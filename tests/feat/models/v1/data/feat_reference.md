@@ -63,15 +63,15 @@ Free-form design rationale, schema sketches, etc.
 
 ### Task List
 
-#### Phase 0: Scaffolding
+#### Phase 100: Scaffolding
 
-- [x] Task 0.1: Create branch and package skeleton
+- [x] Task 100.100: Create branch and package skeleton
 
-#### Phase 1: Implementation
+#### Phase 110: Implementation
 
-- [ ] Task 1.1: Implement the widget component
+- [ ] Task 110.100: Implement the widget component
 
-- [ ] Task 1.2: Add keyboard navigation
+- [ ] Task 110.110: Add keyboard navigation
 
 ## Progress
 

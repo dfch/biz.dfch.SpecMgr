@@ -247,9 +247,31 @@ definitions_and_acronyms
 
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+# (Constructor keyword arguments don't count as name references for vulture's
+# name-based "used" decision -- that is why these entries exist while
+# `base_dir` needs none: a local variable of that name in
+# `general.tools._similarity_corpus` already marks it used.)
 env_var
 env_var_set
+# config (feat-134 Phase 7): `SimilarityConfig` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes
+# (`cache_dir` needs no entry -- the local variable of that name in
+# `general.resources.config._similarity_cache_dir` already marks it used).
+extra_installed
+disabled
+model_name
 
+# similarity (feat-134-related-artifact-similarity):
+# `SimilarityUnavailableResult`'s `available`/`reason` fields are written in
+# the model's own constructor (in `_embedding._similarity_availability`) and
+# read back only via (de)serialization when the tool returns them to the MCP
+# client; nothing in `src/` accesses them as plain attributes. The Phase 1
+# entries for `iter_paths` (now attribute-accessed by the registry consumers),
+# `embed_query` and `_similarity_availability` (now called from the Phase 3
+# `find_related`/`find_similar_text` tool bodies) are obsolete -- vulture sees
+# those `src/` uses.
+available
+reason
 # dtais (feat-92-resources Phase 2): `Dtais`/`CoverageRelationship` fields
 # read only via (de)serialization; nothing in `src/` accesses them as plain
 # attributes yet (the `general/resources/dtais.py` wiring comes later).
@@ -292,3 +314,15 @@ invalidate
 reconcile
 move
 reset
+
+# --- similarity (feat-134-related-artifact-similarity) ------------------
+# `documents` is the `_embedding._TextEmbeddingLike` structural-protocol
+# stub's own method argument -- a declaration with a `...` body, never a real
+# parameter that any `src/` code binds (the concrete `fastembed.TextEmbedding`
+# satisfies the protocol structurally and is only ever reached through the
+# lazy `get_default_provider` import). The `read_embedding`/
+# `invalidate_embedding_cache`/`move_embedding_cache`/`reset_embedding_cache`
+# cache wrappers, `reset_default_provider`, and the `SimilarityUnavailableResult`/
+# `WholeBodyDomain`/`WholeBodyType`/`WholeBodyOrAdrType`/`whole_body_domain`
+# registry names need no entries: vulture treats `__all__`-listed names as used.
+documents

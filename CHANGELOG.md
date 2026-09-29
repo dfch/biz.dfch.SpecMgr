@@ -9,6 +9,116 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `numbered: bool = False` parameter on every `get_<d>` tool for the
+  12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs;
+  `get_adr` unchanged) (feat-153-off-by-n, GitHub issue #153, ADR
+  19ff316b-cd11-41a7-a616-ffd84917da51): meaningful only combined with
+  `raw=True`, it prefixes every returned body line with its 1-based
+  absolute body-line number in the `"<n>: "` form (plain decimal, no
+  padding), so a number seen can be fed straight back into the generic
+  `update` tool's `offset` without manual counting -- windowed reads
+  number from the clamped offset `max(1, k)` and never restart at 1
+  within a window, keeping numbered output in `update`'s own coordinate
+  space. `numbered=True` combined with `raw=False` raises `ValueError`
+  before any file access (mirroring the existing `offset`/`limit`-with-
+  `raw=False` guard, now factored into the shared `validate_read_args`
+  helper in `general/tools/_splice.py`), and a numbered read of a
+  document that exists but fails to parse returns the non-raising
+  `ParseFailureResult` (feat-150, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c),
+  never numbered text. The default (`numbered=False`) output remains
+  byte-identical to the existing `raw=True` text, and the `numbered`
+  prefix is one format family with the new `update` `snippet` (each
+  snippet line is a 2-character marker prefix plus exactly the line a
+  numbered read prints for that number).
+
+### Changed
+
+- **BREAKING**: the generic `update` tool's success return changes,
+  across all 12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/
+  feat/vcr/sysrs; `adr` excluded), from the per-domain frontmatter object
+  only (feature feat-69-update-context's "frontmatter-only" precedent) to
+  a new `UpdateResult` wrapper exposing `frontmatter` (the same
+  per-domain frontmatter object) plus `snippet: str | None`
+  (feat-153-off-by-n, GitHub issue #153, ADR
+  19ff316b-cd11-41a7-a616-ffd84917da51): in range mode (`offset` given,
+  except the whole-body-equivalent `offset=1` + omitted-`limit` range),
+  `snippet` is the before/after window of the touched range -- up to 2
+  unchanged context lines above, the dropped lines (numbered pre-splice),
+  the inserted lines (numbered post-splice), and up to 2 unchanged
+  context lines below, each line rendered `<marker> <n>: <line text>`
+  (`-`/`+`/space marker) -- bounded by the touched range, not the document
+  size (no hard cap); in whole-body mode and for that whole-body-
+  equivalent range, `snippet` is `None`, so the return shape is uniform
+  across both modes and every domain. Callers and tests that read
+  frontmatter fields directly off the result move to
+  `result.frontmatter`. `set_status`, `set_classification`, every
+  `create_<d>` tool, and the already-merged generic `edit` tool keep
+  their existing frontmatter-only (respectively path-string) returns
+  unchanged. `update`'s description now also warns that `offset`/`limit`
+  address the frontmatter-stripped body, never the raw on-disk file (the
+  YAML frontmatter block is variable-length), and that a
+  `numbered=True` read's output must never be fed back verbatim into
+  `content` without stripping the `"<n>: "` prefix.
+
+## [0.34.0] - 2026-09-29
+
+### Added
+
+- Two new generic MCP tools for cross-domain semantic similarity
+  (GitHub issue #134): `find_related` finds the documents most related to
+  an existing document, given its `type`/`id`, and `find_similar_text`
+  finds the documents most similar to a free-form `query` (for
+  pre-creation dedup/discovery checks). Both rank by cosine similarity of
+  local sentence embeddings across every whole-body domain (req, uc, tsk,
+  qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded
+  structurally), returning up to `top_k` (default 10, validated 1..100)
+  `{type, id, title, status, path, score}` rows sorted by score
+  descending; an unparseable candidate still appears, embedded from its
+  full raw text, with the `<failed to parse>` marker title/status and
+  `id = null`.
+- A new optional `similarity` dependency extra holding the embedding
+  backend (`fastembed` + `BAAI/bge-small-en-v1.5`, CPU-only via ONNX
+  Runtime) (GitHub issue #134) -- install with
+  `pip install 'biz-dfch-specmgr[similarity]'`; the model is downloaded
+  once on first use, after which inference is fully local.
+- The presence-based `SPECMGR_SIMILARITY_DISABLED` environment variable
+  (any value) to opt out of the similarity feature at runtime (GitHub
+  issue #134).
+- A structured, non-raising `{available: false, reason, message}`
+  result that both similarity tools return instead of raising whenever
+  the embedding backend is unavailable (the `similarity` extra not
+  installed, the model failing to load, or the opt-out flag present) --
+  the tools always register and stay in the tool list (GitHub issue
+  #134).
+- A static `similarity` section on the `specmgr://config` resource for
+  the semantic-similarity feature (GitHub issue #134, feat-134 Phase
+  7): whether the `similarity` extra (`fastembed`) is installed (an
+  `importlib.util.find_spec` spec lookup, never an import), whether the
+  presence-based `SPECMGR_SIMILARITY_DISABLED` opt-out flag is set, the
+  fixed model name (`BAAI/bge-small-en-v1.5`), and the resolved model
+  cache directory (`FASTEMBED_CACHE_PATH` if set, else
+  `<tempdir>/fastembed_cache`) -- reported, never created: reading the
+  resource stays side-effect-free (no model load, no directory
+  creation). It reports static configuration only; the tools' own
+  dynamic runtime availability remains their structured
+  `{available: false, reason, message}` result (no `loaded` field).
+- The installed `fastembed` package version on the `specmgr://version`
+  resource (GitHub issue #134, feat-134 Phase 7), or `null` when the
+  `similarity` extra is not installed -- read via `importlib.metadata`,
+  never by importing `fastembed` itself.
+- A consolidated `### Semantic Similarity Search` subsection in the
+  README's `## MCP Server` section (GitHub issue #134, feat-134 Phase
+  7): what `find_related`/`find_similar_text` do (and that both always
+  register regardless of install/runtime state), the install commands
+  (cross-referenced with the `## Installation` section), the
+  backend/model identity (`fastembed` + `BAAI/bge-small-en-v1.5`,
+  CPU-only ONNX Runtime), the non-blocking background warmup thread at
+  server startup (correcting the prior "on first use" wording), the
+  model cache location/override (`FASTEMBED_CACHE_PATH`), the
+  `SPECMGR_SIMILARITY_DISABLED` opt-out, and pointers to the extended
+  `specmgr://config`/`specmgr://version` resources for runtime
+  introspection.
+
 - `repair`, a new cross-cutting MCP prompt in `general/prompts/`
   (feat-150-mcp-lifecycle-commands, GitHub issue #150, Phase 1):
   `repair(type, id=None)` narrates repairing a whole-body document
@@ -65,32 +175,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the 11 flat-file domains (scans for the single file whose stem encodes
   `id_` as a hyphen-bounded token -- the flat-file naming is
   `<type>-<id>-<slug>.md` -- and reports a parse-failing file's
-   `(path, str(exc))`) and a bespoke `feat.tools._paths.find_feat_parse_failure
-   (base_dir, id_)` for `feat` (the folder name IS the id, so no scan).
-- A `numbered: bool = False` parameter on every `get_<d>` tool for the
-  12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs;
-  `get_adr` unchanged) (feat-153-off-by-n, GitHub issue #153, ADR
-  19ff316b-cd11-41a7-a616-ffd84917da51): meaningful only combined with
-  `raw=True`, it prefixes every returned body line with its 1-based
-  absolute body-line number in the `"<n>: "` form (plain decimal, no
-  padding), so a number seen can be fed straight back into the generic
-  `update` tool's `offset` without manual counting -- windowed reads
-  number from the clamped offset `max(1, k)` and never restart at 1
-  within a window, keeping numbered output in `update`'s own coordinate
-  space. `numbered=True` combined with `raw=False` raises `ValueError`
-  before any file access (mirroring the existing `offset`/`limit`-with-
-  `raw=False` guard, now factored into the shared `validate_read_args`
-  helper in `general/tools/_splice.py`), and a numbered read of a
-  document that exists but fails to parse returns the non-raising
-  `ParseFailureResult` (feat-150, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c),
-  never numbered text. The default (`numbered=False`) output remains
-  byte-identical to the existing `raw=True` text, and the `numbered`
-  prefix is one format family with the new `update` `snippet` (each
-  snippet line is a 2-character marker prefix plus exactly the line a
-  numbered read prints for that number).
+  `(path, str(exc))`) and a bespoke `feat.tools._paths.find_feat_parse_failure
+  (base_dir, id_)` for `feat` (the folder name IS the id, so no scan).
+- A fixed, permanent numbering scheme for phases and tasks inside `feat`
+  (Feature) documents' `### Task List` (`feat/models/v1`), modeled on the
+  QA question numbering of feat-156 (GitHub issue #156): `Phase` headings
+  now carry 3-digit zero-padded numbers starting at 100, step 10
+  (`#### Phase 100: X`, `#### Phase 110: ...`, alias `^Phase \d{3}: .+$`),
+  and every Task List checklist item now carries a `Task NNN.MMM: ` number
+  prefix (3-digit phase component, dot, 3-digit task component, the task
+  component also starting at 100, step 10, within its phase) --
+  `- [ ] Task 100.100: Y` (or `- [x] ...` once done) -- enforced by a new
+  feat-local `FeatTaskItem` in `feat/models/v1/body.py` that subclasses
+  `tsk`'s own `TaskItem` and re-matches the prefix against the inherited,
+  checkbox-stripped `description` (the same layering
+  `AcceptanceCriterionItem` uses for `ACC-NNN: `), evaluated eagerly at
+  parse time with actionable errors (document-relative field path, 1-based
+  line, expected shape). Only the number SHAPES are enforced: the step-10
+  increment, uniqueness, and the match between a task's phase component and
+  the enclosing phase number stay authoring conventions, so gaps and
+  in-between numbers (e.g. `Phase 105`, `Task 100.105`) always parse and a
+  number is permanent once assigned (removals leave gaps). The packaged
+  template and example and both JSON schema artifacts use the new scheme
+  and round-trip through `parse_feat` (feat-163-feat-numbering, GitHub
+  issue #163).
+- The `feat-numbering` project OpenCode Skill
+  (`.opencode/skills/feat-numbering/SKILL.md`, `name: feat-numbering`):
+  teaches the FEAT Task List numbering scheme (3-digit zero-padded phase
+  numbers starting at 100, step 10; `Task NNN.MMM: ` task lines;
+  shape-only enforcement; in-between insertion without renumbering;
+  permanent numbers) by mirroring the prompts' canonical scheme paragraph,
+  directs agents to the authoritative `specmgr://feat/template`/
+  `specmgr://feat/example`/`specmgr://feat/schema` resources rather than
+  memory, and carries the required `name` plus a third-person
+  `description` front-loading the trigger keywords FEAT, Task List, Phase,
+  and specmgr (feat-163-feat-numbering, GitHub issue #163, REQ-009).
 
 ### Changed
 
+- **BREAKING (dependency contract)**: the `similarity` optional
+  dependency extra now depends on `biz-dfch-specmgr[mcp]` (feat-134
+  follow-up, GitHub issue #134): `pip install "biz-dfch-specmgr[similarity]"`
+  now also pulls in the `mcp`/`cli` extras' dependencies. This corrects
+  `pyproject.toml`'s metadata to match a reality that already existed in
+  the code: every domain package's `__init__.py` (including
+  `general/__init__.py`, which the embedding provider seam lives under)
+  unconditionally imports `prompts`/`resources`/`tools`, and those
+  transitively import `server.py`'s `from mcp.server import MCPServer`,
+  so `general.tools._embedding` could never actually be imported without
+  `mcp` installed regardless of whether `fastembed` was present. ADR
+  750842b2-aca4-4649-ba0c-855ec8e1f505 is unaffected -- it only requires
+  the reverse direction (the `mcp`/`cli` extras must stay free of the
+  ML/`fastembed` dependency), never that `similarity` be usable standalone
+  without `mcp`.
 - Every `get_<d>` tool for the 12 whole-body domains
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `get_adr` unchanged)
   now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for
@@ -105,35 +242,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the result (never a raw `str`); a healthy document's return shape, a truly
   absent id (still raises the domain's not-found error), and an invalid id
   shape (still a `ValueError` before any file access) are all unchanged.
-   This unblocks Phase 1's `repair` prompt with-id branch, which narrates
-   reading the non-raising `ParseFailureResult`-shaped result from
-   `get_<d>(id)`.
-- **BREAKING**: the generic `update` tool's success return changes,
-  across all 12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/
-  feat/vcr/sysrs; `adr` excluded), from the per-domain frontmatter object
-  only (feature feat-69-update-context's "frontmatter-only" precedent) to
-  a new `UpdateResult` wrapper exposing `frontmatter` (the same
-  per-domain frontmatter object) plus `snippet: str | None`
-  (feat-153-off-by-n, GitHub issue #153, ADR
-  19ff316b-cd11-41a7-a616-ffd84917da51): in range mode (`offset` given,
-  except the whole-body-equivalent `offset=1` + omitted-`limit` range),
-  `snippet` is the before/after window of the touched range -- up to 2
-  unchanged context lines above, the dropped lines (numbered pre-splice),
-  the inserted lines (numbered post-splice), and up to 2 unchanged
-  context lines below, each line rendered `<marker> <n>: <line text>`
-  (`-`/`+`/space marker) -- bounded by the touched range, not the document
-  size (no hard cap); in whole-body mode and for that whole-body-
-  equivalent range, `snippet` is `None`, so the return shape is uniform
-  across both modes and every domain. Callers and tests that read
-  frontmatter fields directly off the result move to
-  `result.frontmatter`. `set_status`, `set_classification`, every
-  `create_<d>` tool, and the already-merged generic `edit` tool keep
-  their existing frontmatter-only (respectively path-string) returns
-  unchanged. `update`'s description now also warns that `offset`/`limit`
-  address the frontmatter-stripped body, never the raw on-disk file (the
-  YAML frontmatter block is variable-length), and that a
-  `numbered=True` read's output must never be fed back verbatim into
-  `content` without stripping the `"<n>: "` prefix.
+  This unblocks Phase 1's `repair` prompt with-id branch, which narrates
+  reading the non-raising `ParseFailureResult`-shaped result from
+  `get_<d>(id)`.
+- **BREAKING**: `feat` (Feature) documents now require the 3-digit
+  zero-padded `Phase` heading shape (`#### Phase NNN: {title}`, alias
+  `^Phase \d{3}: .+$`) and the `Task NNN.MMM: ` prefix on every Task List
+  checklist item (see "Added" above): legacy documents written with
+  unpadded `Phase N` headings or `Task N.M` items -- ~26 of the
+  62 existing `.specmgr/feat/<id>/README.md` documents, which parsed
+  before -- now fail `parse_feat`/`list_feat`/`validate(type="feat")`
+  with an actionable error (field path, 1-based line, expected shape),
+  and a `list_feat` of `.specmgr/feat/` reports each as an inline failed
+  entry (`<failed to parse>` marker, counted in `error_count`) rather than
+  dropping it. This is the confirmed strict, no-migration policy: the
+  follow-up migration renumbers them to the new scheme and is tracked by
+  the existing TSK document `tsk-2687d267` ("Fix Remaining feat-* README.md
+  Documents to Validate Against the Current FEAT Schema")
+  (feat-163-feat-numbering, GitHub issue #163).
+- The `create_feat`/`update_feat` prompt instruction files
+  (`feat/data/feat_create_instructions.md`/`feat_update_instructions.md`)
+  now carry the canonical Task List numbering-scheme description (3-digit
+  zero-padded phase numbers starting at 100, step 10; `Task NNN.MMM: `
+  task lines; shape-only enforcement; in-between insertion; permanence)
+  and the two wording-level alignments the REQ-008 optionality audit
+  recommended -- the audit compared every section's mandatory/optional
+  claim in both prompts against `feat/models/v1/body.py` and confirmed
+  zero optionality discrepancies: the create prompt's `Related Decisions`
+  bullet now reads 'optional free-form cross-reference list; entries may
+  reference an ADR id, a dec id, or any other decision record' and its
+  `Blockers` bullet 'optional free-form list of open blockers', both
+  matching the model's docstrings. A new regression test
+  (`tests/feat/prompts/test_prompt_schema_optionality.py`) pins both
+  prompts' mandatory/optional section sets against the model's own
+  required/optional field sets and fails loudly on any drift
+  (feat-163-feat-numbering, GitHub issue #163, REQ-007/REQ-008).
+- The TSK document `tsk-2687d267` ("Fix Remaining feat-* README.md
+  Documents to Validate Against the Current FEAT Schema")'s normative
+  "required FEAT document shape" entry now mandates the new scheme
+  (`#### Phase NNN: {title}` with 3-digit zero-padded phase numbers,
+  first phase 100, step 10 by authoring convention, shape-only
+  enforcement, in-between insertion allowed, and `- [ ] Task NNN.MMM:
+  {text}` / `- [x] Task NNN.MMM: {text}` checklist items) instead of the
+  legacy `Phase N`/`Task N.M` shapes (feat-163-feat-numbering, GitHub
+  issue #163, REQ-011).
+
+### Fixed
+
+- The `_similarity_availability` unavailable-backend message's install
+  instruction now names both extras together --
+  `pip install 'biz-dfch-specmgr[mcp,similarity]'` -- instead of
+  `[similarity]` alone (feat-134 follow-up, GitHub issue #134): in
+  practice `mcp` is always a prerequisite to even reach `find_related`/
+  `find_similar_text`, since every domain package's `__init__.py`
+  (including `general/__init__.py`, which `general/tools/_embedding.py`
+  lives under) unconditionally imports `prompts`/`resources`/`tools`,
+  and those transitively import `server.py`'s
+  `from mcp.server import MCPServer` -- so `[similarity]` alone was
+  never actually sufficient. Pinned by a new regression test
+  (`tests/general/tools/test__embedding.py::TestSimilarityAvailability::
+  test_backend_unavailable_message_wording_pinned`).
+- The similarity engine's title scan (`first_h1` in
+  `general/tools/_similarity_text.py`) now accepts both level-1 heading
+  syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
+  setext (`Title` over a `===` underline, with fenced-code-block tracking
+  and CommonMark's 0-3 leading-space indent tolerance) (GitHub issue
+  #134): a single parseable document with a setext H1 previously made the
+  engine's "parsed documents carry their own mandatory H1" invariant
+  fire, crashing every `find_related`/`find_similar_text` call and
+  aborting the startup warmup mid-corpus.
+- The similarity engine's remaining second-review findings (GitHub issue
+  #134): the availability-before-validation ordering (a
+  disabled/backend-missing environment returns the structured
+  unavailable result even for invalid arguments) is now pinned by
+  committed tests instead of an ad hoc smoke script; the embedding cache
+  stores each candidate's result-row metadata (`id`/`title`/`status`)
+  alongside its vector, so a warm candidate is one file read and no
+  parse (a cold one, one of each) instead of the prior two reads and up
+  to two parses; the `find_similar_text` query is now embedded before the
+  corpus walk (a query-embedding failure surfaces immediately, bad
+  arguments still read and embed nothing); and the `min_score` filter
+  applies a float32 accumulation epsilon (`1e-6`), so an exact
+  self-match scoring `0.9999999...` is no longer dropped by
+  `min_score=1.0`.
+
 ## [0.33.0] - 2026-09-27
 
 ### Added

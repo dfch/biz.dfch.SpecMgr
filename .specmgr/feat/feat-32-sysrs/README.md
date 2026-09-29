@@ -840,6 +840,70 @@ input carries no font-size/bold signal for pandoc to infer headings
 from) — this is expected and acceptable for a read-only research
 reference, not a document meant to be parsed structurally.
 
+**ISO/IEC/IEEE 15288:2023 and 12207:2026 conversion (added 2026-09-29,
+post-closure — reference material only, not yet read for design
+grounding):** the user supplied purchased, licensed local copies of both
+standards (`ISO_IEC_IEEE_15288_2023(en).pdf`, 128 pages;
+`ISO_IEC_IEEE_12207_2026(en).pdf`, 154 pages; both unencrypted, neither
+password-protected), copied into this folder as `ISO_15288.pdf`/
+`ISO_12207.pdf` (owner-read-only, gitignored) and converted to
+`ISO_15288.md`/`ISO_12207.md` alongside the existing `ISO_29148.md`,
+same purpose: local, non-distributed reference text for a future design-
+grounding pass, mirroring how `ISO_29148.md` is used today.
+
+Same `pdftotext` + `pandoc -f markdown-fancy_lists -t gfm --wrap=none`
+pipeline as above, with two differences discovered during this run,
+both worth carrying forward to any future conversion:
+
+1. **`pdftotext` must be run with `-layout`, not its default mode.**
+   Both standards use annotated multi-column/floating-callout page
+   layout for lettered outcome/requirement lists (`a) ... b) ... c) ...`).
+   Default-mode `pdftotext` silently **reorders** these lines (confirmed
+   reproducible: 15288 §6.1.1.2's four-item outcomes list extracted as
+   `a), c), b), d)` in default mode — not a cosmetic issue, a real
+   content-integrity defect, since the standard's actual outcome list is
+   an unordered set express through ordered *letters* precisely so a
+   reader can cite "outcome (c)"). `pdftotext -layout` preserves the
+   physical column order and both files round-tripped correctly (spot-
+   checked 15288 §6.1.1.2 and 12207 §6.4.1.2/§6.4.1.3, including a nested
+   lettered-then-numbered list, both in the exact original order). This
+   is a stronger warning than anything the MITRE/INCOSE Task 0.5/0.8
+   conversions surfaced (those never hit this failure mode) —
+   **any future conversion of a multi-column ISO/IEC/IEEE standard PDF
+   should use `-layout` from the start**, not just when something looks
+   wrong.
+2. **A repeated per-page license banner was stripped**, unlike the
+   MITRE/INCOSE precedent's "leave header/footer noise in, not worth
+   cleaning further." Both PDFs carry three fixed lines on every single
+   page (`Licensed to d-fens GmbH / Ronald Rink (ronald.rink@d-fens.net)`,
+   `ISO Store Order: OP-1107121 license #1/ Downloaded: 2026-09-29`,
+   `Single user licence only, copying and networking prohibited.`) —
+   384 lines removed from 15288 (128 pages × 3), 462 from 12207 (154
+   pages × 3), verified by exact line-count arithmetic before/after. This
+   is qualitatively different from stray page-number noise: full
+   repeated sentences add real bulk with zero informational value, and
+   leaving them in would make the reference text meaningfully harder to
+   read. `ISO_29148.md`'s own source PDF carried no such banner, so this
+   is a new step, not a change to the prior file.
+
+Control-byte stripping was still needed (`tr`, same as before, applied
+before the banner strip): 15288 had 124 stray `\x08` (backspace)
+artifacts, 12207 had 1 — both, like the INCOSE Handbook's own `\x08`
+finds, inside table-of-contents dot-leader runs, not body prose. Both
+files also carried a UTF-8 BOM (`\xef\xbb\xbf`) once per page (126/152
+occurrences respectively) bleeding in from the PDF's own title metadata
+field (`pdfinfo` shows `Title: \ufeffISO/IEC/IEEE 15288:2023\ufeff`) —
+stripped for the same reason as the banner (repeated per-page noise with
+no informational value, an invisible character that would otherwise
+survive into the markdown). No ordered-list-marker corruption risk
+pattern (`(NNN)`-style parenthetical numbers, the MITRE-guide bug) exists
+in either standard's body text at all — confirmed via full-text scan,
+zero matches in both files. As with every other PDF-derived reference in
+this folder, no real `#`/`##` heading tags are produced (plain-text
+input carries no font-size/bold signal for pandoc to infer headings
+from); this is expected, and neither file is meant to be parsed
+structurally.
+
 **Implementation design (added 2026-09-01, Phases 1–6)**
 
 Phase 0 is complete; this subsection is the implementation plan the
@@ -2348,6 +2412,37 @@ entirely, per explicit user instruction, rather than continuing to
 wait on it; see Task List Task 0.7/Design Notes item 4's note.)
 
 ### Recent Updates
+
+#### Update 2026-09-29 (ISO/IEC/IEEE 15288:2023 and 12207:2026 converted to markdown — reference material only)
+
+- Completed: converted the user-supplied `ISO_IEC_IEEE_15288_2023(en).pdf`
+  (128 pages) and `ISO_IEC_IEEE_12207_2026(en).pdf` (154 pages) to
+  `ISO_15288.md`/`ISO_12207.md`, alongside the existing `ISO_29148.md`,
+  same `pdftotext`+`pandoc` pipeline (see Design Notes' "ISO/IEC/IEEE
+  15288:2023 and 12207:2026 conversion" for the full recipe and run
+  notes). Source PDFs copied into this folder as `ISO_15288.pdf`/
+  `ISO_12207.pdf` (owner-read-only), all four new files added to
+  `.gitignore` alongside the existing `ISO_29148.pdf`/`.md` entries —
+  never committed, licensed personal-use copies only.
+- **Important finding, worth flagging prominently**: default-mode
+  `pdftotext` silently reorders lettered outcome/requirement lists
+  (`a) b) c) d)` extracted as `a) c) b) d)` in one verified 15288
+  example) on both standards' multi-column page layout — a genuine
+  content-integrity defect, not cosmetic noise. Fixed by using
+  `pdftotext -layout` instead of the default mode; both files spot-
+  checked afterward and round-tripped in correct original order. Also
+  stripped a repeated three-line per-page license banner (384/462 lines
+  respectively) and a per-page UTF-8 BOM artifact — both new relative to
+  the MITRE/INCOSE/29148 precedent's "leave header/footer noise in."
+- **Scope, deliberately limited**: this is a conversion-and-documentation
+  pass only, at the user's explicit request — neither file has been read
+  for design-grounding findings yet (unlike the eventual read-and-fold-in
+  treatment `ISO_29148.md`/the INCOSE materials got). This feature stays
+  `status: done`; no Task List item was added/reopened for this.
+- Next: if/when a future pass reads these for design grounding, note
+  that any *other* PDF-derived reference added later should default to
+  `pdftotext -layout` from the start, given the reordering defect found
+  here.
 
 #### Update 2026-09-02 (Phase 5 complete — prompts)
 

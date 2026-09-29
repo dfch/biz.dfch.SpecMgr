@@ -91,10 +91,18 @@ With the MCP server:
 pip install "biz-dfch-specmgr[mcp]"
 ```
 
+With semantic-similarity search (`find_related`/`find_similar_text`, see
+[Semantic Similarity Search](#semantic-similarity-search) below), add the
+`similarity` extra on top of `mcp`:
+
+```bash
+pip install "biz-dfch-specmgr[mcp,similarity]"
+```
+
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add "biz-dfch-specmgr[cli,mcp]"
+uv add "biz-dfch-specmgr[cli,mcp,similarity]"
 ```
 
 ## CLI Usage
@@ -141,6 +149,15 @@ tool call, so hand-editing a file between calls is safe.
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
 
+The `find_related`/`find_similar_text` tools (semantic-similarity search,
+requires the `similarity` extra) are turned off by setting the
+`SPECMGR_SIMILARITY_DISABLED` environment variable (any value;
+presence-based) — see [Semantic Similarity Search](#semantic-similarity-search)
+below for the full behavior (install, the non-blocking background warmup at
+server startup, the model cache location, and the structured unavailable
+result both tools return when the feature is disabled or the backend/model
+fails to load).
+
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var
 (or, for the shared `SPECMGR_DOCS_DIR` root, unless the server was started
@@ -150,6 +167,59 @@ per [Add to OpenCode](#add-to-opencode) below — read the `specmgr://config`
 resource to see every domain's actually-resolved absolute base directory
 and whether its env var is explicitly set, without needing shell access to
 the server's host.
+
+### Semantic Similarity Search
+
+The `find_related` and `find_similar_text` tools rank documents by
+semantic similarity using local sentence embeddings (no API keys, no
+network at inference time). `find_related(type, id)` finds the documents
+most related to an existing document; `find_similar_text(query)` finds the
+documents most similar to a free-form query — e.g. a draft you have not
+saved yet, for pre-creation dedup/discovery. Both tools always appear in
+the tool list, regardless of whether the feature is installed or enabled:
+when it is unavailable, each call returns a structured
+`{available: false, reason, message}` result instead of raising.
+
+**Install.** The tools need the optional `similarity` extra on top of
+`mcp` — the exact commands are in [Installation](#installation)
+(`pip install "biz-dfch-specmgr[mcp,similarity]"` or
+`uv add "biz-dfch-specmgr[cli,mcp,similarity]"`). The backend is
+`fastembed` running `BAAI/bge-small-en-v1.5` (CPU-only, ONNX Runtime,
+384-dim).
+
+**Model download and cache.** The model is downloaded once from the
+Hugging Face Hub the first time it is loaded (network required at that
+point only; after that, inference is fully offline). It is cached in
+`$FASTEMBED_CACHE_PATH` if that environment variable is set, otherwise in
+`<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on Linux).
+
+**Background warmup at server startup.** Whenever
+`SPECMGR_SIMILARITY_DISABLED` is not set, the server starts a background
+daemon thread at startup that embeds the full document corpus into the
+in-memory cache — the gate is the opt-out flag only, regardless of whether
+the `similarity` extra is installed. With the extra missing, or with the
+model failing to load, the thread runs the availability probe inside
+itself and exits immediately without cache writes (still never raising).
+The thread is non-blocking — server
+startup never waits for it (the model load/download, if needed, happens
+inside the thread, not on the startup path) — and a mid-warmup failure is
+logged and swallowed, leaving the cache partially warm. Its purpose is to
+keep the first tool call fast: against a cold cache the tools embed the
+corpus on demand, which can cost minutes of CPU.
+
+**Opt-out.** Set `SPECMGR_SIMILARITY_DISABLED` (any value; presence-based)
+to disable the feature without uninstalling the extra — e.g. to skip the
+model download entirely, on a host where the model was never downloaded,
+or to free the memory the model and cache use. Both tools stay registered
+either way.
+
+**Introspection.** Read the `specmgr://config` resource for the feature's
+static configuration — its `similarity` section reports whether the
+`similarity` extra is installed, whether the opt-out flag is set, the
+model name, and the resolved cache directory (static facts only; reading
+the resource never loads the model or creates the cache directory) — and
+the `specmgr://version` resource for the installed `fastembed` version
+(`null` when the extra is not installed).
 
 ### Start the MCP Server
 
@@ -214,6 +284,12 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   To also enable the [Semantic Similarity
+   Search](#semantic-similarity-search) feature (`find_related`/
+   `find_similar_text`), change `[mcp]` to `[mcp,similarity]` in the
+   `--from` value above — see that section for install/runtime-activation
+   details.
+
    **Option B — set the directory env vars explicitly** instead of (or in
    addition to) `--directory`:
 
@@ -236,12 +312,52 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   The same `[mcp]` -> `[mcp,similarity]` change in the `--from` value
+   applies here too, to enable [Semantic Similarity
+   Search](#semantic-similarity-search).
+
    Either option (or both together) makes the resolved base directories
    independent of wherever the MCP host happens to launch the server
    from. Whichever you choose, you can confirm it worked by reading the
    `specmgr://config` resource, which reports the actually-resolved
    absolute base directory for every domain and whether its env var is
    explicitly set.
+
+   **Option C — run from a local source checkout (development).** Options
+   A and B both use `uvx` (`uv tool run`), which resolves
+   `biz-dfch-specmgr[...]` as a named package from the configured index
+   (PyPI by default) into an ephemeral tool environment — they always run
+   the *published* release, never local/unreleased changes. To instead run
+   the project at a specific directory on disk — using its own
+   `pyproject.toml`, lockfile, and source tree directly, including
+   unreleased/`dev`-branch commits — use `uv run --directory
+   <path-to-your-checkout>` (no `--from`, not `uvx`):
+
+   ```json
+   "specmgr": {
+     "type": "local",
+     "enabled": true,
+     "command": [
+       "uv",
+       "run",
+       "--directory",
+       "<path-to-your-checkout>",
+       "--extra",
+       "mcp",
+       "--extra",
+       "similarity",
+       "specmgr",
+       "mcp"
+     ]
+   }
+   ```
+
+   This is the mechanism for contributors/developers pointing OpenCode at
+   their own git checkout instead of the published package. Repeatable
+   `--extra` flags (or `--all-extras` for everything) control which
+   optional dependencies get synced into that local run, independent of
+   what's published on PyPI — drop `--extra similarity` if you don't need
+   [Semantic Similarity Search](#semantic-similarity-search).
 
 3. Save the file and restart OpenCode
 

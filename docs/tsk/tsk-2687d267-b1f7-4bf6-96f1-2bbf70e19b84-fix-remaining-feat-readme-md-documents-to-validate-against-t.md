@@ -4,7 +4,7 @@ created: '2026-09-05 00:20:55.989+02:00'
 id: 2687d267-b1f7-4bf6-96f1-2bbf70e19b84
 status: draft
 type: tsk
-updated: '2026-09-06 09:37:34.609+02:00'
+updated: '2026-09-29 06:32:35.789+02:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,10 @@ version: 1.0.0
 against the current `FeatDocument` schema (frontmatter + body), as reported by
 `specmgr_list_feat`/`specmgr_get_feat`. `feat-0-termxplorer-mcp` was already fixed
 as a worked example -- see the detailed method in "Recent Updates" below before
-starting any of these. Number the tasks so they are easier to track. -->
+starting any of these. Number the tasks so they are easier to track. Once feat-163
+(GitHub issue #163) merges, the failure set grows by the ~26 previously-valid legacy
+`Phase N`/`Task N.M` documents (its strict no-migration policy), so the follow-up
+must renumber them to the new `Phase NNN`/`Task NNN.MMM` scheme. -->
 
 - [ ] Task 1: Fix `feat-10-add-artifact-type-tasklist/README.md`. Known error: a `### Requirements` bullet has a leading `[x]` checkbox marker and wraps across multiple lines, both invalid for `RequirementItem`.
 
@@ -104,7 +107,7 @@ The single most common defect in this batch: a `REQ-NNN:`/`ACC-NNN:`/`Task N.M:`
 
 ### 2026-09-04 22:17:03.000Z - The required FEAT document shape
 
-The required FEAT shape (see resource `specmgr://feat/schema`, or `specmgr_get_feat_template`/`specmgr_get_feat_example` for worked samples): frontmatter `created`/`updated` must match `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$` (e.g. `2026-09-04 22:17:01.000Z`), not a bare ISO `T`-separated timestamp and not missing fractional seconds; frontmatter `status` must be exactly one of `planning`/`progress`/`review`/`done` (map old values like `completed` to `done` and `in-progress` to `progress`); the body is `# Feature: {title}` then `## Plan` holding mandatory `### Overview` free prose, mandatory `### Requirements` with at least one plain bullet `- REQ-NNN: {text}`, mandatory `### Acceptance Criteria` with at least one checkbox bullet `- [ ] ACC-NNN: {text}` or `- [x] ACC-NNN: {text}`, mandatory `### Scope` with exactly `#### Included` then `#### Explicitly Out Of Scope`, optional `### Dependencies` (`#### Depends On`/`#### Blocks`), optional `### Design Notes`, optional `### Related Decisions`, and mandatory `### Task List` with at least one `#### Phase N: {title}` each holding at least one flat checklist item `- [ ] Task N.M: {text}` or `- [x] Task N.M: {text}`; then `## Progress` holding mandatory `### Current Status` free prose, optional `### Blockers`, mandatory `### Updates` with at least one entry newest-first as `#### {timestamp} ( - | : ) {title}` followed by one lead prose paragraph, optional `### Decisions Made` in the same entry shape, optional `### Related PRs / Commits`, and optional `### More Information`; sections must appear in exactly this order, with no unknown or duplicate headings.
+The required FEAT shape (see resource `specmgr://feat/schema`, or `specmgr_get_feat_template`/`specmgr_get_feat_example` for worked samples): frontmatter `created`/`updated` must match `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$` (e.g. `2026-09-04 22:17:01.000Z`), not a bare ISO `T`-separated timestamp and not missing fractional seconds; frontmatter `status` must be exactly one of `planning`/`progress`/`review`/`done` (map old values like `completed` to `done` and `in-progress` to `progress`); the body is `# Feature: {title}` then `## Plan` holding mandatory `### Overview` free prose, mandatory `### Requirements` with at least one plain bullet `- REQ-NNN: {text}`, mandatory `### Acceptance Criteria` with at least one checkbox bullet `- [ ] ACC-NNN: {text}` or `- [x] ACC-NNN: {text}`, mandatory `### Scope` with exactly `#### Included` then `#### Explicitly Out Of Scope`, optional `### Dependencies` (`#### Depends On`/`#### Blocks`), optional `### Design Notes`, optional `### Related Decisions`, and mandatory `### Task List` with at least one `#### Phase NNN: {title}` (3-digit zero-padded phase number -- first phase `Phase 100`, step 10 by authoring convention, only the number shape is enforced, so in-between insertion such as `Phase 105` is allowed) each holding at least one flat checklist item `- [ ] Task NNN.MMM: {text}` or `- [x] Task NNN.MMM: {text}`; then `## Progress` holding mandatory `### Current Status` free prose, optional `### Blockers`, mandatory `### Updates` with at least one entry newest-first as `#### {timestamp} ( - | : ) {title}` followed by one lead prose paragraph, optional `### Decisions Made` in the same entry shape, optional `### Related PRs / Commits`, and optional `### More Information`; sections must appear in exactly this order, with no unknown or duplicate headings.
 
 ### 2026-09-04 22:17:02.000Z - Why the generic update/set_status tools cannot be used directly
 

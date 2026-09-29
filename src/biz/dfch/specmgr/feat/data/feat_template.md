@@ -49,13 +49,13 @@ Free-form design rationale, schema sketches, etc. Optional.
 
 ### Related Decisions
 
-- A bullet list of related ADR or DEC ids, each with a short description. Optional.
+- A free-form cross-reference list; entries may reference an ADR id, a dec id, or any other decision record. Optional.
 
 ### Task List
 
-#### Phase 1: Placeholder Phase
+#### Phase 100: Placeholder Phase
 
-- [ ] Task 1.1: A short description of one task in this phase.
+- [ ] Task 100.100: A short description of one task in this phase.
 
 ## Progress
 
