@@ -169,6 +169,81 @@ class TestGetPrb(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_prb(created.id, raw=False, limit=3)
 
+    def test_numbered_raw_read_prefixes_absolute_line_numbers(self) -> None:
+        """numbered=True must prefix every body line with ``"<n>: "`` (1-based absolute numbers, single trailing
+        newline), and numbered=False must stay byte-identical to today's raw=True output (ACC-004; feat-153
+        Task 5.3 cross-domain matrix)."""
+        created = create_prb(_MINIMAL_BODY)
+        doc_id = created.id
+        unnumbered = get_prb(doc_id, raw=True)
+
+        self.assertEqual(get_prb(doc_id, raw=True, numbered=False), unnumbered)
+
+        lines = unnumbered.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        numbered = get_prb(doc_id, raw=True, numbered=True)
+        self.assertEqual(numbered, expected)
+        self.assertEqual(numbered.splitlines()[1], "2: ")  # the empty body line: trailing space, no special case
+        # A numbered no-window read equals the numbered whole-body-equivalent windowed read (byte-identical
+        # contract).
+        self.assertEqual(numbered, get_prb(doc_id, raw=True, numbered=True, offset=1))
+
+    def test_numbered_windowed_read_starts_at_clamped_offset_and_never_restarts(self) -> None:
+        """A windowed numbered read numbers from the clamped offset (absolute, not window-relative;
+        ACC-011): a k < 1 window starts at 1, a k > N window is empty and prints no numbers."""
+        created = create_prb(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_prb(doc_id, raw=True).splitlines()
+        k, m = 5, 3
+
+        window = get_prb(doc_id, raw=True, numbered=True, offset=k, limit=m)
+
+        self.assertEqual(window, "".join(f"{k + i}: {lines[k - 1 + i]}\n" for i in range(m)))
+        self.assertEqual(get_prb(doc_id, raw=True, numbered=True, offset=0, limit=2), f"1: {lines[0]}\n2: {lines[1]}\n")
+        self.assertEqual(get_prb(doc_id, raw=True, numbered=True, offset=len(lines) + 1), "")
+
+    def test_numbered_with_raw_false_raises_value_error_before_any_file_access(self) -> None:
+        """numbered=True with raw=False must raise ValueError (ACC-005) -- even for a document that fails to
+        parse: the guard fires before the feat-150 parse-failure channel."""
+        created = create_prb(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        with self.assertRaises(ValueError) as ctx:
+            get_prb(created.id, raw=False, numbered=True)
+        message = str(ctx.exception)
+        self.assertIn("numbered", message)
+        self.assertIn("raw", message)
+
+    def test_numbered_raw_read_of_broken_document_returns_parse_failure_result(self) -> None:
+        """A numbered raw read of a document that exists but fails to parse must return the feat-150
+        ParseFailureResult channel, never numbered text (ACC-004's third clause, REQ-004)."""
+        created = create_prb(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_prb(created.id, raw=True, numbered=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+        self.assertEqual(result.id, created.id)
+
+    def test_raw_no_window_read_is_byte_identical_for_a_body_without_trailing_newline(self) -> None:
+        """The unnumbered no-window raw read must return the frontmatter-stripped body verbatim even when the
+        body has no trailing newline -- the no-window path bypasses window_body, which would add one
+        (ACC-004's byte-identity; feat-153 Task 5.2's no-trailing-newline fixture); the numbered read of the
+        same body still normalizes to exactly one trailing newline."""
+        created = create_prb(_MINIMAL_BODY)
+        path = self._doc_path()
+        path.write_text(path.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+        body = body_text(path)
+        self.assertFalse(body.endswith("\n"))
+
+        self.assertEqual(get_prb(created.id, raw=True), body)
+        self.assertEqual(get_prb(created.id, raw=True, numbered=False), body)
+
+        lines = body.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        self.assertEqual(get_prb(created.id, raw=True, numbered=True), expected)
+
     def test_windowed_raw_read_coordinates_index_into_the_splice_target(self) -> None:
         """The coordinates of a windowed raw read must splice at exactly those lines, unchanged
         regions byte-identical (ACC-003 windowed)."""

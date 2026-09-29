@@ -217,6 +217,36 @@ class TestGetReq(unittest.TestCase):
         self.assertIn("numbered", message)
         self.assertIn("raw", message)
 
+    def test_numbered_raw_read_of_broken_document_returns_parse_failure_result(self) -> None:
+        """A numbered raw read of a document that exists but fails to parse must return the feat-150
+        ParseFailureResult channel, never numbered text (ACC-004's third clause, REQ-004)."""
+        created = create_req(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_req(created.id, raw=True, numbered=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+        self.assertEqual(result.id, created.id)
+
+    def test_raw_no_window_read_is_byte_identical_for_a_body_without_trailing_newline(self) -> None:
+        """The unnumbered no-window raw read must return the frontmatter-stripped body verbatim even when the
+        body has no trailing newline -- the no-window path bypasses window_body, which would add one
+        (ACC-004's byte-identity; feat-153 Task 5.2's no-trailing-newline fixture); the numbered read of the
+        same body still normalizes to exactly one trailing newline."""
+        created = create_req(_MINIMAL_BODY)
+        path = self._doc_path()
+        path.write_text(path.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+        body = body_text(path)
+        self.assertFalse(body.endswith("\n"))
+
+        self.assertEqual(get_req(created.id, raw=True), body)
+        self.assertEqual(get_req(created.id, raw=True, numbered=False), body)
+
+        lines = body.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        self.assertEqual(get_req(created.id, raw=True, numbered=True), expected)
+
     def test_windowed_raw_read_coordinates_index_into_the_splice_target(self) -> None:
         """The coordinates of a windowed raw read must splice at exactly those lines, unchanged
         regions byte-identical (ACC-003 windowed)."""

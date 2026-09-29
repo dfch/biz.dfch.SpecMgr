@@ -755,6 +755,13 @@ class _Case:
     insert_marker: str
     #: The single line inserted by the ``limit = 0`` mid-body insert test.
     insert_line: str
+    #: The second line of the size-changing replacement test's fragment: joined
+    #: onto ``middle_replacement`` with a bare newline (no blank line) so the
+    #: two-line fragment stays the same paragraph/field as the one
+    #: ``middle_marker`` line it replaces, keeping the document valid -- 1 line
+    #: replaced by 2, ACC-002's size-changing verification mode (feat-153
+    #: Task 5.3).
+    size_change_second_line: str
 
 
 _CASES: list[_Case] = [
@@ -778,6 +785,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Characteristics",
         insert_line="Inserted description detail.",
+        size_change_second_line="The updated limit applies to all operating modes.",
     ),
     _Case(
         doc_type="uc",
@@ -804,6 +812,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="### Scope",
         insert_line="Inserted goal context.",
+        size_change_second_line="The goal context was revised accordingly.",
     ),
     _Case(
         doc_type="tsk",
@@ -825,6 +834,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Recent Updates",
         insert_line="- [ ] Inserted task.",
+        size_change_second_line="The kickoff note was expanded in review.",
     ),
     _Case(
         doc_type="qa",
@@ -846,6 +856,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=False,
         insert_marker="### Raw Requirements",
         insert_line="Inserted introduction detail.",
+        size_change_second_line="The introduction was clarified in the follow-up interview.",
     ),
     _Case(
         doc_type="prb",
@@ -867,6 +878,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=False,
         insert_marker="## Gap",
         insert_line="Inserted summary detail.",
+        size_change_second_line="The summary was expanded with the confirmed root cause.",
     ),
     _Case(
         doc_type="gol",
@@ -888,6 +900,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Source",
         insert_line="Inserted statement detail.",
+        size_change_second_line="The statement was tightened in the program review.",
     ),
     _Case(
         doc_type="rsk",
@@ -909,6 +922,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Trigger",
         insert_line="Inserted cause detail.",
+        size_change_second_line="The cause description was revised with the new evidence.",
     ),
     _Case(
         doc_type="dec",
@@ -936,6 +950,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Decision Outcome",
         insert_line="Inserted context detail.",
+        size_change_second_line="The context was clarified for the incident review.",
     ),
     _Case(
         doc_type="sop",
@@ -957,6 +972,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Procedure",
         insert_line="Inserted purpose detail.",
+        size_change_second_line="The purpose statement was expanded in revision.",
     ),
     _Case(
         doc_type="vcr",
@@ -978,6 +994,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Coverage",
         insert_line="Inserted verification detail.",
+        size_change_second_line="The verification notes were clarified.",
     ),
     _Case(
         doc_type="sysrs",
@@ -1001,6 +1018,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## System Scope",
         insert_line="Additional purpose detail.",
+        size_change_second_line="The scope statement was refined in review.",
     ),
 ]
 
@@ -1183,6 +1201,38 @@ class TestUpdateRange(TempDocsDirTestCase):
                 # the line the insertion pushed down keeps its text but takes
                 # the post-splice number offset+1
                 self.assertIn(f"  {offset + 1}: {lines[offset - 1]}", snippet_lines)
+
+    def test_size_changing_replace_snippet_numbers_pre_and_post_splice(self) -> None:
+        """A 1-line -> 2-line replacement (limit=1 replaced by a different line count) must yield the
+        snippet with the dropped line at its pre-splice number, the inserted lines at the post-splice
+        numbers, and the context below shifted by the insert (ACC-002's size-changing verification mode,
+        REQ-002's pre-splice/post-splice split; the 12th domain, feat, pins the same in
+        ``tests/feat/tools/test_integration.py``)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                k = _line_no(lines, case.middle_marker)
+                fragment = f"{case.middle_replacement}\n{case.size_change_second_line}"
+
+                result = update(id=created.id, type=case.doc_type, content=fragment, offset=k, limit=1)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # the dropped line keeps its pre-splice number; the two inserted lines take the
+                # post-splice numbers k and k+1 (independent sequences, not contiguous by accident)
+                self.assertIn(f"- {k}: {case.middle_marker}", snippet_lines)
+                self.assertIn(f"+ {k}: {case.middle_replacement}", snippet_lines)
+                self.assertIn(f"+ {k + 1}: {case.size_change_second_line}", snippet_lines)
+                # the line below the touched range keeps its text but takes the post-splice number k+2
+                if k < len(lines):
+                    self.assertIn(f"  {k + 2}: {lines[k]}", snippet_lines)
+                # and the body itself reflects exactly the 1 -> 2 splice
+                expected = lines[: k - 1] + fragment.splitlines() + lines[k:]
+                self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""

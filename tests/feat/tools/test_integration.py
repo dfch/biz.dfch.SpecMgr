@@ -328,6 +328,51 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         with self.assertRaises(ValueError):
             validate(type="feat", content=_INITIAL_BODY, full=True)
 
+    def test_range_update_size_changing_replace_snippet_numbers_pre_and_post_splice(self) -> None:
+        """feat's 12th-domain half of ACC-002's size-changing verification mode (feat is not in
+        ``test_update.py``'s ``_CASES`` -- it is the bespoke folder-per-document domain): a
+        1-line -> 2-line range update's snippet carries the dropped line at its pre-splice number,
+        the inserted lines at the post-splice numbers, and the context below shifted by the insert
+        (REQ-002's pre-splice/post-splice split)."""
+        created = create_feat(_INITIAL_BODY)
+        lines = get_feat(created.id, raw=True).splitlines()
+        k = lines.index("Short description.") + 1
+        fragment = "Updated short description.\nWith an added detail line."
+
+        result = update(created.id, "feat", fragment, offset=k, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {k}: Short description.", snippet_lines)
+        self.assertIn(f"+ {k}: Updated short description.", snippet_lines)
+        self.assertIn(f"+ {k + 1}: With an added detail line.", snippet_lines)
+        # the line below the touched range keeps its text but takes the post-splice number k+2
+        if k < len(lines):
+            self.assertIn(f"  {k + 2}: {lines[k]}", snippet_lines)
+        expected = lines[: k - 1] + fragment.splitlines() + lines[k:]
+        self.assertEqual(get_feat(created.id, raw=True).splitlines(), expected)
+
+    def test_offset_one_omitted_limit_returns_snippet_none_like_whole_body_mode(self) -> None:
+        """feat's half of REQ-003/ACC-003: the whole-body-equivalent range (offset=1, limit omitted)
+        returns the UpdateResult wrapper with snippet=None exactly like whole-body mode (the 11 flat
+        domains pin the same in ``test_update.py``'s ``test_offset_one_equals_whole_body_mode``)."""
+        created = create_feat(_INITIAL_BODY)
+
+        whole_body = update(created.id, "feat", _REVISED_BODY)
+
+        self.assertIsInstance(whole_body, UpdateResult)
+        self.assertIsNone(whole_body.snippet)
+        body_after_whole_body = get_feat(created.id, raw=True)
+
+        ranged = update(created.id, "feat", _REVISED_BODY, offset=1)
+
+        self.assertIsInstance(ranged, UpdateResult)
+        self.assertIsNone(ranged.snippet)
+        self.assertEqual(get_feat(created.id, raw=True), body_after_whole_body)
+
 
 class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):
     """ACC-002: concurrent-create NNN-collision simulation against the full tool surface."""

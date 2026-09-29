@@ -75,6 +75,13 @@ class TestWindowBody(unittest.TestCase):
         self.assertEqual(window_body(_BODY, 1, 2) + window_body(_BODY, 3, 2), _BODY)
         self.assertEqual(window_body(_BODY, 1, 1) + window_body(_BODY, 2, 2) + window_body(_BODY, 4), _BODY)
 
+    def test_defaults_add_a_trailing_newline_for_a_no_trailing_newline_body(self) -> None:
+        """The defaults equal ``body_text`` byte-for-byte ONLY for trailing-newline bodies (the documented
+        caveat): a body without a trailing newline gains one here, which is exactly why every ``get_<d>``
+        tool's no-window raw path keeps returning ``body_text`` verbatim instead of routing it through
+        ``window_body`` (feat-153-off-by-n's pinned no-window wiring, ACC-004's byte-identity)."""
+        self.assertEqual(window_body("a\nb", 1, None), "a\nb\n")
+
 
 class TestWindowBodyNumbered(unittest.TestCase):
     """Tests for ``window_body``'s opt-in ``numbered=`` argument (feat-153-off-by-n Phase 3, REQ-004, ACC-011).
@@ -324,6 +331,35 @@ class TestSpliceSnippet(unittest.TestCase):
             with self.subTest(offset=offset, limit=limit):
                 with self.assertRaises(AssertionError):
                     splice_snippet(_BODY, _BODY, offset, limit)
+
+    def test_offset_one_replacement_has_no_context_above(self) -> None:
+        """offset=1: the context above clamps to zero lines at the body's start (Task 5.1's body-start
+        boundary case; the existing offset=2 test only covers one context line above)."""
+        self.assertEqual(
+            self._snippet(1, 1, "x"),
+            "- 1: l1\n+ 1: x\n  2: l2\n  3: l3\n",
+        )
+
+    def test_size_changing_shrink_3_to_1(self) -> None:
+        """offset=k, limit=3 replaced by 1 line (the shrink direction of Task 5.1's size-changing case):
+        the dropped lines keep their pre-splice numbers, and the single inserted line plus the context
+        below take the post-splice numbers (REQ-002's pre-splice/post-splice split)."""
+        self.assertEqual(
+            self._snippet(2, 3, "x"),
+            "  1: l1\n- 2: l2\n- 3: l3\n- 4: l4\n+ 2: x\n",
+        )
+
+    def test_whole_body_equivalent_range_renders_the_full_window(self) -> None:
+        """offset=1 with an omitted limit: the helper itself renders the whole body as dropped+inserted
+        lines with no context -- it has NO ``snippet=None`` special case. The whole-body-equivalent
+        ``snippet=None`` rule (Task 5.1 / REQ-003) is the shared dispatcher's: it never calls the helper
+        for that range, and the ACC-relevant pin lives in ``test_update.py``'s
+        ``test_offset_one_equals_whole_body_mode`` (all domains)."""
+        post = splice_body(_BODY, 1, None, "a\nb")
+        self.assertEqual(
+            splice_snippet(_BODY, post, 1, None),
+            "- 1: l1\n- 2: l2\n- 3: l3\n- 4: l4\n+ 1: a\n+ 2: b\n",
+        )
 
 
 if __name__ == "__main__":
