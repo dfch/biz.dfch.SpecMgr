@@ -153,6 +153,9 @@ mcp = [
 ]
 similarity = [
     { name = "fastembed" },
+    { name = "mcp" },
+    { name = "rich" },
+    { name = "typer" },
 ]
 test = [
     { name = "coverage" },
@@ -170,6 +173,7 @@ test = [
 requires-dist = [
     { name = "biz-dfch-specmgr", extras = ["cli"], marker = "extra == 'mcp'" },
     { name = "biz-dfch-specmgr", extras = ["cli", "mcp", "test", "similarity"], marker = "extra == 'dev'" },
+    { name = "biz-dfch-specmgr", extras = ["mcp"], marker = "extra == 'similarity'" },
     { name = "build", marker = "extra == 'dev'" },
     { name = "coverage", marker = "extra == 'test'" },
     { name = "fastembed", marker = "extra == 'similarity'", specifier = ">=0.5.0" },

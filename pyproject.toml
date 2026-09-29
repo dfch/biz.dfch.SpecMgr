@@ -78,6 +78,7 @@ test = [
 ]
 
 similarity = [
+    "biz-dfch-specmgr[mcp]",
     "fastembed>=0.5.0",
 ]
 
