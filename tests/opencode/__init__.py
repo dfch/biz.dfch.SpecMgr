@@ -15,4 +15,4 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the repo's project OpenCode skill files (``.opencode/skills/``)."""
+"""Tests for the repo's project OpenCode skill files (``.opencode/skill/`` and ``.opencode/skills/``)."""
