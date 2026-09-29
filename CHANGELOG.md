@@ -66,6 +66,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The `_similarity_availability` unavailable-backend message's install
+  instruction now names both extras together --
+  `pip install 'biz-dfch-specmgr[mcp,similarity]'` -- instead of
+  `[similarity]` alone (feat-134 follow-up, GitHub issue #134): in
+  practice `mcp` is always a prerequisite to even reach `find_related`/
+  `find_similar_text`, since every domain package's `__init__.py`
+  (including `general/__init__.py`, which `general/tools/_embedding.py`
+  lives under) unconditionally imports `prompts`/`resources`/`tools`,
+  and those transitively import `server.py`'s
+  `from mcp.server import MCPServer` -- so `[similarity]` alone was
+  never actually sufficient. Pinned by a new regression test
+  (`tests/general/tools/test__embedding.py::TestSimilarityAvailability::
+  test_backend_unavailable_message_wording_pinned`).
 - The similarity engine's title scan (`first_h1` in
   `general/tools/_similarity_text.py`) now accepts both level-1 heading
   syntaxes markdown-it emits as an `h1` token -- ATX (`# Title`) and
@@ -184,6 +197,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING (dependency contract)**: the `similarity` optional
+  dependency extra now depends on `biz-dfch-specmgr[mcp]` (feat-134
+  follow-up, GitHub issue #134): `pip install "biz-dfch-specmgr[similarity]"`
+  now also pulls in the `mcp`/`cli` extras' dependencies. This corrects
+  `pyproject.toml`'s metadata to match a reality that already existed in
+  the code: every domain package's `__init__.py` (including
+  `general/__init__.py`, which the embedding provider seam lives under)
+  unconditionally imports `prompts`/`resources`/`tools`, and those
+  transitively import `server.py`'s `from mcp.server import MCPServer`,
+  so `general.tools._embedding` could never actually be imported without
+  `mcp` installed regardless of whether `fastembed` was present. ADR
+  750842b2-aca4-4649-ba0c-855ec8e1f505 is unaffected -- it only requires
+  the reverse direction (the `mcp`/`cli` extras must stay free of the
+  ML/`fastembed` dependency), never that `similarity` be usable standalone
+  without `mcp`.
 - Every `get_<d>` tool for the 12 whole-body domains
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `get_adr` unchanged)
   now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for

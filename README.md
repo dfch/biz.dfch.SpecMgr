@@ -284,6 +284,12 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   To also enable the [Semantic Similarity
+   Search](#semantic-similarity-search) feature (`find_related`/
+   `find_similar_text`), change `[mcp]` to `[mcp,similarity]` in the
+   `--from` value above — see that section for install/runtime-activation
+   details.
+
    **Option B — set the directory env vars explicitly** instead of (or in
    addition to) `--directory`:
 
@@ -306,12 +312,52 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   The same `[mcp]` -> `[mcp,similarity]` change in the `--from` value
+   applies here too, to enable [Semantic Similarity
+   Search](#semantic-similarity-search).
+
    Either option (or both together) makes the resolved base directories
    independent of wherever the MCP host happens to launch the server
    from. Whichever you choose, you can confirm it worked by reading the
    `specmgr://config` resource, which reports the actually-resolved
    absolute base directory for every domain and whether its env var is
    explicitly set.
+
+   **Option C — run from a local source checkout (development).** Options
+   A and B both use `uvx` (`uv tool run`), which resolves
+   `biz-dfch-specmgr[...]` as a named package from the configured index
+   (PyPI by default) into an ephemeral tool environment — they always run
+   the *published* release, never local/unreleased changes. To instead run
+   the project at a specific directory on disk — using its own
+   `pyproject.toml`, lockfile, and source tree directly, including
+   unreleased/`dev`-branch commits — use `uv run --directory
+   <path-to-your-checkout>` (no `--from`, not `uvx`):
+
+   ```json
+   "specmgr": {
+     "type": "local",
+     "enabled": true,
+     "command": [
+       "uv",
+       "run",
+       "--directory",
+       "<path-to-your-checkout>",
+       "--extra",
+       "mcp",
+       "--extra",
+       "similarity",
+       "specmgr",
+       "mcp"
+     ]
+   }
+   ```
+
+   This is the mechanism for contributors/developers pointing OpenCode at
+   their own git checkout instead of the published package. Repeatable
+   `--extra` flags (or `--all-extras` for everything) control which
+   optional dependencies get synced into that local run, independent of
+   what's published on PyPI — drop `--extra similarity` if you don't need
+   [Semantic Similarity Search](#semantic-similarity-search).
 
 3. Save the file and restart OpenCode
 

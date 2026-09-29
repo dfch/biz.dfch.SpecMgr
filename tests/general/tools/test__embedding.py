@@ -373,6 +373,29 @@ class TestSimilarityAvailability(SimilarityTestCase):
         self.assertFalse(result.available)
         self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
 
+    def test_backend_unavailable_message_wording_pinned(self) -> None:
+        """Regression (feat-134 follow-up, #134): the exact literal message wording must not silently drift.
+
+        In practice `mcp` is always a prerequisite to even reach this tool (every domain's
+        ``__init__.py``, including ``general/__init__.py``, transitively imports
+        ``server.py``'s ``from mcp.server import MCPServer``), so the install instruction
+        must name both extras together, not `[similarity]` alone -- no ``assertIn``/partial
+        matching, so a future refactor that changes the wording fails loudly here.
+        """
+        reset_default_provider()
+
+        with block_fastembed_import():
+            result = _similarity_availability()
+
+        self.assertEqual(
+            result.message,
+            "The embedding backend is unavailable: the `similarity` extra (fastembed) is not "
+            f"installed, or the {SIMILARITY_MODEL_NAME} model failed to load (including a "
+            "first-use download failure, e.g. no network). Install it with "
+            "`pip install 'biz-dfch-specmgr[mcp,similarity]'` to enable find_related/"
+            "find_similar_text.",
+        )
+
     def test_disabled_is_checked_before_any_backend_import(self) -> None:
         # The flag short-circuits: with the backend blocked AND the flag set, the
         # result is the disabled reason (not backend-unavailable) -- proof the

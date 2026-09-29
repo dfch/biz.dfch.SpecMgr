@@ -626,7 +626,7 @@ def _similarity_availability() -> SimilarityUnavailableResult | None:
                 "The embedding backend is unavailable: the `similarity` extra (fastembed) is not "
                 f"installed, or the {SIMILARITY_MODEL_NAME} model failed to load (including a "
                 "first-use download failure, e.g. no network). Install it with "
-                "`pip install 'biz-dfch-specmgr[similarity]'` to enable find_related/"
+                "`pip install 'biz-dfch-specmgr[mcp,similarity]'` to enable find_related/"
                 "find_similar_text."
             ),
         )
