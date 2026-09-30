@@ -96,76 +96,78 @@ from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
 from ...dec.tools._lock import dec_lock
-from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
 from ...feat.tools._cache import read_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
-from ...feat.tools._paths import feat_base_dir
+from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
 from ...gol.tools._lock import gol_lock
-from ...gol.tools._paths import gol_base_dir
+from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
 from ...prb.tools._lock import prb_lock
-from ...prb.tools._paths import prb_base_dir
+from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
 from ...qa.tools._lock import qa_lock
-from ...qa.tools._paths import qa_base_dir
+from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
 from ...req.tools._lock import req_lock
-from ...req.tools._paths import req_base_dir
+from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
 from ...rsk.tools._lock import rsk_lock
-from ...rsk.tools._paths import rsk_base_dir
+from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
 from ...sop.tools._lock import sop_lock
-from ...sop.tools._paths import sop_base_dir
+from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
 from ...sysrs.tools._lock import sysrs_lock
-from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
-from ...tsk.tools._paths import tsk_base_dir
+from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
 from ...uc.tools._lock import uc_lock
-from ...uc.tools._paths import uc_base_dir
+from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
-from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ..models import ParseFailureResult
+from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
@@ -186,10 +188,11 @@ _SetClassificationFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | ParseFailureResult
 )
 
 
-def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
+def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter | ParseFailureResult:
     """Replace the classification of the requirement identified by ``id_``.
 
     Shaped exactly like :func:`~.set_status._set_status_req` (same
@@ -201,7 +204,15 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
     """
     base_dir = req_base_dir()
     with req_lock(id_):
-        path, existing = load_req_by_id(base_dir, id_)
+        try:
+            path, existing = load_req_by_id(base_dir, id_)
+        except ReqNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_req)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -216,7 +227,7 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
+def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter | ParseFailureResult:
     """Replace the classification of the use case identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -224,7 +235,15 @@ def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
     """
     base_dir = uc_base_dir()
     with uc_lock(id_):
-        path, existing = load_uc_by_id(base_dir, id_)
+        try:
+            path, existing = load_uc_by_id(base_dir, id_)
+        except UcNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_uc)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -239,7 +258,7 @@ def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
+def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter | ParseFailureResult:
     """Replace the classification of the task list identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -247,7 +266,15 @@ def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
     """
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
-        path, existing = load_tsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_tsk_by_id(base_dir, id_)
+        except TskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_tsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -262,7 +289,7 @@ def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
+def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter | ParseFailureResult:
     """Replace the classification of the QA document identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -270,7 +297,15 @@ def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
     """
     base_dir = qa_base_dir()
     with qa_lock(id_):
-        path, existing = load_qa_by_id(base_dir, id_)
+        try:
+            path, existing = load_qa_by_id(base_dir, id_)
+        except QaNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_qa)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -285,7 +320,7 @@ def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
+def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter | ParseFailureResult:
     """Replace the classification of the problem statement identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -293,7 +328,15 @@ def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
     """
     base_dir = prb_base_dir()
     with prb_lock(id_):
-        path, existing = load_prb_by_id(base_dir, id_)
+        try:
+            path, existing = load_prb_by_id(base_dir, id_)
+        except PrbNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_prb)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -308,7 +351,7 @@ def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
+def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter | ParseFailureResult:
     """Replace the classification of the goal identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -316,7 +359,15 @@ def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
     """
     base_dir = gol_base_dir()
     with gol_lock(id_):
-        path, existing = load_gol_by_id(base_dir, id_)
+        try:
+            path, existing = load_gol_by_id(base_dir, id_)
+        except GolNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_gol)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -331,7 +382,7 @@ def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
+def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter | ParseFailureResult:
     """Replace the classification of the risk identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -339,7 +390,15 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
     """
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
-        path, existing = load_rsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_rsk_by_id(base_dir, id_)
+        except RskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_rsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -354,7 +413,7 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
+def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter | ParseFailureResult:
     """Replace the classification of the decision identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
@@ -362,7 +421,15 @@ def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
     """
     base_dir = dec_base_dir()
     with dec_lock(id_):
-        path, existing = load_dec_by_id(base_dir, id_)
+        try:
+            path, existing = load_dec_by_id(base_dir, id_)
+        except DecNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_dec)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -377,7 +444,7 @@ def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
+def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter | ParseFailureResult:
     """Replace the classification of the feature identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``feat_lock``,
@@ -390,7 +457,15 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):
-        path, existing = load_feat_by_id(base_dir, id_)
+        try:
+            path, existing = load_feat_by_id(base_dir, id_)
+        except FeatNotFoundError:
+            parse_failure = find_feat_parse_failure(base_dir, id_)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -405,7 +480,7 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
+def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter | ParseFailureResult:
     """Replace the classification of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_classification_dec` (same
@@ -416,7 +491,15 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
     """
     base_dir = sop_base_dir()
     with sop_lock(id_):
-        path, existing = load_sop_by_id(base_dir, id_)
+        try:
+            path, existing = load_sop_by_id(base_dir, id_)
+        except SopNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sop)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -431,7 +514,7 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
+def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter | ParseFailureResult:
     """Replace the classification of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
@@ -440,7 +523,15 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
     """
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
-        path, existing = load_vcr_by_id(base_dir, id_)
+        try:
+            path, existing = load_vcr_by_id(base_dir, id_)
+        except VcrNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_vcr)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -455,7 +546,7 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
     return new_frontmatter
 
 
-def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter:
+def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter | ParseFailureResult:
     """Replace the classification of the System Requirements Specification identified by ``id_``.
 
     Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
@@ -466,7 +557,15 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
     """
     base_dir = sysrs_base_dir()
     with sysrs_lock(id_):
-        path, existing = load_sysrs_by_id(base_dir, id_)
+        try:
+            path, existing = load_sysrs_by_id(base_dir, id_)
+        except SysrsNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sysrs)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 

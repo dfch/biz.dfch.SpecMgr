@@ -130,7 +130,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -142,7 +142,7 @@ old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter'`
+### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -155,7 +155,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter | ParseFailureResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -165,7 +165,7 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter'`
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter | ParseFailureResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -176,7 +176,7 @@ retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter'`
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter | ParseFailureResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -186,7 +186,7 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter'`
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter | ParseFailureResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -201,7 +201,7 @@ never used here -- the public :func:`set_status` guard rejects it for
 every non-``adr`` type before dispatch.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter'`
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter | ParseFailureResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -211,7 +211,7 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter'`
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -223,7 +223,7 @@ was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter'`
+### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter | ParseFailureResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -234,7 +234,7 @@ written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter'`
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter | ParseFailureResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -244,7 +244,7 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter'`
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -254,7 +254,7 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter'`
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter | ParseFailureResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 

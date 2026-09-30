@@ -70,7 +70,7 @@ enriched (field path + line reference + fix hint) shape.
 
 ## Functions
 
-### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecFrontmatter'`
+### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the classification of the decision identified by ``id_``.
 
@@ -78,7 +78,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
 
 
-### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatFrontmatter'`
+### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatFrontmatter | ParseFailureResult'`
 
 Replace the classification of the feature identified by ``id_``.
 
@@ -91,7 +91,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_classification_gol(id_: 'str', classification: 'str') -> 'GolFrontmatter'`
+### `_set_classification_gol(id_: 'str', classification: 'str') -> 'GolFrontmatter | ParseFailureResult'`
 
 Replace the classification of the goal identified by ``id_``.
 
@@ -99,7 +99,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
 
 
-### `_set_classification_prb(id_: 'str', classification: 'str') -> 'PrbFrontmatter'`
+### `_set_classification_prb(id_: 'str', classification: 'str') -> 'PrbFrontmatter | ParseFailureResult'`
 
 Replace the classification of the problem statement identified by ``id_``.
 
@@ -107,7 +107,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
 
 
-### `_set_classification_qa(id_: 'str', classification: 'str') -> 'QaFrontmatter'`
+### `_set_classification_qa(id_: 'str', classification: 'str') -> 'QaFrontmatter | ParseFailureResult'`
 
 Replace the classification of the QA document identified by ``id_``.
 
@@ -115,7 +115,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
 
 
-### `_set_classification_req(id_: 'str', classification: 'str') -> 'ReqFrontmatter'`
+### `_set_classification_req(id_: 'str', classification: 'str') -> 'ReqFrontmatter | ParseFailureResult'`
 
 Replace the classification of the requirement identified by ``id_``.
 
@@ -127,7 +127,7 @@ own constructor, ``write_req_file``, ``ReqNotFoundError``), replacing
 ``classification`` instead of ``status``.
 
 
-### `_set_classification_rsk(id_: 'str', classification: 'str') -> 'RskFrontmatter'`
+### `_set_classification_rsk(id_: 'str', classification: 'str') -> 'RskFrontmatter | ParseFailureResult'`
 
 Replace the classification of the risk identified by ``id_``.
 
@@ -135,7 +135,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
 
 
-### `_set_classification_sop(id_: 'str', classification: 'str') -> 'SopFrontmatter'`
+### `_set_classification_sop(id_: 'str', classification: 'str') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the classification of the SOP identified by ``id_``.
 
@@ -146,7 +146,7 @@ Verbatim-shape port of :func:`_set_classification_dec` (same
 :func:`_set_classification_req` for the full semantics.
 
 
-### `_set_classification_sysrs(id_: 'str', classification: 'str') -> 'SysrsFrontmatter'`
+### `_set_classification_sysrs(id_: 'str', classification: 'str') -> 'SysrsFrontmatter | ParseFailureResult'`
 
 Replace the classification of the System Requirements Specification identified by ``id_``.
 
@@ -157,7 +157,7 @@ written directly in this shape) -- see :func:`_set_classification_req`
 for the full semantics.
 
 
-### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskFrontmatter'`
+### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskFrontmatter | ParseFailureResult'`
 
 Replace the classification of the task list identified by ``id_``.
 
@@ -165,7 +165,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
 
 
-### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcFrontmatter'`
+### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the classification of the use case identified by ``id_``.
 
@@ -173,7 +173,7 @@ See :func:`_set_classification_req` for the full semantics (same
 ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
 
 
-### `_set_classification_vcr(id_: 'str', classification: 'str') -> 'VcrFrontmatter'`
+### `_set_classification_vcr(id_: 'str', classification: 'str') -> 'VcrFrontmatter | ParseFailureResult'`
 
 Replace the classification of the verification case record identified by ``id_``.
 
