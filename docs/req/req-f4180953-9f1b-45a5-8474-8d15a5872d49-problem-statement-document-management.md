@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:04.246+02:00'
 id: f4180953-9f1b-45a5-8474-8d15a5872d49
 status: draft
 type: req
-updated: '2026-09-03 10:27:04.246+02:00'
+updated: '2026-09-30T14:57:13.790+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `prb` bullet).
 
 ### Goals
 
-- GOL-08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management
+- GOL 08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management

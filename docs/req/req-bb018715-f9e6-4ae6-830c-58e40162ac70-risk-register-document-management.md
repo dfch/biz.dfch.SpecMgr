@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:09.701+02:00'
 id: bb018715-f9e6-4ae6-830c-58e40162ac70
 status: draft
 type: req
-updated: '2026-09-03 10:27:09.701+02:00'
+updated: '2026-09-30T14:57:03.569+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `rsk` bullet).
 
 ### Goals
 
-- GOL-08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management
+- GOL 08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management

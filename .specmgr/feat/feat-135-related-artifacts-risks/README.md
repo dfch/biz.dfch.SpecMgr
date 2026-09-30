@@ -108,7 +108,7 @@ version: 1.0.0
 
 #### Phase 105: Live Data Migration (pre-model-change)
 
-- [ ] Task 105.100: Migrate all 14 `docs/req/*.md` documents' `### Goals` bullet from `GOL-<uuid>` to `GOL <uuid>` via the generic `update` tool (`type="req"`) -- MUST land before Phase 110 (the `update` tool re-parses the existing document first and would refuse the dash-form documents once the new validator is active; the space form already parses under today's unvalidated schema).
+- [x] Task 105.100: Migrate all 14 `docs/req/*.md` documents' `### Goals` bullet from `GOL-<uuid>` to `GOL <uuid>` via the generic `update` tool (`type="req"`) -- MUST land before Phase 110 (the `update` tool re-parses the existing document first and would refuse the dash-form documents once the new validator is active; the space form already parses under today's unvalidated schema).
 
 #### Phase 110: Model Changes (req, gol, dec, sop)
 
@@ -143,7 +143,7 @@ version: 1.0.0
 
 ### Current Status
 
-**As of 2026-09-30**: Phase 100 (Shared Cross-Reference Validator) complete; Phase 105 (Live Data Migration) is next. Plan revised after two review passes against issue #135 and the live codebase. First pass: the live-data migration was reordered before the model change (the generic `update` tool cannot rewrite documents the new schema rejects) and gaps were closed (`server.py`'s `ac` reservation, the `SOP` tag vs `list_references`, stale docstrings/example data). Second pass: `Requirements`/`Decisions`/`Goals`/`Risks` now share `models/md/common_sections.py` base classes for `req`/`gol`/`dec`/`sop` (REQ-010), following the `feat-29-dec-source-roles` precedent, instead of repeating byte-identical classes four times; plus two smaller convention fixes (`_cross_reference.py` import style, `test__cross_reference.py` naming) and a `dec_example.md` gap closure (ACC-013). The Task List was also renumbered to the current 3-digit `feat` schema on 2026-09-29, restoring parseability.
+**As of 2026-09-30**: Phase 100 (Shared Cross-Reference Validator) and Phase 105 (Live Data Migration) complete; Phase 110 (Model Changes) is next. Plan revised after two review passes against issue #135 and the live codebase. First pass: the live-data migration was reordered before the model change (the generic `update` tool cannot rewrite documents the new schema rejects) and gaps were closed (`server.py`'s `ac` reservation, the `SOP` tag vs `list_references`, stale docstrings/example data). Second pass: `Requirements`/`Decisions`/`Goals`/`Risks` now share `models/md/common_sections.py` base classes for `req`/`gol`/`dec`/`sop` (REQ-010), following the `feat-29-dec-source-roles` precedent, instead of repeating byte-identical classes four times; plus two smaller convention fixes (`_cross_reference.py` import style, `test__cross_reference.py` naming) and a `dec_example.md` gap closure (ACC-013). The Task List was also renumbered to the current 3-digit `feat` schema on 2026-09-29, restoring parseability.
 
 ### Blockers
 
@@ -152,6 +152,10 @@ version: 1.0.0
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-30 16:57:14.000+02:00 - Phase 105 complete: 14 live `docs/req/*.md` documents migrated to space-form `GOL <uuid>` bullets
+
+Migrated Task 105.100. Enumerated the 14 real REQ documents via `list_req` (`error_count: 0` before and after), fetched each one's current raw body via `get_req(id, raw=True)`, and rewrote each via the generic `update` tool (`type="req"`, whole-body replace) so that the `### Goals` bullet's `GOL-<uuid>: <title>` (dash) form became `GOL <uuid>: <title>` (space) -- no manual file edits, no `update_section` (ADR-only). All 14 `update` calls returned successfully (re-parse-before-write succeeded in every case, confirming the space form parses under today's unvalidated schema per REQ-009). Verification: `grep -rn "GOL-" docs/req/*.md` returns no matches; `grep -rln "^- GOL " docs/req/*.md | wc -l` equals 14; `git diff docs/req/` shows exactly two changed lines per file (the `updated` frontmatter timestamp the `update` tool always bumps, plus the one Goals bullet line) across all 14 files, nothing else; `list_req` still reports `error_count: 0`. Quality gate green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60` (no output, expected since no `.py` files were touched), and `pytest -n auto tests/req/` (123 passed, 7 subtests passed). This closes ACC-008 and unblocks Phase 110 (the model change can now safely tighten `Goals` validation to the space-only form without breaking these 14 documents).
 
 #### 2026-09-30 15:20:00.000+02:00 - Phase 100 complete: shared cross-reference validator + base classes, sysrs/vcr refactored
 

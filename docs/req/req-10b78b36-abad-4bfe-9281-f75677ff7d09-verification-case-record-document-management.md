@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:45.937+02:00'
 id: 10b78b36-abad-4bfe-9281-f75677ff7d09
 status: draft
 type: req
-updated: '2026-09-03 10:27:45.937+02:00'
+updated: '2026-09-30T14:56:23.846+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `vcr` bullet) and `.specmgr/feat/feat-33-vcr/REA
 
 ### Goals
 
-- GOL-b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts
+- GOL b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts
