@@ -4,7 +4,7 @@ created: '2026-09-17 12:26:44.432+02:00'
 id: feat-135-related-artifacts-risks
 status: planning
 type: feat
-updated: '2026-09-17 12:26:44.432+02:00'
+updated: '2026-09-30T06:21:37.463+02:00'
 version: 1.0.0
 ---
 
@@ -26,7 +26,7 @@ version: 1.0.0
 - REQ-006: Every affected sub-list's items MUST support an optional trailing notes paragraph (`MarkdownListItemWithNotes`), mirroring `sysrs`'s existing shape.
 - REQ-007: The shared validator/pattern logic MUST live in `models/md`, and `sysrs`/`vcr` MUST be refactored to reuse it instead of keeping their own independent, duplicated implementations.
 - REQ-008: Packaged examples, templates, and create/update instructions for `req`/`gol`/`dec`/`sop` MUST be updated so none of them drift from the new schema (no stale Acceptance Criteria mentions, no unvalidated example bullets).
-- REQ-009: The 14 real, on-disk REQ documents (`docs/req/*.md`) whose `### Goals` bullet currently uses the unvalidated `GOL-<uuid>` (dash) form MUST be migrated to the enforced `GOL <uuid>` (space) form via the proper `update` tool.
+- REQ-009: The 14 real, on-disk REQ documents (`docs/req/*.md`) whose `### Goals` bullet currently uses the unvalidated `GOL-<uuid>` (dash) form MUST be migrated to the enforced `GOL <uuid>` (space) form via the generic `update` tool (`type="req"`) BEFORE the model change lands: the `update` tool's per-domain adapter re-parses the existing document first and converts a parse failure into a not-found error before any write, so once the `^GOL {uuid}: .+$` validator is live it can no longer rewrite the dash-form documents -- under today's unvalidated schema the space form already parses, so pre-migration is lossless.
 
 ### Acceptance Criteria
 
@@ -39,17 +39,20 @@ version: 1.0.0
 - [ ] ACC-007: Every packaged `req`/`gol`/`dec`/`sop` example and template parses via its own `parse_<domain>` and contains no `Acceptance Criteria` mentions; create/update instructions document the enforced format explicitly.
 - [ ] ACC-008: All 14 real `docs/req/*.md` documents' `### Goals` bullets use the `GOL <uuid>: <title>` (space) form and still parse via `parse_req`.
 - [ ] ACC-009: `uv run --frozen specmgr schema` and `uv run --frozen specmgr docs` produce no further drift after implementation (clean `git status` on `docs/`).
+- [ ] ACC-010: `server.py`'s module docstring no longer reserves the `ac` domain (no "and later `ac`"), and the removal is recorded in this feature's `Decisions Made`.
+- [ ] ACC-011: No dangling reference to the moved helper remains -- `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) cite the `models/md` location, and `vcr` keeps its module-level `_VERIFIES_PATTERN` name so `tests/vcr/models/v1/test_body.py`'s docstring stays accurate.
 
 ### Scope
 
 #### Included
 
-- Model changes (`body.py` + `models/v1/__init__.py`) for `req`, `gol`, `dec`, `sop`.
-- New shared cross-reference validator module in `models/md`, plus a refactor of `sysrs`/`vcr` to reuse it.
-- Packaged data updates (`*_example.md`, `*_template.md`, `*_create_instructions.md`, `*_update_instructions.md`) for the four domains.
-- Migration of the 14 live `docs/req/*.md` documents' `### Goals` bullets to the new format.
+- Model changes (`body.py` + `models/v1/__init__.py`) for `req`, `gol`, `dec`, `sop`, including rewording every affected sub-list class's docstring/`Field(description=...)` from the stale dash-form example IDs (e.g. `"REQ-9687: <title>"`) to the enforced format -- they feed the packaged `*_schema.json` copies and the generated API docs.
+- New shared cross-reference validator module in `models/md`, plus a behavior-preserving refactor of `sysrs`/`vcr` to reuse it (including updating the docstring cross-references in `rsk/models/v1/tara.py` and `general/models/dtais.py` that cite the helper's old `sysrs` location, and keeping `vcr`'s module-level `_VERIFIES_PATTERN` name).
+- Packaged data updates for all five files per domain (`*_example.md`, `*_template.md`, `*_create_instructions.md`, `*_update_instructions.md`, `*_schema.json`) for the four domains, including rewriting every `Related Artifacts` example bullet into the enforced `<TAG> <uuid>: <title>` form with well-formed lowercase 8-4-4-4-12 UUIDs (soft-wrap OK).
+- Migration of the 14 live `docs/req/*.md` documents' `### Goals` bullets to the new format, executed BEFORE the model change (see REQ-009).
+- Removal of the `ac` domain reservation ("and later `ac`") from `server.py`'s module docstring.
 - Full test coverage: shared-validator unit tests, per-domain format matrix tests, notes-capture tests, updated example/template resource tests.
-- Schema/docs regeneration (`specmgr schema`, `specmgr docs`).
+- Schema/docs regeneration (`specmgr schema`, `specmgr docs`, plus a `specmgr mcp-docs` no-drift check).
 
 #### Explicitly Out Of Scope
 
@@ -58,6 +61,8 @@ version: 1.0.0
 - Giving `rsk` its own `## Related Artifacts` section -- a separate, future decision.
 - Any existence-check against the referenced id (still purely a format check, not a "does this id actually exist" check) -- deferred to a future cross-reference-validation feature, consistent with `feat-134-related-artifact-similarity`'s own explicit exclusion of this.
 - Exposing the format constraint in the generated JSON Schema -- a pre-existing limitation shared with `vcr`/`sysrs`, not fixed here; the create/update instructions text is the only documentation surface for it.
+- Extending `general/tools/_references.py`'s `REFERENCE_TYPES` vocabulary with `sop` (or `tsk`) so the generic `list_references` tool (feat-144-ref-artifact) can extract the new `SOP <uuid>` self-references -- until then those bullets validate in the schema but are invisible to `list_references`; the vocabulary's own docstring already names `sop`/`tsk` "plausible future tag additions", so this is a future feat-144 follow-up, not scope here.
+- Changing `sysrs`'s `## Decisions` pattern (`^(DEC|ADR) ...`) to DEC-only -- the four domains go DEC-only per REQ-005 while `adr` (issue #46, still open) is removed; the asymmetry is recorded in `Decisions Made` and converges when `adr` goes.
 
 ### Dependencies
 
@@ -71,13 +76,15 @@ version: 1.0.0
 
 ### Design Notes
 
-**Shared validator (`models/md`)**: new module (e.g. `models/md/_cross_reference.py`) exporting `UUID_PATTERN` (the shared lowercase 8-4-4-4-12 hex fragment, generalized from `sysrs`'s local `_UUID_PATTERN`), a pattern-builder for one or more type tags, and `validate_cross_reference_items(items, pattern)` (generalized from `sysrs`'s local `_validate_cross_reference_items`: `re.fullmatch` + `re.DOTALL`, actionable `ValueError`). `sysrs` and `vcr` are refactored to import from here instead of keeping independent copies.
+**Shared validator (`models/md`)**: new module (e.g. `models/md/_cross_reference.py`) exporting `UUID_PATTERN` (the shared lowercase 8-4-4-4-12 hex fragment, generalized from `sysrs`'s local `_UUID_PATTERN`), a pattern-builder for one or more type tags, and `validate_cross_reference_items(items, pattern)` (generalized from `sysrs`'s local `_validate_cross_reference_items`: `re.fullmatch` + `re.DOTALL`, a plain `ValueError` of the same shape -- actionability, i.e. field path, line, cause/fix hint, and domain + tool context, is added at the tool layer by feat-27's `wrap_tool_errors`, not by the helper itself). `sysrs` and `vcr` are refactored to import from here instead of keeping independent copies; the docstring cross-references to the helper's old `sysrs` location in `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) are updated to point at `models/md`, and `vcr` keeps its module-level `_VERIFIES_PATTERN` name (built from the shared fragment) so `tests/vcr/models/v1/test_body.py`'s docstring reference stays accurate.
 
-**Per-domain model changes** (`req`, `gol`, `dec`, `sop`): remove `AcceptanceCriteria`/`acceptance_criteria`; add `Risks` (`MarkdownSection3`, `items: list[MarkdownListItemWithNotes]`, validated against `^RSK {uuid}: .+$`) + `risks` field; add `field_validator`s to the existing `Requirements` (`^REQ {uuid}: .+$`), `Decisions` (`^DEC {uuid}: .+$`, DEC-only), `Goals` (`^GOL {uuid}: .+$`); `sop`'s `Sops` self-ref gets `^SOP {uuid}: .+$`. All these sub-lists' `items` type changes from `MarkdownListItem` to `MarkdownListItemWithNotes` (already imported in each of these files for `## Tags`).
+**Per-domain model changes** (`req`, `gol`, `dec`, `sop`): remove `AcceptanceCriteria`/`acceptance_criteria` (class + `RelatedArtifacts` field + `__init__.py` export); add `Risks` (`MarkdownSection3`, `items: list[MarkdownListItemWithNotes]`, validated against `^RSK {uuid}: .+$`) + `risks` field in the slot it occupied; add `field_validator`s to the existing `Requirements` (`^REQ {uuid}: .+$`), `Decisions` (`^DEC {uuid}: .+$`, DEC-only), `Goals` (`^GOL {uuid}: .+$`); `sop`'s `Sops` self-ref gets `^SOP {uuid}: .+$`. All these sub-lists' `items` type changes from `MarkdownListItem` to `MarkdownListItemWithNotes` (already imported in each of these files for `## Tags`). Every affected sub-list class's docstring and `Field(description=...)` is reworded from the stale dash-form example IDs (e.g. `"REQ-9687: <title>"`) to the enforced format, since those strings flow into the packaged `*_schema.json` copies and the generated API docs.
 
 **Known, accepted limitation**: the new format constraint is invisible in the generated JSON Schema, since it's enforced via a Pydantic `field_validator` on a `@computed_field` (`MarkdownListItem.text`), not a schema-declared `Field(pattern=...)` string. This mirrors `vcr`/`sysrs`'s existing behavior and is not something this feature fixes.
 
-**Migration**: the 14 real `docs/req/*.md` documents (created for `feat-84-specmgr-sysrs`) currently populate `### Goals` with the unvalidated `GOL-<uuid>: <title>` (dash) form. These are rewritten to `GOL <uuid>: <title>` (space) via the `update`/`update_section` MCP tool, not a manual file edit, to keep the documents' round-trip integrity intact. No other real `req`/`gol`/`dec`/`sop` document on disk has populated `Related Artifacts` content (confirmed: no `docs/dec/` directory exists yet; `docs/gol/`, `docs/sop/` have none populated).
+**Migration (ordering is load-bearing)**: the 14 real `docs/req/*.md` documents (created for `feat-84-specmgr-sysrs`) currently populate `### Goals` with the unvalidated `GOL-<uuid>: <title>` (dash) form. They MUST be rewritten to `GOL <uuid>: <title>` (space) via the generic `update` tool (`type="req"`) -- not a manual file edit, and not `update_section` (an ADR-only tool) -- BEFORE the model change lands: the `update` tool's per-domain adapter re-parses the existing document first and converts a parse failure into the domain's not-found error before any write, so once the new `^GOL {uuid}: .+$` validator is active it would refuse to rewrite exactly these documents. Under today's unvalidated schema the space form already parses, so the pre-migration is lossless and the repo's own documents are never in a parse-broken window. No other real `req`/`gol`/`dec`/`sop` document on disk has populated `Related Artifacts` content (confirmed: no `docs/dec/` directory exists yet; `docs/gol/`, `docs/sop/` have none populated).
+
+**Interactions with other work**: the enforced `SOP <uuid>` self-reference introduces the first schema-validated tag absent from `general/tools/_references.py`'s `REFERENCE_TYPES` vocabulary (feat-144-ref-artifact), so `list_references` skips such bullets until a future vocabulary extension -- recorded in Out Of Scope, not fixed here. Likewise, `Decisions` going DEC-only in the four domains (REQ-005, because `adr` is slated for removal per issue #46) while `sysrs` keeps `^(DEC|ADR)` is a deliberate, recorded asymmetry, not drift.
 
 ### Related Decisions
 
@@ -85,49 +92,51 @@ version: 1.0.0
 
 ### Task List
 
-#### Phase 1: Shared Cross-Reference Validator (`models/md`)
+#### Phase 100: Shared Cross-Reference Validator (`models/md`)
 
-- [ ] Task 1.1: Implement `models/md/_cross_reference.py` (`UUID_PATTERN`, pattern-builder, `validate_cross_reference_items`), export from `models/md/__init__.py`.
-- [ ] Task 1.2: Refactor `sysrs/models/v1/body.py` to use the shared helper instead of its local `_UUID_PATTERN`/`_validate_cross_reference_items`; confirm existing `tests/sysrs/` suite stays green unmodified.
-- [ ] Task 1.3: Refactor `vcr/models/v1/body.py`'s `_VERIFIES_PATTERN`/validator to reuse the shared `UUID_PATTERN`; confirm existing `tests/vcr/` suite stays green unmodified.
-- [ ] Task 1.4: New `tests/models/md/test_cross_reference.py` (valid match, wrong tag, malformed uuid, missing title, multi-tag pattern, DOTALL soft-wrap case).
+- [ ] Task 100.100: Implement `models/md/_cross_reference.py` (`UUID_PATTERN`, pattern-builder, `validate_cross_reference_items`), export from `models/md/__init__.py`.
+- [ ] Task 100.110: Refactor `sysrs/models/v1/body.py` to use the shared helper instead of its local `_UUID_PATTERN`/`_validate_cross_reference_items`; update the docstring cross-references to the moved helper in `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) to point at `models/md`; confirm existing `tests/sysrs/` suite stays green unmodified.
+- [ ] Task 100.120: Refactor `vcr/models/v1/body.py`'s `_VERIFIES_PATTERN`/validator to reuse the shared `UUID_PATTERN`, keeping the module-level `_VERIFIES_PATTERN` name (built from the shared fragment) so `tests/vcr/models/v1/test_body.py`'s docstring reference stays accurate; confirm existing `tests/vcr/` suite stays green unmodified.
+- [ ] Task 100.130: New `tests/models/md/test_cross_reference.py` (valid match, wrong tag, malformed uuid, missing title, multi-tag pattern, DOTALL soft-wrap case).
 
-#### Phase 2: Model Changes (req, gol, dec, sop)
+#### Phase 105: Live Data Migration (pre-model-change)
 
-- [ ] Task 2.1: `req/models/v1/body.py` + `__init__.py` -- remove `AcceptanceCriteria`, add `Risks`, add format validators to `Requirements`/`Decisions`/`Goals`, upgrade items to `MarkdownListItemWithNotes`.
-- [ ] Task 2.2: Same for `gol/models/v1/body.py` + `__init__.py`.
-- [ ] Task 2.3: Same for `dec/models/v1/body.py` + `__init__.py`.
-- [ ] Task 2.4: Same for `sop/models/v1/body.py` + `__init__.py`, plus `Sops` self-ref format validator.
+- [ ] Task 105.100: Migrate all 14 `docs/req/*.md` documents' `### Goals` bullet from `GOL-<uuid>` to `GOL <uuid>` via the generic `update` tool (`type="req"`) -- MUST land before Phase 110 (the `update` tool re-parses the existing document first and would refuse the dash-form documents once the new validator is active; the space form already parses under today's unvalidated schema).
 
-#### Phase 3: Packaged Data (req, gol, dec, sop)
+#### Phase 110: Model Changes (req, gol, dec, sop)
 
-- [ ] Task 3.1: Update `req/data/{req_example.md,req_template.md,req_create_instructions.md}` (no `req_update_instructions.md` mention was found).
-- [ ] Task 3.2: Update `gol/data/{gol_example.md,gol_template.md,gol_create_instructions.md}`.
-- [ ] Task 3.3: Update `dec/data/{dec_example.md,dec_template.md,dec_create_instructions.md}`.
-- [ ] Task 3.4: Update `sop/data/{sop_example.md,sop_template.md,sop_create_instructions.md}` (check for an update-instructions file too).
+- [ ] Task 110.100: `req/models/v1/body.py` + `__init__.py` -- remove `AcceptanceCriteria` (class + `RelatedArtifacts` field + export), add `Risks`/`risks` in the slot it occupied, add format validators to `Requirements`/`Decisions`/`Goals`, upgrade items to `MarkdownListItemWithNotes`, and reword every affected class's docstring/`Field(description=...)` from the stale dash-form example IDs to the enforced format.
+- [ ] Task 110.110: Same for `gol/models/v1/body.py` + `__init__.py`.
+- [ ] Task 110.120: Same for `dec/models/v1/body.py` + `__init__.py`.
+- [ ] Task 110.130: Same for `sop/models/v1/body.py` + `__init__.py`, plus the `Sops` self-ref format validator.
+- [ ] Task 110.140: Remove the `ac` domain reservation ("and later `ac`") from `server.py`'s module docstring and record the decision in this feature's `Decisions Made`.
 
-#### Phase 4: Live Data Migration
+#### Phase 120: Packaged Data (req, gol, dec, sop)
 
-- [ ] Task 4.1: Migrate all 14 `docs/req/*.md` documents' `### Goals` bullet from `GOL-<uuid>` to `GOL <uuid>` via the `update` tool.
+- [ ] Task 120.100: `req/data/` -- rewrite `Related Artifacts` bullets in `req_example.md` into the enforced `<TAG> <uuid>: <title>` form (well-formed lowercase 8-4-4-4-12 UUIDs; soft-wrap OK), drop `### Acceptance Criteria`, add a `### Risks` section; update `req_template.md` placeholders and `req_create_instructions.md`'s sub-list enumeration; verify `req_update_instructions.md` needs no change; leave `req_schema.json` to Phase 150 regeneration.
+- [ ] Task 120.110: `gol/data/` -- same treatment for `gol_example.md`/`gol_template.md`/`gol_create_instructions.md`; verify `gol_update_instructions.md` needs no change; leave `gol_schema.json` to Phase 150.
+- [ ] Task 120.120: `dec/data/` -- same treatment for `dec_example.md`/`dec_template.md`/`dec_create_instructions.md`; verify `dec_update_instructions.md` needs no change; leave `dec_schema.json` to Phase 150.
+- [ ] Task 120.130: `sop/data/` -- same treatment for `sop_example.md`/`sop_template.md`/`sop_create_instructions.md`, including the `Sops` self-ref bullet; verify `sop_update_instructions.md` needs no change; leave `sop_schema.json` to Phase 150.
 
-#### Phase 5: Tests (req, gol, dec, sop)
+#### Phase 140: Tests (req, gol, dec, sop)
 
-- [ ] Task 5.1: `req` -- retarget ACC tests to Risks; add format-validation matrix for Requirements/Decisions/Goals/Risks; add notes-capture tests; update `test_parser.py`.
-- [ ] Task 5.2: `gol` -- same, plus `tests/gol/resources/` if it asserts on Related Artifacts content.
-- [ ] Task 5.3: `dec` -- same, plus update `tests/dec/resources/test_dec_example.py`.
-- [ ] Task 5.4: `sop` -- same, including `Sops` self-ref matrix, plus update `tests/sop/resources/test_sop_example.py`.
+- [ ] Task 140.100: `req` -- retarget ACC tests to Risks; add format-validation matrix for Requirements/Decisions/Goals/Risks; add notes-capture tests; update `test_parser.py`.
+- [ ] Task 140.110: `gol` -- same, plus `tests/gol/resources/` if it asserts on Related Artifacts content.
+- [ ] Task 140.120: `dec` -- same, plus update `tests/dec/resources/test_dec_example.py`.
+- [ ] Task 140.130: `sop` -- same, including the `Sops` self-ref matrix, plus update `tests/sop/resources/test_sop_example.py`.
 
-#### Phase 6: Regeneration
+#### Phase 150: Regeneration
 
-- [ ] Task 6.1: `uv run --frozen specmgr schema` (+ the four per-domain `--output-dir` package copies).
-- [ ] Task 6.2: `uv run --frozen specmgr docs`.
-- [ ] Task 6.3: Full test suite + lint gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`).
+- [ ] Task 150.100: `uv run --frozen specmgr schema` (+ the four per-domain `--output-dir` package copies).
+- [ ] Task 150.110: `uv run --frozen specmgr docs`.
+- [ ] Task 150.120: Full test suite + lint gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`).
+- [ ] Task 150.130: `uv run --frozen specmgr mcp-docs` -- expected no-op (no tool registration or description changes); confirm no drift on `docs/MCP.md`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-09-17**: Planning stage; not started.
+**As of 2026-09-30**: Planning stage; not started. Plan revised after a review pass against issue #135 and the live codebase -- the live-data migration was reordered before the model change (the generic `update` tool cannot rewrite documents the new schema rejects) and gaps were closed (`server.py`'s `ac` reservation, the `SOP` tag vs `list_references`, stale docstrings/example data). The Task List was also renumbered to the current 3-digit `feat` schema on 2026-09-29, restoring parseability.
 
 ### Blockers
 
@@ -137,6 +146,10 @@ version: 1.0.0
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-09-30 06:02:25.259+02:00 - Task List repair + plan review (issue #135 re-verification)
+
+Full plan review against GitHub issue #135 (unchanged since creation) and the live codebase found two plan errors, seven gaps, and three inconsistencies; all were folded in. Load-bearing fix: the 14 `docs/req/*.md` migration (old Phase 130) is unexecutable AFTER the model change because the generic `update` tool re-parses the existing document first and would refuse the dash-form documents once the new validator is live -- it now runs in a new Phase 105 BEFORE the model change (the space form already parses under today's unvalidated schema). Other changes: remove `server.py`'s "and later `ac`" reservation (Task 110.140); record the `SOP` tag's absence from `list_references`' vocabulary and the DEC-only vs `sysrs` DEC|ADR asymmetry in Out Of Scope + Decisions Made; reword body.py docstrings/Field descriptions and all packaged example bullets to the enforced format; fix stale task facts (all four domains have `*_update_instructions.md`; `update_section` is ADR-only); add ACC-010/011 and a `specmgr mcp-docs` regeneration check. The Task List's 2026-09-29 renumbering to the 3-digit `feat` schema (Phase 100-150) that restored this document's parseability is covered by the Current Status line.
+
 #### 2026-09-17 00:00:00.000Z - Created
 
 Feature created from GitHub issue #135 to remove the never-implemented Acceptance Criteria cross-reference from REQ/GOL/DEC/SOP's Related Artifacts, replace it with a validated Risks reference, and enforce a common cross-reference format, following a design discussion covering scope (all four domains, not just REQ), the GOL-reference question (kept, not extended to VCR/RSK), and the validation-format question (none exists today; a shared validator will be extracted into `models/md`).
@@ -144,6 +157,18 @@ Feature created from GitHub issue #135 to remove the never-implemented Acceptanc
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-30 06:02:25.259+02:00 - Live-data migration runs BEFORE the model change
+
+The generic `update` tool's per-domain adapter re-parses the existing document first and converts a parse failure into the domain's not-found error before any write. Once Phase 110's `^GOL {uuid}: .+$` validator is live, the 14 dash-form `docs/req/*.md` documents would be unparseable and `update` would refuse to rewrite them. The space form parses fine under today's unvalidated schema, so the migration (new Phase 105) is a lossless pre-migration and avoids a parse-broken window for the repo's own documents.
+
+#### 2026-09-30 06:02:25.259+02:00 - `server.py`'s `ac` domain reservation is removed
+
+`server.py`'s module docstring (the authoritative registration list) reserves "and later `ac`" among the document domains. Issue #135's premise -- acceptance criteria were never an artifact type and only exist as `AC-NNN` entries inside `vcr` -- makes the reservation dead text; the reservation is removed as part of this feature (Task 110.140). If a standalone `ac` domain is ever planned, its own feature re-adds the reservation.
+
+#### 2026-09-30 06:02:25.259+02:00 - `SOP` self-references stay invisible to `list_references`; `Decisions` DEC-only asymmetry recorded
+
+Two deliberate, out-of-scope interactions: (1) the enforced `SOP <uuid>` self-reference is the first schema-validated tag absent from `general/tools/_references.py`'s `REFERENCE_TYPES` vocabulary (feat-144-ref-artifact), so `list_references` skips such bullets until a future vocabulary extension (`sop`/`tsk` are already named "plausible future tag additions" there); (2) the four domains' `Decisions` goes DEC-only (REQ-005, `adr` removal per issue #46 is still open) while `sysrs` keeps `^(DEC|ADR)` -- a recorded asymmetry that converges when `adr` is removed, not drift to fix now.
 
 #### 2026-09-17 00:00:00.000Z - Scope is all four domains, not REQ-only
 
@@ -160,6 +185,7 @@ The `"<TYPE> <uuid>: <title>"` format-validation pattern already exists independ
 ### Related PRs / Commits
 
 - [Issue #135](https://github.com/dfch/biz.dfch.SpecMgr/issues/135): tracking issue for this feature.
+- `abf77ee` docs(135): add feature plan.
 
 ### More Information
 
