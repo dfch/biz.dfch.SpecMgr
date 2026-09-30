@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 12:26:44.432+02:00'
 id: feat-135-related-artifacts-risks
-status: planning
+status: review
 type: feat
-updated: '2026-09-30T14:36:11.548+02:00'
+updated: '2026-09-30T17:12:43.190+02:00'
 version: 1.0.0
 ---
 
