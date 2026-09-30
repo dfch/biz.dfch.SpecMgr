@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-29T15:14:11.057+02:00'
 id: feat-170-update-edit-parse-failure
-status: planning
+status: progress
 type: feat
-updated: '2026-09-29T21:51:28.000+02:00'
+updated: '2026-09-30T06:28:57.457+02:00'
 version: 1.0.0
 ---
 
@@ -175,17 +175,17 @@ Decisions Made for the scope choices already locked in during triage.
 
 - 9080b37c-82b3-4f63-81f1-79641d0bf14c (ADR): extended the workaround to `get_<d>`'s parse-failure case via `ParseFailureResult`, and the `find_parse_failure`/`find_feat_parse_failure` helpers this feature reuses unchanged.
 
-- New ADR (Phase 100, case 4 of the 519d1206 chain, after case 1 = 519d1206/`validate`, case 2 = b399f1ce/`set_status`, case 3 = 9080b37c/`get_<d>`): records this decision; its UUID is recorded in this list once created (Task 100.110).
+- b8c9bfea-6dcf-4158-bfc5-4ec17abb842f (ADR): case 4 of the 519d1206 chain -- the non-raising `ParseFailureResult`/`ValidateResult` branches for the four generic mutation tools (feat-170, GitHub issue #170).
 
 ### Task List
 
 #### Phase 100: ADR
 
-- [ ] Task 100.100: Draft and create the new ADR (case 4 of the 519d1206 chain, after case 1 = 519d1206/`validate`, case 2 = b399f1ce/`set_status`, case 3 = 9080b37c/`get_<d>`) recording this decision, referencing GitHub issue #170, explicitly naming the two locked-in scope decisions (no repair capability; bundle all four generic mutation tools together), the `delete` exclusion (candidate case 5), the non-goals from the Scope section, and the mode-dependent Bug-1/Bug-2 precedence (REQ-010), and noting that it refines 519d1206's own "all keep raising" scope statement.
+- [x] Task 100.100: Draft and create the new ADR (case 4 of the 519d1206 chain, after case 1 = 519d1206/`validate`, case 2 = b399f1ce/`set_status`, case 3 = 9080b37c/`get_<d>`) recording this decision, referencing GitHub issue #170, explicitly naming the two locked-in scope decisions (no repair capability; bundle all four generic mutation tools together), the `delete` exclusion (candidate case 5), the non-goals from the Scope section, and the mode-dependent Bug-1/Bug-2 precedence (REQ-010), and noting that it refines 519d1206's own "all keep raising" scope statement.
 
-- [ ] Task 100.110: Get the ADR to `accepted` status before or alongside the Phase 110/120 code landing, and record its UUID in this README's Related Decisions.
+- [x] Task 100.110: Get the ADR to `accepted` status before or alongside the Phase 110/120 code landing, and record its UUID in this README's Related Decisions.
 
-- [ ] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest, `specmgr adr-toc`), then exactly one Conventional Commit for the phase.
+- [x] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest, `specmgr adr-toc`), then exactly one Conventional Commit for the phase.
 
 #### Phase 110: Bug 1 -- ParseFailureResult reuse (update, edit, set_status, set_classification x 12 domains)
 
@@ -245,15 +245,19 @@ Decisions Made for the scope choices already locked in during triage.
 
 ### Current Status
 
-**As of 2026-09-29**: Feature plan created from GitHub issue #170 triage. Root cause fully diagnosed and confirmed by reading the relevant source (`general/tools/update.py`, `edit.py`, `set_status.py`, `set_classification.py`, `general/tools/_doc_paths.py`, the `dec` domain's `_io.py`/`_paths.py`, the existing `get_dec.py` precedent, and the three prior ADRs in the 519d1206 chain). Refined 2026-09-29 after a full plan-vs-codebase review: the `docs/MCP.md` regeneration command corrected to `specmgr mcp-docs` (REQ-007/ACC-004/Phase 130), the Task List restructured to the standing per-phase quality-gate + one-Conventional-Commit discipline (tests folded into their code phases; the monolithic Phase 150 absorbed; final Phase 140 ACC-walk), the nine existing raise-asserting content-validation tests that Phase 120 breaks are now an explicit conversion task (Task 120.140/ACC-006), the mode-dependent Bug-1/Bug-2 precedence is pinned (REQ-010/ACC-007), the `ValidateResult` mirror of `validate` (caught tuple + 300-char cap) is explicit (REQ-003), the repair artifacts' stale mechanism wording is an explicit Phase 130 task (REQ-005/ACC-003/Task 130.110-130.120), and `delete`'s identical-but-excluded defect plus the `CHANGELOG.md` entry are now in Scope. No implementation has started yet -- this feature remains a plan-only artifact per explicit instruction; implementation is a separate, later step.
+**As of 2026-09-30**: Phase 100 (ADR) done -- the case-4 chain ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f ("Extend the non-raising structured-result workaround to the generic mutation tools' failure cases") exists in `docs/adr/`, was created through the MCP `create_adr` tool already at `status: accepted` (all scope decisions were locked in during triage), is listed in the regenerated `docs/adr/README.md` TOC (no drift), and its UUID is recorded in Related Decisions. The plan itself is unchanged from its 2026-09-29 refined state: the root cause remains fully diagnosed (Bug 1 = `load_<d>_by_id` against a broken existing document, affecting all four generic mutation tools; Bug 2 = raised new-content validation on `update`/`edit`), and the requirements REQ-001..REQ-010, acceptance criteria ACC-001..ACC-007, scope, design notes, and the per-phase gate/one-Conventional-Commit discipline all stand as written. Phases 110-140 (Bug-1 `ParseFailureResult` branch, Bug-2 `ValidateResult` branch, docs sync, final ACC-walk) are pending -- implementation of the code phases has not started yet.
 
 ### Blockers
 
-- None currently. Implementation has not been authorized to start yet.
+- None currently.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-30T04:18:09.000Z - Phase 100 (ADR): case-4 chain ADR created and accepted
+
+Created the new ADR through the MCP `create_adr` tool (per ADR 898bfcd0): UUID b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, title "Extend the non-raising structured-result workaround to the generic mutation tools' failure cases", `status: accepted` from the start (all scope decisions were already locked in during triage -- no open design question). The ADR records the two locked-in scope decisions (no repair capability for `update`/`edit`; all four generic mutation tools bundled in this one feature), the `delete` exclusion (recorded as the chain's candidate case 5), the non-goals from the Scope section, the mode-dependent Bug-1/Bug-2 precedence (REQ-010), and that it refines 519d1206's own "all keep raising" scope statement. `specmgr adr-toc` regenerated `docs/adr/README.md` (the new ADR is listed with its id/title/status; a second run is a no-op -- no drift). The ADR's UUID is recorded in Related Decisions above, and the frontmatter `status` moved from `planning` to `progress` (implementation has started). Phase-end gate green: `ruff format --check` (1775 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings), `pytest -n auto --cov=src --cov-report=` (3790 passed), `specmgr adr-toc` (regenerated, no drift). The phase's single Conventional Commit is reserved to the orchestrator (Task 100.120).
 
 #### 2026-09-29T19:51:28.000Z - Refined after plan review
 
