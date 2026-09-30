@@ -179,8 +179,9 @@ __all__ = [
     "Roles",
     "SimilarityHit",
     "SimilarityUnavailableResult",
-    "UpdateFrontmatter",
-    "UpdateResult",
+    # PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
+    "UpdateFrontmatter",  # pylint: disable=undefined-all-variable
+    "UpdateResult",  # pylint: disable=undefined-all-variable
     "ValidateResult",
     "ValidationErrorEntry",
     "WhenToApply",
@@ -215,7 +216,7 @@ def __getattr__(name: str) -> Any:
     then every domain package, and every domain models package, is fully loaded.
     """
     if name in _LAZY_EXPORTS:
-        from . import update_result
+        from . import update_result  # pylint: disable=import-outside-toplevel  # must stay deferred: see the docstring
 
         result = getattr(update_result, name)
         return result

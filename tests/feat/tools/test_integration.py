@@ -245,10 +245,23 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
-        #     through the raw body text exactly like every other domain's own range mode.
+        #     through the raw body text exactly like every other domain's own range mode,
+        #     and must return the UpdateResult wrapper with a non-None snippet carrying the
+        #     dropped line at its pre-splice number and the inserted line at its post-splice
+        #     number (ACC-002's line-for-line mode; the 11 flat domains pin the same in
+        #     tests/general/tools/test_update.py).
         lines = get_feat(feat_id, raw=True).splitlines()
         line_number = lines.index("Short description.") + 1
-        update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        result = update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {line_number}: Short description.", snippet_lines)
+        self.assertIn(f"+ {line_number}: Updated short description.", snippet_lines)
         after_range_update = get_feat(feat_id, raw=True).splitlines()
         self.assertEqual(after_range_update[line_number - 1], "Updated short description.")
         self.assertEqual(len(after_range_update), len(lines))

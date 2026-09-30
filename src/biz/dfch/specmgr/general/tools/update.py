@@ -109,7 +109,9 @@ from ...gol.tools._paths import gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text
-from ..models import UpdateFrontmatter, UpdateResult
+
+# PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
+from ..models import UpdateFrontmatter, UpdateResult  # pylint: disable=no-name-in-module
 from ...prb.models.v1 import Prb, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb

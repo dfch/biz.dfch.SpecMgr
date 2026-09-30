@@ -365,6 +365,7 @@ def validate_read_args(raw: bool, offset: int | None, limit: int | None, numbere
         raise ValueError(f"numbered is only valid with raw=True, got numbered={numbered!r}")
 
 
+# pylint: disable=too-many-locals  # every named local is a distinct contract term of the ADR's snippet definition
 def splice_snippet(pre_body: str, post_body: str, offset: int, limit: int | None) -> str:
     """Render the before/after snippet of the range-mode splice of ``pre_body`` at
     ``offset``/``limit`` into ``post_body``.
