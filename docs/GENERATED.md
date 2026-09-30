@@ -219,6 +219,7 @@ First-line docstrings from each module, organized by domain:
 - `models/config_info.py` — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
+- `models/md/_cross_reference.py` — Shared, private cross-reference format validator for `models.md` domain body models.
 - `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
@@ -556,4 +557,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 378
+**Test files**: 379

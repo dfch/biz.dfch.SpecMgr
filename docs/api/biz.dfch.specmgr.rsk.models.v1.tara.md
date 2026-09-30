@@ -26,7 +26,7 @@ eda85648ce9d's Decision Drivers) rather than inventing a new shared
 `_STRATEGY_ITEM_PATTERN` (the intro list's bullets are always a single
 line): a soft-wrapped bullet's `.text` keeps the embedded newline of its
 continuation lines (`mdformat` does not reflow), mirroring
-`sysrs.models.v1.body._validate_cross_reference_items`'s established
+`models.md._cross_reference.validate_cross_reference_items`'s established
 reasoning. Since `StrategyItem.strategy` is genuinely expected to always
 be a single physical line, feat-99-list-item's shared
 `MarkdownListItem.single_line_text` guard is called there (only) before

@@ -35463,28 +35463,3 @@ items:
   Base class validates the heading triple structure.
   This validates: specific tag h2 and no nested headings in tokens [3:].
 
-
-## Functions
-
-### `_validate_cross_reference_items(items: 'list[MarkdownListItemWithNotes]', pattern: 'str') -> 'list[MarkdownListItemWithNotes]'`
-
-Enforce `pattern` against every item's `.text` (shared by every cross-reference list class below).
-
-`re.DOTALL` is required: an item's `.text` keeps the embedded newline of
-a soft-wrapped bullet line (`mdformat` does not reflow), and `.` would
-not otherwise match it -- confirmed empirically in Phase 1 (Task 1.1).
-The pattern itself is otherwise a plain `re.fullmatch` against the exact
-`<ALLOWED-TYPE-TAG(S)> <uuid>: <title>` shape.
-
-Args:
-    items: The list's already-list-level-validated items (e.g.
-        `Field(min_length=1)` has already run).
-    pattern: The calling class's own module-level pattern constant.
-
-Returns:
-    `items`, unchanged, once every item matches.
-
-Raises:
-    ValueError: some item's `.text` does not fullmatch `pattern` --
-        channeled by Pydantic into `pydantic.ValidationError`.
-

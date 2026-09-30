@@ -186,6 +186,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.config_info`](biz.dfch.specmgr.models.config_info.md) — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - [`biz.dfch.specmgr.models.iso25010`](biz.dfch.specmgr.models.iso25010.md) — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
+- [`biz.dfch.specmgr.models.md._cross_reference`](biz.dfch.specmgr.models.md._cross_reference.md) — Shared, private cross-reference format validator for `models.md` domain body models.
 - [`biz.dfch.specmgr.models.md._errors`](biz.dfch.specmgr.models.md._errors.md) — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.models.md._frontmatter_parse`](biz.dfch.specmgr.models.md._frontmatter_parse.md) — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.

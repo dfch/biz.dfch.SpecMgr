@@ -100,11 +100,11 @@ version: 1.0.0
 
 #### Phase 100: Shared Cross-Reference Validator (`models/md`)
 
-- [ ] Task 100.100: Implement `models/md/_cross_reference.py` (`UUID_PATTERN`, pattern-builder, `validate_cross_reference_items`); direct-import only, no `models/md/__init__.py` export (matching the `_ordering.py`/`_errors.py`/`_markdown.py` precedent).
-- [ ] Task 100.105: Add `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` to `models/md/common_sections.py`, built on Task 100.100's primitives -- each a complete class (`items`, `field_validator`, domain-neutral docstring), mirroring `SourceBase`/RASCI (feat-29-dec-source-roles); add matching unit tests alongside the existing `SourceBase`/RASCI tests.
-- [ ] Task 100.110: Refactor `sysrs/models/v1/body.py` to use the shared `_cross_reference.py` helper instead of its local `_UUID_PATTERN`/`_validate_cross_reference_items` (function-only -- `sysrs` is NOT retargeted onto the new `*Base` classes, per the Design Notes scoping); update the docstring cross-references to the moved helper in `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) to point at `models/md`; confirm existing `tests/sysrs/` suite stays green unmodified.
-- [ ] Task 100.120: Refactor `vcr/models/v1/body.py`'s `_VERIFIES_PATTERN`/validator to reuse the shared `UUID_PATTERN`, keeping the module-level `_VERIFIES_PATTERN` name (built from the shared fragment) so `tests/vcr/models/v1/test_body.py`'s docstring reference stays accurate; confirm existing `tests/vcr/` suite stays green unmodified.
-- [ ] Task 100.130: New `tests/models/md/test__cross_reference.py` (double-underscore, matching `test__ordering.py`/`test__timestamps.py`/`test__markdown.py`'s naming for private `_`-prefixed modules): valid match, wrong tag, malformed uuid, missing title, multi-tag pattern, DOTALL soft-wrap case.
+- [x] Task 100.100: Implement `models/md/_cross_reference.py` (`UUID_PATTERN`, pattern-builder, `validate_cross_reference_items`); direct-import only, no `models/md/__init__.py` export (matching the `_ordering.py`/`_errors.py`/`_markdown.py` precedent).
+- [x] Task 100.105: Add `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` to `models/md/common_sections.py`, built on Task 100.100's primitives -- each a complete class (`items`, `field_validator`, domain-neutral docstring), mirroring `SourceBase`/RASCI (feat-29-dec-source-roles); add matching unit tests alongside the existing `SourceBase`/RASCI tests.
+- [x] Task 100.110: Refactor `sysrs/models/v1/body.py` to use the shared `_cross_reference.py` helper instead of its local `_UUID_PATTERN`/`_validate_cross_reference_items` (function-only -- `sysrs` is NOT retargeted onto the new `*Base` classes, per the Design Notes scoping); update the docstring cross-references to the moved helper in `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) to point at `models/md`; confirm existing `tests/sysrs/` suite stays green unmodified.
+- [x] Task 100.120: Refactor `vcr/models/v1/body.py`'s `_VERIFIES_PATTERN`/validator to reuse the shared `UUID_PATTERN`, keeping the module-level `_VERIFIES_PATTERN` name (built from the shared fragment) so `tests/vcr/models/v1/test_body.py`'s docstring reference stays accurate; confirm existing `tests/vcr/` suite stays green unmodified.
+- [x] Task 100.130: New `tests/models/md/test__cross_reference.py` (double-underscore, matching `test__ordering.py`/`test__timestamps.py`/`test__markdown.py`'s naming for private `_`-prefixed modules): valid match, wrong tag, malformed uuid, missing title, multi-tag pattern, DOTALL soft-wrap case.
 
 #### Phase 105: Live Data Migration (pre-model-change)
 
@@ -143,7 +143,7 @@ version: 1.0.0
 
 ### Current Status
 
-**As of 2026-09-30**: Planning stage; not started. Plan revised after two review passes against issue #135 and the live codebase. First pass: the live-data migration was reordered before the model change (the generic `update` tool cannot rewrite documents the new schema rejects) and gaps were closed (`server.py`'s `ac` reservation, the `SOP` tag vs `list_references`, stale docstrings/example data). Second pass: `Requirements`/`Decisions`/`Goals`/`Risks` now share `models/md/common_sections.py` base classes for `req`/`gol`/`dec`/`sop` (REQ-010), following the `feat-29-dec-source-roles` precedent, instead of repeating byte-identical classes four times; plus two smaller convention fixes (`_cross_reference.py` import style, `test__cross_reference.py` naming) and a `dec_example.md` gap closure (ACC-013). The Task List was also renumbered to the current 3-digit `feat` schema on 2026-09-29, restoring parseability.
+**As of 2026-09-30**: Phase 100 (Shared Cross-Reference Validator) complete; Phase 105 (Live Data Migration) is next. Plan revised after two review passes against issue #135 and the live codebase. First pass: the live-data migration was reordered before the model change (the generic `update` tool cannot rewrite documents the new schema rejects) and gaps were closed (`server.py`'s `ac` reservation, the `SOP` tag vs `list_references`, stale docstrings/example data). Second pass: `Requirements`/`Decisions`/`Goals`/`Risks` now share `models/md/common_sections.py` base classes for `req`/`gol`/`dec`/`sop` (REQ-010), following the `feat-29-dec-source-roles` precedent, instead of repeating byte-identical classes four times; plus two smaller convention fixes (`_cross_reference.py` import style, `test__cross_reference.py` naming) and a `dec_example.md` gap closure (ACC-013). The Task List was also renumbered to the current 3-digit `feat` schema on 2026-09-29, restoring parseability.
 
 ### Blockers
 
@@ -152,6 +152,10 @@ version: 1.0.0
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-30 15:20:00.000+02:00 - Phase 100 complete: shared cross-reference validator + base classes, sysrs/vcr refactored
+
+Implemented all five Phase 100 tasks. New `models/md/_cross_reference.py` (direct-import-only, no `models/md/__init__.py` export) exports `UUID_PATTERN`, a `build_cross_reference_pattern(*tags)` builder supporting both single- and multi-tag patterns (e.g. `(REQ|UC)`), and `validate_cross_reference_items(items, pattern)` (generalized from `sysrs`'s original local implementation, `re.fullmatch` + `re.DOTALL`). Added `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` to `models/md/common_sections.py` (each a complete `MarkdownSection3` class with `items`/`field_validator`, built on the new primitives), mirroring the `SourceBase`/RASCI precedent, and exported them from `models/md/__init__.py` alongside `SourceBase` (the same import surface Phase 110's `req`/`gol`/`dec`/`sop` subclasses will use). Refactored `sysrs/models/v1/body.py` to import `UUID_PATTERN`/`validate_cross_reference_items` instead of its own local `_UUID_PATTERN`/`_validate_cross_reference_items` (function-only, not retargeted onto the new `*Base` classes, per the Design Notes scoping) -- `tests/sysrs/` passes unmodified. Refactored `vcr/models/v1/body.py`'s `_VERIFIES_PATTERN` to build from the shared `UUID_PATTERN` fragment, keeping the module-level name unchanged -- `tests/vcr/` passes unmodified. Updated the stale docstring cross-references to the moved helper in `rsk/models/v1/tara.py` (two places) and `general/models/dtais.py` (one place) to point at `models.md._cross_reference.validate_cross_reference_items`. Added `tests/models/md/test__cross_reference.py` (valid match, wrong tag, malformed uuid -- both uppercase and wrong hex-group length, missing title, multi-tag pattern, DOTALL soft-wrap case) and extended `tests/models/md/test_common_sections.py` with a `TestCrossReferenceBases` class covering all four new base classes plus notes-capture. Quality gate green: `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest -n auto` suite (3811 passed). `specmgr docs` was run to confirm no unexpected drift, then its output was reverted -- doc/schema regeneration is explicitly Phase 150's job, run once after Phases 110-140 land, not per-phase.
 
 #### 2026-09-30 14:36:00.000+02:00 - Second review pass: base-class design for Requirements/Decisions/Goals/Risks, plus two naming/convention fixes
 
@@ -168,6 +172,10 @@ Feature created from GitHub issue #135 to remove the never-implemented Acceptanc
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-09-30 15:20:00.000+02:00 - New `*Base` classes are exported from `models/md/__init__.py`, mirroring `SourceBase`
+
+The plan's Design Notes left implicit whether `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` should be re-exported from `models/md/__init__.py` (only `_cross_reference.py` itself was explicitly specified as direct-import-only, matching `_ordering.py`/`_errors.py`/`_markdown.py`). Since `SourceBase`/the RASCI base classes -- the precedent these four new classes mirror -- are already exported from `models/md/__init__.py` and imported by domains via `from ....models.md import SourceBase`, the four new classes are exported the same way, so Phase 110's `req`/`gol`/`dec`/`sop` subclasses can import them from the identical surface (`from ....models.md import RequirementsBase, ...`) rather than a different, one-off import path.
 
 #### 2026-09-30 14:35:00.000+02:00 - Requirements/Decisions/Goals/Risks share base classes, scoped to req/gol/dec/sop only
 
