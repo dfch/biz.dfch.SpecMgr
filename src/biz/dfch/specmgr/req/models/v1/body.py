@@ -30,11 +30,14 @@ from ....models.md import (
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
-    MarkdownSection3,
     MarkdownParagraph,
     MarkdownListItem,
     MarkdownListItemWithNotes,
     MarkdownComment,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
     SourceBase,
     alias,
     AliasType,
@@ -158,69 +161,59 @@ class Source(SourceBase):
     """
 
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to other requirements, one per line
-    (e.g. "REQ-9687: <title>").
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    other requirements.
+
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Requirements` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to other requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
-    )
 
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
 
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>").
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Decisions` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
-    )
 
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>").
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Goals` type.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
 
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of
-    cross-references to goals, one per line (e.g. "GOL-0007: <title>").
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `req` still declares and
+    owns its own concrete `Risks` type.
     """
-
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for four independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria). Optional as a whole; no consistency check is enforced between
-    the sub-lists.
+    `### ` cross-reference lists (requirements/decisions/goals/risks).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists.
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
 
 
 class MoreInformation(MarkdownSection2):

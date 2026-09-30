@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:53.793+02:00'
 id: bad7e9c7-f794-477b-b64f-ce04645c6ef3
 status: draft
 type: req
-updated: '2026-09-03 10:27:53.793+02:00'
+updated: '2026-09-30T14:57:00.326+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `general` bullet) and ADR 36905d5b-8057-4294-866
 
 ### Goals
 
-- GOL-b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts
+- GOL b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts

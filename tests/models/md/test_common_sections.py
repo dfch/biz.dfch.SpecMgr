@@ -37,17 +37,23 @@ name, which would produce "Roles And Responsibilities" with a capital
 import unittest
 
 import mdformat
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from biz.dfch.specmgr.models.md.common_sections import (
     AccountableBase,
     ConsultedBase,
+    DecisionsBase,
+    GoalsBase,
     InformedBase,
+    RequirementsBase,
     ResponsibleBase,
+    RisksBase,
     RolesAndResponsibilitiesBase,
     SourceBase,
     SupportBase,
 )
+
+_VALID_UUID = "12345678-1234-1234-1234-123456789abc"
 
 
 class Source(SourceBase):
@@ -163,3 +169,88 @@ class TestRolesAndResponsibilitiesBaseAlias(unittest.TestCase):
         )
         with self.assertRaises(AssertionError):
             RolesAndResponsibilities.from_text(text)
+
+
+class Requirements(RequirementsBase):
+    pass
+
+
+class Decisions(DecisionsBase):
+    pass
+
+
+class Goals(GoalsBase):
+    pass
+
+
+class Risks(RisksBase):
+    pass
+
+
+class TestCrossReferenceBases(unittest.TestCase):
+    """Tests for `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase`
+    (feat-135-related-artifacts-risks, Task 100.105).
+
+    Mirrors `TestSourceBase`/`TestRasciLeafBases` above: the `*Base` classes
+    are exercised through minimal local subclasses named exactly like the
+    real domain classes (`req`/`gol`/`dec`/`sop`'s own `Requirements`/
+    `Decisions`/`Goals`/`Risks`) would be, confirming the default
+    `SPACE_SEPARATED` alias already matches with no `@alias` override.
+    """
+
+    def test_requirements_base_accepts_well_formed_bullet(self) -> None:
+        text = mdformat.text(f"### Requirements\n\n- REQ {_VALID_UUID}: A title\n")
+        instance = Requirements.from_text(text)
+        assert instance.items is not None
+        self.assertEqual(len(instance.items), 1)
+
+    def test_requirements_base_rejects_wrong_tag(self) -> None:
+        text = mdformat.text(f"### Requirements\n\n- GOL {_VALID_UUID}: A title\n")
+        with self.assertRaises(ValidationError):
+            Requirements.from_text(text)
+
+    def test_decisions_base_accepts_well_formed_bullet(self) -> None:
+        text = mdformat.text(f"### Decisions\n\n- DEC {_VALID_UUID}: A title\n")
+        instance = Decisions.from_text(text)
+        assert instance.items is not None
+        self.assertEqual(len(instance.items), 1)
+
+    def test_decisions_base_rejects_adr_tag(self) -> None:
+        """DEC-only (REQ-005) -- not `DEC|ADR`, unlike `sysrs`'s own `## Decisions`."""
+        text = mdformat.text(f"### Decisions\n\n- ADR {_VALID_UUID}: A title\n")
+        with self.assertRaises(ValidationError):
+            Decisions.from_text(text)
+
+    def test_goals_base_accepts_well_formed_bullet(self) -> None:
+        text = mdformat.text(f"### Goals\n\n- GOL {_VALID_UUID}: A title\n")
+        instance = Goals.from_text(text)
+        assert instance.items is not None
+        self.assertEqual(len(instance.items), 1)
+
+    def test_goals_base_rejects_malformed_uuid(self) -> None:
+        text = mdformat.text(f"### Goals\n\n- GOL {_VALID_UUID.upper()}: A title\n")
+        with self.assertRaises(ValidationError):
+            Goals.from_text(text)
+
+    def test_risks_base_accepts_well_formed_bullet(self) -> None:
+        text = mdformat.text(f"### Risks\n\n- RSK {_VALID_UUID}: A title\n")
+        instance = Risks.from_text(text)
+        assert instance.items is not None
+        self.assertEqual(len(instance.items), 1)
+
+    def test_risks_base_rejects_missing_title(self) -> None:
+        text = mdformat.text(f"### Risks\n\n- RSK {_VALID_UUID}:\n")
+        with self.assertRaises(ValidationError):
+            Risks.from_text(text)
+
+    def test_bullet_with_notes_captures_notes(self) -> None:
+        text = mdformat.text(f"### Requirements\n\n- REQ {_VALID_UUID}: A title\n\n  A paraphrase note.\n")
+        instance = Requirements.from_text(text)
+        assert instance.items is not None
+        self.assertIsNotNone(instance.items[0].notes)
+
+    def test_bare_bullet_leaves_notes_none(self) -> None:
+        text = mdformat.text(f"### Requirements\n\n- REQ {_VALID_UUID}: A title\n")
+        instance = Requirements.from_text(text)
+        assert instance.items is not None
+        self.assertIsNone(instance.items[0].notes)

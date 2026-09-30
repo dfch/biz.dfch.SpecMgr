@@ -56,15 +56,31 @@ Pydantic validates against the narrowed type, not the parent's declared
 type). This is what makes `cls.__name__` resolve to the domain's own class
 name (e.g. "Accountable", not "AccountableBase") at parse time, which is
 required for the default `SPACE_SEPARATED` alias match to succeed.
+
+`RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` (added
+feat-135-related-artifacts-risks, REQ-010) follow the same thin-subclass
+precedent as `SourceBase`, but need no field-narrowing trick at all: since
+the enforced cross-reference format per role (`"REQ <uuid>: <title>"`,
+`"DEC <uuid>: <title>"`, `"GOL <uuid>: <title>"`, `"RSK <uuid>: <title>"`) is
+identical regardless of which domain (`req`/`gol`/`dec`/`sop`) hosts the
+sub-section, there is no per-domain item-subtype variance to narrow -- each
+base class below is already a complete, ready-to-use `### ` cross-reference
+list class. A domain subclass is a bare pass-through
+(`class Requirements(RequirementsBase): ...` with a domain-specific
+docstring only), and its default `SPACE_SEPARATED` alias (derived from its
+own single-word
+class name at parse time, same mechanism as `SourceBase`) already matches
+its heading with no `@alias` override needed.
 """
 
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
+from ._cross_reference import build_cross_reference_pattern, validate_cross_reference_items
 from .alias import alias
 from .alias_type import AliasType
-from .markdown_list_item import MarkdownListItem
+from .markdown_list_item import MarkdownListItem, MarkdownListItemWithNotes
 from .markdown_paragraph import MarkdownParagraph
 from .markdown_section2 import MarkdownSection2
 from .markdown_section3 import MarkdownSection3
@@ -257,3 +273,147 @@ class RolesAndResponsibilitiesBase(MarkdownSection2):
     informed: InformedBase | None = Field(
         default=None, description="`### Informed` sub-section. Optional; MAY be empty."
     )
+
+
+_REQUIREMENTS_PATTERN = build_cross_reference_pattern("REQ")
+
+
+class RequirementsBase(MarkdownSection3):
+    """`### Requirements` under `## Related Artifacts` -- cross-reference
+    list to other requirements. Optional as a whole; at least one item when
+    present.
+
+    Shared base for every domain's own `Requirements` (currently `req`,
+    `gol`, `dec`, `sop`). Domain subclasses are thin pass-throughs
+    (`class Requirements(RequirementsBase): ...`) with a domain-specific
+    docstring only -- the default `SPACE_SEPARATED` alias already matches
+    `"### Requirements"` for a subclass named `Requirements`, so no `@alias`
+    override is needed here or in any subclass.
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `REQ <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
+        min_length=1,
+        description="Bullet list of `REQ <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
+    )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _REQUIREMENTS_PATTERN)
+
+
+_DECISIONS_PATTERN = build_cross_reference_pattern("DEC")
+
+
+class DecisionsBase(MarkdownSection3):
+    """`### Decisions` under `## Related Artifacts` -- cross-reference list
+    to decisions. Optional as a whole; at least one item when present.
+
+    `DEC`-only (not `DEC|ADR`), since `adr` is slated for removal as an
+    artifact type (issue #46) -- unlike `sysrs`'s own, structurally
+    different `## Decisions` section, which still accepts either tag (a
+    deliberate, recorded asymmetry, see
+    `.specmgr/feat/feat-135-related-artifacts-risks/README.md` Design
+    Notes).
+
+    Shared base for every domain's own `Decisions` (currently `req`, `gol`,
+    `dec`, `sop`). Domain subclasses are thin pass-throughs
+    (`class Decisions(DecisionsBase): ...`) with a domain-specific docstring
+    only -- the default `SPACE_SEPARATED` alias already matches
+    `"### Decisions"` for a subclass named `Decisions`, so no `@alias`
+    override is needed here or in any subclass.
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `DEC <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
+        min_length=1,
+        description="Bullet list of `DEC <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
+    )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _DECISIONS_PATTERN)
+
+
+_GOALS_PATTERN = build_cross_reference_pattern("GOL")
+
+
+class GoalsBase(MarkdownSection3):
+    """`### Goals` under `## Related Artifacts` -- cross-reference list to
+    goals. Optional as a whole; at least one item when present.
+
+    Shared base for every domain's own `Goals` (currently `req`, `gol`,
+    `dec`, `sop`). Domain subclasses are thin pass-throughs
+    (`class Goals(GoalsBase): ...`) with a domain-specific docstring only --
+    the default `SPACE_SEPARATED` alias already matches `"### Goals"` for a
+    subclass named `Goals`, so no `@alias` override is needed here or in
+    any subclass.
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `GOL <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
+        min_length=1,
+        description="Bullet list of `GOL <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
+    )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _GOALS_PATTERN)
+
+
+_RISKS_PATTERN = build_cross_reference_pattern("RSK")
+
+
+class RisksBase(MarkdownSection3):
+    """`### Risks` under `## Related Artifacts` -- cross-reference list to
+    risks. Optional as a whole; at least one item when present.
+
+    Shared base for every domain's own `Risks` (currently `req`, `gol`,
+    `dec`, `sop`). Domain subclasses are thin pass-throughs
+    (`class Risks(RisksBase): ...`) with a domain-specific docstring only --
+    the default `SPACE_SEPARATED` alias already matches `"### Risks"` for a
+    subclass named `Risks`, so no `@alias` override is needed here or in
+    any subclass.
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `RSK <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
+        min_length=1,
+        description="Bullet list of `RSK <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
+    )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _RISKS_PATTERN)

@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:12.539+02:00'
 id: 1b6975fb-f5c2-4a16-b9db-9f026b8e6912
 status: draft
 type: req
-updated: '2026-09-03 10:27:12.539+02:00'
+updated: '2026-09-30T14:56:31.213+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `dec` bullet) and `.specmgr/feat/feat-21-decisio
 
 ### Goals
 
-- GOL-08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management
+- GOL 08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management

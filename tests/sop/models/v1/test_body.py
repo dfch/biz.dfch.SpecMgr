@@ -25,6 +25,12 @@ fields, the `Procedure`/`Updates` containers' zero-entry rejection, the
 `RelatedArtifacts` sub-list independence (incl. the new `Sops` self-reference),
 `Sop`'s section optional/misordering behavior, and the duplicate-step-number
 after-validator (the `ValidationError` channel).
+
+Also covers feat-135-related-artifacts-risks: `AcceptanceCriteria` was
+removed and replaced by `Risks` (REQ-001/REQ-002), and every sub-list --
+including the `Sops` self-reference -- now enforces the shared
+`"<TAG> <uuid>: <title>"` cross-reference format (REQ-004) with an optional
+trailing notes paragraph (REQ-006).
 """
 
 from __future__ import annotations
@@ -36,7 +42,6 @@ from pydantic import ValidationError
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias_match import match_alias
 from biz.dfch.specmgr.sop.models.v1.body import (
-    AcceptanceCriteria,
     Accountable,
     Consulted,
     Decisions,
@@ -49,6 +54,7 @@ from biz.dfch.specmgr.sop.models.v1.body import (
     RelatedArtifacts,
     Requirements,
     Responsible,
+    Risks,
     RolesAndResponsibilities,
     SafetyAndPrecautions,
     Scope,
@@ -60,16 +66,20 @@ from biz.dfch.specmgr.sop.models.v1.body import (
     Updates,
 )
 
+# A well-formed, lowercase 8-4-4-4-12 hex UUID reused by every generic
+# (non-reference-document) cross-reference fixture below -- the exact value
+# is never significant, only its shape.
+_VALID_UUID = "12345678-1234-1234-1234-123456789abc"
+
 # Every `RelatedArtifacts` sub-list class alongside the exact canonical
 # heading text it must -- and only it must -- match. The headings derive
 # from the class names via the `AliasType.SPACE_SEPARATED` convention (no
-# explicit `@alias`), including the multi-word `AcceptanceCriteria` ->
-# "Acceptance Criteria" derivation.
+# explicit `@alias`).
 _SUB_LIST_CLASSES_AND_HEADINGS = [
     (Requirements, "Requirements"),
     (Decisions, "Decisions"),
     (Goals, "Goals"),
-    (AcceptanceCriteria, "Acceptance Criteria"),
+    (Risks, "Risks"),
     (Sops, "Sops"),
 ]
 
@@ -149,23 +159,23 @@ accounts.
 
 ### Requirements
 
-- REQ-0001: Day-one account readiness
+- REQ b2ae2dbd-3bc7-404c-8aa7-0a6eb457d2df: Day-one account readiness
 
 ### Decisions
 
-- DEC-0001: SSO provider selection
+- DEC 8626319c-91ed-43c3-97b3-527de8579cb5: SSO provider selection
 
 ### Goals
 
-- GOL-0001: Four-hour onboarding
+- GOL e079c8ec-2e2e-4812-9360-50bb522ed20c: Four-hour onboarding
 
-### Acceptance Criteria
+### Risks
 
-- ACC-0001: New hire can sign in on day one
+- RSK 1a8b158b-01b7-43f7-bffe-beea23780158: Account provisioning delays
 
 ### Sops
 
-- SOP-0042: IT Account Deprovisioning
+- SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: IT Account Deprovisioning
 
 ## More Information
 
@@ -400,9 +410,6 @@ class TestSubListHeadingAliases(unittest.TestCase):
                 self.assertEqual(cls._metadata.get("type"), "heading_open")
                 self.assertEqual(cls._metadata.get("tag"), "h3")
 
-    def test_acceptance_criteria_rejects_unsplit_class_name(self) -> None:
-        self.assertFalse(match_alias(AcceptanceCriteria, "AcceptanceCriteria"))
-
 
 class TestImplicitHeadingAliases(unittest.TestCase):
     """The remaining leaf sections derive their heading from their class name (SPACE_SEPARATED)."""
@@ -537,7 +544,7 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_related_artifacts_present(self) -> None:
         kwargs = _minimal_sop_kwargs()
         kwargs["related_artifacts"] = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Decisions\n\n- DEC-0001: Some decision.\n")
+            format_text(f"## Related Artifacts\n\n### Decisions\n\n- DEC {_VALID_UUID}: Some decision.\n")
         )
 
         sut = Sop(**kwargs)
@@ -809,7 +816,7 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
         self.assertIsNone(sut.sops)
 
     def test_empty_related_artifacts_container_parses(self) -> None:
@@ -818,33 +825,47 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
         self.assertIsNone(sut.sops)
 
     def test_requirements_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Requirements\n\n- REQ-0001: Some requirement.\n")
+            format_text(f"## Related Artifacts\n\n### Requirements\n\n- REQ {_VALID_UUID}: Some requirement.\n")
         )
 
         self.assertIsNotNone(sut.requirements)
-        self.assertEqual([item.text for item in sut.requirements.items], ["REQ-0001: Some requirement."])
+        self.assertEqual([item.text for item in sut.requirements.items], [f"REQ {_VALID_UUID}: Some requirement."])
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
         self.assertIsNone(sut.sops)
 
-    def test_sops_sub_list_present(self) -> None:
-        sut = RelatedArtifacts.from_text(format_text("## Related Artifacts\n\n### Sops\n\n- SOP-0042: Some SOP.\n"))
+    def test_risks_sub_list_present(self) -> None:
+        sut = RelatedArtifacts.from_text(
+            format_text(f"## Related Artifacts\n\n### Risks\n\n- RSK {_VALID_UUID}: Some risk.\n")
+        )
 
-        self.assertIsNotNone(sut.sops)
-        self.assertEqual([item.text for item in sut.sops.items], ["SOP-0042: Some SOP."])
+        self.assertIsNotNone(sut.risks)
+        self.assertEqual([item.text for item in sut.risks.items], [f"RSK {_VALID_UUID}: Some risk."])
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.sops)
+
+    def test_sops_sub_list_present(self) -> None:
+        sut = RelatedArtifacts.from_text(
+            format_text(f"## Related Artifacts\n\n### Sops\n\n- SOP {_VALID_UUID}: Some SOP.\n")
+        )
+
+        self.assertIsNotNone(sut.sops)
+        self.assertEqual([item.text for item in sut.sops.items], [f"SOP {_VALID_UUID}: Some SOP."])
+        self.assertIsNone(sut.requirements)
+        self.assertIsNone(sut.decisions)
+        self.assertIsNone(sut.goals)
+        self.assertIsNone(sut.risks)
 
     def test_sub_list_present_without_any_bullet_raises_assertion_error(self) -> None:
-        for heading in ("Requirements", "Decisions", "Goals", "Acceptance Criteria", "Sops"):
+        for heading in ("Requirements", "Decisions", "Goals", "Risks", "Sops"):
             with self.subTest(heading=heading):
                 with self.assertRaises(AssertionError):
                     RelatedArtifacts.from_text(format_text(f"## Related Artifacts\n\n### {heading}\n"))
@@ -857,7 +878,7 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Goals(items=[])
         with self.assertRaises(ValidationError):
-            AcceptanceCriteria(items=[])
+            Risks(items=[])
         with self.assertRaises(ValidationError):
             Sops(items=[])
 
@@ -1133,17 +1154,25 @@ class TestSopReferenceDocumentRoundTrips(unittest.TestCase):
         related_artifacts = sut.related_artifacts
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
-            [item.text for item in related_artifacts.requirements.items], ["REQ-0001: Day-one account readiness"]
+            [item.text for item in related_artifacts.requirements.items],
+            ["REQ b2ae2dbd-3bc7-404c-8aa7-0a6eb457d2df: Day-one account readiness"],
         )
         self.assertEqual(
-            [item.text for item in related_artifacts.decisions.items], ["DEC-0001: SSO provider selection"]
+            [item.text for item in related_artifacts.decisions.items],
+            ["DEC 8626319c-91ed-43c3-97b3-527de8579cb5: SSO provider selection"],
         )
-        self.assertEqual([item.text for item in related_artifacts.goals.items], ["GOL-0001: Four-hour onboarding"])
         self.assertEqual(
-            [item.text for item in related_artifacts.acceptance_criteria.items],
-            ["ACC-0001: New hire can sign in on day one"],
+            [item.text for item in related_artifacts.goals.items],
+            ["GOL e079c8ec-2e2e-4812-9360-50bb522ed20c: Four-hour onboarding"],
         )
-        self.assertEqual([item.text for item in related_artifacts.sops.items], ["SOP-0042: IT Account Deprovisioning"])
+        self.assertEqual(
+            [item.text for item in related_artifacts.risks.items],
+            ["RSK 1a8b158b-01b7-43f7-bffe-beea23780158: Account provisioning delays"],
+        )
+        self.assertEqual(
+            [item.text for item in related_artifacts.sops.items],
+            ["SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: IT Account Deprovisioning"],
+        )
 
     def test_updates_entry_computed_fields(self) -> None:
         sut = Sop.from_text(_REFERENCE_TEXT)
@@ -1155,6 +1184,113 @@ class TestSopReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertEqual(entry.timestamp, "2026-08-30 14:30:00.000+02:00")
         self.assertEqual(entry.title, "Approved")
         self.assertIn("The IT Manager signed off", entry.content.text)
+
+
+# Every sub-list class alongside its own correct type tag (feat-135-related-artifacts-risks).
+# `Sops` is included: it enforces the same format via its own inline `field_validator`
+# rather than a shared base class (no cross-domain twin), but REQ-004/REQ-006 apply to it
+# just the same.
+_SUB_LIST_CLASSES_AND_TAGS = [
+    (Requirements, "REQ"),
+    (Decisions, "DEC"),
+    (Goals, "GOL"),
+    (Risks, "RSK"),
+    (Sops, "SOP"),
+]
+
+
+class TestSubListCrossReferenceFormatMatrix(unittest.TestCase):
+    """Every `RelatedArtifacts` sub-list -- including the `Sops` self-reference -- enforces
+    the shared `"<TAG> <uuid>: <title>"` cross-reference format
+    (feat-135-related-artifacts-risks, REQ-004, ACC-002/ACC-003): a well-formed bullet
+    parses, and each malformed variant (wrong tag, uppercase uuid, malformed uuid, dash
+    instead of space, missing title) raises `pydantic.ValidationError`.
+    """
+
+    def test_well_formed_bullet_parses(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(len(sut.items), 1)
+
+    def test_wrong_type_tag_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            wrong_tag = next(other_tag for _, other_tag in _SUB_LIST_CLASSES_AND_TAGS if other_tag != tag)
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {wrong_tag} {_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_uppercase_uuid_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID.upper()}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_malformed_uuid_raises_validation_error(self) -> None:
+        # One hex digit short in the last group.
+        malformed_uuid = "12345678-1234-1234-1234-123456789a"
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {malformed_uuid}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_dash_instead_of_space_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag}-{_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_missing_title_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}:\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_decisions_rejects_adr_tag(self) -> None:
+        """`Decisions` is DEC-only (REQ-005/ACC-004): an `ADR` bullet is rejected."""
+        text = format_text(f"### Decisions\n\n- ADR {_VALID_UUID}: A title\n")
+
+        with self.assertRaises(ValidationError):
+            Decisions.from_text(text)
+
+
+class TestSubListNotesCapture(unittest.TestCase):
+    """A bullet with a trailing indented notes paragraph parses into `.items[0].notes`;
+    a bare bullet leaves `.items[0].notes` as `None` (feat-135-related-artifacts-risks,
+    REQ-006, ACC-005) -- every sub-list's `items` (incl. `Sops`) is now
+    `list[MarkdownListItemWithNotes]`.
+    """
+
+    def test_bullet_with_notes_captures_notes(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n\n  A paraphrase note.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNotNone(sut.items[0].notes)
+
+    def test_bare_bullet_leaves_notes_none(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNone(sut.items[0].notes)
 
 
 if __name__ == "__main__":

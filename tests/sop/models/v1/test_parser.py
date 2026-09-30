@@ -133,23 +133,23 @@ _FULL_DOC = textwrap.dedent(
 
     ### Requirements
 
-    - REQ-0001: Onboarding
+    - REQ b2ae2dbd-3bc7-404c-8aa7-0a6eb457d2df: Onboarding
 
     ### Decisions
 
-    - DEC-0001: SSO choice
+    - DEC 8626319c-91ed-43c3-97b3-527de8579cb5: SSO choice
 
     ### Goals
 
-    - GOL-0001: Fast onboarding
+    - GOL e079c8ec-2e2e-4812-9360-50bb522ed20c: Fast onboarding
 
-    ### Acceptance Criteria
+    ### Risks
 
-    - ACC-0001: Account works
+    - RSK 1a8b158b-01b7-43f7-bffe-beea23780158: Account provisioning delays
 
     ### Sops
 
-    - SOP-0042: Account deprovisioning
+    - SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning
 
     ## More Information
 
@@ -253,7 +253,7 @@ class TestParseSop(unittest.TestCase):
 
             ### Sops
 
-            - SOP-0042: Account deprovisioning
+            - SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning
             """
         )
 
@@ -264,10 +264,10 @@ class TestParseSop(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
         self.assertEqual(
             [item.text for item in related_artifacts.sops.items],
-            ["SOP-0042: Account deprovisioning"],
+            ["SOP 9d4320c9-54cd-40f2-aeda-80a65b71b875: Account deprovisioning"],
         )
 
     def test_related_artifacts_with_zero_sub_lists_parses(self) -> None:
@@ -297,7 +297,7 @@ class TestParseSop(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
         self.assertIsNone(related_artifacts.sops)
 
 

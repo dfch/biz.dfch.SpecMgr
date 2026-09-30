@@ -149,11 +149,11 @@ _FULL_DOC = textwrap.dedent(
 
     ### Requirements
 
-    - REQ-9687: Order dashboard read latency
+    - REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency
 
     ### Goals
 
-    - GOL-0007: Cost-neutral platform migration
+    - GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration
 
     ## Pros and Cons
 
@@ -242,13 +242,14 @@ class TestParseDec(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Order dashboard read latency"],
+            ["REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency"],
         )
         self.assertIsNone(related_artifacts.decisions)
         self.assertEqual(
-            [item.text for item in related_artifacts.goals.items], ["GOL-0007: Cost-neutral platform migration"]
+            [item.text for item in related_artifacts.goals.items],
+            ["GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration"],
         )
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
         pros_and_cons = document.body.pros_and_cons
         self.assertIsNotNone(pros_and_cons)
@@ -311,7 +312,7 @@ class TestParseDec(unittest.TestCase):
 
                 ### Decisions
 
-                - DEC-2703: Nightly order export
+                - DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export
                 """
             )
         )
@@ -321,9 +322,12 @@ class TestParseDec(unittest.TestCase):
         related_artifacts = document.body.related_artifacts
         self.assertIsNotNone(related_artifacts)
         self.assertIsNone(related_artifacts.requirements)
-        self.assertEqual([item.text for item in related_artifacts.decisions.items], ["DEC-2703: Nightly order export"])
+        self.assertEqual(
+            [item.text for item in related_artifacts.decisions.items],
+            ["DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export"],
+        )
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
     def test_related_artifacts_with_zero_sub_lists_parses(self) -> None:
         """A `## Related Artifacts` H2 with none of the four sub-lists is valid (all children optional)."""
@@ -353,7 +357,7 @@ class TestParseDec(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
 
 class TestParseDecValueViolations(unittest.TestCase):
@@ -625,7 +629,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ### Requirements
 
-            - REQ-9687: Order dashboard read latency
+            - REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency
             """
         )
 

@@ -1,32 +1,13 @@
 {
   "$comment": "v1",
   "$defs": {
-    "AcceptanceCriteria": {
-      "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",
-      "properties": {
-        "items": {
-          "description": "Bullet list of cross-references to acceptance criteria, one per line (e.g. \"ACC-1234: <title>\"); must contain at least one item.",
-          "items": {
-            "$ref": "#/$defs/MarkdownListItem"
-          },
-          "minItems": 1,
-          "title": "Items",
-          "type": "array"
-        }
-      },
-      "required": [
-        "items"
-      ],
-      "title": "AcceptanceCriteria",
-      "type": "object"
-    },
     "Decisions": {
-      "description": "`### Decisions` under Related Artifacts -- bullet list of\ncross-references to decisions, one per line (e.g. \"DEC-2703: <title>\").",
+      "description": "`### Decisions` under Related Artifacts -- cross-references to\ndecisions.\n\nSubclasses the shared `models.md.DecisionsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `gol` still declares and\nowns its own concrete `Decisions` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to decisions, one per line (e.g. \"DEC-2703: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `DEC <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -137,12 +118,12 @@
       "type": "object"
     },
     "Goals": {
-      "description": "`### Goals` under Related Artifacts -- bullet list of\ncross-references to goals, one per line (e.g. \"GOL-0007: <title>\").",
+      "description": "`### Goals` under Related Artifacts -- cross-references to goals.\n\nSubclasses the shared `models.md.GoalsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `gol` still declares and\nowns its own concrete `Goals` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to goals, one per line (e.g. \"GOL-0007: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `GOL <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -234,12 +215,6 @@
       "title": "MarkdownComment",
       "type": "object"
     },
-    "MarkdownListItem": {
-      "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
-      "properties": {},
-      "title": "MarkdownListItem",
-      "type": "object"
-    },
     "MarkdownListItemWithNotes": {
       "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
       "properties": {
@@ -307,20 +282,8 @@
       "type": "object"
     },
     "RelatedArtifacts": {
-      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/acceptance\ncriteria). Optional as a whole; no consistency check is enforced between\nthe sub-lists.",
+      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/risks).\nOptional as a whole; no consistency check is enforced between the\nsub-lists.",
       "properties": {
-        "acceptance_criteria": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AcceptanceCriteria"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "`### Acceptance Criteria` sub-section. Optional."
-        },
         "decisions": {
           "anyOf": [
             {
@@ -356,18 +319,30 @@
           ],
           "default": null,
           "description": "`### Requirements` sub-section. Optional."
+        },
+        "risks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Risks` sub-section. Optional."
         }
       },
       "title": "RelatedArtifacts",
       "type": "object"
     },
     "Requirements": {
-      "description": "`### Requirements` under Related Artifacts -- bullet list of\ncross-references to other requirements, one per line\n(e.g. \"REQ-9687: <title>\").",
+      "description": "`### Requirements` under Related Artifacts -- cross-references to\nother requirements.\n\nSubclasses the shared `models.md.RequirementsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `gol` still declares and\nowns its own concrete `Requirements` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to other requirements, one per line (e.g. \"REQ-9687: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -378,6 +353,25 @@
         "items"
       ],
       "title": "Requirements",
+      "type": "object"
+    },
+    "Risks": {
+      "description": "`### Risks` under Related Artifacts -- cross-references to risks.\n\nSubclasses the shared `models.md.RisksBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `gol` still declares and\nowns its own concrete `Risks` type.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `RSK <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Risks",
       "type": "object"
     },
     "Source": {

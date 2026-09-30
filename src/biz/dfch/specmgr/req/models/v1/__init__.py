@@ -25,7 +25,6 @@ in a requirement markdown file -- see ``body.py`` for the full hierarchy.
 
 from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
-    AcceptanceCriteria,
     Characteristics,
     Decisions,
     Description,
@@ -37,6 +36,7 @@ from .body import (
     RelatedArtifacts,
     Requirement,
     Requirements,
+    Risks,
     Source,
     Tags,
 )
@@ -47,7 +47,6 @@ from .summary import ReqSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
-    "AcceptanceCriteria",
     "Characteristics",
     "Decisions",
     "Description",
@@ -62,6 +61,7 @@ __all__ = [
     "ReqFrontmatter",
     "Requirements",
     "ReqSummary",
+    "Risks",
     "Source",
     "Tags",
     "parse_req",
