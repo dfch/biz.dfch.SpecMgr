@@ -41,19 +41,19 @@ The International Safety Board Association (TISBA)
 
 ### Requirements
 
-- REQ-9687: Maximum temperatures of running engines in civil vehicles
+- REQ f04dc881-ec40-4072-9a75-35002fca2bd7: Maximum temperatures of running engines in civil vehicles
 
 ### Decisions
 
-- DEC-2703: Usage of metal conductors in moving engine parts
+- DEC 8502621c-177a-4e76-9bf2-d79b4e960b2c: Usage of metal conductors in moving engine parts
 
 ### Goals
 
-- GOL-0007: Competitive Engines in Consumer Vehicles
+- GOL 115fa636-2b33-4baa-be66-52bcbb8eaa7c: Competitive Engines in Consumer Vehicles
 
-### Acceptance Criteria
+### Risks
 
-- ACC-1234: Temperature Measurements on running combustion engines
+- RSK 7d310eed-1eeb-4820-bc79-03bc5ac4612c: Sensor Drift Under Sustained High-Temperature Operation
 
 ## More Information
 
