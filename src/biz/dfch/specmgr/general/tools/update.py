@@ -89,7 +89,7 @@ from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...prb.models.v1 import Prb, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
@@ -145,12 +145,13 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ..models import ParseFailureResult
+from ..models import ParseFailureResult, ValidateResult, ValidationErrorEntry
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text, splice_body
 from ._timestamps import now_timestamp
+from .validate import _CAUGHT_EXCEPTIONS
 
 __all__ = ["update"]
 
@@ -169,10 +170,13 @@ _UpdateFrontmatter = (
     | VcrFrontmatter
     | SysrsFrontmatter
     | ParseFailureResult
+    | ValidateResult
 )
 
 
-def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -> ReqFrontmatter | ParseFailureResult:
+def _update_req(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> ReqFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain requirement update tool's
@@ -202,8 +206,12 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-                Requirement.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+                    Requirement.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -212,8 +220,12 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
             read_req(path)  # warm the cache (feat-107-doc-cache Phase 3, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-        Requirement.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
+            Requirement.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = req_base_dir()
     with req_lock(id_):
@@ -236,7 +248,9 @@ def _update_req(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) -> UcFrontmatter | ParseFailureResult:
+def _update_uc(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> UcFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain use-case update tool's function
@@ -261,8 +275,12 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-                UseCase.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+                    UseCase.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -271,8 +289,12 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
             read_uc(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-        UseCase.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
+            UseCase.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = uc_base_dir()
     with uc_lock(id_):
@@ -295,7 +317,9 @@ def _update_uc(id_: str, content: str, offset: int | None, limit: int | None) ->
     return new_frontmatter
 
 
-def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -> TskFrontmatter | ParseFailureResult:
+def _update_tsk(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> TskFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain task list update tool's
@@ -320,8 +344,12 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-                Task.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+                    Task.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -330,8 +358,12 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
             read_tsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-        Task.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
+            Task.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
@@ -354,7 +386,9 @@ def _update_tsk(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) -> QaFrontmatter | ParseFailureResult:
+def _update_qa(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> QaFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain QA document update tool's
@@ -379,8 +413,12 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-                Qa.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+                    Qa.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -389,8 +427,12 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
             read_qa(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-        Qa.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
+            Qa.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = qa_base_dir()
     with qa_lock(id_):
@@ -413,7 +455,9 @@ def _update_qa(id_: str, content: str, offset: int | None, limit: int | None) ->
     return new_frontmatter
 
 
-def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -> PrbFrontmatter | ParseFailureResult:
+def _update_prb(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> PrbFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain problem statement update
@@ -438,8 +482,12 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-                Prb.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+                    Prb.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -448,8 +496,12 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
             read_prb(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-        Prb.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
+            Prb.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = prb_base_dir()
     with prb_lock(id_):
@@ -472,7 +524,9 @@ def _update_prb(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -> GolFrontmatter | ParseFailureResult:
+def _update_gol(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> GolFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain goal update tool's function
@@ -497,8 +551,12 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-                Goal.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+                    Goal.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -507,8 +565,12 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
             read_gol(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-        Goal.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
+            Goal.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = gol_base_dir()
     with gol_lock(id_):
@@ -531,7 +593,9 @@ def _update_gol(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -> RskFrontmatter | ParseFailureResult:
+def _update_rsk(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> RskFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain risk update tool's function
@@ -556,8 +620,12 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-                Risk.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+                    Risk.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -566,8 +634,12 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
             read_rsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-        Risk.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
+            Risk.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
@@ -590,7 +662,9 @@ def _update_rsk(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -> DecFrontmatter | ParseFailureResult:
+def _update_dec(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> DecFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim port of the previous per-domain decision update tool's
@@ -617,8 +691,12 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-                Decision.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+                    Decision.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -627,8 +705,12 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
             read_dec(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-        Decision.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
+            Decision.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = dec_base_dir()
     with dec_lock(id_):
@@ -651,7 +733,9 @@ def _update_dec(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) -> FeatFrontmatter | ParseFailureResult:
+def _update_feat(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> FeatFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``feat_lock``, ``load_by_id``,
@@ -678,8 +762,12 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
-                Feature.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+                    Feature.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -688,8 +776,12 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
             read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
-        Feature.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
+            Feature.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
@@ -712,7 +804,9 @@ def _update_feat(id_: str, content: str, offset: int | None, limit: int | None) 
     return new_frontmatter
 
 
-def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -> SopFrontmatter | ParseFailureResult:
+def _update_sop(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> SopFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
@@ -739,8 +833,12 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-                Sop.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+                    Sop.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -749,8 +847,12 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
             read_sop(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-        Sop.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
+            Sop.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = sop_base_dir()
     with sop_lock(id_):
@@ -773,7 +875,9 @@ def _update_sop(id_: str, content: str, offset: int | None, limit: int | None) -
     return new_frontmatter
 
 
-def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -> VcrFrontmatter | ParseFailureResult:
+def _update_vcr(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> VcrFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
     Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,
@@ -797,8 +901,12 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-                Vcr.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+                    Vcr.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -807,8 +915,12 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
             read_vcr(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-        Vcr.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
+            Vcr.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
@@ -833,7 +945,7 @@ def _update_vcr(id_: str, content: str, offset: int | None, limit: int | None) -
 
 def _update_sysrs(
     id_: str, content: str, offset: int | None, limit: int | None
-) -> SysrsFrontmatter | ParseFailureResult:
+) -> SysrsFrontmatter | ParseFailureResult | ValidateResult:
     """Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
     Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
@@ -859,8 +971,12 @@ def _update_sysrs(
                 return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
             assert_within(base_dir, path)
             spliced = splice_body(body_text(path), offset, limit, content)
-            with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-                Sysrs.from_text(format_text(spliced))
+            try:
+                with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+                    Sysrs.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=300)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
             fm_data["updated"] = now
@@ -869,8 +985,12 @@ def _update_sysrs(
             read_sysrs(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
         return new_frontmatter
 
-    with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-        Sysrs.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
+            Sysrs.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=300)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = sysrs_base_dir()
     with sysrs_lock(id_):

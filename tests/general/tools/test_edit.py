@@ -74,8 +74,6 @@ from pathlib import Path
 from typing import Any, Callable
 from unittest import mock
 
-from pydantic import ValidationError
-
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
@@ -84,8 +82,9 @@ from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.general.models import ParseFailureResult
+from biz.dfch.specmgr.general.models import ParseFailureResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 
 #: The shared domain-name source (feat-125-domain-lists): the whole-body
 #: document types the registration test's expected ``type`` enum derives from.
@@ -1261,50 +1260,55 @@ class TestEditMatchStageOnDisk(TempEditDirTestCase):
 
 
 class TestEditInvalidResult(TempEditDirTestCase):
-    """ACC-004/ACC-008: an edit that yields an invalid document raises the wrapped
-    validation error (the ``"<d> edit (body):"`` prefix, per-domain channel) and nothing
-    is written -- the disk write happens only after whole-document validation passes."""
+    """ACC-004/ACC-008: an edit that yields an invalid document returns the non-raising
+    ``ValidateResult(valid=False, ...)`` (feat-170 Phase 120, Bug 2 -- the single message
+    carries the ``"<d> edit (body):"`` prefix, per-domain channel) and nothing is written
+    -- the disk write happens only after whole-document validation passes."""
 
-    def test_deleting_mandatory_h1_raises_wrapped_assertion_error_file_byte_unchanged(self) -> None:
-        """ACC-004: deleting the mandatory H1 raises the wrapped ``AssertionError`` (the
-        per-domain ``"<d> edit (body):"`` prefix); the file stays byte-unchanged."""
+    def test_deleting_mandatory_h1_returns_validate_failure_file_byte_unchanged(self) -> None:
+        """ACC-004: deleting the mandatory H1 returns ``ValidateResult(valid=False, ...)`` whose
+        single message starts with the per-domain ``"<d> edit (body):"`` prefix (the structural
+        ``AssertionError`` channel; feat-170 Phase 120, Bug 2); the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
 
-                with self.assertRaises(AssertionError) as ctx:
-                    edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
+                result = edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
 
-                self.assertTrue(str(ctx.exception).startswith(_wrapped_prefix(case.doc_type)), str(ctx.exception))
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message.startswith(_wrapped_prefix(case.doc_type)), message)
                 self.assertEqual(path.read_bytes(), before)
 
-    def test_edit_producing_field_error_raises_wrapped_error_file_byte_unchanged(self) -> None:
-        """ACC-004: an edit producing a per-domain field error raises the wrapped error;
-        the file stays byte-unchanged."""
+    def test_edit_producing_field_error_returns_validate_failure_file_byte_unchanged(self) -> None:
+        """ACC-004: an edit producing a per-domain field error returns ``ValidateResult(valid=False,
+        ...)`` whose single message carries the per-domain ``"<d> edit (body):"`` prefix (both the
+        ``pydantic.ValidationError`` and the structural ``AssertionError`` channels funnel into the
+        same returned shape, feat-170 Phase 120, Bug 2); the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
                 field_error_old, field_error_new = _field_error_edit(case)
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
-                with self.assertRaises(expected_error) as ctx:
-                    edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+                result = edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
 
-                message = str(ctx.exception)
-                prefix = _wrapped_prefix(case.doc_type)
-                if case.field_error_is_validation:
-                    self.assertIn(prefix, message, message)
-                else:
-                    self.assertTrue(message.startswith(prefix), message)
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(_wrapped_prefix(case.doc_type), message, message)
                 self.assertEqual(path.read_bytes(), before)
 
-    def test_replace_all_invalid_edit_raises_wrapped_error_file_byte_unchanged(self) -> None:
+    def test_replace_all_invalid_edit_returns_validate_failure_file_byte_unchanged(self) -> None:
         """The 2-fold contract under ``replace_all=True``: an edit that yields an invalid
-        document raises the wrapped validation error and nothing is written -- the same
+        document returns ``ValidateResult(valid=False, ...)`` and nothing is written -- the same
         behavior as the single-match path (``_match_and_replace`` does not branch on the
         occurrence count after the replacement)."""
         for case in _CASES:
@@ -1313,23 +1317,21 @@ class TestEditInvalidResult(TempEditDirTestCase):
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
                 field_error_old, field_error_new = _field_error_edit(case)
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
-                with self.assertRaises(expected_error) as ctx:
-                    edit(
-                        id=created.id,
-                        type=case.doc_type,
-                        old_str=field_error_old,
-                        new_str=field_error_new,
-                        replace_all=True,
-                    )
+                result = edit(
+                    id=created.id,
+                    type=case.doc_type,
+                    old_str=field_error_old,
+                    new_str=field_error_new,
+                    replace_all=True,
+                )
 
-                message = str(ctx.exception)
-                prefix = _wrapped_prefix(case.doc_type)
-                if case.field_error_is_validation:
-                    self.assertIn(prefix, message, message)
-                else:
-                    self.assertTrue(message.startswith(prefix), message)
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(_wrapped_prefix(case.doc_type), message, message)
                 self.assertEqual(path.read_bytes(), before)
 
 
@@ -1463,6 +1465,121 @@ class TestEditParseFailure(TempEditDirTestCase):
                 result = edit(id=doc_id, type=case.doc_type, old_str="old text", new_str="new text")
 
                 self._assert_parse_failure_result(case.list_fn, path, doc_id, result)
+                self.assertEqual(path.read_bytes(), before)
+
+
+class TestEditValidateFailure(TempEditDirTestCase):
+    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
+    *post-edit* result is structurally/field invalid must return the non-raising
+    ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
+    exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with
+    nothing written to disk. Stage 1's OC-parity ``ValueError``s (not found / multiple matches)
+    and the pre-dispatch guards stay plain-raising (REQ-004) and are pinned by this module's
+    existing guard/match-stage tests, unchanged. All 12 whole-body domains (this module's
+    unified case shape, ``feat`` included).
+
+    The combined-failure case (REQ-010/ACC-007: broken existing document AND an edit that would
+    produce an invalid body) pins the Bug-1/Bug-2 precedence: ``edit`` holds the lock across the
+    whole read -> match -> validate -> write sequence, so the Phase-110 protected ``load_by_id``
+    runs first and returns ``ParseFailureResult`` (the invalid ``old_str``/``new_str`` are never
+    even matched).
+    """
+
+    def _assert_validate_failure(self, case: _Case, before: bytes, path: Path, result: Any) -> None:
+        """The shared Bug-2 result-shape assertions: the non-raising ``ValidateResult`` shape,
+        the capped message carrying the per-domain ``"<d> edit (body):"`` prefix, and the
+        byte-unchanged file (nothing written)."""
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn(_wrapped_prefix(case.doc_type), message, message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_invalid_edit_returns_validate_failure_nothing_written(self) -> None:
+        """A healthy document + an edit whose post-edit result carries the per-domain field error
+        (the stage-2 fixtures of this module's converted tests; both the
+        ``pydantic.ValidationError`` and the structural ``AssertionError`` channels) returns
+        ``ValidateResult(valid=False, ...)``; the file stays byte-unchanged."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+                field_error_old, field_error_new = _field_error_edit(case)
+
+                result = edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+
+                self._assert_validate_failure(case, before, path, result)
+
+    def test_h1_deletion_edit_returns_validate_failure_nothing_written(self) -> None:
+        """A healthy document + an edit deleting the mandatory H1 (structural failure) returns
+        ``ValidateResult(valid=False, ...)``; the file stays byte-unchanged."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+
+                result = edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
+
+                self._assert_validate_failure(case, before, path, result)
+
+    def test_long_message_is_capped_at_the_validate_limit(self) -> None:
+        """The single ``errors[].message`` is capped exactly as ``validate`` caps it (issue
+        #110): 300 chars via ``snippet`` plus the ``"... (truncated)"`` suffix -- an edit whose
+        post-edit result fails structurally past a long ``## Description`` filler (a duplicate
+        H1) produces a message comfortably past the cap before truncation (the cap is the same
+        shared machinery ``update``'s Phase-120 branch mirrors)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = self._seed(case, case.minimal_body)
+        path = self._doc_path(case, created.id)
+        before = path.read_bytes()
+        long_replacement = (
+            "Long tail content to push the parser's embedded snippet past its own cap: " * 6
+            + "\n# Duplicate Invalid Heading\n\n## Source"
+        )
+
+        result = edit(id=created.id, type="req", old_str="## Source", new_str=long_replacement)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_combined_failure_returns_parse_failure_result_nothing_written(self) -> None:
+        """REQ-010/ACC-007: broken existing document AND an edit whose post-edit result would be
+        invalid -- ``edit`` loads the existing document first (the Phase-110 protected
+        ``load_by_id``), so it returns ``ParseFailureResult`` and the invalid
+        ``old_str``/``new_str`` are never reached; the file stays byte-unchanged (still
+        broken)."""
+        for parse_failure_case, case in zip(_PARSE_FAILURE_CASES, _CASES):
+            with self.subTest(doc_type=case.doc_type):
+                self.assertEqual(parse_failure_case.doc_type, case.doc_type)
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+                field_error_old, field_error_new = _field_error_edit(case)
+
+                result = edit(id=doc_id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+
+                self.assertIsInstance(result, ParseFailureResult)
+                self.assertEqual(result.id, doc_id)
+                self.assertEqual(result.path, str(path.resolve()))
+                self.assertIn(_CORE_DEFECT, result.error)
+                failed = [
+                    summary for summary in parse_failure_case.list_fn().results if summary.title == "<failed to parse>"
+                ]
+                self.assertEqual(len(failed), 1)
+                # Option B (2026-09-26): identity is modulo the trailing pydantic line (follow-up issue #162).
+                self.assertEqual(_strip_pydantic_footer(result.error), _strip_pydantic_footer(failed[0].error))
                 self.assertEqual(path.read_bytes(), before)
 
 

@@ -151,7 +151,7 @@ from ...gol.tools._lock import gol_lock
 from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...prb.models.v1 import Prb, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
@@ -207,12 +207,13 @@ from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ..models import ParseFailureResult
+from ..models import ParseFailureResult, ValidateResult, ValidationErrorEntry
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text
 from ._timestamps import now_timestamp
+from .validate import _CAUGHT_EXCEPTIONS
 
 __all__ = ["edit"]
 
@@ -231,6 +232,7 @@ _EditFrontmatter = (
     | VcrFrontmatter
     | SysrsFrontmatter
     | ParseFailureResult
+    | ValidateResult
 )
 
 
@@ -301,7 +303,9 @@ def _match_and_replace(body: str, old_str: str, new_str: str, replace_all: bool)
     return result
 
 
-def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFrontmatter | ParseFailureResult:
+def _edit_req(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> ReqFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
     Mirror of the generic ``update`` tool's own ``_update_req`` adapter
@@ -326,8 +330,12 @@ def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
-            Requirement.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
+                Requirement.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -337,7 +345,9 @@ def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFro
     return new_frontmatter
 
 
-def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFrontmatter | ParseFailureResult:
+def _edit_uc(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> UcFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
@@ -357,8 +367,12 @@ def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFront
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
-            UseCase.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
+                UseCase.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -368,7 +382,9 @@ def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFront
     return new_frontmatter
 
 
-def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFrontmatter | ParseFailureResult:
+def _edit_tsk(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> TskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
@@ -388,8 +404,12 @@ def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
-            Task.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
+                Task.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -399,7 +419,9 @@ def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFro
     return new_frontmatter
 
 
-def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFrontmatter | ParseFailureResult:
+def _edit_qa(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> QaFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
@@ -419,8 +441,12 @@ def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFront
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
-            Qa.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
+                Qa.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -430,7 +456,9 @@ def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFront
     return new_frontmatter
 
 
-def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFrontmatter | ParseFailureResult:
+def _edit_prb(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> PrbFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
@@ -450,8 +478,12 @@ def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
-            Prb.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
+                Prb.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -461,7 +493,9 @@ def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFro
     return new_frontmatter
 
 
-def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFrontmatter | ParseFailureResult:
+def _edit_gol(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> GolFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
@@ -481,8 +515,12 @@ def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
-            Goal.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
+                Goal.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -492,7 +530,9 @@ def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFro
     return new_frontmatter
 
 
-def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFrontmatter | ParseFailureResult:
+def _edit_rsk(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> RskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
@@ -512,8 +552,12 @@ def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
-            Risk.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
+                Risk.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -523,7 +567,9 @@ def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFro
     return new_frontmatter
 
 
-def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFrontmatter | ParseFailureResult:
+def _edit_dec(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> DecFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
@@ -543,8 +589,12 @@ def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
-            Decision.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
+                Decision.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -554,7 +604,9 @@ def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFro
     return new_frontmatter
 
 
-def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatFrontmatter | ParseFailureResult:
+def _edit_feat(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> FeatFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the feature identified by ``id_``.
 
     Mirror of :func:`_edit_dec`'s shape (same ``feat_lock``, ``load_by_id``,
@@ -576,8 +628,12 @@ def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatF
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="feat", tool="edit", channel=BODY_CHANNEL):
-            Feature.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="feat", tool="edit", channel=BODY_CHANNEL):
+                Feature.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -587,7 +643,9 @@ def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatF
     return new_frontmatter
 
 
-def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFrontmatter | ParseFailureResult:
+def _edit_sop(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> SopFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
@@ -607,8 +665,12 @@ def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
-            Sop.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
+                Sop.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -618,7 +680,9 @@ def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFro
     return new_frontmatter
 
 
-def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFrontmatter | ParseFailureResult:
+def _edit_vcr(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> VcrFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
@@ -638,8 +702,12 @@ def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFro
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
-            Vcr.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
+                Vcr.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -649,7 +717,9 @@ def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFro
     return new_frontmatter
 
 
-def _edit_sysrs(id_: str, old_str: str, new_str: str, replace_all: bool) -> SysrsFrontmatter | ParseFailureResult:
+def _edit_sysrs(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> SysrsFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
@@ -669,8 +739,12 @@ def _edit_sysrs(id_: str, old_str: str, new_str: str, replace_all: bool) -> Sysr
             return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
-            Sysrs.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
+                Sysrs.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=300)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now

@@ -111,7 +111,7 @@ whichever concrete frontmatter model is returned.
 
 ## Functions
 
-### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter | ParseFailureResult'`
+### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
@@ -120,7 +120,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
 
 
-### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter | ParseFailureResult'`
+### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the feature identified by ``id_``.
 
@@ -131,7 +131,7 @@ divergence (see the module docstring): ``id_`` resolves via
 ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
 
 
-### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'GolFrontmatter | ParseFailureResult'`
+### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
@@ -140,7 +140,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
 ``GolNotFoundError``).
 
 
-### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'PrbFrontmatter | ParseFailureResult'`
+### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
@@ -149,7 +149,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``).
 
 
-### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'QaFrontmatter | ParseFailureResult'`
+### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
@@ -158,7 +158,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
 ``QaNotFoundError``).
 
 
-### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'ReqFrontmatter | ParseFailureResult'`
+### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
@@ -172,7 +172,7 @@ write, stage 1 is the domain-agnostic :func:`_match_and_replace` over
 whole document before the verbatim persist and the cache warm.
 
 
-### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'RskFrontmatter | ParseFailureResult'`
+### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
@@ -181,7 +181,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
 ``RskNotFoundError``).
 
 
-### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SopFrontmatter | ParseFailureResult'`
+### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
@@ -190,7 +190,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
 ``SopNotFoundError``).
 
 
-### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SysrsFrontmatter | ParseFailureResult'`
+### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
@@ -199,7 +199,7 @@ frontmatter carry-over with only ``updated`` bumped,
 ``write_sysrs_file``, ``SysrsNotFoundError``).
 
 
-### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TskFrontmatter | ParseFailureResult'`
+### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
@@ -208,7 +208,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
 
-### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter | ParseFailureResult'`
+### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
@@ -217,7 +217,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
 ``UcNotFoundError``).
 
 
-### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'VcrFrontmatter | ParseFailureResult'`
+### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 

@@ -50,7 +50,7 @@ after ``load_by_id``, inside the domain lock.
 
 ## Functions
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter | ParseFailureResult'`
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -63,7 +63,7 @@ domain -- merged from dev while still on the old per-domain mechanism
 (see :func:`_update_req`).
 
 
-### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter | ParseFailureResult'`
+### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
@@ -76,7 +76,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter | ParseFailureResult'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -87,7 +87,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter | ParseFailureResult'`
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -98,7 +98,7 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter | ParseFailureResult'`
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -109,7 +109,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter | ParseFailureResult'`
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -125,7 +125,7 @@ coordinates, and the *spliced result* is validated and persisted
 verbatim instead of the raw fragment.
 
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter | ParseFailureResult'`
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -136,7 +136,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter | ParseFailureResult'`
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -149,7 +149,7 @@ directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
 
-### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter | ParseFailureResult'`
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -161,7 +161,7 @@ from day one per ADR 36905d5b, so there was never a per-domain
 this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter | ParseFailureResult'`
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -172,7 +172,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter | ParseFailureResult'`
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -183,7 +183,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter | ParseFailureResult'`
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
