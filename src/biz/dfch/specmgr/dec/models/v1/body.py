@@ -31,7 +31,7 @@ and Problem Statement -> Decision Drivers -> Considered Options -> Decision
 Outcome (-> Consequences -> Confirmation) -> Roles and Responsibilities
 (-> Accountable -> Responsible -> Support -> Consulted -> Informed) -> Tags
 -> Source -> Related Artifacts (-> Requirements -> Decisions -> Goals ->
-Acceptance Criteria) -> Pros and Cons (-> Option 1: -> Option 2: -> ...) ->
+Risks) -> Pros and Cons (-> Option 1: -> Option 2: -> ...) ->
 More Information -> Updates (-> entry 1 -> entry 2 -> ...)), since
 `models.md`'s `MarkdownStr.from_text` distributes text among declared fields
 in that same order. `## Roles and Responsibilities` and `## Source` are
@@ -49,7 +49,6 @@ import re
 from pydantic import Field, computed_field, model_validator
 
 from ....models.md import (
-    MarkdownListItem,
     MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1,
@@ -61,6 +60,10 @@ from ....models.md import (
     SupportBase,
     ConsultedBase,
     InformedBase,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
     RolesAndResponsibilitiesBase,
     SourceBase,
     alias,
@@ -247,65 +250,59 @@ class Source(SourceBase):
     """
 
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to requirements, one per line
-    (e.g. "REQ-9687: <title>")."""
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    requirements.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
-    )
-
-
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>")."""
-
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Requirements` type.
+    """
 
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of
-    cross-references to goals, one per line (e.g. "GOL-0007: <title>")."""
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Decisions` type.
+    """
 
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>")."""
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Goals` type.
+    """
+
+
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
+
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `dec` still declares and
+    owns its own concrete `Risks` type.
+    """
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for four independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria). Optional as a whole; no consistency check is enforced between
-    the sub-lists.
+    `### ` cross-reference lists (requirements/decisions/goals/risks).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists.
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
 
 
 #: Matches a `### Option {N}: {name}` heading line as retained in a leaf
