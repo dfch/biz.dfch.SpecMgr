@@ -27,7 +27,6 @@ see ``body.py`` for the full hierarchy.
 
 from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
-    AcceptanceCriteria,
     Accountable,
     Consulted,
     Decisions,
@@ -40,6 +39,7 @@ from .body import (
     RelatedArtifacts,
     Requirements,
     Responsible,
+    Risks,
     RolesAndResponsibilities,
     SafetyAndPrecautions,
     Sop,
@@ -56,7 +56,6 @@ from .summary import SopSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
-    "AcceptanceCriteria",
     "Accountable",
     "Consulted",
     "Decisions",
@@ -69,6 +68,7 @@ __all__ = [
     "RelatedArtifacts",
     "Requirements",
     "Responsible",
+    "Risks",
     "RolesAndResponsibilities",
     "SafetyAndPrecautions",
     "Sop",

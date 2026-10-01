@@ -46,10 +46,13 @@ step 1 if this is genuinely a new SOP.
   entries (at least one). Numbers start at 1; leading zeros are
   accepted, gaps are allowed, duplicates are rejected.
 - `## Related Artifacts` -- optional container for up to five `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria, Sops (each `{ID}: {description}` per line; each
-  sub-list needs at least one item if present). `### Sops` is a
-  self-cross-reference (related/superseding SOPs).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks,
+  Sops (each bullet MUST match `<TAG> <uuid>: <title>` -- a
+  space-separated tag, a lowercase 8-4-4-4-12 hex UUID, and a title,
+  e.g. `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; each
+  sub-list needs at least one item if present; `Decisions` accepts
+  only the `DEC` tag, not `ADR`). `### Sops` is a self-cross-reference
+  (related/superseding SOPs), using the same format with the `SOP` tag.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),

@@ -7,8 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A new `### Risks` cross-reference sub-list (to `rsk`) in `req`/`gol`/
+  `dec`/`sop`'s `## Related Artifacts` section, added in the slot the
+  removed `### Acceptance Criteria` sub-list occupied (GitHub issue #135).
+
 ### Changed
 
+- **BREAKING**: every cross-reference sub-list under `req`/`gol`/`dec`/
+  `sop`'s `## Related Artifacts` (`Requirements`, `Decisions`, `Goals`,
+  `Risks`, plus `sop`'s own `Sops` self-reference) now enforces a common
+  bullet format: `"<TAG> <uuid>: <title>"` (space-separated, lowercase
+  8-4-4-4-12 hex UUID, full-line match). A previously-valid but
+  unvalidated bullet -- e.g. the old dash form `REQ-9687: <title>` or a
+  malformed UUID -- is now rejected with `pydantic.ValidationError`. Each
+  item also now supports an optional trailing notes paragraph
+  (`MarkdownListItemWithNotes`), matching `sysrs`'s existing shape. The
+  shared format validator/pattern was extracted into a new
+  `models/md/_cross_reference.py` helper, reused by `sysrs` and `vcr`
+  instead of their own independent, duplicated implementations, and the
+  four domains' recurring `Requirements`/`Decisions`/`Goals`/`Risks`
+  classes are now thin subclasses of new shared `RequirementsBase`/
+  `DecisionsBase`/`GoalsBase`/`RisksBase` classes in
+  `models/md/common_sections.py` (mirroring the `SourceBase`/RASCI
+  precedent from feat-29-dec-source-roles). `Decisions` in these four
+  domains now accepts only the `DEC` tag (rejects `ADR`), since `adr` is
+  slated for eventual removal (issue #46) -- `sysrs`'s own, structurally
+  separate `## Decisions` section still accepts `DEC|ADR`, a deliberate,
+  documented asymmetry. The 14 real, on-disk `docs/req/*.md` documents
+  were migrated ahead of time from the unvalidated `GOL-<uuid>` (dash)
+  form to the newly-enforced `GOL <uuid>` (space) form so they keep
+  parsing under the tightened schema. Packaged examples, templates, and
+  create/update instructions for `req`/`gol`/`dec`/`sop` were updated to
+  match (GitHub issue #135).
 - The four generic mutation tools (`update`, `edit`, `set_status`,
   `set_classification`) now return the non-raising structured
   `ParseFailureResult` (`error`/`path`/`id`) -- instead of raising the
@@ -40,6 +72,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exactly as the generic `validate` tool caps it (feat-110), mirroring
   `validate` including its own caught-exception set (GitHub issue #170,
   ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
+
+### Removed
+
+- **BREAKING**: the `### Acceptance Criteria` cross-reference sub-list
+  (`AcceptanceCriteria`/`acceptance_criteria`) is removed entirely from
+  `req`/`gol`/`dec`/`sop`'s `## Related Artifacts` section -- it referenced
+  an artifact type that was never implemented as a standalone domain;
+  acceptance criteria only ever existed as `AC-NNN` entries inside a `vcr`
+  document, which already owns the correct backward link (`## Verifies`).
+  Any existing document populating `### Acceptance Criteria` now fails to
+  parse via `get_<d>`/`parse_<d>`/`update`/`create_<d>` round-trips until
+  it is migrated to the new `### Risks` sub-list (see "Added"/"Changed"
+  above) (GitHub issue #135).
 
 ## [0.34.0] - 2026-09-29
 
