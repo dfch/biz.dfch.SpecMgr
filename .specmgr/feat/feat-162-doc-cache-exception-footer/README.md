@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-01T05:55:44.404+02:00'
 id: feat-162-doc-cache-exception-footer
-status: done
+status: review
 type: feat
-updated: '2026-10-01T13:00:00.000+02:00'
+updated: '2026-10-01T13:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -187,6 +187,10 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T13:15:00.000Z - Status set to review for PR
+
+All 6 phases (100/110/120/130/140/150) are complete, the full quality gate is green, and all acceptance criteria (ACC-001..ACC-006) are confirmed with concrete evidence (see Phase 150's Updates entry below). Status moved from `done` to `review` ahead of opening a pull request for human review -- not `done` yet, since the PR itself has not been reviewed/merged.
 
 #### 2026-10-01T13:00:00.000Z - Phase 150: Final Verification complete
 
