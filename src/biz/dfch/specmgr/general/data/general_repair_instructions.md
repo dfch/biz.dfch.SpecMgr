@@ -28,10 +28,9 @@ ambiguous -- do not guess.
   document that exists but fails to parse is returned, NOT raised: the
   result carries `error` (the parse-failure message -- field path and
   cause, plus a 1-based line reference and fix hint for structural
-  failures -- the same parse defect `list_$type()`'s failed row carries
-   for the same file; the trailing pydantic documentation line may differ
-   by read order, so treat the two texts as the same defect, not
-   byte-equal) and
+  failures -- byte-identical to `list_$type()`'s failed row `error`
+  for the same file, including the trailing pydantic documentation line)
+  and
   `path` (the absolute on-disk file you will read in step 2 and write
   back in step 5). That `error` is the defect you will fix. If the id is
   truly absent, `get_$type` raises the domain's not-found error -- in

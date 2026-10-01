@@ -669,24 +669,24 @@ type or cross-cutting:
     than under `vcr/resources/` since it is domain-knowledge other document
     types may also want to reference, and `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-     but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+      but not scoped to it), and `general/prompts/` (`compact_history` — rotates
       older `Recent Updates` entries out of any feature folder's `README.md`
-       into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
+      into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
       GitHub issue #150, Phase 1) — cross-cutting, takes `type` (one of the
       whole-body domains; ADR is explicitly out of scope — it is not a
       whole-body domain and has no generic dry-run `validate` tooling) plus an
-       optional `id`, and narrates the host-native repair loop for a document
-       that fails to parse: discover it via `get_<d>(id)`'s non-raising
-        `ParseFailureResult`-shaped result (with an `id` — the result carries
-        `error`, the parse-failure message, the same parse defect as
-        `list_<d>()`'s failed-row `error` for the same file (identical field
-        path and cause; the trailing pydantic documentation line may differ
-        by read order/cache state — Option B, 2026-09-26), plus `path`, the
-        absolute on-disk file; a truly absent id still raises the domain's
-        not-found error;
-       ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) or `list_<d>()`'s `<failed
-       to parse>` failed row (without one), read the raw file with the host's
-       own file-read tool
+      optional `id`, and narrates the host-native repair loop for a document
+      that fails to parse: discover it via `get_<d>(id)`'s non-raising
+      `ParseFailureResult`-shaped result (with an `id` — the result carries
+      `error`, the parse-failure message, byte-identical to
+      `list_<d>()`'s failed-row `error` for the same file (identical field
+      path and cause, including the trailing pydantic documentation line —
+      feat-162-doc-cache-exception-footer, GitHub issue #162), plus `path`, the
+      absolute on-disk file; a truly absent id still raises the domain's
+      not-found error;
+      ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) or `list_<d>()`'s `<failed
+      to parse>` failed row (without one), read the raw file with the host's
+      own file-read tool
       (no specmgr MCP tool can return the raw content of a document that fails
       to parse, and the generic `update` (or `edit`) tool is structurally unable to repair
       one — its per-domain adapters re-parse the existing document before it
@@ -719,11 +719,10 @@ type or cross-cutting:
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
     instead of raising the domain's not-found error — its `error` text
-    carries the same parse defect as that domain's `list_<d>` failed-row
-    `error` for the same file (identical field path and cause; the trailing
-    pydantic documentation line may differ by read order/cache state —
-    Option B, 2026-09-26; the str-faithful reconstruction is tracked as
-    follow-up issue #162), and `raw=True` on a broken document still
+    is byte-identical to that domain's `list_<d>` failed-row
+    `error` for the same file (identical field path and cause, including the trailing
+    pydantic documentation line —
+    feat-162-doc-cache-exception-footer, GitHub issue #162), and `raw=True` on a broken document still
     returns the result (never a raw `str`); a healthy document's shape and every other outcome
     are unchanged (feat-150-mcp-lifecycle-commands Phase 1a, ADR
     9080b37c-82b3-4f63-81f1-79641d0bf14c — the third extension of the

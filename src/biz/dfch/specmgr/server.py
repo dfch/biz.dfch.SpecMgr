@@ -391,10 +391,10 @@ whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec`
 ``feat``/``vcr``/``sysrs``; ``get_adr`` excluded) additionally returns a
 structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
 document that exists but fails to parse, instead of raising the domain's
-not-found error -- the ``error`` text carries the same parse defect as that
+not-found error -- the ``error`` text is byte-identical to that
 domain's ``list_<d>`` tool's failed-row ``error`` for the same file (identical
-field path and cause; the trailing pydantic documentation line may differ by
-read order/cache state -- Option B, 2026-09-26, follow-up issue #162), and
+field path and cause, including the trailing pydantic documentation line --
+feat-162-doc-cache-exception-footer, GitHub issue #162), and
 ``raw=True`` on a broken
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
