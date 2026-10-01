@@ -690,12 +690,12 @@ type or cross-cutting:
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
-     instead of raising the domain's not-found error — its `error` text
-     is byte-identical to that domain's `list_<d>` failed-row
-     `error` for the same file (identical field path and cause, including the trailing
-     pydantic documentation line —
-     feat-162-doc-cache-exception-footer, GitHub issue #162), and `raw=True` on a broken document still
-     returns the result (never a raw `str`); a healthy document's shape and every other outcome
+    instead of raising the domain's not-found error — its `error` text
+    is byte-identical to that domain's `list_<d>` failed-row
+    `error` for the same file (identical field path and cause, including the trailing
+    pydantic documentation line —
+    feat-162-doc-cache-exception-footer, GitHub issue #162), and `raw=True` on a broken document still
+    returns the result (never a raw `str`); a healthy document's shape and every other outcome
     are unchanged (feat-150-mcp-lifecycle-commands Phase 1a, ADR
     9080b37c-82b3-4f63-81f1-79641d0bf14c — the third extension of the
     ADR 519d1206 client-side-`isError`-truncation workaround chain after

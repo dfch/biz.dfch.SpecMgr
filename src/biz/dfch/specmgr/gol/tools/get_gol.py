@@ -70,8 +70,7 @@ from ._paths import GolNotFoundError, gol_base_dir
         "(`error`/`path`/`id`) instead of raising; "
         "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
         "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)."
-        " "
+        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
     ),
