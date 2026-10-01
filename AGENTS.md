@@ -652,10 +652,10 @@ type or cross-cutting:
        optional `id`, and narrates the host-native repair loop for a document
        that fails to parse: discover it via `get_<d>(id)`'s non-raising
         `ParseFailureResult`-shaped result (with an `id` — the result carries
-        `error`, the parse-failure message, the same parse defect as
+        `error`, the parse-failure message, byte-identical to
         `list_<d>()`'s failed-row `error` for the same file (identical field
-        path and cause; the trailing pydantic documentation line may differ
-        by read order/cache state — Option B, 2026-09-26), plus `path`, the
+        path and cause, including the trailing pydantic documentation line —
+        feat-162-doc-cache-exception-footer, GitHub issue #162), plus `path`, the
         absolute on-disk file; a truly absent id still raises the domain's
         not-found error;
        ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) or `list_<d>()`'s `<failed
@@ -690,13 +690,12 @@ type or cross-cutting:
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
-    instead of raising the domain's not-found error — its `error` text
-    carries the same parse defect as that domain's `list_<d>` failed-row
-    `error` for the same file (identical field path and cause; the trailing
-    pydantic documentation line may differ by read order/cache state —
-    Option B, 2026-09-26; the str-faithful reconstruction is tracked as
-    follow-up issue #162), and `raw=True` on a broken document still
-    returns the result (never a raw `str`); a healthy document's shape and every other outcome
+     instead of raising the domain's not-found error — its `error` text
+     is byte-identical to that domain's `list_<d>` failed-row
+     `error` for the same file (identical field path and cause, including the trailing
+     pydantic documentation line —
+     feat-162-doc-cache-exception-footer, GitHub issue #162), and `raw=True` on a broken document still
+     returns the result (never a raw `str`); a healthy document's shape and every other outcome
     are unchanged (feat-150-mcp-lifecycle-commands Phase 1a, ADR
     9080b37c-82b3-4f63-81f1-79641d0bf14c — the third extension of the
     ADR 519d1206 client-side-`isError`-truncation workaround chain after

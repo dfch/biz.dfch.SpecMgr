@@ -53,10 +53,9 @@ write-back must be host-native.
    - With an `id`: call `get_<type>(id)`. A document that exists but fails
      to parse is returned, not raised: the result carries `error` (the
      parse-failure message -- field path and cause, plus a 1-based line
-      reference and fix hint for structural failures -- the same parse
-      defect `list_<type>()`'s failed row carries; the trailing pydantic
-      documentation line may differ by read order, so treat the two as the
-      same defect, not byte-equal text) and `path` (the absolute on-disk
+      reference and fix hint for structural failures -- byte-identical to
+      `list_<type>()`'s failed row, including the trailing pydantic
+      documentation line) and `path` (the absolute on-disk
      file). That `error` is the defect you will fix. If the id is truly
      absent, the call raises the domain's not-found error -- use the
      `question` tool to ask for the right id (or scan `list_<type>()`'s
