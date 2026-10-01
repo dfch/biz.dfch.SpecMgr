@@ -69,14 +69,14 @@ from ._paths import ReqNotFoundError, req_base_dir
         "raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, "
         "default 1) is the first body line to return, `limit` (line count, default through end "
         "of body) how many; out-of-range values clamp (`offset > N` returns the empty string), "
-        "and coordinates with raw=False raise ValueError. A document that exists but fails to parse "
-        "returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; "
+        "and coordinates with raw=False raise ValueError."
+        " A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising; "
         "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
         "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)."
-        " An invalid "
-        "id (path-injection attempt or wrong "
-        "format) is also a ValueError, raised before any file access."
+        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
+        "any file access."
     ),
 )
 def get_req(

@@ -242,11 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
   Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
-  is byte-identical to the domain's `list_<d>` tool's failed-row
-  `error` for the same file (identical field path and cause, including the trailing
-  pydantic documentation line --
-  feat-162-doc-cache-exception-footer, GitHub issue #162), and `raw=True` on a broken document still returns
-  the result (never a raw `str`); a healthy document's return shape, a truly
+  is byte-identical to the domain's `list_<d>` tool's failed-row `error`
+  for the same file (identical field path and cause, including the trailing
+  pydantic documentation line -- feat-162-doc-cache-exception-footer,
+  GitHub issue #162), and `raw=True` on a broken document still returns the
+  result (never a raw `str`); a healthy document's return shape, a truly
   absent id (still raises the domain's not-found error), and an invalid id
   shape (still a `ValueError` before any file access) are all unchanged.
   This unblocks Phase 1's `repair` prompt with-id branch, which narrates
