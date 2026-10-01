@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-01T05:55:44.404+02:00'
 id: feat-162-doc-cache-exception-footer
-status: review
+status: done
 type: feat
-updated: '2026-10-01T09:42:40.596+02:00'
+updated: '2026-10-01T09:50:59.842+02:00'
 version: 1.0.0
 ---
 
@@ -188,7 +188,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 ### Current Status
 
-**As of 2026-10-01**: **Feature complete -- all phases (100/110/120/130/140/150/160) done, status `review`.** Phase 150 (Final Verification) walked all six Acceptance Criteria with concrete evidence (ACC-001..ACC-004 via targeted `unittest` runs against `tests/general/tools/test__doc_cache.py` and all 12 `tests/<d>/tools/test_get_<d>.py` modules; ACC-005 via a zero-hit repo-wide grep for the retired qualified phrases plus two-runs-each idempotency confirmation of `specmgr docs`/`mcp-docs`/`adr-toc`; ACC-006 via the full final quality gate) and ran the full final quality gate one more time: `ruff format --check` (1779 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), `pytest -n auto --cov=src --cov-report=` (3878 passed), all three doc generators confirmed idempotent (zero `git diff` across two consecutive runs each), and `specmgr coverage-badge` (re-ran, produced no diff -- badge already at 99%, unchanged). Phase 160 then addressed three pieces of code-review feedback left over from Phase 140's doc-restoration sweep -- `req/tools/get_req.py`'s `@mcp.tool(description=...)` string's split points, `AGENTS.md`'s `repair` prompt bullet's ragged continuation-line indentation, and `CHANGELOG.md`'s re-tightened `get_<d>` entry's ragged line-wrap -- all rendered-text-preserving tidy-ups, with the full quality gate re-confirmed green afterward. See the Updates entries below for the full per-phase evidence breakdown. Phase 900's Task 900.100 (feat-170 coordination) is intentionally left unchecked -- it is a deferred, cross-feature reminder for a future, separate pass once feat-170's branch has rebased onto `dev`, not part of this feature's own completion.
+**As of 2026-10-01**: **Feature complete -- all phases (100/110/120/130/140/150/160) done, status `done`, ready to merge via PR #176 (base `dev`).** Phase 150 (Final Verification) walked all six Acceptance Criteria with concrete evidence (ACC-001..ACC-004 via targeted `unittest` runs against `tests/general/tools/test__doc_cache.py` and all 12 `tests/<d>/tools/test_get_<d>.py` modules; ACC-005 via a zero-hit repo-wide grep for the retired qualified phrases plus two-runs-each idempotency confirmation of `specmgr docs`/`mcp-docs`/`adr-toc`; ACC-006 via the full final quality gate) and ran the full final quality gate one more time: `ruff format --check` (1779 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), `pytest -n auto --cov=src --cov-report=` (3878 passed), all three doc generators confirmed idempotent (zero `git diff` across two consecutive runs each), and `specmgr coverage-badge` (re-ran, produced no diff -- badge already at 99%, unchanged). Phase 160 then addressed three pieces of code-review feedback left over from Phase 140's doc-restoration sweep -- `req/tools/get_req.py`'s `@mcp.tool(description=...)` string's split points, `AGENTS.md`'s `repair` prompt bullet's ragged continuation-line indentation, and `CHANGELOG.md`'s re-tightened `get_<d>` entry's ragged line-wrap -- all rendered-text-preserving tidy-ups, with the full quality gate re-confirmed green afterward, and those Phase 160 fixes are included in PR #176, which now has all CI checks green and reports `mergeable: MERGEABLE`; status has accordingly moved from `review` back to `done`, with the user performing the actual GitHub merge. See the Updates entries below for the full per-phase evidence breakdown. Phase 900's Task 900.100 (feat-170 coordination) remains the sole intentionally unchecked, deliberately deferred item -- a cross-feature reminder for a future, separate pass once feat-170's branch has rebased onto the post-merge `dev`, not part of this feature's own completion.
 
 ### Blockers
 
@@ -197,6 +197,10 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T14:30:00.000Z - Status set to done, ready to merge
+
+PR #176 (base `dev`) has all CI checks green and reports `mergeable: MERGEABLE`, and Phase 160's review-feedback fixes are already included in that PR, so with the feature now fully complete status is moved from `review` back to `done` ahead of the merge; the user will perform the actual GitHub merge themselves, and Phase 900's Task 900.100 (feat-170 coordination) remains intentionally unchecked, deferred until feat-170's own branch rebases onto the post-merge `dev`.
 
 #### 2026-10-01T14:00:00.000Z - Phase 160: Address code-review feedback complete
 
