@@ -55,6 +55,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it is migrated to the new `### Risks` sub-list (see "Added"/"Changed"
   above) (GitHub issue #135).
 
+### Fixed
+
+- `general.tools._doc_cache.DocCache`'s `_fresh_exception` reconstruction
+  of a cached `pydantic.ValidationError` now preserves the trailing
+  `https://errors.pydantic.dev/...` documentation-link footer for a
+  genuine body-field failure (a recognized, pydantic-core-builtin error
+  kind), instead of unconditionally dropping it via a blanket
+  `PydanticCustomError` wrap. As a result, `get_<d>`'s non-raising
+  `ParseFailureResult.error` and `list_<d>`'s failed-row `error` for the
+  same broken file are now byte-identical in both read orders (list-first
+  and get-first), not merely the same defect modulo that trailing line
+  (GitHub issue #162).
+
 ## [0.34.0] - 2026-09-29
 
 ### Added
@@ -120,10 +133,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is explicitly out
   of scope) that currently fails to parse -- discover it via
   `get_<d>(id)`'s non-raising `ParseFailureResult`-shaped result (with an
-  `id` -- the result carries `error`, the parse-failure message, the same
-  parse defect as `list_<d>()`'s failed-row `error` for the same file
-  (identical field path and cause; the trailing pydantic documentation
-  line may differ by read order/cache state -- Option B, 2026-09-26),
+  `id` -- the result carries `error`, the parse-failure message,
+  byte-identical to `list_<d>()`'s failed-row `error` for the same file
+  (identical field path and cause, including the trailing pydantic
+  documentation line -- feat-162-doc-cache-exception-footer, GitHub issue #162),
   plus `path`, the absolute on-disk file; a truly absent id still raises
   the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
   or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
@@ -229,12 +242,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
   Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
-  carries the same parse defect as the domain's `list_<d>` tool's failed-row
-  `error` for the same file (identical field path and cause; the trailing
-  pydantic documentation line may differ by read order/cache state --
-  Option B, 2026-09-26, the str-faithful reconstruction tracked as
-  follow-up issue #162), and `raw=True` on a broken document still returns
-  the result (never a raw `str`); a healthy document's return shape, a truly
+  is byte-identical to the domain's `list_<d>` tool's failed-row `error`
+  for the same file (identical field path and cause, including the trailing
+  pydantic documentation line -- feat-162-doc-cache-exception-footer,
+  GitHub issue #162), and `raw=True` on a broken document still returns the
+  result (never a raw `str`); a healthy document's return shape, a truly
   absent id (still raises the domain's not-found error), and an invalid id
   shape (still a `ValueError` before any file access) are all unchanged.
   This unblocks Phase 1's `repair` prompt with-id branch, which narrates
