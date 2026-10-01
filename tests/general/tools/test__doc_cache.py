@@ -39,6 +39,20 @@ prototyped this strategy as a standalone, test-local function
 the validated strategy into production ``_fresh_exception`` itself, and
 these tests were retargeted to call it directly, so the spike prototype is
 no longer needed and was removed.
+
+Phase 120 (Task 120.100/120.110) adds the *cache-level* counterpart of the
+above: :class:`TestDocCacheRead`'s ``test_acc001_*`` methods drive a real
+cold read followed by a warm cache-hit re-read of the same unchanged file
+through an actual :meth:`DocCache.read` call (not a direct
+:func:`_fresh_exception` call) for all three ``CACHEABLE_ERROR_TYPES``
+members, including -- the one genuinely new case -- the body-field
+``ValidationError`` fixture's plain-passthrough reconstruction path
+surviving a real cache hit, footer included. Its
+``test_acc004_validation_error_body_field_hits_are_also_is_distinct_with_equal_type_and_message``
+extends the pre-existing ACC-013 ``is``-distinct-exception-objects
+regression test (ACC-004) to independently cover that same plain-passthrough
+path too, alongside the custom-wrap fallback path the original ACC-013 test
+already covered.
 """
 
 from __future__ import annotations
@@ -53,7 +67,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from biz.dfch.specmgr.general.tools._doc_cache import CACHEABLE_ERROR_TYPES, DocCache, _fresh_exception
-from biz.dfch.specmgr.req.models.v1 import parse_req
+from biz.dfch.specmgr.req.models.v1 import ReqDocument, parse_req
 
 
 class _FakeDoc:
@@ -365,6 +379,94 @@ class TestDocCacheRead(unittest.TestCase):
             self.sut.read(missing_path, self.parser)
         self.assertEqual(self.parser.calls, 0)
 
+    # -- feat-162-doc-cache-exception-footer, Phase 120 (Task 120.100, ACC-001) ------------
+    #
+    # Cold-vs-warm `str()` equality, driven through a real `DocCache.read()` cache hit (not a
+    # direct `_fresh_exception` call), for every member of `CACHEABLE_ERROR_TYPES`. The
+    # `AssertionError`/`ValidationError`-frontmatter/`MarkedYAMLError` cases below mirror the
+    # exact same `cold read -> warm read -> assertEqual(str(...), str(...))` shape the existing
+    # `test_acc013_*`/`test_acc019_*` regression tests already use (ACC-004/ACC-013/ACC-019
+    # below) -- they are kept here as their own, explicitly ACC-001-labeled tests (rather than
+    # relying solely on the ACC-004-labeled ones to also happen to prove it) since ACC-001 and
+    # ACC-004 are formally distinct acceptance criteria. The body-field `ValidationError` case
+    # is the one genuinely new test: no pre-Phase-120 test drove the footer-preserving
+    # plain-passthrough reconstruction path through a real `DocCache.read()` cache hit at all.
+
+    def test_acc001_assertion_error_cold_str_equals_warm_str(self) -> None:
+        """ACC-001: `AssertionError` cold `str()` == warm `str()` via a real cache hit."""
+        path = self._write("a.md", "RAISE:AssertionError:simulated structural failure")
+
+        with self.assertRaises(AssertionError) as cold_ctx:
+            self.sut.read(path, self.parser)  # cold: parse_fn actually runs and raises
+        with self.assertRaises(AssertionError) as warm_ctx:
+            self.sut.read(path, self.parser)  # warm: reconstructed via _fresh_exception on the cache hit
+
+        self.assertEqual(str(cold_ctx.exception), str(warm_ctx.exception))
+
+    def test_acc001_validation_error_frontmatter_cold_str_equals_warm_str(self) -> None:
+        """ACC-001: `ValidationError` (frontmatter-only fixture) cold `str()` == warm `str()`.
+
+        Reuses Phase 100's pinned ``_REQ_DOC_WITH_BAD_FRONTMATTER_STATUS`` fixture and the
+        real ``parse_req`` as the cache's own ``parse_fn``, so this exercises the custom-wrap
+        fallback reconstruction path (the already-custom ``"frontmatter_value_error"`` kind)
+        through an actual cold read followed by a warm cache-hit re-read of the same
+        unchanged file -- not a direct ``_fresh_exception`` call.
+        """
+        cache: DocCache[ReqDocument] = DocCache()
+        path = self._write("req-bad-frontmatter.md", _REQ_DOC_WITH_BAD_FRONTMATTER_STATUS)
+
+        with self.assertRaises(ValidationError) as cold_ctx:
+            cache.read(path, parse_req)  # cold
+        with self.assertRaises(ValidationError) as warm_ctx:
+            cache.read(path, parse_req)  # warm
+
+        self.assertEqual(str(cold_ctx.exception), str(warm_ctx.exception))
+        self.assertNotIn("https://errors.pydantic.dev", str(cold_ctx.exception))  # never had a footer
+
+    def test_acc001_validation_error_body_field_cold_str_equals_warm_str(self) -> None:
+        """ACC-001: `ValidationError` (body-field fixture) cold `str()` == warm `str()`, footer-bearing.
+
+        Reuses Phase 100's pinned ``_REQ_DOC_WITH_BAD_BODY_LEVEL`` fixture and the real
+        ``parse_req`` as the cache's own ``parse_fn``, so this exercises the plain,
+        recognized-kind pass-through reconstruction path -- the one this feature's own bug fix
+        (GitHub issue #162) targeted -- through an actual cold read followed by a warm
+        cache-hit re-read of the same unchanged file. Proves the trailing
+        ``https://errors.pydantic.dev`` documentation-link footer survives the warm
+        reconstruction, not just a direct ``_fresh_exception`` call (Phase 100/110 already
+        proved that; this proves the full ``DocCache.read`` cache-hit path does too).
+        """
+        cache: DocCache[ReqDocument] = DocCache()
+        path = self._write("req-bad-body-level.md", _REQ_DOC_WITH_BAD_BODY_LEVEL)
+
+        with self.assertRaises(ValidationError) as cold_ctx:
+            cache.read(path, parse_req)  # cold
+        with self.assertRaises(ValidationError) as warm_ctx:
+            cache.read(path, parse_req)  # warm
+
+        self.assertEqual(str(cold_ctx.exception), str(warm_ctx.exception))
+        self.assertIn("https://errors.pydantic.dev", str(cold_ctx.exception))
+        self.assertIn("https://errors.pydantic.dev", str(warm_ctx.exception))  # the footer survived the cache hit
+
+    def test_acc001_marked_yaml_error_cold_str_equals_warm_str(self) -> None:
+        """ACC-001: `yaml.YAMLError` cold `str()` == warm `str()` via a real cache hit.
+
+        Reuses the module's existing ``_make_marked_yaml_error`` fixture (a genuine,
+        unmocked ``yaml.error.MarkedYAMLError`` from actually parsing malformed YAML) as the
+        cache's own ``parse_fn``, rather than inventing a new malformed-YAML fixture.
+        """
+        model_cache: DocCache[_FakeModelDoc] = DocCache()
+        path = self._write("a.md", "irrelevant text -- the fake parser always raises")
+
+        def _always_raises_marked_yaml_error(_text: str) -> _FakeModelDoc:
+            raise _make_marked_yaml_error()
+
+        with self.assertRaises(yaml.YAMLError) as cold_ctx:
+            model_cache.read(path, _always_raises_marked_yaml_error)  # cold
+        with self.assertRaises(yaml.YAMLError) as warm_ctx:
+            model_cache.read(path, _always_raises_marked_yaml_error)  # warm
+
+        self.assertEqual(str(cold_ctx.exception), str(warm_ctx.exception))
+
     def test_acc009_parse_fn_receives_the_exact_text_that_was_hashed_no_second_file_read(self) -> None:
         """ACC-009: hash and parsed result always originate from one read.
 
@@ -430,7 +532,16 @@ class TestDocCacheRead(unittest.TestCase):
         self.assertEqual(str(ctx1.exception), str(ctx2.exception))
 
     def test_acc013_validation_error_hits_are_also_is_distinct_with_equal_type_and_message(self) -> None:
-        """ACC-013, ValidationError variant: the special-cased reconstruction path (REQ-011)."""
+        """ACC-013/ACC-004, ValidationError variant (custom-wrap fallback path): the
+        special-cased reconstruction path (REQ-011), using a hand-built, already-custom-typed
+        (frontmatter-style) error. See
+        :meth:`test_acc004_validation_error_body_field_hits_are_also_is_distinct_with_equal_type_and_message`
+        immediately below for the sibling proof against the *other* reconstruction code path
+        (the plain, recognized-kind pass-through a genuine body-field failure takes) --
+        feat-162-doc-cache-exception-footer's two-path reconstruction (Phase 110) means each
+        path must independently prove `is`-distinctness, not just the one this test alone
+        already covered.
+        """
         model_cache: DocCache[_FakeModelDoc] = DocCache()
         path = self._write("a.md", "irrelevant text -- the fake parser always raises")
 
@@ -445,6 +556,30 @@ class TestDocCacheRead(unittest.TestCase):
         self.assertIsNot(ctx1.exception, ctx2.exception)
         self.assertIs(type(ctx1.exception), type(ctx2.exception))
         self.assertEqual(str(ctx1.exception), str(ctx2.exception))
+
+    def test_acc004_validation_error_body_field_hits_are_also_is_distinct_with_equal_type_and_message(
+        self,
+    ) -> None:
+        """ACC-004 (feat-162-doc-cache-exception-footer, Phase 120, Task 120.110): the plain,
+        recognized-kind pass-through reconstruction path -- the one a genuine body-field
+        failure actually takes, and the one this feature's own bug fix (GitHub issue #162)
+        targeted -- independently proves `is`-distinctness too, not just the custom-wrap
+        fallback path :meth:`test_acc013_validation_error_hits_are_also_is_distinct_with_equal_type_and_message`
+        above already covers. Reuses Phase 100's pinned ``_REQ_DOC_WITH_BAD_BODY_LEVEL``
+        fixture and the real ``parse_req``, driven through a real `DocCache.read()` cache hit.
+        """
+        cache: DocCache[ReqDocument] = DocCache()
+        path = self._write("req-bad-body-level.md", _REQ_DOC_WITH_BAD_BODY_LEVEL)
+
+        with self.assertRaises(ValidationError) as ctx1:
+            cache.read(path, parse_req)
+        with self.assertRaises(ValidationError) as ctx2:
+            cache.read(path, parse_req)
+
+        self.assertIsNot(ctx1.exception, ctx2.exception)
+        self.assertIs(type(ctx1.exception), type(ctx2.exception))
+        self.assertEqual(str(ctx1.exception), str(ctx2.exception))
+        self.assertIn("https://errors.pydantic.dev", str(ctx1.exception))  # footer present on both hits
 
     def test_acc019_marked_yaml_error_hits_are_also_is_distinct_with_equal_type_and_message(self) -> None:
         """ACC-019 (feat-107-doc-cache Phase 8): the third CACHEABLE_ERROR_TYPES member --
