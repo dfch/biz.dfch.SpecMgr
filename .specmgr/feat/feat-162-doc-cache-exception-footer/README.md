@@ -4,7 +4,7 @@ created: '2026-10-01T05:55:44.404+02:00'
 id: feat-162-doc-cache-exception-footer
 status: planning
 type: feat
-updated: '2026-10-01T09:30:00.000+02:00'
+updated: '2026-10-01T10:15:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -136,11 +136,11 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 #### Phase 130: Tighten the 12 per-domain consistency tests
 
-- [ ] Task 130.100: For each of the 12 `tests/<d>/tools/test_get_<d>.py` modules, replace the relaxed, `_strip_pydantic_footer`-based `error`-text comparison with plain `==` identity, in both read orders (list-first and get-first, exercised via call ordering against a fresh per-test temp file within the same test process -- see REQ-003), and delete the now-dead helper copy.
+- [x] Task 130.100: For each of the 12 `tests/<d>/tools/test_get_<d>.py` modules, replace the relaxed, `_strip_pydantic_footer`-based `error`-text comparison with plain `==` identity, in both read orders (list-first and get-first, exercised via call ordering against a fresh per-test temp file within the same test process -- see REQ-003), and delete the now-dead helper copy.
 
-- [ ] Task 130.110: Add/confirm the `list_<d>()` row-stability-across-repeated-calls test (ACC-003) for at least one representative domain (or all 12, if cheap -- decide during implementation).
+- [x] Task 130.110: Add/confirm the `list_<d>()` row-stability-across-repeated-calls test (ACC-003) for at least one representative domain (or all 12, if cheap -- decide during implementation).
 
-- [ ] Task 130.120: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [x] Task 130.120: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 #### Phase 140: Doc-restoration sweep
 
@@ -178,7 +178,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 ### Current Status
 
-**As of 2026-10-01**: Phase 120 (cache-level tests) complete. `tests/general/tools/test__doc_cache.py`'s `TestDocCacheRead` gained four new `test_acc001_*` tests (Task 120.100) proving cold `str()` == warm `str()` through a real `DocCache.read()` cache hit (not a direct `_fresh_exception` call) for every `CACHEABLE_ERROR_TYPES` member: `AssertionError`, `ValidationError` (both the frontmatter-only custom-wrap-fallback fixture and, the genuinely new case, the body-field plain-passthrough fixture -- proving the footer survives a real cache hit, not just a direct `_fresh_exception` call), and `yaml.YAMLError` (reusing the existing `_make_marked_yaml_error` fixture). A new `test_acc004_validation_error_body_field_hits_are_also_is_distinct_with_equal_type_and_message` test (Task 120.110) extends the pre-existing ACC-013 `is`-distinct-exception-objects regression test to independently cover the plain-passthrough reconstruction path too (the pre-existing test only exercised the custom-wrap fallback path); both tests' docstrings now cross-reference each other, and the pre-existing ACC-013/ACC-019 tests were confirmed to still pass unchanged. Full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src --cov-report=`, 3854 passed, up from 3849). Phase 130 (tightening the 12 per-domain consistency tests, ACC-002/ACC-003) remains, followed by Phase 140's doc-restoration sweep (ACC-005) and Phase 150's final verification (ACC-006). Phase 100/110's own prior status (spike validated against pydantic 2.13.4/pydantic-core 2.46.4; mixed frontmatter+body `ValidationError` confirmed not producible; the production fix shipped and its own three pinned spike tests retargeted to call `_fresh_exception` directly; `feat-170-update-edit-parse-failure`'s independent copy of the same qualified language on its own not-yet-merged branch confirmed via read-only inspection) remains accurate and is preserved in the Updates entries below.
+**As of 2026-10-01**: Phase 130 (tightening the 12 per-domain consistency tests) complete. All 12 `tests/<d>/tools/test_get_<d>.py` modules (dec/feat/gol/prb/qa/req/rsk/sop/sysrs/tsk/uc/vcr) had their `_strip_pydantic_footer` helper and its now-unused `import re` deleted, their single `test_broken_document_error_matches_list_failed_row` test split into two plain-`==` tests covering both read orders (`..._get_first`/`..._list_first`, ACC-002), and a new `test_broken_document_list_error_is_stable_across_repeated_calls` test added to every one of the 12 (ACC-003, ACC-002/ACC-003 fully closed). Full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src --cov-report=`, 3878 passed, up from 3854 -- 24 new tests, 12 files x 2 net-new tests each). Phase 140's doc-restoration sweep (ACC-005) and Phase 150's final verification (ACC-006) remain. Phase 100/110/120's own prior status (production fix shipped; cache-level ACC-001/ACC-004 tests in place) remains accurate and is preserved in the Updates entries below.
 
 ### Blockers
 
@@ -187,6 +187,14 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T10:15:00.000Z - Phase 130 complete
+
+Tightened all 12 `tests/<d>/tools/test_get_<d>.py` consistency tests (Task 130.100/130.110), applied mechanically and identically across dec/feat/gol/prb/qa/req/rsk/sop/sysrs/tsk/uc/vcr via a one-off Python transformation script (not hand-retyped per file, per the plan's own guidance to minimize inconsistency risk), then verified via `git diff --stat` that every file's diff was the same shape/size. Per file: (1) deleted the `_strip_pydantic_footer(text: str) -> str` module-level helper (docstring citing "Option B, 2026-09-26"/"follow-up issue #162") and its now-unused `import re`; (2) renamed `test_broken_document_error_matches_list_failed_row` to `test_broken_document_error_matches_list_failed_row_get_first` (unchanged body: create doc, break it on disk, call `get_<d>` THEN `list_<d>`), changing its assertion from the `_strip_pydantic_footer`-wrapped comparison to plain `self.assertEqual(get_result.error, failed[0].error)`, keeping both pre-existing `assertIn` core-defect-fragment checks; (3) added a new sibling `test_broken_document_error_matches_list_failed_row_list_first` exercising the opposite order (create doc, break it, call `list_<d>()` FIRST, find the failed row, THEN call `get_<d>` SECOND), same plain-equality + `assertIn` assertions -- closing ACC-002 in both read orders, each order a genuine cold-then-warm cache transition within that test's own fresh per-test `tempfile.TemporaryDirectory()` (REQ-003; no subprocess/fresh-process isolation needed, confirming the plan's own stated assumption). `feat`'s own `_doc_path(id_)` signature (the one structural outlier among the 12, vs. every other domain's parameterless `_doc_path()`) was preserved correctly (`self._doc_path(created.id)`) by the transformation script -- flagged here as the only pattern divergence noted during implementation, not a blocker.
+
+ACC-003 (Task 130.110): added `test_broken_document_list_error_is_stable_across_repeated_calls` to **all 12** domains, not just one representative domain -- the plan explicitly left this to implementer judgment ("at least one representative domain (or all 12, if cheap -- decide during implementation)"). Decision: added to all 12, since the test is mechanical/low-risk, was already being added via the same transformation pass touching all 12 files for Task 130.100, and per-domain consistency (every domain's own `get_<d>`/`list_<d>` test module carrying the same completeness) outweighs the marginal cost of 12 near-identical ~8-line tests. Each calls `list_<d>()` twice against the same broken on-disk file within one process and asserts the failed row's `.error` text is byte-identical across both calls.
+
+One ruff `F841` round-trip during implementation: the stability test's `created = create_<d>(_MINIMAL_BODY)` local was unused in 11 of the 12 domains (only `feat` needs `created.id` for its own `_doc_path(id_)` signature), caught immediately by `ruff check` and fixed by dropping the assignment (`create_<d>(_MINIMAL_BODY)` as a bare call) in those 11 -- `feat` correctly keeps the assignment. Full quality gate green: `ruff format --check` (1779 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), `pytest -n auto --cov=src --cov-report=` (3878 passed, up from 3854 -- exactly +24, i.e. +2 net-new tests per file x 12 files, matching the 1-test-split-into-2 plus 1-new-stability-test arithmetic). No production code touched (scope-compliant); `tests/general/tools/test__doc_cache.py` and `tests/general/prompts/test_repair.py` untouched (also scope-compliant, reserved for Phase 100/110/120 -- already done -- and Phase 140 respectively).
 
 #### 2026-10-01T09:30:00.000Z - Phase 120 complete
 
