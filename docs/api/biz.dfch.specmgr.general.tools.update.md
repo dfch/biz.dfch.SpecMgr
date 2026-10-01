@@ -358,6 +358,14 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
         ``offset + limit - 1 > N`` (raised after the on-disk body is read;
         the message names the offending value(s) and the allowed range).
         Nothing is written in any of these cases.
+    KeyError
+        A plain ``KeyError`` still marks ``type="adr"`` (inherited from
+        the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
+        UUID-shaped domain set, so ``type="adr"`` with a well-formed
+        UUID ``id`` passes ``validate_id`` and reaches the lookup, which
+        has no ``adr`` entry. Nothing is written. Unreachable through the
+        MCP server, whose ``type`` enum carries the 12 whole-body domains
+        only; a direct-Python-caller outcome.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

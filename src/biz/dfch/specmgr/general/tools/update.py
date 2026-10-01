@@ -191,7 +191,7 @@ from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text, splice_body
 from ._timestamps import now_timestamp
-from .validate import _CAUGHT_EXCEPTIONS
+from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 
 __all__ = ["update"]
 
@@ -256,7 +256,7 @@ def _update_req(
                 with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
                     Requirement.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -270,7 +270,7 @@ def _update_req(
         with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
             Requirement.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = req_base_dir()
@@ -325,7 +325,7 @@ def _update_uc(
                 with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
                     UseCase.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -339,7 +339,7 @@ def _update_uc(
         with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
             UseCase.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = uc_base_dir()
@@ -394,7 +394,7 @@ def _update_tsk(
                 with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
                     Task.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -408,7 +408,7 @@ def _update_tsk(
         with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
             Task.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = tsk_base_dir()
@@ -463,7 +463,7 @@ def _update_qa(
                 with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
                     Qa.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -477,7 +477,7 @@ def _update_qa(
         with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
             Qa.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = qa_base_dir()
@@ -532,7 +532,7 @@ def _update_prb(
                 with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
                     Prb.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -546,7 +546,7 @@ def _update_prb(
         with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
             Prb.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = prb_base_dir()
@@ -601,7 +601,7 @@ def _update_gol(
                 with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
                     Goal.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -615,7 +615,7 @@ def _update_gol(
         with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
             Goal.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = gol_base_dir()
@@ -670,7 +670,7 @@ def _update_rsk(
                 with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
                     Risk.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -684,7 +684,7 @@ def _update_rsk(
         with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
             Risk.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = rsk_base_dir()
@@ -741,7 +741,7 @@ def _update_dec(
                 with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
                     Decision.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -755,7 +755,7 @@ def _update_dec(
         with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
             Decision.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = dec_base_dir()
@@ -812,7 +812,7 @@ def _update_feat(
                 with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
                     Feature.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -826,7 +826,7 @@ def _update_feat(
         with wrap_tool_errors(domain="feat", tool="update", channel=BODY_CHANNEL):
             Feature.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = feat_base_dir()
@@ -883,7 +883,7 @@ def _update_sop(
                 with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
                     Sop.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -897,7 +897,7 @@ def _update_sop(
         with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
             Sop.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = sop_base_dir()
@@ -951,7 +951,7 @@ def _update_vcr(
                 with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
                     Vcr.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -965,7 +965,7 @@ def _update_vcr(
         with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
             Vcr.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = vcr_base_dir()
@@ -1021,7 +1021,7 @@ def _update_sysrs(
                 with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
                     Sysrs.from_text(format_text(spliced))
             except _CAUGHT_EXCEPTIONS as ex:
-                message = snippet(str(ex), max_chars=300)
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
             now = now_timestamp()
             fm_data = existing.frontmatter.model_dump()
@@ -1035,7 +1035,7 @@ def _update_sysrs(
         with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
             Sysrs.from_text(format_text(content))
     except _CAUGHT_EXCEPTIONS as ex:
-        message = snippet(str(ex), max_chars=300)
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     base_dir = sysrs_base_dir()
@@ -1235,6 +1235,14 @@ def update(
             ``offset + limit - 1 > N`` (raised after the on-disk body is read;
             the message names the offending value(s) and the allowed range).
             Nothing is written in any of these cases.
+        KeyError
+            A plain ``KeyError`` still marks ``type="adr"`` (inherited from
+            the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
+            UUID-shaped domain set, so ``type="adr"`` with a well-formed
+            UUID ``id`` passes ``validate_id`` and reaches the lookup, which
+            has no ``adr`` entry. Nothing is written. Unreachable through the
+            MCP server, whose ``type`` enum carries the 12 whole-body domains
+            only; a direct-Python-caller outcome.
         ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
         PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
         FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

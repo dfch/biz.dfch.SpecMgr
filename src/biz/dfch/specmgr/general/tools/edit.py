@@ -248,7 +248,7 @@ from ._domains import WHOLE_BODY_DOMAINS
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text
 from ._timestamps import now_timestamp
-from .validate import _CAUGHT_EXCEPTIONS
+from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 
 __all__ = ["edit"]
 
@@ -375,7 +375,7 @@ def _edit_req(
             with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
                 Requirement.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -412,7 +412,7 @@ def _edit_uc(
             with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
                 UseCase.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -449,7 +449,7 @@ def _edit_tsk(
             with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
                 Task.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -486,7 +486,7 @@ def _edit_qa(
             with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
                 Qa.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -523,7 +523,7 @@ def _edit_prb(
             with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
                 Prb.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -560,7 +560,7 @@ def _edit_gol(
             with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
                 Goal.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -597,7 +597,7 @@ def _edit_rsk(
             with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
                 Risk.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -634,7 +634,7 @@ def _edit_dec(
             with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
                 Decision.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -673,7 +673,7 @@ def _edit_feat(
             with wrap_tool_errors(domain="feat", tool="edit", channel=BODY_CHANNEL):
                 Feature.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -710,7 +710,7 @@ def _edit_sop(
             with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
                 Sop.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -747,7 +747,7 @@ def _edit_vcr(
             with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
                 Vcr.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
@@ -784,7 +784,7 @@ def _edit_sysrs(
             with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
                 Sysrs.from_text(format_text(edited))
         except _CAUGHT_EXCEPTIONS as ex:
-            message = snippet(str(ex), max_chars=300)
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()

@@ -237,8 +237,11 @@ REQ-009/REQ-003): ``id`` is validated via ``_path_safety.validate_id``
 (no ``/``, no ``\``, no ``..``, plus the dispatched domain's own
     format -- canonical lowercase-hex UUID for every domain other than
     ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
-path-injection attempt, a wrong-format id, or an unsupported ``type``
-is a ``ValueError`` raised before dispatch. Each adapter additionally
+path-injection attempt, a wrong-format id, or an unknown ``type``
+is a ``ValueError`` raised before dispatch -- but ``type="adr"`` passes
+the validation (``adr`` is in ``_path_safety``'s UUID-shaped domain
+set) and raises the plain ``KeyError`` inherited from the
+dispatch-table lookup instead. Each adapter additionally
 confines the resolved path to the domain's own base directory with
 ``_path_safety.assert_within`` inside the lock -- defense-in-depth
 against any future gap in the id validation.
@@ -279,9 +282,14 @@ Raises
 ------
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
-    domain's own format, or ``type`` is not one of the
-    supported domains (raised before any filesystem access; nothing
-    is written).
+    domain's own format, or ``type`` is an unknown document type
+    (raised before any filesystem access; nothing is written).
+KeyError
+    ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
+    ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
+    passes) -- a plain ``KeyError`` inherited from the
+    dispatch-table lookup, which has no ``adr`` entry (nothing is
+    written).
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

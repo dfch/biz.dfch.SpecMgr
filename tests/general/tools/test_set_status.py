@@ -61,6 +61,7 @@ from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
+from biz.dfch.specmgr.feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
@@ -591,6 +592,11 @@ _BROKEN_BODY = "not a valid document, no headings at all\n"
 
 #: The core parse defect ``_BROKEN_BODY`` produces in every domain's parse error text.
 _CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
+
+#: A status string outside every domain's own closed vocabulary (including ADR's fixed set and
+#: its ``"superseded by ..."`` pattern) -- the universally-invalid input the
+#: ``InvalidStatusResult``-first precedence tests in ``TestSetStatusParseFailure`` call with.
+_UNIVERSALLY_INVALID_STATUS = "not-a-status"
 
 
 def _strip_pydantic_footer(text: str) -> str:
@@ -1210,6 +1216,65 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
 
         with self.assertRaises(FeatNotFoundError):
             set_status(id=_MISSING_FEAT_ID, type="feat", status="progress")
+
+    def test_out_of_vocabulary_status_against_broken_document_returns_invalid_status_result_first(self) -> None:
+        """Round-1 post-implementation review (feat-reviewer, GAP finding): pin the documented
+        ``InvalidStatusResult``-first precedence for the 11 flat-file whole-body domains.
+
+        An out-of-vocabulary ``status`` against an existing-but-broken document must return
+        the non-raising ``InvalidStatusResult`` (never a ``ParseFailureResult``, never a
+        raised error): the pre-dispatch ``_check_status_allowed`` check runs before any
+        domain lock is taken or file is read, so it never reaches the protected
+        ``load_by_id`` -- the precedence this class's docstring, this feature's Design
+        Notes (``set_status._set_status_<d>`` bullet), and ADR
+        b8c9bfea-6dcf-4158-bfc5-4ec17abb842f (Option 4, Pros) document. The corrupted
+        file stays byte-unchanged (no status is written).
+        """
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = set_status(id=doc_id, type=case.doc_type, status=_UNIVERSALLY_INVALID_STATUS)
+
+                self.assertIsInstance(result, InvalidStatusResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(result.type, case.doc_type)
+                self.assertEqual(result.status, _UNIVERSALLY_INVALID_STATUS)
+                expected_allowed = sorted(case.allowed_statuses)
+                self.assertEqual(result.allowed_values, expected_allowed)
+                self.assertEqual(
+                    result.message,
+                    f"Invalid status '{_UNIVERSALLY_INVALID_STATUS}' for type '{case.doc_type}'. "
+                    f"Allowed values: {', '.join(expected_allowed)}",
+                )
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_out_of_vocabulary_status_against_broken_document_returns_invalid_status_result_first(self) -> None:
+        """The same precedence pin, for ``feat`` (separate case shape: folder + ``README.md``)."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        path.write_text(_BROKEN_BODY, encoding="utf-8")
+        before = path.read_bytes()
+
+        result = set_status(id=doc_id, type="feat", status=_UNIVERSALLY_INVALID_STATUS)
+
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "feat")
+        self.assertEqual(result.status, _UNIVERSALLY_INVALID_STATUS)
+        expected_allowed = sorted(_FEAT_ALLOWED_STATUSES)
+        self.assertEqual(result.allowed_values, expected_allowed)
+        self.assertEqual(
+            result.message,
+            f"Invalid status '{_UNIVERSALLY_INVALID_STATUS}' for type 'feat'. "
+            f"Allowed values: {', '.join(expected_allowed)}",
+        )
+        self.assertEqual(path.read_bytes(), before)
 
 
 if __name__ == "__main__":

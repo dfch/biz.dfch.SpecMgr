@@ -4,7 +4,7 @@ created: '2026-09-29T15:14:11.057+02:00'
 id: feat-170-update-edit-parse-failure
 status: review
 type: feat
-updated: '2026-10-01T04:21:39.000+02:00'
+updated: '2026-10-01T07:32:04.000+02:00'
 version: 1.0.0
 ---
 
@@ -245,7 +245,11 @@ Decisions Made for the scope choices already locked in during triage.
 
 ### Current Status
 
-**As of 2026-10-01**: Phases 100 (ADR), 110 (Bug 1) and 120 (Bug 2) done. Phase 100 created the case-4 chain ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f ("Extend the non-raising structured-result workaround to the generic mutation tools' failure cases") at `status: accepted` (listed in the regenerated `docs/adr/README.md` TOC, UUID recorded in Related Decisions). Phase 110 added the `XNotFoundError` -> `find_parse_failure`/`find_feat_parse_failure` -> `ParseFailureResult` branch to all 48 per-domain adapters (12 in each of `update` -- both whole-body and range-splice `load_by_id` sites --, `edit`, `set_status` -- the `adr` branch untouched --, and `set_classification`), widened the four tools' return-type union aliases and per-adapter annotations with `| ParseFailureResult`, and added the broken-document -> `ParseFailureResult` test coverage for all 12 domains x all four tools (plus the missing `feat` truly-missing-id regressions in `test_update.py`/`test_set_status.py` and the `test_set_classification.py` feat-entry tightening from bare `Exception` to `FeatNotFoundError`) -- 3800 tests green. Phase 120 added the Bug-2 `ValidateResult` branch: `update`'s 12 adapters' new-content validation blocks (pre-lock in whole-body mode, in-lock post-splice in range mode) and `edit`'s 12 adapters' stage-2 post-edit validation block are now wrapped in `try`/`except` on `validate`'s own imported `_CAUGHT_EXCEPTIONS` tuple, returning `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=snippet(str(ex), max_chars=300))])` (mirroring `validate` exactly; `set_status`/`set_classification` untouched); the `update`/`edit` return unions widen to `<frontmatter> | ParseFailureResult | ValidateResult`; the nine raise-asserting content-validation tests (plus six more that pinned the same old raising contract in `test_error_context.py`/`tests/regression/test_issue_27.py`/`test_issue_71.py`) are converted to the non-raising shape, and the new `TestUpdateValidateFailure`/`TestEditValidateFailure` classes cover invalid-new-content for all 12 domains (both `update` modes and `edit`'s stage 2) incl. the 300-char cap and the REQ-010/ACC-007 combined-failure precedence pins (`ValidateResult` in whole-body `update`, `ParseFailureResult` in range `update` and `edit`) -- 3813 tests green. Phase 130 (docs) done: the four generic mutation tools' module/function docstrings, `@mcp.tool()` descriptions, and the public-dispatcher `Returns`/`Raises` sections now document the new non-raising branches (REQ-006); the repair artifacts' stale mechanism parentheticals are reworded to name the new non-raising `ParseFailureResult` branch with every `tests/general/prompts/test_repair.py`-pinned phrase preserved (that module stays green unchanged -- REQ-005/ACC-003); `general/tools/_doc_paths.py`/`feat/tools/_paths.py` docstrings refreshed (Task 130.120); `AGENTS.md` and `server.py`'s module docstring synced (REQ-007); `CHANGELOG.md` `[Unreleased]` entry added; `docs/MCP.md`/`docs/api/` regenerated (idempotent). Phase 140 (final verification) done: all seven acceptance criteria walked with concrete per-ACC command + output evidence (the dated Updates entry above), every ACC checkbox ticked, and the full quality gate green -- `ruff format --check` (1775 files), `ruff check`, `vulture` (no findings), `pytest -n auto --cov=src --cov-report=` (**3813 passed**, TOTAL coverage 99%), `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` (each idempotent on second run, zero drift), `specmgr coverage-badge` (`docs/coverage.svg` byte-identical). Frontmatter `status` is `review` per the orchestrator's binding override of Task 140.110's `done` wording (PR-first closeout per the user's directive, the feat-163 precedent; `review` -> `done` happens at closeout after the PR is approved/merged); the phase's single Conventional Commit is reserved to the orchestrator, and the PR/merge is pending.
+**As of 2026-10-01**: all five phases (100 ADR, 110 Bug 1, 120 Bug 2, 130 docs, 140 final
+verification) done. Phase 100 created the case-4 chain ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f ("Extend the non-raising structured-result workaround to the generic mutation tools' failure cases") at `status: accepted` (listed in the regenerated `docs/adr/README.md` TOC, UUID recorded in Related Decisions). Phase 110 added the `XNotFoundError` -> `find_parse_failure`/`find_feat_parse_failure` -> `ParseFailureResult` branch to all 48 per-domain adapters (12 in each of `update` -- both whole-body and range-splice `load_by_id` sites --, `edit`, `set_status` -- the `adr` branch untouched --, and `set_classification`), widened the four tools' return-type union aliases and per-adapter annotations with `| ParseFailureResult`, and added the broken-document -> `ParseFailureResult` test coverage for all 12 domains x all four tools (plus the missing `feat` truly-missing-id regressions in `test_update.py`/`test_set_status.py` and the `test_set_classification.py` feat-entry tightening from bare `Exception` to `FeatNotFoundError`) -- 3800 tests green. Phase 120 added the Bug-2 `ValidateResult` branch: `update`'s 12 adapters' new-content validation blocks (pre-lock in whole-body mode, in-lock post-splice in range mode) and `edit`'s 12 adapters' stage-2 post-edit validation block are now wrapped in `try`/`except` on `validate`'s own imported `_CAUGHT_EXCEPTIONS` tuple, returning `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=snippet(str(ex), max_chars=300))])` (mirroring `validate` exactly; `set_status`/`set_classification` untouched); the `update`/`edit` return unions widen to `<frontmatter> | ParseFailureResult | ValidateResult`; the nine raise-asserting content-validation tests (plus six more that pinned the same old raising contract in `test_error_context.py`/`tests/regression/test_issue_27.py`/`test_issue_71.py`) are converted to the non-raising shape, and the new `TestUpdateValidateFailure`/`TestEditValidateFailure` classes cover invalid-new-content for all 12 domains (both `update` modes and `edit`'s stage 2) incl. the 300-char cap and the REQ-010/ACC-007 combined-failure precedence pins (`ValidateResult` in whole-body `update`, `ParseFailureResult` in range `update` and `edit`) -- 3813 tests green. Phase 130 (docs) done: the four generic mutation tools' module/function docstrings, `@mcp.tool()` descriptions, and the public-dispatcher `Returns`/`Raises` sections now document the new non-raising branches (REQ-006); the repair artifacts' stale mechanism parentheticals are reworded to name the new non-raising `ParseFailureResult` branch with every `tests/general/prompts/test_repair.py`-pinned phrase preserved (that module stays green unchanged -- REQ-005/ACC-003); `general/tools/_doc_paths.py`/`feat/tools/_paths.py` docstrings refreshed (Task 130.120); `AGENTS.md` and `server.py`'s module docstring synced (REQ-007); `CHANGELOG.md` `[Unreleased]` entry added; `docs/MCP.md`/`docs/api/` regenerated (idempotent). Phase 140 (final verification) done: all seven acceptance criteria walked with concrete per-ACC command + output evidence (the dated Updates entry above), every ACC checkbox ticked, and the full quality gate green -- `ruff format --check` (1775 files), `ruff check`, `vulture` (no findings), `pytest -n auto --cov=src --cov-report=` (**3813 passed**, TOTAL coverage 99%), `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` (each idempotent on second run, zero drift), `specmgr coverage-badge` (`docs/coverage.svg` byte-identical). Frontmatter `status` is `review` per the orchestrator's binding override of Task 140.110's `done` wording (PR-first closeout per the user's directive, the feat-163 precedent; `review` -> `done` happens at closeout after the PR is approved/merged); the phase's single Conventional Commit is reserved to the orchestrator; PR #175 is open
+with CI green, and the round-1 post-implementation review fixes (feat-reviewer: no errors,
+three non-blocking findings) are applied per the 2026-10-01T05:32:04.000Z Updates entry
+below (full gate green, 3870 tests).
 
 ### Blockers
 
@@ -254,6 +258,92 @@ Decisions Made for the scope choices already locked in during triage.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T05:32:04.000Z - Round 1 post-implementation review fixes applied (feat-reviewer)
+
+Round-1 post-implementation review (feat-reviewer) verdict: no errors, three non-blocking
+findings -- all three fixed this round (the feat-163 round-fix convention: fixes + one
+dated Updates entry + Current Status refresh, no new task phase, no renumbering,
+frontmatter `status` stays `review`).
+
+**Finding 1 (GAP) -- pin the `InvalidStatusResult`-first precedence.** The documented
+precedence (an out-of-vocabulary `status` against a broken existing document still
+returns `InvalidStatusResult` first, since that pre-dispatch check never reaches
+`load_by_id` -- `set_status.py` module docstring, this plan's Design Notes
+`set_status._set_status_<d>` bullet, ADR b8c9bfea Option 4 Pros) was structurally
+guaranteed but pinned by no test: the existing out-of-vocabulary tests
+(`test_set_status.py` whole-body at ~line 726, ADR at ~line 897) ran only against
+healthy documents. Fixed in `tests/general/tools/test_set_status.py`: two new methods
+in `TestSetStatusParseFailure` --
+`test_out_of_vocabulary_status_against_broken_document_returns_invalid_status_result_first`
+(subTest loop over the module's existing `_CASES` data: all 11 flat-file whole-body
+domains) and
+`test_feat_out_of_vocabulary_status_against_broken_document_returns_invalid_status_result_first`
+(the module's own separate `feat` case shape, folder + `README.md`) -- each seeds a
+healthy document via the domain's own `create_<d>`, corrupts its on-disk file with the
+module's existing Phase-110 `_BROKEN_BODY` constant, calls the public `set_status` with
+the new universally-out-of-vocabulary constant `_UNIVERSALLY_INVALID_STATUS`
+(`"not-a-status"` -- outside every domain's closed set, incl. ADR's fixed set and its
+`"superseded by ..."` pattern), and asserts the non-raising `InvalidStatusResult`
+(mirroring the existing out-of-vocab tests' assertion shape: `valid=False`, `type`,
+`status`, `allowed_values` = the domain's own sorted closed set, exact `message`
+wording, file byte-unchanged -- never asserting `ParseFailureResult`). Also added the
+`feat` domain's `_FEAT_ALLOWED_STATUSES` import (the module had none).
+
+**Finding 2 (INCONSISTENCY) -- `set_classification`'s unsupported-`type` prose claimed
+`ValueError`; the code raises `KeyError`.** The one unsupported `type` that passes
+`validate_id` (`type="adr"`, a well-formed UUID -- `adr` is in `_path_safety`'s
+UUID-shaped domain set) reaches the `_ADAPTERS` dispatch-table lookup, which has no
+`adr` entry, and raises the plain `KeyError` -- exactly what the pre-existing
+`test_adr_type_is_not_supported` pins (unreachable through the server: the 12-value
+MCP `type` enum; a direct-Python-caller outcome only). Per-file audit of the current
+`@mcp.tool()` description and public-dispatcher `Returns`/`Raises` against the code:
+`edit.py` accurate (no change -- its prose already names the explicit pre-dispatch
+`ValueError` for an unknown or `adr` `type`, REQ-004/D4, matching the code's own
+`if type not in _ADAPTERS` guard); `set_status.py` accurate (no change -- `_ADAPTERS`
+covers all 13 types incl. `adr`, so the KeyError outcome is unreachable there);
+`update.py` module docstring already correct and description accurate (no
+unsupported-`type` clause), but the public-dispatcher `Raises` section omitted the
+`KeyError` -- fixed (new `KeyError` entry echoing the module docstring's wording);
+`set_classification.py` inaccurate in three prose places -- fixed the description
+(`"or an unsupported `type` is a `ValueError` raised before any file access"` ->
+`"or an unknown `type` is a `ValueError` raised before any file access; `type="adr"`
+passes the id validation (a well-formed UUID id) and raises the plain `KeyError`
+inherited from the dispatch-table lookup instead"`), the docstring's Safety paragraph
+(same correction in RST), and the `Raises` section (ValueError clause narrowed to
+"unknown document type" + new `KeyError` entry) -- plus the dispatcher's adjacent
+inline comment carrying the same false clause (judgment call: the audit surface was
+the description/`Returns`/`Raises`, but leaving a same-file contradiction next to the
+fixed paragraphs was not an option). No executable code changed. Docs regenerated:
+`specmgr mcp-docs` -> `docs/MCP.md` (only the `set_classification` entry's index row +
+detail section changed), `specmgr docs` -> `docs/api/` (only
+`biz.dfch.specmgr.general.tools.update.md` and
+`biz.dfch.specmgr.general.tools.set_classification.md` changed; `edit.py`'s
+import-line change is not rendered into its module page, so `edit.md` is untouched).
+
+**Finding 3 (SMELL) -- 36x duplicated cap literal `max_chars=300` instead of
+`validate`'s named constant.** The plan prescribed the literal (REQ-003: "via
+`snippet(..., max_chars=300)`"), so the implementation was plan-conformant; this round
+tightens the "mirror `validate` exactly" to the total without changing the contract:
+`update.py` and `edit.py` now extend their existing `from .validate import
+_CAUGHT_EXCEPTIONS` line with `_MAX_VALIDATE_ERROR_CHARS`, and every
+`snippet(str(ex), max_chars=300)` site became
+`snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)` -- grep-verified 36 sites
+before (24 in `update.py` + 12 in `edit.py`), 0 `max_chars=300` left after. No
+behavior change (same value, 300); `validate.py`, the test modules (they already
+import the constant for their cap assertions), and the docstrings ("capped at 300
+chars" -- still true) untouched.
+
+**Gate (full, all green):** `ruff format` (5 touched files left unchanged) +
+`ruff format --check` (5 files already formatted) + `ruff check` (all checks passed)
++ `vulture src/ whitelist.py --min-confidence 60` (no findings -- the imported
+constant is used in the same files, no whitelist handling needed) + `pytest -n auto
+--cov=src --cov-report=` (**3870 passed** = 3868 baseline + the 2 new Finding-1 test
+methods; TOTAL coverage 99%, 12336 statements / 121 missing) + `specmgr docs` +
+`specmgr mcp-docs` (second runs byte-identical: md5 of the whole `docs/` *.md tree
+compared before/after) + `specmgr coverage-badge` (`docs/coverage.svg` md5
+`04811661ad416679c97e2396527e8c43` identical before and after both runs -- badge
+unchanged at 99%, file not in the diff).
 
 #### 2026-10-01T02:21:39.000Z - Phase 140 (Final Verification): ACC walk complete (ACC-001..ACC-007 all met); full gate green (3813 tests); status -> `review` per orchestrator override
 

@@ -644,9 +644,11 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, "
         "Option B, 2026-09-26; ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 "
         "of the ADR 519d1206 non-raising-structured-result workaround chain). An invalid `id` "
-        "(path-injection attempt or wrong format for `type`) or an unsupported `type` is a "
-        "`ValueError` raised before any file access. Returns the updated frontmatter only (no body) "
-        "on success; use the corresponding `get_<d>` tool to fetch the full document afterward."
+        "(path-injection attempt or wrong format for `type`) or an unknown `type` is a `ValueError` "
+        'raised before any file access; `type="adr"` passes the id validation (a well-formed '
+        "UUID id) and raises the plain `KeyError` inherited from the dispatch-table lookup "
+        "instead. Returns the updated frontmatter only (no body) on success; use the "
+        "corresponding `get_<d>` tool to fetch the full document afterward."
     ),
 )
 def set_classification(
@@ -682,8 +684,11 @@ def set_classification(
     (no ``/``, no ``\\``, no ``..``, plus the dispatched domain's own
         format -- canonical lowercase-hex UUID for every domain other than
         ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
-    path-injection attempt, a wrong-format id, or an unsupported ``type``
-    is a ``ValueError`` raised before dispatch. Each adapter additionally
+    path-injection attempt, a wrong-format id, or an unknown ``type``
+    is a ``ValueError`` raised before dispatch -- but ``type="adr"`` passes
+    the validation (``adr`` is in ``_path_safety``'s UUID-shaped domain
+    set) and raises the plain ``KeyError`` inherited from the
+    dispatch-table lookup instead. Each adapter additionally
     confines the resolved path to the domain's own base directory with
     ``_path_safety.assert_within`` inside the lock -- defense-in-depth
     against any future gap in the id validation.
@@ -724,9 +729,14 @@ def set_classification(
     ------
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format, or ``type`` is not one of the
-        supported domains (raised before any filesystem access; nothing
-        is written).
+        domain's own format, or ``type`` is an unknown document type
+        (raised before any filesystem access; nothing is written).
+    KeyError
+        ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
+        ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
+        passes) -- a plain ``KeyError`` inherited from the
+        dispatch-table lookup, which has no ``adr`` entry (nothing is
+        written).
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
@@ -736,7 +746,9 @@ def set_classification(
         ``ParseFailureResult`` instead (see Returns).
     """
     # Mirrors set_status's/update's own REQ-009 guard: validate before any filesystem access
-    # (injection prevention); an unsupported `type` also raises ValueError here, before dispatch.
+    # (injection prevention); an unknown `type` also raises ValueError here, before dispatch
+    # (`type="adr"` passes -- its id is a UUID -- and raises the plain `KeyError` inherited
+    # from the dispatch-table lookup below).
     validate_id(type, id)
 
     adapter = _ADAPTERS[type]
