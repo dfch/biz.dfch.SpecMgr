@@ -22,11 +22,29 @@ Phase 6 changed :meth:`DocCache.read`'s ``parse_fn`` contract from
 in, REQ-007) -- every fake ``parse_fn`` in this module (:class:`_CountingParser`
 in particular) now receives already-read text, not a ``Path`` it would have
 to re-read itself.
+
+**feat-162-doc-cache-exception-footer, Phase 100 (spike).**
+:class:`TestFreshExceptionValidationErrorReconstructionSpike` pins the
+reconstruction strategy GitHub issue #162 asks for: a plain, recognized-kind
+``type=``/``ctx=`` pass-through for a ``pydantic.ValidationError``'s
+per-field details (letting pydantic-core regenerate its own templated
+message *and* trailing documentation-link footer for a genuine builtin
+kind), falling back to the production ``_fresh_exception``'s current
+``PydanticCustomError``-wrap only when the plain pass-through fails (the
+already-custom frontmatter case, a ``KeyError`` from
+``ValidationError.from_exception_data``). The strategy is prototyped here as
+a standalone, test-local function
+(:func:`_reconstruct_validation_error_spike`), not yet wired into
+``_fresh_exception`` itself -- that production change, with full docstring
+updates, is Phase 110's job (Task 110.100). These fixtures/tests are kept as
+part of the permanent test suite once Phase 110 lands, per the feature
+plan's own Design Notes.
 """
 
 from __future__ import annotations
 
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -35,6 +53,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic_core import InitErrorDetails, PydanticCustomError
 
 from biz.dfch.specmgr.general.tools._doc_cache import CACHEABLE_ERROR_TYPES, DocCache
+from biz.dfch.specmgr.req.models.v1 import parse_req
 
 
 class _FakeDoc:
@@ -111,6 +130,195 @@ def _make_validation_error(message: str) -> ValidationError:
     ]
     result = ValidationError.from_exception_data("FakeModel", line_errors)
     return result
+
+
+def _reconstruct_validation_error_spike(exc: ValidationError) -> ValidationError:
+    """Phase 100 spike prototype: the reconstruction strategy GitHub issue #162 proposes.
+
+    Attempts a plain, recognized-kind ``type=``/``ctx=`` pass-through for every one of
+    ``exc.errors()``'s per-field details first -- letting ``pydantic_core`` regenerate its
+    own templated message *and*, for a genuine builtin kind, its trailing "For further
+    information visit ..." documentation-link footer. ``ctx`` is included in the
+    ``InitErrorDetails`` kwargs only when the original detail actually carries one (most
+    builtin kinds do; some, e.g. ``missing``, do not) -- ``InitErrorDetails(..., ctx=None)``
+    raises ``TypeError: 'None' is not an instance of 'dict'``, confirmed by this feature's
+    pre-spike experiment.
+
+    Falls back to the current production ``_fresh_exception``'s
+    ``PydanticCustomError``-wrap (every detail re-wrapped, not a per-detail mix) when the
+    plain pass-through fails with ``KeyError`` -- the exact exception
+    ``ValidationError.from_exception_data`` raises for an unrecognized ``type=`` string (e.g.
+    ``"frontmatter_value_error"``, the already-custom kind
+    ``models.md._frontmatter_parse.enrich_frontmatter_validation_error`` produces). A single
+    try/except around the *whole* exception (not genuinely mixed per-detail branching) is
+    sufficient, since every real ``ValidationError`` this codebase's own ``parse_<domain>``
+    functions raise is architecturally homogeneous -- see
+    :class:`TestFreshExceptionValidationErrorReconstructionSpike`'s own
+    ``test_mixed_frontmatter_and_body_failure_is_not_producible_via_parse_req`` for the live
+    confirmation.
+
+    Not yet wired into production ``_fresh_exception`` -- Phase 110 (Task 110.100) does that,
+    with full docstring updates to match.
+    """
+    try:
+        line_errors: list[InitErrorDetails] = []
+        for detail in exc.errors():
+            kwargs: dict[str, object] = {"type": detail["type"], "loc": detail["loc"], "input": detail["input"]}
+            if "ctx" in detail:
+                kwargs["ctx"] = detail["ctx"]
+            line_errors.append(InitErrorDetails(**kwargs))  # type: ignore[typeddict-item]
+        result = ValidationError.from_exception_data(exc.title, line_errors)
+        return result
+    except KeyError:
+        custom_line_errors: list[InitErrorDetails] = [
+            InitErrorDetails(
+                type=PydanticCustomError(detail["type"], detail["msg"]),
+                loc=detail["loc"],
+                input=detail["input"],
+            )
+            for detail in exc.errors()
+        ]
+        result = ValidationError.from_exception_data(exc.title, custom_line_errors)
+        return result
+
+
+#: A well-formed, minimal `req` frontmatter block -- valid `status` ("draft"), used as the
+#: base for both the frontmatter-only and body-field malformed fixtures below.
+_VALID_REQ_FRONTMATTER = (
+    "---\n"
+    "id: deaddead-dead-dead-dead-deaddeaddead\n"
+    "type: req\n"
+    "version: 1.0.0\n"
+    "status: draft\n"
+    "created: '2026-08-05T00:00:00.000Z'\n"
+    "updated: '2026-08-05T00:00:00.000Z'\n"
+    "---\n"
+    "\n"
+)
+
+#: A well-formed, minimal `req` body -- valid `## Level` value ("MUST"), mirroring
+#: `tests/req/tools/test_doc_cache_wiring.py`'s own `_MINIMAL_BODY` fixture.
+_VALID_REQ_BODY = textwrap.dedent(
+    """\
+    # Maximum Engine Temperature
+
+    WHILE the engine is running, THE temperature must be a maximum of 80 \u00b0C.
+
+    ## Description
+
+    If the engine becomes too hot, the lifetime of the system decreases.
+
+    ## Characteristics
+
+    1. Safety
+    1. Reliability
+
+    ## Level
+
+    MUST
+
+    ## Source
+
+    The International Safety Board Association (TISBA)
+    """
+)
+
+#: Frontmatter-only validation failure: `status` is out of the closed vocabulary. Triggers a
+#: `pydantic.ValidationError` already wrapped in a custom `"frontmatter_value_error"` kind by
+#: `models.md._frontmatter_parse.enrich_frontmatter_validation_error` -- `str()`-ing it never
+#: carried a trailing pydantic documentation-link footer to begin with (the custom kind is not
+#: one pydantic-core recognizes).
+_REQ_DOC_WITH_BAD_FRONTMATTER_STATUS = (
+    _VALID_REQ_FRONTMATTER.replace("status: draft", "status: not-a-valid-status") + _VALID_REQ_BODY
+)
+
+#: Body-field validation failure: `## Level`'s value fails `Level._validate_value`'s pattern
+#: check (a `field_validator` raising a plain `ValueError`, which pydantic turns into a
+#: recognized, builtin `"value_error"` kind) -- `str()`-ing it appends the trailing "For
+#: further information visit https://errors.pydantic.dev/<ver>/v/value_error" footer line.
+_REQ_DOC_WITH_BAD_BODY_LEVEL = _VALID_REQ_FRONTMATTER + _VALID_REQ_BODY.replace(
+    "## Level\n\nMUST\n", "## Level\n\nNOTVALID\n"
+)
+
+#: Both a bad frontmatter `status` AND a bad body `## Level` value in one document -- used only
+#: to confirm (per this feature's Design Notes "Pre-spike findings") that a single
+#: `ValidationError` combining both kinds of per-field detail is not producible via any real
+#: `parse_req` call path in this codebase.
+_REQ_DOC_WITH_BOTH_BAD_FRONTMATTER_AND_BODY = _VALID_REQ_FRONTMATTER.replace(
+    "status: draft", "status: not-a-valid-status"
+) + _VALID_REQ_BODY.replace("## Level\n\nMUST\n", "## Level\n\nNOTVALID\n")
+
+
+class TestFreshExceptionValidationErrorReconstructionSpike(unittest.TestCase):
+    """Phase 100 spike (feat-162-doc-cache-exception-footer, Task 100.100/100.110).
+
+    Pins the plain ``type=``/``ctx=`` pass-through reconstruction strategy
+    (:func:`_reconstruct_validation_error_spike`) against two real ``parse_req`` failures --
+    a frontmatter-only one and a body-field one -- and confirms whether a single
+    ``ValidationError`` can ever combine both kinds of per-field detail.
+    """
+
+    def test_sanity_both_fixtures_parse_cleanly_when_not_deliberately_broken(self) -> None:
+        """Sanity check: the shared base fixture text is itself a valid `req` document."""
+        parse_req(_VALID_REQ_FRONTMATTER + _VALID_REQ_BODY)  # must not raise
+
+    def test_frontmatter_only_failure_str_round_trips_via_the_custom_wrap_fallback(self) -> None:
+        """Task 100.110, frontmatter-only fixture: `str(reconstructed) == str(original)`.
+
+        The plain pass-through fails with `KeyError` (the already-custom
+        `"frontmatter_value_error"` kind is not one `pydantic_core` recognizes), so the
+        fallback wrap -- identical to production `_fresh_exception`'s current, only path --
+        is exercised, and must still round-trip `str()` exactly.
+        """
+        with self.assertRaises(ValidationError) as ctx:
+            parse_req(_REQ_DOC_WITH_BAD_FRONTMATTER_STATUS)
+        original = ctx.exception
+        self.assertEqual(original.errors()[0]["type"], "frontmatter_value_error")
+
+        reconstructed = _reconstruct_validation_error_spike(original)
+
+        self.assertEqual(str(reconstructed), str(original))
+        self.assertNotIn("https://errors.pydantic.dev", str(original))  # never had a footer to begin with
+
+    def test_body_field_failure_str_round_trips_via_the_plain_passthrough_including_its_footer(self) -> None:
+        """Task 100.110, body-field fixture: `str(reconstructed) == str(original)`, footer-bearing.
+
+        The recognized builtin `"value_error"` kind passes straight through
+        `ValidationError.from_exception_data` (no `KeyError`, no fallback), so the
+        reconstructed `str()` keeps the trailing "For further information visit ..."
+        documentation-link footer the current production `_fresh_exception`'s unconditional
+        `PydanticCustomError` wrap silently drops today (the bug this feature fixes).
+        """
+        with self.assertRaises(ValidationError) as ctx:
+            parse_req(_REQ_DOC_WITH_BAD_BODY_LEVEL)
+        original = ctx.exception
+        self.assertEqual(original.errors()[0]["type"], "value_error")
+        self.assertIn("https://errors.pydantic.dev", str(original))
+
+        reconstructed = _reconstruct_validation_error_spike(original)
+
+        self.assertEqual(str(reconstructed), str(original))
+        self.assertIn("https://errors.pydantic.dev", str(reconstructed))  # the footer survived reconstruction
+
+    def test_mixed_frontmatter_and_body_failure_is_not_producible_via_parse_req(self) -> None:
+        """Confirms (per the feature's Design Notes "Pre-spike findings") that a single
+        `ValidationError` never combines a frontmatter-origin and a body-origin per-field
+        detail.
+
+        `parse_frontmatter` and `Requirement.from_text` are two structurally separate,
+        sequential validation passes inside `parse_req` -- the first one to fail raises its
+        own complete exception immediately, so a document broken in *both* places (this
+        fixture) still only ever surfaces the frontmatter failure, never a document with one
+        error of each kind. **Finding: not producible** via any real `parse_req` (or, by the
+        same two-stage-parsing shape, any other `parse_<domain>`) call path in this codebase
+        -- confirmed here via a real call path, not asserted a priori.
+        """
+        with self.assertRaises(ValidationError) as ctx:
+            parse_req(_REQ_DOC_WITH_BOTH_BAD_FRONTMATTER_AND_BODY)
+        original = ctx.exception
+
+        self.assertEqual(len(original.errors()), 1)
+        self.assertEqual(original.errors()[0]["type"], "frontmatter_value_error")  # frontmatter fails first
 
 
 class TestDocCacheRead(unittest.TestCase):

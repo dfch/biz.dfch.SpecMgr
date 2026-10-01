@@ -4,7 +4,7 @@ created: '2026-10-01T05:55:44.404+02:00'
 id: feat-162-doc-cache-exception-footer
 status: planning
 type: feat
-updated: '2026-10-01T06:15:56.894+02:00'
+updated: '2026-10-01T07:10:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -112,11 +112,11 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 #### Phase 100: Spike -- validate the reconstruction strategy
 
-- [ ] Task 100.100: Prototype a plain recognized-kind `type=`/`ctx=` pass-through reconstruction for a `ValidationError`'s per-field details -- applying the `ctx`-omission-when-absent and `KeyError`-on-unrecognized-type handling from this feature's Design Notes "Pre-spike findings" -- falling back to the current `PydanticCustomError` wrap only when the plain pass-through fails (the already-custom frontmatter case), against this codebase's actual pinned pydantic/pydantic-core version.
+- [x] Task 100.100: Prototype a plain recognized-kind `type=`/`ctx=` pass-through reconstruction for a `ValidationError`'s per-field details -- applying the `ctx`-omission-when-absent and `KeyError`-on-unrecognized-type handling from this feature's Design Notes "Pre-spike findings" -- falling back to the current `PydanticCustomError` wrap only when the plain pass-through fails (the already-custom frontmatter case), against this codebase's actual pinned pydantic/pydantic-core version.
 
-- [ ] Task 100.110: Pin `str(reconstructed) == str(original)` for two fixtures: a frontmatter-only validation failure and a body-field validation failure (recognized builtin kind, footer-bearing). Confirm (per the Design Notes "Pre-spike findings") whether a mixed failure -- both kinds of field error in one `ValidationError` -- is producible under this codebase's two-stage frontmatter/body parsing; record the outcome explicitly either way rather than leaving it open-ended.
+- [x] Task 100.110: Pin `str(reconstructed) == str(original)` for two fixtures: a frontmatter-only validation failure and a body-field validation failure (recognized builtin kind, footer-bearing). Confirm (per the Design Notes "Pre-spike findings") whether a mixed failure -- both kinds of field error in one `ValidationError` -- is producible under this codebase's two-stage frontmatter/body parsing; record the outcome explicitly either way rather than leaving it open-ended.
 
-- [ ] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest), then exactly one Conventional Commit for the phase.
+- [x] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest), then exactly one Conventional Commit for the phase.
 
 #### Phase 110: Implement the fix
 
@@ -178,7 +178,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 ### Current Status
 
-**As of 2026-10-01**: Feature plan created from GitHub issue #162 (filed by feat-150's Task 1a.8 Option B decision, 2026-09-26). No implementation has started. Root cause confirmed by reading `general/tools/_doc_cache.py::_fresh_exception` directly: the `ValidationError` branch unconditionally wraps every per-field detail in `PydanticCustomError` before calling `ValidationError.from_exception_data`, which is correct for already-custom frontmatter-field errors but silently drops the trailing pydantic documentation-link footer for genuine, recognized-builtin body-field errors. `AssertionError`/`yaml.error.MarkedYAMLError` reconstruction already round-trip `str()` exactly and are out of scope. Also confirmed (read-only inspection of the separate, not-yet-merged `feat-170-update-edit-parse-failure` branch/PR #175) that it independently propagated the identical qualified language into 4 more tool files, a new ADR, and 4 more test helper copies -- tracked here as Phase 900 so it is not forgotten, with its exact timing/ownership deliberately left as an open, later user decision.
+**As of 2026-10-01**: Phase 100 (spike) complete. The proposed reconstruction strategy -- a plain, recognized-kind `type=`/`ctx=` pass-through for a `ValidationError`'s per-field details, falling back to the current `PydanticCustomError` wrap only on `KeyError` -- is confirmed to work exactly against this codebase's pinned pydantic 2.13.4/pydantic-core 2.46.4, pinned by two new permanent tests in `tests/general/tools/test__doc_cache.py` built on real `parse_req` failures (not hand-built fixtures): a frontmatter-only failure (`status` out of vocabulary) round-trips `str()` exactly via the fallback wrap, and a body-field failure (`## Level`'s pattern validator) round-trips `str()` exactly via the plain pass-through, footer included. The single-vs-mixed-exception question is answered: **not producible** -- a document broken in both frontmatter and body still raises only the frontmatter failure (parse_frontmatter fails first, before `Body.from_text` ever runs), confirmed via a real `parse_req` call against a deliberately doubly-broken fixture. The spike's prototype reconstruction function is intentionally kept test-local (`_reconstruct_validation_error_spike`), not yet wired into production `_fresh_exception` -- Phase 110 (Task 110.100) applies it for real, with its own docstring updates. Root cause confirmed by reading `general/tools/_doc_cache.py::_fresh_exception` directly: the `ValidationError` branch unconditionally wraps every per-field detail in `PydanticCustomError` before calling `ValidationError.from_exception_data`, which is correct for already-custom frontmatter-field errors but silently drops the trailing pydantic documentation-link footer for genuine, recognized-builtin body-field errors. `AssertionError`/`yaml.error.MarkedYAMLError` reconstruction already round-trip `str()` exactly and are out of scope. Also confirmed (read-only inspection of the separate, not-yet-merged `feat-170-update-edit-parse-failure` branch/PR #175) that it independently propagated the identical qualified language into 4 more tool files, a new ADR, and 4 more test helper copies -- tracked here as Phase 900 so it is not forgotten, with its exact timing/ownership deliberately left as an open, later user decision.
 
 ### Blockers
 
@@ -187,6 +187,10 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T07:10:00.000Z - Phase 100 complete
+
+Spiked and confirmed the proposed reconstruction strategy against this repo's pinned pydantic 2.13.4/pydantic-core 2.46.4. Prototyped (Task 100.100) a test-local `_reconstruct_validation_error_spike` function in `tests/general/tools/test__doc_cache.py`: attempts a plain `type=`/`ctx=` `InitErrorDetails` pass-through per field-error detail (omitting `ctx` entirely when the original detail has none -- `ctx=None` raises `TypeError`, confirmed live), falls back to the current production `PydanticCustomError`-wrap for the *whole* exception on `KeyError` (confirmed to be the exact exception `ValidationError.from_exception_data` raises for an unrecognized `type=` like `"frontmatter_value_error"`). Pinned (Task 100.110) via two new permanent tests built on real `parse_req` calls against deliberately malformed `req` fixtures (not hand-built pydantic_core objects): `test_frontmatter_only_failure_str_round_trips_via_the_custom_wrap_fallback` (a bad frontmatter `status` value; proves the fallback-wrap path is unchanged/still exact) and `test_body_field_failure_str_round_trips_via_the_plain_passthrough_including_its_footer` (a bad `## Level` value, a recognized builtin `"value_error"` kind; proves the plain pass-through preserves the trailing `https://errors.pydantic.dev/...` footer the current production code silently drops -- the bug itself). The mixed-failure question is answered and recorded: **not producible** -- `test_mixed_frontmatter_and_body_failure_is_not_producible_via_parse_req` breaks both frontmatter and body in one document and confirms `parse_req` still raises only the frontmatter failure (`parse_frontmatter` runs and fails first, before `Body.from_text` is ever reached), matching the Design Notes' pre-spike expectation. Scope discipline: the spike's prototype function is deliberately kept test-local, not wired into production `_fresh_exception` -- Phase 110 (Task 110.100/110.110) applies the validated strategy for real, with the matching docstring rewrite. Full quality gate green (ruff format/check, vulture, `pytest -n auto --cov=src --cov-report=`, 3849 passed). No design decisions needed beyond what the plan's pre-spike findings already established -- all three were confirmed exactly as predicted.
 
 #### 2026-10-01T06:15:00.000Z - Plan review and refinement pass
 
