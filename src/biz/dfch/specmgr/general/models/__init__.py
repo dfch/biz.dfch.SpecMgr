@@ -114,9 +114,15 @@ alone):
   omitted-``limit`` range), and the whole-body domains' frontmatter union the
   ``frontmatter`` field is typed with (single source, re-exported so the
   ``update`` tool's dispatch module does not keep a second copy). These two
-  names are exported lazily (PEP 562 ``__getattr__``, see below) because
-  their own module imports every whole-body domain's models package and must
-  therefore never be imported eagerly from this ``__init__``.
+   names are exported lazily (PEP 562 ``__getattr__``, see below) because
+   their own module imports every whole-body domain's models package and must
+   therefore never be imported eagerly from this ``__init__``.
+   :class:`UpdateResult`'s own API reference lives on the dedicated
+   ``biz.dfch.specmgr.general.models.update_result`` page rather than this
+   one: the ``specmgr docs`` generator's package index pages list only
+   members defined in the module's own ``__init__.py`` (its
+   ``_get_classes``/``_get_functions`` filter, ``obj.__module__ ==
+   module.__name__``), never merely re-exported ones.
 
 Import this package to use either model directly::
 
@@ -221,3 +227,19 @@ def __getattr__(name: str) -> Any:
         result = getattr(update_result, name)
         return result
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    """Return this module's names so ``dir()``/``inspect``/the docs generator see the PEP 562 lazy exports.
+
+    The default module ``dir()`` only sees names defined eagerly in this
+    module's ``__dict__``; ``UpdateResult``/``UpdateFrontmatter`` are
+    provided by :func:`__getattr__` and would otherwise be invisible to
+    ``dir()``, ``inspect.getmembers`` (which the ``specmgr docs`` generator
+    relies on), and IDEs. Returning the union of ``globals().keys()`` and
+    :data:`_LAZY_EXPORTS` exposes them without converting the export to an
+    eager import (which would re-introduce the circular import the PEP 562
+    workaround in :func:`__getattr__` exists to avoid).
+    """
+    result = sorted(set(globals().keys()) | _LAZY_EXPORTS)
+    return result

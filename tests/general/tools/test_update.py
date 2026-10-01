@@ -1272,10 +1272,33 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n = len(lines)
 
-                update(id=created.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0)
+                result = update(id=created.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0)
 
                 expected = lines + case.append_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
+                # feat-153-off-by-n (round 2): pin the append-case snippet -- the only
+                # splice shape the 12-domain matrix did not capture. Nothing is dropped
+                # (limit=0), so the pre- and post-splice numbering spaces agree for the
+                # context-above lines; the append is at the end of the body, so there is
+                # no context-below.
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsInstance(result.frontmatter, case.frontmatter_type)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # no dropped lines (a pure append)
+                self.assertFalse(any(line.startswith("- ") for line in snippet_lines))
+                # the body's last two lines appear as context-above at post-splice
+                # numbers N-1 and N
+                self.assertIn(f"  {n - 1}: {lines[n - 2]}", snippet_lines)
+                self.assertIn(f"  {n}: {lines[n - 1]}", snippet_lines)
+                # the first inserted line takes the post-splice number N+1
+                self.assertIn(f"+ {n + 1}: {case.append_fragment.splitlines()[0]}", snippet_lines)
+                # and there is no context-below line (the append is at the end of the
+                # body): no unchanged "  " line may follow the first inserted "+ " line
+                plus_start = next(i for i, line in enumerate(snippet_lines) if line.startswith("+ "))
+                self.assertFalse(any(line.startswith("  ") for line in snippet_lines[plus_start:]))
 
     def test_limit_omitted_replaces_through_end_of_body(self) -> None:
         """An omitted ``limit`` must extend the range through the last line, replacing it with the fragment."""

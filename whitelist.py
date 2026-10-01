@@ -36,13 +36,18 @@ Genuine dead code found by vulture should be deleted instead.
 # `@app.command()` -- see AGENTS.md's "CLI (cli.py)" section for why Typer needs it.
 _callback
 
-# --- PEP 562 module-level `__getattr__` (lazy exports) ---------------------------
-# Invoked by Python's own attribute-access machinery on the defining module when
-# the eager lookup fails, never called directly from this codebase's code.
+# --- PEP 562 module-level `__getattr__`/`__dir__` (lazy exports) ----------------
+# Invoked by Python's own attribute-access machinery on the defining module,
+# never called directly from this codebase's code.
 # (Currently `general.models`'s lazy `UpdateResult`/`UpdateFrontmatter` export,
 # feat-153-off-by-n Phase 2 -- see that module's `__getattr__` docstring for why
 # the import must stay lazy.)
 __getattr__
+# Companion PEP 562 `__dir__` (feat-153-off-by-n round 2): invoked by `dir()`/
+# `inspect.getmembers` on the defining module, never called directly; it exposes
+# the lazy `UpdateResult`/`UpdateFrontmatter` names to `dir()`/IDEs/the docs
+# generator without converting the export to an eager import.
+__dir__
 
 # --- Pydantic v2 `@field_validator`/`@model_validator` methods -------------------
 # Invoked by Pydantic's validation machinery on model construction, not by any
