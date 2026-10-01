@@ -108,6 +108,41 @@ serialization, the inherited ``_write.py`` caveat identical to
 ``read_<d>`` (the feat-107-doc-cache precedent), and the updated
 frontmatter only is returned (no body).
 
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain).** Two failures now return a structured result instead
+of raising, with nothing written in either case. (1) On a target ``id``
+whose only matching on-disk file fails to parse, every adapter returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
+the domain lock, before the match stage ever runs), probes the domain's
+existing parse-failure lookup (:func:`general.tools._doc_paths.
+find_parse_failure` for the 11 flat-file domains, called with the domain's
+own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text carries the same parse defect as the domain's ``list_<d>``
+failed row for the same file (identical field path and cause; the trailing
+pydantic documentation line may differ by read order/cache state -- Option
+B, 2026-09-26, follow-up issue #162). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. (2) A stage-2 content-validation failure on the *edited* body
+returns the non-raising :class:`~biz.dfch.specmgr.general.models.
+ValidateResult` (``valid=False``, ``errors=[...]``) instead of raising
+``AssertionError``/``pydantic.ValidationError`` -- the single
+``errors[].message`` is the enriched exception text capped exactly as the
+generic ``validate`` tool caps it (300 chars via
+:func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
+exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
+tuple). Stage-1's OC-parity ``ValueError``s (identical input, empty
+``old_str``, not found, multiple matches) and every pre-dispatch
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
+``type``) are never caught and still raise exactly as before.
+
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a
 ``ValueError`` before any file access -- mirroring the generic ``update``
@@ -315,7 +350,13 @@ def _edit_req(
     domain lock is held across the entire read -> match -> validate ->
     write, stage 1 is the domain-agnostic :func:`_match_and_replace` over
     :func:`body_text(path)`, and stage 2 validates the *edited* body as a
-    whole document before the verbatim persist and the cache warm.
+    whole document before the verbatim persist and the cache warm. Failure
+    returns (see the module docstring): a target ``id`` whose only matching
+    on-disk file fails to parse yields the non-raising ``ParseFailureResult``
+    instead of ``ReqNotFoundError`` (a truly-absent id still raises), and a
+    stage-2 content-validation failure of the edited body yields the
+    non-raising ``ValidateResult(valid=False, ...)`` instead of
+    ``AssertionError``/``pydantic.ValidationError``.
     """
     base_dir = req_base_dir()
     with req_lock(id_):
@@ -793,9 +834,22 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion "
         "(legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an "
         "`old_str` containing `\\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex "
-        "fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` "
-        "raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); "
-        "use the corresponding `get_<d>` tool to fetch the full document afterward."
+        "fallback. A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text "
+        "carries the same parse defect as the domain's `list_<d>` failed row for the same file "
+        "(identical field path and cause, though the trailing pydantic documentation line may differ "
+        "by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26) -- "
+        "and a truly-absent id still raises the domain's not-found error. A stage-2 content-validation "
+        "failure on the post-edit result returns a non-raising `ValidateResult` (`valid=False`, "
+        "`errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool "
+        "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "non-raising-structured-result workaround chain). Stage-1's not-found/multiple-matches guards "
+        "and every caller-usage `ValueError` (invalid `id` shape, unknown or `adr` `type`, identical "
+        "input, empty `old_str`) still raise. An invalid `id` (path-injection attempt or wrong format "
+        "for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter "
+        "only (no body; `updated` bumped) on success; use the corresponding `get_<d>` tool to fetch "
+        "the full document afterward."
     ),
 )
 def edit(
@@ -827,9 +881,13 @@ def edit(
 
     **Stage 2 (validate).** The *edited* body is validated as a whole
     document via the domain body model's ``from_text(format_text(edited))``
-    under ``wrap_tool_errors`` -- letting ``AssertionError`` (structural
-    failure) or ``pydantic.ValidationError`` (field/cross-field failure)
-    propagate uncaught, with nothing written in either case.
+    under ``wrap_tool_errors``; a structural (``AssertionError``) or
+    field/cross-field (``pydantic.ValidationError``) failure returns the
+    non-raising ``ValidateResult(valid=False, ...)`` (the single
+    ``errors[].message`` capped at 300 chars exactly as the generic
+    ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
+    failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+    case 4 of the ADR 519d1206 chain), with nothing written in either case.
 
     **2-fold write (REQ-003).** The disk write happens strictly after both
     stages pass: the domain lock is held across the entire read -> match ->
@@ -890,10 +948,27 @@ def edit(
     -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter
-        The updated document's frontmatter only (no body) of the dispatched domain type
-        (``updated`` bumped); use the corresponding ``get_<d>`` tool to fetch the full
-        document afterward.
+    VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
+        On success, the updated document's frontmatter only (no body) of the
+        dispatched domain type (``updated`` bumped); use the corresponding
+        ``get_<d>`` tool to fetch the full document afterward. On a target
+        ``id`` whose only matching on-disk file fails to parse, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) instead of the domain's not-found error --
+        ``error`` carries the same parse defect as the domain's ``list_<d>``
+        failed row for the same file (identical field path and cause; the
+        trailing pydantic documentation line may differ by read order/cache
+        state -- Option B, 2026-09-26, follow-up issue #162). On a stage-2
+        content-validation failure of the edited body, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+        (``valid=False``, ``errors=[{message}]``) with the single
+        ``errors[].message`` capped at 300 chars exactly as the generic
+        ``validate`` tool caps it (feat-110), instead of
+        ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
+        either failure case (feat-170-update-edit-parse-failure, GitHub issue
+        #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain).
 
     Raises
     ------
@@ -912,23 +987,15 @@ def edit(
         ``ValueError``s carry the OC message verbatim with no
         ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
         is written in any of these cases.
-    AssertionError
-        The edited body is structurally invalid (stage 2) -- e.g. deleting
-        the H1. The message is prefixed with domain/tool/channel context
-        (e.g. ``"req edit (body): ..."``) by the shared tool-boundary
-        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the edited body (stage
-        2, e.g. an edit producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        The target id is truly absent (no file on disk matches it at all) --
+        the domain's own not-found error, unchanged from the per-domain tools.
+        An existing-but-broken document returns the non-raising
+        ``ParseFailureResult`` instead, and a stage-2 content-validation
+        failure of the edited body returns the non-raising ``ValidateResult``
+        instead (both see Returns).
     """
     # REQ-005: validate before any filesystem access (injection prevention).
     validate_id(type, id)

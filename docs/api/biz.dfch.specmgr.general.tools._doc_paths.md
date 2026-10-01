@@ -91,9 +91,14 @@ on warm re-raises -- Option B, 2026-09-26, follow-up issue #162). It returns
 ``None`` otherwise (no name match, a vanished file, or a name-matching file
 that parses cleanly), leaving the caller to re-raise its original not-found
 error unchanged. It does not alter :func:`find_doc_path_by_id`'s documented
-skip behavior; ``update``/``delete``/``set_status``/
-``set_classification``/``validate``/``list_references`` keep raising exactly
-as before.
+skip behavior; of the generic id-resolving tools, only ``delete``,
+``validate``, and ``list_references`` keep raising exactly as before on a
+broken target -- ``update``/``edit``/``set_status``/
+``set_classification`` now return the non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` via this probe
+on their own ``XNotFoundError`` catch (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the
+ADR 519d1206-4d2a-4500-9046-6db635209996 workaround chain).
 
 ## Classes
 
@@ -261,7 +266,12 @@ feat-150-mcp-lifecycle-commands Phase 1a, ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c: the ``get_<d>`` tools call this on
 the domain's ``XNotFoundError`` and return a non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
-non-``None`` result.
+non-``None`` result. The four generic mutation tools
+(``update``/``edit``/``set_status``/``set_classification``) now call it
+the same way from their own per-domain adapters on the same catch
+(feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+chain), with the same ``read_fn``/``assert_within`` mirroring.
 
 Parameters
 ----------

@@ -69,6 +69,28 @@ rejected in favor of this single generic tool, per the feature's Scope
 section) -- ``set_classification`` is the sole classification-change entry
 point for every domain.
 
+An existing-but-broken document (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain): on a target ``id`` whose only matching on-disk file
+fails to parse, every adapter now returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
+(inside the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`general.tools._doc_paths.find_parse_failure`,
+called with the domain's own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text carries the same parse defect as the domain's ``list_<d>``
+failed row for the same file (identical field path and cause; the trailing
+pydantic documentation line may differ by read order/cache state -- Option
+B, 2026-09-26, follow-up issue #162). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged.
+
 Safety (mirroring ``set_status``'s/``update``'s/``delete``'s own REQ-009/
 REQ-003): the public :func:`set_classification` validates ``id`` via
 ``_path_safety.validate_id`` before dispatch (a ``ValueError`` before any
@@ -200,7 +222,10 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter | P
     ``frontmatter.loads(...).content`` mechanism and verbatim
     re-persistence, frontmatter reconstructed through :class:`ReqFrontmatter`'s
     own constructor, ``write_req_file``, ``ReqNotFoundError``), replacing
-    ``classification`` instead of ``status``.
+    ``classification`` instead of ``status``. Failure return (see the module
+    docstring): a target ``id`` whose only matching on-disk file fails to
+    parse yields the non-raising ``ParseFailureResult`` instead of
+    ``ReqNotFoundError`` (a truly-absent id still raises).
     """
     base_dir = req_base_dir()
     with req_lock(id_):
@@ -612,10 +637,16 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "`classification` is fully free-text -- no closed "
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
         "tool accepts a `classification` argument at all -- this is the sole classification-change "
-        "entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an "
-        "unsupported `type` is a `ValueError` raised before any file access. Returns the updated "
-        "frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full "
-        "document afterward."
+        "entry point. A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising the domain's not-found error (a truly-absent id "
+        "still raises) -- its `error` text carries the same parse defect as the domain's `list_<d>` "
+        "failed row for the same file (identical field path and cause, though the trailing pydantic "
+        "documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, "
+        "Option B, 2026-09-26; ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 "
+        "of the ADR 519d1206 non-raising-structured-result workaround chain). An invalid `id` "
+        "(path-injection attempt or wrong format for `type`) or an unsupported `type` is a "
+        "`ValueError` raised before any file access. Returns the updated frontmatter only (no body) "
+        "on success; use the corresponding `get_<d>` tool to fetch the full document afterward."
     ),
 )
 def set_classification(
@@ -673,9 +704,21 @@ def set_classification(
     -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter
-        The updated document's frontmatter only (no body) of the dispatched domain type;
-        use the corresponding ``get_<d>`` tool to fetch the full document afterward.
+    VcrFrontmatter | SysrsFrontmatter | ParseFailureResult
+        On success, the updated document's frontmatter only (no body) of the
+        dispatched domain type; use the corresponding ``get_<d>`` tool to
+        fetch the full document afterward. On a target ``id`` whose only
+        matching on-disk file fails to parse, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) instead of the domain's not-found error
+        -- ``error`` carries the same parse defect as the domain's
+        ``list_<d>`` failed row for the same file (identical field path and
+        cause; the trailing pydantic documentation line may differ by read
+        order/cache state -- Option B, 2026-09-26, follow-up issue #162)
+        (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+        b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain).
 
     Raises
     ------
@@ -687,9 +730,10 @@ def set_classification(
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the sibling generic
-        tools.
+        The target id is truly absent (no file on disk matches it at all) --
+        the domain's own not-found error, unchanged from the sibling generic
+        tools. An existing-but-broken document returns the non-raising
+        ``ParseFailureResult`` instead (see Returns).
     """
     # Mirrors set_status's/update's own REQ-009 guard: validate before any filesystem access
     # (injection prevention); an unsupported `type` also raises ValueError here, before dispatch.

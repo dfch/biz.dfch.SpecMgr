@@ -361,7 +361,12 @@ def find_feat_parse_failure(base_dir: Path, id_: str) -> tuple[Path, str] | None
     9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on
     :class:`FeatNotFoundError` and returns a non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
-    non-``None`` result.
+    non-``None`` result. The four generic mutation tools' own ``_feat``
+    adapters (``update``/``edit``/``set_status``/``set_classification`` in
+    ``general/tools/``) call it the same way on the same catch
+    (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+    chain).
 
     Parameters
     ----------

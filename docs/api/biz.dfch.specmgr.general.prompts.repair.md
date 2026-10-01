@@ -17,9 +17,12 @@ domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
 whose ``id`` is null while ``ref``/``path``/``error`` are populated),
 reading the raw file via the host's own file-read tool (no specmgr MCP tool
 can return the raw content of a document that fails to parse:
-``get_<d>(raw=True)`` and the generic ``update`` (or ``edit``) tool both
-re-parse the existing document first, and their per-domain adapters convert
-that failure into the domain's not-found error before any write), fixing only
+``get_<d>(raw=True)`` returns the non-raising parse-failure result for such
+a document instead of its raw text, and the generic ``update`` (or
+``edit``) tool re-parses the existing document before it can write
+anything, returning the non-raising ``ParseFailureResult`` for a broken
+one instead of writing or raising -- a truly-absent id still raises the
+domain's not-found error -- and nothing is ever written), fixing only
 what the error addresses while preserving the frontmatter
 ``id``/``created``/``status``/``version`` byte-for-byte and leaving
 ``updated`` untouched (a repair is not an edit), looping the generic
