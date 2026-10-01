@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-01T05:55:44.404+02:00'
 id: feat-162-doc-cache-exception-footer
-status: planning
+status: done
 type: feat
-updated: '2026-10-01T11:45:00.000+02:00'
+updated: '2026-10-01T13:00:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -38,17 +38,17 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: (REQ-001/REQ-002) A unit test proves cold `str()` == warm `str()` for `pydantic.ValidationError` (both a frontmatter-field and a body-field fixture), `AssertionError`, and `yaml.YAMLError`, in `tests/general/tools/test__doc_cache.py`.
+- [x] ACC-001: (REQ-001/REQ-002) A unit test proves cold `str()` == warm `str()` for `pydantic.ValidationError` (both a frontmatter-field and a body-field fixture), `AssertionError`, and `yaml.YAMLError`, in `tests/general/tools/test__doc_cache.py`.
 
-- [ ] ACC-002: (REQ-003) `get_<d>.error == list_<d>`'s failed-row `.error` in **both** orders (list-first and get-first, each order exercised via call ordering against a fresh per-test temp file within the same test process -- see REQ-003) for all 12 whole-body domains, with the 12 `_strip_pydantic_footer`-based relaxed assertions and helper copies removed.
+- [x] ACC-002: (REQ-003) `get_<d>.error == list_<d>`'s failed-row `.error` in **both** orders (list-first and get-first, each order exercised via call ordering against a fresh per-test temp file within the same test process -- see REQ-003) for all 12 whole-body domains, with the 12 `_strip_pydantic_footer`-based relaxed assertions and helper copies removed.
 
-- [ ] ACC-003: (REQ-004) `list_<d>()`'s row `error` text is asserted stable across repeated calls within one process (new or tightened test).
+- [x] ACC-003: (REQ-004) `list_<d>()`'s row `error` text is asserted stable across repeated calls within one process (new or tightened test).
 
-- [ ] ACC-004: (REQ-005) A test proves two reconstructions of the same cached `ValidationError` failure are `is`-distinct exception objects (unchanged behavior, regression guard).
+- [x] ACC-004: (REQ-005) A test proves two reconstructions of the same cached `ValidationError` failure are `is`-distinct exception objects (unchanged behavior, regression guard).
 
-- [ ] ACC-005: (REQ-006) Every site on the doc-restoration list is re-tightened; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` regenerate with no further manual edits needed.
+- [x] ACC-005: (REQ-006) Every site on the doc-restoration list is re-tightened; `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` regenerate with no further manual edits needed.
 
-- [ ] ACC-006: Full quality gate green (ruff format/check, vulture, `pytest -n auto`, all three doc generators idempotent).
+- [x] ACC-006: Full quality gate green (ruff format/check, vulture, `pytest -n auto`, all three doc generators idempotent).
 
 ### Scope
 
@@ -164,11 +164,11 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 #### Phase 150: Final Verification
 
-- [ ] Task 150.100: Walk every Acceptance Criterion (ACC-001..ACC-006) with concrete evidence (command + output).
+- [x] Task 150.100: Walk every Acceptance Criterion (ACC-001..ACC-006) with concrete evidence (command + output).
 
-- [ ] Task 150.110: Full quality gate green: ruff format/check, vulture, `pytest -n auto --cov=src --cov-report=`, all three doc generators idempotent, `specmgr coverage-badge`; set this feature's frontmatter `status` to `done` and bump `updated`.
+- [x] Task 150.110: Full quality gate green: ruff format/check, vulture, `pytest -n auto --cov=src --cov-report=`, all three doc generators idempotent, `specmgr coverage-badge`; set this feature's frontmatter `status` to `done` and bump `updated`.
 
-- [ ] Task 150.120: Exactly one Conventional Commit for the phase.
+- [x] Task 150.120: Exactly one Conventional Commit for the phase.
 
 #### Phase 900: Coordinate feat-170 adoption (do not forget)
 
@@ -178,7 +178,7 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 
 ### Current Status
 
-**As of 2026-10-01**: Phase 140 (doc-restoration sweep) complete. Every site on REQ-006's doc-restoration list -- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (Decision Outcome items 2/3, Confirmation, a new `more_information` bullet), `general/models/parse_failure_result.py`, `general/tools/_doc_paths.py`, `feat/tools/_paths.py`, `general/data/general_repair_instructions.md`, `general/prompts/repair.py` (module docstring AND `@mcp.prompt` description -- both DID carry the qualified wording, contrary to the orchestrator's pre-check), `.opencode/agent/doc-repairer.md`, all 12 `get_<d>` tool descriptions/docstrings, `AGENTS.md`, `CHANGELOG.md` (2 re-tightened entries plus 1 new `### Fixed` entry), and `server.py`'s module docstring -- is re-tightened from the qualified "same defect, not byte-equal, Option B/follow-up issue #162" claim back to the simple, unqualified, byte-identical invariant (ACC-005). `tests/general/prompts/test_repair.py`'s 2 pinned assertions were updated to match the re-tightened `general_repair_instructions.md` wording; `.opencode/skill/repair/SKILL.md` was re-checked and confirmed to still carry no qualified wording (no edit needed there). `docs/MCP.md`, `docs/api/` + `docs/GENERATED.md`, and `docs/adr/README.md` were regenerated and confirmed idempotent (a second run of each of `specmgr docs`/`mcp-docs`/`adr-toc` produced zero further diff). Full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src --cov-report=`, 3878 passed, unchanged from Phase 130 -- a pure wording sweep, no test count change). Phase 150's final verification (ACC-006) remains. Phase 100/110/120/130's own prior status (production fix shipped; cache-level and per-domain tests in place) remains accurate and is preserved in the Updates entries below.
+**As of 2026-10-01**: **Feature complete -- all phases done, status `done`.** Phase 150 (Final Verification) walked all six Acceptance Criteria with concrete evidence (ACC-001..ACC-004 via targeted `unittest` runs against `tests/general/tools/test__doc_cache.py` and all 12 `tests/<d>/tools/test_get_<d>.py` modules; ACC-005 via a zero-hit repo-wide grep for the retired qualified phrases plus two-runs-each idempotency confirmation of `specmgr docs`/`mcp-docs`/`adr-toc`; ACC-006 via the full final quality gate) and ran the full final quality gate one more time: `ruff format --check` (1779 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), `pytest -n auto --cov=src --cov-report=` (3878 passed), all three doc generators confirmed idempotent (zero `git diff` across two consecutive runs each), and `specmgr coverage-badge` (re-ran, produced no diff -- badge already at 99%, unchanged). See the Updates entry below for the full per-ACC evidence breakdown. Phase 900's Task 900.100 (feat-170 coordination) is intentionally left unchecked -- it is a deferred, cross-feature reminder for a future, separate pass once feat-170's branch has rebased onto `dev`, not part of this feature's own completion.
 
 ### Blockers
 
@@ -187,6 +187,21 @@ Likely fix shape (to be confirmed by Phase 100's spike): per field-error detail,
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-01T13:00:00.000Z - Phase 150: Final Verification complete
+
+Walked all six Acceptance Criteria with concrete evidence (Task 150.100), ran the full final quality gate (Task 150.110), and flipped this feature's own frontmatter `status` to `done` (Task 150.120 follows as the phase's single commit). No production code touched -- verification only, plus this Progress-section update and the frontmatter status flip.
+
+- **ACC-001** (cold `str()` == warm `str()` for all three cacheable exception types): ran the four `test_acc001_*` methods on `TestDocCacheRead` in `tests/general/tools/test__doc_cache.py` directly (`python -m unittest -v tests.general.tools.test__doc_cache.TestDocCacheRead.test_acc001_assertion_error_cold_str_equals_warm_str test_acc001_validation_error_frontmatter_cold_str_equals_warm_str test_acc001_validation_error_body_field_cold_str_equals_warm_str test_acc001_marked_yaml_error_cold_str_equals_warm_str`) -- all 4 PASS (`AssertionError`, `ValidationError` frontmatter-fixture, `ValidationError` body-field-fixture, `yaml.YAMLError`).
+- **ACC-002** (`get_<d>.error == list_<d>`'s failed-row `.error`, both orders, 12 domains, helpers removed): `grep -rn "_strip_pydantic_footer" tests/` returns zero hits (confirmed removed). Ran `test_broken_document_error_matches_list_failed_row_get_first`/`_list_first` for all 12 domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) via `python -m unittest -v tests.<d>.tools.test_get_<d> -k error_matches_list_failed_row` -- 24/24 tests PASS (2 per domain x 12 domains).
+- **ACC-003** (`list_<d>()` row `error` stable across repeated calls): ran `test_broken_document_list_error_is_stable_across_repeated_calls` for all 12 domains via `python -m unittest tests.<d>.tools.test_get_<d> -k stable_across_repeated_calls` -- 12/12 PASS (Phase 130 added it to all 12, not just one representative domain).
+- **ACC-004** (two reconstructions of the same cached `ValidationError` failure are `is`-distinct): ran `test_acc013_validation_error_hits_are_also_is_distinct_with_equal_type_and_message` (frontmatter-origin, custom-wrap fallback path) and `test_acc004_validation_error_body_field_hits_are_also_is_distinct_with_equal_type_and_message` (body-origin, plain pass-through path) together -- both PASS.
+- **ACC-005** (doc-restoration list re-tightened; three generators idempotent): ran `specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc` twice each -- `git status --porcelain`/`git diff --stat` empty after every run (zero drift, confirming idempotency and that Phase 140's prior regeneration already left the repo in its converged state). Repo-wide `grep -rn` for the four retired qualified phrases (`"Option B, 2026-09-26"`, `"follow-up issue #162"`, `"not byte-equal"`, `"may differ by read order"`) across `src/`, `tests/`, `docs/`, `.opencode/`, `AGENTS.md`, `CHANGELOG.md` returns exactly one hit total: the intentional historical bullet in `docs/adr/9080b37c-82b3-4f63-81f1-79641d0bf14c-*.md`'s `more_information` section (added by Phase 140 on purpose, naming this feature as the fix) -- the other three phrases return zero hits anywhere.
+- **ACC-006** (full quality gate green): see Task 150.110 below -- all green.
+
+Task 150.110 (full final quality gate): `uv run --frozen ruff format --check` -> "1779 files already formatted"; `uv run --frozen ruff check` -> "All checks passed!"; `uv run --frozen vulture src/ whitelist.py --min-confidence 60` -> no output (clean); `uv run --frozen pytest -n auto --cov=src --cov-report=` -> "3878 passed in 63.10s" (unchanged count from Phase 140, as expected -- a verification-only phase adds no new tests); `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` each run twice, zero diff on the second run of each (and zero diff overall, since Phase 140 had already regenerated them); `specmgr coverage-badge` re-run, produced no file diff (badge already at 99% coverage, unchanged from Phase 140's own run). Frontmatter `status` changed `planning` -> `done`, `updated` bumped to `2026-10-01T13:00:00.000+02:00`.
+
+Scope discipline: no functional/production code changes in this phase; Phase 900's Task 900.100 (feat-170 coordination) deliberately left unchecked, untouched, and not executed -- it is a deferred, cross-feature reminder for a future pass on a different branch, not part of this feature's own completion criteria.
 
 #### 2026-10-01T11:45:00.000Z - Phase 140 complete
 
