@@ -522,11 +522,19 @@ class TestFindReferences(unittest.TestCase):
                 self.assertEqual(result, [("feat", id_)])
 
     def test_a_feat_tag_is_case_insensitive(self):
-        """lowercase, CamelCase, and UPPERCASE FEAT tag spellings must all match, for both id forms."""
+        """lowercase, CamelCase, and UPPERCASE FEAT tag spellings must all match, and a mixed-case id
+        must come back lowercased -- for both id forms (feat-177 review round: pinning the id's own
+        case-insensitivity, not just the tag's)."""
         for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
             for text in (f"feat {id_}: A title", f"Feat {id_}: A title", f"FEAT {id_}: A title"):
                 with self.subTest(text=text):
                     self.assertEqual(find_references(text), [("feat", id_)])
+        for text, expected in (
+            ("FEAT Feat-177: A title", [("feat", _FEAT_BARE_ID)]),
+            ("FEAT Feat-177-List-Ref-Feat: A title", [("feat", _FEAT_FULL_ID)]),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(find_references(text), expected)
 
     def test_a_feat_separator_variants_all_match(self):
         """a single space, a dash, multiple spaces, and a tab must all separate the FEAT tag from its
@@ -581,6 +589,20 @@ class TestFindReferences(unittest.TestCase):
                 with self.subTest(id_=id_, text=text):
                     result = find_references(text)
                     self.assertEqual(result, expected)
+
+    def test_a_feat_slug_containing_a_uuid_tag_substring_keeps_both_rows(self):
+        """feat-177 review round: the two patterns' match spans are not disjoint when a feat slug
+        embeds a '<TAG>-<uuid>'-shaped substring (the hyphen doubling as the separator -- a FEAT
+        match can never start inside a UUID span, since a uuid cannot contain 't', but a slug can
+        contain one): the merge keeps BOTH spans -- the outer FEAT reference (its span starts
+        first, so it sorts first) plus the inner, phantom UUID-tag row, which resolves like any
+        other reference (typically a not-found row). Keep-both is the pinned v1 behavior -- no
+        overlap handling."""
+        text = f"FEAT feat-1-req-{_UUID}: A title"
+
+        result = find_references(text)
+
+        self.assertEqual(result, [("feat", f"feat-1-req-{_UUID}"), ("req", _UUID)])
 
     def test_dual_spellings_of_a_feat_reference_yield_two_pairs(self):
         """the same feature cited bare and full in one text yields two (type, id) pairs, in

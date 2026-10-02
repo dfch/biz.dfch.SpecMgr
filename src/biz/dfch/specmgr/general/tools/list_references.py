@@ -29,8 +29,8 @@ the source as raw, frontmatter-stripped body text
 the source, since extraction needs the literal markdown), extracts every
 ``<TYPE> <id>`` cross-reference from it (the ten UUID tags with a
 canonical 8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
-``feat-NNN-slug`` id or the bare ``feat-NNN`` number)
-(``general.tools._references.find_references``), deduplicates repeated
+``feat-NNN-slug`` id or the bare ``feat-NNN`` number, via
+``general.tools._references.find_references``), deduplicates repeated
 occurrences of the same reference (first-occurrence order preserved), and
 resolves each unique reference to the referenced document in its own target
 domain (``general.tools._references.resolve_reference``: the target

@@ -28,10 +28,16 @@ generic ``list_references`` tool (``general.tools.list_references``):
   :data:`_REFERENCE_PATTERN` (the ten UUID tags, a canonical 8-4-4-4-12
   hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT`` tag, a full
   ``feat-NNN-slug`` id or a bare ``feat-NNN`` number), each applied with
-  ``re.finditer``, the two match sets merged by stable sort on match
-  position (their spans are provably disjoint -- a UUID cannot contain
-  ``t``; a feat id cannot be a UUID), yielding ``(type, id)`` pairs with
-  ``type``/``id`` lowercased, in first-occurrence order. Repeated
+   ``re.finditer``, the two match sets merged by stable sort on match
+   position (a FEAT match can never start inside a UUID span -- a uuid
+   cannot contain ``t`` -- while a feat slug can contain a
+   ``<TAG>-<uuid>``-shaped substring (the hyphen doubling as the
+   separator), in which case the merge keeps BOTH spans -- the outer FEAT
+   reference plus the inner, phantom UUID-tag row, which resolves like any
+   other reference (typically a not-found row) -- and that corner case is
+   pinned by a dedicated test, feat-177 review round), yielding
+   ``(type, id)`` pairs with ``type``/``id`` lowercased, in
+   first-occurrence order. Repeated
   occurrences of the same reference are **not** deduped here -- dedup
   happens in the row-materialization step (in the tool itself).
 - :func:`resolve_reference` resolves one unique reference into a
@@ -160,6 +166,11 @@ assert len(_FEAT_ID_SPLIT) == 2, (
     "(feat-177-list-ref-feat, Task 100.100)"
 )
 _FEAT_ID_PREFIX, _FEAT_ID_SLUG = _FEAT_ID_SPLIT
+assert re.fullmatch(r"feat-\[[^\]]*\]\+", _FEAT_ID_PREFIX), (
+    f"the shared full feat id shape's number prefix {_FEAT_ID_PREFIX!r} must be exactly 'feat-' plus "
+    "ONE character class with a '+' quantifier (the bare/full id boundary -- a two-class suffix would "
+    "silently move the _FEAT_BARE_ID_PATTERN classifier) (feat-177-list-ref-feat, review round)"
+)
 
 #: The compiled FEAT cross-reference extraction pattern
 #: (feat-177-list-ref-feat REQ-001). The tag is the literal ``FEAT`` (the
@@ -201,9 +212,14 @@ def find_references(text: str) -> list[tuple[str, str]]:
     tag with the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
     number) are applied via ``re.finditer`` over the whole text, and the
     two match sets are merged by stable sort on match position -- the
-    patterns' match spans are provably disjoint (a UUID cannot contain
-    ``t``; a feat id cannot be a UUID), so no overlap handling is needed --
-    and a match may sit anywhere in any line (bullet prefixes,
+    patterns' match spans are not provably disjoint: a FEAT match can never
+    start inside a UUID span (a uuid cannot contain ``t``), while a feat
+    slug can contain a ``<TAG>-<uuid>``-shaped substring (the hyphen
+    doubling as the separator), in which case the merge keeps BOTH spans --
+    the outer FEAT reference plus the inner, phantom UUID-tag row, which
+    resolves like any other reference (typically a not-found row) -- and
+    that corner case is pinned by a dedicated test (feat-177 review round)
+    -- and a match may sit anywhere in any line (bullet prefixes,
     indentation, and mid-prose references all count).
 
     Parameters
@@ -391,7 +407,7 @@ def _load_feat(ref_id: str) -> tuple[str, Path]:
                 break
         if first_match is None:
             raise FeatNotFoundError(
-                f"no feature found for bare number {ref_id!r}: no feature folder named {ref_id!r}-* with a README.md "
+                f"no feature found for bare number {ref_id!r}: no feature folder named {ref_id}-* with a README.md "
                 f"exists under {base_dir!r} (use list_feat to discover the exact id)"
             )
         folder_id = first_match.parent.name
