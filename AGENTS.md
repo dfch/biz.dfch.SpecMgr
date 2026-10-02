@@ -564,8 +564,12 @@ type or cross-cutting:
       `ParseFailureResult` channel too — while every caller-usage
       `ValueError` (invalid id shape, unknown `type`, range-coordinate
       misuse, `edit`'s pre-dispatch OC-parity guards and stage-1 match
-      guards, `set_status`'s `superseded_by` misuse) still raises,
-      `set_status`'s out-of-vocabulary `InvalidStatusResult` (case 2 of the
+       guards, `set_status`'s `superseded_by` misuse) still raises — with
+       the one sub-case where `update`/`set_classification`'s `type="adr"`
+       (a well-formed UUID id, so it passes the id-shape validation) raises
+       the plain `KeyError` from the dispatch-table lookup instead (a
+       direct-Python-caller outcome only, unreachable through the server's
+       12-value `type` enum) — `set_status`'s out-of-vocabulary `InvalidStatusResult` (case 2 of the
       same chain, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs
       pre-lock/pre-load (first), and nothing is written in any failure
       case; `edit`, the generic surgical exact-match
