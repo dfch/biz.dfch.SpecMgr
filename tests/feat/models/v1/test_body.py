@@ -28,6 +28,11 @@ after-validator on `Updates`/`DecisionsMade`, and the full reference
 document's round-trip (seeded from
 `.specmgr/feat/feat-31-feature/example.md`, see
 `tests/feat/models/v1/data/feat_reference.md`).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` and
+`DecisionEntry.content` accept any markdown content (multi-paragraph,
+bullet/numbered list, fenced code block, block quote), not just a single
+paragraph.
 """
 
 from __future__ import annotations
@@ -633,6 +638,108 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
             with self.subTest(cls=cls.__name__):
                 with self.assertRaises(ValidationError):
                     cls()
+
+
+class TestUpdateEntryAndDecisionEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry`/`DecisionEntry` `content` accept any markdown content verbatim, not just one
+    paragraph (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so each entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n- item one\n\n- item two\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+                self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n1. Do the first thing.\n\n2. Do the second thing.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\nSome lead prose.\n\n```\ncode block content\n```\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+                self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n> A quoted observation.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "> A quoted observation.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_model_dump_surfaces_non_paragraph_entry_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object -- for both the `Updates` and `Decisions Made` collections.
+        progress = Progress.from_text(
+            format_text(
+                "## Progress\n\n"
+                "### Current Status\n\nSome status.\n\n"
+                "### Updates\n\n"
+                "#### 2026-08-30 16:47:59.981Z - Paused for review\n\n"
+                "- item one\n\n"
+                "- item two\n\n"
+                "### Decisions Made\n\n"
+                "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures\n\n"
+                "- decision one\n\n"
+                "- decision two\n"
+            )
+        )
+
+        dump = Feature(plan=_minimal_plan(), progress=progress).model_dump(mode="json")
+
+        self.assertEqual(dump["progress"]["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
+        self.assertEqual(
+            dump["progress"]["decisions_made"]["decisions"][0]["content"]["text"],
+            "- decision one\n\n- decision two\n",
+        )
 
 
 class TestUpdatesOrdering(unittest.TestCase):

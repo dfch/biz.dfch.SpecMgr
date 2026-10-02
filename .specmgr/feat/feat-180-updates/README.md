@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T19:38:14.558+02:00'
+updated: '2026-10-02T21:52:53.226+02:00'
 version: 1.0.0
 ---
 
@@ -176,16 +176,16 @@ mid-commit and having to fix-then-retry.
 
 #### Phase 110: New test coverage
 
-- [ ] Task 110.100: In `tests/vcr/models/v1/test_body.py`, add multi-paragraph/list/code-block positive tests for `UpdateEntry.content` (existing negative tests use bare `assertRaises`, not message-specific assertions, so they need no fix -- confirm they still pass unmodified).
-- [ ] Task 110.110: In `tests/feat/models/v1/test_body.py`, do the same for both `UpdateEntry` and `DecisionEntry`.
-- [ ] Task 110.120: In `tests/dec/models/v1/test_body.py`, do the same.
-- [ ] Task 110.130: In `tests/sop/models/v1/test_body.py`, do the same; also check `tests/sop/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
-- [ ] Task 110.140: In `tests/sysrs/models/v1/test_body.py`, do the same; also check `tests/sysrs/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
-- [ ] Task 110.150: In `tests/tsk/models/v1/test_body.py`, do the same; also check `tests/tsk/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed. `tests/tsk/tools/test_create_tsk.py` needs no edit (its only `## Recent Updates` fixture is a single paragraph) -- confirm it still passes unmodified rather than editing it.
-- [ ] Task 110.155: For parity with Tasks 110.130/110.140/110.150's `test_parser.py` check, also check `tests/vcr/models/v1/test_parser.py`, `tests/feat/models/v1/test_parser.py`, and `tests/dec/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
-- [ ] Task 110.160: Add/confirm `model_dump()` assertions covering the non-paragraph content case (ACC-006).
-- [ ] Task 110.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 120.
-- [ ] Task 110.180: Commit Phase 110's changes (the new/updated tests) before starting Phase 120.
+- [x] Task 110.100: In `tests/vcr/models/v1/test_body.py`, add multi-paragraph/list/code-block positive tests for `UpdateEntry.content` (existing negative tests use bare `assertRaises`, not message-specific assertions, so they need no fix -- confirm they still pass unmodified).
+- [x] Task 110.110: In `tests/feat/models/v1/test_body.py`, do the same for both `UpdateEntry` and `DecisionEntry`.
+- [x] Task 110.120: In `tests/dec/models/v1/test_body.py`, do the same.
+- [x] Task 110.130: In `tests/sop/models/v1/test_body.py`, do the same; also check `tests/sop/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
+- [x] Task 110.140: In `tests/sysrs/models/v1/test_body.py`, do the same; also check `tests/sysrs/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
+- [x] Task 110.150: In `tests/tsk/models/v1/test_body.py`, do the same; also check `tests/tsk/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed. `tests/tsk/tools/test_create_tsk.py` needs no edit (its only `## Recent Updates` fixture is a single paragraph) -- confirm it still passes unmodified rather than editing it.
+- [x] Task 110.155: For parity with Tasks 110.130/110.140/110.150's `test_parser.py` check, also check `tests/vcr/models/v1/test_parser.py`, `tests/feat/models/v1/test_parser.py`, and `tests/dec/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
+- [x] Task 110.160: Add/confirm `model_dump()` assertions covering the non-paragraph content case (ACC-006).
+- [x] Task 110.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 120.
+- [x] Task 110.180: Commit Phase 110's changes (the new/updated tests) before starting Phase 120.
 
 #### Phase 120: Regenerate build artifacts
 
@@ -206,18 +206,26 @@ mid-commit and having to fix-then-retry.
 
 ### Current Status
 
-**As of 2026-10-02**: Phase 100 (Model change) is COMPLETE: the model
-retypes (Tasks 100.100-100.160 -- the per-domain `UpdateEntryContent`
-leaf classes plus `feat`'s `DecisionEntryContent` in all 6 domains'
-`models/v1/body.py`, mirroring `feat-114`'s `IntroductionBody` idiom; no
-`models/md` engine changes, no new validator code) and the approved
-fix-up (Task 100.165 -- 21 trailing-newline expected-value updates, the
-superseded feat-7 Task 0.29 regression class deleted with its module-
-docstring supersession note, 6x2 schema copies + `specmgr docs`
-regenerated) are landed; the phase-end full quality gate is green
-(`3900 passed, 2688 subtests passed`) and the phase is committed by the
-orchestrator. Phase 110 (New test coverage, purely additive as
-originally scoped) is next.
+**As of 2026-10-02**: Phase 100 (Model change) and Phase 110 (New test
+coverage) are COMPLETE. Phase 100 landed the per-domain
+`UpdateEntryContent`/`DecisionEntryContent` leaf retypes (plus the
+approved Task 100.165 fix-up: 21 trailing-newline expected-value
+updates, the superseded feat-7 Task 0.29 regression class deleted,
+6x2 schema copies + `specmgr docs` regenerated) and is committed
+(`3900 passed, 2688 subtests passed` gate). Phase 110 added 39 new
+positive/confirmation tests across the 6 domains' `test_body.py` files
+(multi-paragraph/bullet/numbered/code-block/block-quote bodies parse and
+round-trip byte-identically, `.content.text` carries the raw body
+including the trailing `"\n"`, `model_dump()` surfaces the real text per
+ACC-006, blank-content negatives confirmed or added per ACC-005); all 6
+domains' `test_parser.py` files checked with no change needed, and
+`tests/tsk/tools/test_create_tsk.py` confirmed passing unmodified; the
+phase-end full quality gate is green (`3939 passed, 2698 subtests
+passed`). Phase 120 (Regenerate build artifacts) is next -- note that
+Phase 100's commit already landed the regenerated schema/docs artifacts
+via its fix-up (Task 100.165), so Phase 120 is expected to be a
+verification pass (re-run the 12 `specmgr schema` invocations +
+`specmgr docs`, confirm zero drift, commit bookkeeping).
 
 ### Blockers
 
@@ -226,6 +234,89 @@ originally scoped) is next.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T19:52:53.000Z - Phase 110 (New test coverage) completed; full gate green
+
+Implemented Tasks 110.100-110.170; the phase is purely additive as
+scoped (test files only, `src/` untouched). Per-domain additions, each a
+new test class placed beside the domain's own `UpdateEntry` tests,
+mirroring each file's local conventions (`format_text` fixtures,
+`str(sut) == text` entry-level round-trips, `assertRaises` negatives,
+module docstring extended with a feat-180 coverage line):
+
+- `tests/vcr/models/v1/test_body.py` -- new
+  `TestUpdateEntryAcceptsNonParagraphContent` (7 tests: multi-paragraph,
+  bullet list, numbered list, fenced code block, block quote -- each
+  asserting parse + byte-identical round-trip + raw `.content.text`
+  including the trailing `"\n"`; blank-content `AssertionError` negative
+  (ACC-005, none existed for vcr before); `model_dump(mode="json")`
+  surfaces `- item one\n\n- item two\n` at
+  `dump["updates"]["updates"][0]["content"]["text"]` (ACC-006)).
+- `tests/feat/models/v1/test_body.py` -- new
+  `TestUpdateEntryAndDecisionEntryAcceptsNonParagraphContent` (6 tests;
+  the 5 shape tests loop `UpdateEntry`/`DecisionEntry` under their own
+  `####` headings via subTest, so both entry classes are covered per
+  shape; `model_dump` asserts both
+  `dump["progress"]["updates"]["updates"][0]["content"]["text"]` and
+  `dump["progress"]["decisions_made"]["decisions"][0]["content"]["text"]`
+  on a `Feature` body built from the file's own `_minimal_plan()`
+  helper). Blank-content negatives already existed
+  (`test_entry_without_lead_paragraph_raises_assertion_error`) --
+  confirmed unmodified, not duplicated.
+- `tests/dec/models/v1/test_body.py` -- new
+  `TestUpdateEntryAcceptsNonParagraphContent` (6 tests: the 5 shapes +
+  `model_dump` at `dump["updates"]["updates"][0]["content"]["text"]`;
+  the existing blank-content negative confirmed unmodified).
+- `tests/sop/models/v1/test_body.py` -- new
+  `TestUpdateEntryAcceptsNonParagraphContent` (6 tests, same shape;
+  existing blank-content negative confirmed unmodified).
+- `tests/sysrs/models/v1/test_body.py` -- new
+  `TestUpdateEntryAcceptsNonParagraphContent` (7 tests, including the
+  blank-content negative -- none existed for sysrs before -- and
+  `model_dump` at `dump["updates"]["updates"][0]["content"]["text"]`).
+- `tests/tsk/models/v1/test_body.py` -- new
+  `TestUpdateEntryAcceptsNonParagraphContent` (7 tests, including the
+  blank-content negative -- none existed for tsk before -- and
+  `model_dump` at `dump["recent_updates"]["updates"][0]["content"]["text"]`
+  on a full `Task` body, the exact key path
+  `tests/tsk/tools/test_parse_tsk.py` pins at document level).
+
+Fixture stability: every body used in a round-trip assertion is
+mdformat-stable under the engine's own options (`{"number": True}` +
+`simple_breaks`), verified by running `format_text` over each candidate
+and by a pre-write scratch run through every domain's real
+`UpdateEntry`/`DecisionEntry` (all 5 shapes x all 6 domains parsed,
+round-tripped byte-identically, and exposed the expected raw
+`.content.text`; blank and whitespace-only bodies raised the engine's
+mandatory-field `AssertionError`; a `+`-bullet confirmed to normalize
+to `-`). Block-quote coverage was included in all 6 domains (the plan
+required at least 3).
+
+`test_parser.py` check (Tasks 110.130/110.140/110.150/110.155): all 6
+domains' `tests/<d>/models/v1/test_parser.py` read in full -- every
+Updates/Decisions Made fixture in those files is a single-paragraph
+entry (still valid, REQ-005), and the exact-value `.content.text`
+assertions (vcr:193-194, dec:268-269, tsk:81/105-109/193) already carry
+the trailing `"\n"` form from Phase 100's fix-up; no paragraph-specific
+assumption breaks or under-tests the new capability, so NO change was
+needed in any of the 6 files. `tests/tsk/tools/test_create_tsk.py`
+confirmed passing unmodified (its only `## Recent Updates` fixture is a
+single paragraph). All existing bare-`assertRaises` negatives
+(heading-only entries, zero-entry containers, out-of-order entries)
+pass unmodified -- ACC-005/REQ-003 semantics preserved.
+
+Phase-end gate (Task 110.170): `uv run --frozen ruff format --check`
+green (1782 files already formatted), `uv run --frozen ruff check` green
+(all checks passed), `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` green (no output), full suite
+`uv run --frozen pytest -n auto --cov=src --cov-report=` green:
+**3939 passed, 0 failed** (Phase 100's 3900 + 39 new tests). On this
+120-core box `-n auto` (120 workers) drops the unittest-subtest counter
+from xdist's summary line, so the count was re-confirmed with `-n 4`:
+**`3939 passed, 2698 subtests passed in 139.34s`** (Phase 100's 2688
+subtests + the 10 new ones from feat's 5x2-class shape loops). Task
+110.180: the orchestrator commits this phase immediately after this
+entry.
 
 #### 2026-10-02T17:40:00.000Z - Phase 100 fix-up completed per user-approved resolution; full gate green
 

@@ -26,6 +26,10 @@ mirroring `.specmgr/feat/feat-33-vcr/example.md`'s empirically-validated
 shape), `AcceptanceCriteria`'s zero-entry rejection, `Vcr`'s section
 optional/misordering behavior, and the duplicate-AC-number after-validator
 (the `ValidationError` channel).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
 """
 
 from __future__ import annotations
@@ -467,6 +471,79 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-26T14:30:00.000Z")
         self.assertEqual(sut.title, "Created")
+
+
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_blank_content_raises_assertion_error(self) -> None:
+        # `content` stays mandatory: a heading with no body fails the engine's
+        # mandatory-field zero-extent check (feat-180-updates, issue #180, ACC-005).
+        with self.assertRaises(AssertionError):
+            UpdateEntry.from_text(format_text("### 2026-08-26 00:00:00.000Z - Created\n"))
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object.
+        kwargs = _minimal_vcr_kwargs()
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+        )
+
+        dump = Vcr(**kwargs).model_dump(mode="json")
+
+        self.assertEqual(dump["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
 
 
 class TestImplicitHeadingAliases(unittest.TestCase):
