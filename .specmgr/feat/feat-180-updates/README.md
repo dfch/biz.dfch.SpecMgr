@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T14:53:17.515+02:00'
+updated: '2026-10-02T14:56:28.119+02:00'
 version: 1.0.0
 ---
 
@@ -145,6 +145,16 @@ changes -- only confirmation that they still pass unmodified. Phase 110's
 tasks below are therefore purely additive (new positive tests), not
 corrective.
 
+Each phase's quality-gate task (`ruff format --check`/`ruff check`/
+`vulture`/full test suite) is run manually before that phase's own commit
+even though this repo's installed pre-commit hooks already re-enforce the
+identical checks -- plus the `specmgr-schema`/`specmgr-schema-*-package`
+drift hooks and `specmgr docs` -- automatically on every `git commit`
+touching `src/**/*.py`/`tests/**/*.py` (see `AGENTS.md`). The manual run
+is not redundant busywork: it is purely for fast local feedback, catching
+a failure before attempting the commit rather than discovering it
+mid-commit and having to fix-then-retry.
+
 ### Related Decisions
 
 - `feat-114-qa-introduction-any-markdown` (feat): established the `IntroductionBody(MarkdownStr)` leaf-class idiom this feature reuses for `UpdateEntryContent`/`DecisionEntryContent`.
@@ -209,6 +219,17 @@ yet started -- Phase 100 (Model change) is next.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T16:30:00.000Z - Clarified why the manual phase-end gate isn't redundant with pre-commit hooks
+
+Added a Design Notes paragraph explaining that each phase's manual
+quality-gate task (ruff format/check, ruff check, vulture, full test
+suite) is not duplicate busywork even though this repo's installed
+pre-commit hooks already re-enforce the identical checks -- plus
+schema/docs drift -- automatically on every `git commit` touching
+`src/**/*.py`/`tests/**/*.py`: the manual run is purely for fast local
+feedback, catching a failure before attempting the commit rather than
+discovering it mid-commit and having to fix-then-retry.
 
 #### 2026-10-02T15:00:00.000Z - Plan refined after codebase-verification review
 
