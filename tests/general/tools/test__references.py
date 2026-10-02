@@ -39,6 +39,7 @@ from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.adr.tools.create_adr import create_adr
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
+from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.general.models.reference import ReferenceRow
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._references import REFERENCE_TYPES, find_references, resolve_reference
@@ -60,6 +61,12 @@ _UUID2 = "0e15c5de-4ac9-4279-aa75-53249a3e43e4"
 
 #: A well-formed but non-existent canonical UUID (the unknown-id case).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
+
+#: A well-formed full feat-NNN-slug id (the FEAT tag's full id form, feat-177 REQ-001).
+_FEAT_FULL_ID = "feat-177-list-ref-feat"
+
+#: The bare feat-NNN number form of the same feature (the FEAT tag's bare id form, feat-177 REQ-001).
+_FEAT_BARE_ID = "feat-177"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -333,6 +340,60 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
 
 _ADR_TITLE = "Use the dispatch convention"
 
+
+def _feat_body(title: str) -> str:
+    """A valid, minimal feat body with the given ``# Feature: {title}`` H1 and no cross-references
+    (the ``test_list_references`` ``_feat_body_with_references`` shape, minus the references)."""
+    result = textwrap.dedent(
+        f"""\
+        # Feature: {title}
+
+        ## Plan
+
+        ### Overview
+
+        Short description.
+
+        ### Requirements
+
+        - REQ-001: The widget must render within 200ms.
+
+        ### Acceptance Criteria
+
+        - [ ] ACC-001: Render time stays below 200ms.
+
+        ### Scope
+
+        #### Included
+
+        - The widget component itself.
+
+        #### Explicitly Out Of Scope
+
+        - Mobile touch gestures.
+
+        ### Task List
+
+        #### Phase 100: Scaffolding
+
+        - [x] Task 100.100: Create branch and package skeleton
+
+        ## Progress
+
+        ### Current Status
+
+        **As of 2026-08-30**: free-form narrative.
+
+        ### Updates
+
+        #### 2026-08-30 16:47:59.981Z - Paused for review
+
+        Free-form prose describing what happened in this update.
+        """
+    )
+    return result
+
+
 #: Per flat target domain: (the lowercase reference tag, the domain's own
 #: ``create_<d>`` tool, its minimal valid body, and that body's H1 title).
 _TARGET_SEEDS: tuple[tuple[str, Callable[[str], Any], str, str], ...] = (
@@ -352,11 +413,12 @@ class TestFindReferences(unittest.TestCase):
     """Tests for find_references (pure string extraction; no fixture)."""
 
     def test_each_vocabulary_tag_matches_a_well_formed_reference(self):
-        """Every one of the 10 vocabulary tags must match '<TAG> <uuid>' and come back lowercased."""
+        """Every vocabulary tag except ``feat`` (whose id is never a UUID) must match '<TAG> <uuid>'
+        and come back lowercased."""
         for tag in REFERENCE_TYPES:
             if tag == "feat":
-                # feat's UUID form is deliberately not a feat reference (feat-177 ACC-003; the
-                # FEAT-form loop is added in Phase 110, Task 110.100).
+                # feat's UUID form is deliberately not a feat reference (feat-177 ACC-003); the
+                # separate FEAT-form loop is test_each_feat_form_matches_a_well_formed_reference.
                 continue
             with self.subTest(tag=tag):
                 text = f"{tag.upper()} {_UUID}: A title"
@@ -409,10 +471,14 @@ class TestFindReferences(unittest.TestCase):
         self.assertEqual(result, [("req", _UUID), ("gol", _UUID2)])
 
     def test_tags_outside_the_vocabulary_do_not_match(self):
-        """SOP/TSK/FEAT (and longer words containing a tag) must not match."""
+        """SOP/TSK (and longer words containing a tag) must not match; the ``FEAT <uuid>`` case is
+        not a tag outside the vocabulary -- FEAT is in it now -- but the uuid-form regression pin
+        (a feat's id is never a UUID, feat-177 REQ-002/ACC-003)."""
         for text in (
             f"SOP {_UUID}: A title",
             f"TSK {_UUID}: A title",
+            # FEAT is now a vocabulary tag (feat-177): this subtest is the uuid-form regression pin
+            # -- a feat's id is never a UUID, so FEAT <uuid> matches nothing (REQ-002/ACC-003).
             f"FEAT {_UUID}: A title",
             f"REQS {_UUID}: A title",
             f"MYREQ {_UUID}: A title",
@@ -442,6 +508,88 @@ class TestFindReferences(unittest.TestCase):
             with self.subTest(text=text):
                 result = find_references(text)
                 self.assertEqual([pair for pair in result if pair[0] == "gol"], [])
+
+    def test_each_feat_form_matches_a_well_formed_reference(self):
+        """Both of the FEAT tag's id forms -- the full feat-NNN-slug id and the bare feat-NNN number --
+        must match and come back as they appeared (the separate FEAT-form loop of
+        test_each_vocabulary_tag_matches_a_well_formed_reference, feat-177 REQ-001/ACC-003)."""
+        for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
+            with self.subTest(id_=id_):
+                text = f"FEAT {id_}: A title"
+
+                result = find_references(text)
+
+                self.assertEqual(result, [("feat", id_)])
+
+    def test_a_feat_tag_is_case_insensitive(self):
+        """lowercase, CamelCase, and UPPERCASE FEAT tag spellings must all match, for both id forms."""
+        for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
+            for text in (f"feat {id_}: A title", f"Feat {id_}: A title", f"FEAT {id_}: A title"):
+                with self.subTest(text=text):
+                    self.assertEqual(find_references(text), [("feat", id_)])
+
+    def test_a_feat_separator_variants_all_match(self):
+        """a single space, a dash, multiple spaces, and a tab must all separate the FEAT tag from its
+        id, for both id forms."""
+        for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
+            for text in (
+                f"FEAT {id_}: A title",
+                f"FEAT-{id_}: A title",
+                f"FEAT  {id_}: A title",
+                f"FEAT\t{id_}: A title",
+            ):
+                with self.subTest(text=text):
+                    self.assertEqual(find_references(text), [("feat", id_)])
+
+    def test_a_feat_reference_matches_anywhere_in_a_line(self):
+        """column 0, after a bullet prefix, indented (a nested bullet), and mid-prose must all match,
+        for both id forms."""
+        for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
+            for text in (
+                f"FEAT {id_}: A title",
+                f"- FEAT {id_}: A title",
+                f"  - FEAT-{id_}: A title",
+                f"See also FEAT {id_} for details.",
+            ):
+                with self.subTest(text=text):
+                    self.assertEqual(find_references(text), [("feat", id_)])
+
+    def test_a_feat_id_with_a_malformed_tail_does_not_match(self):
+        """an overlong tail (feat-177x) and a dangling dash (feat-177-) must be rejected by the
+        trailing guard, not extracted as the bare feat-177 (feat-177 REQ-001)."""
+        for text in (
+            "FEAT feat-177x: A title",
+            "FEAT feat-177-: A title",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(find_references(text), [])
+
+    def test_feat_and_uuid_references_merge_in_first_occurrence_order(self):
+        """the two patterns' match sets are merged by match position: a FEAT reference between (or
+        before) UUID references must come back in its own position (feat-177 Task 100.100)."""
+        for id_ in (_FEAT_FULL_ID, _FEAT_BARE_ID):
+            for text, expected in (
+                (
+                    f"REQ {_UUID}: one\n\nFEAT {id_}: two\n\nGOL {_UUID2}: three",
+                    [("req", _UUID), ("feat", id_), ("gol", _UUID2)],
+                ),
+                (
+                    f"FEAT {id_}: first\n\nREQ {_UUID}: second",
+                    [("feat", id_), ("req", _UUID)],
+                ),
+            ):
+                with self.subTest(id_=id_, text=text):
+                    result = find_references(text)
+                    self.assertEqual(result, expected)
+
+    def test_dual_spellings_of_a_feat_reference_yield_two_pairs(self):
+        """the same feature cited bare and full in one text yields two (type, id) pairs, in
+        first-occurrence order -- no normalization at the extraction level (feat-177 REQ-007)."""
+        text = f"FEAT {_FEAT_BARE_ID}: the bare spelling\n\nFEAT {_FEAT_FULL_ID}: the full spelling"
+
+        result = find_references(text)
+
+        self.assertEqual(result, [("feat", _FEAT_BARE_ID), ("feat", _FEAT_FULL_ID)])
 
     def test_first_occurrence_order_is_preserved(self):
         """the pairs must come back in the order the references first occur in the text."""
@@ -549,6 +697,137 @@ class TestResolveReference(TempRefDirTestCase):
                 self.assertIsNone(row.path)
                 self.assertIsNotNone(row.error)
                 self.assertIn(error_fragment, row.error)
+
+    def test_a_feat_full_id_resolves_to_a_resolved_row(self):
+        """feat-177 ACC-001 shape at the resolve level: the full feat-NNN-slug id resolves through
+        the exact load_by_id -- the row carries the feature's H1 (the 'Feature: ' prefix stripped)
+        and its README.md path, with no error."""
+        created = create_feat(_feat_body("List Ref Feat"), id=_FEAT_FULL_ID)
+
+        row = resolve_reference("feat", created.id)
+
+        self.assertIsInstance(row, ReferenceRow)
+        self.assertEqual((row.type, row.id), ("feat", _FEAT_FULL_ID))
+        self.assertEqual(row.title, "List Ref Feat")
+        self.assertEqual(row.path, str((self.feat_dir / _FEAT_FULL_ID / "README.md").resolve()))
+        self.assertIsNone(row.error)
+
+    def test_a_feat_bare_number_resolves_retaining_the_bare_id(self):
+        """feat-177 ACC-002: a bare feat-NNN mention resolves to the matching feat-NNN-* feature,
+        and the row's id stays the bare feat-NNN as it appeared in the source -- not the resolved
+        full id."""
+        create_feat(_feat_body("List Ref Feat"), id=_FEAT_FULL_ID)
+
+        row = resolve_reference("feat", _FEAT_BARE_ID)
+
+        self.assertEqual((row.type, row.id), ("feat", _FEAT_BARE_ID))
+        self.assertEqual(row.title, "List Ref Feat")
+        self.assertEqual(row.path, str((self.feat_dir / _FEAT_FULL_ID / "README.md").resolve()))
+        self.assertIsNone(row.error)
+
+    def test_a_bare_feat_number_resolves_the_first_folder_in_sorted_order(self):
+        """feat-177 ACC-005: a bare number matching multiple feature folders resolves the first one
+        in lexicographically sorted folder-name order (the list_feat order)."""
+        create_feat(_feat_body("Beta Feature"), id="feat-1-beta")
+        create_feat(_feat_body("Alpha Feature"), id="feat-1-alpha")
+
+        row = resolve_reference("feat", "feat-1")
+
+        self.assertEqual((row.type, row.id), ("feat", "feat-1"))
+        self.assertEqual(row.title, "Alpha Feature")
+        self.assertEqual(row.path, str((self.feat_dir / "feat-1-alpha" / "README.md").resolve()))
+        self.assertIsNone(row.error)
+
+    def test_a_readme_less_feat_folder_is_not_a_bare_number_candidate(self):
+        """feat-177 ACC-005: the bare-number candidate set is the iter_feat_paths view
+        (README-backed folders only) -- a feat-NNN-* folder without a README.md is not a candidate
+        and cannot shadow a later, valid match, even when it sorts first."""
+        create_feat(_feat_body("Zeta Feature"), id="feat-3-zeta")
+        no_readme = self.feat_dir / "feat-3-noreadme"
+        no_readme.mkdir()
+        (no_readme / "NOTES.txt").write_text("a non-README file", encoding="utf-8")
+
+        row = resolve_reference("feat", "feat-3")
+
+        self.assertEqual((row.type, row.id), ("feat", "feat-3"))
+        self.assertEqual(row.title, "Zeta Feature")
+        self.assertEqual(row.path, str((self.feat_dir / "feat-3-zeta" / "README.md").resolve()))
+        self.assertIsNone(row.error)
+
+    def test_a_bare_feat_number_never_matches_a_longer_number(self):
+        """feat-177 REQ-003: the bare-number prefix carries its trailing hyphen, so feat-1 never
+        matches feat-10-* -- with only a feat-10-* folder on disk, a bare feat-1 is a not-found
+        row (while a bare feat-10 still resolves the feat-10-* folder)."""
+        created = create_feat(_feat_body("Ten Feature"), id="feat-10-multi")
+
+        row = resolve_reference("feat", "feat-1")
+
+        self.assertEqual((row.type, row.id), ("feat", "feat-1"))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("no feature found for bare number 'feat-1'", row.error)
+
+        row = resolve_reference("feat", "feat-10")
+
+        self.assertEqual((row.type, row.id), ("feat", "feat-10"))
+        self.assertEqual(row.title, "Ten Feature")
+        self.assertEqual(row.path, str((self.feat_dir / created.id / "README.md").resolve()))
+        self.assertIsNone(row.error)
+
+    def test_a_broken_first_match_feat_readme_is_a_not_found_row(self):
+        """feat-177 REQ-003: if the first (sorted) name match's README fails to parse, the resolver
+        does not skip on to the next match -- the collapsed FeatNotFoundError yields a not-found
+        row (written directly to the temp dir, since create_feat validates its input)."""
+        create_feat(_feat_body("Good Feature"), id="feat-1-good")
+        broken = self.feat_dir / "feat-1-broken"
+        broken.mkdir()
+        (broken / "README.md").write_text("# Feature: Broken\n\nnot a valid feature body", encoding="utf-8")
+
+        row = resolve_reference("feat", "feat-1")
+
+        self.assertEqual((row.type, row.id), ("feat", "feat-1"))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("feat-1-broken", row.error)
+        self.assertIn("could not be parsed", row.error)
+
+    def test_a_missing_feat_full_id_is_a_not_found_row(self):
+        """feat-177 ACC-004 (full id): a full-id mention of an absent feature is a row with null
+        title/path and the domain's own not-found message in error -- never raises."""
+        row = resolve_reference("feat", "feat-999-no-such-feature")
+
+        self.assertIsInstance(row, ReferenceRow)
+        self.assertEqual((row.type, row.id), ("feat", "feat-999-no-such-feature"))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("no feature found with id 'feat-999-no-such-feature'", row.error)
+
+    def test_a_missing_bare_feat_number_is_a_not_found_row(self):
+        """feat-177 ACC-004 (bare number): a bare-number mention with no matching folder is a row
+        with null title/path and the bare-number not-found message in error -- never raises."""
+        row = resolve_reference("feat", "feat-42")
+
+        self.assertIsInstance(row, ReferenceRow)
+        self.assertEqual((row.type, row.id), ("feat", "feat-42"))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("no feature found for bare number 'feat-42'", row.error)
+
+    def test_a_uuid_shaped_feat_id_is_a_not_found_row(self):
+        """feat-177 REQ-003: a feat's id is never a UUID -- a UUID-shaped feat ref falls through to
+        the exact load_by_id and yields a not-found row."""
+        row = resolve_reference("feat", _UUID)
+
+        self.assertEqual((row.type, row.id), ("feat", _UUID))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("no feature found with id", row.error)
+        self.assertIn(_UUID, row.error)
 
 
 if __name__ == "__main__":
