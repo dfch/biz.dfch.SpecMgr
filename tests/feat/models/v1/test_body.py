@@ -581,7 +581,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30 16:47:59.981Z")
         self.assertEqual(sut.title, "Paused for review")
         self.assertEqual(str(sut), text)
@@ -591,7 +591,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = DecisionEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some decision text.")
+        self.assertEqual(sut.content.text, "Some decision text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30 17:10:00.000Z")
         self.assertEqual(sut.title, "Deferred mobile gestures")
         self.assertEqual(str(sut), text)
@@ -601,7 +601,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30T16:47:59.981Z")
         self.assertEqual(sut.title, "Paused for review")
         self.assertEqual(str(sut), text)
@@ -611,7 +611,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = DecisionEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some decision text.")
+        self.assertEqual(sut.content.text, "Some decision text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30T17:10:00.000Z")
         self.assertEqual(sut.title, "Deferred mobile gestures")
         self.assertEqual(str(sut), text)

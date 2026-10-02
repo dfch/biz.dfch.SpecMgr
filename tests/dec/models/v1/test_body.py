@@ -875,7 +875,7 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-26 00:00:00.000Z")
         self.assertEqual(sut.title, "Created")
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
@@ -924,8 +924,8 @@ class TestUpdatesContainer(unittest.TestCase):
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
-        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(sut.updates[0].content.text, "Second entry text.\n")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.\n")
         self.assertEqual(str(sut), text)
 
     def test_out_of_order_entries_raise_validation_error(self) -> None:
@@ -1203,7 +1203,7 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         # wrapped reference paragraph is checked with `assertIn`; the
         # byte-exact structure is guarded by `test_round_trips` above.
         self.assertEqual(
-            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review."
+            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review.\n"
         )
 
 

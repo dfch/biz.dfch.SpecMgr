@@ -18,7 +18,7 @@
 """System Requirements Specification (SYSRS) body models: whole-section fields under a single H1.
 
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
-`MarkdownSection2WithComment`/`MarkdownSection3`/`MarkdownParagraph`/
+`MarkdownSection2WithComment`/`MarkdownSection3`/`UpdateEntryContent`/
 `MarkdownListItem`/`MarkdownListItemWithNotes` engine: each class below
 models one markdown heading (`## `/`### `) or list, and `Sysrs` is the
 top-level H1 container. A `sysrs` document aggregates already-existing
@@ -80,11 +80,11 @@ from pydantic import Field, computed_field, field_validator, model_validator
 from ....models.md import (
     MarkdownListItem,
     MarkdownListItemWithNotes,
-    MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    MarkdownStr,
     alias,
     AliasType,
 )
@@ -962,6 +962,35 @@ _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
 )
 
 
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 @alias(
     value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
@@ -984,8 +1013,8 @@ class UpdateEntry(MarkdownSection3):
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The timestamp carried by the heading, verbatim. Never
         stored separately -- derived from the retained heading text.
@@ -995,8 +1024,8 @@ class UpdateEntry(MarkdownSection3):
         retained heading text.
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore

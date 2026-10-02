@@ -756,8 +756,8 @@ class TestVcrReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(updates)
         self.assertIsNotNone(updates.comment)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.")
-        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.")
+        self.assertEqual(updates.updates[0].content.text, "AC-001 and AC-003 executed against staging.\n")
+        self.assertEqual(updates.updates[1].content.text, "Initial verification case drafted.\n")
 
 
 if __name__ == "__main__":

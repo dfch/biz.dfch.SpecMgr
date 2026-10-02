@@ -61,17 +61,23 @@
       "type": "object"
     },
     "DecisionEntry": {
-      "description": "`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same `content: MarkdownParagraph`) --\na distinct class since it belongs to a semantically distinct section.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    decision text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same single mandatory `content` leaf\nfield) -- a distinct class since it belongs to a semantically distinct\nsection.\n\nParameters\n----------\ncontent:\n    This entry's own decision text, directly under the H4 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H4 heading -- this entry's own decision text. Mandatory."
+          "$ref": "#/$defs/DecisionEntryContent",
+          "description": "This entry's own decision text, directly under the H4 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "DecisionEntry",
+      "type": "object"
+    },
+    "DecisionEntryContent": {
+      "description": "`DecisionEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `DecisionEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `DecisionEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "DecisionEntryContent",
       "type": "object"
     },
     "DecisionsMade": {
@@ -530,17 +536,23 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.\n\nThe timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`\nor space) + `HH:mm:ss.fff` + explicit UTC offset (`+02:00`, `-05:00`)\nor `Z` for UTC -- the same format as frontmatter `created`/`updated`\n(both separators accepted, the `T`-separated form the machine-written\ncanonical variant, date-only rejected; ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.\n\nThe timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`\nor space) + `HH:mm:ss.fff` + explicit UTC offset (`+02:00`, `-05:00`)\nor `Z` for UTC -- the same format as frontmatter `created`/`updated`\n(both separators accepted, the `T`-separated form the machine-written\ncanonical variant, date-only rejected; ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H4 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H4 heading -- this entry's own update text. Mandatory."
+          "$ref": "#/$defs/UpdateEntryContent",
+          "description": "This entry's own update text, directly under the H4 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "UpdateEntry",
+      "type": "object"
+    },
+    "UpdateEntryContent": {
+      "description": "`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `UpdateEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `UpdateEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "UpdateEntryContent",
       "type": "object"
     },
     "Updates": {

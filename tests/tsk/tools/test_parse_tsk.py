@@ -84,7 +84,7 @@ class TestParseTskTool(unittest.TestCase):
             self.assertEqual(body["items"][0]["description"], "Do the first thing")
             self.assertEqual(body["items"][1]["checked"], True)
             self.assertEqual(len(body["recent_updates"]["updates"]), 1)
-            self.assertEqual(body["recent_updates"]["updates"][0]["content"]["text"], "Started the task list.")
+            self.assertEqual(body["recent_updates"]["updates"][0]["content"]["text"], "Started the task list.\n")
 
     def test_raises_for_invalid_frontmatter(self) -> None:
         """parse_tsk must let a frontmatter validation failure propagate."""

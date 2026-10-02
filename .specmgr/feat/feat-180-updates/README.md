@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T14:56:28.119+02:00'
+updated: '2026-10-02T19:38:14.558+02:00'
 version: 1.0.0
 ---
 
@@ -163,15 +163,16 @@ mid-commit and having to fix-then-retry.
 
 #### Phase 100: Model change
 
-- [ ] Task 100.100: In `vcr/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)` with a `text` computed property; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `CrossReference.value`/`.notes`, `Coverage.value`, and `AcceptanceCriterion.description` in this same file.
-- [ ] Task 100.110: In `feat/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`.
-- [ ] Task 100.120: In `feat/models/v1/body.py`, add `DecisionEntryContent(MarkdownStr)`; retype `DecisionEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.130: In `dec/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `DecisionOutcome.statement` in this same file.
-- [ ] Task 100.140: In `sop/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.150: In `sysrs/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.160: In `tsk/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 110.
-- [ ] Task 100.180: Commit Phase 100's changes (the 6 domains' `body.py` model retypes) before starting Phase 110.
+- [x] Task 100.100: In `vcr/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)` with a `text` computed property; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `CrossReference.value`/`.notes`, `Coverage.value`, and `AcceptanceCriterion.description` in this same file.
+- [x] Task 100.110: In `feat/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`.
+- [x] Task 100.120: In `feat/models/v1/body.py`, add `DecisionEntryContent(MarkdownStr)`; retype `DecisionEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [x] Task 100.130: In `dec/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `DecisionOutcome.statement` in this same file.
+- [x] Task 100.140: In `sop/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [x] Task 100.150: In `sysrs/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [x] Task 100.160: In `tsk/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [x] Task 100.165: Correct the 24 pre-existing test incompatibilities the retype surfaced and regenerate the stale artifacts so the phase-end full suite is green before the commit: (a) the 21 `.content.text`/`model_dump()` expected values in the 6 domains' `test_body.py`/`test_parser.py`/`tests/tsk/tools/test_parse_tsk.py` that pin the old `MarkdownParagraph.text` stripped form gain the new leaf type's raw trailing newline (mechanical expected-value update only); (b) `tests/regression/test_issue_27.py`'s `TestFeat7Task029StrayListMarkerRegression` (3 tests) is deleted together with its trigger-2 fixtures -- the pinned trigger (a `+`-prefixed continuation line inside a `## Recent Updates` entry) is now valid any-markdown content by design (issue #180, ACC-003); the same actionable "text left over" message stays pinned at engine level in `tests/models/md/test_validation_error_baseline.py`, and the module docstring notes the supersession (user-approved decision); (c) regenerate the 6 affected domains' `docs/<d>_schema.json` and packaged `<d>/data/<d>_schema.json` copies plus `specmgr docs` -- greens the 5 `test_matches_fresh_generate_*_schema_output` drift tests (note: `tsk`'s resource test file carries no drift test, a pre-existing asymmetry left untouched; the pre-commit `specmgr-schema-tsk-package` hook still enforces its packaged copy).
+- [x] Task 100.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 110.
+- [x] Task 100.180: Commit Phase 100's changes (the 6 domains' `body.py` model retypes) before starting Phase 110.
 
 #### Phase 110: New test coverage
 
@@ -205,12 +206,18 @@ mid-commit and having to fix-then-retry.
 
 ### Current Status
 
-**As of 2026-10-02**: Planning complete; GitHub issue #180 opened
-capturing the design (per-domain `UpdateEntryContent`/`DecisionEntryContent`
-leaf classes mirroring `feat-114`'s `IntroductionBody` idiom; no new
-validator code needed since the engine's existing mandatory-field
-zero-extent check already enforces non-blank content). Implementation not
-yet started -- Phase 100 (Model change) is next.
+**As of 2026-10-02**: Phase 100 (Model change) is COMPLETE: the model
+retypes (Tasks 100.100-100.160 -- the per-domain `UpdateEntryContent`
+leaf classes plus `feat`'s `DecisionEntryContent` in all 6 domains'
+`models/v1/body.py`, mirroring `feat-114`'s `IntroductionBody` idiom; no
+`models/md` engine changes, no new validator code) and the approved
+fix-up (Task 100.165 -- 21 trailing-newline expected-value updates, the
+superseded feat-7 Task 0.29 regression class deleted with its module-
+docstring supersession note, 6x2 schema copies + `specmgr docs`
+regenerated) are landed; the phase-end full quality gate is green
+(`3900 passed, 2688 subtests passed`) and the phase is committed by the
+orchestrator. Phase 110 (New test coverage, purely additive as
+originally scoped) is next.
 
 ### Blockers
 
@@ -219,6 +226,110 @@ yet started -- Phase 100 (Model change) is next.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T17:40:00.000Z - Phase 100 fix-up completed per user-approved resolution; full gate green
+
+Implemented Task 100.165 per the user-approved resolution of the
+29-failure analysis above (see the Decisions Made entry of the same
+timestamp): (a) updated the 21 pre-existing expected values across the 6
+domains' `test_body.py`/`test_parser.py` files plus
+`tests/tsk/tools/test_parse_tsk.py` -- the exact-value `.content.text` /
+`model_dump()` assertions that pinned the old `MarkdownParagraph.text`
+stripped form now expect the new leaf type's raw form (old string +
+trailing `"\n"`, the same shape qa's own `IntroductionBody` test asserts
+at `tests/qa/models/v2/test_body.py:230`); mechanical expected-value
+changes only, no test logic touched. (b) Deleted
+`tests/regression/test_issue_27.py`'s
+`TestFeat7Task029StrayListMarkerRegression` (3 tests) together with its
+trigger-2 fixtures (`_FEAT_7_TASK_0_29_BODY`,
+`_FEAT_7_TASK_0_29_VALID_SEED_BODY`, `_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS`,
+`_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE`) and section banner:
+the pinned trigger (a `+`-prefixed continuation line inside a
+`## Recent Updates` entry) is now valid any-markdown content by design
+(issue #180, ACC-003); `TestIssue27BareDomainTokenRegression` is
+untouched, no import became unused, and the module docstring now records
+the supersession, pointing to the remaining engine-level pin in
+`tests/models/md/test_validation_error_baseline.py`
+(`test_list_field_leaves_a_stray_list_marker_line_unconsumed`).
+(c) Regenerated the stale artifacts: `specmgr schema` (6 of 12 `docs/`
+schemas changed -- dec/feat/sop/sysrs/tsk/vcr; the other 6 unchanged),
+the 6 packaged `<d>/data/<d>_schema.json` copies (all changed, including
+`tsk`'s, whose drift test does not exist -- pre-existing asymmetry left
+untouched, the pre-commit `specmgr-schema-tsk-package` hook still
+enforces it), `specmgr docs` (the 6 changed domains' `docs/api/...body.md`
+exports refreshed; `docs/GENERATED.md` unchanged), and `specmgr mcp-docs`
+(confirmed no drift -- tool signatures unchanged). Final gate (Task
+100.170): `ruff format --check` green (1782 files already formatted),
+`ruff check` green (all checks passed), `vulture` green, full suite
+`3900 passed, 2688 subtests passed in 74.84s` -- 0 failed (the previous
+3874 passed + 29 failed minus the 3 deleted regression tests). Task
+100.180: the orchestrator commits this phase immediately after this
+entry.
+
+#### 2026-10-02T14:30:00.000Z - Phase 100 (Model change) implemented; full suite shows 29 pre-existing-test failures for Phase 110 to correct
+
+Implemented Tasks 100.100-100.160: added the per-domain
+`UpdateEntryContent(MarkdownStr)` leaf class (plus `feat`'s
+`DecisionEntryContent`) with a `text` computed property
+(`return self._value`, mirroring `qa`'s `IntroductionBody.text` from
+feat-114), and retyped `UpdateEntry.content` (all 6 domains) and
+`DecisionEntry.content` (feat) from `MarkdownParagraph` to the new leaf
+type, in `vcr`/`feat`/`dec`/`sop`/`sysrs`/`tsk`'s own
+`models/v1/body.py`. Imports: `MarkdownStr` added in all 6;
+`MarkdownParagraph` kept in `vcr` (still used by
+`CrossReference.value`/`.notes`, `Coverage.value`,
+`AcceptanceCriterion.description`) and `dec` (still used by
+`DecisionOutcome.statement`), dropped in `feat`/`sop`/`sysrs`/`tsk`
+(verified unused after the retypes); the module docstrings of the 4
+drop-import files that listed `MarkdownParagraph` among the engine
+components now name the new leaf class(es) instead; the "lead paragraph"
+wording in each `UpdateEntry`/`DecisionEntry` docstring/Field description
+now says the entry's own update/decision text (any markdown content) --
+the "Mandatory" claim is kept. No `models/md` engine changes, no new
+validator code, no `__init__.py` export changes (the feat-114
+`IntroductionBody` precedent is also un-exported), and heading structure /
+`@alias` timestamp pattern / `min_length=1` / newest-first check all
+untouched.
+
+Phase-end gate (Task 100.170) run: `ruff format --check` green (1782
+files already formatted), `ruff check` green (all checks passed),
+`vulture src/ whitelist.py --min-confidence 60` green (no whitelist
+change needed -- the `text` name is already marked used by existing
+`self.text` accesses in `src/`, exactly as for the `IntroductionBody`
+precedent, which carries no whitelist entry either); full suite
+**red**: `29 failed, 3874 passed in 74.66s`. All 29 are pre-existing
+tests the plan predicted would pass unmodified; they fall in three
+groups: (1) 21 exact-value assertions on `.content.text` /
+`model_dump()` values in the 6 domains' `test_body.py`/`test_parser.py`
+/ `tests/tsk/tools/test_parse_tsk.py` that pin the OLD
+`MarkdownParagraph.text` behavior (re-parse + `.strip()`, no trailing
+newline) -- the new leaf type exposes `_value` raw, which carries
+mdformat's canonical single trailing newline; qa's own shipped test for
+the precedent idiom asserts exactly that trailing newline
+(`tests/qa/models/v2/test_body.py:230`:
+`assertEqual(sut.introduction.body.text, "Some intro text.\n")`);
+single-paragraph round-trips were verified byte-identical and
+blank/whitespace-only content still fails with the engine's
+mandatory-field zero-extent check, so the model change itself is correct
+per the plan's Design Rules -- these 21 assertions need the trailing
+`"\n"` added; (2) 3 `tests/regression/test_issue_27.py`
+`TestFeat7Task029StrayListMarkerRegression` tests whose fixture puts a
+`+`-prefixed line inside a `## Recent Updates` entry -- that content is
+now legitimate any-markdown (ACC-003) and parses instead of raising,
+which is precisely the semantic change issue #180 requests; the plan's
+Design Notes analyzed only the blank-content negative path ("the new
+leaf type's `get_extent` returns `0` for blank text exactly like
+`MarkdownParagraph.get_extent`") and missed this now-valid list path, so
+those 3 regression tests need re-scoping (the feat-7 stray-list-marker
+trigger no longer applies inside update entries); (3) 5
+`test_matches_fresh_generate_{feat,dec,sop,sysrs,vcr}_schema_output`
+schema-drift tests whose packaged `schema.json` copies predate the model
+change -- regenerated by Phase 120 (or the commit-time
+`specmgr-schema`/`specmgr-schema-<domain>-package` pre-commit hooks,
+which run before the commit-time test hook). Tasks 100.170/100.180 stay
+open until groups (1)+(2) are corrected (Phase 110's scope -- its tasks
+were planned as purely additive on a premise this run proved false) and
+group (3) by Phase 120 / the commit hook.
 
 #### 2026-10-02T16:30:00.000Z - Clarified why the manual phase-end gate isn't redundant with pre-commit hooks
 
@@ -272,6 +383,50 @@ single-paragraph examples remain valid.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T17:40:00.000Z - Delete (not re-scope) the 3 feat-7 Task 0.29 stray-list-marker regression tests
+
+User-approved after the 2026-10-02T14:30:00.000Z three-group failure
+analysis. Rationale: the pinned trigger (a `+`-prefixed continuation line
+inside a `## Recent Updates` entry) is dead by design under issue #180's
+any-markdown relaxation (ACC-003) -- that input is now valid update-entry
+content and no longer raises. Re-scoping rejected: it would require
+hunting for a TSK location that preserves the same hint set and would
+dilute the file's purpose of reproducing issue #27's real-world
+triggers end-to-end; no unique coverage is lost, since
+`tests/models/md/test_validation_error_baseline.py`'s
+`test_list_field_leaves_a_stray_list_marker_line_unconsumed` pins the
+identical actionable "text left over after processing all fields"
+message (with the stray-list-marker hint) at engine level. Consequence:
+the 24 non-schema test corrections + artifact regeneration land in Phase
+100's own commit via a new in-between Task 100.165 (forced by ACC-008's
+passing-gate-before-phase-commit), keeping Phase 110 purely additive as
+planned; the supersession is recorded in
+`tests/regression/test_issue_27.py`'s module docstring.
+
+#### 2026-10-02T14:30:00.000Z - Kept the plan's raw-`_value` `text` property; the 24 non-schema test corrections move into Phase 110
+
+Phase 100's full-suite run proved the plan's "existing positive tests
+read `.content.text`, which both old and new types expose" expectation
+incompatible with the plan's own Design Rule 2: `MarkdownParagraph.text`
+re-parses `_value` and returns the stripped inline text (no trailing
+newline), while the mandated `IntroductionBody`-style `text` returns
+`_value` raw, carrying mdformat's canonical single trailing newline --
+and qa's own shipped test for that precedent asserts the trailing
+newline (`tests/qa/models/v2/test_body.py:230`). Chose the plan's
+explicit Design Rule 2 / feat-114 precedent (raw `_value`, no new
+stripping behavior) and accepted the 21 resulting assertion updates as
+Phase 110 work, rather than deviating from the precedent to keep the old
+assertions green unmodified. The same call subsumes the 3 feat-7
+stray-list-marker regression tests: their fixture's `+`-prefixed line
+inside a `## Recent Updates` entry is now valid content by design
+(ACC-003), so re-scoping those tests (not restoring the old rejection)
+is the only resolution consistent with the feature. Phase 100's
+commit (Task 100.180) is therefore sequenced after Phase 110's
+corrections land, not immediately after Phase 100, since the commit-time
+pre-commit test hook would otherwise fail on the same 24 tests (the 5
+schema-drift tests are handled by the commit-time schema hooks, which
+run first).
 
 #### 2026-10-02T16:00:00.000Z - Full quality gate and separate commit per phase, not just at the end
 

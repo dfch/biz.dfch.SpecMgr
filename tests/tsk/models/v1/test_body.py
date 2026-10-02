@@ -89,7 +89,7 @@ class TestTaskWithoutComment(unittest.TestCase):
         )
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in sut.recent_updates.updates],
-            [("Progress", "Migrated one widget so far."), ("Kickoff", "Started the migration.")],
+            [("Progress", "Migrated one widget so far.\n"), ("Kickoff", "Started the migration.\n")],
         )
         self.assertEqual(str(sut), _NO_COMMENT_TEXT)
 
@@ -198,7 +198,7 @@ Started the migration.
         self.assertEqual(len(sut.updates), 1)
         self.assertEqual(sut.updates[0].title, "Kickoff")
         self.assertEqual(sut.updates[0].timestamp, "2026-08-01 00:00:00.000Z")
-        self.assertEqual(sut.updates[0].content.text, "Started the migration.")
+        self.assertEqual(sut.updates[0].content.text, "Started the migration.\n")
         self.assertEqual(str(sut), text)
 
 
@@ -229,9 +229,9 @@ Started the migration.
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in sut.updates],
             [
-                ("Wrapping up", "Only the shim removal is left."),
-                ("Halfway there", "Migrated half of the widgets."),
-                ("Kickoff", "Started the migration."),
+                ("Wrapping up", "Only the shim removal is left.\n"),
+                ("Halfway there", "Migrated half of the widgets.\n"),
+                ("Kickoff", "Started the migration.\n"),
             ],
         )
         self.assertEqual(str(sut), text)
@@ -332,7 +332,7 @@ Some update text.
 
         self.assertEqual(sut.timestamp, "2026-08-01 00:00:00.000Z")
         self.assertEqual(sut.title, "Kickoff")
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:

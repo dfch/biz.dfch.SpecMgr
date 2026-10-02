@@ -893,7 +893,7 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-30 14:30:00.000+02:00")
         self.assertEqual(sut.title, "Approved")
-        self.assertEqual(sut.content.text, "Signed off.")
+        self.assertEqual(sut.content.text, "Signed off.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_with_z(self) -> None:
@@ -909,7 +909,7 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-30T14:30:00.000+02:00")
         self.assertEqual(sut.title, "Approved")
-        self.assertEqual(sut.content.text, "Signed off.")
+        self.assertEqual(sut.content.text, "Signed off.\n")
         self.assertEqual(str(sut), text)
 
     def test_rejects_date_only_heading_at_parse_time(self) -> None:
@@ -963,9 +963,9 @@ class TestUpdatesContainer(unittest.TestCase):
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
+        self.assertEqual(sut.updates[0].content.text, "Second entry text.\n")
         self.assertEqual(sut.updates[0].title, "Confirmed")
-        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.\n")
         self.assertEqual(sut.updates[1].title, "Created")
         self.assertEqual(str(sut), text)
 
