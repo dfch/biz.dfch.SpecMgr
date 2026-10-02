@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T21:52:53.226+02:00'
+updated: '2026-10-02T23:50:15.361+02:00'
 version: 1.0.0
 ---
 
@@ -189,10 +189,10 @@ mid-commit and having to fix-then-retry.
 
 #### Phase 120: Regenerate build artifacts
 
-- [ ] Task 120.100: Run `specmgr schema` for each of the 6 domains -- two separate invocations per domain (`--output-dir docs/` and `--output-dir src/biz/dfch/specmgr/<domain>/data`), 12 invocations total, unless relying on the corresponding `specmgr-schema`/`specmgr-schema-<domain>-package` pre-commit hooks to regenerate both automatically on commit.
-- [ ] Task 120.110: Run `specmgr docs` to regenerate `docs/GENERATED.md`/`docs/api/` for the changed docstrings.
-- [ ] Task 120.120: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 130.
-- [ ] Task 120.130: Commit Phase 120's changes (the regenerated schema/docs artifacts) before starting Phase 130.
+- [x] Task 120.100: Run `specmgr schema` for each of the 6 domains -- two separate invocations per domain (`--output-dir docs/` and `--output-dir src/biz/dfch/specmgr/<domain>/data`), 12 invocations total, unless relying on the corresponding `specmgr-schema`/`specmgr-schema-<domain>-package` pre-commit hooks to regenerate both automatically on commit.
+- [x] Task 120.110: Run `specmgr docs` to regenerate `docs/GENERATED.md`/`docs/api/` for the changed docstrings.
+- [x] Task 120.120: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 130.
+- [x] Task 120.130: Commit Phase 120's changes (the regenerated schema/docs artifacts) before starting Phase 130.
 
 #### Phase 130: CHANGELOG and final verification
 
@@ -221,11 +221,14 @@ ACC-006, blank-content negatives confirmed or added per ACC-005); all 6
 domains' `test_parser.py` files checked with no change needed, and
 `tests/tsk/tools/test_create_tsk.py` confirmed passing unmodified; the
 phase-end full quality gate is green (`3939 passed, 2698 subtests
-passed`). Phase 120 (Regenerate build artifacts) is next -- note that
-Phase 100's commit already landed the regenerated schema/docs artifacts
-via its fix-up (Task 100.165), so Phase 120 is expected to be a
-verification pass (re-run the 12 `specmgr schema` invocations +
-`specmgr docs`, confirm zero drift, commit bookkeeping).
+passed`). Phase 120 (Regenerate build artifacts) is COMPLETE as a
+verification pass with zero drift: all 13 `specmgr schema` invocations
+(12 per-domain + 1 all-types) reported `(unchanged)`, `specmgr docs`
+and `specmgr mcp-docs` reported no drift, and the full quality gate is
+green (`3939 passed, 2698 subtests passed`) -- expected, since Phase
+100's fix-up (Task 100.165) already landed the regeneration in its own
+commit, forced by ACC-008. Phase 130 (CHANGELOG and final verification)
+is next.
 
 ### Blockers
 
@@ -234,6 +237,79 @@ verification pass (re-run the 12 `specmgr schema` invocations +
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T21:02:17.000Z - Phase 120 (Regenerate build artifacts) completed as a verification pass; zero drift
+
+Implemented Tasks 120.100-120.120 as a verification pass, not a
+regeneration: Phase 100's approved fix-up (Task 100.165, committed in
+b6492cd) had already landed every affected artifact -- the 6 domains'
+`docs/<d>_schema.json` + packaged
+`src/biz/dfch/specmgr/<d>/data/<d>_schema.json` copies
+(dec/feat/sop/sysrs/tsk/vcr) and `docs/api/` for the 6 changed
+`body.py` modules -- because ACC-008 required the full gate green
+before Phase 100's commit and the commit-time pre-commit hooks would
+otherwise have forced the same regeneration.
+
+Regeneration confirmation: all 13 `specmgr schema` invocations -- the
+12 per-domain pairs (`--output-dir docs/` + `--output-dir
+src/biz/dfch/specmgr/<d>/data`, one pair each for dec/feat/sop/sysrs/
+tsk/vcr) plus 1 all-types run (no args, all 12 registered types to
+`docs/`) -- reported `✓ Wrote ... (unchanged)` and exited 0: the 6
+affected and the other 6 `docs/` schemas both agree with the committed
+copies, and all 6 packaged copies agree as well. `specmgr docs`
+(484 `docs/api/` module files + `docs/GENERATED.md`) and `specmgr
+mcp-docs` (`docs/MCP.md`) also reported no drift; `git status --short`
+was empty after every regeneration command.
+
+Phase-end gate (Task 120.120): `uv run --frozen ruff format --check`
+green (1782 files already formatted), `uv run --frozen ruff check`
+green (all checks passed), `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` green (no output), full suite `uv run --frozen
+pytest -n auto --cov=src --cov-report=` green: **3939 passed in
+72.76s, 0 failed**. As recorded for Phase 110, xdist drops the
+unittest-subtest counter from the distributed summary, so the count
+was re-confirmed with a serial run: **`3939 passed, 3 deselected,
+2698 subtests passed in 296.54s`** -- unchanged from Phase 110's
+result, as expected for a no-content-change phase. Task 120.130: the
+orchestrator commits this phase immediately after this entry (the
+commit carries only this bookkeeping, since the regeneration pass
+changed no file).
+
+Anomaly surfaced during bookkeeping (reported during the verification
+pass; resolved in this phase's own commit per orchestrator approval):
+`parse_feat` of this README with THIS worktree's own feat-180 code
+was failing the
+`_validate_newest_first` check in BOTH `### Updates` and `###
+Decisions Made` -- the 14:30:00 entry in each section sat above the
+16:30:00/15:00:00 (Updates) and 16:00:00 (Decisions Made) entries.
+That ordering violation was introduced by Phase 100's bookkeeping
+(b6492cd) and stayed latent, because under the pre-feat-180
+`MarkdownParagraph`-based `UpdateEntry.content` the parse of the
+multi-paragraph Phase 100/110 entries failed earlier with "text left
+over" and never reached the ordering validator; the feat-180
+relaxation is what lets parsing get that far. This entry itself is
+valid: a `/tmp` copy with only the two misplaced 14:30 entries
+re-sorted to their newest-first positions parses cleanly under this
+worktree's code (7 Updates + 6 Decisions entries, this entry's
+multi-paragraph content fully captured as `UpdateEntryContent`), so
+the re-sort was a mechanical, content-preserving fix. Separately,
+this session's MCP
+`specmgr_get_feat` still reports the old "text left over" error for
+the file because the server process runs pre-feat-180 code from
+another checkout -- a restart from a post-feat-180 checkout is needed
+to serve the new schema; no tool signatures changed, so `specmgr
+mcp-docs` is unaffected (confirmed above).
+
+Resolution: this phase additionally re-ordered the two
+`14:30:00.000Z` entries (one in `### Updates`, one in `### Decisions
+Made`) that Phase 100's bookkeeping had prepended above newer entries
+-- a newest-first violation that stayed latent under the pre-feat-180
+model (parsing died earlier with "text left over" on the
+multi-paragraph entries) and is now enforced-and-detected because
+feat-180's own relaxation lets `parse_feat` reach the ordering
+validator. Whole entry blocks were moved byte-for-byte with no
+rewording; `parse_feat` on this README now succeeds (`OK 7 6`: 7
+Updates + 6 Decisions entries).
 
 #### 2026-10-02T19:52:53.000Z - Phase 110 (New test coverage) completed; full gate green
 
@@ -357,6 +433,41 @@ exports refreshed; `docs/GENERATED.md` unchanged), and `specmgr mcp-docs`
 100.180: the orchestrator commits this phase immediately after this
 entry.
 
+#### 2026-10-02T16:30:00.000Z - Clarified why the manual phase-end gate isn't redundant with pre-commit hooks
+
+Added a Design Notes paragraph explaining that each phase's manual
+quality-gate task (ruff format/check, ruff check, vulture, full test
+suite) is not duplicate busywork even though this repo's installed
+pre-commit hooks already re-enforce the identical checks -- plus
+schema/docs drift -- automatically on every `git commit` touching
+`src/**/*.py`/`tests/**/*.py`: the manual run is purely for fast local
+feedback, catching a failure before attempting the commit rather than
+discovering it mid-commit and having to fix-then-retry.
+
+#### 2026-10-02T15:00:00.000Z - Plan refined after codebase-verification review
+
+Reviewed the plan against the actual codebase (per-domain `body.py` files,
+the `feat-114` `IntroductionBody` precedent, `models/md/markdown_str.py`
+internals, existing tests, schema files, and `CHANGELOG.md`) and corrected
+several issues: (1) Phase 110's premise that existing tests need
+`MarkdownParagraph`-specific error-message fixes was false -- no such
+assertions exist in any of the 6 domains; reworded all Phase 110 tasks to
+be purely additive and added an explanatory paragraph to Design Notes;
+(2) Tasks 100.100 (`vcr`) and 100.130 (`dec`) incorrectly implied
+`MarkdownParagraph` might be dropped -- it stays in use elsewhere in both
+files (`CrossReference`/`Coverage`/`AcceptanceCriterion` in `vcr`,
+`DecisionOutcome.statement` in `dec`), now stated explicitly; (3) resolved
+an inconsistency where only `tsk`'s `test_create_tsk.py` was singled out
+for an edit it doesn't need, and only `sop`/`tsk` called out `test_parser.py`
+checks -- added Task 110.155 for `vcr`/`feat`/`dec` parity and clarified
+`test_create_tsk.py` needs no change; (4) Task 120.100 now spells out the
+two separate `specmgr schema` invocations per domain; (5) Task 130.100 now
+specifies the `### Changed` CHANGELOG subsection; (6) Design Notes now
+notes that this extends the `feat-114` `IntroductionBody` idiom into new
+(mandatory-field) territory rather than being a pure mirror, and that
+`.text` is also required for existing call-site compatibility, not just
+`model_dump()`.
+
 #### 2026-10-02T14:30:00.000Z - Phase 100 (Model change) implemented; full suite shows 29 pre-existing-test failures for Phase 110 to correct
 
 Implemented Tasks 100.100-100.160: added the per-domain
@@ -422,41 +533,6 @@ open until groups (1)+(2) are corrected (Phase 110's scope -- its tasks
 were planned as purely additive on a premise this run proved false) and
 group (3) by Phase 120 / the commit hook.
 
-#### 2026-10-02T16:30:00.000Z - Clarified why the manual phase-end gate isn't redundant with pre-commit hooks
-
-Added a Design Notes paragraph explaining that each phase's manual
-quality-gate task (ruff format/check, ruff check, vulture, full test
-suite) is not duplicate busywork even though this repo's installed
-pre-commit hooks already re-enforce the identical checks -- plus
-schema/docs drift -- automatically on every `git commit` touching
-`src/**/*.py`/`tests/**/*.py`: the manual run is purely for fast local
-feedback, catching a failure before attempting the commit rather than
-discovering it mid-commit and having to fix-then-retry.
-
-#### 2026-10-02T15:00:00.000Z - Plan refined after codebase-verification review
-
-Reviewed the plan against the actual codebase (per-domain `body.py` files,
-the `feat-114` `IntroductionBody` precedent, `models/md/markdown_str.py`
-internals, existing tests, schema files, and `CHANGELOG.md`) and corrected
-several issues: (1) Phase 110's premise that existing tests need
-`MarkdownParagraph`-specific error-message fixes was false -- no such
-assertions exist in any of the 6 domains; reworded all Phase 110 tasks to
-be purely additive and added an explanatory paragraph to Design Notes;
-(2) Tasks 100.100 (`vcr`) and 100.130 (`dec`) incorrectly implied
-`MarkdownParagraph` might be dropped -- it stays in use elsewhere in both
-files (`CrossReference`/`Coverage`/`AcceptanceCriterion` in `vcr`,
-`DecisionOutcome.statement` in `dec`), now stated explicitly; (3) resolved
-an inconsistency where only `tsk`'s `test_create_tsk.py` was singled out
-for an edit it doesn't need, and only `sop`/`tsk` called out `test_parser.py`
-checks -- added Task 110.155 for `vcr`/`feat`/`dec` parity and clarified
-`test_create_tsk.py` needs no change; (4) Task 120.100 now spells out the
-two separate `specmgr schema` invocations per domain; (5) Task 130.100 now
-specifies the `### Changed` CHANGELOG subsection; (6) Design Notes now
-notes that this extends the `feat-114` `IntroductionBody` idiom into new
-(mandatory-field) territory rather than being a pure mirror, and that
-`.text` is also required for existing call-site compatibility, not just
-`model_dump()`.
-
 #### 2026-10-02T14:15:00.000Z - Created
 
 Feature folder created from GitHub issue #180, following a plan-mode
@@ -495,6 +571,25 @@ passing-gate-before-phase-commit), keeping Phase 110 purely additive as
 planned; the supersession is recorded in
 `tests/regression/test_issue_27.py`'s module docstring.
 
+#### 2026-10-02T16:00:00.000Z - Full quality gate and separate commit per phase, not just at the end
+
+Considered two existing project precedents for multi-phase features: the
+lighter one (`feat-177-list-ref-feat`'s single "full quality gate" task at
+the very last phase, with only the test suite re-run per earlier phase)
+vs. the heavier one (`feat-30-sop`'s "Phase-end quality gate (ruff
+format/check, vulture, full unittest) + commit" after every single
+phase). Chose the heavier convention for this feature: it touches 6
+domains' model files plus their test suites, and the test suite itself
+runs in roughly a minute (parallelized via `pytest -n auto`), so four
+full gate-runs cost a few extra minutes in exchange for catching any
+per-phase lint/vulture regression immediately and keeping each phase
+independently revertable via its own commit, instead of only discovering
+an issue -- or needing to revert all 4 phases at once -- at the very end.
+Phases 100/110/120 each gained a trailing quality-gate task
+(`ruff format --check`/`ruff check`/`vulture`/full test suite) plus a
+dedicated commit task; Phase 130 already ended with the equivalent
+gate + commit shape and needed no change.
+
 #### 2026-10-02T14:30:00.000Z - Kept the plan's raw-`_value` `text` property; the 24 non-schema test corrections move into Phase 110
 
 Phase 100's full-suite run proved the plan's "existing positive tests
@@ -518,25 +613,6 @@ corrections land, not immediately after Phase 100, since the commit-time
 pre-commit test hook would otherwise fail on the same 24 tests (the 5
 schema-drift tests are handled by the commit-time schema hooks, which
 run first).
-
-#### 2026-10-02T16:00:00.000Z - Full quality gate and separate commit per phase, not just at the end
-
-Considered two existing project precedents for multi-phase features: the
-lighter one (`feat-177-list-ref-feat`'s single "full quality gate" task at
-the very last phase, with only the test suite re-run per earlier phase)
-vs. the heavier one (`feat-30-sop`'s "Phase-end quality gate (ruff
-format/check, vulture, full unittest) + commit" after every single
-phase). Chose the heavier convention for this feature: it touches 6
-domains' model files plus their test suites, and the test suite itself
-runs in roughly a minute (parallelized via `pytest -n auto`), so four
-full gate-runs cost a few extra minutes in exchange for catching any
-per-phase lint/vulture regression immediately and keeping each phase
-independently revertable via its own commit, instead of only discovering
-an issue -- or needing to revert all 4 phases at once -- at the very end.
-Phases 100/110/120 each gained a trailing quality-gate task
-(`ruff format --check`/`ruff check`/`vulture`/full test suite) plus a
-dedicated commit task; Phase 130 already ended with the equivalent
-gate + commit shape and needed no change.
 
 #### 2026-10-02T14:10:00.000Z - No custom non-blank validator needed
 
