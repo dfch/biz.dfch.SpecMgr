@@ -72,6 +72,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exactly as the generic `validate` tool caps it (feat-110), mirroring
   `validate` including its own caught-exception set (GitHub issue #170,
   ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
+- The `list_references` tag vocabulary gains `FEAT` -- a `FEAT` tag now
+  references a feature's full `feat-NNN-slug` id or bare `feat-NNN`
+  number (instead of a uuid), resolved to the feature's title (its H1
+  with the `Feature: ` prefix stripped) and on-disk path, like every
+  other reference tag; the existing ten UUID tags are byte-unchanged
+  (`FEAT <uuid>`-shaped text matches nothing) (feat-177-list-ref-feat,
+  GitHub issue #177).
 
 ### Removed
 

@@ -635,9 +635,11 @@ type or cross-cutting:
      GitHub issue #144) — takes a *source* document's `type` (one of
      adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
      regex-scans the source's frontmatter-stripped body for `<TYPE>
-     <uuid>` references (the 10-tag reference vocabulary
-     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS; case-insensitive tag,
-     space or dash separator, anywhere in a line), dedupes repeated
+     <id>` references (the 11-tag reference vocabulary
+     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT; case-insensitive tag,
+     space/tab/dash separator, anywhere in a line; the ten UUID tags
+     carry a canonical uuid id, while FEAT carries the full
+     `feat-NNN-slug` id or the bare `feat-NNN` number), dedupes repeated
      occurrences (first-occurrence order), resolves each unique
      reference in its target domain (cache-backed; ADR excluded from
      the cache), and returns a paged `PagedResult[ReferenceRow]` — one

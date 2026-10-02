@@ -3,9 +3,11 @@
 One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
 
 The ``list_references`` tool (``general.tools.list_references``)
-regex-extracts every ``<TYPE> <uuid>`` cross-reference from one source
-document's frontmatter-stripped body, deduplicates repeated occurrences of
-the same reference (first-occurrence order preserved), resolves each unique
+regex-extracts every ``<TYPE> <id>`` cross-reference from one source
+document's frontmatter-stripped body (the ten UUID tags with a canonical
+uuid id, plus the ``FEAT`` tag carrying the full ``feat-NNN-slug`` id or
+the bare ``feat-NNN`` number), deduplicates repeated occurrences of the
+same reference (first-occurrence order preserved), resolves each unique
 reference to the referenced document in its own target domain, and returns
 one :class:`ReferenceRow` per unique reference, paged
 (``PagedResult[ReferenceRow]`` via the shared ``list_*`` mechanism, ADR
@@ -25,17 +27,21 @@ Parameters
 type:
     The referenced document's target domain name, lowercase -- one of
     ``general.tools._references.REFERENCE_TYPES`` (``gol``/``prb``/
-    ``qa``/``uc``/``req``/``rsk``/``dec``/``adr``/``vcr``/``sysrs``;
-    the reference tag itself is the uppercase form of this value).
+    ``qa``/``uc``/``req``/``rsk``/``dec``/``adr``/``vcr``/``sysrs``/
+    ``feat``; the reference tag itself is the uppercase form of this
+    value).
 id:
-    The referenced document's own specmgr-assigned identifier -- a
-    canonical lowercase-hex UUID, as it appeared in the source body
-    (lowercased).
+    The referenced document's own specmgr-assigned identifier, as it
+    appeared in the source body (lowercased) -- a canonical
+    lowercase-hex UUID for the ten UUID tags, or, for ``feat``, the
+    full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number.
 title:
     The referenced document's ``# {title}`` H1, re-derived from the
     resolved document on disk (``doc.body.text`` for the flat target
-    domains, ``doc.body.title`` for ``adr``) -- or ``None`` if the
-    reference could not be resolved (``error`` is set).
+    domains, the ``feat`` H1 with its ``Feature: `` prefix stripped
+    via ``feature_title``, ``doc.body.title`` for ``adr``) -- or
+    ``None`` if the reference could not be resolved (``error`` is
+    set).
 path:
     The referenced document's real, absolute (``.resolve()``d)
     on-disk file path, for a caller that wants to read it directly

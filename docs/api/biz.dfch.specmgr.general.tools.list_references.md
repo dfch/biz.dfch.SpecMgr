@@ -10,7 +10,9 @@ every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
 the source, since extraction needs the literal markdown), extracts every
-``<TYPE> <uuid>`` cross-reference from it
+``<TYPE> <id>`` cross-reference from it (the ten UUID tags with a
+canonical 8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
+``feat-NNN-slug`` id or the bare ``feat-NNN`` number)
 (``general.tools._references.find_references``), deduplicates repeated
 occurrences of the same reference (first-occurrence order preserved), and
 resolves each unique reference to the referenced document in its own target
@@ -64,24 +66,28 @@ The source is identified by ``type`` (every whole-body domain
 validated via ``_path_safety.validate_id`` before any filesystem
 access (ACC-005). The source is then read as raw, frontmatter-stripped
 body text (``_splice.body_text`` -- the doc-cache does not apply to it,
-since extraction needs the literal markdown), and every ``<TYPE>
-<uuid>`` cross-reference in that text is extracted
-(``_references.find_references``: the reference tag is case-insensitive
-and separated from the uuid by one or more space/tab/dash characters;
-a match may sit anywhere in a line; the reference's own inline title is
-not captured). Repeated occurrences of the same ``(type, id)``
-reference are deduplicated to one row, first-occurrence order preserved
-(REQ-005).
+since extraction needs the literal markdown), and every ``<TYPE> <id>``
+cross-reference in that text is extracted
+(``_references.find_references``: the ten UUID tags with a canonical
+8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
+``feat-NNN-slug`` id or the bare ``feat-NNN`` number; the reference tag
+is case-insensitive and separated from the id by one or more
+space/tab/dash characters; a match may sit anywhere in a line; the
+reference's own inline title is not captured). Repeated occurrences of
+the same ``(type, id)`` reference are deduplicated to one row,
+first-occurrence order preserved (REQ-005).
 
 Each unique reference is resolved to the referenced document in its own
-target domain (``_references.resolve_reference``: the nine flat target
-domains read through their own cache-backed ``load_by_id``; ``adr``
-never does -- ADR bfd76370). The row's ``title`` is the referenced
-document's own ``# {title}`` H1 and its ``path`` the referenced
-document's resolved absolute file path; a reference whose target does
-not exist on disk is a row with ``title``/``path`` ``None`` and the
-target domain's own not-found message in ``error`` -- target resolution
-never raises (ACC-003).
+target domain (``_references.resolve_reference``: the ten flat target
+domains read through their own cache-backed ``load_by_id`` -- ``feat``
+is folder-per-document rather than flat-file, but its ``load_by_id`` is
+cache-backed the same way -- and ``adr`` never does, ADR bfd76370). The
+row's ``title`` is the referenced document's own ``# {title}`` H1 (the
+feature's H1 with the ``Feature: `` prefix stripped, for ``feat``) and
+its ``path`` the referenced document's resolved absolute file path; a
+reference whose target does not exist on disk is a row with
+``title``/``path`` ``None`` and the target domain's own not-found
+message in ``error`` -- target resolution never raises (ACC-003).
 
 The full, deduplicated row list is wrapped in
 ``PagedResult[ReferenceRow]`` via the exact ``list_*`` paging
