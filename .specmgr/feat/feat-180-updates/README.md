@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T13:15:57.269+02:00'
+updated: '2026-10-02T13:39:03.210+02:00'
 version: 1.0.0
 ---
 
@@ -58,7 +58,7 @@ regardless of shape. Tracked by
 #### Included
 
 - New `UpdateEntryContent` (and `feat`'s `DecisionEntryContent`) leaf classes, and the `content` field retype, in `vcr`/`feat`/`dec`/`sop`/`sysrs`/`tsk`'s `models/v1/body.py`.
-- Test updates/additions in each domain's `tests/<domain>/models/v1/test_body.py`, plus `tsk`/`sop`'s `test_parser.py` and `tsk`'s `test_create_tsk.py`.
+- Test additions in each domain's `tests/<domain>/models/v1/test_body.py`, plus a check (and update only if needed) of each domain's `tests/<domain>/models/v1/test_parser.py` for paragraph-specific fixtures/assertions. `tsk`'s `test_create_tsk.py` requires no change (its only `## Recent Updates` fixture is a single paragraph, verified) and is explicitly excluded.
 - Regenerated `docs/*_schema.json` and each domain's packaged `<domain>/data/<domain>_schema.json`, plus `docs/GENERATED.md`/`docs/api/`.
 - A `CHANGELOG.md` entry under `[Unreleased]`.
 
@@ -95,6 +95,14 @@ exactly correct -- no custom stop-condition override is needed, unlike
 `qa`'s own `QaAnswer` (which needs one because further adjacent Q&A pairs
 can follow it within the same enclosing section).
 
+Note this extends the `feat-114` idiom into new territory, rather than
+being a byte-for-byte mirror of it: `IntroductionBody`
+(`qa/models/v2/body.py`) is declared `Optional` and never exercises the
+mandatory-field code path. `UpdateEntryContent`/`DecisionEntryContent` are
+the first use of this leaf-class idiom as a *mandatory* field -- verified
+to work via `process_field`'s existing `assert extent > 0` check
+(`models/md/markdown_str.py:360`), see below.
+
 Each new class adds a `text` computed property (`return self._value`),
 mirroring `IntroductionBody.text`/`QaAnswer.text` verbatim. This is
 required, not cosmetic: `MarkdownStr` itself declares zero pydantic
@@ -102,6 +110,11 @@ fields (`_value` is a private attribute, invisible to `model_dump()`) --
 without a `text` computed property, a bare `MarkdownStr`-typed field would
 serialize to an empty `{}` object over `model_dump()`/`model_dump_json()`,
 exactly the MCP-transport path this server uses for every tool response.
+The `.text` property is also required for call-site compatibility, not
+just serialization: existing positive-path tests already read
+`.content.text` directly on the current `MarkdownParagraph` field (e.g.
+`tests/feat/models/v1/test_body.py:582`), and those call sites must keep
+working unchanged after the retype.
 
 No new validator code is needed to preserve the "mandatory, non-blank"
 rule. `@field_validator("_value")` is structurally impossible (`_value`
@@ -120,6 +133,17 @@ exactly the same zero-extent behavior `MarkdownParagraph.get_extent` has
 for blank input today. So the non-blank requirement is preserved for
 free, purely by keeping `content` mandatory.
 
+None of the 6 domains' existing `UpdateEntry`/`DecisionEntry` negative-path
+tests assert on specific error-message text today -- they all use bare
+`assertRaises(AssertionError)`/`assertRaises(ValidationError)` (e.g.
+`tests/dec/models/v1/test_body.py:907-909`,
+`tests/feat/models/v1/test_body.py:629-636`). Since the new leaf type's
+`get_extent` returns `0` for blank text exactly like
+`MarkdownParagraph.get_extent` does, these existing tests require no
+changes -- only confirmation that they still pass unmodified. Phase 110's
+tasks below are therefore purely additive (new positive tests), not
+corrective.
+
 ### Related Decisions
 
 - `feat-114-qa-introduction-any-markdown` (feat): established the `IntroductionBody(MarkdownStr)` leaf-class idiom this feature reuses for `UpdateEntryContent`/`DecisionEntryContent`.
@@ -128,10 +152,10 @@ free, purely by keeping `content` mandatory.
 
 #### Phase 100: Model change
 
-- [ ] Task 100.100: In `vcr/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)` with a `text` computed property; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [ ] Task 100.100: In `vcr/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)` with a `text` computed property; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `CrossReference.value`/`.notes`, `Coverage.value`, and `AcceptanceCriterion.description` in this same file.
 - [ ] Task 100.110: In `feat/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`.
 - [ ] Task 100.120: In `feat/models/v1/body.py`, add `DecisionEntryContent(MarkdownStr)`; retype `DecisionEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.130: In `dec/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
+- [ ] Task 100.130: In `dec/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`. Do NOT drop the `MarkdownParagraph` import -- it stays in use by `DecisionOutcome.statement` in this same file.
 - [ ] Task 100.140: In `sop/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [ ] Task 100.150: In `sysrs/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [ ] Task 100.160: In `tsk/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
@@ -139,24 +163,25 @@ free, purely by keeping `content` mandatory.
 
 #### Phase 110: New test coverage
 
-- [ ] Task 110.100: In `tests/vcr/models/v1/test_body.py`, fix `MarkdownParagraph`-specific error-message assertions and add multi-paragraph/list/code-block positive tests plus a blank-content negative test.
+- [ ] Task 110.100: In `tests/vcr/models/v1/test_body.py`, add multi-paragraph/list/code-block positive tests for `UpdateEntry.content` (existing negative tests use bare `assertRaises`, not message-specific assertions, so they need no fix -- confirm they still pass unmodified).
 - [ ] Task 110.110: In `tests/feat/models/v1/test_body.py`, do the same for both `UpdateEntry` and `DecisionEntry`.
 - [ ] Task 110.120: In `tests/dec/models/v1/test_body.py`, do the same.
-- [ ] Task 110.130: In `tests/sop/models/v1/test_body.py` and `tests/sop/models/v1/test_parser.py`, do the same.
-- [ ] Task 110.140: In `tests/sysrs/models/v1/test_body.py`, do the same.
-- [ ] Task 110.150: In `tests/tsk/models/v1/test_body.py`, `tests/tsk/models/v1/test_parser.py`, and `tests/tsk/tools/test_create_tsk.py`, do the same.
+- [ ] Task 110.130: In `tests/sop/models/v1/test_body.py`, do the same; also check `tests/sop/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
+- [ ] Task 110.140: In `tests/sysrs/models/v1/test_body.py`, do the same; also check `tests/sysrs/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
+- [ ] Task 110.150: In `tests/tsk/models/v1/test_body.py`, do the same; also check `tests/tsk/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed. `tests/tsk/tools/test_create_tsk.py` needs no edit (its only `## Recent Updates` fixture is a single paragraph) -- confirm it still passes unmodified rather than editing it.
+- [ ] Task 110.155: For parity with Tasks 110.130/110.140/110.150's `test_parser.py` check, also check `tests/vcr/models/v1/test_parser.py`, `tests/feat/models/v1/test_parser.py`, and `tests/dec/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
 - [ ] Task 110.160: Add/confirm `model_dump()` assertions covering the non-paragraph content case (ACC-006).
 - [ ] Task 110.170: Run the full test suite. Must pass before moving to Phase 120.
 
 #### Phase 120: Regenerate build artifacts
 
-- [ ] Task 120.100: Run `specmgr schema` for each of the 6 domains, both the `docs/` output and each domain's packaged `<domain>/data/` output.
+- [ ] Task 120.100: Run `specmgr schema` for each of the 6 domains -- two separate invocations per domain (`--output-dir docs/` and `--output-dir src/biz/dfch/specmgr/<domain>/data`), 12 invocations total, unless relying on the corresponding `specmgr-schema`/`specmgr-schema-<domain>-package` pre-commit hooks to regenerate both automatically on commit.
 - [ ] Task 120.110: Run `specmgr docs` to regenerate `docs/GENERATED.md`/`docs/api/` for the changed docstrings.
 - [ ] Task 120.120: Run the full test suite. Must pass before moving to Phase 130.
 
 #### Phase 130: CHANGELOG and final verification
 
-- [ ] Task 130.100: Add a `CHANGELOG.md` entry under `[Unreleased]` describing the relaxation across the 6 domains.
+- [ ] Task 130.100: Add a `CHANGELOG.md` entry under `[Unreleased]` -> `### Changed` (backward-compatible field-type relaxation, not a new feature) describing the relaxation across the 6 domains.
 - [ ] Task 130.110: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
 - [ ] Task 130.120: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
 - [ ] Task 130.130: Run the full test suite one final time.
@@ -180,6 +205,30 @@ yet started -- Phase 100 (Model change) is next.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T15:00:00.000Z - Plan refined after codebase-verification review
+
+Reviewed the plan against the actual codebase (per-domain `body.py` files,
+the `feat-114` `IntroductionBody` precedent, `models/md/markdown_str.py`
+internals, existing tests, schema files, and `CHANGELOG.md`) and corrected
+several issues: (1) Phase 110's premise that existing tests need
+`MarkdownParagraph`-specific error-message fixes was false -- no such
+assertions exist in any of the 6 domains; reworded all Phase 110 tasks to
+be purely additive and added an explanatory paragraph to Design Notes;
+(2) Tasks 100.100 (`vcr`) and 100.130 (`dec`) incorrectly implied
+`MarkdownParagraph` might be dropped -- it stays in use elsewhere in both
+files (`CrossReference`/`Coverage`/`AcceptanceCriterion` in `vcr`,
+`DecisionOutcome.statement` in `dec`), now stated explicitly; (3) resolved
+an inconsistency where only `tsk`'s `test_create_tsk.py` was singled out
+for an edit it doesn't need, and only `sop`/`tsk` called out `test_parser.py`
+checks -- added Task 110.155 for `vcr`/`feat`/`dec` parity and clarified
+`test_create_tsk.py` needs no change; (4) Task 120.100 now spells out the
+two separate `specmgr schema` invocations per domain; (5) Task 130.100 now
+specifies the `### Changed` CHANGELOG subsection; (6) Design Notes now
+notes that this extends the `feat-114` `IntroductionBody` idiom into new
+(mandatory-field) territory rather than being a pure mirror, and that
+`.text` is also required for existing call-site compatibility, not just
+`model_dump()`.
 
 #### 2026-10-02T14:15:00.000Z - Created
 
