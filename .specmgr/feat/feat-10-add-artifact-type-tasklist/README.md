@@ -2,7 +2,7 @@
 created: '2026-08-16 00:00:00.000Z'
 id: feat-10-add-artifact-type-tasklist
 status: done
-updated: '2026-08-19 00:00:00.000Z'
+updated: '2026-09-30T05:12:31.000Z'
 version: 1.0.0
 ---
 
@@ -27,76 +27,31 @@ tools/resources shape almost exactly (per GitHub issue #10).
 
 ### Requirements
 
-- [x] REQ-001: Define the `tsk` markdown schema — frontmatter (`type="tsk"`,
-  4-value status set: `draft`/`active`/`done`/`cancelled`) and body (H1 title,
-  optional leading comment, flat checklist of items, mandatory `## Recent Updates` section holding a dynamic list of H3 update entries)
-- [x] REQ-002: Pydantic models for `tsk` documents (`tsk/models/v1/` —
-  domain-first path, mirroring `req/models/v1/`)
-- [x] REQ-003: Parse and validate `tsk` documents from markdown
-  (`parse_tsk`, mirroring `parse_req`)
-- [x] REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_tsk`,
-  `get_tsk_example`, `get_tsk_template`, `create_tsk`, `update_tsk`,
-  `set_status_tsk`, `delete_tsk` (stub), `validate_tsk`, `get_tsk`
-- [x] REQ-005: MCP resources mirroring `req`: `specmgr://tsk/list`,
-  `/example`, `/schema`, `/template`
-- [x] REQ-006: MCP prompts — `create_task`, `update_task` (narrated tool
-  sequences, mirroring `req/prompts/create_req.py`/`update_req.py`), and a new
-  `implement_task` prompt: reads an existing `tsk` document (via `get_tsk`),
-  builds an actual `TodoWrite` list from its items, and uses the `question`
-  tool to resolve ambiguity before proceeding
-- [x] REQ-007: Packaged example/template/schema data (`tsk/data/`) via the
-  existing generic `general/tools/_packaged_data.py`, with the matching
-  `pyproject.toml` package-data entry, pre-commit hook, and CI step
-- [x] REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema`
-  (new `tsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept
-  drift-free via pre-commit/CI
+- REQ-001: Define the `tsk` markdown schema — frontmatter (`type="tsk"`, 4-value status set: `draft`/`active`/`done`/`cancelled`) and body (H1 title, optional leading comment, flat checklist of items, mandatory `## Recent Updates` section holding a dynamic list of H3 update entries)
+- REQ-002: Pydantic models for `tsk` documents (`tsk/models/v1/` — domain-first path, mirroring `req/models/v1/`)
+- REQ-003: Parse and validate `tsk` documents from markdown (`parse_tsk`, mirroring `parse_req`)
+- REQ-004: MCP tools mirroring `req`'s lifecycle surface: `parse_tsk`, `get_tsk_example`, `get_tsk_template`, `create_tsk`, `update_tsk`, `set_status_tsk`, `delete_tsk` (stub), `validate_tsk`, `get_tsk`
+- REQ-005: MCP resources mirroring `req`: `specmgr://tsk/list`, `/example`, `/schema`, `/template`
+- REQ-006: MCP prompts — `create_task`, `update_task` (narrated tool sequences, mirroring `req/prompts/create_req.py`/`update_req.py`), and a new `implement_task` prompt: reads an existing `tsk` document (via `get_tsk`), builds an actual `TodoWrite` list from its items, and uses the `question` tool to resolve ambiguity before proceeding
+- REQ-007: Packaged example/template/schema data (`tsk/data/`) via the existing generic `general/tools/_packaged_data.py`, with the matching `pyproject.toml` package-data entry, pre-commit hook, and CI step
+- REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema` (new `tsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept drift-free via pre-commit/CI
 
 ### Acceptance Criteria
 
-- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/tsk_schema.json`,
-  `specmgr://tsk/schema`), reference `tsk` document (`tsk_reference.md`)
-  round-trips through the parser (`test_parses_full_reference_document`)
-- [x] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional
-  fields correctly, including the `TaskItem` checked/description split
-  (`tests/tsk/models/v1/test_task_item.py`, `test_body.py`)
-- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree;
-  malformed input raises (structural `AssertionError` / field-level
-  `pydantic.ValidationError`, matching `req`/`uc`'s error-channel convention)
-  — `tests/tsk/models/v1/test_parser.py`
-- [x] ACC-004: Verifies REQ-004 — every listed tool implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`), with
-  `create_tsk`/`update_tsk` validating body-only content the same way
-  `create_req`/`update_req` do
-- [x] ACC-005: Verifies REQ-005 — every listed resource implemented and
-  registered (confirmed present in regenerated `docs/MCP.md`)
-- [x] ACC-006: Verifies REQ-006 — `create_task`/`update_task` prompts
-  narrate the correct tool sequence (`tests/tsk/prompts/`); `implement_task`
-  demonstrably drives a `TodoWrite` list from a real `tsk` document and asks
-  a clarifying question via the `question` tool when an item's intent is
-  ambiguous — verified live during Phase 4: created a real document via
-  `create_tsk`, called `implement_task(id)`, built an actual `TodoWrite` list
-  from its items, identified the ambiguous item ("Do the thing") per the
-  prompt's own Step 3 guidance, and asked a clarifying question via the
-  `question` tool before completing it
-- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a
-  real, non-editable install, mirroring `req`'s own verification (feat-6
-  Task 5.1) — verified during Phase 4: built a wheel (`uv build --wheel`),
-  confirmed `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are
-  packaged inside it, installed into a scratch venv (`biz-dfch-specmgr[mcp]`,
-  non-editable), and confirmed `read_packaged_text`/`get_tsk_example`/
-  `get_tsk_template`/`tsk_schema()` all resolve correctly from a working
-  directory outside the repo (no source-tree fallback possible)
-- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/
-  `specmgr mcp-docs` all report no drift after implementation — verified
-  during Phase 4: all three commands re-run cleanly with zero `git diff`
-  after Phase 3's commit; confirmed the generic (no `--type`) `docs`/
-  `mcp-docs`/`schema` CI steps already cover `tsk` automatically
-  (registry-driven), needing no new per-type step beyond the packaged-copy
-  step Task 3.12 already added
+- [x] ACC-001: Verifies REQ-001 — schema documented (`docs/tsk_schema.json`, `specmgr://tsk/schema`), reference `tsk` document (`tsk_reference.md`) round-trips through the parser (`test_parses_full_reference_document`)
+- [x] ACC-002: Verifies REQ-002 — Pydantic models validate required/optional fields correctly, including the `TaskItem` checked/description split (`tests/tsk/models/v1/test_task_item.py`, `test_body.py`)
+- [x] ACC-003: Verifies REQ-003 — parser produces a valid object tree; malformed input raises (structural `AssertionError` / field-level `pydantic.ValidationError`, matching `req`/`uc`'s error-channel convention) — `tests/tsk/models/v1/test_parser.py`
+- [x] ACC-004: Verifies REQ-004 — every listed tool implemented and registered (confirmed present in regenerated `docs/MCP.md`), with `create_tsk`/`update_tsk` validating body-only content the same way `create_req`/`update_req` do
+- [x] ACC-005: Verifies REQ-005 — every listed resource implemented and registered (confirmed present in regenerated `docs/MCP.md`)
+- [x] ACC-006: Verifies REQ-006 — `create_task`/`update_task` prompts narrate the correct tool sequence (`tests/tsk/prompts/`); `implement_task` demonstrably drives a `TodoWrite` list from a real `tsk` document and asks a clarifying question via the `question` tool when an item's intent is ambiguous — verified live during Phase 4: created a real document via `create_tsk`, called `implement_task(id)`, built an actual `TodoWrite` list from its items, identified the ambiguous item ("Do the thing") per the prompt's own Step 3 guidance, and asked a clarifying question via the `question` tool before completing it
+- [x] ACC-007: Verifies REQ-007 — packaged data resolves correctly from a real, non-editable install, mirroring `req`'s own verification (feat-6 Task 5.1) — verified during Phase 4: built a wheel (`uv build --wheel`), confirmed `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are packaged inside it, installed into a scratch venv (`biz-dfch-specmgr[mcp]`, non-editable), and confirmed `read_packaged_text`/`get_tsk_example`/`get_tsk_template`/`tsk_schema()` all resolve correctly from a working directory outside the repo (no source-tree fallback possible)
+- [x] ACC-008: Verifies REQ-008 — `specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report no drift after implementation — verified during Phase 4: all three commands re-run cleanly with zero `git diff` after Phase 3's commit; confirmed the generic (no `--type`) `docs`/`mcp-docs`/`schema` CI steps already cover `tsk` automatically (registry-driven), needing no new per-type step beyond the packaged-copy step Task 3.12 already added
 
 ### Scope
 
-**Included in this feature:**
+#### Included
+
+in this feature:
 
 - Specification of the `tsk` markdown schema (frontmatter + body)
 - Pydantic models, parser, and schema generation under `tsk/models/v1/`
@@ -104,7 +59,7 @@ tools/resources shape almost exactly (per GitHub issue #10).
 - `implement_task` prompt behavior (TodoWrite + `question`-tool clarification)
 - Tests mirroring `tests/req/`'s layout and coverage
 
-**Explicitly out of scope:**
+#### Explicitly Out Of Scope
 
 - Phases, per-item `depends on`/`status` metadata, or any other structure
   beyond a flat checklist (explicit decision — see Design Notes)
@@ -120,14 +75,19 @@ tools/resources shape almost exactly (per GitHub issue #10).
 
 ### Dependencies
 
-- Depends on: ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+#### Depends On
+
+- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
   hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
   `MarkdownFrontmatter` base), `general/tools/_doc_paths.py` and
   `_packaged_data.py` (generalized past REQ specifically for this kind of
   reuse, `feat-6-requirement-artifact` Tasks 3.10/5.2/5.3), the existing
   `models/md` engine — in particular `MarkdownSection1WithComment` and
   `MarkdownListItem` (reused as-is) and `MarkdownComment` (feat-6 Task 3.20)
-- Blocks: None identified yet
+
+#### Blocks
+
+- None identified yet
 
 ### Design Notes
 
@@ -182,7 +142,7 @@ tools/resources shape almost exactly (per GitHub issue #10).
   (`create_task`/`update_task`/`implement_task`), not the `tsk`-prefixed
   convention the tools/resources use, matching GitHub issue #10 verbatim.
 
-### Related ADRs
+Related ADRs
 
 - ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by
   document-type domain (domain-first hierarchy)
@@ -192,8 +152,6 @@ tools/resources shape almost exactly (per GitHub issue #10).
 No new ADR is anticipated for this feature — the `TaskItem` checkbox-parsing
 approach and the `RecentUpdates` dynamic-section design are scoped enough to
 log only in this file's own Decisions Made, not a full ADR.
-
-### Task List
 
 Single, canonical breakdown of work phases and tasks. Status lives on the
 task itself — there is no separate "planned" vs. "executed" list to keep in
@@ -210,70 +168,12 @@ into Phases 1–3 below (each phase now carries its own test tasks); Phase 4
 absorbs a final cross-cutting verification pass instead. This collapses the
 original 5 phases into **4 commits**.
 
-#### Phase 1: Specification (commit 1) — done
-
-- [x] Task 1.1: Define `tsk` frontmatter (`tsk/models/v1/frontmatter.py` —
-  `TskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["tsk"]`,
-  4-value status set `draft`/`active`/`done`/`cancelled`) — depends on: none
-  — status: done
-- [x] Task 1.2: Define `tsk` body structure (`tsk/models/v1/body.py`,
-  `tsk/models/v1/task_item.py`) — `Task(MarkdownSection1WithComment)` with
-  `items: list[TaskItem]` and `recent_updates: RecentUpdates`; `TaskItem`
-  (checked/description computed fields, new `MarkdownListItem` subclass);
-  `RecentUpdates(MarkdownSection2)` holding `updates: list[UpdateEntry]`
-  built on `models/md`'s generic `list[MarkdownStr]` engine
-  (`process_list_field`), with `UpdateEntry` a free-form-title H3 leaf via
-  `@alias(value=".+", type=AliasType.REGEX)` — not ADR's numbered-option
-  pattern — depends on: Task 1.1 — status: done
-- [x] Task 1.3 (renumbered; was 1.4): Create a reference `tsk` document
-  (`tsk_reference.md`) exercising every field, used as the parser's
-  round-trip test fixture — depends on: Task 1.2 — status: done (placed at
-  `.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md`,
-  mirroring `req`'s own reference-fixture location convention, not
-  `tsk/data/` — see Recent Updates)
-- [x] Task 1.4 (renumbered; was 1.5, folded from former Task 5.1):
-  `tests/tsk/models/v1/test_frontmatter.py`, `test_body.py`/`test_task_item.py`
-  — structural + validation tests mirroring `tests/req/models/v1/`, with
-  explicit coverage of `MarkdownSection1WithComment`'s comment-present/
-  comment-absent cases (its first real production consumer — no prior test
-  coverage outside `models/md`'s own unit tests) — depends on: Task 1.3 —
-  status: done
-
 **Plan correction (2026-08-16, see Decisions Made)**: the former Task 1.3
 ("draft `tsk_schema.json` + register in the schema generator") has moved to
 Phase 2 as Task 2.5 — `generate_req_schema`/`generate_uc_schema`
 (`commands/schema.py`) both call the full `XDocument.model_json_schema()`,
 not just the body model, so schema generation cannot happen before
 `TskDocument` (Task 2.1) exists.
-
-#### Phase 2: Pydantic Models & Parser (commit 2) — done
-
-- [x] Task 2.1: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status:
-  done
-- [x] Task 2.2: Implement `parse_tsk(text: str) -> TskDocument` (mirrors
-  `parse_req`/`parse_uc`) — depends on: Task 2.1 — status: done
-- [x] Task 2.3: `tsk/models/v1/summary.py` (`TskSummary`, mirroring
-  `ReqSummary`/`AdrSummary`, for the `specmgr://tsk/list` resource) —
-  depends on: Task 2.1 — status: done
-- [x] Task 2.4: Field-level `Field(description=...)` on every scalar/
-  optional field (schema-quality parity with REQ's Task 2.4/2.5/2.6) —
-  depends on: Task 2.1 — status: done (audited; Phase 1 already met the bar,
-  no gaps found)
-- [x] Task 2.5 (moved from Phase 1's former Task 1.3): Draft `tsk_schema.json`
-  via `generate_tsk_schema()` (mirroring `generate_req_schema`/
-  `generate_uc_schema` in `commands/schema.py`, calling
-  `TskDocument.model_json_schema()`) + register `"tsk"` in the `specmgr
-  schema` doc-type generator registry (`_GENERATORS`) — depends on: Task
-  2.1 — status: done (`docs/tsk_schema.json` generated, mirroring
-  `docs/req_schema.json`/`docs/uc_schema.json`'s own precedent)
-- [x] Task 2.6 (folded from former Task 5.1): `tests/tsk/models/v1/test_parser.py`
-  — mirrors `TestParseReq`'s 8-case shape (minimal doc, full
-  reference-doc round-trip, defaults-when-absent, invalid status, malformed
-  structure, etc.), plus round-trip coverage of the new
-  `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2,
-  Task 2.5 — status: done
-
-#### Phase 3: MCP Surface (commit 3) — done
 
 **Plan correction (2026-08-16, see Decisions Made)**: REQ-004 explicitly
 lists `parse_tsk` among the 9 required MCP tools, but the Task List below
@@ -283,93 +183,53 @@ Inserted as Task 3.2 below (mirroring `req/tools/parse_req.py`, a thin
 `Path(path).read_text()` -> model-layer `parse_tsk` adapter), renumbering
 every subsequent Phase 3 task by one and updating all cross-references.
 
-- [x] Task 3.1: `tsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`,
-  thin wrappers over `general/tools/_doc_paths.py` (mirrors
-  `req/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status:
-  done
-- [x] Task 3.2 (new): `parse_tsk(path: str) -> TskDocument` tool wrapper
-  (`tsk/tools/parse_tsk.py`, mirroring `req/tools/parse_req.py` — reads a
-  filepath from disk, delegates to the model-layer `parse_tsk`) — depends
-  on: Task 3.1 — status: done
-- [x] Task 3.3: `create_tsk(content: str) -> TskDocument` tool (body-only
-  content, MCP builds frontmatter: `id`, `type="tsk"`, `status="draft"`,
-  `created=updated=now`, `version`) — depends on: Task 3.1 — status:
-  done
-- [x] Task 3.4: `update_tsk(id, content) -> TskDocument` tool (whole-body
-  replace, preserves `id`/`type`/`status`/`created`/`version`, bumps
-  `updated`) — depends on: Task 3.1 — status: done
-- [x] Task 3.5: `set_status_tsk(id, status) -> TskDocument` tool (only path
-  that changes `status`) — depends on: Task 3.1 — status: done
-- [x] Task 3.6: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task
-  3.1 — status: done
-- [x] Task 3.7: `validate_tsk(content, full=False) -> bool` tool — depends
-  on: none — status: done
-- [x] Task 3.8: `get_tsk(id) -> TskDocument` tool (id-based single-document
-  read; tool, not resource — matches REQ's revisited Task 3.17 conclusion)
-  — depends on: Task 3.1 — status: done
-- [x] Task 3.9: `get_tsk_example`/`get_tsk_template` tools + packaged data
-  (`tsk/data/tsk_example.md`, `tsk/data/tsk_template.md`) via
-  `general/tools/_packaged_data.py` — depends on: Task 1.3 — status:
-  done
-- [x] Task 3.10: `specmgr://tsk/list` and `specmgr://tsk/schema` resources
-  (packaged `tsk/data/tsk_schema.json`, mirroring `specmgr://req/schema`) —
-  depends on: Task 3.1, Task 2.5 — status: done
-- [x] Task 3.11: `specmgr://tsk/example` and `specmgr://tsk/template`
-  resources — depends on: Task 3.9 — status: done
-- [x] Task 3.12: `pyproject.toml` package-data entry for
-  `biz.dfch.specmgr.tsk` (`data/*.md`, `data/*.json`), pre-commit hook + CI
-  step for the packaged `tsk_schema.json` copy (mirroring
-  `specmgr-schema-req-package`) — depends on: Task 2.5 — status: done
-- [x] Task 3.13: `tsk/prompts/create_task.py` + `update_task.py` — narrate
-  the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`)
-  — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: done
-- [x] Task 3.14: `tsk/prompts/implement_task.py` — reads an existing `tsk`
-  document via `get_tsk`, builds a `TodoWrite` list from its `items`, and
-  uses the `question` tool to resolve ambiguity for any item before
-  proceeding — depends on: Task 3.8 — status: done
-- [x] Task 3.15: add `tsk` to `server.py`'s domain import line (last-line
-  import convention — easily forgotten, silently means nothing registers)
-  — depends on: Tasks 3.2-3.14 — status: done
-- [x] Task 3.16 (folded from former Tasks 5.2/5.3): `tests/tsk/tools/...`,
-  `tests/tsk/resources/...`, `tests/tsk/prompts/...` mirroring
-  `tests/req/tools/`/`tests/req/resources/` layout, plus dedicated tests for
-  `implement_task`'s `TodoWrite`/`question`-tool driven behavior — depends
-  on: Tasks 3.1-3.15 — status: done
-
-#### Phase 4: Docs, CI wiring & final verification (commit 4) — done
-
-- [x] Task 4.1: `specmgr docs` regeneration (new `tsk` modules picked up) —
-  depends on: Phase 1-3 complete — status: done (regenerated as part of the
-  Phase 3 commit; re-verified zero drift in Phase 4)
-- [x] Task 4.2: `specmgr mcp-docs` regeneration (new tools/resources/
-  prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status:
-  done (regenerated as part of the Phase 3 commit; re-verified zero drift
-  in Phase 4)
-- [x] Task 4.3: CI wiring — confirm the Python-3.13-only `specmgr schema`/
-  `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml`
-  cover `tsk` with no separate per-type step needed (registry-driven,
-  mirroring `req`'s own wiring) — depends on: Task 4.1, Task 4.2 — status:
-  done (confirmed by inspection: the generic, no-`--type` `docs`/
-  `mcp-docs`/`schema` steps already cover every registered type; only the
-  packaged-copy step is per-type and Task 3.12 already added it)
-- [x] Task 4.4: Final verification pass — walk every ACC-001..008 below and
-  confirm each is actually satisfied; run the full quality gate (ruff
-  format/check, pylint advisory, vulture, unittest, `specmgr docs`,
-  `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end —
-  depends on: Tasks 4.1-4.3 — status: done. All 8 ACCs re-verified with
-  concrete evidence (see updated Acceptance Criteria section above),
-  including two substantive live demonstrations beyond unit tests: (1)
-  ACC-006 — created a real `tsk` document, drove an actual `TodoWrite` list
-  from `implement_task`'s narrated instructions, and asked a clarifying
-  question via the `question` tool for its ambiguous item; (2) ACC-007 —
-  built a real wheel, installed it non-editably into a scratch venv, and
-  confirmed packaged data resolves correctly outside the source tree. Full
-  quality gate (980 tests, ruff format/check, vulture, pylint 9.72/10
-  advisory) all clean.
-
 **Note:** If a task's scope changes mid-flight, edit its description in
 place; rely on git history (`git log -p` on this file) to recover what was
 originally planned, rather than keeping a second copy of the task around.
+
+### Task List
+
+#### Phase 100: Specification (commit 1) — done
+
+- [x] Task 100.100: Define `tsk` frontmatter (`tsk/models/v1/frontmatter.py` — `TskFrontmatter` subclass of `MarkdownFrontmatter`, `type=Literal["tsk"]`, 4-value status set `draft`/`active`/`done`/`cancelled`) — depends on: none — status: done
+- [x] Task 100.110: Define `tsk` body structure (`tsk/models/v1/body.py`, `tsk/models/v1/task_item.py`) — `Task(MarkdownSection1WithComment)` with `items: list[TaskItem]` and `recent_updates: RecentUpdates`; `TaskItem` (checked/description computed fields, new `MarkdownListItem` subclass); `RecentUpdates(MarkdownSection2)` holding `updates: list[UpdateEntry]` built on `models/md`'s generic `list[MarkdownStr]` engine (`process_list_field`), with `UpdateEntry` a free-form-title H3 leaf via `@alias(value=".+", type=AliasType.REGEX)` — not ADR's numbered-option pattern — depends on: Task 1.1 — status: done
+- [x] Task 100.120: (renumbered; was 1.4) Create a reference `tsk` document (`tsk_reference.md`) exercising every field, used as the parser's round-trip test fixture — depends on: Task 1.2 — status: done (placed at `.specmgr/feat/feat-10-add-artifact-type-tasklist/tsk_reference.md`, mirroring `req`'s own reference-fixture location convention, not `tsk/data/` — see Recent Updates)
+- [x] Task 100.130: (renumbered; was 1.5, folded from former Task 5.1) `tests/tsk/models/v1/test_frontmatter.py`, `test_body.py`/`test_task_item.py` — structural + validation tests mirroring `tests/req/models/v1/`, with explicit coverage of `MarkdownSection1WithComment`'s comment-present/ comment-absent cases (its first real production consumer — no prior test coverage outside `models/md`'s own unit tests) — depends on: Task 1.3 — status: done
+
+#### Phase 110: Pydantic Models & Parser (commit 2) — done
+
+- [x] Task 110.100: `tsk/models/v1/document.py` (`TskDocument(frontmatter, body)`, mirroring `ReqDocument`) — depends on: Task 1.3 — status: done
+- [x] Task 110.110: Implement `parse_tsk(text: str) -> TskDocument` (mirrors `parse_req`/`parse_uc`) — depends on: Task 2.1 — status: done
+- [x] Task 110.120: `tsk/models/v1/summary.py` (`TskSummary`, mirroring `ReqSummary`/`AdrSummary`, for the `specmgr://tsk/list` resource) — depends on: Task 2.1 — status: done
+- [x] Task 110.130: Field-level `Field(description=...)` on every scalar/ optional field (schema-quality parity with REQ's Task 2.4/2.5/2.6) — depends on: Task 2.1 — status: done (audited; Phase 1 already met the bar, no gaps found)
+- [x] Task 110.140: (moved from Phase 1's former Task 1.3) Draft `tsk_schema.json` via `generate_tsk_schema()` (mirroring `generate_req_schema`/ `generate_uc_schema` in `commands/schema.py`, calling `TskDocument.model_json_schema()`) + register `"tsk"` in the `specmgr schema` doc-type generator registry (`_GENERATORS`) — depends on: Task 2.1 — status: done (`docs/tsk_schema.json` generated, mirroring `docs/req_schema.json`/`docs/uc_schema.json`'s own precedent)
+- [x] Task 110.150: (folded from former Task 5.1) `tests/tsk/models/v1/test_parser.py` — mirrors `TestParseReq`'s 8-case shape (minimal doc, full reference-doc round-trip, defaults-when-absent, invalid status, malformed structure, etc.), plus round-trip coverage of the new `RecentUpdates`/`UpdateEntry` dynamic-list combo — depends on: Task 2.2, Task 2.5 — status: done
+
+#### Phase 120: MCP Surface (commit 3) — done
+
+- [x] Task 120.100: `tsk/tools/_paths.py` + `_io.py` + `_write.py` + `_lock.py`, thin wrappers over `general/tools/_doc_paths.py` (mirrors `req/tools/_paths.py` etc. exactly) — depends on: Task 2.2 — status: done
+- [x] Task 120.110: (new) `parse_tsk(path: str) -> TskDocument` tool wrapper (`tsk/tools/parse_tsk.py`, mirroring `req/tools/parse_req.py` — reads a filepath from disk, delegates to the model-layer `parse_tsk`) — depends on: Task 3.1 — status: done
+- [x] Task 120.120: `create_tsk(content: str) -> TskDocument` tool (body-only content, MCP builds frontmatter: `id`, `type="tsk"`, `status="draft"`, `created=updated=now`, `version`) — depends on: Task 3.1 — status: done
+- [x] Task 120.130: `update_tsk(id, content) -> TskDocument` tool (whole-body replace, preserves `id`/`type`/`status`/`created`/`version`, bumps `updated`) — depends on: Task 3.1 — status: done
+- [x] Task 120.140: `set_status_tsk(id, status) -> TskDocument` tool (only path that changes `status`) — depends on: Task 3.1 — status: done
+- [x] Task 120.150: `delete_tsk(id) -> NoReturn` stub tool — depends on: Task 3.1 — status: done
+- [x] Task 120.160: `validate_tsk(content, full=False) -> bool` tool — depends on: none — status: done
+- [x] Task 120.170: `get_tsk(id) -> TskDocument` tool (id-based single-document read; tool, not resource — matches REQ's revisited Task 3.17 conclusion) — depends on: Task 3.1 — status: done
+- [x] Task 120.180: `get_tsk_example`/`get_tsk_template` tools + packaged data (`tsk/data/tsk_example.md`, `tsk/data/tsk_template.md`) via `general/tools/_packaged_data.py` — depends on: Task 1.3 — status: done
+- [x] Task 120.190: `specmgr://tsk/list` and `specmgr://tsk/schema` resources (packaged `tsk/data/tsk_schema.json`, mirroring `specmgr://req/schema`) — depends on: Task 3.1, Task 2.5 — status: done
+- [x] Task 120.200: `specmgr://tsk/example` and `specmgr://tsk/template` resources — depends on: Task 3.9 — status: done
+- [x] Task 120.210: `pyproject.toml` package-data entry for `biz.dfch.specmgr.tsk` (`data/*.md`, `data/*.json`), pre-commit hook + CI step for the packaged `tsk_schema.json` copy (mirroring `specmgr-schema-req-package`) — depends on: Task 2.5 — status: done
+- [x] Task 120.220: `tsk/prompts/create_task.py` + `update_task.py` — narrate the tool sequence (mirroring `req/prompts/create_req.py`/`update_req.py`) — depends on: Tasks 3.3, 3.4, 3.5, 3.8, 3.10 — status: done
+- [x] Task 120.230: `tsk/prompts/implement_task.py` — reads an existing `tsk` document via `get_tsk`, builds a `TodoWrite` list from its `items`, and uses the `question` tool to resolve ambiguity for any item before proceeding — depends on: Task 3.8 — status: done
+- [x] Task 120.240: add `tsk` to `server.py`'s domain import line (last-line import convention — easily forgotten, silently means nothing registers) — depends on: Tasks 3.2-3.14 — status: done
+- [x] Task 120.250: (folded from former Tasks 5.2/5.3) `tests/tsk/tools/...`, `tests/tsk/resources/...`, `tests/tsk/prompts/...` mirroring `tests/req/tools/`/`tests/req/resources/` layout, plus dedicated tests for `implement_task`'s `TodoWrite`/`question`-tool driven behavior — depends on: Tasks 3.1-3.15 — status: done
+
+#### Phase 130: Docs, CI wiring & final verification (commit 4) — done
+
+- [x] Task 130.100: `specmgr docs` regeneration (new `tsk` modules picked up) — depends on: Phase 1-3 complete — status: done (regenerated as part of the Phase 3 commit; re-verified zero drift in Phase 4)
+- [x] Task 130.110: `specmgr mcp-docs` regeneration (new tools/resources/ prompts appear in `docs/MCP.md`) — depends on: Phase 3 complete — status: done (regenerated as part of the Phase 3 commit; re-verified zero drift in Phase 4)
+- [x] Task 130.120: CI wiring — confirm the Python-3.13-only `specmgr schema`/ `specmgr docs`/`specmgr mcp-docs` steps in `.github/workflows/ci.yml` cover `tsk` with no separate per-type step needed (registry-driven, mirroring `req`'s own wiring) — depends on: Task 4.1, Task 4.2 — status: done (confirmed by inspection: the generic, no-`--type` `docs`/ `mcp-docs`/`schema` steps already cover every registered type; only the packaged-copy step is per-type and Task 3.12 already added it)
+- [x] Task 130.130: Final verification pass — walk every ACC-001..008 below and confirm each is actually satisfied; run the full quality gate (ruff format/check, pylint advisory, vulture, unittest, `specmgr docs`, `specmgr schema`, `specmgr mcp-docs` drift checks) once more end-to-end — depends on: Tasks 4.1-4.3 — status: done. All 8 ACCs re-verified with concrete evidence (see updated Acceptance Criteria section above), including two substantive live demonstrations beyond unit tests: (1) ACC-006 — created a real `tsk` document, drove an actual `TodoWrite` list from `implement_task`'s narrated instructions, and asked a clarifying question via the `question` tool for its ambiguous item; (2) ACC-007 — built a real wheel, installed it non-editably into a scratch venv, and confirmed packaged data resolves correctly outside the source tree. Full quality gate (980 tests, ruff format/check, vulture, pylint 9.72/10 advisory) all clean.
 
 ## Progress
 
@@ -401,196 +261,69 @@ non-editable wheel install in a scratch venv). All 8 requirements and all
 8 acceptance criteria satisfied. All four commits landed
 (`9ace8dd`/`1cb9ffe`/`cba8799`/pending Phase 4 commit).
 
+See `history.md` for updates before 2026-08-16 (yet further continued, 2).
+
 ### Blockers
 
 None.
 
-### Recent Updates
+### Updates
 
-See `history.md` for updates before 2026-08-16 (yet further continued, 2).
+<!-- Recent -->
 
-#### 2026-08-16 (yet further continued, 2)
+#### 2026-08-16 00:00:00.000Z - (yet further continued, 2)
 
-- Completed: caught and fixed a second Phase-3 gap before dispatching
-  implementation — REQ-004 lists `parse_tsk` among the 9 required MCP
-  tools, but the Task List had no task for the tool wrapper itself (only
-  the Phase 2 model-layer function). Inserted as Task 3.2, renumbering the
-  rest of Phase 3 (see Decisions Made).
-- Completed: **Phase 3 (MCP Surface)** — all 9 tools (`parse_tsk`,
-  `create_tsk`, `update_tsk`, `set_status_tsk`, `delete_tsk` stub,
-  `validate_tsk`, `get_tsk`, `get_tsk_example`, `get_tsk_template`), all 4
-  resources (`specmgr://tsk/list`, `/schema`, `/example`, `/template`), all
-  3 prompts (`create_task`, `update_task`, `implement_task` — the last one
-  genuinely new, no `req`/`adr` precedent), packaged data
-  (`tsk/data/tsk_example.md`/`tsk_template.md`/`tsk_schema.json`),
-  `pyproject.toml`/`.pre-commit-config.yaml`/`.github/workflows/ci.yml`
-  wiring, and `server.py` registration, all mirroring `req`'s exact
-  structure file-for-file. 93 new tests under `tests/tsk/{tools,resources,
-  prompts}/`. Delegated to `implementation-specialist` with the full `req`
-  reference implementation embedded in the prompt for precision; reviewed
-  and quality-gated by the orchestrator before committing.
-- Also completed: found and fixed a real correctness defect during review
-  (not caught by the implementation-specialist's own test suite, which
-  passed by construction but didn't probe this specific gap) —
-  `TaskItem.checked`/`.description` are `@computed_field`s, evaluated only
-  on access, never during model construction/validation. This meant
-  `Task.from_text(...)` (and therefore `create_tsk`/`update_tsk`) silently
-  accepted a malformed checkbox marker like `"- [z] foo"`, breaking this
-  project's universal "successfully constructing the model *is* the
-  validation" convention — a caller could have written a bad file to disk
-  before any error surfaced, if it ever did. First attempted fix (a
-  `model_validator(mode="after")` directly on `TaskItem`) broke everything
-  — `MarkdownListItem.from_text` constructs a bare `cls()` first and only
-  assigns the parsed text to a private `_value` attribute *afterward*
-  (bypassing Pydantic's own validation), so a `TaskItem`-level validator
-  fires on an empty, not-yet-populated instance. Fixed correctly instead
-  with a `model_validator(mode="after")` on `Task` itself (`_validate_items_eagerly`),
-  which runs after every `TaskItem` in `self.items` is already fully
-  constructed, forcing each one's `.checked` to evaluate immediately.
-  Added regression tests at both the model layer
-  (`tests/tsk/models/v1/test_body.py::TestTaskItemMarkerValidatedEagerly`)
-  and the tool layer (`tests/tsk/tools/test_create_tsk.py::test_malformed_checkbox_marker_raises_and_writes_nothing`).
-  Whitelisted `_validate_items_eagerly` in `whitelist.py` (same
-  Pydantic-validator category as the other `_validate_*` entries).
-- Next: Execute Phase 4 (Docs, CI wiring & final verification) — confirm
-  `specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report no drift,
-  confirm CI wiring, and walk every ACC-001..008 to verify.
-- Notes: 980 tests passing total; ruff format/check and vulture clean.
-  `docs/` (API docs, `GENERATED.md`, `MCP.md`) regenerated to reflect the
-  new `tsk` modules/tools/resources/prompts.
+Completed: caught and fixed a second Phase-3 gap before dispatching implementation — REQ-004 lists `parse_tsk` among the 9 required MCP tools, but the Task List had no task for the tool wrapper itself (only the Phase 2 model-layer function). Inserted as Task 3.2, renumbering the rest of Phase 3 (see Decisions Made). Completed: **Phase 3 (MCP Surface)** — all 9 tools (`parse_tsk`, `create_tsk`, `update_tsk`, `set_status_tsk`, `delete_tsk` stub, `validate_tsk`, `get_tsk`, `get_tsk_example`, `get_tsk_template`), all 4 resources (`specmgr://tsk/list`, `/schema`, `/example`, `/template`), all 3 prompts (`create_task`, `update_task`, `implement_task` — the last one genuinely new, no `req`/`adr` precedent), packaged data (`tsk/data/tsk_example.md`/`tsk_template.md`/`tsk_schema.json`), `pyproject.toml`/`.pre-commit-config.yaml`/`.github/workflows/ci.yml` wiring, and `server.py` registration, all mirroring `req`'s exact structure file-for-file. 93 new tests under `tests/tsk/{tools,resources, prompts}/`. Delegated to `implementation-specialist` with the full `req` reference implementation embedded in the prompt for precision; reviewed and quality-gated by the orchestrator before committing. Also completed: found and fixed a real correctness defect during review (not caught by the implementation-specialist's own test suite, which passed by construction but didn't probe this specific gap) — `TaskItem.checked`/`.description` are `@computed_field`s, evaluated only on access, never during model construction/validation. This meant `Task.from_text(...)` (and therefore `create_tsk`/`update_tsk`) silently accepted a malformed checkbox marker like `"- [z] foo"`, breaking this project's universal "successfully constructing the model *is* the validation" convention — a caller could have written a bad file to disk before any error surfaced, if it ever did. First attempted fix (a `model_validator(mode="after")` directly on `TaskItem`) broke everything — `MarkdownListItem.from_text` constructs a bare `cls()` first and only assigns the parsed text to a private `_value` attribute *afterward* (bypassing Pydantic's own validation), so a `TaskItem`-level validator fires on an empty, not-yet-populated instance. Fixed correctly instead with a `model_validator(mode="after")` on `Task` itself (`_validate_items_eagerly`), which runs after every `TaskItem` in `self.items` is already fully constructed, forcing each one's `.checked` to evaluate immediately. Added regression tests at both the model layer (`tests/tsk/models/v1/test_body.py::TestTaskItemMarkerValidatedEagerly`) and the tool layer (`tests/tsk/tools/test_create_tsk.py::test_malformed_checkbox_marker_raises_and_writes_nothing`). Whitelisted `_validate_items_eagerly` in `whitelist.py` (same Pydantic-validator category as the other `_validate_*` entries). Next: Execute Phase 4 (Docs, CI wiring & final verification) — confirm `specmgr docs`/`specmgr schema`/`specmgr mcp-docs` all report no drift, confirm CI wiring, and walk every ACC-001..008 to verify. Notes: 980 tests passing total; ruff format/check and vulture clean. `docs/` (API docs, `GENERATED.md`, `MCP.md`) regenerated to reflect the new `tsk` modules/tools/resources/prompts.
 
-#### 2026-08-16 (final)
+#### 2026-08-16 00:00:00.000Z - (final)
 
-- Completed: **Phase 4 (Docs, CI wiring & final verification)** — feature
-  complete. Re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr schema`
-  (generic and `--type tsk` packaged copy) and confirmed zero drift after
-  Phase 3's commit. Confirmed by inspecting `.github/workflows/ci.yml` that
-  the generic (no `--type`) `docs`/`mcp-docs`/`schema` steps already cover
-  `tsk` automatically (registry-driven) — no new generic CI step needed,
-  only the per-type packaged-copy step Task 3.12 already added.
-- Also completed: two substantive live verifications beyond unit tests,
-  going beyond what the plan strictly required to make the acceptance
-  criteria genuinely convincing rather than just "the tests pass":
-  - **ACC-006**: created a real `tsk` document via `create_tsk` with one
-    checked item, one clear unchecked item, and one deliberately ambiguous
-    item ("Do the thing"); called `implement_task(id)` and confirmed its
-    instructions correctly narrate the `get_tsk` → `TodoWrite`-list-build →
-    `question`-tool-for-ambiguity → separate `update_tsk`-to-persist
-    sequence; then actually drove a real `TodoWrite` list from the parsed
-    items and used the `question` tool to resolve the ambiguous item before
-    marking it complete, exactly as the prompt instructs.
-  - **ACC-007**: ran `uv build --wheel`, confirmed
-    `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are present
-    inside the built wheel, installed it non-editably into a scratch venv
-    (`biz-dfch-specmgr[mcp]`), and confirmed `read_packaged_text`/
-    `get_tsk_example`/`get_tsk_template`/`tsk_schema()` all resolve
-    correctly from a working directory outside the repo entirely (no
-    source-tree fallback possible) — mirroring `req`'s own feat-6 Task 5.1
-    verification.
-  - Ran the full quality gate one final time: 980 tests passing, ruff
-    format/check clean, vulture clean, pylint (advisory) 9.72/10 — the
-    handful of pylint findings (`redefined-builtin 'id'`, missing test
-    docstrings, `duplicate-code` across mirrored test files) all match
-    `req`'s own existing, accepted pattern exactly (verified by running
-    pylint against `req`'s own files too), not a `tsk`-specific regression.
-- All 8 requirements (REQ-001..008) and all 8 acceptance criteria
-  (ACC-001..008) checked off with concrete evidence in their respective
-  sections above. Feature status set to `done`.
-- Notes: no `CHANGELOG.md` entry added — confirmed by inspecting `uc`'s own
-  domain-addition commit (`74e271e`) that new-domain features are not
-  logged there; `CHANGELOG.md`'s `[Unreleased]` section is only updated at
-  version-bump time per `AGENTS.md`.
+Completed: **Phase 4 (Docs, CI wiring & final verification)** — feature complete. Re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr schema` (generic and `--type tsk` packaged copy) and confirmed zero drift after Phase 3's commit. Confirmed by inspecting `.github/workflows/ci.yml` that the generic (no `--type`) `docs`/`mcp-docs`/`schema` steps already cover `tsk` automatically (registry-driven) — no new generic CI step needed, only the per-type packaged-copy step Task 3.12 already added. Also completed: two substantive live verifications beyond unit tests, going beyond what the plan strictly required to make the acceptance criteria genuinely convincing rather than just "the tests pass": **ACC-006**: created a real `tsk` document via `create_tsk` with one checked item, one clear unchecked item, and one deliberately ambiguous item ("Do the thing"); called `implement_task(id)` and confirmed its instructions correctly narrate the `get_tsk` → `TodoWrite`-list-build → `question`-tool-for-ambiguity → separate `update_tsk`-to-persist sequence; then actually drove a real `TodoWrite` list from the parsed items and used the `question` tool to resolve the ambiguous item before marking it complete, exactly as the prompt instructs. **ACC-007**: ran `uv build --wheel`, confirmed `tsk/data/{tsk_example.md,tsk_template.md,tsk_schema.json}` are present inside the built wheel, installed it non-editably into a scratch venv (`biz-dfch-specmgr[mcp]`), and confirmed `read_packaged_text`/ `get_tsk_example`/`get_tsk_template`/`tsk_schema()` all resolve correctly from a working directory outside the repo entirely (no source-tree fallback possible) — mirroring `req`'s own feat-6 Task 5.1 verification. Ran the full quality gate one final time: 980 tests passing, ruff format/check clean, vulture clean, pylint (advisory) 9.72/10 — the handful of pylint findings (`redefined-builtin 'id'`, missing test docstrings, `duplicate-code` across mirrored test files) all match `req`'s own existing, accepted pattern exactly (verified by running pylint against `req`'s own files too), not a `tsk`-specific regression. All 8 requirements (REQ-001..008) and all 8 acceptance criteria (ACC-001..008) checked off with concrete evidence in their respective sections above. Feature status set to `done`. Notes: no `CHANGELOG.md` entry added — confirmed by inspecting `uc`'s own domain-addition commit (`74e271e`) that new-domain features are not logged there; `CHANGELOG.md`'s `[Unreleased]` section is only updated at version-bump time per `AGENTS.md`.
 
 ### Decisions Made
 
-- **2026-08-16**: Target GitHub issue #10, not #11 — issue #11 does not
-  exist; #10 ("Add artifact type TaskList") matches the pre-existing local
-  branch's slug. Rationale: avoid creating a redundant new issue when an
-  existing one already describes the same feature.
-- **2026-08-16**: Rename the local branch from `feat-11-...` to
-  `feat-10-...` rather than keep the mismatched number or leave a new issue
-  to be filed — rationale: keeps the `feat-NNN-slug` convention
-  (AGENTS.md) accurate and avoids a second `.specmgr/feat/` folder later
-  needing a rename too.
-- **2026-08-16**: `tsk` body is a flat checklist (H1 + optional comment +
-  `items: list[TaskItem]` + mandatory `## Recent Updates`) — no phases, no
-  per-item `depends on`/`status` metadata. Rationale: keeps the artifact
-  genuinely lightweight, distinct from the heavier `.specmgr/feat/*`
-  Task List format it is meant to be a smaller alternative to.
-- **2026-08-16**: `tsk` frontmatter `status` is `draft`/`active`/`done`/
-  `cancelled`, not REQ's 7-value set. Rationale: purpose-fit to how a task
-  list is actually used, rather than maximizing schema consistency with an
-  artifact type (REQ) whose lifecycle semantics don't map naturally onto a
-  todo list.
-- **2026-08-16**: No dedicated per-entry tools for `## Recent Updates`
-  (no `option_create`/`option_list` equivalent) — entries are appended via
-  whole-body `update_tsk` calls. Rationale: mirrors REQ's own Task 3.9
-  conclusion that granular, ADR-style section-mutation tooling isn't worth
-  building for an artifact this small.
-- **2026-08-16**: Execution strategy — delegate each phase to the
-  `implementation-specialist` subagent (implementation + its own mirrored
-  tests together, not a separate later test phase); one Conventional Commit
-  per completed phase; orchestrator quality-gates (ruff/vulture/unittest)
-  before each commit. Rationale: user-selected approach; keeps the original
-  5-phase plan's dependency ordering intact while avoiding a large,
-  disconnected final test-writing pass.
-- **2026-08-16**: `RecentUpdates`/its H3 entries are built on `models/md`'s
-  generic `list[MarkdownStr]` engine (`process_list_field`) with a
-  free-form-title H3 leaf via `@alias(value=".+", type=AliasType.REGEX)`,
-  not adapted from ADR's `AdrOption`/`_OPTION_HEADING_PATTERN`. Rationale:
-  ADR's option model bakes in mandatory sequential numbering and a fixed
-  `"Option {number}: "` render format that free-form update entries don't
-  want; the declarative `models/md` engine already provides the needed
-  "H2 with dynamic H3 children" shape generically (confirmed by
-  exploration), matching how `req`'s own `Requirement` H1 already uses the
-  same free-form-title alias mechanism.
-- **2026-08-16**: Moved schema generation (`generate_tsk_schema()` +
-  `specmgr schema` registry entry) from Phase 1 to Phase 2, as Task 2.5.
-  Rationale: verified `commands/schema.py`'s `generate_req_schema`/
-  `generate_uc_schema` both call the full `XDocument.model_json_schema()`
-  (frontmatter + body combined), not the body model alone — so it cannot
-  run before `TskDocument` (Task 2.1) exists. The original Task List had
-  this as Task 1.3, before `TskDocument` was even defined; corrected before
-  starting implementation to avoid building against a broken dependency
-  order.
-- **2026-08-16**: Added `min_length=1` to `RecentUpdates.updates`,
-  superseding the original Design Notes wording ("its own `updates` list may
-  start empty on creation"). Rationale: Phase 2 empirically confirmed
-  `models/md`'s generic list-parsing engine already rejects a `## Recent
-  Updates` section with zero `### ` entries during `from_text` for any
-  non-`Optional` `list[X]` field (regardless of `min_length`) — but direct
-  Python construction (`RecentUpdates(updates=[])`) still silently
-  succeeded, an inconsistency that would have surfaced confusingly in
-  Phase 3's `create_tsk`. Making the constraint explicit and consistent
-  means a freshly created `tsk` document must seed a first Recent Updates
-  entry (e.g. "Created") — `create_tsk`/`get_tsk_template`/`get_tsk_example`
-  in Phase 3 must account for this, same as `Task.items`' own `min_length=1`
-  already requires at least one checklist item.
-- **2026-08-16**: Inserted a Phase 3 task for the `parse_tsk` **tool**
-  wrapper (renumbered as Task 3.2, shifting every subsequent Phase 3 task
-  by one). Rationale: REQ-004 explicitly lists `parse_tsk` among the 9
-  required MCP tools, but the original Task List only ever planned the
-  model-layer `parse_tsk(text) -> TskDocument` free function (Phase 2,
-  Task 2.2) — the thin `@mcp.tool()` adapter over it (mirroring
-  `req/tools/parse_req.py`) had no task of its own. Caught before starting
-  Phase 3 implementation, same as the earlier schema-sequencing fix.
-- **2026-08-16**: Added `Task._validate_items_eagerly`, a
-  `model_validator(mode="after")` on `Task` (not `TaskItem`) that forces
-  every item's `.checked` computed field to evaluate immediately after
-  parsing. Rationale: `TaskItem.checked`/`.description` are
-  `@computed_field`s, which Pydantic only evaluates on access, never
-  during model construction -- `Task.from_text(...)` alone silently
-  accepted a malformed checkbox marker (e.g. `"- [z] foo"`), breaking this
-  project's "successful construction is validation" convention that every
-  `create_*`/`update_*`/`validate_*` tool's own docstring states literally.
-  A `model_validator` directly on `TaskItem` does not work for this --
-  `MarkdownListItem.from_text` constructs a bare, no-argument `cls()` first
-  and only assigns the parsed text to the private `_value` attribute
-  afterward (bypassing Pydantic's validation pipeline for that
-  assignment), so a `TaskItem`-level validator fires on an empty,
-  not-yet-populated instance. Placing the validator on `Task` instead
-  works because by the time it runs, every `TaskItem` in `self.items` has
-  already completed its own `from_text` construction.
+#### 2026-08-16 00:00:00.000Z : Target GitHub issue #10, not #11 — issue #11 does not exist; #10 ("Add artifact type TaskList") matches the pre-existing local branch's slug.
+
+Rationale: avoid creating a redundant new issue when an existing one already describes the same feature.
+
+#### 2026-08-16 00:00:00.000Z : Rename the local branch from `feat-11-...` to `feat-10-...` rather than keep the mismatched number or leave a new issue to be filed —
+
+rationale: keeps the `feat-NNN-slug` convention (AGENTS.md) accurate and avoids a second `.specmgr/feat/` folder later needing a rename too.
+
+#### 2026-08-16 00:00:00.000Z : `tsk` body is a flat checklist (H1 + optional comment + `items: list[TaskItem]` + mandatory `## Recent Updates`) — no phases, no per-item `depends on`/`status` metadata.
+
+Rationale: keeps the artifact genuinely lightweight, distinct from the heavier `.specmgr/feat/*` Task List format it is meant to be a smaller alternative to.
+
+#### 2026-08-16 00:00:00.000Z : `tsk` frontmatter `status` is `draft`/`active`/`done`/`cancelled`, not REQ's 7-value set.
+
+Rationale: purpose-fit to how a task list is actually used, rather than maximizing schema consistency with an artifact type (REQ) whose lifecycle semantics don't map naturally onto a todo list.
+
+#### 2026-08-16 00:00:00.000Z : No dedicated per-entry tools for `## Recent Updates` (no `option_create`/`option_list` equivalent) — entries are appended via whole-body `update_tsk` calls.
+
+Rationale: mirrors REQ's own Task 3.9 conclusion that granular, ADR-style section-mutation tooling isn't worth building for an artifact this small.
+
+#### 2026-08-16 00:00:00.000Z : Execution strategy — delegate each phase to the `implementation-specialist` subagent (implementation + its own mirrored tests together, not a separate later test phase); one Conventional Commit per completed phase; orchestrator quality-gates (ruff/vulture/unittest) before each commit.
+
+Rationale: user-selected approach; keeps the original 5-phase plan's dependency ordering intact while avoiding a large, disconnected final test-writing pass.
+
+#### 2026-08-16 00:00:00.000Z : `RecentUpdates`/its H3 entries are built on `models/md`'s generic `list[MarkdownStr]` engine (`process_list_field`) with a free-form-title H3 leaf via `@alias(value=".+", type=AliasType.REGEX)`, not adapted from ADR's `AdrOption`/`_OPTION_HEADING_PATTERN`.
+
+Rationale: ADR's option model bakes in mandatory sequential numbering and a fixed `"Option {number}: "` render format that free-form update entries don't want; the declarative `models/md` engine already provides the needed "H2 with dynamic H3 children" shape generically (confirmed by exploration), matching how `req`'s own `Requirement` H1 already uses the same free-form-title alias mechanism.
+
+#### 2026-08-16 00:00:00.000Z : Moved schema generation (`generate_tsk_schema()` + `specmgr schema` registry entry) from Phase 1 to Phase 2, as Task 2.5.
+
+Rationale: verified `commands/schema.py`'s `generate_req_schema`/`generate_uc_schema` both call the full `XDocument.model_json_schema()` (frontmatter + body combined), not the body model alone — so it cannot run before `TskDocument` (Task 2.1) exists. The original Task List had this as Task 1.3, before `TskDocument` was even defined; corrected before starting implementation to avoid building against a broken dependency order.
+
+#### 2026-08-16 00:00:00.000Z : Added `min_length=1` to `RecentUpdates.updates`, superseding the original Design Notes wording ("its own `updates` list may start empty on creation").
+
+Rationale: Phase 2 empirically confirmed `models/md`'s generic list-parsing engine already rejects a `## Recent Updates` section with zero `### ` entries during `from_text` for any non-`Optional` `list[X]` field (regardless of `min_length`) — but direct Python construction (`RecentUpdates(updates=[])`) still silently succeeded, an inconsistency that would have surfaced confusingly in Phase 3's `create_tsk`. Making the constraint explicit and consistent means a freshly created `tsk` document must seed a first Recent Updates entry (e.g. "Created") — `create_tsk`/`get_tsk_template`/`get_tsk_example` in Phase 3 must account for this, same as `Task.items`' own `min_length=1` already requires at least one checklist item.
+
+#### 2026-08-16 00:00:00.000Z : Inserted a Phase 3 task for the `parse_tsk` **tool** wrapper (renumbered as Task 3.2, shifting every subsequent Phase 3 task by one).
+
+Rationale: REQ-004 explicitly lists `parse_tsk` among the 9 required MCP tools, but the original Task List only ever planned the model-layer `parse_tsk(text) -> TskDocument` free function (Phase 2, Task 2.2) — the thin `@mcp.tool()` adapter over it (mirroring `req/tools/parse_req.py`) had no task of its own. Caught before starting Phase 3 implementation, same as the earlier schema-sequencing fix.
+
+#### 2026-08-16 00:00:00.000Z : Added `Task._validate_items_eagerly`, a `model_validator(mode="after")` on `Task` (not `TaskItem`) that forces every item's `.checked` computed field to evaluate immediately after parsing.
+
+Rationale: `TaskItem.checked`/`.description` are `@computed_field`s, which Pydantic only evaluates on access, never during model construction -- `Task.from_text(...)` alone silently accepted a malformed checkbox marker (e.g. `"- [z] foo"`), breaking this project's "successful construction is validation" convention that every `create_*`/`update_*`/`validate_*` tool's own docstring states literally. A `model_validator` directly on `TaskItem` does not work for this -- `MarkdownListItem.from_text` constructs a bare, no-argument `cls()` first and only assigns the parsed text to the private `_value` attribute afterward (bypassing Pydantic's validation pipeline for that assignment), so a `TaskItem`-level validator fires on an empty, not-yet-populated instance. Placing the validator on `Task` instead works because by the time it runs, every `TaskItem` in `self.items` has already completed its own `from_text` construction.
 
 ### Related PRs / Commits
 

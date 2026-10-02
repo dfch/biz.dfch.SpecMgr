@@ -4,7 +4,7 @@ created: '2026-09-02 21:49:41.712+02:00'
 id: feat-69-update-context
 status: done
 type: feat
-updated: '2026-09-03 01:15:00.000+02:00'
+updated: '2026-09-30T05:55:00.000Z'
 version: 1.0.0
 ---
 
@@ -81,44 +81,44 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 ### Task List
 
-#### Phase 1: Design the shared minimal-response shape
+#### Phase 100: Design the shared minimal-response shape
 
-- [x] Task 1.1: Decide/document the frontmatter-only return type contract shared by update/set_status/set_classification/`create_<d>` (Design Notes).
-- [x] Task 1.2: Confirm via test run that no prompt currently documents the old full-document response shape (already verified: none do).
+- [x] Task 100.100: Decide/document the frontmatter-only return type contract shared by update/set_status/set_classification/`create_<d>` (Design Notes).
+- [x] Task 100.110: Confirm via test run that no prompt currently documents the old full-document response shape (already verified: none do).
 
-#### Phase 2: Generic tools (general/tools/)
+#### Phase 110: Generic tools (general/tools/)
 
-- [x] Task 2.1: Change `update` to return frontmatter-only across all 11 whole-body domains.
-- [x] Task 2.2: Change `set_status` to return frontmatter-only across all 11 whole-body domains (adr branch unchanged).
-- [x] Task 2.3: Change `set_classification` to return frontmatter-only across all 11 whole-body domains.
-- [x] Task 2.4: Update each tool's MCP `description=` text and docstring Returns section.
-- [x] Task 2.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 3.
+- [x] Task 110.100: Change `update` to return frontmatter-only across all 11 whole-body domains.
+- [x] Task 110.110: Change `set_status` to return frontmatter-only across all 11 whole-body domains (adr branch unchanged).
+- [x] Task 110.120: Change `set_classification` to return frontmatter-only across all 11 whole-body domains.
+- [x] Task 110.130: Update each tool's MCP `description=` text and docstring Returns section.
+- [x] Task 110.140: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 3.
 
-#### Phase 3: Per-domain `create_<d>` tools
+#### Phase 120: Per-domain `create_<d>` tools
 
-- [x] Task 3.1: Change all 11 `create_<d>` tools to return frontmatter-only.
-- [x] Task 3.2: Update each tool's MCP `description=` text and docstring Returns section.
-- [x] Task 3.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 4.
+- [x] Task 120.100: Change all 11 `create_<d>` tools to return frontmatter-only.
+- [x] Task 120.110: Update each tool's MCP `description=` text and docstring Returns section.
+- [x] Task 120.120: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 4.
 
-#### Phase 4: Tests
+#### Phase 130: Tests
 
-- [x] Task 4.1: Update/add unit tests asserting frontmatter-only responses for update/set_status/set_classification/`create_<d>` across all 11 domains.
-- [x] Task 4.2: Add a regression test confirming `delete` and ADR tools are unaffected.
-- [x] Task 4.3: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 5.
+- [x] Task 130.100: Update/add unit tests asserting frontmatter-only responses for update/set_status/set_classification/`create_<d>` across all 11 domains.
+- [x] Task 130.110: Add a regression test confirming `delete` and ADR tools are unaffected.
+- [x] Task 130.120: Run the full test suite plus `ruff format --check`/`ruff check`/`vulture` before moving to Phase 5.
 
-#### Phase 5: Docs
+#### Phase 140: Docs
 
-- [x] Task 5.1: Regenerate `docs/api/` + `docs/GENERATED.md` via `specmgr docs`.
-- [x] Task 5.2: Update AGENTS.md bullets/README mentions of write-tool return shapes if any exist.
-- [x] Task 5.3: Run the full test suite (final validation) plus `ruff format --check`/`ruff check`/`vulture` before considering the feature done.
+- [x] Task 140.100: Regenerate `docs/api/` + `docs/GENERATED.md` via `specmgr docs`.
+- [x] Task 140.110: Update AGENTS.md bullets/README mentions of write-tool return shapes if any exist.
+- [x] Task 140.120: Run the full test suite (final validation) plus `ruff format --check`/`ruff check`/`vulture` before considering the feature done.
 
-#### Phase 6: Merge upstream dev (sysrs domain) and extend the frontmatter-only contract to sysrs
+#### Phase 150: Merge upstream dev (sysrs domain) and extend the frontmatter-only contract to sysrs
 
-- [x] Task 6.1: Merge `origin/dev` (PR #68's `sysrs` domain) into this feature branch, resolving conflicts.
-- [x] Task 6.2: Apply the same frontmatter-only contract (Phases 1-4's pattern) to the new `sysrs` domain's `update`/`set_status`/`set_classification` adapters and its `create_sysrs` tool.
-- [x] Task 6.3: Fix/extend `sysrs`-related tests to match (mirroring Phases 2-4's approach), across `tests/general/tools/test_{update,set_status,set_classification}.py`'s new `sysrs` cases and `tests/sysrs/` itself.
-- [x] Task 6.4: Reconcile `AGENTS.md` domain-count wording between this feature's sentence and `dev`'s bump to 12 whole-body domains.
-- [x] Task 6.5: Regenerate docs, run the full quality gate.
+- [x] Task 150.100: Merge `origin/dev` (PR #68's `sysrs` domain) into this feature branch, resolving conflicts.
+- [x] Task 150.110: Apply the same frontmatter-only contract (Phases 1-4's pattern) to the new `sysrs` domain's `update`/`set_status`/`set_classification` adapters and its `create_sysrs` tool.
+- [x] Task 150.120: Fix/extend `sysrs`-related tests to match (mirroring Phases 2-4's approach), across `tests/general/tools/test_{update,set_status,set_classification}.py`'s new `sysrs` cases and `tests/sysrs/` itself.
+- [x] Task 150.130: Reconcile `AGENTS.md` domain-count wording between this feature's sentence and `dev`'s bump to 12 whole-body domains.
+- [x] Task 150.140: Regenerate docs, run the full quality gate.
 
 ## Progress
 
@@ -130,15 +130,13 @@ The shared contract: every in-scope tool's success return type stays the same do
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-02 (Phase 6) - Merged origin/dev (sysrs domain), extended frontmatter-only contract to sysrs
+#### 2026-09-02 23:59:00.000+02:00 - (Phase 6) Merged origin/dev (sysrs domain), extended frontmatter-only contract to sysrs
 
 Completed Phase 6 (Tasks 6.1-6.5), reopened after this feature was believed done because
 `origin/dev` gained commit `c30e03e` (PR #68, "feat(sysrs): add System Requirements Specification
 (SYSRS) domain") after this feature's branch point -- a 12th whole-body domain developed in
 parallel against the OLD (pre-feat-69) full-document-return shape, conflicting with this feature's
-open PR #75 in exactly the three generic-tool files this feature already changed.
-
-- **Task 6.1 (merge)**: `git fetch origin && git merge --no-commit --no-ff origin/dev`. Confirmed
+open PR #75 in exactly the three generic-tool files this feature already changed. **Task 6.1 (merge)**: `git fetch origin && git merge --no-commit --no-ff origin/dev`. Confirmed
   the exact conflict set matched the pre-flighted answer key: 3 real `.py` source conflicts
   (`update.py`, `set_status.py`, `set_classification.py`, 3-4 regions each: an import block, the
   N-way `_UpdateFrontmatter`/`_SetStatusFrontmatter`/`_SetClassificationFrontmatter` union
@@ -159,7 +157,7 @@ open PR #75 in exactly the three generic-tool files this feature already changed
   (before `feat`). The 4 generated-doc conflicts were resolved with `git checkout --theirs` (an
   arbitrary pick, since Task 6.5 fully regenerates them afterward anyway) and then genuinely
   regenerated via `specmgr docs`/`specmgr mcp-docs`.
-- **Task 6.2 (sysrs contract)**: applied the identical Phase 1/2/3 mechanical change to the 4 spots
+**Task 6.2 (sysrs contract)**: applied the identical Phase 1/2/3 mechanical change to the 4 spots
   the merge brought in still on the old shape: `_update_sysrs`/`_set_status_sysrs`/
   `_set_classification_sysrs` (drop `new_doc = SysrsDocument(...)`, `return new_frontmatter`,
   `-> SysrsFrontmatter`; `_update_sysrs`'s whole-body/range branches had the same now-unused
@@ -169,7 +167,7 @@ open PR #75 in exactly the three generic-tool files this feature already changed
   `slugify(body.text)` as in every other `create_<d>` tool; `description=`/docstring Returns
   updated with the same "frontmatter only (no body); use `get_sysrs`" clause every other
   `create_<d>` tool got in Phase 3).
-- **Task 6.3 (sysrs tests)**: `tests/general/tools/test_update.py`/`test_set_status.py` were
+**Task 6.3 (sysrs tests)**: `tests/general/tools/test_update.py`/`test_set_status.py` were
   missing `frontmatter_type=SysrsFrontmatter, document_type=SysrsDocument` on their merged-in
   `sysrs` `_Case` (the mandatory fields this feature's Phase 4 added) -- added both, which
   automatically extends the existing shared-loop frontmatter-only assertions to `sysrs` with no new
@@ -192,32 +190,29 @@ open PR #75 in exactly the three generic-tool files this feature already changed
   `test_get_sysrs_example.py`/`test_get_sysrs_template.py`/`test_parse_sysrs.py`/
   `test_validate_sysrs.py`) green without modification, confirming none of them call the tools this
   feature changes.
-- **Task 6.4 (AGENTS.md)**: found the stale "its eleven non-`adr` adapters" wording in the
+**Task 6.4 (AGENTS.md)**: found the stale "its eleven non-`adr` adapters" wording in the
   `general/` bullet's own Phase-5-added sentence (a leftover from before `sysrs` existed); fixed to
   "twelve". Every other domain-count number in that same paragraph (`dev`'s own "twelve whole-body
   domains", "all thirteen", "twelve `get_<d>` tools", "all thirteen, incl. `get_adr`") was already
   correct from the clean (non-conflicting) merge and left untouched.
-- **Task 6.5 (docs + gate)**: `specmgr docs` (458 module files + `GENERATED.md`) and
+**Task 6.5 (docs + gate)**: `specmgr docs` (458 module files + `GENERATED.md`) and
   `specmgr mcp-docs` (`docs/MCP.md`) regenerated, replacing the placeholder `--theirs` content from
   Task 6.1 with genuinely current output. Full quality gate green: `ruff format --check` (1627
   files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
   --min-confidence 60` (no findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"`
   (3293 tests, up from 3071 pre-merge -- the ~220 new tests are `sysrs`'s own suite merged in from
   `dev` -- all passing).
-
 The merge is left uncommitted, fully staged (`git add -A`), for the orchestrator to review and
 finish (per this phase's own instructions: do not run `git commit`).
 
-#### 2026-09-02 (Phase 5) - Docs verified current, AGENTS.md updated, ACC-005 confirmed satisfied -- feature done
+#### 2026-09-02 23:57:00.000+02:00 - (Phase 5) Docs verified current, AGENTS.md updated, ACC-005 confirmed satisfied -- feature done
 
-Completed Phase 5 (Tasks 5.1-5.3), the final phase.
-
-- **Task 5.1**: ran `uv run --frozen specmgr docs` and `uv run --frozen specmgr mcp-docs` from a
+Completed Phase 5 (Tasks 5.1-5.3), the final phase. **Task 5.1**: ran `uv run --frozen specmgr docs` and `uv run --frozen specmgr mcp-docs` from a
   clean tree (after Phase 4's last commit `36cca8e`); `git status --short`/`git diff --stat` showed
   zero changes afterward -- confirming `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` were
   already fully current, since the repo's pre-commit hooks already ran both generators on every
   prior commit in this feature. No drift found; nothing to stage.
-- **Task 5.2**: searched `AGENTS.md` and `README.md` for existing prose describing what
+**Task 5.2**: searched `AGENTS.md` and `README.md` for existing prose describing what
   `update`/`set_status`/`set_classification`/`create_<d>` return on success. Confirmed: `README.md`
   has no such text at all (no change needed); `AGENTS.md`'s only "return"-related hits besides the
   `general/` bullet are the eleven `get_<d>(..., raw=True)` mentions (an unrelated, pre-existing
@@ -231,11 +226,11 @@ Completed Phase 5 (Tasks 5.1-5.3), the final phase.
   and still returning the full document with `body` intact -- cited as `(feat-69-update-context)`,
   matching the file's existing citation convention. No per-domain bullet (`req/`, `uc/`, etc.) was
   touched, per the task's own instruction, since none of them describe any tool's return shape today.
-- **Task 5.3**: final quality gate, all green -- `ruff format --check` (1541 files already
+**Task 5.3**: final quality gate, all green -- `ruff format --check` (1541 files already
   formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no
   findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3071 tests, all passing
   -- same count as the end of Phase 4, since Phase 5 touched no test files).
-- **ACC-005 re-investigation**: Phase 4 left ACC-005 unchecked, noting it "did not find/verify
+**ACC-005 re-investigation**: Phase 4 left ACC-005 unchecked, noting it "did not find/verify
   dedicated error-path coverage." Searched `tests/general/tools/test_error_context.py` (confirms
   `create_<d>`/`update`/`set_status`/`validate_<d>` still raise `AssertionError`/
   `pydantic.ValidationError` with domain+tool-prefixed actionable messages, per feat-27-validation)
@@ -254,7 +249,6 @@ Completed Phase 5 (Tasks 5.1-5.3), the final phase.
   this feature (feat-27-validation and earlier) and was never touched by Phases 2-4, since those
   phases only changed success-path `return` statements -- so it demonstrates REQ-005/ACC-005 held
   throughout this feature's work without requiring any new test. ACC-005 is now checked.
-
 All seven acceptance criteria (ACC-001 through ACC-007) are satisfied. The feature is complete;
 `Current Status` and the plan's frontmatter `status` are updated to reflect that.
 
@@ -272,14 +266,12 @@ and all 11 `create_<d>`), a block of three assertions next to the existing
 did not exist anywhere before this phase), and `self.assertFalse(hasattr(result, "body"))`
 (confirms the response is structurally bounded, not merely "the same type with an empty body" --
 verified `hasattr` is `False` on `ReqFrontmatter` before relying on it everywhere else, since
-Pydantic frontmatter models declare no `body` field).
-
-- **`create_<d>` (all 11 domains)**: each domain's own `tests/<d>/tools/test_create_<d>.py`
+Pydantic frontmatter models declare no `body` field). **`create_<d>` (all 11 domains)**: each domain's own `tests/<d>/tools/test_create_<d>.py`
   already had a `test_builds_frontmatter_and_returns_document` test asserting
   `assertIsInstance(result, XxxFrontmatter)`; added the two new assertions immediately after it
   in all 11 files (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`),
   importing each domain's `XxxDocument` class alongside the already-imported `XxxFrontmatter`.
-- **`update`**: `tests/general/tools/test_update.py`'s `_CASES` list (covering 10 of the 11
+**`update`**: `tests/general/tools/test_update.py`'s `_CASES` list (covering 10 of the 11
   whole-body domains -- `feat` is tested separately via `tests/feat/tools/test_integration.py`,
   since its fixture/addressing strategy differs from the other ten's flat-file `_seed`/`_doc_path`
   helpers) is genuinely data-driven; extended the shared `_Case` dataclass with
@@ -289,19 +281,19 @@ Pydantic frontmatter models declare no `body` field).
   through the existing `for case in _CASES:` loop, not 10 near-duplicate test methods. Added the
   same three assertions to `tests/feat/tools/test_integration.py`'s own `update(...)` call (step
   4 of its lifecycle walkthrough) for `feat`'s coverage.
-- **`set_status`**: same data-driven pattern in `tests/general/tools/test_set_status.py`'s
+**`set_status`**: same data-driven pattern in `tests/general/tools/test_set_status.py`'s
   `TestSetStatusWholeBodyDomains` class (its `_CASES` also excludes `feat`, mirroring `update`'s
   own test file) -- extended `_Case` the same way and added the three assertions once in
   `test_changes_status_bumps_updated_leaves_body_untouched`. Added the same three assertions to
   `tests/feat/tools/test_integration.py`'s `set_status(...)` call (step 5) for `feat`'s coverage.
   The ADR-specific `TestSetStatusAdr` class was deliberately left alone for the frontmatter-only
   assertions (out of scope) but gained the Task 4.2 regression assertion instead (see below).
-- **`set_classification`**: same data-driven pattern in
+**`set_classification`**: same data-driven pattern in
   `tests/general/tools/test_set_classification.py`'s `TestSetClassificationWholeBodyDomains`
   class -- this file's `_CASES` already included `feat` (unlike `update`'s/`set_status`'s own),
   so all 11 domains are covered through the single data-driven assertion block added to
   `test_sets_classification_bumps_updated_leaves_body_untouched`.
-- **Task 4.2 (delete/ADR regression)**: added `self.assertIsInstance(result, str)` to
+**Task 4.2 (delete/ADR regression)**: added `self.assertIsInstance(result, str)` to
   `tests/general/tools/test_delete.py`'s `test_delete_returns_deleted_path_and_removes_the_document`
   (delete's minimal-payload contract was already exercised via `assertEqual(result, str(target))`
   but never explicitly type-checked). Added `self.assertIsInstance(result, Adr)` plus a `.body`
@@ -318,7 +310,6 @@ Pydantic frontmatter models declare no `body` field).
   `.frontmatter.*`/`.body.*` assertions on their `create_adr`/`update_frontmatter`/
   `update_section` return values; the four `option_*` tools return bare strings/lists by design,
   not documents, so there is no document-shape claim to regress-test for them at all).
-
 Quality gate, all green: `ruff format --check` (1541 files already formatted), `ruff check` (all
 checks passed -- one `F401` self-inflicted during drafting, an unused `FeatFrontmatter`/
 `FeatDocument` import added to `test_update.py` before realizing `feat` is not in that file's
@@ -328,24 +319,16 @@ Phase 3's 3070, from the new `test_create_adr.py` regression method -- all passi
 
 #### 2026-09-02 23:20:00.000+02:00 - Phase 3 done: all 11 `create_<d>` tools return frontmatter-only
 
-Completed Phase 3 (Tasks 3.1-3.3). Applied the Phase 1 contract mechanically to all 11 per-domain `create_<d>` tools:
-
-- `req/tools/create_req.py`, `uc/tools/create_uc.py`, `tsk/tools/create_tsk.py`, `qa/tools/create_qa.py`, `prb/tools/create_prb.py`, `gol/tools/create_gol.py`, `rsk/tools/create_rsk.py`, `dec/tools/create_dec.py`, `sop/tools/create_sop.py`, `feat/tools/create_feat.py`, `vcr/tools/create_vcr.py`: each tool's `-> XxxDocument` return annotation changed to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed; `return new_doc` changed to `return new_frontmatter`. The preceding `body = Xxx.from_text(format_text(content))` binding stays exactly as-is in every file (unlike Phase 2's `update.py`), since `body.text` (or, for `create_feat`, `feature_title(body.text)`) is still needed to derive the filename slug -- no `F841` finding resulted. The now-fully-unused `XxxDocument` import removed from each file's models import line (confirmed via grep that no other reference to `XxxDocument` remained -- module docstrings still mention the class name in a `:class:` cross-reference/prose sense, which is fine since it is documentation about the general "no in-memory cache" pattern, not a code reference); `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `create_feat.py`'s extra logic (optional caller-chosen `id`, `FileExistsError` pre-write check, `feat_create_lock()`) is otherwise untouched -- only the same four mechanical changes applied. Each tool's `description=` text gained one short clarifying clause ("Returns the newly created document's frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward."), matching Phase 2's phrasing style for `update`/`set_status`/`set_classification`; each docstring's Returns section rewritten to name the `XxxFrontmatter` type, note the id now lives directly on `.id` (not nested under `.frontmatter.id`), and point at the corresponding `get_<d>` tool.
-
+Completed Phase 3 (Tasks 3.1-3.3). Applied the Phase 1 contract mechanically to all 11 per-domain `create_<d>` tools: `req/tools/create_req.py`, `uc/tools/create_uc.py`, `tsk/tools/create_tsk.py`, `qa/tools/create_qa.py`, `prb/tools/create_prb.py`, `gol/tools/create_gol.py`, `rsk/tools/create_rsk.py`, `dec/tools/create_dec.py`, `sop/tools/create_sop.py`, `feat/tools/create_feat.py`, `vcr/tools/create_vcr.py`: each tool's `-> XxxDocument` return annotation changed to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed; `return new_doc` changed to `return new_frontmatter`. The preceding `body = Xxx.from_text(format_text(content))` binding stays exactly as-is in every file (unlike Phase 2's `update.py`), since `body.text` (or, for `create_feat`, `feature_title(body.text)`) is still needed to derive the filename slug -- no `F841` finding resulted. The now-fully-unused `XxxDocument` import removed from each file's models import line (confirmed via grep that no other reference to `XxxDocument` remained -- module docstrings still mention the class name in a `:class:` cross-reference/prose sense, which is fine since it is documentation about the general "no in-memory cache" pattern, not a code reference); `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `create_feat.py`'s extra logic (optional caller-chosen `id`, `FileExistsError` pre-write check, `feat_create_lock()`) is otherwise untouched -- only the same four mechanical changes applied. Each tool's `description=` text gained one short clarifying clause ("Returns the newly created document's frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward."), matching Phase 2's phrasing style for `update`/`set_status`/`set_classification`; each docstring's Returns section rewritten to name the `XxxFrontmatter` type, note the id now lives directly on `.id` (not nested under `.frontmatter.id`), and point at the corresponding `get_<d>` tool.
 Fixed every existing test that broke because `create_<d>`'s return value is now the frontmatter object directly, not a `XxxDocument` wrapper. Beyond each domain's own `test_create_<d>.py` (all 11), the full-suite run surfaced widespread breakage in every domain's `test_get_<d>.py`/`test_list_<d>.py` (which seed fixtures via `create_<d>` and then read `.frontmatter.id`/`.frontmatter.X` off that seed value), six cross-domain `test_integration.py` files (`dec`, `gol`, `prb`, `sop`, `feat`, `vcr` -- their `create_<d>` call's own return value was asserted with `.frontmatter.*`/`.body.*`, plus already-fixed-in-Phase-2 `update`/`set_status` result assertions that referenced `created.frontmatter.*`), two `feat`-specific files (`test_set_feat_id.py`, whose `set_feat_id` return value is unchanged but whose `create_feat`-seeded `created.frontmatter.*` reads needed fixing; `test_list_feat.py`), two `feat/prompts/` walkthrough tests (`test_create_feat.py`, `test_update_feat.py`), and five generic-tool files whose fixtures seed via every domain's `create_<d>` (`tests/general/tools/test_update.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py`, `test_error_context.py`) plus `tests/regression/test_issue_27.py`. In every case the fix was the same: `.frontmatter.X` on the tool's own `create_<d>` return value became `.X`; the handful of `.body.X` assertions on that same return value (which have nothing left to read, since the return value carries no body at all) were rewritten to call the domain's own `get_<d>(id)` tool first and assert against the freshly fetched full document's `.body.X` instead -- preserving each test's original intent without expanding coverage, exactly the pattern Phase 2 used. `assertIsInstance(created, XxxDocument)` checks on a `create_<d>` return value became `assertIsInstance(created, XxxFrontmatter)`, with the corresponding import swapped (or, where the module also uses `XxxDocument` elsewhere -- e.g. `dec`'s/`gol`'s/`sop`'s/`vcr`'s/`feat`'s integration tests, which still call `parse_<d>`/`get_<d>_example` and assert on those results -- both `XxxDocument` and `XxxFrontmatter` are imported side by side). Every `get_<d>`/`parse_<d>`/`list_<d>` test's own assertions on *those* tools' still-unchanged return values, and every ADR-specific test, are untouched.
-
 Quality gate, all green: `ruff format --check` (1541 files already formatted, after one reformat of `tests/general/tools/test_update.py` for two lines that now fit under the 120-char limit once `created.frontmatter.` shrank to `created.`), `ruff check` (all checks passed, no new findings -- `body` stayed genuinely used in every `create_<d>` file, so no `F841`), `vulture src/ whitelist.py --min-confidence 60` (no findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3070 tests, all passing).
 
 #### 2026-09-02 22:45:00.000+02:00 - Phase 2 done: generic tools (update/set_status/set_classification) return frontmatter-only
 
-Completed Phase 2 (Tasks 2.1-2.5). Applied the Phase 1 contract mechanically to all three generic dispatch tools in `general/tools/`:
-
-- `update.py`: all 11 `_update_<d>` adapters' return annotation changed `-> XxxDocument` to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed from both the whole-body and range branches of each adapter; `return new_doc` changed to `return new_frontmatter`. The now-pointless `body = Xxx.from_text(...)` bindings (both branches, all 11 domains) became `F841` unused-variable findings once the document-wrapping was removed, since `body` was only ever used to build the removed `XxxDocument(...)` -- fixed by dropping the assignment and keeping the bare validating call (`Xxx.from_text(format_text(...))`) for its side effect (raising on invalid content), matching the Design Notes' point that this validation step performs no cross-field logic today but must still run. The module-level union alias renamed `_UpdateDocument` -> `_UpdateFrontmatter` with every member changed to its `XxxFrontmatter` counterpart; the `_ADAPTERS` dict value type and the public `update()` return annotation updated accordingly; the now-fully-unused `XxxDocument` imports (11 domains) removed, `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `update()`'s `description=` text and docstring Returns section updated to state the frontmatter-only response shape and point callers at the corresponding `get_<d>` tool.
-- `set_status.py`: the same mechanical change applied to its 11 non-adr adapters (`_set_status_req` .. `_set_status_vcr`); `_set_status_adr` and the `Adr` union member are explicitly untouched (out of scope, per the feature's Scope section and the plan's explicit exception). The union alias renamed `_SetStatusDocument` -> `_SetStatusFrontmatter`, keeping `Adr` in the union; `_ADAPTERS` dict value type and the public `set_status()` return annotation updated; the 11 now-unused `XxxDocument` imports removed. `set_status()`'s `description=` text and docstring Returns section updated, explicitly noting the `adr` branch still returns the full `Adr` document (unchanged).
-- `set_classification.py`: the same mechanical change applied to all 11 adapters (no `adr` branch exists in this tool at all). Union alias renamed `_SetClassificationDocument` -> `_SetClassificationFrontmatter`; `_ADAPTERS` dict value type and the public `set_classification()` return annotation updated; the 11 now-unused `XxxDocument` imports removed; `description=`/docstring Returns updated.
-
+Completed Phase 2 (Tasks 2.1-2.5). Applied the Phase 1 contract mechanically to all three generic dispatch tools in `general/tools/`: `update.py`: all 11 `_update_<d>` adapters' return annotation changed `-> XxxDocument` to `-> XxxFrontmatter`; the `new_doc = XxxDocument(frontmatter=new_frontmatter, body=body)` line removed from both the whole-body and range branches of each adapter; `return new_doc` changed to `return new_frontmatter`. The now-pointless `body = Xxx.from_text(...)` bindings (both branches, all 11 domains) became `F841` unused-variable findings once the document-wrapping was removed, since `body` was only ever used to build the removed `XxxDocument(...)` -- fixed by dropping the assignment and keeping the bare validating call (`Xxx.from_text(format_text(...))`) for its side effect (raising on invalid content), matching the Design Notes' point that this validation step performs no cross-field logic today but must still run. The module-level union alias renamed `_UpdateDocument` -> `_UpdateFrontmatter` with every member changed to its `XxxFrontmatter` counterpart; the `_ADAPTERS` dict value type and the public `update()` return annotation updated accordingly; the now-fully-unused `XxxDocument` imports (11 domains) removed, `XxxFrontmatter` imports and the body-model imports (`Requirement`, `UseCase`, `Task`, `Qa`, `Prb`, `Goal`, `Risk`, `Decision`, `Feature`, `Sop`, `Vcr`) kept. `update()`'s `description=` text and docstring Returns section updated to state the frontmatter-only response shape and point callers at the corresponding `get_<d>` tool.
+`set_status.py`: the same mechanical change applied to its 11 non-adr adapters (`_set_status_req` .. `_set_status_vcr`); `_set_status_adr` and the `Adr` union member are explicitly untouched (out of scope, per the feature's Scope section and the plan's explicit exception). The union alias renamed `_SetStatusDocument` -> `_SetStatusFrontmatter`, keeping `Adr` in the union; `_ADAPTERS` dict value type and the public `set_status()` return annotation updated; the 11 now-unused `XxxDocument` imports removed. `set_status()`'s `description=` text and docstring Returns section updated, explicitly noting the `adr` branch still returns the full `Adr` document (unchanged).
+`set_classification.py`: the same mechanical change applied to all 11 adapters (no `adr` branch exists in this tool at all). Union alias renamed `_SetClassificationDocument` -> `_SetClassificationFrontmatter`; `_ADAPTERS` dict value type and the public `set_classification()` return annotation updated; the 11 now-unused `XxxDocument` imports removed; `description=`/docstring Returns updated.
 Also fixed every existing test that broke because `result` (the tool's return value) is now the frontmatter object directly, not a `XxxDocument` wrapper: `tests/general/tools/test_update.py`, `test_set_status.py` (its non-adr `TestSetStatusWholeBodyDomains` test only -- the ADR-specific tests are unchanged, since `_set_status_adr` still returns the full `Adr`), and `test_set_classification.py` all had their `result.frontmatter.X`/`result.body.X` assertions on the tool's own direct return value rewritten to `result.X` (dropping the now-nonexistent `.frontmatter` indirection; `.body` assertions on the *tool's own return value* no longer apply since the body is gone). Beyond the three generic-tool test files the plan named, the full-suite run surfaced six cross-domain integration tests and one prompt test that also call `update`/`set_status` directly and asserted on their return value's `.frontmatter.*`/`.body.*` -- `tests/vcr/tools/test_integration.py`, `tests/prb/tools/test_integration.py`, `tests/dec/tools/test_integration.py`, `tests/gol/tools/test_integration.py`, `tests/sop/tools/test_integration.py`, `tests/feat/tools/test_integration.py`, and `tests/feat/prompts/test_update_feat.py`. Their `.frontmatter.*` assertions on the tool's own return value became `.X` the same way; their `.body.*` assertions (which no longer have anything to read, since the return value no longer carries a body at all) were rewritten to call the domain's own `get_<d>(id)` tool first and assert against the freshly fetched full document's `.body.*` instead -- preserving each test's original intent (confirming the body was actually persisted/updated) without expanding coverage. Every `create_<d>`/`get_<d>`/`parse_<d>` test's own `.frontmatter.*`/`.body.*` assertions (on `create_<d>`'s own still-unchanged return value, Phase 3's job) and every ADR-specific test are untouched.
-
 Quality gate, all green: `ruff format --check` (1541 files already formatted), `ruff check` (all checks passed, after fixing 11 new `F841` findings from the removed `XxxDocument` wrapping making `body` locals genuinely unused), `vulture src/ whitelist.py --min-confidence 60` (no findings), `python -m unittest discover -v -s tests -t . -p "test_*.py"` (3070 tests, all passing).
 
 #### 2026-09-02 22:12:00.000+02:00 - Phase 1 done: formalized frontmatter-only return contract
@@ -364,7 +347,7 @@ Feature drafted from GitHub issue #69, covering the generic `update`/`set_status
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-02 (Phase 6) - Resolved the 4 generated-doc merge conflicts with `--theirs` rather than hand-merging
+#### 2026-09-02 23:59:00.000+02:00 - (Phase 6) Resolved the 4 generated-doc merge conflicts with `--theirs` rather than hand-merging
 
 `docs/MCP.md` and 3 `docs/api/biz.dfch.specmgr.general.tools.*.md` files conflicted during the
 `origin/dev` merge purely because both branches' source changes touched the same generated
@@ -376,7 +359,7 @@ be the final content, only a way to unblock the merge; the task's own instructio
 sanctioned this ("resolve them any way that lets the merge proceed ... regenerate ... which will
 overwrite whatever you picked with the correct, current content anyway").
 
-#### 2026-09-02 (Phase 5) - Ticked ACC-005 based on pre-existing tests, without adding new ones
+#### 2026-09-02 23:57:00.000+02:00 - (Phase 5) Ticked ACC-005 based on pre-existing tests, without adding new ones
 
 Phase 4 left ACC-005 unchecked because it didn't go looking for "nothing was written" coverage
 specifically. Rather than writing new tests myself (Phase 4 already closed test-writing for this
@@ -402,7 +385,7 @@ sites -- consistent with the plan's own instruction to extend an existing, natur
 rather than duplicate structure. `set_classification`'s own `_CASES` already included `feat`
 before this phase, so no equivalent judgment call was needed there.
 
-#### 2026-09-02 23:20:00.000+02:00 - Left each create_<d> module docstring's `:class:` cross-reference to `XxxDocument` alone (Phase 3)
+#### 2026-09-02 23:20:00.000+02:00 - Left each `create_<d>` module docstring's `:class:` cross-reference to `XxxDocument` alone (Phase 3)
 
 Each `create_<d>.py` module docstring's opening paragraph says something like "there is no in-memory cache of a parsed `:class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`` -- the `.md` file itself is always the source of truth". Task 3.1 removed the `XxxDocument` *import* (now genuinely unused in the tool's code) but this prose reference to the class name is still an accurate, general statement about the codebase's I/O pattern (no caching), not a claim that this specific tool constructs a `XxxDocument` -- and Sphinx `:class:` roles resolve by fully-qualified path, not local import, so the docstring still renders correctly without the import. Left unchanged rather than rewritten, since the plan's task list only calls for changing the function's own Returns section and the `description=` text, not the module docstring's introductory paragraph.
 

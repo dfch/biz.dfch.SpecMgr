@@ -3,7 +3,7 @@ created: '2026-08-31 15:37:40.000Z'
 id: feat-36-delete
 status: done
 type: feat
-updated: '2026-09-01 01:28:41.000Z'
+updated: '2026-09-30T04:37:58.000Z'
 version: 1.0.0
 ---
 
@@ -420,40 +420,40 @@ no replacement per-domain delete tests are added — coverage moves entirely to
 
 ### Task List
 
-#### Phase 0: Worktree, branch, and design plan (designer)
+#### Phase 100: Worktree, branch, and design plan (designer)
 
-- [x] Task 0.1: Create the `feat-36-delete` git worktree/branch from `dev` at `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete` (`dev` left untouched) — status: done (2026-08-31).
-- [x] Task 0.2: Author this feature README (the full design) — status: done (2026-08-31).
-- [x] Task 0.3: Strip leftover debug `print()` calls (and the assignments/loops that become dead with them) from `tests/models/md/test_markdown_section.py`, `tests/models/md/test_markdown_str.py`, and `tests/models/md/test_markdown_list_item.py` — applied byte-exact to `dev` (separate commit there, pushed by the maintainer) and to this branch so the later feature merge stays conflict-free; makes the `unittest` output (and the pre-commit hook's) noise-free — depends on: Task 0.2 — status: done (2026-08-31).
+- [x] Task 100.100: Create the `feat-36-delete` git worktree/branch from `dev` at `/home/user/src/biz.dfch.SpecMgr.worktrees/feat-36-delete` (`dev` left untouched) — status: done (2026-08-31).
+- [x] Task 100.110: Author this feature README (the full design) — status: done (2026-08-31).
+- [x] Task 100.120: Strip leftover debug `print()` calls (and the assignments/loops that become dead with them) from `tests/models/md/test_markdown_section.py`, `tests/models/md/test_markdown_str.py`, and `tests/models/md/test_markdown_list_item.py` — applied byte-exact to `dev` (separate commit there, pushed by the maintainer) and to this branch so the later feature merge stays conflict-free; makes the `unittest` output (and the pre-commit hook's) noise-free — depends on: Task 0.2 — status: done (2026-08-31).
 
-#### Phase 1: Reusable path-safety module (Phase-Orchestrator)
+#### Phase 110: Reusable path-safety module (Phase-Orchestrator)
 
-- [x] Task 1.1: Add `general/tools/_path_safety.py` exactly per Design Notes §1 (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`; `ValueError` on failure; no I/O) — depends on: Task 0.2 — status: done (2026-08-31).
-- [x] Task 1.2: Add `tests/general/tools/test__path_safety.py` per Design Notes §9 — depends on: Task 1.1 — status: done (2026-08-31).
+- [x] Task 110.100: Add `general/tools/_path_safety.py` exactly per Design Notes §1 (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`; `ValueError` on failure; no I/O) — depends on: Task 0.2 — status: done (2026-08-31).
+- [x] Task 110.110: Add `tests/general/tools/test__path_safety.py` per Design Notes §9 — depends on: Task 1.1 — status: done (2026-08-31).
 
-#### Phase 2: The generic delete tool (Phase-Orchestrator)
+#### Phase 120: The generic delete tool (Phase-Orchestrator)
 
-- [x] Task 2.1: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) and register it in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a sentence in the module docstring — the server registers tools purely via this package's import side effect) — depends on: Task 1.1 — status: done (2026-08-31).
-- [x] Task 2.2: Add `tests/general/tools/test_delete.py` per Design Notes §9 — depends on: Task 2.1 — status: done (2026-08-31).
+- [x] Task 120.100: Add `general/tools/delete.py` per Design Notes §2–§6 (`DeleteError`, eleven `_delete_<d>` adapters, `_ADAPTERS`, `@mcp.tool(name="delete")` public function calling `validate_id` then dispatching) and register it in `general/tools/__init__.py` (`from .delete import delete`, the `__all__` entry, and a sentence in the module docstring — the server registers tools purely via this package's import side effect) — depends on: Task 1.1 — status: done (2026-08-31).
+- [x] Task 120.110: Add `tests/general/tools/test_delete.py` per Design Notes §9 — depends on: Task 2.1 — status: done (2026-08-31).
 
-#### Phase 3: Retire the eleven delete stubs (Phase-Orchestrator)
+#### Phase 130: Retire the eleven delete stubs (Phase-Orchestrator)
 
-- [x] Task 3.1: Delete the eleven `src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` files — depends on: Task 2.1 — status: done (2026-08-31).
-- [x] Task 3.2: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring; **additionally** in each of the eleven domain-level `<d>/__init__.py` package docstrings, drop `delete_<d>` from the tool enumeration (required by ACC-002: `grep -r "delete_<d>"` over all of `src/` must return nothing) — depends on: Task 3.1 — status: done (2026-08-31).
-- [x] Task 3.3: Delete the eleven `tests/<d>/tools/test_delete_<d>.py` stub-test files — depends on: Task 3.2 — status: done (2026-08-31).
+- [x] Task 130.100: Delete the eleven `src/biz/dfch/specmgr/<d>/tools/delete_<d>.py` files — depends on: Task 2.1 — status: done (2026-08-31).
+- [x] Task 130.110: In each of the eleven `<d>/tools/__init__.py`, remove the `from .delete_<d> import delete_<d>` line, the `delete_<d>` `__all__` entry, and the stub mention in the module docstring; **additionally** in each of the eleven domain-level `<d>/__init__.py` package docstrings, drop `delete_<d>` from the tool enumeration (required by ACC-002: `grep -r "delete_<d>"` over all of `src/` must return nothing) — depends on: Task 3.1 — status: done (2026-08-31).
+- [x] Task 130.120: Delete the eleven `tests/<d>/tools/test_delete_<d>.py` stub-test files — depends on: Task 3.2 — status: done (2026-08-31).
 
-#### Phase 4: Decision and documentation propagation (Phase-Orchestrator)
+#### Phase 140: Decision and documentation propagation (Phase-Orchestrator)
 
-- [x] Task 4.1: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: done (2026-09-01).
-- [x] Task 4.2: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
-- [x] Task 4.3: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
-- [x] Task 4.4: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
-- [x] Task 4.5: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`), each run twice to confirm no drift — depends on: Tasks 4.1–4.4 — status: done (2026-09-01).
+- [x] Task 140.100: Create the new ADR via the `create_adr` MCP tool per Design Notes §7 (requester-confirmed: the enabled specmgr MCP server resolves `docs/adr` relative to its CWD, i.e. this worktree — sanity-check with `git status` right after creation), set it `accepted`, run `specmgr adr-toc`, and ensure the new ADR file plus the regenerated `docs/adr/README.md` are `git add`ed into the Phase 4 commit — depends on: Task 3.3 — status: done (2026-09-01).
+- [x] Task 140.110: Update `AGENTS.md` per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
+- [x] Task 140.120: Update `server.py`'s module docstring per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
+- [x] Task 140.130: Add the `CHANGELOG.md` `[Unreleased]` entry per Design Notes §8 — depends on: Task 3.3 — status: done (2026-08-31).
+- [x] Task 140.140: Regenerate `docs/` (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`), each run twice to confirm no drift — depends on: Tasks 4.1–4.4 — status: done (2026-09-01).
 
-#### Phase 5: Quality gate and sign-off (Phase-Orchestrator)
+#### Phase 150: Quality gate and sign-off (Phase-Orchestrator)
 
-- [x] Task 5.1: Run the full gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the full `unittest` suite, and advisory `pylint`) and fix any failures — depends on: Task 4.5 — status: done (2026-09-01).
-- [x] Task 5.2: Walk ACC-001..ACC-008, mark each `[x]` with a concrete justification (test file / tool / doc proving it), update Current Status, and bump this README's frontmatter `status`/`updated` — depends on: Task 5.1 — status: done (2026-09-01).
+- [x] Task 150.100: Run the full gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, the full `unittest` suite, and advisory `pylint`) and fix any failures — depends on: Task 4.5 — status: done (2026-09-01).
+- [x] Task 150.110: Walk ACC-001..ACC-008, mark each `[x]` with a concrete justification (test file / tool / doc proving it), update Current Status, and bump this README's frontmatter `status`/`updated` — depends on: Task 5.1 — status: done (2026-09-01).
 
 ## Progress
 

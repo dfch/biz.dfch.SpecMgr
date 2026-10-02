@@ -4,7 +4,7 @@ created: '2026-09-26T18:33:23.901+02:00'
 id: feat-153-off-by-n
 status: planning
 type: feat
-updated: '2026-09-26T20:30:29.936+02:00'
+updated: '2026-09-30T04:37:26.000Z'
 version: 1.0.0
 ---
 
@@ -140,49 +140,49 @@ While touching all 12 `get_<d>.py` files anyway, consider factoring the existing
 
 ### Task List
 
-#### Phase 1: Design
+#### Phase 100: Design
 
-- [ ] Task 1.1: Finalize the `UpdateResult` wrapper shape and the snippet-window algorithm (pre-splice/post-splice before/after numbering split, 2-line context, boundary clamping) from this feature's Design Notes
+- [ ] Task 100.100: Finalize the `UpdateResult` wrapper shape and the snippet-window algorithm (pre-splice/post-splice before/after numbering split, 2-line context, boundary clamping) from this feature's Design Notes
 
-- [ ] Task 1.2: Finalize the `numbered` parameter contract for `get_<d>` (opt-in, raw-only, absolute body-line numbers even under windowing, `ValueError` when combined with `raw=False`) and the exact `"<n>: "` line-prefix format
+- [ ] Task 100.110: Finalize the `numbered` parameter contract for `get_<d>` (opt-in, raw-only, absolute body-line numbers even under windowing, `ValueError` when combined with `raw=False`) and the exact `"<n>: "` line-prefix format
 
-- [ ] Task 1.3: Draft the new ADR (REQ-009) revising feature feat-69-update-context's "frontmatter-only" return precedent for `update` and get it accepted before/alongside implementation
+- [ ] Task 100.120: Draft the new ADR (REQ-009) revising feature feat-69-update-context's "frontmatter-only" return precedent for `update` and get it accepted before/alongside implementation
 
-#### Phase 2: Implementation -- update() snippet
+#### Phase 110: Implementation -- update() snippet
 
-- [ ] Task 2.1: Add a snippet-window helper (pre-splice/post-splice before/after lines + 2-line context) alongside `body_text`/`splice_body`/`window_body` in `general/tools/_splice.py`
+- [ ] Task 110.100: Add a snippet-window helper (pre-splice/post-splice before/after lines + 2-line context) alongside `body_text`/`splice_body`/`window_body` in `general/tools/_splice.py`
 
-- [ ] Task 2.2: Introduce the `UpdateResult` wrapper type; extend `update`'s per-domain `_update_<d>` adapters to hand back the pre-splice body, post-splice body, and resolved `offset`/`limit`, and compute the snippet once in the shared public dispatcher (range mode populates `snippet`; whole-body mode sets `snippet=None`)
+- [ ] Task 110.110: Introduce the `UpdateResult` wrapper type; extend `update`'s per-domain `_update_<d>` adapters to hand back the pre-splice body, post-splice body, and resolved `offset`/`limit`, and compute the snippet once in the shared public dispatcher (range mode populates `snippet`; whole-body mode sets `snippet=None`)
 
-- [ ] Task 2.3: Update `update`'s tool description/docstring with the coordinate-mismatch warning (fix #1) and the "never feed a numbered read back as content" warning
+- [ ] Task 110.120: Update `update`'s tool description/docstring with the coordinate-mismatch warning (fix #1) and the "never feed a numbered read back as content" warning
 
-#### Phase 3: Implementation -- numbered raw reads
+#### Phase 120: Implementation -- numbered raw reads
 
-- [ ] Task 3.1: Add the `numbered: bool = False` parameter to every one of the 12 domains' `get_<d>` tools, wired through the shared `window_body`/`body_text` helpers, always reporting absolute body-line numbers
+- [ ] Task 120.100: Add the `numbered: bool = False` parameter to every one of the 12 domains' `get_<d>` tools, wired through the shared `window_body`/`body_text` helpers, always reporting absolute body-line numbers
 
-- [ ] Task 3.2: Enforce `ValueError` for `numbered=True` combined with `raw=False`, before any file access (consider factoring this together with the pre-existing, already-duplicated `offset`/`limit`-with-`raw=False` guard into one shared helper while touching all 12 files anyway)
+- [ ] Task 120.110: Enforce `ValueError` for `numbered=True` combined with `raw=False`, before any file access (consider factoring this together with the pre-existing, already-duplicated `offset`/`limit`-with-`raw=False` guard into one shared helper while touching all 12 files anyway)
 
-- [ ] Task 3.3: Update every `get_<d>` tool description/docstring with the numbered-format explanation and the "don't feed back verbatim" warning
+- [ ] Task 120.120: Update every `get_<d>` tool description/docstring with the numbered-format explanation and the "don't feed back verbatim" warning
 
-#### Phase 4: Docs
+#### Phase 130: Docs
 
-- [ ] Task 4.1: Update AGENTS.md's `feat` entry and the `general`/`update` bullet with the coordinate-mismatch warning and the new `UpdateResult`/`numbered` capabilities; correct AGENTS.md's existing "ADR feat-69-update-context" mislabeling (it is a feature, not an ADR) in the same edit
+- [ ] Task 130.100: Update AGENTS.md's `feat` entry and the `general`/`update` bullet with the coordinate-mismatch warning and the new `UpdateResult`/`numbered` capabilities; correct AGENTS.md's existing "ADR feat-69-update-context" mislabeling (it is a feature, not an ADR) in the same edit
 
-- [ ] Task 4.2: Update all 11 `update_<d>` prompt files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) that narrate the raw-read-then-offset workflow to mention `numbered=True` and the coordinate-mismatch warning
+- [ ] Task 130.110: Update all 11 `update_<d>` prompt files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) that narrate the raw-read-then-offset workflow to mention `numbered=True` and the coordinate-mismatch warning
 
-- [ ] Task 4.3: Add a `CHANGELOG.md` `[Unreleased]` `**BREAKING**` entry for `update`'s new `frontmatter` + `snippet` return shape
+- [ ] Task 130.120: Add a `CHANGELOG.md` `[Unreleased]` `**BREAKING**` entry for `update`'s new `frontmatter` + `snippet` return shape
 
-- [ ] Task 4.4: Regenerate `docs/MCP.md`, `docs/api/`, and `docs/adr/README.md` via `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`
+- [ ] Task 130.130: Regenerate `docs/MCP.md`, `docs/api/`, and `docs/adr/README.md` via `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`
 
-#### Phase 5: Tests & Quality Gate
+#### Phase 140: Tests & Quality Gate
 
-- [ ] Task 5.1: Unit tests for the snippet-window helper (before/after content, 2-line context, boundary clamping at body start/end, pure-insert/append cases, and a size-changing replacement case verifying the pre-splice/post-splice before/after numbering split from REQ-002)
+- [ ] Task 140.100: Unit tests for the snippet-window helper (before/after content, 2-line context, boundary clamping at body start/end, pure-insert/append cases, and a size-changing replacement case verifying the pre-splice/post-splice before/after numbering split from REQ-002)
 
-- [ ] Task 5.2: Unit tests for the numbered-line formatter (format, default-off behavior, `ValueError` path, and absolute-vs-window-relative numbering when combined with `offset`/`limit`)
+- [ ] Task 140.110: Unit tests for the numbered-line formatter (format, default-off behavior, `ValueError` path, and absolute-vs-window-relative numbering when combined with `offset`/`limit`)
 
-- [ ] Task 5.3: Tool tests across all 12 whole-body domains for both features (happy path, whole-body-mode `snippet=None`, numbered on/off, `ValueError` paths)
+- [ ] Task 140.120: Tool tests across all 12 whole-body domains for both features (happy path, whole-body-mode `snippet=None`, numbered on/off, `ValueError` paths)
 
-- [ ] Task 5.4: Run ruff/pylint/vulture and the full test suite (phase-end quality gate)
+- [ ] Task 140.130: Run ruff/pylint/vulture and the full test suite (phase-end quality gate)
 
 ## Progress
 

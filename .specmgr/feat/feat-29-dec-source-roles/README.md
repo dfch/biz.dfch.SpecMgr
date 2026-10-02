@@ -4,7 +4,7 @@ created: '2026-09-17 14:06:49.067+02:00'
 id: feat-29-dec-source-roles
 status: done
 type: feat
-updated: '2026-09-19 16:30:00.000+02:00'
+updated: '2026-09-30T04:37:49.000Z'
 version: 1.0.0
 ---
 
@@ -122,64 +122,64 @@ Orchestration handoff (see REQ-010): Phases 0-3 were implemented inline in one l
 
 ### Task List
 
-#### Phase 0: Feature Folder
+#### Phase 100: Feature Folder
 
-- [x] Task 0.1: Create this feature folder (`feat-29-dec-source-roles`) via `create_feat`, capturing the full design discussed with the user.
+- [x] Task 100.100: Create this feature folder (`feat-29-dec-source-roles`) via `create_feat`, capturing the full design discussed with the user.
 
-#### Phase 1: Shared Base Classes
+#### Phase 110: Shared Base Classes
 
-- [x] Task 1.1: Add `models/md/common_sections.py` with `SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase` (the last decorated once with `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)`).
-- [x] Task 1.2: Refactor `req/models/v1/body.py::Source` to subclass `SourceBase`; confirm REQ's existing test suite passes unchanged.
-- [x] Task 1.3: Refactor `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases; confirm SOP's existing test suite passes unchanged.
-- [x] Task 1.4: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 110.100: Add `models/md/common_sections.py` with `SourceBase`, `AccountableBase`, `ResponsibleBase`, `SupportBase`, `ConsultedBase`, `InformedBase`, `RolesAndResponsibilitiesBase` (the last decorated once with `@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)`).
+- [x] Task 110.110: Refactor `req/models/v1/body.py::Source` to subclass `SourceBase`; confirm REQ's existing test suite passes unchanged.
+- [x] Task 110.120: Refactor `sop/models/v1/body.py`'s six RASCI classes to subclass the new bases; confirm SOP's existing test suite passes unchanged.
+- [x] Task 110.130: Run this phase's full quality gate (REQ-009) and commit.
 
-#### Phase 2: DEC Schema
+#### Phase 120: DEC Schema
 
-- [x] Task 2.1: Add mandatory `RolesAndResponsibilities` (subclassing the Phase 1 bases) to `dec/models/v1/body.py`.
-- [x] Task 2.2: Add optional `Tags` to `dec/models/v1/body.py`, absorbing the DEC half of `feat-133-tags-dec-rsk`.
-- [x] Task 2.3: Add mandatory `Source` (subclassing `SourceBase`) to `dec/models/v1/body.py`.
-- [x] Task 2.4: Wire the three new fields into `Decision`'s field declaration order per REQ-005 (no schema version bump needed -- see Design Notes).
-- [x] Task 2.5: Add unit tests for DEC's three new sections (parser/body/summary), mirroring `tests/sop/models/v1/test_body.py` and `tests/req/models/v1/test_body.py`; update every other DEC/general test fixture broken by the two new mandatory sections (see Design Notes).
-- [x] Task 2.6: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 120.100: Add mandatory `RolesAndResponsibilities` (subclassing the Phase 1 bases) to `dec/models/v1/body.py`.
+- [x] Task 120.110: Add optional `Tags` to `dec/models/v1/body.py`, absorbing the DEC half of `feat-133-tags-dec-rsk`.
+- [x] Task 120.120: Add mandatory `Source` (subclassing `SourceBase`) to `dec/models/v1/body.py`.
+- [x] Task 120.130: Wire the three new fields into `Decision`'s field declaration order per REQ-005 (no schema version bump needed -- see Design Notes).
+- [x] Task 120.140: Add unit tests for DEC's three new sections (parser/body/summary), mirroring `tests/sop/models/v1/test_body.py` and `tests/req/models/v1/test_body.py`; update every other DEC/general test fixture broken by the two new mandatory sections (see Design Notes).
+- [x] Task 120.150: Run this phase's full quality gate (REQ-009) and commit.
 
-#### Phase 3: Templates, Examples, Schema Resource
+#### Phase 130: Templates, Examples, Schema Resource
 
-- [x] Task 3.1: Update DEC's packaged template/example data files to include the three new sections with representative content.
-- [x] Task 3.2: Add/adjust a test asserting the packaged DEC template/example still parse successfully with the new mandatory sections present (covered by the existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py`, which already assert full-document parsing).
-- [x] Task 3.3: Run this phase's full quality gate (REQ-009) and commit -- combined with Phase 2's commit since both were implemented and verified together in one pass.
+- [x] Task 130.100: Update DEC's packaged template/example data files to include the three new sections with representative content.
+- [x] Task 130.110: Add/adjust a test asserting the packaged DEC template/example still parse successfully with the new mandatory sections present (covered by the existing `tests/dec/resources/test_dec_example.py`/`test_dec_template.py`, which already assert full-document parsing).
+- [x] Task 130.120: Run this phase's full quality gate (REQ-009) and commit -- combined with Phase 2's commit since both were implemented and verified together in one pass.
 
-#### Phase 4: Prompts
+#### Phase 140: Prompts
 
-- [x] Task 4.1: Update `dec/prompts/create_dec.py` instructions to mention the three new sections and reference `specmgr://rasci` for RASCI role definitions.
-- [x] Task 4.2: Update `dec/prompts/update_dec.py` instructions similarly.
-- [x] Task 4.3: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 140.100: Update `dec/prompts/create_dec.py` instructions to mention the three new sections and reference `specmgr://rasci` for RASCI role definitions.
+- [x] Task 140.110: Update `dec/prompts/update_dec.py` instructions similarly.
+- [x] Task 140.120: Run this phase's full quality gate (REQ-009) and commit.
 
-#### Phase 5: Docs and Housekeeping
+#### Phase 150: Docs and Housekeeping
 
-- [x] Task 5.1: Update `AGENTS.md`'s `dec/` bullet to mention the three new sections and the shared-base-class refactor.
-- [x] Task 5.2: Update `feat-7-various-improvements/README.md`'s Task 0.33 entry to "split out into `feat-29-dec-source-roles`".
-- [x] Task 5.3: Update `feat-133-tags-dec-rsk/README.md` to drop DEC from scope, pointing at this feature for the DEC half.
-- [x] Task 5.4: Post a comment on GitHub issue #29 summarizing the shipped design.
-- [x] Task 5.5: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
-- [x] Task 5.6: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
+- [x] Task 150.100: Update `AGENTS.md`'s `dec/` bullet to mention the three new sections and the shared-base-class refactor.
+- [x] Task 150.110: Update `feat-7-various-improvements/README.md`'s Task 0.33 entry to "split out into `feat-29-dec-source-roles`".
+- [x] Task 150.120: Update `feat-133-tags-dec-rsk/README.md` to drop DEC from scope, pointing at this feature for the DEC half.
+- [x] Task 150.130: Post a comment on GitHub issue #29 summarizing the shipped design.
+- [x] Task 150.140: Post a comment on GitHub issue #133 noting DEC's Tags half was absorbed into issue #29.
+- [x] Task 150.150: Run this phase's full quality gate (REQ-009), commit, and mark this feature's status `done`.
 
-#### Phase 6: Post-Review Remediation
+#### Phase 160: Post-Review Remediation
 
-- [x] Task 6.1: Add a dated Decisions Made entry recording that `## Roles and Responsibilities`/`## Source` stay mandatory as shipped, and the resulting backward incompatibility is an accepted, documented breaking change rather than a design reversal (REQ-013).
-- [x] Task 6.2: Fix `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` per REQ-012.
-- [x] Task 6.3: Add the `CHANGELOG.md [Unreleased]` entry per REQ-011, including a short before/after migration snippet.
-- [x] Task 6.4: Add the "Known Limitations" section per REQ-014.
-- [x] Task 6.5: Run the full local quality gate (REQ-009's existing checklist) and report the evidence. Do NOT commit.
-- [x] Task 6.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 6.1-6.5 are complete.
+- [x] Task 160.100: Add a dated Decisions Made entry recording that `## Roles and Responsibilities`/`## Source` stay mandatory as shipped, and the resulting backward incompatibility is an accepted, documented breaking change rather than a design reversal (REQ-013).
+- [x] Task 160.110: Fix `tests/dec/models/v1/test_body.py::TestDecisionMisordering::test_updates_before_more_information_raises_assertion_error` and `::test_related_artifacts_after_pros_and_cons_raises_assertion_error` per REQ-012.
+- [x] Task 160.120: Add the `CHANGELOG.md [Unreleased]` entry per REQ-011, including a short before/after migration snippet.
+- [x] Task 160.130: Add the "Known Limitations" section per REQ-014.
+- [x] Task 160.140: Run the full local quality gate (REQ-009's existing checklist) and report the evidence. Do NOT commit.
+- [x] Task 160.150: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 6.1-6.5 are complete.
 
-#### Phase 7: External Review Remediation (Round 2)
+#### Phase 170: External Review Remediation (Round 2)
 
-- [x] Task 7.1: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
-- [x] Task 7.2: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
-- [x] Task 7.3: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
-- [x] Task 7.4: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
-- [x] Task 7.5: Run this phase's full quality gate (REQ-009) and commit.
-- [x] Task 7.6: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
+- [x] Task 170.100: Add a regression test to `tests/dec/models/v1/test_body.py` covering misordering of the three new sections per REQ-015 (ACC-014); spot-check by temporarily reverting the ordering guard and confirming the new test fails, then restore.
+- [x] Task 170.110: Document the domain-neutral `SourceBase.value` field-description wording as an intentional choice per REQ-016 (ACC-015).
+- [x] Task 170.120: Remove the duplicated `_MANDATORY_ROLES_AND_SOURCE` constant from `tests/dec/models/v1/test_parser.py` and import the shared `tests/dec/tools/_helpers.py::MANDATORY_ROLES_AND_SOURCE` instead per REQ-017 (ACC-016).
+- [x] Task 170.130: Rewrite `tests/general/tools/test_validate.py`'s `_DEC_MINIMAL_BODY`/`_DEC_BAD_FIELD_BODY` fixtures to use a single `textwrap.dedent` call each per REQ-018 (ACC-017).
+- [x] Task 170.140: Run this phase's full quality gate (REQ-009) and commit.
+- [x] Task 170.150: Update this README's Progress section (Current Status, a new dated Updates entry, frontmatter `status` back to `done`, `updated` bumped) once Tasks 7.1-7.5 are complete.
 
 ## Progress
 

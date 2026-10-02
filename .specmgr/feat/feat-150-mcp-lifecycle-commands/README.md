@@ -4,7 +4,7 @@ created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
 status: review
 type: feat
-updated: '2026-09-28T05:48:30.994+02:00'
+updated: '2026-09-30T05:13:02.000Z'
 version: 1.0.0
 ---
 
@@ -186,93 +186,93 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Task List
 
-#### Phase 0: `get_<d>` parse-failure error channel (repair prerequisite -- implement before Phase 1's commit)
+#### Phase 100: `get_<d>` parse-failure error channel (repair prerequisite -- implement before Phase 1's commit)
 
-- [x] Task 1a.1: `ParseFailureResult` model in `general/models/parse_failure_result.py` (fields `error`/`path`/`id`, mirroring `invalid_status_result.py`'s shape) + registration in `general/models/__init__.py`.
+- [x] Task 100.100: `ParseFailureResult` model in `general/models/parse_failure_result.py` (fields `error`/`path`/`id`, mirroring `invalid_status_result.py`'s shape) + registration in `general/models/__init__.py`.
 
-- [x] Task 1a.2: the shared `find_parse_failure(base_dir, id_, read_fn) -> tuple[Path, str] | None` helper in `general/tools/_doc_paths.py` (scans for the file whose stem encodes `id_` as a hyphen-bounded token -- the flat-file naming is `<type>-<id>-<slug>.md` -- and reports a parse-failing file's `(path, str(exc))`, `None` otherwise; `find_doc_path_by_id`'s documented skip behavior unchanged) + the bespoke `find_feat_parse_failure(base_dir, id_)` in `feat/tools/_paths.py` (no scan -- the folder name IS the id).
+- [x] Task 100.110: the shared `find_parse_failure(base_dir, id_, read_fn) -> tuple[Path, str] | None` helper in `general/tools/_doc_paths.py` (scans for the file whose stem encodes `id_` as a hyphen-bounded token -- the flat-file naming is `<type>-<id>-<slug>.md` -- and reports a parse-failing file's `(path, str(exc))`, `None` otherwise; `find_doc_path_by_id`'s documented skip behavior unchanged) + the bespoke `find_feat_parse_failure(base_dir, id_)` in `feat/tools/_paths.py` (no scan -- the folder name IS the id).
 
-- [x] Task 1a.3: the 12 `get_<d>` conversions (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs): on `<D>NotFoundError` from `load_by_id`, run the helper, `assert_within`, return `ParseFailureResult(error, path, id)`; re-raise otherwise. Union return annotation `<D>Document | str | ParseFailureResult`, description/docstring note (consistent across all 12), `raw=True` never returns a broken document's raw text.
+- [x] Task 100.120: the 12 `get_<d>` conversions (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs): on `<D>NotFoundError` from `load_by_id`, run the helper, `assert_within`, return `ParseFailureResult(error, path, id)`; re-raise otherwise. Union return annotation `<D>Document | str | ParseFailureResult`, description/docstring note (consistent across all 12), `raw=True` never returns a broken document's raw text.
 
-- [x] Task 1a.4: the new ADR in `docs/adr/` ("Extend the non-raising structured-result workaround to `get_<d>`'s parse-failure case", status `accepted`, ADR 519d1206-chain third case) + `specmgr adr-toc` regeneration.
+- [x] Task 100.130: the new ADR in `docs/adr/` ("Extend the non-raising structured-result workaround to `get_<d>`'s parse-failure case", status `accepted`, ADR 519d1206-chain third case) + `specmgr adr-toc` regeneration.
 
-- [x] Task 1a.5: tests -- per-domain (all 12: broken → `ParseFailureResult` with `error`/`path`/`id` (no raise); healthy → today's exact shape (raw=False model, raw=True str); absent id → domain `XNotFoundError`; `raw=True` on broken → `ParseFailureResult` (never a str); invalid id shape → `ValueError`), the `error`-text consistency vs `list_<d>` (all 12), the shared-helper unit tests, and the `ParseFailureResult` model test.
+- [x] Task 100.140: tests -- per-domain (all 12: broken → `ParseFailureResult` with `error`/`path`/`id` (no raise); healthy → today's exact shape (raw=False model, raw=True str); absent id → domain `XNotFoundError`; `raw=True` on broken → `ParseFailureResult` (never a str); invalid id shape → `ValueError`), the `error`-text consistency vs `list_<d>` (all 12), the shared-helper unit tests, and the `ParseFailureResult` model test.
 
-- [x] Task 1a.6: docs sync -- `server.py` module docstring (the `get_<d>` `ParseFailureResult` note), `AGENTS.md` `general/` bullet, `CHANGELOG.md` (`Added` for the model/helpers + `Changed` for the `get_*` contract), `specmgr docs`/`specmgr mcp-docs` regeneration (also picks up the uncommitted Phase 1 `repair` prompt -- expected).
+- [x] Task 100.150: docs sync -- `server.py` module docstring (the `get_<d>` `ParseFailureResult` note), `AGENTS.md` `general/` bullet, `CHANGELOG.md` (`Added` for the model/helpers + `Changed` for the `get_*` contract), `specmgr docs`/`specmgr mcp-docs` regeneration (also picks up the uncommitted Phase 1 `repair` prompt -- expected).
 
-- [x] Task 1a.7: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift), then exactly one Conventional Commit for the phase.
+- [x] Task 100.160: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift), then exactly one Conventional Commit for the phase.
 
-- [x] Task 1a.8 (follow-up issue #162): Option B amendment pass (2026-09-26 decision): qualify the error-text consistency claim at every remaining site -- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (Decision Outcome item 3 + Consequences + Confirmation), the `ParseFailureResult` docstring (`general/models/parse_failure_result.py`), the `repair` instructions' step 1 with-id line (`general/data/general_repair_instructions.md`), `repair.py`'s module docstring + `@mcp.prompt` description, the `doc-repairer` agent / `repair` skill wording if it repeats the claim, `AGENTS.md`/`CHANGELOG.md`/`server.py` wording, regenerated `docs/MCP.md` + `docs/api` -- and relax the 12 order-dependent `error`-text identity tests to content-based assertions (identical field path and cause); then file the follow-up issue for Option A (str-faithful `DocCache._fresh_exception` reconstruction) carrying its full spec (root cause, affected surface, acceptance criteria, doc-restoration list) and record the issue number here.
+- [x] Task 100.170: (follow-up issue #162) Option B amendment pass (2026-09-26 decision): qualify the error-text consistency claim at every remaining site -- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (Decision Outcome item 3 + Consequences + Confirmation), the `ParseFailureResult` docstring (`general/models/parse_failure_result.py`), the `repair` instructions' step 1 with-id line (`general/data/general_repair_instructions.md`), `repair.py`'s module docstring + `@mcp.prompt` description, the `doc-repairer` agent / `repair` skill wording if it repeats the claim, `AGENTS.md`/`CHANGELOG.md`/`server.py` wording, regenerated `docs/MCP.md` + `docs/api` -- and relax the 12 order-dependent `error`-text identity tests to content-based assertions (identical field path and cause); then file the follow-up issue for Option A (str-faithful `DocCache._fresh_exception` reconstruction) carrying its full spec (root cause, affected surface, acceptance criteria, doc-restoration list) and record the issue number here.
 
-#### Phase 1: repair (no ADR dependency -- implement first)
+#### Phase 110: repair (no ADR dependency -- implement first)
 
-- [x] Task 1.1: `general/data/general_repair_instructions.md` (host-native read/write, the explicit no-`update` note, the post-write `get_<d>`/`list_<d>` confirmation step, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/repair.py` (`repair(type, id=None)`) + registration in `general/prompts/__init__.py`.
+- [x] Task 110.100: `general/data/general_repair_instructions.md` (host-native read/write, the explicit no-`update` note, the post-write `get_<d>`/`list_<d>` confirmation step, the diagnose-only degradation, the frontmatter-preservation rule, the ADR exclusion) + `general/prompts/repair.py` (`repair(type, id=None)`) + registration in `general/prompts/__init__.py`.
 
-- [x] Task 1.2: `.opencode/agent/doc-repairer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/repair.md` (`$1`/`$2`, `agent: doc-repairer`).
+- [x] Task 110.110: `.opencode/agent/doc-repairer.md` (full explicit permission frontmatter per REQ-002) + `.opencode/command/repair.md` (`$1`/`$2`, `agent: doc-repairer`).
 
-- [x] Task 1.2b: `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair` frontmatter, a trigger `description` covering an organically-encountered failed-to-parse document, a thin body deferring to `doc-repairer` via the `task` tool when available, else narrating the condensed host-native loop mirroring `general/data/general_repair_instructions.md`).
+- [x] Task 110.120: `.opencode/skill/repair/SKILL.md` (REQ-012: `name: repair` frontmatter, a trigger `description` covering an organically-encountered failed-to-parse document, a thin body deferring to `doc-repairer` via the `task` tool when available, else narrating the condensed host-native loop mirroring `general/data/general_repair_instructions.md`).
 
-- [x] Task 1.3: `tests/general/prompts/test_repair.py` (registration + template substitution + asserting the rendered instructions mention the post-write `get_<d>`/`list_<d>` confirmation step, matching existing prompt test patterns -- since `repair` is narration-only text, this test can only check what the instructions say, not execute an actual repair; the real end-to-end proof is ACC-002's manual smoke test).
+- [x] Task 110.130: `tests/general/prompts/test_repair.py` (registration + template substitution + asserting the rendered instructions mention the post-write `get_<d>`/`list_<d>` confirmation step, matching existing prompt test patterns -- since `repair` is narration-only text, this test can only check what the instructions say, not execute an actual repair; the real end-to-end proof is ACC-002's manual smoke test).
 
-- [x] Task 1.4: Docs sync: `AGENTS.md`'s `general/` bullet (including the new `.opencode/skill/repair/` skill), `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [x] Task 110.140: Docs sync: `AGENTS.md`'s `general/` bullet (including the new `.opencode/skill/repair/` skill), `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
-- [x] Task 1.5: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs` drift), then exactly one Conventional Commit for the phase.
+- [x] Task 110.150: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs`/`specmgr mcp-docs` drift), then exactly one Conventional Commit for the phase.
 
-#### Phase 2: refine_feat
+#### Phase 120: refine_feat
 
-- [ ] Task 2.1: `feat/prompts/refine_feat.py` (`refine_feat(id)`) + `feat/data/feat_refine_instructions.md` (the MCP-native `get_feat`/`update`/`validate` path) + registration in `feat/prompts/__init__.py`.
+- [ ] Task 120.100: `feat/prompts/refine_feat.py` (`refine_feat(id)`) + `feat/data/feat_refine_instructions.md` (the MCP-native `get_feat`/`update`/`validate` path) + registration in `feat/prompts/__init__.py`.
 
-- [ ] Task 2.2: `.opencode/agent/feat-planner.md` (path-scoped `edit`/`write` permission rules per REQ-004) + `.opencode/command/refine-feature.md` (`agent: feat-planner`).
+- [ ] Task 120.110: `.opencode/agent/feat-planner.md` (path-scoped `edit`/`write` permission rules per REQ-004) + `.opencode/command/refine-feature.md` (`agent: feat-planner`).
 
-- [ ] Task 2.3: `tests/feat/prompts/test_refine_feat.py` + manual smoke test (ACC-004).
+- [ ] Task 120.120: `tests/feat/prompts/test_refine_feat.py` + manual smoke test (ACC-004).
 
-- [ ] Task 2.4: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [ ] Task 120.130: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
-- [ ] Task 2.5: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [ ] Task 120.140: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
-#### Phase 3: ADR for portable-delegation pattern
+#### Phase 130: ADR for portable-delegation pattern
 
-- [ ] Task 3.1: Write the new ADR (see Related Decisions) in `docs/adr/` per the repo's ADR conventions, regenerate `specmgr adr-toc` (pre-commit hook), set its status to `accepted`, and record its UUID in this README's Related Decisions -- needed before Phase 4 (its UUID is an input to Phase 4's instruction files).
+- [ ] Task 130.100: Write the new ADR (see Related Decisions) in `docs/adr/` per the repo's ADR conventions, regenerate `specmgr adr-toc` (pre-commit hook), set its status to `accepted`, and record its UUID in this README's Related Decisions -- needed before Phase 4 (its UUID is an input to Phase 4's instruction files).
 
-- [ ] Task 3.2: Phase-end gate: full quality gate green (including the `specmgr adr-toc` drift check), then exactly one Conventional Commit for the phase.
+- [ ] Task 130.110: Phase-end gate: full quality gate green (including the `specmgr adr-toc` drift check), then exactly one Conventional Commit for the phase.
 
-#### Phase 4: implement_feat + review_feat + auto fix-phase loop
+#### Phase 140: implement_feat + review_feat + auto fix-phase loop
 
-- [ ] Task 4.1: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` + registration, narrating the optional-delegation pattern from Design Notes, naming the Phase 3 ADR by UUID, and mentioning the review-fix loop.
+- [ ] Task 140.100: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` + registration, narrating the optional-delegation pattern from Design Notes, naming the Phase 3 ADR by UUID, and mentioning the review-fix loop.
 
-- [ ] Task 4.2: `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` + registration, mirroring `feat-reviewer.md`'s checklist/report format including the conditional "Proposed Fix Phase" section.
+- [ ] Task 140.110: `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` + registration, mirroring `feat-reviewer.md`'s checklist/report format including the conditional "Proposed Fix Phase" section.
 
-- [ ] Task 4.3: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block + the `[NEEDS DECISION]` flagging rule (REQ-007).
+- [ ] Task 140.120: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block + the `[NEEDS DECISION]` flagging rule (REQ-007).
 
-- [ ] Task 4.4: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-008: exit on no Errors/Gaps/Inconsistencies, the implementer-appends-the-fix-phase delegation step); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step and fix its "a a" typo; update `.opencode/command/review-feature.md`'s body so its report-section enumeration includes the new conditional section.
+- [ ] Task 140.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-008: exit on no Errors/Gaps/Inconsistencies, the implementer-appends-the-fix-phase delegation step); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step and fix its "a a" typo; update `.opencode/command/review-feature.md`'s body so its report-section enumeration includes the new conditional section.
 
-- [ ] Task 4.5: Update `implement_feat`'s narration to mention the same review-fix loop, for portable-host parity.
+- [ ] Task 140.140: Update `implement_feat`'s narration to mention the same review-fix loop, for portable-host parity.
 
-- [ ] Task 4.6: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` + manual smoke test.
+- [ ] Task 140.150: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` + manual smoke test.
 
-- [ ] Task 4.7: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [ ] Task 140.160: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `specmgr docs`/`specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
 
-- [ ] Task 4.8: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [ ] Task 140.170: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
-#### Phase 5: Distribution
+#### Phase 150: Distribution
 
-- [ ] Task 5.1: `commands/opencode.py`: the `opencode` Typer sub-application with the `sync` stage (repo-root `.opencode/{agent,command}/*.md` -> `general/data/opencode/{agent,command}/` package copy) and `install [--global|--local] [--force]` (REQ-010 semantics: package-data source via `importlib.resources`, all 12 files, sibling-directory detection, per-file no-op/refuse/`--force`, no `opencode.json` touch); register via `app.add_typer` in `cli.py`; export in `commands/__init__.py`.
+- [ ] Task 150.100: `commands/opencode.py`: the `opencode` Typer sub-application with the `sync` stage (repo-root `.opencode/{agent,command}/*.md` -> `general/data/opencode/{agent,command}/` package copy) and `install [--global|--local] [--force]` (REQ-010 semantics: package-data source via `importlib.resources`, all 12 files, sibling-directory detection, per-file no-op/refuse/`--force`, no `opencode.json` touch); register via `app.add_typer` in `cli.py`; export in `commands/__init__.py`.
 
-- [ ] Task 5.2: Generate the initial package copy; add the `pyproject.toml` `[tool.setuptools.package-data]` globs for `general/data/opencode/`; add the pre-commit local drift hook (sync + fail on diff, files `^.opencode/(agent|command)/.*\.md$`); add the CI parity check to the 3.13 job alongside the `specmgr docs`/`specmgr adr-toc` drift checks.
+- [ ] Task 150.110: Generate the initial package copy; add the `pyproject.toml` `[tool.setuptools.package-data]` globs for `general/data/opencode/`; add the pre-commit local drift hook (sync + fail on diff, files `^.opencode/(agent|command)/.*\.md$`); add the CI parity check to the 3.13 job alongside the `specmgr docs`/`specmgr adr-toc` drift checks.
 
-- [ ] Task 5.3: `tests/commands/test_opencode.py` (sync idempotence/drift detection, install copy behavior, sibling-directory detection, `--force` overwrite guard, global vs. local target resolution, package-data sourcing) + a manual `specmgr opencode install --local` smoke in a temp directory (ACC-009/ACC-010).
+- [ ] Task 150.120: `tests/commands/test_opencode.py` (sync idempotence/drift detection, install copy behavior, sibling-directory detection, `--force` overwrite guard, global vs. local target resolution, package-data sourcing) + a manual `specmgr opencode install --local` smoke in a temp directory (ACC-009/ACC-010).
 
-- [ ] Task 5.4: README.md: the new section immediately after "Add to OpenCode" (installer + manual Claude Code path per REQ-011, referencing that section for server setup) + the README Table of Contents entry.
+- [ ] Task 150.130: README.md: the new section immediately after "Add to OpenCode" (installer + manual Claude Code path per REQ-011, referencing that section for server setup) + the README Table of Contents entry.
 
-- [ ] Task 5.5: Docs sync: `AGENTS.md`'s CLI section (the new `specmgr opencode` subcommand), `specmgr docs` regeneration (the `commands/` module in `docs/api/`), `CHANGELOG.md` entry.
+- [ ] Task 150.140: Docs sync: `AGENTS.md`'s CLI section (the new `specmgr opencode` subcommand), `specmgr docs` regeneration (the `commands/` module in `docs/api/`), `CHANGELOG.md` entry.
 
-- [ ] Task 5.6: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [ ] Task 150.150: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
-#### Phase 6: Final Verification
+#### Phase 160: Final Verification
 
-- [ ] Task 6.1: Walk every Acceptance Criterion above (ACC-001..ACC-014) with concrete evidence.
+- [ ] Task 160.100: Walk every Acceptance Criterion above (ACC-001..ACC-014) with concrete evidence.
 
-- [ ] Task 6.2: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [ ] Task 160.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 ## Progress
 

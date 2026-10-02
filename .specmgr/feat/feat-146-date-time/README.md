@@ -4,7 +4,7 @@ created: '2026-09-23 22:33:23.868+02:00'
 id: feat-146-date-time
 status: review
 type: feat
-updated: '2026-09-25T08:39:06.050+02:00'
+updated: '2026-09-30T04:37:12.000Z'
 version: 1.0.0
 ---
 
@@ -91,41 +91,41 @@ No external dependencies; this feature is self-contained.
 
 ### Task List
 
-#### Phase 0: ADR + feature folder
+#### Phase 100: ADR + feature folder
 
-- [x] Task 0.1: Create the ADR via `create_adr` (status `draft`), capturing context/drivers/options/decision/consequences per this plan.
-- [x] Task 0.2: Create this feature folder via `create_feat` (id `feat-146-date-time`) with the plan above, citing the ADR id.
-- [x] Task 0.3: Run `specmgr adr-toc`; full quality gate.
+- [x] Task 100.100: Create the ADR via `create_adr` (status `draft`), capturing context/drivers/options/decision/consequences per this plan.
+- [x] Task 100.110: Create this feature folder via `create_feat` (id `feat-146-date-time`) with the plan above, citing the ADR id.
+- [x] Task 100.120: Run `specmgr adr-toc`; full quality gate.
 
-#### Phase 1: Frontmatter/write core + frontmatter sweep
+#### Phase 110: Frontmatter/write core + frontmatter sweep
 
-- [x] Task 1.1: `general/tools/_timestamps.py`: `format_timestamp` space→`T`; remove `format_date` (+ `__all__`); docstring updates.
-- [x] Task 1.2: `models/md/frontmatter.py`: `_DATE_TIME_PATTERN` → `[T ]`; comment block + field docstrings.
-- [x] Task 1.3: `_stringify_metadata`: `datetime` → `T`-canonical with milliseconds (shared path + per-domain copies).
-- [x] Task 1.4: Sweep: 24 packaged frontmatters → `T`; `feat_reference.md` → `T`; ~44 test files (writer-output assertions + fixtures → `T`, keep explicit space-acceptance tests); `test__timestamps.py` (12 tests); `test_frontmatter.py` matrix.
-- [x] Task 1.5: `specmgr schema` (all twelve) + `specmgr docs`; full quality gate.
+- [x] Task 110.100: `general/tools/_timestamps.py`: `format_timestamp` space→`T`; remove `format_date` (+ `__all__`); docstring updates.
+- [x] Task 110.110: `models/md/frontmatter.py`: `_DATE_TIME_PATTERN` → `[T ]`; comment block + field docstrings.
+- [x] Task 110.120: `_stringify_metadata`: `datetime` → `T`-canonical with milliseconds (shared path + per-domain copies).
+- [x] Task 110.130: Sweep: 24 packaged frontmatters → `T`; `feat_reference.md` → `T`; ~44 test files (writer-output assertions + fixtures → `T`, keep explicit space-acceptance tests); `test__timestamps.py` (12 tests); `test_frontmatter.py` matrix.
+- [x] Task 110.140: `specmgr schema` (all twelve) + `specmgr docs`; full quality gate.
 
-#### Phase 2: Entry headings (six domains)
+#### Phase 120: Entry headings (six domains)
 
-- [x] Task 2.1: Widen `feat` (body.py:435/442) + `sop` (body.py:372/377) to `[T ]`.
-- [x] Task 2.2: Tighten `tsk` (body.py:69/74), `dec` (body.py:424/429), `vcr` (body.py:320/326), `sysrs` (body.py:996/1002): mandatory time + `[T ]`.
-- [x] Task 2.3: `models/md/_ordering.py`: delete `_DATE_ONLY_LENGTH` + mixed-granularity branch; docstrings.
-- [x] Task 2.4: Body docstrings: drop leniency wording ("REQ-004", "locked post-sibling shape", feat body.py:449-454 "deliberately not the same format as frontmatter"); cite the ADR.
-- [x] Task 2.5: Packaged data: 8 date-only headings → space midnight UTC (`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`, `tsk_template:22`, `vcr_template:54`); rewrite 8 tsk/dec/vcr/sysrs instruction files (full form only, space examples); check feat/sop/other instruction wording.
-- [x] Task 2.6: Tests: flip date-only accept→reject (4 files); `test__ordering.py` drop date-only/mixed cases; add `T`-accept per domain; review `test_issue_67.py` exclusion + comment.
-- [x] Task 2.7: `specmgr schema` + full quality gate.
+- [x] Task 120.100: Widen `feat` (body.py:435/442) + `sop` (body.py:372/377) to `[T ]`.
+- [x] Task 120.110: Tighten `tsk` (body.py:69/74), `dec` (body.py:424/429), `vcr` (body.py:320/326), `sysrs` (body.py:996/1002): mandatory time + `[T ]`.
+- [x] Task 120.120: `models/md/_ordering.py`: delete `_DATE_ONLY_LENGTH` + mixed-granularity branch; docstrings.
+- [x] Task 120.130: Body docstrings: drop leniency wording ("REQ-004", "locked post-sibling shape", feat body.py:449-454 "deliberately not the same format as frontmatter"); cite the ADR.
+- [x] Task 120.140: Packaged data: 8 date-only headings → space midnight UTC (`dec_example:136`, `sysrs_example:535/541`, `sysrs_template:236`, `tsk_example:25/29`, `tsk_template:22`, `vcr_template:54`); rewrite 8 tsk/dec/vcr/sysrs instruction files (full form only, space examples); check feat/sop/other instruction wording.
+- [x] Task 120.150: Tests: flip date-only accept→reject (4 files); `test__ordering.py` drop date-only/mixed cases; add `T`-accept per domain; review `test_issue_67.py` exclusion + comment.
+- [x] Task 120.160: `specmgr schema` + full quality gate.
 
-#### Phase 3: Repo documents migration
+#### Phase 130: Repo documents migration
 
-- [x] Task 3.1: Migrate 3 `docs/` entry headings → space midnight UTC (`docs/tsk` x2, `docs/sysrs` x1).
-- [x] Task 3.2: Parse gate: every `docs/` document through its own domain tools; full quality gate.
+- [x] Task 130.100: Migrate 3 `docs/` entry headings → space midnight UTC (`docs/tsk` x2, `docs/sysrs` x1).
+- [x] Task 130.110: Parse gate: every `docs/` document through its own domain tools; full quality gate.
 
-#### Phase 4: Previous-feature notes + closeout
+#### Phase 140: Previous-feature notes + closeout
 
-- [x] Task 4.1: Brief supersession notes (one blockquote each, citing the ADR id) in: feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema; verify-by-grep candidates (feat-31-feature, feat-33-vcr, feat-10-add-artifact-type-tasklist, feat-21-decision, feat-5-md-model-parser, feat-93-feat-template) get notes only if they carry format decisions.
-- [x] Task 4.2: `CHANGELOG.md` `[Unreleased]` BREAKING entry; AGENTS.md touch-up (now_timestamp shared format → `T` write, both accepted).
-- [x] Task 4.3: Final doc regeneration (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`); ADR `set_status` → `accepted`; GitHub comment on issue #146.
-- [x] Task 4.4: Full quality gate.
+- [x] Task 140.100: Brief supersession notes (one blockquote each, citing the ADR id) in: feat-38-39-41-43-44, feat-32-sysrs, feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema; verify-by-grep candidates (feat-31-feature, feat-33-vcr, feat-10-add-artifact-type-tasklist, feat-21-decision, feat-5-md-model-parser, feat-93-feat-template) get notes only if they carry format decisions.
+- [x] Task 140.110: `CHANGELOG.md` `[Unreleased]` BREAKING entry; AGENTS.md touch-up (now_timestamp shared format → `T` write, both accepted).
+- [x] Task 140.120: Final doc regeneration (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`); ADR `set_status` → `accepted`; GitHub comment on issue #146.
+- [x] Task 140.130: Full quality gate.
 
 ## Progress
 

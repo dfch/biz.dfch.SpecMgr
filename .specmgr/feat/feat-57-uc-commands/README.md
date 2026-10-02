@@ -3,7 +3,7 @@ created: '2026-09-02 14:59:42.990Z'
 id: feat-57-uc-commands
 status: done
 type: feat
-updated: '2026-09-06 07:09:18.000Z'
+updated: '2026-10-02T14:28:22.000Z'
 version: 1.0.0
 ---
 
@@ -81,39 +81,39 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 ### Task List
 
-#### Phase 0: Pre-requisite -- feat-56 sync gate
+#### Phase 100: Pre-requisite -- feat-56 sync gate
 
-- [x] Task 0.1: Confirm feat-56 (classification frontmatter field + generic `set_classification` tool) has been implemented and merged; do not proceed to Phase 1 until confirmed.
+- [x] Task 100.100: Confirm feat-56 (classification frontmatter field + generic `set_classification` tool) has been implemented and merged; do not proceed to Phase 1 until confirmed.
 
-- [x] Task 0.2: Review one already-updated sibling domain's create/update instructions (e.g. req) for the exact `set_classification` mention wording/pattern to mirror.
+- [x] Task 100.110: Review one already-updated sibling domain's create/update instructions (e.g. req) for the exact `set_classification` mention wording/pattern to mirror.
 
-#### Phase 1: Instructions content
+#### Phase 110: Instructions content
 
-- [x] Task 1.1: Draft `uc_create_instructions.md` mirroring `req_create_instructions.md`'s structure, adapted for UC-specific tool names/resources, including the `set_classification` reference.
+- [x] Task 110.100: Draft `uc_create_instructions.md` mirroring `req_create_instructions.md`'s structure, adapted for UC-specific tool names/resources, including the `set_classification` reference.
 
-- [x] Task 1.2: Draft `uc_update_instructions.md` mirroring `req_update_instructions.md`'s structure, adapted for UC-specific tool names/resources, including the `set_classification` reference.
+- [x] Task 110.110: Draft `uc_update_instructions.md` mirroring `req_update_instructions.md`'s structure, adapted for UC-specific tool names/resources, including the `set_classification` reference.
 
-#### Phase 2: Prompt modules
+#### Phase 120: Prompt modules
 
-- [x] Task 2.1: Implement `uc/prompts/create_uc.py` (`@mcp.prompt()`, `read_packaged_text`, `string.Template` substitution), mirroring `req/prompts/create_req.py`.
+- [x] Task 120.100: Implement `uc/prompts/create_uc.py` (`@mcp.prompt()`, `read_packaged_text`, `string.Template` substitution), mirroring `req/prompts/create_req.py`.
 
-- [x] Task 2.2: Implement `uc/prompts/update_uc.py` mirroring `req/prompts/update_req.py`.
+- [x] Task 120.110: Implement `uc/prompts/update_uc.py` mirroring `req/prompts/update_req.py`.
 
-- [x] Task 2.3: Add `uc/prompts/__init__.py` and update `uc/__init__.py` to import `prompts` alongside `resources, tools`.
+- [x] Task 120.120: Add `uc/prompts/__init__.py` and update `uc/__init__.py` to import `prompts` alongside `resources, tools`.
 
-#### Phase 3: Documentation & registration
+#### Phase 130: Documentation & registration
 
-- [x] Task 3.1: Update `server.py`'s module docstring to add the "Use-case prompts (uc/prompts/)" entry.
+- [x] Task 130.100: Update `server.py`'s module docstring to add the "Use-case prompts (uc/prompts/)" entry.
 
-- [x] Task 3.2: Update `AGENTS.md`'s `uc/` bullet and "Still genuinely missing" list.
+- [x] Task 130.110: Update `AGENTS.md`'s `uc/` bullet and "Still genuinely missing" list.
 
-- [x] Task 3.3: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` via `specmgr docs`.
+- [x] Task 130.120: Regenerate `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md` via `specmgr docs`.
 
-#### Phase 4: Tests & verification
+#### Phase 140: Tests & verification
 
-- [x] Task 4.1: Add unit tests for `create_uc`/`update_uc` prompt registration and content substitution, mirroring existing req prompt tests.
+- [x] Task 140.100: Add unit tests for `create_uc`/`update_uc` prompt registration and content substitution, mirroring existing req prompt tests.
 
-- [x] Task 4.2: Run the full lint/test suite (`ruff format --check`, `ruff check`, `vulture`, `unittest discover`) and fix any failures.
+- [x] Task 140.110: Run the full lint/test suite (`ruff format --check`, `ruff check`, `vulture`, `unittest discover`) and fix any failures.
 
 ## Progress
 
@@ -125,8 +125,7 @@ This feature mirrors the `req/prompts/` pattern exactly: each prompt function is
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-02 00:00:00.000Z — Phase 4: Tests & verification (feature complete)
-
+#### 2026-09-02 00:00:00.000Z - Phase 4: Tests & verification (feature complete)
 Added `tests/uc/prompts/__init__.py` (mirroring `tests/req/prompts/__init__.py`,
 empty package marker) and `tests/uc/prompts/test_create_uc.py`/
 `test_update_uc.py`, 1:1 ports of `tests/req/prompts/test_create_req.py`/
@@ -163,9 +162,7 @@ contains a `set_classification(id, type="uc", classification)` line
 (Phase 1), now also locked in by the new tests. All six Acceptance Criteria
 (ACC-001..006) hold. This is the final phase -- feature complete, nothing
 committed (orchestrator's responsibility).
-
-#### 2026-09-02 00:00:00.000Z — Phase 3: Documentation & registration
-
+#### 2026-09-02 00:00:00.000Z - Phase 3: Documentation & registration
 Updated `src/biz/dfch/specmgr/server.py`'s module docstring: added a
 "Use-case prompts (``uc/prompts/``)" paragraph to the "Prompts" section,
 placed right after the ADR paragraph and before the Requirement paragraph
@@ -187,9 +184,7 @@ edit exactly. Verified: `ruff format --check`/`ruff check` on
 without raising; running `specmgr docs`/`specmgr mcp-docs` a second time
 produced no further `git status` changes (idempotent). No test files
 were added (Phase 4's job). Nothing committed.
-
-#### 2026-09-02 00:00:00.000Z — Phase 2: Prompt modules implemented
-
+#### 2026-09-02 00:00:00.000Z - Phase 2: Prompt modules implemented
 Added `src/biz/dfch/specmgr/uc/prompts/create_uc.py`, `update_uc.py`, and
 `__init__.py`, 1:1 ports of `req/prompts/create_req.py`/`update_req.py`/
 `__init__.py` (same `@mcp.prompt()` decorator shape, `string.Template`
@@ -214,15 +209,10 @@ hoc `await server.mcp.list_prompts()` check confirms both `create_uc` and
 `update_uc` are registered on the shared `mcp` app. No tests were added
 (Phase 4's job) and no `specmgr docs`/`server.py`/`AGENTS.md` edits were
 made (Phase 3's job). Nothing committed.
-
-#### 2026-09-02 00:00:00.000Z — Phase 1: Instructions content drafted
-
+#### 2026-09-02 00:00:00.000Z - Phase 1: Instructions content drafted
 Added `src/biz/dfch/specmgr/uc/data/uc_create_instructions.md` and `uc_update_instructions.md`, ported from `req/data/req_create_instructions.md`/`req_update_instructions.md`'s structure (numbered-step flow, `$topic`/`$id`/`$instructions` `string.Template` placeholders) and adapted to UC's actual tool/resource surface: `list_uc`, `create_uc`, `get_uc`/`get_uc(raw=True)`, `validate_uc`, `specmgr://uc/template`/`example`/`schema`, the generic `update`/`set_status`/`set_classification` tools with `type="uc"`, and UC's narrower 5-value status vocabulary (draft/proposed/accepted/deprecated/superseded, no "implemented"/"rejected"). The structure recap in both files was verified directly against `uc/models/v2/use_case.py`'s Pydantic field definitions (mandatory vs. optional `Characteristic Information` sub-sections, `Extensions`/`Sub-Variations` being fully optional with regex-constrained `### Extension {step}{letter}. ...`/`### Step {N}: ...` headings and the step-reference cross-check `model_validator`) rather than assumed from the issue's summary. No `uc/data/__init__.py` was needed and no `pyproject.toml` change was needed -- `uc/data/` already existed (holding `uc_example.md`/`uc_template.md`/`uc_schema.json`) and `[tool.setuptools.package-data]` already declares `"biz.dfch.specmgr.uc" = ["data/*.md", "data/*.json"]`, which already covers the two new files. `ruff format --check`/`ruff check` pass (no-op on `.md` files; confirms nothing else was touched). Nothing committed.
-
-#### 2026-09-02 00:00:00.000Z — Created
-
+#### 2026-09-02 00:00:00.000Z - Created
 Feature created from GitHub issue #57 ("uc domain has no create_uc/update_uc prompts"), scoping the addition of a create_uc/update_uc MCP prompt pair to bring the uc domain to parity with every other whole-body domain. Implementation is explicitly gated on feat-56 (classification) landing first.
-
 ### Related PRs / Commits
 
 - [Issue #57](https://github.com/dfch/biz.dfch.SpecMgr/issues/57): uc domain has no create_uc/update_uc prompts (unlike every other whole-body domain) -- the source issue for this feature.

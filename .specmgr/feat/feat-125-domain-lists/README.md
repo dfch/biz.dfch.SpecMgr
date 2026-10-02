@@ -4,7 +4,7 @@ created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
 status: review
 type: feat
-updated: '2026-09-22 05:20:28.443Z'
+updated: '2026-09-30T04:36:43.000Z'
 version: 1.0.0
 ---
 
@@ -130,46 +130,46 @@ feat-122) -- it touches real code: constants, `Literal[...]` type hints, dead-co
 
 ### Task List
 
-#### Phase 1: Quick wins (no shared source needed)
+#### Phase 100: Quick wins (no shared source needed)
 
-- [x] Task 1.1: Close the `sysrs` gap in `tests/general/tools/test__path_safety.py`'s `_UUID_DOMAINS` (issue follow-up #1; subsumed by Task 4.1 -- landed first as the minimal standalone fix)
-- [x] Task 1.2: Remove `general/tools/delete.py`'s dead `_DELETE_TYPES` (REQ-005)
-- [x] Task 1.3: Remove `general/tools/validate.py`'s dead `_VALIDATE_TYPES` (REQ-005)
-- [x] Task 1.4: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing and its stale "assigns the next `feat-NNN-slug` id" sentence (REQ-009)
-- [x] Task 1.5: Phase gate: `ruff format --check` + `ruff check`, `vulture`, targeted tests (`test_delete`, `test_validate`, `test__path_safety`)
+- [x] Task 100.100: Close the `sysrs` gap in `tests/general/tools/test__path_safety.py`'s `_UUID_DOMAINS` (issue follow-up #1; subsumed by Task 4.1 -- landed first as the minimal standalone fix)
+- [x] Task 100.110: Remove `general/tools/delete.py`'s dead `_DELETE_TYPES` (REQ-005)
+- [x] Task 100.120: Remove `general/tools/validate.py`'s dead `_VALIDATE_TYPES` (REQ-005)
+- [x] Task 100.130: Reword `feat/tools/__init__.py`'s "the eight lifecycle tools below" to relational phrasing and its stale "assigns the next `feat-NNN-slug` id" sentence (REQ-009)
+- [x] Task 100.140: Phase gate: `ruff format --check` + `ruff check`, `vulture`, targeted tests (`test_delete`, `test_validate`, `test__path_safety`)
 
-#### Phase 2: The shared source
+#### Phase 110: The shared source
 
-- [x] Task 2.1: Create `general/tools/_domains.py` (REQ-001): copyright header, NumPy docstring, `__all__`, `WHOLE_BODY_DOMAINS` + the three derived tuples + `ADR`/`FEAT` singletons; `git add` so `pylint` sees it
-- [x] Task 2.2: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated, unknown-type error message derived (REQ-003)
-- [x] Task 2.3: Rewire `set_status.py`'s `_TYPE_ADR` -> shared `ADR` at all 6 sites (REQ-004)
-- [x] Task 2.4: Phase gate: server-import smoke test (`python -c "import biz.dfch.specmgr.server"`), full suite
+- [x] Task 110.100: Create `general/tools/_domains.py` (REQ-001): copyright header, NumPy docstring, `__all__`, `WHOLE_BODY_DOMAINS` + the three derived tuples + `ADR`/`FEAT` singletons; `git add` so `pylint` sees it
+- [x] Task 110.110: Rewire `_path_safety.py` (REQ-004): `_UUID_TYPES = frozenset(UUID_DOMAINS)`, `_TYPE_FEAT` -> shared `FEAT`, docstring `:data:` references updated, unknown-type error message derived (REQ-003)
+- [x] Task 110.120: Rewire `set_status.py`'s `_TYPE_ADR` -> shared `ADR` at all 6 sites (REQ-004)
+- [x] Task 110.130: Phase gate: server-import smoke test (`python -c "import biz.dfch.specmgr.server"`), full suite
 
-#### Phase 3: src rewiring
+#### Phase 120: src rewiring
 
-- [x] Task 3.1: `update.py` (REQ-002/003/006): `Literal[*WHOLE_BODY_DOMAINS]`, `_ADAPTERS` keys reordered (drop `feat`-before-`sop`), set-equality assert, description derived
-- [x] Task 3.2: `set_status.py`: `Literal[*ALL_DOMAINS]`, `_ADAPTERS` keys reordered, set-equality asserts on `_ADAPTERS` and (already-canonical) `_ALLOWED_STATUSES_BY_TYPE`, description derived
-- [x] Task 3.3: `set_classification.py`: 12-domain treatment, dict keys reordered, assert, description derived
-- [x] Task 3.4: `delete.py`: `Literal[*WHOLE_BODY_DOMAINS]`, assert, description derived (dict already canonical)
-- [x] Task 3.5: `validate.py`: same as Task 3.4, plus unsupported-type error message derived (REQ-003)
-- [x] Task 3.6: `config.py` (REQ-007): set-equality assert in `config_info()`, description derived from `ALL_DOMAINS`
-- [x] Task 3.7: Phase gate: full suite; `specmgr mcp-docs` dry run to sanity-check the emitted enums
+- [x] Task 120.100: `update.py` (REQ-002/003/006): `Literal[*WHOLE_BODY_DOMAINS]`, `_ADAPTERS` keys reordered (drop `feat`-before-`sop`), set-equality assert, description derived
+- [x] Task 120.110: `set_status.py`: `Literal[*ALL_DOMAINS]`, `_ADAPTERS` keys reordered, set-equality asserts on `_ADAPTERS` and (already-canonical) `_ALLOWED_STATUSES_BY_TYPE`, description derived
+- [x] Task 120.120: `set_classification.py`: 12-domain treatment, dict keys reordered, assert, description derived
+- [x] Task 120.130: `delete.py`: `Literal[*WHOLE_BODY_DOMAINS]`, assert, description derived (dict already canonical)
+- [x] Task 120.140: `validate.py`: same as Task 3.4, plus unsupported-type error message derived (REQ-003)
+- [x] Task 120.150: `config.py` (REQ-007): set-equality assert in `config_info()`, description derived from `ALL_DOMAINS`
+- [x] Task 120.160: Phase gate: full suite; `specmgr mcp-docs` dry run to sanity-check the emitted enums
 
-#### Phase 4: Test rewiring
+#### Phase 130: Test rewiring
 
-- [x] Task 4.1: `test__path_safety.py`: import `UUID_DOMAINS`/`FEAT`, replace local constants (subsumes Task 1.1) (REQ-008)
-- [x] Task 4.2: `test_config.py`: import `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
-- [x] Task 4.3: `test_doc_cache_structural.py` + `test_doc_cache_delete_scan_race.py`: import `WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
-- [x] Task 4.4: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)`; `test_delete.py`'s local `_TYPE_FEAT` -> shared `FEAT` (REQ-008)
-- [x] Task 4.5: Phase gate: `pytest -n auto`, full suite
+- [x] Task 130.100: `test__path_safety.py`: import `UUID_DOMAINS`/`FEAT`, replace local constants (subsumes Task 1.1) (REQ-008)
+- [x] Task 130.110: `test_config.py`: import `ALL_DOMAINS`/`WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
+- [x] Task 130.120: `test_doc_cache_structural.py` + `test_doc_cache_delete_scan_race.py`: import `WHOLE_BODY_NO_FEAT_DOMAINS` (REQ-008)
+- [x] Task 130.130: `test_delete.py` + `test_update.py` registration tests: expected enums derived from `list(WHOLE_BODY_DOMAINS)`; `test_delete.py`'s local `_TYPE_FEAT` -> shared `FEAT` (REQ-008)
+- [x] Task 130.140: Phase gate: `pytest -n auto`, full suite
 
-#### Phase 5: Docs, ADR, conventions, quality gate
+#### Phase 140: Docs, ADR, conventions, quality gate
 
-- [x] Task 5.1: Regenerate `docs/MCP.md` (`specmgr mcp-docs`), `docs/api/` + `docs/GENERATED.md` (`specmgr docs`); review the diffs for only the intended changes (REQ-010)
-- [x] Task 5.2: Write the new ADR (status `accepted`); run `specmgr adr-toc` (REQ-011)
-- [x] Task 5.3: Add the "Domain-List Constants" rule to `.specmgr/conventions.md` (REQ-011)
-- [x] Task 5.4: Update `AGENTS.md`'s future-domain convention paragraph (name the `_domains.py` registration step); add the `CHANGELOG.md` `[Unreleased]` entry (REQ-011)
-- [x] Task 5.5: Quality gate: `ruff format --check` + `ruff check`, `vulture`, `pylint` (advisory), `pytest -n auto --cov=src --cov-report=`, `specmgr docs`/`adr-toc`/`mcp-docs`/`schema` drift checks (ACC-009/011); update this README (status -> `review`, `Updates` entry)
+- [x] Task 140.100: Regenerate `docs/MCP.md` (`specmgr mcp-docs`), `docs/api/` + `docs/GENERATED.md` (`specmgr docs`); review the diffs for only the intended changes (REQ-010)
+- [x] Task 140.110: Write the new ADR (status `accepted`); run `specmgr adr-toc` (REQ-011)
+- [x] Task 140.120: Add the "Domain-List Constants" rule to `.specmgr/conventions.md` (REQ-011)
+- [x] Task 140.130: Update `AGENTS.md`'s future-domain convention paragraph (name the `_domains.py` registration step); add the `CHANGELOG.md` `[Unreleased]` entry (REQ-011)
+- [x] Task 140.140: Quality gate: `ruff format --check` + `ruff check`, `vulture`, `pylint` (advisory), `pytest -n auto --cov=src --cov-report=`, `specmgr docs`/`adr-toc`/`mcp-docs`/`schema` drift checks (ACC-009/011); update this README (status -> `review`, `Updates` entry)
 
 ## Progress
 
