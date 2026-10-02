@@ -79,8 +79,35 @@ letting ``pydantic.ValidationError`` propagate from the adapter's
 additive exception to this tool's otherwise raise-based contract
 (mirroring the generic ``validate`` tool's own non-raising workaround,
 ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
-(unknown id, path-injection/wrong-shape id, ``superseded_by`` misuse on a
-non-``adr`` type) still raises exactly as before.
+(a truly-absent id, path-injection/wrong-shape id, ``superseded_by``
+misuse on a non-``adr`` type) still raises exactly as before.
+
+An existing-but-broken document (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain): on a target ``id`` whose only matching on-disk file
+fails to parse, each of the 12 whole-body adapters now returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
+(inside the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`general.tools._doc_paths.find_parse_failure`,
+called with the domain's own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. The pre-dispatch out-of-vocabulary ``InvalidStatusResult``
+check runs first and is unaffected -- an out-of-vocabulary ``status``
+against a broken existing document still returns ``InvalidStatusResult``
+(that check never reaches ``load_by_id``). The ``adr`` adapter stays
+raise-based (ADR is out of scope for this feature).
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
@@ -130,7 +157,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -142,7 +169,7 @@ old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter'`
+### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -155,7 +182,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter | ParseFailureResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -165,7 +192,7 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter'`
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter | ParseFailureResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -176,7 +203,7 @@ retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter'`
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter | ParseFailureResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -186,7 +213,7 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter'`
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter | ParseFailureResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -198,10 +225,13 @@ verbatim re-persistence, frontmatter reconstructed through
 vocabulary validates, ``write_req_file``, ``ReqNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4). ``superseded_by`` is
 never used here -- the public :func:`set_status` guard rejects it for
-every non-``adr`` type before dispatch.
+every non-``adr`` type before dispatch. Failure return (see the module
+docstring): a target ``id`` whose only matching on-disk file fails to
+parse yields the non-raising ``ParseFailureResult`` instead of
+``ReqNotFoundError`` (a truly-absent id still raises).
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter'`
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter | ParseFailureResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -211,7 +241,7 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter'`
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -223,7 +253,7 @@ was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter'`
+### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter | ParseFailureResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -234,7 +264,7 @@ written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter'`
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter | ParseFailureResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -244,7 +274,7 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter'`
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -254,7 +284,7 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter'`
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter | ParseFailureResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -334,18 +364,32 @@ Replace the status of an existing document, across every domain.
     -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
-    The updated document's frontmatter only (no body) of the dispatched domain type
-    for the whole-body domains; for ``type="adr"`` (unchanged, out of scope for
-    this feature) the full ``Adr`` document, as before. Use the corresponding
-    ``get_<d>`` tool to fetch the full document afterward for the whole-body
-    domains. When the requested target status already equals the document's
-    current status, the same value shape is returned unchanged, with no write
-    and no ``updated`` bump (issue #109's no-op case). When ``status`` is not
-    in the dispatched domain's closed vocabulary,
-    returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
-    (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
-    why this one case no longer raises.
+VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult
+    On success, the updated document's frontmatter only (no body) of the
+    dispatched domain type for the whole-body domains; for ``type="adr"``
+    (unchanged, out of scope for this feature) the full ``Adr`` document,
+    as before. Use the corresponding ``get_<d>`` tool to fetch the full
+    document afterward for the whole-body domains. When the requested
+    target status already equals the document's current status, the same
+    value shape is returned unchanged, with no write and no ``updated``
+    bump (issue #109's no-op case). When ``status`` is not in the
+    dispatched domain's closed vocabulary, returns an
+    :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+    (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
+    below for why this one case no longer raises. When the target
+    ``id``'s only matching on-disk file fails to parse (the whole-body
+    domains), a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) is returned instead of the domain's
+    not-found error -- ``error`` is byte-identical to the domain's
+    ``list_<d>`` failed row's ``error`` for the same file (identical
+    field path and cause, including the trailing pydantic documentation
+    line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+    id still raising the domain's own not-found error
+    (feat-170-update-edit-parse-failure, GitHub issue
+    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+    workaround chain).
 
     Raises
     ------
@@ -372,6 +416,9 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
     AdrNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        The target id is truly absent (no file on disk matches it at all)
+        -- the domain's own not-found error, unchanged from the per-domain
+        tools. An existing-but-broken document of the whole-body domains
+        returns the non-raising ``ParseFailureResult`` instead (see
+        Returns); the ``adr`` branch is unchanged (it raises as before).
 

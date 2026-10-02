@@ -118,6 +118,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-07
   - Decision-makers: OpenCode agent + user decision
+- [Extend the non-raising structured-result workaround to the generic mutation tools' failure cases](b8c9bfea-6dcf-4158-bfc5-4ec17abb842f-extend-the-non-raising-structured-result-workaround-to-the-g.md)
+  - Id: b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
+  - Status: accepted
+  - Date: 2026-09-30
+  - Decision-makers: OpenCode agent + user decision
 - [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
   - Id: bbf412a7-965e-4435-8669-c338407d73b7
   - Status: accepted

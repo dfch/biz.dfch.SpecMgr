@@ -16,7 +16,8 @@ permission:
   todowrite: allow
   external_directory:
     "*": ask
-    "~/.local/share/opencode/**": allow
+    "/tmp/opencode/**": allow
+    "/tmp/**": allow
   edit: deny
   write: deny
   task: deny

@@ -383,11 +383,15 @@ the generic, disk-free/id-free dry-run content validator for the
 whole-body domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
 ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
-former per-domain ``validate_<d>`` tools; unlike every other generic
-tool above, it never raises for a content-validation failure -- it always
-returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
-when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
-content-shape mismatch or an unsupported ``type``;
+former per-domain ``validate_<d>`` tools; it is the one generic tool
+above whose entire surface is non-raising structured results: it never
+raises for a content-validation failure -- it always returns
+``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty when
+``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
+content-shape mismatch or an unsupported ``type`` (the four generic
+mutation tools' non-raising branches, above, cover
+content-validation and existing-document-parse-failure only -- their
+caller-usage errors still raise);
 ``find_related`` -- find the documents most semantically related to an
 existing document, given its ``type``/``id``, across every whole-body domain
 (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
@@ -455,7 +459,21 @@ feat-162-doc-cache-exception-footer, GitHub issue #162), and
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
 extension of the ADR 519d1206 client-side-``isError``-truncation workaround
-chain after ``validate`` and ``set_status``'s invalid-status case.
+chain after ``validate`` and ``set_status``'s invalid-status case. A fourth
+extension (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f) adds the same non-raising
+``ParseFailureResult`` to the generic ``update``/``edit``/``set_status``/
+``set_classification`` tools for an existing-but-broken target document
+(the per-domain adapters catch the ``load_by_id`` failure, probe the same
+parse-failure lookup, and return the result -- a truly-absent id still
+raises the domain's not-found error), and ``update``/``edit`` additionally
+return the non-raising ``ValidateResult`` for a content-validation failure
+on the submitted new content / post-edit result instead of raising
+``AssertionError``/``pydantic.ValidationError`` (the single
+``errors[].message`` capped at 300 chars as ``validate`` caps it, feat-110;
+every caller-usage ``ValueError`` still raises, and
+``set_status``'s own ``InvalidStatusResult`` check still runs
+pre-lock/pre-load first).
 
 Prompts
 -------

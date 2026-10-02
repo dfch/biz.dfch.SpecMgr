@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ### Added
 
 - A `numbered: bool = False` parameter on every `get_<d>` tool for the
@@ -86,6 +88,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parsing under the tightened schema. Packaged examples, templates, and
   create/update instructions for `req`/`gol`/`dec`/`sop` were updated to
   match (GitHub issue #135).
+- The four generic mutation tools (`update`, `edit`, `set_status`,
+  `set_classification`) now return the non-raising structured
+  `ParseFailureResult` (`error`/`path`/`id`) -- instead of raising the
+  domain's not-found error -- when the target id's only matching on-disk
+  file fails to parse (GitHub issue #170, feat-170-update-edit-
+  parse-failure, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, the fourth
+  extension of the ADR 519d1206 client-side-`isError`-truncation
+  non-raising structured-result workaround chain, after `validate`'s
+  `{valid, errors}` result, `set_status`'s `InvalidStatusResult`, and
+  `get_<d>`'s `ParseFailureResult`): the per-domain adapters catch the
+  `load_by_id` failure, probe the domain's existing parse-failure lookup
+  (the same helper every `get_<d>` tool uses, with the same
+  `read_fn`/`assert_within` mirroring), and return the result, so the
+  `error` text is byte-identical to the domain's `list_<d>()` failed
+  row's `error` for the same file (identical field path and cause,
+  including the trailing pydantic documentation line -- fixed by
+  feat-162-doc-cache-exception-footer, GitHub issue #162). A truly-absent
+  id still raises the domain's own not-found error, every caller-usage
+  `ValueError` is unchanged (invalid id shape, unknown `type`,
+  range-coordinate misuse, `edit`'s OC-parity guards -- pre-dispatch
+  identical-input/empty-`old_str` and stage-1 match guards, `set_status`'s
+  `superseded_by` misuse), and nothing is written to disk in any failure
+  case.
+- `update`/`edit` additionally return the non-raising
+  `ValidateResult(valid=False, errors=[{message}])` -- instead of raising
+  `AssertionError`/`pydantic.ValidationError` -- for a content-validation
+  failure on the submitted new content (or, for `edit`, on the post-edit
+  result): the single `errors[].message` is capped at 300 characters
+  exactly as the generic `validate` tool caps it (feat-110), mirroring
+  `validate` including its own caught-exception set (GitHub issue #170,
+  ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
 
 ### Removed
 

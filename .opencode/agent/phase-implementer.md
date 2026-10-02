@@ -13,6 +13,10 @@ permission:
     "git push*": deny
     "*": allow
   task: deny
+  external_directory:
+    "*": ask
+    "/tmp/opencode/**": allow
+    "/tmp/**": allow
 ---
 
 # Phase Implementer

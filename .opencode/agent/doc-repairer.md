@@ -41,11 +41,13 @@ tool to ask for a clean pair rather than guessing.
 You use the specmgr MCP tools for discovery, diagnosis, validation, and
 confirmation, and your **own host file `read`/`write` tools** for the raw
 read and the write-back. No specmgr MCP tool can return the raw content of
-a document that fails to parse (`get_<d>` with `raw=True` and the generic
-`update` (or `edit`) tool both re-parse the existing document first, and
-their per-domain adapters convert that parse failure into the domain's
-not-found error before anything is written) -- so the raw read and the
-write-back must be host-native.
+a document that fails to parse (`get_<d>` with `raw=True` returns the
+non-raising parse-failure result for such a document instead of its raw
+text, and the generic `update` (or `edit`) tool re-parses the existing
+document before it can write anything, returning the non-raising
+`ParseFailureResult` for a broken one instead of writing or raising -- a
+truly-absent id still raises the domain's not-found error) -- so the raw
+read and the write-back must be host-native.
 
 ## Workflow
 

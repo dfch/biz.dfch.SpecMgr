@@ -108,6 +108,42 @@ serialization, the inherited ``_write.py`` caveat identical to
 ``read_<d>`` (the feat-107-doc-cache precedent), and the updated
 frontmatter only is returned (no body).
 
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain).** Two failures now return a structured result instead
+of raising, with nothing written in either case. (1) On a target ``id``
+whose only matching on-disk file fails to parse, every adapter returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
+the domain lock, before the match stage ever runs), probes the domain's
+existing parse-failure lookup (:func:`general.tools._doc_paths.
+find_parse_failure` for the 11 flat-file domains, called with the domain's
+own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. (2) A stage-2 content-validation failure on the *edited* body
+returns the non-raising :class:`~biz.dfch.specmgr.general.models.
+ValidateResult` (``valid=False``, ``errors=[...]``) instead of raising
+``AssertionError``/``pydantic.ValidationError`` -- the single
+``errors[].message`` is the enriched exception text capped exactly as the
+generic ``validate`` tool caps it (300 chars via
+:func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
+exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
+tuple). Stage-1's OC-parity ``ValueError``s (identical input, empty
+``old_str``, not found, multiple matches) and every pre-dispatch
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
+``type``) are never caught and still raise exactly as before.
+
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a
 ``ValueError`` before any file access -- mirroring the generic ``update``
@@ -136,81 +172,84 @@ from ...dec.models.v1 import DecFrontmatter, Decision
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
 from ...dec.tools._lock import dec_lock
-from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter, Feature
 from ...feat.tools._cache import read_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
-from ...feat.tools._paths import feat_base_dir
+from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolFrontmatter, Goal
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
 from ...gol.tools._lock import gol_lock
-from ...gol.tools._paths import gol_base_dir
+from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...prb.models.v1 import Prb, PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
 from ...prb.tools._lock import prb_lock
-from ...prb.tools._paths import prb_base_dir
+from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import Qa, QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
 from ...qa.tools._lock import qa_lock
-from ...qa.tools._paths import qa_base_dir
+from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter, Requirement
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
 from ...req.tools._lock import req_lock
-from ...req.tools._paths import req_base_dir
+from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import Risk, RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
 from ...rsk.tools._lock import rsk_lock
-from ...rsk.tools._paths import rsk_base_dir
+from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import Sop, SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
 from ...sop.tools._lock import sop_lock
-from ...sop.tools._paths import sop_base_dir
+from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import Sysrs, SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
 from ...sysrs.tools._lock import sysrs_lock
-from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import Task, TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
-from ...tsk.tools._paths import tsk_base_dir
+from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter, UseCase
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
 from ...uc.tools._lock import uc_lock
-from ...uc.tools._paths import uc_base_dir
+from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import Vcr, VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
-from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ..models import ParseFailureResult, ValidateResult, ValidationErrorEntry
+from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS
 from ._path_safety import assert_within, validate_id
 from ._splice import body_text
 from ._timestamps import now_timestamp
+from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 
 __all__ = ["edit"]
 
@@ -228,6 +267,8 @@ _EditFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | ParseFailureResult
+    | ValidateResult
 )
 
 
@@ -298,7 +339,9 @@ def _match_and_replace(body: str, old_str: str, new_str: str, replace_all: bool)
     return result
 
 
-def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFrontmatter:
+def _edit_req(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> ReqFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
     Mirror of the generic ``update`` tool's own ``_update_req`` adapter
@@ -308,15 +351,33 @@ def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFro
     domain lock is held across the entire read -> match -> validate ->
     write, stage 1 is the domain-agnostic :func:`_match_and_replace` over
     :func:`body_text(path)`, and stage 2 validates the *edited* body as a
-    whole document before the verbatim persist and the cache warm.
+    whole document before the verbatim persist and the cache warm. Failure
+    returns (see the module docstring): a target ``id`` whose only matching
+    on-disk file fails to parse yields the non-raising ``ParseFailureResult``
+    instead of ``ReqNotFoundError`` (a truly-absent id still raises), and a
+    stage-2 content-validation failure of the edited body yields the
+    non-raising ``ValidateResult(valid=False, ...)`` instead of
+    ``AssertionError``/``pydantic.ValidationError``.
     """
     base_dir = req_base_dir()
     with req_lock(id_):
-        path, existing = load_req_by_id(base_dir, id_)
+        try:
+            path, existing = load_req_by_id(base_dir, id_)
+        except ReqNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_req)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
-            Requirement.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
+                Requirement.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -326,7 +387,9 @@ def _edit_req(id_: str, old_str: str, new_str: str, replace_all: bool) -> ReqFro
     return new_frontmatter
 
 
-def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFrontmatter:
+def _edit_uc(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> UcFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
@@ -335,11 +398,23 @@ def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFront
     """
     base_dir = uc_base_dir()
     with uc_lock(id_):
-        path, existing = load_uc_by_id(base_dir, id_)
+        try:
+            path, existing = load_uc_by_id(base_dir, id_)
+        except UcNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_uc)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
-            UseCase.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
+                UseCase.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -349,7 +424,9 @@ def _edit_uc(id_: str, old_str: str, new_str: str, replace_all: bool) -> UcFront
     return new_frontmatter
 
 
-def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFrontmatter:
+def _edit_tsk(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> TskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
@@ -358,11 +435,23 @@ def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFro
     """
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
-        path, existing = load_tsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_tsk_by_id(base_dir, id_)
+        except TskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_tsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
-            Task.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
+                Task.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -372,7 +461,9 @@ def _edit_tsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> TskFro
     return new_frontmatter
 
 
-def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFrontmatter:
+def _edit_qa(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> QaFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
@@ -381,11 +472,23 @@ def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFront
     """
     base_dir = qa_base_dir()
     with qa_lock(id_):
-        path, existing = load_qa_by_id(base_dir, id_)
+        try:
+            path, existing = load_qa_by_id(base_dir, id_)
+        except QaNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_qa)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
-            Qa.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
+                Qa.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -395,7 +498,9 @@ def _edit_qa(id_: str, old_str: str, new_str: str, replace_all: bool) -> QaFront
     return new_frontmatter
 
 
-def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFrontmatter:
+def _edit_prb(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> PrbFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
@@ -404,11 +509,23 @@ def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFro
     """
     base_dir = prb_base_dir()
     with prb_lock(id_):
-        path, existing = load_prb_by_id(base_dir, id_)
+        try:
+            path, existing = load_prb_by_id(base_dir, id_)
+        except PrbNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_prb)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
-            Prb.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
+                Prb.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -418,7 +535,9 @@ def _edit_prb(id_: str, old_str: str, new_str: str, replace_all: bool) -> PrbFro
     return new_frontmatter
 
 
-def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFrontmatter:
+def _edit_gol(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> GolFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
@@ -427,11 +546,23 @@ def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFro
     """
     base_dir = gol_base_dir()
     with gol_lock(id_):
-        path, existing = load_gol_by_id(base_dir, id_)
+        try:
+            path, existing = load_gol_by_id(base_dir, id_)
+        except GolNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_gol)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
-            Goal.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
+                Goal.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -441,7 +572,9 @@ def _edit_gol(id_: str, old_str: str, new_str: str, replace_all: bool) -> GolFro
     return new_frontmatter
 
 
-def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFrontmatter:
+def _edit_rsk(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> RskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
@@ -450,11 +583,23 @@ def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFro
     """
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
-        path, existing = load_rsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_rsk_by_id(base_dir, id_)
+        except RskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_rsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
-            Risk.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
+                Risk.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -464,7 +609,9 @@ def _edit_rsk(id_: str, old_str: str, new_str: str, replace_all: bool) -> RskFro
     return new_frontmatter
 
 
-def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFrontmatter:
+def _edit_dec(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> DecFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
@@ -473,11 +620,23 @@ def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFro
     """
     base_dir = dec_base_dir()
     with dec_lock(id_):
-        path, existing = load_dec_by_id(base_dir, id_)
+        try:
+            path, existing = load_dec_by_id(base_dir, id_)
+        except DecNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_dec)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
-            Decision.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
+                Decision.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -487,7 +646,9 @@ def _edit_dec(id_: str, old_str: str, new_str: str, replace_all: bool) -> DecFro
     return new_frontmatter
 
 
-def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatFrontmatter:
+def _edit_feat(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> FeatFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the feature identified by ``id_``.
 
     Mirror of :func:`_edit_dec`'s shape (same ``feat_lock``, ``load_by_id``,
@@ -498,11 +659,23 @@ def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatF
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):
-        path, existing = load_feat_by_id(base_dir, id_)
+        try:
+            path, existing = load_feat_by_id(base_dir, id_)
+        except FeatNotFoundError:
+            parse_failure = find_feat_parse_failure(base_dir, id_)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="feat", tool="edit", channel=BODY_CHANNEL):
-            Feature.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="feat", tool="edit", channel=BODY_CHANNEL):
+                Feature.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -512,7 +685,9 @@ def _edit_feat(id_: str, old_str: str, new_str: str, replace_all: bool) -> FeatF
     return new_frontmatter
 
 
-def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFrontmatter:
+def _edit_sop(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> SopFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
@@ -521,11 +696,23 @@ def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFro
     """
     base_dir = sop_base_dir()
     with sop_lock(id_):
-        path, existing = load_sop_by_id(base_dir, id_)
+        try:
+            path, existing = load_sop_by_id(base_dir, id_)
+        except SopNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sop)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
-            Sop.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
+                Sop.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -535,7 +722,9 @@ def _edit_sop(id_: str, old_str: str, new_str: str, replace_all: bool) -> SopFro
     return new_frontmatter
 
 
-def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFrontmatter:
+def _edit_vcr(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> VcrFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
@@ -544,11 +733,23 @@ def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFro
     """
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
-        path, existing = load_vcr_by_id(base_dir, id_)
+        try:
+            path, existing = load_vcr_by_id(base_dir, id_)
+        except VcrNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_vcr)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
-            Vcr.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
+                Vcr.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -558,7 +759,9 @@ def _edit_vcr(id_: str, old_str: str, new_str: str, replace_all: bool) -> VcrFro
     return new_frontmatter
 
 
-def _edit_sysrs(id_: str, old_str: str, new_str: str, replace_all: bool) -> SysrsFrontmatter:
+def _edit_sysrs(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> SysrsFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
@@ -567,11 +770,23 @@ def _edit_sysrs(id_: str, old_str: str, new_str: str, replace_all: bool) -> Sysr
     """
     base_dir = sysrs_base_dir()
     with sysrs_lock(id_):
-        path, existing = load_sysrs_by_id(base_dir, id_)
+        try:
+            path, existing = load_sysrs_by_id(base_dir, id_)
+        except SysrsNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sysrs)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
-        with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
-            Sysrs.from_text(format_text(edited))
+        try:
+            with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
+                Sysrs.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
         now = now_timestamp()
         fm_data = existing.frontmatter.model_dump()
         fm_data["updated"] = now
@@ -620,9 +835,22 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion "
         "(legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an "
         "`old_str` containing `\\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex "
-        "fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` "
-        "raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); "
-        "use the corresponding `get_<d>` tool to fetch the full document afterward."
+        "fallback. A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text "
+        "is byte-identical to the domain's `list_<d>` failed row's `error` for the same file "
+        "(identical field path and cause, including the trailing pydantic documentation line; "
+        "ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
+        "not-found error. A stage-2 content-validation "
+        "failure on the post-edit result returns a non-raising `ValidateResult` (`valid=False`, "
+        "`errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool "
+        "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "non-raising-structured-result workaround chain). Stage-1's not-found/multiple-matches guards "
+        "and every caller-usage `ValueError` (invalid `id` shape, unknown or `adr` `type`, identical "
+        "input, empty `old_str`) still raise. An invalid `id` (path-injection attempt or wrong format "
+        "for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter "
+        "only (no body; `updated` bumped) on success; use the corresponding `get_<d>` tool to fetch "
+        "the full document afterward."
     ),
 )
 def edit(
@@ -654,9 +882,13 @@ def edit(
 
     **Stage 2 (validate).** The *edited* body is validated as a whole
     document via the domain body model's ``from_text(format_text(edited))``
-    under ``wrap_tool_errors`` -- letting ``AssertionError`` (structural
-    failure) or ``pydantic.ValidationError`` (field/cross-field failure)
-    propagate uncaught, with nothing written in either case.
+    under ``wrap_tool_errors``; a structural (``AssertionError``) or
+    field/cross-field (``pydantic.ValidationError``) failure returns the
+    non-raising ``ValidateResult(valid=False, ...)`` (the single
+    ``errors[].message`` capped at 300 chars exactly as the generic
+    ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
+    failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+    case 4 of the ADR 519d1206 chain), with nothing written in either case.
 
     **2-fold write (REQ-003).** The disk write happens strictly after both
     stages pass: the domain lock is held across the entire read -> match ->
@@ -717,10 +949,27 @@ def edit(
     -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter
-        The updated document's frontmatter only (no body) of the dispatched domain type
-        (``updated`` bumped); use the corresponding ``get_<d>`` tool to fetch the full
-        document afterward.
+    VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
+        On success, the updated document's frontmatter only (no body) of the
+        dispatched domain type (``updated`` bumped); use the corresponding
+        ``get_<d>`` tool to fetch the full document afterward. On a target
+        ``id`` whose only matching on-disk file fails to parse, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) instead of the domain's not-found error --
+        ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
+        ``error`` for the same file (identical field path and cause, including
+        the trailing pydantic documentation line; ADR
+        9080b37c-82b3-4f63-81f1-79641d0bf14c). On a stage-2 content-validation
+        failure of the edited body, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+        (``valid=False``, ``errors=[{message}]``) with the single
+        ``errors[].message`` capped at 300 chars exactly as the generic
+        ``validate`` tool caps it (feat-110), instead of
+        ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
+        either failure case (feat-170-update-edit-parse-failure, GitHub issue
+        #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain).
 
     Raises
     ------
@@ -739,23 +988,15 @@ def edit(
         ``ValueError``s carry the OC message verbatim with no
         ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
         is written in any of these cases.
-    AssertionError
-        The edited body is structurally invalid (stage 2) -- e.g. deleting
-        the H1. The message is prefixed with domain/tool/channel context
-        (e.g. ``"req edit (body): ..."``) by the shared tool-boundary
-        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the edited body (stage
-        2, e.g. an edit producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        The target id is truly absent (no file on disk matches it at all) --
+        the domain's own not-found error, unchanged from the per-domain tools.
+        An existing-but-broken document returns the non-raising
+        ``ParseFailureResult`` instead, and a stage-2 content-validation
+        failure of the edited body returns the non-raising ``ValidateResult``
+        instead (both see Returns).
     """
     # REQ-005: validate before any filesystem access (injection prevention).
     validate_id(type, id)
