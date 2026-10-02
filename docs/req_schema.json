@@ -1,25 +1,6 @@
 {
   "$comment": "v1",
   "$defs": {
-    "AcceptanceCriteria": {
-      "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",
-      "properties": {
-        "items": {
-          "description": "Bullet list of cross-references to acceptance criteria, one per line (e.g. \"ACC-1234: <title>\"); must contain at least one item.",
-          "items": {
-            "$ref": "#/$defs/MarkdownListItem"
-          },
-          "minItems": 1,
-          "title": "Items",
-          "type": "array"
-        }
-      },
-      "required": [
-        "items"
-      ],
-      "title": "AcceptanceCriteria",
-      "type": "object"
-    },
     "Characteristics": {
       "description": "`## Characteristics` -- bullet list of ISO 25010:2023 quality attributes this\nrequirement concerns (\"Functional Suitability\", \"Performance\", \"User Interaction\",\n\"Compatibility\", \"Maintainability\", \"Security\", \"Reliability\", \"Safety\").\nMandatory. At least one characteristic.",
       "properties": {
@@ -41,12 +22,12 @@
       "type": "object"
     },
     "Decisions": {
-      "description": "`### Decisions` under Related Artifacts -- bullet list of\ncross-references to decisions, one per line (e.g. \"DEC-2703: <title>\").",
+      "description": "`### Decisions` under Related Artifacts -- cross-references to\ndecisions.\n\nSubclasses the shared `models.md.DecisionsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Decisions` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to decisions, one per line (e.g. \"DEC-2703: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `DEC <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -66,12 +47,12 @@
       "type": "object"
     },
     "Goals": {
-      "description": "`### Goals` under Related Artifacts -- bullet list of\ncross-references to goals, one per line (e.g. \"GOL-0007: <title>\").",
+      "description": "`### Goals` under Related Artifacts -- cross-references to goals.\n\nSubclasses the shared `models.md.GoalsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Goals` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to goals, one per line (e.g. \"GOL-0007: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `GOL <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -189,20 +170,8 @@
       "type": "object"
     },
     "RelatedArtifacts": {
-      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/acceptance\ncriteria). Optional as a whole; no consistency check is enforced between\nthe sub-lists.",
+      "description": "`## Related Artifacts` -- container for four independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/risks).\nOptional as a whole; no consistency check is enforced between the\nsub-lists.",
       "properties": {
-        "acceptance_criteria": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AcceptanceCriteria"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "`### Acceptance Criteria` sub-section. Optional."
-        },
         "decisions": {
           "anyOf": [
             {
@@ -238,6 +207,18 @@
           ],
           "default": null,
           "description": "`### Requirements` sub-section. Optional."
+        },
+        "risks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Risks` sub-section. Optional."
         }
       },
       "title": "RelatedArtifacts",
@@ -418,12 +399,12 @@
       "type": "object"
     },
     "Requirements": {
-      "description": "`### Requirements` under Related Artifacts -- bullet list of\ncross-references to other requirements, one per line\n(e.g. \"REQ-9687: <title>\").",
+      "description": "`### Requirements` under Related Artifacts -- cross-references to\nother requirements.\n\nSubclasses the shared `models.md.RequirementsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Requirements` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to other requirements, one per line (e.g. \"REQ-9687: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -434,6 +415,25 @@
         "items"
       ],
       "title": "Requirements",
+      "type": "object"
+    },
+    "Risks": {
+      "description": "`### Risks` under Related Artifacts -- cross-references to risks.\n\nSubclasses the shared `models.md.RisksBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `req` still declares and\nowns its own concrete `Risks` type.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `RSK <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Risks",
       "type": "object"
     },
     "Source": {

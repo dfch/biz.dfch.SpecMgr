@@ -86,8 +86,8 @@ class TestRepairPrompt(unittest.TestCase):
         result = _one_line(repair_fn("req", _ID))
         self.assertIn("get_req", result)
         self.assertIn("returned, NOT raised", result)
-        self.assertIn("the same parse defect `list_req()`'s failed row carries for the same file", result)
-        self.assertIn("treat the two texts as the same defect, not byte-equal", result)
+        self.assertIn("byte-identical to `list_req()`'s failed row `error` for the same file", result)
+        self.assertIn("including the trailing pydantic documentation line", result)
         self.assertIn("truly absent, `get_req` raises the domain's not-found error", result)
 
     def test_host_file_tools_directed(self):

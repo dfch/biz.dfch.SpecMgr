@@ -29,7 +29,7 @@ Field declaration order on `Sop`/`RolesAndResponsibilities`/`Procedure`/
 Definitions -> Roles and Responsibilities (-> Accountable -> Responsible ->
 Support -> Consulted -> Informed) -> Safety and Precautions -> Procedure
 (-> Step 1: -> Step 2: -> ...) -> Related Artifacts (-> Requirements ->
-Decisions -> Goals -> Acceptance Criteria -> Sops) -> More Information ->
+Decisions -> Goals -> Risks -> Sops) -> More Information ->
 Updates (-> entry 1 -> entry 2 -> ...)), since `models.md`'s
 `MarkdownStr.from_text` distributes text among declared fields in that same
 order.
@@ -39,10 +39,10 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, computed_field, field_validator, model_validator
 
 from ....models.md import (
-    MarkdownListItem,
+    MarkdownListItemWithNotes,
     MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
@@ -53,10 +53,15 @@ from ....models.md import (
     SupportBase,
     ConsultedBase,
     InformedBase,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
     RolesAndResponsibilitiesBase,
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN, validate_cross_reference_items
 from ....models.md._ordering import validate_newest_first
 
 
@@ -277,79 +282,96 @@ class Procedure(MarkdownSection2):
     )
 
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to requirements, one per line
-    (e.g. "REQ-9687: <title>")."""
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    requirements.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
-    )
-
-
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>")."""
-
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Requirements` type.
+    """
 
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of cross-references
-    to goals, one per line (e.g. "GOL-0007: <title>")."""
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Decisions` type.
+    """
 
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>")."""
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Goals` type.
+    """
+
+
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
+
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Risks` type.
+    """
+
+
+_SOPS_PATTERN = rf"^SOP {UUID_PATTERN}: .+$"
 
 
 class Sops(MarkdownSection3):
-    """`### Sops` under Related Artifacts -- bullet list of cross-references to
-    other, related/superseding SOPs, one per line (e.g. "SOP-0042: <title>").
-    A self-cross-reference sub-list (GOL's self-referencing `Goals` sub-list
-    precedent)."""
+    """`### Sops` under Related Artifacts -- cross-references to other,
+    related/superseding SOPs. A self-cross-reference sub-list (GOL's
+    self-referencing `Goals` sub-list precedent).
 
-    items: list[MarkdownListItem] = Field(
+    Has no cross-domain twin (no other domain has a self-cross-reference
+    sub-list of this shape), so unlike `Requirements`/`Decisions`/`Goals`/
+    `Risks` above it is not built on a shared `models.md` base class --
+    it enforces the same `"SOP <uuid>: <title>"` format via its own inline
+    `field_validator`, calling the same shared
+    `models.md._cross_reference.validate_cross_reference_items` primitive
+    those base classes use internally (feat-135-related-artifacts-risks).
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `SOP <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
-        description="Bullet list of cross-references to other SOPs, one per line "
-        '(e.g. "SOP-0042: <title>"); must contain at least one item.',
+        description="Bullet list of `SOP <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
     )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _SOPS_PATTERN)
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for five independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria/sops). Optional as a whole; no consistency check is enforced
-    between the sub-lists. The `### Sops` sub-list is a self-cross-reference
-    (a `sop` document may reference other, related/superseding SOPs).
+    `### ` cross-reference lists (requirements/decisions/goals/risks/sops).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists. The `### Sops` sub-list is a self-cross-reference (a `sop`
+    document may reference other, related/superseding SOPs).
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
     sops: Sops | None = Field(default=None, description="`### Sops` sub-section (self-cross-reference). Optional.")
 
 

@@ -19,7 +19,6 @@
 
 from __future__ import annotations
 
-import re
 import tempfile
 import textwrap
 import unittest
@@ -89,21 +88,10 @@ _MINIMAL_BODY = (
 )
 
 
-def _strip_pydantic_footer(text: str) -> str:
-    """Strip the optional trailing pydantic documentation line from a parse-error text.
-
-    The ``DocCache``'s exception reconstruction drops pydantic's "For further
-    information visit https://errors.pydantic.dev/..." line on warm re-raises,
-    so the ``get_rsk``/``list_rsk`` error-text identity is asserted modulo that
-    line (Option B, 2026-09-26; the str-faithful reconstruction is tracked as
-    follow-up issue #162).
-    """
-    result = re.sub(r"[ \t]*For further information visit https://errors\.pydantic\.dev/.*$", "", text, flags=re.S)
-    return result
-
-
-class TestGetRsk(unittest.TestCase):
-    """Tests for the get_rsk tool."""
+class TestGetRsk(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    """Tests for the get_rsk tool (one method per read path x outcome; the feat-150 parse-failure,
+    feat-153 numbered, and feat-162 byte-identical-error test groups together push the class past
+    pylint's default of 20 public methods)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -332,9 +320,9 @@ class TestGetRsk(unittest.TestCase):
         self.assertIsInstance(result, ParseFailureResult)
         self.assertNotIsInstance(result, str)
 
-    def test_broken_document_error_matches_list_failed_row(self) -> None:
-        """ParseFailureResult.error must carry the same parse defect as list_rsk's failed-row error for the same
-        broken file (identical field path and cause; the trailing pydantic documentation line is modulo)."""
+    def test_broken_document_error_matches_list_failed_row_get_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_rsk's failed-row error for the same broken
+        file, in cold-get-then-warm-list read order (REQ-003)."""
         created = create_rsk(_MINIMAL_BODY)
         self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
@@ -343,11 +331,38 @@ class TestGetRsk(unittest.TestCase):
 
         self.assertIsInstance(get_result, ParseFailureResult)
         self.assertEqual(len(failed), 1)
-        # Option B (2026-09-26): identity is modulo the trailing pydantic line; restore plain equality with issue #162.
-        self.assertEqual(_strip_pydantic_footer(get_result.error), _strip_pydantic_footer(failed[0].error))
+        self.assertEqual(get_result.error, failed[0].error)
         # The core defect content (this fixture's structural parse failure) must be present in both texts.
         self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
         self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_error_matches_list_failed_row_list_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_rsk's failed-row error for the same broken
+        file, in cold-list-then-warm-get read order (REQ-003)."""
+        created = create_rsk(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        failed = [summary for summary in list_rsk().results if summary.title == "<failed to parse>"]
+        get_result = get_rsk(created.id)
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_list_error_is_stable_across_repeated_calls(self) -> None:
+        """list_rsk()'s row error text must be byte-identical across repeated calls (REQ-004)."""
+        create_rsk(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        first_call = [s for s in list_rsk().results if s.title == "<failed to parse>"]
+        second_call = [s for s in list_rsk().results if s.title == "<failed to parse>"]
+
+        self.assertEqual(len(first_call), 1)
+        self.assertEqual(len(second_call), 1)
+        self.assertEqual(first_call[0].error, second_call[0].error)
 
     def test_invalid_id_shape_raises_value_error(self) -> None:
         """An id that is not a well-formed canonical UUID must raise ValueError before any file access."""

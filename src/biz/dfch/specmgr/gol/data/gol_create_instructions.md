@@ -28,8 +28,11 @@ step 1 if this is genuinely a new goal.
 - `## Source` -- mandatory single-line value naming the origin/authority
   of this goal.
 - `## Related Artifacts` -- optional container for up to four `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria (each `{ID}: {description}` per line).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks
+  (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
+  tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
+  `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
+  accepts only the `DEC` tag, not `ADR`).
 - `## More Information` -- optional freeform supplementary text.
 - `## Notes` -- optional freeform remarks.
 

@@ -4,7 +4,7 @@ created: '2026-09-03 10:26:32.304+02:00'
 id: 64065cad-bb84-45c4-9e18-b2a8c5ce6865
 status: draft
 type: req
-updated: '2026-09-03 10:26:32.304+02:00'
+updated: '2026-09-30T14:56:47.919+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `req` bullet) and `.specmgr/feat/feat-6-requirem
 
 ### Goals
 
-- GOL-08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management
+- GOL 08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management

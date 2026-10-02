@@ -66,6 +66,21 @@ indefinitely and eventually mixing frames from unrelated call stacks
 equivalent exception object -- same type, same message -- on every hit
 instead).
 
+**feat-162-doc-cache-exception-footer: a ``ValidationError``-reconstruction
+footer bug, closed.** :func:`_fresh_exception`'s original ``ValidationError``
+branch unconditionally re-wrapped every per-field error detail in a
+``pydantic_core.PydanticCustomError`` before calling
+``ValidationError.from_exception_data`` -- correct for an already-custom,
+frontmatter-origin error (which never carried a trailing pydantic
+documentation-link footer to begin with), but silently dropping that footer
+for a genuine, recognized pydantic-core builtin kind (e.g. a domain body's
+own ``Body.from_text(...)`` model validators). Contrary to this module's
+own prior assumption, **not every parse error this codebase raises is
+already "enriched" into a custom error type** -- only frontmatter-origin
+ones are; body-origin ones are plain, recognized builtin kinds. See
+:func:`_fresh_exception`'s own docstring for the corrected, two-path
+reconstruction (GitHub issue #162).
+
 **Lock-ordering rule.** :class:`DocCache`'s own internal ``threading.Lock``
 guards *only* its dict get/set/pop bookkeeping -- never the file read, never
 the caller-supplied ``parse_fn`` call itself, and never held across any
@@ -280,20 +295,42 @@ function special-cases each:
 - ``pydantic.ValidationError``: ``.args`` is always empty (it is a
   ``pydantic_core``-implemented type whose real state lives outside
   ``BaseException.args`` entirely), so ``type(exc)(*exc.args)`` would
-  silently reconstruct an exception with an empty message. Instead,
-  each of ``exc.errors()``'s per-field dicts is re-wrapped as its own
-  ``pydantic_core.PydanticCustomError(detail["type"], detail["msg"])``
-  and handed to ``ValidationError.from_exception_data`` -- this exactly
-  reproduces ``str(exc)`` for every ``ValidationError`` this codebase's
-  own ``parse_<domain>`` functions actually raise (every one of them is
-  already "enriched" into a custom error type by
-  ``models.md._frontmatter_parse.enrich_frontmatter_validation_error``,
-  which this mirrors). A genuinely built-in-kind (non-custom-wrapped)
-  ``ValidationError`` -- not something any ``parse_<domain>`` in this
-  codebase ever raises -- would still round-trip its message text
-  faithfully, only losing the trailing "For further information visit
-  ..." documentation-link footer pydantic-core appends to a
-  recognized builtin kind.
+  silently reconstruct an exception with an empty message. This
+  codebase's own ``parse_<domain>`` functions raise two architecturally
+  distinct, never-mixed shapes of ``ValidationError`` (feat-162-doc-
+  cache-exception-footer, GitHub issue #162, confirmed by live
+  experiment: a document broken in both frontmatter and body still
+  surfaces only the frontmatter failure, since ``parse_frontmatter``
+  and a domain's own ``Body.from_text`` are two sequential, independently-
+  raising validation passes), so reconstruction tries two paths, in
+  order, for the *whole* exception (not a per-detail mix):
+
+  1. **Plain, recognized-kind pass-through (tried first).** Each of
+     ``exc.errors()``'s per-field dicts is rebuilt as a plain
+     ``pydantic_core.InitErrorDetails(type=detail["type"],
+     loc=detail["loc"], input=detail["input"])``, including
+     ``ctx=detail["ctx"]`` only when ``"ctx" in detail`` (some builtin
+     kinds, e.g. ``missing``, carry none; ``InitErrorDetails(...,
+     ctx=None)`` raises ``TypeError``, confirmed live). For a genuine,
+     recognized pydantic-core builtin kind -- what a domain body's own
+     ``Body.from_text(...)`` model validators actually raise -- this
+     lets pydantic-core regenerate its own templated message *and*
+     trailing "For further information visit ..." documentation-link
+     footer, so ``str()`` round-trips exactly, footer included.
+  2. **``PydanticCustomError``-wrap fallback (only on ``KeyError``).**
+     ``ValidationError.from_exception_data`` raises ``KeyError:
+     "Invalid error type: '<type>'"`` (confirmed to be the exact
+     exception, not some other kind) when at least one detail's
+     ``type`` is not one of pydantic-core's own recognized kinds --
+     i.e. it is already a custom-wrapped frontmatter-origin error
+     (``models.md._frontmatter_parse.enrich_frontmatter_validation_error``
+     always produces the custom ``"frontmatter_value_error"`` kind,
+     which never carried a footer to begin with). On that ``KeyError``,
+     every detail is re-wrapped as its own
+     ``pydantic_core.PydanticCustomError(detail["type"], detail["msg"])``
+     instead -- the behavior this branch originally, and incorrectly,
+     always used -- which still round-trips ``str()`` exactly for the
+     custom-typed frontmatter case.
 - ``yaml.error.MarkedYAMLError`` (the concrete type every real
   ``yaml.YAMLError`` this codebase raises actually is, per
   ``models.md._frontmatter_parse.enrich_frontmatter_yaml_error``, which

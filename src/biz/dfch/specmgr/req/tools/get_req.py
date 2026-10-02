@@ -72,14 +72,14 @@ from ._paths import ReqNotFoundError, req_base_dir
         "raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, "
         "default 1) is the first body line to return, `limit` (line count, default through end "
         "of body) how many; out-of-range values clamp (`offset > N` returns the empty string), "
-        "and coordinates with raw=False raise ValueError. A document that exists but fails to parse "
-        "returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text "
-        "carries the same parse defect as the domain's own `list` tool's failed-row `error` for the "
-        "same file (identical field path and cause, though the trailing pydantic documentation line "
-        "may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, "
-        "2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid "
-        "id (path-injection attempt or wrong "
-        "format) is also a ValueError, raised before any file access."
+        "and coordinates with raw=False raise ValueError."
+        " A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising; "
+        "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
+        "for the same file (identical field path and cause, including the trailing pydantic "
+        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
+        "any file access."
         " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
         'absolute body-line number in the `"<n>: "` form (plain decimal, no padding) -- under '
         "`offset`/`limit` windowing the numbers start at the clamped offset and never restart at 1, so a "
@@ -140,12 +140,9 @@ def get_req(
         exists but fails to parse, a
         :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
         (``error``/``path``/``id``) is returned instead of raising --
-        ``error`` carries the same parse defect as the domain's own ``list``
-        tool's failed-row ``error`` for the same file (identical field path
-        and cause, though the trailing pydantic documentation line may
-        differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c,
-        Option B, 2026-09-26 -- the str-faithful reconstruction is tracked
-        as a follow-up issue);
+        ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
+        the same file (identical field path and cause, including the trailing pydantic
+        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
         ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.ReqNotFoundError` if no requirement has this id.
 

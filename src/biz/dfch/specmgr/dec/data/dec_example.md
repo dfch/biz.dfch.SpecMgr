@@ -91,15 +91,19 @@ of per-team improvisation with no company-level rule.
 
 ### Requirements
 
-- REQ-4412: Onboarding plan for new engineers
+- REQ 86476d47-2f88-44ed-8e79-540a62bb5fba: Onboarding plan for new engineers
 
 ### Decisions
 
-- DEC-1187: Common meeting times and no-meeting blocks
+- DEC 447f7350-f639-4217-aff3-e7cbdc70abd8: Common meeting times and no-meeting blocks
 
 ### Goals
 
-- GOL-0021: Retention of junior engineers in the first two years
+- GOL b483ae2a-5267-47ea-9728-df8c0c1b1290: Retention of junior engineers in the first two years
+
+### Risks
+
+- RSK 2c3c6b5b-d89d-4bf5-a3c1-f614da86b65c: Hybrid Schedule Reduces On-Site Mentoring Availability for Junior Engineers
 
 ## Pros and Cons
 

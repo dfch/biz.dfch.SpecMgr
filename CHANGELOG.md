@@ -5,8 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ### Added
 
 - A `numbered: bool = False` parameter on every `get_<d>` tool for the
@@ -30,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   prefix is one format family with the new `update` `snippet` (each
   snippet line is a 2-character marker prefix plus exactly the line a
   numbered read prints for that number).
+- A new `### Risks` cross-reference sub-list (to `rsk`) in `req`/`gol`/
+  `dec`/`sop`'s `## Related Artifacts` section, added in the slot the
+  removed `### Acceptance Criteria` sub-list occupied (GitHub issue #135).
 
 ### Changed
 
@@ -59,6 +60,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   YAML frontmatter block is variable-length), and that a
   `numbered=True` read's output must never be fed back verbatim into
   `content` without stripping the `"<n>: "` prefix.
+- **BREAKING**: every cross-reference sub-list under `req`/`gol`/`dec`/
+  `sop`'s `## Related Artifacts` (`Requirements`, `Decisions`, `Goals`,
+  `Risks`, plus `sop`'s own `Sops` self-reference) now enforces a common
+  bullet format: `"<TAG> <uuid>: <title>"` (space-separated, lowercase
+  8-4-4-4-12 hex UUID, full-line match). A previously-valid but
+  unvalidated bullet -- e.g. the old dash form `REQ-9687: <title>` or a
+  malformed UUID -- is now rejected with `pydantic.ValidationError`. Each
+  item also now supports an optional trailing notes paragraph
+  (`MarkdownListItemWithNotes`), matching `sysrs`'s existing shape. The
+  shared format validator/pattern was extracted into a new
+  `models/md/_cross_reference.py` helper, reused by `sysrs` and `vcr`
+  instead of their own independent, duplicated implementations, and the
+  four domains' recurring `Requirements`/`Decisions`/`Goals`/`Risks`
+  classes are now thin subclasses of new shared `RequirementsBase`/
+  `DecisionsBase`/`GoalsBase`/`RisksBase` classes in
+  `models/md/common_sections.py` (mirroring the `SourceBase`/RASCI
+  precedent from feat-29-dec-source-roles). `Decisions` in these four
+  domains now accepts only the `DEC` tag (rejects `ADR`), since `adr` is
+  slated for eventual removal (issue #46) -- `sysrs`'s own, structurally
+  separate `## Decisions` section still accepts `DEC|ADR`, a deliberate,
+  documented asymmetry. The 14 real, on-disk `docs/req/*.md` documents
+  were migrated ahead of time from the unvalidated `GOL-<uuid>` (dash)
+  form to the newly-enforced `GOL <uuid>` (space) form so they keep
+  parsing under the tightened schema. Packaged examples, templates, and
+  create/update instructions for `req`/`gol`/`dec`/`sop` were updated to
+  match (GitHub issue #135).
+
+### Removed
+
+- **BREAKING**: the `### Acceptance Criteria` cross-reference sub-list
+  (`AcceptanceCriteria`/`acceptance_criteria`) is removed entirely from
+  `req`/`gol`/`dec`/`sop`'s `## Related Artifacts` section -- it referenced
+  an artifact type that was never implemented as a standalone domain;
+  acceptance criteria only ever existed as `AC-NNN` entries inside a `vcr`
+  document, which already owns the correct backward link (`## Verifies`).
+  Any existing document populating `### Acceptance Criteria` now fails to
+  parse via `get_<d>`/`parse_<d>`/`update`/`create_<d>` round-trips until
+  it is migrated to the new `### Risks` sub-list (see "Added"/"Changed"
+  above) (GitHub issue #135).
+
+### Fixed
+
+- `general.tools._doc_cache.DocCache`'s `_fresh_exception` reconstruction
+  of a cached `pydantic.ValidationError` now preserves the trailing
+  `https://errors.pydantic.dev/...` documentation-link footer for a
+  genuine body-field failure (a recognized, pydantic-core-builtin error
+  kind), instead of unconditionally dropping it via a blanket
+  `PydanticCustomError` wrap. As a result, `get_<d>`'s non-raising
+  `ParseFailureResult.error` and `list_<d>`'s failed-row `error` for the
+  same broken file are now byte-identical in both read orders (list-first
+  and get-first), not merely the same defect modulo that trailing line
+  (GitHub issue #162).
 
 ## [0.34.0] - 2026-09-29
 
@@ -125,10 +178,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is explicitly out
   of scope) that currently fails to parse -- discover it via
   `get_<d>(id)`'s non-raising `ParseFailureResult`-shaped result (with an
-  `id` -- the result carries `error`, the parse-failure message, the same
-  parse defect as `list_<d>()`'s failed-row `error` for the same file
-  (identical field path and cause; the trailing pydantic documentation
-  line may differ by read order/cache state -- Option B, 2026-09-26),
+  `id` -- the result carries `error`, the parse-failure message,
+  byte-identical to `list_<d>()`'s failed-row `error` for the same file
+  (identical field path and cause, including the trailing pydantic
+  documentation line -- feat-162-doc-cache-exception-footer, GitHub issue #162),
   plus `path`, the absolute on-disk file; a truly absent id still raises
   the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
   or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
@@ -234,12 +287,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
   Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
-  carries the same parse defect as the domain's `list_<d>` tool's failed-row
-  `error` for the same file (identical field path and cause; the trailing
-  pydantic documentation line may differ by read order/cache state --
-  Option B, 2026-09-26, the str-faithful reconstruction tracked as
-  follow-up issue #162), and `raw=True` on a broken document still returns
-  the result (never a raw `str`); a healthy document's return shape, a truly
+  is byte-identical to the domain's `list_<d>` tool's failed-row `error`
+  for the same file (identical field path and cause, including the trailing
+  pydantic documentation line -- feat-162-doc-cache-exception-footer,
+  GitHub issue #162), and `raw=True` on a broken document still returns the
+  result (never a raw `str`); a healthy document's return shape, a truly
   absent id (still raises the domain's not-found error), and an invalid id
   shape (still a `ValueError` before any file access) are all unchanged.
   This unblocks Phase 1's `repair` prompt with-id branch, which narrates
