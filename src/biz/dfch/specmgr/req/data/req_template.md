@@ -43,19 +43,19 @@ Where does this requirement come from? This can be a document reference, an inte
 
 ### Requirements
 
-- A bullet list with related requirements. Optional.
+- REQ 00000000-0000-4000-8000-000000000001: title of the related requirement
 
 ### Decisions
 
-- A bullet list with related decisions. Optional.
+- DEC 00000000-0000-4000-8000-000000000002: title of the related decision
 
 ### Goals
 
-- A bullet list with related goals. Optional.
+- GOL 00000000-0000-4000-8000-000000000003: title of the related goal
 
-### Acceptance Criteria
+### Risks
 
-- A bullet list with related acceptance criteria. Optional.
+- RSK 00000000-0000-4000-8000-000000000004: title of the related risk
 
 ## More Information
 

@@ -41,6 +41,47 @@ ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
 
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain).** Two failures now return a structured result instead of
+raising, with nothing written in either case. (1) On a target ``id`` whose
+only matching on-disk file fails to parse, every adapter returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
+the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`._doc_paths.find_parse_failure` for the 11
+flat-file domains, called with the domain's own cache-backed ``read_<d>``
+as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. (2) A content-validation failure on the submitted new content
+(whole-body mode: the pre-lock validation; range mode: the in-lock
+post-splice validation) returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.ValidateResult`
+(``valid=False``, ``errors=[...]``) instead of raising
+``AssertionError``/``pydantic.ValidationError`` -- the single
+``errors[].message`` is the enriched exception text capped exactly as the
+generic ``validate`` tool caps it (300 chars via
+:func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
+exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
+tuple). The mode-dependent precedence when both failures hold at once is
+intentional (whole-body mode validates before loading, so
+``ValidateResult`` wins; range mode loads first, so
+``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
+(invalid ``id`` shape, ``limit`` given without ``offset``, misused range
+coordinates) still raises exactly as before, and a plain ``KeyError``
+still marks ``type="adr"`` (inherited from the dispatch-table lookup).
+
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
 validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
 ``ValueError`` before any filesystem access -- mirroring the generic
@@ -50,7 +91,7 @@ after ``load_by_id``, inside the domain lock.
 
 ## Functions
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter'`
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -63,7 +104,7 @@ domain -- merged from dev while still on the old per-domain mechanism
 (see :func:`_update_req`).
 
 
-### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter'`
+### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
@@ -76,7 +117,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -87,7 +128,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter'`
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -98,7 +139,7 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter'`
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -109,7 +150,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter'`
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -122,10 +163,16 @@ without ``offset`` is rejected by the public :func:`update` guard
 before dispatch), the on-disk body is re-read via :func:`body_text`,
 spliced via :func:`splice_body` at the read-style ``offset``/``limit``
 coordinates, and the *spliced result* is validated and persisted
-verbatim instead of the raw fragment.
+verbatim instead of the raw fragment. Failure returns (see the module
+docstring): a target ``id`` whose only matching on-disk file fails to
+parse yields the non-raising ``ParseFailureResult`` instead of
+``ReqNotFoundError`` (a truly-absent id still raises), and a
+content-validation failure on the submitted/spliced content yields the
+non-raising ``ValidateResult(valid=False, ...)`` instead of
+``AssertionError``/``pydantic.ValidationError``.
 
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter'`
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -136,7 +183,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter'`
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -149,7 +196,7 @@ directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
 
-### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter'`
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -161,7 +208,7 @@ from day one per ADR 36905d5b, so there was never a per-domain
 this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter'`
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -172,7 +219,7 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter'`
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -183,7 +230,7 @@ per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter'`
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -206,10 +253,14 @@ Replace the body of an existing document, in whole-body or line-range mode.
     **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
     markdown only, with no YAML frontmatter block -- the same shape the
     per-domain ``update_<d>`` tools accept. Validated the same way: the
-    domain body model's ``from_text(format_text(content))``, letting
-    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-    (field/cross-field failure) propagate uncaught, with nothing written in
-    either case.
+    domain body model's ``from_text(format_text(content))`` -- a
+    structural (``AssertionError``) or field/cross-field
+    (``pydantic.ValidationError``) failure returns the non-raising
+    ``ValidateResult(valid=False, ...)`` (the single ``errors[].message``
+    capped at 300 chars exactly as the generic ``validate`` tool caps it,
+    feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206 chain)
+    with nothing written.
 
     **Range mode** (``offset`` given): ``content`` is a replacement
     *fragment* addressed by read-style ``offset``/``limit`` coordinates,
@@ -274,9 +325,28 @@ Replace the body of an existing document, in whole-body or line-range mode.
     -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter
-    The updated document's frontmatter only (no body) of the dispatched domain type;
-    use the corresponding ``get_<d>`` tool to fetch the full document afterward.
+VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
+    On success, the updated document's frontmatter only (no body) of the
+    dispatched domain type; use the corresponding ``get_<d>`` tool to fetch
+    the full document afterward. On a target ``id`` whose only matching
+    on-disk file fails to parse, a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) instead of the domain's not-found error --
+    ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
+    ``error`` for the same file (identical field path and cause, including
+    the trailing pydantic documentation line; ADR
+    9080b37c-82b3-4f63-81f1-79641d0bf14c). On a content-validation failure
+    of the submitted new content (or, in range
+    mode, of the spliced result), a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+    (``valid=False``, ``errors=[{message}]``) with the single
+    ``errors[].message`` capped at 300 chars exactly as the generic
+    ``validate`` tool caps it (feat-110), instead of
+    ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
+    either failure case (feat-170-update-edit-parse-failure, GitHub issue
+    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+    workaround chain).
 
     Raises
     ------
@@ -289,21 +359,21 @@ VcrFrontmatter | SysrsFrontmatter
         ``offset + limit - 1 > N`` (raised after the on-disk body is read;
         the message names the offending value(s) and the allowed range).
         Nothing is written in any of these cases.
-    AssertionError
-        The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). The message is prefixed with domain/tool/channel
-        context (e.g. ``"tsk update (body): ..."``) by the shared
-        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
+    KeyError
+        A plain ``KeyError`` still marks ``type="adr"`` (inherited from
+        the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
+        UUID-shaped domain set, so ``type="adr"`` with a well-formed
+        UUID ``id`` passes ``validate_id`` and reaches the lookup, which
+        has no ``adr`` entry. Nothing is written. Unreachable through the
+        MCP server, whose ``type`` enum carries the 12 whole-body domains
+        only; a direct-Python-caller outcome.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+        The target id is truly absent (no file on disk matches it at all)
+        -- the domain's own not-found error, unchanged from the per-domain
+        tools. An existing-but-broken document returns the non-raising
+        ``ParseFailureResult`` instead, and a content-validation failure of
+        the submitted/spliced content returns the non-raising
+        ``ValidateResult`` instead (both see Returns).
 

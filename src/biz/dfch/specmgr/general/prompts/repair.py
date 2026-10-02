@@ -23,10 +23,10 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through repairing a whole-body specmgr document that currently fails to
 parse: discovering it (with an ``id``: ``get_<d>(id)`` -- a document that
 exists but fails to parse is returned, not raised: the result carries
-``error`` (the parse-failure message, the same parse defect as
+``error`` (the parse-failure message, byte-identical to
 ``list_<d>``'s failed-row ``error`` for the same file -- identical field
-path and cause, though the trailing pydantic documentation line may
-differ by read order/cache state) and ``path`` (the absolute on-disk
+path and cause, including the trailing pydantic documentation line) and
+``path`` (the absolute on-disk
 file), for every one of the whole-body domains per ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c; a truly absent id still raises the
 domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
@@ -34,9 +34,12 @@ domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
 whose ``id`` is null while ``ref``/``path``/``error`` are populated),
 reading the raw file via the host's own file-read tool (no specmgr MCP tool
 can return the raw content of a document that fails to parse:
-``get_<d>(raw=True)`` and the generic ``update`` (or ``edit``) tool both
-re-parse the existing document first, and their per-domain adapters convert
-that failure into the domain's not-found error before any write), fixing only
+``get_<d>(raw=True)`` returns the non-raising parse-failure result for such
+a document instead of its raw text, and the generic ``update`` (or
+``edit``) tool re-parses the existing document before it can write
+anything, returning the non-raising ``ParseFailureResult`` for a broken
+one instead of writing or raising -- a truly-absent id still raises the
+domain's not-found error -- and nothing is ever written), fixing only
 what the error addresses while preserving the frontmatter
 ``id``/``created``/``status``/``version`` byte-for-byte and leaving
 ``updated`` untouched (a repair is not an edit), looping the generic
@@ -96,8 +99,8 @@ _ID_NOT_GIVEN_TEMPLATE = (
     description=(
         "Guides the LLM through repairing a whole-body specmgr document that currently fails to "
         "parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- "
-        "the error text carrying the same parse defect as list_<d>()'s failed row for the same "
-        "file, modulo a possibly-missing trailing pydantic documentation line; every whole-body "
+        "the error text byte-identical to list_<d>()'s failed row for the same "
+        "file; every whole-body "
         "domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) when an id is given, or "
         "list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the "
         "host's own file-read tool, fix only what the error addresses while preserving the "

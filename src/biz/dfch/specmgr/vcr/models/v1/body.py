@@ -69,15 +69,18 @@ from ....models.md import (
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN
 from ....models.md._ordering import validate_newest_first
 
 #: Matches `## Verifies`' single-line `value` paragraph: exactly one `REQ`
 #: or `UC` cross-reference, tagged with its type, followed by a standard
-#: 8-4-4-4-12 hex UUID and a title (REQ-001). No id-prefix precedent existed
-#: elsewhere in the codebase to reuse for the UUID shape, so this introduces
-#: one -- see `.specmgr/feat/feat-33-vcr/README.md` Design Notes' persisted
-#: `Verifies` class sketch.
-_VERIFIES_PATTERN = r"^(REQ|UC) [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"
+#: 8-4-4-4-12 hex UUID and a title (REQ-001). Built from the shared
+#: `models.md._cross_reference.UUID_PATTERN` fragment
+#: (feat-135-related-artifacts-risks, REQ-007) -- no id-prefix precedent
+#: existed elsewhere in the codebase when this was first introduced, see
+#: `.specmgr/feat/feat-33-vcr/README.md` Design Notes' persisted `Verifies`
+#: class sketch.
+_VERIFIES_PATTERN = rf"^(REQ|UC) {UUID_PATTERN}: .+$"
 
 
 class Verifies(MarkdownSection2WithComment):

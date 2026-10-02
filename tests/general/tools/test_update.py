@@ -52,14 +52,16 @@ from pathlib import Path
 from typing import Any, Callable
 from unittest import mock
 
-from pydantic import ValidationError
-
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
-from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
+from biz.dfch.specmgr.dec.tools.list_dec import list_dec
+from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.feat.tools.list_feat import list_feat
+from biz.dfch.specmgr.general.models import ParseFailureResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008): the
 #: whole-body document types the registration test's expected enum derives from.
@@ -68,33 +70,43 @@ from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
+from biz.dfch.specmgr.gol.tools.list_gol import list_gol
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.prb.tools.list_prb import list_prb
 from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.qa.tools.list_qa import list_qa
 from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.req.tools.list_req import list_req
 from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.rsk.tools.list_rsk import list_rsk
 from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.sop.tools.list_sop import list_sop
 from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
 from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.uc.tools.list_uc import list_uc
 from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
+from biz.dfch.specmgr.vcr.tools.list_vcr import list_vcr
 
 update_module = importlib.import_module("biz.dfch.specmgr.general.tools.update")
 update = update_module.update
@@ -709,6 +721,51 @@ _FIXED_TIMESTAMP = "2026-08-27 12:00:00.123Z"
 #: well-formed to reach the domain's own not-found error past the new ``validate_id`` guard).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
+#: A well-formed but non-existent ``feat-NNN-slug`` folder name (``feat``'s own id shape).
+_MISSING_FEAT_ID = "feat-999-does-not-exist"
+
+#: The corrupted on-disk body every parse-failure case below seeds (the same corruption the
+#: ``get_<d>`` parse-failure tests use: no H1 heading at all, so every domain's parser fails at
+#: the markdown engine level, before any domain-specific section validation).
+_BROKEN_BODY = "not a valid document, no headings at all\n"
+
+#: The core parse defect ``_BROKEN_BODY`` produces in every domain's parse error text.
+_CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
+
+
+@dataclass(frozen=True)
+class _ParseFailureCase:
+    """Per-domain test data for the parse-failure (Bug 1) coverage of the generic ``update`` tool.
+
+    The 11 flat-file domains; ``feat`` carries the same coverage in its own separate case
+    shape (folder + ``README.md``), mirroring this module's existing split of ``feat`` out
+    of the flat-file ``_CASES`` loop.
+    """
+
+    doc_type: str
+    create: Callable[[str], Any]
+    not_found_error: type[Exception]
+    #: The domain's own ``list_<d>`` tool -- the consistency reference for ``error`` text.
+    list_fn: Callable[..., Any]
+    minimal_body: str
+    #: A valid whole-body (and range-fragment) replacement body for the domain.
+    valid_content: str
+
+
+_PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
+    _ParseFailureCase("req", create_req, ReqNotFoundError, list_req, _REQ_MINIMAL_BODY, _REQ_UPDATED_BODY),
+    _ParseFailureCase("uc", create_uc, UcNotFoundError, list_uc, _UC_MINIMAL_BODY, _UC_UPDATED_BODY),
+    _ParseFailureCase("tsk", create_tsk, TskNotFoundError, list_tsk, _TSK_MINIMAL_BODY, _TSK_UPDATED_BODY),
+    _ParseFailureCase("qa", create_qa, QaNotFoundError, list_qa, _QA_MINIMAL_BODY, _QA_UPDATED_BODY),
+    _ParseFailureCase("prb", create_prb, PrbNotFoundError, list_prb, _PRB_MINIMAL_BODY, _PRB_UPDATED_BODY),
+    _ParseFailureCase("gol", create_gol, GolNotFoundError, list_gol, _GOL_MINIMAL_BODY, _GOL_UPDATED_BODY),
+    _ParseFailureCase("rsk", create_rsk, RskNotFoundError, list_rsk, _RSK_MINIMAL_BODY, _RSK_UPDATED_BODY),
+    _ParseFailureCase("dec", create_dec, DecNotFoundError, list_dec, _DEC_MINIMAL_BODY, _DEC_UPDATED_BODY),
+    _ParseFailureCase("sop", create_sop, SopNotFoundError, list_sop, _SOP_MINIMAL_BODY, _SOP_UPDATED_BODY),
+    _ParseFailureCase("vcr", create_vcr, VcrNotFoundError, list_vcr, _VCR_MINIMAL_BODY, _VCR_UPDATED_BODY),
+    _ParseFailureCase("sysrs", create_sysrs, SysrsNotFoundError, list_sysrs, _SYSRS_MINIMAL_BODY, _SYSRS_UPDATED_BODY),
+]
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -1063,8 +1120,9 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
-    def test_status_not_settable_through_update(self) -> None:
-        """A YAML frontmatter block smuggled into ``content`` must fail validation, leaving the file untouched."""
+    def test_status_not_settable_through_update_returns_validate_failure_and_leaves_file_byte_identical(self) -> None:
+        """A YAML frontmatter block smuggled into ``content`` must fail validation with the non-raising
+        ``ValidateResult(valid=False, ...)`` (feat-170 Phase 120, Bug 2), leaving the file byte-identical."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
@@ -1072,40 +1130,59 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                 before = path.read_text(encoding="utf-8")
                 smuggled = "---\nstatus: accepted\n---\n" + case.updated_body
 
-                with self.assertRaises(AssertionError):
-                    update(id=created.id, type=case.doc_type, content=smuggled)
+                result = update(id=created.id, type=case.doc_type, content=smuggled)
 
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(f"{case.doc_type} update (body): ", message)
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
-    def test_structural_failure_raises_and_leaves_file_byte_identical(self) -> None:
-        """A structurally invalid whole body must raise ``AssertionError``, leaving the file byte-identical."""
+    def test_structural_failure_returns_validate_failure_and_leaves_file_byte_identical(self) -> None:
+        """A structurally invalid whole body must return the non-raising ``ValidateResult(valid=False, ...)``
+        (feat-170 Phase 120, Bug 2), leaving the file byte-identical."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case)
                 before = path.read_text(encoding="utf-8")
 
-                with self.assertRaises(AssertionError):
-                    update(id=created.id, type=case.doc_type, content=_MALFORMED_BODY)
+                result = update(id=created.id, type=case.doc_type, content=_MALFORMED_BODY)
 
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(f"{case.doc_type} update (body): ", message)
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
-    def test_field_validation_failure_raises_and_leaves_file_byte_identical(self) -> None:
-        """An out-of-vocabulary field value must raise, leaving the file byte-identical (per-type error type)."""
+    def test_field_validation_failure_returns_validate_failure_and_leaves_file_byte_identical(self) -> None:
+        """An out-of-vocabulary field value must return the non-raising ``ValidateResult(valid=False, ...)``
+        (feat-170 Phase 120, Bug 2), leaving the file byte-identical -- both the
+        ``pydantic.ValidationError`` and the structural ``AssertionError`` channels funnel into the same
+        returned shape (the per-type exception distinction disappears in the RETURN shape, though the
+        message content still differs)."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case)
                 before = path.read_text(encoding="utf-8")
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
-                with self.assertRaises(expected_error):
-                    update(
-                        id=created.id,
-                        type=case.doc_type,
-                        content=_field_error_body(case, case.minimal_body),
-                    )
+                result = update(
+                    id=created.id,
+                    type=case.doc_type,
+                    content=_field_error_body(case, case.minimal_body),
+                )
 
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(f"{case.doc_type} update (body): ", message)
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
     def test_raises_domain_not_found_for_unknown_id(self) -> None:
@@ -1281,50 +1358,63 @@ class TestUpdateRange(TempDocsDirTestCase):
                 self.assertIn("limit", str(ctx.exception))
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
-    def test_range_deleting_the_h1_raises_and_leaves_file_untouched(self) -> None:
-        """A range deleting the H1 must raise ``AssertionError`` (structural), leaving the file untouched."""
+    def test_range_deleting_the_h1_returns_validate_failure_and_leaves_file_untouched(self) -> None:
+        """A range deleting the H1 must return the non-raising ``ValidateResult(valid=False, ...)``
+        (structural; feat-170 Phase 120, Bug 2), leaving the file untouched."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case)
                 before = path.read_text(encoding="utf-8")
 
-                with self.assertRaises(AssertionError):
-                    update(id=created.id, type=case.doc_type, content="", offset=1, limit=1)
+                result = update(id=created.id, type=case.doc_type, content="", offset=1, limit=1)
 
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(f"{case.doc_type} update (body): ", message)
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
-    def test_range_producing_out_of_vocabulary_value_raises_and_leaves_file_untouched(self) -> None:
-        """A range producing an out-of-vocabulary field value must raise, leaving the file untouched (per-type error)."""
+    def test_range_producing_out_of_vocabulary_value_returns_validate_failure_and_leaves_file_untouched(self) -> None:
+        """A range producing an out-of-vocabulary field value must return the non-raising
+        ``ValidateResult(valid=False, ...)`` (feat-170 Phase 120, Bug 2), leaving the file untouched --
+        both the ``pydantic.ValidationError`` and the structural ``AssertionError`` channels funnel into
+        the same returned shape (the per-type exception distinction disappears in the RETURN shape,
+        though the message content still differs)."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case)
                 before = path.read_text(encoding="utf-8")
                 lines = body_text(path).splitlines()
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
                 if case.field_error_is_append:
                     n = len(lines)
-                    with self.assertRaises(expected_error):
-                        update(
-                            id=created.id,
-                            type=case.doc_type,
-                            content=case.field_error_fragment,
-                            offset=n + 1,
-                            limit=0,
-                        )
+                    result = update(
+                        id=created.id,
+                        type=case.doc_type,
+                        content=case.field_error_fragment,
+                        offset=n + 1,
+                        limit=0,
+                    )
                 else:
                     k = _line_no(lines, case.field_error_marker)
-                    with self.assertRaises(expected_error):
-                        update(
-                            id=created.id,
-                            type=case.doc_type,
-                            content=case.field_error_fragment,
-                            offset=k,
-                            limit=1,
-                        )
+                    result = update(
+                        id=created.id,
+                        type=case.doc_type,
+                        content=case.field_error_fragment,
+                        offset=k,
+                        limit=1,
+                    )
 
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(f"{case.doc_type} update (body): ", message)
                 self.assertEqual(path.read_text(encoding="utf-8"), before)
 
     def test_range_mode_raises_domain_not_found_for_unknown_id(self) -> None:
@@ -1460,6 +1550,343 @@ class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
                     update(id=doc_id, type=case.doc_type, content=case.minimal_body)
 
                 spy.assert_any_call(base_dir, path)
+
+
+class TestUpdateParseFailure(TempUpdateInjectionDirTestCase):
+    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
+    domain's ``XNotFoundError``) in both whole-body and range modes, with nothing written to
+    disk -- the ``error`` carries the same parse defect as the domain's own ``list_<d>``
+    failed row for the same file (the ``get_<d>`` precedent, ADR 9080b37c). ``feat`` carries
+    the same coverage in its own separate case shape (folder + ``README.md``), mirroring this
+    module's existing split of ``feat`` out of the flat-file ``_CASES`` loop.
+
+    A truly-absent id still raises the domain's own not-found error (REQ-002): the 11
+    flat-file domains' regression is this module's existing
+    ``TestUpdateWholeBody``/``TestUpdateRange`` unknown-id tests (unchanged by this phase);
+    the ``feat`` domain's own missing-id regression -- absent from this module before this
+    phase -- is added below.
+    """
+
+    def _assert_parse_failure_result(self, list_fn: Callable[..., Any], path: Path, doc_id: str, result: Any) -> None:
+        """The shared result-shape and list-row consistency assertions (the ``get_<d>`` precedent)."""
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, doc_id)
+        self.assertEqual(result.path, str(path.resolve()))
+        self.assertTrue(result.error)
+        failed = [summary for summary in list_fn().results if summary.title == "<failed to parse>"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn(_CORE_DEFECT, result.error)
+        self.assertIn(_CORE_DEFECT, failed[0].error)
+
+    def test_broken_document_whole_body_returns_parse_failure_result_nothing_written(self) -> None:
+        """Whole-body mode against a broken existing document must return ``ParseFailureResult``; the file
+        stays byte-unchanged (the valid submitted content is NOT written over the corruption)."""
+        for case in _PARSE_FAILURE_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = update(id=doc_id, type=case.doc_type, content=case.valid_content)
+
+                self._assert_parse_failure_result(case.list_fn, path, doc_id, result)
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_broken_document_range_returns_parse_failure_result_nothing_written(self) -> None:
+        """Range mode against a broken existing document must return ``ParseFailureResult`` (the protected
+        ``load_by_id`` runs before any coordinate validation); the file stays byte-unchanged."""
+        for case in _PARSE_FAILURE_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = update(id=doc_id, type=case.doc_type, content=case.valid_content, offset=1, limit=1)
+
+                self._assert_parse_failure_result(case.list_fn, path, doc_id, result)
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_broken_document_whole_body_returns_parse_failure_result_nothing_written(self) -> None:
+        """``feat`` (separate case shape: folder + ``README.md``), whole-body mode."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        path.write_text(_BROKEN_BODY, encoding="utf-8")
+        before = path.read_bytes()
+
+        result = update(id=doc_id, type="feat", content=_FEAT_MINIMAL_BODY)
+
+        self._assert_parse_failure_result(list_feat, path, doc_id, result)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_broken_document_range_returns_parse_failure_result_nothing_written(self) -> None:
+        """``feat`` (separate case shape: folder + ``README.md``), range mode."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        path.write_text(_BROKEN_BODY, encoding="utf-8")
+        before = path.read_bytes()
+
+        result = update(id=doc_id, type="feat", content=_FEAT_MINIMAL_BODY, offset=1, limit=1)
+
+        self._assert_parse_failure_result(list_feat, path, doc_id, result)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_missing_id_still_raises_domain_not_found(self) -> None:
+        """REQ-002 regression (``feat``): a truly-absent id still raises ``FeatNotFoundError`` in both modes."""
+        create_feat(_FEAT_MINIMAL_BODY)
+
+        with self.assertRaises(FeatNotFoundError):
+            update(id=_MISSING_FEAT_ID, type="feat", content=_FEAT_MINIMAL_BODY)
+        with self.assertRaises(FeatNotFoundError):
+            update(id=_MISSING_FEAT_ID, type="feat", content="frag", offset=1, limit=1)
+
+
+class TestUpdateValidateFailure(TempUpdateInjectionDirTestCase):
+    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): genuinely invalid new
+    content against a healthy existing document must return the non-raising
+    ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
+    exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with
+    nothing written to disk: whole-body mode (the pre-lock validation branch) and range mode (the
+    in-lock, post-splice validation branch) alike. All 12 whole-body domains; ``feat`` carries
+    the same coverage in its own separate case shape (folder + ``README.md``), mirroring this
+    module's existing split of ``feat`` out of the flat-file ``_CASES`` loop.
+
+    The combined-failure case (REQ-010/ACC-007: broken existing document AND invalid submitted
+    content) pins the mode-dependent Bug-1/Bug-2 precedence: whole-body ``update`` validates
+    pre-lock and returns ``ValidateResult``; range ``update`` loads first and returns
+    ``ParseFailureResult`` (the invalid content is never reached).
+    """
+
+    def _assert_validate_failure(self, doc_type: str, before: bytes, path: Path, result: Any) -> None:
+        """The shared Bug-2 result-shape assertions: the non-raising ``ValidateResult`` shape,
+        the capped message carrying the per-domain ``wrap_tool_errors`` prefix, and the
+        byte-identical file (nothing written)."""
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn(f"{doc_type} update (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_whole_body_invalid_content_returns_validate_failure_nothing_written(self) -> None:
+        """Whole-body mode: each domain's structural and field-error invalid bodies return
+        ``ValidateResult(valid=False, ...)``; the file stays byte-identical (``updated`` not bumped)."""
+        for case in _CASES:
+            created = case.create(case.minimal_body)
+            path = self._doc_path(case, created.id)
+            before = path.read_bytes()
+            for label, content in (
+                ("structural", _MALFORMED_BODY),
+                ("field-error", _field_error_body(case, case.minimal_body)),
+            ):
+                with self.subTest(doc_type=case.doc_type, invalid=label):
+                    result = update(id=created.id, type=case.doc_type, content=content)
+
+                    self._assert_validate_failure(case.doc_type, before, path, result)
+
+    def test_range_invalid_splice_returns_validate_failure_nothing_written(self) -> None:
+        """Range mode: a splice reproducing the per-domain field error (the same construction the
+        converted range test uses) returns ``ValidateResult(valid=False, ...)``; the file stays
+        byte-identical (``updated`` not bumped)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+                lines = body_text(path).splitlines()
+
+                if case.field_error_is_append:
+                    n = len(lines)
+                    result = update(
+                        id=created.id,
+                        type=case.doc_type,
+                        content=case.field_error_fragment,
+                        offset=n + 1,
+                        limit=0,
+                    )
+                else:
+                    k = _line_no(lines, case.field_error_marker)
+                    result = update(
+                        id=created.id,
+                        type=case.doc_type,
+                        content=case.field_error_fragment,
+                        offset=k,
+                        limit=1,
+                    )
+
+                self._assert_validate_failure(case.doc_type, before, path, result)
+
+    def test_whole_body_long_message_is_capped_at_the_validate_limit(self) -> None:
+        """The single ``errors[].message`` is capped exactly as ``validate`` caps it (issue #110):
+        300 chars via ``snippet`` plus the ``"... (truncated)"`` suffix -- mirrors
+        ``test_validate.py``'s own duplicate-H1 repro through the ``update`` tool."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        filler = (
+            "Filler text to exceed five hundred characters in the description field so the "
+            "parser has enough content before the duplicate heading appears further down in "
+            "this fixture body. "
+        ) * 3
+        long_invalid_body = (
+            "# Maximum Engine Temperature\n\n"
+            "WHILE the engine is running, THE temperature must be a maximum of 80 \u00b0C.\n\n"
+            "## Description\n\n"
+            f"{filler}\n\n"
+            "# Duplicate Invalid Heading\n\n"
+            "More filler text after the duplicate heading, so the unmatched remainder is "
+            "itself long enough for the embedded snippet() call inside the parser error "
+            "message to also hit its own 300-character/5-line cap, pushing the overall "
+            "update() message comfortably past 300 characters even after prefixing.\n"
+        )
+        created = case.create(case.minimal_body)
+        path = self._doc_path(case, created.id)
+        before = path.read_bytes()
+
+        result = update(id=created.id, type="req", content=long_invalid_body)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_combined_failure_whole_body_returns_validate_failure(self) -> None:
+        """REQ-010/ACC-007: broken existing document AND invalid submitted content -- whole-body
+        ``update`` validates the submitted content pre-lock, before taking the lock or loading the
+        existing document, so it returns ``ValidateResult(valid=False, ...)`` (the Phase-110
+        ``ParseFailureResult`` branch is never reached); the file stays byte-identical (still
+        broken)."""
+        for case in _PARSE_FAILURE_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = update(id=doc_id, type=case.doc_type, content=_MALFORMED_BODY)
+
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                self.assertIn(f"{case.doc_type} update (body): ", result.errors[0].message)
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_combined_failure_range_returns_parse_failure_result(self) -> None:
+        """REQ-010/ACC-007: the same combined input in range mode -- ``load_by_id`` runs first
+        (inside the lock, before any splice or validation), so its Phase-110 protected branch
+        returns ``ParseFailureResult`` (the invalid content is never reached); the file stays
+        byte-identical (still broken)."""
+        for case in _PARSE_FAILURE_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = update(id=doc_id, type=case.doc_type, content=_MALFORMED_BODY, offset=1, limit=1)
+
+                self.assertIsInstance(result, ParseFailureResult)
+                self.assertEqual(result.id, doc_id)
+                self.assertEqual(result.path, str(path.resolve()))
+                self.assertIn(_CORE_DEFECT, result.error)
+                failed = [summary for summary in case.list_fn().results if summary.title == "<failed to parse>"]
+                self.assertEqual(len(failed), 1)
+                self.assertEqual(result.error, failed[0].error)
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_whole_body_invalid_content_returns_validate_failure_nothing_written(self) -> None:
+        """``feat`` (separate case shape: folder + ``README.md``), whole-body mode: the structural
+        and field-error invalid bodies return ``ValidateResult(valid=False, ...)``."""
+        for number, (label, content) in enumerate(
+            (
+                (
+                    "structural",
+                    _MALFORMED_BODY,
+                ),
+                (
+                    "field-error",
+                    _FEAT_MINIMAL_BODY.replace(
+                        "- REQ-001: The widget must render within 200ms.", "- Not a requirement at all."
+                    ),
+                ),
+            ),
+            start=1,
+        ):
+            with self.subTest(invalid=label):
+                # Explicit, distinct ids: the default ``feat-0-<slug-from-title>`` id would collide
+                # between the two sub-cases of this one test's shared temp ``SPECMGR_FEAT_DIR``.
+                created = create_feat(_FEAT_MINIMAL_BODY, id=f"feat-{number}-example-widget-{label}")
+                doc_id = created.id
+                path = feat_base_dir() / doc_id / "README.md"
+                before = path.read_bytes()
+
+                result = update(id=doc_id, type="feat", content=content)
+
+                self._assert_validate_failure("feat", before, path, result)
+
+    def test_feat_range_invalid_splice_returns_validate_failure_nothing_written(self) -> None:
+        """``feat`` (separate case shape), range mode: a splice replacing the requirement bullet
+        with an invalid one returns ``ValidateResult(valid=False, ...)``."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        before = path.read_bytes()
+        lines = body_text(path).splitlines()
+        k = _line_no(lines, "- REQ-001: The widget must render within 200ms.")
+
+        result = update(id=doc_id, type="feat", content="- Not a requirement at all.", offset=k, limit=1)
+
+        self._assert_validate_failure("feat", before, path, result)
+
+    def test_feat_combined_failure_whole_body_returns_validate_failure(self) -> None:
+        """``feat`` (separate case shape), REQ-010/ACC-007 whole-body precedence: broken document
+        AND invalid content return ``ValidateResult(valid=False, ...)``."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        path.write_text(_BROKEN_BODY, encoding="utf-8")
+        before = path.read_bytes()
+
+        result = update(id=doc_id, type="feat", content=_MALFORMED_BODY)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("feat update (body): ", result.errors[0].message)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_feat_combined_failure_range_returns_parse_failure_result(self) -> None:
+        """``feat`` (separate case shape), REQ-010/ACC-007 range precedence: broken document AND
+        invalid content return ``ParseFailureResult`` (``load_by_id`` runs first)."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+        doc_id = created.id
+        path = feat_base_dir() / doc_id / "README.md"
+        path.write_text(_BROKEN_BODY, encoding="utf-8")
+        before = path.read_bytes()
+
+        result = update(id=doc_id, type="feat", content=_MALFORMED_BODY, offset=1, limit=1)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, doc_id)
+        self.assertEqual(result.path, str(path.resolve()))
+        self.assertIn(_CORE_DEFECT, result.error)
+        failed = [summary for summary in list_feat().results if summary.title == "<failed to parse>"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(result.error, failed[0].error)
+        self.assertEqual(path.read_bytes(), before)
 
 
 if __name__ == "__main__":

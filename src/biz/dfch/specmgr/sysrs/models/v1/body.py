@@ -88,42 +88,8 @@ from ....models.md import (
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN, validate_cross_reference_items
 from ....models.md._ordering import validate_newest_first
-
-#: The standard lowercase 8-4-4-4-12 hex UUID shape, shared by every
-#: cross-reference section's item-text pattern below -- the same
-#: uuid-fragment style as the shipped `vcr` precedent
-#: (`vcr.models.v1.body._VERIFIES_PATTERN`).
-_UUID_PATTERN = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-
-
-def _validate_cross_reference_items(
-    items: list[MarkdownListItemWithNotes], pattern: str
-) -> list[MarkdownListItemWithNotes]:
-    """Enforce `pattern` against every item's `.text` (shared by every cross-reference list class below).
-
-    `re.DOTALL` is required: an item's `.text` keeps the embedded newline of
-    a soft-wrapped bullet line (`mdformat` does not reflow), and `.` would
-    not otherwise match it -- confirmed empirically in Phase 1 (Task 1.1).
-    The pattern itself is otherwise a plain `re.fullmatch` against the exact
-    `<ALLOWED-TYPE-TAG(S)> <uuid>: <title>` shape.
-
-    Args:
-        items: The list's already-list-level-validated items (e.g.
-            `Field(min_length=1)` has already run).
-        pattern: The calling class's own module-level pattern constant.
-
-    Returns:
-        `items`, unchanged, once every item matches.
-
-    Raises:
-        ValueError: some item's `.text` does not fullmatch `pattern` --
-            channeled by Pydantic into `pydantic.ValidationError`.
-    """
-    for item in items:
-        if not re.fullmatch(pattern, item.text, re.DOTALL):
-            raise ValueError(f"item must match pattern {pattern!r}, got {item.text!r}")
-    return items
 
 
 class SystemPurpose(MarkdownSection2):
@@ -149,7 +115,7 @@ class BusinessContext(MarkdownSection3):
 
 
 #: Matches `### Goals`' bullet item text: `GOL <uuid>: <title>` (REQ-006).
-_GOALS_PATTERN = rf"^GOL {_UUID_PATTERN}: .+$"
+_GOALS_PATTERN = rf"^GOL {UUID_PATTERN}: .+$"
 
 
 class Goals(MarkdownSection3):
@@ -174,11 +140,11 @@ class Goals(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _GOALS_PATTERN)
+        return validate_cross_reference_items(items, _GOALS_PATTERN)
 
 
 #: Matches `### Problem Statement`'s bullet item text: `PRB <uuid>: <title>`.
-_PROBLEM_STATEMENT_PATTERN = rf"^PRB {_UUID_PATTERN}: .+$"
+_PROBLEM_STATEMENT_PATTERN = rf"^PRB {UUID_PATTERN}: .+$"
 
 
 class ProblemStatement(MarkdownSection3):
@@ -201,7 +167,7 @@ class ProblemStatement(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _PROBLEM_STATEMENT_PATTERN)
+        return validate_cross_reference_items(items, _PROBLEM_STATEMENT_PATTERN)
 
 
 @alias(value="Business Context and Goals", type=AliasType.LITERAL)
@@ -242,7 +208,7 @@ class BusinessContextAndGoals(MarkdownSection2):
 
 
 #: Matches `## Stakeholder Needs and Elicitation`'s bullet item text: `QA <uuid>: <title>`.
-_STAKEHOLDER_NEEDS_PATTERN = rf"^QA {_UUID_PATTERN}: .+$"
+_STAKEHOLDER_NEEDS_PATTERN = rf"^QA {UUID_PATTERN}: .+$"
 
 
 @alias(value="Stakeholder Needs and Elicitation", type=AliasType.LITERAL)
@@ -270,11 +236,11 @@ class StakeholderNeedsAndElicitation(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _STAKEHOLDER_NEEDS_PATTERN)
+        return validate_cross_reference_items(items, _STAKEHOLDER_NEEDS_PATTERN)
 
 
 #: Matches `## Operational Concept and Scenarios`'s bullet item text: `UC <uuid>: <title>`.
-_OPERATIONAL_CONCEPT_PATTERN = rf"^UC {_UUID_PATTERN}: .+$"
+_OPERATIONAL_CONCEPT_PATTERN = rf"^UC {UUID_PATTERN}: .+$"
 
 
 @alias(value="Operational Concept and Scenarios", type=AliasType.LITERAL)
@@ -302,12 +268,12 @@ class OperationalConceptAndScenarios(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _OPERATIONAL_CONCEPT_PATTERN)
+        return validate_cross_reference_items(items, _OPERATIONAL_CONCEPT_PATTERN)
 
 
 #: Matches `## Decisions`'s bullet item text: `DEC <uuid>: <title>` OR `ADR <uuid>: <title>`
 #: (real `sysrs` documents may cross-reference either `dec` or `adr` ids, decided 2026-08-30).
-_DECISIONS_PATTERN = rf"^(DEC|ADR) {_UUID_PATTERN}: .+$"
+_DECISIONS_PATTERN = rf"^(DEC|ADR) {UUID_PATTERN}: .+$"
 
 
 class Decisions(MarkdownSection2):
@@ -332,11 +298,11 @@ class Decisions(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _DECISIONS_PATTERN)
+        return validate_cross_reference_items(items, _DECISIONS_PATTERN)
 
 
 #: Matches `## Risks`'s bullet item text: `RSK <uuid>: <title>`.
-_RISKS_PATTERN = rf"^RSK {_UUID_PATTERN}: .+$"
+_RISKS_PATTERN = rf"^RSK {UUID_PATTERN}: .+$"
 
 
 class Risks(MarkdownSection2):
@@ -358,7 +324,7 @@ class Risks(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _RISKS_PATTERN)
+        return validate_cross_reference_items(items, _RISKS_PATTERN)
 
 
 @alias(value="Assumptions and Dependencies", type=AliasType.LITERAL)
@@ -450,7 +416,7 @@ class SystemModesAndStates(MarkdownSection2):
 
 #: Matches every `## Requirements`/`## Other Characteristics` H3's bullet item
 #: text: `REQ <uuid>: <title>` (REQ-006).
-_REQ_PATTERN = rf"^REQ {_UUID_PATTERN}: .+$"
+_REQ_PATTERN = rf"^REQ {UUID_PATTERN}: .+$"
 
 
 class FunctionalSuitability(MarkdownSection3):
@@ -473,7 +439,7 @@ class FunctionalSuitability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class PerformanceEfficiency(MarkdownSection3):
@@ -496,7 +462,7 @@ class PerformanceEfficiency(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Compatibility(MarkdownSection3):
@@ -519,7 +485,7 @@ class Compatibility(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class InteractionCapability(MarkdownSection3):
@@ -542,7 +508,7 @@ class InteractionCapability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Reliability(MarkdownSection3):
@@ -564,7 +530,7 @@ class Reliability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Security(MarkdownSection3):
@@ -586,7 +552,7 @@ class Security(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Maintainability(MarkdownSection3):
@@ -608,7 +574,7 @@ class Maintainability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Flexibility(MarkdownSection3):
@@ -631,7 +597,7 @@ class Flexibility(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Safety(MarkdownSection3):
@@ -654,7 +620,7 @@ class Safety(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Requirements(MarkdownSection2):
@@ -741,7 +707,7 @@ class PhysicalCharacteristics(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class EnvironmentalConditions(MarkdownSection3):
@@ -764,7 +730,7 @@ class EnvironmentalConditions(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class InformationManagement(MarkdownSection3):
@@ -787,7 +753,7 @@ class InformationManagement(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 @alias(value="Policy and Regulation", type=AliasType.LITERAL)
@@ -815,7 +781,7 @@ class PolicyAndRegulation(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class SystemLifeCycleSustainment(MarkdownSection3):
@@ -838,7 +804,7 @@ class SystemLifeCycleSustainment(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 @alias(value="Packaging, Handling, Shipping and Transportation", type=AliasType.LITERAL)
@@ -867,7 +833,7 @@ class PackagingHandlingShippingAndTransportation(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class OtherCharacteristics(MarkdownSection2):
@@ -909,7 +875,7 @@ class OtherCharacteristics(MarkdownSection2):
 
 
 #: Matches `## Verification`'s bullet item text: `VCR <uuid>: <title>`.
-_VERIFICATION_PATTERN = rf"^VCR {_UUID_PATTERN}: .+$"
+_VERIFICATION_PATTERN = rf"^VCR {UUID_PATTERN}: .+$"
 
 
 class Verification(MarkdownSection2):
@@ -932,7 +898,7 @@ class Verification(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _VERIFICATION_PATTERN)
+        return validate_cross_reference_items(items, _VERIFICATION_PATTERN)
 
 
 class References(MarkdownSection2):

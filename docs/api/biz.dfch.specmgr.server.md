@@ -308,11 +308,15 @@ the generic, disk-free/id-free dry-run content validator for the
 whole-body domains (``type`` is one of
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
 ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
-former per-domain ``validate_<d>`` tools; unlike every other generic
-tool above, it never raises for a content-validation failure -- it always
-returns ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty
-when ``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
-content-shape mismatch or an unsupported ``type``;
+former per-domain ``validate_<d>`` tools; it is the one generic tool
+above whose entire surface is non-raising structured results: it never
+raises for a content-validation failure -- it always returns
+``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty when
+``valid`` is ``True``), only raising ``ValueError`` for a ``full``/
+content-shape mismatch or an unsupported ``type`` (the four generic
+mutation tools' non-raising branches, above, cover
+content-validation and existing-document-parse-failure only -- their
+caller-usage errors still raise);
 ``find_related`` -- find the documents most semantically related to an
 existing document, given its ``type``/``id``, across every whole-body domain
 (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
@@ -372,15 +376,29 @@ whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec`
 ``feat``/``vcr``/``sysrs``; ``get_adr`` excluded) additionally returns a
 structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
 document that exists but fails to parse, instead of raising the domain's
-not-found error -- the ``error`` text carries the same parse defect as that
+not-found error -- the ``error`` text is byte-identical to that
 domain's ``list_<d>`` tool's failed-row ``error`` for the same file (identical
-field path and cause; the trailing pydantic documentation line may differ by
-read order/cache state -- Option B, 2026-09-26, follow-up issue #162), and
+field path and cause, including the trailing pydantic documentation line --
+feat-162-doc-cache-exception-footer, GitHub issue #162), and
 ``raw=True`` on a broken
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
 extension of the ADR 519d1206 client-side-``isError``-truncation workaround
-chain after ``validate`` and ``set_status``'s invalid-status case.
+chain after ``validate`` and ``set_status``'s invalid-status case. A fourth
+extension (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f) adds the same non-raising
+``ParseFailureResult`` to the generic ``update``/``edit``/``set_status``/
+``set_classification`` tools for an existing-but-broken target document
+(the per-domain adapters catch the ``load_by_id`` failure, probe the same
+parse-failure lookup, and return the result -- a truly-absent id still
+raises the domain's not-found error), and ``update``/``edit`` additionally
+return the non-raising ``ValidateResult`` for a content-validation failure
+on the submitted new content / post-edit result instead of raising
+``AssertionError``/``pydantic.ValidationError`` (the single
+``errors[].message`` capped at 300 chars as ``validate`` caps it, feat-110;
+every caller-usage ``ValueError`` still raises, and
+``set_status``'s own ``InvalidStatusResult`` check still runs
+pre-lock/pre-load first).
 
 Prompts
 -------
@@ -470,7 +488,7 @@ Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``feat``, ``vcr``, ``sysrs``, and later ``ac``) is a
+``feat``, ``vcr``, ``sysrs``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``

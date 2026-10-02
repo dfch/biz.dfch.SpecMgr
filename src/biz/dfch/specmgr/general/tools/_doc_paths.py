@@ -98,17 +98,22 @@ exactly that case: it scans for the single file whose stem encodes the id
 and returns ``(path, str(exc))`` when that read raises a parse error, so
 ``get_<d>`` can return a non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` whose ``error``
-text carries the same parse defect as the domain's ``list_<d>`` failed-row ``error``
+text is byte-identical to the domain's ``list_<d>`` failed-row ``error``
 (both are ``str()`` of the same exception from the same reader -- identical field
-path and cause; the trailing pydantic documentation line may differ by read
-order/cache state, since the ``DocCache``'s exception reconstruction drops it
-on warm re-raises -- Option B, 2026-09-26, follow-up issue #162). It returns
+path and cause, including the trailing pydantic documentation line --
+feat-162-doc-cache-exception-footer, GitHub issue #162, fixed ``DocCache``'s
+exception reconstruction to preserve that footer on a warm re-raise). It returns
 ``None`` otherwise (no name match, a vanished file, or a name-matching file
 that parses cleanly), leaving the caller to re-raise its original not-found
 error unchanged. It does not alter :func:`find_doc_path_by_id`'s documented
-skip behavior; ``update``/``delete``/``set_status``/
-``set_classification``/``validate``/``list_references`` keep raising exactly
-as before.
+skip behavior; of the generic id-resolving tools, only ``delete``,
+``validate``, and ``list_references`` keep raising exactly as before on a
+broken target -- ``update``/``edit``/``set_status``/
+``set_classification`` now return the non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` via this probe
+on their own ``XNotFoundError`` catch (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the
+ADR 519d1206-4d2a-4500-9046-6db635209996 workaround chain).
 """
 
 from __future__ import annotations
@@ -382,12 +387,12 @@ def find_parse_failure(
     ``(path, str(exc))`` if that read raises a parse error
     (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError`` --
     the same channels :func:`general.tools._listing.build_summaries` catches
-    for the ``list_<d>`` failed row, so ``str(exc)`` here carries the same
-    parse defect as that row's ``error`` field -- identical field path and
-    cause; the trailing pydantic documentation line may differ by read
-    order/cache state, since the ``DocCache``'s exception reconstruction
-    drops it on warm re-raises -- Option B, 2026-09-26, follow-up issue
-    #162). It returns ``None`` for every other
+    for the ``list_<d>`` failed row, so ``str(exc)`` here is byte-identical
+    to that row's ``error`` field -- identical field path and cause,
+    including the trailing pydantic documentation line, since
+    feat-162-doc-cache-exception-footer (GitHub issue #162) fixed
+    ``DocCache``'s exception reconstruction to preserve that footer on a
+    warm re-raise). It returns ``None`` for every other
     outcome -- no name match, a name-matching file that vanishes mid-scan
     (``FileNotFoundError``), or a name-matching file that parses cleanly
     (a frontmatter-id mismatch, i.e. the file is not the requested document)
@@ -397,7 +402,12 @@ def find_parse_failure(
     9080b37c-82b3-4f63-81f1-79641d0bf14c: the ``get_<d>`` tools call this on
     the domain's ``XNotFoundError`` and return a non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
-    non-``None`` result.
+    non-``None`` result. The four generic mutation tools
+    (``update``/``edit``/``set_status``/``set_classification``) now call it
+    the same way from their own per-domain adapters on the same catch
+    (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+    chain), with the same ``read_fn``/``assert_within`` mirroring.
 
     Parameters
     ----------

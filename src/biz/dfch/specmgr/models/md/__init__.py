@@ -49,6 +49,10 @@ from .common_sections import (
     ConsultedBase,
     InformedBase,
     RolesAndResponsibilitiesBase,
+    RequirementsBase,
+    DecisionsBase,
+    GoalsBase,
+    RisksBase,
 )
 
 __all__ = [
@@ -85,4 +89,8 @@ __all__ = [
     "ConsultedBase",
     "InformedBase",
     "RolesAndResponsibilitiesBase",
+    "RequirementsBase",
+    "DecisionsBase",
+    "GoalsBase",
+    "RisksBase",
 ]

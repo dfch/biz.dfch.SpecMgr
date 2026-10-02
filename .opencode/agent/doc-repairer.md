@@ -41,11 +41,13 @@ tool to ask for a clean pair rather than guessing.
 You use the specmgr MCP tools for discovery, diagnosis, validation, and
 confirmation, and your **own host file `read`/`write` tools** for the raw
 read and the write-back. No specmgr MCP tool can return the raw content of
-a document that fails to parse (`get_<d>` with `raw=True` and the generic
-`update` (or `edit`) tool both re-parse the existing document first, and
-their per-domain adapters convert that parse failure into the domain's
-not-found error before anything is written) -- so the raw read and the
-write-back must be host-native.
+a document that fails to parse (`get_<d>` with `raw=True` returns the
+non-raising parse-failure result for such a document instead of its raw
+text, and the generic `update` (or `edit`) tool re-parses the existing
+document before it can write anything, returning the non-raising
+`ParseFailureResult` for a broken one instead of writing or raising -- a
+truly-absent id still raises the domain's not-found error) -- so the raw
+read and the write-back must be host-native.
 
 ## Workflow
 
@@ -53,10 +55,9 @@ write-back must be host-native.
    - With an `id`: call `get_<type>(id)`. A document that exists but fails
      to parse is returned, not raised: the result carries `error` (the
      parse-failure message -- field path and cause, plus a 1-based line
-      reference and fix hint for structural failures -- the same parse
-      defect `list_<type>()`'s failed row carries; the trailing pydantic
-      documentation line may differ by read order, so treat the two as the
-      same defect, not byte-equal text) and `path` (the absolute on-disk
+      reference and fix hint for structural failures -- byte-identical to
+      `list_<type>()`'s failed row, including the trailing pydantic
+      documentation line) and `path` (the absolute on-disk
      file). That `error` is the defect you will fix. If the id is truly
      absent, the call raises the domain's not-found error -- use the
      `question` tool to ask for the right id (or scan `list_<type>()`'s

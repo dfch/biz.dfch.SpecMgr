@@ -27,7 +27,6 @@ see ``body.py`` for the full hierarchy.
 
 from ._util import SCHEMA_COMMENT_VERSION
 from .body import (
-    AcceptanceCriteria,
     Confirmation,
     Consequences,
     ConsideredOptions,
@@ -42,6 +41,7 @@ from .body import (
     ProsAndCons,
     RelatedArtifacts,
     Requirements,
+    Risks,
     UpdateEntry,
     Updates,
 )
@@ -52,7 +52,6 @@ from .summary import DecSummary
 
 __all__ = [
     "SCHEMA_COMMENT_VERSION",
-    "AcceptanceCriteria",
     "Confirmation",
     "Consequences",
     "ConsideredOptions",
@@ -70,6 +69,7 @@ __all__ = [
     "ProsAndCons",
     "RelatedArtifacts",
     "Requirements",
+    "Risks",
     "UpdateEntry",
     "Updates",
     "parse_dec",

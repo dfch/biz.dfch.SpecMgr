@@ -69,6 +69,7 @@ import pydantic
 from biz.dfch.specmgr.feat.tools._io import load_by_id
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
@@ -320,10 +321,18 @@ class TestIssue71MalformedHeadingRegression(unittest.TestCase):
         before = body_text(path)
         offset = _line_number(before, _EXISTING_DECISION_HEADING)
 
-        with self.assertRaises(AssertionError) as ctx:
-            update(id=feat_id, type="feat", content=_MALFORMED_HEADING_FRAGMENT, offset=offset, limit=0)
+        # Since feat-170 Phase 120 (Bug 2), the generic `update` tool no longer raises for this
+        # content-validation failure -- it returns the non-raising `ValidateResult` whose message
+        # is capped at 300 chars exactly as `validate`'s is, so (mirroring the `validate` test
+        # above) assert only the substrings that survive the cap, plus the truncation marker.
+        result = update(id=feat_id, type="feat", content=_MALFORMED_HEADING_FRAGMENT, offset=offset, limit=0)
 
-        _assert_actionable(str(ctx.exception), "feat update (body):", _MALFORMED_HEADING_SUBSTRINGS)
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        _assert_actionable(message, "feat update (body):", _MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE)
+        self.assertTrue(message.endswith("... (truncated)"), message)
 
         # Nothing was persisted: the on-disk body is byte-identical to before the failed splice.
         self.assertEqual(before, body_text(path))
@@ -372,10 +381,16 @@ class TestIssue71NewestFirstOrderingRegression(unittest.TestCase):
         before = body_text(path)
         offset = _line_number(before, _ORDER_ACTUAL_NEWEST_HEADING)
 
-        with self.assertRaises(pydantic.ValidationError) as ctx:
-            update(id=feat_id, type="feat", content=_ORDER_VIOLATION_FRAGMENT, offset=offset, limit=0)
+        # Since feat-170 Phase 120 (Bug 2), the generic `update` tool no longer raises for this
+        # content-validation failure -- it returns the non-raising `ValidateResult` whose message
+        # is capped at 300 chars exactly as `validate`'s is; this fixture's message fits under
+        # the cap, so the full substring set is asserted, as in the `validate` test above.
+        result = update(id=feat_id, type="feat", content=_ORDER_VIOLATION_FRAGMENT, offset=offset, limit=0)
 
-        _assert_actionable(str(ctx.exception), "feat update (body):", _ORDER_VIOLATION_SUBSTRINGS)
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable(result.errors[0].message, "feat update (body):", _ORDER_VIOLATION_SUBSTRINGS)
 
         # Nothing was persisted: the on-disk body is byte-identical to before the failed splice.
         self.assertEqual(before, body_text(path))
