@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T13:39:03.210+02:00'
+updated: '2026-10-02T14:53:17.515+02:00'
 version: 1.0.0
 ---
 
@@ -49,7 +49,7 @@ regardless of shape. Tracked by
 - [ ] ACC-005: An `UpdateEntry`/`DecisionEntry` with blank/whitespace-only content under its heading still fails to parse with an `AssertionError` (non-blank requirement preserved), in all 6 domains.
 - [ ] ACC-006: `model_dump()` on a parsed document surfaces the new leaf field's real text content for a non-paragraph body, not an empty object.
 - [ ] ACC-007: The full test suite passes after every phase below, not just at the end.
-- [ ] ACC-008: `ruff format --check`, `ruff check`, and `vulture` all pass against the final state.
+- [ ] ACC-008: Each of the 4 phases ends with a passing full quality gate (`ruff format --check`, `ruff check`, `vulture`, full test suite) before that phase's own commit -- not just a single check against the final state.
 - [ ] ACC-009: Every affected domain's packaged `schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
 - [ ] ACC-010: `CHANGELOG.md` carries an entry describing the relaxation under `[Unreleased]`.
 
@@ -61,6 +61,7 @@ regardless of shape. Tracked by
 - Test additions in each domain's `tests/<domain>/models/v1/test_body.py`, plus a check (and update only if needed) of each domain's `tests/<domain>/models/v1/test_parser.py` for paragraph-specific fixtures/assertions. `tsk`'s `test_create_tsk.py` requires no change (its only `## Recent Updates` fixture is a single paragraph, verified) and is explicitly excluded.
 - Regenerated `docs/*_schema.json` and each domain's packaged `<domain>/data/<domain>_schema.json`, plus `docs/GENERATED.md`/`docs/api/`.
 - A `CHANGELOG.md` entry under `[Unreleased]`.
+- A separate commit after each of the 4 phases' own passing quality gate, rather than one final commit for the whole feature.
 
 #### Explicitly Out Of Scope
 
@@ -159,7 +160,8 @@ corrective.
 - [ ] Task 100.140: In `sop/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [ ] Task 100.150: In `sysrs/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [ ] Task 100.160: In `tsk/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [ ] Task 100.170: Run the full test suite. Must pass before moving to Phase 110.
+- [ ] Task 100.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 110.
+- [ ] Task 100.180: Commit Phase 100's changes (the 6 domains' `body.py` model retypes) before starting Phase 110.
 
 #### Phase 110: New test coverage
 
@@ -171,13 +173,15 @@ corrective.
 - [ ] Task 110.150: In `tests/tsk/models/v1/test_body.py`, do the same; also check `tests/tsk/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed. `tests/tsk/tools/test_create_tsk.py` needs no edit (its only `## Recent Updates` fixture is a single paragraph) -- confirm it still passes unmodified rather than editing it.
 - [ ] Task 110.155: For parity with Tasks 110.130/110.140/110.150's `test_parser.py` check, also check `tests/vcr/models/v1/test_parser.py`, `tests/feat/models/v1/test_parser.py`, and `tests/dec/models/v1/test_parser.py` for any paragraph-specific fixtures/assertions and update only if needed.
 - [ ] Task 110.160: Add/confirm `model_dump()` assertions covering the non-paragraph content case (ACC-006).
-- [ ] Task 110.170: Run the full test suite. Must pass before moving to Phase 120.
+- [ ] Task 110.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 120.
+- [ ] Task 110.180: Commit Phase 110's changes (the new/updated tests) before starting Phase 120.
 
 #### Phase 120: Regenerate build artifacts
 
 - [ ] Task 120.100: Run `specmgr schema` for each of the 6 domains -- two separate invocations per domain (`--output-dir docs/` and `--output-dir src/biz/dfch/specmgr/<domain>/data`), 12 invocations total, unless relying on the corresponding `specmgr-schema`/`specmgr-schema-<domain>-package` pre-commit hooks to regenerate both automatically on commit.
 - [ ] Task 120.110: Run `specmgr docs` to regenerate `docs/GENERATED.md`/`docs/api/` for the changed docstrings.
-- [ ] Task 120.120: Run the full test suite. Must pass before moving to Phase 130.
+- [ ] Task 120.120: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 130.
+- [ ] Task 120.130: Commit Phase 120's changes (the regenerated schema/docs artifacts) before starting Phase 130.
 
 #### Phase 130: CHANGELOG and final verification
 
@@ -247,6 +251,25 @@ single-paragraph examples remain valid.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T16:00:00.000Z - Full quality gate and separate commit per phase, not just at the end
+
+Considered two existing project precedents for multi-phase features: the
+lighter one (`feat-177-list-ref-feat`'s single "full quality gate" task at
+the very last phase, with only the test suite re-run per earlier phase)
+vs. the heavier one (`feat-30-sop`'s "Phase-end quality gate (ruff
+format/check, vulture, full unittest) + commit" after every single
+phase). Chose the heavier convention for this feature: it touches 6
+domains' model files plus their test suites, and the test suite itself
+runs in roughly a minute (parallelized via `pytest -n auto`), so four
+full gate-runs cost a few extra minutes in exchange for catching any
+per-phase lint/vulture regression immediately and keeping each phase
+independently revertable via its own commit, instead of only discovering
+an issue -- or needing to revert all 4 phases at once -- at the very end.
+Phases 100/110/120 each gained a trailing quality-gate task
+(`ruff format --check`/`ruff check`/`vulture`/full test suite) plus a
+dedicated commit task; Phase 130 already ended with the equivalent
+gate + commit shape and needed no change.
 
 #### 2026-10-02T14:10:00.000Z - No custom non-blank validator needed
 
