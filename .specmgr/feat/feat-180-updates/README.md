@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: planning
 type: feat
-updated: '2026-10-02T23:50:15.361+02:00'
+updated: '2026-10-03T00:12:05.726+02:00'
 version: 1.0.0
 ---
 
@@ -196,39 +196,41 @@ mid-commit and having to fix-then-retry.
 
 #### Phase 130: CHANGELOG and final verification
 
-- [ ] Task 130.100: Add a `CHANGELOG.md` entry under `[Unreleased]` -> `### Changed` (backward-compatible field-type relaxation, not a new feature) describing the relaxation across the 6 domains.
-- [ ] Task 130.110: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
-- [ ] Task 130.120: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
-- [ ] Task 130.130: Run the full test suite one final time.
-- [ ] Task 130.140: Review `git status`/`git diff` for completeness, then commit.
+- [x] Task 130.100: Add a `CHANGELOG.md` entry under `[Unreleased]` -> `### Changed` (backward-compatible field-type relaxation, not a new feature) describing the relaxation across the 6 domains.
+- [x] Task 130.110: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
+- [x] Task 130.120: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
+- [x] Task 130.130: Run the full test suite one final time.
+- [x] Task 130.140: Review `git status`/`git diff` for completeness, then commit.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-02**: Phase 100 (Model change) and Phase 110 (New test
-coverage) are COMPLETE. Phase 100 landed the per-domain
-`UpdateEntryContent`/`DecisionEntryContent` leaf retypes (plus the
-approved Task 100.165 fix-up: 21 trailing-newline expected-value
-updates, the superseded feat-7 Task 0.29 regression class deleted,
-6x2 schema copies + `specmgr docs` regenerated) and is committed
-(`3900 passed, 2688 subtests passed` gate). Phase 110 added 39 new
-positive/confirmation tests across the 6 domains' `test_body.py` files
-(multi-paragraph/bullet/numbered/code-block/block-quote bodies parse and
-round-trip byte-identically, `.content.text` carries the raw body
-including the trailing `"\n"`, `model_dump()` surfaces the real text per
-ACC-006, blank-content negatives confirmed or added per ACC-005); all 6
-domains' `test_parser.py` files checked with no change needed, and
-`tests/tsk/tools/test_create_tsk.py` confirmed passing unmodified; the
-phase-end full quality gate is green (`3939 passed, 2698 subtests
-passed`). Phase 120 (Regenerate build artifacts) is COMPLETE as a
-verification pass with zero drift: all 13 `specmgr schema` invocations
-(12 per-domain + 1 all-types) reported `(unchanged)`, `specmgr docs`
-and `specmgr mcp-docs` reported no drift, and the full quality gate is
-green (`3939 passed, 2698 subtests passed`) -- expected, since Phase
-100's fix-up (Task 100.165) already landed the regeneration in its own
-commit, forced by ACC-008. Phase 130 (CHANGELOG and final verification)
-is next.
+**As of 2026-10-02**: All four phases are COMPLETE, each with its own
+passing-gate commit. Phase 100 (Model change, b6492cd) landed the
+per-domain `UpdateEntryContent`/`DecisionEntryContent` leaf retypes
+plus the approved Task 100.165 fix-up (21 trailing-newline
+expected-value updates, the superseded feat-7 Task 0.29 regression
+class deleted, 6x2 schema copies + `specmgr docs` regenerated;
+`3900 passed, 2688 subtests passed` gate). Phase 110 (New test
+coverage, ebf4f17) added 39 new positive/confirmation tests across the
+6 domains' `test_body.py` files (multi-paragraph/bullet/numbered/
+code-block/block-quote bodies parse and round-trip byte-identically,
+`.content.text` carries the raw body including the trailing `"\n"`,
+`model_dump()` surfaces the real text per ACC-006, blank-content
+negatives confirmed or added per ACC-005; all 6 domains'
+`test_parser.py` files checked with no change needed, and
+`tests/tsk/tools/test_create_tsk.py` confirmed passing unmodified;
+`3939 passed, 2698 subtests passed` gate). Phase 120 (Regenerate build
+artifacts, f6c9f9b) was a verification pass with zero drift (all 13
+`specmgr schema` invocations (12 per-domain + 1 all-types) reported
+`(unchanged)`, `specmgr docs`/`specmgr mcp-docs` reported no drift,
+plus this README's own newest-first entry ordering fixed; `3939
+passed, 2698 subtests passed` gate). Phase 130 (CHANGELOG and final
+verification) added the `[Unreleased]` -> `### Changed`
+`CHANGELOG.md` entry and re-ran the final full gate green (`3939
+passed, 0 failed`). Implementation finished: the orchestrator will now
+set this feature's status to `review` and open the PR.
 
 ### Blockers
 
@@ -237,6 +239,43 @@ is next.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T22:12:05.000Z - Phase 130 (CHANGELOG and final verification) completed; implementation finished
+
+Implemented Tasks 130.100-130.130. Task 130.100 added one entry under
+`[Unreleased]` -> `### Changed` in `CHANGELOG.md` (appended at the end
+of the subsection, after the `update`/`edit` `ValidateResult` entry and
+before `### Removed`): the timestamped entries' `content` field
+(`UpdateEntry.content` -- `## Updates` in `vcr`/`dec`/`sop`/`sysrs`,
+`## Recent Updates` in `tsk`, `### Updates` in `feat` -- and `feat`'s
+own `DecisionEntry.content` in `### Decisions Made`) now accepts any
+markdown content (multiple paragraphs, lists, code blocks, block
+quotes), not just a single CommonMark paragraph, retyped from
+`MarkdownParagraph` to the per-domain `UpdateEntryContent`/
+`DecisionEntryContent` `MarkdownStr` leaves following the `qa`
+`### Introduction` precedent (GitHub issue #114) -- backward-compatible
+strict superset, `content` still mandatory, blank/whitespace-only
+bodies still failing (GitHub issue #180). Nothing else in
+`CHANGELOG.md` touched (no other entries, no `[Unreleased]` header
+change, no version bump); `ruff format CHANGELOG.md` reported the file
+already formatted.
+
+Phase-end gate (Tasks 130.110-130.130): `uv run --frozen ruff format
+--check` green (1782 files already formatted), `uv run --frozen ruff
+check` green (all checks passed), `uv run --frozen vulture src/
+whitelist.py --min-confidence 60` green (exit 0, no output), final
+full suite `uv run --frozen pytest -n auto --cov=src --cov-report=`
+green: **3939 passed in 68.84s (0:01:08), 0 failed** -- unchanged from
+the Phase 120 baseline (as recorded for Phases 110/120, xdist drops
+the unittest-subtest counter from the distributed summary; the last
+serial confirmation there reported 2698 subtests).
+
+All four phases (100/110/120/130) are now complete, each with its own
+passing-gate commit: b6492cd (Phase 100), ebf4f17 (Phase 110), f6c9f9b
+(Phase 120), and this phase's commit for Phase 130 (carrying
+`CHANGELOG.md` + this bookkeeping only). Task 130.140: the
+orchestrator commits this phase immediately after this entry, then
+sets the feature status to `review` and opens the PR.
 
 #### 2026-10-02T21:02:17.000Z - Phase 120 (Regenerate build artifacts) completed as a verification pass; zero drift
 
