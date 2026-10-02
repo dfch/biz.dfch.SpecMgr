@@ -96,8 +96,35 @@ letting ``pydantic.ValidationError`` propagate from the adapter's
 additive exception to this tool's otherwise raise-based contract
 (mirroring the generic ``validate`` tool's own non-raising workaround,
 ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
-(unknown id, path-injection/wrong-shape id, ``superseded_by`` misuse on a
-non-``adr`` type) still raises exactly as before.
+(a truly-absent id, path-injection/wrong-shape id, ``superseded_by``
+misuse on a non-``adr`` type) still raises exactly as before.
+
+An existing-but-broken document (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain): on a target ``id`` whose only matching on-disk file
+fails to parse, each of the 12 whole-body adapters now returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
+(inside the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`general.tools._doc_paths.find_parse_failure`,
+called with the domain's own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. The pre-dispatch out-of-vocabulary ``InvalidStatusResult``
+check runs first and is unaffected -- an out-of-vocabulary ``status``
+against a broken existing document still returns ``InvalidStatusResult``
+(that check never reaches ``load_by_id``). The ``adr`` adapter stays
+raise-based (ADR is out of scope for this feature).
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
@@ -128,22 +155,22 @@ from ...dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATU
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
 from ...dec.tools._lock import dec_lock
-from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
 from ...feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from ...feat.tools._cache import read_feat
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
-from ...feat.tools._paths import feat_base_dir
+from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
-from ...general.models import InvalidStatusResult
+from ...general.models import InvalidStatusResult, ParseFailureResult
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
 from ...gol.tools._lock import gol_lock
-from ...gol.tools._paths import gol_base_dir
+from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.adr import Adr
 from ...models.adr.v1 import mutations
@@ -155,28 +182,28 @@ from ...prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATU
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
 from ...prb.tools._lock import prb_lock
-from ...prb.tools._paths import prb_base_dir
+from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
 from ...qa.tools._lock import qa_lock
-from ...qa.tools._paths import qa_base_dir
+from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
 from ...req.tools._lock import req_lock
-from ...req.tools._paths import req_base_dir
+from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
 from ...rsk.tools._lock import rsk_lock
-from ...rsk.tools._paths import rsk_base_dir
+from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
@@ -184,36 +211,37 @@ from ...sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATU
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
 from ...sop.tools._lock import sop_lock
-from ...sop.tools._paths import sop_base_dir
+from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.models.v1.frontmatter import _ALLOWED_STATUSES as _SYSRS_ALLOWED_STATUSES
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
 from ...sysrs.tools._lock import sysrs_lock
-from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK_ALLOWED_STATUSES
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
-from ...tsk.tools._paths import tsk_base_dir
+from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
 from ...uc.tools._lock import uc_lock
-from ...uc.tools._paths import uc_base_dir
+from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
 from ...vcr.tools._lock import vcr_lock
-from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
+from ._doc_paths import find_parse_failure
 from ._domains import ADR, ALL_DOMAINS, WholeBodyOrAdrType
 from ._path_safety import assert_within, validate_id
 from ._timestamps import now_timestamp
@@ -235,6 +263,7 @@ _SetStatusFrontmatter = (
     | VcrFrontmatter
     | SysrsFrontmatter
     | Adr
+    | ParseFailureResult
 )
 
 #: Each whole-body domain's own closed status vocabulary, plus ADR's fixed set,
@@ -304,7 +333,7 @@ def _check_status_allowed(type_: str, status: str, superseded_by: str | None) ->
     )
 
 
-def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFrontmatter:
+def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFrontmatter | ParseFailureResult:
     """Replace the status of the requirement identified by ``id_``.
 
     Verbatim port of the previous per-domain requirement status tool's
@@ -315,13 +344,24 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFron
     vocabulary validates, ``write_req_file``, ``ReqNotFoundError``; that
     per-domain tool was retired in feat-22 Phase 4). ``superseded_by`` is
     never used here -- the public :func:`set_status` guard rejects it for
-    every non-``adr`` type before dispatch.
+    every non-``adr`` type before dispatch. Failure return (see the module
+    docstring): a target ``id`` whose only matching on-disk file fails to
+    parse yields the non-raising ``ParseFailureResult`` instead of
+    ``ReqNotFoundError`` (a truly-absent id still raises).
     """
     assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
 
     base_dir = req_base_dir()
     with req_lock(id_):
-        path, existing = load_req_by_id(base_dir, id_)
+        try:
+            path, existing = load_req_by_id(base_dir, id_)
+        except ReqNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_req)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -338,7 +378,7 @@ def _set_status_req(id_: str, status: str, superseded_by: str | None) -> ReqFron
     return new_frontmatter
 
 
-def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontmatter:
+def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontmatter | ParseFailureResult:
     """Replace the status of the use case identified by ``id_``.
 
     Verbatim port of the previous per-domain use-case status tool's
@@ -350,7 +390,15 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontm
 
     base_dir = uc_base_dir()
     with uc_lock(id_):
-        path, existing = load_uc_by_id(base_dir, id_)
+        try:
+            path, existing = load_uc_by_id(base_dir, id_)
+        except UcNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_uc)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -367,7 +415,7 @@ def _set_status_uc(id_: str, status: str, superseded_by: str | None) -> UcFrontm
     return new_frontmatter
 
 
-def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFrontmatter:
+def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFrontmatter | ParseFailureResult:
     """Replace the status of the task list identified by ``id_``.
 
     Verbatim port of the previous per-domain task list status tool's
@@ -379,7 +427,15 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFron
 
     base_dir = tsk_base_dir()
     with tsk_lock(id_):
-        path, existing = load_tsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_tsk_by_id(base_dir, id_)
+        except TskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_tsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -396,7 +452,7 @@ def _set_status_tsk(id_: str, status: str, superseded_by: str | None) -> TskFron
     return new_frontmatter
 
 
-def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontmatter:
+def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontmatter | ParseFailureResult:
     """Replace the status of the QA document identified by ``id_``.
 
     Verbatim port of the previous per-domain QA document status tool's
@@ -408,7 +464,15 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontm
 
     base_dir = qa_base_dir()
     with qa_lock(id_):
-        path, existing = load_qa_by_id(base_dir, id_)
+        try:
+            path, existing = load_qa_by_id(base_dir, id_)
+        except QaNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_qa)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -425,7 +489,7 @@ def _set_status_qa(id_: str, status: str, superseded_by: str | None) -> QaFrontm
     return new_frontmatter
 
 
-def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFrontmatter:
+def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFrontmatter | ParseFailureResult:
     """Replace the status of the problem statement identified by ``id_``.
 
     Verbatim port of the previous per-domain problem statement status
@@ -438,7 +502,15 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFron
 
     base_dir = prb_base_dir()
     with prb_lock(id_):
-        path, existing = load_prb_by_id(base_dir, id_)
+        try:
+            path, existing = load_prb_by_id(base_dir, id_)
+        except PrbNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_prb)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -455,7 +527,7 @@ def _set_status_prb(id_: str, status: str, superseded_by: str | None) -> PrbFron
     return new_frontmatter
 
 
-def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFrontmatter:
+def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFrontmatter | ParseFailureResult:
     """Replace the status of the goal identified by ``id_``.
 
     Verbatim port of the previous per-domain goal status tool's function
@@ -467,7 +539,15 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFron
 
     base_dir = gol_base_dir()
     with gol_lock(id_):
-        path, existing = load_gol_by_id(base_dir, id_)
+        try:
+            path, existing = load_gol_by_id(base_dir, id_)
+        except GolNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_gol)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -484,7 +564,7 @@ def _set_status_gol(id_: str, status: str, superseded_by: str | None) -> GolFron
     return new_frontmatter
 
 
-def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFrontmatter:
+def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFrontmatter | ParseFailureResult:
     """Replace the status of the risk identified by ``id_``.
 
     Verbatim port of the previous per-domain risk status tool's function
@@ -496,7 +576,15 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFron
 
     base_dir = rsk_base_dir()
     with rsk_lock(id_):
-        path, existing = load_rsk_by_id(base_dir, id_)
+        try:
+            path, existing = load_rsk_by_id(base_dir, id_)
+        except RskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_rsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -513,7 +601,7 @@ def _set_status_rsk(id_: str, status: str, superseded_by: str | None) -> RskFron
     return new_frontmatter
 
 
-def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFrontmatter:
+def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFrontmatter | ParseFailureResult:
     """Replace the status of the decision identified by ``id_``.
 
     Verbatim port of the previous per-domain decision status tool's
@@ -527,7 +615,15 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFron
 
     base_dir = dec_base_dir()
     with dec_lock(id_):
-        path, existing = load_dec_by_id(base_dir, id_)
+        try:
+            path, existing = load_dec_by_id(base_dir, id_)
+        except DecNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_dec)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -544,7 +640,7 @@ def _set_status_dec(id_: str, status: str, superseded_by: str | None) -> DecFron
     return new_frontmatter
 
 
-def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFrontmatter:
+def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFrontmatter | ParseFailureResult:
     """Replace the status of the feature identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
@@ -559,7 +655,15 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
 
     base_dir = feat_base_dir()
     with feat_lock(id_):
-        path, existing = load_feat_by_id(base_dir, id_)
+        try:
+            path, existing = load_feat_by_id(base_dir, id_)
+        except FeatNotFoundError:
+            parse_failure = find_feat_parse_failure(base_dir, id_)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -576,7 +680,7 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
     return new_frontmatter
 
 
-def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFrontmatter:
+def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFrontmatter | ParseFailureResult:
     """Replace the status of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
@@ -590,7 +694,15 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFron
 
     base_dir = sop_base_dir()
     with sop_lock(id_):
-        path, existing = load_sop_by_id(base_dir, id_)
+        try:
+            path, existing = load_sop_by_id(base_dir, id_)
+        except SopNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sop)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -607,7 +719,7 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopFron
     return new_frontmatter
 
 
-def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFrontmatter:
+def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFrontmatter | ParseFailureResult:
     """Replace the status of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
@@ -619,7 +731,15 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFron
 
     base_dir = vcr_base_dir()
     with vcr_lock(id_):
-        path, existing = load_vcr_by_id(base_dir, id_)
+        try:
+            path, existing = load_vcr_by_id(base_dir, id_)
+        except VcrNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_vcr)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -636,7 +756,7 @@ def _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrFron
     return new_frontmatter
 
 
-def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> SysrsFrontmatter:
+def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> SysrsFrontmatter | ParseFailureResult:
     """Replace the status of the System Requirements Specification identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
@@ -649,7 +769,15 @@ def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> Sysrs
 
     base_dir = sysrs_base_dir()
     with sysrs_lock(id_):
-        path, existing = load_sysrs_by_id(base_dir, id_)
+        try:
+            path, existing = load_sysrs_by_id(base_dir, id_)
+        except SysrsNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sysrs)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
@@ -728,11 +856,19 @@ assert set(_ADAPTERS) == set(ALL_DOMAINS), (
         "message}) instead, so the allowed-values detail survives MCP clients that truncate error "
         "content. `superseded_by` "
         'is accepted only for `type="adr"` -- it composes the status as "superseded by '
-        '{superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor '
+        '{superseded_by}"; with any other `type` it is a `ValueError`. A document that exists '
+        "but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of "
+        "raising the domain's not-found error (a truly-absent id still raises, and the "
+        "out-of-vocabulary-status `InvalidStatusResult` check above still runs first, "
+        "pre-lock/pre-load) -- its `error` text is byte-identical to the domain's `list_<d>` "
+        "failed row's `error` for the same file (identical field path and cause, including the "
+        "trailing pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "non-raising-structured-result workaround chain). Neither `create_*` nor "
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
         "status-change entry point. An invalid `id` (path-injection attempt or wrong format "
         "for `type`) is a `ValueError` raised before any file access. Returns the updated "
-        "frontmatter only (no body, except for the unchanged `adr` branch); use the "
+        "frontmatter only (no body, except for the unchanged `adr` branch) on success; use the "
         "corresponding `get_<d>` tool to fetch the full document afterward."
     ),
 )
@@ -810,18 +946,32 @@ def set_status(
         -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult
-        The updated document's frontmatter only (no body) of the dispatched domain type
-        for the whole-body domains; for ``type="adr"`` (unchanged, out of scope for
-        this feature) the full ``Adr`` document, as before. Use the corresponding
-        ``get_<d>`` tool to fetch the full document afterward for the whole-body
-        domains. When the requested target status already equals the document's
-        current status, the same value shape is returned unchanged, with no write
-        and no ``updated`` bump (issue #109's no-op case). When ``status`` is not
-        in the dispatched domain's closed vocabulary,
-        returns an :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
-        (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section below for
-        why this one case no longer raises.
+    VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult
+        On success, the updated document's frontmatter only (no body) of the
+        dispatched domain type for the whole-body domains; for ``type="adr"``
+        (unchanged, out of scope for this feature) the full ``Adr`` document,
+        as before. Use the corresponding ``get_<d>`` tool to fetch the full
+        document afterward for the whole-body domains. When the requested
+        target status already equals the document's current status, the same
+        value shape is returned unchanged, with no write and no ``updated``
+        bump (issue #109's no-op case). When ``status`` is not in the
+        dispatched domain's closed vocabulary, returns an
+        :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+        (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
+        below for why this one case no longer raises. When the target
+        ``id``'s only matching on-disk file fails to parse (the whole-body
+        domains), a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) is returned instead of the domain's
+        not-found error -- ``error`` is byte-identical to the domain's
+        ``list_<d>`` failed row's ``error`` for the same file (identical
+        field path and cause, including the trailing pydantic documentation
+        line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+        id still raising the domain's own not-found error
+        (feat-170-update-edit-parse-failure, GitHub issue
+        #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain).
 
         Raises
         ------
@@ -848,8 +998,11 @@ def set_status(
         PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
         FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
         AdrNotFoundError
-            No document of the dispatched ``type`` has this id -- the
-            domain's own not-found error, unchanged from the per-domain tools.
+            The target id is truly absent (no file on disk matches it at all)
+            -- the domain's own not-found error, unchanged from the per-domain
+            tools. An existing-but-broken document of the whole-body domains
+            returns the non-raising ``ParseFailureResult`` instead (see
+            Returns); the ``adr`` branch is unchanged (it raises as before).
     """
     # REQ-009: validate before any filesystem access (injection prevention).
     validate_id(type, id)

@@ -91,6 +91,42 @@ serialization, the inherited ``_write.py`` caveat identical to
 ``read_<d>`` (the feat-107-doc-cache precedent), and the updated
 frontmatter only is returned (no body).
 
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain).** Two failures now return a structured result instead
+of raising, with nothing written in either case. (1) On a target ``id``
+whose only matching on-disk file fails to parse, every adapter returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
+the domain lock, before the match stage ever runs), probes the domain's
+existing parse-failure lookup (:func:`general.tools._doc_paths.
+find_parse_failure` for the 11 flat-file domains, called with the domain's
+own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. (2) A stage-2 content-validation failure on the *edited* body
+returns the non-raising :class:`~biz.dfch.specmgr.general.models.
+ValidateResult` (``valid=False``, ``errors=[...]``) instead of raising
+``AssertionError``/``pydantic.ValidationError`` -- the single
+``errors[].message`` is the enriched exception text capped exactly as the
+generic ``validate`` tool caps it (300 chars via
+:func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
+exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
+tuple). Stage-1's OC-parity ``ValueError``s (identical input, empty
+``old_str``, not found, multiple matches) and every pre-dispatch
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
+``type``) are never caught and still raise exactly as before.
+
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a
 ``ValueError`` before any file access -- mirroring the generic ``update``
@@ -111,7 +147,7 @@ whichever concrete frontmatter model is returned.
 
 ## Functions
 
-### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter'`
+### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
@@ -120,7 +156,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
 
 
-### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter'`
+### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the feature identified by ``id_``.
 
@@ -131,7 +167,7 @@ divergence (see the module docstring): ``id_`` resolves via
 ``load_by_id``/``feat_base_dir``), not a flat-file directory scan.
 
 
-### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'GolFrontmatter'`
+### `_edit_gol(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'GolFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
@@ -140,7 +176,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
 ``GolNotFoundError``).
 
 
-### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'PrbFrontmatter'`
+### `_edit_prb(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'PrbFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
@@ -149,7 +185,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``).
 
 
-### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'QaFrontmatter'`
+### `_edit_qa(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'QaFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
@@ -158,7 +194,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
 ``QaNotFoundError``).
 
 
-### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'ReqFrontmatter'`
+### `_edit_req(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'ReqFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
@@ -169,10 +205,16 @@ the edit-specific in-lock sequence (see the module docstring): the
 domain lock is held across the entire read -> match -> validate ->
 write, stage 1 is the domain-agnostic :func:`_match_and_replace` over
 :func:`body_text(path)`, and stage 2 validates the *edited* body as a
-whole document before the verbatim persist and the cache warm.
+whole document before the verbatim persist and the cache warm. Failure
+returns (see the module docstring): a target ``id`` whose only matching
+on-disk file fails to parse yields the non-raising ``ParseFailureResult``
+instead of ``ReqNotFoundError`` (a truly-absent id still raises), and a
+stage-2 content-validation failure of the edited body yields the
+non-raising ``ValidateResult(valid=False, ...)`` instead of
+``AssertionError``/``pydantic.ValidationError``.
 
 
-### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'RskFrontmatter'`
+### `_edit_rsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'RskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
@@ -181,7 +223,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
 ``RskNotFoundError``).
 
 
-### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SopFrontmatter'`
+### `_edit_sop(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SopFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
@@ -190,7 +232,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
 ``SopNotFoundError``).
 
 
-### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SysrsFrontmatter'`
+### `_edit_sysrs(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'SysrsFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
@@ -199,7 +241,7 @@ frontmatter carry-over with only ``updated`` bumped,
 ``write_sysrs_file``, ``SysrsNotFoundError``).
 
 
-### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TskFrontmatter'`
+### `_edit_tsk(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TskFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
@@ -208,7 +250,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
 
-### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter'`
+### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
@@ -217,7 +259,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
 ``UcNotFoundError``).
 
 
-### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'VcrFrontmatter'`
+### `_edit_vcr(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'VcrFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 
@@ -300,9 +342,13 @@ the result.
 
 **Stage 2 (validate).** The *edited* body is validated as a whole
 document via the domain body model's ``from_text(format_text(edited))``
-under ``wrap_tool_errors`` -- letting ``AssertionError`` (structural
-failure) or ``pydantic.ValidationError`` (field/cross-field failure)
-propagate uncaught, with nothing written in either case.
+under ``wrap_tool_errors``; a structural (``AssertionError``) or
+field/cross-field (``pydantic.ValidationError``) failure returns the
+non-raising ``ValidateResult(valid=False, ...)`` (the single
+``errors[].message`` capped at 300 chars exactly as the generic
+``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
+failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+case 4 of the ADR 519d1206 chain), with nothing written in either case.
 
 **2-fold write (REQ-003).** The disk write happens strictly after both
 stages pass: the domain lock is held across the entire read -> match ->
@@ -363,10 +409,27 @@ Returns
 -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter
-    The updated document's frontmatter only (no body) of the dispatched domain type
-    (``updated`` bumped); use the corresponding ``get_<d>`` tool to fetch the full
-    document afterward.
+VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
+    On success, the updated document's frontmatter only (no body) of the
+    dispatched domain type (``updated`` bumped); use the corresponding
+    ``get_<d>`` tool to fetch the full document afterward. On a target
+    ``id`` whose only matching on-disk file fails to parse, a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) instead of the domain's not-found error --
+    ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
+    ``error`` for the same file (identical field path and cause, including
+    the trailing pydantic documentation line; ADR
+    9080b37c-82b3-4f63-81f1-79641d0bf14c). On a stage-2 content-validation
+    failure of the edited body, a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+    (``valid=False``, ``errors=[{message}]``) with the single
+    ``errors[].message`` capped at 300 chars exactly as the generic
+    ``validate`` tool caps it (feat-110), instead of
+    ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
+    either failure case (feat-170-update-edit-parse-failure, GitHub issue
+    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+    workaround chain).
 
 Raises
 ------
@@ -385,21 +448,13 @@ ValueError
     ``ValueError``s carry the OC message verbatim with no
     ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
     is written in any of these cases.
-AssertionError
-    The edited body is structurally invalid (stage 2) -- e.g. deleting
-    the H1. The message is prefixed with domain/tool/channel context
-    (e.g. ``"req edit (body): ..."``) by the shared tool-boundary
-    wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-    wrap_tool_errors`), layered on top of the engine's own
-    field-path/line/snippet enrichment (feat-27-validation Phases
-    1/2). Nothing is written.
-pydantic.ValidationError
-    A field/cross-field validation failure in the edited body (stage
-    2, e.g. an edit producing an out-of-vocabulary value) -- similarly
-    prefixed. Nothing is written.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-    No document of the dispatched ``type`` has this id -- the
-    domain's own not-found error, unchanged from the per-domain tools.
+    The target id is truly absent (no file on disk matches it at all) --
+    the domain's own not-found error, unchanged from the per-domain tools.
+    An existing-but-broken document returns the non-raising
+    ``ParseFailureResult`` instead, and a stage-2 content-validation
+    failure of the edited body returns the non-raising ``ValidateResult``
+    instead (both see Returns).
 

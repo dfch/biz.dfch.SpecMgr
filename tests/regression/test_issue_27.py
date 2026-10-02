@@ -40,7 +40,12 @@ plan's Design Notes describe (REQ-003), not a full exact-string pin -- that pinn
 to ``tests/models/md/test_validation_error_baseline.py`` (Phase 1's Task 1.0/1.8). Since
 feat-81-83-validation Phase 2, the generic ``validate`` tool never raises for a content-validation
 failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the ``validate``-tool
-tests below assert against ``result.errors[0].message`` rather than a raised exception.
+tests below assert against ``result.errors[0].message`` rather than a raised exception. Since
+feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), the generic ``update``
+tool never raises for a content-validation failure either -- it returns the same non-raising
+``ValidateResult`` shape (the single ``errors[].message`` capped at 300 chars exactly as
+``validate``'s is), so the ``update``-tool tests below assert against ``result.errors[0].message``
+as well.
 """
 
 from __future__ import annotations
@@ -51,6 +56,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.update import update
 from biz.dfch.specmgr.general.tools.validate import validate
@@ -187,12 +193,18 @@ class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
             self.assertIn(substring, message)
 
     def test_update_surfaces_an_actionable_message(self) -> None:
+        """Since feat-170 Phase 120 (Bug 2), the generic ``update`` tool no longer raises for this
+        content-validation failure -- it returns the non-raising ``ValidateResult`` whose message
+        is capped exactly as ``validate``'s is, so assert against
+        ``result.errors[0].message`` (the same shape as the ``validate`` test above)."""
         created = create_tsk(_ISSUE_27_VALID_SEED_BODY)
 
-        with self.assertRaises(AssertionError) as ctx:
-            update(id=created.id, type="tsk", content=_ISSUE_27_BODY)
+        result = update(id=created.id, type="tsk", content=_ISSUE_27_BODY)
 
-        message = str(ctx.exception)
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
         for substring in _ISSUE_27_EXPECTED_SUBSTRINGS:
             self.assertIn(substring, message)
 
@@ -224,14 +236,23 @@ class TestFeat7Task029StrayListMarkerRegression(TempTskDirTestCase):
             self.assertIn(substring, message)
 
     def test_update_surfaces_an_actionable_message(self) -> None:
+        """Issue #110 (mirrored from the ``validate`` test above): since feat-170 Phase 120
+        (Bug 2), the generic ``update`` tool no longer raises for this failure -- it returns the
+        non-raising ``ValidateResult`` whose message is capped at 300 chars, so the trailing
+        fix-hint clause is truncated away -- assert only the substrings that still survive
+        (cause + the start of the fix hint), plus the truncation marker itself, to keep proving
+        issue #27/feat-7 Task 0.29 is still caught and reported actionably."""
         created = create_tsk(_FEAT_7_TASK_0_29_VALID_SEED_BODY)
 
-        with self.assertRaises(AssertionError) as ctx:
-            update(id=created.id, type="tsk", content=_FEAT_7_TASK_0_29_BODY)
+        result = update(id=created.id, type="tsk", content=_FEAT_7_TASK_0_29_BODY)
 
-        message = str(ctx.exception)
-        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS:
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE:
             self.assertIn(substring, message)
+        self.assertTrue(message.endswith("... (truncated)"), message)
 
 
 if __name__ == "__main__":

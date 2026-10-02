@@ -38,8 +38,10 @@ propagate: repair it, or report it clearly.
   2. **Raw read**: read the complete file at the row's `path` with your
      own host file-read tool. No specmgr MCP tool can return the raw
      content of a document that fails to parse, and the generic `update`
-     (or `edit`) tool cannot repair it (its adapters re-parse first and
-     convert the failure into the domain's not-found error).
+     (or `edit`) tool cannot repair it (it re-parses the existing document
+     before it can write anything and, for a broken one, returns the
+     non-raising `ParseFailureResult` instead of writing or raising -- a
+     truly-absent id still raises the domain's not-found error).
   3. **Fix minimally**: only what the enriched error names (field path,
      1-based line, cause/fix hint). Preserve the frontmatter
      `id`/`created`/`status`/`version` byte-for-byte; leave `updated`

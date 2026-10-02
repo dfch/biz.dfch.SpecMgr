@@ -73,15 +73,17 @@ from pathlib import Path
 from typing import Any, Callable
 from unittest import mock
 
-from pydantic import ValidationError
-
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
+from biz.dfch.specmgr.dec.tools.list_dec import list_dec
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
+from biz.dfch.specmgr.feat.tools.list_feat import list_feat
+from biz.dfch.specmgr.general.models import ParseFailureResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 
 #: The shared domain-name source (feat-125-domain-lists): the whole-body
 #: document types the registration test's expected ``type`` enum derives from.
@@ -90,33 +92,43 @@ from biz.dfch.specmgr.general.tools._splice import body_text
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
+from biz.dfch.specmgr.gol.tools.list_gol import list_gol
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
+from biz.dfch.specmgr.prb.tools.list_prb import list_prb
 from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError, qa_base_dir
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
+from biz.dfch.specmgr.qa.tools.list_qa import list_qa
 from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError, req_base_dir
 from biz.dfch.specmgr.req.tools.create_req import create_req
+from biz.dfch.specmgr.req.tools.list_req import list_req
 from biz.dfch.specmgr.rsk.models.v1 import RskDocument, RskFrontmatter
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
+from biz.dfch.specmgr.rsk.tools.list_rsk import list_rsk
 from biz.dfch.specmgr.sop.models.v1 import SopDocument, SopFrontmatter
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError, sop_base_dir
 from biz.dfch.specmgr.sop.tools.create_sop import create_sop
+from biz.dfch.specmgr.sop.tools.list_sop import list_sop
 from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
 from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
+from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
+from biz.dfch.specmgr.uc.tools.list_uc import list_uc
 from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
+from biz.dfch.specmgr.vcr.tools.list_vcr import list_vcr
 
 edit_module = importlib.import_module("biz.dfch.specmgr.general.tools.edit")
 edit = edit_module.edit
@@ -517,6 +529,48 @@ _FEAT_MINIMAL_BODY = textwrap.dedent(
     Free-form prose describing what happened in this update.
     """
 )
+
+
+#: The corrupted on-disk body every parse-failure case below seeds (the same corruption the
+#: ``get_<d>`` parse-failure tests use: no H1 heading at all, so every domain's parser fails at
+#: the markdown engine level, before any domain-specific section validation).
+_BROKEN_BODY = "not a valid document, no headings at all\n"
+
+#: The core parse defect ``_BROKEN_BODY`` produces in every domain's parse error text.
+_CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
+
+
+@dataclass(frozen=True)
+class _ParseFailureCase:
+    """Per-domain test data for the parse-failure (Bug 1) coverage of the generic ``edit`` tool.
+
+    All 12 whole-body domains, ``feat`` included (this module's own ``_CASES`` already carries
+    ``feat`` in the unified shape, unlike ``test_update.py``/``test_set_status.py``).
+    """
+
+    doc_type: str
+    create: Callable[[str], Any]
+    not_found_error: type[Exception]
+    base_dir: Callable[[], Path]
+    #: The domain's own ``list_<d>`` tool -- the consistency reference for ``error`` text.
+    list_fn: Callable[..., Any]
+    minimal_body: str
+
+
+_PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
+    _ParseFailureCase("req", create_req, ReqNotFoundError, req_base_dir, list_req, _REQ_MINIMAL_BODY),
+    _ParseFailureCase("uc", create_uc, UcNotFoundError, uc_base_dir, list_uc, _UC_MINIMAL_BODY),
+    _ParseFailureCase("tsk", create_tsk, TskNotFoundError, tsk_base_dir, list_tsk, _TSK_MINIMAL_BODY),
+    _ParseFailureCase("qa", create_qa, QaNotFoundError, qa_base_dir, list_qa, _QA_MINIMAL_BODY),
+    _ParseFailureCase("prb", create_prb, PrbNotFoundError, prb_base_dir, list_prb, _PRB_MINIMAL_BODY),
+    _ParseFailureCase("gol", create_gol, GolNotFoundError, gol_base_dir, list_gol, _GOL_MINIMAL_BODY),
+    _ParseFailureCase("rsk", create_rsk, RskNotFoundError, rsk_base_dir, list_rsk, _RSK_MINIMAL_BODY),
+    _ParseFailureCase("dec", create_dec, DecNotFoundError, dec_base_dir, list_dec, _DEC_MINIMAL_BODY),
+    _ParseFailureCase("sop", create_sop, SopNotFoundError, sop_base_dir, list_sop, _SOP_MINIMAL_BODY),
+    _ParseFailureCase("feat", create_feat, FeatNotFoundError, feat_base_dir, list_feat, _FEAT_MINIMAL_BODY),
+    _ParseFailureCase("vcr", create_vcr, VcrNotFoundError, vcr_base_dir, list_vcr, _VCR_MINIMAL_BODY),
+    _ParseFailureCase("sysrs", create_sysrs, SysrsNotFoundError, sysrs_base_dir, list_sysrs, _SYSRS_MINIMAL_BODY),
+]
 
 
 @dataclass(frozen=True)
@@ -1191,50 +1245,55 @@ class TestEditMatchStageOnDisk(TempEditDirTestCase):
 
 
 class TestEditInvalidResult(TempEditDirTestCase):
-    """ACC-004/ACC-008: an edit that yields an invalid document raises the wrapped
-    validation error (the ``"<d> edit (body):"`` prefix, per-domain channel) and nothing
-    is written -- the disk write happens only after whole-document validation passes."""
+    """ACC-004/ACC-008: an edit that yields an invalid document returns the non-raising
+    ``ValidateResult(valid=False, ...)`` (feat-170 Phase 120, Bug 2 -- the single message
+    carries the ``"<d> edit (body):"`` prefix, per-domain channel) and nothing is written
+    -- the disk write happens only after whole-document validation passes."""
 
-    def test_deleting_mandatory_h1_raises_wrapped_assertion_error_file_byte_unchanged(self) -> None:
-        """ACC-004: deleting the mandatory H1 raises the wrapped ``AssertionError`` (the
-        per-domain ``"<d> edit (body):"`` prefix); the file stays byte-unchanged."""
+    def test_deleting_mandatory_h1_returns_validate_failure_file_byte_unchanged(self) -> None:
+        """ACC-004: deleting the mandatory H1 returns ``ValidateResult(valid=False, ...)`` whose
+        single message starts with the per-domain ``"<d> edit (body):"`` prefix (the structural
+        ``AssertionError`` channel; feat-170 Phase 120, Bug 2); the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
 
-                with self.assertRaises(AssertionError) as ctx:
-                    edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
+                result = edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
 
-                self.assertTrue(str(ctx.exception).startswith(_wrapped_prefix(case.doc_type)), str(ctx.exception))
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message.startswith(_wrapped_prefix(case.doc_type)), message)
                 self.assertEqual(path.read_bytes(), before)
 
-    def test_edit_producing_field_error_raises_wrapped_error_file_byte_unchanged(self) -> None:
-        """ACC-004: an edit producing a per-domain field error raises the wrapped error;
-        the file stays byte-unchanged."""
+    def test_edit_producing_field_error_returns_validate_failure_file_byte_unchanged(self) -> None:
+        """ACC-004: an edit producing a per-domain field error returns ``ValidateResult(valid=False,
+        ...)`` whose single message carries the per-domain ``"<d> edit (body):"`` prefix (both the
+        ``pydantic.ValidationError`` and the structural ``AssertionError`` channels funnel into the
+        same returned shape, feat-170 Phase 120, Bug 2); the file stays byte-unchanged."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case, case.minimal_body)
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
                 field_error_old, field_error_new = _field_error_edit(case)
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
-                with self.assertRaises(expected_error) as ctx:
-                    edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+                result = edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
 
-                message = str(ctx.exception)
-                prefix = _wrapped_prefix(case.doc_type)
-                if case.field_error_is_validation:
-                    self.assertIn(prefix, message, message)
-                else:
-                    self.assertTrue(message.startswith(prefix), message)
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(_wrapped_prefix(case.doc_type), message, message)
                 self.assertEqual(path.read_bytes(), before)
 
-    def test_replace_all_invalid_edit_raises_wrapped_error_file_byte_unchanged(self) -> None:
+    def test_replace_all_invalid_edit_returns_validate_failure_file_byte_unchanged(self) -> None:
         """The 2-fold contract under ``replace_all=True``: an edit that yields an invalid
-        document raises the wrapped validation error and nothing is written -- the same
+        document returns ``ValidateResult(valid=False, ...)`` and nothing is written -- the same
         behavior as the single-match path (``_match_and_replace`` does not branch on the
         occurrence count after the replacement)."""
         for case in _CASES:
@@ -1243,23 +1302,21 @@ class TestEditInvalidResult(TempEditDirTestCase):
                 path = self._doc_path(case, created.id)
                 before = path.read_bytes()
                 field_error_old, field_error_new = _field_error_edit(case)
-                expected_error = ValidationError if case.field_error_is_validation else AssertionError
 
-                with self.assertRaises(expected_error) as ctx:
-                    edit(
-                        id=created.id,
-                        type=case.doc_type,
-                        old_str=field_error_old,
-                        new_str=field_error_new,
-                        replace_all=True,
-                    )
+                result = edit(
+                    id=created.id,
+                    type=case.doc_type,
+                    old_str=field_error_old,
+                    new_str=field_error_new,
+                    replace_all=True,
+                )
 
-                message = str(ctx.exception)
-                prefix = _wrapped_prefix(case.doc_type)
-                if case.field_error_is_validation:
-                    self.assertIn(prefix, message, message)
-                else:
-                    self.assertTrue(message.startswith(prefix), message)
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                message = result.errors[0].message
+                self.assertTrue(message)
+                self.assertIn(_wrapped_prefix(case.doc_type), message, message)
                 self.assertEqual(path.read_bytes(), before)
 
 
@@ -1348,6 +1405,165 @@ class TestEditRegistration(unittest.TestCase):
         self.assertNotIn("replace_all", schema["required"])
 
         self.assertNotIn("minLength", schema["properties"]["new_str"])
+
+
+class TestEditParseFailure(TempEditDirTestCase):
+    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
+    domain's ``XNotFoundError``) from the generic ``edit`` tool's single protected
+    ``load_by_id`` call site (the lock is held across the whole read -> match -> validate ->
+    write sequence, so stage 1/stage 2 are never reached), with nothing written to disk -- the
+    ``error`` carries the same parse defect as the domain's own ``list_<d>`` failed row for
+    the same file (the ``get_<d>`` precedent, ADR 9080b37c). All 12 whole-body domains,
+    ``feat`` included (this module's unified case shape).
+
+    A truly-absent id still raises the domain's own not-found error (REQ-002): the regression
+    is this module's existing ``TestEditDomainNotFound`` (unchanged by this phase, all 12
+    domains including ``feat``).
+    """
+
+    def _assert_parse_failure_result(self, list_fn: Callable[..., Any], path: Path, doc_id: str, result: Any) -> None:
+        """The shared result-shape and list-row consistency assertions (the ``get_<d>`` precedent)."""
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, doc_id)
+        self.assertEqual(result.path, str(path.resolve()))
+        self.assertTrue(result.error)
+        failed = [summary for summary in list_fn().results if summary.title == "<failed to parse>"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn(_CORE_DEFECT, result.error)
+        self.assertIn(_CORE_DEFECT, failed[0].error)
+
+    def test_broken_document_returns_parse_failure_result_nothing_written(self) -> None:
+        """A valid edit (``old_str``/``new_str``) against a broken existing document must return
+        ``ParseFailureResult``; the corrupted file stays byte-unchanged (no edit is applied)."""
+        for case in _PARSE_FAILURE_CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+
+                result = edit(id=doc_id, type=case.doc_type, old_str="old text", new_str="new text")
+
+                self._assert_parse_failure_result(case.list_fn, path, doc_id, result)
+                self.assertEqual(path.read_bytes(), before)
+
+
+class TestEditValidateFailure(TempEditDirTestCase):
+    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
+    *post-edit* result is structurally/field invalid must return the non-raising
+    ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
+    exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with
+    nothing written to disk. Stage 1's OC-parity ``ValueError``s (not found / multiple matches)
+    and the pre-dispatch guards stay plain-raising (REQ-004) and are pinned by this module's
+    existing guard/match-stage tests, unchanged. All 12 whole-body domains (this module's
+    unified case shape, ``feat`` included).
+
+    The combined-failure case (REQ-010/ACC-007: broken existing document AND an edit that would
+    produce an invalid body) pins the Bug-1/Bug-2 precedence: ``edit`` holds the lock across the
+    whole read -> match -> validate -> write sequence, so the Phase-110 protected ``load_by_id``
+    runs first and returns ``ParseFailureResult`` (the invalid ``old_str``/``new_str`` are never
+    even matched).
+    """
+
+    def _assert_validate_failure(self, case: _Case, before: bytes, path: Path, result: Any) -> None:
+        """The shared Bug-2 result-shape assertions: the non-raising ``ValidateResult`` shape,
+        the capped message carrying the per-domain ``"<d> edit (body):"`` prefix, and the
+        byte-unchanged file (nothing written)."""
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn(_wrapped_prefix(case.doc_type), message, message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_invalid_edit_returns_validate_failure_nothing_written(self) -> None:
+        """A healthy document + an edit whose post-edit result carries the per-domain field error
+        (the stage-2 fixtures of this module's converted tests; both the
+        ``pydantic.ValidationError`` and the structural ``AssertionError`` channels) returns
+        ``ValidateResult(valid=False, ...)``; the file stays byte-unchanged."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+                field_error_old, field_error_new = _field_error_edit(case)
+
+                result = edit(id=created.id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+
+                self._assert_validate_failure(case, before, path, result)
+
+    def test_h1_deletion_edit_returns_validate_failure_nothing_written(self) -> None:
+        """A healthy document + an edit deleting the mandatory H1 (structural failure) returns
+        ``ValidateResult(valid=False, ...)``; the file stays byte-unchanged."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                path = self._doc_path(case, created.id)
+                before = path.read_bytes()
+
+                result = edit(id=created.id, type=case.doc_type, old_str=case.h1_line, new_str="")
+
+                self._assert_validate_failure(case, before, path, result)
+
+    def test_long_message_is_capped_at_the_validate_limit(self) -> None:
+        """The single ``errors[].message`` is capped exactly as ``validate`` caps it (issue
+        #110): 300 chars via ``snippet`` plus the ``"... (truncated)"`` suffix -- an edit whose
+        post-edit result fails structurally past a long ``## Description`` filler (a duplicate
+        H1) produces a message comfortably past the cap before truncation (the cap is the same
+        shared machinery ``update``'s Phase-120 branch mirrors)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = self._seed(case, case.minimal_body)
+        path = self._doc_path(case, created.id)
+        before = path.read_bytes()
+        long_replacement = (
+            "Long tail content to push the parser's embedded snippet past its own cap: " * 6
+            + "\n# Duplicate Invalid Heading\n\n## Source"
+        )
+
+        result = edit(id=created.id, type="req", old_str="## Source", new_str=long_replacement)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
+        self.assertEqual(path.read_bytes(), before)
+
+    def test_combined_failure_returns_parse_failure_result_nothing_written(self) -> None:
+        """REQ-010/ACC-007: broken existing document AND an edit whose post-edit result would be
+        invalid -- ``edit`` loads the existing document first (the Phase-110 protected
+        ``load_by_id``), so it returns ``ParseFailureResult`` and the invalid
+        ``old_str``/``new_str`` are never reached; the file stays byte-unchanged (still
+        broken)."""
+        for parse_failure_case, case in zip(_PARSE_FAILURE_CASES, _CASES):
+            with self.subTest(doc_type=case.doc_type):
+                self.assertEqual(parse_failure_case.doc_type, case.doc_type)
+                created = case.create(case.minimal_body)
+                doc_id = created.id
+                path = self._doc_path(case, doc_id)
+                path.write_text(_BROKEN_BODY, encoding="utf-8")
+                before = path.read_bytes()
+                field_error_old, field_error_new = _field_error_edit(case)
+
+                result = edit(id=doc_id, type=case.doc_type, old_str=field_error_old, new_str=field_error_new)
+
+                self.assertIsInstance(result, ParseFailureResult)
+                self.assertEqual(result.id, doc_id)
+                self.assertEqual(result.path, str(path.resolve()))
+                self.assertIn(_CORE_DEFECT, result.error)
+                failed = [
+                    summary for summary in parse_failure_case.list_fn().results if summary.title == "<failed to parse>"
+                ]
+                self.assertEqual(len(failed), 1)
+                self.assertEqual(result.error, failed[0].error)
+                self.assertEqual(path.read_bytes(), before)
 
 
 if __name__ == "__main__":

@@ -545,7 +545,34 @@ type or cross-cutting:
      `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
      `limit` = count; omitted `limit` = through end of body, `0` = pure
      insert, `offset` `N+1` = append; strict validation, never clamped),
-      splice-then-validate-whole; `edit`, the generic surgical exact-match
+      splice-then-validate-whole — and now with two non-raising failure
+      channels (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+      b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206
+      non-raising-structured-result chain): on a target id whose only
+      matching on-disk file fails to parse it returns the non-raising
+      `ParseFailureResult` (`error`/`path`/`id`, the same parse defect as
+      the domain's `list_<d>` failed row for the same file) instead of
+      raising the domain's not-found error (a truly-absent id still
+      raises), and a content-validation failure on the submitted new
+      content (or, in range mode, on the spliced result) returns the
+      non-raising `ValidateResult` (`valid=False`, single
+      `errors[].message` capped at 300 chars exactly as the generic
+      `validate` tool caps it, feat-110) instead of raising
+      `AssertionError`/`pydantic.ValidationError` — `edit` (below) gains
+      the same two channels for the post-edit result, and
+      `set_status`/`set_classification` (below) gain the
+      `ParseFailureResult` channel too — while every caller-usage
+      `ValueError` (invalid id shape, unknown `type`, range-coordinate
+      misuse, `edit`'s pre-dispatch OC-parity guards and stage-1 match
+       guards, `set_status`'s `superseded_by` misuse) still raises — with
+       the one sub-case where `update`/`set_classification`'s `type="adr"`
+       (a well-formed UUID id, so it passes the id-shape validation) raises
+       the plain `KeyError` from the dispatch-table lookup instead (a
+       direct-Python-caller outcome only, unreachable through the server's
+       12-value `type` enum) — `set_status`'s out-of-vocabulary `InvalidStatusResult` (case 2 of the
+      same chain, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs
+      pre-lock/pre-load (first), and nothing is written in any failure
+      case; `edit`, the generic surgical exact-match
       string replacement of an existing document's frontmatter-stripped body
       across the whole-body domains (`type` is one of
       req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
@@ -580,11 +607,14 @@ type or cross-cutting:
      excluded, `validate_adr` remains its own standalone tool) —
      replacing the former per-domain `validate_<d>` tools
      (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
-     unlike every other generic tool here, it never raises for a
+     it is the one generic tool here whose entire surface is non-raising
+     structured results: it never raises for a
      content-validation failure, always returning
      `{valid: bool, errors: list[{message: str}]}`, only raising
      `ValueError` for a `full`/content-shape mismatch or an unsupported
-     `type`; `find_related`, the generic cross-domain semantic-similarity
+     `type` (the four generic mutation tools' non-raising branches, above,
+     cover content-validation and existing-document-parse-failure only —
+     their caller-usage `ValueError`s still raise); `find_related`, the generic cross-domain semantic-similarity
      search for the documents most related to an existing document, given
      its `type`/`id`, across every whole-body domain (`adr` excluded
      structurally), ranked by cosine similarity of local sentence
@@ -663,8 +693,10 @@ type or cross-cutting:
       own file-read tool
       (no specmgr MCP tool can return the raw content of a document that fails
       to parse, and the generic `update` (or `edit`) tool is structurally unable to repair
-      one — its per-domain adapters re-parse the existing document first and
-      convert the failure into the domain's not-found error before any write),
+      one — its per-domain adapters re-parse the existing document before it
+      can write anything and, for a broken one, return the non-raising
+      `ParseFailureResult` instead of writing or raising (a truly-absent id
+      still raises the domain's not-found error)),
       fix only what the enriched error addresses while preserving the
       frontmatter `id`/`created`/`status`/`version` byte-for-byte and leaving
       `updated` untouched (a repair is not an edit), loop the generic
