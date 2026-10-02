@@ -65,7 +65,6 @@ from __future__ import annotations
 
 import asyncio
 import importlib
-import re
 import tempfile
 import textwrap
 import unittest
@@ -539,20 +538,6 @@ _BROKEN_BODY = "not a valid document, no headings at all\n"
 
 #: The core parse defect ``_BROKEN_BODY`` produces in every domain's parse error text.
 _CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
-
-
-def _strip_pydantic_footer(text: str) -> str:
-    """Strip the optional trailing pydantic documentation line from a parse-error text.
-
-    Module-local copy of the helper every ``get_<d>`` parse-failure test module carries
-    (the convention is 12 local copies, not a shared import): the ``DocCache``'s exception
-    reconstruction drops pydantic's "For further information visit
-    https://errors.pydantic.dev/..." line on warm re-raises, so the error-text identity
-    against the domain's ``list_<d>`` failed row is asserted modulo that line (Option B,
-    2026-09-26; the str-faithful reconstruction is tracked as follow-up issue #162).
-    """
-    result = re.sub(r"[ \t]*For further information visit https://errors\.pydantic\.dev/.*$", "", text, flags=re.S)
-    return result
 
 
 @dataclass(frozen=True)
@@ -1445,8 +1430,7 @@ class TestEditParseFailure(TempEditDirTestCase):
         self.assertTrue(result.error)
         failed = [summary for summary in list_fn().results if summary.title == "<failed to parse>"]
         self.assertEqual(len(failed), 1)
-        # Option B (2026-09-26): identity is modulo the trailing pydantic line (follow-up issue #162).
-        self.assertEqual(_strip_pydantic_footer(result.error), _strip_pydantic_footer(failed[0].error))
+        self.assertEqual(result.error, failed[0].error)
         # The core defect content (this fixture's structural parse failure) must be present in both texts.
         self.assertIn(_CORE_DEFECT, result.error)
         self.assertIn(_CORE_DEFECT, failed[0].error)
@@ -1578,8 +1562,7 @@ class TestEditValidateFailure(TempEditDirTestCase):
                     summary for summary in parse_failure_case.list_fn().results if summary.title == "<failed to parse>"
                 ]
                 self.assertEqual(len(failed), 1)
-                # Option B (2026-09-26): identity is modulo the trailing pydantic line (follow-up issue #162).
-                self.assertEqual(_strip_pydantic_footer(result.error), _strip_pydantic_footer(failed[0].error))
+                self.assertEqual(result.error, failed[0].error)
                 self.assertEqual(path.read_bytes(), before)
 
 

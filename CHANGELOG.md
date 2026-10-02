@@ -54,11 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `load_by_id` failure, probe the domain's existing parse-failure lookup
   (the same helper every `get_<d>` tool uses, with the same
   `read_fn`/`assert_within` mirroring), and return the result, so the
-  `error` text carries the same parse defect as the domain's `list_<d>()`
-  failed row for the same file (identical field path and cause; the
-  trailing pydantic documentation line may differ by read order/cache
-  state -- Option B, 2026-09-26, follow-up issue #162). A truly-absent id
-  still raises the domain's own not-found error, every caller-usage
+  `error` text is byte-identical to the domain's `list_<d>()` failed
+  row's `error` for the same file (identical field path and cause,
+  including the trailing pydantic documentation line -- fixed by
+  feat-162-doc-cache-exception-footer, GitHub issue #162). A truly-absent
+  id still raises the domain's own not-found error, every caller-usage
   `ValueError` is unchanged (invalid id shape, unknown `type`,
   range-coordinate misuse, `edit`'s OC-parity guards -- pre-dispatch
   identical-input/empty-`old_str` and stage-1 match guards, `set_status`'s

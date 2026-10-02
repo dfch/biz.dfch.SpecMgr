@@ -125,10 +125,11 @@ own cache-backed ``read_<d>`` as ``read_fn``;
 returns the result when the probe finds a name-matching broken file (the
 probed path passes the same ``_path_safety.assert_within`` guard the
 primary load path applies, mirroring every ``get_<d>``'s own branch). The
-``error`` text carries the same parse defect as the domain's ``list_<d>``
-failed row for the same file (identical field path and cause; the trailing
-pydantic documentation line may differ by read order/cache state -- Option
-B, 2026-09-26, follow-up issue #162). A truly-absent ``id`` (no file on
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
 disk matches at all) still raises the domain's own not-found error
 unchanged. (2) A stage-2 content-validation failure on the *edited* body
 returns the non-raising :class:`~biz.dfch.specmgr.general.models.
@@ -836,10 +837,10 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "`old_str` containing `\\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex "
         "fallback. A document that exists but fails to parse returns a `ParseFailureResult` "
         "(`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text "
-        "carries the same parse defect as the domain's `list_<d>` failed row for the same file "
-        "(identical field path and cause, though the trailing pydantic documentation line may differ "
-        "by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26) -- "
-        "and a truly-absent id still raises the domain's not-found error. A stage-2 content-validation "
+        "is byte-identical to the domain's `list_<d>` failed row's `error` for the same file "
+        "(identical field path and cause, including the trailing pydantic documentation line; "
+        "ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
+        "not-found error. A stage-2 content-validation "
         "failure on the post-edit result returns a non-raising `ValidateResult` (`valid=False`, "
         "`errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool "
         "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR "
@@ -955,11 +956,11 @@ def edit(
         ``id`` whose only matching on-disk file fails to parse, a non-raising
         :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
         (``error``/``path``/``id``) instead of the domain's not-found error --
-        ``error`` carries the same parse defect as the domain's ``list_<d>``
-        failed row for the same file (identical field path and cause; the
-        trailing pydantic documentation line may differ by read order/cache
-        state -- Option B, 2026-09-26, follow-up issue #162). On a stage-2
-        content-validation failure of the edited body, a non-raising
+        ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
+        ``error`` for the same file (identical field path and cause, including
+        the trailing pydantic documentation line; ADR
+        9080b37c-82b3-4f63-81f1-79641d0bf14c). On a stage-2 content-validation
+        failure of the edited body, a non-raising
         :class:`~biz.dfch.specmgr.general.models.ValidateResult`
         (``valid=False``, ``errors=[{message}]``) with the single
         ``errors[].message`` capped at 300 chars exactly as the generic

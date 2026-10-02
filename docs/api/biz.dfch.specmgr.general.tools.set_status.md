@@ -97,10 +97,11 @@ called with the domain's own cache-backed ``read_<d>`` as ``read_fn``;
 returns the result when the probe finds a name-matching broken file (the
 probed path passes the same ``_path_safety.assert_within`` guard the
 primary load path applies, mirroring every ``get_<d>``'s own branch). The
-``error`` text carries the same parse defect as the domain's ``list_<d>``
-failed row for the same file (identical field path and cause; the trailing
-pydantic documentation line may differ by read order/cache state -- Option
-B, 2026-09-26, follow-up issue #162). A truly-absent ``id`` (no file on
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
 disk matches at all) still raises the domain's own not-found error
 unchanged. The pre-dispatch out-of-vocabulary ``InvalidStatusResult``
 check runs first and is unaffected -- an out-of-vocabulary ``status``
@@ -380,12 +381,12 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResu
     domains), a non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
     (``error``/``path``/``id``) is returned instead of the domain's
-    not-found error -- ``error`` carries the same parse defect as the
-    domain's ``list_<d>`` failed row for the same file (identical field
-    path and cause; the trailing pydantic documentation line may differ
-    by read order/cache state -- Option B, 2026-09-26, follow-up issue
-    #162) -- with a truly-absent id still raising the domain's own
-    not-found error (feat-170-update-edit-parse-failure, GitHub issue
+    not-found error -- ``error`` is byte-identical to the domain's
+    ``list_<d>`` failed row's ``error`` for the same file (identical
+    field path and cause, including the trailing pydantic documentation
+    line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+    id still raising the domain's own not-found error
+    (feat-170-update-edit-parse-failure, GitHub issue
     #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
