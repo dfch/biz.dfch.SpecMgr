@@ -4,7 +4,7 @@ created: '2026-10-02T11:28:09.942+02:00'
 id: feat-177-list-ref-feat
 status: planning
 type: feat
-updated: '2026-10-02T13:10:35.190+02:00'
+updated: '2026-10-02T14:47:50.000+02:00'
 version: 1.0.0
 ---
 
@@ -82,9 +82,9 @@ version: 1.0.0
 
 #### Phase 100: Scanner and Resolver
 
-- [ ] Task 100.100: Add `_UUID_REFERENCE_TYPES` (the existing 10 tags, same order) in `general/tools/_references.py`, rebuild `REFERENCE_TYPES` as `_UUID_REFERENCE_TYPES + ("feat",)`, add the second compiled FEAT reference pattern (literal `FEAT` tag + `feat-[0-9]+(?:-[a-z0-9-]+)?` + trailing `(?![0-9a-z-])` guard, sharing the full-id shape with `general/tools/_path_safety._FEAT_ID_PATTERN` via a private import with alias), and extend `find_references` to merge both `finditer` result sets by stable sort on `(start, end)` -- the UUID pattern stays byte-unchanged.
-- [ ] Task 100.110: Add a `_load_feat` resolver (full-id shape -> exact `load_by_id`; bare `feat-[0-9]+$` -> first in sorted order matching the `feat-NNN-` prefix, name-only filter over the `iter_feat_paths` view (README-backed folders only); any other shape -> exact `load_by_id` -> not-found row; title via `feature_title`; the row's `id` is the extracted id verbatim) and register it in `_TARGET_RESOLVERS`.
-- [ ] Task 100.120: Update the `_references` module docstring (its first bullet's `:data:`_REFERENCE_PATTERN`` reference, the "feat can never be one" statement, the tag-vocabulary paragraph, the UUID-only id wording in the `find_references`/`resolve_reference` docstrings, and the `_TARGET_RESOLVERS` comment's "nine flat target domains" wording) and the `_REFERENCE_PATTERN` constant docstring (tag-group derivation -> `_UUID_REFERENCE_TYPES`); the drift-guard assertion stays as-is (its domain-agnostic message remains accurate -- no edit).
+- [x] Task 100.100: Add `_UUID_REFERENCE_TYPES` (the existing 10 tags, same order) in `general/tools/_references.py`, rebuild `REFERENCE_TYPES` as `_UUID_REFERENCE_TYPES + ("feat",)`, add the second compiled FEAT reference pattern (literal `FEAT` tag + `feat-[0-9]+(?:-[a-z0-9-]+)?` + trailing `(?![0-9a-z-])` guard, sharing the full-id shape with `general/tools/_path_safety._FEAT_ID_PATTERN` via a private import with alias), and extend `find_references` to merge both `finditer` result sets by stable sort on `(start, end)` -- the UUID pattern stays byte-unchanged.
+- [x] Task 100.110: Add a `_load_feat` resolver (full-id shape -> exact `load_by_id`; bare `feat-[0-9]+$` -> first in sorted order matching the `feat-NNN-` prefix, name-only filter over the `iter_feat_paths` view (README-backed folders only); any other shape -> exact `load_by_id` -> not-found row; title via `feature_title`; the row's `id` is the extracted id verbatim) and register it in `_TARGET_RESOLVERS`.
+- [x] Task 100.120: Update the `_references` module docstring (its first bullet's `:data:`_REFERENCE_PATTERN`` reference, the "feat can never be one" statement, the tag-vocabulary paragraph, the UUID-only id wording in the `find_references`/`resolve_reference` docstrings, and the `_TARGET_RESOLVERS` comment's "nine flat target domains" wording) and the `_REFERENCE_PATTERN` constant docstring (tag-group derivation -> `_UUID_REFERENCE_TYPES`); the drift-guard assertion stays as-is (its domain-agnostic message remains accurate -- no edit).
 
 #### Phase 110: Tests
 
@@ -104,11 +104,15 @@ version: 1.0.0
 
 ### Current Status
 
-**As of 2026-10-02**: Planning: feature drafted from GitHub issue #177, refined after two code-level reviews; no implementation started.
+**As of 2026-10-02**: Phase 100 (Scanner and Resolver) implemented in `general/tools/_references.py` -- the second compiled FEAT reference pattern (full `feat-NNN-slug` id or bare `feat-NNN` number, trailing guard, id shapes shared from `_path_safety._FEAT_ID_PATTERN` via private import with alias), the `_load_feat` resolver registered in `_TARGET_RESOLVERS`, and `find_references` extended to merge both `finditer` result sets by stable sort on `(start, end)` (the UUID pattern stays byte-unchanged). Remaining: Phase 110 (Tests) and Phase 120 (Documentation and Gates). Gate state: fully green (ruff format/check, vulture, and the full pytest suite -- the ACC-003 pinned exception landed with Phase 100 as the minimal `feat` `continue` special-case in the `test_each_vocabulary_tag_matches_a_well_formed_reference` vocabulary loop; its FEAT-form counterpart and the loop's docstring reword remain Phase 110 Task 110.100 work).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-02T12:08:18.000Z - Phase 100 implemented (Scanner and Resolver)
+
+Implemented Tasks 100.100/100.110/100.120 in `general/tools/_references.py` (plus the minimal ACC-003 pinned test special-case noted at the end of this entry -- no other test or doc-surface changes, which are Phase 110/120): (1) added `_UUID_REFERENCE_TYPES` (the existing 10 tags, same order) and rebuilt `REFERENCE_TYPES` as `_UUID_REFERENCE_TYPES + ("feat",)` (the 11-tag vocabulary; the module-scope drift guard is unchanged); the UUID pattern's tag group is now derived from `_UUID_REFERENCE_TYPES` and its compiled regex is byte-unchanged; (2) added the second compiled FEAT pattern -- literal `FEAT` tag, one-or-more space/tab/dash separator, the id alternative `feat-[0-9]+(?:-[a-z0-9-]+)?` with the trailing `(?![0-9a-z-])` guard -- whose id shapes are sourced from `_path_safety._FEAT_ID_PATTERN` via a private import with alias (`_FEAT_FULL_ID_PATTERN`; the unanchored shape is split into its number prefix and slug class, with a module-scope tripwire assertion that the split yields exactly two parts) so the pattern and the resolver's full/bare classifier cannot drift from `assert_feat_id`; (3) extended `find_references` to merge both `finditer` result sets by stable sort on `(start, end)` (spans provably disjoint); (4) added `_load_feat` (full-id shape and any other shape -- e.g. a UUID -- through feat's cache-backed exact `load_by_id`; bare `feat-NNN` through the first README-backed `iter_feat_paths` folder whose name starts with `feat-NNN-`, name-only, no document parsing; title via `feature_title`; the row's id is the extracted id verbatim) and registered `"feat"` in `_TARGET_RESOLVERS`; (5) updated the module/constant/function docstrings per Task 100.120 (first bullet's pattern reference, the "feat can never be one" statements, the tag-vocabulary paragraph, the UUID-only id wording in `find_references`/`resolve_reference`, the "nine flat target domains" wording, the accepted-v1 caveat now covering both patterns). Quality gate: `ruff format --check`, `ruff check`, and `vulture` green, and the full pytest suite green -- the ACC-003 pinned exception landed with Phase 100 as the minimal `feat` `continue` special-case in the `test_each_vocabulary_tag_matches_a_well_formed_reference` vocabulary loop (skipping `feat`, whose UUID form is deliberately not a feat reference: a feat's id is never a UUID), so the pre-commit full-suite gate stays green; the remaining Task 110.100 test work (the FEAT-form loop, the loop's docstring reword) stays in Phase 110.
 
 #### 2026-10-02T11:07:26.000Z - Refined after second review
 
@@ -121,6 +125,16 @@ Reviewed the plan against the code (`_references.py`, `_path_safety.py`, `list_r
 #### 2026-10-02T09:24:57.000Z - Created
 
 Feature drafted from GitHub issue #177: `list_references` does not resolve FEAT (slug-style id) cross-references. Design settled as a FEAT-scoped second scanner pattern (full id or bare `feat-NNN` number) plus a `_load_feat` resolver; multi-match bare numbers resolve first in directory order. No implementation started.
+
+### Decisions Made
+
+#### 2026-10-02T12:47:50.000Z - The ACC-003 pinned vocabulary-loop special-case lands with Phase 100, not Phase 110
+
+The plan parked the `test_each_vocabulary_tag_matches_a_well_formed_reference` update in Phase 110 (Task 110.100) after pinning it as the one expected red test of Phase 100, but the repo's pre-commit contract runs the full pytest suite on every commit touching `src/`/`tests/` (`.pre-commit-config.yaml`), so no commit can land while the suite is red; the orchestrator therefore pulled the minimal ACC-003 special-case into Phase 100 -- a pinned `continue` (with a comment citing the pin) that skips `feat` in the UUID vocabulary loop, since `feat`'s UUID form is deliberately not a feat reference (a feat's id is never a UUID). Behavior and end state are exactly as the plan pinned: the remaining Task 110.100 work (the loop's docstring reword, the separate FEAT-form loop, and the `test_tags_outside_the_vocabulary_do_not_match` rewording) stays in Phase 110.
+
+#### 2026-10-02T12:08:18.000Z - The FEAT pattern's id shapes are derived from the shared full-id constant, not re-typed
+
+The plan pinned the FEAT reference pattern's id alternative (`feat-[0-9]+(?:-[a-z0-9-]+)?`) and that it "share the full-id shape" with `general/tools/_path_safety._FEAT_ID_PATTERN` via a private import with alias, but left the sharing mechanism open; it was implemented as: import the constant aliased `_FEAT_FULL_ID_PATTERN`, strip its `^`/`$` anchors to get the full-id shape, and split that shape at the hyphen preceding its final character class into the number prefix (`feat-[0-9]+`) and the slug class with quantifier (`[a-z0-9-]+`), composing the id alternative as `<prefix>(?:-<slug>)?` and the resolver's bare classifier as `^<prefix>$` -- a module-scope tripwire assertion (`len(_FEAT_ID_SPLIT) == 2`) makes a future shape change of the shared constant fail loudly at import time instead of silently drifting the pattern. The anchored constant itself remains the resolver's full-id classifier (the plan's "doubles as the full/bare classifier" pin), the `"feat"` entry is registered last in `_TARGET_RESOLVERS` (mirroring `REFERENCE_TYPES`' order), and the bare-number zero-match not-found message names the id, the `feat-NNN-*` folder expectation, and the `README.md` requirement.
 
 ### More Information
 

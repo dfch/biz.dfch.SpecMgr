@@ -354,6 +354,10 @@ class TestFindReferences(unittest.TestCase):
     def test_each_vocabulary_tag_matches_a_well_formed_reference(self):
         """Every one of the 10 vocabulary tags must match '<TAG> <uuid>' and come back lowercased."""
         for tag in REFERENCE_TYPES:
+            if tag == "feat":
+                # feat's UUID form is deliberately not a feat reference (feat-177 ACC-003; the
+                # FEAT-form loop is added in Phase 110, Task 110.100).
+                continue
             with self.subTest(tag=tag):
                 text = f"{tag.upper()} {_UUID}: A title"
 
