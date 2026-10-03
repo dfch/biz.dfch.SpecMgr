@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: review
 type: feat
-updated: '2026-10-03T12:32:42.000+02:00'
+updated: '2026-10-03T16:18:17.000+02:00'
 version: 1.0.0
 ---
 
@@ -42,18 +42,18 @@ regardless of shape. Tracked by
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: An `UpdateEntry`/`DecisionEntry` containing only a plain paragraph still parses and round-trips identically to today, in all 6 domains (no regression).
-- [ ] ACC-002: An `UpdateEntry`/`DecisionEntry` containing multiple blank-line-separated paragraphs parses and round-trips successfully, in all 6 domains.
-- [ ] ACC-003: An `UpdateEntry`/`DecisionEntry` containing a bullet/numbered list parses and round-trips successfully, in all 6 domains.
-- [ ] ACC-004: An `UpdateEntry`/`DecisionEntry` containing a fenced code block parses and round-trips successfully, in all 6 domains.
-- [ ] ACC-005: An `UpdateEntry`/`DecisionEntry` with blank/whitespace-only content under its heading still fails to parse with an `AssertionError` (non-blank requirement preserved), in all 6 domains.
-- [ ] ACC-006: `model_dump()` on a parsed document surfaces the new leaf field's real text content for a non-paragraph body, not an empty object.
-- [ ] ACC-007: The full test suite passes after every phase below, not just at the end.
-- [ ] ACC-008: Each of the 6 phases ends with a passing full quality gate (`ruff format --check`, `ruff check`, `vulture`, full test suite) before that phase's own commit -- not just a single check against the final state.
-- [ ] ACC-009: Every affected domain's packaged `schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
-- [ ] ACC-010: `CHANGELOG.md` carries an entry describing the relaxation under `[Unreleased]`.
-- [ ] ACC-011: The upstream merge of `origin/dev` (8e23fed) lands as a single merge commit whose `CHANGELOG.md` is a pure union -- every `[Unreleased]` entry of both parents preserved byte-verbatim, no other content in the file modified -- and PR #182's GitHub `mergeable` state moves from `CONFLICTING` to `CLEAN`.
-- [ ] ACC-012: A `feat-reviewer` pass over the merged branch completes against this plan's REQ-001..006 and ACC-001..011; every reported finding is fixed and re-gated before closeout; every met ACC box is checked in this README with a dated review entry.
+- [x] ACC-001: An `UpdateEntry`/`DecisionEntry` containing only a plain paragraph still parses and round-trips identically to today, in all 6 domains (no regression).
+- [x] ACC-002: An `UpdateEntry`/`DecisionEntry` containing multiple blank-line-separated paragraphs parses and round-trips successfully, in all 6 domains.
+- [x] ACC-003: An `UpdateEntry`/`DecisionEntry` containing a bullet/numbered list parses and round-trips successfully, in all 6 domains.
+- [x] ACC-004: An `UpdateEntry`/`DecisionEntry` containing a fenced code block parses and round-trips successfully, in all 6 domains.
+- [x] ACC-005: An `UpdateEntry`/`DecisionEntry` with blank/whitespace-only content under its heading still fails to parse with an `AssertionError` (non-blank requirement preserved), in all 6 domains.
+- [x] ACC-006: `model_dump()` on a parsed document surfaces the new leaf field's real text content for a non-paragraph body, not an empty object.
+- [x] ACC-007: The full test suite passes after every phase below, not just at the end.
+- [x] ACC-008: Each of the 6 phases ends with a passing full quality gate (`ruff format --check`, `ruff check`, `vulture`, full test suite) before that phase's own commit -- not just a single check against the final state.
+- [x] ACC-009: Every affected domain's packaged `schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
+- [x] ACC-010: `CHANGELOG.md` carries an entry describing the relaxation under `[Unreleased]`.
+- [x] ACC-011: The upstream merge of `origin/dev` (8e23fed) lands as a single merge commit whose `CHANGELOG.md` is a pure union -- every `[Unreleased]` entry of both parents preserved byte-verbatim, no other content in the file modified -- and PR #182's GitHub `mergeable` state moves from `CONFLICTING` to `CLEAN`.
+- [x] ACC-012: A `feat-reviewer` pass over the merged branch completes against this plan's REQ-001..006 and ACC-001..011; every reported finding is fixed and re-gated before closeout; every met ACC box is checked in this README with a dated review entry.
 
 ### Scope
 
@@ -172,7 +172,7 @@ mid-commit and having to fix-then-retry.
 - [x] Task 100.140: In `sop/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [x] Task 100.150: In `sysrs/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
 - [x] Task 100.160: In `tsk/models/v1/body.py`, add `UpdateEntryContent(MarkdownStr)`; retype `UpdateEntry.content`; drop the now-unused `MarkdownParagraph` import if nothing else in the module uses it.
-- [x] Task 100.165: Correct the 24 pre-existing test incompatibilities the retype surfaced and regenerate the stale artifacts so the phase-end full suite is green before the commit: (a) the 21 `.content.text`/`model_dump()` expected values in the 6 domains' `test_body.py`/`test_parser.py`/`tests/tsk/tools/test_parse_tsk.py` that pin the old `MarkdownParagraph.text` stripped form gain the new leaf type's raw trailing newline (mechanical expected-value update only); (b) `tests/regression/test_issue_27.py`'s `TestFeat7Task029StrayListMarkerRegression` (3 tests) is deleted together with its trigger-2 fixtures -- the pinned trigger (a `+`-prefixed continuation line inside a `## Recent Updates` entry) is now valid any-markdown content by design (issue #180, ACC-003); the same actionable "text left over" message stays pinned at engine level in `tests/models/md/test_validation_error_baseline.py`, and the module docstring notes the supersession (user-approved decision); (c) regenerate the 6 affected domains' `docs/<d>_schema.json` and packaged `<d>/data/<d>_schema.json` copies plus `specmgr docs` -- greens the 5 `test_matches_fresh_generate_*_schema_output` drift tests (note: `tsk`'s resource test file carries no drift test, a pre-existing asymmetry left untouched; the pre-commit `specmgr-schema-tsk-package` hook still enforces its packaged copy).
+- [x] Task 100.165: Correct the 24 pre-existing test incompatibilities the retype surfaced and regenerate the stale artifacts so the phase-end full suite is green before the commit: (a) the 21 scalar (+10 tuple) `.content.text`/`model_dump()` expected values in the 6 domains' `test_body.py`/`test_parser.py`/`tests/tsk/tools/test_parse_tsk.py` that pin the old `MarkdownParagraph.text` stripped form gain the new leaf type's raw trailing newline (mechanical expected-value update only); (b) `tests/regression/test_issue_27.py`'s `TestFeat7Task029StrayListMarkerRegression` (3 tests) is deleted together with its trigger-2 fixtures -- the pinned trigger (a `+`-prefixed continuation line inside a `## Recent Updates` entry) is now valid any-markdown content by design (issue #180, ACC-003); the same actionable "text left over" message stays pinned at engine level in `tests/models/md/test_validation_error_baseline.py`, and the module docstring notes the supersession (user-approved decision); (c) regenerate the 6 affected domains' `docs/<d>_schema.json` and packaged `<d>/data/<d>_schema.json` copies plus `specmgr docs` -- greens the 5 `test_matches_fresh_generate_*_schema_output` drift tests (note: `tsk`'s resource test file carries no drift test, a pre-existing asymmetry left untouched; the pre-commit `specmgr-schema-tsk-package` hook still enforces its packaged copy).
 - [x] Task 100.170: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before moving to Phase 110.
 - [x] Task 100.180: Commit Phase 100's changes (the 6 domains' `body.py` model retypes) before starting Phase 110.
 
@@ -210,17 +210,17 @@ mid-commit and having to fix-then-retry.
 - [x] Task 140.110: `git merge origin/dev` (local `origin/dev` at 8e23fed already matches the remote, verified via `git ls-remote`) -- expect exactly one conflict, `CHANGELOG.md`, the only file both sides touched (our 37 changed files intersect their 197 in one).
 - [x] Task 140.120: Resolve the `CHANGELOG.md` conflict in `[Unreleased]` -> `### Changed` as a union of both bullets, ours first (the feat-153 merge precedent): keep this feature's #180 entry (timestamped entries' `content` accepts any markdown), then dev's #177 entry (`list_references` gains the `FEAT` tag); nothing else in the file touched.
 - [x] Task 140.130: Verify the resolution is a pure union (ACC-011): `git diff HEAD^1..HEAD -- CHANGELOG.md` and `git diff HEAD^2..HEAD -- CHANGELOG.md` each show only added lines -- no modification or deletion of either parent's content, every entry byte-verbatim against its parent.
-- [x] Task 140.140: `git add CHANGELOG.md && git commit` with the default merge message (no pre-commit hooks are installed in this worktree, so nothing runs automatically).
+- [x] Task 140.140: `git add CHANGELOG.md && git commit` with the default merge message (the pre-commit hook did run -- for a conflicted-merge commit it checked only the merge-conflict file; see the Phase 140 progress entry below).
 - [x] Task 140.150: Regenerate the derived docs to a fixed point -- `uv run --frozen specmgr docs`, `uv run --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc` -- and confirm zero drift (feat-180 touched no tool docstrings); commit only if any changed.
 - [x] Task 140.160: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before the push.
 - [x] Task 140.170: `git push`, then poll `gh pr view 182 --json mergeable` (without `--watch`, repeating as needed) until it reports `CLEAN`, clearing the current `CONFLICTING`.
 
 #### Phase 150: Review and closeout
 
-- [ ] Task 150.100: Run the `feat-reviewer` subagent over the merged branch, checking code/tests/docs against this plan's REQ-001..006 and ACC-001..011.
-- [ ] Task 150.110: If the review reports findings, fix them and re-run the Task 140.160 full gate before proceeding; if it reports none, record that explicitly in the review entry (ACC-012).
-- [ ] Task 150.120: Check off every met ACC box in this README's `### Acceptance Criteria` and add a dated review entry to `### Updates` recording the outcome.
-- [ ] Task 150.130: Review `git status`/`git diff` for completeness, then commit (bookkeeping only, unless Task 150.110 landed fixes) and push.
+- [x] Task 150.100: Run the `feat-reviewer` subagent over the merged branch, checking code/tests/docs against this plan's REQ-001..006 and ACC-001..011.
+- [x] Task 150.110: If the review reports findings, fix them and re-run the Task 140.160 full gate before proceeding; if it reports none, record that explicitly in the review entry (ACC-012).
+- [x] Task 150.120: Check off every met ACC box in this README's `### Acceptance Criteria` and add a dated review entry to `### Updates` recording the outcome.
+- [x] Task 150.130: Review `git status`/`git diff` for completeness, then commit (bookkeeping only, unless Task 150.110 landed fixes) and push.
 
 ## Progress
 
@@ -229,8 +229,9 @@ mid-commit and having to fix-then-retry.
 **As of 2026-10-02**: All four phases are COMPLETE, each with its own
 passing-gate commit. Phase 100 (Model change, b6492cd) landed the
 per-domain `UpdateEntryContent`/`DecisionEntryContent` leaf retypes
-plus the approved Task 100.165 fix-up (21 trailing-newline
-expected-value updates, the superseded feat-7 Task 0.29 regression
+plus the approved Task 100.165 fix-up (21 scalar (+10 tuple)
+trailing-newline expected-value updates, the superseded feat-7 Task
+0.29 regression
 class deleted, 6x2 schema copies + `specmgr docs` regenerated;
 `3900 passed, 2688 subtests passed` gate). Phase 110 (New test
 coverage, ebf4f17) added 39 new positive/confirmation tests across the
@@ -278,6 +279,18 @@ branch pushed, and PR #182 now reports `mergeable: MERGEABLE` /
 stays `review`: Phase 150 (the `feat-reviewer` pass + ACC
 check-off) is the remaining work.
 
+**As of 2026-10-03**: Phase 150 (Review and closeout) is COMPLETE:
+the `feat-reviewer` pass (all 11 ACCs MET, no code defects) reported
+6 findings (1 major + 2 minor + 3 nit), all fixed and re-gated (12
+prompt-instruction files reworded to the new any-markdown `Field`
+descriptions, multi-entry non-paragraph pin added in dec's
+`TestUpdatesContainer`, whitespace-only `subTest` variants in
+vcr/sysrs/tsk, three plan-README nits), the full gate re-run green
+(`4052 passed, 0 failed`; serial `2773 subtests passed`), and all 12
+ACC boxes (ACC-001..012) checked. Feature closeout done; PR #182
+reports `mergeable: MERGEABLE` / `mergeStateStatus: CLEAN` with all
+CI checks green.
+
 ### Blockers
 
 - None.
@@ -285,6 +298,89 @@ check-off) is the remaining work.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T14:18:17.000Z - Phase 150 (Review and closeout) completed; feat-reviewer findings fixed, all 12 ACCs met
+
+Implemented Tasks 150.100-150.120 (Task 150.100, the `feat-reviewer`
+pass, was run by the orchestrator before this phase started; its
+findings are the complete set -- it was not re-run here). Review
+verdict: all 11 ACCs (ACC-001..011) MET against REQ-001..006, no code
+defects, but 6 findings to fix and re-gate before closeout per
+ACC-012: 1 major (F1), 2 minor (F2, F4), 3 nit (F3, F5, F6). All six
+fixed:
+
+- F1 (major): the 12 packaged `*_create_instructions.md`/
+  `*_update_instructions.md` files in the 6 affected domains still
+  told the authoring LLM each Updates/Decisions Made entry is
+  "followed by a mandatory lead paragraph" (tsk: "a short paragraph
+  of update text") -- contradicting the schema's own new `Field`
+  descriptions this feature landed. Reworded only the stale shape
+  clause in each file to mirror that domain's `UpdateEntry.content`/
+  `DecisionEntry.content` `Field` description ("the entry's own update
+  text directly under the H3 heading (any markdown content -- multiple
+  paragraphs, lists, code blocks, block quotes, not just a single
+  paragraph), which is mandatory"; feat: "update/decision text" under
+  the H4 heading). `*_example.md`/`*_template.md` files and the DEC
+  `Decision Outcome` `statement` lead-paragraph references untouched
+  (out of scope per the plan).
+- F2 (minor): no test pinned a multi-entry collection whose first
+  entry carries non-paragraph content (the load-bearing "consume
+  everything remaining stops at the next entry's heading"
+  assumption). Extended the pre-existing multi-entry test in
+  `tests/dec/models/v1/test_body.py`'s `TestUpdatesContainer`
+  (`test_parses_multiple_entries_in_document_order`) with a bullet-list
+  first entry; fixture verified mdformat-stable; asserts parse +
+  byte-identical round-trip + per-entry `.content.text` values
+  (`"- item one\n\n- item two\n"` / `"First entry text.\n"`).
+- F3 (nit): ACC-005's "whitespace-only" half was unpinned (the new
+  blank-content negatives pin heading-with-nothing-after only). Added
+  a whitespace-only (`"   \n"` -- mdformat-normalizes to nothing)
+  `subTest` variant to the three Phase 110 blank-content tests in
+  `tests/vcr/models/v1/test_body.py`, `tests/sysrs/models/v1/
+  test_body.py`, and `tests/tsk/models/v1/test_body.py` (+6 subtests);
+  dec/sop/feat's pre-existing blank negatives left unmodified.
+- F4 (minor): Task 140.140's stale parenthetical ("no pre-commit hooks
+  are installed in this worktree, so nothing runs automatically")
+  replaced with a pointer to the Phase 140 progress entry (the hook
+  DID run; for a conflicted-merge commit it checked only the
+  merge-conflict file).
+- F5 (nit): the Task 100.165 "21 `.content.text`/`model_dump()`
+  expected values" count undercounted (21 scalar assertions + 5
+  list-comprehension assertions carrying 10 tuple values = 26 changed
+  assertions / 31 changed value strings; nothing missed, verified).
+  Amended to "21 scalar (+10 tuple)" in the task line and all its
+  Progress-section echoes (the 2026-10-02 Current Status entry, the
+  17:40:00 and 14:30:00 Updates entries); the 14:30:00 Decisions Made
+  entry's own "21" stays byte-for-byte per its F6 append-only
+  treatment.
+- F6 (nit): the 2026-10-02T14:30:00 Decisions Made entry's superseded
+  sequencing sentence ("the 24 non-schema test corrections move into
+  Phase 110" / "Phase 100's commit ... sequenced after Phase 110's
+  corrections land") now carries an appended one-line supersession note
+  pointing at the 17:40:00 entry (the corrections landed in Phase 100's
+  own commit via in-between Task 100.165); original text otherwise
+  byte-for-byte (append-only log convention).
+
+Re-run full gate (Task 150.110, the Task 140.160 gate): `uv run
+--frozen ruff format --check` green (1788 files already formatted),
+`uv run --frozen ruff check` green (all checks passed), `uv run
+--frozen vulture src/ whitelist.py --min-confidence 60` green (exit 0,
+no output), `uv run --frozen pytest -n auto --cov=src --cov-report=`
+green: **4052 passed in 78.97s (0:01:18), 0 failed** -- unchanged test
+count from the Phase 140 baseline (F2/F3 extended pre-existing test
+methods, adding no new ones); serial confirmation `uv run --frozen
+pytest -n 0` green: **4052 passed, 3 deselected, 2773 subtests passed
+in 319.30s** (the +6 subtests are exactly F3's three 2-iteration
+`subTest` loops; the remainder of the delta vs Phase 120's 2698 is
+dev's merge-side subtests).
+
+All 12 ACC boxes (ACC-001..012) are now checked in the Acceptance
+Criteria (ACC-012 by this closeout itself), Tasks 150.100-150.120 are
+checked off, and the Current Status section gained its Phase 150
+paragraph. This README re-parses cleanly under the worktree's own
+feat-180 code (`parse_feat` over the raw file text). Task 150.130: the
+two commits (the F1-F3 fix commit, then this plan-README bookkeeping
+commit) and the push follow this entry.
 
 #### 2026-10-03T10:32:42.000Z - Phase 140 (Upstream dev merge) completed; CHANGELOG pure-union verified, PR #182 CLEAN
 
@@ -582,7 +678,8 @@ entry.
 
 Implemented Task 100.165 per the user-approved resolution of the
 29-failure analysis above (see the Decisions Made entry of the same
-timestamp): (a) updated the 21 pre-existing expected values across the 6
+timestamp): (a) updated the 21 scalar (+10 tuple) pre-existing expected
+values across the 6
 domains' `test_body.py`/`test_parser.py` files plus
 `tests/tsk/tools/test_parse_tsk.py` -- the exact-value `.content.text` /
 `model_dump()` assertions that pinned the old `MarkdownParagraph.text`
@@ -685,7 +782,8 @@ change needed -- the `text` name is already marked used by existing
 precedent, which carries no whitelist entry either); full suite
 **red**: `29 failed, 3874 passed in 74.66s`. All 29 are pre-existing
 tests the plan predicted would pass unmodified; they fall in three
-groups: (1) 21 exact-value assertions on `.content.text` /
+groups: (1) 21 scalar (+10 tuple) exact-value assertions on
+`.content.text` /
 `model_dump()` values in the 6 domains' `test_body.py`/`test_parser.py`
 / `tests/tsk/tools/test_parse_tsk.py` that pin the OLD
 `MarkdownParagraph.text` behavior (re-parse + `.strip()`, no trailing
@@ -697,7 +795,8 @@ the precedent idiom asserts exactly that trailing newline
 single-paragraph round-trips were verified byte-identical and
 blank/whitespace-only content still fails with the engine's
 mandatory-field zero-extent check, so the model change itself is correct
-per the plan's Design Rules -- these 21 assertions need the trailing
+per the plan's Design Rules -- these 21 scalar (+10 tuple) assertions
+need the trailing
 `"\n"` added; (2) 3 `tests/regression/test_issue_27.py`
 `TestFeat7Task029StrayListMarkerRegression` tests whose fixture puts a
 `+`-prefixed line inside a `## Recent Updates` entry -- that content is
@@ -817,6 +916,9 @@ corrections land, not immediately after Phase 100, since the commit-time
 pre-commit test hook would otherwise fail on the same 24 tests (the 5
 schema-drift tests are handled by the commit-time schema hooks, which
 run first).
+
+(Superseded by the 17:40:00 entry: the corrections landed in Phase 100's
+own commit via in-between Task 100.165.)
 
 #### 2026-10-02T14:10:00.000Z - No custom non-blank validator needed
 
