@@ -41,6 +41,13 @@ specmgr://uc/schema --  The generated UC JSON Schema, read from a packaged data 
 specmgr://uc/example -- A complete, valid sample use case document as raw markdown.
 specmgr://uc/template -- A use-case template (every field present, placeholder text)
                           as raw markdown.
+specmgr://uc/plantuml -- The frozen UC -> PlantUML mapping and validation rulebook: the
+                         per-UC usecase and package diagram mapping, the sequence-skeleton
+                         attribution rule + UNATTRIBUTED marker grammar, the strict
+                         3-source validation chain, the jar/bin + URL invocation contracts,
+                         the two-mode structure checker, and the user-owned platform-adapter
+                         snippets -- raw markdown domain-knowledge guidance (feat-185-
+                         uc-diagrams Phase 100).
 specmgr://tsk/schema -- The generated TSK JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/tsk_schema.json``) so it works from a
                         real, non-editable install.

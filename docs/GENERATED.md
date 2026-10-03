@@ -510,6 +510,7 @@ First-line docstrings from each module, organized by domain:
 - `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
+- `uc/resources/uc_plantuml.py` — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -558,4 +559,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 380
+**Test files**: 381

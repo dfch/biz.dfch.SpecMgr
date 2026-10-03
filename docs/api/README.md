@@ -449,6 +449,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml`](biz.dfch.specmgr.uc.resources.uc_plantuml.md) — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).

@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:46:57.279+02:00'
 id: feat-185-uc-diagrams
-status: planning
+status: progress
 type: feat
-updated: '2026-10-03T15:37:00.000+02:00'
+updated: '2026-10-03T18:19:07.695+02:00'
 version: 1.0.0
 ---
 
@@ -205,17 +205,17 @@ Each phase ends in exactly one commit containing all of the phase's code + tests
 - Precedent, domain-knowledge resource shape: `specmgr://rsk/tara`, `specmgr://dtais`
 - Precedent, packaged-data convention: `{type}/data/{type}_{kind}.{ext}` via `general.tools._packaged_data` — rulebook content (`rsk/data/rsk_tara.md`), prompt instructions (`uc/data/uc_create_instructions.md`, `general/data/general_repair_instructions.md`), template/example pairs
 - Precedent, the v1 diagram renderer being ported: `uc/models/v1/uc_diagram.py` (`_actor_label`, alias pattern) — `render_uc_diagram` was explicitly "not yet ported" in the v2 package docstring
-- Pending (Task 100.120): ADR vs feature-level decision for the `plantuml/` package placement + validation-chain policy (leaning ADR: the package is cross-cutting by design)
+- Resolved (Task 100.120): ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 ("Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain", accepted, user-confirmed 2026-10-03) — `plantuml/` as a new top-level cross-cutting package (import-free, stdlib-only, not a separate PyPI library) + the strict first-set-wins, no-fall-through chain policy over exactly three env vars
 
 ### Task List
 
 #### Phase 100: Mapping spec and frozen validation protocol
 
-- [ ] Task 100.100: Author the rulebook content: mapping spec (§2) freezing all defaults decided in the E/G/D/I reviews (include/extend keyword map + UML arrow directions, `#quot;` label sanitisation, left-to-right package layout, file layout with agent-owned sequence files, Subfunction judgment rule scoped to the agent path, the full sequence-attribution rule: trigger as step 0 with receiver fixed to the system, longest-prefix sender, text-position receiver with system fallback, full UNATTRIBUTED marker grammar (step/extension/trigger forms + the shared constant in import-free `plantuml/`), step decomposition (marker strip, lead-paragraph split, ordinal numbering), participant-emission details (declaration order/keywords, alias scheme, `->`-only arrows, note placement), the system first-sentence rule, package-edge defaults (one edge per reference in a bullet, inline labels, the unresolvable-note template), and the closed ignored-content list) + the usecase-diagram reference rendering for Buy Goods
-- [ ] Task 100.110: Author the rulebook content: validation chain (§3–§5) — env-var table, strict selection / no-fall-through semantics, local invocation contract, URL protocol matrix with verified fixtures, size-limit note
-- [ ] Task 100.120: Decide ADR vs feature decision for `plantuml/` placement + chain policy; create the ADR if architecture-level
-- [ ] Task 100.130: Author platform-adapter reference snippets (§8) + production guidance in the rulebook; confirm no wrapper ships in the repo
-- [ ] Task 100.140: Author `uc/data/uc_plantuml.md` (the rulebook's content source) + register `specmgr://uc/plantuml` resource + `server.py` docstring + `specmgr mcp-docs` regen; Phase 100 quality gate (single commit, full pre-commit suite)
+- [x] Task 100.100: Author the rulebook content: mapping spec (§2) freezing all defaults decided in the E/G/D/I reviews (include/extend keyword map + UML arrow directions, `#quot;` label sanitisation, left-to-right package layout, file layout with agent-owned sequence files, Subfunction judgment rule scoped to the agent path, the full sequence-attribution rule: trigger as step 0 with receiver fixed to the system, longest-prefix sender, text-position receiver with system fallback, full UNATTRIBUTED marker grammar (step/extension/trigger forms + the shared constant in import-free `plantuml/`), step decomposition (marker strip, lead-paragraph split, ordinal numbering), participant-emission details (declaration order/keywords, alias scheme, `->`-only arrows, note placement), the system first-sentence rule, package-edge defaults (one edge per reference in a bullet, inline labels, the unresolvable-note template), and the closed ignored-content list) + the usecase-diagram reference rendering for Buy Goods
+- [x] Task 100.110: Author the rulebook content: validation chain (§3–§5) — env-var table, strict selection / no-fall-through semantics, local invocation contract, URL protocol matrix with verified fixtures, size-limit note
+- [x] Task 100.120: Decide ADR vs feature decision for `plantuml/` placement + chain policy; create the ADR if architecture-level
+- [x] Task 100.130: Author platform-adapter reference snippets (§8) + production guidance in the rulebook; confirm no wrapper ships in the repo
+- [x] Task 100.140: Author `uc/data/uc_plantuml.md` (the rulebook's content source) + register `specmgr://uc/plantuml` resource + `server.py` docstring + `specmgr mcp-docs` regen; Phase 100 quality gate (single commit, full pre-commit suite)
 
 #### Phase 110: `plantuml/` package, renderers, data files
 
@@ -257,11 +257,15 @@ Each phase ends in exactly one commit containing all of the phase's code + tests
 
 ### Current Status
 
-**As of 2026-10-03**: Design review complete, plan refined across two E/G/D/I review rounds (round 1: packaged-data file names fixed, sequence-attribution rule frozen, example/template split into single-diagram files, tool contracts pinned in §11; round 2: CLI scoped deterministic-only — sequence files agent-owned, user decision — trigger receiver pinned, package broken-document handling frozen, marker grammar / step decomposition / participant-emission / system-sentence / package-edge / ignored-content freezes added, chain short-circuit + canary memoisation pinned, CLI exit codes + config-section shape frozen). No implementation started; Phase 100 is next.
+**As of 2026-10-03**: Phase 100 complete — the frozen rulebook ships as the `specmgr://uc/plantuml` resource (`uc/data/uc_plantuml.md`, `text/markdown`), and ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 decided the `plantuml/` package placement + the strict validation-chain policy (user-confirmed). Phase 110 (`plantuml/` package, renderers, data files) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03 16:05:00.000Z - Phase 100 complete: frozen rulebook + ADR
+
+Phase 100 (Tasks 100.100–100.140) delivered. The frozen rulebook now ships as `uc/data/uc_plantuml.md` + the `specmgr://uc/plantuml` MCP resource (`text/markdown`, the domain-knowledge shape per the `specmgr://rsk/tara` precedent; no dedicated model, so the sanity pins in `tests/uc/resources/test_uc_plantuml.py` are the drift guard). Content: §2 mapping spec (actor/label cleaning, the system first-sentence rule, level normalisation, `#quot;` sanitisation + single-line escaping, the per-UC usecase diagram with the Buy Goods reference rendering as the frozen golden, the package diagram layout + edge rules with the unresolvable-note template, the sequence skeleton — participant declarations/alias scheme, step decomposition, attribution, the full UNATTRIBUTED marker grammar, trigger as virtual step 0, the notes table, extension fragments — plus file layout with agent-owned sequence files, the Subfunction judgment rule, and the closed ignored-content list); §3 validation chain (env-var table, strict first-set-wins/no-fall-through, set-but-unavailable hard failure, the structure-only floor, canary memoisation, the exact result-model shape, chain short-circuit, prompt contract); §4 local jar/bin invocation contract; §5 URL protocol with the frozen classification matrix + verified fixture facts; §6 two-mode structure checker contract with the five verified lenient cases; §7 user-owned platform-adapter reference snippets + production guidance (no wrapper ships in the repo — confirmed: no adapter files added by this phase). ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 ("Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain", accepted, user-confirmed) records both coupled decisions, with `docs/adr/README.md` regenerated. Findings: the v2 model exposes a step's complete extent (marker + continuation) via `str(item)`, not `.text` (lead paragraph only) — the rulebook's §2.9.2 decomposition pipeline is written against `str(item)`; a `Related Use Cases` bullet carrying no recognisable relationship keyword defaults to `<<include>>` (frozen in rulebook §2.8); package-edge emission requires the target to be in the package AND parseable, for all three edge kinds. Docs touched: `server.py` docstring, `docs/MCP.md` (regenerated), `docs/api/` (regenerated), `AGENTS.md` uc bullet. Phase 110 (`plantuml/` package, renderers, data files) is next.
 
 #### 2026-10-03 13:37:00.000Z - Plan review round 2 (E/G/D/I)
 
@@ -278,6 +282,10 @@ Feature created from the design conversation: formalised UC → PlantUML pipelin
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03 16:05:00.000Z - `plantuml/` placement + strict chain policy: full ADR (user-confirmed)
+
+Created ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4, "Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain" (accepted), covering both coupled decisions: (1) `plantuml/` as a new top-level cross-cutting package — import-free, stdlib-only, not a separate PyPI library (considered: in-package top-level [chosen] vs per-domain copy vs separate PyPI library vs vendored third-party); (2) strict first-set-wins, no-fall-through source selection over exactly three env vars — a set-but-unavailable source is a hard failure (no write, no other source, no network); only the all-unset state degrades to the structure-only floor (considered: strict [chosen] vs fall-through chain vs PATH auto-discovery + public default). Rationale: the privacy invariant (a typo'd local source must never silently send diagram content to plantuml.com) is made structural, and future diagram domains reuse the package + policy (see the ADR).
 
 #### 2026-10-03 13:37:00.000Z - CLI is deterministic-only; sequence files are agent-owned
 

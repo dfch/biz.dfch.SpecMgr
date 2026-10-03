@@ -65,8 +65,13 @@ type or cross-cutting:
   `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
   failed-to-parse document inline (with a resolved `path`) rather than
-  silently dropping it,
-  feat-81-83-validation Phase 3);
+   silently dropping it,
+   feat-81-83-validation Phase 3), plus the static
+   domain-knowledge resource `specmgr://uc/plantuml` — the frozen
+   UC → PlantUML mapping and validation rulebook (raw markdown,
+   `text/markdown`; feat-185-uc-diagrams Phase 100 — the cross-cutting
+   `plantuml/` package and the renderers/tools it specifies arrive in
+   later phases of the same feature);
   `uc/prompts/` (`create_uc`/`update_uc`). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
