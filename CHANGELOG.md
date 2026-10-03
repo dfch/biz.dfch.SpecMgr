@@ -33,6 +33,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new `### Risks` cross-reference sub-list (to `rsk`) in `req`/`gol`/
   `dec`/`sop`'s `## Related Artifacts` section, added in the slot the
   removed `### Acceptance Criteria` sub-list occupied (GitHub issue #135).
+- A project-local `specmgr-refs` OpenCode skill
+  (`.opencode/skills/specmgr-refs/SKILL.md`), the agent-initiated surface
+  of the feat-144 cross-reference retrieval stack: it loads itself when a
+  task matches reference-retrieval phrasings, routes single-document
+  retrieval to the `list_references` MCP tool, the `ref-finder` subagent,
+  or the `/refs` command (a pointer, never a re-implementation), and
+  codifies the compositions the command and subagent do not cover -- the
+  multi-hop reference-graph traversal (per-level `list_references` calls,
+  seen-set dedup, pagination while `truncated`), the batch resolution
+  validation across the 12 whole-body domains (req/uc/tsk/qa/prb/gol/
+  rsk/dec/sop/feat/vcr/sysrs -- the `list_references` source enum
+  additionally accepts `adr`, deliberately excluded here), and the reverse
+  lookup (which documents reference a given `<type> <id>`), all preserving
+  `ref-finder`'s read-only posture and shared **NOT FOUND** reporting
+  conventions (feat-152-ref-skill, GitHub issue #152).
 
 ### Changed
 

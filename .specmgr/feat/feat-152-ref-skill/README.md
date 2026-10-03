@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T07:27:21.033+02:00'
 id: feat-152-ref-skill
-status: planning
+status: progress
 type: feat
-updated: '2026-10-03T11:27:33.849+02:00'
+updated: '2026-10-03T12:47:18.877+02:00'
 version: 1.0.0
 ---
 
@@ -297,9 +297,9 @@ _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "n
 
 #### Phase 110: Implementation
 
-- [ ] Task 110.100: Create `.opencode/skills/specmgr-refs/SKILL.md`
-- [ ] Task 110.110: Register the skill in `AGENTS.md` and the root `README.md` `## Referencing Artifacts` section, and record it in `CHANGELOG.md`
-- [ ] Task 110.120: Create `tests/opencode/test_skill_specmgr_refs.py` per the Task 100.130 pin list
+- [x] Task 110.100: Create `.opencode/skills/specmgr-refs/SKILL.md`
+- [x] Task 110.110: Register the skill in `AGENTS.md` and the root `README.md` `## Referencing Artifacts` section, and record it in `CHANGELOG.md`
+- [x] Task 110.120: Create `tests/opencode/test_skill_specmgr_refs.py` per the Task 100.130 pin list
 
 #### Phase 120: Verification
 
@@ -315,11 +315,15 @@ _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "n
 
 ### Current Status
 
-**As of 2026-10-03**: Phase 100 (Design) complete — the skill design is locked in `### Design Notes`'s `#### Locked design (Phase 100)` block (verbatim description string, full `SKILL.md` file draft, mechanical test pin list, and the passed cross-check against `ref-finder`), with the beyond-plan choices in `### Decisions Made`; implementation not started — no skill file, test file, or doc registration exists yet. Phase 110 (Implementation) is next and executes the locked design mechanically.
+**As of 2026-10-03**: Phase 110 (Implementation) complete — the skill file `.opencode/skills/specmgr-refs/SKILL.md` exists byte-for-byte per the locked draft, the drift-guard test `tests/opencode/test_skill_specmgr_refs.py` exists with all nine pins passing, and all three doc registrations have landed (`AGENTS.md`'s `list_references` entry, the root `README.md` `## Referencing Artifacts` paragraph, and the `CHANGELOG.md` `[Unreleased]` `### Added` bullet) at the Phase 100 locked anchors; the quality gate is green (ruff format/check, vulture, full pytest 4025 passed, `specmgr docs` bumping the test-file count 380→381 with no other docs drift, coverage badge unchanged, `specmgr mcp-docs` a no-op). Phase 120 (Verification) is next and smoke-exercises the four workflows.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T10:29:57.962Z - Phase 110: implementation landed
+
+Phase 110 (Tasks 110.100–110.120) executed the Phase 100 locked design mechanically: (1) `.opencode/skills/specmgr-refs/SKILL.md` was written byte-for-byte from the Locked-design block (2) draft — frontmatter `name: specmgr-refs` plus the single-line locked `description` (verified to equal the block (1) string exactly) and the router body that delegates single-document retrieval to the `list_references` tool / `ref-finder` subagent / `/refs` command and codifies the graph, batch, and reverse workflows — in the plural `.opencode/skills/` directory per the locked directory choice; (2) all three doc registrations landed at the locked anchors — the `AGENTS.md` `list_references` entry now names the OpenCode-native counterparts (the `ref-finder` subagent `.opencode/agent/ref-finder.md`, the `/refs <type> <id>` command `.opencode/command/refs.md` with `agent: ref-finder`, and the self-triggering `specmgr-refs` OpenCode Skill `.opencode/skills/specmgr-refs/SKILL.md`, feat-152, GitHub issue #152) in one sentence appended after its final line, following the `repair`-skill registration pattern; the root `README.md` `## Referencing Artifacts` section gained one new final paragraph documenting the skill as the agent-initiated surface; and `CHANGELOG.md`'s `[Unreleased]` `### Added` list gained one appended bullet; (3) the drift-guard test `tests/opencode/test_skill_specmgr_refs.py` was created per the Task 100.130 pin list — five classes covering pins a–e (file location, frontmatter, reporting vocabulary, delegation pointer, read-only posture), mirroring `test_skill_feat_numbering.py`'s header, constants, and helpers, all nine tests passing. Quality gate green: `ruff format --check` (1790 files already formatted) and `ruff check` pass, `vulture` is clean, the full suite passes 4025 tests, `specmgr docs` bumped `docs/GENERATED.md`'s test-file count from 380 to 381 with no other `docs/` drift, `specmgr coverage-badge` left `docs/coverage.svg` byte-identical (the new test imports nothing from `src/`), and `specmgr mcp-docs` was a no-op on `docs/MCP.md`. Phase 120 (Verification) is next.
 
 #### 2026-10-03T09:27:33.848Z - Phase 100: design locked
 
