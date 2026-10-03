@@ -4,7 +4,7 @@ created: '2026-10-02T11:28:09.942+02:00'
 id: feat-177-list-ref-feat
 status: review
 type: feat
-updated: '2026-10-02T19:48:32.000+02:00'
+updated: '2026-10-03T06:22:25.000+02:00'
 version: 1.0.0
 ---
 
@@ -109,6 +109,14 @@ version: 1.0.0
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T04:22:25.000Z - Post-review count-removal docstring round (feat-122 Docstring Style convention)
+
+A third feat-reviewer-driven round: removed every hardcoded cardinal count of the reference-tag vocabulary (word form `ten`/`nine` and digit form `11-tag`/`10-tag`) from the five `src/` files, `AGENTS.md`, and the `[Unreleased]` `CHANGELOG.md` entry, per `.specmgr/conventions.md`'s Docstring Style rule (feat-122, GitHub issue #122 -- a hardcoded count silently goes stale every time a domain or tag is added and no test or lint rule catches the mismatch, so use an explicit tag list or relational phrasing that does not depend on a count staying in sync). Nineteen sites (W1-W19) edited in place; the explicit tag lists (e.g. `GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS`) are kept, per the convention, since they are self-verifying. The two self-contradictory count-adjective phrases -- "the ten target domains (the nine flat-file ones plus folder-per-document ``feat``)" in `_references.py`'s `_TARGET_RESOLVERS` comment and `list_references.py`'s function docstring -- were both reworded to the same relational phrasing ("every target domain except ``adr`` reads through its own cache-backed ``load_by_id``; ``feat`` is folder-per-document rather than flat-file") so the two locations stay in deliberate agreement. The `list_references` `@mcp.tool` description string changed from "the shared 11-tag reference vocabulary ... the ten UUID tags" to "the shared reference-tag vocabulary ... the UUID tags", and its `docs/MCP.md` mirror was regenerated to match (both the table row and the tool section). The `docs/api` mirrors for `_references`, `list_references`, `general.tools`, `general.models.reference`, and `server` were regenerated (`specmgr docs`); `docs/GENERATED.md` is byte-identical (no module added/removed). Zero code and zero behavior changes -- docstrings, one `@mcp.tool` description string, and comments only. Gate state: fully green (ruff format/check, vulture, pytest -n auto -- 3923 passed, and second `specmgr docs` + `specmgr mcp-docs` runs idempotent).
+
+#### 2026-10-02T21:35:37.000Z - Post-review docstring fix round (feat-reviewer ship-with-nits)
+
+A second feat-reviewer pass returned **ship-with-nits** (three docstring-only findings, no behavior issues); this round applied exactly the specified corrections, with zero code and zero behavior changes. (1) Corrected the reference-tag vocabulary count "the ten tags" -> "the nine tags" in `_references.py` (module docstring and the `REFERENCE_TYPES` comment) and the regenerated `docs/api` mirror -- the SYSRS/VCR structured patterns validate exactly nine target tags (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR), and `REFERENCE_TYPES` is those nine plus `sysrs` (the free-form-prose aggregator exception) plus `feat` (11 total); every "the ten UUID tags" phrase referring to `_UUID_REFERENCE_TYPES` is correct and stays untouched. (2) Reworded the self-contradictory "the ten flat target domains ... ``feat`` is folder-per-document rather than flat-file" phrasing in `_references.py`'s `_TARGET_RESOLVERS` comment and `list_references.py`'s `list_references` function docstring -- the two locations share the identical rewording: "the ten target domains (the nine flat-file ones plus folder-per-document ``feat``) read through their own cache-backed ``load_by_id``", with ``adr`` never doing so (the feat-107-doc-cache citation and the ADR bfd76370 citation kept). (3) Restructured the misplaced "via <fn>" clause in `list_references.py`'s module docstring so the function name LEADS the parenthetical that enumerates the id-shape vocabulary (matching the pattern the function's own docstring already uses: "extracted (``_references.find_references``: the ten UUID tags ...)"), keeping the phrase "the ten UUID tags" intact. Gate state: fully green (ruff format/check, vulture, pytest -n auto -- 3923 passed, and a second `specmgr docs` run is idempotent -- only the two expected `docs/api` pages changed, `docs/GENERATED.md` byte-identical -- while `specmgr mcp-docs` leaves `docs/MCP.md` untouched).
 
 #### 2026-10-02T17:48:32.000Z - Post-review fix round (PR #181 review)
 

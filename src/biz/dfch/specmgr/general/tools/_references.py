@@ -25,7 +25,7 @@ generic ``list_references`` tool (``general.tools.list_references``):
 
 - :func:`find_references` extracts every ``<TYPE> <id>``
   cross-reference from a frontmatter-stripped body text via
-  :data:`_REFERENCE_PATTERN` (the ten UUID tags, a canonical 8-4-4-4-12
+  :data:`_REFERENCE_PATTERN` (the UUID tags, a canonical 8-4-4-4-12
   hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT`` tag, a full
   ``feat-NNN-slug`` id or a bare ``feat-NNN`` number), each applied with
    ``re.finditer``, the two match sets merged by stable sort on match
@@ -59,9 +59,9 @@ generic ``list_references`` tool (``general.tools.list_references``):
   (rather than as a live reference) is still extracted and
   resolved/reported as if it were real.
 
-The reference *tag* vocabulary is the ten tags the SYSRS/VCR structured
-patterns validate as reference targets plus ``sysrs`` (the aggregator
-document type may reference in free-form prose) plus ``feat``
+The reference *tag* vocabulary consists of the tags the SYSRS/VCR
+structured patterns validate as reference targets, plus ``sysrs`` (the
+aggregator document type may reference in free-form prose), plus ``feat``
 (feat-177-list-ref-feat -- the one tag whose id is not a UUID: a FEAT
 reference carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number, and :func:`_load_feat` resolves it by its own folder lookup). It
@@ -107,19 +107,19 @@ __all__ = [
     "resolve_reference",
 ]
 
-#: The ten UUID-tagged reference types (the reference-tag vocabulary as of
+#: The UUID-tagged reference types (the reference-tag vocabulary as of
 #: feat-144-ref-artifact, before feat-177-list-ref-feat added ``feat``):
 #: the lowercase target-domain name of each tag, same order.
 #: :data:`_REFERENCE_PATTERN`'s tag group is derived from this constant
 #: (not from :data:`REFERENCE_TYPES`) so the UUID pattern keeps matching
-#: exactly these ten tags: a feat's id is never a UUID, so ``FEAT
+#: exactly these tags: a feat's id is never a UUID, so ``FEAT
 #: <uuid>``-shaped text matches nothing under the UUID pattern.
 _UUID_REFERENCE_TYPES: tuple[str, ...] = ("gol", "prb", "qa", "uc", "req", "rsk", "dec", "adr", "vcr", "sysrs")
 
 #: The reference *types* a cross-reference tag can name (feat-144 REQ-002;
 #: ``feat`` added by feat-177-list-ref-feat): the lowercase target-domain
 #: name of each tag -- the tag itself is the uppercase form (``GOL`` ->
-#: ``"gol"``, ``FEAT`` -> ``"feat"``). The ten tags the SYSRS/VCR
+#: ``"gol"``, ``FEAT`` -> ``"feat"``). The tags the SYSRS/VCR
 #: structured patterns validate as reference targets, plus ``sysrs`` (the
 #: aggregator document type may reference in free-form prose), plus
 #: ``feat`` (whose ids are ``feat-NNN-slug`` folder names -- or the bare
@@ -207,7 +207,7 @@ def find_references(text: str) -> list[tuple[str, str]]:
 
     ``text`` is the source document's frontmatter-stripped body markdown
     (e.g. from ``general.tools._splice.body_text``). Both
-    :data:`_REFERENCE_PATTERN` (the ten UUID tags with a canonical
+    :data:`_REFERENCE_PATTERN` (the UUID tags with a canonical
     8-4-4-4-12 hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT``
     tag with the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
     number) are applied via ``re.finditer`` over the whole text, and the
@@ -232,7 +232,7 @@ def find_references(text: str) -> list[tuple[str, str]]:
     list[tuple[str, str]]
         One ``(type, id)`` pair per match, with ``type``/``id`` lowercased
         (the tag's lowercase target-domain name, and the referenced id as
-        it appeared: the canonical lowercase-hex uuid for the ten UUID
+        it appeared: the canonical lowercase-hex uuid for the UUID
         tags, the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
         number for ``feat``), in first-occurrence order. Repeated
         occurrences of the same reference are **not** deduped here -- dedup
@@ -424,11 +424,11 @@ def _load_feat(ref_id: str) -> tuple[str, Path]:
 #: Per target-domain reference resolver (feat-144 Task 2.1, ``feat`` added
 #: by feat-177-list-ref-feat Task 100.110): each returns ``(title, path)``
 #: for one reference id and propagates the domain's own ``XNotFoundError``
-#: (a ``LookupError``) if the target is absent on disk. The ten flat
-#: target domains read through their own cache-backed ``load_by_id``
-#: (feat-107-doc-cache; ``feat`` is folder-per-document rather than
-#: flat-file, but its ``load_by_id`` is cache-backed the same way -- see
-#: :func:`_load_feat`); ``adr`` never does (see :func:`_load_adr`).
+#: (a ``LookupError``) if the target is absent on disk. Every target
+#: domain except ``adr`` reads through its own cache-backed
+#: ``load_by_id`` (feat-107-doc-cache; ``feat`` is folder-per-document
+#: rather than flat-file -- see :func:`_load_feat`); ``adr`` never does
+#: (see :func:`_load_adr`).
 _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "gol": _load_gol,
     "prb": _load_prb,
@@ -478,7 +478,7 @@ def resolve_reference(ref_type: str, ref_id: str) -> ReferenceRow:
         The reference tag's lowercase target-domain name, e.g. ``"req"``.
     ref_id:
         The referenced document's id, as it appeared in the source body
-        (lowercased): the canonical lowercase-hex UUID for the ten UUID
+        (lowercased): the canonical lowercase-hex UUID for the UUID
         tags, the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
         number for ``feat``.
 

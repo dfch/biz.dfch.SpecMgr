@@ -76,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   references a feature's full `feat-NNN-slug` id or bare `feat-NNN`
   number (instead of a uuid), resolved to the feature's title (its H1
   with the `Feature: ` prefix stripped) and on-disk path, like every
-  other reference tag; the existing ten UUID tags are byte-unchanged
+  other reference tag; the existing UUID tags are byte-unchanged
   (`FEAT <uuid>`-shaped text matches nothing) (feat-177-list-ref-feat,
   GitHub issue #177).
 

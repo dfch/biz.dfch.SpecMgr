@@ -27,11 +27,12 @@ every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
 the source, since extraction needs the literal markdown), extracts every
-``<TYPE> <id>`` cross-reference from it (the ten UUID tags with a
+``<TYPE> <id>`` cross-reference from it (via
+``general.tools._references.find_references``: the UUID tags with a
 canonical 8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
-``feat-NNN-slug`` id or the bare ``feat-NNN`` number, via
-``general.tools._references.find_references``), deduplicates repeated
-occurrences of the same reference (first-occurrence order preserved), and
+``feat-NNN-slug`` id or the bare ``feat-NNN`` number), deduplicates
+repeated occurrences of the same reference (first-occurrence order
+preserved), and
 resolves each unique reference to the referenced document in its own target
 domain (``general.tools._references.resolve_reference``: the target
 domains' own cache-backed ``load_by_id``; ``adr`` never, ADR bfd76370).
@@ -161,7 +162,7 @@ def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
         "Cross-references of one source document, resolved and paged. `type` is the source "
         f"document's domain (one of {', '.join(ALL_DOMAINS)}) and `id` the source's own "
         "identifier. The tool scans the source's frontmatter-stripped body for reference tags "
-        "(the shared 11-tag reference vocabulary in general.tools._references: the ten UUID tags "
+        "(the shared reference-tag vocabulary in general.tools._references: the UUID tags "
         "GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS, each carrying a canonical uuid id, plus FEAT, "
         "carrying the full feat-NNN-slug id or the bare feat-NNN number; case-insensitive tag, "
         "space/tab/dash separator, anywhere in a line), dedupes repeated occurrences "
@@ -193,7 +194,7 @@ def list_references(
     body text (``_splice.body_text`` -- the doc-cache does not apply to it,
     since extraction needs the literal markdown), and every ``<TYPE> <id>``
     cross-reference in that text is extracted
-    (``_references.find_references``: the ten UUID tags with a canonical
+    (``_references.find_references``: the UUID tags with a canonical
     8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
     ``feat-NNN-slug`` id or the bare ``feat-NNN`` number; the reference tag
     is case-insensitive and separated from the id by one or more
@@ -203,10 +204,10 @@ def list_references(
     first-occurrence order preserved (REQ-005).
 
     Each unique reference is resolved to the referenced document in its own
-    target domain (``_references.resolve_reference``: the ten flat target
-    domains read through their own cache-backed ``load_by_id`` -- ``feat``
-    is folder-per-document rather than flat-file, but its ``load_by_id`` is
-    cache-backed the same way -- and ``adr`` never does, ADR bfd76370). The
+    target domain (``_references.resolve_reference``: every target domain
+    except ``adr`` reads through its own cache-backed ``load_by_id``
+    (``feat`` is folder-per-document rather than flat-file); ``adr`` never
+    does, ADR bfd76370). The
     row's ``title`` is the referenced document's own ``# {title}`` H1 (the
     feature's H1 with the ``Feature: `` prefix stripped, for ``feat``) and
     its ``path`` the referenced document's resolved absolute file path; a

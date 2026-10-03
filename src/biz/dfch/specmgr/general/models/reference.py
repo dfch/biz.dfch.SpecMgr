@@ -19,7 +19,7 @@
 
 The ``list_references`` tool (``general.tools.list_references``)
 regex-extracts every ``<TYPE> <id>`` cross-reference from one source
-document's frontmatter-stripped body (the ten UUID tags with a canonical
+document's frontmatter-stripped body (the UUID tags with a canonical
 uuid id, plus the ``FEAT`` tag carrying the full ``feat-NNN-slug`` id or
 the bare ``feat-NNN`` number), deduplicates repeated occurrences of the
 same reference (first-occurrence order preserved), resolves each unique
@@ -53,7 +53,7 @@ class ReferenceRow(BaseModel):
     id:
         The referenced document's own specmgr-assigned identifier, as it
         appeared in the source body (lowercased) -- a canonical
-        lowercase-hex UUID for the ten UUID tags, or, for ``feat``, the
+        lowercase-hex UUID for the UUID tags, or, for ``feat``, the
         full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number.
     title:
         The referenced document's ``# {title}`` H1, re-derived from the

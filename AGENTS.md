@@ -635,9 +635,9 @@ type or cross-cutting:
      GitHub issue #144) — takes a *source* document's `type` (one of
      adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
      regex-scans the source's frontmatter-stripped body for `<TYPE>
-     <id>` references (the 11-tag reference vocabulary
+     <id>` references (the reference-tag vocabulary
      GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT; case-insensitive tag,
-     space/tab/dash separator, anywhere in a line; the ten UUID tags
+     space/tab/dash separator, anywhere in a line; the UUID tags
      carry a canonical uuid id, while FEAT carries the full
      `feat-NNN-slug` id or the bare `feat-NNN` number), dedupes repeated
      occurrences (first-occurrence order), resolves each unique

@@ -10,7 +10,7 @@ generic ``list_references`` tool (``general.tools.list_references``):
 
 - :func:`find_references` extracts every ``<TYPE> <id>``
   cross-reference from a frontmatter-stripped body text via
-  :data:`_REFERENCE_PATTERN` (the ten UUID tags, a canonical 8-4-4-4-12
+  :data:`_REFERENCE_PATTERN` (the UUID tags, a canonical 8-4-4-4-12
   hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT`` tag, a full
   ``feat-NNN-slug`` id or a bare ``feat-NNN`` number), each applied with
    ``re.finditer``, the two match sets merged by stable sort on match
@@ -44,9 +44,9 @@ generic ``list_references`` tool (``general.tools.list_references``):
   (rather than as a live reference) is still extracted and
   resolved/reported as if it were real.
 
-The reference *tag* vocabulary is the ten tags the SYSRS/VCR structured
-patterns validate as reference targets plus ``sysrs`` (the aggregator
-document type may reference in free-form prose) plus ``feat``
+The reference *tag* vocabulary consists of the tags the SYSRS/VCR
+structured patterns validate as reference targets, plus ``sysrs`` (the
+aggregator document type may reference in free-form prose), plus ``feat``
 (feat-177-list-ref-feat -- the one tag whose id is not a UUID: a FEAT
 reference carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number, and :func:`_load_feat` resolves it by its own folder lookup). It
@@ -167,7 +167,7 @@ tag's own id shapes added by feat-177-list-ref-feat REQ-001).
 
 ``text`` is the source document's frontmatter-stripped body markdown
 (e.g. from ``general.tools._splice.body_text``). Both
-:data:`_REFERENCE_PATTERN` (the ten UUID tags with a canonical
+:data:`_REFERENCE_PATTERN` (the UUID tags with a canonical
 8-4-4-4-12 hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT``
 tag with the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number) are applied via ``re.finditer`` over the whole text, and the
@@ -192,7 +192,7 @@ Returns
 list[tuple[str, str]]
     One ``(type, id)`` pair per match, with ``type``/``id`` lowercased
     (the tag's lowercase target-domain name, and the referenced id as
-    it appeared: the canonical lowercase-hex uuid for the ten UUID
+    it appeared: the canonical lowercase-hex uuid for the UUID
     tags, the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
     number for ``feat``), in first-occurrence order. Repeated
     occurrences of the same reference are **not** deduped here -- dedup
@@ -228,7 +228,7 @@ ref_type:
     The reference tag's lowercase target-domain name, e.g. ``"req"``.
 ref_id:
     The referenced document's id, as it appeared in the source body
-    (lowercased): the canonical lowercase-hex UUID for the ten UUID
+    (lowercased): the canonical lowercase-hex UUID for the UUID
     tags, the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
     number for ``feat``.
 

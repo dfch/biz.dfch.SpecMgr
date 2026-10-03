@@ -81,8 +81,8 @@ availability is decided at call time (REQ-003). ``list_references`` -- the
 generic, cross-domain cross-reference listing tool (``type`` is one of
 req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): scans the source
 document's frontmatter-stripped body for ``<TYPE> <id>`` references (the
-shared 11-tag reference vocabulary in ``general.tools._references`` --
-the ten UUID tags with a canonical uuid id, plus ``feat`` carrying the
+shared reference-tag vocabulary in ``general.tools._references`` --
+the UUID tags with a canonical uuid id, plus ``feat`` carrying the
 full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number), dedupes
 repeated occurrences (first-occurrence order preserved), resolves each
 unique reference to the referenced document in its own target domain, and

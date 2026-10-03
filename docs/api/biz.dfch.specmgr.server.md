@@ -339,10 +339,10 @@ generic, cross-domain cross-reference listing tool: takes a *source*
 document's ``type`` (one of
 ``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
 and its ``id``, scans the source's frontmatter-stripped body for
-``<TYPE> <id>`` references (the shared 11-tag reference vocabulary
+``<TYPE> <id>`` references (the shared reference-tag vocabulary
 ``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``/
 ``FEAT``: case-insensitive tag, one or more space/tab/dash separators,
-anywhere in a line; the ten UUID tags carry a canonical uuid id, while
+anywhere in a line; the UUID tags carry a canonical uuid id, while
 ``FEAT`` carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number), dedupes repeated occurrences of the same reference
 (first-occurrence order preserved), and resolves each unique reference in
