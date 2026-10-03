@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T07:27:21.033+02:00'
 id: feat-152-ref-skill
-status: review
+status: progress
 type: feat
-updated: '2026-10-03T15:07:49.504+02:00'
+updated: '2026-10-03T18:12:40.914+02:00'
 version: 1.0.0
 ---
 
@@ -311,15 +311,26 @@ _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "n
 
 - [x] Task 130.100: Update this feature's Progress (check off ACCs, advance status via the generic `set_status`)
 
+#### Phase 140: Review Remediation
+
+- [ ] Task 140.100: Add drift-guard pin (f) to `tests/opencode/test_skill_specmgr_refs.py` -- the three codified workflow headings (`## Graph workflow (multi-hop traversal)`, `## Batch workflow (resolution validation)`, `## Reverse workflow ("which documents reference X?")`) plus the load-bearing constants (the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate-`adr`-exclusion wording) as a new `TestSkillWorkflowPresence` class (two test methods: headings, constants) -- and extend the plan's locked pin list (Locked-design block (3)), the REQ-008 pin enumeration, and the ACC-005 pin enumeration + inline evidence (the test grows 9 to 11 tests, 5 to 6 classes; the evidence must name the two new pins, including pin (e) read-only posture which the enumeration currently omits)
+- [ ] Task 140.110: Align the skill's batch workflow step 4 report to the 6-column shape the Phase 120 smoke actually used -- columns `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count` -- in `.opencode/skills/specmgr-refs/SKILL.md` (replace the step-4 "(columns: domain, documents scanned, `parse_failures`, `total`, `error_count`)" list with "(columns: `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count`)"), and update the plan's Locked-design block (2) draft so the file stays byte-for-byte the plan's source of truth
+- [ ] Task 140.120: Correct the test module docstring's temporal claim -- "The repo's newest project OpenCode skill" becomes "The repo's third project OpenCode skill" (permanent ordinal, the `test_skill_feat_numbering.py` precedent's own style; the existing repair/feat-numbering parenthetical stays)
+- [ ] Task 140.130: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, `specmgr docs`/`mcp-docs`/`coverage-badge` drift checks), set the feature status back to `review` via the generic `set_status` tool (`type="feat"`), and update this plan's Progress (tick Tasks 140.100-140.130, dated Updates entry, Current Status)
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-03**: Phase 130 (Closeout) complete — all four phases of the plan are done. Phase 100 locked the skill design (the description string, the full `SKILL.md` draft, the consistency-test pin list, and the `ref-finder` cross-check with recorded outcome: pass); Phase 110 wrote `.opencode/skills/specmgr-refs/SKILL.md`, landed the three doc registrations (`AGENTS.md`, the root `README.md` `## Referencing Artifacts` section, and `CHANGELOG.md`), and created the nine-test drift-guard `tests/opencode/test_skill_specmgr_refs.py`; Phase 120 smoke-exercised all four workflows live against this repository's registry and re-ran the full quality gate; Phase 130 ticked all five acceptance criteria with inline evidence in `### Acceptance Criteria`, ticked Task 130.100, and advanced the feature's status. All five acceptance criteria are met, and the full repository quality gate is green (Phase 120: `ruff format --check` with 1790 files already formatted, `ruff check`, `vulture` clean, `pytest -n auto` 4025 passed, `specmgr docs` / `specmgr mcp-docs` / `specmgr coverage-badge` all no-drift), re-confirmed by Phase 130's own gate run after its progress-record-only edit. The feature is at status `review`, pending the PR and the post-implementation feat-reviewer pass; the one residual — a fresh opencode session loading the skill unprompted — is flagged for review-time confirmation.
+**As of 2026-10-03**: Phases 100–130 (Design, Implementation, Verification, Closeout) are done — all five acceptance criteria met with inline evidence, the full repository quality gate green, and the feature at status `review` pending the PR and the post-implementation feat-reviewer pass. That review (PR #184) has now returned a "ready to merge" verdict with follow-up findings (one drift-guard gap, three wording inconsistencies), remediated in a newly staged `#### Phase 140: Review Remediation` carrying four unticked tasks in `### Task List`; the feature status was reopened from `review` to `progress` at staging. Next: a fresh phase-implementer pass implementing Tasks 140.100–140.130, after which the status returns to `review` at Task 140.130.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T16:12:40.914Z - Phase 140 staged: review remediation
+
+The post-implementation feat-reviewer pass over the fully implemented feature (PR #184) returned a "ready to merge" verdict with follow-up findings: one gap (the drift-guard test carries no presence pin for the three codified workflows — a mutant deleting `## Graph workflow`/`## Batch workflow`/`## Reverse workflow` wholesale still passes all nine tests, because every reporting token also occurs in the intro, routing-table, and Reporting-conventions sections) and three wording inconsistencies. In response, a new `#### Phase 140: Review Remediation` is staged in `### Task List` after Phase 130 with four unticked tasks: Task 140.100 adds the drift-guard pin (f) — a new `TestSkillWorkflowPresence` class pinning the three workflow headings plus the load-bearing constants (the canonical 12-domain string, the `N = 2` default-depth wording, and the deliberate-`adr`-exclusion wording) — and extends the locked pin list (Locked-design block (3)), the REQ-008 pin enumeration, and the ACC-005 pin enumeration plus inline evidence (the test grows 9 to 11 tests and 5 to 6 classes, naming the two new pins including pin (e) read-only posture which the enumeration currently omits); Task 140.110 aligns the skill's batch workflow step-4 report with the 6-column shape the Phase 120 smoke actually used (adding `list_total`) and updates the Locked-design block (2) draft so the file stays byte-for-byte the plan's source of truth; Task 140.120 corrects the test module docstring's temporal "newest" to the permanent ordinal "third"; Task 140.130 runs the full quality gate, sets the feature status back to `review` via the generic `set_status` tool (`type="feat"`), and updates this Progress. Scope EXCLUDES the reviewer's optional inherited code smell (the untested "hyphen-separated" name-shape assertion), which would edit feat-163's own test artifact and belongs to a cross-feature follow-up. The feature status was reopened from `review` to `progress` at staging, and the implementation is a fresh phase-implementer pass next.
 
 #### 2026-10-03T13:01:57.058Z - Phase 130: closeout — ACCs ticked with evidence, status advanced to review
 
@@ -348,6 +359,10 @@ Feature plan created for GitHub issue #152 (agent-initiated specmgr cross-refere
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T16:12:40.914Z - Phase 140: review remediation staged
+
+The post-implementation feat-reviewer pass (PR #184, verdict "ready to merge") returned one gap and three wording inconsistencies. The gap — the drift-guard test has no presence pin for the three codified workflows (a mutant deleting `## Graph workflow`/`## Batch workflow`/`## Reverse workflow` wholesale still passes all nine tests, because every reporting token also occurs in the intro, routing-table, and Reporting-conventions sections) — undermines REQ-008's stated purpose for the feature's core deliverable, so it is remediated in a new Phase 140 on the same branch and PR rather than a follow-up feature; the fix also aligns the skill's batch workflow step-4 report columns with the 6-column shape the Phase 120 smoke actually used (adding `list_total`) and corrects the test module docstring's temporal "newest" to the permanent ordinal "third" (the `test_skill_feat_numbering.py` precedent's own style). Scope EXCLUDES the reviewer's optional inherited code smell (the untested "hyphen-separated" name-shape assertion), which would edit feat-163's own test artifact and belongs to a cross-feature follow-up. The feature status was reopened `review` -> `progress` at staging and returns to `review` at Task 140.130, and the PR body's test count (nine tests) is updated by the orchestrator after the Phase 140 commit is pushed.
 
 #### 2026-10-03T09:27:33.848Z - Phase 100 locked design decisions
 
