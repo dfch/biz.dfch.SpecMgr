@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: review
 type: feat
-updated: '2026-10-03T10:48:14.000+02:00'
+updated: '2026-10-03T12:32:42.000+02:00'
 version: 1.0.0
 ---
 
@@ -206,14 +206,14 @@ mid-commit and having to fix-then-retry.
 
 #### Phase 140: Upstream dev merge (CHANGELOG conflict)
 
-- [ ] Task 140.100: `uv sync --all-extras --frozen` to pick up dev's uv.lock bump (776c13d, the uv group) that the merge will land.
-- [ ] Task 140.110: `git merge origin/dev` (local `origin/dev` at 8e23fed already matches the remote, verified via `git ls-remote`) -- expect exactly one conflict, `CHANGELOG.md`, the only file both sides touched (our 37 changed files intersect their 197 in one).
-- [ ] Task 140.120: Resolve the `CHANGELOG.md` conflict in `[Unreleased]` -> `### Changed` as a union of both bullets, ours first (the feat-153 merge precedent): keep this feature's #180 entry (timestamped entries' `content` accepts any markdown), then dev's #177 entry (`list_references` gains the `FEAT` tag); nothing else in the file touched.
-- [ ] Task 140.130: Verify the resolution is a pure union (ACC-011): `git diff HEAD^1..HEAD -- CHANGELOG.md` and `git diff HEAD^2..HEAD -- CHANGELOG.md` each show only added lines -- no modification or deletion of either parent's content, every entry byte-verbatim against its parent.
-- [ ] Task 140.140: `git add CHANGELOG.md && git commit` with the default merge message (no pre-commit hooks are installed in this worktree, so nothing runs automatically).
-- [ ] Task 140.150: Regenerate the derived docs to a fixed point -- `uv run --frozen specmgr docs`, `uv run --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc` -- and confirm zero drift (feat-180 touched no tool docstrings); commit only if any changed.
-- [ ] Task 140.160: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before the push.
-- [ ] Task 140.170: `git push`, then poll `gh pr view 182 --json mergeable` (without `--watch`, repeating as needed) until it reports `CLEAN`, clearing the current `CONFLICTING`.
+- [x] Task 140.100: `uv sync --all-extras --frozen` to pick up dev's uv.lock bump (776c13d, the uv group) that the merge will land.
+- [x] Task 140.110: `git merge origin/dev` (local `origin/dev` at 8e23fed already matches the remote, verified via `git ls-remote`) -- expect exactly one conflict, `CHANGELOG.md`, the only file both sides touched (our 37 changed files intersect their 197 in one).
+- [x] Task 140.120: Resolve the `CHANGELOG.md` conflict in `[Unreleased]` -> `### Changed` as a union of both bullets, ours first (the feat-153 merge precedent): keep this feature's #180 entry (timestamped entries' `content` accepts any markdown), then dev's #177 entry (`list_references` gains the `FEAT` tag); nothing else in the file touched.
+- [x] Task 140.130: Verify the resolution is a pure union (ACC-011): `git diff HEAD^1..HEAD -- CHANGELOG.md` and `git diff HEAD^2..HEAD -- CHANGELOG.md` each show only added lines -- no modification or deletion of either parent's content, every entry byte-verbatim against its parent.
+- [x] Task 140.140: `git add CHANGELOG.md && git commit` with the default merge message (no pre-commit hooks are installed in this worktree, so nothing runs automatically).
+- [x] Task 140.150: Regenerate the derived docs to a fixed point -- `uv run --frozen specmgr docs`, `uv run --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc` -- and confirm zero drift (feat-180 touched no tool docstrings); commit only if any changed.
+- [x] Task 140.160: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before the push.
+- [x] Task 140.170: `git push`, then poll `gh pr view 182 --json mergeable` (without `--watch`, repeating as needed) until it reports `CLEAN`, clearing the current `CONFLICTING`.
 
 #### Phase 150: Review and closeout
 
@@ -265,6 +265,19 @@ precedent) and 150 (the `feat-reviewer` pass + ACC check-off) were
 therefore added to the plan as unchecked; status stays `review` --
 the new phases are review-stage work, not implementation.
 
+**As of 2026-10-03**: Phase 140 (upstream dev merge) is COMPLETE:
+`origin/dev` (818a2e9, one docs-only feat-185 plan commit past the
+plan's stated 8e23fed) merged as a single merge commit (48c0a74)
+whose `CHANGELOG.md` resolution is the verified pure union -- our
+#180 any-markdown entry first, dev's #177 `FEAT`-tag entry after,
+both byte-verbatim against their parents, both parent-diffs
+added-lines-only (ACC-011). Zero derived-docs drift, the full
+post-merge phase-end gate green (`4052 passed, 0 failed`), the
+branch pushed, and PR #182 now reports `mergeable: MERGEABLE` /
+`mergeStateStatus: CLEAN` -- it merges cleanly into `dev`. Status
+stays `review`: Phase 150 (the `feat-reviewer` pass + ACC
+check-off) is the remaining work.
+
 ### Blockers
 
 - None.
@@ -272,6 +285,67 @@ the new phases are review-stage work, not implementation.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T10:32:42.000Z - Phase 140 (Upstream dev merge) completed; CHANGELOG pure-union verified, PR #182 CLEAN
+
+Implemented Tasks 140.100-140.170. The merge parent was 818a2e9
+(`docs(feat-185): add plan`) -- exactly one docs-only commit past
+the plan's stated 8e23fed, adding only the new file
+`.specmgr/feat/feat-185-uc-diagrams/README.md` that this branch
+never touches; no design impact. `uv sync --all-extras --frozen` ran
+before the merge (Task 140.100) and again after the merge commit, so
+the phase-end gate ran under the post-merge lockfile environment
+(dev's 776c13d uv-group bump landed).
+
+`git merge origin/dev` (Task 140.110) stopped with exactly one
+conflict, `CHANGELOG.md` -- the only file both sides touched
+(confirmed via `git diff --name-only --diff-filter=U`); everything
+else auto-merged. Resolved (Task 140.120) in `[Unreleased]` ->
+`### Changed` as the pure union per the feat-153 merge precedent:
+our 13-line #180 entry first, dev's 7-line #177 `FEAT`-tag entry
+after, then one blank line, then `### Removed` -- nothing else in
+the file touched. Committed (Task 140.140) as merge commit 48c0a74
+with the default merge message.
+
+ACC-011 verification (Task 140.130): `git diff HEAD^1 HEAD --
+CHANGELOG.md` and `git diff HEAD^2 HEAD -- CHANGELOG.md` each show
+zero deletion lines (every content line is a `+` line carrying the
+other parent's entry), and both entries extract byte-identical from
+the committed tree against their respective parents (the 13-line /
+7-line spans sed-extracted from each parent and from HEAD, `diff`
+clean).
+
+Pre-commit at the merge commit: the hook IS installed (in the
+shared common git dir, which all worktrees share) -- the plan's
+"no pre-commit hooks are installed in this worktree" parenthetical
+was stale. As predicted, for a conflicted-merge commit it checked
+only the merge-conflict file: "Checking merge-conflict files
+only.", `ruff format` Passed on `CHANGELOG.md`, every other hook
+Skipped (no files to check).
+
+Docs regeneration to a fixed point (Task 140.150): `specmgr docs`
+(485 `docs/api/` module files + `docs/GENERATED.md`), `specmgr
+mcp-docs` (`docs/MCP.md`), `specmgr adr-toc` (`docs/adr/README.md`)
+-- `git status --short` empty afterwards: zero drift (feat-180
+touched no tool docstrings), no docs commit needed.
+
+Phase-end gate (Task 140.160), post-merge environment: `uv run
+--frozen ruff format --check` green (1788 files already formatted),
+`uv run --frozen ruff check` green (all checks passed), `uv run
+--frozen vulture src/ whitelist.py --min-confidence 60` green (exit
+0, no output), full suite green: **4052 passed in 75.69s (0:01:15),
+0 failed**.
+
+Push (Task 140.170): `git push origin feat-180-updates` carried the
+merge commit (`9cf04b0..48c0a74`). GitHub cleared the conflict
+shortly after: `gh pr view 182 --json mergeable,mergeStateStatus`
+polls (no `--watch`, 30-120s apart) reported `UNSTABLE`/`MERGEABLE`
+while the post-merge CI ran, then
+`{"mergeStateStatus":"CLEAN","mergeable":"MERGEABLE"}` -- the
+`CONFLICTING` state recorded in the 2026-10-03T08:48:14.000Z entry
+is gone. This bookkeeping commit is pushed after that verification,
+and the PR's final state is re-confirmed CLEAN by the poll
+following this push.
 
 #### 2026-10-03T08:48:14.000Z - Plan extended with Phase 140 (upstream dev merge) and Phase 150 (review); no implementation started
 
