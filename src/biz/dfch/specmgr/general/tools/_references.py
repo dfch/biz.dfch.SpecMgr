@@ -28,18 +28,18 @@ generic ``list_references`` tool (``general.tools.list_references``):
   :data:`_REFERENCE_PATTERN` (the UUID tags, a canonical 8-4-4-4-12
   hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT`` tag, a full
   ``feat-NNN-slug`` id or a bare ``feat-NNN`` number), each applied with
-   ``re.finditer``, the two match sets merged by stable sort on match
-   position (a FEAT match can never start inside a UUID span -- a uuid
-   cannot contain ``t`` -- while a feat slug can contain a
-   ``<TAG>-<uuid>``-shaped substring (the hyphen doubling as the
-   separator), in which case the merge keeps BOTH spans -- the outer FEAT
-   reference plus the inner, phantom UUID-tag row, which resolves like any
-   other reference (typically a not-found row) -- and that corner case is
-   pinned by a dedicated test, feat-177 review round), yielding
-   ``(type, id)`` pairs with ``type``/``id`` lowercased, in
-   first-occurrence order. Repeated
-  occurrences of the same reference are **not** deduped here -- dedup
-  happens in the row-materialization step (in the tool itself).
+  ``re.finditer``, the two match sets merged by stable sort on match
+  position (a FEAT match can never start inside a UUID span -- a uuid
+  cannot contain ``t`` -- while a feat slug can contain a
+  ``<TAG>-<uuid>``-shaped substring (the hyphen doubling as the
+  separator), in which case the merge keeps BOTH spans -- the outer FEAT
+  reference plus the inner, phantom UUID-tag row, which resolves like any
+  other reference (typically a not-found row) -- and that corner case is
+  pinned by a dedicated test, feat-177 review round), yielding
+  ``(type, id)`` pairs with ``type``/``id`` lowercased, in
+  first-occurrence order. Repeated occurrences of the same reference are
+  **not** deduped here -- dedup happens in the row-materialization step
+  (in the tool itself).
 - :func:`resolve_reference` resolves one unique reference into a
   :class:`~biz.dfch.specmgr.general.models.reference.ReferenceRow` by
   dispatching on the reference's tag to the target domain's own
@@ -211,16 +211,16 @@ def find_references(text: str) -> list[tuple[str, str]]:
     8-4-4-4-12 hex id) and :data:`_FEAT_REFERENCE_PATTERN` (the ``FEAT``
     tag with the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
     number) are applied via ``re.finditer`` over the whole text, and the
-    two match sets are merged by stable sort on match position -- the
+    two match sets are merged by stable sort on match position. The
     patterns' match spans are not provably disjoint: a FEAT match can never
     start inside a UUID span (a uuid cannot contain ``t``), while a feat
     slug can contain a ``<TAG>-<uuid>``-shaped substring (the hyphen
-    doubling as the separator), in which case the merge keeps BOTH spans --
+    doubling as the separator), in which case the merge keeps BOTH spans:
     the outer FEAT reference plus the inner, phantom UUID-tag row, which
-    resolves like any other reference (typically a not-found row) -- and
-    that corner case is pinned by a dedicated test (feat-177 review round)
-    -- and a match may sit anywhere in any line (bullet prefixes,
-    indentation, and mid-prose references all count).
+    resolves like any other reference (typically a not-found row); that
+    corner case is pinned by a dedicated test (feat-177 review round). A
+    match may sit anywhere in any line (bullet prefixes, indentation, and
+    mid-prose references all count).
 
     Parameters
     ----------
