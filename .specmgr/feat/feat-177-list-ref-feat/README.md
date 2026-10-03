@@ -4,7 +4,7 @@ created: '2026-10-02T11:28:09.942+02:00'
 id: feat-177-list-ref-feat
 status: review
 type: feat
-updated: '2026-10-03T06:22:25.000+02:00'
+updated: '2026-10-03T07:24:11.000+02:00'
 version: 1.0.0
 ---
 
@@ -109,6 +109,10 @@ version: 1.0.0
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T05:24:11.000Z - Post-review user-facing doc wording round (feat-reviewer findings 4+5)
+
+feat-reviewer findings (4)+(5) resolved: `.opencode/command/refs.md`'s and `.opencode/agent/ref-finder.md`'s frontmatter `description`s now read `<TYPE> <id>` instead of `<TYPE> <uuid>` (their bodies were already accurate and stay untouched), and the root `README.md`'s "Referencing Artifacts" opening is reworded so free-form prose is no longer read as `FEAT`-tag-only -- the scanner accepts any of the reference tags in free-form prose, while the structured locations (VCR's `## Verifies`, SYSRS's per-section bullet lists, DEC's `## Related Artifacts`) remain uuid-only. Wording only, zero behavior change; `status` stays `review`, frontmatter `updated` bumped.
 
 #### 2026-10-03T04:22:25.000Z - Post-review count-removal docstring round (feat-122 Docstring Style convention)
 

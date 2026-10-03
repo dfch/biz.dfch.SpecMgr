@@ -391,10 +391,11 @@ To resolve the cross-references an artifact already carries, see
 ## Referencing Artifacts
 
 specmgr documents cross-reference each other via `<TYPE> <uuid>` lines
-(VCR's `## Verifies`, SYSRS's per-section bullet lists, DEC's `## Related
-Artifacts`) and, in free-form prose, via a `FEAT` tag carrying a
-feature's own id — the full `feat-NNN-slug` or the bare `feat-NNN`
-number (the structured locations above remain uuid-only). The
+in the structured locations (VCR's `## Verifies`, SYSRS's per-section
+bullet lists, DEC's `## Related Artifacts`) and — anywhere in free-form
+prose — via any of the reference tags, including a `FEAT` tag carrying
+a feature's own id (the full `feat-NNN-slug` or the bare `feat-NNN`
+number; the structured locations above remain uuid-only). The
 `list_references` MCP tool resolves those references: point your
 assistant at any artifact (`<type> <id>`) and it lists every
 cross-reference tag in the artifact's body, each resolved to the

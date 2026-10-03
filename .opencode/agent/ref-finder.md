@@ -1,7 +1,7 @@
 ---
 description: >-
   Lists and resolves the artifacts a single specmgr document references --
-  its `<TYPE> <uuid>` cross-reference lines -- by calling the `list_references`
+  its `<TYPE> <id>` cross-reference lines -- by calling the `list_references`
   MCP tool and reporting each referenced artifact's `type`/`id`/`title`/`path`,
   flagging any that could not be resolved on disk. Read-only -- never edits,
   writes, or commits.
