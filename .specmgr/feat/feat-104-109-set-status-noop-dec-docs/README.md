@@ -4,7 +4,7 @@ created: '2026-09-14 12:11:30.116+02:00'
 id: feat-104-109-set-status-noop-dec-docs
 status: done
 type: feat
-updated: '2026-09-14 21:14:01.842Z'
+updated: '2026-09-30T04:36:25.000Z'
 version: 1.0.0
 ---
 
@@ -82,21 +82,21 @@ Read-only investigation performed 2026-09-14 (no code changed yet, per explicit 
 
 ### Task List
 
-#### Phase 1: set_status no-op (#109)
+#### Phase 100: set_status no-op (#109)
 
-- [x] Task 1.1: Add the no-op early-return to each of the 13 `_set_status_<d>` adapters in `general/tools/set_status.py`.
+- [x] Task 100.100: Add the no-op early-return to each of the 13 `_set_status_<d>` adapters in `general/tools/set_status.py`.
 
-- [x] Task 1.2: Update `set_status`'s module docstring and `@mcp.tool()` description to document the no-op behavior.
+- [x] Task 100.110: Update `set_status`'s module docstring and `@mcp.tool()` description to document the no-op behavior.
 
-- [x] Task 1.3: Add/extend regression tests in `tests/general/tools/test_set_status.py` (ACC-001, ACC-002) and confirm ACC-003's existing tests still pass.
+- [x] Task 100.120: Add/extend regression tests in `tests/general/tools/test_set_status.py` (ACC-001, ACC-002) and confirm ACC-003's existing tests still pass.
 
-#### Phase 2: DEC Updates timestamp documentation (#104)
+#### Phase 110: DEC Updates timestamp documentation (#104)
 
-- [x] Task 2.1: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
+- [x] Task 110.100: Edit `dec/data/dec_example.md` to show the full-timestamp `## Updates` heading form on one existing entry.
 
-- [x] Task 2.2: RESOLVED by the user: also update `dec/data/dec_template.md`'s single `## Updates` entry to the full-timestamp form (not example-only -- both files now show it).
+- [x] Task 110.110: RESOLVED by the user: also update `dec/data/dec_template.md`'s single `## Updates` entry to the full-timestamp form (not example-only -- both files now show it).
 
-- [x] Task 2.3: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
+- [x] Task 110.120: Confirm `tests/dec/resources/test_dec_example.py`/`test_dec_template.py` still pass unmodified (ACC-005); run the full test suite.
 
 ## Progress
 

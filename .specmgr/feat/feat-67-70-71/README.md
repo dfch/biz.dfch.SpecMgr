@@ -4,7 +4,7 @@ created: '2026-09-03 08:28:23.003+02:00'
 id: feat-67-70-71
 status: done
 type: feat
-updated: '2026-09-03 10:51:10.996+02:00'
+updated: '2026-09-30T04:38:19.000Z'
 version: 1.0.0
 ---
 
@@ -103,41 +103,41 @@ Recorded here in one place, per Task 5.3, now that all three topics' phases are 
 
 ### Task List
 
-#### Phase 1: Investigation and Design
+#### Phase 100: Investigation and Design
 
-- [x] Task 1.1: Reproduce the bare `<word>`-as-HTML failure (#70) against a minimal `feat` document and confirm current behavior at the `models/md/_markdown.py::_assert_no_raw_html`/`parse()` level.
-- [x] Task 1.2: Reproduce the malformed-timestamp-heading failure (#71) against a minimal `feat` document and confirm current behavior at the `models/md/markdown_section.py`/`markdown_str.py` alias/`get_extent` level.
-- [x] Task 1.3: Re-run both repros against a large (~150-line) real document, matching the scale that originally triggered the issue reports, to check for a length/complexity-specific gap not visible in the minimal repro.
-- [x] Task 1.4: Investigate whether MCP client/transport-side message truncation or discarding could explain the reported bare "Error executing tool" symptom despite `wrap_tool_errors` producing a full message server-side.
-- [x] Task 1.5: Audit every domain's `*/data/*_template.md`/`*/data/*_example.md` for round, all-zero placeholder timestamps (frontmatter and, for `feat`, body-level `#### {timestamp}` headings) and record the full list of files needing changes.
-- [x] Task 1.6: Reproduce the newest-first-ordering failure noted in Design Notes (out-of-order `#### {timestamp}` entries in `Updates`/`Decisions Made`) and confirm whether its error path also bypasses `wrap_tool_errors`'s actionable detail.
-- [x] Task 1.7: Record findings (confirmed-real gap vs. no-gap-found per topic, root cause, side-effect assessment across domains) in this feature's Design Notes, or spin off a DEC/ADR if warranted.
+- [x] Task 100.100: Reproduce the bare `<word>`-as-HTML failure (#70) against a minimal `feat` document and confirm current behavior at the `models/md/_markdown.py::_assert_no_raw_html`/`parse()` level.
+- [x] Task 100.110: Reproduce the malformed-timestamp-heading failure (#71) against a minimal `feat` document and confirm current behavior at the `models/md/markdown_section.py`/`markdown_str.py` alias/`get_extent` level.
+- [x] Task 100.120: Re-run both repros against a large (~150-line) real document, matching the scale that originally triggered the issue reports, to check for a length/complexity-specific gap not visible in the minimal repro.
+- [x] Task 100.130: Investigate whether MCP client/transport-side message truncation or discarding could explain the reported bare "Error executing tool" symptom despite `wrap_tool_errors` producing a full message server-side.
+- [x] Task 100.140: Audit every domain's `*/data/*_template.md`/`*/data/*_example.md` for round, all-zero placeholder timestamps (frontmatter and, for `feat`, body-level `#### {timestamp}` headings) and record the full list of files needing changes.
+- [x] Task 100.150: Reproduce the newest-first-ordering failure noted in Design Notes (out-of-order `#### {timestamp}` entries in `Updates`/`Decisions Made`) and confirm whether its error path also bypasses `wrap_tool_errors`'s actionable detail.
+- [x] Task 100.160: Record findings (confirmed-real gap vs. no-gap-found per topic, root cause, side-effect assessment across domains) in this feature's Design Notes, or spin off a DEC/ADR if warranted.
 
-#### Phase 2: Placeholder Timestamp Fix and Test
+#### Phase 110: Placeholder Timestamp Fix and Test
 
-- [x] Task 2.1: Replace round, all-zero placeholder timestamps across every affected `*_template.md`/`*_example.md` (per Task 1.5's list) with deliberately odd, non-round values in the correct format.
-- [x] Task 2.2: Add/extend a regression test asserting a repo-wide search for round, all-zero timestamps returns zero matches across every domain's template/example files.
-- [x] Task 2.3: Run the full test suite to confirm no regressions from the content changes.
+- [x] Task 110.100: Replace round, all-zero placeholder timestamps across every affected `*_template.md`/`*_example.md` (per Task 1.5's list) with deliberately odd, non-round values in the correct format.
+- [x] Task 110.110: Add/extend a regression test asserting a repo-wide search for round, all-zero timestamps returns zero matches across every domain's template/example files.
+- [x] Task 110.120: Run the full test suite to confirm no regressions from the content changes.
 
-#### Phase 3: Bare HTML-Like Token Actionable-Error Fix and Test
+#### Phase 120: Bare HTML-Like Token Actionable-Error Fix and Test
 
-- [ ] Task 3.1: Based on Phase 1 findings, fix the origin path in `models/md/_markdown.py` so a bare `<word>`-shaped token failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", per Task 3.3's own findings entry below.
-- [x] Task 3.2: Add an end-to-end regression test fixture (a bare `<word>` token outside backticks in a heading/list item, driven through `create_feat`/`validate_feat`) asserting the final message is actionable.
-- [x] Task 3.3: Verify ACC-002 passes.
+- [ ] Task 120.100: Based on Phase 1 findings, fix the origin path in `models/md/_markdown.py` so a bare `<word>`-shaped token failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", per Task 3.3's own findings entry below.
+- [x] Task 120.110: Add an end-to-end regression test fixture (a bare `<word>` token outside backticks in a heading/list item, driven through `create_feat`/`validate_feat`) asserting the final message is actionable.
+- [x] Task 120.120: Verify ACC-002 passes.
 
-#### Phase 4: Malformed Timestamp-Heading Actionable-Error Fix and Test
+#### Phase 130: Malformed Timestamp-Heading Actionable-Error Fix and Test
 
-- [ ] Task 4.1: Based on Phase 1 findings, fix the origin path in `models/md/markdown_section.py`/`markdown_str.py`'s alias/`get_extent` matching so a malformed `#### {timestamp}` heading failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap for #71's malformed-heading case (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", matching Phase 3's Task 3.1 precedent.
-- [x] Task 4.2: Add an end-to-end regression test fixture (a malformed `#### {timestamp}` heading in `Updates`/`Decisions Made`, driven through `create_feat`/`validate_feat`/the generic `update` tool) asserting the final message is actionable.
-- [x] Task 4.3: Based on Task 1.6's findings, decide whether the newest-first-ordering failure mode also needs its own fix here or is already covered by Task 4.1/4.2's fix; add a dedicated regression test either way.
-- [x] Task 4.4: Verify ACC-003 passes.
+- [ ] Task 130.100: Based on Phase 1 findings, fix the origin path in `models/md/markdown_section.py`/`markdown_str.py`'s alias/`get_extent` matching so a malformed `#### {timestamp}` heading failure carries full actionable detail, only if Task 1.3/1.4 confirmed a real gap. **Skipped, intentionally**: Phase 1 and Phase 1b both conclusively found no gap for #71's malformed-heading case (see Design Notes), and the orchestrator/user accepted that verdict, so this task's own precondition was never met -- left unchecked (not `[x]`) to record "not applicable" rather than "done", matching Phase 3's Task 3.1 precedent.
+- [x] Task 130.110: Add an end-to-end regression test fixture (a malformed `#### {timestamp}` heading in `Updates`/`Decisions Made`, driven through `create_feat`/`validate_feat`/the generic `update` tool) asserting the final message is actionable.
+- [x] Task 130.120: Based on Task 1.6's findings, decide whether the newest-first-ordering failure mode also needs its own fix here or is already covered by Task 4.1/4.2's fix; add a dedicated regression test either way.
+- [x] Task 130.130: Verify ACC-003 passes.
 
-#### Phase 5: Closeout and Final Verification
+#### Phase 140: Closeout and Final Verification
 
-- [x] Task 5.1: Re-run the full repo-wide round-timestamp search (ACC-001) to confirm zero remaining matches.
-- [x] Task 5.2: Re-run the full test suite to confirm no regressions across all changes.
-- [x] Task 5.3: Record the final verdict on issues #67/#70/#71 (fixed vs. confirmed-already-correct-plus-regression-test-added) in Design Notes/Decisions Made.
-- [x] Task 5.4: Update this feature's Progress section (Current Status) and close out.
+- [x] Task 140.100: Re-run the full repo-wide round-timestamp search (ACC-001) to confirm zero remaining matches.
+- [x] Task 140.110: Re-run the full test suite to confirm no regressions across all changes.
+- [x] Task 140.120: Record the final verdict on issues #67/#70/#71 (fixed vs. confirmed-already-correct-plus-regression-test-added) in Design Notes/Decisions Made.
+- [x] Task 140.130: Update this feature's Progress section (Current Status) and close out.
 
 ## Progress
 

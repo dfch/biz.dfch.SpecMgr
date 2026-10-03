@@ -4,7 +4,7 @@ created: '2026-09-04 10:00:51.149+02:00'
 id: feat-93-feat-template
 status: done
 type: feat
-updated: '2026-09-04 12:09:30.151+02:00'
+updated: '2026-09-30T04:53:20.000Z'
 version: 1.0.0
 ---
 
@@ -68,23 +68,23 @@ The canonical source of truth for a feature template/example is the packaged dat
 
 ### Task List
 
-#### Phase 1: Discovery ✅ DONE
+#### Phase 100: Discovery ✅ DONE
 
-- [x] Task 1.1: Locate all diverging copies of the feature template/example concept and confirm the canonical `feat_template.md` / `feat_example.md` data files.
-- [x] Task 1.2: Scan `src/` and `tests/` for any reference to `.specmgr/_template/v1/README.md`.
-- [x] Task 1.3: Confirm the exact fenced template blocks and line ranges inside ADR e369ee2e.
+- [x] Task 100.100: Locate all diverging copies of the feature template/example concept and confirm the canonical `feat_template.md` / `feat_example.md` data files.
+- [x] Task 100.110: Scan `src/` and `tests/` for any reference to `.specmgr/_template/v1/README.md`.
+- [x] Task 100.120: Confirm the exact fenced template blocks and line ranges inside ADR e369ee2e.
 
-#### Phase 2: Implementation
+#### Phase 110: Implementation
 
-- [x] Task 2.1: Delete `.specmgr/_template/v1/README.md`.
-- [x] Task 2.2: Edit ADR e369ee2e to drop the verbatim fenced template blocks and append a pointer to the canonical tools.
-- [x] Task 2.3: Update the AGENTS.md `feat` template bullet to point at the canonical tools.
+- [x] Task 110.100: Delete `.specmgr/_template/v1/README.md`.
+- [x] Task 110.110: Edit ADR e369ee2e to drop the verbatim fenced template blocks and append a pointer to the canonical tools.
+- [x] Task 110.120: Update the AGENTS.md `feat` template bullet to point at the canonical tools.
 
-#### Phase 3: Verification
+#### Phase 120: Verification
 
-- [x] Task 3.1: Regenerate `docs/MCP.md` / `docs/GENERATED.md`.
-- [x] Task 3.2: Run the full unit-test suite and confirm it passes unchanged.
-- [x] Task 3.3: Dry-run `validate_feat(content, full=True)` on this feature's body.
+- [x] Task 120.100: Regenerate `docs/MCP.md` / `docs/GENERATED.md`.
+- [x] Task 120.110: Run the full unit-test suite and confirm it passes unchanged.
+- [x] Task 120.120: Dry-run `validate_feat(content, full=True)` on this feature's body.
 
 ## Progress
 

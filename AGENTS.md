@@ -441,12 +441,20 @@ type or cross-cutting:
   `path: str` field every other whole-body domain's summary also carries
   via the shared `DocSummary` base (feat-81-83-validation Phase 3/4), no
   longer a `feat`-only divergence. Unlike every other domain, though,
-  `feat`'s own workflow -- direct hand/agent editing of
-  `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
-  first-class, sanctioned read/edit entry point by original design, not
-   merely an incidental convenience every other domain only gained
-   later. See `.specmgr/feat/feat-31-feature/README.md` for the full
-  design.
+   `feat`'s own workflow -- direct hand/agent editing of
+   `.specmgr/feat/<id>/README.md` -- treats this shared `path` as a
+   first-class, sanctioned read/edit entry point by original design, not
+    merely an incidental convenience every other domain only gained
+    later. That direct-file-editing workflow must keep the generic
+    `update` tool's coordinate mismatch in mind: a raw on-disk `.md`
+    file's line numbers are never `update`'s `offset`/`limit` body-line
+    coordinates (the YAML frontmatter block is variable-length), so the
+    only safe source of coordinates is `get_feat(id, raw=True)`
+    (optionally `numbered=True`), never a raw file read minus an assumed
+    constant (feat-153-off-by-n, GitHub issue #153, ADR
+    19ff316b-cd11-41a7-a616-ffd84917da51). See
+   `.specmgr/feat/feat-31-feature/README.md` for the full
+   design.
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -540,128 +548,151 @@ type or cross-cutting:
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
-     *and* line-range replace for the whole-body domains — `type` is
-     one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
-     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
-     `limit` = count; omitted `limit` = through end of body, `0` = pure
-     insert, `offset` `N+1` = append; strict validation, never clamped),
-      splice-then-validate-whole — and now with two non-raising failure
-      channels (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-      b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206
-      non-raising-structured-result chain): on a target id whose only
-      matching on-disk file fails to parse it returns the non-raising
-      `ParseFailureResult` (`error`/`path`/`id`, the same parse defect as
-      the domain's `list_<d>` failed row for the same file) instead of
-      raising the domain's not-found error (a truly-absent id still
-      raises), and a content-validation failure on the submitted new
-      content (or, in range mode, on the spliced result) returns the
-      non-raising `ValidateResult` (`valid=False`, single
-      `errors[].message` capped at 300 chars exactly as the generic
-      `validate` tool caps it, feat-110) instead of raising
-      `AssertionError`/`pydantic.ValidationError` — `edit` (below) gains
-      the same two channels for the post-edit result, and
-      `set_status`/`set_classification` (below) gain the
-      `ParseFailureResult` channel too — while every caller-usage
-      `ValueError` (invalid id shape, unknown `type`, range-coordinate
-      misuse, `edit`'s pre-dispatch OC-parity guards and stage-1 match
-       guards, `set_status`'s `superseded_by` misuse) still raises — with
-       the one sub-case where `update`/`set_classification`'s `type="adr"`
-       (a well-formed UUID id, so it passes the id-shape validation) raises
-       the plain `KeyError` from the dispatch-table lookup instead (a
-       direct-Python-caller outcome only, unreachable through the server's
-       12-value `type` enum) — `set_status`'s out-of-vocabulary `InvalidStatusResult` (case 2 of the
-      same chain, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs
-      pre-lock/pre-load (first), and nothing is written in any failure
-      case; `edit`, the generic surgical exact-match
-      string replacement of an existing document's frontmatter-stripped body
-      across the whole-body domains (`type` is one of
-      req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
-      unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
-      `ValueError` for an unknown or `adr` `type`, following the generic
-      `validate` tool's precedent): `old_str` must match the on-disk body
-      byte-exactly (no line-ending normalization), must be unique unless
-      `replace_all`, then the *edited* body must still validate as a whole
-      document — written to disk only if both stages pass, nothing written on
-      any failure (the file stays byte-unchanged; an empty `new_str` is a
-      pure deletion, legal iff the edited body validates); returns the
-      updated frontmatter only (`updated` bumped), with an invalid `id` a
-      `ValueError` before any file access (feat-159-edit, GitHub issue #159);
-      `set_status`, the generic status change for
-     every
-     domain incl. adr — `superseded_by` is ADR-only, composing
-     `"superseded by X"`; `set_classification`, the generic free-text
-     `classification` frontmatter field change for the whole-body
-     domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
-     (`adr` excluded, same as `update`/`delete`, since ADR's separate
-     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
-     the body and every other frontmatter field untouched, with a
-     blank/whitespace-only value clearing `classification` back to
-     `None`/absent; `delete`, the generic type-dispatched hard-delete
-     for the whole-body domains — `type` is one of
-     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), every one of these
-     domains implements a `delete` adapter in that one tool (a future domain
-     adds its own adapter there, never a per-domain `delete_<d>` tool),
-     resolving by `id`, taking the domain's own lock, and returning the
-     deleted path; `validate`, the generic, disk-free/id-free dry-run
-     content validator for the same whole-body domains (`adr`
-     excluded, `validate_adr` remains its own standalone tool) —
-     replacing the former per-domain `validate_<d>` tools
-     (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
-     it is the one generic tool here whose entire surface is non-raising
-     structured results: it never raises for a
-     content-validation failure, always returning
-     `{valid: bool, errors: list[{message: str}]}`, only raising
-     `ValueError` for a `full`/content-shape mismatch or an unsupported
-     `type` (the four generic mutation tools' non-raising branches, above,
-     cover content-validation and existing-document-parse-failure only —
-     their caller-usage `ValueError`s still raise); `find_related`, the generic cross-domain semantic-similarity
-     search for the documents most related to an existing document, given
-     its `type`/`id`, across every whole-body domain (`adr` excluded
-     structurally), ranked by cosine similarity of local sentence
-     embeddings (the `similarity` extra, `fastembed`/`bge-small`),
-     excluding the source document itself; `find_similar_text`, the same
-     ranking for a free-form `query` text (the pre-creation
-     dedup/discovery companion of `find_related`). Both return up to
-     `top_k` (default 10, validated 1..100) ranked `{type, id, title,
-     status, path, score}` hit rows (an unparseable candidate appears with
-     `id = null` and the `<failed to parse>` marker title/status), and
-     both return the structured, non-raising `{available: false, reason,
-     message}` result whenever the embedding feature is unavailable
-     (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to
-     load) — the tools always register; availability is decided at call
-     time (feat-134-related-artifact-similarity, ADR
-     750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
-     cross-domain cross-reference listing tool (feat-144-ref-artifact,
-     GitHub issue #144) — takes a *source* document's `type` (one of
-     adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
-     regex-scans the source's frontmatter-stripped body for `<TYPE>
-     <id>` references (the reference-tag vocabulary
-     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT; case-insensitive tag,
-     space/tab/dash separator, anywhere in a line; the UUID tags
-     carry a canonical uuid id, while FEAT carries the full
-     `feat-NNN-slug` id or the bare `feat-NNN` number), dedupes repeated
-     occurrences (first-occurrence order), resolves each unique
-     reference in its target domain (cache-backed; ADR excluded from
-     the cache), and returns a paged `PagedResult[ReferenceRow]` — one
-     row per unique reference carrying `type`/`id`/`title` (the
-     referenced document's H1)/`path` (resolved absolute file path); a
-     reference that cannot be resolved on disk is a row with null
-     `title`/`path` and the target domain's not-found message in
-     `error` — it never raises; `max_results`/`offset` paging with the
-     same clamp-not-error contract as every `list_*` tool (default 25,
-     cap 100). It applies the same `_path_safety` guards: an invalid
-     source `type`/`id` (path-injection attempt or wrong-format id) is
-     a `ValueError` before any filesystem access, and a missing source
-     raises the source domain's not-found error, identical to `get_<d>`.
-     On a successful write, `update`, `set_status` (its
-     non-`adr` adapters), `set_classification`, and every per-domain
-     `create_<d>` tool now return the domain's frontmatter object only (no
-     body) — small and bounded regardless of document size, unlike an
-     append-only document's ever-growing body — with the `adr` dispatch
-     branch of `set_status` and every ADR-specific tool (`create_adr`,
-     `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
-     still returning the full document with `body` intact
-     (feat-69-update-context). `general/resources/`
+    *and* line-range replace for the whole-body domains — `type` is
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
+    `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
+    `limit` = count; omitted `limit` = through end of body, `0` = pure
+    insert, `offset` `N+1` = append; strict validation, never clamped),
+    `offset`/`limit` address the frontmatter-stripped body, never the raw
+    on-disk `.md` file (the YAML frontmatter block is variable-length, so
+    a raw file read's line numbers are never the same as body-line
+    coordinates — the only safe source of coordinates is a
+    `get_<d>(id, raw=True)` read, never a raw file read minus an assumed
+    constant), and a success return of `UpdateResult` — `frontmatter`
+    (the updated frontmatter only, no body) plus `snippet`, `None` in
+    whole-body mode and, in range mode, the before/after window of the
+    touched range (dropped lines numbered pre-splice, inserted lines
+    numbered post-splice, up to 2 unchanged context lines per side),
+    bounded by the touched range rather than the document size (the
+    whole-body-equivalent `offset=1` + omitted-`limit` range returns
+    `snippet=None` too; feat-153-off-by-n, GitHub issue #153, ADR
+    19ff316b-cd11-41a7-a616-ffd84917da51),
+    splice-then-validate-whole — and now with two non-raising failure
+    channels (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206
+    non-raising-structured-result chain): on a target id whose only
+    matching on-disk file fails to parse it returns the non-raising
+    `ParseFailureResult` (`error`/`path`/`id`, the same parse defect as
+    the domain's `list_<d>` failed row for the same file) instead of
+    raising the domain's not-found error (a truly-absent id still
+    raises), and a content-validation failure on the submitted new
+    content (or, in range mode, on the spliced result) returns the
+    non-raising `ValidateResult` (`valid=False`, single
+    `errors[].message` capped at 300 chars exactly as the generic
+    `validate` tool caps it, feat-110) instead of raising
+    `AssertionError`/`pydantic.ValidationError` — `edit` (below) gains
+    the same two channels for the post-edit result, and
+    `set_status`/`set_classification` (below) gain the
+    `ParseFailureResult` channel too — while every caller-usage
+    `ValueError` (invalid id shape, unknown `type`, range-coordinate
+    misuse, `edit`'s pre-dispatch OC-parity guards and stage-1 match
+    guards, `set_status`'s `superseded_by` misuse) still raises — with
+    the one sub-case where `update`/`set_classification`'s `type="adr"`
+    (a well-formed UUID id, so it passes the id-shape validation) raises
+    the plain `KeyError` from the dispatch-table lookup instead (a
+    direct-Python-caller outcome only, unreachable through the server's
+    12-value `type` enum) — `set_status`'s out-of-vocabulary
+    `InvalidStatusResult` (case 2 of the same chain, ADR
+    b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs pre-lock/pre-load
+    (first), and nothing is written in any failure case; `edit`, the
+    generic surgical exact-match
+    string replacement of an existing document's frontmatter-stripped body
+    across the whole-body domains (`type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
+    unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
+    `ValueError` for an unknown or `adr` `type`, following the generic
+    `validate` tool's precedent): `old_str` must match the on-disk body
+    byte-exactly (no line-ending normalization), must be unique unless
+    `replace_all`, then the *edited* body must still validate as a whole
+    document — written to disk only if both stages pass, nothing written on
+    any failure (the file stays byte-unchanged; an empty `new_str` is a
+    pure deletion, legal iff the edited body validates); returns the
+    updated frontmatter only (`updated` bumped), with an invalid `id` a
+    `ValueError` before any file access (feat-159-edit, GitHub issue #159);
+    `set_status`, the generic status change for
+    every
+    domain incl. adr — `superseded_by` is ADR-only, composing
+    `"superseded by X"`; `set_classification`, the generic free-text
+    `classification` frontmatter field change for the whole-body
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
+    (`adr` excluded, same as `update`/`delete`, since ADR's separate
+    `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
+    the body and every other frontmatter field untouched, with a
+    blank/whitespace-only value clearing `classification` back to
+    `None`/absent; `delete`, the generic type-dispatched hard-delete
+    for the whole-body domains — `type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), every one of these
+    domains implements a `delete` adapter in that one tool (a future domain
+    adds its own adapter there, never a per-domain `delete_<d>` tool),
+    resolving by `id`, taking the domain's own lock, and returning the
+    deleted path; `validate`, the generic, disk-free/id-free dry-run
+    content validator for the same whole-body domains (`adr`
+    excluded, `validate_adr` remains its own standalone tool) —
+    replacing the former per-domain `validate_<d>` tools
+    (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
+    it is the one generic tool here whose entire surface is non-raising
+    structured results: it never raises for a
+    content-validation failure, always returning
+    `{valid: bool, errors: list[{message: str}]}`, only raising
+    `ValueError` for a `full`/content-shape mismatch or an unsupported
+    `type` (the four generic mutation tools' non-raising branches, above,
+    cover content-validation and existing-document-parse-failure only —
+    their caller-usage `ValueError`s still raise); `find_related`, the generic cross-domain semantic-similarity
+    search for the documents most related to an existing document, given
+    its `type`/`id`, across every whole-body domain (`adr` excluded
+    structurally), ranked by cosine similarity of local sentence
+    embeddings (the `similarity` extra, `fastembed`/`bge-small`),
+    excluding the source document itself; `find_similar_text`, the same
+    ranking for a free-form `query` text (the pre-creation
+    dedup/discovery companion of `find_related`). Both return up to
+    `top_k` (default 10, validated 1..100) ranked `{type, id, title,
+    status, path, score}` hit rows (an unparseable candidate appears with
+    `id = null` and the `<failed to parse>` marker title/status), and
+    both return the structured, non-raising `{available: false, reason,
+    message}` result whenever the embedding feature is unavailable
+    (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to
+    load) — the tools always register; availability is decided at call
+    time (feat-134-related-artifact-similarity, ADR
+    750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
+    cross-domain cross-reference listing tool (feat-144-ref-artifact,
+    GitHub issue #144) — takes a *source* document's `type` (one of
+    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
+    regex-scans the source's frontmatter-stripped body for `<TYPE>
+    <id>` references (the reference-tag vocabulary
+    GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT; case-insensitive tag,
+    space/tab/dash separator, anywhere in a line; the UUID tags
+    carry a canonical uuid id, while FEAT carries the full
+    `feat-NNN-slug` id or the bare `feat-NNN` number), dedupes repeated
+    occurrences (first-occurrence order), resolves each unique
+    reference in its target domain (cache-backed; ADR excluded from
+    the cache), and returns a paged `PagedResult[ReferenceRow]` — one
+    row per unique reference carrying `type`/`id`/`title` (the
+    referenced document's H1)/`path` (resolved absolute file path); a
+    reference that cannot be resolved on disk is a row with null
+    `title`/`path` and the target domain's not-found message in
+    `error` — it never raises; `max_results`/`offset` paging with the
+    same clamp-not-error contract as every `list_*` tool (default 25,
+    cap 100). It applies the same `_path_safety` guards: an invalid
+    source `type`/`id` (path-injection attempt or wrong-format id) is
+    a `ValueError` before any filesystem access, and a missing source
+    raises the source domain's not-found error, identical to `get_<d>`.
+    On a successful write, `set_status` (its non-`adr`
+    adapters), `set_classification`, and every per-domain
+    `create_<d>` tool return the domain's frontmatter object only (no
+    body) — small and bounded regardless of document size, unlike an
+    append-only document's ever-growing body — with the `adr` dispatch
+    branch of `set_status` and every ADR-specific tool (`create_adr`,
+    `update_frontmatter`, `update_section`, the `option_*` tools) excluded,
+    still returning the full document with `body` intact
+    (feat-69-update-context); `update` is the deliberate exception to that
+    frontmatter-only precedent — since feat-153-off-by-n (GitHub issue
+    #153, ADR 19ff316b-cd11-41a7-a616-ffd84917da51) it returns the
+    `UpdateResult` wrapper instead: the same per-domain frontmatter object
+    under `frontmatter`, plus `snippet`, which is `None` in whole-body mode
+    and, in range mode, the before/after window of the touched range
+    (bounded by the touched range rather than the document size), so the
+    "small and bounded" property now holds for the snippet via that
+    bounded-by-touched-range contract. `general/resources/`
     (`specmgr://version` — the package version plus the installed
     `fastembed` version (or `null` when the `similarity` extra is missing,
     feat-134 Phase 7), `specmgr://config` — every domain's resolved base
@@ -713,13 +744,25 @@ type or cross-cutting:
       `/repair <type> [id]` command (`.opencode/command/repair.md`,
       `agent: doc-repairer`), and the self-triggering `repair` OpenCode Skill
       (`.opencode/skill/repair/SKILL.md`, REQ-012) that defers to
-      `doc-repairer` via the `task` tool when available). Every `get_<d>` tool for the whole-body
-    domains additionally
-    takes a `raw: bool = False` parameter — `raw=True` returns the
-    frontmatter-stripped body text as-is (the text `update`'s
-    `offset`/`limit` index into), with optional read-style `offset`/`limit`
-    windowing of that raw read (raw-only; out-of-range values clamp, never
-    error). `get_<d>` for the 12 whole-body domains
+       `doc-repairer` via the `task` tool when available). Every `get_<d>` tool for the whole-body
+     domains additionally
+     takes a `raw: bool = False` parameter — `raw=True` returns the
+     frontmatter-stripped body text as-is (the text `update`'s
+     `offset`/`limit` index into), with optional read-style `offset`/`limit`
+     windowing of that raw read (raw-only; out-of-range values clamp, never
+     error) and an optional `numbered: bool = False` parameter
+     (feat-153-off-by-n, GitHub issue #153, ADR
+     19ff316b-cd11-41a7-a616-ffd84917da51; raw-only — combining `numbered`
+     with `raw=False` raises `ValueError`, like `offset`/`limit`) — when
+     `numbered=True`, every returned body line is prefixed with its 1-based
+     absolute body-line number in the `"<n>: "` form (plain decimal, no
+     padding); windowed reads number from the clamped offset and never
+     restart at 1 within a window, so a number seen in the output can be fed
+     straight back into `update`'s `offset`; `numbered=False` output stays
+     byte-identical to the plain `raw=True` text; and, per feat-150's
+     precedent below, a numbered read of a document that exists but fails to
+     parse still returns the `ParseFailureResult`, never numbered text.
+     `get_<d>` for the 12 whole-body domains
     (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;

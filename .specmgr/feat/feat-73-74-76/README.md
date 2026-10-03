@@ -4,7 +4,7 @@ created: '2026-09-03 00:03:19.829+02:00'
 id: feat-73-74-76
 status: done
 type: feat
-updated: '2026-09-18 13:39:58.009+02:00'
+updated: '2026-09-30T04:38:24.000Z'
 version: 1.0.0
 ---
 
@@ -106,35 +106,35 @@ usage) was already correctly wired when `sysrs` was built (feat-32-sysrs).
 
 ### Task List
 
-#### Phase 1: NOTICE License Audit (#73)
+#### Phase 100: NOTICE License Audit (#73)
 
-- [x] Task 1.1: List every direct 3rd-party library dependency from pyproject.toml.
+- [x] Task 100.100: List every direct 3rd-party library dependency from pyproject.toml.
 
-- [x] Task 1.2: For each dependency, verify NOTICE lists the correct license type and attribution text (using #47/mdformat-simple-breaks as the worked example).
+- [x] Task 100.110: For each dependency, verify NOTICE lists the correct license type and attribution text (using #47/mdformat-simple-breaks as the worked example).
 
-- [x] Task 1.3: Fix any discrepancies found in NOTICE.
+- [x] Task 100.120: Fix any discrepancies found in NOTICE.
 
-#### Phase 2: sysrs Config/Gap Analysis (#74)
+#### Phase 110: sysrs Config/Gap Analysis (#74)
 
-- [x] Task 2.1: Add sysrs to specmgr://config.
+- [x] Task 110.100: Add sysrs to specmgr://config.
 
-- [x] Task 2.2: Compare sysrs's tools/resources/prompts against every other whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) to find other missing common functions.
+- [x] Task 110.110: Compare sysrs's tools/resources/prompts against every other whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr) to find other missing common functions.
 
-- [x] Task 2.3: Write up the gap list (in Design Notes or a follow-up feature).
+- [x] Task 110.120: Write up the gap list (in Design Notes or a follow-up feature).
 
-- [x] Task 2.4: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
+- [x] Task 110.130: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
 
-#### Phase 3: Confluence Page Title Fix (#76)
+#### Phase 120: Confluence Page Title Fix (#76)
 
-- [x] Task 3.1: In specmgr_confluence_update, parse the first H1 heading from the source markdown file.
+- [x] Task 120.100: In specmgr_confluence_update, parse the first H1 heading from the source markdown file.
 
-- [x] Task 3.2: Set the Confluence page's title field to that H1 text when updating the page body via the REST API.
+- [x] Task 120.110: Set the Confluence page's title field to that H1 text when updating the page body via the REST API.
 
-- [x] Task 3.3: If no H1 is present, leave the existing page title untouched.
+- [x] Task 120.120: If no H1 is present, leave the existing page title untouched.
 
-- [x] Task 3.4: Add/adjust tests covering both the H1-present and no-H1 cases.
+- [x] Task 120.130: Add/adjust tests covering both the H1-present and no-H1 cases.
 
-- [x] Task 3.5: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
+- [x] Task 120.140: Run the full test suite (`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`) plus `ruff format --check`/`ruff check`/`vulture` and confirm all pass.
 
 ## Progress
 

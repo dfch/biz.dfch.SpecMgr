@@ -4,7 +4,7 @@ created: '2026-09-17 07:38:35.189+02:00'
 id: feat-102-133-rsk-tags-source
 status: done
 type: feat
-updated: '2026-09-21 05:33:37.000+02:00'
+updated: '2026-09-30T04:36:17.000Z'
 version: 1.0.0
 ---
 
@@ -117,50 +117,50 @@ The remaining scope is therefore:
 
 ### Task List
 
-#### Phase 0: Branch + folder consolidation (setup; orchestrator-direct)
+#### Phase 100: Branch + folder consolidation (setup; orchestrator-direct)
 
-- [x] Task 0.1: Create branch `feat-102-133-rsk-tags-source` from `dev` (the working tree carries the planning-time README rewrite).
-- [x] Task 0.2: Commit the README rewrite (this combined plan) -- commit message per REQ-016, e.g. `docs(rsk): plan feat-102-133 combined feature (rsk mandatory Source + Tags alignment) (#102) (#133)`.
-- [x] Task 0.3: Run `set_feat_id(feat-133-tags-dec-rsk -> feat-102-133-rsk-tags-source)` (rewrites the frontmatter `id`, bumps `updated`, leaves the body byte-identical) -- commit per REQ-016, e.g. `docs(feat): rename feat-133-tags-dec-rsk to feat-102-133-rsk-tags-source (#102) (#133)`.
-- [x] Task 0.4: Run the quality gate (REQ-014) -- docs-only, expected no-op; verify no drift before proceeding to Phase 1.
+- [x] Task 100.100: Create branch `feat-102-133-rsk-tags-source` from `dev` (the working tree carries the planning-time README rewrite).
+- [x] Task 100.110: Commit the README rewrite (this combined plan) -- commit message per REQ-016, e.g. `docs(rsk): plan feat-102-133 combined feature (rsk mandatory Source + Tags alignment) (#102) (#133)`.
+- [x] Task 100.120: Run `set_feat_id(feat-133-tags-dec-rsk -> feat-102-133-rsk-tags-source)` (rewrites the frontmatter `id`, bumps `updated`, leaves the body byte-identical) -- commit per REQ-016, e.g. `docs(feat): rename feat-133-tags-dec-rsk to feat-102-133-rsk-tags-source (#102) (#133)`.
+- [x] Task 100.130: Run the quality gate (REQ-014) -- docs-only, expected no-op; verify no drift before proceeding to Phase 1.
 
-#### Phase 1: #133 -- Tags item-type alignment (closes #133)
+#### Phase 110: #133 -- Tags item-type alignment (closes #133)
 
-- [x] Task 1.1: In `rsk/models/v1/body.py`, change `Tags.items` from `list[MarkdownListItem]` to `list[MarkdownListItemWithNotes]` (update the import from `...models.md`; add a docstring note that rsk mirrors `req`/`dec`/`gol`'s `Tags` shape, per issue #133).
-- [x] Task 1.2: In `tests/rsk/models/v1/test_body.py`, confirm plain tags parse unchanged (existing assertions still hold) and add a test: a tag with a loose-list continuation paragraph has it captured in `item.notes` and round-trips.
-- [x] Task 1.3: Quality gate (REQ-014) -- expect changes in `rsk_schema.json` (both copies; the Tags items schema gains the `notes` property) and in the touched module's `docs/api/` page from the docstring note; commit per REQ-016, e.g. `feat(rsk): align ## Tags item type to MarkdownListItemWithNotes (req/dec/gol parity) (#102) (#133)`.
-- [x] Task 1.4: Post the GitHub comment on issue #133 per REQ-013 and close the issue. (Done 2026-09-21 by the orchestrator in the final GitHub close-out -- the network/`gh`-auth blocker recorded in the Phase 1 entry no longer applies; comment + close links in Related PRs / Commits and the top Updates entry.)
+- [x] Task 110.100: In `rsk/models/v1/body.py`, change `Tags.items` from `list[MarkdownListItem]` to `list[MarkdownListItemWithNotes]` (update the import from `...models.md`; add a docstring note that rsk mirrors `req`/`dec`/`gol`'s `Tags` shape, per issue #133).
+- [x] Task 110.110: In `tests/rsk/models/v1/test_body.py`, confirm plain tags parse unchanged (existing assertions still hold) and add a test: a tag with a loose-list continuation paragraph has it captured in `item.notes` and round-trips.
+- [x] Task 110.120: Quality gate (REQ-014) -- expect changes in `rsk_schema.json` (both copies; the Tags items schema gains the `notes` property) and in the touched module's `docs/api/` page from the docstring note; commit per REQ-016, e.g. `feat(rsk): align ## Tags item type to MarkdownListItemWithNotes (req/dec/gol parity) (#102) (#133)`.
+- [x] Task 110.130: Post the GitHub comment on issue #133 per REQ-013 and close the issue. (Done 2026-09-21 by the orchestrator in the final GitHub close-out -- the network/`gh`-auth blocker recorded in the Phase 1 entry no longer applies; comment + close links in Related PRs / Commits and the top Updates entry.)
 
-#### Phase 2: #102 -- mandatory `## Source` schema (BREAKING)
+#### Phase 120: #102 -- mandatory `## Source` schema (BREAKING)
 
-- [x] Task 2.1: In `rsk/models/v1/body.py`, add `class Source(SourceBase)` (thin subclass; domain docstring + the domain-neutral field-description wording note mirroring `req.Source`/`dec.Source`), add the required `source` field between `tags` and `more_information`, and update the module docstring's layout diagram (add the `## Source` line) and its field-order sentence.
-- [x] Task 2.2: In `rsk/tools/_sentinel.py`, add a `## Source` section to `_SENTINEL_RSK_TEXT` positioned before its `## More Information` (the sentinel has no `## Owner`/`## Tags`, so it goes directly ahead of `## More Information`).
-- [x] Task 2.3: Create `tests/rsk/tools/_helpers.py` with the shared `MANDATORY_SOURCE` snippet (see Design Notes -- fixture helper convention).
-- [x] Task 2.4: Update every full-RSK-document fixture to include `## Source` (the verified 15-file list in REQ-008); the per-tool rsk test files import `MANDATORY_SOURCE` from the new helper. (Plus three more full-RSK documents the verified list missed because it grepped `tests/` only: `.specmgr/feat/feat-15-add-artifact-type-risk/rsk_reference.md` -- parsed by three rsk model tests -- and `rsk/data/rsk_template.md` + `rsk/data/rsk_example.md`, whose committed content is round-tripped through `parse_rsk` by `tests/rsk/resources/test_rsk_{template,example}.py`; the two data files are Phase 3 Tasks 3.1/3.2 executed early, since REQ-014's per-phase green gate forces them into Phase 2.)
-- [x] Task 2.5: Add the new unit tests per REQ-009: parses-with-source; fails-without (message content asserted); misordering regression (`## Source` before `## Tags`; after `## More Information`) with the temporary-field-reorder spot-check that the test genuinely depends on the order guard (restore immediately; leave no reverted state in the diff).
-- [x] Task 2.6: Quality gate (REQ-014) -- expect `rsk_schema.json` (both copies; `source` now required) + the touched modules' API docs; full suite green; commit per REQ-016, e.g. `feat(rsk): add mandatory ## Source section (BREAKING for pre-existing rsk documents) (#102) (#133)`. (Gate green 2026-09-21 01:10 UTC, 3364 tests; the orchestrator commits.)
+- [x] Task 120.100: In `rsk/models/v1/body.py`, add `class Source(SourceBase)` (thin subclass; domain docstring + the domain-neutral field-description wording note mirroring `req.Source`/`dec.Source`), add the required `source` field between `tags` and `more_information`, and update the module docstring's layout diagram (add the `## Source` line) and its field-order sentence.
+- [x] Task 120.110: In `rsk/tools/_sentinel.py`, add a `## Source` section to `_SENTINEL_RSK_TEXT` positioned before its `## More Information` (the sentinel has no `## Owner`/`## Tags`, so it goes directly ahead of `## More Information`).
+- [x] Task 120.120: Create `tests/rsk/tools/_helpers.py` with the shared `MANDATORY_SOURCE` snippet (see Design Notes -- fixture helper convention).
+- [x] Task 120.130: Update every full-RSK-document fixture to include `## Source` (the verified 15-file list in REQ-008); the per-tool rsk test files import `MANDATORY_SOURCE` from the new helper. (Plus three more full-RSK documents the verified list missed because it grepped `tests/` only: `.specmgr/feat/feat-15-add-artifact-type-risk/rsk_reference.md` -- parsed by three rsk model tests -- and `rsk/data/rsk_template.md` + `rsk/data/rsk_example.md`, whose committed content is round-tripped through `parse_rsk` by `tests/rsk/resources/test_rsk_{template,example}.py`; the two data files are Phase 3 Tasks 3.1/3.2 executed early, since REQ-014's per-phase green gate forces them into Phase 2.)
+- [x] Task 120.140: Add the new unit tests per REQ-009: parses-with-source; fails-without (message content asserted); misordering regression (`## Source` before `## Tags`; after `## More Information`) with the temporary-field-reorder spot-check that the test genuinely depends on the order guard (restore immediately; leave no reverted state in the diff).
+- [x] Task 120.150: Quality gate (REQ-014) -- expect `rsk_schema.json` (both copies; `source` now required) + the touched modules' API docs; full suite green; commit per REQ-016, e.g. `feat(rsk): add mandatory ## Source section (BREAKING for pre-existing rsk documents) (#102) (#133)`. (Gate green 2026-09-21 01:10 UTC, 3364 tests; the orchestrator commits.)
 
-#### Phase 3: #102 -- template, example, schema resource
+#### Phase 130: #102 -- template, example, schema resource
 
-- [x] Task 3.1: In `rsk/data/rsk_template.md`, add `## Source` between `## Tags` and `## More Information` with a placeholder line in template style (e.g. "The origin or authority of this risk -- the QA document, discussion, or report it derives from."). (Executed early in Phase 2, commit `a6383b3` -- REQ-014's per-phase green gate forces the packaged data files to parse in every gate.)
-- [x] Task 3.2: In `rsk/data/rsk_example.md`, add `## Source` with representative provenance content (e.g. "QA interview 2026-09-17 -- risk elicitation for the document-processing upload pipeline (issue #15's worked example)."). (Executed early in Phase 2, commit `a6383b3` -- same REQ-014 green-gate reason as Task 3.1.)
-- [x] Task 3.3: Confirm `specmgr schema` regenerates `docs/rsk_schema.json` + packaged `rsk/data/rsk_schema.json` with `source` required (verified in the gate; the data files themselves are not regenerated). (Confirmed by the orchestrator; both schema copies were regenerated with `source` required in Phase 2's gate, commit `a6383b3`.)
-- [x] Task 3.4: Quality gate (REQ-014); commit per REQ-016, e.g. `feat(rsk): document mandatory ## Source in template and example (#102) (#133)`. (No separate Phase 3 commit -- the gate and commit folded into Phase 2's `a6383b3`; nothing remained to commit.)
+- [x] Task 130.100: In `rsk/data/rsk_template.md`, add `## Source` between `## Tags` and `## More Information` with a placeholder line in template style (e.g. "The origin or authority of this risk -- the QA document, discussion, or report it derives from."). (Executed early in Phase 2, commit `a6383b3` -- REQ-014's per-phase green gate forces the packaged data files to parse in every gate.)
+- [x] Task 130.110: In `rsk/data/rsk_example.md`, add `## Source` with representative provenance content (e.g. "QA interview 2026-09-17 -- risk elicitation for the document-processing upload pipeline (issue #15's worked example)."). (Executed early in Phase 2, commit `a6383b3` -- same REQ-014 green-gate reason as Task 3.1.)
+- [x] Task 130.120: Confirm `specmgr schema` regenerates `docs/rsk_schema.json` + packaged `rsk/data/rsk_schema.json` with `source` required (verified in the gate; the data files themselves are not regenerated). (Confirmed by the orchestrator; both schema copies were regenerated with `source` required in Phase 2's gate, commit `a6383b3`.)
+- [x] Task 130.130: Quality gate (REQ-014); commit per REQ-016, e.g. `feat(rsk): document mandatory ## Source in template and example (#102) (#133)`. (No separate Phase 3 commit -- the gate and commit folded into Phase 2's `a6383b3`; nothing remained to commit.)
 
-#### Phase 4: #102 -- prompts
+#### Phase 140: #102 -- prompts
 
-- [x] Task 4.1: In `rsk/data/rsk_create_instructions.md`, add a `## Source` bullet to the structure recap (mandatory single-line value: the origin/authority of the risk, e.g. the QA document or discussion it derives from) positioned between the `## Tags` and `## More Information` bullets, and add source to the mandatory elicit list in step 2 (the current "optionally owner, tags, and more information" stays as-is).
-- [x] Task 4.2: In `rsk/data/rsk_update_instructions.md`, add the mandatory single-line `source` value to step 3's body-change enumeration (which currently lists the mandatory `cause`/`trigger`/`consequence`/`scope`/assessments/`strategy`/`mitigation` fields, then "any of the optional `owner`/`tags`/`more_information` sections").
-- [x] Task 4.3: Update `tests/rsk/prompts/test_create_risk.py` and `test_update_risk.py` text assertions for the new instruction content.
-- [x] Task 4.4: Quality gate (REQ-014) -- expect no `specmgr docs` content change (no `.py` docstrings touched); commit per REQ-016, e.g. `feat(rsk): narrate mandatory ## Source in create/update prompts (#102) (#133)`. (Gate green 2026-09-21 02:27 UTC, 3365 tests, no docs/schema/coverage drift; the orchestrator commits.)
+- [x] Task 140.100: In `rsk/data/rsk_create_instructions.md`, add a `## Source` bullet to the structure recap (mandatory single-line value: the origin/authority of the risk, e.g. the QA document or discussion it derives from) positioned between the `## Tags` and `## More Information` bullets, and add source to the mandatory elicit list in step 2 (the current "optionally owner, tags, and more information" stays as-is).
+- [x] Task 140.110: In `rsk/data/rsk_update_instructions.md`, add the mandatory single-line `source` value to step 3's body-change enumeration (which currently lists the mandatory `cause`/`trigger`/`consequence`/`scope`/assessments/`strategy`/`mitigation` fields, then "any of the optional `owner`/`tags`/`more_information` sections").
+- [x] Task 140.120: Update `tests/rsk/prompts/test_create_risk.py` and `test_update_risk.py` text assertions for the new instruction content.
+- [x] Task 140.130: Quality gate (REQ-014) -- expect no `specmgr docs` content change (no `.py` docstrings touched); commit per REQ-016, e.g. `feat(rsk): narrate mandatory ## Source in create/update prompts (#102) (#133)`. (Gate green 2026-09-21 02:27 UTC, 3365 tests, no docs/schema/coverage drift; the orchestrator commits.)
 
-#### Phase 5: Docs, housekeeping, close-out
+#### Phase 150: Docs, housekeeping, close-out
 
-- [x] Task 5.1: In `AGENTS.md`'s rsk bullet (REQ-010), document the mandatory `## Source`, the `## Tags` WithNotes alignment, and the previously-undocumented optional `## Owner`/`## More Information` sections (worded like the `dec` bullet's own section enumeration), referencing this feature.
-- [x] Task 5.2: In `CHANGELOG.md`'s `[Unreleased]` (REQ-011), add `### Added` -- rsk `## Source` (mandatory), `**BREAKING**`-marked with a before/after migration snippet; and `### Changed` -- rsk `## Tags` item type aligned to `MarkdownListItemWithNotes` (non-breaking).
-- [x] Task 5.3: In this README (REQ-012 close-out), verify the Design Notes' known-limitations note is current, add the final dated Updates entry, check every Acceptance Criterion box that is met, set frontmatter `status` to `done`, and bump `updated`.
-- [x] Task 5.4: Post the GitHub comment on issue #102 per REQ-013 (DEC half shipped via feat-29/issue #29; RSK half shipped here as **mandatory** -- breaking note + pointer to the CHANGELOG migration snippet) and close the issue. (Done 2026-09-21 by the orchestrator in the final GitHub close-out -- same blocker note as Task 1.4; comment + close links in Related PRs / Commits and the top Updates entry.)
-- [x] Task 5.5: Quality gate (REQ-014); commit per REQ-016, e.g. `docs(rsk): AGENTS.md/CHANGELOG close-out for rsk Source + Tags alignment (#102) (#133)`; final check that every commit on the branch contains both `#102` and `#133` in its message (REQ-016/ACC-012). (Gate green 2026-09-21 02:59 UTC, 3365 tests, no docs/schema/coverage drift; all four branch commits carry both `#102` and `#133`; the orchestrator commits per REQ-016.)
+- [x] Task 150.100: In `AGENTS.md`'s rsk bullet (REQ-010), document the mandatory `## Source`, the `## Tags` WithNotes alignment, and the previously-undocumented optional `## Owner`/`## More Information` sections (worded like the `dec` bullet's own section enumeration), referencing this feature.
+- [x] Task 150.110: In `CHANGELOG.md`'s `[Unreleased]` (REQ-011), add `### Added` -- rsk `## Source` (mandatory), `**BREAKING**`-marked with a before/after migration snippet; and `### Changed` -- rsk `## Tags` item type aligned to `MarkdownListItemWithNotes` (non-breaking).
+- [x] Task 150.120: In this README (REQ-012 close-out), verify the Design Notes' known-limitations note is current, add the final dated Updates entry, check every Acceptance Criterion box that is met, set frontmatter `status` to `done`, and bump `updated`.
+- [x] Task 150.130: Post the GitHub comment on issue #102 per REQ-013 (DEC half shipped via feat-29/issue #29; RSK half shipped here as **mandatory** -- breaking note + pointer to the CHANGELOG migration snippet) and close the issue. (Done 2026-09-21 by the orchestrator in the final GitHub close-out -- same blocker note as Task 1.4; comment + close links in Related PRs / Commits and the top Updates entry.)
+- [x] Task 150.140: Quality gate (REQ-014); commit per REQ-016, e.g. `docs(rsk): AGENTS.md/CHANGELOG close-out for rsk Source + Tags alignment (#102) (#133)`; final check that every commit on the branch contains both `#102` and `#133` in its message (REQ-016/ACC-012). (Gate green 2026-09-21 02:59 UTC, 3365 tests, no docs/schema/coverage drift; all four branch commits carry both `#102` and `#133`; the orchestrator commits per REQ-016.)
 
 ## Progress
 

@@ -26,7 +26,9 @@ generic ``update``/``set_status``/``set_classification`` tools in
 ``general/tools/`` (called with ``type="uc"``). UC has no
 ``specmgr://uc/{id}`` resource -- id-based reads are ``get_uc``-only, ADR
 ddfb1109-422d-4507-8dbc-dc5e4bec9614; ``get_uc``'s ``raw=True`` parameter
-serves the line-range flow's line numbers.
+serves the line-range flow's line numbers (with ``numbered=True``
+additionally printing each line's 1-based body-line number, ready to
+feed into ``update``'s ``offset``).
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: UC's lifecycle surface is deliberately

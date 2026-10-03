@@ -4,7 +4,7 @@ created: '2026-09-25T18:10:37.035+02:00'
 id: feat-159-edit
 status: done
 type: feat
-updated: '2026-09-27T11:45:34.984+02:00'
+updated: '2026-09-30T04:37:34.000Z'
 version: 1.0.0
 ---
 
@@ -130,51 +130,51 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 ### Task List
 
-#### Phase 1: Design
+#### Phase 100: Design
 
-- [x] Task 1.1: Draft the tool contract (signature, OC error parity, 2-fold behaviour) into this feature — status: done (2026-09-25)
+- [x] Task 100.100: Draft the tool contract (signature, OC error parity, 2-fold behaviour) into this feature — status: done (2026-09-25)
 
-- [x] Task 1.2: Decide whether a full ADR is required or the dispatch-only convention (ADR 36905d5b) suffices; record in Decisions Made — status: done (2026-09-26, no new ADR; see Decisions Made)
+- [x] Task 100.110: Decide whether a full ADR is required or the dispatch-only convention (ADR 36905d5b) suffices; record in Decisions Made — status: done (2026-09-26, no new ADR; see Decisions Made)
 
-#### Phase 2: Implementation
+#### Phase 110: Implementation
 
-- [x] Task 2.1: Add `general/tools/edit.py` — public dispatcher (guard order per REQ-008, explicit `type` check per REQ-004) plus 12 per-domain adapters, `_ADAPTERS` dispatch table with its own module-level drift assert, the `@mcp.tool(description=...)` text (read-before-edit client convention; `edit` vs `update` guidance; body-only; 2-fold behaviour; byte-exact/no-EOL-normalization note; nothing written on failure), and the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration) — status: done (2026-09-26)
+- [x] Task 110.100: Add `general/tools/edit.py` — public dispatcher (guard order per REQ-008, explicit `type` check per REQ-004) plus 12 per-domain adapters, `_ADAPTERS` dispatch table with its own module-level drift assert, the `@mcp.tool(description=...)` text (read-before-edit client convention; `edit` vs `update` guidance; body-only; 2-fold behaviour; byte-exact/no-EOL-normalization note; nothing written on failure), and the `general/tools/__init__.py` wiring (import, `__all__`, package-docstring enumeration) — status: done (2026-09-26)
 
-- [x] Task 2.2: Implement stage-1 exact-match logic with the pinned verbatim OC error messages (identical; empty `old_str` adapted; not found; multiple matches) as plain `ValueError`s with no wrap prefix (REQ-008/REQ-009) — status: done (2026-09-26)
+- [x] Task 110.110: Implement stage-1 exact-match logic with the pinned verbatim OC error messages (identical; empty `old_str` adapted; not found; multiple matches) as plain `ValueError`s with no wrap prefix (REQ-008/REQ-009) — status: done (2026-09-26)
 
-- [x] Task 2.3: Implement stage-2 whole-document validation with the disk write strictly after validation passes (the domain lock held across read → match → validate → write), frontmatter carry-over (`updated` bump), verbatim persist (incl. the empty-`new_str` deletion case), cache warm — status: done (2026-09-26)
+- [x] Task 110.120: Implement stage-2 whole-document validation with the disk write strictly after validation passes (the domain lock held across read → match → validate → write), frontmatter carry-over (`updated` bump), verbatim persist (incl. the empty-`new_str` deletion case), cache warm — status: done (2026-09-26)
 
-#### Phase 3: Tests
+#### Phase 120: Tests
 
-- [x] Task 3.1: Unit tests for the match stage (0/1/n occurrences, `replace_all`, `new_str == old_str` guard, empty `old_str` guard, empty `new_str` deletion, the guard-order / fire-before-file-access cases, the pure-byte-exact CRLF pin per ACC-010) — status: done (2026-09-27)
+- [x] Task 120.100: Unit tests for the match stage (0/1/n occurrences, `replace_all`, `new_str == old_str` guard, empty `old_str` guard, empty `new_str` deletion, the guard-order / fire-before-file-access cases, the pure-byte-exact CRLF pin per ACC-010) — status: done (2026-09-27)
 
-- [x] Task 3.2: Tool tests across all 12 whole-body domains (happy path, not found, multiple matches, invalid result, invalid id) mirroring `test_update.py`'s per-domain `_Case` harness and `SPECMGR_DOCS_DIR` temp fixture — status: done (2026-09-27)
+- [x] Task 120.110: Tool tests across all 12 whole-body domains (happy path, not found, multiple matches, invalid result, invalid id) mirroring `test_update.py`'s per-domain `_Case` harness and `SPECMGR_DOCS_DIR` temp fixture — status: done (2026-09-27)
 
-- [x] Task 3.3: Regression: the file is byte-unchanged on every failure path (including the invalid-result path) — status: done (2026-09-27)
+- [x] Task 120.120: Regression: the file is byte-unchanged on every failure path (including the invalid-result path) — status: done (2026-09-27)
 
-- [x] Task 3.4: Registration/schema test mirroring `TestUpdateRegistration` (live `mcp.list_tools()`: `type` enum == `WHOLE_BODY_DOMAINS`, `required == [id, type, old_str, new_str]`, `replace_all` optional bool default false, no `minLength` on `new_str`) plus the pinned `type="adr"` explicit-`ValueError` test (REQ-004) — status: done (2026-09-27)
+- [x] Task 120.130: Registration/schema test mirroring `TestUpdateRegistration` (live `mcp.list_tools()`: `type` enum == `WHOLE_BODY_DOMAINS`, `required == [id, type, old_str, new_str]`, `replace_all` optional bool default false, no `minLength` on `new_str`) plus the pinned `type="adr"` explicit-`ValueError` test (REQ-004) — status: done (2026-09-27)
 
-#### Phase 4: Docs & Quality Gate
+#### Phase 130: Docs & Quality Gate
 
-- [x] Task 4.1: Update the `server.py` docstring, regenerate `docs/MCP.md` and `docs/api/`, update `AGENTS.md` (the `general/tools/` paragraph names `edit`, including its deliberate `ValueError` divergence from `update`'s `KeyError` for `type="adr"`) — status: done (2026-09-27)
+- [x] Task 130.100: Update the `server.py` docstring, regenerate `docs/MCP.md` and `docs/api/`, update `AGENTS.md` (the `general/tools/` paragraph names `edit`, including its deliberate `ValueError` divergence from `update`'s `KeyError` for `type="adr"`) — status: done (2026-09-27)
 
-- [x] Task 4.2: Run ruff/pylint/vulture and the full test suite (phase-end quality gate) — status: done (2026-09-27)
+- [x] Task 130.110: Run ruff/pylint/vulture and the full test suite (phase-end quality gate) — status: done (2026-09-27)
 
-#### Phase 5: External-Review Hardening (found during an external `feat-reviewer` review pass after Phase 4, not part of GitHub issue #159's original request)
+#### Phase 140: External-Review Hardening (found during an external `feat-reviewer` review pass after Phase 4, not part of GitHub issue #159's original request)
 
-- [x] Task 5.1: `CHANGELOG.md` — `[Unreleased]` gains an `### Added` entry for the new `edit` tool (the feat-144 `list_references` entry's own shape): the generic, cross-domain, surgical exact-match body-replacement tool in `general/tools/` across the 12 whole-body domains, `adr` excluded via an explicit pre-dispatch `ValueError` (the generic `validate` tool's precedent, unlike `update`'s inherited `KeyError`), the OC-parity contract (byte-exact matching, no line-ending normalization, `replace_all`, the verbatim stage-1 messages), the 2-fold contract (written only if the match succeeds and the edited body still validates as a whole document; byte-unchanged on any failure), an empty `new_str` as a pure deletion, the frontmatter-only return with `updated` bumped, the domain lock held across the entire read/match/validate/write sequence, and the shared `_path_safety` guards. — status: done (2026-09-27)
+- [x] Task 140.100: `CHANGELOG.md` — `[Unreleased]` gains an `### Added` entry for the new `edit` tool (the feat-144 `list_references` entry's own shape): the generic, cross-domain, surgical exact-match body-replacement tool in `general/tools/` across the 12 whole-body domains, `adr` excluded via an explicit pre-dispatch `ValueError` (the generic `validate` tool's precedent, unlike `update`'s inherited `KeyError`), the OC-parity contract (byte-exact matching, no line-ending normalization, `replace_all`, the verbatim stage-1 messages), the 2-fold contract (written only if the match succeeds and the edited body still validates as a whole document; byte-unchanged on any failure), an empty `new_str` as a pure deletion, the frontmatter-only return with `updated` bumped, the domain lock held across the entire read/match/validate/write sequence, and the shared `_path_safety` guards. — status: done (2026-09-27)
 
-- [x] Task 5.2: `src/biz/dfch/specmgr/general/tools/edit.py` — port the feat-addressing paragraph from `update.py`'s module docstring (`feat` is the one domain whose adapter resolves `id` via `feat.tools._paths`'s bespoke folder-per-document shortcut, not a flat-file directory scan) into `edit.py`'s own module docstring, so `_edit_feat`'s "(see the module docstring)" reference is valid in its own file. — status: done (2026-09-27)
+- [x] Task 140.110: `src/biz/dfch/specmgr/general/tools/edit.py` — port the feat-addressing paragraph from `update.py`'s module docstring (`feat` is the one domain whose adapter resolves `id` via `feat.tools._paths`'s bespoke folder-per-document shortcut, not a flat-file directory scan) into `edit.py`'s own module docstring, so `_edit_feat`'s "(see the module docstring)" reference is valid in its own file. — status: done (2026-09-27)
 
-- [x] Task 5.3: `src/biz/dfch/specmgr/general/tools/edit.py` — document the explicit pre-dispatch `type` check's actual reach: the edit-specific message is reachable only for `type="adr"` (a well-formed UUID id passes `validate_id` first); any other unknown type is rejected by `validate_id`'s own message (which lists the UUID domains, `adr` included). The code comment at the check and the tool docstring's `Raises` section say so; behavior and the pinned guard order (REQ-008, `validate_id` first) are unchanged. — status: done (2026-09-27)
+- [x] Task 140.120: `src/biz/dfch/specmgr/general/tools/edit.py` — document the explicit pre-dispatch `type` check's actual reach: the edit-specific message is reachable only for `type="adr"` (a well-formed UUID id passes `validate_id` first); any other unknown type is rejected by `validate_id`'s own message (which lists the UUID domains, `adr` included). The code comment at the check and the tool docstring's `Raises` section say so; behavior and the pinned guard order (REQ-008, `validate_id` first) are unchanged. — status: done (2026-09-27)
 
-- [x] Task 5.4: `tests/general/tools/test_edit.py` — pylint parity with the `test_update.py` mirror: `# pylint: disable=protected-access` on the `_match_and_replace` alias (the repo's own 13-site convention), one-line docstrings on the 23 test methods that lack one (the mirror is 22/22), and a docstring on `test_unknown_type_raises_value_error` explaining the deliberate containment assert (the message comes from the shared `validate_id`, not `edit`'s own explicit check, which is reachable for `adr` only and pinned by full equality in the adjacent test). — status: done (2026-09-27)
+- [x] Task 140.130: `tests/general/tools/test_edit.py` — pylint parity with the `test_update.py` mirror: `# pylint: disable=protected-access` on the `_match_and_replace` alias (the repo's own 13-site convention), one-line docstrings on the 23 test methods that lack one (the mirror is 22/22), and a docstring on `test_unknown_type_raises_value_error` explaining the deliberate containment assert (the message comes from the shared `validate_id`, not `edit`'s own explicit check, which is reachable for `adr` only and pinned by full equality in the adjacent test). — status: done (2026-09-27)
 
-- [x] Task 5.5: `tests/general/tools/test_edit.py` — close the one untested 2-fold corner: a new `TestEditInvalidResult` test running the per-domain field-error edit with `replace_all=True`, asserting the wrapped validation error (per-domain channel) and the file byte-unchanged, exactly mirroring the single-match path's test. — status: done (2026-09-27)
+- [x] Task 140.140: `tests/general/tools/test_edit.py` — close the one untested 2-fold corner: a new `TestEditInvalidResult` test running the per-domain field-error edit with `replace_all=True`, asserting the wrapped validation error (per-domain channel) and the file byte-unchanged, exactly mirroring the single-match path's test. — status: done (2026-09-27)
 
-- [x] Task 5.6: `.specmgr/feat/feat-159-edit/README.md` — fix the Current Status pylint sentence (the 23x C0116 + 1x W0212 findings do not share their classes with the `test_update.py` mirror; after Task 5.4 the residual findings do) and refresh the gate-evidence numbers to this phase's own runs. — status: done (2026-09-27)
+- [x] Task 140.150: `.specmgr/feat/feat-159-edit/README.md` — fix the Current Status pylint sentence (the 23x C0116 + 1x W0212 findings do not share their classes with the `test_update.py` mirror; after Task 5.4 the residual findings do) and refresh the gate-evidence numbers to this phase's own runs. — status: done (2026-09-27)
 
-- [x] Task 5.7: Regenerate `docs/api/` + `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`) for the docstring changes; run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`, per-file `pylint`); update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting the phase originated from the external `feat-reviewer` pass); the feature stays in `status: review`. — status: done (2026-09-27)
+- [x] Task 140.160: Regenerate `docs/api/` + `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`) for the docstring changes; run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto --cov=src`, per-file `pylint`); update Progress (Current Status, a dated Updates entry, a Decisions Made entry noting the phase originated from the external `feat-reviewer` pass); the feature stays in `status: review`. — status: done (2026-09-27)
 
 ## Progress
 

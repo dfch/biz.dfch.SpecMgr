@@ -4,7 +4,7 @@ created: '2026-09-07 04:41:26.135+02:00'
 id: feat-103-set-status-error
 status: done
 type: feat
-updated: '2026-09-07 08:16:48.000+02:00'
+updated: '2026-09-30T04:36:21.000Z'
 version: 1.0.0
 ---
 
@@ -44,8 +44,7 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 - [x] ACC-005: `docs/MCP.md` (regenerated via `specmgr docs`) reflects the updated set_status behavior.
 
-- [x] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits. Filed later, in a follow-up session, as
-  [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740).
+- [x] ACC-006: the drafted upstream bug report has been filed as a real GitHub issue against `anomalyco/opencode`, its URL recorded in this feature's Related PRs / Commits. Filed later, in a follow-up session, as [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740).
 
 - [x] ACC-007: full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`).
 
@@ -95,45 +94,43 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Task List
 
-#### Phase 1: Design & ADR
+#### Phase 100: Design & ADR
 
-- [x] Task 1.1: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted. **(ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, reviewed and approved by the user; status set to `accepted`)**
+- [x] Task 100.100: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted. **(ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, reviewed and approved by the user; status set to `accepted`)**
 
-- [x] Task 1.2: Design the shared status-vocabulary lookup (mapping type -> allowed values, incl. ADR's fixed set + pattern) without duplicating each domain's existing private constant.
+- [x] Task 100.110: Design the shared status-vocabulary lookup (mapping type -> allowed values, incl. ADR's fixed set + pattern) without duplicating each domain's existing private constant.
 
-- [x] Task 1.3: Design the structured invalid-status result shape and exact message wording.
+- [x] Task 100.120: Design the structured invalid-status result shape and exact message wording.
 
-#### Phase 2: Implementation
+#### Phase 110: Implementation
 
-- [x] Task 2.1: Implement the pre-check in general/tools/set_status.py for all 12 whole-body domains + adr.
+- [x] Task 110.100: Implement the pre-check in general/tools/set_status.py for all 12 whole-body domains + adr.
 
-- [x] Task 2.2: Update set_status's docstring/description for the new return shape.
+- [x] Task 110.110: Update set_status's docstring/description for the new return shape.
 
-- [x] Task 2.3: Confirm every other existing failure mode is unchanged.
+- [x] Task 110.120: Confirm every other existing failure mode is unchanged.
 
-#### Phase 3: Tests
+#### Phase 120: Tests
 
-- [x] Task 3.1: Update test_out_of_vocabulary_status_raises_validation_error_file_untouched (whole-body + ADR) to assert the new structured, non-raising result and its content.
+- [x] Task 120.100: Update test_out_of_vocabulary_status_raises_validation_error_file_untouched (whole-body + ADR) to assert the new structured, non-raising result and its content.
 
-- [x] Task 3.2: Assert the file on disk remains untouched on rejection.
+- [x] Task 120.110: Assert the file on disk remains untouched on rejection.
 
-- [x] Task 3.3: Add regression tests pinning the exact message wording.
+- [x] Task 120.120: Add regression tests pinning the exact message wording.
 
-#### Phase 4: Docs & Upstream Filing
+#### Phase 130: Docs & Upstream Filing
 
-- [x] Task 4.1: Regenerate docs/api/, docs/GENERATED.md, docs/MCP.md via specmgr docs.
+- [x] Task 130.100: Regenerate docs/api/, docs/GENERATED.md, docs/MCP.md via specmgr docs.
 
-- [x] Task 4.2: Regenerate docs/adr/README.md via specmgr adr-toc.
+- [x] Task 130.110: Regenerate docs/adr/README.md via specmgr adr-toc.
 
-- [x] Task 4.3: **DEVIATION (per explicit user instruction)**: did NOT file the drafted upstream bug report as a
-  real GitHub issue -- only reviewed and updated its drafted text (see Updates below). ACC-006 remains
-  unmet by explicit user choice.
+- [x] Task 130.120: **DEVIATION (per explicit user instruction)**: did NOT file the drafted upstream bug report as a real GitHub issue -- only reviewed and updated its drafted text (see Updates below). ACC-006 remains unmet by explicit user choice.
 
-#### Phase 5: Verification & Closeout
+#### Phase 140: Verification & Closeout
 
-- [x] Task 5.1: Run full quality gate.
+- [x] Task 140.100: Run full quality gate.
 
-- [x] Task 5.2: Update feature status to done; final Updates entry.
+- [x] Task 140.110: Update feature status to done; final Updates entry.
 
 ## Progress
 

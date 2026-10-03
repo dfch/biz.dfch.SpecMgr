@@ -46,6 +46,7 @@ from biz.dfch.specmgr.feat.prompts.update_feat import update_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat as create_feat_tool
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
+from biz.dfch.specmgr.general.models import UpdateResult
 from biz.dfch.specmgr.general.tools import _packaged_data
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -97,19 +98,19 @@ class TestUpdateFeatPrompt(unittest.TestCase):
 
     def test_mentions_range_update_flow(self):
         """The prompt must teach the line-range flow: read the exact body
-        via get_feat(id, raw=True), identify the 1-based line to start at
+        via get_feat(id, raw=True, numbered=True), identify the 1-based line to start at
         and how many lines to replace (N+1 is end-of-body), call
         `update` with offset/limit passing only the replacement lines;
         whole-body for multi-section or uncertain changes."""
         result = update_feat("feat-42-widget")
-        self.assertIn("get_feat(id, raw=True)", result)
+        self.assertIn("get_feat(id, raw=True, numbered=True)", result)
         self.assertIn("1-based line to start at and how many", result)
         self.assertIn("offset = N+1", result)
         self.assertIn('update(id, type="feat", content, offset=..., limit=...)', result)
         self.assertIn("multi-section change, or whenever you are", result)
         self.assertIn("byte-identical", result)
         self.assertLess(
-            result.index("get_feat(id, raw=True)"),
+            result.index("get_feat(id, raw=True, numbered=True)"),
             result.index('update(id, type="feat", content, offset=..., limit=...)'),
         )
 
@@ -286,10 +287,14 @@ class TestUpdateFeatInstructionsWalkthrough(TempFeatDirTestCase):
             "- REQ-001: The widget must render within 200ms.",
             "- REQ-001: The widget must render within 200ms.\n\n- REQ-002: The widget must be keyboard-navigable.",
         )
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
         whole_body_result = update(feat_id, "feat", revised_body)
+        self.assertIsInstance(whole_body_result, UpdateResult)
+        self.assertIsNone(whole_body_result.snippet)
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
-        self.assertEqual(whole_body_result.id, feat_id)
-        self.assertEqual(whole_body_result.created, created.created)
+        self.assertEqual(whole_body_result.frontmatter.id, feat_id)
+        self.assertEqual(whole_body_result.frontmatter.created, created.created)
 
         # Step 4, status change: a separate, optional follow-up via the generic
         # set_status tool (never through `update`).

@@ -4,7 +4,7 @@ created: '2026-09-02 16:10:31.726+02:00'
 id: feat-47-md-simple-breaks
 status: planning
 type: feat
-updated: '2026-09-02 16:29:30.863+02:00'
+updated: '2026-09-30T04:38:08.000Z'
 version: 1.0.0
 ---
 
@@ -82,19 +82,19 @@ PyPI reachability from the implementation environment was confirmed directly (fe
 
 ### Task List
 
-#### Phase 1: Implementation
+#### Phase 100: Implementation
 
-- [x] Task 1.1: Add `mdformat-simple-breaks==0.1.0` (exact pin) as a dependency in `pyproject.toml`.
+- [x] Task 100.100: Add `mdformat-simple-breaks==0.1.0` (exact pin) as a dependency in `pyproject.toml`.
 
-- [x] Task 1.2: Regenerate `uv.lock` (`uv lock`).
+- [x] Task 100.110: Regenerate `uv.lock` (`uv lock`).
 
-- [x] Task 1.3: Wire `extensions={"simple_breaks"}` into the shared `mdformat.text(...)` call in `format_text()` (`src/biz/dfch/specmgr/models/md/_markdown.py`).
+- [x] Task 100.120: Wire `extensions={"simple_breaks"}` into the shared `mdformat.text(...)` call in `format_text()` (`src/biz/dfch/specmgr/models/md/_markdown.py`).
 
-- [x] Task 1.4: Add regression test case(s) to the existing `tests/models/md/test__markdown.py` covering `---`/`***`/`___` thematic-break rendering (extend, don't add a new file).
+- [x] Task 100.130: Add regression test case(s) to the existing `tests/models/md/test__markdown.py` covering `---`/`***`/`___` thematic-break rendering (extend, don't add a new file).
 
-- [x] Task 1.5: Run the full test suite and confirm no regressions.
+- [x] Task 100.140: Run the full test suite and confirm no regressions.
 
-- [x] Task 1.6: Add a `### Fixed` entry (Keep a Changelog's own standard category for a bug fix, per this repo's existing `CHANGELOG.md` section headers) under `[Unreleased]`, describing the GitHub issue #47 fix.
+- [x] Task 100.150: Add a `### Fixed` entry (Keep a Changelog's own standard category for a bug fix, per this repo's existing `CHANGELOG.md` section headers) under `[Unreleased]`, describing the GitHub issue #47 fix.
 
 ## Progress
 

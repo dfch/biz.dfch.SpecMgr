@@ -9,12 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `numbered: bool = False` parameter on every `get_<d>` tool for the
+  12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs;
+  `get_adr` unchanged) (feat-153-off-by-n, GitHub issue #153, ADR
+  19ff316b-cd11-41a7-a616-ffd84917da51): meaningful only combined with
+  `raw=True`, it prefixes every returned body line with its 1-based
+  absolute body-line number in the `"<n>: "` form (plain decimal, no
+  padding), so a number seen can be fed straight back into the generic
+  `update` tool's `offset` without manual counting -- windowed reads
+  number from the clamped offset `max(1, k)` and never restart at 1
+  within a window, keeping numbered output in `update`'s own coordinate
+  space. `numbered=True` combined with `raw=False` raises `ValueError`
+  before any file access (mirroring the existing `offset`/`limit`-with-
+  `raw=False` guard, now factored into the shared `validate_read_args`
+  helper in `general/tools/_splice.py`), and a numbered read of a
+  document that exists but fails to parse returns the non-raising
+  `ParseFailureResult` (feat-150, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c),
+  never numbered text. The default (`numbered=False`) output remains
+  byte-identical to the existing `raw=True` text, and the `numbered`
+  prefix is one format family with the new `update` `snippet` (each
+  snippet line is a 2-character marker prefix plus exactly the line a
+  numbered read prints for that number).
 - A new `### Risks` cross-reference sub-list (to `rsk`) in `req`/`gol`/
   `dec`/`sop`'s `## Related Artifacts` section, added in the slot the
   removed `### Acceptance Criteria` sub-list occupied (GitHub issue #135).
 
 ### Changed
 
+- **BREAKING**: the generic `update` tool's success return changes,
+  across all 12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/
+  feat/vcr/sysrs; `adr` excluded), from the per-domain frontmatter object
+  only (feature feat-69-update-context's "frontmatter-only" precedent) to
+  a new `UpdateResult` wrapper exposing `frontmatter` (the same
+  per-domain frontmatter object) plus `snippet: str | None`
+  (feat-153-off-by-n, GitHub issue #153, ADR
+  19ff316b-cd11-41a7-a616-ffd84917da51): in range mode (`offset` given,
+  except the whole-body-equivalent `offset=1` + omitted-`limit` range),
+  `snippet` is the before/after window of the touched range -- up to 2
+  unchanged context lines above, the dropped lines (numbered pre-splice),
+  the inserted lines (numbered post-splice), and up to 2 unchanged
+  context lines below, each line rendered `<marker> <n>: <line text>`
+  (`-`/`+`/space marker) -- bounded by the touched range, not the document
+  size (no hard cap); in whole-body mode and for that whole-body-
+  equivalent range, `snippet` is `None`, so the return shape is uniform
+  across both modes and every domain. Callers and tests that read
+  frontmatter fields directly off the result move to
+  `result.frontmatter`. `set_status`, `set_classification`, every
+  `create_<d>` tool, and the already-merged generic `edit` tool keep
+  their existing frontmatter-only (respectively path-string) returns
+  unchanged. `update`'s description now also warns that `offset`/`limit`
+  address the frontmatter-stripped body, never the raw on-disk file (the
+  YAML frontmatter block is variable-length), and that a
+  `numbered=True` read's output must never be fed back verbatim into
+  `content` without stripping the `"<n>: "` prefix.
 - **BREAKING**: every cross-reference sub-list under `req`/`gol`/`dec`/
   `sop`'s `## Related Artifacts` (`Requirements`, `Decisions`, `Goals`,
   `Risks`, plus `sop`'s own `Sops` self-reference) now enforces a common

@@ -4,7 +4,7 @@ created: '2026-09-09 04:33:02.804+02:00'
 id: feat-114-qa-introduction-any-markdown
 status: done
 type: feat
-updated: '2026-09-09 05:45:00.000+02:00'
+updated: '2026-09-30T04:36:30.000Z'
 version: 1.0.0
 ---
 
@@ -94,37 +94,37 @@ None of the other existing concrete `models/md` leaf types can be reused for thi
 
 ### Task List
 
-#### Phase 1: Model change
+#### Phase 100: Model change
 
-- [x] Task 1.1: In `qa/models/v2/body.py`, drop the now-unused `MarkdownParagraph` import; add `MarkdownStr` to the `models.md` import; add `computed_field` to the `pydantic` import.
-- [x] Task 1.2: Add `IntroductionBody(MarkdownStr)` with a `text` computed property (mirroring `QaAnswer.text`), per Design Notes.
-- [x] Task 1.3: Retype `Introduction.body` from `list[MarkdownParagraph] | None` to `IntroductionBody | None` (`default=None` unchanged); update `Introduction`'s own docstring.
-- [x] Task 1.4: Update the module-level docstring's ASCII diagram (`### Introduction` block: `{intro paragraphs}` → `{any markdown}`).
-- [x] Task 1.5: Fix the now-broken existing tests to match the new scalar (not list) shape (see Design Notes).
-- [x] Task 1.6: Regenerate build artifacts (schema + docs).
-- [x] Task 1.7: Run the full test suite. Must pass before moving to Phase 2.
+- [x] Task 100.100: In `qa/models/v2/body.py`, drop the now-unused `MarkdownParagraph` import; add `MarkdownStr` to the `models.md` import; add `computed_field` to the `pydantic` import.
+- [x] Task 100.110: Add `IntroductionBody(MarkdownStr)` with a `text` computed property (mirroring `QaAnswer.text`), per Design Notes.
+- [x] Task 100.120: Retype `Introduction.body` from `list[MarkdownParagraph] | None` to `IntroductionBody | None` (`default=None` unchanged); update `Introduction`'s own docstring.
+- [x] Task 100.130: Update the module-level docstring's ASCII diagram (`### Introduction` block: `{intro paragraphs}` → `{any markdown}`).
+- [x] Task 100.140: Fix the now-broken existing tests to match the new scalar (not list) shape (see Design Notes).
+- [x] Task 100.150: Regenerate build artifacts (schema + docs).
+- [x] Task 100.160: Run the full test suite. Must pass before moving to Phase 2.
 
-#### Phase 2: New positive/negative test coverage
+#### Phase 110: New positive/negative test coverage
 
-- [x] Task 2.1: Add a test constructing/parsing an `Introduction` whose body is a non-paragraph element and asserting it round-trips successfully (ACC-002).
-- [x] Task 2.2: Add/confirm a test asserting a comment-only `### Introduction` still parses with `body is None` (ACC-003).
-- [x] Task 2.3: Confirm (add if missing) a `model_dump()` assertion covering the non-paragraph body case (ACC-004).
-- [x] Task 2.4: Run the full test suite. Must pass before moving to Phase 3.
+- [x] Task 110.100: Add a test constructing/parsing an `Introduction` whose body is a non-paragraph element and asserting it round-trips successfully (ACC-002).
+- [x] Task 110.110: Add/confirm a test asserting a comment-only `### Introduction` still parses with `body is None` (ACC-003).
+- [x] Task 110.120: Confirm (add if missing) a `model_dump()` assertion covering the non-paragraph body case (ACC-004).
+- [x] Task 110.130: Run the full test suite. Must pass before moving to Phase 3.
 
-#### Phase 3: Packaged data files
+#### Phase 120: Packaged data files
 
-- [x] Task 3.1: Update `qa/data/qa_example.md`'s `### Introduction` section to add a leading comment plus a short bullet list.
-- [x] Task 3.2: Update `qa/data/qa_template.md`'s `### Introduction` placeholder wording.
-- [x] Task 3.3: Brief wording tweak in `qa/data/qa_create_instructions.md`.
-- [x] Task 3.4: Re-run `uv run --frozen specmgr docs` if needed.
-- [x] Task 3.5: Run the full test suite. Must pass before moving to Phase 4.
+- [x] Task 120.100: Update `qa/data/qa_example.md`'s `### Introduction` section to add a leading comment plus a short bullet list.
+- [x] Task 120.110: Update `qa/data/qa_template.md`'s `### Introduction` placeholder wording.
+- [x] Task 120.120: Brief wording tweak in `qa/data/qa_create_instructions.md`.
+- [x] Task 120.130: Re-run `uv run --frozen specmgr docs` if needed.
+- [x] Task 120.140: Run the full test suite. Must pass before moving to Phase 4.
 
-#### Phase 4: Final verification
+#### Phase 130: Final verification
 
-- [x] Task 4.1: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
-- [x] Task 4.2: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
-- [x] Task 4.3: Run the full test suite one final time.
-- [x] Task 4.4: Review `git status`/`git diff` for completeness, then commit.
+- [x] Task 130.100: `uv run --frozen ruff format --check && uv run --frozen ruff check`.
+- [x] Task 130.110: `uv run --frozen vulture src/ whitelist.py --min-confidence 60`.
+- [x] Task 130.120: Run the full test suite one final time.
+- [x] Task 130.130: Review `git status`/`git diff` for completeness, then commit.
 
 ## Progress
 

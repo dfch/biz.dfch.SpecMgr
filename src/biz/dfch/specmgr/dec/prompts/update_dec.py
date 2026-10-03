@@ -24,7 +24,9 @@ through revising an existing Decision (DEC) document by id, using the
 existing ``dec/tools/`` surface (``get_dec``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="dec"``; ``get_dec``'s ``raw=True`` parameter serves the line-range
-flow's line numbers) plus the cross-cutting ``specmgr://rasci`` resource
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``) plus the cross-cutting ``specmgr://rasci`` resource
 (read first when the change touches ``## Roles and Responsibilities``).
 There is no ``specmgr://dec/{id}`` resource to point
 at -- id-based reads always go through the ``get_dec`` tool only (ADR

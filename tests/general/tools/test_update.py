@@ -21,7 +21,7 @@ Parameterized over all whole-body document types; seeds a real,
 persisted document per type in a temp ``SPECMGR_DOCS_DIR`` via the domain's
 own ``create_<d>`` tool (mirroring the fixture strategy of the per-domain
 ``tests/<d>/tools/test_update_<d>.py`` files still on disk at this phase).
-Covers ACC-001 (whole-body mode) and ACC-002 (range mode) plus the
+Covers feat-22's ACC-001 (whole-body mode) and ACC-002 (range mode) plus the
 registration smoke test of Task 2.8.
 
 Note on the per-type out-of-vocabulary field-value cases: ``req``, ``uc``,
@@ -59,7 +59,7 @@ from biz.dfch.specmgr.dec.tools.list_dec import list_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.general.models import ParseFailureResult, ValidateResult
+from biz.dfch.specmgr.general.models import ParseFailureResult, UpdateResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 
@@ -774,10 +774,12 @@ class _Case:
     doc_type: str
     create: Callable[[str], Any]
     not_found_error: type[Exception]
-    #: The domain's own frontmatter class -- the type ``update`` must return (feat-69).
+    #: The domain's own frontmatter class -- the type ``update``'s returned
+    #: ``UpdateResult.frontmatter`` must be (feat-69, revised by feat-153 Phase 2:
+    #: the wrapper itself is ``UpdateResult``, not this class).
     frontmatter_type: type
-    #: The domain's own document (frontmatter+body wrapper) class -- what ``update`` must
-    #: NOT return any more (feat-69).
+    #: The domain's own document (frontmatter+body wrapper) class -- what neither
+    #: ``UpdateResult`` nor its ``frontmatter`` member may be (feat-69).
     document_type: type
     minimal_body: str
     updated_body: str
@@ -809,6 +811,13 @@ class _Case:
     insert_marker: str
     #: The single line inserted by the ``limit = 0`` mid-body insert test.
     insert_line: str
+    #: The second line of the size-changing replacement test's fragment: joined
+    #: onto ``middle_replacement`` with a bare newline (no blank line) so the
+    #: two-line fragment stays the same paragraph/field as the one
+    #: ``middle_marker`` line it replaces, keeping the document valid -- 1 line
+    #: replaced by 2, ACC-002's size-changing verification mode (feat-153
+    #: Task 5.3).
+    size_change_second_line: str
 
 
 _CASES: list[_Case] = [
@@ -832,6 +841,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Characteristics",
         insert_line="Inserted description detail.",
+        size_change_second_line="The updated limit applies to all operating modes.",
     ),
     _Case(
         doc_type="uc",
@@ -858,6 +868,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="### Scope",
         insert_line="Inserted goal context.",
+        size_change_second_line="The goal context was revised accordingly.",
     ),
     _Case(
         doc_type="tsk",
@@ -879,6 +890,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Recent Updates",
         insert_line="- [ ] Inserted task.",
+        size_change_second_line="The kickoff note was expanded in review.",
     ),
     _Case(
         doc_type="qa",
@@ -900,6 +912,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=False,
         insert_marker="### Raw Requirements",
         insert_line="Inserted introduction detail.",
+        size_change_second_line="The introduction was clarified in the follow-up interview.",
     ),
     _Case(
         doc_type="prb",
@@ -921,6 +934,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=False,
         insert_marker="## Gap",
         insert_line="Inserted summary detail.",
+        size_change_second_line="The summary was expanded with the confirmed root cause.",
     ),
     _Case(
         doc_type="gol",
@@ -942,6 +956,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Source",
         insert_line="Inserted statement detail.",
+        size_change_second_line="The statement was tightened in the program review.",
     ),
     _Case(
         doc_type="rsk",
@@ -963,6 +978,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Trigger",
         insert_line="Inserted cause detail.",
+        size_change_second_line="The cause description was revised with the new evidence.",
     ),
     _Case(
         doc_type="dec",
@@ -990,6 +1006,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Decision Outcome",
         insert_line="Inserted context detail.",
+        size_change_second_line="The context was clarified for the incident review.",
     ),
     _Case(
         doc_type="sop",
@@ -1011,6 +1028,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Procedure",
         insert_line="Inserted purpose detail.",
+        size_change_second_line="The purpose statement was expanded in revision.",
     ),
     _Case(
         doc_type="vcr",
@@ -1032,6 +1050,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## Coverage",
         insert_line="Inserted verification detail.",
+        size_change_second_line="The verification notes were clarified.",
     ),
     _Case(
         doc_type="sysrs",
@@ -1055,6 +1074,7 @@ _CASES: list[_Case] = [
         field_error_is_validation=True,
         insert_marker="## System Scope",
         insert_line="Additional purpose detail.",
+        size_change_second_line="The scope statement was refined in review.",
     ),
 ]
 
@@ -1108,16 +1128,23 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 result = update(id=created.id, type=case.doc_type, content=case.updated_body)
 
-                self.assertIsInstance(result, case.frontmatter_type)
+                # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): the return is the
+                # UpdateResult wrapper -- the feat-69 frontmatter-only contract moved
+                # under result.frontmatter; whole-body mode carries snippet=None.
+                self.assertIsInstance(result, UpdateResult)
                 self.assertNotIsInstance(result, case.document_type)
-                self.assertFalse(hasattr(result, "body"))
-                self.assertEqual(result.id, created.id)
-                self.assertEqual(result.type, case.doc_type)
-                self.assertEqual(result.status, created.status)
-                self.assertEqual(result.created, created.created)
-                self.assertEqual(result.version, created.version)
-                self.assertNotEqual(result.updated, created.updated)
-                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, result.updated))
+                frontmatter = result.frontmatter
+                self.assertIsInstance(frontmatter, case.frontmatter_type)
+                self.assertNotIsInstance(frontmatter, case.document_type)
+                self.assertFalse(hasattr(frontmatter, "body"))
+                self.assertEqual(frontmatter.id, created.id)
+                self.assertEqual(frontmatter.type, case.doc_type)
+                self.assertEqual(frontmatter.status, created.status)
+                self.assertEqual(frontmatter.created, created.created)
+                self.assertEqual(frontmatter.version, created.version)
+                self.assertNotEqual(frontmatter.updated, created.updated)
+                self.assertIsNotNone(re.fullmatch(_DATE_TIME_TIMESTAMP, frontmatter.updated))
+                self.assertIsNone(result.snippet)
                 self.assertEqual(body_text(self._doc_path(case)), case.updated_body.rstrip("\n"))
 
     def test_status_not_settable_through_update_returns_validate_failure_and_leaves_file_byte_identical(self) -> None:
@@ -1195,8 +1222,93 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
                     update(id=_MISSING_UUID, type=case.doc_type, content=case.minimal_body)
 
 
+#: Every snippet line's prefix: a 1-character marker (`-`/`+`/space) + one space +
+#: the plain decimal line number + the exact `": "` separator (feat-153-off-by-n
+#: Phase 2, REQ-002; ADR 19ff316b's Decision Outcome item 3).
+_SNIPPET_LINE_PREFIX = r"^[-+ ] \d+: "
+
+
 class TestUpdateRange(TempDocsDirTestCase):
     """ACC-002: range mode (``offset``/``limit``) across all whole-body document types."""
+
+    def test_range_mode_returns_update_result_with_snippet(self) -> None:
+        """A range-mode update must return the UpdateResult wrapper with a non-None snippet
+        naming the dropped and inserted lines (feat-153-off-by-n Phase 2, REQ-002)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                k = _line_no(lines, case.middle_marker)
+
+                result = update(id=created.id, type=case.doc_type, content=case.middle_replacement, offset=k, limit=1)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsInstance(result.frontmatter, case.frontmatter_type)
+                self.assertNotIsInstance(result.frontmatter, case.document_type)
+                self.assertFalse(hasattr(result.frontmatter, "body"))
+                self.assertEqual(result.frontmatter.id, created.id)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # the dropped line (pre-splice number k) and the inserted line
+                # (post-splice number k) are both present, verbatim
+                self.assertIn(f"- {k}: {case.middle_marker}", snippet_lines)
+                self.assertIn(f"+ {k}: {case.middle_replacement}", snippet_lines)
+                # and unchanged context is carried on at least one side
+                self.assertTrue(any(line.startswith("  ") for line in snippet_lines))
+
+    def test_pure_insert_snippet_has_no_dropped_lines_and_shifted_post_numbers(self) -> None:
+        """A ``limit = 0`` insert's snippet must carry no `-` lines, and the context below the
+        insert must be numbered post-splice (shifted by the insertion)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                offset = _line_no(lines, case.insert_marker) - 1
+
+                result = update(id=created.id, type=case.doc_type, content=case.insert_line, offset=offset, limit=0)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                self.assertFalse(any(line.startswith("- ") for line in snippet_lines))
+                self.assertIn(f"+ {offset}: {case.insert_line}", snippet_lines)
+                # the line the insertion pushed down keeps its text but takes
+                # the post-splice number offset+1
+                self.assertIn(f"  {offset + 1}: {lines[offset - 1]}", snippet_lines)
+
+    def test_size_changing_replace_snippet_numbers_pre_and_post_splice(self) -> None:
+        """A 1-line -> 2-line replacement (limit=1 replaced by a different line count) must yield the
+        snippet with the dropped line at its pre-splice number, the inserted lines at the post-splice
+        numbers, and the context below shifted by the insert (ACC-002's size-changing verification mode,
+        REQ-002's pre-splice/post-splice split; the 12th domain, feat, pins the same in
+        ``tests/feat/tools/test_integration.py``)."""
+        for case in _CASES:
+            with self.subTest(doc_type=case.doc_type):
+                created = self._seed(case, case.minimal_body)
+                lines = body_text(self._doc_path(case)).splitlines()
+                k = _line_no(lines, case.middle_marker)
+                fragment = f"{case.middle_replacement}\n{case.size_change_second_line}"
+
+                result = update(id=created.id, type=case.doc_type, content=fragment, offset=k, limit=1)
+
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # the dropped line keeps its pre-splice number; the two inserted lines take the
+                # post-splice numbers k and k+1 (independent sequences, not contiguous by accident)
+                self.assertIn(f"- {k}: {case.middle_marker}", snippet_lines)
+                self.assertIn(f"+ {k}: {case.middle_replacement}", snippet_lines)
+                self.assertIn(f"+ {k + 1}: {case.size_change_second_line}", snippet_lines)
+                # the line below the touched range keeps its text but takes the post-splice number k+2
+                if k < len(lines):
+                    self.assertIn(f"  {k + 2}: {lines[k]}", snippet_lines)
+                # and the body itself reflects exactly the 1 -> 2 splice
+                expected = lines[: k - 1] + fragment.splitlines() + lines[k:]
+                self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
 
     def test_middle_range_replace_leaves_out_of_range_lines_byte_identical(self) -> None:
         """A single middle-line replace must change only that line, leaving every other line identical."""
@@ -1236,10 +1348,33 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n = len(lines)
 
-                update(id=created.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0)
+                result = update(id=created.id, type=case.doc_type, content=case.append_fragment, offset=n + 1, limit=0)
 
                 expected = lines + case.append_fragment.splitlines()
                 self.assertEqual(body_text(self._doc_path(case)).splitlines(), expected)
+                # feat-153-off-by-n (round 2): pin the append-case snippet -- the only
+                # splice shape the 12-domain matrix did not capture. Nothing is dropped
+                # (limit=0), so the pre- and post-splice numbering spaces agree for the
+                # context-above lines; the append is at the end of the body, so there is
+                # no context-below.
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsInstance(result.frontmatter, case.frontmatter_type)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                for line in snippet_lines:
+                    self.assertRegex(line, _SNIPPET_LINE_PREFIX)
+                # no dropped lines (a pure append)
+                self.assertFalse(any(line.startswith("- ") for line in snippet_lines))
+                # the body's last two lines appear as context-above at post-splice
+                # numbers N-1 and N
+                self.assertIn(f"  {n - 1}: {lines[n - 2]}", snippet_lines)
+                self.assertIn(f"  {n}: {lines[n - 1]}", snippet_lines)
+                # the first inserted line takes the post-splice number N+1
+                self.assertIn(f"+ {n + 1}: {case.append_fragment.splitlines()[0]}", snippet_lines)
+                # and there is no context-below line (the append is at the end of the
+                # body): no unchanged "  " line may follow the first inserted "+ " line
+                plus_start = next(i for i, line in enumerate(snippet_lines) if line.startswith("+ "))
+                self.assertFalse(any(line.startswith("  ") for line in snippet_lines[plus_start:]))
 
     def test_limit_omitted_replaces_through_end_of_body(self) -> None:
         """An omitted ``limit`` must extend the range through the last line, replacing it with the fragment."""
@@ -1263,7 +1398,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                 lines = body_text(self._doc_path(case)).splitlines()
                 n_min = len(case.minimal_body.splitlines())
 
-                update(
+                result = update(
                     id=created.id,
                     type=case.doc_type,
                     content="",
@@ -1272,6 +1407,13 @@ class TestUpdateRange(TempDocsDirTestCase):
                 )
 
                 self.assertEqual(body_text(self._doc_path(case)), case.minimal_body.rstrip("\n"))
+                # feat-153-off-by-n Phase 2 (REQ-002): a pure delete's snippet
+                # carries the dropped lines (pre-splice numbers) and no `+` lines
+                self.assertIsInstance(result, UpdateResult)
+                self.assertIsNotNone(result.snippet)
+                snippet_lines = result.snippet.splitlines()
+                self.assertFalse(any(line.startswith("+ ") for line in snippet_lines))
+                self.assertIn(f"- {n_min + 1}: {lines[n_min]}", snippet_lines)
 
     def test_offset_one_equals_whole_body_mode(self) -> None:
         """``offset = 1`` (``limit`` omitted) must produce the same file as whole-body mode with the identical text."""
@@ -1280,12 +1422,20 @@ class TestUpdateRange(TempDocsDirTestCase):
                 created = self._seed(case, case.minimal_body)
                 doc_id = created.id
                 with mock.patch.object(update_module, "now_timestamp", return_value=_FIXED_TIMESTAMP):
-                    update(id=doc_id, type=case.doc_type, content=case.updated_body)
+                    whole_body = update(id=doc_id, type=case.doc_type, content=case.updated_body)
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")
 
-                    update(id=doc_id, type=case.doc_type, content=case.updated_body, offset=1)
+                    # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): both the
+                    # whole-body mode and the whole-body-equivalent range return the
+                    # UpdateResult wrapper with snippet=None -- never a snippet.
+                    self.assertIsInstance(whole_body, UpdateResult)
+                    self.assertIsNone(whole_body.snippet)
 
+                    ranged = update(id=doc_id, type=case.doc_type, content=case.updated_body, offset=1)
+
+                    self.assertIsInstance(ranged, UpdateResult)
+                    self.assertIsNone(ranged.snippet)
                     self.assertEqual(path.read_text(encoding="utf-8"), whole_body_file)
 
     def test_limit_without_offset_raises_value_error_before_file_access(self) -> None:
