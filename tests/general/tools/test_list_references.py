@@ -26,8 +26,11 @@ contract (ACC-001), the empty-list case (ACC-002), the never-raising
 not-found row (ACC-003), first-occurrence deduplication (ACC-004), the
 path-safety guards (ACC-005), the source-missing raise (ACC-006), the
 ``list_*`` paging contract (ACC-009), the source-domain spread (a
-``feat-NNN-slug``-id ``feat`` source and a UUID-id ``adr`` source), and a
-live-``mcp`` registration smoke test (mirroring ``test_delete.py``'s).
+``feat-NNN-slug``-id ``feat`` source and a UUID-id ``adr`` source), the
+FEAT target (feat-177-list-ref-feat, issue #177: a QA source referencing a
+feature by its full ``feat-NNN-slug`` id, its bare ``feat-NNN`` number, or
+both spellings in one body), and a live-``mcp`` registration smoke test
+(mirroring ``test_delete.py``'s).
 """
 
 from __future__ import annotations
@@ -58,6 +61,7 @@ from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.models.adr import AdrBody, AdrFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
+from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
@@ -394,6 +398,102 @@ def _feat_body_with_references(req_id: str, gol_id: str) -> str:
         #### 2026-08-30 16:47:59.981Z - Paused for review
 
         Free-form prose describing what happened in this update.
+        """
+    )
+    return result
+
+
+def _feat_body(title: str) -> str:
+    """A valid, minimal feat body with the given ``# Feature: {title}`` H1 and no cross-references
+    (the ``_feat_body_with_references`` shape above, minus the references)."""
+    result = textwrap.dedent(
+        f"""\
+        # Feature: {title}
+
+        ## Plan
+
+        ### Overview
+
+        Short description.
+
+        ### Requirements
+
+        - REQ-001: The widget must render within 200ms.
+
+        ### Acceptance Criteria
+
+        - [ ] ACC-001: Render time stays below 200ms.
+
+        ### Scope
+
+        #### Included
+
+        - The widget component itself.
+
+        #### Explicitly Out Of Scope
+
+        - Mobile touch gestures.
+
+        ### Task List
+
+        #### Phase 100: Scaffolding
+
+        - [x] Task 100.100: Create branch and package skeleton
+
+        ## Progress
+
+        ### Current Status
+
+        **As of 2026-08-30**: free-form narrative.
+
+        ### Updates
+
+        #### 2026-08-30 16:47:59.981Z - Paused for review
+
+        Free-form prose describing what happened in this update.
+        """
+    )
+    return result
+
+
+def _qa_body_with_feat_reference(feat_mention: str) -> str:
+    """A valid QA body whose ``### Introduction`` prose carries the given FEAT reference line
+    (the issue #177 repro shape: a QA source referencing a FEAT target)."""
+    result = textwrap.dedent(
+        f"""\
+        # Some QA Title
+
+        ## General
+
+        ### Introduction
+
+        Some intro text.
+
+        {feat_mention}
+
+        ### Raw Requirements
+
+        Some raw requirements text.
+
+        ## Elicitation Context
+
+        ## Functional Suitability
+
+        ## Performance Efficiency
+
+        ## Compatibility
+
+        ## Interaction Capability
+
+        ## Reliability
+
+        ## Security
+
+        ## Maintainability
+
+        ## Flexibility
+
+        ## Safety
         """
     )
     return result
@@ -744,6 +844,79 @@ class TestListReferencesSourceDomainSpread(TempListReferencesDirTestCase):
         path = Path(row.path)
         self.assertTrue(path.is_absolute())
         self.assertTrue(path.exists())
+
+
+class TestListReferencesFeatTarget(TempListReferencesDirTestCase):
+    """feat-177-list-ref-feat (issue #177): a QA source referencing a FEAT target -- the full
+    feat-NNN-slug id (ACC-001), the bare feat-NNN number (ACC-002), or both spellings in one body
+    (ACC-008) -- returns resolved rows (the feature's H1 title and its README.md path), not
+    total: 0."""
+
+    def test_a_qa_source_referencing_a_feat_full_id_returns_a_resolved_row(self) -> None:
+        """ACC-001 (the issue #177 repro): a QA document whose body mentions FEAT
+        feat-1-frontend-technology-decision (a feature folder seeded in the temp SPECMGR_FEAT_DIR)
+        returns that reference as a resolved row -- not total: 0."""
+        feat_id = "feat-1-frontend-technology-decision"
+        created_feat = create_feat(_feat_body("Frontend Technology Decision"), id=feat_id)
+        created_qa = create_qa(_qa_body_with_feat_reference(f"FEAT {feat_id}: A feature."))
+
+        result: PagedResult[ReferenceRow] = list_references(type="qa", id=created_qa.id)
+
+        self.assertEqual(result.total, 1)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(len(result.results), 1)
+
+        row = result.results[0]
+        self.assertEqual(row.type, "feat")
+        self.assertEqual(row.id, created_feat.id)
+        self.assertEqual(row.title, "Frontend Technology Decision")
+        self.assertIsNone(row.error)
+        self.assertEqual(Path(row.path), (self.feat_dir / created_feat.id / "README.md").resolve())
+
+    def test_a_qa_source_referencing_a_bare_feat_number_returns_a_resolved_row(self) -> None:
+        """ACC-002: a bare-number mention (FEAT feat-177) resolves to the matching feat-177-*
+        feature, and the row's id stays the bare feat-177 as it appeared in the source body."""
+        created_feat = create_feat(_feat_body("List Ref Feat"), id="feat-177-list-ref-feat")
+        created_qa = create_qa(_qa_body_with_feat_reference("FEAT feat-177: A feature."))
+
+        result = list_references(type="qa", id=created_qa.id)
+
+        self.assertEqual(result.total, 1)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(len(result.results), 1)
+
+        row = result.results[0]
+        self.assertEqual(row.type, "feat")
+        self.assertEqual(row.id, "feat-177")
+        self.assertEqual(row.title, "List Ref Feat")
+        self.assertIsNone(row.error)
+        self.assertEqual(Path(row.path), (self.feat_dir / created_feat.id / "README.md").resolve())
+
+    def test_dual_feat_spellings_yield_two_resolved_rows(self) -> None:
+        """ACC-008: the same feature cited in both spellings (the bare number first, the full id
+        second) yields two resolved rows -- one per unique (type, id) pair, in first-occurrence
+        order, with the same title/path and no spelling normalization."""
+        created_feat = create_feat(_feat_body("List Ref Feat"), id="feat-177-list-ref-feat")
+        mention = f"FEAT feat-177: A feature, also cited as FEAT {created_feat.id}: the same feature."
+        created_qa = create_qa(_qa_body_with_feat_reference(mention))
+
+        result = list_references(type="qa", id=created_qa.id)
+
+        self.assertEqual(result.total, 2)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(len(result.results), 2)
+
+        first, second = result.results
+        self.assertEqual((first.type, first.id), ("feat", "feat-177"))
+        self.assertEqual((second.type, second.id), ("feat", "feat-177-list-ref-feat"))
+        self.assertEqual(first.title, second.title)
+        self.assertEqual(first.title, "List Ref Feat")
+        self.assertEqual(first.path, second.path)
+        self.assertIsNone(first.error)
+        self.assertIsNone(second.error)
 
 
 class TestListReferencesRegistration(unittest.TestCase):

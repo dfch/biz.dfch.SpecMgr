@@ -391,14 +391,18 @@ To resolve the cross-references an artifact already carries, see
 ## Referencing Artifacts
 
 specmgr documents cross-reference each other via `<TYPE> <uuid>` lines
-(VCR's `## Verifies`, SYSRS's per-section bullet lists, DEC's `## Related
-Artifacts`). The `list_references` MCP tool resolves those references:
-point your assistant at any artifact (`<type> <id>`) and it lists every
-`<TYPE> <uuid>` cross-reference in the artifact's body, each resolved to
-the referenced document's type, id, title (its H1), and on-disk path.
+in the structured locations (VCR's `## Verifies`, SYSRS's per-section
+bullet lists, DEC's `## Related Artifacts`) and — anywhere in free-form
+prose — via any of the reference tags, including a `FEAT` tag carrying
+a feature's own id (the full `feat-NNN-slug` or the bare `feat-NNN`
+number; the structured locations above remain uuid-only). The
+`list_references` MCP tool resolves those references: point your
+assistant at any artifact (`<type> <id>`) and it lists every
+cross-reference tag in the artifact's body, each resolved to the
+referenced document's type, id, title (its H1), and on-disk path.
 Results are paged like every `list_*` tool; references that do not
 resolve on disk come back as rows carrying an `error` (not a failure),
-and free-form or non-uuid references are ignored.
+and any other free-form or non-conforming text is ignored.
 
 In [opencode](https://opencode.ai), the `/refs <type> <id>` slash command
 (`.opencode/command/refs.md`) wraps the same tool: it delegates to the

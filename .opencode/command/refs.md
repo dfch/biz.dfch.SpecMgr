@@ -1,5 +1,5 @@
 ---
-description: List and resolve the artifacts a specmgr document references (its `<TYPE> <uuid>` cross-references), by delegating to the read-only ref-finder subagent.
+description: List and resolve the artifacts a specmgr document references (its `<TYPE> <id>` cross-references), by delegating to the read-only ref-finder subagent.
 agent: ref-finder
 ---
 
