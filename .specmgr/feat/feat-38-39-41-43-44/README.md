@@ -3,7 +3,7 @@ created: '2026-09-01 15:14:00.000+02:00'
 id: feat-38-39-41-43-44
 status: done
 type: feat
-updated: '2026-09-01 22:45:00.000+02:00'
+updated: '2026-09-30T04:38:03.000Z'
 version: 1.0.0
 ---
 
@@ -100,51 +100,51 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Task List
 
-#### Phase 1: Em-dash out of update entries (issue 38)
+#### Phase 100: Em-dash out of update entries (issue 38)
 
-- [x] Task 1.1: Change the SOP `UpdateEntry` alias and `_UPDATE_ENTRY_HEADING_PATTERN` to `(?: - | : )`; update docstrings - depends on: none - status: done
-- [x] Task 1.2: Change the FEAT `_ENTRY_HEADING_ALIAS`/`_ENTRY_HEADING_PATTERN` (covers `UpdateEntry` and `DecisionEntry`); update docstrings - depends on: none - status: done
-- [x] Task 1.3: Rewrite the SOP packaged data (template/example/create-instructions) to the new separators - depends on: Task 1.1 - status: done
-- [x] Task 1.4: Rewrite the FEAT packaged data (template/example/create-instructions) - depends on: Task 1.2 - status: done
-- [x] Task 1.5: Rewrite the DEC/VCR convention text (model docstrings + template/example/create-instructions) - depends on: none - status: done
-- [x] Task 1.6: Migrate repo artifacts (docs/sop entries, feat-36 README entries, this README's entries) - depends on: Tasks 1.1-1.2 - status: done
-- [x] Task 1.7: Update the SOP/FEAT/DEC/VCR test fixtures (parser + body tests) - depends on: Tasks 1.1-1.5 - status: done
-- [x] Task 1.8: Phase gate (schema/docs/mcp-docs regen, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 1.6-1.7 - status: done
+- [x] Task 100.100: Change the SOP `UpdateEntry` alias and `_UPDATE_ENTRY_HEADING_PATTERN` to `(?: - | : )`; update docstrings - depends on: none - status: done
+- [x] Task 100.110: Change the FEAT `_ENTRY_HEADING_ALIAS`/`_ENTRY_HEADING_PATTERN` (covers `UpdateEntry` and `DecisionEntry`); update docstrings - depends on: none - status: done
+- [x] Task 100.120: Rewrite the SOP packaged data (template/example/create-instructions) to the new separators - depends on: Task 1.1 - status: done
+- [x] Task 100.130: Rewrite the FEAT packaged data (template/example/create-instructions) - depends on: Task 1.2 - status: done
+- [x] Task 100.140: Rewrite the DEC/VCR convention text (model docstrings + template/example/create-instructions) - depends on: none - status: done
+- [x] Task 100.150: Migrate repo artifacts (docs/sop entries, feat-36 README entries, this README's entries) - depends on: Tasks 1.1-1.2 - status: done
+- [x] Task 100.160: Update the SOP/FEAT/DEC/VCR test fixtures (parser + body tests) - depends on: Tasks 1.1-1.5 - status: done
+- [x] Task 100.170: Phase gate (schema/docs/mcp-docs regen, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 1.6-1.7 - status: done
 
-#### Phase 2: Newest-first ordering enforced in SOP/DEC/VCR/TSK (issue 39)
+#### Phase 110: Newest-first ordering enforced in SOP/DEC/VCR/TSK (issue 39)
 
-- [x] Task 2.1: Shared `models/md/_ordering.py` helper + unit tests (aware comparison, day-granularity rule, equals allowed) - depends on: Phase 1 - status: done
-- [x] Task 2.2: SOP `Updates._validate_newest_first` (delegates to the helper) + out-of-order parse tests - depends on: Task 2.1 - status: done
-- [x] Task 2.3: DEC/VCR/TSK timestamp-led `UpdateEntry` alias + `timestamp` computed field + section validators + tests - depends on: Task 2.1 - status: done
-- [x] Task 2.4: Promote SOP/DEC/TSK containers to `MarkdownSection2WithComment`; ordering-hint comments in templates; reword all four domains' create/update instructions to prepend - depends on: Tasks 2.2-2.3 - status: done
-- [x] Task 2.5: Re-order the docs/sop entries newest-first; verify the docs/tsk entries against the new alias - depends on: Tasks 2.2-2.3 - status: done
-- [x] Task 2.6: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 2.4-2.5 - status: done
+- [x] Task 110.100: Shared `models/md/_ordering.py` helper + unit tests (aware comparison, day-granularity rule, equals allowed) - depends on: Phase 1 - status: done
+- [x] Task 110.110: SOP `Updates._validate_newest_first` (delegates to the helper) + out-of-order parse tests - depends on: Task 2.1 - status: done
+- [x] Task 110.120: DEC/VCR/TSK timestamp-led `UpdateEntry` alias + `timestamp` computed field + section validators + tests - depends on: Task 2.1 - status: done
+- [x] Task 110.130: Promote SOP/DEC/TSK containers to `MarkdownSection2WithComment`; ordering-hint comments in templates; reword all four domains' create/update instructions to prepend - depends on: Tasks 2.2-2.3 - status: done
+- [x] Task 110.140: Re-order the docs/sop entries newest-first; verify the docs/tsk entries against the new alias - depends on: Tasks 2.2-2.3 - status: done
+- [x] Task 110.150: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates) - depends on: Tasks 2.4-2.5 - status: done
 
-#### Phase 3: Unified timestamp format (issue 44)
+#### Phase 120: Unified timestamp format (issue 44)
 
-- [x] Task 3.1: `general/tools/_timestamps.py` helper (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for zero offset; three-digit ms) + unit tests - depends on: Phase 2 - status: done
-- [x] Task 3.2: `MarkdownFrontmatter.created`/`updated` date+time-only validator (D5) + tests (reject date-only/microseconds/`T`/timezone-less; accept `Z`/offset) - depends on: none - status: done
-- [x] Task 3.3: Replace all 44 generator sites (11 create, 22 update, 11 set_status) with the helper - depends on: Tasks 3.1-3.2 - status: done
-- [x] Task 3.4: Migrate repo documents per D7/D8 (five parseable docs mandatory; twenty-one legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: done
-- [x] Task 3.5: Normalize every test-fixture `created`/`updated` value (~49 files) to conforming date+time - depends on: Task 3.2 - status: done
-- [x] Task 3.6: Normalize packaged body-entry values (vcr_template seconds; tsk_template/tsk_example `05:42` times) and align `.specmgr/_template/v1/README.md` with the enforced feat convention - depends on: Phase 2 - status: done
-- [x] Task 3.7: Reword the "microsecond timestamp" docstrings (`update.py`, `set_status.py`, feat models) - depends on: Task 3.3 - status: done
-- [x] Task 3.8: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates + its own frontmatter/entry migration) - depends on: Tasks 3.3-3.7 - status: done
+- [x] Task 120.100: `general/tools/_timestamps.py` helper (`now_timestamp`, `format_timestamp`, `format_date`; `Z` for zero offset; three-digit ms) + unit tests - depends on: Phase 2 - status: done
+- [x] Task 120.110: `MarkdownFrontmatter.created`/`updated` date+time-only validator (D5) + tests (reject date-only/microseconds/`T`/timezone-less; accept `Z`/offset) - depends on: none - status: done
+- [x] Task 120.120: Replace all 44 generator sites (11 create, 22 update, 11 set_status) with the helper - depends on: Tasks 3.1-3.2 - status: done
+- [x] Task 120.130: Migrate repo documents per D7/D8 (five parseable docs mandatory; twenty-one legacy feat READMEs frontmatter-only; placeholders to first-commit timestamp) - depends on: Task 3.2 - status: done
+- [x] Task 120.140: Normalize every test-fixture `created`/`updated` value (~49 files) to conforming date+time - depends on: Task 3.2 - status: done
+- [x] Task 120.150: Normalize packaged body-entry values (vcr_template seconds; tsk_template/tsk_example `05:42` times) and align `.specmgr/_template/v1/README.md` with the enforced feat convention - depends on: Phase 2 - status: done
+- [x] Task 120.160: Reword the "microsecond timestamp" docstrings (`update.py`, `set_status.py`, feat models) - depends on: Task 3.3 - status: done
+- [x] Task 120.170: Phase gate (regens, suite, pylint, CHANGELOG BREAKING entry, this README's Updates + its own frontmatter/entry migration) - depends on: Tasks 3.3-3.7 - status: done
 
-#### Phase 4: `_path_safety` in `get_<d>`/`update`/`set_status` (issue 43)
+#### Phase 130: `_path_safety` in `get_<d>`/`update`/`set_status` (issue 43)
 
-- [x] Task 4.1: `_path_safety` gains `"adr"` (`_UUID_TYPES` + docstring/error text) + `test__path_safety` updates - depends on: Phase 3 - status: done
-- [x] Task 4.2: Public `update` calls `validate_id` before dispatch + `assert_within` in the eleven adapters + injection/defense-in-depth tests modeled on `test_delete.py` - depends on: Task 4.1 - status: done
-- [x] Task 4.3: Same for public `set_status` (twelve adapters incl. adr) + tests - depends on: Task 4.1 - status: done
-- [x] Task 4.4: Same for the twelve `get_<d>` tools (incl. `get_adr` via `find_adr_path`) + parameterized injection tests - depends on: Task 4.1 - status: done
-- [x] Task 4.5: Update tool docstrings/descriptions with the ValueError contract; propagate the AGENTS.md `general/` bullet; `server.py` docstring + `docs/MCP.md` via hooks - depends on: Tasks 4.2-4.4 - status: done
-- [x] Task 4.6: Phase gate (regens, suite, pylint, CHANGELOG entry, this README's Updates) - depends on: Task 4.5 - status: done
+- [x] Task 130.100: `_path_safety` gains `"adr"` (`_UUID_TYPES` + docstring/error text) + `test__path_safety` updates - depends on: Phase 3 - status: done
+- [x] Task 130.110: Public `update` calls `validate_id` before dispatch + `assert_within` in the eleven adapters + injection/defense-in-depth tests modeled on `test_delete.py` - depends on: Task 4.1 - status: done
+- [x] Task 130.120: Same for public `set_status` (twelve adapters incl. adr) + tests - depends on: Task 4.1 - status: done
+- [x] Task 130.130: Same for the twelve `get_<d>` tools (incl. `get_adr` via `find_adr_path`) + parameterized injection tests - depends on: Task 4.1 - status: done
+- [x] Task 130.140: Update tool docstrings/descriptions with the ValueError contract; propagate the AGENTS.md `general/` bullet; `server.py` docstring + `docs/MCP.md` via hooks - depends on: Tasks 4.2-4.4 - status: done
+- [x] Task 130.150: Phase gate (regens, suite, pylint, CHANGELOG entry, this README's Updates) - depends on: Task 4.5 - status: done
 
-#### Phase 5: Pylint W0622 per-file disables (issue 41)
+#### Phase 140: Pylint W0622 per-file disables (issue 41)
 
-- [x] Task 5.1: Add the module-level `# pylint: disable=redefined-builtin` line with rationale to the 39 baseline files - depends on: Phase 4 - status: done
-- [x] Task 5.2: Verify the full pylint run: zero W0622, all other findings unchanged against the captured baseline - depends on: Task 5.1 - status: done
-- [x] Task 5.3: Record in this README's Decisions Made + CHANGELOG entry + phase gate (regens, suite, this README's Updates) - depends on: Task 5.2 - status: done
+- [x] Task 140.100: Add the module-level `# pylint: disable=redefined-builtin` line with rationale to the 39 baseline files - depends on: Phase 4 - status: done
+- [x] Task 140.110: Verify the full pylint run: zero W0622, all other findings unchanged against the captured baseline - depends on: Task 5.1 - status: done
+- [x] Task 140.120: Record in this README's Decisions Made + CHANGELOG entry + phase gate (regens, suite, this README's Updates) - depends on: Task 5.2 - status: done
 
 ## Progress
 

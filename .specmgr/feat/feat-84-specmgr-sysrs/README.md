@@ -4,7 +4,7 @@ created: '2026-09-03 10:00:47.481+02:00'
 id: feat-84-specmgr-sysrs
 status: done
 type: feat
-updated: '2026-09-03 10:50:20.971+02:00'
+updated: '2026-09-30T04:53:18.000Z'
 version: 1.0.0
 ---
 
@@ -63,24 +63,24 @@ Regeneration/refresh checklist for keeping this SysRS current as the codebase ev
 
 ### Task List
 
-#### Phase 1: Discovery
+#### Phase 100: Discovery
 
-- [x] Task 1.1: Read `AGENTS.md` and the source tree under `src/` to build a domain-package inventory.
-- [x] Task 1.2: Read every `.specmgr/feat/*/README.md` and extract requirements, decisions, and scope already captured there.
-- [x] Task 1.3: Enumerate any existing `gol`/`req`/`uc`/`rsk`/`dec`/`adr`/`vcr` documents on disk via their `list_<d>` tools and record their ids/titles.
+- [x] Task 100.100: Read `AGENTS.md` and the source tree under `src/` to build a domain-package inventory.
+- [x] Task 100.110: Read every `.specmgr/feat/*/README.md` and extract requirements, decisions, and scope already captured there.
+- [x] Task 100.120: Enumerate any existing `gol`/`req`/`uc`/`rsk`/`dec`/`adr`/`vcr` documents on disk via their `list_<d>` tools and record their ids/titles.
 
-#### Phase 2: Gap-Filling
+#### Phase 110: Gap-Filling
 
-- [x] Task 2.1: Identify SysRS sections (Goals, Decisions, Requirements per ISO 25010 characteristic, Other Characteristics) that have no corresponding existing artifact.
-- [x] Task 2.2: Ask the user via the `question` tool to resolve each identified gap.
-- [x] Task 2.3: Create any minimal prerequisite `GOL`/`REQ`/`DEC` documents needed to back a SysRS cross-reference bullet.
+- [x] Task 110.100: Identify SysRS sections (Goals, Decisions, Requirements per ISO 25010 characteristic, Other Characteristics) that have no corresponding existing artifact.
+- [x] Task 110.110: Ask the user via the `question` tool to resolve each identified gap.
+- [x] Task 110.120: Create any minimal prerequisite `GOL`/`REQ`/`DEC` documents needed to back a SysRS cross-reference bullet.
 
-#### Phase 3: Draft and Create the SysRS
+#### Phase 120: Draft and Create the SysRS
 
-- [x] Task 3.1: Assemble the SysRS body per `specmgr://sysrs/template`/`specmgr://sysrs/example` and the `specmgr://sysrs/schema`.
-- [x] Task 3.2: Run `validate_sysrs(content, full=True)` and fix any reported issues.
-- [x] Task 3.3: Call `create_sysrs` to persist the document.
-- [x] Task 3.4: Write down the regeneration workflow (e.g. in this feature's Design Notes via the `update` tool) for future refreshes.
+- [x] Task 120.100: Assemble the SysRS body per `specmgr://sysrs/template`/`specmgr://sysrs/example` and the `specmgr://sysrs/schema`.
+- [x] Task 120.110: Run `validate_sysrs(content, full=True)` and fix any reported issues.
+- [x] Task 120.120: Call `create_sysrs` to persist the document.
+- [x] Task 120.130: Write down the regeneration workflow (e.g. in this feature's Design Notes via the `update` tool) for future refreshes.
 
 ## Progress
 

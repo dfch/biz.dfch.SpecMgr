@@ -4,7 +4,7 @@ created: '2026-09-11 06:58:07.735+02:00'
 id: feat-122-docstring-comments
 status: done
 type: feat
-updated: '2026-09-11 22:56:25.871+02:00'
+updated: '2026-09-30T04:36:35.000Z'
 version: 1.0.0
 ---
 
@@ -135,91 +135,91 @@ Separately, and outside this feature's own scope: `.specmgr/conventions.md`'s `#
 
 ### Task List
 
-#### Phase 1: Reword src/ and AGENTS.md docstrings, comments, and MCP tool description strings
+#### Phase 100: Reword src/ and AGENTS.md docstrings, comments, and MCP tool description strings
 
-- [x] Task 1.1: Reword the four paragraphs (`update`, `set_status`, `set_classification`, `delete`) in `general/tools/__init__.py` -- per REQ-008, also correct the `update`/`set_classification`/`delete` paragraphs' domain lists to include `sysrs` (eleven -> twelve) and the `set_status` paragraph's count and list to include both `sysrs` and `adr` correctly (twelve -> thirteen), not just remove the adjective; also correct the same paragraphs' embedded "ten flat domains" sub-phrase (line 44, inside the `delete` paragraph) to "eleven" -- a sub-detail distinct from the top-level domain-list/count fix, found via REQ-012's third-pass review.
+- [x] Task 100.100: Reword the four paragraphs (`update`, `set_status`, `set_classification`, `delete`) in `general/tools/__init__.py` -- per REQ-008, also correct the `update`/`set_classification`/`delete` paragraphs' domain lists to include `sysrs` (eleven -> twelve) and the `set_status` paragraph's count and list to include both `sysrs` and `adr` correctly (twelve -> thirteen), not just remove the adjective; also correct the same paragraphs' embedded "ten flat domains" sub-phrase (line 44, inside the `delete` paragraph) to "eleven" -- a sub-detail distinct from the top-level domain-list/count fix, found via REQ-012's third-pass review.
 
-- [x] Task 1.2: Reword `general/tools/set_classification.py`, including the digit-form "12-way"/"13-way" phrases (lines 25, 55, 174 as of the post-`dev`-merge line numbers; originally 25, 55, 162 before the merge shifted them, see Design Notes). Also correct line 46's "ten whole-body domains'" to "eleven" (found via REQ-012's third-pass review, not merely a destyle).
+- [x] Task 100.110: Reword `general/tools/set_classification.py`, including the digit-form "12-way"/"13-way" phrases (lines 25, 55, 174 as of the post-`dev`-merge line numbers; originally 25, 55, 162 before the merge shifted them, see Design Notes). Also correct line 46's "ten whole-body domains'" to "eleven" (found via REQ-012's third-pass review, not merely a destyle).
 
-- [x] Task 1.3: Reword `general/tools/set_status.py`, including the digit-form "13-way" phrases (lines 54, 211 as of the post-`dev`-merge line numbers; originally 54, 199 before the merge shifted them, see Design Notes). Also correct line 699's "eleven whole-body domains" to "twelve" (found via REQ-012's third-pass review, not merely a destyle).
+- [x] Task 100.120: Reword `general/tools/set_status.py`, including the digit-form "13-way" phrases (lines 54, 211 as of the post-`dev`-merge line numbers; originally 54, 199 before the merge shifted them, see Design Notes). Also correct line 699's "eleven whole-body domains" to "twelve" (found via REQ-012's third-pass review, not merely a destyle).
 
-- [x] Task 1.4: Reword `general/tools/update.py`, including the digit-form "12-way" phrases (lines 42, 155 as of the post-`dev`-merge line numbers; originally 42, 143 before the merge shifted them, see Design Notes). Also correct line 47's "the other ten's identical shape" and line 786's "ten UUID domains" to "eleven" (found via REQ-012's third-pass review, not merely a destyle).
+- [x] Task 100.130: Reword `general/tools/update.py`, including the digit-form "12-way" phrases (lines 42, 155 as of the post-`dev`-merge line numbers; originally 42, 143 before the merge shifted them, see Design Notes). Also correct line 47's "the other ten's identical shape" and line 786's "ten UUID domains" to "eleven" (found via REQ-012's third-pass review, not merely a destyle).
 
-- [x] Task 1.5: Reword `general/tools/delete.py` -- per REQ-008 (as expanded by REQ-012), also correct lines 42 and 411's "ten UUID domains" to "eleven", not merely destyle.
+- [x] Task 100.140: Reword `general/tools/delete.py` -- per REQ-008 (as expanded by REQ-012), also correct lines 42 and 411's "ten UUID domains" to "eleven", not merely destyle.
 
-- [x] Task 1.6: Reword `general/tools/validate.py`.
+- [x] Task 100.150: Reword `general/tools/validate.py`.
 
-- [x] Task 1.7: Reword `general/tools/_path_safety.py` -- per REQ-008, also correct `assert_uuid`'s docstring from "ten" to "twelve" `_UUID_TYPES` domains (the frozenset itself already has twelve entries; only the prose is stale).
+- [x] Task 100.160: Reword `general/tools/_path_safety.py` -- per REQ-008, also correct `assert_uuid`'s docstring from "ten" to "twelve" `_UUID_TYPES` domains (the frozenset itself already has twelve entries; only the prose is stale).
 
-- [x] Task 1.8: Reword `server.py`.
+- [x] Task 100.170: Reword `server.py`.
 
-- [x] Task 1.9: Reword `general/resources/config.py`.
+- [x] Task 100.180: Reword `general/resources/config.py`.
 
-- [x] Task 1.10: Reword `general/resources/__init__.py`.
+- [x] Task 100.190: Reword `general/resources/__init__.py`.
 
-- [x] Task 1.11: Reword `feat/models/v1/summary.py`.
+- [x] Task 100.200: Reword `feat/models/v1/summary.py`.
 
-- [x] Task 1.12: Reword `feat/tools/list_feat.py` -- the `dev` merge (REQ-011) added a second, digit-form occurrence ("...the other 11 whole-body domains'...") alongside the original word-form one; both must be reworded.
+- [x] Task 100.210: Reword `feat/tools/list_feat.py` -- the `dev` merge (REQ-011) added a second, digit-form occurrence ("...the other 11 whole-body domains'...") alongside the original word-form one; both must be reworded.
 
-- [x] Task 1.13: Reword `models/config_info.py`.
+- [x] Task 100.220: Reword `models/config_info.py`.
 
-- [x] Task 1.14: Reword `models/md/_frontmatter_parse.py`.
+- [x] Task 100.230: Reword `models/md/_frontmatter_parse.py`.
 
-- [x] Task 1.15: Reword `adr/tools/validate_adr.py` -- per REQ-008, also correct "eleven whole-body domains" to "twelve".
+- [x] Task 100.240: Reword `adr/tools/validate_adr.py` -- per REQ-008, also correct "eleven whole-body domains" to "twelve".
 
-- [x] Task 1.16: Reword `adr/tools/create_adr.py` -- per REQ-008, also correct "eleven whole-body domains" to "twelve".
+- [x] Task 100.250: Reword `adr/tools/create_adr.py` -- per REQ-008, also correct "eleven whole-body domains" to "twelve".
 
-- [x] Task 1.17: Reword `general/tools/_splice.py` (per REQ-008, also correct "eleven `get_<d>` tools" to "twelve") and `rsk/tools/_sentinel.py` -- 2 files the issue's own audit missed, found via a fresh repo-wide grep.
+- [x] Task 100.260: Reword `general/tools/_splice.py` (per REQ-008, also correct "eleven `get_<d>` tools" to "twelve") and `rsk/tools/_sentinel.py` -- 2 files the issue's own audit missed, found via a fresh repo-wide grep.
 
-- [x] Task 1.18: Reword `AGENTS.md`'s 14 confirmed occurrences (REQ-009: 13 word-form plus 1 digit-form added by the `dev` merge's own `feat-107-doc-cache` paragraph); cross-check each against the current, actual domain count/list it describes rather than assuming the existing number is merely redundant (same caution as REQ-008).
+- [x] Task 100.270: Reword `AGENTS.md`'s 14 confirmed occurrences (REQ-009: 13 word-form plus 1 digit-form added by the `dev` merge's own `feat-107-doc-cache` paragraph); cross-check each against the current, actual domain count/list it describes rather than assuming the existing number is merely redundant (same caution as REQ-008).
 
-- [x] Task 1.19: Reword the 3 `src/` files found by the post-`dev`-merge re-audit (REQ-011): `general/tools/_doc_paths.py`, `feat/tools/_cache.py`, and `req/tools/_cache.py`. All three already carry the correct domain count -- destyling only, no factual correction needed.
+- [x] Task 100.280: Reword the 3 `src/` files found by the post-`dev`-merge re-audit (REQ-011): `general/tools/_doc_paths.py`, `feat/tools/_cache.py`, and `req/tools/_cache.py`. All three already carry the correct domain count -- destyling only, no factual correction needed.
 
-- [x] Task 1.20: Reword `general/tools/_timestamps.py`'s stale digit-form phrase at lines 34-35 ("the 11 `create_<d>` tools... and the 11 `set_status` adapter sites") -- a file missing from every prior file list, found only by REQ-012's third-pass re-audit; correct the counts to reflect the current 12 `create_<d>` tools / 12 `set_status` adapter sites, not merely destyle.
+- [x] Task 100.290: Reword `general/tools/_timestamps.py`'s stale digit-form phrase at lines 34-35 ("the 11 `create_<d>` tools... and the 11 `set_status` adapter sites") -- a file missing from every prior file list, found only by REQ-012's third-pass re-audit; correct the counts to reflect the current 12 `create_<d>` tools / 12 `set_status` adapter sites, not merely destyle.
 
-- [x] Task 1.21: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` via `specmgr docs`/`specmgr mcp-docs`; confirm a clean `git status` diff.
+- [x] Task 100.300: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md` via `specmgr docs`/`specmgr mcp-docs`; confirm a clean `git status` diff.
 
-- [x] Task 1.22: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`).
+- [x] Task 100.310: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`).
 
-#### Phase 2: Reword tests/ docstrings and comments
+#### Phase 110: Reword tests/ docstrings and comments
 
-- [x] Task 2.1: Reword `tests/sysrs/models/v1/test_parser.py`.
+- [x] Task 110.100: Reword `tests/sysrs/models/v1/test_parser.py`.
 
-- [x] Task 2.2: Reword `tests/general/resources/test_config.py`.
+- [x] Task 110.110: Reword `tests/general/resources/test_config.py`.
 
-- [x] Task 2.3: Reword `tests/general/models/test_summary.py`.
+- [x] Task 110.120: Reword `tests/general/models/test_summary.py`.
 
-- [x] Task 2.4: Reword `tests/general/tools/test_set_classification.py`.
+- [x] Task 110.130: Reword `tests/general/tools/test_set_classification.py`.
 
-- [x] Task 2.5: Reword `tests/general/tools/test_validate.py`, including the digit-form "12-way" phrase (line 21).
+- [x] Task 110.140: Reword `tests/general/tools/test_validate.py`, including the digit-form "12-way" phrase (line 21).
 
-- [x] Task 2.6: Reword `tests/general/tools/test__path_safety.py`.
+- [x] Task 110.150: Reword `tests/general/tools/test__path_safety.py`.
 
-- [x] Task 2.7: Reword `tests/general/tools/test_set_status.py`.
+- [x] Task 110.160: Reword `tests/general/tools/test_set_status.py`.
 
-- [x] Task 2.8: Reword `tests/general/tools/test_delete.py`.
+- [x] Task 110.170: Reword `tests/general/tools/test_delete.py`.
 
-- [x] Task 2.9: Reword `tests/general/tools/test_update.py`, reconciling the different counts ("ten", "twelve", "eleven") mixed across its docstrings -- per REQ-008, "ten UUID domains" (lines 604, 1338) is factually stale and must become "eleven" (twelve whole-body domains minus `feat`), not just be destyled. Two further spots were missing from this task's original line-number citations, found via REQ-012's third-pass review: line 20's "ten whole-body document types" is stale and must become "twelve" (not eleven -- a different fix direction than the UUID-domain spots, since this phrase is a total-inclusive count, not a self-excluded one), and line 1360's "eleven whole-body domains, feat included" is self-contradictory as written and must become "twelve".
+- [x] Task 110.180: Reword `tests/general/tools/test_update.py`, reconciling the different counts ("ten", "twelve", "eleven") mixed across its docstrings -- per REQ-008, "ten UUID domains" (lines 604, 1338) is factually stale and must become "eleven" (twelve whole-body domains minus `feat`), not just be destyled. Two further spots were missing from this task's original line-number citations, found via REQ-012's third-pass review: line 20's "ten whole-body document types" is stale and must become "twelve" (not eleven -- a different fix direction than the UUID-domain spots, since this phrase is a total-inclusive count, not a self-excluded one), and line 1360's "eleven whole-body domains, feat included" is self-contradictory as written and must become "twelve".
 
-- [x] Task 2.10: Reword `tests/feat/tools/test_list_feat.py`.
+- [x] Task 110.190: Reword `tests/feat/tools/test_list_feat.py`.
 
-- [x] Task 2.11: Reword `tests/commands/test_schema.py` -- found via the follow-up audit, missed by the issue's original list.
+- [x] Task 110.200: Reword `tests/commands/test_schema.py` -- found via the follow-up audit, missed by the issue's original list.
 
-- [x] Task 2.12: Reword `tests/general/tools/test_error_context.py` -- found via the follow-up audit, missed by the issue's original list.
+- [x] Task 110.210: Reword `tests/general/tools/test_error_context.py` -- found via the follow-up audit, missed by the issue's original list.
 
-- [x] Task 2.13: Reword `tests/models/md/test_frontmatter_errors.py` -- found via the follow-up audit, missed by the issue's original list.
+- [x] Task 110.220: Reword `tests/models/md/test_frontmatter_errors.py` -- found via the follow-up audit, missed by the issue's original list.
 
-- [x] Task 2.14: Reword `tests/adr/tools/test_create_adr.py` -- matches only in digit form ("the 11 whole-body domains"), which is why the original word-only grep missed this file; reword to "twelve".
+- [x] Task 110.230: Reword `tests/adr/tools/test_create_adr.py` -- matches only in digit form ("the 11 whole-body domains"), which is why the original word-only grep missed this file; reword to "twelve".
 
-- [x] Task 2.15: Reword `tests/general/tools/test_doc_cache_structural.py` and `tests/general/tools/test_doc_cache_delete_scan_race.py` -- 2 brand-new test files found by the post-`dev`-merge re-audit (REQ-011); both already carry correct domain counts, destyling only. While in these files, also verify Tasks 2.8 (`test_delete.py`, digit-form "12-value `type` enum" at lines 40, 754, 763) and 2.9 (`test_update.py`, same phrase at lines 1293, 1303) each catch that additional un-flagged digit-form occurrence, not just the lines their own task text enumerates.
+- [x] Task 110.240: Reword `tests/general/tools/test_doc_cache_structural.py` and `tests/general/tools/test_doc_cache_delete_scan_race.py` -- 2 brand-new test files found by the post-`dev`-merge re-audit (REQ-011); both already carry correct domain counts, destyling only. While in these files, also verify Tasks 2.8 (`test_delete.py`, digit-form "12-value `type` enum" at lines 40, 754, 763) and 2.9 (`test_update.py`, same phrase at lines 1293, 1303) each catch that additional un-flagged digit-form occurrence, not just the lines their own task text enumerates.
 
-- [x] Task 2.16: Run the full quality gate again after the Phase 2 edits.
+- [x] Task 110.250: Run the full quality gate again after the Phase 2 edits.
 
-#### Phase 3: Codify the convention
+#### Phase 120: Codify the convention
 
-- [x] Task 3.1: Add a rule to `.specmgr/conventions.md`'s `### Docstring Style` subsection (nested under `## Additional Best Practices`, not the unrelated top-level `## Documentation Requirements` section) stating that a generic tool's supported-domain count must not be restated as a cardinal number in prose (word or digit form); use explicit domain lists or relational phrasing instead.
+- [x] Task 120.100: Add a rule to `.specmgr/conventions.md`'s `### Docstring Style` subsection (nested under `## Additional Best Practices`, not the unrelated top-level `## Documentation Requirements` section) stating that a generic tool's supported-domain count must not be restated as a cardinal number in prose (word or digit form); use explicit domain lists or relational phrasing instead.
 
-- [x] Task 3.2: Run a final full quality-gate pass and confirm `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` produce zero diff. Also run a final broadened grep across `src/`, `tests/`, and `AGENTS.md` for the cardinal numbers six/seven/eight/nine (word and digit form), confirming no older, undetected stale domain-count reference remains from before `dec`/`sop`/`vcr`/`sysrs` were added (REQ-015).
+- [x] Task 120.110: Run a final full quality-gate pass and confirm `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` produce zero diff. Also run a final broadened grep across `src/`, `tests/`, and `AGENTS.md` for the cardinal numbers six/seven/eight/nine (word and digit form), confirming no older, undetected stale domain-count reference remains from before `dec`/`sop`/`vcr`/`sysrs` were added (REQ-015).
 
 ## Progress
 

@@ -4,7 +4,7 @@ created: '2026-09-22 12:57:03.095+02:00'
 id: feat-148-agent-identity
 status: planning
 type: feat
-updated: '2026-09-22 12:57:03.095+02:00'
+updated: '2026-09-30T05:13:02.000Z'
 version: 1.0.0
 ---
 
@@ -75,22 +75,22 @@ Proposed approach, in order:
 
 ### Task List
 
-#### Phase 1: Provisioning and Documentation
+#### Phase 100: Provisioning and Documentation
 
-- [ ] Task 1.1: Document the exact steps for provisioning a GitHub fine-grained PAT on a dedicated machine account, scoped to this repo, without recording any actual token/account values.
-- [ ] Task 1.2: Document the exact steps for provisioning a GitLab Service Account or Project/Group Access Token, scoped to the relevant project(s), without recording any actual token/account values.
+- [ ] Task 100.100: Document the exact steps for provisioning a GitHub fine-grained PAT on a dedicated machine account, scoped to this repo, without recording any actual token/account values.
+- [ ] Task 100.110: Document the exact steps for provisioning a GitLab Service Account or Project/Group Access Token, scoped to the relevant project(s), without recording any actual token/account values.
 
-#### Phase 2: Agent Wiring
+#### Phase 110: Agent Wiring
 
-- [ ] Task 2.1: Update the agent's launch/env configuration so its process (and only its process) receives the bot credential via `GH_TOKEN`/`GITLAB_TOKEN`, without touching the developer's shell rc files or stored `gh` session.
-- [ ] Task 2.2: Configure agent-scoped `git config user.name`/`user.email` to match the bot identity.
-- [ ] Task 2.3 (optional): Wire in a `Co-authored-by:` trailer on agent commits.
+- [ ] Task 110.100: Update the agent's launch/env configuration so its process (and only its process) receives the bot credential via `GH_TOKEN`/`GITLAB_TOKEN`, without touching the developer's shell rc files or stored `gh` session.
+- [ ] Task 110.110: Configure agent-scoped `git config user.name`/`user.email` to match the bot identity.
+- [ ] Task 110.120: (optional) Wire in a `Co-authored-by:` trailer on agent commits.
 
-#### Phase 3: Verification
+#### Phase 120: Verification
 
-- [ ] Task 3.1: Perform a test push/PR/merge via the agent and confirm the actor shown in the GitHub/GitLab UI differs from the developer's own actor.
-- [ ] Task 3.2: Confirm the developer's own `gh auth status` / git configuration is unchanged.
-- [ ] Task 3.3: Confirm no credential values were written to any tracked file in the repository.
+- [ ] Task 120.100: Perform a test push/PR/merge via the agent and confirm the actor shown in the GitHub/GitLab UI differs from the developer's own actor.
+- [ ] Task 120.110: Confirm the developer's own `gh auth status` / git configuration is unchanged.
+- [ ] Task 120.120: Confirm no credential values were written to any tracked file in the repository.
 
 ## Progress
 
