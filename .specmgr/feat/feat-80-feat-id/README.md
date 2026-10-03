@@ -4,7 +4,7 @@ created: '2026-09-04 16:27:34.938+02:00'
 id: feat-80-feat-id
 status: done
 type: feat
-updated: '2026-09-18 13:25:13.577+02:00'
+updated: '2026-09-30T04:53:15.000Z'
 version: 1.0.0
 ---
 
@@ -84,17 +84,17 @@ The fix mirrors feat-69's mechanical recipe exactly: drop the `FeatDocument(...)
 
 ### Task List
 
-#### Phase 1: Fix set_feat_id return shape
+#### Phase 100: Fix set_feat_id return shape
 
-- [x] Task 1.1: Change `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` and return `new_frontmatter` directly in `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`.
+- [x] Task 100.100: Change `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` and return `new_frontmatter` directly in `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`.
 
-- [x] Task 1.2: Update `set_feat_id`'s `description=`/docstring text to state the frontmatter-only return shape.
+- [x] Task 100.110: Update `set_feat_id`'s `description=`/docstring text to state the frontmatter-only return shape.
 
-- [x] Task 1.3: Update `tests/feat/tools/test_set_feat_id.py` with the three-assertion pattern (`isinstance(result, FeatFrontmatter)`, `not isinstance(result, FeatDocument)`, `not hasattr(result, "body")`).
+- [x] Task 100.120: Update `tests/feat/tools/test_set_feat_id.py` with the three-assertion pattern (`isinstance(result, FeatFrontmatter)`, `not isinstance(result, FeatDocument)`, `not hasattr(result, "body")`).
 
-- [x] Task 1.4: Update AGENTS.md's `feat/` bullet to reflect the corrected return shape.
+- [x] Task 100.130: Update AGENTS.md's `feat/` bullet to reflect the corrected return shape.
 
-- [x] Task 1.5: Run `uv run --frozen pytest -n auto`, `ruff format --check`, `ruff check`, `vulture`, and regenerate `specmgr docs`/`docs/MCP.md`; verify no drift.
+- [x] Task 100.140: Run `uv run --frozen pytest -n auto`, `ruff format --check`, `ruff check`, `vulture`, and regenerate `specmgr docs`/`docs/MCP.md`; verify no drift.
 
 ## Progress
 

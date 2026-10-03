@@ -3,7 +3,7 @@ created: '2026-09-02 15:24:37.128Z'
 id: feat-51-mcp-cwd
 status: done
 type: feat
-updated: '2026-09-06 07:09:18.000Z'
+updated: '2026-10-02T14:28:17.000Z'
 version: 1.0.0
 ---
 
@@ -54,22 +54,22 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 ### Task List
 
-#### Phase 1: Diagnostic Resource
+#### Phase 100: Diagnostic Resource
 
-- [x] Task 1.1: Finalize the `specmgr://config` payload schema (domain -> base_dir, env_var name, env_var_set flag) for all twelve domains.
-- [x] Task 1.2: Implement the resource in `general/resources/` and register it in `server.py`.
-- [x] Task 1.3: Add unit tests, including the non-disclosure test required by ACC-002.
-- [x] Task 1.4: Update `server.py`'s module docstring and regenerate `docs/MCP.md` via `specmgr mcp-docs`.
+- [x] Task 100.100: Finalize the `specmgr://config` payload schema (domain -> base_dir, env_var name, env_var_set flag) for all twelve domains.
+- [x] Task 100.110: Implement the resource in `general/resources/` and register it in `server.py`.
+- [x] Task 100.120: Add unit tests, including the non-disclosure test required by ACC-002.
+- [x] Task 100.130: Update `server.py`'s module docstring and regenerate `docs/MCP.md` via `specmgr mcp-docs`.
 
-#### Phase 2: Documentation Updates
+#### Phase 110: Documentation Updates
 
-- [x] Task 2.1: Update README's "Add to OpenCode" example per the chosen guidance (REQ-003).
-- [x] Task 2.2: Add `SPECMGR_FEAT_DIR` to README's "Environment Variables" section (REQ-004).
+- [x] Task 110.100: Update README's "Add to OpenCode" example per the chosen guidance (REQ-003).
+- [x] Task 110.110: Add `SPECMGR_FEAT_DIR` to README's "Environment Variables" section (REQ-004).
 
-#### Phase 3: Verification
+#### Phase 120: Verification
 
-- [x] Task 3.1: Run the full lint (`ruff format --check`, `ruff check`), `vulture`, and unittest suite.
-- [x] Task 3.2: Manually verify `specmgr://config` output against a real worktree to confirm the reported paths match reality.
+- [x] Task 120.100: Run the full lint (`ruff format --check`, `ruff check`), `vulture`, and unittest suite.
+- [x] Task 120.110: Manually verify `specmgr://config` output against a real worktree to confirm the reported paths match reality.
 
 ## Progress
 
@@ -81,46 +81,28 @@ This feature adds a `specmgr://config` resource that reports, for every domain, 
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-02 — Phase 3 complete: final verification pass, feature done
-
+#### 2026-09-02 23:59:59.000Z - Phase 3 complete: final verification pass, feature done
 Ran the full quality gate end-to-end in this real worktree: `uv run --frozen ruff format --check` (1527 files already formatted), `uv run --frozen ruff check` (all checks passed), `uv run --frozen vulture src/ whitelist.py --min-confidence 60` (no output, no findings), and `uv run --frozen --all-extras python -m unittest discover -v -s tests -t . -p "test_*.py"` (3047 tests, OK) -- all four green, satisfying ACC-005. Manually invoked `config_info()` directly (bypassing the MCP transport) with the default environment (no `SPECMGR_*_DIR` vars set) and confirmed every reported `base_dir` is the correct absolute path under this worktree's root (e.g. `adr` -> `.../feat-51-mcp-cwd/docs/adr` (exists on disk with real ADR files), `feat` -> `.../feat-51-mcp-cwd/.specmgr/feat` (exists on disk with real feature folders), `req` -> `.../feat-51-mcp-cwd/docs/req` (correctly computed, not yet created -- expected, since REQ has no documents yet in this worktree)), and that `env_var_set` is `false` for all twelve domains. Re-ran with `SPECMGR_ADR_DIR=/tmp/some/test/dir` set only for that single invocation and confirmed `adr`'s `base_dir` flipped to `/tmp/some/test/dir` and `env_var_set` flipped to `true`, with every other domain unaffected -- directly exercising the self-diagnosis scenario the feature exists for. Confirmed no stray env var was left in the shell afterward. Re-confirmed ACC-003 (README's "Add to OpenCode"/"Environment Variables" sections) and ACC-004 (`docs/MCP.md` lists `specmgr://config`) by grepping the committed files; `git status --short` showed a clean tree throughout, confirming no drift from running the doc-generation-adjacent commands. All five acceptance criteria (ACC-001 through ACC-005) are genuinely satisfied end-to-end. No blockers found.
-
-#### 2026-09-02 — Phase 2 complete: README documentation updates
-
+#### 2026-09-02 23:59:59.000Z - Phase 2 complete: README documentation updates
 Updated the top-level `README.md`'s "Environment Variables" section to add a `SPECMGR_FEAT_DIR` bullet (mirroring the existing `SPECMGR_ADR_DIR` bullet's style: FEAT-specific, defaults to `.specmgr/feat`, not shared via `SPECMGR_DOCS_DIR`) plus a short pointer to the new `specmgr://config` resource for self-diagnosis. Rewrote "Add to OpenCode"'s single, unsafe example into two labeled alternatives: Option A uses `uvx --directory <path-to-your-project> --from biz-dfch-specmgr[mcp] specmgr mcp` (confirmed via `uv --help`/a live `uv run --directory` test that `--directory` is a global uv/uvx flag that must precede `--from`); Option B adds an explicit `"environment"` block setting `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR`/`SPECMGR_FEAT_DIR` (confirmed as a real key in OpenCode's own `McpLocalConfig` JSON schema, found in `.opencode/node_modules/@opencode-ai/sdk/dist/gen/types.gen.d.ts`). Both are framed as alternatives, with prose explaining why the plain example is CWD-dependent/unsafe and pointing at `specmgr://config` to verify either option worked. Satisfies REQ-003/REQ-004/ACC-003. Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full unittest suite, `specmgr docs`) passes unchanged, since this phase only touched `README.md` (not part of the generated docs pipeline).
-
-#### 2026-09-02 — Phase 1 complete: specmgr://config resource implemented
-
+#### 2026-09-02 23:59:59.000Z - Phase 1 complete: specmgr://config resource implemented
 Added the `specmgr://config` resource reporting, for all twelve document domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr), the resolved absolute base directory and whether the domain's `SPECMGR_*_DIR` env var is explicitly set. New files: `src/biz/dfch/specmgr/models/config_info.py` (`DomainConfig`/`ConfigInfo` Pydantic models, registered in `models/__init__.py`), `src/biz/dfch/specmgr/general/resources/config.py` (the `config_info()` resource function, registered in `general/resources/__init__.py`), `tests/general/resources/test_config.py` (13 tests, including ACC-002's non-disclosure tests). Updated `server.py`'s module docstring with a `specmgr://config` entry and regenerated `docs/MCP.md` via `specmgr mcp-docs`. Only the twelve known `SPECMGR_*_DIR` env var names are ever read (never `os.environ` wholesale), satisfying REQ-002. Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full unittest suite of 3047 tests) passes.
-
-#### 2026-09-02 00:00:00.000Z — Created
-
+#### 2026-09-02 00:00:00.000Z - Created
 Feature drafted from GitHub issue #51 ("MCP server silently resolves per-domain base directories relative to CWD, with no way for a client to self-diagnose a misconfiguration"), covering a new `specmgr://config` resource and related README documentation fixes.
-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-02 — Combine both REQ-003 "Add to OpenCode" options rather than picking one
-
+#### 2026-09-02 23:59:59.000Z - Combine both REQ-003 "Add to OpenCode" options rather than picking one
 REQ-003 originally offered an either/or: recommend `uv run --frozen --directory <path> specmgr mcp` (or the OpenCode-JSON equivalent, `uvx --directory <path> ...`), OR document setting `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR`/`SPECMGR_FEAT_DIR` explicitly. The user was asked to choose between these two and explicitly chose a **combination of both** rather than picking just one: the README's "Add to OpenCode" example now shows both as labeled alternatives (Option A: `uvx --directory <path-to-your-project> --from biz-dfch-specmgr[mcp] specmgr mcp`; Option B: the plain `uvx --from ...` command plus an explicit `"environment"` block setting all three directory env vars), with prose noting either (or both together) is valid and pointing at `specmgr://config` to verify the result.
-
-#### 2026-09-02 — ConfigInfo model shape and location
-
+#### 2026-09-02 23:59:59.000Z - ConfigInfo model shape and location
 `ConfigInfo`/`DomainConfig` were added to top-level `models/config_info.py` (mirroring `VersionInfo`'s location), not inlined in the resource module, since the payload is structured/machine-readable output (like `Iso25010`), not raw markdown prose (like `dtais`/`rasci`). `ConfigInfo` holds a single `domains: dict[str, DomainConfig]` field (domain name -> config) rather than twelve named fields, matching the plan's own "domain -> {...}" mapping wording and avoiding a 12-field model that would need editing for every future domain.
-
-#### 2026-09-02 00:00:02.000Z — Never disclose non-directory environment variables
-
+#### 2026-09-02 00:00:02.000Z - Never disclose non-directory environment variables
 `specmgr://config` will explicitly enumerate only the known `SPECMGR_*_DIR` keys rather than iterating over the full process environment, to guarantee secrets such as PATs are never disclosed through this resource.
-
-#### 2026-09-02 00:00:01.000Z — Cover all twelve domains, not just the three named in the issue
-
+#### 2026-09-02 00:00:01.000Z - Cover all twelve domains, not just the three named in the issue
 Although the issue only calls out `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR`/`SPECMGR_FEAT_DIR` by name, the diagnostic resource will report on all twelve domains for consistency and future-proofing.
-
-#### 2026-09-02 00:00:00.000Z — Implement diagnosis as a resource, not a tool
-
+#### 2026-09-02 00:00:00.000Z - Implement diagnosis as a resource, not a tool
 A `specmgr://config` resource was chosen over a `get_config` tool, mirroring the existing `specmgr://version` resource's shape and because the reported information is descriptive/static-ish rather than an action.
-
 ### Related PRs / Commits
 
 - [Issue #51](https://github.com/dfch/biz.dfch.SpecMgr/issues/51): tracking issue for this feature.

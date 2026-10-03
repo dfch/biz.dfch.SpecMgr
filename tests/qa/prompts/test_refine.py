@@ -47,12 +47,12 @@ class TestRefinePrompt(unittest.TestCase):
 
     def test_mentions_n_plus_one_append_range(self):
         """The clean-append path must read the exact body via
-        get_qa(id, raw=True) and use the N+1 end-of-body append range."""
+        get_qa(id, raw=True, numbered=True) and use the N+1 end-of-body append range."""
         result = refine("abc-123")
-        self.assertIn("get_qa(id, raw=True)", result)
+        self.assertIn("get_qa(id, raw=True, numbered=True)", result)
         self.assertIn('update(id, type="qa", content, offset=N+1)', result)
         self.assertLess(
-            result.index("get_qa(id, raw=True)"),
+            result.index("get_qa(id, raw=True, numbered=True)"),
             result.index('update(id, type="qa", content, offset=N+1)'),
         )
 

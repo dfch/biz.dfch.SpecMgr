@@ -55,7 +55,7 @@ from unittest import mock
 
 import frontmatter
 
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -156,13 +156,17 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
         # 4. update (type="sop", GENERIC): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003, ACC-006).
+        #    (feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        #    frontmatter fields live under .frontmatter; whole-body mode's snippet is None.)
         updated = update(sop_id, "sop", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertEqual(updated.version, created.version)
-        self.assertNotEqual(updated.updated, created.updated)
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertEqual(updated.frontmatter.version, created.version)
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         self.assertIsNotNone(get_sop(sop_id).body.scope)
 
         # 4b. update (type="sop", GENERIC) range mode: a line-range splice must persist and stay valid.
@@ -177,9 +181,9 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         # 5. set_status (type="sop", GENERIC): only status/updated may change (ACC-003, ACC-006).
         active = set_status(sop_id, "sop", "active")
         self.assertEqual(active.status, "active")
-        self.assertEqual(active.id, updated.id)
-        self.assertEqual(active.created, updated.created)
-        self.assertNotEqual(active.updated, updated.updated)
+        self.assertEqual(active.id, updated.frontmatter.id)
+        self.assertEqual(active.created, updated.frontmatter.created)
+        self.assertNotEqual(active.updated, updated.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertIsNotNone(get_sop(sop_id).body.scope)
 

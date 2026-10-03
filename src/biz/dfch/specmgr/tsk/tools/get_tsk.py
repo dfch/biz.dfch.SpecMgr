@@ -43,7 +43,10 @@ against. With optional read-style ``offset``/``limit`` coordinates
 (feat-28-get-update, Phase 2), the same raw read instead returns the window
 of that text, served by the shared
 :func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
-out-of-range values, never erroring).
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
 """
 
 from __future__ import annotations
@@ -51,7 +54,7 @@ from __future__ import annotations
 from ...general.models import ParseFailureResult
 from ...general.tools._doc_paths import find_parse_failure
 from ...general.tools._path_safety import assert_within, validate_id
-from ...general.tools._splice import body_text, window_body
+from ...general.tools._splice import body_text, validate_read_args, window_body
 from ...server import mcp
 from ..models.v1 import TskDocument
 from ._io import load_by_id, read_tsk
@@ -75,10 +78,19 @@ from ._paths import TskNotFoundError, tsk_base_dir
         "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
+        " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
+        'absolute body-line number in the `"<n>: "` form (plain decimal, no padding) -- under '
+        "`offset`/`limit` windowing the numbers start at the clamped offset and never restart at 1, so a "
+        "number seen in the output can be fed straight back into the generic `update` tool's `offset`. "
+        "`numbered` is meaningful only with raw=True: combining it with raw=False raises ValueError (like "
+        "`offset`/`limit`), and a numbered read of a document that fails to parse returns the "
+        "`ParseFailureResult` described above, never numbered text. Numbered output must never be fed back "
+        'verbatim into `content` for `update` or `create_tsk` -- strip the `"<n>: "` prefix from each '
+        "line first (it is likewise never a valid `edit` `old_str`)."
     ),
 )
 def get_tsk(
-    id: str, raw: bool = False, offset: int | None = None, limit: int | None = None
+    id: str, raw: bool = False, offset: int | None = None, limit: int | None = None, numbered: bool = False
 ) -> TskDocument | str | ParseFailureResult:
     """Read and return the task list identified by ``id``.
 
@@ -101,13 +113,28 @@ def get_tsk(
         With ``raw=True`` only: the number of body lines the window spans
         (default through the end of the body; capped at the remaining
         lines, a negative value returns the empty string).
+    numbered:
+        With ``raw=True`` only: when ``True``, prefix every returned body
+        line with its 1-based absolute body-line number in the ``"<n>: "``
+        form (plain decimal, no padding) -- under ``offset``/``limit``
+        windowing the numbers start at the clamped ``offset`` and never
+        restart at 1, so a number seen in the output can be fed straight
+        back into the generic ``update`` tool's ``offset``. Numbered
+        output must never be fed back verbatim as ``content`` for
+        ``update`` or ``create_tsk`` -- strip the ``"<n>: "`` prefix from
+        each line first (it is likewise never a valid ``edit`` ``old_str``).
+        Combining it with ``raw=False`` raises ``ValueError`` (see
+        ``Raises``).
 
     Returns
     -------
     TskDocument | str | ParseFailureResult
         With ``raw=False``: the current on-disk document, freshly re-read
         and re-parsed. With ``raw=True``: the body text (or its
-        ``offset``/``limit`` window) as a plain string. When the document
+        ``offset``/``limit`` window) as a plain string. With
+        ``numbered=True``, every returned line is additionally prefixed
+        with its ``"<n>: "`` 1-based absolute body-line number. When the
+        document
         exists but fails to parse, a
         :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
         (``error``/``path``/``id``) is returned instead of raising --
@@ -122,12 +149,13 @@ def get_tsk(
     ValueError
         ``id`` is a path-injection attempt or not a well-formed id for this domain
         (raised before any filesystem access), or ``offset``/``limit`` coordinates
-        are given with ``raw=False`` (a parsed document requires the whole body;
-        also raised before any file access).
+        are given with ``raw=False`` (a parsed document requires the whole body),
+        or ``numbered=True`` is given with ``raw=False`` (numbering is a
+        ``raw=True``-only feature) -- both read-argument misuses raised before
+        any file access.
     """
     validate_id("tsk", id)
-    if not raw and (offset is not None or limit is not None):
-        raise ValueError(f"offset/limit are only valid with raw=True, got offset={offset!r}, limit={limit!r}")
+    validate_read_args(raw, offset, limit, numbered)
 
     base_dir = tsk_base_dir()
     try:
@@ -142,10 +170,10 @@ def get_tsk(
     assert_within(base_dir, path)
     if raw:
         text = body_text(path)
-        if offset is None and limit is None:
+        if offset is None and limit is None and not numbered:
             result: TskDocument | str = text
             return result
-        result = window_body(text, offset if offset is not None else 1, limit)
+        result = window_body(text, 1 if offset is None else offset, limit, numbered=numbered)
         return result
     result = doc
     return result

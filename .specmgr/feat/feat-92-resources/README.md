@@ -3,7 +3,7 @@ created: '2026-09-04 00:00:00.000Z'
 id: feat-92-resources
 status: review
 type: feat
-updated: '2026-09-04 12:00:00.000Z'
+updated: '2026-10-02T16:22:00.000Z'
 version: 1.0.0
 ---
 
@@ -100,46 +100,6 @@ the raw text returned, and (b) covered by its own
 - ADR (to be created in Phase 0): formalizes this feature's central
   convention repo-wide.
 
-### Task List
-
-#### Phase 0: ADR
-
-- [x] Task 0.1: Write and merge the ADR (REQ-007).
-
-#### Phase 1: `iso25010`
-
-- [x] Task 1.1: Switch `general/resources/iso25010.py` to markdown output with parse-and-discard validation.
-- [x] Task 1.2: Update `dtais.py`'s stale docstring cross-reference.
-- [x] Task 1.3: Broaden `tests/models/test_iso25010.py`; rewrite `tests/general/resources/test_iso25010.py`.
-
-#### Phase 2: `dtais` model
-
-- [x] Task 2.1: Add `general/models/dtais.py` and `tests/models/test_dtais.py`.
-
-#### Phase 3: `tara` model
-
-- [x] Task 3.1: Add `rsk/models/v1/tara.py` and `tests/models/test_tara.py`.
-
-#### Phase 4: `risk_matrix` model
-
-- [x] Task 4.1: Add `rsk/models/v1/risk_matrix.py` and `tests/models/test_risk_matrix.py`. Scope extended per the
-  user's explicit "follow the ADR" decision to also include wiring `rsk/resources/risk_matrix.py` to
-  `parse_risk_matrix` on every call, not deferred to a later follow-up.
-
-#### Phase 5: `rasci` model
-
-- [x] Task 5.1: Add `general/models/rasci.py` and `tests/models/test_rasci.py`.
-
-#### Phase 6: `ears` resource
-
-- [x] Task 6.1: Author `general/data/general_ears.md`.
-- [x] Task 6.2: Add `general/models/ears.py`, `general/resources/ears.py`, and tests.
-
-#### Phase 7: Wrap-up
-
-- [x] Task 7.1: Regenerate docs, update `server.py`'s docstring, add a CHANGELOG entry, run the full lint/test pass.
-
-#### Phase 8: Align EARS content with the source paper (Mavin et al., RE'09)
 
 Cross-checked against the original paper (`Mavin_A_Rolls_Royce_EARS_RE09_Paperaccepted.pdf`,
 kept in this feature folder): the packaged `general_ears.md` authored in Phase 6 used
@@ -183,31 +143,52 @@ only, not a repo artifact, and will not be available at implementation time:**
   the six items requested), so it will read inconsistently (lowercase keywords)
   next to the newly upper-cased templates above it -- known, accepted, not a bug.
 
-- [x] Task 8.0: Discard the stray uncommitted partial edit to
-  `general/data/general_ears.md` (`git checkout --` it) before starting.
-- [x] Task 8.1: Update `general/models/ears.py`'s `_PATTERN_NAMES` constant to the
-  paper's exact ordered vocabulary (`["Ubiquitous requirements", "Event-driven
-  requirements", "Unwanted behaviours", "State-driven requirements", "Optional
-  features"]`); update stale name/order mentions in its module and class
-  docstrings. No structural/field changes needed.
-- [x] Task 8.2: Rewrite `general/data/general_ears.md` per the source paper: append
-  the generic EARS syntax to the existing intro paragraph (same block, no blank
-  line); reorder/rename/reword `## The five requirement patterns`'s five bullets
-  to the paper's exact names and templates (keep each bullet's existing
-  hand-written explanatory sentence); reorder `## When to use each pattern` to
-  match, and append the paper's first worked example per pattern to each bullet.
-- [x] Task 8.3: Update `tests/models/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and
-  all 3 malformed fixtures (`_MISSING_PATTERN_TEXT`, `_MISMATCHED_WHEN_TO_USE_TEXT`,
-  `_WRONG_PATTERN_NAME_TEXT`) to the new names/order/templates.
-- [x] Task 8.4: Update `tests/general/resources/test_ears.py`:
-  `_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new
-  names/order/templates.
-- [x] Task 8.5: Update stale old-name/order mentions in `general/resources/ears.py`
-  (module docstring + `@mcp.resource(...)` description) and `server.py`'s module
-  docstring (~line 120-122).
-- [x] Task 8.6: Wrap-up: regenerate docs (`specmgr docs`), extend the existing
-  CHANGELOG `[Unreleased]` entry, run the full lint/test pass, commit, and push
-  to `origin/feat-92-resources` (lands on the existing open PR #95 -- no new PR).
+
+### Task List
+
+#### Phase 100: ADR
+
+- [x] Task 100.100: Write and merge the ADR (REQ-007).
+
+#### Phase 110: `iso25010`
+
+- [x] Task 110.100: Switch `general/resources/iso25010.py` to markdown output with parse-and-discard validation.
+- [x] Task 110.110: Update `dtais.py`'s stale docstring cross-reference.
+- [x] Task 110.120: Broaden `tests/models/test_iso25010.py`; rewrite `tests/general/resources/test_iso25010.py`.
+
+#### Phase 120: `dtais` model
+
+- [x] Task 120.100: Add `general/models/dtais.py` and `tests/models/test_dtais.py`.
+
+#### Phase 130: `tara` model
+
+- [x] Task 130.100: Add `rsk/models/v1/tara.py` and `tests/models/test_tara.py`.
+
+#### Phase 140: `risk_matrix` model
+
+- [x] Task 140.100: Add `rsk/models/v1/risk_matrix.py` and `tests/models/test_risk_matrix.py`. Scope extended per the user's explicit "follow the ADR" decision to also include wiring `rsk/resources/risk_matrix.py` to `parse_risk_matrix` on every call, not deferred to a later follow-up.
+
+#### Phase 150: `rasci` model
+
+- [x] Task 150.100: Add `general/models/rasci.py` and `tests/models/test_rasci.py`.
+
+#### Phase 160: `ears` resource
+
+- [x] Task 160.100: Author `general/data/general_ears.md`.
+- [x] Task 160.110: Add `general/models/ears.py`, `general/resources/ears.py`, and tests.
+
+#### Phase 170: Wrap-up
+
+- [x] Task 170.100: Regenerate docs, update `server.py`'s docstring, add a CHANGELOG entry, run the full lint/test pass.
+
+#### Phase 180: Align EARS content with the source paper (Mavin et al., RE'09)
+- [x] Task 180.100: Discard the stray uncommitted partial edit to `general/data/general_ears.md` (`git checkout --` it) before starting.
+- [x] Task 180.110: Update `general/models/ears.py`'s `_PATTERN_NAMES` constant to the paper's exact ordered vocabulary (`["Ubiquitous requirements", "Event-driven requirements", "Unwanted behaviours", "State-driven requirements", "Optional features"]`); update stale name/order mentions in its module and class docstrings. No structural/field changes needed.
+- [x] Task 180.120: Rewrite `general/data/general_ears.md` per the source paper: append the generic EARS syntax to the existing intro paragraph (same block, no blank line); reorder/rename/reword `## The five requirement patterns`'s five bullets to the paper's exact names and templates (keep each bullet's existing hand-written explanatory sentence); reorder `## When to use each pattern` to match, and append the paper's first worked example per pattern to each bullet.
+- [x] Task 180.130: Update `tests/models/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and all 3 malformed fixtures (`_MISSING_PATTERN_TEXT`, `_MISMATCHED_WHEN_TO_USE_TEXT`, `_WRONG_PATTERN_NAME_TEXT`) to the new names/order/templates.
+- [x] Task 180.140: Update `tests/general/resources/test_ears.py`: `_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new names/order/templates.
+- [x] Task 180.150: Update stale old-name/order mentions in `general/resources/ears.py` (module docstring + `@mcp.resource(...)` description) and `server.py`'s module docstring (~line 120-122).
+- [x] Task 180.160: Wrap-up: regenerate docs (`specmgr docs`), extend the existing CHANGELOG `[Unreleased]` entry, run the full lint/test pass, commit, and push to `origin/feat-92-resources` (lands on the existing open PR #95 -- no new PR).
 
 ## Progress
 
@@ -270,8 +251,7 @@ None.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 - Phase 8 (align EARS content with the source paper) complete -- feature done
-
+#### 2026-09-04 23:59:59.000Z - Phase 8 (align EARS content with the source paper) complete -- feature done
 Cross-checked Phase 6's from-scratch `general/data/general_ears.md`
 against the actual source paper (Mavin et al., "Easy Approach to
 Requirements Syntax (EARS)", RE'09, sections 4.1-4.6, kept as a personal
@@ -280,10 +260,8 @@ had used invented pattern names/order/wording instead of transcribing
 the paper's own terminology, omitted the paper's §4.1 generic syntax
 sentence entirely, and had no worked examples under `## When to use each
 pattern`.
-
 Task 8.0: confirmed via `git status`/`git diff` that there was no stray
 uncommitted edit to `general_ears.md` to discard -- nothing to do.
-
 Task 8.1: updated `general/models/ears.py`'s `_PATTERN_NAMES` to the
 paper's exact ordered vocabulary (`["Ubiquitous requirements",
 "Event-driven requirements", "Unwanted behaviours", "State-driven
@@ -293,7 +271,6 @@ docstrings. Verified (see Decisions Made below) that the existing `_NAME`
 regex fragment (`` [A-Za-z]+(?:[- ][A-Za-z]+)* ``) already matches a
 3-token name like `Event-driven requirements` without modification, so
 no regex widening was needed.
-
 Task 8.2: rewrote `general/data/general_ears.md`: appended the paper's
 generic syntax (`` `<optional preconditions> <optional trigger> the
 <system name> shall <system response>` ``) as a trailing clause of the
@@ -309,24 +286,20 @@ read inconsistently against the newly upper-cased `WHEN`/`WHILE`/`WHERE`
 templates above it -- known, accepted, not fixed). Ran the file through
 `specmgr_mdformat` and adopted its normalized wrapping as the committed
 form.
-
 Task 8.3: updated `tests/models/test_ears.py`'s `_EXPECTED_PATTERN_NAMES`
 and all three malformed fixtures (`_MISSING_PATTERN_TEXT`,
 `_MISMATCHED_WHEN_TO_USE_TEXT`, `_WRONG_PATTERN_NAME_TEXT`) to the new
 names/order/templates, each still exercising the exact same failure mode
 as before (missing one pattern bullet; mismatched order between the two
 lists; an out-of-vocabulary pattern name).
-
 Task 8.4: updated `tests/general/resources/test_ears.py`'s
 `_EXPECTED_PATTERN_NAMES` and `_valid_ears_text()`'s fixture to the new
 names/order/templates; confirmed it remains a well-formed,
 `parse_ears`-accepted document.
-
 Task 8.5: updated the stale name/order mentions in
 `general/resources/ears.py`'s module docstring and its
 `@mcp.resource(...)` `description=` string, and in `server.py`'s module
 docstring's `specmgr://ears --` bullet.
-
 Task 8.6: regenerated `docs/api/`, `docs/GENERATED.md`, and `docs/MCP.md`
 via `specmgr docs`/`specmgr mcp-docs` (both produced real diffs, since
 `ears.py`'s docstrings and `general_ears.md`'s content changed); `specmgr
@@ -335,14 +308,12 @@ Extended the existing `CHANGELOG.md` `[Unreleased]` `### Added` bullet
 (rather than adding a new bullet) with a clause noting the `specmgr://ears`
 content was aligned with the source paper's exact pattern names/order/
 templates and now includes its worked examples.
-
 Full quality gate, all green: `ruff format --check` (1672 files already
 formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
 --min-confidence 60` (no findings), full `unittest` suite (**3377
 tests**, all passing -- identical count to Phase 7's own last run, since
 this phase only changed existing fixtures/docstrings, not test/src
 structure), and `specmgr unused-code` ("No unused code found").
-
 The feature is now fully complete: all 8 phases plus the dtais/tara
 follow-up are done, REQ-001 through REQ-007 remain implemented, and
 ACC-001 through ACC-007 remain satisfied -- REQ-006/ACC-006 are unchanged
@@ -351,9 +322,7 @@ REQ-*/ACC-* item was added. No blockers. Per this phase's own explicit
 instructions, this work was NOT committed or pushed -- it lands as
 additional commits on the still-open PR #95 at the orchestrator's/user's
 discretion.
-
 #### 2026-09-04 00:00:00.000Z - Phase 7 (wrap-up) complete -- feature done
-
 Ran the final consistency/verification pass (Task 7.1). Cross-checked
 every `server.py` module-docstring line mentioning `specmgr://iso25010`,
 `specmgr://dtais`, `specmgr://rsk/tara`, `specmgr://rsk/risk-matrix`,
@@ -379,20 +348,17 @@ the new `ears` resource is likewise not listed) -- left untouched since
 it predates this feature and is a listing-completeness gap, not an
 output-shape claim this feature's ADR is about; fixing it would be scope
 creep beyond Task 7.1's own instructions.
-
 Ran `uv run --frozen specmgr docs`, `specmgr mcp-docs`, and `specmgr
 adr-toc`: all three produced **zero** `git status` diff, confirming every
 prior phase's own doc-regeneration step already left `docs/api/`,
 `docs/GENERATED.md`, `docs/MCP.md`, and `docs/adr/README.md` fully in
 sync -- no missed regeneration step from Phases 0-6.
-
 Added a `CHANGELOG.md` `[Unreleased]` entry (GitHub issue #92): one
 `### Changed` bullet for `specmgr://iso25010`'s breaking output-shape
 change (raw markdown instead of structured JSON, still parse-and-discard
 validated), and one `### Added` bullet for the four new drift-guarded
 models (`dtais`/`tara`/`risk-matrix`/`rasci`), the new `specmgr://ears`
 resource, and the new ADR.
-
 Full lint/test pass, all green: `ruff format --check` (1672 files already
 formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py
 --min-confidence 60` (no findings), `pylint $(git ls-files '*.py')`
@@ -402,7 +368,6 @@ suite (**3377 tests**, all passing -- identical count to Phase 6's own
 last run, confirming Phase 7 added no new src/test code of its own, only
 docs/CHANGELOG/this README), and `specmgr unused-code` ("No unused code
 found").
-
 Re-walked every acceptance criterion (ACC-001..007) against the current
 repo state rather than trusting the existing checkboxes: ACC-001
 (`general/resources/iso25010.py`'s `mime_type="text/markdown"` confirmed
@@ -418,13 +383,10 @@ docstring, and covered by `tests/models/test_ears.py` (8 tests) plus a
 resource-level test), ACC-007 (the ADR file exists on disk with
 `status: accepted`) -- all seven confirmed genuinely satisfied, not just
 checkbox-ticked.
-
 The feature is complete: all 7 phases plus the dtais/tara follow-up are
 done, REQ-001 through REQ-007 are all implemented, and ACC-001 through
 ACC-007 are all independently re-verified in this entry. No blockers.
-
 #### 2026-09-04 00:00:00.000Z - Phase 6 (`ears` resource) complete
-
 Authored `general/data/general_ears.md` from scratch (REQ-006, Task
 6.1): an EARS (Easy Approach to Requirements Syntax) guidance document
 with an intro paragraph, `## The five requirement patterns` (5 bolded,
@@ -439,7 +401,6 @@ while iterating and adopted its normalized wrapping (inline code spans
 are never broken across lines by `mdformat`, so several bullets ended up
 single-line rather than soft-wrapped) as the committed, canonical form,
 so a future `mdformat` pass produces no diff.
-
 Added `general/models/ears.py` (REQ-006, Task 6.2): an `Ears
 (MarkdownSection1)` document model mirroring `general.models.dtais.
 Dtais`'s shape closely, with one structural deviation forced by the
@@ -485,7 +446,6 @@ in order) plus 3 distinct malformed-fixture drift-guard tests (ACC-006)
 list whose order doesn't match the patterns list, and a patterns list
 with a name (`Guard clause`) not in the closed vocabulary -- each
 asserting `parse_ears` raises `AssertionError`/`pydantic.ValidationError`.
-
 Added `general/resources/ears.py` (Task 6.2, built dispatch-ready and
 wired from day one, unlike `dtais`/`tara`'s original Phase 2/3 scoping):
 `@mcp.resource("specmgr://ears", ..., mime_type="text/markdown")`
@@ -509,7 +469,6 @@ day one): real packaged content assertions, fresh-read-per-call
 precedent), `FileNotFoundError` propagation on a missing file, and a
 `test_raises_on_structural_drift` fail-fast test (ACC-006's "resource
 test" requirement).
-
 Added `_._validate_patterns`/`_._validate_when_to_use_matches_patterns`
 to `whitelist.py`'s Pydantic-validator group, and `combining_patterns` to
 its (de)serialization-only-field group (`Ears.patterns`/`.when_to_use`
@@ -528,9 +487,7 @@ phases), as expected -- the resource count bumped from 43 to 44 and a new
 resource registration, not a re-wiring of an existing one. Full quality
 gate (ruff format --check, ruff check, vulture, full unittest suite: 3377
 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 5 (`rasci` model, scope extended to include resource wiring) complete
-
 Added `general/models/rasci.py` (REQ-005): a `Rasci(MarkdownSection1)`
 document model for `general/data/general_rasci.md`, mirroring
 `general.models.dtais.Dtais`'s shape (H1-rooted, leading `MarkdownParagraph`
@@ -572,7 +529,6 @@ drift-guard tests (ACC-005) -- a role list with only 4 of the 5 required
 entries, a role list with two roles swapped out of order, and a role list
 with a role name (`Owner`) not in the closed vocabulary -- each asserting
 `parse_rasci` raises `AssertionError`/`pydantic.ValidationError`.
-
 Per the user's "follow the ADR literally" decision (see this feature's
 Decisions Made log), and per this phase's own explicitly-extended scope
 (not deferred, unlike Phases 2/3's original narrower task wording), this
@@ -610,9 +566,7 @@ expected cross-reference updates in `docs/api/README.md`/
 as expected, since the resource's `mime_type`/URI/name did not change.
 Full quality gate (ruff format --check, ruff check, vulture, full
 unittest suite: 3364 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 4 (`risk_matrix` model, scope extended to include resource wiring) complete
-
 Added `rsk/models/v1/risk_matrix.py` (REQ-004): a `RiskMatrix(MarkdownSection1)`
 document model for `rsk/data/rsk_risk_matrix.md`, following REQ-004's
 narrow scope literally -- only the "Product thresholds" 4-item list is
@@ -658,7 +612,6 @@ list with a gap in its bounds (non-contiguous), and a threshold entry
 whose stated zone doesn't match what `level_from_product` would actually
 derive for its bounds -- each asserting `parse_risk_matrix` raises
 `AssertionError`/`pydantic.ValidationError`.
-
 Per the user's "follow the ADR literally" decision (see this feature's
 Decisions Made log), this phase's scope was extended beyond Task 4.1's
 literal "model + test" wording to also wire `rsk/resources/
@@ -699,9 +652,7 @@ plus the expected cross-reference updates in `docs/api/README.md`/
 as expected, since the resource's `mime_type`/URI/name did not change.
 Full quality gate (ruff format --check, ruff check, vulture, full
 unittest suite: 3356 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Follow-up: wired `dtais`/`tara` resources to parse-and-discard at request time
-
 Phase 2's Task 2.1 and Phase 3's Task 3.1 were scoped, by their own task
 text, to "add the model and its `tests/models/test_*.py` drift-guard
 suite" only, deliberately leaving `general/resources/dtais.py`'s
@@ -758,9 +709,7 @@ unittest suite: 3345 tests) passed. Regenerated `docs/api/` via
 `docs/api/biz.dfch.specmgr.rsk.resources.tara.md`); `specmgr mcp-docs`
 produced no `docs/MCP.md` diff, as expected, since neither resource's
 `mime_type`/URI/name changed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 3 (`tara` model) complete
-
 Added `rsk/models/v1/tara.py` (REQ-003): a `Tara(MarkdownSection1)`
 document model for `rsk/data/rsk_tara.md`, mirroring
 `general.models.dtais.Dtais`'s shape (H1-rooted, leading `MarkdownParagraph`
@@ -802,7 +751,7 @@ canonical, fixed 4-value vocabulary (`["transfer", "accept", "reduce",
 _validate_mitigation_matches_strategies` are REQ-003's "matching"
 cross-checks -- **by set, not by order** (see Decisions Made below).
 `parse_tara()` mirrors `parse_dtais()`'s exact `format_text` + `from_text`
-+ `isinstance` shape. Exported from `rsk/models/v1/__init__.py` alongside
+`isinstance` shape. Exported from `rsk/models/v1/__init__.py` alongside
 `Strategy`/`level_from_product`, per that package's existing style. Added
 `tests/models/test_tara.py` (11 tests) mirroring `test_dtais.py`'s
 structure: 6 happy-path assertions against the real packaged file
@@ -831,9 +780,7 @@ module page, plus the expected cross-reference updates in
 `docs/api/README.md`/`docs/api/biz.dfch.specmgr.rsk.models.v1.md`/
 `docs/GENERATED.md`). Full quality gate (ruff format --check, ruff check,
 vulture, full unittest suite: 3343 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 2 (`dtais` model) complete
-
 Added `general/models/dtais.py` (REQ-002): a `Dtais(MarkdownSection1)`
 document model for `general/data/general_dtais.md`, mirroring
 `models.iso25010.Iso25010`'s shape (H1-rooted, leading `MarkdownParagraph`
@@ -887,9 +834,7 @@ plus the expected cross-reference updates in `docs/api/README.md`/
 `docs/api/biz.dfch.specmgr.general.models.md`/`docs/GENERATED.md`). Full
 quality gate (ruff format --check, ruff check, vulture, full unittest
 suite: 3332 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 1 (`iso25010`) complete
-
 Switched `general/resources/iso25010.py`'s `iso25010()` resource function
 from returning a structured `Iso25010` JSON object (`mime_type="application/json"`)
 to returning the packaged `general/data/general_iso25010.md` raw markdown
@@ -918,9 +863,7 @@ malformed content and asserts the resource raises. Regenerated
 JSON behavior for now -- that's Phase 7's Task 7.1). Full quality gate
 (ruff format --check, ruff check, vulture, full unittest suite: 3322
 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Phase 0 (ADR) complete
-
 Created and accepted ADR
 `docs/adr/356d8781-e446-4c26-917a-eda85648ce9d-expose-cross-cutting-reference-resources-as-raw-markdown-wit.md`
 ("Expose cross-cutting reference resources as raw markdown with
@@ -933,18 +876,14 @@ cross-referencing `specmgr://iso25010`/`dtais`/`rsk/tara`/`rsk/risk-matrix`/
 "More Information". Regenerated `docs/adr/README.md` via
 `specmgr adr-toc`. Full quality gate (ruff format --check, ruff check,
 vulture, full unittest suite: 3318 tests) passed.
-
 #### 2026-09-04 00:00:00.000Z - Created
-
 Feature folder created for GitHub issue #92, capturing the plan discussed
 and agreed with the user.
-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 - Phase 8 implementation calls: no regex widening needed; CHANGELOG bullet extended in place
-
+#### 2026-09-04 23:59:59.000Z - Phase 8 implementation calls: no regex widening needed; CHANGELOG bullet extended in place
 Two small calls made while implementing Phase 8: (1) Task 8.1 asked to
 verify whether `general/models/ears.py`'s shared `_NAME` regex fragment
 (`` [A-Za-z]+(?:[- ][A-Za-z]+)* ``) needed widening to match a 2-3-token
@@ -961,9 +900,7 @@ extend the existing `### Added` bullet in place with one more clause,
 since the correction is a content-accuracy refinement of the exact same
 resource already announced there, not a separate change worth its own
 bullet.
-
 #### 2026-09-04 00:00:00.000Z - `ears` model design calls (Phase 6)
-
 Two non-obvious calls made while implementing `general/models/ears.py`:
 (1) the phase's own design guidance suggested declaring `patterns:
 list[PatternItem]` as a bare field directly on `Ears`, mirroring `Dtais.
@@ -989,9 +926,7 @@ items` names, in order) -- simpler and stricter than `tara`'s set-based
 comparison, and possible only because this document's author (this
 phase) controlled both lists' ordering from the start, unlike `tara`'s
 pre-existing, reverse-engineered file.
-
 #### 2026-09-04 00:00:00.000Z - `rasci` model design calls (Phase 5)
-
 Two non-obvious calls made while implementing `general/models/rasci.py`:
 (1) `RoleItem` exposes two `@computed_field`s (`role`/`description`)
 rather than one, mirroring `tsk.models.v1.task_item.TaskItem`'s
@@ -1010,9 +945,7 @@ wording (a renamed/reordered role is a structural break, not merely a
 count mismatch). Unlike `dtais`'s two 5-word lists, RASCI has only the one
 role list in the whole document (no second list to cross-check against),
 so there is no analogous "matching" cross-check to add here.
-
 #### 2026-09-04 00:00:00.000Z - `risk_matrix` model design calls (Phase 4)
-
 Two non-obvious calls made while implementing `rsk/models/v1/risk_matrix.py`:
 (1) the `level_from_product` cross-check the phase instructions "strongly
 encouraged" (rather than mandated) was implemented: `ProductThresholds.
@@ -1036,9 +969,7 @@ properties are simpler to consume there than unpacking a tuple three
 times; this also matches `assessment.Probability.value`/`Impact.value`'s
 own "one computed field per meaningfully-distinct piece of data" style
 already established in this same package.
-
 #### 2026-09-04 00:00:00.000Z - Follow the ADR literally: every reference resource is wired to parse-and-discard at request time, not just `iso25010`
-
 Phase 2's Task 2.1 and Phase 3's Task 3.1 task descriptions were scoped
 too narrowly -- "add the model + its `tests/models/test_*.py` suite"
 only -- leaving `general/resources/dtais.py`/`rsk/resources/tara.py`
@@ -1056,9 +987,7 @@ Updates entry above); Phases 4/5/6 (`risk_matrix`, `rasci`, `ears`) will
 include this same request-time parse-and-discard wiring as part of
 their own scope, not as separately-deferred follow-up work, so no
 similar gap should recur for those three.
-
 #### 2026-09-04 00:00:00.000Z - `tara` model's cross-list "matching" checks compare by set, not by order (Phase 3)
-
 Unlike `dtais`'s two 5-word lists (which happen to share the same order,
 so `Dtais._validate_when_to_apply_matches_methods` could -- and does --
 compare them as ordered lists), the real `rsk_tara.md`'s TARA strategy
@@ -1089,9 +1018,7 @@ mitigation lists' words as sets (`self.assertEqual(quadrant_words,
 strategy_words)` on `set` values), never asserting a specific order for
 those two lists, so a future test edit cannot silently regress back to an
 order-sensitive (and therefore wrong, given the real file) comparison.
-
 #### 2026-09-04 00:00:00.000Z - `dtais` model design calls (Phase 2)
-
 Three non-obvious calls made while implementing `general/models/dtais.py`:
 (1) `` ## Relationship to `## Coverage` ``'s heading is pinned via
 `@alias(value="Relationship to `## Coverage`", type=AliasType.LITERAL)`
@@ -1113,23 +1040,16 @@ as a closed literal set on `Dtais.methods` -- only the count (`min_length=
 words, matching 'when to apply' list", not a fixed vocabulary check, and
 `vcr.models.v1.body._AC_HEADING_PATTERN` already separately owns the
 authoritative closed DTAIS set.
-
 #### 2026-09-04 00:00:00.000Z - EARS resource placement
-
 `specmgr://ears` lives under `general/resources/` (cross-cutting), not
 `req/resources/`, mirroring `dtais`'s cross-domain placement rationale.
-
 #### 2026-09-04 00:00:00.000Z - Model scope for regex-cross-checked resources
-
 Dedicated models are added for all three of `dtais`, `tara`, and
 `risk_matrix` (not just `risk_matrix`), replacing their existing ad hoc
 regex-based drift-guard tests.
-
 #### 2026-09-04 00:00:00.000Z - iso25010 validation approach
-
 Kept runtime validate-then-discard (parse via `parse_iso25010` to fail
 fast, return raw text) rather than test-only validation.
-
 ### Related PRs / Commits
 
 - GitHub issue #92: https://github.com/dfch/biz.dfch.SpecMgr/issues/92

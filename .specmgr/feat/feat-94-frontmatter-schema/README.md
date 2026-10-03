@@ -4,7 +4,7 @@ created: '2026-09-04 08:22:35.000Z'
 id: feat-94-frontmatter-schema
 status: done
 type: feat
-updated: '2026-09-04 09:45:00.000Z'
+updated: '2026-10-02T17:46:14.000Z'
 version: 1.0.0
 ---
 
@@ -90,25 +90,25 @@ GitHub issue #94 reports that every whole-body document type's frontmatter `crea
 
 ### Task List
 
-#### Phase 1: Schema Exposure
+#### Phase 100: Schema Exposure
 
-- [x] Task 1.1: Implement the schema-exposure mechanism satisfying REQ-002's constraint (e.g. `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`) on `MarkdownFrontmatter.created`/`updated`.
+- [x] Task 100.100: Implement the schema-exposure mechanism satisfying REQ-002's constraint (e.g. `Field(json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`) on `MarkdownFrontmatter.created`/`updated`.
 
-- [x] Task 1.2: Update the `created`/`updated` docstring per REQ-006.
+- [x] Task 100.110: Update the `created`/`updated` docstring per REQ-006.
 
-- [x] Task 1.3: Regenerate `docs/{type}_schema.json` and each domain's packaged copy for all twelve affected domains; confirm zero drift on a second run.
+- [x] Task 100.120: Regenerate `docs/{type}_schema.json` and each domain's packaged copy for all twelve affected domains; confirm zero drift on a second run.
 
-#### Phase 2: Regression Tests
+#### Phase 110: Regression Tests
 
-- [x] Task 2.1: Add a test asserting the generated schema carries `pattern` for `created`/`updated` (REQ-004).
+- [x] Task 110.100: Add a test asserting the generated schema carries `pattern` for `created`/`updated` (REQ-004).
 
-- [x] Task 2.2: Add a test asserting the actionable validator message still surfaces through `validate_<d>` for a non-conforming value, not a raw pydantic pattern-mismatch dump (REQ-003).
+- [x] Task 110.110: Add a test asserting the actionable validator message still surfaces through `validate_<d>` for a non-conforming value, not a raw pydantic pattern-mismatch dump (REQ-003).
 
-#### Phase 3: Verification and Closeout
+#### Phase 120: Verification and Closeout
 
-- [x] Task 3.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite, `specmgr docs`, `specmgr schema` drift check for both `docs/` and package copies).
+- [x] Task 120.100: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite, `specmgr docs`, `specmgr schema` drift check for both `docs/` and package copies).
 
-- [x] Task 3.2: Comment on GitHub issue #94 with the outcome; mark this feature done.
+- [x] Task 120.110: Comment on GitHub issue #94 with the outcome; mark this feature done.
 
 ## Progress
 
@@ -131,7 +131,6 @@ frontmatter `status` is now `done`. The feature is closed.
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
 #### 2026-09-04 09:45:00.000Z - Feature closed
-
 Completed Task 3.2, the last remaining task. Posted a summary comment on GitHub issue #94 with the
 outcome (https://github.com/dfch/biz.dfch.SpecMgr/issues/94#issuecomment-5540432436), covering all
 three phases (Phase 1 commit `32ccc14`, Phase 2 commit `b07809a`, Phase 3 commit `a531624`) and the
@@ -139,33 +138,29 @@ confirmed-met status of all seven acceptance criteria (ACC-001 through ACC-007).
 frontmatter `status` is now `done` (was `planning`), and Task 3.2 is checked off in the Task List.
 No source, test, or schema files were touched -- this README-only edit is the sole remaining
 change for this feature.
-
-#### 2026-09-04 - Phase 3 (Verification and Closeout) quality gate complete
-
+#### 2026-09-04 09:00:00.000Z - Phase 3 (Verification and Closeout) quality gate complete
 Ran Task 3.1's full quality gate on top of Phase 1 (commit `32ccc14`) and Phase 2 (commit
 `b07809a`), starting from and ending with a fully clean working tree (`git status --porcelain`
 empty before and after every command below):
-
-- `uv run --frozen ruff format --check`: `1652 files already formatted`.
-- `uv run --frozen ruff check`: `All checks passed!`.
-- `uv run --frozen vulture src/ whitelist.py --min-confidence 60`: no output (clean).
-- `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`: `Ran 3320 tests in
+`uv run --frozen ruff format --check`: `1652 files already formatted`.
+`uv run --frozen ruff check`: `All checks passed!`.
+`uv run --frozen vulture src/ whitelist.py --min-confidence 60`: no output (clean).
+`uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`: `Ran 3320 tests in
   127.626s` / `OK` -- same 3320-test count Phase 2 left behind (no regressions, no new failures).
-- `uv run --frozen specmgr docs`: regenerated `docs/api` + `docs/GENERATED.md`; `git status`
+`uv run --frozen specmgr docs`: regenerated `docs/api` + `docs/GENERATED.md`; `git status`
   confirmed zero diff (docs were already current from Phase 1/2).
-- `uv run --frozen specmgr schema` (all twelve registered types, `docs/` output): all twelve
+`uv run --frozen specmgr schema` (all twelve registered types, `docs/` output): all twelve
   `docs/{type}_schema.json` files reported `(unchanged)` -- `dec`, `feat`, `gol`, `prb`, `qa`, `req`,
   `rsk`, `sop`, `sysrs`, `tsk`, `uc`, `vcr`.
-- `uv run --frozen specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` for each of
+`uv run --frozen specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data` for each of
   the same twelve domains: all twelve packaged `{type}/data/{type}_schema.json` copies also reported
   `(unchanged)`.
-- Spot-checked `docs/req_schema.json`'s `$defs.ReqFrontmatter.properties.created`/`.updated`: both
+Spot-checked `docs/req_schema.json`'s `$defs.ReqFrontmatter.properties.created`/`.updated`: both
   carry `"pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$"` as
   a sibling of the `anyOf` array, matching Design Notes' documented tradeoff exactly.
-- Confirmed `adr` has no registered schema type at all (`specmgr schema --help`'s `--type` list
+Confirmed `adr` has no registered schema type at all (`specmgr schema --help`'s `--type` list
   omits it, and no `docs/adr_schema.json`/`adr/data/adr_schema.json` file exists anywhere in the
   repo) -- ADR's schema is untouched, as REQ-001/Scope require.
-
 Walked all seven acceptance criteria against this evidence plus the Phase 1/Phase 2 Updates
 entries above; all seven (ACC-001 through ACC-007) are confirmed met. Task 3.2 (GitHub issue
 comment + marking the feature `done`) is intentionally NOT done yet -- posting to GitHub and
@@ -173,9 +168,7 @@ flipping this document's frontmatter `status` are both held for explicit human c
 this phase's own instructions. No source, test, or schema files were touched during this
 verification pass -- read-only quality-gate commands only, with only this README's Progress
 section edited afterward.
-
-#### 2026-09-04 - Phase 2 (Regression Tests) complete
-
+#### 2026-09-04 09:00:00.000Z - Phase 2 (Regression Tests) complete
 Implemented Tasks 2.1-2.2. Added `TestGeneratedSchemaCreatedUpdatedPattern` to
 `tests/commands/test_schema.py` (REQ-004): a single test method loops (via `subTest`) over every
 entry in `commands.schema._GENERATORS` (all twelve affected domains: `dec`, `feat`, `gol`, `prb`,
@@ -193,21 +186,15 @@ pydantic pattern-mismatch phrase "String should match pattern" -- guarding speci
 files were touched -- test-only change. Full quality gate green: `ruff format --check`, `ruff
 check`, `vulture`, the full `unittest` suite (3320 tests, up from 3318), and `specmgr docs` (no
 drift -- no docstrings changed in this phase).
-
-#### 2026-09-04 - Phase 1 (Schema Exposure) complete
-
+#### 2026-09-04 09:00:00.000Z - Phase 1 (Schema Exposure) complete
 Implemented Tasks 1.1-1.3. In `src/biz/dfch/specmgr/models/md/frontmatter.py`, changed `created`/`updated` from plain `str | None = None` fields to `Field(default=None, json_schema_extra={"pattern": _DATE_TIME_PATTERN.pattern})`, confirmed this does NOT engage pydantic-core's own runtime `pattern` enforcement (verified end-to-end: a bad `created` value still raises the original actionable `@field_validator(mode="after")` message, not a generic pydantic pattern-mismatch dump), and updated both fields' docstrings per REQ-006 to mention the new schema-level `pattern` constraint. Regenerated `docs/{type}_schema.json` and each domain's packaged `{type}/data/{type}_schema.json` copy for all twelve affected domains (`dec`, `feat`, `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `uc`, `vcr`) via `uv run --frozen specmgr schema` and `uv run --frozen specmgr schema --type <t> --output-dir src/biz/dfch/specmgr/<t>/data`; a second run of each produced `(unchanged)` for every file, confirming zero drift. Confirmed `adr`'s schema files show no diff. Full quality gate green: `ruff format --check`, `ruff check`, `vulture`, the full `unittest` suite (3318 tests), and `specmgr docs` (which regenerated only `docs/api/biz.dfch.specmgr.models.md.frontmatter.md` to reflect the docstring change, as expected).
-
 #### 2026-09-04 08:22:35.000Z - Created
-
 Created from GitHub issue #94 ("Expose frontmatter created/updated date+time format in JSON Schema as a pattern"). The issue itself was corrected in place before this feature was drafted: its original acceptance criteria prescribed `Field(pattern=...)` as the implementation mechanism, which a prototype build (during `feat-81-83-validation`'s own investigation) proved regresses `feat-27-validation`'s actionable validation-error messages; the issue's domain list was also missing `qa`. Both are reflected here as REQ-001/REQ-002 and the corrected domain list.
-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 - Chose `req` for REQ-003 and a parametrized `subTest` loop for REQ-004
-
+#### 2026-09-04 09:00:00.000Z - Chose `req` for REQ-003 and a parametrized `subTest` loop for REQ-004
 REQ-003 ("at least one domain") was satisfied via `req`/`validate_req`, following the plan's own
 suggestion and matching an established test pattern already in `tests/req/tools/test_validate_req.py`
 (a full-document fixture with a single field swapped, then asserted against via
@@ -218,7 +205,5 @@ already owns the one canonical `{domain: generate_fn}` mapping across all twelve
 avoiding a hand-maintained duplicate list of domain names/`Frontmatter` classes elsewhere, and
 `domain.capitalize()` reliably reconstructs each `{Domain}Frontmatter` `$defs` key for every current
 single-word domain name.
-
 #### 2026-09-04 08:22:35.000Z - Require the schema-exposure mechanism not to change runtime validation behavior
-
 Decided the feature's Requirements/Acceptance Criteria state a *constraint* (no pydantic-core runtime enforcement beyond the existing validator) rather than prescribing a specific mechanism, since the original GitHub issue's literal `Field(pattern=...)` prescription was demonstrated to violate that constraint. `Field(json_schema_extra={"pattern": ...})` is recorded in Design Notes as a verified-working option, not mandated as the only acceptable one.

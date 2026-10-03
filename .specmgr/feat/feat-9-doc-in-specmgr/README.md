@@ -3,7 +3,7 @@ id: feat-9-doc-in-specmgr
 version: 1.0.0
 status: progress
 created: '2026-08-11 00:00:00.000Z'
-updated: '2026-09-06 07:09:18.000Z'
+updated: '2026-10-01T06:05:00.000Z'
 ---
 
 # Feature: Migrate `/doc` to `.specmgr`
@@ -39,18 +39,22 @@ This feature consolidates development planning into a single, consistent locatio
 
 ### Scope
 
-**Included:**
+#### Included
+
 - Move all 10 .md files from `/doc/` to `.specmgr/feat/`
 - Update AGENTS.md to reflect new locations
 - Verify all references are updated
 - Clean removal of `/doc/` directory
 
-**Out of scope:**
+#### Explicitly Out Of Scope
+
 - Rewriting any of the migrated content
 - Creating new feature folders beyond this one
 - Consolidating or deleting substantive planning docs (only archiving temporary session artifacts)
 
 ### Dependencies
+
+#### Depends On
 
 - None (this is a pure reorganization, no feature dependencies)
 
@@ -72,30 +76,30 @@ This feature consolidates development planning into a single, consistent locatio
 | `test.md` | `feat-9-doc-in-specmgr/history/` | Temporary test artifact; moved to history for archival |
 | `session-ses_038f-adr-tool-plan.md` | `feat-9-doc-in-specmgr/history/` | Session artifact; archived to history |
 
-### Related ADRs
+### Related Decisions
 
 - ADR e369ee2e: "Organize development artifacts in `.specmgr` with feature-driven work units"
 - ADR ece4554b: "Organize the codebase by document-type domain"
 
 ### Task List
 
-#### Phase 1: Planning & Setup
-- [x] Task 1.1: Create feature folder and README — depends on: none — status: done (2026-08-11)
-- [x] Task 1.2: Verify all file paths and content before migration — depends on: Task 1.1 — status: done (2026-08-11)
+#### Phase 100: Planning & Setup
+- [x] Task 100.100: Create feature folder and README — depends on: none — status: done (2026-08-11)
+- [x] Task 100.110: Verify all file paths and content before migration — depends on: Task 1.1 — status: done (2026-08-11)
 
-#### Phase 2: Migration
-- [x] Task 2.1: Move UC-related files to feat-4-use-cases — depends on: Task 1.2 — status: done (2026-08-11)
-- [x] Task 2.2: Move strategic docs to feat-0 — depends on: Task 1.2 — status: done (2026-08-11)
-- [x] Task 2.3: Archive session/temporary artifacts to feat-0/history — depends on: Task 1.2 — status: done (2026-08-11)
+#### Phase 110: Migration
+- [x] Task 110.100: Move UC-related files to feat-4-use-cases — depends on: Task 1.2 — status: done (2026-08-11)
+- [x] Task 110.110: Move strategic docs to feat-0 — depends on: Task 1.2 — status: done (2026-08-11)
+- [x] Task 110.120: Archive session/temporary artifacts to feat-0/history — depends on: Task 1.2 — status: done (2026-08-11)
 
-#### Phase 3: Reference Updates
-- [x] Task 3.1: Update AGENTS.md to remove /doc/ references — depends on: Phase 2 — status: done (2026-08-11)
-- [x] Task 3.2: Search and verify no other references to /doc/ exist — depends on: Task 3.1 — status: done (2026-08-11)
+#### Phase 120: Reference Updates
+- [x] Task 120.100: Update AGENTS.md to remove /doc/ references — depends on: Phase 2 — status: done (2026-08-11)
+- [x] Task 120.110: Search and verify no other references to /doc/ exist — depends on: Task 3.1 — status: done (2026-08-11)
 
-#### Phase 4: Cleanup & Verification
-- [x] Task 4.1: Remove /doc/ directory — depends on: Task 3.2 — status: done (2026-08-11)
-- [x] Task 4.2: Verify all migrated files are accessible and links work — depends on: Task 4.1 — status: done (2026-08-11)
-- [ ] Task 4.3: Commit with message "refactor: migrate /doc to .specmgr/feat/feat-0" — depends on: Task 4.2 — status: ready
+#### Phase 130: Cleanup & Verification
+- [x] Task 130.100: Remove /doc/ directory — depends on: Task 3.2 — status: done (2026-08-11)
+- [x] Task 130.110: Verify all migrated files are accessible and links work — depends on: Task 4.1 — status: done (2026-08-11)
+- [ ] Task 130.120: Commit with message "refactor: migrate /doc to .specmgr/feat/feat-0" — depends on: Task 4.2 — status: ready
 
 ## Progress
 
@@ -107,19 +111,21 @@ This feature consolidates development planning into a single, consistent locatio
 
 None at this time.
 
-### Recent Updates
+### Updates
 
-#### 2026-08-11 (Completed)
-- **Phase 1**: Feature folder and README created with full plan
-- **Phase 2**: All 10 files migrated: 5 UC-related files → feat-4-use-cases, 3 strategic docs → feat-0, 2 artifacts → feat-0/history
-- **Phase 3**: Updated AGENTS.md and README.md; updated 15+ source files (server.py, models/adr/__init__.py, adr/prompts/*.py, uc/models/*.py, tests/*.py)
-- **Phase 4**: Verified no remaining `/doc/` references (except CHANGELOG history), removed `/doc/` directory
-- **Result**: Clean migration complete; all paths updated; no content loss; ready for commit
+#### 2026-08-11 00:00:00.000Z - Completed
+
+**Phase 1**: Feature folder and README created with full plan **Phase 2**: All 10 files migrated: 5 UC-related files → feat-4-use-cases, 3 strategic docs → feat-0, 2 artifacts → feat-0/history **Phase 3**: Updated AGENTS.md and README.md; updated 15+ source files (server.py, models/adr/__init__.py, adr/prompts/*.py, uc/models/*.py, tests/*.py) **Phase 4**: Verified no remaining `/doc/` references (except CHANGELOG history), removed `/doc/` directory **Result**: Clean migration complete; all paths updated; no content loss; ready for commit
 
 ### Decisions Made
 
-- **2026-08-11**: Consolidate `/doc` into `.specmgr/feat/` rather than splitting between `.specmgr/` and `docs/` — keeps development artifacts (work-in-progress) separate from published documentation, per AGENTS.md architecture.
-- **2026-08-11**: Archive session artifacts (session-ses_*.md, test.md) to `history/` subfolder rather than deleting — preserves context while signaling they are no longer active.
+#### 2026-08-11 00:00:00.000Z : Consolidate `/doc` into `.specmgr/feat/`
+
+Consolidate `/doc` into `.specmgr/feat/` rather than splitting between `.specmgr/` and `docs/` — keeps development artifacts (work-in-progress) separate from published documentation, per AGENTS.md architecture.
+
+#### 2026-08-11 00:00:00.000Z : Archive session artifacts (session-ses_*.md, test.md) to `history/` subfolder
+
+Archive session artifacts (session-ses_*.md, test.md) to `history/` subfolder rather than deleting — preserves context while signaling they are no longer active.
 
 ### Related PRs / Commits
 

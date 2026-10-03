@@ -4,7 +4,7 @@ created: '2026-09-21 21:31:30.254+02:00'
 id: feat-144-ref-artifact
 status: done
 type: feat
-updated: '2026-09-23 18:28:40.638+02:00'
+updated: '2026-09-30T04:37:07.000Z'
 version: 1.0.0
 ---
 
@@ -96,62 +96,62 @@ All open choices are now locked (Phase 1 complete). The design:
 
 ### Task List
 
-#### Phase 1: Design
+#### Phase 100: Design
 
-- [x] Task 1.1: Pin the tool name (`list_references`), the result-row schema (`ReferenceRow(type, id, title, path, error)` wrapped in `PagedResult`), the 10-tag reference vocabulary, the extraction regex, the source raw-read vs. target cached-read split, the naive per-ref resolution strategy (→ `### Decisions Made`), and the follow-up #145. (The `/refs` command + `ref-finder` subagent decision is recorded in `### Decisions Made` at planning time.)
-- [x] Task 1.2: Commit the finalized plan + the staged `/refs` command + `ref-finder` subagent artifacts as the feat-144 prep commit (markdown-only; no Python). The full quality gate with the tool's tests runs again in Phase 3/5 once the implementation lands.
+- [x] Task 100.100: Pin the tool name (`list_references`), the result-row schema (`ReferenceRow(type, id, title, path, error)` wrapped in `PagedResult`), the 10-tag reference vocabulary, the extraction regex, the source raw-read vs. target cached-read split, the naive per-ref resolution strategy (→ `### Decisions Made`), and the follow-up #145. (The `/refs` command + `ref-finder` subagent decision is recorded in `### Decisions Made` at planning time.)
+- [x] Task 100.110: Commit the finalized plan + the staged `/refs` command + `ref-finder` subagent artifacts as the feat-144 prep commit (markdown-only; no Python). The full quality gate with the tool's tests runs again in Phase 3/5 once the implementation lands.
 
-#### Phase 2: Implementation
+#### Phase 110: Implementation
 
-- [x] Task 2.1: Add the shared reference-extraction regex, 10-tag type vocabulary, and per-domain resolution dispatch in `general/tools/_references.py`
-- [x] Task 2.2: Add the `ReferenceRow` model in `general/models/reference.py`
-- [x] Task 2.3: Implement the `list_references` tool (source `validate_id` + `load_by_id` + `assert_within` + `body_text`; per-ref target resolution; `PagedResult` wrap) with `_path_safety` guards, registered in `general/tools/__init__.py` and `server.py`
-- [x] Task 2.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
+- [x] Task 110.100: Add the shared reference-extraction regex, 10-tag type vocabulary, and per-domain resolution dispatch in `general/tools/_references.py`
+- [x] Task 110.110: Add the `ReferenceRow` model in `general/models/reference.py`
+- [x] Task 110.120: Implement the `list_references` tool (source `validate_id` + `load_by_id` + `assert_within` + `body_text`; per-ref target resolution; `PagedResult` wrap) with `_path_safety` guards, registered in `general/tools/__init__.py` and `server.py`
+- [x] Task 110.130: Run the full quality gate with tests and commit the phase as a single commit (no push)
 
-#### Phase 3: Tests
+#### Phase 120: Tests
 
-- [x] Task 3.1: Unit tests for extraction (per tag + case/dash/anywhere variants), deduplication, resolved-vs-not-found rows, and the empty-list case (tmp `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR` fixtures with real referenced artifacts)
-- [x] Task 3.2: Path-safety tests (invalid source `type`/`id` raise before any filesystem access) and source-missing (raises the domain not-found error)
-- [x] Task 3.3: Paging tests (`total`/`truncated`/`error_count` correct, `offset` advances, `max_results` clamps to [1,100], `offset` floors to 0)
-- [x] Task 3.4: Run the full quality gate with tests and commit the phase as a single commit (no push)
+- [x] Task 120.100: Unit tests for extraction (per tag + case/dash/anywhere variants), deduplication, resolved-vs-not-found rows, and the empty-list case (tmp `SPECMGR_DOCS_DIR`/`SPECMGR_ADR_DIR` fixtures with real referenced artifacts)
+- [x] Task 120.110: Path-safety tests (invalid source `type`/`id` raise before any filesystem access) and source-missing (raises the domain not-found error)
+- [x] Task 120.120: Paging tests (`total`/`truncated`/`error_count` correct, `offset` advances, `max_results` clamps to [1,100], `offset` floors to 0)
+- [x] Task 120.130: Run the full quality gate with tests and commit the phase as a single commit (no push)
 
-#### Phase 4: Command + Subagent
+#### Phase 130: Command + Subagent
 
-- [x] Task 4.1: Create `.opencode/agent/ref-finder.md` -- a read-only subagent (frontmatter: `mode: subagent`, read-only permission block with `edit`/`write` denied, `feat-reviewer`-style) whose workflow parses `<type> <id>`, calls `list_references`, and reports the rows with not-found references flagged
-- [x] Task 4.2: Create `.opencode/command/refs.md` -- the `/refs <type> <id>` slash command with frontmatter `description` + `agent: ref-finder`, `review-feature`-style body
-- [x] Task 4.3: Verify both files follow the conventions of the existing `.opencode/agent`/`.opencode/command` files and smoke-test `/refs` against a real document (deferred: requires `list_references` to exist)
-- [x] Task 4.4: Run the full quality gate with tests and commit the phase (folded into the Phase 5 docs commit once the tool lands)
+- [x] Task 130.100: Create `.opencode/agent/ref-finder.md` -- a read-only subagent (frontmatter: `mode: subagent`, read-only permission block with `edit`/`write` denied, `feat-reviewer`-style) whose workflow parses `<type> <id>`, calls `list_references`, and reports the rows with not-found references flagged
+- [x] Task 130.110: Create `.opencode/command/refs.md` -- the `/refs <type> <id>` slash command with frontmatter `description` + `agent: ref-finder`, `review-feature`-style body
+- [x] Task 130.120: Verify both files follow the conventions of the existing `.opencode/agent`/`.opencode/command` files and smoke-test `/refs` against a real document (deferred: requires `list_references` to exist)
+- [x] Task 130.130: Run the full quality gate with tests and commit the phase (folded into the Phase 5 docs commit once the tool lands)
 
-#### Phase 5: Documentation
+#### Phase 140: Documentation
 
-- [x] Task 5.1: Update `server.py`'s module docstring, `AGENTS.md`, `README.md` (new `## Referencing Artifacts` section for `/refs`), and `CHANGELOG.md` (`[Unreleased]` → Added)
-- [x] Task 5.2: Regenerate `docs/MCP.md` (`specmgr mcp-docs`) and `docs/api/` + `docs/GENERATED.md` (`specmgr docs`); update `whitelist.py` if vulture flags a new symbol
-- [x] Task 5.3: Run the full quality gate with tests and commit the phase as a single commit (no push)
+- [x] Task 140.100: Update `server.py`'s module docstring, `AGENTS.md`, `README.md` (new `## Referencing Artifacts` section for `/refs`), and `CHANGELOG.md` (`[Unreleased]` → Added)
+- [x] Task 140.110: Regenerate `docs/MCP.md` (`specmgr mcp-docs`) and `docs/api/` + `docs/GENERATED.md` (`specmgr docs`); update `whitelist.py` if vulture flags a new symbol
+- [x] Task 140.120: Run the full quality gate with tests and commit the phase as a single commit (no push)
 
-#### Phase 6: Verification & Closeout
+#### Phase 150: Verification & Closeout
 
-- [x] Task 6.1: Run the full quality gate with tests as the final verification pass
-- [x] Task 6.2: Update `### Current Status` and `### Updates`, and set the feature status via the generic `set_status` tool (`type="feat"`)
-- [x] Task 6.3: Commit the phase as a single commit (no push)
+- [x] Task 150.100: Run the full quality gate with tests as the final verification pass
+- [x] Task 150.110: Update `### Current Status` and `### Updates`, and set the feature status via the generic `set_status` tool (`type="feat"`)
+- [x] Task 150.120: Commit the phase as a single commit (no push)
 
-#### Phase 7: Follow-Up Fixes (Review Remediation)
+#### Phase 160: Follow-Up Fixes (Review Remediation)
 
-- [x] Task 7.1: Fix the docstring splice in `general/tools/__init__.py` (stray leading-space artifact from inserting the `list_references` paragraph mid-sentence into the existing `validate` docstring text); regenerate `docs/api/biz.dfch.specmgr.general.tools.md` (`specmgr docs`).
-- [x] Task 7.2: Replace `list_references.py`'s hand-written `Literal["req", "uc", ..., "adr"]` `type` parameter with `Literal[*ALL_DOMAINS]` (imported from `general.tools._domains`), matching `set_status.py`/`update.py`/`delete.py`/`set_classification.py`/`validate.py`'s existing pattern (feat-125-domain-lists).
-- [x] Task 7.3: Add the missing drift guard for `_SOURCE_LOADERS` in `list_references.py`: `assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), "..."` at module scope, identical in shape to `set_status.py`'s `_ADAPTERS`/`ALL_DOMAINS` guard. No restructuring of the data-driven dict itself (Phase 2's documented design choice stands).
-- [x] Task 7.4: In `_references.py`, add `assert set(_TARGET_RESOLVERS) == set(REFERENCE_TYPES), "..."` at module scope, and narrow `resolve_reference`'s `except LookupError` so a `KeyError` from a missing `_TARGET_RESOLVERS` entry (a programming error) is not silently folded into the same not-found `ReferenceRow` path as a legitimate domain `XNotFoundError`.
-- [x] Task 7.5: Tick `ACC-001`..`ACC-009` to `[x]` in the Acceptance Criteria section, each with an inline evidence sentence (repo convention, e.g. `feat-36-delete/README.md:52-59`). (Done in this same doc-only edit.)
-- [x] Task 7.6: Document the accepted code-fence/inline-code-span extraction caveat in `_references.py`'s module docstring (the Design Notes bullet above is staged); add one test in `test__references.py` pinning the (accepted) behavior of a reference-shaped string inside a fenced/inline code span.
-- [x] Task 7.7: Replace the Unicode em dash "—" with ASCII "--" in `.opencode/agent/ref-finder.md`'s `description` field and `.opencode/command/refs.md`'s body, matching `feat-reviewer.md`/`review-feature.md`/`phase-implementer.md`'s typographic convention.
-- [x] Task 7.8: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`); reopen the feature status via `set_status` (`type="feat"`, `done` -> `progress`) at phase start (done in this edit) and set it back to `done` on closeout; update `### Current Status`/`### Updates`; commit as a single phase commit on the existing `feat-144-ref-artifact` branch (amending open PR #147, no push unless instructed).
+- [x] Task 160.100: Fix the docstring splice in `general/tools/__init__.py` (stray leading-space artifact from inserting the `list_references` paragraph mid-sentence into the existing `validate` docstring text); regenerate `docs/api/biz.dfch.specmgr.general.tools.md` (`specmgr docs`).
+- [x] Task 160.110: Replace `list_references.py`'s hand-written `Literal["req", "uc", ..., "adr"]` `type` parameter with `Literal[*ALL_DOMAINS]` (imported from `general.tools._domains`), matching `set_status.py`/`update.py`/`delete.py`/`set_classification.py`/`validate.py`'s existing pattern (feat-125-domain-lists).
+- [x] Task 160.120: Add the missing drift guard for `_SOURCE_LOADERS` in `list_references.py`: `assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), "..."` at module scope, identical in shape to `set_status.py`'s `_ADAPTERS`/`ALL_DOMAINS` guard. No restructuring of the data-driven dict itself (Phase 2's documented design choice stands).
+- [x] Task 160.130: In `_references.py`, add `assert set(_TARGET_RESOLVERS) == set(REFERENCE_TYPES), "..."` at module scope, and narrow `resolve_reference`'s `except LookupError` so a `KeyError` from a missing `_TARGET_RESOLVERS` entry (a programming error) is not silently folded into the same not-found `ReferenceRow` path as a legitimate domain `XNotFoundError`.
+- [x] Task 160.140: Tick `ACC-001`..`ACC-009` to `[x]` in the Acceptance Criteria section, each with an inline evidence sentence (repo convention, e.g. `feat-36-delete/README.md:52-59`). (Done in this same doc-only edit.)
+- [x] Task 160.150: Document the accepted code-fence/inline-code-span extraction caveat in `_references.py`'s module docstring (the Design Notes bullet above is staged); add one test in `test__references.py` pinning the (accepted) behavior of a reference-shaped string inside a fenced/inline code span.
+- [x] Task 160.160: Replace the Unicode em dash "—" with ASCII "--" in `.opencode/agent/ref-finder.md`'s `description` field and `.opencode/command/refs.md`'s body, matching `feat-reviewer.md`/`review-feature.md`/`phase-implementer.md`'s typographic convention.
+- [x] Task 160.170: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`); reopen the feature status via `set_status` (`type="feat"`, `done` -> `progress`) at phase start (done in this edit) and set it back to `done` on closeout; update `### Current Status`/`### Updates`; commit as a single phase commit on the existing `feat-144-ref-artifact` branch (amending open PR #147, no push unless instructed).
 
-#### Phase 8: Minor Cleanup Fixes
+#### Phase 170: Minor Cleanup Fixes
 
-- [x] Task 8.1: Fix the stale req-first/adr-last domain-list ordering in `list_references.py`'s `@mcp.tool()` `description=` (replace the hand-written list with a dynamic `f"{', '.join(ALL_DOMAINS)}"` interpolation, mirroring `set_status.py`'s own pattern) and in its function docstring's `Parameters` section (correct the literal order to match `ALL_DOMAINS`'s adr-first order); apply the same adr-first ordering correction at the three other sites that hand-write this list in the stale order: `server.py`'s module docstring, `AGENTS.md`, and `CHANGELOG.md`; regenerate `docs/MCP.md`/`docs/api/` to pick up the description-text change.
-- [x] Task 8.2: Fix the complexity-note overstatement in the plan's Design Notes ("Target resolution" bullet) and Decisions Made ("Resolution strategy" entry): `O(#refs × #domain) scans`/`Cost is O(#refs × #domain)` corrected to `O(#refs) scans`/`Cost is O(#refs)` (`resolve_reference` is an O(1) dict dispatch per reference, not a scan across domains).
-- [x] Task 8.3: Replace the Unicode ellipsis "…" with ASCII "..." in `.opencode/agent/ref-finder.md` and `.opencode/command/refs.md`'s truncated-uuid examples, matching the ASCII convention already used in `feat-reviewer.md`/`phase-orchestrator.md`.
-- [x] Task 8.4: Extend `TestListReferencesSourceMissing` in `test_list_references.py` to cover the six source domains it was missing (`tsk`, `qa`, `prb`, `dec`, `sop`, `vcr`), in the exact same parametrized-cases style already used for the other 7 domains, asserting the same not-found-raises-identical-to-`get_<d>` contract for all 13 supported source domains.
-- [x] Task 8.5: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, `specmgr docs`, `specmgr adr-toc`); confirm `docs/api/`/`docs/MCP.md` show only the Task 8.1 description-text diff; update `### Current Status`/`### Updates` and bump the frontmatter `updated` timestamp.
+- [x] Task 170.100: Fix the stale req-first/adr-last domain-list ordering in `list_references.py`'s `@mcp.tool()` `description=` (replace the hand-written list with a dynamic `f"{', '.join(ALL_DOMAINS)}"` interpolation, mirroring `set_status.py`'s own pattern) and in its function docstring's `Parameters` section (correct the literal order to match `ALL_DOMAINS`'s adr-first order); apply the same adr-first ordering correction at the three other sites that hand-write this list in the stale order: `server.py`'s module docstring, `AGENTS.md`, and `CHANGELOG.md`; regenerate `docs/MCP.md`/`docs/api/` to pick up the description-text change.
+- [x] Task 170.110: Fix the complexity-note overstatement in the plan's Design Notes ("Target resolution" bullet) and Decisions Made ("Resolution strategy" entry): `O(#refs × #domain) scans`/`Cost is O(#refs × #domain)` corrected to `O(#refs) scans`/`Cost is O(#refs)` (`resolve_reference` is an O(1) dict dispatch per reference, not a scan across domains).
+- [x] Task 170.120: Replace the Unicode ellipsis "…" with ASCII "..." in `.opencode/agent/ref-finder.md` and `.opencode/command/refs.md`'s truncated-uuid examples, matching the ASCII convention already used in `feat-reviewer.md`/`phase-orchestrator.md`.
+- [x] Task 170.130: Extend `TestListReferencesSourceMissing` in `test_list_references.py` to cover the six source domains it was missing (`tsk`, `qa`, `prb`, `dec`, `sop`, `vcr`), in the exact same parametrized-cases style already used for the other 7 domains, asserting the same not-found-raises-identical-to-`get_<d>` contract for all 13 supported source domains.
+- [x] Task 170.140: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, `specmgr docs`, `specmgr adr-toc`); confirm `docs/api/`/`docs/MCP.md` show only the Task 8.1 description-text diff; update `### Current Status`/`### Updates` and bump the frontmatter `updated` timestamp.
 
 ## Progress
 

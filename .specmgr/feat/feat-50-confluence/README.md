@@ -3,7 +3,7 @@ created: '2026-09-01 17:36:02.251Z'
 id: feat-50-confluence
 status: done
 type: feat
-updated: '2026-09-06 07:09:18.000Z'
+updated: '2026-09-30T05:13:07.000Z'
 version: 1.0.0
 ---
 
@@ -132,45 +132,45 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 ### Task List
 
-#### Phase 1: Rename `webfetch` to `confluence_fetch`
+#### Phase 100: Rename `webfetch` to `confluence_fetch`
 
-- [x] Task 1.1: Extract `general/tools/_confluence_config.py` (env var constants, `ConfluenceNotConfiguredError`, `_confluence_config()`).
+- [x] Task 100.100: Extract `general/tools/_confluence_config.py` (env var constants, `ConfluenceNotConfiguredError`, `_confluence_config()`).
 
-- [x] Task 1.2: Rename `webfetch.py` to `confluence_fetch.py` (tool/function/exception names, env var names), update `general/tools/__init__.py`, `general/__init__.py`, `server.py` docstrings.
+- [x] Task 100.110: Rename `webfetch.py` to `confluence_fetch.py` (tool/function/exception names, env var names), update `general/tools/__init__.py`, `general/__init__.py`, `server.py` docstrings.
 
-- [x] Task 1.3: Rename `test_webfetch.py` to `test_confluence_fetch.py`, updating all references.
+- [x] Task 100.120: Rename `test_webfetch.py` to `test_confluence_fetch.py`, updating all references.
 
-- [x] Task 1.4: Update `README.md` environment variables section and `CHANGELOG.md`.
+- [x] Task 100.130: Update `README.md` environment variables section and `CHANGELOG.md`.
 
-#### Phase 2: URL helper + `confluence_fetch` enhancements
+#### Phase 110: URL helper + `confluence_fetch` enhancements
 
-- [x] Task 2.1: Add `general/tools/_confluence_url.py` (`extract_page_id`, `build_rest_content_url`, `looks_like_rest_or_download_url`) with `tests/general/tools/test__confluence_url.py`.
+- [x] Task 110.100: Add `general/tools/_confluence_url.py` (`extract_page_id`, `build_rest_content_url`, `looks_like_rest_or_download_url`) with `tests/general/tools/test__confluence_url.py`.
 
-- [x] Task 2.2: Wire automatic REST URL construction, tiny-link rejection, and SSO-redirect detection into `confluence_fetch`.
+- [x] Task 110.110: Wire automatic REST URL construction, tiny-link rejection, and SSO-redirect detection into `confluence_fetch`.
 
-- [x] Task 2.3: Add binary/image download support (content-type detection, write-to-`destination_path`) to `confluence_fetch`.
+- [x] Task 110.120: Add binary/image download support (content-type detection, write-to-`destination_path`) to `confluence_fetch`.
 
-- [x] Task 2.4: Extend `test_confluence_fetch.py` with cases for all of the above.
+- [x] Task 110.130: Extend `test_confluence_fetch.py` with cases for all of the above.
 
-#### Phase 3: `confluence_update` core (no attachments yet)
+#### Phase 120: `confluence_update` core (no attachments yet)
 
-- [x] Task 3.1: Implement `confluence_update` (GET version/title, render Markdown via `markdown-it-py`, PUT with incremented version).
+- [x] Task 120.100: Implement `confluence_update` (GET version/title, render Markdown via `markdown-it-py`, PUT with incremented version).
 
-- [x] Task 3.2: Add `tests/general/tools/test_confluence_update.py` (mocked GET/PUT).
+- [x] Task 120.110: Add `tests/general/tools/test_confluence_update.py` (mocked GET/PUT).
 
-#### Phase 4: Attachment upload + image macro rewrite
+#### Phase 130: Attachment upload + image macro rewrite
 
-- [x] Task 4.1: Implement local-image discovery, attachment upload (with existing-filename fallback), and `<img>` -> `<ac:image>` rewriting in `confluence_update`.
+- [x] Task 130.100: Implement local-image discovery, attachment upload (with existing-filename fallback), and `<img>` -> `<ac:image>` rewriting in `confluence_update`.
 
-- [x] Task 4.2: Extend `test_confluence_update.py` with mocked `POST` attachment upload/fallback cases.
+- [x] Task 130.110: Extend `test_confluence_update.py` with mocked `POST` attachment upload/fallback cases.
 
-#### Phase 5: Verification and docs
+#### Phase 140: Verification and docs
 
-- [x] Task 5.1: Real, reversible smoke test against the dedicated Confluence test page (id `1232503612`).
+- [x] Task 140.100: Real, reversible smoke test against the dedicated Confluence test page (id `1232503612`).
 
-- [x] Task 5.2: `specmgr docs`, `ruff format`/`check`, `vulture`, full `unittest` suite, `CHANGELOG.md` entry.
+- [x] Task 140.110: `specmgr docs`, `ruff format`/`check`, `vulture`, full `unittest` suite, `CHANGELOG.md` entry.
 
-#### Phase 6: Fix duplicate-filename detection against real Confluence behavior
+#### Phase 150: Fix duplicate-filename detection against real Confluence behavior
 
 A post-completion, real-instance follow-up test (called `confluence_update` directly a second
 time against page `1232503612` with the same already-attached `feat-50-smoke-test.png` filename)
@@ -186,20 +186,20 @@ fallback *endpoint itself* was separately confirmed live to work correctly (`POS
 incremented `1` -> `2`, independent of the page's own version) -- only the detection trigger is
 broken.
 
-- [x] Task 6.1: Fix `_looks_like_duplicate_filename_response()` in `confluence_update.py` to
+- [x] Task 150.100: Fix `_looks_like_duplicate_filename_response()` in `confluence_update.py` to
   detect the real, confirmed Confluence error message ("Cannot add a new attachment with same
   file name as an existing attachment: `<filename>`. Log referral number is `<uuid>`"), in
   addition to (or replacing) the current "already exist" heuristic; consider a more robust check
   (e.g. status 400 + the uploaded filename itself appearing in the message) over exact-phrase
   matching, so future message-wording variants are less likely to slip through undetected again.
 
-- [x] Task 6.2: Add a regression test in `test_confluence_update.py` using the exact real message
+- [x] Task 150.110: Add a regression test in `test_confluence_update.py` using the exact real message
   captured live, asserting the fallback path (`_find_existing_attachment_id` +
   `.../child/attachment/{id}/data`) is now actually triggered for this real-world response shape,
   and that the corresponding `<img>` tag IS rewritten to `<ac:image>`/`<ri:attachment>` in this
   case (not left as a `failed_images` entry, as it incorrectly was before this fix).
 
-- [x] Task 6.3: Update code comments/docstrings in `confluence_update.py` and this feature
+- [x] Task 150.120: Update code comments/docstrings in `confluence_update.py` and this feature
   README's Decisions Made log: the attachment-create endpoint shape, the `<ac:image>` rewrite,
   and the fallback `.../child/attachment/{id}/data` endpoint shape are now *confirmed* against a
   real instance (not just the create path, as Phase 5 recorded) -- only the detection heuristic
@@ -209,19 +209,19 @@ broken.
   independent of the page's own version (which `confluence_update`'s `PUT` always increments on
   every call, regardless of the attachment outcome).
 
-- [x] Task 6.4: Re-run the full quality gate (`ruff format`/`check`, `vulture`, full `unittest`
+- [x] Task 150.130: Re-run the full quality gate (`ruff format`/`check`, `vulture`, full `unittest`
   suite, `specmgr docs`/`specmgr mcp-docs`) and add a `CHANGELOG.md` entry (amend the existing
   `[Unreleased]` `confluence_update` bullet, or add a `### Fixed` entry, since this feature has
   not shipped in a release yet).
 
-- [x] Task 6.5 (optional): re-exercise the corrected heuristic once more against the real
+- [x] Task 150.140: (optional) re-exercise the corrected heuristic once more against the real
   dedicated test page (id `1232503612`) to confirm the fix actually triggers the fallback live,
   end-to-end -- weigh this against leaving yet another permanent attachment-version increment on
   the real page (there is no attachment-delete tool in this codebase, per Phase 5's already-
   documented limitation). **Intentionally skipped** -- see the Decisions Made entry below for the
   rationale (relied on the mocked regression test, Task 6.2, instead).
 
-#### Phase 7: Sanitize invalid HTML comments and convert frontmatter to a code block
+#### Phase 160: Sanitize invalid HTML comments and convert frontmatter to a code block
 
 A follow-up ad hoc real-instance test (uploading this very feature's own `README.md` -- a real,
 representative Markdown file with YAML frontmatter and `<!-- -->` HTML comments using `--` as a
@@ -240,41 +240,41 @@ real problems:
    `---` fence as a Setext-heading underline, turning the entire frontmatter block into a single
    `<h2>` heading.
 
-- [x] Task 7.1: Fix REQ-010 for real (not just as a one-off manual workaround): add a
+- [x] Task 160.100: Fix REQ-010 for real (not just as a one-off manual workaround): add a
   `confluence_update` render-pipeline step that finds every `<!-- ... -->` comment in the rendered
   HTML fragment and replaces any `--` inside the comment body with a safe substitute (e.g. an em
   dash `—`), also guarding against a sanitized comment ending in a bare `-` immediately before
   `-->` (also invalid per the XML comment grammar).
 
-- [x] Task 7.2: Add tests in `test_confluence_update.py` reproducing the confirmed real scenario
+- [x] Task 160.110: Add tests in `test_confluence_update.py` reproducing the confirmed real scenario
   (a Markdown file containing an HTML comment with `--` inside it) and asserting the final
   `body.storage.value` contains no raw `--` inside any `<!-- -->` comment (ACC-009).
 
-- [x] Task 7.3: Fix REQ-011: if the source Markdown file begins with a YAML frontmatter block (a
+- [x] Task 160.120: Fix REQ-011: if the source Markdown file begins with a YAML frontmatter block (a
   line consisting solely of `---`, followed later by a closing `---` line), convert that block
   into a fenced code block (e.g. an appropriate ` ``` ` fence) before rendering, so it becomes a
   `<pre><code>`-style block instead of being mangled into a heading. A file with no leading
   frontmatter, or with an unclosed/malformed opening `---` (no matching closing `---` line), must
   be left completely unaffected.
 
-- [x] Task 7.4: Add tests in `test_confluence_update.py` for the frontmatter conversion (ACC-010):
+- [x] Task 160.130: Add tests in `test_confluence_update.py` for the frontmatter conversion (ACC-010):
   a file with a leading frontmatter block renders it as a fenced/code block (not a heading); a
   file without frontmatter is unaffected; a file with an opening `---` but no closing `---` is
   unaffected (not incorrectly treated as frontmatter).
 
-- [x] Task 7.5: Update `confluence_update`'s module docstring/description and this feature
+- [x] Task 160.140: Update `confluence_update`'s module docstring/description and this feature
   README's Decisions Made log to document both new robustness behaviors; re-run the full quality
   gate (`ruff format`/`check`, `vulture`, full `unittest` suite, `specmgr docs`/`specmgr
   mcp-docs`); add a `CHANGELOG.md` entry (amend the existing `[Unreleased]` `confluence_update`
   bullet).
 
-- [x] Task 7.6 (optional): re-verify live against the real dedicated test page by uploading this
+- [x] Task 160.150: (optional) re-verify live against the real dedicated test page by uploading this
   feature's own, real, UNMODIFIED `README.md` directly (no scratch-copy workaround needed this
   time) and confirming the `PUT` now succeeds on the first try with the frontmatter rendered as a
   code block; revert the page back to its original test content afterward. **Attempted and
   passed** -- see the Updates entry below for full evidence.
 
-#### Phase 8: Sync with upstream `dev`; add `confluence_update`/`confluence_fetch` MCP prompts
+#### Phase 170: Sync with upstream `dev`; add `confluence_update`/`confluence_fetch` MCP prompts
 
 At the user's request: (a) sync this feature branch with `origin/dev` (which has advanced since
 this branch forked), and (b) add two new MCP *prompts* -- narrated instruction text, a separate
@@ -286,7 +286,7 @@ first, ahead of the two prompt tasks the user listed first in their own request,
 practical reasons: building the new prompts on the freshly-merged base avoids doing the work twice
 against a stale branch.
 
-- [x] Task 8.1: Merge `origin/dev` into this feature branch (`feat-50-confluence`). Expect
+- [x] Task 170.100: Merge `origin/dev` into this feature branch (`feat-50-confluence`). Expect
   conflicts only in generated/shared files this feature also touched (`CHANGELOG.md`,
   `docs/GENERATED.md`, `docs/api/README.md`, possibly other regenerated `docs/api/*.md` pages) --
   resolve any real source-code conflicts by hand (none expected, since `dev`'s changes since this
@@ -296,7 +296,7 @@ against a stale branch.
   format`/`check`, `vulture`, full `unittest` suite) afterward to confirm the merged branch is
   clean and this feature's own Confluence work still passes unchanged.
 
-- [x] Task 8.2: Add a new `@mcp.prompt()` named `confluence_update`
+- [x] Task 170.110: Add a new `@mcp.prompt()` named `confluence_update`
   (`general/prompts/confluence_update.py`) -- same name as the existing `confluence_update` tool.
   Accepts the same two parameters as the tool (`page_url_or_id: str, markdown_file_path: str`) and
   returns instructional text (via a packaged data file,
@@ -306,11 +306,11 @@ against a stale branch.
   those two argument values to upload the given Markdown file's rendered content to the given
   Confluence page. Register it in `general/prompts/__init__.py`.
 
-- [x] Task 8.3: Add tests for the `confluence_update` prompt (e.g.
+- [x] Task 170.120: Add tests for the `confluence_update` prompt (e.g.
   `tests/general/prompts/test_confluence_update.py`) asserting the returned instructional text
   embeds both given parameter values and names the `confluence_update` tool (ACC-011).
 
-- [x] Task 8.4: Add a new `@mcp.prompt()` named `confluence_fetch`
+- [x] Task 170.130: Add a new `@mcp.prompt()` named `confluence_fetch`
   (`general/prompts/confluence_fetch.py`) -- same name as the existing `confluence_fetch` tool.
   Accepts the same parameters as the tool (`url: str, destination_path: str | None = None`) and
   returns instructional text (packaged data file,
@@ -320,12 +320,12 @@ against a stale branch.
   content (REQ-005) and is optional/omittable for a normal page fetch. Register it in
   `general/prompts/__init__.py`.
 
-- [x] Task 8.5: Add tests for the `confluence_fetch` prompt (e.g.
+- [x] Task 170.140: Add tests for the `confluence_fetch` prompt (e.g.
   `tests/general/prompts/test_confluence_fetch.py`) asserting the returned instructional text
   embeds the given parameter value(s) -- including the `destination_path=None` case -- and names
   the `confluence_fetch` tool (ACC-012).
 
-- [x] Task 8.6: Update `general/__init__.py`'s and `server.py`'s module docstrings to mention both
+- [x] Task 170.150: Update `general/__init__.py`'s and `server.py`'s module docstrings to mention both
   new prompts; re-run the full quality gate (`ruff format`/`check`, `vulture`, full `unittest`
   suite, `specmgr docs`/`specmgr mcp-docs`); add a `CHANGELOG.md` entry (`[Unreleased]`
   `### Added`).

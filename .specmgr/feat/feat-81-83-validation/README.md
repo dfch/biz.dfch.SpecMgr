@@ -4,7 +4,7 @@ created: '2026-09-03 10:38:25.338Z'
 id: feat-81-83-validation
 status: done
 type: feat
-updated: '2026-09-06 07:09:18.000Z'
+updated: '2026-10-02T16:09:27.000Z'
 version: 1.0.0
 ---
 
@@ -34,11 +34,11 @@ GitHub issues #81 and #83 both concern how this repo's MCP tools report validati
 
 - REQ-008: Regression tests reproduce issue #83's two literal repro bodies end-to-end through the new generic `validate` tool, and a directory with a mix of valid and unparseable documents end-to-end through `list_<d>` for at least two domains.
 
-- REQ-009 (Phase 6, added following an independent post-closeout quality review): Fix the 11 stale domain `__init__.py` module docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`) that still enumerate the retired `validate_<d>` tool in their own "tools (...)" listing (e.g. `req/__init__.py`'s docstring still lists `validate_req` as one of its tools) -- a real, verifiable inaccuracy Task 2.3/5.2 did not catch because both only audited `AGENTS.md`/`server.py`/prompts, not every domain package's own module docstring. In the same pass, also correct `sysrs/__init__.py`'s own unrelated, pre-existing staleness (claims "7 tools" and that "`sysrs.prompts` is still an empty placeholder sub-package", both no longer true as of feat-32-sysrs's later phases), since it is touched during the same audit. Regenerate `docs/api/`/`docs/GENERATED.md` afterward, since they mirror these docstrings verbatim and currently ship the same stale claims.
+- REQ-009: (Phase 6, added following an independent post-closeout quality review) Fix the 11 stale domain `__init__.py` module docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`) that still enumerate the retired `validate_<d>` tool in their own "tools (...)" listing (e.g. `req/__init__.py`'s docstring still lists `validate_req` as one of its tools) -- a real, verifiable inaccuracy Task 2.3/5.2 did not catch because both only audited `AGENTS.md`/`server.py`/prompts, not every domain package's own module docstring. In the same pass, also correct `sysrs/__init__.py`'s own unrelated, pre-existing staleness (claims "7 tools" and that "`sysrs.prompts` is still an empty placeholder sub-package", both no longer true as of feat-32-sysrs's later phases), since it is touched during the same audit. Regenerate `docs/api/`/`docs/GENERATED.md` afterward, since they mirror these docstrings verbatim and currently ship the same stale claims.
 
-- REQ-010 (Phase 6): Fix `general/tools/validate.py`'s `yaml.YAMLError` message-enrichment gap. Every `_validate_<d>` adapter's unconditional, unwrapped `has_frontmatter = bool(frontmatter.loads(content).metadata)` probe -- run before the `full=True`/`full=False` branch is even decided -- raises PyYAML's raw, un-enriched error (opaque `"<unicode string>"` location, block-relative line number) for malformed frontmatter YAML, instead of `parse_<d>`'s enriched form (`"the frontmatter block"` naming, document-relative line number, via `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error`) -- because the probe runs entirely outside any `wrap_tool_errors` context. This directly contradicts REQ-004's own claim ("reusing feat-27-validation's already-enriched message... verbatim") for this one channel, and was inherited unchanged from the original per-domain `validate_<d>` tools (a "verbatim port"), not introduced by this feature -- but it was never caught because `tests/general/tools/test_validate.py` (849 lines, 15 test methods) contains zero `yaml`/`YAMLError`/malformed-YAML-syntax test coverage, unlike the parallel `list_<d>` fix (Task 3.3), which got a dedicated test for exactly this channel. Fix: add a private helper `_detect_frontmatter(content: str, *, domain: str) -> bool` inside `general/tools/validate.py` (kept local to this file, not promoted to a shared `models/md` module, since nothing else in the codebase currently needs this exact composition) that composes `enrich_frontmatter_yaml_error` (block-naming + document-relative line remap) with `wrap_tool_errors`'s own domain/tool labeling, used by all twelve adapters in place of their raw probe, so a malformed-YAML `validate(type=<d>, content=..., full=True)` call's error message becomes textually identical to `parse_<d>`'s own message for the same input (modulo the `wrap_tool_errors` label prefix). Must not change the existing `full`/content-shape-mismatch `ValueError` behavior -- `TestValidateFullShapeMismatchRaises` must keep passing unmodified.
+- REQ-010: (Phase 6) Fix `general/tools/validate.py`'s `yaml.YAMLError` message-enrichment gap. Every `_validate_<d>` adapter's unconditional, unwrapped `has_frontmatter = bool(frontmatter.loads(content).metadata)` probe -- run before the `full=True`/`full=False` branch is even decided -- raises PyYAML's raw, un-enriched error (opaque `"<unicode string>"` location, block-relative line number) for malformed frontmatter YAML, instead of `parse_<d>`'s enriched form (`"the frontmatter block"` naming, document-relative line number, via `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error`) -- because the probe runs entirely outside any `wrap_tool_errors` context. This directly contradicts REQ-004's own claim ("reusing feat-27-validation's already-enriched message... verbatim") for this one channel, and was inherited unchanged from the original per-domain `validate_<d>` tools (a "verbatim port"), not introduced by this feature -- but it was never caught because `tests/general/tools/test_validate.py` (849 lines, 15 test methods) contains zero `yaml`/`YAMLError`/malformed-YAML-syntax test coverage, unlike the parallel `list_<d>` fix (Task 3.3), which got a dedicated test for exactly this channel. Fix: add a private helper `_detect_frontmatter(content: str, *, domain: str) -> bool` inside `general/tools/validate.py` (kept local to this file, not promoted to a shared `models/md` module, since nothing else in the codebase currently needs this exact composition) that composes `enrich_frontmatter_yaml_error` (block-naming + document-relative line remap) with `wrap_tool_errors`'s own domain/tool labeling, used by all twelve adapters in place of their raw probe, so a malformed-YAML `validate(type=<d>, content=..., full=True)` call's error message becomes textually identical to `parse_<d>`'s own message for the same input (modulo the `wrap_tool_errors` label prefix). Must not change the existing `full`/content-shape-mismatch `ValueError` behavior -- `TestValidateFullShapeMismatchRaises` must keep passing unmodified.
 
-- REQ-011 (Phase 6): Amend ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section, which currently commits to a specific future step ("its `{valid, errors}` result must be observed intact end-to-end through a live OpenCode session for at least the two Phase 1 regression fixtures") that this feature's own closeout (Phase 5) never actually performed or recorded -- only unit-level Python calls (`TestValidateIssue83Regressions`) were run. Revise that section to state precisely what was verified (unit-level `{valid, errors}` shape reproduction of both Phase 1 regression fixtures via direct Python calls, not a live MCP client round-trip) rather than leaving an unfulfilled, silently-open commitment in an `accepted`-status ADR.
+- REQ-011: (Phase 6) Amend ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section, which currently commits to a specific future step ("its `{valid, errors}` result must be observed intact end-to-end through a live OpenCode session for at least the two Phase 1 regression fixtures") that this feature's own closeout (Phase 5) never actually performed or recorded -- only unit-level Python calls (`TestValidateIssue83Regressions`) were run. Revise that section to state precisely what was verified (unit-level `{valid, errors}` shape reproduction of both Phase 1 regression fixtures via direct Python calls, not a live MCP client round-trip) rather than leaving an unfulfilled, silently-open commitment in an `accepted`-status ADR.
 
 ### Acceptance Criteria
 
@@ -203,77 +203,77 @@ None of these three gaps required reopening this feature's core design (the gene
 
 ### Task List
 
-#### Phase 1: Investigation and Inventory
+#### Phase 100: Investigation and Inventory
 
-- [x] Task 1.1: Reproduce issue #83's `req` naive-isoformat-timestamp repro against current HEAD via `validate_req`. Done -- see Design Notes.
+- [x] Task 100.100: Reproduce issue #83's `req` naive-isoformat-timestamp repro against current HEAD via `validate_req`. Done -- see Design Notes.
 
-- [x] Task 1.2: Reproduce issue #83's `dec` em-dash-heading repro against current HEAD via `validate_dec`. Done -- see Design Notes.
+- [x] Task 100.110: Reproduce issue #83's `dec` em-dash-heading repro against current HEAD via `validate_dec`. Done -- see Design Notes.
 
-- [x] Task 1.3: Record a confirmed-real-or-already-fixed verdict for both, in Design Notes. Done -- verdict recorded, with a root-cause diagnosis that narrows this feature's fix rationale (also spot-checked via `validate_feat`; see Design Notes).
+- [x] Task 100.120: Record a confirmed-real-or-already-fixed verdict for both, in Design Notes. Done -- verdict recorded, with a root-cause diagnosis that narrows this feature's fix rationale (also spot-checked via `validate_feat`; see Design Notes).
 
-- [x] Task 1.4: Inventory all thirteen current `validate_<d>` tools (signature, domain, behavior) in Design Notes, per issue #81. Done -- see Design Notes.
+- [x] Task 100.130: Inventory all thirteen current `validate_<d>` tools (signature, domain, behavior) in Design Notes, per issue #81. Done -- see Design Notes.
 
-- [x] Task 1.5: Resolve the open design questions in Design Notes (generic `validate`'s domain list; `{valid, errors}` shape; failed-entry marker/`ref` semantics; `list_<d>` `path`-field parity) -- resolved 2026-09-03 during plan refinement, ahead of Phase 1 kickoff; see Design Notes and the Decisions Made log below.
+- [x] Task 100.140: Resolve the open design questions in Design Notes (generic `validate`'s domain list; `{valid, errors}` shape; failed-entry marker/`ref` semantics; `list_<d>` `path`-field parity) -- resolved 2026-09-03 during plan refinement, ahead of Phase 1 kickoff; see Design Notes and the Decisions Made log below.
 
-#### Phase 2: Generic `validate` Tool
+#### Phase 110: Generic `validate` Tool
 
-- [x] Task 2.1: Implement the generic `validate(type, content, full)` tool in `general/tools/`, dispatching to each of the twelve applicable domains' existing validation logic (`adr` excluded), returning `{valid: bool, errors: list[{message: str}]}` without raising for a content-validation failure. The exception handler must catch exactly `(AssertionError, ValidationError, yaml.YAMLError)`, never a bare `ValueError`, so the `full`/content-shape-mismatch `ValueError` (REQ-004's carve-out) still propagates instead of being absorbed into `{valid: false}`. Done -- `src/biz/dfch/specmgr/general/tools/validate.py` (twelve private `_validate_<d>` adapters, a dispatch table, and the public `validate` `@mcp.tool()`), plus `src/biz/dfch/specmgr/general/models/validate_result.py` (`ValidateResult`/`ValidationErrorEntry`).
+- [x] Task 110.100: Implement the generic `validate(type, content, full)` tool in `general/tools/`, dispatching to each of the twelve applicable domains' existing validation logic (`adr` excluded), returning `{valid: bool, errors: list[{message: str}]}` without raising for a content-validation failure. The exception handler must catch exactly `(AssertionError, ValidationError, yaml.YAMLError)`, never a bare `ValueError`, so the `full`/content-shape-mismatch `ValueError` (REQ-004's carve-out) still propagates instead of being absorbed into `{valid: false}`. Done -- `src/biz/dfch/specmgr/general/tools/validate.py` (twelve private `_validate_<d>` adapters, a dispatch table, and the public `validate` `@mcp.tool()`), plus `src/biz/dfch/specmgr/general/models/validate_result.py` (`ValidateResult`/`ValidationErrorEntry`).
 
-- [x] Task 2.2: Create a new ADR documenting the decision to consolidate the twelve per-domain `validate_<d>` tools into the generic `validate(type, content, full)` tool -- extending ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to a read-only/dry-run tool category, distinct from `update`/`set_status`/`set_classification`/`delete`'s mutation category -- via `create_adr`, then `specmgr adr-toc`; update the placeholder bullet under Related Decisions above with the assigned id. Done -- ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (`docs/adr/078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md`), `docs/adr/README.md` regenerated, Related Decisions bullet updated.
+- [x] Task 110.110: Create a new ADR documenting the decision to consolidate the twelve per-domain `validate_<d>` tools into the generic `validate(type, content, full)` tool -- extending ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to a read-only/dry-run tool category, distinct from `update`/`set_status`/`set_classification`/`delete`'s mutation category -- via `create_adr`, then `specmgr adr-toc`; update the placeholder bullet under Related Decisions above with the assigned id. Done -- ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (`docs/adr/078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md`), `docs/adr/README.md` regenerated, Related Decisions bullet updated.
 
-- [x] Task 2.3: Migrate `create_<d>`/`update_<d>` prompts and `AGENTS.md`'s `validate_<d>` mentions to the generic `validate` tool, for the twelve consolidated domains; `validate_adr` references are left untouched. Done -- all 24 `create_<d>`/`update_<d>` prompt `.py` docstrings/descriptions and their packaged `*_instructions.md` data files updated to reference the generic `validate` tool; `AGENTS.md`'s per-domain bullets, the `general/` bullet, and the "Still genuinely missing" section updated; `server.py`'s own module docstring updated (its per-domain tool lists and the `general/tools/` paragraph).
+- [x] Task 110.120: Migrate `create_<d>`/`update_<d>` prompts and `AGENTS.md`'s `validate_<d>` mentions to the generic `validate` tool, for the twelve consolidated domains; `validate_adr` references are left untouched. Done -- all 24 `create_<d>`/`update_<d>` prompt `.py` docstrings/descriptions and their packaged `*_instructions.md` data files updated to reference the generic `validate` tool; `AGENTS.md`'s per-domain bullets, the `general/` bullet, and the "Still genuinely missing" section updated; `server.py`'s own module docstring updated (its per-domain tool lists and the `general/tools/` paragraph).
 
-- [x] Task 2.4: Remove the twelve consolidated per-domain `validate_<d>` tool files (all except `validate_adr`, which remains). Done -- `git rm`'d all twelve `<d>/tools/validate_<d>.py` files and their `__init__.py` imports/`__all__`/docstring registrations.
+- [x] Task 110.130: Remove the twelve consolidated per-domain `validate_<d>` tool files (all except `validate_adr`, which remains). Done -- `git rm`'d all twelve `<d>/tools/validate_<d>.py` files and their `__init__.py` imports/`__all__`/docstring registrations.
 
-- [x] Task 2.5: Remove the 12 dedicated `test_validate_<d>.py` files (~1600 lines total; coverage superseded by Task 2.6's generic-tool tests), and update the 6 `test_integration.py` files (dec/feat/sop/sysrs/vcr, plus one more) and the 3 regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`) plus `tests/general/tools/test_error_context.py` that currently import a `validate_<d>` function directly, repointing each to the generic `validate` tool. Done -- 12 `test_validate_<d>.py` files removed; the 5 affected `test_integration.py` files (dec/feat/sop/sysrs/vcr -- `prb`/`gol`'s own `test_integration.py` never referenced `validate_<d>`, confirmed by search), the 3 regression tests, `tests/general/tools/test_error_context.py`, and `tests/sop/prompts/test_create_sop.py`/`tests/sysrs/prompts/test_create_sysrs.py` (found by a broader search, per this task's own instruction) all repointed to the generic `validate` tool.
+- [x] Task 110.140: Remove the 12 dedicated `test_validate_<d>.py` files (~1600 lines total; coverage superseded by Task 2.6's generic-tool tests), and update the 6 `test_integration.py` files (dec/feat/sop/sysrs/vcr, plus one more) and the 3 regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`) plus `tests/general/tools/test_error_context.py` that currently import a `validate_<d>` function directly, repointing each to the generic `validate` tool. Done -- 12 `test_validate_<d>.py` files removed; the 5 affected `test_integration.py` files (dec/feat/sop/sysrs/vcr -- `prb`/`gol`'s own `test_integration.py` never referenced `validate_<d>`, confirmed by search), the 3 regression tests, `tests/general/tools/test_error_context.py`, and `tests/sop/prompts/test_create_sop.py`/`tests/sysrs/prompts/test_create_sysrs.py` (found by a broader search, per this task's own instruction) all repointed to the generic `validate` tool.
 
-- [x] Task 2.6: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1, plus a test that `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`, plus a test -- for a representative sample of domains (`req`, `dec`, `vcr`) -- that a `full`/content-shape mismatch (`full=True` with body-only content, and `full=False` with a complete document) still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`. Done -- `tests/general/tools/test_validate.py` (15 test methods across 4 test classes, parameterized over all twelve domains' ported fixture bodies).
+- [x] Task 110.150: Unit tests for the generic tool across all twelve applicable domains, plus the two regression fixtures from Phase 1, plus a test that `validate(type="adr", ...)` and any other unsupported `type` still raise `ValueError`, plus a test -- for a representative sample of domains (`req`, `dec`, `vcr`) -- that a `full`/content-shape mismatch (`full=True` with body-only content, and `full=False` with a complete document) still raises `ValueError` through the generic tool rather than being swallowed into `{valid: false}`. Done -- `tests/general/tools/test_validate.py` (15 test methods across 4 test classes, parameterized over all twelve domains' ported fixture bodies).
 
-- [x] Task 2.7: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting the twelve `validate_<d>` tool removals and the new generic `validate` tool's non-raising `{valid, errors}` contract. Done -- `CHANGELOG.md` `[Unreleased]` gained an "Added" entry for the new `validate` tool and a "Removed" **BREAKING** entry for the twelve retired `validate_<d>` tools.
+- [x] Task 110.160: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting the twelve `validate_<d>` tool removals and the new generic `validate` tool's non-raising `{valid, errors}` contract. Done -- `CHANGELOG.md` `[Unreleased]` gained an "Added" entry for the new `validate` tool and a "Removed" **BREAKING** entry for the twelve retired `validate_<d>` tools.
 
-#### Phase 3: `list_<d>` Failure Reporting
+#### Phase 120: `list_<d>` Failure Reporting
 
-- [x] Task 3.1: Implement `general/tools/_listing.py::build_summaries()` (per Design Notes), with a default `error_types=(AssertionError, ValidationError, yaml.YAMLError)` -- covering all three of `validate_<d>`'s own documented parse-failure channels, not just the first two, so malformed frontmatter YAML is reported as a failed entry rather than crashing `list_<d>`; add `error_count: int = 0` to `PagedResult` and `path`/`error` to the shared `DocSummary` base; wire all twelve whole-body domains' `list_<d>.py` through the new helper, replacing each domain's own copy-pasted loop -- this necessarily also populates `path=path.resolve()` on every *successful*-entry construction across all twelve domains, since `path` is now mandatory on the shared base (see Design Notes' Phase 3/Phase 4 sequencing note; Task 4.1 only verifies/spot-checks this afterward, it does not introduce new population code); update `AGENTS.md`'s `list_<d>` bullets to mention `error_count`. Done -- `general/tools/_listing.py` (`build_summaries()`, `default_failed_summary()`, `FAILED_TO_PARSE_MARKER`, `DEFAULT_ERROR_TYPES`) added; `PagedResult.error_count: int = 0` and `DocSummary.path: str`/`error: str | None = None` added; `general/tools/_paging.py::paginate()` gained an `error_count: int = 0` parameter threaded straight into the returned `PagedResult`; all twelve `list_<d>.py` files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) now route through `build_summaries()`. **Clarification on the "across all twelve domains" wording above**: per this task's own delegated implementation instructions, `feat` is the one deliberate exception -- `list_feat.py`'s `to_summary`/`to_failed_summary` callbacks keep `FeatSummary.path` as the existing *unresolved* `str(path)` in this phase (via `default_failed_summary(..., resolve=False)` for its failed rows), since `FeatSummary` already had its own separate `path` field before this feature and its resolved-path retrofit is explicitly Phase 4, Task 4.2's job, not this one's -- so "all twelve domains" above should be read as "the other eleven domains get a brand-new resolved `path` field; `feat`'s pre-existing `path` field is merely routed through the new helper, unchanged in value." `AGENTS.md`'s twelve `list_<d>` bullets each now mention `error_count`.
+- [x] Task 120.100: Implement `general/tools/_listing.py::build_summaries()` (per Design Notes), with a default `error_types=(AssertionError, ValidationError, yaml.YAMLError)` -- covering all three of `validate_<d>`'s own documented parse-failure channels, not just the first two, so malformed frontmatter YAML is reported as a failed entry rather than crashing `list_<d>`; add `error_count: int = 0` to `PagedResult` and `path`/`error` to the shared `DocSummary` base; wire all twelve whole-body domains' `list_<d>.py` through the new helper, replacing each domain's own copy-pasted loop -- this necessarily also populates `path=path.resolve()` on every *successful*-entry construction across all twelve domains, since `path` is now mandatory on the shared base (see Design Notes' Phase 3/Phase 4 sequencing note; Task 4.1 only verifies/spot-checks this afterward, it does not introduce new population code); update `AGENTS.md`'s `list_<d>` bullets to mention `error_count`. Done -- `general/tools/_listing.py` (`build_summaries()`, `default_failed_summary()`, `FAILED_TO_PARSE_MARKER`, `DEFAULT_ERROR_TYPES`) added; `PagedResult.error_count: int = 0` and `DocSummary.path: str`/`error: str | None = None` added; `general/tools/_paging.py::paginate()` gained an `error_count: int = 0` parameter threaded straight into the returned `PagedResult`; all twelve `list_<d>.py` files (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`) now route through `build_summaries()`. **Clarification on the "across all twelve domains" wording above**: per this task's own delegated implementation instructions, `feat` is the one deliberate exception -- `list_feat.py`'s `to_summary`/`to_failed_summary` callbacks keep `FeatSummary.path` as the existing *unresolved* `str(path)` in this phase (via `default_failed_summary(..., resolve=False)` for its failed rows), since `FeatSummary` already had its own separate `path` field before this feature and its resolved-path retrofit is explicitly Phase 4, Task 4.2's job, not this one's -- so "all twelve domains" above should be read as "the other eleven domains get a brand-new resolved `path` field; `feat`'s pre-existing `path` field is merely routed through the new helper, unchanged in value." `AGENTS.md`'s twelve `list_<d>` bullets each now mention `error_count`.
 
-- [x] Task 3.2: Implement RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) per Design Notes; wire into `list_rsk`'s `to_failed_summary` callback; add a dedicated unit test that parses `_SENTINEL_RSK_TEXT` via `parse_rsk` and asserts it succeeds, independent of `list_rsk`'s own tests. Done -- `rsk/tools/_sentinel.py` (`_SENTINEL_RSK_TEXT`, `_SENTINEL_RSK_DOCUMENT`, `build_failed_rsk_summary()`) added and wired into `list_rsk.py`; `tests/rsk/tools/test__sentinel.py` added (9 tests, parsing `_SENTINEL_RSK_TEXT` directly, independent of `list_rsk`'s own tests). One deviation from the plan's original design, recorded in Decisions Made below: the sentinel's H1 is a plain descriptive title, not literally `"<failed to parse>"` -- `title` is overridden via `model_copy` (a fifth field, alongside `id`/`status`/`path`/`error`) using the shared `FAILED_TO_PARSE_MARKER` constant, since writing that literal marker text as a markdown H1 is rejected by `models/md`'s own raw-HTML guard and every markdown escape-hatch that survives the guard leaves its own syntax embedded in `.text`'s raw-source-derived output.
+- [x] Task 120.110: Implement RSK's sentinel-document construction (`rsk/tools/_sentinel.py`) per Design Notes; wire into `list_rsk`'s `to_failed_summary` callback; add a dedicated unit test that parses `_SENTINEL_RSK_TEXT` via `parse_rsk` and asserts it succeeds, independent of `list_rsk`'s own tests. Done -- `rsk/tools/_sentinel.py` (`_SENTINEL_RSK_TEXT`, `_SENTINEL_RSK_DOCUMENT`, `build_failed_rsk_summary()`) added and wired into `list_rsk.py`; `tests/rsk/tools/test__sentinel.py` added (9 tests, parsing `_SENTINEL_RSK_TEXT` directly, independent of `list_rsk`'s own tests). One deviation from the plan's original design, recorded in Decisions Made below: the sentinel's H1 is a plain descriptive title, not literally `"<failed to parse>"` -- `title` is overridden via `model_copy` (a fifth field, alongside `id`/`status`/`path`/`error`) using the shared `FAILED_TO_PARSE_MARKER` constant, since writing that literal marker text as a markdown H1 is rejected by `models/md`'s own raw-HTML guard and every markdown escape-hatch that survives the guard leaves its own syntax embedded in `.text`'s raw-source-derived output.
 
-- [x] Task 3.3: Regression tests with a mixed valid/unparseable directory for at least two domains, including `rsk`; include at least one malformed-YAML-frontmatter fixture (not just structural/field-validation failures) to exercise the `yaml.YAMLError` path. Done -- `req` and `rsk` (the two mandated domains) each gained a `test_returns_summaries_and_reports_malformed_file_as_a_failed_entry` test (structural-failure fixture, asserting `total`/`error_count`, marker `title`/`status`, `ref`, resolved `path`, `error`) and a dedicated `test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry` test exercising the `yaml.YAMLError` path; every other whole-body domain's own pre-existing `test_list_<d>.py` was also updated (not just left red) since `build_summaries()`'s semantics change broke their old skip-based assertions -- `uc`/`tsk`/`qa`/`prb`/`gol`/`dec`/`sop`/`vcr`/`sysrs`/`feat` all got their `..._skips_malformed_..."` test renamed to `..._reports_malformed_..._as_a_failed_entry` and their `total`/`error_count` assertions updated to match. New `tests/general/tools/test__listing.py` (18 tests) covers `build_summaries()`/`default_failed_summary()` directly (all three `error_types` channels, a non-matching exception propagating, mixed success/failure ordering, custom `error_types`). `tests/general/tools/test_paging.py`/`tests/general/models/test_paged_result.py`/`tests/general/models/test_summary.py` updated for `error_count`/`path`/`error`; `AdrSummary`'s own tests split off into their own, narrower four-field expectation, since `adr` is out of scope for this feature and `AdrSummary` deliberately does not gain `path`/`error`.
+- [x] Task 120.120: Regression tests with a mixed valid/unparseable directory for at least two domains, including `rsk`; include at least one malformed-YAML-frontmatter fixture (not just structural/field-validation failures) to exercise the `yaml.YAMLError` path. Done -- `req` and `rsk` (the two mandated domains) each gained a `test_returns_summaries_and_reports_malformed_file_as_a_failed_entry` test (structural-failure fixture, asserting `total`/`error_count`, marker `title`/`status`, `ref`, resolved `path`, `error`) and a dedicated `test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry` test exercising the `yaml.YAMLError` path; every other whole-body domain's own pre-existing `test_list_<d>.py` was also updated (not just left red) since `build_summaries()`'s semantics change broke their old skip-based assertions -- `uc`/`tsk`/`qa`/`prb`/`gol`/`dec`/`sop`/`vcr`/`sysrs`/`feat` all got their `..._skips_malformed_..."` test renamed to `..._reports_malformed_..._as_a_failed_entry` and their `total`/`error_count` assertions updated to match. New `tests/general/tools/test__listing.py` (18 tests) covers `build_summaries()`/`default_failed_summary()` directly (all three `error_types` channels, a non-matching exception propagating, mixed success/failure ordering, custom `error_types`). `tests/general/tools/test_paging.py`/`tests/general/models/test_paged_result.py`/`tests/general/models/test_summary.py` updated for `error_count`/`path`/`error`; `AdrSummary`'s own tests split off into their own, narrower four-field expectation, since `adr` is out of scope for this feature and `AdrSummary` deliberately does not gain `path`/`error`.
 
-- [x] Task 3.4: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting `list_<d>`'s `total`/`error_count` semantics change (`total` now includes failed entries alongside successes). Done -- `CHANGELOG.md` `[Unreleased]` gained a "Changed" **BREAKING** entry.
+- [x] Task 120.130: Add a `CHANGELOG.md` `[Unreleased]` entry (**BREAKING**) documenting `list_<d>`'s `total`/`error_count` semantics change (`total` now includes failed entries alongside successes). Done -- `CHANGELOG.md` `[Unreleased]` gained a "Changed" **BREAKING** entry.
 
-#### Phase 4: `list_<d>` Path Field Parity
+#### Phase 130: `list_<d>` Path Field Parity
 
-- [x] Task 4.1: Confirm/spot-check the `path` field population Task 3.1 already wired into the other eleven whole-body domains' `list_<d>` implementations (see Design Notes' Phase 3/Phase 4 sequencing note -- Task 3.1 necessarily populated `path=path.resolve()` on every successful-entry construction across all twelve domains as an unavoidable consequence of `path` becoming mandatory on the shared base; this task introduces no new field-population code); update `AGENTS.md`'s `list_<d>`/`FeatSummary` bullets to mention the shared `path` field. Done -- confirmed, by reading each of the eleven `list_<d>.py` files, that `path=str(path.resolve())` (successful entries) and a plain `default_failed_summary(...)` call defaulting to resolved (failed entries) are genuinely present for req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs, and that each domain's own `test_list_<d>.py` already asserts `Path(summary.path).is_absolute()`/`Path(failed.path) == broken_path.resolve()` -- no gaps found, no new field-population code introduced. Updated all twelve `list_<d>` bullets in `AGENTS.md` (including `rsk`/`feat`'s own) to mention the (now-shared) resolved `path` field, and rewrote `FeatSummary`'s stale "one extra field" bullet paragraph (see Task 4.2).
+- [x] Task 130.100: Confirm/spot-check the `path` field population Task 3.1 already wired into the other eleven whole-body domains' `list_<d>` implementations (see Design Notes' Phase 3/Phase 4 sequencing note -- Task 3.1 necessarily populated `path=path.resolve()` on every successful-entry construction across all twelve domains as an unavoidable consequence of `path` becoming mandatory on the shared base; this task introduces no new field-population code); update `AGENTS.md`'s `list_<d>`/`FeatSummary` bullets to mention the shared `path` field. Done -- confirmed, by reading each of the eleven `list_<d>.py` files, that `path=str(path.resolve())` (successful entries) and a plain `default_failed_summary(...)` call defaulting to resolved (failed entries) are genuinely present for req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs, and that each domain's own `test_list_<d>.py` already asserts `Path(summary.path).is_absolute()`/`Path(failed.path) == broken_path.resolve()` -- no gaps found, no new field-population code introduced. Updated all twelve `list_<d>` bullets in `AGENTS.md` (including `rsk`/`feat`'s own) to mention the (now-shared) resolved `path` field, and rewrote `FeatSummary`'s stale "one extra field" bullet paragraph (see Task 4.2).
 
-- [x] Task 4.2: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format; remove `FeatSummary`'s now-redundant local `path` field declaration, since it is now inherited from `DocSummary`. Done -- `feat/tools/list_feat.py`'s `_to_summary` now builds `path=str(path.resolve())`, and `_to_failed_summary` no longer passes `resolve=False` (that parameter was removed entirely, see Decisions Made); `feat/models/v1/summary.py`'s `FeatSummary` no longer redeclares `path: str` (now purely inherited from `DocSummary`), and its module/class docstrings rewritten accordingly; `tests/feat/tools/test_list_feat.py` gained `Path(summary.path).is_absolute()`/exact resolved-equality assertions (no test asserted the old literal unresolved form, so nothing broke, but the module docstring's stale Phase 3/4 framing was corrected); `tests/general/models/test_summary.py` gained a new `TestFeatSummarySharesDocSummaryBase` class asserting `FeatSummary` now matches every other whole-body domain's exact field set and no longer redeclares `path` in its own `__annotations__`.
+- [x] Task 130.110: Retrofit `FeatSummary.path`/`list_feat.py` to also use `path.resolve()` instead of the current unresolved `str(path)`; update any existing `feat` tests that assert on the old unresolved-path format; remove `FeatSummary`'s now-redundant local `path` field declaration, since it is now inherited from `DocSummary`. Done -- `feat/tools/list_feat.py`'s `_to_summary` now builds `path=str(path.resolve())`, and `_to_failed_summary` no longer passes `resolve=False` (that parameter was removed entirely, see Decisions Made); `feat/models/v1/summary.py`'s `FeatSummary` no longer redeclares `path: str` (now purely inherited from `DocSummary`), and its module/class docstrings rewritten accordingly; `tests/feat/tools/test_list_feat.py` gained `Path(summary.path).is_absolute()`/exact resolved-equality assertions (no test asserted the old literal unresolved form, so nothing broke, but the module docstring's stale Phase 3/4 framing was corrected); `tests/general/models/test_summary.py` gained a new `TestFeatSummarySharesDocSummaryBase` class asserting `FeatSummary` now matches every other whole-body domain's exact field set and no longer redeclares `path` in its own `__annotations__`.
 
-- [x] Task 4.3: Revise `DocSummary.ref`'s docstring to drop the "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain. Done -- see the revised docstring quoted in this phase's own Updates entry below.
+- [x] Task 130.120: Revise `DocSummary.ref`'s docstring to drop the "callers must not read this off disk themselves" policy language, since `path` now makes direct reads a sanctioned, first-class option for every whole-body domain. Done -- see the revised docstring quoted in this phase's own Updates entry below.
 
-- [x] Task 4.4: Tests for the new `path` field (all eleven domains) and for `FeatSummary`'s changed, now-resolved `path` behavior. Done -- the eleven other domains' tests already had full `path` coverage from Phase 3 (Task 4.1 confirmed, no gaps to fill); `feat`'s own coverage extended in `tests/feat/tools/test_list_feat.py` (absolute-path assertion for every summary, exact resolved-path equality for the failed entry) and `tests/general/models/test_summary.py` (`TestFeatSummarySharesDocSummaryBase`); `tests/general/tools/test__listing.py`'s now-removed `resolve=False` test replaced with a single `test_path_is_always_resolved` test reflecting the simplified, always-resolving `default_failed_summary` (Decisions Made).
+- [x] Task 130.130: Tests for the new `path` field (all eleven domains) and for `FeatSummary`'s changed, now-resolved `path` behavior. Done -- the eleven other domains' tests already had full `path` coverage from Phase 3 (Task 4.1 confirmed, no gaps to fill); `feat`'s own coverage extended in `tests/feat/tools/test_list_feat.py` (absolute-path assertion for every summary, exact resolved-path equality for the failed entry) and `tests/general/models/test_summary.py` (`TestFeatSummarySharesDocSummaryBase`); `tests/general/tools/test__listing.py`'s now-removed `resolve=False` test replaced with a single `test_path_is_always_resolved` test reflecting the simplified, always-resolving `default_failed_summary` (Decisions Made).
 
-- [x] Task 4.5: Add a `CHANGELOG.md` `[Unreleased]` entry documenting the `path`/`error` fields on all twelve whole-body domains' `list_<d>` summaries and `FeatSummary.path`'s resolved-path retrofit. Done -- amended Phase 3's own "Changed" `list_<d>` bullet to drop its now-stale "`feat`/`FeatSummary` keeps its existing unresolved form for now" parenthetical, and added a new dedicated "Changed" bullet documenting `FeatSummary.path`'s field-removal/resolved-path retrofit.
+- [x] Task 130.140: Add a `CHANGELOG.md` `[Unreleased]` entry documenting the `path`/`error` fields on all twelve whole-body domains' `list_<d>` summaries and `FeatSummary.path`'s resolved-path retrofit. Done -- amended Phase 3's own "Changed" `list_<d>` bullet to drop its now-stale "`feat`/`FeatSummary` keeps its existing unresolved form for now" parenthetical, and added a new dedicated "Changed" bullet documenting `FeatSummary.path`'s field-removal/resolved-path retrofit.
 
-#### Phase 5: Verification and Closeout
+#### Phase 140: Verification and Closeout
 
-- [x] Task 5.1: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite). Done -- all four commands clean (1652 files already formatted, all ruff checks passed, no vulture output, 3342 tests passed via `pytest -n auto --cov=src`); see Updates below.
+- [x] Task 140.100: Full quality gate (`ruff format --check`, `ruff check`, `vulture`, full `unittest` suite). Done -- all four commands clean (1652 files already formatted, all ruff checks passed, no vulture output, 3342 tests passed via `pytest -n auto --cov=src`); see Updates below.
 
-- [x] Task 5.2: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; confirm no `AGENTS.md` edit was missed beyond what Tasks 2.3/3.1/4.1 already covered; confirm the three `CHANGELOG.md [Unreleased]` entries from Tasks 2.7/3.4/4.5 are all present (or consciously squashed into fewer entries if committed together). Done -- `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all re-ran with zero drift (Phases 2-4 already left everything current); `AGENTS.md` audited in full, no stale content found (all twelve `validate_<d>` mentions correctly phrased as "former"/removed, the generic `validate` tool mentioned for all twelve domains, `error_count`/resolved `path` mentioned in all twelve `list_<d>` bullets, "Still genuinely missing" section already correctly names the generic `validate` tool); `CHANGELOG.md [Unreleased]` audited, confirmed all three pieces of information present (consciously squashed into one "Added" + one "Removed" + two "Changed" entries rather than kept as three separate per-phase entries): (a) the `validate` tool addition + twelve `validate_<d>` removals, (b) `list_<d>`'s `total`/`error_count` semantics change, (c) `path`/`error` fields on all twelve domains' summaries + `FeatSummary.path`'s resolved-path retrofit. No edits needed to either file.
+- [x] Task 140.110: Regenerate `docs/api/`/`docs/GENERATED.md`/`docs/MCP.md`; confirm no `AGENTS.md` edit was missed beyond what Tasks 2.3/3.1/4.1 already covered; confirm the three `CHANGELOG.md [Unreleased]` entries from Tasks 2.7/3.4/4.5 are all present (or consciously squashed into fewer entries if committed together). Done -- `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` all re-ran with zero drift (Phases 2-4 already left everything current); `AGENTS.md` audited in full, no stale content found (all twelve `validate_<d>` mentions correctly phrased as "former"/removed, the generic `validate` tool mentioned for all twelve domains, `error_count`/resolved `path` mentioned in all twelve `list_<d>` bullets, "Still genuinely missing" section already correctly names the generic `validate` tool); `CHANGELOG.md [Unreleased]` audited, confirmed all three pieces of information present (consciously squashed into one "Added" + one "Removed" + two "Changed" entries rather than kept as three separate per-phase entries): (a) the `validate` tool addition + twelve `validate_<d>` removals, (b) `list_<d>`'s `total`/`error_count` semantics change, (c) `path`/`error` fields on all twelve domains' summaries + `FeatSummary.path`'s resolved-path retrofit. No edits needed to either file.
 
-- [x] Task 5.3: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done. Done -- see Updates below for the comment URLs.
+- [x] Task 140.120: Comment on GitHub issues #81 and #83 with the outcome; mark this feature done. Done -- see Updates below for the comment URLs.
 
-#### Phase 6: Post-Review Remediation
+#### Phase 150: Post-Review Remediation
 
-- [x] Task 6.1: Audit all twelve domain `__init__.py` docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`/`sysrs`) for `validate_<d>`-staleness and any other drift; fix each in place (REQ-009). Regenerate `specmgr docs` (`docs/api/`/`docs/GENERATED.md`) and confirm no remaining stale mentions. Done -- removed every stale `validate_<d>` tools-list mention and added an accurate "disk-free, id-free dry-run content validation goes through the generic `validate` tool... -- the former `validate_<d>` tool was removed in favor of it (feat-81-83-validation)" sentence to all twelve files; fixed `sysrs/__init__.py`'s own unrelated staleness (false "7 tools"/"prompts still an empty placeholder" claims) and `sop/__init__.py`'s adjacent "7 tools" miscount (both found during this same audit); `specmgr docs` regenerated with zero remaining stale mentions (verified via `git diff docs/api/`).
+- [x] Task 150.100: Audit all twelve domain `__init__.py` docstrings (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/`rsk`/`sop`/`tsk`/`uc`/`vcr`/`sysrs`) for `validate_<d>`-staleness and any other drift; fix each in place (REQ-009). Regenerate `specmgr docs` (`docs/api/`/`docs/GENERATED.md`) and confirm no remaining stale mentions. Done -- removed every stale `validate_<d>` tools-list mention and added an accurate "disk-free, id-free dry-run content validation goes through the generic `validate` tool... -- the former `validate_<d>` tool was removed in favor of it (feat-81-83-validation)" sentence to all twelve files; fixed `sysrs/__init__.py`'s own unrelated staleness (false "7 tools"/"prompts still an empty placeholder" claims) and `sop/__init__.py`'s adjacent "7 tools" miscount (both found during this same audit); `specmgr docs` regenerated with zero remaining stale mentions (verified via `git diff docs/api/`).
 
-- [x] Task 6.2: Implement the private `_detect_frontmatter(content: str, *, domain: str) -> bool` helper inside `general/tools/validate.py` (kept local to this file per REQ-010's own scoping decision), composing `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error` with `wrap_tool_errors`'s domain/tool labeling; replace all twelve adapters' raw `bool(frontmatter.loads(content).metadata)` probes with it. Confirm `TestValidateFullShapeMismatchRaises` and every other pre-existing `test_validate.py` test still passes unmodified. Done -- `_detect_frontmatter` runs the raw `frontmatter.loads(content)` probe inside a `with wrap_tool_errors(domain=domain, tool="validate"):` block, catching a raised `yaml.YAMLError` and re-raising `enrich_frontmatter_yaml_error(content, error)` from inside that block so `wrap_tool_errors`'s own `except yaml.YAMLError` clause re-labels the already-enriched error -- the same enrich-then-label composition order `parse_<d>`/`wrap_tool_errors` already use, confirmed byte-for-byte identical (modulo the tool-name label) via a live manual probe. All twelve adapters' `has_frontmatter = bool(frontmatter.loads(content).metadata)` lines replaced with `has_frontmatter = _detect_frontmatter(content, domain="<d>")`; all 15 pre-existing `test_validate.py` tests, including `TestValidateFullShapeMismatchRaises`, still pass unmodified.
+- [x] Task 150.110: Implement the private `_detect_frontmatter(content: str, *, domain: str) -> bool` helper inside `general/tools/validate.py` (kept local to this file per REQ-010's own scoping decision), composing `models/md/_frontmatter_parse.py::enrich_frontmatter_yaml_error` with `wrap_tool_errors`'s domain/tool labeling; replace all twelve adapters' raw `bool(frontmatter.loads(content).metadata)` probes with it. Confirm `TestValidateFullShapeMismatchRaises` and every other pre-existing `test_validate.py` test still passes unmodified. Done -- `_detect_frontmatter` runs the raw `frontmatter.loads(content)` probe inside a `with wrap_tool_errors(domain=domain, tool="validate"):` block, catching a raised `yaml.YAMLError` and re-raising `enrich_frontmatter_yaml_error(content, error)` from inside that block so `wrap_tool_errors`'s own `except yaml.YAMLError` clause re-labels the already-enriched error -- the same enrich-then-label composition order `parse_<d>`/`wrap_tool_errors` already use, confirmed byte-for-byte identical (modulo the tool-name label) via a live manual probe. All twelve adapters' `has_frontmatter = bool(frontmatter.loads(content).metadata)` lines replaced with `has_frontmatter = _detect_frontmatter(content, domain="<d>")`; all 15 pre-existing `test_validate.py` tests, including `TestValidateFullShapeMismatchRaises`, still pass unmodified.
 
-- [x] Task 6.3: Add the missing `yaml.YAMLError` regression test(s) to `tests/general/tools/test_validate.py` for at least two domains (e.g. `req`, `dec`), asserting message parity between `validate(type=<d>, ..., full=True)` and `parse_<d>` for identical malformed-YAML-frontmatter input (REQ-010/ACC-010). Done -- new `TestValidateYamlErrorEnrichment` class (2 tests: `req`, `dec`), reusing the `f"---\nid: <d>-1\nstatus: [unterminated\n---\n{...}"` malformed-frontmatter fixture shape already established by `tests/req/tools/test_list_req.py`; each test calls `validate(type=<d>, content=malformed, full=True)` and the domain's own disk-free `parse_<d>` free function (wrapped in the same `wrap_tool_errors(domain=<d>, tool="parse_<d>")` the real tool wrapper uses) on byte-identical input, then asserts the two messages are identical once each one's own `"{domain} validate: "`/`"{domain} parse_<d>: "` label prefix is stripped. Manually confirmed (by temporarily monkeypatching `_detect_frontmatter` back to the pre-fix raw probe) that this test genuinely fails if Task 6.2's fix is reverted. All pre-existing `test_validate.py` tests continue to pass unmodified (17 tests total in the file now, up from 15).
+- [x] Task 150.120: Add the missing `yaml.YAMLError` regression test(s) to `tests/general/tools/test_validate.py` for at least two domains (e.g. `req`, `dec`), asserting message parity between `validate(type=<d>, ..., full=True)` and `parse_<d>` for identical malformed-YAML-frontmatter input (REQ-010/ACC-010). Done -- new `TestValidateYamlErrorEnrichment` class (2 tests: `req`, `dec`), reusing the `f"---\nid: <d>-1\nstatus: [unterminated\n---\n{...}"` malformed-frontmatter fixture shape already established by `tests/req/tools/test_list_req.py`; each test calls `validate(type=<d>, content=malformed, full=True)` and the domain's own disk-free `parse_<d>` free function (wrapped in the same `wrap_tool_errors(domain=<d>, tool="parse_<d>")` the real tool wrapper uses) on byte-identical input, then asserts the two messages are identical once each one's own `"{domain} validate: "`/`"{domain} parse_<d>: "` label prefix is stripped. Manually confirmed (by temporarily monkeypatching `_detect_frontmatter` back to the pre-fix raw probe) that this test genuinely fails if Task 6.2's fix is reverted. All pre-existing `test_validate.py` tests continue to pass unmodified (17 tests total in the file now, up from 15).
 
-- [x] Task 6.4: Revise ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section per REQ-011. Done -- via `specmgr_update_section`; see this entry's own Updates note below for the exact replacement wording. No other ADR section touched.
+- [x] Task 150.130: Revise ADR 519d1206-4d2a-4500-9046-6db635209996's `### Confirmation` section per REQ-011. Done -- via `specmgr_update_section`; see this entry's own Updates note below for the exact replacement wording. No other ADR section touched.
 
-- [x] Task 6.5: Full quality gate re-run (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `pytest -n auto --cov=src`); `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift checks; add a `CHANGELOG.md [Unreleased]` entry only if warranted (likely not needed -- Phase 6's changes are docstring/test/ADR-only, no MCP tool contract change; record the "no entry needed" conclusion explicitly rather than silently skipping it). Done -- all four gate commands clean (1652 files already formatted, all ruff checks passed, no vulture output, 3344 tests passed via `pytest -n auto --cov=src`, up from 3342 -- net +2 from `TestValidateYamlErrorEnrichment`); `specmgr docs` regenerated 13 API pages plus zero `docs/GENERATED.md` diff; `specmgr mcp-docs` produced zero `docs/MCP.md` diff (no tool signature/description changed); `specmgr adr-toc` produced zero `docs/adr/README.md` diff. `CHANGELOG.md` decision: no new `[Unreleased]` entry added -- Phase 6 only fixes/tests/documents the `validate` tool's already-`[Unreleased]`, not-yet-shipped contract (the existing "Added" entry from Task 2.7 already describes `validate` accurately; the `yaml.YAMLError` enrichment fix corrects a bug in that same not-yet-released tool, not a behavior change visible to anyone who has consumed a released version) and touches no other MCP tool's signature or behavior.
+- [x] Task 150.140: Full quality gate re-run (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `pytest -n auto --cov=src`); `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc` drift checks; add a `CHANGELOG.md [Unreleased]` entry only if warranted (likely not needed -- Phase 6's changes are docstring/test/ADR-only, no MCP tool contract change; record the "no entry needed" conclusion explicitly rather than silently skipping it). Done -- all four gate commands clean (1652 files already formatted, all ruff checks passed, no vulture output, 3344 tests passed via `pytest -n auto --cov=src`, up from 3342 -- net +2 from `TestValidateYamlErrorEnrichment`); `specmgr docs` regenerated 13 API pages plus zero `docs/GENERATED.md` diff; `specmgr mcp-docs` produced zero `docs/MCP.md` diff (no tool signature/description changed); `specmgr adr-toc` produced zero `docs/adr/README.md` diff. `CHANGELOG.md` decision: no new `[Unreleased]` entry added -- Phase 6 only fixes/tests/documents the `validate` tool's already-`[Unreleased]`, not-yet-shipped contract (the existing "Added" entry from Task 2.7 already describes `validate` accurately; the `yaml.YAMLError` enrichment fix corrects a bug in that same not-yet-released tool, not a behavior change visible to anyone who has consumed a released version) and touches no other MCP tool's signature or behavior.
 
-- [x] Task 6.6: Update Progress/Current Status and the Decisions Made log; mark ACC-009/ACC-010/ACC-011 `[x]`; restore `status: done` in frontmatter once all of Phase 6 is complete. Done -- see this entry's own Updates note, Decisions Made log, and frontmatter (`status: done`, `version: 1.2.0`) below.
+- [x] Task 150.150: Update Progress/Current Status and the Decisions Made log; mark ACC-009/ACC-010/ACC-011 `[x]`; restore `status: done` in frontmatter once all of Phase 6 is complete. Done -- see this entry's own Updates note, Decisions Made log, and frontmatter (`status: done`, `version: 1.2.0`) below.
 
 ## Progress
 
@@ -288,10 +288,8 @@ Phases 1-5 summary (unchanged from the original closeout): **all 5 phases, all 8
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
 #### 2026-09-04 19:00:00.000Z - Phase 6 (Post-Review Remediation) complete: Tasks 6.1-6.6 done -- feature closed out
-
 Implemented Phase 6's three remediation items (Tasks 6.1-6.4), re-ran the
 full quality gate (Task 6.5), and closed out this plan document (Task 6.6).
-
 Task 6.1 fixed all twelve domain `__init__.py` module docstrings' stale
 `validate_<d>` tools-list mentions (`dec`/`feat`/`gol`/`prb`/`qa`/`req`/
 `rsk`/`sop`/`tsk`/`uc`/`vcr`/`sysrs`): each now instead states "Disk-free,
@@ -321,7 +319,6 @@ docs` regenerated 13 API pages (`docs/api/biz.dfch.specmgr.
 `general.tools.validate.md` for Task 6.2 below) with zero remaining stale
 mentions; `docs/GENERATED.md` unchanged (no test-file-count change from
 this task).
-
 Task 6.2 fixed the `yaml.YAMLError` message-enrichment gap in
 `general/tools/validate.py`: a new private `_detect_frontmatter(content:
 str, *, domain: str) -> bool` helper runs the `frontmatter.loads(content)`
@@ -344,7 +341,6 @@ local to `general/tools/validate.py`, not promoted to `models/md`, per
 this phase's own scoping decision (see Decisions Made). All 15
 pre-existing `test_validate.py` tests, including
 `TestValidateFullShapeMismatchRaises`, pass unmodified after this change.
-
 Task 6.3 added `tests/general/tools/test_validate.py::
 TestValidateYamlErrorEnrichment` (2 new tests: `req`, `dec`), reusing the
 `f"---\nid: <d>-1\nstatus: [unterminated\n---\n{...}"` malformed-frontmatter
@@ -363,7 +359,6 @@ test genuinely fails without Task 6.2's fix -- the un-enriched message
 lacks the `"{domain} validate: "` prefix and the `"the frontmatter block"`
 naming entirely. All pre-existing `test_validate.py` tests continue to
 pass unmodified; the file now has 17 tests total (up from 15).
-
 Task 6.4 amended ADR 519d1206-4d2a-4500-9046-6db635209996's `###
 Confirmation` section via `update_section(id=..., key="confirmation",
 ...)`, replacing only its unfulfilled forward-looking sentence ("Future
@@ -381,7 +376,6 @@ ran into). Every other ADR section (context, decision drivers, options,
 decision outcome, consequences, more information) was left untouched;
 `specmgr_validate_adr` confirmed the amended document still re-parses
 successfully. See Decisions Made below for the exact wording rationale.
-
 Task 6.5 re-ran the full quality gate: `ruff format --check` (1652 files
 already formatted), `ruff check` (all checks passed), `vulture src/
 whitelist.py --min-confidence 60` (no output), and the full `pytest -n
@@ -399,29 +393,22 @@ already-`[Unreleased]`, not-yet-shipped contract (Task 2.7's existing
 `yaml.YAMLError` enrichment fix corrects a bug in that same not-yet-
 released tool, invisible to anyone who has only ever used a released
 version) and touches no other MCP tool's signature or behavior.
-
 Task 6.6 (this update) marks ACC-009/ACC-010/ACC-011 and Tasks 6.1-6.5
 `[x]` with verdict/done notes above, updates Current Status to record the
 whole feature (all 6 phases, REQ-001 through REQ-011, ACC-001 through
 ACC-011) as complete, restores `status: done` in frontmatter, and bumps
 `version` to `1.2.0`.
-
 This closes the whole feature: all 6 phases and all 11 REQs/ACCs
 (ACC-001 through ACC-011) are done, with a clean final quality gate
 (3344 tests) and zero outstanding documentation drift.
-
 #### 2026-09-04 18:00:00.000Z - Phase 6 (Post-Review Remediation) planned: REQ-009/010/011, ACC-009/010/011, and the Phase 6 task list added following an independent quality review
-
 An independent review of this already-closed-out feature (conducted after Phase 5) re-verified the shipped artifacts directly -- running the real quality gate, reading the actual implementation, and probing the generic `validate` tool live -- rather than relying on this document's own self-audit log. It confirmed the core design and full test suite (3342 tests, `ruff`/`vulture` clean) are sound, but found three concrete, reproducible gaps: (1) 11 of 12 domain `__init__.py` module docstrings still list the retired `validate_<d>` tool as existing, missed by Task 2.3/5.2's audits since those only covered `AGENTS.md`/`server.py`/prompts; (2) `validate`'s `yaml.YAMLError` messages are not enriched the way `parse_<d>`'s are, for malformed frontmatter YAML specifically, because each adapter's `has_frontmatter` probe runs outside any enrichment context -- reproduced live, and confirmed untested (zero `yaml`/`YAMLError` mentions in `test_validate.py`); (3) ADR 519d1206's own Confirmation section commits to a live-OpenCode-session re-check that was never recorded as performed. Added REQ-009/ACC-009 (docstring fix), REQ-010/ACC-010 (`_detect_frontmatter` helper + missing test coverage, kept as a private helper local to `general/tools/validate.py` per an explicit scoping decision -- see Decisions Made), and REQ-011/ACC-011 (ADR amendment) accordingly, plus a new Phase 6 task list (Tasks 6.1-6.6) and a Design Notes addendum recording the three findings in full. `status` reverted from `done` to `in-progress` in frontmatter; `version` bumped to `1.1.0`. This entry is planning-only -- no code, tests, or other files outside this plan document were touched; Phase 6's own tasks remain `[ ]` until implemented.
-
 #### 2026-09-04 17:00:00.000Z - Phase 5 (Verification and Closeout) complete: Tasks 5.1-5.3 done -- feature closed out
-
 Closed out the whole feature. Task 5.1 re-ran the full quality gate with no
 code changes needed: `ruff format --check` (1652 files already formatted),
 `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), and the full `pytest -n auto --cov=src`
 suite (3342 passed, unchanged from Phase 4's own count -- no test edits were
 needed in this phase).
-
 Task 5.2 re-ran `specmgr docs`, `specmgr mcp-docs`, and `specmgr adr-toc`;
 `git status`/`git diff` showed zero drift after all three, confirming
 Phases 2-4 already left `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`, and
@@ -442,7 +429,6 @@ fields on all twelve domains' summaries plus `FeatSummary.path`'s
 resolved-path retrofit) rather than kept as three separate per-phase
 entries -- explicitly permitted by this task's own wording. No edits were
 needed.
-
 Task 5.3 posted one outcome comment each to GitHub issues #81
 (<https://github.com/dfch/biz.dfch.SpecMgr/issues/81#issuecomment-5545854938>)
 and #83
@@ -459,7 +445,6 @@ server-side regression), and that `validate`'s non-raising `{valid, errors}`
 design is a client-independent workaround for that gap (ADR
 519d1206-4d2a-4500-9046-6db635209996). Neither issue was closed, per this
 task's own instruction -- that is left to a human.
-
 Confirmed, on a final read-through, every ACC-001 through ACC-007 checkbox
 was already `[x]` with a verdict note from Phases 1-4; found one genuine
 gap -- ACC-008 (REQ-008's regression tests) was still `[ ]` even though the
@@ -468,13 +453,10 @@ regression tests it describes were already implemented and passing (Task
 directory tests for `req`/`rsk`) -- and marked it `[x]` with a verdict note
 identifying exactly which tests satisfy it. No new test code was written;
 this was a documentation-only correction.
-
 This closes the feature: all 5 phases and all 8 REQs/ACCs (ACC-001 through
 ACC-008) are done, with a clean final quality gate and zero outstanding
 documentation drift.
-
 #### 2026-09-04 16:00:00.000Z - Phase 4 (`list_<d>` Path Field Parity) complete: Tasks 4.1-4.5 done
-
 Closed out REQ-007/ACC-007. Task 4.1 (spot-check, no new field-population code):
 confirmed by reading every one of the other eleven whole-body domains'
 `list_<d>.py` files that Phase 3 already wired `path=str(path.resolve())` on
@@ -483,7 +465,6 @@ their `test_list_<d>.py` files that each already asserts
 `Path(summary.path).is_absolute()` (successful entries) and
 `Path(failed.path) == broken_path.resolve()` (failed entries) -- no gaps
 found across `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`.
-
 Task 4.2 retrofitted `feat`: `feat/tools/list_feat.py`'s `_to_summary` now
 builds `path=str(path.resolve())` (previously unresolved `str(path)`), and
 its `_to_failed_summary` no longer passes `resolve=False` to
@@ -493,14 +474,12 @@ its own `path: str` field -- it is now purely inherited from the shared
 `DocSummary` base, like every other whole-body domain's summary -- and its
 module/class docstrings were rewritten to describe this as history, not a
 live divergence.
-
 Task 4.3 revised `DocSummary.ref`'s docstring
 (`general/models/summary.py`) to drop the "callers must not read this off
 disk themselves, only pass it to the matching domain's `get_<domain>` tool"
 policy sentence, replacing it with a note that `path` (the sibling field)
 now exposes the real filesystem path directly for a caller that wants it,
 per REQ-007.
-
 Task 4.4 added/extended tests: `tests/feat/tools/test_list_feat.py` gained
 an `is_absolute()` assertion for every summary in its malformed-folder test,
 plus an exact `Path(failed.path) == (broken / README_FILENAME).resolve()`
@@ -516,14 +495,12 @@ test (exercising the now-removed `resolve` parameter) was replaced with a
 single `test_path_is_always_resolved` test. The other eleven domains needed
 no new tests -- Task 4.1 confirmed their Phase 3 coverage was already
 complete.
-
 Task 4.5 added a `CHANGELOG.md` `[Unreleased]` entry: amended Phase 3's own
 "Changed" `list_<d>` bullet to drop its now-stale "`feat`/`FeatSummary`
 already had its own `path` field; it keeps its existing unresolved form for
 now, retrofitted separately" parenthetical (no longer true), and added a new
 dedicated "Changed" bullet documenting `FeatSummary.path`'s field-removal/
 resolved-path retrofit.
-
 Updated `AGENTS.md` (Task 4.1's own scope): all twelve `list_<d>` bullets
 (including `rsk`'s and `feat`'s own) now mention the shared, resolved `path`
 field alongside their existing `error_count` mention; `feat`'s own bullet's
@@ -533,7 +510,6 @@ state that `path` is no longer `feat`-only, while still noting `feat`'s own
 direct-editing workflow treats it as a first-class, sanctioned entry point
 by original design (not merely an incidental convenience gained later, as
 for the other eleven domains).
-
 Quality gate: `ruff format --check` (clean, 1652 files already formatted),
 `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the full `pytest -n auto --cov=src` suite
 (3342 tests, up from 3339 immediately before this phase's test edits -- net
@@ -547,7 +523,6 @@ Quality gate: `ruff format --check` (clean, 1652 files already formatted),
 `docs/GENERATED.md`), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- no
 tool descriptions/signatures changed), and `specmgr adr-toc`
 (`docs/adr/README.md` unchanged) all green.
-
 Design decision made during this phase, not already covered by the plan's
 own Design Notes (added to Decisions Made below): simplified
 `general/tools/_listing.py::default_failed_summary` by removing its
@@ -556,9 +531,7 @@ flexibility once `feat` (its only caller ever passing `resolve=False`) was
 retrofitted to always resolve -- every one of the twelve domains'
 `to_failed_summary` callbacks now calls `default_failed_summary` with the
 same, simplified two-or-three-positional-plus-`ref`-keyword signature.
-
 #### 2026-09-04 15:00:00.000Z - Phase 3 (`list_<d>` Failure Reporting) complete: Tasks 3.1-3.4 done
-
 Implemented REQ-006's `list_<d>` failure-reporting fix and the shared
 listing infrastructure it depends on (Task 3.1): `general/tools/_listing.py`
 (`build_summaries(paths, read, to_summary, to_failed_summary, error_types= (AssertionError, ValidationError, yaml.YAMLError))`, `default_failed_summary()`,
@@ -582,7 +555,6 @@ resolved-path retrofit is explicitly Phase 4, Task 4.2's job -- while the
 other eleven domains' successful *and* failed entries both get a brand-new,
 `.resolve()`d `path`. `AGENTS.md`'s twelve `list_<d>` bullets each now
 mention `error_count`.
-
 Implemented RSK's sentinel-document construction (Task 3.2):
 `rsk/tools/_sentinel.py` (`_SENTINEL_RSK_TEXT`, `_SENTINEL_RSK_DOCUMENT`,
 `build_failed_rsk_summary()`), a fixed, valid, deliberately
@@ -593,7 +565,6 @@ via the real, unmodified `parse_rsk` pipeline, then run through the same
 overriding the fields no document could ever supply. `tests/rsk/tools/test__sentinel.py`
 (9 tests) parses `_SENTINEL_RSK_TEXT` directly, independent of `list_rsk`'s
 own tests.
-
 Added regression tests (Task 3.3): `req`/`rsk` (the two mandated domains)
 each gained a full `test_returns_summaries_and_reports_malformed_file_as_a_failed_entry`
 test (asserting `total`/`error_count`, marker `title`/`status`, `ref`,
@@ -610,11 +581,9 @@ skipped now counts toward `total`). New `tests/general/tools/test__listing.py`
 `AdrSummary`'s own tests were split off into a narrower four-field
 expectation, since `adr` is out of scope for this feature and `AdrSummary`
 deliberately does not gain `path`/`error` (see Decisions Made below).
-
 Added a `CHANGELOG.md` `[Unreleased]` entry (Task 3.4): a "Changed"
 **BREAKING** entry documenting `list_<d>`'s `total`/`error_count` semantics
 change.
-
 Quality gate: `ruff format --check` (clean), `ruff check` (all checks
 passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the
 full `pytest -n auto --cov=src` suite (3340 tests, up from 3308 -- net +32:
@@ -625,7 +594,6 @@ spread across the twelve `test_list_<d>.py` files and the three
 `_sentinel.py`), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- no tool
 descriptions/signatures changed), and `specmgr adr-toc` (`docs/adr/README.md`
 unchanged) all green.
-
 Design decision made during this phase, not already covered by the plan's
 own Design Notes (added to Decisions Made below): the RSK sentinel's H1 is
 a plain descriptive title, not literally `"<failed to parse>"` -- `title`
@@ -637,9 +605,7 @@ writing that literal marker text as a markdown H1 is rejected by
 span, a backslash escape) leaves its own markdown syntax embedded in
 `MarkdownSection.text`'s raw-source-derived output instead of yielding the
 bare marker string.
-
 #### 2026-09-04 14:00:00.000Z - Phase 2 (Generic `validate` Tool) complete: Tasks 2.1-2.7 done
-
 Implemented the generic, type-dispatched `validate(type, content, full)` tool in
 `general/tools/validate.py` for the twelve whole-body domains (`adr` excluded,
 `validate_adr` unchanged), covering REQ-003/REQ-004/ACC-003/ACC-004: twelve
@@ -661,13 +627,11 @@ on (`validate` is content-based, not id-based). Added
 `general/models/validate_result.py` (`ValidateResult`/`ValidationErrorEntry`,
 greenfield -- no existing non-raising-result precedent in this codebase) and
 registered `validate` in `general/tools/__init__.py`.
-
 Created ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (Task 2.2), extending ADR
 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention to this
 read-only/dry-run tool category; regenerated `docs/adr/README.md` via
 `specmgr adr-toc`; updated the Related Decisions placeholder bullet above with
 the real id.
-
 Migrated every prompt/test dependent on the twelve retired `validate_<d>`
 functions (Task 2.3/2.5): all 24 `create_<d>`/`update_<d>` prompt `.py`
 docstrings/descriptions and their packaged `*_instructions.md` data files
@@ -688,7 +652,6 @@ regression tests (`test_issue_27.py`, `test_issue_70.py`, `test_issue_71.py`),
 `tests/general/tools/test_error_context.py`, and (found via the broader
 search Task 2.5 itself called for) `tests/sop/prompts/test_create_sop.py`/
 `tests/sysrs/prompts/test_create_sysrs.py`.
-
 Added `tests/general/tools/test_validate.py` (Task 2.6): 15 test methods
 across 4 classes -- `TestValidateAllDomains` (parameterized over all twelve
 domains' ported fixture bodies: valid body-only, valid full document,
@@ -703,7 +666,6 @@ enriched message present, never a raised exception). Added a `CHANGELOG.md`
 `[Unreleased]` entry (Task 2.7): an "Added" entry for the new `validate` tool
 and a "Removed" **BREAKING** entry for the twelve retired `validate_<d>`
 tools, matching `delete`'s/`update`'s own precedent wording.
-
 Quality gate: `ruff format --check` (clean), `ruff check` (all checks
 passed), `vulture src/ whitelist.py --min-confidence 60` (no output), the
 full `unittest discover` suite (3308 tests, up from 3293 -- net +15 new,
@@ -711,7 +673,6 @@ full `unittest discover` suite (3308 tests, up from 3293 -- net +15 new,
 `validate_<d>` API pages pruned, two new pages added for `validate.py`/
 `validate_result.py`), `specmgr adr-toc` (regenerated `docs/adr/README.md`),
 and `specmgr mcp-docs` (regenerated `docs/MCP.md`) all green.
-
 Design decision made during this phase, not already covered by the plan's
 own Design Notes (added to Decisions Made below): the unsupported-`type`
 check in `validate()` deliberately does NOT mirror `delete`'s/
@@ -725,47 +686,30 @@ static-type-check time." `update`'s/`set_classification`'s own docstrings
 already (inaccurately) claim a `ValueError` for this case, so `validate`'s
 explicit check is arguably a corrected precedent, not a deviation from the
 documented (if not actual) contract.
-
 #### 2026-09-04 13:00:00.000Z - Task 1.4 done: full inventory of all thirteen `validate_<d>` tools added; Phase 1 complete
-
 Added the Task 1.4 inventory to Design Notes: a table covering all thirteen current `validate_<d>` tools' signatures, per-domain behavior for `full=False`/`full=True`, and the exceptions each lets propagate, plus a consolidated summary of `validate_adr`'s four points of structural divergence from the other twelve (id-based/disk-touching vs. content-based/disk-free, no `full` parameter, `AdrParseError` instead of `AssertionError` as its structural channel, and an additional `AdrNotFoundError` failure mode). This closes REQ-002/ACC-002 and, since Tasks 1.1-1.3 and 1.5 were already done, completes Phase 1 in full. No design decisions were made in this task (pure inventory/documentation); Phase 2 (the generic `validate` tool) has not started.
-
 #### 2026-09-04 12:00:00.000Z - Plan refined a third time following an independent review: ADR task, YAMLError coverage, CHANGELOG tasks, test-migration task, full/type-mismatch test, path-field sequencing note
-
 Refined the plan again, following an independent gap review conducted before Phase 2 implementation begins. Seven concrete gaps were raised and addressed: (1) added a Design Notes sequencing note clarifying that Task 3.1 (Phase 3), not Task 4.1 (Phase 4), is what actually introduces and populates the mandatory `path` field on the shared `DocSummary` base across all twelve domains -- Task 4.1 was reworded from "add the field" to "confirm/spot-check what Task 3.1 already wired," since `build_summaries()`'s callbacks must produce fully-valid model instances immediately in Phase 3, and the RSK sentinel's own Phase 3 `model_copy` already depended on `path` existing; (2) added Task 2.7/3.4/4.5, one `CHANGELOG.md [Unreleased]` entry per phase that ships a breaking change, matching `feat-36-delete`'s and `feat-38-39-41-43-44`'s own established per-phase CHANGELOG convention, which this plan had omitted entirely; (3) added Task 2.5, removing/migrating the 12 dedicated `test_validate_<d>.py` files (~1600 lines) plus the 6 `test_integration.py`, 3 regression, and 1 `test_error_context.py` files that import a `validate_<d>` function directly -- Task 2.4 ("remove the twelve tool files") did not previously account for the parallel test files that would otherwise `ImportError` immediately; (4) added a clarifying sentence to REQ-004 and a cross-reference in Design Notes explaining that `errors` currently holds zero or one entries in practice (each domain's validation performs exactly one guarded parse call), and that the list shape is deliberate forward-compatibility rather than an indication multiple concurrent errors are expected today; (5) added `yaml.YAMLError` to `build_summaries()`'s default `error_types` (Task 3.1, Design Notes) -- confirmed via source that `parse_<d>` genuinely raises it, unwrapped, for malformed frontmatter, and omitting it from the catch set would leave `list_<d>` crashing outright on such a document instead of reporting it as a failed entry, which is exactly issue #83(b)'s complaint; extended Task 3.3 to include a malformed-YAML fixture, and noted (out of scope) that `general/tools/_doc_paths.py::find_doc_path_by_id` shares this same gap today; (6) extended Task 2.6/ACC-004 with a new test, for a representative sample of domains (`req`/`dec`/`vcr`), confirming the `full`/content-shape-mismatch `ValueError` still propagates through the generic tool rather than being swallowed into `{valid: false}` -- and added an explicit exception-class-filtering note to Task 2.1; (7) added Task 2.2, writing a new dedicated ADR for the `validate`-consolidation decision (with a placeholder bullet under Related Decisions pending its assigned id), mirroring `feat-36-delete`'s own precedent of writing a dedicated ADR even where a general dispatch-only convention (36905d5b) already existed. Renumbered the rest of Phase 2 (2.2-2.4 -> 2.3-2.4, plus new 2.5-2.7) and fixed Task 5.2's now-stale "Tasks 2.2/3.1/4.1" cross-reference to "Tasks 2.3/3.1/4.1". No REQ/ACC renumbering was needed beyond extending ACC-003/ACC-004's existing wording in place.
-
 #### 2026-09-04 09:00:00.000Z - Plan refined further: shared listing helper, `list_<d>` total/error_count semantics, RSK sentinel-document design, ACC restructured one-per-REQ
-
 Refined the plan again, before Phase 2 implementation begins. Corrected Task 3.1's incorrect assumption that a shared `list_<d>` listing helper already existed (it did not -- confirmed the try/except/append loop is copy-pasted identically across ten domains); designed a new `general/tools/_listing.py::build_summaries()` helper to replace it, plus `error_count`/`path`/`error` additions to the shared `PagedResult`/`DocSummary` bases rather than duplicated per domain. Resolved `total`'s semantics once failed entries are folded into `results` (it now includes them, a deliberate change from today's "parseable only" meaning, which is exactly what fixes issue #83's silent-zero complaint) and `error_count`'s semantics (counts across the whole directory, mirroring `total`, not just the current page). Worked through, and resolved, why `RskSummary` -- the only domain summary type with fields beyond the shared `DocSummary` base -- cannot represent a failed row via `Optional` fields (rejected: weakens real rows' guarantees too) or fabricated plausible-looking placeholder data (rejected: indistinguishable from real low-severity risk data in an aggregate view); adopted a fixed, valid, deliberately worst-case-severity sentinel RSK document, parsed once through the real `parse_rsk` pipeline (no validation bypass), with only the four fields no document could ever supply (`id`/`status` marker/`path`/`error`) set after the fact -- see Design Notes for the full design and rationale, including a dedicated standalone test for the sentinel document itself. Also folded `validate_feat`'s ad hoc Phase 1 spot-check into Task 1.3, split Task 2.2/5.2's `AGENTS.md` responsibilities so the work isn't deferred to one vague catch-all task, and restructured Acceptance Criteria to exactly one ACC per REQ (previously ACC-003 covered both REQ-003 and REQ-004).
-
 #### 2026-09-03 17:00:00.000Z - Recorded the client-side-defect workaround rationale as an ADR
-
 Wrote ADR 519d1206-4d2a-4500-9046-6db635209996 ("Design `validate` as a non-raising, structured-result tool to work around client-side MCP error-content truncation"), formalizing the reasoning already captured in Design Notes: `validate`'s REQ-003/004 non-raising design exists because of a confirmed, external OpenCode 1.18.27 client-side defect, not as an independently preferred design -- a decision worth a full ADR since the rationale generalizes to any future tool in this repo facing the same need, not just this feature. Cross-referenced the ADR from Design Notes/Related Decisions and from the drafted, unfiled `opencode-issue-mcp-tool-error-truncated.md`.
-
 #### 2026-09-03 16:00:00.000Z - Phase 1 Tasks 1.1-1.3 done: repro confirmed, root cause narrowed to a client-side rendering gap
-
 Reproduced both of issue #83's literal repro bodies against current HEAD (`req` naive-isoformat timestamps via `validate_req`; `dec` em-dash `## Updates` sub-heading via `validate_dec`). In this agent session, both surfaced only as a bare, contentless `"Error executing tool <name>"` message through the normal MCP tool-call interface -- the opaque-failure symptom issue #83 describes. A follow-up raw MCP JSON-RPC inspection (bypassing this session's own tool-calling harness, via the `mcp` SDK's `stdio_client`) proved the specmgr server itself sends the full, `feat-27-validation`-enriched message in the wire-level `CallToolResult`; the truncation happens one layer further out, in the calling agent's own tool-result rendering. `feat-67-70-71`'s "transport forwards unabridged" conclusion is confirmed correct, not regressed. Full detail and rationale for how this reinforces (rather than changes) REQ-003/004's non-raising `validate` design are in Design Notes.
-
 #### 2026-09-03 15:00:00.000Z - Plan refined: design questions resolved ahead of Phase 1
-
 Refined the plan before starting implementation. Corrected a stale "eleven" `validate_<d>` tool count to the actual thirteen (twelve identical-signature whole-body tools plus the structurally-different `validate_adr`). Resolved all of Task 1.5's open design questions plus REQ-007's previously-conditional `path`-field decision -- see Design Notes and "Design questions resolved during plan refinement" below for the resolutions and rationale. Requirements, Acceptance Criteria, Scope, and the Task List were updated to reflect these resolutions.
-
 #### 2026-09-03 14:27:36.412Z - Created
-
 Created from GitHub issues #81 (consolidate validation tools) and #83 (opaque validation errors; `list_<domain>` silently reporting zero on parse failures). Combines both issues into one feature since #83 is referenced by #81 and both concern how validation failures/results are reported by this repo's MCP tools.
-
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
 #### 2026-09-04 19:00:00.000Z - Phase 6 implementation-approach decisions, made during Phase 6 itself
-
 Four concrete implementation-approach decisions were made while carrying out Phase 6's own
 already-scoped REQ-009/010/011 (distinct from the four scoping decisions recorded in the
 2026-09-04 18:00:00.000Z entry below, which were made while *defining* Phase 6, not while
 implementing it):
-
-1. **`_detect_frontmatter` re-raises the enriched YAML error from inside the `wrap_tool_errors`
+**`_detect_frontmatter` re-raises the enriched YAML error from inside the `wrap_tool_errors`
    `with` block, rather than composing the two enrichment calls as two separate, sequential
    `try`/`except` layers.** This mirrors the real pipeline exactly: `parse_frontmatter` raises
    the block/line-enriched error, which then propagates up into the *caller's own*
@@ -774,8 +718,7 @@ implementing it):
    from error` *inside* `_detect_frontmatter`'s own `with wrap_tool_errors(...)` block reproduces
    that same nesting/propagation order in one function, rather than needing two separate context
    managers or a manually-composed re-raise chain.
-
-2. **The Task 6.3 regression test wraps the domain's own `parse_<d>` free function in a
+**The Task 6.3 regression test wraps the domain's own `parse_<d>` free function in a
    locally-constructed `wrap_tool_errors(domain=<d>, tool="parse_<d>")` block, rather than
    calling the file-based `parse_<d>` MCP tool through a temp file.** Since `parse_<d>` (the free
    function, e.g. `req.models.v1.parse_req`) is disk-free, and the tool wrapper
@@ -783,16 +726,14 @@ implementing it):
    the exact same `with wrap_tool_errors(domain="req", tool="parse_req"): return _parse_req(text)`
    pattern, replicating that one-line wrapping in the test avoids an unnecessary temp-file
    round-trip while still exercising the identical enrichment composition the real tool applies.
-
-3. **`sysrs/__init__.py`'s "6 tools"/"2 prompts" corrections, and the adjacent `sop/__init__.py`
+**`sysrs/__init__.py`'s "6 tools"/"2 prompts" corrections, and the adjacent `sop/__init__.py`
    "7 tools" -> "6 tools" fix, are itemized by name in the docstring text itself (not just a bare
    corrected number).** Since the original "7 tools" claim's staleness (in both files) stemmed
    from silently including the later-removed `validate_<d>` in a count with no itemized list to
    cross-check against, listing every tool name by name directly in the docstring makes a future
    count drift immediately, visibly wrong (a missing/extra name) rather than requiring a separate
    `tools/__init__.py` cross-check to catch a bare-number error again.
-
-4. **No `CHANGELOG.md [Unreleased]` entry was added for Phase 6**, per the plan's own Task 6.5
+**No `CHANGELOG.md [Unreleased]` entry was added for Phase 6**, per the plan's own Task 6.5
    wording anticipating this outcome: `validate`'s own `[Unreleased]` "Added" entry (Task 2.7)
    already describes the tool's contract accurately, and Phase 6's `yaml.YAMLError` enrichment
    fix corrects a bug in that same not-yet-released tool -- invisible to anyone who has only ever
@@ -800,21 +741,13 @@ implementing it):
    entry. The eleven docstring fixes (Task 6.1) and the ADR amendment (Task 6.4) are likewise
    below `CHANGELOG.md`'s own threshold (internal documentation accuracy, not a notable change to
    the package's behavior).
-
 #### 2026-09-04 18:00:00.000Z - Phase 6 scoping decisions, made during the independent post-closeout quality review
-
 Three implementation-approach decisions were made while turning the review's findings into Phase 6's REQ-009/010/011:
-
-1. **REQ-010's `yaml.YAMLError` enrichment gap is fixed, not just documented.** Considered leaving the behavior as-is (it matches the original per-domain `validate_<d>` tools byte-for-byte) and only correcting REQ-004/the module docstring's overstated "verbatim" enrichment claim plus adding the missing test. Rejected in favor of an actual fix, since `validate`'s entire purpose is consistent, actionable failure reporting, and leaving one of its three named channels quietly worse than the other two undermines that purpose more than the small code change to fix it costs.
-
-2. **The `_detect_frontmatter` helper stays private inside `general/tools/validate.py`, not promoted to a shared `models/md` module.** Considered adding it to `models/md/_frontmatter_parse.py`/`_errors.py` for future reusability. Rejected for now: nothing else in the codebase currently needs this exact composition (`enrich_frontmatter_yaml_error` + `wrap_tool_errors` labeling for a presence-only probe, as opposed to a full parse), and adding it to a shared module speculatively would be scope creep beyond what REQ-010 actually requires.
-
-3. **REQ-011 amends ADR 519d1206's Confirmation section rather than attempting the live-session re-check it originally committed to.** A live MCP-client round-trip isn't something an agent session can reliably automate or independently verify (the same limitation Phase 1's own investigation ran into, requiring a bespoke standalone JSON-RPC script outside the normal tool-calling harness). Rather than attempt and possibly mis-record another ad hoc repro, the ADR's own Confirmation section is corrected to state what was actually verified (unit-level `{valid, errors}` shape reproduction), consistent with this repo's general preference for accurate records over unfulfilled commitments.
-
-4. **`sysrs/__init__.py`'s own unrelated docstring staleness is fixed in the same Phase 6 pass as REQ-009**, rather than filed as a separate cleanup item, since it is discovered and touched during the same twelve-domain `__init__.py` audit and costs nothing extra to fix immediately.
-
+**REQ-010's `yaml.YAMLError` enrichment gap is fixed, not just documented.** Considered leaving the behavior as-is (it matches the original per-domain `validate_<d>` tools byte-for-byte) and only correcting REQ-004/the module docstring's overstated "verbatim" enrichment claim plus adding the missing test. Rejected in favor of an actual fix, since `validate`'s entire purpose is consistent, actionable failure reporting, and leaving one of its three named channels quietly worse than the other two undermines that purpose more than the small code change to fix it costs.
+**The `_detect_frontmatter` helper stays private inside `general/tools/validate.py`, not promoted to a shared `models/md` module.** Considered adding it to `models/md/_frontmatter_parse.py`/`_errors.py` for future reusability. Rejected for now: nothing else in the codebase currently needs this exact composition (`enrich_frontmatter_yaml_error` + `wrap_tool_errors` labeling for a presence-only probe, as opposed to a full parse), and adding it to a shared module speculatively would be scope creep beyond what REQ-010 actually requires.
+**REQ-011 amends ADR 519d1206's Confirmation section rather than attempting the live-session re-check it originally committed to.** A live MCP-client round-trip isn't something an agent session can reliably automate or independently verify (the same limitation Phase 1's own investigation ran into, requiring a bespoke standalone JSON-RPC script outside the normal tool-calling harness). Rather than attempt and possibly mis-record another ad hoc repro, the ADR's own Confirmation section is corrected to state what was actually verified (unit-level `{valid, errors}` shape reproduction), consistent with this repo's general preference for accurate records over unfulfilled commitments.
+**`sysrs/__init__.py`'s own unrelated docstring staleness is fixed in the same Phase 6 pass as REQ-009**, rather than filed as a separate cleanup item, since it is discovered and touched during the same twelve-domain `__init__.py` audit and costs nothing extra to fix immediately.
 #### 2026-09-04 16:00:00.000Z - Removed `default_failed_summary`'s `resolve` parameter entirely rather than leaving it as dead flexibility
-
 Decided, during Phase 4 implementation, to remove `general/tools/_listing.py::default_failed_summary`'s
 `resolve: bool = True` parameter outright rather than simply leaving it in place (still defaulting to
 `True`) now that every one of the twelve domains' `to_failed_summary` callbacks resolves. `feat` was the
@@ -831,9 +764,7 @@ place describing the Phase 3/Phase 4 boundary in the past tense (`_listing.py`'s
 `list_feat.py`'s module docstring, `AGENTS.md`'s `feat` bullet, this plan's own Design Notes reference to
 Task 3.1's sequencing note) were updated so no "Phase 3 exception" language remains describing a boundary
 that, after this phase, no longer exists.
-
 #### 2026-09-04 15:00:00.000Z - RSK sentinel's `title` is overridden via `model_copy`, not read off the sentinel's own H1
-
 Decided, during Phase 3 implementation, that the RSK sentinel document's H1 must be a plain
 descriptive title (`"RSK Sentinel Document (Internal)"`), not literally the fixed marker text
 `"<failed to parse>"` as an earlier draft of the design proposed -- discovered to be technically
@@ -856,9 +787,7 @@ sentinel's marker can never drift out of sync with the other eleven domains' eve
 longer read off the sentinel document's own H1. `RskSummary`'s field constraints, and every other
 part of the original sentinel-document design (a fixed, valid, deliberately worst-case-severity
 document parsed once via the real, unmodified `parse_rsk` pipeline), are completely unchanged.
-
 #### 2026-09-04 14:00:00.000Z - `validate`'s unsupported-`type` check is an explicit `ValueError`, not an implicit `KeyError`
-
 Decided, during Phase 2 implementation, that `validate()`'s unsupported-`type` guard (including
 `type="adr"`) must be an explicit `if type not in _ADAPTERS: raise ValueError(...)` check rather
 than mirroring `delete`'s/`set_classification`'s own actual runtime behavior for the same
@@ -876,27 +805,15 @@ own explicit check is a deliberate, freestanding guard, not a byproduct of some 
 path. Note that `update`'s/`set_classification`'s own docstrings already (inaccurately) document
 a `ValueError` for an unsupported `type`, so `validate`'s explicit, correct-per-its-own-docstring
 behavior is arguably a corrected precedent for future generic tools, not a one-off inconsistency.
-
 #### 2026-09-04 12:00:00.000Z - Independent plan review: write a dedicated ADR for the validate consolidation, fix `list_<d>`'s YAMLError gap, add CHANGELOG/test-migration tasks, clarify path-field sequencing
-
 Decided, following an independent review of this plan before Phase 2 begins, to write a new dedicated ADR for the `validate_<d>` -> generic `validate` consolidation (Task 2.2) rather than relying solely on citing ADR 36905d5b-8057-4294-8665-c7eed5534db0's general convention, since `feat-36-delete` set the precedent of writing its own dedicated ADR for an equivalent per-tool consolidation even though the general convention already existed, and `validate` is arguably a distinct category (read-only/dry-run, not a mutation tool) worth its own explicit record. Decided to add `yaml.YAMLError` to `build_summaries()`'s default failure-catch set (Task 3.1) rather than leaving it at `(AssertionError, ValidationError)` as originally designed, since `parse_<d>` genuinely raises it unwrapped for malformed frontmatter and leaving it uncaught would have shipped an incomplete fix for issue #83(b) (a malformed-YAML document would still crash `list_<d>` outright). Decided to add explicit `CHANGELOG.md [Unreleased]` tasks per phase (2.7/3.4/4.5) rather than leaving CHANGELOG maintenance implicit, matching this repo's own established precedent on the two most directly comparable prior features. Decided to add an explicit test-migration task (2.5) for the dependent test files rather than assuming Task 2.4's "remove the tool files" implicitly covers it, since 22 other test files import a `validate_<d>` function directly and would otherwise break with an unhandled `ImportError` the moment Task 2.4 runs. Decided to keep the `errors: list[{message}]` shape (not switch to a scalar `error: str | None`) despite it holding at most one entry in every case the current implementation can produce, on forward-compatibility grounds, but to say so explicitly in REQ-004/Design Notes rather than leaving the discrepancy undocumented. Decided to clarify, rather than restructure, the Phase 3/Phase 4 boundary for the `path` field: Task 3.1 already has to introduce and populate it for all twelve domains as an unavoidable consequence of it becoming a mandatory field on the shared `DocSummary` base, so Task 4.1 is reworded to a verification/spot-check step instead of pretending to add the field from scratch a second time.
-
 #### 2026-09-04 09:00:00.000Z - Shared `list_<d>` helper, `list_<d>` total/error_count semantics, and RSK's sentinel-document design
-
 Decided to generalize `list_<d>`'s failure-reporting loop into one shared `general/tools/_listing.py` helper (mirroring `general/tools/_doc_paths.py::find_doc_path_by_id`'s existing callback-based precedent) instead of the originally-planned per-domain edits, since the twelve domains' loops are (with the exception of `rsk`/`feat`'s summary-construction step) byte-for-byte identical. Decided `total`'s meaning changes to include failed entries once they are folded into `results` (rather than adding a second "successes only" count field), and `error_count` counts across the whole directory independent of paging, mirroring `total`'s own existing semantics -- both computed for free by materializing the full list, including failures, before `paginate()` slices it. Decided against weakening `RskSummary`'s schema (`Optional` fields) or fabricating schema-valid-but-plausible placeholder risk data to represent a failed RSK document, since the latter is indistinguishable from real, low-severity data in an aggregate risk-matrix view and considered worse than a silent zero (a believable lie, not an obvious absence). Decided instead on a fixed, deliberately worst-case-severity sentinel RSK markdown document, parsed once through the unmodified real `parse_rsk` pipeline, with only the four fields no document could ever supply (`id`, the `status` marker, `path`, `error`) set after parsing via `model_copy` -- keeping `RskSummary`'s schema completely untouched while still surfacing every failed risk document as an unmistakable (title marker plus worst-case severity), non-fabricated-looking row. A dedicated test parses the sentinel text on its own, so a future RSK schema change is caught immediately rather than surfacing indirectly through `list_rsk`.
-
 #### 2026-09-03 17:00:00.000Z - Wrote a full ADR for the client-side-defect workaround rationale
-
 Decided this feature's own Design Notes were not a sufficient home for the reasoning behind `validate`'s non-raising design, since that reasoning -- it exists to work around a confirmed external OpenCode defect, not as an independently preferred design -- generalizes beyond this one feature to any future tool in this repo that signals failure by raising. Wrote ADR 519d1206-4d2a-4500-9046-6db635209996 to record it as a full architectural decision, per this repo's own convention that decisions affecting more than one feature belong in a full ADR rather than a feature-local log.
-
 #### 2026-09-03 16:00:00.000Z - No change to REQ-003/004's design after root-causing the opaque-failure symptom to a client-side gap
-
 Decided not to broaden this feature's scope to "fix" the client-side tool-error-rendering gap that root-causes the opaque-failure symptom observed in Tasks 1.1-1.3, since it lives outside specmgr's own code (in the calling agent's tool-invocation harness) and specmgr has no way to control or detect which MCP client is in use. Decided instead that this finding is evidence *for* REQ-003/004 as already designed, not a reason to change it: since a tool's ordinary successful return value has been observed to pass through completely regardless of size/content, while an `is_error=true` result is empirically at the mercy of a client's own (possibly lossy) rendering, converting `validate` from raise-on-failure to always-returns-`{valid, errors}` sidesteps the lossy path entirely, independent of which client calls it.
-
 #### 2026-09-03 15:00:00.000Z - Design questions resolved during plan refinement
-
 Resolved, ahead of Phase 1, the four open design questions the plan had deferred: (1) the generic `validate` tool's domain list excludes `adr` (12-way, matching `update`/`set_classification`/`delete`'s precedent), since `validate_adr` is structurally different (`id`-based, disk-touching, no `full` parameter) from the twelve identical-signature whole-body `validate_<d>` tools -- `validate_adr` stays standalone and unchanged; (2) the `{valid, errors}` result shape is `errors: list[{message: str}]` with no `field` key, since no existing machinery separates field/line data back out of `feat-27-validation`'s already-fused enriched message strings, and a `field` key would be `None` for `AssertionError`/YAML-sourced errors regardless; (3) a failed `list_<d>` entry uses the fixed marker `title="<failed to parse>"` with `ref=path.stem` (identical to every domain's existing successful-entry derivation), with directory/permission enumeration errors left explicitly out of scope; (4) REQ-007's previously-conditional `path`-field decision is resolved to "yes, implement" for all eleven other whole-body domains, as an absolute/resolved path rather than `FeatSummary`'s current unresolved form -- `FeatSummary.path` itself is retrofitted to match, and `DocSummary.ref`'s "must not read this off disk" docstring policy is revised accordingly, since direct reads become a sanctioned, first-class option for every domain rather than a `feat`-only divergence. Also corrected a stale "eleven" `validate_<d>` tool count to the actual thirteen throughout the plan.
-
 #### 2026-09-03 14:27:36.412Z - Scope and design decisions recorded at creation
-
 Combined issues #81 and #83 into one feature (they cross-reference each other and both concern validation-result reporting). Decided the generic `validate` tool consolidates only `validate_<d>` (not `parse_<d>`/`get_<d>`), matching the existing precedent that only write-adjacent tools are consolidated into generic dispatch tools; the per-domain tools are removed outright once migrated, not kept as backward-compatible wrappers, matching the `update`/`set_status`/`delete` precedent. Decided `list_<d>`'s failure reporting adds an `error_count` header field and folds failed documents directly into `results` (marker `title` + `error` field) rather than a separate parallel array, so a caller sees failures without a second lookup. Decided to investigate first (Phase 1) whether issue #83's own two literal repro cases still reproduce against current HEAD, following the same method `feat-67-70-71` used for issues #70/#71, rather than assuming a code fix is still needed.

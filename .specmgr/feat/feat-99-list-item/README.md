@@ -4,7 +4,7 @@ created: '2026-09-04 23:25:55.412+02:00'
 id: feat-99-list-item
 status: done
 type: feat
-updated: '2026-09-09 05:27:56.835+02:00'
+updated: '2026-09-30T04:53:21.000Z'
 version: 1.0.0
 ---
 
@@ -66,23 +66,23 @@ Diagnosis (2026-09-04) narrowed the failure to `MarkdownListItem` subclasses tha
 
 ### Task List
 
-#### Phase 1: Diagnosis
+#### Phase 100: Diagnosis
 
-- [x] Task 1.1: Reproduce the failure with a minimal feat document containing one soft-wrapped list item.
-- [x] Task 1.2: Bisect to confirm the failure is specifically the list-item lazy-continuation join, not something else.
-- [x] Task 1.3: Check whether the same construct reproduces against one other models/md domain (e.g. req or tsk) to confirm shared-vs-local scope.
+- [x] Task 100.100: Reproduce the failure with a minimal feat document containing one soft-wrapped list item.
+- [x] Task 100.110: Bisect to confirm the failure is specifically the list-item lazy-continuation join, not something else.
+- [x] Task 100.120: Check whether the same construct reproduces against one other models/md domain (e.g. req or tsk) to confirm shared-vs-local scope.
 
-#### Phase 2: Fix
+#### Phase 110: Fix
 
-- [x] Task 2.1: Add a shared single-physical-line guard to `MarkdownListItem` in `models/md/markdown_list_item.py` (e.g. a `single_line_text(self, *, expected: str) -> str` method), raising an actionable `AssertionError` (field path, 1-based line reference, explicit "soft-wrapped/lazy-continuation list items are not supported" cause, and a "join onto one physical line" fix hint) when a structurally-checked item's `.text` spans more than one physical line.
-- [x] Task 2.2: Wire the new guard into the five confirmed call sites: `tsk.TaskItem.checked`/`.description` (`tsk/models/v1/task_item.py`), `feat.RequirementItem.description` and `feat.AcceptanceCriterionItem.criterion_description` (`feat/models/v1/body.py`), `rsk.ThresholdItem` (`rsk/models/v1/risk_matrix.py`), and `rsk.StrategyItem` (`rsk/models/v1/tara.py`). Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages (Tags, cross-ref lists, etc.) must keep tolerating soft-wraps unchanged.
-- [x] Task 2.3: Confirm (no code change expected) that the MCP tool error wrapper already surfaces the underlying exception message end-to-end, via one live `create_feat`/`validate` call against a soft-wrapped fixture, and check ACC-003/REQ-003 accordingly.
+- [x] Task 110.100: Add a shared single-physical-line guard to `MarkdownListItem` in `models/md/markdown_list_item.py` (e.g. a `single_line_text(self, *, expected: str) -> str` method), raising an actionable `AssertionError` (field path, 1-based line reference, explicit "soft-wrapped/lazy-continuation list items are not supported" cause, and a "join onto one physical line" fix hint) when a structurally-checked item's `.text` spans more than one physical line.
+- [x] Task 110.110: Wire the new guard into the five confirmed call sites: `tsk.TaskItem.checked`/`.description` (`tsk/models/v1/task_item.py`), `feat.RequirementItem.description` and `feat.AcceptanceCriterionItem.criterion_description` (`feat/models/v1/body.py`), `rsk.ThresholdItem` (`rsk/models/v1/risk_matrix.py`), and `rsk.StrategyItem` (`rsk/models/v1/tara.py`). Free-form `MarkdownListItem`/`MarkdownListItemWithNotes` usages (Tags, cross-ref lists, etc.) must keep tolerating soft-wraps unchanged.
+- [x] Task 110.120: Confirm (no code change expected) that the MCP tool error wrapper already surfaces the underlying exception message end-to-end, via one live `create_feat`/`validate` call against a soft-wrapped fixture, and check ACC-003/REQ-003 accordingly.
 
-#### Phase 3: Documentation and Verification
+#### Phase 120: Documentation and Verification
 
-- [x] Task 3.1: Update AGENTS.md (and/or `.specmgr/conventions.md`) to document the single-physical-line constraint on structurally-checked list items, and confirm the `get_<d>_template`/`get_<d>_example` outputs for `tsk`/`feat`/`rsk` don't already contain soft-wrapped bullets (expected: they don't).
-- [x] Task 3.2: Add/extend unittest coverage: the shared guard itself (`tests/models/md/test_markdown_list_item.py`), each of the five call sites (`tests/tsk/models/v1/test_task_item.py`, `tests/feat/models/v1/test_body.py`, and the `rsk` risk-matrix/tara test files), and one end-to-end MCP tool test proving the actionable error reaches the client.
-- [x] Task 3.3: Run the full quality gate: `ruff format --check && ruff check`, `vulture`, `pytest -n auto`, and regenerate `specmgr docs`/`adr-toc` if any touched docstrings changed.
+- [x] Task 120.100: Update AGENTS.md (and/or `.specmgr/conventions.md`) to document the single-physical-line constraint on structurally-checked list items, and confirm the `get_<d>_template`/`get_<d>_example` outputs for `tsk`/`feat`/`rsk` don't already contain soft-wrapped bullets (expected: they don't).
+- [x] Task 120.110: Add/extend unittest coverage: the shared guard itself (`tests/models/md/test_markdown_list_item.py`), each of the five call sites (`tests/tsk/models/v1/test_task_item.py`, `tests/feat/models/v1/test_body.py`, and the `rsk` risk-matrix/tara test files), and one end-to-end MCP tool test proving the actionable error reaches the client.
+- [x] Task 120.120: Run the full quality gate: `ruff format --check && ruff check`, `vulture`, `pytest -n auto`, and regenerate `specmgr docs`/`adr-toc` if any touched docstrings changed.
 
 ## Progress
 

@@ -4,7 +4,7 @@ created: '2026-09-10 19:09:06.111+02:00'
 id: feat-120-remove-confluence
 status: done
 type: feat
-updated: '2026-09-10 21:56:21.311+02:00'
+updated: '2026-09-30T04:36:34.000Z'
 version: 1.0.0
 ---
 
@@ -64,25 +64,25 @@ MCP tools in this server should stay domain-focused on system-specification arti
 
 ### Task List
 
-#### Phase 1: ADR
+#### Phase 100: ADR
 
-- [x] Task 1.1: Write a new ADR documenting the decision to remove the Confluence tools from the MCP server, referencing GitHub issue #120.
-- [x] Task 1.2: Mark ADR a156fdf9-052c-4f43-93a2-eeec04a91eac as superseded by the new ADR via the generic `set_status` tool (`type="adr"`, `superseded_by=<new ADR id>`).
+- [x] Task 100.100: Write a new ADR documenting the decision to remove the Confluence tools from the MCP server, referencing GitHub issue #120.
+- [x] Task 100.110: Mark ADR a156fdf9-052c-4f43-93a2-eeec04a91eac as superseded by the new ADR via the generic `set_status` tool (`type="adr"`, `superseded_by=<new ADR id>`).
 
-#### Phase 2: Removal
+#### Phase 110: Removal
 
-- [x] Task 2.1: Delete the confluence tool/prompt/helper/data source modules listed in Scope > Included.
-- [x] Task 2.2: Delete the confluence test files listed in Scope > Included.
-- [x] Task 2.3: Update `general/tools/__init__.py` and `general/prompts/__init__.py` imports, `__all__`, and docstrings to remove confluence references.
-- [x] Task 2.4: Update `server.py`'s module docstring, `README.md`'s environment-variables section, and add a `CHANGELOG.md` `[Unreleased]` removal entry.
-- [x] Task 2.5: Remove the `httpx` dependency from `pyproject.toml` and `NOTICE` after confirming it is unused elsewhere in `src/`.
-- [x] Task 2.6: Regenerate `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`, and remove any stale orphaned generated files.
+- [x] Task 110.100: Delete the confluence tool/prompt/helper/data source modules listed in Scope > Included.
+- [x] Task 110.110: Delete the confluence test files listed in Scope > Included.
+- [x] Task 110.120: Update `general/tools/__init__.py` and `general/prompts/__init__.py` imports, `__all__`, and docstrings to remove confluence references.
+- [x] Task 110.130: Update `server.py`'s module docstring, `README.md`'s environment-variables section, and add a `CHANGELOG.md` `[Unreleased]` removal entry.
+- [x] Task 110.140: Remove the `httpx` dependency from `pyproject.toml` and `NOTICE` after confirming it is unused elsewhere in `src/`.
+- [x] Task 110.150: Regenerate `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`, and remove any stale orphaned generated files.
 
-#### Phase 3: Verification
+#### Phase 120: Verification
 
-- [x] Task 3.1: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) and confirm it is green.
-- [x] Task 3.2: Confirm `specmgr docs`/`specmgr mcp-docs` produce zero `git status` diff.
-- [x] Task 3.3: Verify every Acceptance Criteria item, check them off, and set this feature's status to `done`.
+- [x] Task 120.100: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) and confirm it is green.
+- [x] Task 120.110: Confirm `specmgr docs`/`specmgr mcp-docs` produce zero `git status` diff.
+- [x] Task 120.120: Verify every Acceptance Criteria item, check them off, and set this feature's status to `done`.
 
 ## Progress
 

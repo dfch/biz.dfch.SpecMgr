@@ -4,8 +4,9 @@ Frontmatter-stripped body extraction, body-line splicing, and body-line
 windowing for the generic ``update`` tool (feat-22-consolidate-mutation-tools,
 Phase 2) and the ``get_<d>`` tools (feat-28-get-update, Phase 2).
 
-Three small, doc-type-agnostic text helpers shared by the generic ``update``
-tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
+Small, doc-type-agnostic helpers shared by the generic ``update`` tool's
+range mode and every ``get_<d>`` tool's ``raw=True`` reads (and the
+``get_<d>`` tools' own read-argument validation):
 
 - :func:`body_text` extracts a document file's frontmatter-stripped body text
   using the established ``frontmatter.loads(path.read_text(encoding="utf-8")).
@@ -22,20 +23,44 @@ tool's range mode and every ``get_<d>`` tool's ``raw=True`` reads:
   ``limit`` = number of lines, omitted = through the last body line, capped
   at the remaining lines), clamping out-of-range values instead of erroring
   (the ``list_<d>`` "clamped, not errored" convention; reads are
-  non-destructive).
+  non-destructive). With ``numbered=True``, each returned line is
+  additionally prefixed with its 1-based **absolute** body-line number
+  (numbering starts at the clamped offset and never restarts at 1 within a
+  window, so a number seen in a numbered read can be fed straight back into
+  the generic ``update`` tool's ``offset``; feat-153-off-by-n Phase 3,
+  REQ-004, ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item
+  6).
+- :func:`splice_snippet` renders the before/after window of a range-mode
+  splice (the dropped lines, the inserted lines, and up to 2 unchanged
+  context lines per side, each labeled with its 1-based body-line number per
+  the pre-splice/post-splice split) as the ``snippet`` string the generic
+  ``update`` tool returns on success in range mode (feat-153-off-by-n
+  Phase 2, REQ-002, ADR 19ff316b-cd11-41a7-a616-ffd84917da51).
+- :func:`validate_read_args` raises ``ValueError`` for the ``get_<d>``
+  read-argument misuses -- the ``offset``/``limit`` windowing coordinates or
+  ``numbered=True`` combined with ``raw=False`` -- the single shared guard
+  behind all 12 ``get_<d>`` tools, which the caller runs before any file
+  access (feat-153-off-by-n Phase 3, REQ-005).
 
-**The raw/splice invariant.** All three helpers are the *single* definition
-of "the body text" in this codebase: every ``get_<d>(raw=True)`` read
-(windowed or not) and every ``update`` range splice go through
-:func:`body_text`, so *what the client counts is what the server splices* --
-the line numbers a client sees in any ``get_<d>(raw=True)`` read, windowed or
-not, index byte-for-byte into the same text the server splices against;
+**The raw/splice invariant.** The text helpers (:func:`body_text`,
+:func:`splice_body`, and :func:`window_body`) are the *single* definition of
+"the body text" in this codebase: every ``get_<d>(raw=True)`` read (windowed
+or not) and every ``update`` range splice go through :func:`body_text`, so
+*what the client counts is what the server splices* -- the line numbers a
+client sees in any ``get_<d>(raw=True)`` read, windowed or not, index
+byte-for-byte into the same text the server splices against;
 :func:`window_body` is the single windowing definition shared by every
-``get_<d>`` tool.
+``get_<d>`` tool (its ``numbered`` argument only prefixes the window's lines
+with their absolute body-line numbers -- the unnumbered output is unchanged,
+and the splice coordinates keep addressing the *unprefixed* line count).
+:func:`splice_snippet` is the single snippet definition
+shared by the generic ``update`` tool's dispatcher (it consumes, never
+defines, the body text).
 
 As with :mod:`_doc_paths`, this module has no ``mcp`` dependency -- plain
-file I/O and text manipulation only, kept separately from any
-``@mcp.tool()``-decorated function so it stays independently testable.
+file I/O, text manipulation, and argument validation only, kept separately
+from any ``@mcp.tool()``-decorated function so it stays independently
+testable.
 
 ## Functions
 
@@ -133,7 +158,132 @@ ValueError
     per the project's user-controlled-flow-control rule.
 
 
-### `window_body(text: 'str', offset: 'int' = 1, limit: 'int | None' = None) -> 'str'`
+### `splice_snippet(pre_body: 'str', post_body: 'str', offset: 'int', limit: 'int | None') -> 'str'`
+
+Render the before/after snippet of the range-mode splice of ``pre_body`` at
+``offset``/``limit`` into ``post_body``.
+
+The single snippet definition behind the generic ``update`` tool's
+``UpdateResult.snippet`` (feat-153-off-by-n Phase 2, REQ-002, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome items 2/3/4):
+given the pre-splice body, the post-splice body (the result of splicing
+``pre_body`` at these same coordinates via :func:`splice_body`), and the
+``offset``/``limit`` coordinates, returns the touched range's before/after
+window -- the dropped lines, the inserted lines, and up to
+:data:`_CONTEXT_LINES` unchanged context lines immediately above and below
+the touched range in the *post-splice* body, clamped at the body's
+start/end (clamped, never errored, mirroring :func:`window_body`) --
+rendered as the ADR's exact snippet line format:
+
+- Each snippet line is ``<marker> <n>: <line text>``: ``<marker>`` is
+  exactly one character -- ``-`` for a dropped line, ``+`` for an
+  inserted line, a single space for a context line; ``<n>`` is the plain
+  decimal line number (no zero padding, no fixed-width alignment); the
+  separator is exactly ``": "``; ``<line text>`` is the line's verbatim
+  text, so an empty body line renders as ``<marker> <n>: `` with a
+  trailing space (no empty-line special case).
+- Dropped lines are labeled with their **pre-splice** 1-based body-line
+  numbers (``offset..offset + drop_count - 1``; they no longer exist
+  afterward, so no post-splice number applies to them); inserted lines
+  (``offset..offset + insert_count - 1``) and context lines are labeled
+  with their **post-splice** numbers. The two numbering sequences are
+  independent and need not be contiguous or to overlap when the
+  replacement changes the line count -- expected, not a defect.
+- Line order: context-above, dropped, inserted, context-below.
+- The snippet text is its lines joined with ``"\n"`` plus a single
+  trailing ``"\n"``, or ``""`` when it contains no lines at all (only a
+  no-op splice on an empty body).
+- The window is bounded by the touched range, not the document size:
+  at most ``drop_count`` + ``insert_count`` + ``2 * _CONTEXT_LINES``
+  lines, no hard cap and no elision markers.
+
+Equivalent view (the format family shared with the ``get_<d>`` numbered
+read): every snippet line is a 2-character marker prefix (``"- "``/
+``"+ "``/``"  "``) prepended to exactly the line a
+``get_<d>(raw=True, numbered=True)`` read prints for that number.
+
+Doc-type-agnostic like its neighbors: no I/O, no schema knowledge -- the
+generic ``update`` tool's shared dispatcher computes the snippet once per
+call from the adapter's pre/post bodies and coordinates, never
+duplicating it into the per-domain adapters.
+
+Parameters
+----------
+pre_body:
+    The frontmatter-stripped body text as it existed before the splice
+    (e.g. from :func:`body_text`).
+post_body:
+    The frontmatter-stripped body text after the splice -- the result of
+    splicing ``pre_body`` at these same ``offset``/``limit`` coordinates
+    via :func:`splice_body`.
+offset:
+    The 1-based first line of the spliced range; must satisfy
+    :func:`splice_body`'s own coordinate contract (``1..N + 1``, where
+    ``N + 1`` is the virtual end-of-body position) -- the caller enforces
+    it, since the dispatcher only ever hands the helper coordinates
+    ``splice_body`` already accepted.
+limit:
+    The number of lines the spliced range spans; must satisfy
+    :func:`splice_body`'s own contract (``0`` = pure insert,
+    ``None`` (omitted) = through the last body line) -- enforced by the
+    caller as for ``offset``.
+
+Returns
+-------
+str
+    The rendered snippet (see the class of behavior above), or ``""``
+    when the window contains no lines at all.
+
+Raises
+------
+AssertionError
+    The inputs violate the helper's invariants (non-string bodies,
+    non-integer coordinates, or coordinates outside :func:`splice_body`'s
+    own contract) -- program-invariant failures only, never
+    user-controlled flow control.
+
+
+### `validate_read_args(raw: 'bool', offset: 'int | None', limit: 'int | None', numbered: 'bool') -> 'None'`
+
+Reject ``get_<d>`` read-argument misuses before any file access.
+
+The single shared guard behind every ``get_<d>`` tool (feat-153-off-by-n
+Phase 3, REQ-005, ACC-005) for the read-surface argument rules that were
+formerly hand-duplicated inline in each of the 12 ``get_<d>.py`` files:
+a parsed-document read (``raw=False``) requires the whole body, so the
+raw-read-only arguments -- the ``offset``/``limit`` windowing
+coordinates and ``numbered=True`` -- are misuses of the read surface
+when combined with it. Client-controlled input, so these are
+``ValueError``s (not ``assert``s), per the project's
+user-controlled-flow-control rule. The caller runs this guard after its
+own ``validate_id`` and before the ``load_by_id`` attempt and the
+post-feat-150 parse-failure channel, so a misused argument reports
+``ValueError`` even for a document that fails to parse (REQ-005).
+
+Parameters
+----------
+raw:
+    The tool's ``raw`` argument (``False`` = parsed document,
+    ``True`` = frontmatter-stripped body text).
+offset:
+    The tool's ``offset`` argument (``None`` = not given).
+limit:
+    The tool's ``limit`` argument (``None`` = not given).
+numbered:
+    The tool's ``numbered`` argument (``False`` = unnumbered body
+    text, the default; ``True`` = line-numbered).
+
+Raises
+------
+ValueError
+    ``raw`` is ``False`` and ``offset`` or ``limit`` is given (the
+    message is byte-identical to the one each ``get_<d>`` raised
+    inline before this factorization), or ``raw`` is ``False`` and
+    ``numbered`` is ``True``; the ``numbered`` message mirrors the
+    ``offset``/``limit`` one and names the offending value.
+
+
+### `window_body(text: 'str', offset: 'int' = 1, limit: 'int | None' = None, numbered: 'bool' = False) -> 'str'`
 
 Return the body-line window ``offset..offset + limit - 1`` of ``text``.
 
@@ -152,15 +302,32 @@ raising. Let ``N = len(text.splitlines())`` be the number of lines of
 - ``limit = None`` (omitted) extends the window through the last line;
   any given ``limit`` is capped at the remaining lines (``N - offset +
   1``), and a negative ``limit`` yields an empty window.
+- With ``numbered=True`` (feat-153-off-by-n Phase 3, REQ-004, ACC-011;
+  ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item 6),
+  each returned line is additionally prefixed with its 1-based
+  **absolute** body-line number in the ``f"{n}: {text}"`` form (plain
+  decimal, no padding; the line text verbatim, so an empty body line
+  renders as ``"<n>: "`` with the separator's trailing space):
+  numbering starts at the clamped ``offset`` (``max(1, offset)``) and
+  increments by 1 per line -- never a per-window restart at 1 -- so a
+  number seen in a numbered, windowed read can be fed straight back
+  into the generic ``update`` tool's ``offset``. Non-empty numbered
+  output ends with exactly one trailing ``"\n"`` regardless of whether
+  ``text`` had one (so a ``numbered=True`` no-window read and a
+  ``numbered=True`` whole-body-equivalent windowed read of the same
+  body are byte-identical); an empty window (or empty ``text``)
+  returns ``""`` as for the unnumbered case.
 
-The result is the window's lines, each keeping its trailing newline --
-``""`` if the window is empty, else ``"\n".join(lines[offset - 1 :
-offset - 1 + count]) + "\n"``. Consequently, :func:`window_body` with
-the defaults (``offset = 1``, ``limit = None``) equals a normal
-trailing-newline body byte-for-byte, and concatenating consecutive
-non-overlapping windows reproduces the body -- the raw/splice invariant
-holds for windowed reads exactly as for full raw reads (see the module
-docstring).
+The unnumbered result is the window's lines, each keeping its trailing
+newline -- ``""`` if the window is empty, else ``"\n".join(lines[
+offset - 1 : offset - 1 + count]) + "\n"``. Consequently,
+:func:`window_body` with the defaults (``offset = 1``, ``limit = None``)
+equals a normal trailing-newline body byte-for-byte, and concatenating
+consecutive non-overlapping windows reproduces the body -- the
+raw/splice invariant holds for windowed reads exactly as for full raw
+reads (see the module docstring). ``numbered=False`` (the default) is
+byte-identical to that current behavior, including for a ``text``
+without a trailing newline.
 
 Parameters
 ----------
@@ -173,6 +340,10 @@ limit:
     The number of body lines the window spans; ``None`` (omitted)
     extends the window through the last line, and the value is capped
     at the remaining lines (a negative value yields an empty window).
+numbered:
+    When ``True``, prefix each returned line with its 1-based absolute
+    body-line number (see the third bullet above); ``False`` (the
+    default) returns the plain window.
 
 Returns
 -------

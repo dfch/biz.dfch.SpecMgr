@@ -4,7 +4,7 @@ created: '2026-09-25T19:42:03.316+02:00'
 id: feat-123-test-gap-cache
 status: review
 type: feat
-updated: '2026-09-26T21:11:30.214+02:00'
+updated: '2026-09-30T04:36:38.000Z'
 version: 1.0.0
 ---
 
@@ -97,46 +97,46 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 ### Task List
 
-#### Phase 1: Audit and Confirm the Gap
+#### Phase 100: Audit and Confirm the Gap
 
-- [x] Task 1.1: Verify the shipped call-site inventory by inspection/grep (12 `create_<domain>` warm sites; 24 `update` + 12 `set_status` + 12 `set_classification` warm sites; 12 `delete` invalidate sites; 12 `list_<domain>` reconcile sites) and confirm no test exercises them for the 11 non-`req` domains (issue #123's gap statement).
-- [x] Task 1.2: Determine each domain's non-no-op `set_status` pair from the fixture's own frontmatter `status` value (template `draft`, `rsk` `open`, `feat` `planning`) and the shared `general/tools/set_status.py::_ALLOWED_STATUSES_BY_TYPE` mapping, and verify the uniform H1 range-splice content per domain (including `feat`'s `Feature: ` prefix).
-- [x] Task 1.3: Set this feature's status to `progress` via the generic `set_status` tool (`type="feat"`).
+- [x] Task 100.100: Verify the shipped call-site inventory by inspection/grep (12 `create_<domain>` warm sites; 24 `update` + 12 `set_status` + 12 `set_classification` warm sites; 12 `delete` invalidate sites; 12 `list_<domain>` reconcile sites) and confirm no test exercises them for the 11 non-`req` domains (issue #123's gap statement).
+- [x] Task 100.110: Determine each domain's non-no-op `set_status` pair from the fixture's own frontmatter `status` value (template `draft`, `rsk` `open`, `feat` `planning`) and the shared `general/tools/set_status.py::_ALLOWED_STATUSES_BY_TYPE` mapping, and verify the uniform H1 range-splice content per domain (including `feat`'s `Feature: ` prefix).
+- [x] Task 100.120: Set this feature's status to `progress` via the generic `set_status` tool (`type="feat"`).
 
-#### Phase 2: Implement the Table-Driven Wiring Tests
+#### Phase 110: Implement the Table-Driven Wiring Tests
 
-- [x] Task 2.1: Create `tests/general/tools/test_doc_cache_write_wiring.py` with the license header, the module docstring naming issue #123 as the feat-107 follow-up, the shared `_with_id`-style fixture helpers (REQ-008), and per-domain cache resets in `setUp`/`tearDown`.
-- [x] Task 2.2: Implement the create-warm flat-domain table class (REQ-001, ACC-001) with caller-bound `read_<domain>` spies.
-- [x] Task 2.3: Implement the update / set_status / set_classification warm flat-domain table classes (REQ-002/003/004, ACC-002), update covering both the whole-body and range-splice paths.
-- [x] Task 2.4: Implement the delete-invalidate flat-domain table class (REQ-005, ACC-003) including the `_cache` entries behavioral assertion.
-- [x] Task 2.5: Implement the list-reconcile flat-domain table class (REQ-006, ACC-004).
-- [x] Task 2.6: Implement the dedicated `feat` counterpart classes for Tasks 2.2--2.5 (REQ-009) using `SPECMGR_FEAT_DIR` + `create_feat` fixtures, and drive every flat class from `general.tools._domains`.
-- [x] Task 2.7: Run the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`) and confirm every row passes against the shipped code.
-- [x] Task 2.8: Run the ACC-005 mutation check: for each of the seven row types (create, update whole-body, update range-splice, set_status, set_classification, delete, list), drop one domain's call site, confirm the matching row fails, restore, and confirm green -- record the seven drop/restore cycles in an `### Updates` entry.
+- [x] Task 110.100: Create `tests/general/tools/test_doc_cache_write_wiring.py` with the license header, the module docstring naming issue #123 as the feat-107 follow-up, the shared `_with_id`-style fixture helpers (REQ-008), and per-domain cache resets in `setUp`/`tearDown`.
+- [x] Task 110.110: Implement the create-warm flat-domain table class (REQ-001, ACC-001) with caller-bound `read_<domain>` spies.
+- [x] Task 110.120: Implement the update / set_status / set_classification warm flat-domain table classes (REQ-002/003/004, ACC-002), update covering both the whole-body and range-splice paths.
+- [x] Task 110.130: Implement the delete-invalidate flat-domain table class (REQ-005, ACC-003) including the `_cache` entries behavioral assertion.
+- [x] Task 110.140: Implement the list-reconcile flat-domain table class (REQ-006, ACC-004).
+- [x] Task 110.150: Implement the dedicated `feat` counterpart classes for Tasks 2.2--2.5 (REQ-009) using `SPECMGR_FEAT_DIR` + `create_feat` fixtures, and drive every flat class from `general.tools._domains`.
+- [x] Task 110.160: Run the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`) and confirm every row passes against the shipped code.
+- [x] Task 110.170: Run the ACC-005 mutation check: for each of the seven row types (create, update whole-body, update range-splice, set_status, set_classification, delete, list), drop one domain's call site, confirm the matching row fails, restore, and confirm green -- record the seven drop/restore cycles in an `### Updates` entry.
 
-#### Phase 3: Verification and Closeout
+#### Phase 120: Verification and Closeout
 
-- [x] Task 3.1: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs`, committing the regenerated `docs/GENERATED.md` (whose `**Test files**` count is expected to bump from 362 to 363 for the new file; no other drift).
-- [x] Task 3.2: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
+- [x] Task 120.100: Run the full quality gate (ACC-006): `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen specmgr docs`, committing the regenerated `docs/GENERATED.md` (whose `**Test files**` count is expected to bump from 362 to 363 for the new file; no other drift).
+- [x] Task 120.110: Check off the satisfied ACCs in this file, add the closeout `### Updates` entry, and set this feature's status to `done` via the generic `set_status` tool (`type="feat"`).
 
-#### Phase 4: Address Post-Implementation Review Findings
+#### Phase 130: Address Post-Implementation Review Findings
 
-- [x] Task 4.1: Rename the eight row classes to the ACC numbering they implement (post-implementation review minor #1): the set_status classes to `TestAcc002SetStatusWarm...`, the set_classification classes to `TestAcc002SetClassificationWarm...`, the delete classes to `TestAcc003DeleteInvalidates...`, and the list classes to `TestAcc004ListReconciles...` (flat and feat counterparts alike); the create (`Acc001`) and update (`Acc002`) classes keep their names.
-- [x] Task 4.2: Make the delete rows' `_cache` entries behavioral assertion environment-independent by checking `path.resolve()` (the cache's own key normalization, minor #2) in both the flat and feat delete classes.
-- [x] Task 4.3: Add the import-time drift guard `assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message (minor #3), mirroring `general/tools/set_status.py`'s own mapping guard idiom.
-- [x] Task 4.4: Nit cleanups in the test file: count-free docstring phrasing for the domain count (nit #4) and a named module constant for feat's `create_feat`-written `planning` status (nit #6).
-- [x] Task 4.5: Add PR #160 to this plan's Related PRs / Commits section (nit #7).
-- [x] Task 4.6: Run the Phase 4 quality gate: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`, expected 12 passed / 84 subtests), the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`, expected 3452 passed), and `uv run --frozen specmgr docs` (expected zero drift — no test files added or removed, the `**Test files**` count stays at 363).
-- [x] Task 4.7: Check off this phase's tasks, add the closeout `### Updates` entry (review verdict, finding-to-fix mapping, gate evidence), and rewrite `### Current Status` (which must reflect status `review`, the committed `docs/GENERATED.md`, and the open PR #160 — replacing the stale Phase 3 prose).
+- [x] Task 130.100: Rename the eight row classes to the ACC numbering they implement (post-implementation review minor #1): the set_status classes to `TestAcc002SetStatusWarm...`, the set_classification classes to `TestAcc002SetClassificationWarm...`, the delete classes to `TestAcc003DeleteInvalidates...`, and the list classes to `TestAcc004ListReconciles...` (flat and feat counterparts alike); the create (`Acc001`) and update (`Acc002`) classes keep their names.
+- [x] Task 130.110: Make the delete rows' `_cache` entries behavioral assertion environment-independent by checking `path.resolve()` (the cache's own key normalization, minor #2) in both the flat and feat delete classes.
+- [x] Task 130.120: Add the import-time drift guard `assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message (minor #3), mirroring `general/tools/set_status.py`'s own mapping guard idiom.
+- [x] Task 130.130: Nit cleanups in the test file: count-free docstring phrasing for the domain count (nit #4) and a named module constant for feat's `create_feat`-written `planning` status (nit #6).
+- [x] Task 130.140: Add PR #160 to this plan's Related PRs / Commits section (nit #7).
+- [x] Task 130.150: Run the Phase 4 quality gate: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the new file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`, expected 12 passed / 84 subtests), the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`, expected 3452 passed), and `uv run --frozen specmgr docs` (expected zero drift — no test files added or removed, the `**Test files**` count stays at 363).
+- [x] Task 130.160: Check off this phase's tasks, add the closeout `### Updates` entry (review verdict, finding-to-fix mapping, gate evidence), and rewrite `### Current Status` (which must reflect status `review`, the committed `docs/GENERATED.md`, and the open PR #160 — replacing the stale Phase 3 prose).
 
-#### Phase 5: Address Second-Round (feat-reviewer) Review Findings
+#### Phase 140: Address Second-Round (feat-reviewer) Review Findings
 
-- [x] Task 5.1: Correct the Design Notes' range-splice H1 wording, which the 2026-09-26 12:13:14 Decisions Made entry already flagged as contradicted by `sysrs`'s mandated `System Requirements Specification: ` prefix (second-round finding: inconsistency): "`# {title}` for the 11 flat domains" now names all three H1 shapes (the ten free-H1 flat domains, `sysrs`, and `feat`), matching the implementation and the test file's module docstring.
-- [x] Task 5.2: Add the import-time drift guard `assert set(_H1_PREFIX_BY_DOMAIN) <= set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message (second-round finding: improvement), extending the constant's comment to state the obligation (a future domain whose body model mandates an H1 prefix must add its own entry) and why the full-equality guard `_SET_STATUS_TARGETS_BY_DOMAIN` carries is inapplicable to this intentionally sparse table (the free-H1 domains legitimately carry no entry).
-- [x] Task 5.3: Pin REQ-006's "before summary building" ordering in both list classes (second-round finding: gap): each list row now additionally patches the caller-bound `build_summaries` name in the `list_<domain>` module with a side effect that asserts a per-row `call_order` list reads `["reconcile"]` before delegating to the real `build_summaries`, and asserts the build spy fired once -- a refactor that moves the reconcile after summary building fails the exact domain row (verified by a mutation cycle on `req`: the two calls swapped in `list_req`, the `req` subtest failed with the ordering message, restore byte-exact, green); the row count is unchanged (12 passed / 84 subtests).
-- [x] Task 5.4: Record the second-round code-smell finding (the ~60 lines of private helpers and fixtures -- `_ID_LINE_PATTERN`, `_with_id`, `_cache_module`, and the feat minimal-body fixture -- duplicated verbatim or near-verbatim between this file and `test_doc_cache_structural.py`) as a conscious decision in `### Decisions Made` rather than acting on it: the Out-of-Scope list keeps the structural test untouched, and a shared fixture module would couple the two files' private names; a dedup is separate-feature scope if ever wanted.
-- [x] Task 5.5: Run the Phase 5 quality gate: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the test file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`, expected 12 passed / 84 subtests), the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`, expected 3452 passed), and `uv run --frozen specmgr docs` (expected zero drift -- no test files added or removed, the `**Test files**` count stays at 363).
-- [x] Task 5.6: Check off this phase's tasks, add the closeout `### Updates` entry (review verdict, finding-to-fix mapping, gate evidence), and rewrite `### Current Status` (which must reflect status `review`, the open PR #160, and the addressed second-round findings).
+- [x] Task 140.100: Correct the Design Notes' range-splice H1 wording, which the 2026-09-26 12:13:14 Decisions Made entry already flagged as contradicted by `sysrs`'s mandated `System Requirements Specification: ` prefix (second-round finding: inconsistency): "`# {title}` for the 11 flat domains" now names all three H1 shapes (the ten free-H1 flat domains, `sysrs`, and `feat`), matching the implementation and the test file's module docstring.
+- [x] Task 140.110: Add the import-time drift guard `assert set(_H1_PREFIX_BY_DOMAIN) <= set(WHOLE_BODY_DOMAINS)` with a self-documenting sync-obligation message (second-round finding: improvement), extending the constant's comment to state the obligation (a future domain whose body model mandates an H1 prefix must add its own entry) and why the full-equality guard `_SET_STATUS_TARGETS_BY_DOMAIN` carries is inapplicable to this intentionally sparse table (the free-H1 domains legitimately carry no entry).
+- [x] Task 140.120: Pin REQ-006's "before summary building" ordering in both list classes (second-round finding: gap): each list row now additionally patches the caller-bound `build_summaries` name in the `list_<domain>` module with a side effect that asserts a per-row `call_order` list reads `["reconcile"]` before delegating to the real `build_summaries`, and asserts the build spy fired once -- a refactor that moves the reconcile after summary building fails the exact domain row (verified by a mutation cycle on `req`: the two calls swapped in `list_req`, the `req` subtest failed with the ordering message, restore byte-exact, green); the row count is unchanged (12 passed / 84 subtests).
+- [x] Task 140.130: Record the second-round code-smell finding (the ~60 lines of private helpers and fixtures -- `_ID_LINE_PATTERN`, `_with_id`, `_cache_module`, and the feat minimal-body fixture -- duplicated verbatim or near-verbatim between this file and `test_doc_cache_structural.py`) as a conscious decision in `### Decisions Made` rather than acting on it: the Out-of-Scope list keeps the structural test untouched, and a shared fixture module would couple the two files' private names; a dedup is separate-feature scope if ever wanted.
+- [x] Task 140.140: Run the Phase 5 quality gate: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, the test file standalone (`uv run --frozen pytest tests/general/tools/test_doc_cache_write_wiring.py -v`, expected 12 passed / 84 subtests), the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`, expected 3452 passed), and `uv run --frozen specmgr docs` (expected zero drift -- no test files added or removed, the `**Test files**` count stays at 363).
+- [x] Task 140.150: Check off this phase's tasks, add the closeout `### Updates` entry (review verdict, finding-to-fix mapping, gate evidence), and rewrite `### Current Status` (which must reflect status `review`, the open PR #160, and the addressed second-round findings).
 
 ## Progress
 
