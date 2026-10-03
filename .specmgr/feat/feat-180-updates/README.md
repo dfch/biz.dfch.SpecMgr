@@ -4,7 +4,7 @@ created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
 status: review
 type: feat
-updated: '2026-10-03T00:12:05.726+02:00'
+updated: '2026-10-03T10:48:14.000+02:00'
 version: 1.0.0
 ---
 
@@ -49,9 +49,11 @@ regardless of shape. Tracked by
 - [ ] ACC-005: An `UpdateEntry`/`DecisionEntry` with blank/whitespace-only content under its heading still fails to parse with an `AssertionError` (non-blank requirement preserved), in all 6 domains.
 - [ ] ACC-006: `model_dump()` on a parsed document surfaces the new leaf field's real text content for a non-paragraph body, not an empty object.
 - [ ] ACC-007: The full test suite passes after every phase below, not just at the end.
-- [ ] ACC-008: Each of the 4 phases ends with a passing full quality gate (`ruff format --check`, `ruff check`, `vulture`, full test suite) before that phase's own commit -- not just a single check against the final state.
+- [ ] ACC-008: Each of the 6 phases ends with a passing full quality gate (`ruff format --check`, `ruff check`, `vulture`, full test suite) before that phase's own commit -- not just a single check against the final state.
 - [ ] ACC-009: Every affected domain's packaged `schema.json` (both copies) and `docs/api/` are regenerated and committed in sync with the model change (no drift).
 - [ ] ACC-010: `CHANGELOG.md` carries an entry describing the relaxation under `[Unreleased]`.
+- [ ] ACC-011: The upstream merge of `origin/dev` (8e23fed) lands as a single merge commit whose `CHANGELOG.md` is a pure union -- every `[Unreleased]` entry of both parents preserved byte-verbatim, no other content in the file modified -- and PR #182's GitHub `mergeable` state moves from `CONFLICTING` to `CLEAN`.
+- [ ] ACC-012: A `feat-reviewer` pass over the merged branch completes against this plan's REQ-001..006 and ACC-001..011; every reported finding is fixed and re-gated before closeout; every met ACC box is checked in this README with a dated review entry.
 
 ### Scope
 
@@ -61,7 +63,7 @@ regardless of shape. Tracked by
 - Test additions in each domain's `tests/<domain>/models/v1/test_body.py`, plus a check (and update only if needed) of each domain's `tests/<domain>/models/v1/test_parser.py` for paragraph-specific fixtures/assertions. `tsk`'s `test_create_tsk.py` requires no change (its only `## Recent Updates` fixture is a single paragraph, verified) and is explicitly excluded.
 - Regenerated `docs/*_schema.json` and each domain's packaged `<domain>/data/<domain>_schema.json`, plus `docs/GENERATED.md`/`docs/api/`.
 - A `CHANGELOG.md` entry under `[Unreleased]`.
-- A separate commit after each of the 4 phases' own passing quality gate, rather than one final commit for the whole feature.
+- A separate commit after each of the 6 phases' own passing quality gate, rather than one final commit for the whole feature.
 
 #### Explicitly Out Of Scope
 
@@ -202,6 +204,24 @@ mid-commit and having to fix-then-retry.
 - [x] Task 130.130: Run the full test suite one final time.
 - [x] Task 130.140: Review `git status`/`git diff` for completeness, then commit.
 
+#### Phase 140: Upstream dev merge (CHANGELOG conflict)
+
+- [ ] Task 140.100: `uv sync --all-extras --frozen` to pick up dev's uv.lock bump (776c13d, the uv group) that the merge will land.
+- [ ] Task 140.110: `git merge origin/dev` (local `origin/dev` at 8e23fed already matches the remote, verified via `git ls-remote`) -- expect exactly one conflict, `CHANGELOG.md`, the only file both sides touched (our 37 changed files intersect their 197 in one).
+- [ ] Task 140.120: Resolve the `CHANGELOG.md` conflict in `[Unreleased]` -> `### Changed` as a union of both bullets, ours first (the feat-153 merge precedent): keep this feature's #180 entry (timestamped entries' `content` accepts any markdown), then dev's #177 entry (`list_references` gains the `FEAT` tag); nothing else in the file touched.
+- [ ] Task 140.130: Verify the resolution is a pure union (ACC-011): `git diff HEAD^1..HEAD -- CHANGELOG.md` and `git diff HEAD^2..HEAD -- CHANGELOG.md` each show only added lines -- no modification or deletion of either parent's content, every entry byte-verbatim against its parent.
+- [ ] Task 140.140: `git add CHANGELOG.md && git commit` with the default merge message (no pre-commit hooks are installed in this worktree, so nothing runs automatically).
+- [ ] Task 140.150: Regenerate the derived docs to a fixed point -- `uv run --frozen specmgr docs`, `uv run --frozen specmgr mcp-docs`, `uv run --frozen specmgr adr-toc` -- and confirm zero drift (feat-180 touched no tool docstrings); commit only if any changed.
+- [ ] Task 140.160: Phase-end quality gate: `uv run --frozen ruff format --check && uv run --frozen ruff check`; `uv run --frozen vulture src/ whitelist.py --min-confidence 60`; run the full test suite. All must pass before the push.
+- [ ] Task 140.170: `git push`, then poll `gh pr view 182 --json mergeable` (without `--watch`, repeating as needed) until it reports `CLEAN`, clearing the current `CONFLICTING`.
+
+#### Phase 150: Review and closeout
+
+- [ ] Task 150.100: Run the `feat-reviewer` subagent over the merged branch, checking code/tests/docs against this plan's REQ-001..006 and ACC-001..011.
+- [ ] Task 150.110: If the review reports findings, fix them and re-run the Task 140.160 full gate before proceeding; if it reports none, record that explicitly in the review entry (ACC-012).
+- [ ] Task 150.120: Check off every met ACC box in this README's `### Acceptance Criteria` and add a dated review entry to `### Updates` recording the outcome.
+- [ ] Task 150.130: Review `git status`/`git diff` for completeness, then commit (bookkeeping only, unless Task 150.110 landed fixes) and push.
+
 ## Progress
 
 ### Current Status
@@ -229,8 +249,21 @@ plus this README's own newest-first entry ordering fixed; `3939
 passed, 2698 subtests passed` gate). Phase 130 (CHANGELOG and final
 verification) added the `[Unreleased]` -> `### Changed`
 `CHANGELOG.md` entry and re-ran the final full gate green (`3939
-passed, 0 failed`). Implementation finished: the orchestrator will now
-set this feature's status to `review` and open the PR.
+passed, 0 failed`). Implementation finished: the feature's status was
+set to `review` (c096158) and PR #182 opened against `dev`.
+
+**As of 2026-10-03**: PR #182 is open with all CI checks green
+(builds 3.11/3.12/3.13, CodeQL, Analyze) but GitHub reports
+`mergeable: CONFLICTING` -- upstream `dev` advanced 6 commits past
+this branch's merge base (fac70948), and a read-only `git merge-tree`
+confirms the merge would conflict in exactly one file, `CHANGELOG.md`
+(the only file both sides touched). No review has happened yet
+either: zero GitHub reviews, empty `reviewDecision`, no `feat-
+reviewer` pass recorded, all ACC boxes unchecked. Phases 140 (the
+upstream merge + pure-union CHANGELOG resolution per the feat-153
+precedent) and 150 (the `feat-reviewer` pass + ACC check-off) were
+therefore added to the plan as unchecked; status stays `review` --
+the new phases are review-stage work, not implementation.
 
 ### Blockers
 
@@ -239,6 +272,44 @@ set this feature's status to `review` and open the PR.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T08:48:14.000Z - Plan extended with Phase 140 (upstream dev merge) and Phase 150 (review); no implementation started
+
+While PR #182 sat open, upstream `dev` advanced 6 commits past this
+branch's merge base (fac70948): feat-153 (issue #153, PR #164 --
+numbered raw reads + the `update` `UpdateResult` return), feat-177
+(issue #177, PR #181 -- `list_references` FEAT tag), the feat-135/
+162/163 closeouts, a uv dependency bump, and two feat-plan repairs --
+so GitHub now reports the PR `mergeable: CONFLICTING`. A read-only
+`git merge-tree` of `origin/dev` (8e23fed, confirmed current via
+`git ls-remote`) against this branch shows exactly one conflict:
+`CHANGELOG.md`, the only file both sides touched (our 37 changed
+files intersect their 197 in one). The conflict sits in
+`[Unreleased]` -> `### Changed`, where this feature's #180 entry and
+dev's #177 `FEAT`-tag entry both appended at the tail of the bullet
+list. Also confirmed: no review of this feature has actually happened
+-- the status had been set to `review` (c096158) and the PR opened,
+but GitHub carries zero reviews and an empty `reviewDecision`, no
+`feat-reviewer` pass is recorded anywhere in this README (the only
+"review" mention before this one is the 2026-10-02T15:00:00 plan
+refinement), and all 10 original ACC boxes were still unchecked.
+
+Per user direction, the plan was extended in place only (no
+implementation started): new `Phase 140: Upstream dev merge
+(CHANGELOG conflict)` (Tasks 140.100-140.170: resync the uv.lock,
+`git merge origin/dev`, resolve the `CHANGELOG.md` conflict as a
+pure union -- our #180 entry first, dev's #177 entry after, each
+byte-verbatim against its parent, following the feat-153 merge
+precedent recorded in `.specmgr/feat/feat-153-off-by-n/README.md` --
+verify the union, regenerate the derived docs to a fixed point, full
+gate, push, and poll PR #182 to `CLEAN`) and new `Phase 150: Review
+and closeout` (Tasks 150.100-150.130: the `feat-reviewer` subagent
+pass against REQ-001..006/ACC-001..011, fix + re-gate any findings,
+check off the met ACC boxes, dated review entry, commit + push).
+ACC-008 and the Scope's "4 phases" references updated to 6; two new
+acceptance criteria added (ACC-011: merge is a pure union and the PR
+becomes mergeable; ACC-012: review pass completed and ACCs checked).
+Status stays `review`.
 
 #### 2026-10-02T22:12:05.000Z - Phase 130 (CHANGELOG and final verification) completed; implementation finished
 
@@ -589,6 +660,26 @@ single-paragraph examples remain valid.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T08:48:14.000Z - Track the upstream sync and the review pass as Phases 140/150 of this feature; resolve the CHANGELOG conflict as a union per the feat-153 precedent
+
+Considered tracking the `origin/dev` merge in a separate feature
+folder, or doing it ad hoc without plan entries. Rejected: the merge
+exists solely to make THIS PR mergeable, and the repo's own precedent
+(feat-153-off-by-n's Phase 0, "git merge origin/dev, never force")
+folds upstream syncs into the feature's own task list. Chose to append
+two new phases after the four implementation phases -- 140 = the
+merge, 150 = the review -- without renumbering anything that already
+exists (the gap-friendly feat-numbering scheme; numbers are permanent
+once assigned). The CHANGELOG resolution follows feat-153's recorded
+precedent verbatim: a union of both sides' `[Unreleased]` entries in
+the standard section order, every entry byte-verbatim against its
+respective parent, ours first and dev's after within `### Changed` --
+here: our #180 any-markdown entry first, dev's #177 `FEAT`-tag entry
+second. Status stays `review` rather than dropping back to
+`progress`: Phases 100-130 (the actual implementation) are complete
+and committed, and the new phases are review-stage work (unblocking
+the PR + the review itself), not new feature scope.
 
 #### 2026-10-02T17:40:00.000Z - Delete (not re-scope) the 3 feat-7 Task 0.29 stray-list-marker regression tests
 
