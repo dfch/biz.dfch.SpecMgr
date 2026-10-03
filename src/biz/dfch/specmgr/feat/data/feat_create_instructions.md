@@ -73,8 +73,10 @@ step 1 if this is genuinely a new feature.
     `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` +
     `Z` or `±HH:mm` (the date/time separator may be `T` or a space; a
     date-only timestamp is rejected), joined to the title by `" - "` or
-    `" : "` (the em-dash separator is rejected), each with a lead
-    paragraph.
+    `" : "` (the em-dash separator is rejected), each with the entry's own
+    update/decision text directly under the H4 heading (any markdown
+    content -- multiple paragraphs, lists, code blocks, block quotes, not
+    just a single paragraph), which is mandatory.
   - `### Decisions Made` -- optional, same shape as `### Updates` (same
     timestamp format, same newest-first ordering, at least one entry once
     the section is present at all).

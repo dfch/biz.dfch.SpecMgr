@@ -58,7 +58,9 @@ ask which ones (if any) they want to add to or revise.
     `### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
     date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
     date/time separator may be `T` or a space; a date-only timestamp is
-    rejected), followed by a mandatory lead paragraph.
+    rejected), followed by the entry's own update text directly under the
+    H3 heading (any markdown content -- multiple paragraphs, lists, code
+    blocks, block quotes, not just a single paragraph), which is mandatory.
     `offset`/`limit` address the frontmatter-stripped body, never the
     raw on-disk `.md` file: the YAML frontmatter block is variable-
     length, so a raw file read's line numbers are never the same as

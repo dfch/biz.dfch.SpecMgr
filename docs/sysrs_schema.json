@@ -1064,17 +1064,23 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update\nentry (a change to the `sysrs` document itself, not to the system it\nspecifies).\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or\n`### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +\n``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``, ``-05:00``) or\n``Z`` for UTC variant -- date-only is rejected (ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's/VCR's\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update\nentry (a change to the `sysrs` document itself, not to the system it\nspecifies).\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or\n`### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +\n``HH:mm:ss.fff`` + explicit UTC offset (``+02:00``, ``-05:00``) or\n``Z`` for UTC variant -- date-only is rejected (ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's/VCR's\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+          "$ref": "#/$defs/UpdateEntryContent",
+          "description": "This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "UpdateEntry",
+      "type": "object"
+    },
+    "UpdateEntryContent": {
+      "description": "`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `UpdateEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `UpdateEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "UpdateEntryContent",
       "type": "object"
     },
     "Updates": {

@@ -119,6 +119,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exactly as the generic `validate` tool caps it (feat-110), mirroring
   `validate` including its own caught-exception set (GitHub issue #170,
   ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
+- `vcr`/`feat`/`dec`/`sop`/`sysrs`/`tsk`: the timestamped entries'
+  `content` field now accepts any markdown content -- multiple
+  paragraphs, lists, code blocks, block quotes -- not just a single
+  CommonMark paragraph: `UpdateEntry.content` (in `## Updates` for
+  `vcr`/`dec`/`sop`/`sysrs`, in `## Recent Updates` for `tsk`, and in
+  `### Updates` for `feat`) and `feat`'s own `DecisionEntry.content`
+  (in `### Decisions Made`) are retyped from `MarkdownParagraph` to a
+  per-domain, opaque markdown leaf (`UpdateEntryContent`, plus `feat`'s
+  `DecisionEntryContent`), following the `qa` `### Introduction`
+  precedent (GitHub issue #114). The change is backward-compatible (a
+  strict superset): every previously valid single-paragraph entry parses
+  and round-trips unchanged, `content` remains mandatory, and a
+  blank/whitespace-only entry body still fails (GitHub issue #180).
 - The `list_references` tag vocabulary gains `FEAT` -- a `FEAT` tag now
   references a feature's full `feat-NNN-slug` id or bare `feat-NNN`
   number (instead of a uuid), resolved to the feature's title (its H1
