@@ -815,6 +815,28 @@ class TestResolveReference(TempRefDirTestCase):
         self.assertIn("feat-1-broken", row.error)
         self.assertIn("could not be parsed", row.error)
 
+    def test_a_feat_folder_with_a_mismatching_frontmatter_id_is_a_not_found_row(self):
+        """feat-177 (optional review follow-up): a feature folder that parses but whose frontmatter
+        id mismatches its folder name is a not-found row via load_by_id's own mismatch guard
+        (feat/tools/_paths.py) -- never raises; written directly by mutating the created document's
+        frontmatter id, since create_feat enforces id == folder name."""
+        create_feat(_feat_body("Mismatch Feature"), id="feat-5-mismatch")
+        readme = self.feat_dir / "feat-5-mismatch" / "README.md"
+        text = readme.read_text(encoding="utf-8")
+        self.assertEqual(text.count("id: feat-5-mismatch"), 1)
+        readme.write_text(text.replace("id: feat-5-mismatch", "id: feat-9-other"), encoding="utf-8")
+
+        row = resolve_reference("feat", "feat-5-mismatch")
+
+        self.assertIsInstance(row, ReferenceRow)
+        self.assertEqual((row.type, row.id), ("feat", "feat-5-mismatch"))
+        self.assertIsNone(row.title)
+        self.assertIsNone(row.path)
+        self.assertIsNotNone(row.error)
+        self.assertIn("does not match the containing folder's own name", row.error)
+        self.assertIn("feat-5-mismatch", row.error)
+        self.assertIn("feat-9-other", row.error)
+
     def test_a_missing_feat_full_id_is_a_not_found_row(self):
         """feat-177 ACC-004 (full id): a full-id mention of an absent feature is a row with null
         title/path and the domain's own not-found message in error -- never raises."""
