@@ -528,10 +528,13 @@ class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
         self.assertEqual(str(sut), text)
 
     def test_blank_content_raises_assertion_error(self) -> None:
-        # `content` stays mandatory: a heading with no body fails the engine's
+        # `content` stays mandatory: a heading with no body (or a whitespace-only
+        # body, which mdformat normalizes to nothing) fails the engine's
         # mandatory-field zero-extent check (feat-180-updates, issue #180, ACC-005).
-        with self.assertRaises(AssertionError):
-            UpdateEntry.from_text(format_text("### 2026-08-26 00:00:00.000Z - Created\n"))
+        for body in ("", "   \n"):
+            with self.subTest(body=body):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"### 2026-08-26 00:00:00.000Z - Created\n{body}"))
 
     def test_model_dump_surfaces_non_paragraph_content(self) -> None:
         # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,

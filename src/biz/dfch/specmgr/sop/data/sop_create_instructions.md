@@ -57,8 +57,10 @@ step 1 if this is genuinely a new SOP.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
   then `### {timestamp} ( - | : ) {title}` entries, newest-first (e.g.
-  `### 2026-08-30 14:30:00.000+02:00 - Created`), each with a mandatory
-  lead paragraph. The timestamp is the full date+time form
+  `### 2026-08-30 14:30:00.000+02:00 - Created`), each with the entry's own
+  update text directly under the H3 heading (any markdown content --
+  multiple paragraphs, lists, code blocks, block quotes, not just a single
+  paragraph), which is mandatory. The timestamp is the full date+time form
   `yyyy-MM-dd[T ]HH:mm:ss.fff` with an explicit UTC offset (`+02:00`,
   `-05:00`) or `Z` -- the same full format as the frontmatter
   `created`/`updated` dates (the date/time separator may be `T` or a

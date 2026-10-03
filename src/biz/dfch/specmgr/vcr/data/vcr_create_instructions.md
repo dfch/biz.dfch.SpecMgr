@@ -46,8 +46,10 @@ genuinely a new verification case record.
   then timestamp-led `### {timestamp} ( - | : ) {title}` entries,
   newest-first, where `{timestamp}` is the full date+time form
    `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (e.g.
-   `### 2026-08-31 07:40:12.500+02:00 - Created`), each with a mandatory
-   lead paragraph.
+   `### 2026-08-31 07:40:12.500+02:00 - Created`), each with the entry's own
+   update text directly under the H3 heading (any markdown content --
+   multiple paragraphs, lists, code blocks, block quotes, not just a single
+   paragraph), which is mandatory.
   The date/time separator may be `T` or a space; a date-only timestamp
   is rejected. New entries are prepended (newest first), not appended.
 

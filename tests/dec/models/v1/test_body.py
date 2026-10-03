@@ -984,10 +984,13 @@ class TestUpdatesContainer(unittest.TestCase):
     """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
 
     def test_parses_multiple_entries_in_document_order(self) -> None:
+        # The first entry's body is non-paragraph (feat-180): its "consume
+        # everything remaining" content must stop at the second entry's heading.
         text = format_text(
             "## Updates\n\n"
             "### 2026-08-27 00:00:00.000Z : Confirmed\n\n"
-            "Second entry text.\n\n"
+            "- item one\n\n"
+            "- item two\n\n"
             "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "First entry text.\n"
         )
@@ -995,7 +998,7 @@ class TestUpdatesContainer(unittest.TestCase):
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "Second entry text.\n")
+        self.assertEqual(sut.updates[0].content.text, "- item one\n\n- item two\n")
         self.assertEqual(sut.updates[1].content.text, "First entry text.\n")
         self.assertEqual(str(sut), text)
 
