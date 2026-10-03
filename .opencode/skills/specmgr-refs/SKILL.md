@@ -96,7 +96,7 @@ Use for "do all cross-references across the registry resolve on disk?".
    page to completion. Aggregate per domain: documents scanned, `total` (the
    sum of each document's own `total`), `error_count` (the sum of each
    document's own `error_count`), and every **NOT FOUND** row.
-4. **Report** one table per domain (columns: domain, documents scanned,
+4. **Report** one table per domain (columns: `domain`, `list_total`, documents scanned,
    `parse_failures`, `total`, `error_count`), then one overall table with
    the same columns summed, and list every unresolvable reference with its
    source document (the referencing `type`/`id`/`title`/`path`) and the

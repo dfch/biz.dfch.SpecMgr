@@ -17,7 +17,7 @@
 
 """feat-152 Phase 110, Task 110.120: ACC-005 consistency test for the specmgr-refs project skill.
 
-The repo's newest project OpenCode skill, ``.opencode/skills/specmgr-refs/SKILL.md``
+The repo's third project OpenCode skill, ``.opencode/skills/specmgr-refs/SKILL.md``
 (feat-163's ``feat-numbering`` skill, ``.opencode/skills/feat-numbering/SKILL.md``,
 being the previous one and feat-150's ``repair`` skill,
 ``.opencode/skill/repair/SKILL.md``, the first), is the agent-initiated router over the
@@ -31,10 +31,13 @@ casing it was authored in); the inherited ``ref-finder`` reporting vocabulary (p
 every token of the locked ``_REPORTING_TOKENS`` tuple occurs in the body as a literal
 substring, backticks included); the single-document delegation pointer (pin d -- the
 locked delegation phrase in the whitespace-normalized body, plus all three names of the
-existing stack); and the read-only posture (pin e -- both locked read-only phrases in the
-whitespace-normalized body). All pins are mechanical string checks on the committed file;
-none of them import from ``src/``, so the test guards the skill wording, not the tool
-behavior.
+existing stack); the read-only posture (pin e -- both locked read-only phrases in the
+whitespace-normalized body); and the workflow presence (pin f -- the three codified
+workflow headings as literal body substrings, plus the load-bearing workflow constants
+(the canonical 12-domain string, the ``N = 2`` default-depth wording, and the deliberate
+``adr``-exclusion wording) in the whitespace-normalized body). All pins are mechanical
+string checks on the committed file; none of them import from ``src/``, so the test
+guards the skill wording, not the tool behavior.
 """
 
 from __future__ import annotations
@@ -70,6 +73,16 @@ _REPORTING_TOKENS: tuple[str, ...] = (
 _DELEGATION_PHRASE = "is a pointer to the existing stack, never a copy of it"
 _DELEGATION_NAMES: tuple[str, ...] = ("list_references", "ref-finder", "/refs")
 _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "never commit")
+_WORKFLOW_HEADINGS: tuple[str, ...] = (
+    "## Graph workflow (multi-hop traversal)",
+    "## Batch workflow (resolution validation)",
+    '## Reverse workflow ("which documents reference X?")',
+)
+_WORKFLOW_CONSTANTS: tuple[str, ...] = (
+    "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs",
+    "N = 2",
+    "deliberate",
+)
 
 
 def _skill_text() -> str:
@@ -203,6 +216,27 @@ class TestSkillReadOnlyPosture(unittest.TestCase):
 
         for phrase in _READONLY_PHRASES:
             self.assertIn(phrase, normalized_body)
+
+
+class TestSkillWorkflowPresence(unittest.TestCase):
+    """Pin f: the three codified workflows are present in the body — the feature's
+    core deliverable cannot be stripped silently."""
+
+    def test_workflow_headings_present(self):
+        """Every codified workflow heading occurs in the body as a literal substring."""
+        _, body = _split_frontmatter(_skill_text())
+
+        for heading in _WORKFLOW_HEADINGS:
+            self.assertIn(heading, body)
+
+    def test_workflow_constants_present(self):
+        """The load-bearing workflow constants occur in the body once whitespace is normalized."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for constant in _WORKFLOW_CONSTANTS:
+            self.assertIn(constant, normalized_body)
 
 
 if __name__ == "__main__":

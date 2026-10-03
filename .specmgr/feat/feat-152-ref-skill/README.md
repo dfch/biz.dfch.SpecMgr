@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T07:27:21.033+02:00'
 id: feat-152-ref-skill
-status: progress
+status: review
 type: feat
-updated: '2026-10-03T18:12:40.914+02:00'
+updated: '2026-10-03T18:49:46.806+02:00'
 version: 1.0.0
 ---
 
@@ -25,7 +25,7 @@ feat-144-ref-artifact shipped the specmgr cross-reference retrieval stack: the g
 - REQ-005: The skill codifies a reverse lookup workflow (e.g. "which documents reference REQ `<uuid>`?"): scan candidate documents via paged `list_<d>` plus per-document `list_references`, match on the target `(type, id)`, and report the referencing documents with `type`/`id`/`title`/`path`.
 - REQ-006: The skill preserves `ref-finder`'s read-only posture (no edit/write/commit) and reporting conventions (`type`/`id`/`title`/`path` per reference, **NOT FOUND** prefix for unresolvable references, stated `total` and `error_count`).
 - REQ-007: Registration and documentation: `AGENTS.md` registers the skill in its `list_references` tool entry (following the existing `repair`-skill registration pattern), the root `README.md` documents it in its `## Referencing Artifacts` section alongside the `/refs` command and the `ref-finder` subagent, `CHANGELOG.md` records the addition, and the skill file conforms to the project-local `.opencode` skill conventions (same shape as the existing `repair` and `feat-numbering` skills).
-- REQ-008: A drift-guard consistency test `tests/opencode/test_skill_specmgr_refs.py` (structure per `tests/opencode/test_skill_feat_numbering.py`) pins the skill's load-bearing wording so it cannot silently drift from the feat-144 contract: the file location; frontmatter exactly `name`/`description` with `name` equal to the containing folder and a third-person `description` carrying the trigger keywords; the inherited reporting vocabulary (**NOT FOUND** prefix, `type`/`id`/`title`/`path` row fields, stated `total`/`error_count`/`truncated`); and the single-document delegation pointer naming `list_references`/`ref-finder`/`/refs`.
+- REQ-008: A drift-guard consistency test `tests/opencode/test_skill_specmgr_refs.py` (structure per `tests/opencode/test_skill_feat_numbering.py`) pins the skill's load-bearing wording so it cannot silently drift from the feat-144 contract: the file location; frontmatter exactly `name`/`description` with `name` equal to the containing folder and a third-person `description` carrying the trigger keywords; the inherited reporting vocabulary (**NOT FOUND** prefix, `type`/`id`/`title`/`path` row fields, stated `total`/`error_count`/`truncated`); the single-document delegation pointer naming `list_references`/`ref-finder`/`/refs`; the read-only posture (both locked read-only phrases); and the workflow presence (the three codified workflow headings, the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate `adr`-exclusion wording).
 
 ### Acceptance Criteria
 
@@ -33,7 +33,7 @@ feat-144-ref-artifact shipped the specmgr cross-reference retrieval stack: the g
 - [x] ACC-002: The single-document, graph, batch, and reverse workflows are each covered by exactly one codified path in the skill, with no overlapping or contradictory instructions. The skill's "Route by task shape" table maps each of the four task shapes to exactly one path (single-document → the delegation pointer; graph/batch/reverse → their own single numbered workflows), and the one deliberate divergence (compositions page every call to completion, overriding the single-document interactive page-when-asked default) is explicitly scoped in the skill body so no instruction overlaps or contradicts — cross-checked in Phase 100's Task 100.120 (recorded outcome: pass).
 - [x] ACC-003: The skill body contains no narrative duplication of `ref-finder`'s workflow — single-document handling is a pointer/delegation, not a copy. The single-document section is a pointer naming the `list_references` tool / `ref-finder` subagent / `/refs` command and re-tells none of `ref-finder`'s workflow narrative (Phase 100 cross-check, recorded in the plan); the drift-guard test pins the phrase "is a pointer to the existing stack, never a copy of it" plus all three stack names.
 - [x] ACC-004: All four workflows execute successfully against live specmgr documents in this repository (smoke exercise), reporting expected rows with **NOT FOUND** flagging. Phase 120 smoke-exercised all four workflows against this repository's live registry — single-document `feat feat-144-ref-artifact` (`total=5`, `error_count=0`, all five ADRs resolve) and `feat feat-152-ref-skill` (`total=1`, `error_count=0`); the **NOT FOUND** path proven via a throwaway temp source per feat-144's recorded precedent (`total=6`, `error_count=1`, the all-zero-uuid ADR row with null `title`/`path`, temp dir removed); graph from `feat feat-144-ref-artifact` at the default N=2 (level 1 `total=5`, level-2 aggregate `total=9`, 0 errors, 11 unique documents seen); batch across the 12 whole-body domains (overall `total=173`, `error_count=1` — the one **NOT FOUND** row is an illustrative placeholder uuid quoted in `feat feat-135-related-artifacts-risks`'s own plan text, the accepted feat-144 regex-extraction caveat; six pre-existing null-id `parse_failures` tallied, not scanned); reverse for `adr e369ee2e-3353-4f92-991c-6367d76d832e` (13 hits, `feat feat-152-ref-skill` among them). Closing note on the self-referential dynamic: the Phase 120 progress entry quotes the smoke's uuids verbatim, so under the same accepted caveat the live registry's feat-152 document is itself a reference source on any fresh batch re-run (the orchestrator's independent re-run reported overall `total=180`, `error_count=3`) — correct behavior, recorded so reviewers are not surprised.
-- [x] ACC-005: The REQ-008 consistency test exists, pins the location, frontmatter, trigger keywords, reporting vocabulary, and delegation pointer as listed, and passes under the repository quality gate's `pytest` run (the mechanical counterpart of REQ-002/REQ-006). `tests/opencode/test_skill_specmgr_refs.py` exists (nine tests, five classes) and pins exactly what the ACC lists — the file location, the frontmatter (exactly `name`/`description`, `name` equal to the containing folder, third-person description carrying the eight locked trigger keywords), the inherited reporting vocabulary (**NOT FOUND**, `type`/`id`/`title`/`path`, `total`/`error_count`/`truncated`), and the single-document delegation pointer (locked phrase plus `list_references`/`ref-finder`/`/refs`) — and it passed in the Phase 110/120 quality-gate `pytest` runs (4025 passed, the nine included).
+- [x] ACC-005: The REQ-008 consistency test exists, pins the location, frontmatter, trigger keywords, reporting vocabulary, delegation pointer, read-only posture, and workflow presence as listed, and passes under the repository quality gate's `pytest` run (the mechanical counterpart of REQ-002/REQ-006). `tests/opencode/test_skill_specmgr_refs.py` exists (eleven tests, six classes) and pins exactly what the ACC lists — the file location, the frontmatter (exactly `name`/`description`, `name` equal to the containing folder, third-person description carrying the eight locked trigger keywords), the inherited reporting vocabulary (**NOT FOUND**, `type`/`id`/`title`/`path`, `total`/`error_count`/`truncated`), the single-document delegation pointer (locked phrase plus `list_references`/`ref-finder`/`/refs`), the read-only posture (both locked read-only phrases), and the workflow presence (the three codified workflow headings plus the canonical 12-domain string, the `N = 2` default-depth wording, and the deliberate `adr`-exclusion wording) — and it passed in the Phase 110/120 quality-gate `pytest` runs (4025 passed, the nine included) and the Phase 140 quality-gate `pytest` run (4027 passed, the eleven included).
 
 ### Scope
 
@@ -185,7 +185,7 @@ Use for "do all cross-references across the registry resolve on disk?".
    page to completion. Aggregate per domain: documents scanned, `total` (the
    sum of each document's own `total`), `error_count` (the sum of each
    document's own `error_count`), and every **NOT FOUND** row.
-4. **Report** one table per domain (columns: domain, documents scanned,
+4. **Report** one table per domain (columns: `domain`, `list_total`, documents scanned,
    `parse_failures`, `total`, `error_count`), then one overall table with
    the same columns summed, and list every unresolvable reference with its
    source document (the referencing `type`/`id`/`title`/`path`) and the
@@ -248,6 +248,7 @@ uses the `ref-finder` vocabulary, verbatim:
 - `TestSkillReportingVocabulary` (pin c): every reporting token below occurs in the body as a literal substring (backticks included — the skill's reporting conventions name them backticked).
 - `TestSkillDelegationPointer` (pin d): the whitespace-normalized body contains the locked delegation phrase; the body names all three of the existing stack.
 - `TestSkillReadOnlyPosture` (pin e): the whitespace-normalized body contains both locked read-only phrases.
+- `TestSkillWorkflowPresence` (pin f): the three codified workflow headings each occur in the body as a literal substring, and the load-bearing workflow constants (the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate `adr`-exclusion wording) each occur in the whitespace-normalized body.
 
 ```python
 _TRIGGER_KEYWORDS: tuple[str, ...] = (
@@ -273,6 +274,16 @@ _REPORTING_TOKENS: tuple[str, ...] = (
 _DELEGATION_PHRASE = "is a pointer to the existing stack, never a copy of it"
 _DELEGATION_NAMES: tuple[str, ...] = ("list_references", "ref-finder", "/refs")
 _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "never commit")
+_WORKFLOW_HEADINGS: tuple[str, ...] = (
+    "## Graph workflow (multi-hop traversal)",
+    "## Batch workflow (resolution validation)",
+    '## Reverse workflow ("which documents reference X?")',
+)
+_WORKFLOW_CONSTANTS: tuple[str, ...] = (
+    "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs",
+    "N = 2",
+    "deliberate",
+)
 ```
 
 **(4) Cross-check against `.opencode/agent/ref-finder.md` (Task 100.120) — outcome: pass.**
@@ -313,20 +324,24 @@ _READONLY_PHRASES: tuple[str, ...] = ("never edit, write, create, or delete", "n
 
 #### Phase 140: Review Remediation
 
-- [ ] Task 140.100: Add drift-guard pin (f) to `tests/opencode/test_skill_specmgr_refs.py` -- the three codified workflow headings (`## Graph workflow (multi-hop traversal)`, `## Batch workflow (resolution validation)`, `## Reverse workflow ("which documents reference X?")`) plus the load-bearing constants (the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate-`adr`-exclusion wording) as a new `TestSkillWorkflowPresence` class (two test methods: headings, constants) -- and extend the plan's locked pin list (Locked-design block (3)), the REQ-008 pin enumeration, and the ACC-005 pin enumeration + inline evidence (the test grows 9 to 11 tests, 5 to 6 classes; the evidence must name the two new pins, including pin (e) read-only posture which the enumeration currently omits)
-- [ ] Task 140.110: Align the skill's batch workflow step 4 report to the 6-column shape the Phase 120 smoke actually used -- columns `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count` -- in `.opencode/skills/specmgr-refs/SKILL.md` (replace the step-4 "(columns: domain, documents scanned, `parse_failures`, `total`, `error_count`)" list with "(columns: `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count`)"), and update the plan's Locked-design block (2) draft so the file stays byte-for-byte the plan's source of truth
-- [ ] Task 140.120: Correct the test module docstring's temporal claim -- "The repo's newest project OpenCode skill" becomes "The repo's third project OpenCode skill" (permanent ordinal, the `test_skill_feat_numbering.py` precedent's own style; the existing repair/feat-numbering parenthetical stays)
-- [ ] Task 140.130: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, `specmgr docs`/`mcp-docs`/`coverage-badge` drift checks), set the feature status back to `review` via the generic `set_status` tool (`type="feat"`), and update this plan's Progress (tick Tasks 140.100-140.130, dated Updates entry, Current Status)
+- [x] Task 140.100: Add drift-guard pin (f) to `tests/opencode/test_skill_specmgr_refs.py` -- the three codified workflow headings (`## Graph workflow (multi-hop traversal)`, `## Batch workflow (resolution validation)`, `## Reverse workflow ("which documents reference X?")`) plus the load-bearing constants (the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate-`adr`-exclusion wording) as a new `TestSkillWorkflowPresence` class (two test methods: headings, constants) -- and extend the plan's locked pin list (Locked-design block (3)), the REQ-008 pin enumeration, and the ACC-005 pin enumeration + inline evidence (the test grows 9 to 11 tests, 5 to 6 classes; the evidence must name the two new pins, including pin (e) read-only posture which the enumeration currently omits)
+- [x] Task 140.110: Align the skill's batch workflow step 4 report to the 6-column shape the Phase 120 smoke actually used -- columns `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count` -- in `.opencode/skills/specmgr-refs/SKILL.md` (replace the step-4 "(columns: domain, documents scanned, `parse_failures`, `total`, `error_count`)" list with "(columns: `domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count`)"), and update the plan's Locked-design block (2) draft so the file stays byte-for-byte the plan's source of truth
+- [x] Task 140.120: Correct the test module docstring's temporal claim -- "The repo's newest project OpenCode skill" becomes "The repo's third project OpenCode skill" (permanent ordinal, the `test_skill_feat_numbering.py` precedent's own style; the existing repair/feat-numbering parenthetical stays)
+- [x] Task 140.130: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`, `specmgr docs`/`mcp-docs`/`coverage-badge` drift checks), set the feature status back to `review` via the generic `set_status` tool (`type="feat"`), and update this plan's Progress (tick Tasks 140.100-140.130, dated Updates entry, Current Status)
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-03**: Phases 100–130 (Design, Implementation, Verification, Closeout) are done — all five acceptance criteria met with inline evidence, the full repository quality gate green, and the feature at status `review` pending the PR and the post-implementation feat-reviewer pass. That review (PR #184) has now returned a "ready to merge" verdict with follow-up findings (one drift-guard gap, three wording inconsistencies), remediated in a newly staged `#### Phase 140: Review Remediation` carrying four unticked tasks in `### Task List`; the feature status was reopened from `review` to `progress` at staging. Next: a fresh phase-implementer pass implementing Tasks 140.100–140.130, after which the status returns to `review` at Task 140.130.
+**As of 2026-10-03**: Phases 100–130 (Design, Implementation, Verification, Closeout) and Phase 140 (Review Remediation) are done — all five acceptance criteria met with inline evidence, the reviewer's one drift-guard gap closed by the new pin (f) with mutant evidence, the batch step-4 report columns aligned with the 6-column Phase 120 smoke shape, the test module docstring's temporal ordinal corrected, the REQ-008/ACC-005 pin enumerations and inline evidence updated to the eleven-test/six-class facts, the full repository quality gate green (4027 passed), and the feature at status `review` pending the orchestrator's PR #184 update. Next: the orchestrator updates PR #184's test count after the Phase 140 commit; the one residual for review time is confirming that a fresh opencode session loads the skill unprompted in a matching mid-task context.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-03T16:40:44.713Z - Phase 140: review remediation complete
+
+Implemented Tasks 140.100–140.130. Task 140.100 added the drift-guard pin (f): a new `TestSkillWorkflowPresence` class with two methods (the three codified workflow headings as literal body substrings, and the load-bearing workflow constants — the canonical 12-domain string `req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs`, the `N = 2` default-depth wording, and the deliberate `adr`-exclusion wording — in the whitespace-normalized body), closing the reviewer's hole with mutant evidence: a throwaway copy of `SKILL.md` under `/tmp/opencode/` with the three workflow sections deleted from `## Graph workflow` through the end of the Reverse workflow section (lines 50–137) fails both new assertions (all three headings and all three constants occur nowhere in the mutant), while the real file passes both; the plan's Locked-design block (3) pin list, the REQ-008 pin enumeration, and the ACC-005 pin enumeration plus inline evidence now name all six pins, the test growing from nine tests/five classes to eleven tests/six classes. Task 140.110 aligned the batch workflow step-4 report columns with the 6-column shape the Phase 120 smoke actually used (`domain`, `list_total`, documents scanned, `parse_failures`, `total`, `error_count`) in both `SKILL.md` and the Locked-design block (2) draft, with the draft verified byte-for-byte equal to the on-disk file again (modulo the single trailing newline). Task 140.120 corrected the test module docstring's temporal "newest" to the permanent ordinal "third" (the `test_skill_feat_numbering.py` precedent's own style). Quality gate green: `ruff format --check` and `ruff check` pass, `vulture` is clean, `pytest -n auto` passes 4027 tests (the nine prior plus the two new), and `specmgr docs`/`mcp-docs`/`coverage-badge` report no drift (the test-file count is unchanged at 381). The feature status returns to `review` via the generic `set_status` tool (`type="feat"`); PR #184 is updated by the orchestrator after the Phase 140 commit. The residual for review time is unchanged: confirming that a fresh opencode session loads the skill unprompted in a matching mid-task context.
 
 #### 2026-10-03T16:12:40.914Z - Phase 140 staged: review remediation
 
