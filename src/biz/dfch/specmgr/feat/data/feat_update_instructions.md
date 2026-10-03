@@ -42,13 +42,16 @@ revise.
   otherwise. `content` is body markdown only (no frontmatter block) in
   both cases.
   - **Line-range replace** (a localized change -- one paragraph, list
-    item, or section): first call `get_feat(id, raw=True)` to see the
-    exact body text, identify the 1-based line to start at and how many
-    lines to replace -- `offset` is the first body line, `limit` the
-    number of lines (`offset`..`offset+limit-1`); `limit` omitted
-    replaces through the last body line, `limit=0` is a pure insert,
-    and the `N+1` position is end-of-body: `offset = N+1` appends after
-    the last line -- and call `update(id, type="feat", content, offset=..., limit=...)`
+    item, or section): first call `get_feat(id, raw=True, numbered=True)`
+    to see the exact body text -- every line prefixed with its 1-based
+    body-line number, so no manual counting is needed and a number seen
+    can be fed straight back into `update`'s `offset` -- identify the
+    1-based line to start at and how many lines to replace -- `offset`
+    is the first body line, `limit` the number of lines
+    (`offset`..`offset+limit-1`); `limit` omitted replaces through the
+    last body line, `limit=0` is a pure insert, and the `N+1` position
+    is end-of-body: `offset = N+1` appends after the last line -- and
+    call `update(id, type="feat", content, offset=..., limit=...)`
     passing only the replacement lines. The server splices the fragment
     into the current on-disk body and validates the result as a whole
     document before writing anything, so every out-of-range line stays
@@ -77,6 +80,12 @@ revise.
     its neighbours (e.g. `Phase 105`, `Task 100.105`) so existing numbers
     never renumber; once assigned, a number is permanent, and removals
     leave gaps.
+    `offset`/`limit` address the frontmatter-stripped body, never the
+    raw on-disk `.md` file: the YAML frontmatter block is variable-
+    length, so a raw file read's line numbers are never the same as
+    body-line coordinates -- and never feed the `numbered=True` output
+    back verbatim as `content`: strip the `"<n>: "` prefix from each
+    line first.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="feat", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:

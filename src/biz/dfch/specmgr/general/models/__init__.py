@@ -100,10 +100,36 @@ Also backs feat-144-ref-artifact's generic ``list_references`` tool
   domain's not-found message in ``error`` (a never-raising, ``list_*``-
   style inline failure).
 
+Also backs feat-153-off-by-n Phase 2's revision of the generic ``update``
+tool's success return (ADR 19ff316b-cd11-41a7-a616-ffd84917da51, revising
+feature feat-69-update-context's "frontmatter-only" precedent for ``update``
+alone):
+
+- :class:`UpdateResult`/:data:`UpdateFrontmatter` -- the wrapper every
+  successful ``update`` call returns: the dispatched domain's own frontmatter
+  object plus an optional ``snippet`` (the before/after window of the touched
+  range in range mode -- dropped lines numbered pre-splice, inserted lines
+  numbered post-splice, up to 2 unchanged context lines per side; ``None`` in
+  whole-body mode and for the whole-body-equivalent ``offset=1`` +
+  omitted-``limit`` range), and the whole-body domains' frontmatter union the
+  ``frontmatter`` field is typed with (single source, re-exported so the
+  ``update`` tool's dispatch module does not keep a second copy). These two
+   names are exported lazily (PEP 562 ``__getattr__``, see below) because
+   their own module imports every whole-body domain's models package and must
+   therefore never be imported eagerly from this ``__init__``.
+   :class:`UpdateResult`'s own API reference lives on the dedicated
+   ``biz.dfch.specmgr.general.models.update_result`` page rather than this
+   one: the ``specmgr docs`` generator's package index pages list only
+   members defined in the module's own ``__init__.py`` (its
+   ``_get_classes``/``_get_functions`` filter, ``obj.__module__ ==
+   module.__name__``), never merely re-exported ones.
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
 """
+
+from typing import Any
 
 from .dtais import (
     CoverageItem,
@@ -159,6 +185,9 @@ __all__ = [
     "Roles",
     "SimilarityHit",
     "SimilarityUnavailableResult",
+    # PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
+    "UpdateFrontmatter",  # pylint: disable=undefined-all-variable
+    "UpdateResult",  # pylint: disable=undefined-all-variable
     "ValidateResult",
     "ValidationErrorEntry",
     "WhenToApply",
@@ -169,3 +198,48 @@ __all__ = [
     "parse_ears",
     "parse_rasci",
 ]
+
+#: PEP 562: the names this package exports lazily from its ``update_result``
+#: submodule (both are defined there).
+_LAZY_EXPORTS = frozenset({"UpdateFrontmatter", "UpdateResult"})
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily export the ``update_result`` names (PEP 562) -- see the module docstring.
+
+    ``update_result`` imports every whole-body domain's own models package (for
+    the ``frontmatter`` union), so it must never be imported eagerly from this
+    ``__init__``: every domain's ``summary.py`` re-enters this package (``from
+    ....general.models.summary import DocSummary``) while sibling domains' own
+    ``__init__`` files may still be mid-import -- e.g. ``feat.models.v1.body``
+    imports ``tsk``'s models, and ``tsk``'s package ``__init__`` pulls in the
+    server's full domain-import list, leaving ``feat.models.v1`` partially
+    initialized. Deferring the import to first name access is safe: the only
+    module that requests these names at import time is ``general.tools.update``
+    (the generic ``update`` tool's dispatch module), and that always loads
+    after ``general.tools.__init__`` has completed its first import
+    (``delete``) -- which cascades through the server's full domain list, so by
+    then every domain package, and every domain models package, is fully loaded.
+    """
+    if name in _LAZY_EXPORTS:
+        from . import update_result  # pylint: disable=import-outside-toplevel  # must stay deferred: see the docstring
+
+        result = getattr(update_result, name)
+        return result
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    """Return this module's names so ``dir()``/``inspect``/the docs generator see the PEP 562 lazy exports.
+
+    The default module ``dir()`` only sees names defined eagerly in this
+    module's ``__dict__``; ``UpdateResult``/``UpdateFrontmatter`` are
+    provided by :func:`__getattr__` and would otherwise be invisible to
+    ``dir()``, ``inspect.getmembers`` (which the ``specmgr docs`` generator
+    relies on), and IDEs. Returning the union of ``globals().keys()`` and
+    :data:`_LAZY_EXPORTS` exposes them without converting the export to an
+    eager import (which would re-introduce the circular import the PEP 562
+    workaround in :func:`__getattr__` exists to avoid).
+    """
+    result = sorted(set(globals().keys()) | _LAZY_EXPORTS)
+    return result

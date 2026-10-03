@@ -61,7 +61,7 @@ from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundErr
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
@@ -220,23 +220,48 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         # 4. update (type="feat", whole-body): must bump only `updated` (the same
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
+        #    (feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        #    frontmatter fields live under .frontmatter; whole-body mode's snippet is None.)
         updated = update(feat_id, "feat", _REVISED_BODY)
-        self.assertIsInstance(updated, FeatFrontmatter)
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
         self.assertNotIsInstance(updated, FeatDocument)
         self.assertFalse(hasattr(updated, "body"))
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "planning")
-        self.assertEqual(updated.version, created.version)
-        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        # NB: the local is named `updated_frontmatter` on purpose -- this test file also
+        # imports the `frontmatter` *library* (used in step 8), so a `frontmatter` local
+        # would shadow it for the rest of the method.
+        updated_frontmatter = updated.frontmatter
+        self.assertIsInstance(updated_frontmatter, FeatFrontmatter)
+        self.assertNotIsInstance(updated_frontmatter, FeatDocument)
+        self.assertFalse(hasattr(updated_frontmatter, "body"))
+        self.assertEqual(updated_frontmatter.id, created.id)
+        self.assertEqual(updated_frontmatter.type, created.type)
+        self.assertEqual(updated_frontmatter.created, created.created)
+        self.assertEqual(updated_frontmatter.status, "planning")
+        self.assertEqual(updated_frontmatter.version, created.version)
+        self.assertRegex(
+            updated_frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
-        #     through the raw body text exactly like every other domain's own range mode.
+        #     through the raw body text exactly like every other domain's own range mode,
+        #     and must return the UpdateResult wrapper with a non-None snippet carrying the
+        #     dropped line at its pre-splice number and the inserted line at its post-splice
+        #     number (ACC-002's line-for-line mode; the 11 flat domains pin the same in
+        #     tests/general/tools/test_update.py).
         lines = get_feat(feat_id, raw=True).splitlines()
         line_number = lines.index("Short description.") + 1
-        update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        result = update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {line_number}: Short description.", snippet_lines)
+        self.assertIn(f"+ {line_number}: Updated short description.", snippet_lines)
         after_range_update = get_feat(feat_id, raw=True).splitlines()
         self.assertEqual(after_range_update[line_number - 1], "Updated short description.")
         self.assertEqual(len(after_range_update), len(lines))
@@ -248,8 +273,8 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertNotIsInstance(in_progress, FeatDocument)
         self.assertFalse(hasattr(in_progress, "body"))
         self.assertEqual(in_progress.status, "progress")
-        self.assertEqual(in_progress.id, updated.id)
-        self.assertEqual(in_progress.created, updated.created)
+        self.assertEqual(in_progress.id, updated.frontmatter.id)
+        self.assertEqual(in_progress.created, updated.frontmatter.created)
         self.assertRegex(
             in_progress.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
         )
@@ -315,6 +340,51 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
 
         with self.assertRaises(ValueError):
             validate(type="feat", content=_INITIAL_BODY, full=True)
+
+    def test_range_update_size_changing_replace_snippet_numbers_pre_and_post_splice(self) -> None:
+        """feat's 12th-domain half of ACC-002's size-changing verification mode (feat is not in
+        ``test_update.py``'s ``_CASES`` -- it is the bespoke folder-per-document domain): a
+        1-line -> 2-line range update's snippet carries the dropped line at its pre-splice number,
+        the inserted lines at the post-splice numbers, and the context below shifted by the insert
+        (REQ-002's pre-splice/post-splice split)."""
+        created = create_feat(_INITIAL_BODY)
+        lines = get_feat(created.id, raw=True).splitlines()
+        k = lines.index("Short description.") + 1
+        fragment = "Updated short description.\nWith an added detail line."
+
+        result = update(created.id, "feat", fragment, offset=k, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {k}: Short description.", snippet_lines)
+        self.assertIn(f"+ {k}: Updated short description.", snippet_lines)
+        self.assertIn(f"+ {k + 1}: With an added detail line.", snippet_lines)
+        # the line below the touched range keeps its text but takes the post-splice number k+2
+        if k < len(lines):
+            self.assertIn(f"  {k + 2}: {lines[k]}", snippet_lines)
+        expected = lines[: k - 1] + fragment.splitlines() + lines[k:]
+        self.assertEqual(get_feat(created.id, raw=True).splitlines(), expected)
+
+    def test_offset_one_omitted_limit_returns_snippet_none_like_whole_body_mode(self) -> None:
+        """feat's half of REQ-003/ACC-003: the whole-body-equivalent range (offset=1, limit omitted)
+        returns the UpdateResult wrapper with snippet=None exactly like whole-body mode (the 11 flat
+        domains pin the same in ``test_update.py``'s ``test_offset_one_equals_whole_body_mode``)."""
+        created = create_feat(_INITIAL_BODY)
+
+        whole_body = update(created.id, "feat", _REVISED_BODY)
+
+        self.assertIsInstance(whole_body, UpdateResult)
+        self.assertIsNone(whole_body.snippet)
+        body_after_whole_body = get_feat(created.id, raw=True)
+
+        ranged = update(created.id, "feat", _REVISED_BODY, offset=1)
+
+        self.assertIsInstance(ranged, UpdateResult)
+        self.assertIsNone(ranged.snippet)
+        self.assertEqual(get_feat(created.id, raw=True), body_after_whole_body)
 
 
 class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):

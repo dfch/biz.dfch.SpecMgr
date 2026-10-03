@@ -41,7 +41,7 @@ from unittest import mock
 
 import frontmatter
 
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -126,20 +126,24 @@ class TestVcrLifecycleIntegration(TempVcrDirTestCase):
         # 4. update (type="vcr"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version.
         updated = update(vcr_id, "vcr", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertEqual(updated.version, created.version)
-        self.assertNotEqual(updated.updated, created.updated)
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertEqual(updated.frontmatter.version, created.version)
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 
         # 5. set_status (type="vcr"): only status/updated may change.
         progressed = set_status(vcr_id, "vcr", "progress")
         self.assertEqual(progressed.status, "progress")
-        self.assertEqual(progressed.id, updated.id)
-        self.assertEqual(progressed.created, updated.created)
-        self.assertNotEqual(progressed.updated, updated.updated)
+        self.assertEqual(progressed.id, updated.frontmatter.id)
+        self.assertEqual(progressed.created, updated.frontmatter.created)
+        self.assertNotEqual(progressed.updated, updated.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertEqual(get_vcr(vcr_id).body.coverage.value.text, "full")
 

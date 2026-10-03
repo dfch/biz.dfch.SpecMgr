@@ -24,7 +24,9 @@ through revising an existing Goal (GOL) document by id, using the existing
 ``gol/tools/`` surface (``get_gol``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="gol"``; ``get_gol``'s ``raw=True`` parameter serves the line-range
-flow's line numbers). There is no ``specmgr://gol/{id}`` resource to point at
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/

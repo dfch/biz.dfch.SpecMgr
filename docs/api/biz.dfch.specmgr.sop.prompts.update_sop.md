@@ -7,7 +7,9 @@ through revising an existing Standard Operating Procedure (SOP) document
 by id, using the existing ``sop/tools/`` surface (``get_sop``,
 generic ``validate`` tool) plus the generic ``update``/``set_status`` tools in
 ``general/tools/`` (called with ``type="sop"``; ``get_sop``'s ``raw=True``
-parameter serves the line-range flow's line numbers). There is no
+parameter serves the line-range flow's line numbers, with ``numbered=True``
+additionally printing each line's 1-based body-line number, ready to feed
+into ``update``'s ``offset``). There is no
 ``specmgr://sop/{id}`` resource to point at -- id-based reads always go
 through the ``get_sop`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 

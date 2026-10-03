@@ -54,7 +54,7 @@ from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
-from biz.dfch.specmgr.general.models import InvalidStatusResult
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -152,20 +152,24 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         # 4. update (type="dec"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003).
         updated = update(dec_id, "dec", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertEqual(updated.version, created.version)
-        self.assertNotEqual(updated.updated, created.updated)
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertEqual(updated.frontmatter.version, created.version)
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
         accepted = set_status(dec_id, "dec", "accepted")
         self.assertEqual(accepted.status, "accepted")
-        self.assertEqual(accepted.id, updated.id)
-        self.assertEqual(accepted.created, updated.created)
-        self.assertNotEqual(accepted.updated, updated.updated)
+        self.assertEqual(accepted.id, updated.frontmatter.id)
+        self.assertEqual(accepted.created, updated.frontmatter.created)
+        self.assertNotEqual(accepted.updated, updated.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
