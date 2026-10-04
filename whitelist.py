@@ -331,3 +331,19 @@ reset
 # `WholeBodyDomain`/`WholeBodyType`/`WholeBodyOrAdrType`/`whole_body_domain`
 # registry names need no entries: vulture treats `__all__`-listed names as used.
 documents
+
+# --- plantuml (feat-185-uc-diagrams Phase 110) --------------------------
+# `PlantumlValidationResult`'s `structure_ok`/`checked_by` fields are set in
+# the result's own constructors (vulture's dataclass constructor-kwarg
+# suppression does not count that as use) and read only by tests; the
+# MCP-facing serialization of the §3.6 result arrives in Phase 120. The
+# remaining fields (`valid`/`rendered`/`errors`/`warnings`/`source_state`/
+# `available`/`reason`/`fix_hint`) need no entry: `chain.validate_plantuml`
+# reads the backend verdicts' same-named attributes, marking the names used.
+structure_ok
+checked_by
+# `UNATTRIBUTED_MARKER_FORMS` is the documentation/test pin of the three
+# frozen marker grammar forms (rulebook §2.9.4); the live shared constant is
+# `UNATTRIBUTED_MARKER_PREFIX` (used by both the renderer and the checker),
+# so the forms tuple itself is read only by the rulebook pin in tests.
+UNATTRIBUTED_MARKER_FORMS

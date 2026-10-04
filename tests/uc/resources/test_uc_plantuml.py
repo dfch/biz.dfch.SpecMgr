@@ -140,14 +140,19 @@ class TestUcPlantumlResource(unittest.TestCase):
         result = uc_plantuml()
 
         for fragment in (
-            "GET {base}/svg/~1{enc}",
+            "GET {base}/svg/{enc}",
             "Welcome to PlantUML!",
             "generated a bad URL",
             "INCONCLUSIVE",
             "PLANTUML_LIMIT_SIZE=8192",
             "--check-syntax --no-error-image -pipe",
             "-checkonly",
-            "ERROR / 1 / Syntax Error? (Assumed diagram type: sequence)",
+            # both documented ERROR-block byte shapes (older one-liner / 1.2026.8 three-line)
+            "ERROR / {line} / Syntax Error? (Assumed diagram type: {type})",
+            "Syntax Error? (Assumed diagram type: {type})",
+            # the amended freeze: the classic no-prefix form + the rejected prefixed forms
+            "SoWkI",
+            "`~1` was never a real PlantUML URL-decoder prefix",
             'participant "Famous Bob" aass Bob',
             "' validated: structure-only",
             "#quot;",

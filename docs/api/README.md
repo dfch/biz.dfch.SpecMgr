@@ -220,6 +220,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.plantuml`](biz.dfch.specmgr.plantuml.md) — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- [`biz.dfch.specmgr.plantuml.backends`](biz.dfch.specmgr.plantuml.backends.md) — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- [`biz.dfch.specmgr.plantuml.chain`](biz.dfch.specmgr.plantuml.chain.md) — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- [`biz.dfch.specmgr.plantuml.encode`](biz.dfch.specmgr.plantuml.encode.md) — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- [`biz.dfch.specmgr.plantuml.structure`](biz.dfch.specmgr.plantuml.structure.md) — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- [`biz.dfch.specmgr.plantuml.url`](biz.dfch.specmgr.plantuml.url.md) — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
 - [`biz.dfch.specmgr.prb`](biz.dfch.specmgr.prb.md) — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
 - [`biz.dfch.specmgr.prb.models`](biz.dfch.specmgr.prb.models.md) — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.prb.models.v1`](biz.dfch.specmgr.prb.models.v1.md) — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -442,6 +448,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
 - [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- [`biz.dfch.specmgr.uc.models.v2.renderer`](biz.dfch.specmgr.uc.models.v2.renderer.md) — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
 - [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).

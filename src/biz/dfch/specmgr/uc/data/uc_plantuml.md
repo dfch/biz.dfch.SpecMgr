@@ -535,9 +535,13 @@ HTTP 404 from the canary yields the fix hint "check the base URL path prefix (ba
 ### 3.7 Chain short-circuit (frozen)
 
 `validate_plantuml` runs the structure check first. On structure red the parser is
-**never called** (no subprocess, no network) and the result carries the structure
-`errors` with `valid = None`, `rendered = None`, `checked_by = "structure"` — which
-also keeps known-broken content off the network.
+**never called** (no subprocess, no network) and the result carries the structure `errors` with
+`valid = None`, `rendered = None`, `checked_by = "structure"` — which also
+keeps known-broken content off the network. On a structure-red short-circuit
+**with** a source configured, the result carries `source_state = "none"`,
+`available = false`, and a `reason` stating that no validation source was
+called — the §3.6 enum has no "not probed" value, probing is forbidden on
+that path by this section, and the result must not depend on call history.
 
 ### 3.8 Prompt contract (agent flow, Phase 120)
 
@@ -563,8 +567,14 @@ stdin, all output on stdout (no file arguments, no container volume mapping need
   from the **raw byte stream**, never from a text channel: stdout is
   binary-contaminated (a placeholder PNG is emitted even for *valid* `-pipe` checks —
   verified).
-- **Error message shape:** the text block `ERROR / {line} / Syntax Error? (Assumed
-  diagram type: {type})` scanned from the output bytes.
+- **Error message shape:** an `ERROR` text block scanned from the raw output
+  bytes (never from a text channel) — one of two byte shapes, both accepted
+  by the scanner (`backends.scan_error_blocks`): the one-line shape
+  `ERROR / {line} / Syntax Error? (Assumed diagram type: {type})` of older
+  builds, and the three-line block `ERROR` / `{line}` / `Syntax Error?
+  (Assumed diagram type: {type})` that current builds (1.2026.8, verified)
+  emit on **stderr** (stdout stays binary-contaminated with the placeholder
+  PNG on valid checks, as above).
 - **Render proof:** `--svg --no-error-image -pipe` — exit 0 **and** the output starts
   with `<svg` ⇒ `rendered = true`; the SVG is written to a temp file (its path
   optionally reported), never inlined into tool results.
@@ -578,23 +588,52 @@ probe.
 
 ### 5.1 Endpoint and encoding
 
-A single endpoint: `GET {base}/svg/~1{enc}`, where `{enc}` is the PlantUML `~1` URL
-header encoding of the full diagram source (deflate + the `~1` magic + hex; the encoder
-ships in `plantuml/encode.py`, Phase 110). **The `~1` header is mandatory:**
-bare-deflate payloads are rejected by the public server with the explanatory SVG.
+A single endpoint: `GET {base}/svg/{enc}`, where `{enc}` is the PlantUML
+**classic** encoding of the full diagram source (the encoder ships in
+`plantuml/encode.py`, Phase 110, amended 2026-10-04): the custom-base64
+(alphabet `0-9A-Za-z-_` — digits first, 3 bytes → 4 characters, the trailing
+partial group zero-padded) of the **raw-deflate** stream of the source's
+UTF-8 bytes (equivalently, a `zlib.compress` stream with its 2-byte header
+and 4-byte adler32 tail stripped), **no prefix** — the `SoWkI…` form of
+every historical `plantuml.com/plantuml/svg/` URL (the server's own
+short-form redirects use it).
+
+**The legacy prefixed forms are not accepted by current builds** (1.2026.8,
+verified 2026-10-04 against dev jetty + plantuml.com): `~1{hex}` and
+`~b{hex}` payloads answer the 200 request-error placeholder (the public
+server: the 200 "generated a bad URL" explanatory), and `~h{hex}` answers
+the 400 placeholder. `~1` was never a real PlantUML URL-decoder prefix (only
+`~b`/`~h` exist in the decoder); the classic no-prefix form is the only
+encoding the client uses. Compression layer matters: the public server
+decodes the custom-base64 and inflates **raw** deflate only — the same
+payload zlib-wrapped is answered "generated a bad URL" there, while dev
+jetty accepts both layers.
 
 ### 5.2 Classification matrix (frozen)
 
-| HTTP status | Body | Classification | Verified against |
+| HTTP status | Body | Classification | Verified against (re-recorded 2026-10-04) |
 |---|---|---|---|
-| 200 | real diagram SVG (no placeholder markers) | **VALID + RENDERED** (the body is the render proof) | both servers |
-| 400 | "Welcome to PlantUML!" placeholder | **SYNTAX INVALID** | both (jetty 6260 B; plantuml.com 20073 B) |
-| 200 | "Welcome to PlantUML!" placeholder | **REQUEST ERROR** (exceeds the deployment's size limit / undecodable payload / no `@startuml` extracted) | jetty (5377 B, all three cases) |
-| 200 | "…generated a bad URL" explanatory | **ENCODE ERROR** (our payload was rejected; should be impossible — client bug/transport) | plantuml.com (2985 B) |
+| 200 | real diagram SVG (no placeholder markers) | **VALID + RENDERED** (the body is the render proof) | both (jetty 2095 B; plantuml.com 2100 B) |
+| 400 | "Welcome to PlantUML!" placeholder | **SYNTAX INVALID** | both (jetty 8522 B; plantuml.com 8532 B) |
+| 200 | "Welcome to PlantUML!" placeholder | **REQUEST ERROR** (the deployment's size limit / an undecodable payload; on current builds a decodable no-`@startuml` payload answers 400 — drift note (a)) | jetty (5377 B, undecodable-payload case) |
+| 200 | "…generated a bad URL" explanatory | **ENCODE ERROR** (our payload was rejected; should be impossible — client bug/transport; the recorded case is a non-classic payload form) | plantuml.com (2957 B) |
 | anything else | — | **INCONCLUSIVE** → one retry → still inconclusive ⇒ `source_state` (§3.3) | — |
 
 **An unrecognised response is never classified INVALID** — only the exact
 400 + "Welcome to PlantUML!" combination is.
+
+**Drift note (current 1.2026.8 builds vs. the 2026-10-03 design-time records,
+re-verified 2026-10-04):** (a) a no-`@startuml` (decodable-but-diagram-less)
+payload now answers 400 + placeholder — classified SYNTAX INVALID, still
+never a source fault — while the 200-placeholder row remains the
+undecodable-payload case; (b) the dev jetty's `PLANTUML_LIMIT_SIZE=8192`
+(2026-10-03 design-time record) is no longer observed on the 2026-10-04
+build — a 20 KB+ diagram renders; (c) the 400 welcome page embeds the
+submitted input, so its size varies with the payload — every client
+assertion is signature-based (the placeholder "Welcome to PlantUML!" marker
+/ the "generated a bad URL" marker / the `<svg` prefix + `data-diagram-type`),
+never size-based; (d) the `/check/` PNG assets stayed byte-stable across the
+drift (sha-pinned, §5.6).
 
 ### 5.3 Timeouts
 
@@ -604,10 +643,13 @@ Every HTTP call carries a named timeout constant (the jar/bin subprocess carries
 
 ### 5.4 Deployment size limits
 
-The dev jetty runs `PLANTUML_LIMIT_SIZE=8192` (decoded bytes): a 25 KB diagram returns
-the 200-placeholder (REQUEST ERROR) there while the public server renders the same
-diagram fine. The client surfaces this as a request error with a fix hint (the
-deployment's size limit rejected the diagram; self-host with a higher
+A deployment may cap the size of the diagram it will decode
+(`PLANTUML_LIMIT_SIZE`): the 2026-10-03 design-time dev jetty ran
+`PLANTUML_LIMIT_SIZE=8192` (decoded bytes) and answered oversized diagrams
+with the 200-placeholder (REQUEST ERROR) while the public server rendered
+the same diagram fine; that cap is not observed on the 2026-10-04 1.2026.8
+dev jetty. Whenever a deployment's limit rejects a diagram, the client
+surfaces it as a request error with a fix hint (raise the deployment's
 `PLANTUML_LIMIT_SIZE` or shrink the diagram) — **never as INVALID**.
 
 ### 5.5 Why `/check/` is not used
@@ -622,14 +664,16 @@ servers.
 
 ### 5.6 Verified fixtures (recorded under `tests/fixtures/plantuml/`, Phase 110)
 
-- jetty placeholder SVGs: 6260 B (400) and 5377 B (200)
-- plantuml.com: 20073 B 400 placeholder; 2985 B "bad URL" explanatory
+- jetty placeholder SVGs: 8522 B (400) and 5377 B (200, the undecodable
+  legacy-prefixed payload case) — re-recorded 2026-10-04
+- plantuml.com: 8532 B 400 placeholder; 2957 B "bad URL" explanatory — re-recorded 2026-10-04
 - the two PNG `/check/` assets — 69 B (sha256 `9cfe511e…`) and 68 B (sha256
   `cf9a9dfe…`) — retained as documentation fixtures only; the protocol does not use
-  them
+  them (byte-stable across the 2026-10-03 → 2026-10-04 drift)
 - the canonical `aass` error fixture (from PlantUML's own docs): the diagram
-  `participant "Famous Bob" aass Bob` → `ERROR / 1 / Syntax Error? (Assumed diagram type: sequence)`,
-  exit 200 on 1.2026.8
+  `participant "Famous Bob" aass Bob` → exit 200 on 1.2026.8 with the `ERROR` block
+  (line 1, `Syntax Error? (Assumed diagram type: sequence)` — the three-line shape
+  on 1.2026.8, the one-line shape on older builds, §4)
 
 ## 6. Structure checker contract (frozen)
 

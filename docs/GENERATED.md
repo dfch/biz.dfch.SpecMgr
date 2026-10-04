@@ -253,6 +253,15 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
+**plantuml/**
+
+- `plantuml/__init__.py` — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- `plantuml/backends.py` — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- `plantuml/chain.py` — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- `plantuml/encode.py` — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- `plantuml/structure.py` — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- `plantuml/url.py` — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
+
 **prb/**
 
 - `prb/__init__.py` — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
@@ -504,6 +513,7 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- `uc/models/v2/renderer.py` — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
 - `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
@@ -559,4 +569,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 381
+**Test files**: 388

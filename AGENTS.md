@@ -69,9 +69,22 @@ type or cross-cutting:
    feat-81-83-validation Phase 3), plus the static
    domain-knowledge resource `specmgr://uc/plantuml` — the frozen
    UC → PlantUML mapping and validation rulebook (raw markdown,
-   `text/markdown`; feat-185-uc-diagrams Phase 100 — the cross-cutting
-   `plantuml/` package and the renderers/tools it specifies arrive in
-   later phases of the same feature);
+   `text/markdown`; feat-185-uc-diagrams Phase 100 — the normative spec
+   for everything diagram-related in this domain);
+  `uc/models/v2/renderer.py` — the three deterministic renderers the
+  rulebook specifies (feat-185-uc-diagrams Phase 110): `render_uc_diagram`
+  (the v1-port, rulebook §2.5–§2.6 — byte-for-byte the §2.6 reference
+  rendering for the packaged example), `render_use_case_package` (multi-UC
+  package diagram, §2.7–§2.8 — takes resolved `PackageDocument` facts, not
+  directory handles), and `render_uc_sequence_skeleton` (§2.9 — the
+  deterministic skeleton whose UNATTRIBUTED markers the Phase 120 prompt
+  flow attributes); golden-pinned under `tests/fixtures/uc-diagrams/`
+  (ACC-001); the skeleton imports the shared UNATTRIBUTED marker constant
+  from the cross-cutting `plantuml/` package (see below) so renderer and
+  structure checker cannot drift; the packaged
+  `uc/data/uc_plantuml_template.md` / `uc_plantuml_example.md`
+  single-diagram data files ship here too (their MCP tools/resources land
+  in Phase 120);
   `uc/prompts/` (`create_uc`/`update_uc`). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
@@ -801,6 +814,22 @@ because it predates the domain-first refactor and has no dependency on
 `adr/` (the exception) plus only shared cross-domain modules —
 `iso25010.py`, `md/` (markdown-section building blocks), and
 `version_info.py` — don't assume any other doc type's schema lives there.
+A third, non-model top-level package also exists: **`plantuml/`**
+(feat-185-uc-diagrams Phase 110, ADR
+7a626b12-b189-4561-a51d-ffb2e9e193b4) — the cross-cutting, **import-free**
+(no `biz.dfch.specmgr.*` imports anywhere in it; the dependency direction
+is always specmgr-domain → `plantuml`, never the reverse — e.g.
+`uc/models/v2/renderer.py` imports the shared UNATTRIBUTED marker constant
+from `plantuml/structure.py`) and **stdlib-only** (no new dependency or
+extra) PlantUML support library: `encode.py` (the classic URL text
+encoder — the `SoWkI…` form, rulebook §5.1), `structure.py` (the two-mode structure checker + the shared
+marker constant), `backends.py` (jar/bin local backends), `url.py` (the
+single-endpoint `/svg/` matrix classifier), and `chain.py` (the strict
+first-set-wins, no-fall-through validation chain over exactly three env
+vars + the non-raising result model). It is deliberately extractable but
+not a separate PyPI library, and nothing in it registers with the MCP
+server (the tools/resources that wrap it arrive in later phases of
+feat-185-uc-diagrams).
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server
