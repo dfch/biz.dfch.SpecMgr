@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-04T12:59:26.936+02:00'
 id: feat-128-schema-not-used
-status: planning
+status: review
 type: feat
-updated: '2026-10-05T09:42:25.000+02:00'
+updated: '2026-10-05T11:01:43.136+02:00'
 version: 1.0.0
 ---
 
@@ -25,9 +25,9 @@ Agents often take several round-trips to create or update specmgr artifacts with
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: The feature (or a linked decision record) contains a written root-cause analysis answering issue #128's question 1, citing at least one concrete instruction gap or observed agent behavior.
-- [ ] ACC-002: The schema audit answers question 2 with a gap list (each gap: domain, section, problem, proposed fix) or an explicit documented conclusion that the schemas are complete.
-- [ ] ACC-003: The round-trip-reduction plan for question 3 exists as an actionable task list (in this feature or a linked follow-up feature) with at least one measurable target.
+- [x] ACC-001: The feature (or a linked decision record) contains a written root-cause analysis answering issue #128's question 1, citing at least one concrete instruction gap or observed agent behavior. Met in Phase 100 (commit b2d2c98): root-cause-analysis.md in this folder answers question 1 from 8 controlled fresh-agent runs -- 0/4 no-prompt and 0/2 prompt-update runs fetched the schema while the prompt-create runs did (2/2), the update prompts' unconditional "Check the schema" step was skipped 2/2, and four concrete instruction gaps are cited (silent `create_<d>`/update/validate tool descriptions, context-insensitive update step, the prb lead-sentence frame absent from template/example and the schema's machine layer, and the 2-hop resource route plus non-invocable MCP prompts on the opencode host).
+- [x] ACC-002: The schema audit answers question 2 with a gap list (each gap: domain, section, problem, proposed fix) or an explicit documented conclusion that the schemas are complete. Met in Phase 100 (commit b2d2c98): schema-audit.md in this folder records the gap list as 16 quadruples (domain, section, problem, proposed fix) -- zero enum across all 12 schemas, only the two feat-94 timestamp patterns, properties: {} markdown leaves per-domain counts, the closed-vocabulary absences, the provenance-oriented resource and schema-silent prompt metadata (verbatim), and adr's missing schema resource with code citations (commands/schema.py \_GENERATORS, adr/resources/).
+- [x] ACC-003: The round-trip-reduction plan for question 3 exists as an actionable task list (in this feature or a linked follow-up feature) with at least one measurable target. Met in Phase 110 (commit 00cd7cb): round-trip-reduction-plan.md in this folder holds the plan (Direction-1 vs Direction-2 evaluation, Direction-2-first recommendation, change inventory C1-C15, measurable targets T1-T3 stated as baseline -> target -> measurement), and its actionable task list lives in the linked follow-up feature feat-189-reduce-agent-round-trips (4 phases, 16 tasks, T1-T3 in its ACC-005).
 
 ### Scope
 
@@ -83,11 +83,15 @@ Phase 110 artifacts (written 2026-10-05; sibling file of this README plus a new 
 
 ### Current Status
 
-**As of 2026-10-05**: Phase 110 (Planning) complete -- the round-trip-reduction plan (round-trip-reduction-plan.md) evaluates both directions (increase schema discoverability vs reduce the need for it) and recommends a Direction-2-first hybrid: fold the closed-form rules into the 1-hop template/example artifacts agents already fetch, make the create/update instruction steps context-sensitive, demote the schema to constraint discovery, and keep only non-prescriptive pointers in the always-in-context tool surface (the 1-hop `get_<d>_schema` tool was considered and rejected); its actionable task list + measurable targets live in the follow-up feature feat-189-reduce-agent-round-trips (GitHub issue #189); all three questions of issue #128 are answered (root cause: discoverability -- zero pointers to the schema in the always-in-context tool surface -- plus a rational skip of a 2-hop, constraint-free fetch, with the only closed-form rule agents failed on (the prb lead-sentence frame) living in prose they never saw, audit: 16 gaps, plan: Direction-2-first hybrid tracked as feat-189-reduce-agent-round-trips with measurable targets T1-T3).
+**As of 2026-10-05**: Feature complete, status moving to review. Phase 100 (Investigation) answered issue #128 question 1 (root-cause-analysis.md: discoverability plus a rational skip of a 2-hop, constraint-free fetch; the only closed-form rule agents failed on lived in prose they never saw) and question 2 (schema-audit.md: 16 gap quadruples, adr has no schema resource at all), and captured the quantitative baseline (round-trip-baseline.md); Phase 110 (Planning) answered question 3 with round-trip-reduction-plan.md (Direction-2-first hybrid, measurable targets T1-T3) tracked as the follow-up feature feat-189-reduce-agent-round-trips (GitHub issue #189). All three acceptance criteria met (evidence inline above).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-05T10:49:19.000+02:00 - Close-out: ACCs ticked, status to review
+
+Close-out edit: ACC-001/002/003 ticked with inline evidence sentences; Current Status updated; frontmatter status set to review by the orchestrator immediately after this edit, followed by push and PR opening. No plan, code, or finding changes -- the two phase commits (b2d2c98, 00cd7cb) stand as verified.
 
 #### 2026-10-05T09:42:25.000+02:00 - Phase 110: Planning complete
 
