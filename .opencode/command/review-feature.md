@@ -1,5 +1,5 @@
 ---
-description: Review a completed .specmgr feature (feat-NNN-slug) for errors, gaps, inconsistencies, code smells, and improvements.
+description: Review a completed .specmgr feature (feat-NNN-slug) for errors, gaps, discrepancies, and improvements.
 agent: feat-reviewer
 ---
 
@@ -14,6 +14,7 @@ Review the feature `$ARGUMENTS` (a `feat-NNN-slug` id under `.specmgr/feat/`).
    Conventional Commits scope by domain, not by feature id, so grepping
    subjects for the id is unreliable.
 3. Apply the full review checklist from your own agent instructions.
-4. Report Errors / Gaps / Inconsistencies / Code Smells / Improvements /
-   Positives with file:line citations. Do not edit, write, or commit
-   anything.
+4. Report Errors (E1, E2, ...) / Gaps (G1, ...) / Discrepancies (D1, ...) /
+   Improvements (I1, ...) / Positives (P1, ...) as TSK-compatible checklist
+   items (`- [ ] <ID>: <description>`), each with a file:line citation. Do
+   not edit, write, or commit anything.
