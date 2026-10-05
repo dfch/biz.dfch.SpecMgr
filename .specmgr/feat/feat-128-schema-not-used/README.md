@@ -4,7 +4,7 @@ created: '2026-10-04T12:59:26.936+02:00'
 id: feat-128-schema-not-used
 status: review
 type: feat
-updated: '2026-10-05T13:46:58.000+02:00'
+updated: '2026-10-05T20:10:52.000+02:00'
 version: 1.0.0
 ---
 
@@ -59,7 +59,7 @@ Preliminary observations to confirm in Phase 100: (a) the generated JSON schemas
 
 Phase 100 artifacts (written 2026-10-05; sibling files of this README): `root-cause-analysis.md` -- the written answer to issue #128 question 1 (ACC-001), hypotheses (a)-(d) adjudicated against 8 controlled agent runs with four concrete instruction gaps; `schema-audit.md` -- the ACC-002 gap list (16 quadruples), the adr-missing finding with code citations, the resource/prompt/tool metadata audit (verbatim strings), the per-domain closed-vocabulary baseline verification, the packaged-vs-docs drift check, and the published-vs-worktree surface diff; `round-trip-baseline.md` -- the ACC-003 grounding tables (per-run + domain x operation aggregates, payload sizes, schema-fetch counts) and the explicit baseline numbers Phase 110 may use; `evidence/` -- raw `--format json` event streams (11 files: smoke, prompt-surface probe, the 8 formal runs, plus the one recorded retry attempt), `manifest.md` (verbatim instruction strings, seeds, metrics, verdicts, harness incident, the verbatim agent-facing metadata record), `final-docs/` (the eight success-verdict documents), the rendered prompts, and the harness scripts.
 
-Phase 110 artifacts (written 2026-10-05; sibling file of this README plus a new feature): `round-trip-reduction-plan.md` -- the written answer to issue #128 question 3 (ACC-003): the goal statement, the explicit evaluation of Direction 1 (increase schema discoverability/usage) and Direction 2 (reduce the *need* for the schema), the recommendation (Direction-2-first hybrid), the change inventory C1-C15 mapped to the 16 audit gaps and the 4 instruction gaps, and the measurable targets T1-T3 stated against the Phase 100 baseline; and the follow-up feature `feat-189-reduce-agent-round-trips` (GitHub issue #189), whose phase-structured Task List (Phase 100 P0, Phase 110 P1, Phase 120 P2, Phase 130 verification) is the plan's actionable implementation inventory.
+Phase 110 artifacts (written 2026-10-05; sibling file of this README plus a new feature): `round-trip-reduction-plan.md` -- the written answer to issue #128 question 3 (ACC-003): the goal statement, the explicit evaluation of Direction 1 (increase schema discoverability/usage) and Direction 2 (reduce the *need* for the schema), the recommendation (Direction-2-first hybrid), the change inventory C1-C15 plus the post-review C17 (schema resource -> `get_<d>_schema` tool conversion, ADR-first) mapped to the 16 audit gaps and the 4 instruction gaps, and the measurable targets T1-T3 stated against the Phase 100 baseline; and the follow-up feature `feat-189-reduce-agent-round-trips` (GitHub issue #189), whose phase-structured Task List (Phase 100 P0, Phase 105 P1-pre, Phase 110 P1, Phase 120 P2, Phase 130 verification) is the plan's actionable implementation inventory.
 
 ### Related Decisions
 
@@ -88,6 +88,10 @@ Phase 110 artifacts (written 2026-10-05; sibling file of this README plus a new 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-05T20:10:52.000+02:00 - Plan revision: C17 `get_<d>_schema` tool conversion adopted
+
+Plan revision (author-directed, post-implementation review): in `round-trip-reduction-plan.md`, Direction-1 lever 3 (the 1-hop `get_<d>_schema` tool) is reopened and adopted as C17 -- a dated revision paragraph after the rejection text carries the five rationale points (the plan's own P2 falsifies the zero-constraint argument; the RCA's #1 root cause is discoverability in the always-in-context tool surface; the ddfb1109/ec9f5262 precedent generalizes to the last per-domain authoring resource; C6/C7 collapse into the tool description; 94 -> 106 tool cost acknowledged with T2's 0-fetch target unchanged); the change inventory gains a C17 row (P1-pre, Phase 105) and the C7 row is marked superseded (ids are permanent); the priority order gains a P1-pre (Phase 105) bullet between P0 and P1, and the P1 bullet now reads "C6-C12 (C7 superseded by C17)". The follow-up feature `feat-189-reduce-agent-round-trips` is amended to match (new Phase 105 with the ADR + tool tasks, Tasks 110.100/110.120 retargeted, Task 110.110 removed leaving its number gap, REQ-007/ACC-003/Scope/Design Notes updates, its own Updates entry). No status changes: feat-128 stays `review` on PR #191, feat-189 stays `planning`; the PR is not merged.
 
 #### 2026-10-05T13:46:58.000+02:00 - Post-implementation review: findings addressed
 
@@ -122,6 +126,10 @@ Plan review findings applied: corrected the schema-audit scope from 13 domains t
 Feature document created from GitHub issue #128 (agents do not use schema information for create and update operations). Plan drafted; investigation pending.
 
 ### Decisions Made
+
+#### 2026-10-05T20:10:52.000+02:00 - Plan revision: schema access surface converts to `get_<d>_schema` tools (C17)
+
+Author-directed post-implementation-review decision: the plan's rejected Direction-1 lever 3 (the 1-hop `get_<d>_schema` tool per domain) is reopened and adopted as C17 -- the 12 `specmgr://<domain>/schema` resources convert to 12 `get_<d>_schema` tools (resources removed), ADR-first, extending the house precedents ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-reads moved to the `get_<d>` tool, `/{id}` resource dropped) and ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (listing moved to the `list_<d>` tool, `/list` resource dropped) to the last remaining per-domain authoring resource. Two of the plan's rejection arguments no longer hold: the plan's own P2 (C13/C14, `json_schema_extra` enum/pattern enrichment) falsifies the "zero-constraint machine layer" argument -- the schema becomes constraint-bearing -- and the RCA's #1 root cause (discoverability in the always-in-context tool surface; 0/4 no-prompt runs ever entered the resource layer) shows a resource description cannot fix what only a tool description can. Template and example are already tools (`get_<d>_template`/`get_<d>_example`), so the conversion makes the domain authoring surface 100% tool-based; C6 (pointer clauses) and C7 (usage-oriented rewording) collapse into the `get_<d>_schema` tool description, and the 2-hop resource route (instruction gap 4) is eliminated. Cost acknowledged: 94 -> 106 always-in-context tools (terse descriptions). T2's "0 schema fetches" target is unchanged -- the conversion makes the designated constraint-discovery fallback path cheap and findable; it never prescribes a fetch. The ADR is to be written as feat-189's first implementation task (new Phase 105, P1-pre, before the C6/C8 pointer retargeting that names the tool).
 
 #### 2026-10-05T09:42:25.000+02:00 - Phase 110: direction choice, rejections, and the flagged scope tension
 
