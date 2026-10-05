@@ -32,8 +32,9 @@ file I/O, no network, no clock:
   receiver, else the system; self-message when the sender is the system),
   §2.9.4 UNATTRIBUTED markers (built from the shared
   :mod:`biz.dfch.specmgr.plantuml.structure` constants — never re-stringed),
-  §2.9.6 notes (top/final bare ``note``, message-attached ``note right``,
-  bare ``note`` when there is no message to attach to), §2.9.7 extension
+  §2.9.6 notes (top/final ``note left``, message-attached ``note right``,
+  ``note left`` when there is no message to attach to — amended 2026-10-05,
+  the real 1.2026.8 parser rejects bare ``note``), §2.9.7 extension
   ``alt`` fragments (anchored at the structurally validated step, single
   condition branch, no ``else``, sibling order, resumption notes for
   Return/Continue-to-step items — standalone or embedded, case-insensitive),
@@ -130,7 +131,7 @@ The frozen edge line (rulebook §2.8 table; ``{label}`` omitted when empty).
 
 One ``alt`` fragment (frozen, rulebook §2.9.7): the condition header,
 the items in order (the same pipeline as a main step), the resumption
-notes (full item text — no message; bare ``note`` when the resumption
+notes (full item text — no message; ``note left`` when the resumption
 item is the fragment's first item), and the bare ``end`` close (a single
 branch, no ``else``).
 
@@ -148,9 +149,10 @@ The §2.3 level stereotype (case-insensitive normalisation; None when unrecognis
 ### `_note_block(content_lines: 'list[str]', *, attached: 'bool') -> 'list[str]'`
 
 One note block (frozen format): ``note right`` when attached to a
-message, a bare ``note`` when there is no message to attach to
-(rulebook §2.9.6). Content lines are pre-indented; blank lines stay
-truly empty.
+message, ``note left`` when there is no message to attach to (rulebook
+§2.9.6, amended 2026-10-05 — the real 1.2026.8 parser rejects bare
+``note``). Content lines are pre-indented; blank lines stay truly
+empty.
 
 
 ### `_note_lines(content: 'str') -> 'list[str]'`

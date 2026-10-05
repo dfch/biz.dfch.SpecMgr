@@ -6,7 +6,7 @@ actor Bank
 actor "Shipping service" as p4
 participant Company
 
-note
+note left
   We know Buyer (customer record exists in system)
   We know Buyer's address
   Buyer has valid contact information on file
@@ -109,13 +109,13 @@ end note
 end
 Company -> Company: Company receives payment and records it.
 
-note
+note left
   Buyer has goods
   We have money for the goods
   Order is recorded in system
   Invoice is sent to Buyer
 end note
-note
+note left
   We have not sent the goods
   Buyer has not spent the money
   Order is not recorded

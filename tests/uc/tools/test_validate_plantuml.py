@@ -21,9 +21,11 @@ The tool is a direct, thin wrapper over ``plantuml.chain.validate_plantuml``
 (non-raising by construction): these tests pin the wrapper's own contract --
 the offline chain outcomes (structure-red short-circuit with no source ever
 called, the all-unset structure-only floor), the MCP-level serialization of
-the §3.6 dataclass result (what the SDK ships to the client), and one
-env-gated live green/red pair against the configured source (ACC-004's MCP
-surface; skipped with a reason on unconfigured checkouts, ACC-007).
+the §3.6 dataclass result (what the SDK ships to the client), and the
+env-gated live tests against the configured source: the green/red pair
+(ACC-004's MCP surface) plus the packaged-example green (the ACC-002
+enabler, Phase 125); all skipped with a reason on unconfigured checkouts
+(ACC-007).
 """
 
 from __future__ import annotations
@@ -47,12 +49,12 @@ _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "plantuml"
 _EXAMPLE = read_packaged_text("uc", "plantuml_example")
 _AASS = (_FIXTURES / "aass_error.puml").read_text(encoding="utf-8")
 _AASS_DIAGRAM = f"@startuml\n{_AASS.rstrip()}\n@enduml\n"
-#: The env-gated live test's green subject: a small, fully attributed sequence diagram that is
-#: valid by construction on the real parser (note LEFT/right, no bare `note` block). The packaged
-#: example is NOT the live subject: it (like the skeleton golden) carries the rulebook §2.9.6
-#: bare-`note` top/final notes, which the real 1.2026.8 parser rejects with a syntax error
-#: (verified 2026-10-05 on both the jetty URL and the local jar) -- a frozen-spec finding pending
-#: the rulebook's own amendment (see the feat-185 Progress entry of 2026-10-05).
+#: The env-gated live test's minimal green subject: a small, fully attributed sequence diagram
+#: that is valid by construction on the real parser (note left/right, no bare `note` block). The
+#: packaged example is a live subject too (its own test below): the Phase 125 amendment
+#: (2026-10-05, user-approved ruling) re-recorded its three unanchored notes as `note left`
+#: after the real 1.2026.8 parser rejected the rulebook's former bare-`note` form (see the
+#: rulebook §2.9 amendment note and the feat-185 Progress entry of 2026-10-05).
 _LIVE_DIAGRAM = (
     "@startuml Buy Goods\n"
     "\n"
@@ -181,7 +183,8 @@ class TestValidatePlantumlOffline(unittest.TestCase):
 
 
 class TestValidatePlantumlLive(unittest.TestCase):
-    """The env-gated live pair (ACC-004's MCP surface; clean skip on unconfigured checkouts, ACC-007)."""
+    """The env-gated live tests (ACC-004's MCP surface + the Phase 125 packaged-example ACC-002
+    enabler; clean skip on unconfigured checkouts, ACC-007)."""
 
     def test_valid_diagram_is_green_at_the_selected_source(self):
         """A parser-valid diagram must validate valid=true/rendered=true, checked_by = the selected
@@ -208,6 +211,22 @@ class TestValidatePlantumlLive(unittest.TestCase):
         self.assertFalse(result.valid)
         self.assertEqual(result.checked_by, info.kind)
         self.assertTrue(result.errors)
+
+    def test_packaged_example_is_green_at_the_selected_source(self):
+        """The ACC-002 enabler (Phase 125): the packaged, fully attributed example file must
+        validate green at the selected source -- its three unanchored notes were re-recorded
+        as `note left` per the user-approved 2026-10-05 ruling (the former bare-`note` form
+        was rejected by the real 1.2026.8 parser)."""
+        info = require_plantuml_source(self)
+
+        result = validate_plantuml(_EXAMPLE)
+
+        self.assertTrue(result.structure_ok)
+        self.assertTrue(result.valid)
+        self.assertTrue(result.rendered)
+        self.assertEqual(result.checked_by, info.kind)
+        self.assertEqual(result.source_state, "ok")
+        self.assertTrue(result.available)
 
 
 if __name__ == "__main__":

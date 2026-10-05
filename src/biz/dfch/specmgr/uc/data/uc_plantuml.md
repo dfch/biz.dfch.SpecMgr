@@ -246,19 +246,27 @@ blank line only where shown:
 
 The source ends with exactly one trailing newline.
 
-**Note block format (frozen):**
+**Note block format (frozen; the unanchored header amended 2026-10-05):**
 
-    note
+    note left
       {content line, 2-space indented}
     end note
 
-`note right` (message-attached) and `note` (top/final/unanchored) share this shape; the
+`note right` (message-attached) and `note left` (top/final/unanchored) share this shape; the
 only difference is the header line. A blank line inside the note content is emitted as
-a truly empty line. Top (preconditions) and final (end condition) notes are bare
-`note` blocks; all message-attached notes (continuation, sub-variation, resumption) are
+a truly empty line. Top (preconditions) and final (end condition) notes are `note left`
+blocks; all message-attached notes (continuation, sub-variation, resumption) are
 `note right` blocks — except when there is **no message to attach to** (the step's
 message is an UNATTRIBUTED marker, or the resumption item is the fragment's first
-item): then the note is a bare `note` block at that position.
+item): then the note is a `note left` block at that position.
+
+Amended 2026-10-05 (user-approved ruling): the unanchored notes were bare `note`
+blocks, which the real 1.2026.8 parser rejects — jetty: `GET {base}/svg/{enc}`
+answers 400 with the error at the `note` line; jar: `--check-syntax -pipe` exits
+200 with `Syntax Error? (Assumed diagram type: sequence)` — while `note left` is
+valid on both (verified 2026-10-05); the renderer therefore emits `note left` in
+all three unanchored cases, and the structure checker is unchanged (it never
+rejects what the parser accepts — a bare `note` stays accepted).
 
 **Message line format (frozen):** `{sender-alias} -> {receiver-alias}: {message text}`
 — exactly one space around `->`, one space after the colon; a self-message repeats the
@@ -386,12 +394,12 @@ interchange)` leads with no participant label →
 
 | Note | Source | Form | Content (one line per entry, 2-space indented) |
 |---|---|---|---|
-| preconditions (top) | `### Preconditions` bullets | bare `note`, before the trigger | each bullet's text |
-| continuation | a step / extension item / trigger's §2.9.2.3 continuation | `note right` attached to that message — bare `note` when the message is an UNATTRIBUTED marker | the dedented continuation lines, verbatim |
+| preconditions (top) | `### Preconditions` bullets | `note left`, before the trigger | each bullet's text |
+| continuation | a step / extension item / trigger's §2.9.2.3 continuation | `note right` attached to that message — `note left` when the message is an UNATTRIBUTED marker | the dedented continuation lines, verbatim |
 | sub-variation | `### Step {N}:` matching the step's ordinal | `note right` on that step's message (after its continuation note, when both exist) | the sub-variation's full heading text (e.g. `Step 1: Buyer may use`), then each variation bullet's text |
-| resumption | an extension item containing a return/continue phrase (§2.9.7) | `note right` on the fragment's preceding message — bare `note` directly after the `alt` line when the resumption item is the fragment's first item | the full item text (marker stripped, single-line-escaped) |
-| success end condition (final) | `### Success End Condition` bullets | bare `note`, after the steps | each bullet's text |
-| failed end condition (final) | `### Failed End Condition` bullets | bare `note`, after the success note (document order) | each bullet's text |
+| resumption | an extension item containing a return/continue phrase (§2.9.7) | `note right` on the fragment's preceding message — `note left` directly after the `alt` line when the resumption item is the fragment's first item | the full item text (marker stripped, single-line-escaped) |
+| success end condition (final) | `### Success End Condition` bullets | `note left`, after the steps | each bullet's text |
+| failed end condition (final) | `### Failed End Condition` bullets | `note left`, after the success note (document order) | each bullet's text |
 
 No source section → no note. Preconditions, sub-variation, and end-condition entries are
 emitted as their text (list markers stripped); no blank lines are inserted between

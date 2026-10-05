@@ -12,9 +12,9 @@ actor "Primary actor" as p1
 actor "Secondary actor" as p2
 participant "System" as p3
 
-' --- preconditions note (§2.9.6) — a bare top note, one line per precondition
-' bullet. Delete this block when the use case has no preconditions.
-note
+' --- preconditions note (§2.9.6) — a note-left top note, one line per
+' precondition bullet. Delete this block when the use case has no preconditions.
+note left
   {precondition, one line per bullet}
 end note
 
@@ -50,7 +50,7 @@ end note
 ' bare end. Sibling extensions at the same step run in document order. An
 ' item containing "Return to step N" / "Continue to step N" (standalone or
 ' embedded) is the fragment's resumption note — the full item text as a note,
-' NOT a message (a bare note when it is the fragment's first item).
+' NOT a message (a note-left note when it is the fragment's first item).
 alt {extension condition}
   p3 -> p1: {extension item text}
   note right
@@ -58,12 +58,12 @@ alt {extension condition}
   end note
 end
 
-' --- end-condition notes (§2.9.6) — bare final notes, success first, then
-' failed, one line per bullet. Delete a block when its section is absent.
-note
+' --- end-condition notes (§2.9.6) — note-left final notes, success first,
+' then failed, one line per bullet. Delete a block when its section is absent.
+note left
   {success end condition, one line per bullet}
 end note
-note
+note left
   {failed end condition, one line per bullet}
 end note
 
