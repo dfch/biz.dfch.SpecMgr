@@ -56,6 +56,8 @@ import threading
 import unittest
 from unittest import mock
 
+from biz.dfch.specmgr.feat.tools import _cache as feat_cache_module
+from biz.dfch.specmgr.feat.tools._paths import README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.general.tools import _embedding as embedding_module
 from biz.dfch.specmgr.general.tools._embedding_cache import _cache as embedding_cache_singleton
 from biz.dfch.specmgr.general.tools._similarity_corpus import candidate_similarity_text, iter_candidate_paths
@@ -68,7 +70,7 @@ from biz.dfch.specmgr.general.tools._similarity_search import (
 )
 from biz.dfch.specmgr.general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR, start_startup_warmup
 
-from ._similarity_helpers import block_fastembed_import, reset_default_provider, SimilarityTestCase
+from ._similarity_helpers import _FEAT_MINIMAL_BODY, block_fastembed_import, reset_default_provider, SimilarityTestCase
 
 #: The unified thread's own name (``general.tools._startup_warmup``'s own
 #: module-private constant) -- duplicated here rather than imported, since
@@ -188,6 +190,109 @@ class TestServerLifespan(SimilarityTestCase):
 
         asyncio.run(drive())
         self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
+        self.assertEqual(fake.embed_calls, 0)
+
+
+class _FeatCacheResetSimilarityTestCase(SimilarityTestCase):
+    """``SimilarityTestCase``, extended with both ``feat`` cache stages reset per test and
+    ``SPECMGR_FEAT_WARMUP_DISABLED`` saved/restored (feat-187-list-feat-timeout, Phase 120's own
+    Testability design note: "both feat cache stages reset per test... the new lifespan/startup
+    tests built on the SimilarityTestCase fixture with both feat cache stages reset and
+    SPECMGR_FEAT_WARMUP_DISABLED saved/restored"). Scoped to this one new test class rather than
+    folded into the shared fixture itself, since every pre-existing test in this module already
+    isolates correctly via the fixture's own fresh-temp-``SPECMGR_FEAT_DIR``-per-test convention."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        feat_cache_module.reset_feat_cache()
+        feat_cache_module.reset_feat_dirty_cache()
+        self._saved_feat_warmup_disabled = os.environ.pop(FEAT_WARMUP_DISABLED_ENV_VAR, None)
+
+    def tearDown(self) -> None:
+        feat_cache_module.reset_feat_cache()
+        feat_cache_module.reset_feat_dirty_cache()
+        if self._saved_feat_warmup_disabled is not None:
+            os.environ[FEAT_WARMUP_DISABLED_ENV_VAR] = self._saved_feat_warmup_disabled
+        super().tearDown()
+
+    def _feat_is_warm(self, path) -> bool:  # noqa: ANN001 -- Path, kept untyped to avoid an unused import here
+        """Whether ``path`` is already clean-cache-warm, via a parse-free ``peek_feat`` lookup."""
+        text = path.read_text(encoding="utf-8")
+        result = feat_cache_module.peek_feat(path, text) is not None
+        return result
+
+    def _seed_cold_feat_doc(self):  # noqa: ANN201 -- Path, kept untyped to avoid an unused import here
+        """Seed a feat document on disk, then reset both cache stages so it starts genuinely cold.
+
+        ``create_feat`` itself warms both cache stages as part of its own write-path warming
+        (Task 110.130) -- irrelevant to a real server startup, where every feat document predates
+        the process and starts cold. Resetting after seeding simulates that real cold-start
+        condition, so this class's own warm/cold assertions test the warmup's own gating, not
+        ``create_feat``'s unrelated write-path warming.
+        """
+        created = self.seed_feat(_FEAT_MINIMAL_BODY)
+        feat_cache_module.reset_feat_cache()
+        feat_cache_module.reset_feat_dirty_cache()
+        result = feat_base_dir() / created.id / README_FILENAME
+        return result
+
+
+class TestAcc009ExhaustiveFlagGating(_FeatCacheResetSimilarityTestCase):
+    """ACC-009: REQ-007's per-phase gating invariant, asserted directly and exhaustively across all
+    four ``SPECMGR_FEAT_WARMUP_DISABLED``/``SPECMGR_SIMILARITY_DISABLED`` flag combinations --
+    closing the gap the pre-existing ``TestStartSimilarityWarmup``/``TestServerLifespan`` classes
+    above only partially covered (feat caches were never asserted warm/empty there; the both-
+    flags-set no-thread case was the only one directly pinned)."""
+
+    def test_both_flags_absent_thread_started_all_three_phases_run(self) -> None:
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+
+        thread = start_startup_warmup()
+
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
+        self.assertTrue(self._feat_is_warm(path), "feat caches must be warmed when both flags are absent")
+        self.assertGreater(fake.embed_calls, 0, "the similarity cache must be populated when both flags are absent")
+
+    def test_feat_warmup_disabled_alone_skips_feat_phases_similarity_still_runs(self) -> None:
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+        os.environ[FEAT_WARMUP_DISABLED_ENV_VAR] = "1"
+
+        thread = start_startup_warmup()
+
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(self._feat_is_warm(path), "feat phases must be skipped when SPECMGR_FEAT_WARMUP_DISABLED")
+        self.assertGreater(fake.embed_calls, 0, "phase 3 must still run with only the feat flag set")
+
+    def test_similarity_disabled_alone_feat_phases_still_run_similarity_skipped(self) -> None:
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+        self.set_disabled("1")
+
+        thread = start_startup_warmup()
+
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
+        self.assertTrue(self._feat_is_warm(path), "feat phases must still run with only the similarity flag set")
+        self.assertEqual(fake.embed_calls, 0, "phase 3 must be skipped when SPECMGR_SIMILARITY_DISABLED")
+
+    def test_both_flags_set_no_thread_started_at_all(self) -> None:
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+        self.set_disabled("1")
+        os.environ[FEAT_WARMUP_DISABLED_ENV_VAR] = "1"
+
+        thread = start_startup_warmup()
+
+        self.assertIsNone(thread, "both flags set must be a true no-op -- no thread started at all")
+        self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
+        self.assertFalse(self._feat_is_warm(path))
         self.assertEqual(fake.embed_calls, 0)
 
 
