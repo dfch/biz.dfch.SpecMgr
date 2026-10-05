@@ -67,8 +67,8 @@ Schema payload sizes (bytes, `docs/<domain>_schema.json`; KB in
 parentheses): tsk 12,607 (12.3), prb 15,574 (15.2), gol 16,172 (15.8),
 rsk 18,722 (18.3), req 19,986 (19.5), vcr 21,318 (20.8), uc 23,096
 (22.6), qa 25,406 (24.8), feat 28,859 (28.2), sop 33,039 (32.3), dec
-35,296 (34.5), sysrs 53,024 (51.8). Total for all 12: 314,014 bytes
-(~306.7 KB) -- the "perceived cost" of a schema fetch scales with this,
+35,296 (34.5), sysrs 53,024 (51.8). Total for all 12: 303,099 bytes
+(~296.0 KB) -- the "perceived cost" of a schema fetch scales with this,
 and half of it (the docstring-derived descriptions) describes the
 *parser's* internal mechanics rather than authoring rules.
 
@@ -79,10 +79,12 @@ constraints (no `enum`, no heading `pattern`), appearing at most as
 prose in `description` strings:
 
 - **req** -- `Level.value` (RFC 2119 obligation strength): the node is
-  `{"$ref": "#/$defs/MarkdownParagraph", "description": "...(e.g. \"MUST\")"}`; the full set (`MUST`/`SHALL`/`SHOULD`/`MAY`/`MUST NOT`,
-  `req/models/v1` Level validator) appears nowhere -- 0 occurrences of
-  `shall`/`must not` in the whole file, and the single `e.g. "MUST"`
-  prose example. Status set (`draft`/`proposed`/`accepted`/
+  `{"$ref": "#/$defs/MarkdownParagraph", "description": "...(e.g. \"MUST\")"}`; the full set (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/`MAY`,
+  enforced by `req/models/v1`'s `_LEVEL_PATTERN`) appears nowhere -- 0
+  occurrences of `shall`/`must not`/`should not` in the whole file, and
+  the only level word that occurs is `MUST`, twice, both as the
+  `e.g. "MUST"` prose example in `Level`'s and `Level.value`'s
+  descriptions. Status set (`draft`/`proposed`/`accepted`/
   `rejected`/`implemented`/`deprecated`/`superseded`): prose-only in the
   `ReqFrontmatter` description; the `status` node itself is
   `{"default": "draft", "type": "string"}`.
@@ -125,14 +127,17 @@ prose in `description` strings:
   (`planning`/`progress`/`review`/`done`): prose-only, `status` node
   `{"default": "planning", "type": "string"}`.
 - **vcr** -- DTAIS method set (`Demonstration`/`Test`/`Analysis`/
-  `Inspection`/`Special`): **not even fully in prose** -- `Test` occurs
-  only inside one `e.g. AC-001 (Test): ...` heading example in
-  `AcceptanceCriterion`'s description; `Demonstration`, `Analysis`,
-  `Inspection`, `Special` have 0 occurrences in the whole file (the
-  `specmgr://dtais` general resource is the only place an agent can
-  learn the set). The `AC-NNN` 3-digit number + method heading regex:
-  prose-only. `## Coverage` set (`full`/`partial`/`none`): prose-only.
-  Status set (`draft`/`progress`/`complete`/`approved`): prose-only.
+  `Inspection`/`Special`): **absent even as prose** -- the method-word
+  set never occurs: `Demonstration`, `Analysis`, `Inspection`, `Special`
+  have 0 occurrences in the whole file, and `Test` appears only via the
+  unrelated `#### Test Steps` sub-section (`$defs.TestSteps`, the
+  `test_steps` prose) and the `AC-001 (Test)` example heading in
+  `AcceptanceCriterion`'s description (13 `Test` occurrences in total,
+  none as the DTAIS method word; the `specmgr://dtais` general resource
+  is the only place an agent can learn the set). The `AC-NNN` 3-digit
+  number + method heading regex: prose-only. `## Coverage` set
+  (`full`/`partial`/`none`): prose-only. Status set
+  (`draft`/`progress`/`complete`/`approved`): prose-only.
 - **sysrs** -- the per-sub-list type-tagged reference vocabulary
   (`GOL`/`PRB`/`QA`/`UC`/`REQ`/`RSK`/`DEC`/`ADR`/`VCR` bullets):
   prose-only; status set (`draft`/`review`/`approved`/`active`/
@@ -171,7 +176,8 @@ gap list is below. "Section" names the JSON location (dot path into
     parsed-JSON contract.
 04. **domain** req, **section** `$defs.Level.properties.value`,
     **problem** the RFC 2119 obligation-strength set is absent (0
-    `shall`/`must not` occurrences; one `e.g. "MUST"` prose example),
+    `shall`/`must not`/`should not` occurrences; the only level word
+    present is `MUST`, as the `e.g. "MUST"` prose example),
     **proposed fix** `enum` on `Level.value` (single-line, so an enum of
     the 5 RFC 2119 words is directly expressible) or a `pattern`.
 05. **domain** tsk, **section** `$defs.TaskItem`, **problem** the
@@ -203,11 +209,12 @@ gap list is below. "Section" names the JSON location (dot path into
     value and heading-value `pattern`s (both are single-line closed
     sets).
 10. **domain** vcr, **section** `$defs.AcceptanceCriterion` and
-    `$defs.Coverage`, **problem** the DTAIS method set is absent even as
-    prose (only `Test` occurs, inside one example heading;
-    `Demonstration`/`Analysis`/`Inspection`/`Special` never occur), the
-    `AC-NNN (Method):` heading regex and the `full`/`partial`/`none`
-    coverage set are prose-only, **proposed fix** `enum` on the method
+    `$defs.Coverage`, **problem** the DTAIS method-word set is absent
+    (`Demonstration`/`Analysis`/`Inspection`/`Special` never occur;
+    `Test` appears only via the `Test Steps` sub-section and one
+    example heading), the `AC-NNN (Method):` heading regex and the
+    `full`/`partial`/`none` coverage set are prose-only, **proposed fix**
+    `enum` on the method
     word and the coverage value (both single-line closed sets), a
     heading `pattern` for `AC-NNN`, and reference the
     `specmgr://dtais` resource from the schema description.
@@ -274,13 +281,16 @@ gap list is below. "Section" names the JSON location (dot path into
 
 Every `specmgr://<domain>/schema` resource in
 `src/biz/dfch/specmgr/<domain>/resources/<domain>_schema.py` (decorator
-lines 49-59, varying only in the domain word) carries:
+spans lines 49-61 across the 12 files -- 50-60 for tsk -- shifted by
+each file's import block; uniform apart from the domain word) carries:
 
 - `name="<domain>_schema"`, `title="<Domain> (<XXX>) JSON Schema"` (e.g.
   `title="Task List (TSK) JSON Schema"`, `title="Problem Statement (PRB) JSON Schema"`).
 - `description="The generated <XXX> JSON Schema (2020-12 dialect), generated by `specmgr schema`and kept current by a pre-commit hook/CI step. Includes a`$comment` schema-layout version marker for detecting a shape change without diffing the whole document."` (the
-  full 12 are recorded in the evidence manifest; all are the same three
-  sentences with the domain word substituted).
+  full 12 are recorded verbatim in `evidence/manifest.md`, section
+  "Agent-facing metadata (verbatim, published 0.34.0 surface)", sourced
+  from the committed probe output `evidence/mcp-surface-probe.txt`; all
+  are the same three sentences with the domain word substituted).
 
 Classification: **provenance-oriented** -- all three sentences describe
 how the file is produced and kept current (generation command,
@@ -307,7 +317,10 @@ The other 20 (req/uc/qa/gol/rsk/dec/sop/feat/vcr/sysrs) follow the same
 two-sentence pattern ("checking for an existing similar X ... driving
 create_X/validate to author a new X document." / "revising an existing X
 by id: reading current state, applying the requested change with the
-right tool, and validating."), recorded in the evidence manifest.
+right tool, and validating."), recorded verbatim in
+`evidence/manifest.md`, section "Agent-facing metadata (verbatim,
+published 0.34.0 surface)" (sourced from the committed probe output
+`evidence/mcp-surface-probe.txt`).
 Classification: **task-flow-oriented, schema-silent** -- none of the 24
 mentions `specmgr://<domain>/schema`, `/template`, or `/example`, so the
 prompt *listing* gives no hint that a schema resource exists; the schema
@@ -315,7 +328,7 @@ pointer appears only *inside* the prompt body (create step 3/4/10,
 update step 4/5/6/9 -- Design Notes (b)), which an agent never reads
 without invoking the prompt.
 
-### Tool descriptions (live published surface, verbatim in the manifest)
+### Tool descriptions (live published surface; verbatim in `evidence/manifest.md`'s "Agent-facing metadata" section)
 
 Captured from the published 0.34.0 server's `tools/list`: `create_tsk`,
 `create_prb`, `get_tsk`, `get_prb`, `list_tsk`, `list_prb`, `update`,
@@ -351,5 +364,8 @@ tool to fetch the full document afterward" (create tools) and the
   directly to the audited schemas; the tsk observations apply to the
   older published tsk schema, which differs from the audited one only in
   the `UpdateEntryContent` leaf (gap entry 16).
-- **Registration counts (live published surface):** 84 tools, 25
-  prompts, 44 resources (probe output in the evidence manifest).
+- **Registration counts (live published surface):** 94 tools, 32
+  prompts, 44 resources (probe output committed as
+  `evidence/mcp-surface-probe.txt`; verbatim record in
+  `evidence/manifest.md`, section "Agent-facing metadata (verbatim,
+  published 0.34.0 surface)").

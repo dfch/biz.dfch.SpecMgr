@@ -67,7 +67,7 @@ The levers, each checked against the baseline:
    the agent look. **Assessment: keep as support, low value alone.**
 3. **1-hop schema access** (a new `get_<d>_schema` tool per domain;
    instruction gap 4). Would cut the observed 2-hop resource route to 1 hop
-   and put the schema inside the 84-tool list the agent scans. **Assessment:
+   and put the schema inside the 94-tool list the agent scans. **Assessment:
    reject.** (i) The observed success path needs no schema at all (0/4
    no-prompt fetches, all succeeded); 1-hop access buys a faster cross-check
    for a fetch the plan is trying to make unnecessary. (ii) The schema's
@@ -115,7 +115,10 @@ The levers, each checked against the baseline:
    closed sets that show only a filled-in instance (req Level's single
    `MUST`, rsk's single `reduce`/`Probability 3`, qa's filled-in prefix)
    get the same one-line-comment treatment; the vcr template already
-   spells DTAIS/AC-NNN/coverage in prose (verified no-op). **Assessment:
+   spells DTAIS and the AC-NNN heading shape in prose (verified
+   present, no-op for those), but the coverage set
+   `full`/`partial`/`none` appears only as the filled-in `partial`
+   instance -- fold the set in as a comment (see C12). **Assessment:
    primary lever** -- it puts the guidance in the artifact the agents
    demonstrably fetch, in 1 hop, at zero added round-trips.
 2. **Context-sensitive update-prompt steps** (instruction gap 2). Replace
@@ -171,7 +174,7 @@ Priority order for the follow-up feature (one phase each):
   cost drivers; data files only (templates, create/update instructions).
 - **P1 (Phase 110):** C6-C12 -- the non-prescriptive D1 pointers
   (tool descriptions, resource metadata, prompt metadata) plus the
-  remaining closed-form template folds and the vcr no-op verification.
+  remaining closed-form template folds and the vcr coverage-set fold.
 - **P2 (Phase 120):** C13-C15 -- the metadata-only schema enrichment,
   regeneration + invariance tests, and the adr exclusion note.
 - **Deferred:** gap 14 (authoring-view split), gap 03 (per-leaf content
@@ -188,16 +191,16 @@ Task List. "Gap" numbers refer to `schema-audit.md`'s 16 gap quadruples;
 | --- | --- | --- | --- | --- |
 | C1 | prb template (`prb/data/prb_template.md`) | carry the exact bracketed frame `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` in the single leading HTML comment (model permits one comment between H1 and lead sentence); keep the filled-in lead sentence as the concrete instance | 08 / IG3 | P0 |
 | C2 | prb example (`prb/data/prb_example.md`) | same frame comment; the example's lead sentence already conforms (verified) | 08 / IG3 | P0 |
-| C3 | tsk template (`tsk/data/tsk_template.md`) | reword the leading comment: drop "Number the tasks so that they are easier to track" (observed to induce "Task 1:" rewrites of the requested task texts); instead direct keeping each task's text as given, flat checklist, one item per line | (hypothesis a finding) / IG3 | P0 |
-| C4 | all 12 create instructions (`<d>/data/<d>_create_instructions.md`) | repoint the "Use the template/example/schema as references" step (step 3 req/uc/tsk/qa/gol/vcr/feat, step 4 dec/sop/sysrs, step 10 prb) to the `get_<d>_template`/`get_<d>_example` tools (1 hop); schema fetch becomes conditional (structural uncertainty or validation-error resolution only) | 16-residual / IG4 | P0 |
+| C3 | tsk template (`tsk/data/tsk_template.md`) | reword the leading comment: drop "Number the tasks so that they are easier to track" (observed to induce "Task 1:" rewrites of the requested task texts); instead direct keeping each task's text as given, flat checklist, one item per line -- and reword the example items (`- [ ] Task 1: ...` / `- [x] Task 2: ...` / `- [ ] Task 3: ...`) to drop the "Task N:" prefix, keeping a plain flat checklist in the examples too | (hypothesis a finding) / IG3 | P0 |
+| C4 | all 12 create instructions (`<d>/data/<d>_create_instructions.md`) | repoint the template/example/schema reference step ("Use the template/example/schema as references"; rsk's variant heading: "...and the domain knowledge as references") at (step 3 req/uc/tsk/qa/gol/rsk/vcr/feat, step 4 dec/sop/sysrs, step 10 prb) to the `get_<d>_template`/`get_<d>_example` tools (1 hop); schema fetch becomes conditional (structural uncertainty or validation-error resolution only) | 16-residual / IG4 | P0 |
 | C5 | all 12 update instructions (`<d>/data/<d>_update_instructions.md`) | make the "Check the schema" step (step 4 req/uc/tsk/qa/rsk, step 5 vcr/feat/gol, step 6 dec/sop/sysrs, step 9 prb) context-sensitive: fetch only for whole-body/structural changes; skip for local splices where the raw body is in context | 03 / IG2 | P0 |
 | C6 | 12 `create_<d>` + generic `update` + `validate` tool descriptions (docstrings) | one non-prescriptive clause each naming the domain's `specmgr://<domain>/schema` (and `/template`, `/example`) as the structure reference | 13 / IG1 | P1 |
 | C7 | 12 schema resource descriptions (`<d>/resources/<d>_schema.py`) | reword provenance-oriented -> usage-oriented: when to fetch (constraint discovery), what it is (parsed-JSON view, not markdown -- point at the template for the markdown view), keep the provenance sentence and the `$comment` marker mention | 11, 15, 16 / IG1 | P1 |
 | C8 | 24 create/update prompt descriptions (`@mcp.prompt()` metadata) | one clause naming the schema/template/example resources as the structure reference | 12 | P1 |
-| C9 | req template | comment on `## Level` naming the full RFC 2119 set (`MUST`/`SHALL`/`SHOULD`/`MAY`/`MUST NOT`) | 04 | P1 |
+| C9 | req template | comment on `## Level` naming the full RFC 2119 set (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/`MAY`) | 04 | P1 |
 | C10 | rsk template | comments naming the TARA 4-word set (pointing at `specmgr://rsk/tara`) and the Probability/Impact 1-5 range (pointing at `specmgr://rsk/risk-matrix`) | 09 | P1 |
 | C11 | qa template | comment on the question prefix spelling the rule (single category digit, 4-digit zero-padded per-category sequence) | 07 | P1 |
-| C12 | vcr template | verification (expected no-op): the template already carries DTAIS, the AC-NNN shape, and the coverage values in prose; fold in anything missing the same way as C9-C11 | 10 | P1 |
+| C12 | vcr template | small fold: DTAIS and the AC-NNN heading shape verified present in prose (no-op for those); the coverage set `full`/`partial`/`none` appears only as the filled-in `partial` instance -- fold the set in as a comment the same way as C9-C11 | 10 | P1 |
 | C13 | 12 domains' models (`<d>/models/vN/`) | emit the closed sets as `json_schema_extra` metadata (12 status enums; req Level enum; tsk checkbox pattern + update-entry heading pattern; qa question-prefix pattern; prb lead-sentence pattern + 5W2H heading list; rsk TARA enum + Probability/Impact heading patterns; vcr DTAIS + coverage enums + AC-NNN heading pattern) -- metadata only, never `Literal`/`Field(pattern=)`; each set first verified code-enforced before its metadata is emitted | 02-10 (schema half) | P2 |
 | C14 | generated schemas | regenerate the 12 (`uv run --frozen specmgr schema`), refresh the packaged `data/<d>_schema.json` copies per the existing drift check, add parse-behavior invariance tests (every closed-set fixture accepted/rejected identically before/after) | 02-10 (regeneration) | P2 |
 | C15 | `create_adr` tool description | one clause documenting the **deliberate** absence of `specmgr://adr/schema` (the tool's own typed input parameters are the authoritative ADR structure reference); no `adr` entry added to `commands/schema.py`'s `_GENERATORS` -- ADR is the phasing-out domain (the doc cache excludes it for the same reason) | 01 | P2 |
@@ -236,8 +239,8 @@ if it is met in **all** n runs of the cell.
   (first `create_prb` rejected for the unseen lead-sentence frame; +2 calls
   over the minimum path). Target: tsk at most 5 calls **and** the checklist
   items carry the requested task texts verbatim; prb first-try
-  `create_prb` success, at most 5 calls, 0 validation-failure retries.
-  Measured
+  `create_prb` success, at most 5 calls, 0 validation-failure retries,
+  0 schema fetches. Measured
   by re-running `tsk-create-noprompt` and `prb-create-noprompt` (n>=3 each)
   and parsing the event streams with `parse_events.py`.
 - **T2 -- create with prompt (both domains).** Baseline: tsk 9 calls, prb

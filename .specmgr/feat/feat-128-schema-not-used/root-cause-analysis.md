@@ -52,11 +52,16 @@ agents reach for when they reach for anything.
   prose descriptions (never fetched) and in the `create_prb` prompt body
   (step 9; never invoked in the noprompt condition). Consequence,
   observed: `prb-create-noprompt`'s first `create_prb` attempt failed
-  with "problem_statement must match the template '[Current state] is
-  causing ...', got 'Onboarding a new build server currently takes...'"
-  -- two extra round-trips (validate, fixed validate) before success.
-  The prb prompt run composed the correct lead sentence on the first
-  try (the schema fetch + prompt step 9 both carry the frame).
+  opaquely (`Error executing tool create_prb`); the agent then called
+  `validate` to find the issue, and the frame message below is verbatim
+  that subsequent `validate` call's output (truncated at feat-110's
+  300-char cap) -- "problem_statement must match the template '\[Current
+  state\] is causing ...', got 'Onboarding a new build server currently
+  takes...'" -- two extra calls over the minimum path (the failed first
+  `create_prb` and the `validate` that revealed the frame) before the
+  successful retry. The prb prompt run composed the correct lead
+  sentence on the first try (the schema fetch + prompt step 9 both
+  carry the frame).
 - So (a) is right that template/example are more *actionable* in
   practice (agents use them) but wrong to imply they are a sufficient
   substitute: the guidance is **split across three artifacts**
@@ -102,7 +107,7 @@ agents reach for when they reach for anything.
 - The noprompt runs' tool sequences contain zero resource-layer calls
   (0 `list_mcp_resources`, 0 `read_mcp_resource` across all 4) -- the
   schema was not merely *not fetched*, it was *not known to exist as a
-  fetchable thing*. The agents' world was the 84-tool `tools/list`;
+  fetchable thing*. The agents' world was the 94-tool `tools/list`;
   inside it, the only authoring-guidance affordances are the
   `get_<d>_template`/`get_<d>_example` tools (which is exactly what they
   used).
@@ -151,7 +156,7 @@ Ranked by the evidence:
 
 1. **Discoverability (primary, noprompt condition).** The schema is a
    resource, not a tool; nothing in the agent's always-in-context
-   surface (84 tool descriptions) names it; the prompts that do name it
+   surface (94 tool descriptions) names it; the prompts that do name it
    are pull-based and, on this host, not even invocable as tools. An
    agent that never invokes the prompt cannot know the schema exists
    (0/4 noprompt runs made any resource-layer call).

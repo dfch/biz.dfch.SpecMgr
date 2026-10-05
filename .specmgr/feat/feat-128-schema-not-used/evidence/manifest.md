@@ -31,8 +31,9 @@ each run (one file per run, plus retry attempts).
   `../schema-audit.md`, section "Published-vs-worktree surface diff".
 
 - Live published surface (probe via Python MCP client against the
-  uvx server): 84 tools, 25 prompts, 44 resources (resource list in
-  the probe output kept with the analysis notes; `specmgr://<d>/schema`
+  uvx server): 94 tools, 32 prompts, 44 resources (full name/title/
+  description record committed as `mcp-surface-probe.txt`, reproducible
+  via `harness/mcp_probe.py list <bare-dir>`; `specmgr://<d>/schema`
   present for exactly the 12 whole-body domains, none for adr).
 
 - Prompt-pre-invoked mechanism: a probe run (`run-promptprobe.json`)
@@ -94,13 +95,24 @@ Both seeds were verified parseable by the published server
   the controlled condition). Both contaminated outputs were discarded,
   all 8 run dirs were wiped, seeds re-placed with the same UUIDs, and
   the formal sequence re-run from a clean state (06:23-07:04). The
-  discarded event streams were deleted; the runner log lines for them
-  (06:13:47/06:15:16/06:25:15/06:30:12) remain in `runner.log` and are
-  **not** part of the baseline.
+  discarded event streams were deleted; `runner.log` is git-ignored
+  (`*.log`) and therefore not in the PR, so its lines for these cells
+  (the four tsk-create executions, 06:13:47/06:15:16/06:25:15/
+  06:30:12) are quoted verbatim below -- the first two are the
+  contaminated first attempts (**not** part of the baseline), the
+  latter two the formal clean re-runs:
+
+  ```text
+  2026-10-05T06:13:47+02:00 tsk-create-noprompt exit=0 duration=79s
+  2026-10-05T06:15:16+02:00 tsk-create-prompt exit=0 duration=89s
+  2026-10-05T06:25:15+02:00 tsk-create-noprompt exit=0 duration=114s
+  2026-10-05T06:30:12+02:00 tsk-create-prompt exit=0 duration=297s
+  ```
+
 - `prb-create-prompt` attempt 1 timed out at the 600 s per-run limit
-  (`runner.log` 06:49:09, exit=124) while assembling the body (8 tool
-  calls done, no document written, event stream complete up to the
-  kill). Per the run protocol it was retried once with the identical
+  (runner.log line, quoted verbatim from the git-ignored file since it
+  is not in the PR: `2026-10-05T06:49:09+02:00 prb-create-prompt exit=124 duration=600s`) while assembling the body (8 tool calls
+  done, no document written, event stream complete up to the kill). Per the run protocol it was retried once with the identical
   instruction in the identical (clean) dir; the retry succeeded (394
   s) and is the formal result. Both streams are preserved:
   `run-prb-create-prompt-attempt1.json` / `run-prb-create-prompt.json`.
@@ -395,7 +407,7 @@ Both seeds were verified parseable by the published server
 
 - condition: none
 
-- metrics: 7 calls, all specmgr: get_prb_template, get_prb_example, create_prb (ATTEMPT 1 -- FAILED: 'problem_statement must match the template [Current state] is causing [specific issue], for [stakeholder] because [underlying cause]., got Onboarding a new build server currently takes...' -- the agent wrote a natural sentence, not the fixed frame), validate (dry-run of attempt 1 -- same error), validate (dry-run of corrected draft -- passed), create_prb (ATTEMPT 2 -- succeeded), get_prb (verify). 0 schema fetches; 1 validation-failure -> retry cycle (+2 calls over the minimum path); 1 failed call.
+- metrics: 7 calls, all specmgr: get_prb_template, get_prb_example, create_prb (ATTEMPT 1 -- FAILED opaquely: 'Error executing tool create_prb' -- the agent wrote a natural sentence, not the fixed frame), validate (dry-run of attempt 1 -- the agent's own text says it validated to find the issue; the `validate` error is where it learned the frame, verbatim and truncated at feat-110's 300-char cap: 'prb validate (body): Value error, problem_statement must match the template [Current state] is causing [specific issue], for [stakeholder] because [underlying cause]., got Onboarding a new build server currently takes 3 to 4 working days of manual wo... (truncated)'), validate (dry-run of corrected draft -- passed), create_prb (ATTEMPT 2 -- succeeded), get_prb (verify). 0 schema fetches; 1 validation-failure -> retry cycle (+2 calls over the minimum path); 1 failed call.
 
 - wall: 254.1 s (runner 266 s)
 
@@ -821,15 +833,127 @@ Both seeds were verified parseable by the published server
   In the problem statement document titled 'Build server onboarding takes too long', change the cost stated in the Impact section from 1500 EUR per quarter to 2500 EUR per quarter.
   ```
 
+## Agent-facing metadata (verbatim, published 0.34.0 surface)
+
+The committed probe output `mcp-surface-probe.txt` -- captured
+2026-10-05 by running `harness/mcp_probe.py list <bare-dir>` against
+`uvx --from "biz-dfch-specmgr[mcp, similarity]" specmgr mcp`, i.e. the
+exact published 0.34.0 surface the Phase 100 agents saw (94 tools, 32
+prompts, 44 resources; reproducible from this harness) -- is the source
+of the verbatim strings below, which back the claims in
+`../schema-audit.md`'s "Agent-facing metadata audit (verbatim)".
+
+### The 12 `specmgr://<d>/schema` resource name/title/description triples
+
+- `specmgr://req/schema` -- `name="req_schema"`, `title="Requirement (REQ) JSON Schema"`
+  description (verbatim): "The generated REQ JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://uc/schema` -- `name="uc_schema"`, `title="Use Case (UC) JSON Schema"`
+  description (verbatim): "The generated UC JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://tsk/schema` -- `name="tsk_schema"`, `title="Task List (TSK) JSON Schema"`
+  description (verbatim): "The generated TSK JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://qa/schema` -- `name="qa_schema"`, `title="Question and Answer (QA) JSON Schema"`
+  description (verbatim): "The generated QA JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://prb/schema` -- `name="prb_schema"`, `title="Problem Statement (PRB) JSON Schema"`
+  description (verbatim): "The generated PRB JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://gol/schema` -- `name="gol_schema"`, `title="Goal (GOL) JSON Schema"`
+  description (verbatim): "The generated GOL JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://rsk/schema` -- `name="rsk_schema"`, `title="Risk (RSK) JSON Schema"`
+  description (verbatim): "The generated RSK JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://dec/schema` -- `name="dec_schema"`, `title="Decision (DEC) JSON Schema"`
+  description (verbatim): "The generated DEC JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://sop/schema` -- `name="sop_schema"`, `title="Standard Operating Procedure (SOP) JSON Schema"`
+  description (verbatim): "The generated SOP JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://feat/schema` -- `name="feat_schema"`, `title="Feature (FEAT) JSON Schema"`
+  description (verbatim): "The generated FEAT JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://vcr/schema` -- `name="vcr_schema"`, `title="Verification Case Record (VCR) JSON Schema"`
+  description (verbatim): "The generated VCR JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+- `specmgr://sysrs/schema` -- `name="sysrs_schema"`, `title="System Requirements Specification (SYSRS) JSON Schema"`
+  description (verbatim): "The generated SYSRS JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document."
+
+### The 24 whole-body create/update prompt name/title/description triples
+
+- `create_req(topic)` -- `title="Create a requirement"`
+  description (verbatim): "Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate to author a new REQ document."
+- `update_req(id,instructions)` -- `title="Update a requirement"`
+  description (verbatim): "Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_uc(topic)` -- `title="Create a use case"`
+  description (verbatim): "Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document."
+- `update_uc(id,instructions)` -- `title="Update a use case"`
+  description (verbatim): "Guides the LLM through revising an existing use case by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_task(topic)` -- `title="Create a task list"`
+  description (verbatim): "Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate to author a new TSK document."
+- `update_task(id,instructions)` -- `title="Update a task list"`
+  description (verbatim): "Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_qa(topic)` -- `title="Create a QA document"`
+  description (verbatim): "Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate to author a new QA document."
+- `update_qa(id,instructions)` -- `title="Update a QA document"`
+  description (verbatim): "Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_prb(topic,qa_id)` -- `title="Create a problem statement"`
+  description (verbatim): "Guides the LLM through checking for an existing similar problem statement, optionally carrying over already-answered 5W2H questions from a linked QA document (qa_id), interviewing the user for whichever 5W2H current-state questions remain, synthesizing the Summary and Gap, composing the mandatory Problem Statement lead sentence, and driving create_prb/validate to author a new PRB document."
+- `update_prb(id,instructions)` -- `title="Update a problem statement"`
+  description (verbatim): "Guides the LLM through revising an existing problem statement by id: reading current state (recovering an old-shape document missing the mandatory lead sentence via a raw re-read if needed), showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating."
+- `create_gol(topic)` -- `title="Create a goal"`
+  description (verbatim): "Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate to author a new GOL document."
+- `update_gol(id)` -- `title="Update a goal"`
+  description (verbatim): "Guides the LLM through revising an existing goal by id: reading current state, showing which sections are present vs. empty, eliciting revisions, applying the change with the right tool, and validating."
+- `create_risk(topic)` -- `title="Create a risk"`
+  description (verbatim): "Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate to author a new RSK document."
+- `update_risk(id,instructions)` -- `title="Update a risk"`
+  description (verbatim): "Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_dec(topic)` -- `title="Create a decision"`
+  description (verbatim): "Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate to author a new DEC document."
+- `update_dec(id,instructions)` -- `title="Update a decision"`
+  description (verbatim): "Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_sop(topic)` -- `title="Create a standard operating procedure"`
+  description (verbatim): "Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate to author a new SOP document."
+- `update_sop(id,instructions)` -- `title="Update a standard operating procedure"`
+  description (verbatim): "Guides the LLM through revising an existing standard operating procedure by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_feat(topic)` -- `title="Create a feature"`
+  description (verbatim): "Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate to author a new FEAT document."
+- `update_feat(id,instructions)` -- `title="Update a feature"`
+  description (verbatim): "Guides the LLM through revising an existing feature by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_vcr(topic)` -- `title="Create a verification case record"`
+  description (verbatim): "Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document."
+- `update_vcr(id,instructions)` -- `title="Update a verification case record"`
+  description (verbatim): "Guides the LLM through revising an existing verification case record by id: reading current state, applying the requested change with the right tool, and validating."
+- `create_sysrs(topic)` -- `title="Create a system requirements specification"`
+  description (verbatim): "Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate to author a new SYSRS document."
+- `update_sysrs(id,instructions)` -- `title="Update a system requirements specification"`
+  description (verbatim): "Guides the LLM through revising an existing system requirements specification by id: reading current state, applying the requested change with the right tool, and validating."
+
+### The 8 tool descriptions named by the audit
+
+- `create_tsk` (verbatim description):
+  "Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_tsk` tool to fetch the full document afterward."
+- `create_prb` (verbatim description):
+  "Create a new Problem Statement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the problem statement base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_prb` tool to fetch the full document afterward."
+- `get_tsk` (verbatim description):
+  "Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access."
+- `get_prb` (verbatim description):
+  "Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access."
+- `list_tsk` (verbatim description):
+  "Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored."
+- `list_prb` (verbatim description):
+  "Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored."
+- `update` (verbatim description):
+  "Whole-body or line-range replace of an existing document's content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward."
+- `validate` (verbatim description):
+  "Disk-free, id-free dry run validating document content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). Never raises for a content-validation failure: always returns `{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is `True`, and each `message` is truncated to at most `_MAX_VALIDATE_ERROR_CHARS` (300) characters (plus an `"... (truncated)"` suffix when truncation occurred) rather than returned verbatim without limit. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage error and still raises `ValueError` before any validation runs. This is the sole validate entry point for these domains -- the former per-domain `validate_<d>` tools are removed; `validate_adr` remains a separate, unchanged, id-based tool."
+
+One published-vs-audit diff, recorded per the audit's instruction not to rewrite its worktree citations: the published `create_qa` and `update_gol` descriptions deviate slightly from the audit's summarized "uniform two-sentence pattern" for the other 20 prompts (create_qa names the ISO/IEC 25010:2023 questions; update_gol adds "showing which sections are present vs. empty"); the four tsk/prb prompt strings and the templated resource description the audit quoted verbatim match the published surface exactly. None of the 8 tool descriptions above mentions the schema/template/example resources, confirming the audit's gap 13 on the live surface.
+
 ## Success verification
 
 After all runs, each run dir's documents were read back from disk
 (content checks above) and every run dir was listed through the
-PUBLISHED server itself (`mcp_probe.py call_tool list_<d> {}`): all 7
-dirs that should hold a document report `total: 1, error_count: 0` with
-the real title (no `<failed to parse>` rows) -- i.e. every success
-verdict is backed by a parse through the same server surface the agents
-used. (probe output kept in the analysis notes; not part of a run.)
+PUBLISHED server itself (`mcp_probe.py call_tool list_<d> {}`): all 8
+formal run dirs each hold exactly one document and report `total: 1, error_count: 0` with the real title (no `<failed to parse>` rows) --
+i.e. every success verdict is backed by a parse through the same server
+surface the agents used. (The prb-create-prompt attempt-1 + retry pair
+share that one dir per the retry protocol; the committed `final-docs/`
+tree has exactly 8 subdirectories, one per run dir. The published-
+surface probe record is committed as `mcp-surface-probe.txt`; the
+per-run `list_<d>` outputs were not preserved; not part of a run.)
 
 ## Repo-pollution check
 

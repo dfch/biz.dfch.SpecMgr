@@ -29,18 +29,27 @@ async def run(action: str, cwd: Path, argv: list[str]) -> None:
             await session.initialize()
             if action == "list":
                 tools = await session.list_tools()
+                print(f"TOOL COUNT: {len(tools.tools)}")
                 print("TOOLS:")
                 for t in tools.tools:
                     print(f"  {t.name}")
+                    print(f"    description: {t.description}")
                 prompts = await session.list_prompts()
+                print(f"PROMPT COUNT: {len(prompts.prompts)}")
                 print("PROMPTS:")
                 for p in prompts.prompts:
                     args = ",".join(a.name for a in (p.arguments or []))
-                    print(f"  {p.name}({args}) -- {p.title}")
+                    print(f"  {p.name}({args})")
+                    print(f"    title: {p.title}")
+                    print(f"    description: {p.description}")
                 resources = await session.list_resources()
+                print(f"RESOURCE COUNT: {len(resources.resources)}")
                 print("RESOURCES:")
                 for r in resources.resources:
                     print(f"  {r.uri}")
+                    print(f"    name: {r.name}")
+                    print(f"    title: {r.title}")
+                    print(f"    description: {r.description}")
             elif action == "get_prompt":
                 name = argv[0]
                 arguments = json.loads(argv[1]) if len(argv) > 1 else {}

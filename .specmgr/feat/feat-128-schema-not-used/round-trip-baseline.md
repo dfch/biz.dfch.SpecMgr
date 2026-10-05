@@ -82,9 +82,11 @@ Headline facts:
   resource layer at all (0 `list_mcp_resources` calls across all four
   noprompt runs).
 - **Wall clock** tracks context size, not call count: the prb prompt run
-  (13 KB prompt + 15 KB schema + 11 KB template/example in context)
-  needed 394 s where the noprompt prb create needed 254 s with 2 more
-  calls; one prompt prb create attempt exceeded the 600 s timeout.
+  (13 KB prompt + 15 KB schema + the template fetch in context -- the
+  formal run fetched only `specmgr://prb/template` (2,086 B); template
+  and example together are 5,759 B, ~5.6 KB) needed 394 s where the
+  noprompt prb create needed 254 s with 2 more calls; one prompt prb
+  create attempt exceeded the 600 s timeout.
 
 ## Per-domain schema payload size (KB) -- the "perceived cost" input
 
@@ -101,7 +103,7 @@ to the published copy the agents fetched, tsk differs only in the
 | req | 19,986 | 19.52 | dec | 35,296 | 34.47 |
 | vcr | 21,318 | 20.82 | sysrs | 53,024 | 51.78 |
 
-Total: 314,014 bytes (~306.66 KB) across the 12 domains. Schema-fetch
+Total: 303,099 bytes (~296.0 KB) across the 12 domains. Schema-fetch
 counts per session (formal runs): tsk-create-noprompt 0,
 tsk-create-prompt 1, tsk-update-noprompt 0, tsk-update-prompt 0,
 prb-create-noprompt 0, prb-create-prompt 1 (both attempts),

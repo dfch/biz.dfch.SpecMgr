@@ -4,7 +4,7 @@ created: '2026-10-05T09:40:30.333+02:00'
 id: feat-189-reduce-agent-round-trips
 status: planning
 type: feat
-updated: '2026-10-05T09:40:30.333+02:00'
+updated: '2026-10-05T13:46:58.000+02:00'
 version: 1.0.0
 ---
 
@@ -46,7 +46,7 @@ measurable targets T1-T3 are in the Acceptance Criteria.
 - [ ] ACC-002: All 12 create instruction files reference the `get_<d>_template`/`get_<d>_example` tools and carry a conditional schema step, and all 12 update instruction files carry the context-sensitive schema step (REQ-002).
 - [ ] ACC-003: The live worktree server surface carries the new clauses -- probed via `tools/list`, `list_resources`, and the prompt metadata (harness `mcp_probe.py`/`mcp_descs.py`): the 12 `create_<d>` + `update` + `validate` tool descriptions, the 12 schema resource descriptions, and the 24 create/update prompt descriptions -- and the `create_adr` description documents the adr schema exclusion (REQ-003, REQ-005).
 - [ ] ACC-004: `uv run --frozen specmgr schema` exits 0 with the 12 updated `docs/<domain>_schema.json` carrying the inventory's enum/pattern metadata and byte-identical packaged copies, and the parse-behavior invariance tests pass (every closed set accepted/rejected exactly as before the metadata change) (REQ-004).
-- [ ] ACC-005: The Phase 130 re-run meets the measurable targets in all n runs of every cell, recorded in `round-trip-rerun.md` in this feature folder -- T1 (create without prompt: prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries; baseline 7 calls including 1 validation-failure -> retry cycle; tsk at most 5 calls with the requested task texts verbatim; baseline 5 calls with a "Task 1:" prefix deviation) and T2 (create with prompt, both domains: at most 7 calls per successful create, 0 schema fetches, 0 600 s timeouts; baseline 9 calls each with 1 schema fetch on the 2-hop resource route each, and one prb prompt attempt timed out at 600 s) and T3 (update, all four cells: at or below the baseline call count per cell -- tsk 5 no-prompt / 6 prompt, prb 5 / 5 -- with 0 schema fetches for the local edits and 0 closed-form validation failures) (REQ-006).
+- [ ] ACC-005: The Phase 130 re-run meets the measurable targets in all n runs of every cell, recorded in `round-trip-rerun.md` in this feature folder -- T1 (create without prompt: prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries, 0 schema fetches; baseline 7 calls including 1 validation-failure -> retry cycle; tsk at most 5 calls with the requested task texts verbatim; baseline 5 calls with a "Task 1:" prefix deviation) and T2 (create with prompt, both domains: at most 7 calls per successful create, 0 schema fetches, 0 600 s timeouts; baseline 9 calls each with 1 schema fetch on the 2-hop resource route each, and one prb prompt attempt timed out at 600 s) and T3 (update, all four cells: at or below the baseline call count per cell -- tsk 5 no-prompt / 6 prompt, prb 5 / 5 -- with 0 schema fetches for the local edits and 0 closed-form validation failures) (REQ-006).
 
 ### Scope
 
@@ -125,8 +125,8 @@ retry-once protocol. Harness reference:
 #### Phase 100: P0 -- Closed-Form Rules Into the Artifacts Agents Already Fetch
 
 - [ ] Task 100.100: (C1, C2) Add the exact bracketed lead-sentence frame `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` to the prb template's single leading HTML comment (the model permits exactly one comment between the H1 and the lead sentence; keep the filled-in lead sentence as the concrete instance) and add the same frame comment to the prb example; verify both files round-trip through parse_prb and the existing prb template/example tests pass.
-- [ ] Task 100.110: (C3) Reword the tsk template's leading HTML comment: remove the sentence "Number the tasks so that they are easier to track" (observed in the feat-128 baseline to induce "Task 1:" rewrites of the requested task texts) and instead direct keeping each task's text as given by the user, flat checklist, one item per line; verify the tsk template tests pass.
-- [ ] Task 100.120: (C4) Repoint all 12 create instruction files' "Use the template/example/schema as references" step (step 3 in req/uc/tsk/qa/gol/vcr/feat, step 4 in dec/sop/sysrs, step 10 in prb) to the `get_<d>_template`/`get_<d>_example` tools (1 hop) and make the schema fetch conditional -- only on structural uncertainty or when resolving a validation error.
+- [ ] Task 100.110: (C3) Reword the tsk template's leading HTML comment: remove the sentence "Number the tasks so that they are easier to track" (observed in the feat-128 baseline to induce "Task 1:" rewrites of the requested task texts) and instead direct keeping each task's text as given by the user, flat checklist, one item per line; the template's own example items (`- [ ] Task 1: ...` / `- [x] Task 2: ...` / `- [ ] Task 3: ...`) carry the "Task N:" prefix too, so reword them to drop it as well, keeping a plain flat checklist; verify the tsk template tests pass.
+- [ ] Task 100.120: (C4) Repoint all 12 create instruction files' template/example/schema reference step ("Use the template/example/schema as references"; rsk's variant heading: "Use the template/example/schema and the domain knowledge as references") at (step 3 in req/uc/tsk/qa/gol/rsk/vcr/feat, step 4 in dec/sop/sysrs, step 10 in prb) to the `get_<d>_template`/`get_<d>_example` tools (1 hop) and make the schema fetch conditional -- only on structural uncertainty or when resolving a validation error.
 - [ ] Task 100.130: (C5) Make all 12 update instruction files' "Check the schema" step (step 4 in req/uc/tsk/qa/rsk, step 5 in vcr/feat/gol, step 6 in dec/sop/sysrs, step 9 in prb) context-sensitive: fetch the schema only for whole-body rewrites or structural changes (add/remove/rename sections, edit closed-form content), and skip it for local splices where the raw body is already in context (update still validates the result as a whole document).
 
 #### Phase 110: P1 -- Non-Prescriptive Pointers in Always-In-Context Metadata
@@ -134,8 +134,8 @@ retry-once protocol. Harness reference:
 - [ ] Task 110.100: (C6) Add one non-prescriptive clause to each of the 12 `create_<d>` tool descriptions and to the generic `update` and `validate` tool descriptions naming the domain's `specmgr://<domain>/schema` resource (and `/template`, `/example`) as the structure reference -- a pointer, never an imperative to fetch.
 - [ ] Task 110.110: (C7) Reword the 12 `specmgr://<domain>/schema` resource descriptions from provenance-oriented to usage-oriented: when to fetch it (constraint discovery: structural questions, unresolved validation errors), what it is (the parsed-JSON view, not the markdown view -- point at the domain template for the markdown view), keeping the provenance sentence and the `$comment` marker mention.
 - [ ] Task 110.120: (C8) Add one clause to the 24 create/update prompt descriptions naming the `specmgr://<domain>/schema` (and `/template`, `/example`) resources as the structure reference.
-- [ ] Task 110.130: (C9, C10, C11) Fold the remaining closed sets into the templates as HTML comments: the req template's `## Level` section names the full RFC 2119 set (`MUST`/`SHALL`/`SHOULD`/`MAY`/`MUST NOT`), the rsk template names the TARA 4-word set (pointing at `specmgr://rsk/tara`) and the Probability/Impact 1-5 range (pointing at `specmgr://rsk/risk-matrix`), the qa template's question prefix spells the rule (single category digit, 4-digit zero-padded per-category sequence); verify each modified template round-trips through its domain parser.
-- [ ] Task 110.140: (C12) Verify the vcr template already carries the DTAIS set, the `AC-NNN (Method):` heading shape, and the `full`/`partial`/`none` coverage values in its prose (recorded no-op); if any is missing, fold it in the same way as Task 110.130.
+- [ ] Task 110.130: (C9, C10, C11) Fold the remaining closed sets into the templates as HTML comments: the req template's `## Level` section names the full RFC 2119 set (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/`MAY` -- the set must match req's `_LEVEL_PATTERN` verbatim), the rsk template names the TARA 4-word set (pointing at `specmgr://rsk/tara`) and the Probability/Impact 1-5 range (pointing at `specmgr://rsk/risk-matrix`), the qa template's question prefix spells the rule (single category digit, 4-digit zero-padded per-category sequence); verify each modified template round-trips through its domain parser.
+- [ ] Task 110.140: (C12) Verify the vcr template already carries the DTAIS set and the `AC-NNN (Method):` heading shape in its prose (verified present, no-op for those); the `full`/`partial`/`none` coverage set appears only as the filled-in `partial` instance -- fold the coverage set in as a comment the same way as Task 110.130.
 
 #### Phase 120: P2 -- Schema Metadata Enrichment (Metadata Only)
 
@@ -147,20 +147,20 @@ retry-once protocol. Harness reference:
 
 - [ ] Task 130.100: Extend the harness (reused from `.specmgr/feat/feat-128-schema-not-used/evidence/harness/`: `run_all.sh`, `mcp_probe.py`, `parse_events.py`, `instructions/`, `seeds/`) so the opencode runs register the worktree's specmgr server instead of the published uvx server (per-run-directory project opencode config), and probe the live surface (`tools/list` + `list_resources` + prompt metadata) to record the worktree-surface deviation in the report.
 - [ ] Task 130.110: Re-run all 8 cells (tsk + prb x create + update x with/without prompt) with the identical instruction strings and seeds, n>=3 per cell, the pinned model, the 600 s timeout, and the retry-once protocol.
-- [ ] Task 130.120: Check the measurable targets -- T1 (create without prompt: tsk at most 5 calls with the requested task texts verbatim; prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries), T2 (create with prompt: at most 7 calls per successful create in both domains, 0 schema fetches, 0 timeouts), T3 (update: at or below the baseline call count per cell, 0 schema fetches for local edits, 0 closed-form validation failures) -- and write the outcome report `round-trip-rerun.md` in this feature folder, with each target holding in all n runs of the cell.
+- [ ] Task 130.120: Check the measurable targets -- T1 (create without prompt: tsk at most 5 calls with the requested task texts verbatim; prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries, 0 schema fetches), T2 (create with prompt: at most 7 calls per successful create in both domains, 0 schema fetches, 0 timeouts), T3 (update: at or below the baseline call count per cell, 0 schema fetches for local edits, 0 closed-form validation failures) -- and write the outcome report `round-trip-rerun.md` in this feature folder, with each target holding in all n runs of the cell.
 - [ ] Task 130.130: Update this feature's Progress with the verification outcome; if any target is missed, add a corrective task using in-between numbering (e.g. Phase 135) rather than renumbering, and leave feat-128's ACC-003 closure to the feat-128 reviewer.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-05**: Feature created (status: planning). Phase 100 of feat-128 complete; implementation pending.
+**As of 2026-10-05**: Feature created (status: planning). feat-128 complete through Phase 110 (planning); this feature's implementation pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-10-05T09:37:30.000+02:00 - Created
+#### 2026-10-05T09:40:30.000+02:00 - Created
 
 Feature created to track the implementation of the round-trip-reduction
 plan drafted in feat-128 Phase 110
