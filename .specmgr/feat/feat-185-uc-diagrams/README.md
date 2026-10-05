@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:46:57.279+02:00'
 id: feat-185-uc-diagrams
-status: progress
+status: review
 type: feat
-updated: '2026-10-05T18:54:08.000Z'
+updated: '2026-10-05T23:11:05.971+02:00'
 version: 1.0.0
 ---
 
@@ -270,6 +270,10 @@ Each phase ends in exactly one commit containing all of the phase's code + tests
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-05 23:02:17.000Z - Finalization: status set to review
+
+All implementation phases (100/110/120/125/130/140) are committed — one Conventional Commit per phase (68b2afe, b17fe6c, 044d738, 6ed22ed, 906cb90, 3493338) — and the frontmatter status is set to `review` via the generic `set_status` tool (this commit). Acceptance-criteria evidence: ACC-001 the golden + walkthrough-pinning tests (the committed `buy-goods.sequence.walkthrough.puml` is the byte-exact source of truth); ACC-002 the walkthrough record (`buy-goods.sequence.walkthrough.md` — the one recorded question, the validation verdict green at the jetty source); ACC-007 the unconfigured-checkout skip proof (recorded in the Phase 140 entry). The branch push and the PR against `dev` follow this commit (orchestrator finalization).
 
 #### 2026-10-05 18:54:08.000Z - Phase 140 complete: host artifacts, conventions, end-to-end walkthrough
 
