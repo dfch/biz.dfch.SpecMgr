@@ -63,7 +63,10 @@ revise.
     `#### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
     date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
     date/time separator may be `T` or a space; a date-only timestamp is
-    rejected), followed by a lead paragraph. Adding a new phase or task
+    rejected), followed by the entry's own update/decision text directly
+    under the H4 heading (any markdown content -- multiple paragraphs,
+    lists, code blocks, block quotes, not just a single paragraph), which
+    is mandatory. Adding a new phase or task
     to the `### Task List` section is the same kind of line-range insert
     of one new, numbered line -- never a renumber of the existing lines.
     Task List numbering scheme: phases carry 3-digit zero-padded numbers

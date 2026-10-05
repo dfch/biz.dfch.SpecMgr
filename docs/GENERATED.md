@@ -582,4 +582,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 402
+**Test files**: 403

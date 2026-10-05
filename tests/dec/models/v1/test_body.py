@@ -29,6 +29,10 @@ removed and replaced by `Risks` (REQ-001/REQ-002), and every sub-list now
 enforces the shared `"<TAG> <uuid>: <title>"` cross-reference format
 (REQ-004), `Decisions` is DEC-only (REQ-005), and an optional trailing
 notes paragraph is supported (REQ-006).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
 """
 
 from __future__ import annotations
@@ -875,7 +879,7 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
 
         self.assertEqual(sut.timestamp, "2026-08-26 00:00:00.000Z")
         self.assertEqual(sut.title, "Created")
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
@@ -909,14 +913,84 @@ class TestUpdateEntryComputedFields(unittest.TestCase):
             UpdateEntry()
 
 
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-26 00:00:00.000Z - Created\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-26 00:00:00.000Z - Created\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object.
+        kwargs = _minimal_decision_kwargs()
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-26 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+        )
+
+        dump = Decision(**kwargs).model_dump(mode="json")
+
+        self.assertEqual(dump["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
+
+
 class TestUpdatesContainer(unittest.TestCase):
     """`Updates`/`UpdateEntry` mirror TSK's `RecentUpdates`/`UpdateEntry` shape."""
 
     def test_parses_multiple_entries_in_document_order(self) -> None:
+        # The first entry's body is non-paragraph (feat-180): its "consume
+        # everything remaining" content must stop at the second entry's heading.
         text = format_text(
             "## Updates\n\n"
             "### 2026-08-27 00:00:00.000Z : Confirmed\n\n"
-            "Second entry text.\n\n"
+            "- item one\n\n"
+            "- item two\n\n"
             "### 2026-08-26 00:00:00.000Z - Created\n\n"
             "First entry text.\n"
         )
@@ -924,8 +998,8 @@ class TestUpdatesContainer(unittest.TestCase):
         sut = Updates.from_text(text)
 
         self.assertEqual(len(sut.updates), 2)
-        self.assertEqual(sut.updates[0].content.text, "Second entry text.")
-        self.assertEqual(sut.updates[1].content.text, "First entry text.")
+        self.assertEqual(sut.updates[0].content.text, "- item one\n\n- item two\n")
+        self.assertEqual(sut.updates[1].content.text, "First entry text.\n")
         self.assertEqual(str(sut), text)
 
     def test_out_of_order_entries_raise_validation_error(self) -> None:
@@ -1203,7 +1277,7 @@ class TestDecisionReferenceDocumentRoundTrips(unittest.TestCase):
         # wrapped reference paragraph is checked with `assertIn`; the
         # byte-exact structure is guarded by `test_round_trips` above.
         self.assertEqual(
-            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review."
+            updates.updates[1].content.text, "Initial decision record drafted after the 2026-08-25 platform review.\n"
         )
 
 

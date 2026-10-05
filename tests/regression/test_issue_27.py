@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""feat-27-validation Task 4.1 (REQ-007/ACC-005): end-to-end regression tests for the two known
+"""feat-27-validation Task 4.1 (REQ-007/ACC-005): end-to-end regression tests for the known
 triggers that motivated this feature.
 
 1. **GitHub issue #27**'s own reproduction body: a bare ``<domain>``-style token in a `tsk`
@@ -23,16 +23,16 @@ triggers that motivated this feature.
    minimal repro code block, verbatim (fetched via ``gh issue view 27 --json body``) -- only the
    trailing ``## Recent Updates`` entry's body text ("repro") is exactly as the reporter wrote
    it; nothing here is paraphrased.
-2. **feat-7 Task 0.29**'s trigger: a `Recent Updates` entry paragraph that wraps onto a
-   continuation line starting with ``+``. feat-7's own README (Background, Task 0.29) quotes
-   only the literal fragment ``"+ group-block style as final..."`` from the original TSK
-   document (id ``952d39e5-3b79-4389-bc71-a4fe8ca85cd3``) that first exposed this -- that
-   document's full original text is not recorded anywhere in this repo's history, so the body
-   below is a realistic reconstruction embedding that exact literal fragment as the offending
-   continuation line, not the verbatim original document. This is called out here, not silently
-   presented as a full verbatim repro.
+2. **feat-7 Task 0.29**'s trigger -- a ``+``-prefixed continuation line inside a `## Recent
+   Updates` entry -- is **intentionally superseded** by feat-180-updates (GitHub issue #180):
+   update/decision entry ``content`` now accepts any markdown, so that input is valid content
+   and no longer an error; the former end-to-end tests for it were deleted (user-approved
+   decision, 2026-10-02). The same actionable "text left over after processing all fields"
+   message with the stray-list-marker hint remains pinned at engine level in
+   ``tests/models/md/test_validation_error_baseline.py``
+   (``test_list_field_leaves_a_stray_list_marker_line_unconsumed``).
 
-Each trigger is reproduced through all three of the generic ``validate`` tool (``type="tsk"``,
+The remaining trigger is reproduced through all three of the generic ``validate`` tool (``type="tsk"``,
 disk-free dry run), ``create_tsk`` (create), and the generic ``update`` tool (``type="tsk"``,
 whole-body replace of an existing document) -- the three surfaces GitHub issue #27 named as all
 affected. Every test asserts the surfaced message contains the cause + fix-hint substrings the
@@ -109,60 +109,6 @@ _ISSUE_27_EXPECTED_SUBSTRINGS = (
     "write it as an HTML comment",
 )
 
-# ---------------------------------------------------------------------------
-# Trigger 2: feat-7 Task 0.29's `+`-prefixed continuation-line trigger, reconstructed around
-# the one literal fragment feat-7's own README preserves ("+ group-block style as final...").
-# ---------------------------------------------------------------------------
-
-_FEAT_7_TASK_0_29_BODY = textwrap.dedent(
-    """\
-    # Finish persisting the OpenCode + MCP PlantUML sequence diagram
-
-    - [x] Task 1: Persist the sequence diagram to disk
-
-    ## Recent Updates
-
-    ### 2026-08-29 00:00:00.000Z - Diagram persisted
-
-    Persisted the diagram to disk, deciding to keep the diagram's own
-    + group-block style as final layout for the sequence.
-    """
-)
-
-#: A valid seed document for the create-then-update flow below: the same update-entry
-#: paragraph, joined onto one line so it never starts a new CommonMark list.
-_FEAT_7_TASK_0_29_VALID_SEED_BODY = textwrap.dedent(
-    """\
-    # Finish persisting the OpenCode + MCP PlantUML sequence diagram
-
-    - [x] Task 1: Persist the sequence diagram to disk
-
-    ## Recent Updates
-
-    ### 2026-08-29 00:00:00.000Z - Diagram persisted
-
-    Persisted the diagram to disk, deciding to keep the diagram's own
-    group-block style as final layout for the sequence.
-    """
-)
-
-#: The stray-list-marker cause + fix-hint substrings a caller needs to see (REQ-003), taken from
-#: Phase 1's own enrichment of the "text left over" message (`models/md/markdown_str.py`).
-_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS = (
-    "text left over after processing all fields",
-    "a line starting with '-', '*', or '+' begins a new",
-    "CommonMark list",
-    "remove the marker or indent the line",
-)
-
-#: Feat-110 (issue #110): the same substrings above, minus the trailing fix-hint clause
-#: ("remove the marker or indent the line"), which now falls past `validate()`'s
-#: `_MAX_VALIDATE_ERROR_CHARS` cap for this fixture's raw message length and is truncated
-#: away -- `create_tsk`/`update` still raise the full, untruncated exception (`validate.py`'s
-#: truncation is scoped to the non-raising `ValidateResult` path only, REQ-002), so only the
-#: `validate`-tool surface below needs this weaker substring set.
-_FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE = _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS[:-1]
-
 
 class TempTskDirTestCase(unittest.TestCase):
     """Common fixture: a temp dir set as the docs root via ``SPECMGR_DOCS_DIR``."""
@@ -207,52 +153,6 @@ class TestIssue27BareDomainTokenRegression(TempTskDirTestCase):
         message = result.errors[0].message
         for substring in _ISSUE_27_EXPECTED_SUBSTRINGS:
             self.assertIn(substring, message)
-
-
-class TestFeat7Task029StrayListMarkerRegression(TempTskDirTestCase):
-    """feat-7 Task 0.29's `+`-prefixed continuation line, through the same three surfaces."""
-
-    def test_validate_surfaces_an_actionable_message(self) -> None:
-        """Issue #110: this fixture's raw message now exceeds `validate()`'s
-        `_MAX_VALIDATE_ERROR_CHARS` cap, so the trailing fix-hint clause ("remove the marker
-        or indent the line") is truncated away -- assert only the substrings that still
-        survive (cause + the start of the fix hint), plus the truncation marker itself, to
-        keep proving issue #27/feat-7 Task 0.29 is still caught and reported actionably."""
-        result = validate(type="tsk", content=_FEAT_7_TASK_0_29_BODY)
-
-        self.assertFalse(result.valid)
-        self.assertEqual(len(result.errors), 1)
-        message = result.errors[0].message
-        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE:
-            self.assertIn(substring, message)
-        self.assertTrue(message.endswith("... (truncated)"), message)
-
-    def test_create_tsk_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_tsk(_FEAT_7_TASK_0_29_BODY)
-
-        message = str(ctx.exception)
-        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS:
-            self.assertIn(substring, message)
-
-    def test_update_surfaces_an_actionable_message(self) -> None:
-        """Issue #110 (mirrored from the ``validate`` test above): since feat-170 Phase 120
-        (Bug 2), the generic ``update`` tool no longer raises for this failure -- it returns the
-        non-raising ``ValidateResult`` whose message is capped at 300 chars, so the trailing
-        fix-hint clause is truncated away -- assert only the substrings that still survive
-        (cause + the start of the fix hint), plus the truncation marker itself, to keep proving
-        issue #27/feat-7 Task 0.29 is still caught and reported actionably."""
-        created = create_tsk(_FEAT_7_TASK_0_29_VALID_SEED_BODY)
-
-        result = update(id=created.id, type="tsk", content=_FEAT_7_TASK_0_29_BODY)
-
-        self.assertIsInstance(result, ValidateResult)
-        self.assertFalse(result.valid)
-        self.assertEqual(len(result.errors), 1)
-        message = result.errors[0].message
-        for substring in _FEAT_7_TASK_0_29_EXPECTED_SUBSTRINGS_VIA_VALIDATE:
-            self.assertIn(substring, message)
-        self.assertTrue(message.endswith("... (truncated)"), message)
 
 
 if __name__ == "__main__":

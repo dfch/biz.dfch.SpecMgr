@@ -27,8 +27,11 @@ step 1 if this is genuinely a new task list.
   `### {timestamp} ( - | : ) {title}` entry, newest-first, where
   `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` +
   `Z` or `±HH:mm` (e.g. `### 2026-08-19 05:42:00.000+02:00 - Created`),
-  each followed by a short paragraph of update text. The date/time
-  separator may be `T` or a space; a date-only timestamp is rejected. A
+  each followed by the entry's own update text directly under the H3
+  heading (any markdown content -- multiple paragraphs, lists, code blocks,
+  block quotes, not just a single paragraph), which is mandatory. The
+  date/time separator may be `T` or a space; a date-only timestamp is
+  rejected. A
   freshly drafted task list must include at least one Recent Updates
   entry describing why this list was made --
   `RecentUpdates.updates` requires `min_length>=1`, so an empty section

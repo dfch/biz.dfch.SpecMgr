@@ -78,7 +78,7 @@ class TestParseTsk(unittest.TestCase):
         )
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
-            [("Kickoff", "Started the task list.")],
+            [("Kickoff", "Started the task list.\n")],
         )
 
     def test_parses_full_reference_document(self) -> None:
@@ -102,10 +102,10 @@ class TestParseTsk(unittest.TestCase):
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
             [
-                ("Migration in progress", "Migrated 5 of 12 widgets so far; no regressions found."),
+                ("Migration in progress", "Migrated 5 of 12 widgets so far; no regressions found.\n"),
                 (
                     "Kickoff",
-                    "Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.",
+                    "Started the migration; inventoried 12 widgets currently registered against WidgetRegistryV1.\n",
                 ),
             ],
         )
@@ -190,7 +190,7 @@ class TestParseTsk(unittest.TestCase):
 
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in document.body.recent_updates.updates],
-            [("Follow-up", "Made more progress."), ("Kickoff", "Started the task list.")],
+            [("Follow-up", "Made more progress.\n"), ("Kickoff", "Started the task list.\n")],
         )
 
     def test_recent_updates_with_zero_entries_raises_assertion_error(self) -> None:

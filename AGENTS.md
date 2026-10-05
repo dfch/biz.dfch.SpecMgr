@@ -749,6 +749,13 @@ type or cross-cutting:
     source `type`/`id` (path-injection attempt or wrong-format id) is
     a `ValueError` before any filesystem access, and a missing source
     raises the source domain's not-found error, identical to `get_<d>`.
+    The OpenCode-native counterparts are the `ref-finder` subagent
+    (`.opencode/agent/ref-finder.md`), the `/refs <type> <id>` command
+    (`.opencode/command/refs.md`, `agent: ref-finder`), and the
+    self-triggering `specmgr-refs` OpenCode Skill
+    (`.opencode/skills/specmgr-refs/SKILL.md`, feat-152, GitHub issue
+    #152) that routes single-document requests to `list_references`
+    and codifies the graph/batch/reverse workflows.
     On a successful write, `set_status` (its non-`adr`
     adapters), `set_classification`, and every per-domain
     `create_<d>` tool return the domain's frontmatter object only (no
