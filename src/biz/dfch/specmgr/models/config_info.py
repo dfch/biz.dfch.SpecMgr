@@ -18,10 +18,15 @@
 """Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 
 Also carries the static ``similarity`` section the resource reports for the
-semantic-similarity feature (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`.
+semantic-similarity feature (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`
+-- and, since feat-185-uc-diagrams Phase 120, the static ``plantuml`` section
+(the presence-only state of the exactly-three validation-source env vars plus
+the first-set-wins ``selected`` source): :class:`PlantumlConfig`.
 """
 
 from __future__ import annotations
+
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -86,8 +91,57 @@ class SimilarityConfig(BaseModel):
     cache_dir: str
 
 
+class PlantumlSourceConfig(BaseModel):
+    """One of the exactly-three PlantUML validation-source env vars (feat-185-uc-diagrams Phase 120).
+
+    Presence-only, mirroring :class:`DomainConfig`'s ``env_var_set``
+    convention (the resource's own no-disclosure contract, feat-51-mcp-cwd
+    REQ-002): whether the variable is set in the current process
+    environment (``os.environ.get(name) is not None``) -- never its *value*
+    (a jar path, a bin path, or a server URL would be disclosed by it).
+
+    Parameters
+    ----------
+    set:
+        Whether the env var is present (any value; presence-based, never
+        the value).
+    """
+
+    set: bool
+
+
+class PlantumlConfig(BaseModel):
+    """The static ``plantuml`` section of ``specmgr://config`` (feat-185-uc-diagrams Phase 120).
+
+    The presence-only state of the exactly-three validation-source env vars
+    (rulebook §3.1: ``SPECMGR_PLANTUML_JAR`` → ``SPECMGR_PLANTUML_BIN`` →
+    ``SPECMGR_PLANTUML_URL``) plus :data:`selected`, the first-set-wins
+    selection over them (rulebook §3.2, ``plantuml.chain.select_source``) --
+    ``"none"`` when all three are unset (the structure-only floor).
+    Presence-only throughout: no value of any of the three vars is ever
+    reported.
+
+    Parameters
+    ----------
+    jar:
+        The presence of ``SPECMGR_PLANTUML_JAR``: :class:`PlantumlSourceConfig`.
+    bin:
+        The presence of ``SPECMGR_PLANTUML_BIN``: :class:`PlantumlSourceConfig`.
+    url:
+        The presence of ``SPECMGR_PLANTUML_URL``: :class:`PlantumlSourceConfig`.
+    selected:
+        The selected validation source per the §3.2 first-set-wins order:
+        ``"jar"``, ``"bin"``, ``"url"``, or ``"none"`` (all unset).
+    """
+
+    jar: PlantumlSourceConfig
+    bin: PlantumlSourceConfig
+    url: PlantumlSourceConfig
+    selected: Literal["jar", "bin", "url", "none"]
+
+
 class ConfigInfo(BaseModel):
-    """Resolved base directory configuration for every document domain, plus the similarity section.
+    """Resolved base directory configuration for every document domain, plus the similarity and plantuml sections.
 
     Parameters
     ----------
@@ -98,7 +152,12 @@ class ConfigInfo(BaseModel):
     similarity:
         The static configuration of the semantic-similarity feature
         (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`.
+    plantuml:
+        The static configuration of the PlantUML validation source
+        (feat-185-uc-diagrams Phase 120): :class:`PlantumlConfig` --
+        presence-only (never a value of the three env vars).
     """
 
     domains: dict[str, DomainConfig]
     similarity: SimilarityConfig
+    plantuml: PlantumlConfig

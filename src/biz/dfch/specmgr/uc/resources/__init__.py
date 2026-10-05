@@ -26,6 +26,12 @@ content rather than a valid document instance. ``uc_plantuml`` registers the
 static domain-knowledge rulebook resource (``specmgr://uc/plantuml``,
 feat-185-uc-diagrams Phase 100) -- the frozen UC → PlantUML mapping and
 validation spec, raw markdown, the same shape as ``specmgr://rsk/tara``.
+``uc_plantuml_template``/``uc_plantuml_example`` register the packaged
+PlantUML-source pair (``specmgr://uc/plantuml-template``/
+``specmgr://uc/plantuml-example``, feat-185-uc-diagrams Phase 120) -- the
+sequence-skeleton template and the complete, fully attributed "Buy Goods"
+sequence example, raw PlantUML source, ``text/plain`` (not markdown, not
+specmgr documents: no frontmatter, not validate-able).
 Import this package to
 register all use-case resources against the shared ``mcp`` application
 instance::
@@ -42,11 +48,13 @@ parameters (``max_results``/``offset``) could be accepted -- see
 ``.specmgr/feat/feat-13-list-paging/README.md``.
 """
 
-from . import uc_example, uc_plantuml, uc_schema, uc_template  # noqa: F401
+from . import uc_example, uc_plantuml, uc_plantuml_example, uc_plantuml_template, uc_schema, uc_template  # noqa: F401
 
 __all__ = [
     "uc_example",
     "uc_plantuml",
+    "uc_plantuml_example",
+    "uc_plantuml_template",
     "uc_schema",
     "uc_template",
 ]

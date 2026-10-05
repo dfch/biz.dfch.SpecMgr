@@ -47,7 +47,27 @@ type or cross-cutting:
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
-  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`); whole-body and
+  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`), plus the
+  read-only diagram surface (feat-185-uc-diagrams Phase 120, thin over the
+  Phase 110 `uc/models/v2/renderer.py` + the import-free `plantuml/`
+  package): `get_uc_diagram` (per-UC usecase diagram by id) and
+  `get_uc_sequence_skeleton` (the deterministic sequence skeleton by id;
+  UNATTRIBUTED markers where the §2.9.3 attribution cannot pre-fill) —
+  both `_path_safety`-guarded and cache-aware, an existing-but-broken UC
+  returning the non-raising `ParseFailureResult` per the feat-150
+  precedent; `get_use_case_package_diagram` (multi-UC package diagram;
+  `ids=None` = every UC in `list_uc` order, delegated to the `list_uc`
+  tool; an id missing on disk or existing-but-broken becomes a skipped
+  slot whose references take the deterministic unresolvable-note path —
+  the render never fails on an id; a wrong-format id is a `ValueError`
+  before any file access); `validate_plantuml` (the strict validation
+  chain over diagram text — structure pre-flight always, then the single
+  first-set-wins source or the all-unset structure-only floor — non-raising
+  `PlantumlValidationResult`); `get_uc_plantuml_template`/
+  `get_uc_plantuml_example` (the packaged PlantUML-source template/example,
+  verbatim); and `plantuml_encode` (the classic `SoWkI…`-form URL text
+  encoding — the `{enc}` payload of `GET {base}/svg/{enc}`; the tool takes
+  no base URL, so it returns the encoding itself; fully offline); whole-body and
   line-range updates go through the generic
   `update` tool in `general/tools/` (`type="uc"`), status changes through
   the generic `set_status` tool (`type="uc"`), classification changes
@@ -70,7 +90,12 @@ type or cross-cutting:
    domain-knowledge resource `specmgr://uc/plantuml` — the frozen
    UC → PlantUML mapping and validation rulebook (raw markdown,
    `text/markdown`; feat-185-uc-diagrams Phase 100 — the normative spec
-   for everything diagram-related in this domain);
+   for everything diagram-related in this domain) — and the packaged
+   PlantUML-source pair `specmgr://uc/plantuml-template` /
+   `specmgr://uc/plantuml-example` (the sequence-skeleton template and
+   the complete, fully attributed "Buy Goods" sequence example; raw
+   PlantUML source, `text/plain` — not markdown, not specmgr documents:
+   no frontmatter, not `validate`-able; feat-185-uc-diagrams Phase 120);
   `uc/models/v2/renderer.py` — the three deterministic renderers the
   rulebook specifies (feat-185-uc-diagrams Phase 110): `render_uc_diagram`
   (the v1-port, rulebook §2.5–§2.6 — byte-for-byte the §2.6 reference
@@ -83,9 +108,22 @@ type or cross-cutting:
   from the cross-cutting `plantuml/` package (see below) so renderer and
   structure checker cannot drift; the packaged
   `uc/data/uc_plantuml_template.md` / `uc_plantuml_example.md`
-  single-diagram data files ship here too (their MCP tools/resources land
-  in Phase 120);
-  `uc/prompts/` (`create_uc`/`update_uc`). Schema at
+  single-diagram data files ship here too (their MCP tools/resources
+  landed in Phase 120);
+  `uc/prompts/` (`create_uc`/`update_uc`, plus
+  `generate_uc_sequence_diagram` — the rulebook §3.8 agent flow for one
+  use case's sequence diagram: read-first `specmgr://uc/plantuml`,
+  `TodoWrite` plan, `get_uc` (a `ParseFailureResult` stops the flow), the
+  §2.11 Subfunction judgment, `get_uc_sequence_skeleton`, attribution of
+  every `UNATTRIBUTED` marker (the `question` tool MUST be used whenever
+  not confident; pre-filled arrows are positional, not semantic, and may
+  be corrected), the zero-marker rule, the `validate_plantuml` loop
+  (green at the highest available layer before writing;
+  `source_state != ok` with a source set ⇒ report + do not write; all
+  unset ⇒ write with the `' validated: structure-only` header as the
+  file's first line), the host-native write to
+  `diagrams/uc/<id>.sequence.puml` (no specmgr tool writes `.puml`), and
+  never commit). Schema at
   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
@@ -716,7 +754,11 @@ type or cross-cutting:
     feat-134 Phase 7), `specmgr://config` — every domain's resolved base
     directory plus whether its `SPECMGR_*_DIR` env var is set, and since
     feat-134 Phase 7 a static `similarity` section
-    (`extra_installed`/`disabled`/`model_name`/`cache_dir`),
+    (`extra_installed`/`disabled`/`model_name`/`cache_dir`), plus since
+    feat-185-uc-diagrams Phase 120 a static `plantuml` section
+    (`jar`/`bin`/`url` each presence-only `{set: bool}` + `selected` —
+    the first-set-wins source per rulebook §3.2, `"none"` when all unset;
+    never a value of the three `SPECMGR_PLANTUML_*` vars),
     `specmgr://ears` — the EARS requirement-phrasing templates (feat-92),
     `specmgr://iso25010` — the ISO/IEC 25010:2023
     quality model, `specmgr://dtais` — the DTAIS verification-method

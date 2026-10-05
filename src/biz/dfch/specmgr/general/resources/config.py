@@ -54,6 +54,20 @@ model cache directory. Static configuration only: the tools' own dynamic
 runtime availability (whether the model is loaded/usable right now) is
 their structured ``{available, reason, message}`` result, not part of this
 resource -- it deliberately reports no ``loaded`` or other runtime state.
+
+**Static plantuml section (feat-185-uc-diagrams Phase 120).** The payload
+additionally carries a ``plantuml`` section (``PlantumlConfig``): the
+**presence-only** state of the exactly-three PlantUML validation-source env
+vars (``SPECMGR_PLANTUML_JAR``/``SPECMGR_PLANTUML_BIN``/
+``SPECMGR_PLANTUML_URL`` -- rulebook §3.1; each reported as ``{set: bool}``,
+never its value: a jar path, a bin path, or a server URL would be a
+disclosure violation of REQ-002's own contract), plus ``selected`` -- the
+first-set-wins selection over the three (rulebook §3.2, derived from
+``plantuml.chain.select_source``; ``"none"`` when all are unset, the
+structure-only floor). Static configuration only, like ``similarity``:
+whether the selected source actually *answers its canary right now* is the
+``validate_plantuml`` tool's own ``source_state``/``available`` result, not
+part of this resource.
 """
 
 from __future__ import annotations
@@ -70,7 +84,8 @@ from ...general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from ...general.tools._domains import ALL_DOMAINS
 from ...general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
 from ...gol.tools._paths import gol_base_dir
-from ...models import ConfigInfo, DomainConfig, SimilarityConfig
+from ...models import ConfigInfo, DomainConfig, PlantumlConfig, PlantumlSourceConfig, SimilarityConfig
+from ...plantuml.chain import ENV_VAR_BIN, ENV_VAR_JAR, ENV_VAR_URL, select_source
 from ...prb.tools._paths import prb_base_dir
 from ...qa.tools._paths import qa_base_dir
 from ...req.tools._paths import req_base_dir
@@ -119,17 +134,21 @@ def _similarity_cache_dir() -> str:
         "the semantic-similarity feature (feat-134): whether the `similarity` extra (fastembed) is "
         "installed (a spec lookup, never an import), whether the presence-based SPECMGR_SIMILARITY_DISABLED "
         "opt-out flag is set, the fixed model name, and the resolved model cache directory "
-        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created). "
-        "Static configuration only -- the tools' own dynamic runtime availability is their structured "
-        "{available, reason, message} result, not part of this resource. Never discloses the value of "
-        "any environment variable except the resolved cache path, only whether the relevant "
-        "directory-path/opt-out env vars are present."
+        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created), "
+        "and a static `plantuml` section for the PlantUML validation source (feat-185-uc-diagrams "
+        "Phase 120): the presence-only state of the exactly-three source env vars "
+        "(SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never a "
+        'value) plus `selected` -- the first-set-wins selection over them ("jar"/"bin"/"url"/'
+        '"none"). Static configuration only -- the tools\' own dynamic runtime availability is '
+        "their structured {available, reason, message} result, not part of this resource. Never "
+        "discloses the value of any environment variable except the resolved cache path, only "
+        "whether the relevant directory-path/opt-out env vars are present."
     ),
     mime_type="application/json",
 )
 def config_info() -> ConfigInfo:
     """
-    Return the resolved base directory and env-var-set flag for every domain, plus the similarity section.
+    Return the resolved base directory and env-var-set flag for every domain, plus the similarity and plantuml sections.
 
     Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
     reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -150,11 +169,22 @@ def config_info() -> ConfigInfo:
     payload; it is their structured ``{available, reason, message}``
     result.
 
+    The ``plantuml`` section (feat-185-uc-diagrams Phase 120) is static
+    configuration only: the **presence** of each of the exactly-three
+    validation-source env vars (``os.environ.get(var) is not None`` --
+    never a value), plus ``selected``, derived from
+    ``plantuml.chain.select_source`` (the rulebook §3.2 first-set-wins
+    order JAR → BIN → URL; ``"none"`` when all three are unset). The
+    ``validate_plantuml`` tool's own dynamic availability (whether the
+    selected source answers its canary right now) is deliberately not part
+    of this payload; it is that tool's ``source_state``/``available``
+    result.
+
     Returns
     -------
     ConfigInfo
         The resolved base directory configuration for every domain, plus
-        the static similarity section.
+        the static similarity section and the static plantuml section.
     """
     docs_dir_set = os.environ.get(DOCS_DIR_ENV_VAR) is not None
 
@@ -238,5 +268,17 @@ def config_info() -> ConfigInfo:
         cache_dir=_similarity_cache_dir(),
     )
 
-    result = ConfigInfo(domains=domains, similarity=similarity)
+    # the static plantuml section (feat-185-uc-diagrams Phase 120): presence-only
+    # over the exactly-three source env vars, `selected` per the rulebook §3.2
+    # first-set-wins order (select_source returns (kind, value); only the kind
+    # is reported -- the value would be a disclosure violation, REQ-002).
+    selected = select_source()
+    plantuml = PlantumlConfig(
+        jar=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_JAR) is not None),
+        bin=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_BIN) is not None),
+        url=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_URL) is not None),
+        selected=selected[0] if selected is not None else "none",
+    )
+
+    result = ConfigInfo(domains=domains, similarity=similarity, plantuml=plantuml)
     return result

@@ -517,10 +517,13 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
 - `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- `uc/prompts/generate_uc_sequence_diagram.py` — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
 - `uc/resources/uc_plantuml.py` — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- `uc/resources/uc_plantuml_example.py` — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- `uc/resources/uc_plantuml_template.py` — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -531,10 +534,17 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- `uc/tools/get_uc_diagram.py` — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- `uc/tools/get_uc_plantuml_example.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_plantuml_template.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_sequence_skeleton.py` — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- `uc/tools/get_use_case_package_diagram.py` — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
+- `uc/tools/plantuml_encode.py` — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/validate_plantuml.py` — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 
 **vcr/**
 
@@ -569,4 +579,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 388
+**Test files**: 398

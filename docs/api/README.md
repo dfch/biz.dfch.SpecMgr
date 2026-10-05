@@ -453,10 +453,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
 - [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.prompts.create_uc`](biz.dfch.specmgr.uc.prompts.create_uc.md) — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram`](biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram.md) — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_plantuml`](biz.dfch.specmgr.uc.resources.uc_plantuml.md) — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_example`](biz.dfch.specmgr.uc.resources.uc_plantuml_example.md) — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_template`](biz.dfch.specmgr.uc.resources.uc_plantuml_template.md) — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -467,10 +470,17 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.get_uc_diagram`](biz.dfch.specmgr.uc.tools.get_uc_diagram.md) — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_example`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_example.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_template`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_template.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton`](biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton.md) — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- [`biz.dfch.specmgr.uc.tools.get_use_case_package_diagram`](biz.dfch.specmgr.uc.tools.get_use_case_package_diagram.md) — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
+- [`biz.dfch.specmgr.uc.tools.plantuml_encode`](biz.dfch.specmgr.uc.tools.plantuml_encode.md) — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.validate_plantuml`](biz.dfch.specmgr.uc.tools.validate_plantuml.md) — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 - [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

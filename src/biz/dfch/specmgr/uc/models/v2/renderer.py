@@ -255,7 +255,7 @@ def _distinct_actor_labels(use_case: UseCase) -> list[str]:
     document order (rulebook §2.1) — the usecase/actor-union order."""
     info = use_case.characteristic_information
     raw = [str(info.primary_actor.body[0]).strip()] if info.primary_actor.body else []
-    raw.extend(item.text for item in info.secondary_actors.items if info.secondary_actors is not None)
+    raw.extend(item.text for item in (info.secondary_actors.items if info.secondary_actors is not None else []))
 
     labels: list[str] = []
     seen: set[str] = set()

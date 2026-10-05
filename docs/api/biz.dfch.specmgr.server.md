@@ -33,6 +33,16 @@ specmgr://uc/plantuml -- The frozen UC -> PlantUML mapping and validation rulebo
                          the two-mode structure checker, and the user-owned platform-adapter
                          snippets -- raw markdown domain-knowledge guidance (feat-185-
                          uc-diagrams Phase 100).
+specmgr://uc/plantuml-template -- The packaged PlantUML sequence-skeleton template (placeholder
+                         participants + mapping comments, rulebook §2.9) as raw PlantUML
+                         source: not markdown, not a specmgr document (no frontmatter, not
+                         validate-able) -- text/plain (feat-185-uc-diagrams Phase 120).
+specmgr://uc/plantuml-example -- The complete, fully attributed sequence diagram for the
+                         packaged "Buy Goods" example UC as raw PlantUML source: not
+                         markdown, not a specmgr document (no frontmatter, not
+                         validate-able) -- text/plain; the model for the
+                         generate_uc_sequence_diagram prompt flow (feat-185-uc-diagrams
+                         Phase 120).
 specmgr://tsk/schema -- The generated TSK JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/tsk_schema.json``) so it works from a
                         real, non-editable install.
@@ -132,11 +142,17 @@ specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, g
                         ``SPECMGR_SIMILARITY_DISABLED`` opt-out flag is set, the fixed model
                         name (the shared ``SIMILARITY_MODEL_NAME`` constant, the single source
                         both ``get_default_provider()`` and the section read), and the resolved
-                        model cache directory (``FASTEMBED_CACHE_PATH`` if set, else
-                        ``<tempdir>/fastembed_cache`` -- reported, never created). Static
-                        configuration only: the tools' own dynamic runtime availability is
-                        their structured ``{available, reason, message}`` result, not part of
-                        this resource (no ``loaded`` field).
+                         model cache directory (``FASTEMBED_CACHE_PATH`` if set, else
+                         ``<tempdir>/fastembed_cache`` -- reported, never created). Plus a
+                         static ``plantuml`` section for the PlantUML validation source
+                         (feat-185-uc-diagrams Phase 120): the presence-only state of the
+                         exactly-three source env vars (SPECMGR_PLANTUML_JAR/
+                         SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never
+                         a value) plus ``selected`` -- the first-set-wins selection over
+                         them ("jar"/"bin"/"url"/"none"). Static configuration only: the
+                         tools' own dynamic runtime availability is their structured
+                         ``{available, reason, message}`` result, not part of this resource
+                         (no ``loaded`` field).
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -191,7 +207,27 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_uc``,
 ``get_uc_example``,
-``get_uc_template``, ``create_uc``.
+``get_uc_template``, ``create_uc``, and the read-only diagram surface
+(feat-185-uc-diagrams Phase 120, thin over the Phase 110
+``uc.models.v2.renderer`` + the import-free ``plantuml`` package):
+``get_uc_diagram`` (the per-UC usecase diagram by id),
+``get_uc_sequence_skeleton`` (the deterministic sequence skeleton by id;
+UNATTRIBUTED markers for the messages the attribution rule cannot pre-fill)
+-- both ``_path_safety``-guarded and cache-aware, an existing-but-broken
+document returning the non-raising ``ParseFailureResult`` per the feat-150
+precedent --, and ``get_use_case_package_diagram`` (the multi-UC package diagram;
+``ids=None`` = every UC in ``list_uc`` order, delegated to the ``list_uc``
+tool; an id missing on disk or existing-but-broken becomes a skipped slot
+whose references take the deterministic unresolvable-note path -- the render
+never fails on an id; a wrong-format id is a ``ValueError`` before any file
+access), ``validate_plantuml`` (the strict validation chain over diagram
+text: structure pre-flight always, then the single first-set-wins source
+-- no fall-through -- or the all-unset structure-only floor; non-raising
+§3.6 ``PlantumlValidationResult``), ``get_uc_plantuml_template``/
+``get_uc_plantuml_example`` (the packaged PlantUML-source template/example,
+verbatim), and ``plantuml_encode`` (the classic ``SoWkI…``-form URL text
+encoding -- the ``{enc}`` payload of ``GET {base}/svg/{enc}``; the tool takes
+no base URL, so it returns the encoding itself; fully offline).
 Requirement tools (``req/tools/``): ``parse_req``, ``get_req`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -490,7 +526,21 @@ ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
 text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
 §11).
 Use-case prompts (``uc/prompts/``): ``create_uc``, ``update_uc`` --
-instructional text guiding an LLM through the UC tool sequence above.
+instructional text guiding an LLM through the UC tool sequence above -- plus
+``generate_uc_sequence_diagram`` (feat-185-uc-diagrams Phase 120), the
+rulebook §3.8 agent flow for one use case's sequence diagram: read the frozen
+rulebook (``specmgr://uc/plantuml``) first, build a ``TodoWrite`` plan, read
+the UC via ``get_uc`` (a ``ParseFailureResult`` stops the flow -- repair first),
+apply the §2.11 Subfunction judgment, fetch the deterministic skeleton via
+``get_uc_sequence_skeleton``, attribute every ``UNATTRIBUTED`` marker by
+understanding the free text (the ``question`` tool MUST be used whenever not
+confident; pre-filled arrows are positional, not semantic, and may be
+corrected), enforce the zero-marker rule, loop ``validate_plantuml`` until
+green at the highest available layer (``source_state != ok`` with a source set
+=> report ``reason``/``fix_hint`` and do not write; all unset => write with the
+``' validated: structure-only`` header as the file's first line), write the
+``.puml`` file host-native at ``diagrams/uc/<id>.sequence.puml`` (no specmgr
+tool writes ``.puml``), and never commit.
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --
 instructional text guiding an LLM through the REQ tool sequence above (Task 3.19).
 Task list prompts (``tsk/prompts/``): ``create_task``, ``update_task`` -- instructional

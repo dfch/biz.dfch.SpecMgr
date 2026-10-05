@@ -40,6 +40,20 @@ runtime availability (whether the model is loaded/usable right now) is
 their structured ``{available, reason, message}`` result, not part of this
 resource -- it deliberately reports no ``loaded`` or other runtime state.
 
+**Static plantuml section (feat-185-uc-diagrams Phase 120).** The payload
+additionally carries a ``plantuml`` section (``PlantumlConfig``): the
+**presence-only** state of the exactly-three PlantUML validation-source env
+vars (``SPECMGR_PLANTUML_JAR``/``SPECMGR_PLANTUML_BIN``/
+``SPECMGR_PLANTUML_URL`` -- rulebook §3.1; each reported as ``{set: bool}``,
+never its value: a jar path, a bin path, or a server URL would be a
+disclosure violation of REQ-002's own contract), plus ``selected`` -- the
+first-set-wins selection over the three (rulebook §3.2, derived from
+``plantuml.chain.select_source``; ``"none"`` when all are unset, the
+structure-only floor). Static configuration only, like ``similarity``:
+whether the selected source actually *answers its canary right now* is the
+``validate_plantuml`` tool's own ``source_state``/``available`` result, not
+part of this resource.
+
 ## Functions
 
 ### `_similarity_cache_dir() -> 'str'`
@@ -66,7 +80,7 @@ Returns:
 
 ### `config_info() -> 'ConfigInfo'`
 
-Return the resolved base directory and env-var-set flag for every domain, plus the similarity section.
+Return the resolved base directory and env-var-set flag for every domain, plus the similarity and plantuml sections.
 
 Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
 reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -87,9 +101,20 @@ model is loaded/usable right now) is deliberately not part of this
 payload; it is their structured ``{available, reason, message}``
 result.
 
+The ``plantuml`` section (feat-185-uc-diagrams Phase 120) is static
+configuration only: the **presence** of each of the exactly-three
+validation-source env vars (``os.environ.get(var) is not None`` --
+never a value), plus ``selected``, derived from
+``plantuml.chain.select_source`` (the rulebook §3.2 first-set-wins
+order JAR → BIN → URL; ``"none"`` when all three are unset). The
+``validate_plantuml`` tool's own dynamic availability (whether the
+selected source answers its canary right now) is deliberately not part
+of this payload; it is that tool's ``source_state``/``available``
+result.
+
 Returns
 -------
 ConfigInfo
     The resolved base directory configuration for every domain, plus
-    the static similarity section.
+    the static similarity section and the static plantuml section.
 

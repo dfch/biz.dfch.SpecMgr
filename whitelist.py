@@ -265,6 +265,16 @@ env_var_set
 extra_installed
 disabled
 model_name
+# config (feat-185-uc-diagrams Phase 120): `PlantumlConfig`'s `jar`/`bin`
+# fields read only via (de)serialization; nothing in `src/` accesses them as
+# plain attributes (constructor keyword arguments don't count, same as the
+# entries above). `url` needs no entry -- the `plantuml.chain` module's own
+# `from . import ... url` marks the name used; `PlantumlSourceConfig.set`
+# needs none either (the `set` builtin call in `general.resources.config`
+# marks it), nor does `selected` (the local variable of that name in
+# `config_info()`).
+jar
+bin
 
 # similarity (feat-134-related-artifact-similarity):
 # `SimilarityUnavailableResult`'s `available`/`reason` fields are written in
@@ -335,8 +345,10 @@ documents
 # --- plantuml (feat-185-uc-diagrams Phase 110) --------------------------
 # `PlantumlValidationResult`'s `structure_ok`/`checked_by` fields are set in
 # the result's own constructors (vulture's dataclass constructor-kwarg
-# suppression does not count that as use) and read only by tests; the
-# MCP-facing serialization of the §3.6 result arrives in Phase 120. The
+# suppression does not count that as use) and read by tests plus the MCP
+# serialization of the §3.6 result (Phase 120): `uc.tools.validate_plantuml`
+# returns the dataclass verbatim and the mcp SDK's pydantic serializer reads
+# its fields dynamically, which vulture's static scan cannot see. The
 # remaining fields (`valid`/`rendered`/`errors`/`warnings`/`source_state`/
 # `available`/`reason`/`fix_hint`) need no entry: `chain.validate_plantuml`
 # reads the backend verdicts' same-named attributes, marking the names used.
