@@ -47,10 +47,13 @@ First-line docstrings from each module, organized by domain:
 - `commands/__init__.py` — commands module.
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram generation sub-command group (feat-185-uc-diagrams, Phase 130).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- `commands/plantuml_check.py` — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- `commands/plantuml_encode.py` — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - `commands/req_parse.py` — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -579,4 +582,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 398
+**Test files**: 401

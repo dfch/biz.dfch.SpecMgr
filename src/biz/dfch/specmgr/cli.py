@@ -33,7 +33,21 @@ additionally requires the ``mcp`` extra
 import typer
 from dotenv import find_dotenv, load_dotenv
 
-from .commands import adr_toc, coverage_badge, docs, mcp, mcp_docs, mdformat, req_parse, schema, unused_code, version
+from .commands import (
+    adr_toc,
+    coverage_badge,
+    diagram,
+    docs,
+    mcp,
+    mcp_docs,
+    mdformat,
+    plantuml_check,
+    plantuml_encode,
+    req_parse,
+    schema,
+    unused_code,
+    version,
+)
 
 # ---------------------------------------------------------------------------
 # .env loading
@@ -82,6 +96,9 @@ app.command()(schema)
 app.command()(unused_code)
 app.command()(req_parse)
 app.command()(mdformat)
+app.command()(plantuml_check)
+app.command()(plantuml_encode)
+app.add_typer(diagram, name="diagram")
 
 
 if __name__ == "__main__":

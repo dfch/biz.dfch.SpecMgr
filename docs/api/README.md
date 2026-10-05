@@ -36,10 +36,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands`](biz.dfch.specmgr.commands.md) — commands module.
 - [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- [`biz.dfch.specmgr.commands.diagram`](biz.dfch.specmgr.commands.diagram.md) — ``diagram`` -- the deterministic PlantUML diagram generation sub-command group (feat-185-uc-diagrams, Phase 130).
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - [`biz.dfch.specmgr.commands.mdformat`](biz.dfch.specmgr.commands.mdformat.md) — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- [`biz.dfch.specmgr.commands.plantuml_check`](biz.dfch.specmgr.commands.plantuml_check.md) — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- [`biz.dfch.specmgr.commands.plantuml_encode`](biz.dfch.specmgr.commands.plantuml_encode.md) — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - [`biz.dfch.specmgr.commands.req_parse`](biz.dfch.specmgr.commands.req_parse.md) — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.

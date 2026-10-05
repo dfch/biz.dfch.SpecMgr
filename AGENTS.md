@@ -1106,6 +1106,45 @@ extras onto every consumer of the base library.
   (see `_callback` in `cli.py`) forces Typer to keep treating it as a command
   group — keep that callback even after a second command is added, don't
   assume it becomes dead code to remove.
+- `specmgr diagram uc [ids|all] --out <dir> [--check]` (feat-185-uc-diagrams
+  Phase 130, `commands/diagram.py` — the one Typer sub-command group,
+  registered via `app.add_typer`): writes the deterministic per-UC usecase
+  diagrams (`<id>.usecase.puml`) + the multi-UC `package.puml` over exactly
+  the invoked UCs (default `--out` = CWD-relative `diagrams/uc/`, rulebook
+  §2.10); `all` renders every UC in `list_uc` order (incl. `Subfunction`
+  level — the §2.11 judgment is agent-path only) and skips existing-but-
+  broken documents (their references take the package's deterministic note);
+  `--check` regenerates in memory and byte-diffs usecase + package only
+  (missing files count as differing, no writes). **Deterministic-only — it
+  never creates, overwrites, reads, or diffs `<id>.sequence.puml`**
+  (agent-owned), and written artifacts carry no structure-only header.
+  Thin over the Phase 120 `get_use_case_package_diagram` resolution
+  (lazy import — needs the `mcp` extra; missing extra ⇒ exit 1) + the pure
+  Phase 110 renderers. Exit codes: **0** written / no diff, **1** diff found
+  (`--check`) / missing `mcp` extra, **2** usage-or-render error (wrong-
+  format id before any file access, an explicitly requested id missing on
+  disk or existing-but-broken — the parse error is reported, a render
+  failure, `all` combined with ids).
+- `specmgr plantuml-check <path...>` (feat-185-uc-diagrams Phase 130,
+  `commands/plantuml_check.py`): validates any `.puml` file(s) — agent-
+  owned sequence files included, no specmgr document needed — through the
+  strict chain (`plantuml.chain.validate_plantuml` over the file text); per
+  file it prints the verdict (`checked_by`/`valid`/`rendered`/`source_
+  state`) + every finding as `{path}:{line}: {message} (fix: {fix_hint})`.
+  Exit codes (worst applicable wins, severity **2 > 3 > 1 > 0**): **0** all
+  valid at the highest available layer (incl. the all-unset structure-only
+  floor), **1** any structure-red or source-invalid, **2** selected source
+  misconfigured/unavailable (chain hard failure) or a usage error (non-
+  `.puml` / unreadable / missing path — all reported before any chain run),
+  **3** inconclusive (persistent after the chain's one retry; also the URL
+  matrix's undetermined request/encode-error rows — never INVALID).
+- `specmgr plantuml-encode <path|->` (feat-185-uc-diagrams Phase 130,
+  `commands/plantuml_encode.py`): prints the classic `SoWkI…`-form URL
+  encoding (`plantuml.encode.encode_puml` — the `{enc}` payload of
+  `GET {base}/svg/{enc}`; no base URL is taken, so the encoding itself is
+  printed) of a file's or stdin's (`-`) diagram source; fully offline.
+  Exit codes: **0** printed, **2** usage error (missing/unreadable file,
+  empty input).
 
 ## MCP server (`server.py`)
 

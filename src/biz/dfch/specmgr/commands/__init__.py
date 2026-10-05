@@ -18,15 +18,20 @@
 """commands module.
 
 Each CLI command lives in its own module, exposing a plain function that
-``cli.py`` registers on the Typer ``app`` via ``app.command()(fn)``.
+``cli.py`` registers on the Typer ``app`` via ``app.command()(fn)``. The
+``diagram`` module is the one Typer sub-command group (registered via
+``app.add_typer``) — ``specmgr diagram uc`` (feat-185-uc-diagrams, Phase 130).
 """
 
 from .adr_toc import adr_toc
 from .coverage_badge import coverage_badge
+from .diagram import diagram
 from .docs import docs
 from .mcp import mcp
 from .mcp_docs import mcp_docs
 from .mdformat import mdformat
+from .plantuml_check import plantuml_check
+from .plantuml_encode import plantuml_encode
 from .req_parse import req_parse
 from .schema import schema
 from .unused_code import unused_code
@@ -35,10 +40,13 @@ from .version import version
 __all__ = [
     "adr_toc",
     "coverage_badge",
+    "diagram",
     "docs",
     "mcp",
     "mcp_docs",
     "mdformat",
+    "plantuml_check",
+    "plantuml_encode",
     "req_parse",
     "schema",
     "unused_code",
