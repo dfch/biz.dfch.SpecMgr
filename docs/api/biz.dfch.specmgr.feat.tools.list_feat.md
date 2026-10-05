@@ -92,8 +92,12 @@ exported and untouched (Phase 120's ACC-003 reference-implementation test
 calls them directly against the still-unmodified generic
 ``build_summaries`` sweep for its byte-identical-convergence diff) even
 though this tool's own production request path no longer calls either of
-them -- see ``whitelist.py``'s own feat-187 entry for the resulting,
-expected ``vulture`` false positive.
+them -- no ``vulture``/``whitelist.py`` exemption is actually needed for
+this, though: every other domain's ``list_<d>.py`` module defines its own
+same-named ``_to_summary``/``_to_failed_summary`` functions, so
+``vulture``'s name-based matching already treats these names as used
+across the whole scanned tree (confirmed via
+``uv run --frozen vulture src/ whitelist.py --min-confidence 60``).
 
 ## Functions
 
