@@ -1,0 +1,3 @@
+In the problem statement document titled 'Build server onboarding takes too long', change the cost stated in the Impact section from 1500 EUR per quarter to 2500 EUR per quarter.
+
+Use only the specmgr MCP tools to complete the task. When the document change is complete, reply DONE.

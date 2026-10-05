@@ -4,7 +4,7 @@ created: '2026-10-04T12:59:26.936+02:00'
 id: feat-128-schema-not-used
 status: planning
 type: feat
-updated: '2026-10-04T20:22:01.000+02:00'
+updated: '2026-10-05T07:44:27.000+02:00'
 version: 1.0.0
 ---
 
@@ -57,6 +57,8 @@ Agents often take several round-trips to create or update specmgr artifacts with
 
 Preliminary observations to confirm in Phase 100: (a) the generated JSON schemas capture section structure (required/optional, minItems) but for free-form markdown sections the expected content shape lives only in the prose descriptions with empty properties, so the `specmgr://<domain>/template` and `specmgr://<domain>/example` resources may carry more actionable authoring guidance -- the third review verified that the loss extends beyond free-form sections: all 12 generated schemas carry zero `enum` and only the two feat-94 frontmatter timestamp `pattern`s, every markdown leaf (`MarkdownParagraph`/`MarkdownListItem`) renders as `properties: {}`, and all domain closed vocabularies/regex aliases (REQ `Level`'s RFC 2119 set, RSK 5x5/TARA, VCR DTAIS/AC-NNN, TSK checkbox markers, status values) are absent from the schemas, appearing at most as prose 'e.g.' examples; (b) every whole-body create prompt contains a dedicated 'Use the template/example/schema as references' step (step 3 in req/uc/tsk/qa/gol/vcr/feat, step 4 in dec/sop/sysrs, step 10 in prb) and every whole-body update prompt a dedicated 'Check the schema' step (step 4 in req/uc/tsk/qa/rsk, step 5 in vcr/feat/gol, step 6 in dec/sop/sysrs, step 9 in prb) -- step numbers verified across all 24 instruction files in the third review -- so for prompt-driven flows the gap may be discoverability, perceived cost, or compliance rather than a missing instruction; (c) no `create_<d>` tool description (the agent-visible tools/list metadata) mentions the schema/template/example resources at all, so tool-direct flows that never invoke the prompt get zero pointers (verified in the third review); (d) the schemas describe the parsed JSON document shape (property names like `statement`/`characteristics`), not the markdown the agent authors, so the prompts' 'confirm field names' instruction conflates two artifact layers; and MCP prompts are pull-based -- an agent must explicitly invoke the prompt, so in tool-direct flows the prompts' schema instructions are architecturally invisible, whereas tool/resource description metadata is always in the agent's context (the create/update prompts' own `title`/`description` metadata is likewise silent about the schema, verified in the third review).
 
+Phase 100 artifacts (written 2026-10-05; sibling files of this README): `root-cause-analysis.md` -- the written answer to issue #128 question 1 (ACC-001), hypotheses (a)-(d) adjudicated against 8 controlled agent runs with four concrete instruction gaps; `schema-audit.md` -- the ACC-002 gap list (16 quadruples), the adr-missing finding with code citations, the resource/prompt/tool metadata audit (verbatim strings), the per-domain closed-vocabulary baseline verification, the packaged-vs-docs drift check, and the published-vs-worktree surface diff; `round-trip-baseline.md` -- the ACC-003 grounding tables (per-run + domain x operation aggregates, payload sizes, schema-fetch counts) and the explicit baseline numbers Phase 110 may use; `evidence/` -- raw `--format json` event streams (11 files: smoke, prompt-surface probe, the 8 formal runs, plus the one recorded retry attempt), `manifest.md` (verbatim instruction strings, seeds, metrics, verdicts, harness incident), the rendered prompts, and the harness scripts.
+
 ### Related Decisions
 
 - feat-94-frontmatter-schema: expose frontmatter created/updated date+time format in JSON Schema as a pattern.
@@ -66,9 +68,9 @@ Preliminary observations to confirm in Phase 100: (a) the generated JSON schemas
 
 #### Phase 100: Investigation
 
-- [ ] Task 100.100: Reproduce and document agent round-trip behavior for create/update without a schema query (issue #128 question 1) with a fixed methodology: two domains (one simple, e.g. tsk, one complex, e.g. prb or dec) x create and update, a fresh MCP-only agent, one controlled run with and one without the prompt pre-invoked.
-- [ ] Task 100.110: Audit the 12 whole-body domains' `specmgr://<domain>/schema` resources for correctness and completeness -- including each resource's agent-facing title/description metadata, whose current wording is provenance-oriented (how it is generated and kept current) rather than usage-oriented (fetch before authoring a body) -- and record adr's missing schema resource as an explicit finding (question 2); also audit the create/update prompts' own `title`/`description` metadata (currently silent about the schema), and verify per domain the closed-vocabulary baseline recorded in Design Notes (a) (zero `enum`, two timestamp `pattern`s, `properties: {}` leaves) into concrete gap entries.
-- [ ] Task 100.120: Capture a quantitative round-trip baseline (tool calls per successful create and per successful update, per domain) from observed agent sessions, to ground the ACC-003 measurable target, including per-domain schema payload size (KB) and schema-fetch counts per session to ground the 'perceived cost' hypothesis.
+- [x] Task 100.100: Reproduce and document agent round-trip behavior for create/update without a schema query (issue #128 question 1) with a fixed methodology: two domains (one simple, e.g. tsk, one complex, e.g. prb or dec) x create and update, a fresh MCP-only agent, one controlled run with and one without the prompt pre-invoked.
+- [x] Task 100.110: Audit the 12 whole-body domains' `specmgr://<domain>/schema` resources for correctness and completeness -- including each resource's agent-facing title/description metadata, whose current wording is provenance-oriented (how it is generated and kept current) rather than usage-oriented (fetch before authoring a body) -- and record adr's missing schema resource as an explicit finding (question 2); also audit the create/update prompts' own `title`/`description` metadata (currently silent about the schema), and verify per domain the closed-vocabulary baseline recorded in Design Notes (a) (zero `enum`, two timestamp `pattern`s, `properties: {}` leaves) into concrete gap entries.
+- [x] Task 100.120: Capture a quantitative round-trip baseline (tool calls per successful create and per successful update, per domain) from observed agent sessions, to ground the ACC-003 measurable target, including per-domain schema payload size (KB) and schema-fetch counts per session to ground the 'perceived cost' hypothesis.
 
 #### Phase 110: Planning
 
@@ -79,11 +81,15 @@ Preliminary observations to confirm in Phase 100: (a) the generated JSON schemas
 
 ### Current Status
 
-**As of 2026-10-04**: Feature created (status: planning). Investigation of issue #128's three questions has not started yet.
+**As of 2026-10-05**: Phase 100 (Investigation) complete -- 8 controlled fresh-agent runs reproduced the skip (0/4 no-prompt runs and 0/2 prompt-update runs fetched the schema; 2/2 prompt-create runs did), the 12-domain schema audit recorded 16 concrete gaps (zero `enum`, closed vocabularies prose-only, adr has no schema resource at all), and the quantitative round-trip baseline (tool calls per successful create/update per domain x condition, payload sizes, fetch counts) now grounds the ACC-003 measurable target; findings in the Phase 100 sibling artifacts (see Design Notes).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-05T07:44:27.000+02:00 - Phase 100: Investigation complete
+
+Phase 100 executed all three tasks: (1) 8 controlled `opencode run` experiments (tsk + prb x create + update x with/without the create/update prompt pre-invoked by the harness, fresh MCP-only agents in bare temp dirs, model pinned, published specmgr 0.34.0 surface) -- all 8 succeeded (one prb-create-prompt retry after a 600 s timeout, both attempts recorded) and every required document change verified on disk and parseable through the published server; (2) the 12-domain schema audit (all 12 `docs/<domain>_schema.json` regenerated unchanged and byte-identical to the packaged copies; 16 gap quadruples recorded, including adr's missing schema resource, the prose-only closed vocabularies, and the provenance-oriented resource / schema-silent prompt metadata, verbatim); (3) the quantitative baseline (e.g. tool calls per successful create: tsk 5 no-prompt / 9 prompt, prb 7 no-prompt / 9 prompt; per successful update: tsk 5 / 6, prb 5 / 5; schema fetches 0/4 no-prompt vs 2/2 prompt-create and 0/2 prompt-update; 1 validation-failure retry cycle on prb create no-prompt). Artifacts: `root-cause-analysis.md` (ACC-001), `schema-audit.md` (ACC-002), `round-trip-baseline.md` (ACC-003 grounding), and `evidence/` (11 event streams, manifest with verbatim instructions/seeds/metrics/verdicts, rendered prompts, harness scripts); a harness incident (two contaminated re-runs from a mis-built runner) is documented in the manifest and excluded from the baseline. Tasks 100.100/100.110/100.120 ticked done in place; Phase 110 (Planning) not started.
 
 #### 2026-10-04T20:22:01.000+02:00 - Plan review: third-round fixes applied
 
@@ -100,6 +106,12 @@ Plan review findings applied: corrected the schema-audit scope from 13 domains t
 #### 2026-10-04T12:59:26.635+02:00 - Created
 
 Feature document created from GitHub issue #128 (agents do not use schema information for create and update operations). Plan drafted; investigation pending.
+
+### Decisions Made
+
+#### 2026-10-05T07:44:27.000+02:00 - Phase 100 run-harness decisions (as implemented)
+
+The binding user-approved harness design was implemented with these recorded choices: (1) the two domains are **tsk** (simple) and **prb** (complex; the plan allowed "prb or dec", prb was picked for its mandatory lead-sentence template + 7 5W2H headings, which exercises the closed-form guidance that lives only in prose); (2) all 8 formal runs are fresh, non-interactive `opencode run` sessions (opencode v1.18.34) in bare temp dirs under `/tmp/opencode/feat128/runs/`, model pinned to `vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2` (the orchestrator's model) with `--format json` as the primary evidence source, run sequentially against the published 0.34.0 specmgr MCP server so no `SPECMGR_*_DIR` env var ever points at the repo (zero repo pollution, verified); (3) the **prompt-pre-invoked mechanism actually used is harness-fetched** -- a probe run proved a fresh opencode session cannot invoke MCP prompts natively at all (reply `NO_PROMPT_TOOL`, zero tool calls), so the four `-prompt` runs had their domain prompt rendered out-of-band by a throwaway Python MCP client (`get_prompt` against the same uvx server) and prepended to the instruction verbatim between BEGIN/END markers; (4) the update prompts' required `id` argument was filled with the placeholder `UNKNOWN` (never the seed UUID) in both conditions, so document discovery via `list_<d>`/`get_<d>` stays part of the measured round trip; (5) update runs were seeded by the harness writing a parseable document directly into `<run-dir>/docs/<domain>/<uuid>.md` (fresh UUIDs, valid frontmatter, `status: active`) before launch; (6) per-run protocol: 600 s timeout, retry once with the identical instruction on a hung/failed run and record both attempts (applied to `prb-create-prompt`, whose attempt 1 timed out mid-draft and whose retry is the formal result); (7) a harness incident (a mis-built second runner re-executed two create cells into already-populated dirs) was detected, the contaminated outputs discarded, all dirs wiped and re-seeded, and the whole 8-run sequence re-executed from a clean state -- the incident is documented in `evidence/manifest.md` and excluded from the baseline; (8) findings live as sibling files of this README (`root-cause-analysis.md`, `schema-audit.md`, `round-trip-baseline.md`, `evidence/`), no YAML frontmatter (they are not specmgr documents; feat-9 precedent), formatted with `specmgr mdformat`.
 
 ### Related PRs / Commits
 
