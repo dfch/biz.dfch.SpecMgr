@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A `refine-feature`/`review-feature` OpenCode command+skill+agent trio
+  (`.opencode/command/refine-feature.md`, `.opencode/skills/refine-feature/
+  SKILL.md`, `.opencode/agent/feat-refiner.md`; `.opencode/command/
+  review-feature.md`, `.opencode/skills/review-feature/SKILL.md`,
+  `.opencode/agent/feat-reviewer.md`, Refs #190): `feat-refiner`
+  sanity-checks a **planned** `.specmgr/feat/<id>/README.md` plan --
+  traceability, Phase/Task numbering, a transitive cycle-safe
+  `Depends On`/`Blocks`/`Related Decisions` reference-graph walk, scope and
+  status consistency -- while `feat-reviewer` reviews a **finished**
+  implementation's code diff against that same plan using a Google
+  code-review-derived checklist layered with the nine ISO/IEC 25010:2023
+  product-quality characteristics; both report Errors/Gaps/Discrepancies/
+  Improvements/Positives as TSK-compatible `- [ ] <ID>: <description>`
+  checklist lines. Each agent's checklist is layered so the two
+  `.opencode/agent/*.md` files stay copy-paste-portable to any other
+  specmgr-based repo: a Generic layer (portable as-is) plus an optional,
+  purely-local third layer read from a new `.specmgr/conventions/
+  feat-reviewer.md` / `.specmgr/conventions/feat-refiner.md` file, applied
+  only if that file exists in the target repo.
 - A `numbered: bool = False` parameter on every `get_<d>` tool for the
   12 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs;
   `get_adr` unchanged) (feat-153-off-by-n, GitHub issue #153, ADR
@@ -33,6 +52,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A new `### Risks` cross-reference sub-list (to `rsk`) in `req`/`gol`/
   `dec`/`sop`'s `## Related Artifacts` section, added in the slot the
   removed `### Acceptance Criteria` sub-list occupied (GitHub issue #135).
+- A project-local `specmgr-refs` OpenCode skill
+  (`.opencode/skills/specmgr-refs/SKILL.md`), the agent-initiated surface
+  of the feat-144 cross-reference retrieval stack: it loads itself when a
+  task matches reference-retrieval phrasings, routes single-document
+  retrieval to the `list_references` MCP tool, the `ref-finder` subagent,
+  or the `/refs` command (a pointer, never a re-implementation), and
+  codifies the compositions the command and subagent do not cover -- the
+  multi-hop reference-graph traversal (per-level `list_references` calls,
+  seen-set dedup, pagination while `truncated`), the batch resolution
+  validation across the 12 whole-body domains (req/uc/tsk/qa/prb/gol/
+  rsk/dec/sop/feat/vcr/sysrs -- the `list_references` source enum
+  additionally accepts `adr`, deliberately excluded here), and the reverse
+  lookup (which documents reference a given `<type> <id>`), all preserving
+  `ref-finder`'s read-only posture and shared **NOT FOUND** reporting
+  conventions (feat-152-ref-skill, GitHub issue #152).
 
 ### Changed
 
