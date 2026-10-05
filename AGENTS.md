@@ -120,12 +120,29 @@ type or cross-cutting:
   be corrected), the zero-marker rule, the `validate_plantuml` loop
   (green at the highest available layer before writing;
   `source_state != ok` with a source set ⇒ report + do not write; all
-  unset ⇒ write with the `' validated: structure-only` header as the
-  file's first line), the host-native write to
-  `diagrams/uc/<id>.sequence.puml` (no specmgr tool writes `.puml`), and
-  never commit). Schema at
-  `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
-  inside the domain package, not `models/uc/`.
+   unset ⇒ write with the `' validated: structure-only` header as the
+   file's first line), the host-native write to
+   `diagrams/uc/<id>.sequence.puml` (no specmgr tool writes `.puml`), and
+   never commit), plus the OpenCode host surface (feat-185-uc-diagrams
+   Phase 140 — the trio pattern of the `general` bullet's `repair` trio,
+   minus a dedicated subagent: the flow is the prompt itself): the
+   self-triggering `uc-diagram` skill
+   (`.opencode/skill/uc-diagram/SKILL.md` — thin; points at the
+   `generate_uc_sequence_diagram` prompt, the read-first
+   `specmgr://uc/plantuml` rulebook, the deterministic-only CLI
+   (`specmgr diagram uc` / `--check`, `plantuml-check`, `plantuml-encode`),
+   and carries the plantuml-mcp watch note — prefer a host-configured
+   plantuml MCP check/render tool if present, no dependency), and the
+   `/uc-diagram <id>` command (`.opencode/command/uc-diagram.md` — runs the
+   same prompt flow for the given UC id and reports per its step 10);
+   pinned by `tests/opencode/test_skill_uc_diagram.py`. The Phase 140
+   end-to-end walkthrough record (ACC-002: the question transcript, the
+   validation verdict, the execution method) is committed as
+   `tests/fixtures/uc-diagrams/buy-goods.sequence.walkthrough.md` alongside
+   the pure, comment-free `buy-goods.sequence.walkthrough.puml` (the
+   ACC-001 pinning test's source of truth). Schema at
+   `uc/models/v1/` (legacy) and `uc/models/v2/` (current),
+   inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
   `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
   `get_tsk_template`); whole-body and

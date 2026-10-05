@@ -25,7 +25,11 @@ checker (both modes where applicable — the skeleton carries UNATTRIBUTED
 marker warnings only; the package/usecase goldens are clean). The packaged
 fully-attributed example (`uc/data/uc_plantuml_example.md`) is pinned as the
 skeleton with each UNATTRIBUTED marker line replaced by the frozen test-local
-attribution table, so it cannot drift from the renderer.
+attribution table, so it cannot drift from the renderer; the Phase 140
+end-to-end walkthrough's committed `.puml`
+(`buy-goods.sequence.walkthrough.puml` — the pure, comment-free source of
+truth, ACC-002 evidence) is pinned the same way with exact byte equality
+(no comment-stripping).
 """
 
 import os
@@ -226,6 +230,25 @@ class TestSequenceSkeleton(unittest.TestCase):
 
         self.assertEqual(_strip_comments("\n".join(transformed)), _strip_comments(example))
         self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in example.split("\n")))
+
+    def test_walkthrough_file_is_the_skeleton_with_the_frozen_attributions(self):
+        """The ACC-001 walkthrough pin: the committed walkthrough `.puml` (the pure,
+        comment-free source of truth the Phase 140 end-to-end run wrote) must equal
+        the skeleton with each UNATTRIBUTED marker line replaced by its frozen
+        attribution -- exact byte equality, no comment-stripping.
+        """
+        use_case = _example_use_case()
+
+        skeleton = render_uc_sequence_skeleton(use_case)
+        transformed = [_ATTRIBUTIONS.get(line, line) for line in skeleton.split("\n")]
+        walkthrough = (_FIXTURES / "buy-goods.sequence.walkthrough.puml").read_text(encoding="utf-8")
+
+        self.assertEqual(walkthrough, "\n".join(transformed))
+        self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in walkthrough.split("\n")))
+        self.assertFalse(any(line.lstrip().startswith("'") for line in walkthrough.split("\n")))
+        result = S.check_structure(walkthrough, S.MODE_STANDALONE)
+        self.assertTrue(result.ok)
+        self.assertEqual(result.warnings, [])
 
 
 class TestUseCasePackage(unittest.TestCase):

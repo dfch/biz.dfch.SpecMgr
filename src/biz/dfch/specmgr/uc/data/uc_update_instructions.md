@@ -58,6 +58,7 @@ want to change before calling any write tool.
     you are not intentionally changing, or it will be dropped.
     `id`/`type`/`status`/`created`/`version` are preserved automatically
     regardless of what you submit; only `updated` changes.
+  - Attribution authoring style: when the change touches `Main Success Scenario` steps or extension items, start each step with the actor who performs it, e.g. `Company checks inventory for requested goods.` -- the PlantUML sequence-skeleton attribution pre-fill, rulebook `specmgr://uc/plantuml`, keys on that participant-label prefix.
 - A change to `status` -> `set_status(id, type="uc", status)` instead
   -- `update` never accepts or changes `status`. `status` must be one
   of: draft, proposed, accepted, deprecated, superseded.
