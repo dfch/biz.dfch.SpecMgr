@@ -4,7 +4,7 @@ created: '2026-10-03T22:09:42.529+02:00'
 id: feat-187-list-feat-timeout
 status: review
 type: feat
-updated: '2026-10-05T20:38:01.299+02:00'
+updated: '2026-10-05T23:21:30.000+02:00'
 version: 1.0.0
 ---
 
@@ -183,6 +183,10 @@ Options evaluated and rejected or deferred: (1) a pure frontmatter-only request 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-05T23:21:00.000+02:00 - Round-5 review findings G1/I1/I2 applied: OpenCode-native repair docs feat-qualified, `_run_phase` reader type tightened, warmup path-snapshot edge noted in docstring
+
+The three open findings from the round-5 `feat-reviewer` pass (G1, I1, I2 -- no new errors or discrepancies; the reviewer re-ran the full gate locally first: ruff/vulture clean, 4080 passed, `specmgr docs`/`specmgr adr-toc` zero diff) were applied at the maintainer's direction, with no new Phase -- the record is at `status: review`, and the I1/I2 code-side changes are behavior-preserving typing/docstring corrections with no test or ACC impact, consistent with how the round-4 improvement items were applied in place. (1) G1 -- `.opencode/agent/doc-repairer.md` (workflow step 1) and `.opencode/skill/repair/SKILL.md` (frontmatter `description` plus step 1) still asserted the `get_<d>`/`list_<d>` error-byte-identity as unconditional for every whole-body domain; these two OpenCode-native texts were never in Task 110.140's enumerated scope (which covered `src/` plus AGENTS.md, not the `.opencode/` layer), so the feat-187 qualification they are owed was missed; both now carry the same time-qualified wording the Task 110.140 sweep established elsewhere (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44: during the tier-2/tier-3 convergence window `list_feat`'s row may carry tier-2 wording that converges later or be a tier-3 transiently-healthy row, while `get_feat`'s own `error` remains the unconditional, full-fidelity authority; every other domain stays unconditional) -- docs-only, no code/test/ACC impact. (2) I1 -- `feat/tools/_warmup.py`'s `_run_phase` typed its `read` parameter as bare `object`; it is now `Callable[[Path], FeatDocument | FeatFrontmatterSummary]` (no `TypeVar` needed, since the return value is discarded and nothing threads a per-phase type to the caller) with `FeatFrontmatterSummary` imported from `._cache` and `FeatDocument` from `..models.v1` (the same import `_cache.py` itself makes; no circularity), verified green by `ruff check` and the unchanged test suite. (3) I2 -- `warmup_feat_caches`'s own docstring now notes directly that the path list is snapshotted once and reused for both phases, so a folder created after the snapshot (e.g. by a concurrent `create_feat`) is invisible to that run's full-parse phase and converges instead via that write's own dual-stage cache warming (Task 110.130) or at the function's next invocation -- the edge was already documented at the ADR level, just not where a reader of this function alone would look. Post-fix gate re-run green: `ruff format --check`/`ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean, `uv run --frozen pytest -n auto --cov=src --cov-report=` 4080 passed, `specmgr docs` regenerated with exactly the one expected diff (`docs/api/biz.dfch.specmgr.feat.tools._warmup.md`).
 
 #### 2026-10-05T20:38:01.299+02:00 - Round-4 improvements I1-I5 applied: ADR 3982712a 9080b37c reference tag, FEAT tags on dependency/failure-set declarations, CHANGELOG provenance in Task 120.120, single-paragraph authoring constraint, Out-of-Scope pause conditional resolved
 

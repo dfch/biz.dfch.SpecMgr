@@ -6,7 +6,10 @@ description: >-
   marker (null `id`, populated `ref`/`path`/`error`), or a `get_<d>` call
   that returns the non-raising parse-failure result (a document that
   exists but fails to parse: `error`/`path`/`id` fields, the `error` text
-  carrying the same parse defect as `list_<d>`'s failed row) -- whether
+  carrying the same parse defect as `list_<d>`'s failed row, unconditional
+  for every domain except `feat`, where that identity is time-qualified by
+  the background warmup's convergence (ADR
+  3982712a-a46b-4b2b-809f-9c6925a49b44)) -- whether
   surfaced by
   an explicit `/repair` request or organically while you are working with
   specmgr documents mid-task. Whole-body domains only (req/uc/tsk/qa/prb/
@@ -31,7 +34,11 @@ propagate: repair it, or report it clearly.
   specmgr `repair` MCP prompt narrates):
   1. **Discover**: with an id, `get_<type>(id)` -- a broken document is
       returned, not raised: read the result's `error` (the parse failure,
-      the same defect `list_<type>()`'s failed row carries) and its `path`;
+      the same defect `list_<type>()`'s failed row carries -- unconditional
+      for every domain except `feat`, whose row is time-qualified by the
+      background warmup's convergence (ADR
+      3982712a-a46b-4b2b-809f-9c6925a49b44); `get_feat`'s own `error` stays
+      the full-fidelity authority in every case) and its `path`;
       without,
      `list_<type>()` -- find the failed row (`<failed to parse>` marker
      in `title`/`status`, null `id`, populated `path`/`error`).

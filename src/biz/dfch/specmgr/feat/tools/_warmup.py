@@ -62,7 +62,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ...general.tools._doc_cache import CACHEABLE_ERROR_TYPES
-from ._cache import read_feat, read_feat_dirty, reconcile_feat_cache, reconcile_feat_dirty_cache
+from ..models.v1 import FeatDocument
+from ._cache import (
+    FeatFrontmatterSummary,
+    read_feat,
+    read_feat_dirty,
+    reconcile_feat_cache,
+    reconcile_feat_dirty_cache,
+)
 from ._paths import feat_base_dir, iter_feat_paths
 
 __all__ = ["FeatWarmupResult", "WarmupPhaseResult", "warmup_feat_caches"]
@@ -97,7 +104,9 @@ class FeatWarmupResult:
     full_parse_phase: WarmupPhaseResult
 
 
-def _run_phase(paths: Iterable[Path], read: Callable[[Path], object], phase_name: str) -> WarmupPhaseResult:
+def _run_phase(
+    paths: Iterable[Path], read: Callable[[Path], FeatDocument | FeatFrontmatterSummary], phase_name: str
+) -> WarmupPhaseResult:
     """Run one warmup phase's own ``read`` callback over ``paths``, crash-contained.
 
     Parameters
@@ -146,6 +155,14 @@ def warmup_feat_caches() -> FeatWarmupResult:
     by the full-parse phase over the same path list -- never raising, and
     never blocking on anything other than the two phases' own (bounded,
     cache-backed) reads.
+
+    The path list is snapshotted once at the top of this function and
+    reused for both phases. A folder created after the snapshot (e.g. by
+    a concurrent ``create_feat`` call) is invisible to this run -- the
+    sub-second frontmatter phase is already past, and the multi-minute
+    full-parse phase does not re-scan the directory -- and converges
+    instead via that write's own dual-stage cache warming (Task 110.130)
+    or at this function's own next invocation.
 
     Returns
     -------
