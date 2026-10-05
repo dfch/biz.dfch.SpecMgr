@@ -54,25 +54,34 @@ pattern instead of triplicating it (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
   (:class:`~biz.dfch.specmgr.general.models.similarity_hit.SimilarityHit`,
   the plan's own hit shape ``type``/``id``/``title``/``status``/``path``/
   ``score``, ACC-001/ACC-002) from a collected candidate and its score.
-- :func:`warmup_similarity_cache` / :func:`start_similarity_warmup` -- the
-  REQ-011 background warmup: the full default corpus (no ``target_types``
-  restriction) through the same :func:`collect_candidates` path. The startup
-  gate (:func:`start_similarity_warmup`, called from ``server.py``'s own
-  ``_lifespan``) is the ``SPECMGR_SIMILARITY_DISABLED`` presence flag
-  **only** -- lightweight and synchronous, so server startup is never
-  blocked by the embedding backend (Phase 5, Task 5.2, REQ-011's strict
-  reading); the flag present means no thread is started at all (a no-op).
-  The full availability probe (``_embedding._similarity_availability()``,
-  the same check both tool bodies run first thing, REQ-003 -- the lazy
+- :func:`warmup_similarity_cache` -- the REQ-011 background warmup *phase
+  body*: embeds the full default corpus (no ``target_types`` restriction)
+  through the same :func:`collect_candidates` path, never raising. The
+  full availability probe (``_embedding._similarity_availability()``, the
+  same check both tool bodies run first thing, REQ-003 -- the lazy
   ``import fastembed`` plus the eager model load, including the one-time
-  first-use download) runs **inside** the daemon thread
-  (:func:`warmup_similarity_cache`'s first step): a structured unavailable
-  result means the thread exits immediately, without cache writes. When
-  started, the thread is a daemon (it dies with the process -- no shutdown
-  join logic), its entire body is wrapped so that no exception escapes it
+  first-use download) runs **inside this function** (its first step): a
+  structured unavailable result means it returns immediately, without
+  cache writes. Its entire body is wrapped so that no exception escapes it
   (logged and swallowed -- a mid-warmup failure leaves the cache partially
-  warm and the demand path keeps working), and it never blocks the caller
-  (no join at startup).
+  warm and the demand path keeps working).
+
+  **feat-187-list-feat-timeout, Task 110.120: this module no longer owns
+  the startup thread/gate.** The standalone ``start_similarity_warmup``
+  spawner (the ``SPECMGR_SIMILARITY_DISABLED``-gated thread-spawn
+  function that used to be called directly from ``server.py``'s
+  ``_lifespan``) has been retired: :func:`warmup_similarity_cache` is now
+  invoked as phase 3 of the single, unified
+  ``general.tools._startup_warmup.start_startup_warmup`` daemon thread
+  (``specmgr-startup-warmup``), which also runs two new ``feat``-domain
+  warmup phases ahead of it (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44,
+  refining this feature's own ADR 750842b2's **Warmup** sub-decision via
+  its v1.4.0 note). :func:`warmup_similarity_cache` itself, its own
+  availability-probe-first/crash-containment/never-raising body, and the
+  demand path it shares the cache with, are all otherwise unchanged by
+  that move -- only the startup orchestration (the thread name, the gate,
+  and where the thread is started from) relocated to
+  ``general.tools._startup_warmup``.
 
 **Dependency-light.** Standard library + ``python-frontmatter`` (base
 dependency) + the Phase 1/2 ``general.tools`` siblings and the base
@@ -86,20 +95,12 @@ backend.
 from __future__ import annotations
 
 import logging
-import os
-import threading
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 from ..models import SimilarityHit
-from ._embedding import (
-    EmbeddingProvider,
-    SIMILARITY_DISABLED_ENV_VAR,
-    Vector,
-    _similarity_availability,
-    get_default_provider,
-)
+from ._embedding import EmbeddingProvider, Vector, _similarity_availability, get_default_provider
 from ._embedding_cache import read_embedding
 from ._similarity_corpus import candidate_similarity_text, iter_candidate_paths
 from ._similarity_text import SimilarityText
@@ -108,15 +109,9 @@ __all__ = [
     "CollectedCandidate",
     "collect_candidates",
     "make_embed_fn",
-    "start_similarity_warmup",
     "to_similarity_hit",
     "warmup_similarity_cache",
 ]
-
-#: The warmup thread's name (diagnostics: shows up as its own thread in
-#: ``threading.enumerate()``/profilers; a daemon, so it dies with the
-#: process -- no shutdown join logic by design, REQ-011).
-_WARMUP_THREAD_NAME = "specmgr-similarity-warmup"
 
 _logger = logging.getLogger(__name__)
 
@@ -347,50 +342,3 @@ def warmup_similarity_cache() -> None:
         _logger.info("similarity warmup finished: %d candidate(s) embedded into the cache", len(candidates))
     except Exception as ex:
         _logger.warning("similarity warmup failed (the demand path keeps working): %s", ex, exc_info=True)
-
-
-def start_similarity_warmup() -> threading.Thread | None:
-    """Gate on the opt-out flag and start the daemon warmup thread, if enabled (REQ-011).
-
-    The entry point ``server.py``'s ``_lifespan`` calls at startup.
-    Synchronously it checks **only** the lightweight, synchronous
-    ``SPECMGR_SIMILARITY_DISABLED`` presence gate
-    (``os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None`` -- the
-    repo's own env-flag convention, REQ-003): when the flag is present it
-    starts **no thread at all** -- a no-op -- and returns ``None``. When
-    the flag is absent it starts a daemon thread running
-    :func:`warmup_similarity_cache` and returns the thread **without
-    joining it** (REQ-011: warmup must not block server startup -- the
-    thread runs in the background, and as a daemon it dies with the
-    process; no shutdown join logic is added).
-
-    The full availability probe -- the lazy ``import fastembed`` plus the
-    eager model load, including the one-time first-use download (
-    :func:`_embedding._similarity_availability`, the same check both
-    similarity tools run first thing in their bodies, REQ-003) -- runs
-    **inside that daemon thread** (:func:`warmup_similarity_cache`'s first
-    step; Phase 5, Task 5.2), never on this startup path: server readiness
-    is therefore never blocked by the embedding backend, and on a
-    first/air-gapped run the model download -- if it happens at all -- is
-    backgrounded. When the probe is unavailable the thread exits
-    immediately without cache writes (the demand path serves the structured
-    unavailable result); when it is available the thread embeds the full
-    default corpus.
-
-    Args:
-        (none -- the gate reads only the environment; the backend probe
-        runs in the thread the gate starts).
-
-    Returns:
-        The started daemon thread, or ``None`` when the
-        ``SPECMGR_SIMILARITY_DISABLED`` flag is present and no thread was
-        started.
-    """
-    if os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None:
-        result: threading.Thread | None = None
-        return result
-
-    thread = threading.Thread(target=warmup_similarity_cache, daemon=True, name=_WARMUP_THREAD_NAME)
-    thread.start()
-    result = thread
-    return result

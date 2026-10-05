@@ -79,9 +79,17 @@ FeatDocument | str | ParseFailureResult
     exists but fails to parse, a
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
     (``error``/``path``/``id``) is returned instead of raising --
-    ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
-    the same file (identical field path and cause, including the trailing pydantic
-    documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+    ``get_feat`` always fully parses, remaining the unconditional,
+    full-fidelity authority for this document; its ``error`` converges
+    to byte-identical to ``list_feat``'s own failed-row ``error`` for
+    the same file once ``list_feat``'s background warmup (or this very
+    call) has fully parsed it -- before that (or under
+    ``SPECMGR_FEAT_WARMUP_DISABLED``), ``list_feat``'s row may instead
+    carry a transiently-healthy or dirty-stage-specific ``error`` (ADR
+    3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract,
+    time-qualifying ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c for
+    ``feat`` only -- every other domain's list/get error byte-identity
+    stays unconditional);
     ``raw=True`` never returns a broken document's raw text.
     Raises :class:`._paths.FeatNotFoundError` if no feature has this id.
 

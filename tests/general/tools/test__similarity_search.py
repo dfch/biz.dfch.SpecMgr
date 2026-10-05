@@ -19,49 +19,74 @@
 (feat-134, Phase 3, Task 3.7 + the shared per-candidate loop).
 
 Covers ACC-014 (the warmup seam: enabled -> a daemon thread named
-``specmgr-similarity-warmup`` populates the cache without blocking; flag set ->
-``start_similarity_warmup`` returns ``None`` and starts no thread; backend
-missing -> the thread still starts (the startup gate is the flag only, Phase
-5, Task 5.2), runs the availability probe inside itself, and exits without
-cache writes or a provider installed; ``warmup_similarity_cache`` swallows a
-mid-corpus provider failure, leaving the cache partially warm, never raising;
-``server._lifespan`` completes without raising in both the enabled and disabled
-cases) plus the unit behavior of ``collect_candidates`` (the vanished-file
-skip), ``to_similarity_hit`` (field assembly, plain-``float`` score), and
-``make_embed_fn`` (embeds the candidate's own embedding text).
+``specmgr-startup-warmup`` populates the cache without blocking; backend
+missing -> the thread still starts (the similarity phase's own availability
+probe runs inside itself, Phase 5, Task 5.2), and exits without cache writes
+or a provider installed; ``warmup_similarity_cache`` swallows a mid-corpus
+provider failure, leaving the cache partially warm, never raising;
+``server._lifespan`` completes without raising in both the enabled and
+fully-disabled cases) plus the unit behavior of ``collect_candidates`` (the
+vanished-file skip), ``to_similarity_hit`` (field assembly, plain-``float``
+score), and ``make_embed_fn`` (embeds the candidate's own embedding text).
+
+**feat-187-list-feat-timeout, Task 110.120.** The standalone
+``start_similarity_warmup`` spawner this module's own tests used to drive
+directly has been retired: ``general.tools._startup_warmup.start_startup_warmup``
+is the new, unified entry point (feat frontmatter phase -> feat full-parse
+phase -> this module's own, unchanged ``warmup_similarity_cache`` body as
+phase 3), so the warmup-seam tests below now drive that spawner instead.
+``SPECMGR_SIMILARITY_DISABLED`` alone no longer means "no thread at all" --
+the unified thread still starts for the (here: empty, so near-instant)
+``feat`` phases -- it now means "no similarity phase, no embed work"
+instead; the ``SimilarityTestCase`` fixture's own ``SPECMGR_FEAT_DIR`` temp
+dir has no feature folders, so the ``feat`` phases are an immediate no-op in
+every test below, isolating these assertions to the similarity phase alone.
+The true "no thread at all" invariant now requires *both*
+``SPECMGR_SIMILARITY_DISABLED`` and ``SPECMGR_FEAT_WARMUP_DISABLED`` to be
+set (ACC-009's exhaustive four-combination coverage is Phase 120's own,
+later addition; this module's lifespan test below only pins the
+both-flags-set no-op case it already covered under the old design).
 """
 
 from __future__ import annotations
 
 import asyncio
+import os
 import threading
 import unittest
+from unittest import mock
 
 from biz.dfch.specmgr.general.tools import _embedding as embedding_module
 from biz.dfch.specmgr.general.tools._embedding_cache import _cache as embedding_cache_singleton
 from biz.dfch.specmgr.general.tools._similarity_corpus import candidate_similarity_text, iter_candidate_paths
 from biz.dfch.specmgr.general.tools._similarity_search import (
-    _WARMUP_THREAD_NAME,
     CollectedCandidate,
     collect_candidates,
     make_embed_fn,
-    start_similarity_warmup,
     to_similarity_hit,
     warmup_similarity_cache,
 )
+from biz.dfch.specmgr.general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR, start_startup_warmup
 
 from ._similarity_helpers import block_fastembed_import, reset_default_provider, SimilarityTestCase
 
+#: The unified thread's own name (``general.tools._startup_warmup``'s own
+#: module-private constant) -- duplicated here rather than imported, since
+#: it is intentionally not part of that module's public ``__all__``.
+_WARMUP_THREAD_NAME = "specmgr-startup-warmup"
+
 
 class TestStartSimilarityWarmup(SimilarityTestCase):
-    """ACC-014: the ``start_similarity_warmup`` gate + thread seam."""
+    """ACC-014: the unified ``start_startup_warmup`` gate + thread seam (feat-187-list-feat-timeout,
+    Task 110.120 -- this class used to drive the now-retired, similarity-only ``start_similarity_warmup``
+    directly; the fixture's empty ``feat`` corpus keeps the new feat phases a near-instant no-op here)."""
 
     def test_enabled_starts_a_named_daemon_thread_and_populates_the_cache(self) -> None:
         self.seed_req("Doc A", "alpha")
         self.seed_req("Doc B", "beta")
         fake = self.install_fake()
 
-        thread = start_similarity_warmup()
+        thread = start_startup_warmup()
 
         self.assertIsInstance(thread, threading.Thread)
         self.assertTrue(thread.daemon)
@@ -71,29 +96,35 @@ class TestStartSimilarityWarmup(SimilarityTestCase):
         self.assertEqual(fake.embed_calls, 2)
         self.assertEqual(len(embedding_cache_singleton._entries), 2)  # pylint: disable=protected-access
 
-    def test_disabled_flag_returns_none_and_starts_no_thread(self) -> None:
+    def test_similarity_disabled_flag_alone_starts_a_thread_but_runs_no_similarity_phase(self) -> None:
+        """SPECMGR_SIMILARITY_DISABLED alone: the unified thread still starts (for the feat phases),
+        but the similarity phase itself never runs -- no embed calls, no cache writes (feat-187-list-feat-timeout,
+        Task 110.120; this is the "no thread at all" assertion the pre-unification design made here, now
+        corrected -- see ``test_disabled_lifespan_completes_without_raising_and_starts_no_thread`` below for
+        the genuine both-flags-set no-thread invariant)."""
         self.seed_req("Doc A", "alpha")
         fake = self.install_fake()
         self.set_disabled("1")
 
-        thread = start_similarity_warmup()
+        thread = start_startup_warmup()
 
-        self.assertIsNone(thread)
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
         self.assertEqual(fake.embed_calls, 0)
         self.assertEqual(len(embedding_cache_singleton._entries), 0)  # pylint: disable=protected-access
-        self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
 
     def test_backend_missing_starts_a_thread_that_exits_without_cache_writes(self) -> None:
         self.seed_req("Doc A", "alpha")
         reset_default_provider()
 
-        # The startup gate is the env flag only (Phase 5, Task 5.2): with the
+        # The similarity phase's own startup gate is the env flag only (Phase 5, Task 5.2): with the
         # backend missing, a thread is still started. Join it *inside* the
         # import blocker, so the thread's own availability probe (the lazy
         # ``import fastembed``) is guaranteed to run against the blocked
         # boundary and fail, not after the blocker is restored.
         with block_fastembed_import():
-            thread = start_similarity_warmup()
+            thread = start_startup_warmup()
             self.assertIsInstance(thread, threading.Thread)
             self.assertTrue(thread.daemon)
             self.assertEqual(thread.name, _WARMUP_THREAD_NAME)
@@ -139,6 +170,11 @@ class TestServerLifespan(SimilarityTestCase):
         self.assertGreater(fake.embed_calls, 0)
 
     def test_disabled_lifespan_completes_without_raising_and_starts_no_thread(self) -> None:
+        """The true "no thread at all" invariant now requires BOTH opt-out flags (feat-187-list-feat-timeout,
+        Task 110.120): SPECMGR_SIMILARITY_DISABLED alone would still start the unified thread for the
+        (here: empty) feat phases -- ACC-009's exhaustive four-combination coverage is Phase 120's own,
+        later addition; this test only re-pins the both-flags-set no-op case the pre-unification design
+        already covered under a single flag."""
         from biz.dfch.specmgr.server import _lifespan, mcp
 
         self.seed_req("Doc A", "alpha")
@@ -146,8 +182,9 @@ class TestServerLifespan(SimilarityTestCase):
         self.set_disabled("1")
 
         async def drive() -> None:
-            async with _lifespan(mcp):
-                pass
+            with mock.patch.dict(os.environ, {FEAT_WARMUP_DISABLED_ENV_VAR: "1"}):
+                async with _lifespan(mcp):
+                    pass
 
         asyncio.run(drive())
         self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
