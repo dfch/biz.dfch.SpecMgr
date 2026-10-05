@@ -29,25 +29,12 @@ delete any document, and never commit.
   findings.
 - **`/refine-feature <id>` already routes to `feat-refiner`.** If the user
   typed it, let it run.
-- **Otherwise, run the same workflow yourself** -- do not re-derive a
-  different checklist; read `.opencode/agent/feat-refiner.md` for the
-  authoritative checklist and report format and apply it verbatim:
-  1. Load `.specmgr/feat/<id>/README.md` via
-     `get_feat(id, raw=True, numbered=True)`, plus `history.md` if present.
-  2. Walk the reference graph transitively from
-     `list_references("feat", id)`: for each resolved reference, call
-     `list_references` again on it, tracking every visited `(type, id)`
-     pair so a cycle (two features depending on each other, a DEC citing
-     the very FEAT that cites it, ...) is detected, not looped forever.
-  3. Apply `feat-refiner`'s checklist (traceability, Phase/Task numbering,
-     cross-reference integrity, scope coherence, status consistency,
-     clarity, repo-convention consistency) against the plan and the graph.
-  4. Report in `feat-refiner`'s exact section order and format: Errors
-     (E1, E2, ...) / Gaps (G1, ...) / Discrepancies (D1, ...) /
-     Improvements (I1, ...) / Positives (P1, ...), each a
-     `- [ ] <ID>: <description>` line citing a README.md line/section,
-     plus the visited-nodes appendix.
+- **Otherwise, run the same workflow yourself.** Read
+  `.opencode/agent/feat-refiner.md` in full and follow it verbatim as your
+  operating instructions for this task -- do not re-derive a different
+  checklist, workflow, or report format; that file (plus, in this repo,
+  `.specmgr/conventions/feat-refiner.md` if it exists) is the single
+  source of truth, and the two must not drift apart.
 
-If `id` is missing, ambiguous, or not a valid `feat-NNN-slug`, ask (via
-your host's question mechanism) rather than guessing. Never propose fixes
-as a diff -- describe them in prose; the user decides what to act on.
+Never propose fixes as a diff -- describe them in prose; the user decides
+what to act on.

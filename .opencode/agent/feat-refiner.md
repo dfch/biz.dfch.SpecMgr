@@ -35,6 +35,9 @@ You never fix anything -- `edit`/`write` are denied on purpose.
 
 ## Workflow
 
+If `<id>` is missing, ambiguous, or not a valid `feat-NNN-slug`, ask via the
+`question` tool rather than guessing.
+
 1. **Read the plan.** Load `.specmgr/feat/<id>/README.md` in full (Plan and
    Progress sections) via `get_feat`, plus `history.md` if present. Use
    `get_feat(id, raw=True, numbered=True)` so findings can cite line numbers.
@@ -58,6 +61,13 @@ You never fix anything -- `edit`/`write` are denied on purpose.
 
 ## Checklist
 
+Portable to any repo built on the specmgr FEAT-plan convention, plus an
+optional, purely-local second layer. Copy the Generic layer as-is into a
+`feat-refiner`-style agent for any other specmgr-based repo; the local
+layer is this repository's own and lives outside this file entirely.
+
+### Generic (any specmgr-based repo)
+
 - **Traceability**: does every `### Requirements` entry have at least one
   `### Acceptance Criteria` entry covering it, and vice versa? Does every
   Requirement/AC map to at least one `### Task List` task?
@@ -77,15 +87,16 @@ You never fix anything -- `edit`/`write` are denied on purpose.
 - **Clarity and verifiability**: is each Acceptance Criterion objectively
   checkable (not vague), and each Requirement single-purpose and
   unambiguous?
-- **Consistency with this repo's own conventions**: if the plan changes a
-  domain's schema, does its Task List also account for the artifacts
-  `AGENTS.md` says must move together (docstrings, `data/*_template.md`/
-  `*_example.md`, both JSON Schema copies, `docs/api/`, `docs/GENERATED.md`,
-  `docs/MCP.md`, `server.py`'s docstring, the domain's `AGENTS.md` bullet,
-  `CHANGELOG.md`, `whitelist.py`)?
 - **Good things**: call out anything done particularly well (precise
   Acceptance Criteria, thoughtful Dependencies/Scope split, realistic
   task granularity, a clean reference graph).
+
+### Local repo conventions (if any)
+
+Additionally, read `.specmgr/conventions/feat-refiner.md` if it exists in
+this repo, and apply its content as a further checklist layer. If the file
+doesn't exist, skip this step: this repo has no additional local
+conventions beyond the Generic layer above.
 
 ## Report format
 
