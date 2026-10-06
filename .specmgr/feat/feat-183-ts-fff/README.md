@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
-status: planning
+status: progress
 type: feat
-updated: '2026-10-04T09:02:42.694+02:00'
+updated: '2026-10-06T09:13:53.751+02:00'
 version: 1.0.0
 ---
 
@@ -80,15 +80,68 @@ records (ADR 23a14195, ADR 8c889262) are deliberately left untouched -- see Scop
 
 ##### Baseline Inventory (Task 100.105)
 
-_To be completed by Task 100.105: the exact in-scope file set and occurrence count that
-ACC-003's scoped search targets (planning-review expectation: 29 `src/` files with 33
-occurrences, `AGENTS.md` line 945, `tests/general/tools/test_validate.py` line 895, plus
-the generated `docs/api` pages and `docs/`/packaged `data/` schema copies)._
+Anchor: HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025` (verified via `git rev-parse HEAD`).
+Inventory is over tracked files as of that commit plus no `src/` changes (this phase adds only
+untracked `session-prompt.md`/`session-NN.md` siblings here). Method: notation-shaped
+`git grep -E 'ss\.fff|SS\.fff'` over tracked files (gitignored `build/` and
+`.opencode/node_modules/` are invisible to it by construction), plus a full case-insensitive
+`fff` sweep to classify every non-notation hit. **Total: 48 in-scope files, 53 occurrences.**
+
+- `src/` core models (11 files, 15 occurrences; all paths under `src/biz/dfch/specmgr/`):
+  `models/md/frontmatter.py:56,97,187` (line 187 = the sole user-visible runtime error string),
+  `models/md/_timestamps.py:23,90`, `models/md/_ordering.py:29`,
+  `general/tools/_timestamps.py:27,79`, `tsk/models/v1/body.py:114`,
+  `vcr/models/v1/body.py:370`, `sysrs/models/v1/body.py:1008`, `sop/models/v1/body.py:437`,
+  `dec/models/v1/body.py:466`, `feat/models/v1/body.py:539`, `feat/models/v1/frontmatter.py:32`.
+- `src/` packaged instruction data (12 files, 12 occurrences, one per file):
+  `tsk` create:28/update:44, `dec` create:64/update:78, `sop` create:64/update:78,
+  `feat` create:73/update:64, `vcr` create:48/update:59, `sysrs` create:95/update:81
+  (`<d>/data/<d>_{create,update}_instructions.md`).
+- `src/` packaged `data/` JSON schemas (6 files, 6 occurrences): `tsk`:179, `dec`:651,
+  `sop`:595, `feat`:539, `vcr`:112, `sysrs`:1067.
+- `docs/` JSON schema copies (6 files, 6 occurrences): the same six `<d>_schema.json` files at
+  the same line numbers; all six pairs verified byte-identical to their packaged `data/`
+  copies via `cmp`.
+- `docs/api` generated pages (11 files, 12 occurrences): `models.md._timestamps:8,61`,
+  `general.tools._timestamps:12,57`, `models.md._ordering:14`, `models.md.frontmatter:53`,
+  `tsk.models.v1.body:1392`, `dec.models.v1.body:19490`, `sop.models.v1.body:16948`,
+  `feat.models.v1.body:21762`, `feat.models.v1.frontmatter:17`, `vcr.models.v1.body:4313`,
+  `sysrs.models.v1.body:32254` (all `biz.dfch.specmgr.*` page names).
+- `AGENTS.md:1011` (1 file, 1 occurrence).
+- `tests/general/tools/test_validate.py:895` (1 file, 1 occurrence; pins the error-message text).
+
+Excluded and why: the `#fff` CSS color literal (`commands/coverage_badge.py:111,124` and its
+generated `docs/coverage.svg`); the two historical ADRs (`docs/adr/23a14195-...:60,61`,
+`docs/adr/8c889262-...:15,36`); `CHANGELOG.md:564,751,887,1208,1238`; `docs/tsk/*.md`
+historical task records (plan expected them to carry the only uppercase `SS.fff` variant;
+actual at HEAD: zero `fff` occurrences); other `.specmgr/feat/*` historical feature records;
+this README's own deliberate references; the new `session-prompt.md`/`session-NN.md`
+siblings' deliberate quotes; incidental hex `fff` runs in session ids, git hashes, `uv.lock`,
+and a binary PDF.
+
+Deltas vs the plan's second-pass expectations: every verified expectation holds except two --
+the total instruction-file count is 32, not 33 (12 of 32 carry the notation, as expected),
+and `docs/tsk/*.md` carry zero occurrences, not the expected uppercase variant (excluded
+either way).
 
 ##### Root Cause (ACC-001)
 
-_To be completed by Task 100.110, after the independent agent-session evidence from Task
-100.100 has been collected._
+The three fresh-context baseline sessions (`session-01.md` through `session-03.md`, prompted
+verbatim per `session-prompt.md`) all substituted the placeholder correctly -- baseline rate
+3/3, zero literal `fff` copies -- and each grounded its millisecond choice in the concrete
+`e.g. ### 2026-08-19 05:42:00.000+02:00` line that today's instruction-file wording ships
+alongside the notation (session-01: `.fff` "is the required 3-digit millisecond field";
+session-02: `.fff = .000`; session-03: "the mandatory `.fff` millisecond field gets `.000`").
+The root cause is therefore not the notation under its full, example-anchored presentation,
+but exposure without that anchor: `fff` is a bare three-letter token that is not ISO 8601 and
+that nothing in the notation marks as a digit slot, so wherever an agent meets the notation
+alone -- notably the example-free runtime error message
+(`models/md/frontmatter.py:187`, whose text is the notation itself) -- a surface
+pattern-fill reading copies it verbatim, as issue #183 reports. The repo's own history
+corroborates the confusion: the feat-156 README records its own `### Updates` entry headings
+having been written *without* the millisecond slot at all ("lacked the `.fff` milliseconds the
+`UpdateEntry` heading regex mandates") because the slot's content was unguessable from the
+notation.
 
 ##### Chosen Notation and Rationale (ACC-002)
 
@@ -104,9 +157,9 @@ been validated per Task 110.110._
 
 #### Phase 100: Root-cause investigation
 
-- [ ] Task 100.100: Bump this README's frontmatter `status` to `progress` (via the generic `set_status` tool, `type="feat"`) and prepend an Updates entry recording the transition, spawn at least three independent, fresh-context `task`-tool agent sessions (subagent type `explore` -- the only general-purpose fresh-context research agent; no specialized agent, to keep the prompt neutral), present each with the current, unmodified instruction-file/docstring timestamp wording and a neutral prompt, and record their literal interpretations/misreadings verbatim in one `session-NN.md` sibling per session (`session-01.md`, ...) -- together with the shared neutral prompt template in a `session-prompt.md` sibling (REQ-001). -- depends on: none
-- [ ] Task 100.105: Produce the baseline inventory of the in-scope file set -- every file carrying the `fff` placeholder notation as of the current HEAD commit (record the exact SHA in the subsection), with file:line occurrences -- and record it in this README's `#### Investigation Findings` > `##### Baseline Inventory` subsection (ACC-003's scoped search targets this set). -- depends on: none
-- [ ] Task 100.110: Synthesize the collected evidence into a short root-cause summary and record it in this README's `#### Investigation Findings` > `##### Root Cause (ACC-001)` subsection (ACC-001). -- depends on: Task 100.100
+- [x] Task 100.100: Bump this README's frontmatter `status` to `progress` (via the generic `set_status` tool, `type="feat"`) and prepend an Updates entry recording the transition, spawn at least three independent, fresh-context `task`-tool agent sessions (subagent type `explore` -- the only general-purpose fresh-context research agent; no specialized agent, to keep the prompt neutral), present each with the current, unmodified instruction-file/docstring timestamp wording and a neutral prompt, and record their literal interpretations/misreadings verbatim in one `session-NN.md` sibling per session (`session-01.md`, ...) -- together with the shared neutral prompt template in a `session-prompt.md` sibling (REQ-001). -- depends on: none
+- [x] Task 100.105: Produce the baseline inventory of the in-scope file set -- every file carrying the `fff` placeholder notation as of the current HEAD commit (record the exact SHA in the subsection), with file:line occurrences -- and record it in this README's `#### Investigation Findings` > `##### Baseline Inventory` subsection (ACC-003's scoped search targets this set). -- depends on: none
+- [x] Task 100.110: Synthesize the collected evidence into a short root-cause summary and record it in this README's `#### Investigation Findings` > `##### Root Cause (ACC-001)` subsection (ACC-001). -- depends on: Task 100.100
 
 #### Phase 110: Notation selection
 
@@ -141,9 +194,36 @@ investigation or implementation has started yet.
 3 errors, 3 gaps, 4 discrepancies, and 4 improvements (see the `Plan refined` Updates
 entry); still planning stage.
 
+**As of 2026-10-06**: Phase 100 (root-cause investigation) complete; feature in `progress`.
+Baseline measured (3/3 correct substitutions under today's `fff` wording, zero verbatim
+copies), inventory recorded (48 in-scope files, 53 occurrences), root cause summarized in
+`#### Investigation Findings`. Next: Phase 110 (notation selection).
+
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-06T07:11:20.433Z - Phase 100 complete (root-cause investigation)
+
+Tasks 100.100/100.105/100.110 done. Three independent, fresh-context `explore` sessions
+(verbatim records `session-01.md`-`session-03.md`, shared neutral template and scoring
+protocol `session-prompt.md`) performed the one fixed timestamp task under today's
+unmodified wording: 3/3 correct substitutions, zero literal `fff` copies -- the `fff`
+baseline rate is 100%, feeding Phase 110's pass bar (Task 110.100). Root cause recorded
+under `#### Investigation Findings`: the notation misleads where it is exposed without the
+concrete-example anchor, notably in the example-free runtime error message. Baseline
+inventory recorded (48 in-scope files, 53 occurrences at HEAD
+`25c7f13be4571a5af635a69eb37dcd3bdfb30025`; deltas: 32 instruction files total, not 33;
+`docs/tsk/*.md` carry zero occurrences, not the expected uppercase variant). No `src/` or
+`tests/` file was touched. Mechanism note: the implementing agent's own `task` tool is
+denied, so each trial ran as a headless `opencode run` relay that invoked the `explore`
+subagent via the `task` tool with the template verified byte-identical from the raw event
+stream.
+
+#### 2026-10-06T06:02:59.173Z - Status planning → progress (Phase 100 start)
+
+Frontmatter `status` bumped `planning` → `progress` via the generic `set_status` tool
+(`type="feat"`) per Task 100.100. Phase 100 (root-cause investigation) is now in flight.
 
 #### 2026-10-04T06:55:42.756Z - Plan refined (second-pass review findings applied)
 
