@@ -892,7 +892,7 @@ class TestValidateIssue83Regressions(unittest.TestCase):
         self.assertEqual(len(result.errors), 1)
         message = result.errors[0].message
         self.assertIn(
-            "must be the date+time variant 'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.fff' followed by 'Z' "
+            "must be the date+time variant 'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.SSS' followed by 'Z' "
             "or a signed '+HH:mm'/'-HH:mm' offset",
             message,
         )

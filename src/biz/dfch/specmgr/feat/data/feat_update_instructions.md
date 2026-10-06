@@ -61,7 +61,7 @@ revise.
     `### Decisions Made` heading if no comment is present) -- new entries
     go first, since both sections are newest-first, enforced. Each entry's heading is
     `#### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
-    date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (the
+    date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (the
     date/time separator may be `T` or a space; a date-only timestamp is
     rejected), followed by the entry's own update/decision text directly
     under the H4 heading (any markdown content -- multiple paragraphs,

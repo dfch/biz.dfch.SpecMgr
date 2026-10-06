@@ -70,7 +70,7 @@ step 1 if this is genuinely a new feature.
   - `### Updates` -- mandatory, an optional leading HTML comment (e.g. an
     ordering hint) followed by at least one
     `#### {timestamp} ( - | : ) {title}` entry, newest-first, where
-    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` +
+    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` +
     `Z` or `±HH:mm` (the date/time separator may be `T` or a space; a
     date-only timestamp is rejected), joined to the title by `" - "` or
     `" : "` (the em-dash separator is rejected), each with the entry's own

@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
-status: progress
+status: review
 type: feat
-updated: '2026-10-06T09:13:53.751+02:00'
+updated: '2026-10-06T21:31:40.511+02:00'
 version: 1.0.0
 ---
 
@@ -209,13 +209,13 @@ occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 
 #### Phase 120: Rollout
 
-- [ ] Task 120.100: Verify by search that no packaged template/example carries the `fff` placeholder notation (expected: zero occurrences, concrete sample timestamps only); update any occurrence found to the new notation. -- depends on: Task 110.120
-- [ ] Task 120.105: Update the 12 packaged instruction files that cite the `fff` notation -- `*_create_instructions.md` and `*_update_instructions.md` in `tsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`. -- depends on: Task 110.120
-- [ ] Task 120.110: Update the core sources -- the runtime error string in `models/md/frontmatter.py` (the only user-visible error text carrying the notation) and the docstring/comment mentions in `models/md/_timestamps.py`, `models/md/_ordering.py`, `general/tools/_timestamps.py`, and the 7 per-domain model files (`tsk`/`vcr`/`sysrs`/`sop`/`dec` `models/v1/body.py`, plus `feat` `models/v1/body.py` and `feat` `models/v1/frontmatter.py`). -- depends on: Task 110.120
-- [ ] Task 120.115: Update the test that pins the exact literal error-message text containing the old notation (`tests/general/tools/test_validate.py`) to match the new notation. -- depends on: Task 120.110
-- [ ] Task 120.120: Regenerate the affected artifacts -- `uv run --frozen specmgr schema` for the `docs/` schema copies, `uv run --frozen specmgr schema --type <d> --output-dir src/biz/dfch/specmgr/<d>/data` for the 6 packaged `data/` schema copies served by `specmgr://<d>/schema` (dec/feat/sop/sysrs/tsk/vcr are the only schema files carrying the notation), and `uv run --frozen specmgr docs` for `docs/api`/`docs/GENERATED.md` (`docs/adr/README.md` is unaffected -- no ADR changes). -- depends on: Task 120.110
-- [ ] Task 120.130: Update `AGENTS.md`'s own mentions of the notation. -- depends on: Task 110.120
-- [ ] Task 120.140: Scoped search (per ACC-003's pattern/exclusion rules, targeting Task 100.105's baseline file set) confirms no remaining `fff`-as-placeholder occurrences in in-scope files; full quality gate green (ACC-006); bump this README's frontmatter `status` to `review` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 120.100, Task 120.105, Task 120.115, Task 120.120, Task 120.130
+- [x] Task 120.100: Verify by search that no packaged template/example carries the `fff` placeholder notation (expected: zero occurrences, concrete sample timestamps only); update any occurrence found to the new notation. -- depends on: Task 110.120
+- [x] Task 120.105: Update the 12 packaged instruction files that cite the `fff` notation -- `*_create_instructions.md` and `*_update_instructions.md` in `tsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`. -- depends on: Task 110.120
+- [x] Task 120.110: Update the core sources -- the runtime error string in `models/md/frontmatter.py` (the only user-visible error text carrying the notation) and the docstring/comment mentions in `models/md/_timestamps.py`, `models/md/_ordering.py`, `general/tools/_timestamps.py`, and the 7 per-domain model files (`tsk`/`vcr`/`sysrs`/`sop`/`dec` `models/v1/body.py`, plus `feat` `models/v1/body.py` and `feat` `models/v1/frontmatter.py`). -- depends on: Task 110.120
+- [x] Task 120.115: Update the test that pins the exact literal error-message text containing the old notation (`tests/general/tools/test_validate.py`) to match the new notation. -- depends on: Task 120.110
+- [x] Task 120.120: Regenerate the affected artifacts -- `uv run --frozen specmgr schema` for the `docs/` schema copies, `uv run --frozen specmgr schema --type <d> --output-dir src/biz/dfch/specmgr/<d>/data` for the 6 packaged `data/` schema copies served by `specmgr://<d>/schema` (dec/feat/sop/sysrs/tsk/vcr are the only schema files carrying the notation), and `uv run --frozen specmgr docs` for `docs/api`/`docs/GENERATED.md` (`docs/adr/README.md` is unaffected -- no ADR changes). -- depends on: Task 120.110
+- [x] Task 120.130: Update `AGENTS.md`'s own mentions of the notation. -- depends on: Task 110.120
+- [x] Task 120.140: Scoped search (per ACC-003's pattern/exclusion rules, targeting Task 100.105's baseline file set) confirms no remaining `fff`-as-placeholder occurrences in in-scope files; full quality gate green (ACC-006); bump this README's frontmatter `status` to `review` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 120.100, Task 120.105, Task 120.115, Task 120.120, Task 120.130
 
 #### Phase 130: Closeout
 
@@ -225,6 +225,12 @@ occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-06**: Phase 120 (rollout) complete; feature in `review`. The `SSS`
+notation substituted across the whole Task 100.105 baseline inventory (11 core
+sources, 12 packaged instruction files, the test pin, `AGENTS.md`, plus the
+regenerated schema copies and `docs/api` pages); ACC-003's scoped residual search
+and the full quality gate green (pytest 4080 passed). Next: Phase 130 (closeout).
 
 **As of 2026-10-06**: Phase 110 (notation selection) complete; feature in `progress`. All three
 candidate notations (`SSS`, `ms`, `sss`) pass the pre-defined pass bar (3/3 correct substitutions
@@ -248,6 +254,33 @@ copies), inventory recorded (48 in-scope files, 53 occurrences), root cause summ
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-06T21:30:12.033+02:00 - Phase 120 complete (rollout; status progress → review)
+
+Tasks 120.100/120.105/120.110/120.115/120.120/120.130/120.140 done. Mechanical `fff` →
+`SSS` token substitution across the entire Task 100.105 baseline file set (48 files,
+53 occurrences): the 11 core model sources -- including the sole user-visible runtime
+error string in `models/md/frontmatter.py` (wording only; every accepted format,
+separator, and validation regex unchanged per REQ-004) -- the 12 packaged instruction
+files (pure substitution, one line each, no rewording), the test pin in
+`tests/general/tools/test_validate.py`, and `AGENTS.md`. Task 120.100 re-verified all
+24 packaged templates/examples: zero notation occurrences (concrete sample timestamps
+only), so no update was needed there. Regenerated: the 6 `docs/` and 6 packaged
+`data/` schema copies (all 6 pairs verified byte-identical via `cmp`; a second run of
+every generator is a no-op; the generated diffs contain only the substitution) and the
+11 `docs/api` pages (`docs/GENERATED.md` rewritten byte-identical; `docs/MCP.md` and
+`docs/adr/README.md` untouched). ACC-003 scoped residual search: zero
+`ss.fff|SS.fff` remains in any in-scope file -- every remaining repo-wide hit is the
+documented exclusion set (the two historical ADRs, `CHANGELOG.md`, other
+`.specmgr/feat/*` historical records, this feature's own README/session files, the
+`#fff` CSS literals, lockfile hashes, and the binary PDF). Full quality gate green:
+ruff format/check, vulture, pytest 4080 passed, `specmgr docs`/`specmgr adr-toc`
+no-op. Environment delta: the worktree's `.venv` editable install initially pointed
+at the main checkout; reinstalled via `uv sync --all-extras --frozen
+--reinstall-package biz-dfch-specmgr` so all generators ran against worktree code
+(the one stray run before that rewrote byte-identical content into the main repo's
+`docs/`, leaving it clean). Frontmatter `status` bumped `progress` → `review` via the
+generic `set_status` tool (`type="feat"`) per Task 120.140 (plan convention I4).
 
 #### 2026-10-06T18:31:46.947Z - Phase 110 complete (notation selection)
 
