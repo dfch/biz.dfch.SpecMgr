@@ -343,18 +343,17 @@ back to `review`. Final sign-off is now pending review.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-> **Note (Task 6.2, REQ-017, added 2026-09-19):** the five entries below dated
-> 2026-09-19 15:20:00.000Z through 2026-09-19 21:00:00.000Z narrate the
-> feature's `status` transitioning to/from the literal word `"in-progress"`.
-> That word is not a value in `FeatFrontmatter.status`'s closed vocabulary
-> (`planning`/`progress`/`review`/`done`); those entries predate the
-> correction to the actual value, `progress`, which `AGENTS.md` and this
-> file's own frontmatter already reflect. They are left as-is (append-only
-> historical log) rather than silently rewritten -- read `"in-progress"`
-> there as `progress` throughout.
-
 #### 2026-09-19 23:00:00.000Z - Phase 6 (Second External-Review Hardening) implemented
 
+**Note (Task 6.2, REQ-017, added 2026-09-19):** the five entries below dated
+2026-09-19 15:20:00.000Z through 2026-09-19 21:00:00.000Z narrate the
+feature's `status` transitioning to/from the literal word `"in-progress"`.
+That word is not a value in `FeatFrontmatter.status`'s closed vocabulary
+(`planning`/`progress`/`review`/`done`); those entries predate the
+correction to the actual value, `progress`, which `AGENTS.md` and this
+file's own frontmatter already reflect. They are left as-is (append-only
+historical log) rather than silently rewritten -- read `"in-progress"`
+there as `progress` throughout.
 Implemented Task 6.1-6.7 in full (including both optional Improvement tasks,
 6.5 and 6.6), touching only `tests/prb/models/v1/test_body.py`,
 `tests/prb/data/test_instructions_consistency.py`,
