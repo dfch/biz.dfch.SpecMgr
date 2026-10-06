@@ -71,13 +71,20 @@ format, as reply item 1 (the exact string) and item 2 (a one-sentence derivation
 ## Mechanism and trial log
 
 Each trial is one independent, fresh-context session of the built-in `explore` subagent (read-only;
-`question` denied) on model `vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2`. The implementing agent's own
+`question` denied); the Phase 100 baseline trials ran on the
+`vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2` endpoint and the nine Phase 110 candidate trials
+(recorded in the Phase 110 section below) on the `vllm-sys0-mtp-1/qwen3.8-27b-bf16-896k-mtp-1`
+endpoint. The implementing agent's own
 `task` tool is denied by its config, so each trial ran as a headless `opencode run` session whose primary
 agent invoked the `task` tool exactly once with `subagent_type="explore"` and the template above verbatim,
 and then relayed the subagent's final answer unchanged. From each trial's raw JSON event stream, the
 relayed `prompt` argument was verified byte-identical to this template (trailing newline aside) and the
 recorded response is the subagent's own `task_result`, cross-checked against the relay's final text. No
-instruction file, docstring, or error message was modified before or during the trials.
+instruction file, docstring, or error message was modified before or during the trials. Consequence of
+the endpoint difference: every trial (baseline and all candidates) scored identically -- 3/3 correct
+substitutions, zero verbatim copies -- so the endpoint difference cannot have changed any pass/fail
+outcome; identical underlying weights across the two endpoints are assumed from the endpoints' naming,
+not verified.
 
 | Trial | Subagent session | Date (UTC) | Score |
 |---|---|---|---|

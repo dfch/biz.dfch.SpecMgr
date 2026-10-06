@@ -4,7 +4,7 @@ created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
 status: review
 type: feat
-updated: '2026-10-06T22:08:37.782+02:00'
+updated: '2026-10-06T23:59:40.362+02:00'
 version: 1.0.0
 ---
 
@@ -42,12 +42,12 @@ records (ADR 23a14195, ADR 8c889262) are deliberately left untouched -- see Scop
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A short written summary of the root-cause investigation (REQ-001) exists, citing concrete evidence (the `session-*.md` verbatim agent-session records and/or historical examples) of why the current notation misleads, recorded in this README's `### Design Notes` > `#### Investigation Findings` > `##### Root Cause (ACC-001)` subsection.
-- [ ] ACC-002: The chosen replacement notation (REQ-002) is documented with its rationale, including the pass-bar validation evidence that it reduces misreading versus the current `fff` notation, recorded in this README's `### Design Notes` > `#### Investigation Findings` > `##### Chosen Notation and Rationale (ACC-002)` subsection.
-- [ ] ACC-003: Every occurrence of the old `fff` placeholder notation describing a millisecond placeholder -- in the in-scope files of Task 100.105's baseline inventory (packaged instruction files, docstrings, the runtime error message, JSON schemas in both the `docs/` and packaged `data/` copies, the generated `docs/api` pages, `AGENTS.md`) -- is updated to the new notation. Verified by a scoped search (not a blind repo-wide `fff` grep) that targets that baseline file set and notation-shaped patterns (e.g. `ss.fff`, `HH:mm:ss.fff`), explicitly excluding unrelated matches (e.g. the `#fff` CSS color literal in `commands/coverage_badge.py`, gitignored `build/`, `.opencode/node_modules/`) and the out-of-scope historical content named in Scope (the two ADRs, `CHANGELOG.md`, `.specmgr/feat/*/session-*.md`, `docs/tsk/*.md`) as well as this README's own deliberate references to the notation being replaced.
-- [ ] ACC-004: No template, example, instruction file, docstring, or error message touched by this feature grows by more than a small, bounded amount of added prose per occurrence (the anti-bloat constraint), verified by reviewing the diff of each touched file.
-- [ ] ACC-005: Every packaged template and example still parses through its own domain's parser after the notation change (no structural/content regression); the packaged instruction files are verified by diff review to carry only the notation substitution, since they are frontmatter-less prompt markdown, not domain documents.
-- [ ] ACC-006: The full quality gate (ruff format/check, vulture, `pytest -n auto --cov`, pylint baseline unchanged) is green after the change, including any test that previously pinned the literal old-notation error-message text (e.g. `tests/general/tools/test_validate.py`) now updated to match the new notation.
+- [x] ACC-001: A short written summary of the root-cause investigation (REQ-001) exists, citing concrete evidence (the `session-*.md` verbatim agent-session records and/or historical examples) of why the current notation misleads, recorded in this README's `### Design Notes` > `#### Investigation Findings` > `##### Root Cause (ACC-001)` subsection.
+- [x] ACC-002: The chosen replacement notation (REQ-002) is documented with its rationale, including the pass-bar validation evidence that it reduces misreading versus the current `fff` notation, recorded in this README's `### Design Notes` > `#### Investigation Findings` > `##### Chosen Notation and Rationale (ACC-002)` subsection.
+- [x] ACC-003: Every occurrence of the old `fff` placeholder notation describing a millisecond placeholder -- in the in-scope files of Task 100.105's baseline inventory (packaged instruction files, docstrings, the runtime error message, JSON schemas in both the `docs/` and packaged `data/` copies, the generated `docs/api` pages, `AGENTS.md`) -- is updated to the new notation. Verified by a scoped search (not a blind repo-wide `fff` grep) that targets that baseline file set and notation-shaped patterns (e.g. `ss.fff`, `HH:mm:ss.fff`), explicitly excluding unrelated matches (e.g. the `#fff` CSS color literal in `commands/coverage_badge.py`, gitignored `build/`, `.opencode/node_modules/`) and the out-of-scope historical content named in Scope (the two ADRs, `CHANGELOG.md`, `.specmgr/feat/*/session-*.md`, `docs/tsk/*.md`) as well as this README's own deliberate references to the notation being replaced.
+- [x] ACC-004: No template, example, instruction file, docstring, or error message touched by this feature grows by more than a small, bounded amount of added prose per occurrence (the anti-bloat constraint), verified by reviewing the diff of each touched file.
+- [x] ACC-005: Every packaged template and example still parses through its own domain's parser after the notation change (no structural/content regression); the packaged instruction files are verified by diff review to carry only the notation substitution, since they are frontmatter-less prompt markdown, not domain documents.
+- [x] ACC-006: The full quality gate (ruff format/check, vulture, `pytest -n auto --cov`, pylint baseline unchanged) is green after the change, including any test that previously pinned the literal old-notation error-message text (e.g. `tests/general/tools/test_validate.py`) now updated to match the new notation.
 
 ### Scope
 
@@ -85,7 +85,7 @@ Inventory is over tracked files as of that commit plus no `src/` changes (this p
 untracked `session-prompt.md`/`session-NN.md` siblings here). Method: notation-shaped
 `git grep -E 'ss\.fff|SS\.fff'` over tracked files (gitignored `build/` and
 `.opencode/node_modules/` are invisible to it by construction), plus a full case-insensitive
-`fff` sweep to classify every non-notation hit. **Total: 48 in-scope files, 53 occurrences.**
+`fff` sweep to classify every non-notation hit. **Total: 48 in-scope files, 54 occurrences.**
 
 - `src/` core models (11 files, 15 occurrences; all paths under `src/biz/dfch/specmgr/`):
   `models/md/frontmatter.py:56,97,187` (line 187 = the sole user-visible runtime error string),
@@ -102,7 +102,7 @@ untracked `session-prompt.md`/`session-NN.md` siblings here). Method: notation-s
 - `docs/` JSON schema copies (6 files, 6 occurrences): the same six `<d>_schema.json` files at
   the same line numbers; all six pairs verified byte-identical to their packaged `data/`
   copies via `cmp`.
-- `docs/api` generated pages (11 files, 12 occurrences): `models.md._timestamps:8,61`,
+- `docs/api` generated pages (11 files, 13 occurrences): `models.md._timestamps:8,61`,
   `general.tools._timestamps:12,57`, `models.md._ordering:14`, `models.md.frontmatter:53`,
   `tsk.models.v1.body:1392`, `dec.models.v1.body:19490`, `sop.models.v1.body:16948`,
   `feat.models.v1.body:21762`, `feat.models.v1.frontmatter:17`, `vcr.models.v1.body:4313`,
@@ -182,9 +182,13 @@ Pass-bar evidence versus `fff`: `SSS` achieves 3/3 correct substitutions and zer
 carries the digit-slot marker, removing the bare non-ISO token the recorded root cause identifies as
 the misreading mechanism on the example-free exposure paths (notably the runtime error message).
 Prompt variants, the full trial log, and the per-candidate computation: `session-prompt.md`.
+Because every trial's prompt carried the concrete `e.g. ...05:42:00.000+02:00` anchor line, the
+quantitative comparison measures no-regression-plus-zero-verbatim-copies under example-anchored
+exposure, and the reduction claim for the example-free exposure path (notably the runtime error
+message) rests on the token's self-descriptiveness rather than on a measured delta.
 
 Phase 120 rollout note: the rollout is the mechanical substitution `fff` -> `SSS` (uppercase, three
-letters) at every in-scope occurrence of Task 100.105's baseline inventory (48 files, 53
+letters) at every in-scope occurrence of Task 100.105's baseline inventory (48 files, 54
 occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 
 ### Related Decisions
@@ -220,11 +224,17 @@ occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 #### Phase 130: Closeout
 
 - [x] Task 130.100: Add a `CHANGELOG.md` `[Unreleased]` entry and comment on GitHub issue #183 with the fix summary. -- depends on: Task 120.140
-- [x] Task 130.110: Final full quality gate; bump this README's frontmatter `status` to `done` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 130.100
+- [x] Task 130.110: Final full quality gate; bump this README's frontmatter `status` to `done` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 130.100 (the task's `done` status bump was superseded for this run -- status remains `review`, `done` deferred until after the PR merge; see the Phase 130 Updates entry)
 
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-06**: Round-1 review findings (feat-reviewer) applied in a docs-only pass over
+this feature folder (no `src/`/`tests/`/`docs/`/`CHANGELOG.md` changes) -- see the `Round-1
+review findings applied` Updates entry. Branch and PR unchanged: frontmatter `status`
+remains `review`, PR #201 open; the `done` transition stays deferred until after the PR
+merge.
 
 **As of 2026-10-06**: Phase 130 (closeout) complete; branch `feat-183-ts-fff` ready
 for PR. `CHANGELOG.md` carries the new `[Unreleased]` `### Changed` entry, GitHub
@@ -244,24 +254,59 @@ and the full quality gate green (pytest 4080 passed). Next: Phase 130 (closeout)
 candidate notations (`SSS`, `ms`, `sss`) pass the pre-defined pass bar (3/3 correct substitutions
 and zero verbatim placeholder copies each, versus the `fff` baseline 3/3); `SSS` is selected and
 recorded in `##### Chosen Notation and Rationale (ACC-002)` with the full pass-bar evidence. Next:
-Phase 120 (rollout of the mechanical `fff` -> `SSS` substitution over the 48-file / 53-occurrence
+Phase 120 (rollout of the mechanical `fff` -> `SSS` substitution over the 48-file / 54-occurrence
 baseline inventory).
 
-**As of 2026-10-03**: Feature just created from GitHub issue #183; planning stage only -- no
-investigation or implementation has started yet.
+**As of 2026-10-06**: Phase 100 (root-cause investigation) complete; feature in `progress`.
+Baseline measured (3/3 correct substitutions under today's `fff` wording, zero verbatim
+copies), inventory recorded (48 in-scope files, 54 occurrences), root cause summarized in
+`#### Investigation Findings`. Next: Phase 110 (notation selection).
 
 **As of 2026-10-04**: Plan refined against the live tree per a review that found and fixed
 3 errors, 3 gaps, 4 discrepancies, and 4 improvements (see the `Plan refined` Updates
 entry); still planning stage.
 
-**As of 2026-10-06**: Phase 100 (root-cause investigation) complete; feature in `progress`.
-Baseline measured (3/3 correct substitutions under today's `fff` wording, zero verbatim
-copies), inventory recorded (48 in-scope files, 53 occurrences), root cause summarized in
-`#### Investigation Findings`. Next: Phase 110 (notation selection).
+**As of 2026-10-03**: Feature just created from GitHub issue #183; planning stage only -- no
+investigation or implementation has started yet.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-06T23:58:11.794+02:00 - Round-1 review findings applied (feat-reviewer)
+
+Docs-only pass over this feature folder (no `src/`/`tests/`/`docs/`/`CHANGELOG.md`
+changes) applying the round-1 feat-reviewer findings. D1: the baseline inventory
+arithmetic corrected -- header total 53 -> 54 in-scope occurrences (48 files
+unchanged), the `docs/api` bullet 12 -> 13 occurrences (its own itemized line
+references enumerate 13), and every propagated restatement of the wrong total
+corrected (the ACC-002 Phase 120 rollout note, the Phase 100/110 `### Current
+Status` entries, the Phase 100/120 Updates entries); re-verified against base
+commit 25c7f13 (`git grep -cE 'ss\.fff|SS\.fff'` = 54 in-scope match lines: 33
+`src/` + 1 `AGENTS.md` + 1 test + 6 `docs/` schemas + 13 `docs/api`) and HEAD
+(exactly 54 `ss.SSS` replacements across the same 48 files, zero residual
+`ss.fff` in scope). D2: the nine Phase 110 `session-04.md`-`session-12.md`
+`Model:` headers corrected to the `vllm-sys0-mtp-1/qwen3.8-27b-bf16-896k-mtp-1`
+endpoint per the opencode session store (the three Phase 100 sessions genuinely
+ran on `mtp-2` and are unchanged); the `## Mechanism and trial log` model
+statement qualified to name both endpoints, with one added line on the
+consequence: every trial (baseline and all candidates) scored identically (3/3
+correct, zero verbatim copies), so the endpoint difference cannot have changed
+any pass/fail outcome; identical underlying weights across the two endpoints are
+assumed from the endpoints' naming, not verified. D3: Task 130.110 annotated at
+the end of its line (the `done` status bump superseded for this run; status
+remains `review`, `done` deferred until after the PR merge), and the six
+`### Acceptance Criteria` boxes checked after the independent review verified
+each criterion as satisfied. D4: `### Current Status` reordered strictly
+newest-first (Phase 130, 120, 110, 100, then the 2026-10-04, then the
+2026-10-03 entry; blocks moved verbatim, no rewording). G1: one sentence on
+the protocol limitation added to the ACC-002 record after the "Pass-bar
+evidence" paragraph: because every trial's prompt carried the concrete
+`e.g. ...05:42:00.000+02:00` anchor line, the comparison measures
+no-regression-plus-zero-verbatim-copies under example-anchored exposure, and
+the reduction claim for the example-free exposure path rests on the token's
+self-descriptiveness rather than a measured delta. Branch and PR unchanged:
+frontmatter `status` remains `review`, PR #201 open.
 
 #### 2026-10-06T22:08:37.782+02:00 - Phase 130 complete (closeout)
 
@@ -286,7 +331,7 @@ phases' precedent). Closeout complete; the branch is ready for PR.
 
 Tasks 120.100/120.105/120.110/120.115/120.120/120.130/120.140 done. Mechanical `fff` →
 `SSS` token substitution across the entire Task 100.105 baseline file set (48 files,
-53 occurrences): the 11 core model sources -- including the sole user-visible runtime
+54 occurrences): the 11 core model sources -- including the sole user-visible runtime
 error string in `models/md/frontmatter.py` (wording only; every accepted format,
 separator, and validation regex unchanged per REQ-004) -- the 12 packaged instruction
 files (pure substitution, one line each, no rewording), the test pin in
@@ -334,7 +379,7 @@ unmodified wording: 3/3 correct substitutions, zero literal `fff` copies -- the 
 baseline rate is 100%, feeding Phase 110's pass bar (Task 110.100). Root cause recorded
 under `#### Investigation Findings`: the notation misleads where it is exposed without the
 concrete-example anchor, notably in the example-free runtime error message. Baseline
-inventory recorded (48 in-scope files, 53 occurrences at HEAD
+inventory recorded (48 in-scope files, 54 occurrences at HEAD
 `25c7f13be4571a5af635a69eb37dcd3bdfb30025`; deltas: 32 instruction files total, not 33;
 `docs/tsk/*.md` carry zero occurrences, not the expected uppercase variant). No `src/` or
 `tests/` file was touched. Mechanism note: the implementing agent's own `task` tool is

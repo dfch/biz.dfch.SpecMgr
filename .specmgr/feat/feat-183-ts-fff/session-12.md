@@ -2,7 +2,7 @@
 
 - Date: 2026-10-06T17:44:13Z (UTC)
 - Subagent: `explore` (built-in, read-only), subagent session `ses_eedaf1bc7ffeg7RH0kL12rYo4r`
-- Model: `vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2`
+- Model: `vllm-sys0-mtp-1/qwen3.8-27b-bf16-896k-mtp-1`
 - Candidate: `sss` (the Phase 100 neutral template with `fff` replaced by `sss` in exactly the three
   quoted-notation occurrences; variant recorded in `session-prompt.md`)
 - Mechanism: same headless `opencode run` relay as Phase 100 (the implementing agent's own `task` tool is
