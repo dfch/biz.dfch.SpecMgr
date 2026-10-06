@@ -1029,10 +1029,10 @@ documentation in `docs/`:
   ADR. It belongs in the feature's own "Decisions Made" log instead if it's
   scoped entirely to that feature's implementation details. When in doubt,
   write the ADR.
-- Existing feature folders: `.specmgr/feat/feat-9-doc-in-specmgr/`
-   (development artifacts migration), `.specmgr/feat/feat-4-use-cases/` (use-case
-   modeling and examples), `.specmgr/feat/feat-5-md-model-parser/` (markdown
-   parsing infrastructure).
+- Existing feature folders: do not enumerate them here — the list grows
+  constantly and any copy kept in this file immediately drifts out of date.
+  Use the `list_feat` MCP tool (or browse `.specmgr/feat/` directly) to see
+  the current, authoritative set.
 
 ## Developer Commands
 
