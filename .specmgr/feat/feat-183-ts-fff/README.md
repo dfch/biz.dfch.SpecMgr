@@ -4,7 +4,7 @@ created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
 status: review
 type: feat
-updated: '2026-10-06T21:31:40.511+02:00'
+updated: '2026-10-06T22:08:37.782+02:00'
 version: 1.0.0
 ---
 
@@ -219,12 +219,20 @@ occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 
 #### Phase 130: Closeout
 
-- [ ] Task 130.100: Add a `CHANGELOG.md` `[Unreleased]` entry and comment on GitHub issue #183 with the fix summary. -- depends on: Task 120.140
-- [ ] Task 130.110: Final full quality gate; bump this README's frontmatter `status` to `done` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 130.100
+- [x] Task 130.100: Add a `CHANGELOG.md` `[Unreleased]` entry and comment on GitHub issue #183 with the fix summary. -- depends on: Task 120.140
+- [x] Task 130.110: Final full quality gate; bump this README's frontmatter `status` to `done` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 130.100
 
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-06**: Phase 130 (closeout) complete; branch `feat-183-ts-fff` ready
+for PR. `CHANGELOG.md` carries the new `[Unreleased]` `### Changed` entry, GitHub
+issue #183 has the fix summary posted and verified, and the final full quality gate
+is green (pytest 4080 passed; `specmgr docs`/`specmgr adr-toc` no-op). The frontmatter
+`status` intentionally remains `review` -- per orchestrator/user instruction the
+`done` transition is deferred until after the PR merge (the plan's Task 130.110
+`done` bump is superseded for this run).
 
 **As of 2026-10-06**: Phase 120 (rollout) complete; feature in `review`. The `SSS`
 notation substituted across the whole Task 100.105 baseline inventory (11 core
@@ -254,6 +262,25 @@ copies), inventory recorded (48 in-scope files, 53 occurrences), root cause summ
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-06T22:08:37.782+02:00 - Phase 130 complete (closeout)
+
+Tasks 130.100/130.110 done. `CHANGELOG.md`: one new `[Unreleased]` entry under
+`### Changed` (category chosen for a human-facing notation/wording change with no
+behavior change), matching the adjacent entries' hard-wrap width and the
+`(feat-183-ts-fff, GitHub issue #183)` provenance idiom. GitHub issue #183: fix
+summary posted via `gh` and verified (comment
+https://github.com/dfch/biz.dfch.SpecMgr/issues/183#issuecomment-6024451872, author
+`dfch`, 2026-10-06T20:04:23Z). Final full quality gate green: ruff format --check
+(1840 files already formatted), ruff check (all checks passed), vulture (clean, no
+output), pytest -n auto --cov=src (4080 passed), `specmgr docs` and
+`specmgr adr-toc` both no-ops (regenerated `docs/` byte-identical; `git status --
+docs/` clean). Status override: the frontmatter `status` intentionally remains
+`review` (not `done`) per orchestrator/user instruction -- the `done` transition is
+deferred until after the PR merge, so the plan's Task 130.110 `done` bump is
+superseded for this run; no `set_status` call was made this phase (the only
+frontmatter change is the `updated` bump for this hand edit, per the prior
+phases' precedent). Closeout complete; the branch is ready for PR.
 
 #### 2026-10-06T21:30:12.033+02:00 - Phase 120 complete (rollout; status progress → review)
 
