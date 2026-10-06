@@ -3,7 +3,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-09-01 12:37:17.000Z'
+updated: '2026-10-06 18:15:56.000Z'
 version: 1.0.0
 ---
 
@@ -212,7 +212,7 @@ a diagnostic.
 
 **Manual fallback:** run the checks individually: `git status`;
 `git fetch && git merge-base --is-ancestor origin/main origin/dev`;
-`gh run list --limit 30 --json databaseId,headSha,headBranch,status,conclusion --jq '[.[] | select(.headBranch == "dev")] | .[0]'` (this `gh` version has no `--branch` flag); `git tag -l vX.Y.Z` and
+`gh run list --limit 30 --json databaseId,headSha,headBranch,event,name,status,conclusion --jq '[.[] | select(.headBranch == "dev" and .name == "Lint and Test" and .event == "push")] | .[0]'` (this `gh` version has no `--branch` flag; the name/event filters keep dependabot "Graph Update" runs and pull_request runs out of the gate — SOP Updates 2026-10-06); `git tag -l vX.Y.Z` and
 `git ls-remote --tags origin vX.Y.Z`; `uv lock --check`;
 `gh auth status`.
 
@@ -383,6 +383,68 @@ directly against the local checkout.
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-10-06 20:15:56.000+02:00 - v0.35.0 released under this SOP; three release-script defects found and fixed
+
+The v0.35.0 release surfaced three `scripts/release.sh` defects, all
+fixed in the script (the SOP's own step descriptions were already
+correct — the script had drifted from them) and covered by a new
+`tests/test_release_sh.py` (a fake-`gh`-shim unittest suite that sources
+the script's helpers — enabled by a `BASH_SOURCE` dispatch guard added
+to the script, behavior-preserving for direct runs):
+
+(1) The dev CI gate matched the wrong workflow. `latest_dev_run_tsv`
+filtered only by `headBranch == "dev"`, so the newest run of ANY
+workflow qualified; at `commit-push`'s wait, the newest dev run was a
+dependabot "Graph Update" run (47 s, green, same head SHA), and the
+gate declared "dev CI green" while the real "Lint and Test" push run
+was still in flight. The helper now also requires the workflow name
+("Lint and Test", the `name:` key of `.github/workflows/ci.yml`) and
+`event == "push"` (pull_request runs also carry `headBranch "dev"`),
+which fixes the same latent hazard in `precheck`'s latest-dev-CI check
+and `status`'s display; Step 2's manual fallback jq one-liner carries
+the same filter now.
+
+(2) `pr-create` fail-fasted on pending checks. This environment's
+`gh` 2.4.0 (Ubuntu's `2.4.0+dfsg1` build) returns `gh pr checks` exit
+code 1 for PENDING checks as well as failing ones (0 only when every
+registered check passes) — verified live when `pr-create` died with
+"checks are failing" although every listed check was pass or pending.
+`wait_for_pr_checks` now distinguishes the two by parsing the output:
+a terminal failure state (`fail`/`failure`/`error`/`cancelled`/
+`canceled`) dies the stage with the output; anything else keeps polling
+within the existing timeout. (The v0.16.0 pending-suite fix had added
+polling, but its pending-detection relied on exit codes this `gh` build
+never returns.)
+
+(3) `pr-merge` exited non-zero after a fully successful merge. The
+local `git merge --ff-only` + push of `main` made GitHub mark the PR
+`MERGED` itself, so the stage's final `gh pr close` hit a GraphQL
+"Could not close the pull request" error. The close is now
+`close_pr_if_open`: it reads the PR state via the REST API (`gh pr
+view`'s default GraphQL field set breaks on today's GitHub in this
+`gh` build — the Projects-classic deprecation error) and skips the
+close when the PR is already `merged`/`closed`. Along the way,
+`status`'s `pr` line now reports `[x] merged (tag vX.Y.Z on
+origin/main)` once the tag is on `main`, instead of the misleading
+"no open PR; main behind dev" for the normal post-release state, and
+`help` no longer truncates its final usage line.
+
+The publication itself was held up by an external outage, not a defect
+in what we ship: TestPyPI's upload/OIDC endpoint (`test.pypi.org/
+legacy/`) returned 503 while the front page and simple index stayed up
+(no incident declared on status.python.org, which does not track
+test.pypi.org components). Both the original publish run and one
+re-run failed at the "Publish to TestPyPI" job's audience retrieval
+with no file uploaded anywhere. The recovery was a manual `gh api
+-X POST repos/dfch/biz.dfch.SpecMgr/actions/runs/<id>/rerun-failed-
+jobs` on the SAME tag once the endpoint responded, followed by
+`publish-wait` — no new version was needed since nothing had been
+published. Re-running the failed publish jobs on the same tag after a
+transient external failure (as opposed to "a fix plus a new, higher
+version", which applies when OUR artifact or workflow is at fault) is
+therefore a sanctioned operator step; a dedicated `publish-rerun`
+stage was deliberately not added in this round.
 
 ### 2026-09-01 12:37:17.000+02:00 - Release name format refined (version prefix required); script and command aligned
 

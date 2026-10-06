@@ -57,6 +57,13 @@ REPO_ROOT="biz-dfch-specmgr"
 # Workflow NAME (the `name:` key) of .github/workflows/publish.yml —
 # `gh run list --workflow` filters by name, not by file name.
 PUBLISH_WORKFLOW="Publish to PyPI"
+# Workflow NAME (the `name:` key) of .github/workflows/ci.yml — the dev
+# CI gate must match this workflow only: `latest_dev_run_tsv` used to
+# accept the newest run of ANY workflow on dev, and a dependabot
+# "Graph Update" run (47 s, green, same head SHA) once satisfied the
+# commit-push gate while the real "Lint and Test" run was still in
+# flight (v0.35.0 release, SOP Updates 2026-10-06).
+CI_WORKFLOW="Lint and Test"
 POLL_INTERVAL=30
 DEV_CI_TIMEOUT_MIN=40
 PUBLISH_TIMEOUT_MIN=45
@@ -72,7 +79,7 @@ die() { printf 'release: ERROR: %s\n' "$*" >&2; exit 1; }
 is_tty() { [ -t 0 ]; }
 
 usage() {
-  sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,39p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 
@@ -193,12 +200,23 @@ wait_for_run() {
 }
 
 # Print "databaseId headSha status conclusion" (tab-separated) for the newest
-# dev-branch run, or nothing if none exists. (This gh version has no
-# 'gh run list --branch' flag, hence the headBranch filter.)
+# dev-branch "Lint and Test" push run, or nothing if none exists. (This gh
+# version has no 'gh run list --branch' flag, hence the headBranch filter.)
+# The workflow-NAME and -event filters are mandatory: unfiltered, the newest
+# run of any workflow on dev qualifies (a dependabot "Graph Update" run once
+# satisfied this gate — v0.35.0 release), and pull_request runs are excluded
+# because they also carry headBranch "dev".
 latest_dev_run_tsv() {
-  gh run list --limit 30 --json databaseId,headSha,headBranch,status,conclusion \
-    --jq '[.[] | select(.headBranch == "dev")] | .[0] // empty
-          | [.databaseId, .headSha, .status, (.conclusion // "")] | @tsv' 2>/dev/null || true
+  # The filtering runs in standalone jq (with `--arg`), the same pattern
+  # the publish-run lookups below use — `gh --jq` in this build takes only
+  # the program and its `$ENV` does not see the process environment.
+  local runs
+  runs=$(gh run list --limit 30 --json databaseId,headSha,headBranch,event,name,status,conclusion 2>/dev/null || true)
+  [ -n "$runs" ] || return 0
+  jq -r --arg wf "$CI_WORKFLOW" \
+    '[.[] | select(.headBranch == "dev" and .name == $wf and .event == "push")]
+       | .[0] // empty
+       | [.databaseId, .headSha, .status, (.conclusion // "")] | @tsv' <<<"$runs" 2>/dev/null || true
 }
 
 # Wait until a dev run exists for the current origin/dev head, then for it to pass.
@@ -225,8 +243,17 @@ wait_for_dev_ci() {
 }
 
 # Poll a PR's checks every POLL_INTERVAL seconds. $1 = PR number.
+# This gh build (2.4.0+dfsg1) returns `gh pr checks` rc=1 for PENDING
+# checks as well as failing ones — rc=0 only when every registered check
+# passes (verified live in the v0.35.0 release, when the old
+# rc=1-is-fatal handling below fail-fasted although every listed check
+# was pass or pending). The pending/failing distinction therefore comes
+# from parsing the output, not the exit code: a line whose state column
+# is a terminal failure state dies the stage; anything else (pending,
+# queued, no checks registered yet, error text) keeps polling within the
+# timeout.
 wait_for_pr_checks() {
-  local pr="$1" out rc polls
+  local pr="$1" out rc polls fatal
   polls=0
   while :; do
     out=$(gh pr checks "$pr" 2>&1) && rc=0 || rc=$?
@@ -234,7 +261,8 @@ wait_for_pr_checks() {
       info "PR #$pr checks: all green"
       return 0
     fi
-    if [ "$rc" -eq 1 ]; then
+    fatal=$(printf '%s\n' "$out" | awk -F'\t' '$2 == "fail" || $2 == "failure" || $2 == "error" || $2 == "cancelled" || $2 == "canceled" { print }')
+    if [ -n "$fatal" ]; then
       printf '%s\n' "$out" >&2
       die "PR #$pr checks are failing (see above); fix on dev and resume from the failed stage"
     fi
@@ -245,6 +273,27 @@ wait_for_pr_checks() {
     info "PR #$pr checks: pending (poll ${polls}/40)"
     sleep "$POLL_INTERVAL"
   done
+}
+
+# Close the PR if GitHub has not already done it: the local ff-only push
+# of main can make GitHub mark the PR MERGED itself, and `gh pr close`
+# then fails with a GraphQL "Could not close the pull request" error —
+# observed live in the v0.35.0 release, exiting the stage non-zero after
+# everything substantive had succeeded. The state comes from the REST API
+# (`gh pr view`'s default GraphQL field set breaks on today's GitHub in
+# this gh build — the Projects-classic deprecation error), matching the
+# script's other `gh api` call sites. $1 = PR number.
+close_pr_if_open() {
+  local pr_num="$1" pr_state
+  pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
+  case "$pr_state" in
+    merged | closed)
+      info "PR #$pr_num already $pr_state — nothing to close"
+      ;;
+    *)
+      gh pr close "$pr_num"
+      ;;
+  esac
 }
 
 # Tracked files differing from HEAD (staged or unstaged); untracked paths are
@@ -520,7 +569,7 @@ stage_pr_merge() {
   git checkout dev --quiet
   git fetch origin main --quiet
   [ "$(git rev-parse origin/main)" = "$(git rev-parse origin/dev)" ] || die "after merge, origin/main != origin/dev — the invariant is broken; investigate before tagging"
-  gh pr close "$pr_num"
+  close_pr_if_open "$pr_num"
   info "pr-merge: done (fast-forward via local --ff-only merge; the invariant holds)"
 }
 
@@ -704,6 +753,10 @@ stage_status() {
   pr_line=$(gh pr list --base main --head dev --state open --json number,url --jq '.[0] // empty | [.number, .url] | @tsv' 2>/dev/null || true)
   if [ -n "$pr_line" ]; then
     mark="!"; detail="open PR: $pr_line (merge gate pending?)"
+  elif git rev-parse --verify --quiet "refs/tags/v$v" >/dev/null && git merge-base --is-ancestor "v$v" origin/main 2>/dev/null; then
+    # Post-release normal state: dev has moved on past the release commit,
+    # so main != dev, but the tag being on origin/main proves the merge.
+    mark="x"; detail="merged (tag v$v on origin/main)"
   elif [ "$(git rev-parse origin/main 2>/dev/null || true)" = "$(git rev-parse origin/dev 2>/dev/null || true)" ]; then
     mark="x"; detail="main equals dev (merged)"
   else
@@ -812,4 +865,8 @@ main() {
   esac
 }
 
-main "$@"
+# Guard so the file can be SOURCED (tests/test_release_sh.py sources the
+# helpers); a direct run still dispatches exactly as before.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
