@@ -145,8 +145,47 @@ notation.
 
 ##### Chosen Notation and Rationale (ACC-002)
 
-_To be completed by Task 110.120, after the candidate notations from Task 110.100 have
-been validated per Task 110.110._
+**Chosen: `SSS`** -- the full pattern becomes `yyyy-MM-dd[T ]HH:mm:ss.SSS[Z|±HH:MM]`.
+
+Rationale, grounded in the recorded root cause (`fff` is a bare three-letter, non-ISO token that
+nothing in the notation marks as a digit slot): `SSS` marks the slot as exactly three digits by the
+notation's own convention -- the same "repeated field letter, repetition count = digit count"
+mechanism `yyyy`/`MM`/`dd`/`HH`/`mm`/`ss` already use -- and `S` is the established pattern letter
+for the millisecond field (Java SimpleDateFormat, moment.js, date-fns, Android), an uppercase that
+keeps the slot visually distinct from the adjacent `ss` (lowercase) seconds field. It is a narrow
+drop-in token (REQ-005) that changes nothing about the accepted formats or regexes (REQ-004).
+
+Candidates considered (three drafted, three validated). Protocol per candidate: the persisted Phase
+100 neutral template with one mechanical substitution (`fff` -> token in exactly the three
+quoted-notation occurrences, everything else byte-identical), three independent fresh-context
+`explore` sessions, the same fixed task (2026-10-06, 07:52:14 UTC+02:00); pass = zero verbatim
+copies of the candidate token AND correct-substitution rate >= 2/3 AND >= the `fff` baseline 3/3.
+
+| Candidate | Grounding | Sessions | Scores | Verbatim copies | Computation | Result |
+|---|---|---|---|---|---|---|
+| `SSS` | pattern-letter convention (field letter, repetition count = digit count) | 04-06 | 3x (b) | 0 | 3/3 >= 2/3, >= 3/3 | PASS |
+| `ms` | ISO 31-2 unit symbol (slot labelled by the unit its content carries) | 07-09 | 3x (b) | 0 | 3/3 >= 2/3, >= 3/3 | PASS |
+| `sss` | ISO 8601's own fractional-seconds notation; drawback: sits directly after `ss` | 10-12 | 3x (b) | 0 | 3/3 >= 2/3, >= 3/3 | PASS |
+
+All three pass, so Task 110.115's selection rule applied: prefer the candidate that marks the digit
+slot by the notation's own convention (the recorded root-cause defect), then the strongest
+convention backing, then the narrowest token. `ms` labels the field by unit but leaves the
+three-digit requirement to the concrete example (its sessions derive `.000` "as in the example");
+`sss` marks the digit count but collides with the adjacent `ss` seconds field (`ss.sss`),
+re-introducing the adjacent-letter-slot ambiguity the root cause describes. All three of `SSS`'s
+sessions derived `.000` from the token itself ("the format requires three digits", "the mandatory
+3-digit `SSS` milliseconds"). No re-draft rounds were needed.
+
+Pass-bar evidence versus `fff`: `SSS` achieves 3/3 correct substitutions and zero verbatim copies
+(`session-04.md`-`session-06.md`) under the identical protocol that gave `fff` its 3/3 baseline
+(`session-01.md`-`session-03.md`) -- no regression, zero misreads -- while the token itself now
+carries the digit-slot marker, removing the bare non-ISO token the recorded root cause identifies as
+the misreading mechanism on the example-free exposure paths (notably the runtime error message).
+Prompt variants, the full trial log, and the per-candidate computation: `session-prompt.md`.
+
+Phase 120 rollout note: the rollout is the mechanical substitution `fff` -> `SSS` (uppercase, three
+letters) at every in-scope occurrence of Task 100.105's baseline inventory (48 files, 53
+occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 
 ### Related Decisions
 
@@ -163,10 +202,10 @@ been validated per Task 110.110._
 
 #### Phase 110: Notation selection
 
-- [ ] Task 110.100: Draft 2-3 candidate replacement notations for the millisecond placeholder and define the quantitative pass bar together with its measurement protocol up front (each candidate validated in at least three fresh-context sessions of the REQ-001 method, each session performing one fixed timestamp task under the persisted neutral prompt template; a "correct substitution" is a syntactically valid full date+time timestamp with exactly three millisecond digits in the placeholder field; the `fff` baseline rate is measured with the same protocol in Phase 100; pass = zero verbatim placeholder copies AND a correct-millisecond-substitution rate of at least two-thirds of the trials AND at least as high as the `fff` baseline rate). -- depends on: Task 100.110
-- [ ] Task 110.110: Validate the leading candidate(s) against the pass bar using the same independent fresh-context `task`-tool-session method as Phase 100 and record the results -- verbatim session transcripts in one `session-NN.md` sibling per session, continuing Phase 100's numbering, plus the per-candidate pass/fail computation. -- depends on: Task 110.100
-- [ ] Task 110.115: Select the one candidate that meets the pass bar (if none does, re-draft per Task 110.100's criteria, up to two further re-draft rounds; if still none passes, or if Task 100.110's root cause lies outside the notation, record the negative outcome in the `##### Chosen Notation and Rationale (ACC-002)` subsection and stop for a user decision instead of entering Phase 120). -- depends on: Task 110.110
-- [ ] Task 110.120: Record the final chosen notation and its rationale, including the pass-bar evidence, in this README's `#### Investigation Findings` > `##### Chosen Notation and Rationale (ACC-002)` subsection (ACC-002). -- depends on: Task 110.115
+- [x] Task 110.100: Draft 2-3 candidate replacement notations for the millisecond placeholder and define the quantitative pass bar together with its measurement protocol up front (each candidate validated in at least three fresh-context sessions of the REQ-001 method, each session performing one fixed timestamp task under the persisted neutral prompt template; a "correct substitution" is a syntactically valid full date+time timestamp with exactly three millisecond digits in the placeholder field; the `fff` baseline rate is measured with the same protocol in Phase 100; pass = zero verbatim placeholder copies AND a correct-millisecond-substitution rate of at least two-thirds of the trials AND at least as high as the `fff` baseline rate). -- depends on: Task 100.110
+- [x] Task 110.110: Validate the leading candidate(s) against the pass bar using the same independent fresh-context `task`-tool-session method as Phase 100 and record the results -- verbatim session transcripts in one `session-NN.md` sibling per session, continuing Phase 100's numbering, plus the per-candidate pass/fail computation. -- depends on: Task 110.100
+- [x] Task 110.115: Select the one candidate that meets the pass bar (if none does, re-draft per Task 110.100's criteria, up to two further re-draft rounds; if still none passes, or if Task 100.110's root cause lies outside the notation, record the negative outcome in the `##### Chosen Notation and Rationale (ACC-002)` subsection and stop for a user decision instead of entering Phase 120). -- depends on: Task 110.110
+- [x] Task 110.120: Record the final chosen notation and its rationale, including the pass-bar evidence, in this README's `#### Investigation Findings` > `##### Chosen Notation and Rationale (ACC-002)` subsection (ACC-002). -- depends on: Task 110.115
 
 #### Phase 120: Rollout
 
@@ -187,6 +226,13 @@ been validated per Task 110.110._
 
 ### Current Status
 
+**As of 2026-10-06**: Phase 110 (notation selection) complete; feature in `progress`. All three
+candidate notations (`SSS`, `ms`, `sss`) pass the pre-defined pass bar (3/3 correct substitutions
+and zero verbatim placeholder copies each, versus the `fff` baseline 3/3); `SSS` is selected and
+recorded in `##### Chosen Notation and Rationale (ACC-002)` with the full pass-bar evidence. Next:
+Phase 120 (rollout of the mechanical `fff` -> `SSS` substitution over the 48-file / 53-occurrence
+baseline inventory).
+
 **As of 2026-10-03**: Feature just created from GitHub issue #183; planning stage only -- no
 investigation or implementation has started yet.
 
@@ -202,6 +248,22 @@ copies), inventory recorded (48 in-scope files, 53 occurrences), root cause summ
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-06T18:31:46.947Z - Phase 110 complete (notation selection)
+
+Tasks 110.100/110.110/110.115/110.120 done. Three candidate notations drafted (`SSS`, `ms`, `sss`),
+each validated in three independent fresh-context `explore` sessions under the persisted Phase 100
+template with one mechanical substitution (`fff` -> token in exactly the three quoted occurrences):
+3/3 correct substitutions and zero verbatim placeholder copies for every candidate -- all three
+PASS the pass bar (zero verbatim copies AND rate >= 2/3 AND >= the `fff` baseline 3/3), sessions
+`session-04.md`-`session-12.md`, prompt variants and trial log in `session-prompt.md`. `SSS`
+selected (Task 110.115's rule: marks the digit slot by the notation's own repetition convention,
+the established millisecond pattern letter, distinct from the `ss` seconds field) and recorded in
+`##### Chosen Notation and Rationale (ACC-002)` with the per-candidate pass-bar evidence. Same
+headless `opencode run` relay mechanism as Phase 100 (the implementing agent's own `task` tool is
+denied; byte-identity of every trial's relayed prompt verified from the raw JSON event stream,
+trailing newline aside; responses are the subagents' own `task_result`s). No re-draft rounds
+needed. No `src/` or `tests/` file was touched. Next: Phase 120 (rollout of `fff` -> `SSS`).
 
 #### 2026-10-06T07:11:20.433Z - Phase 100 complete (root-cause investigation)
 
