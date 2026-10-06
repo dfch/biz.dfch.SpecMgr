@@ -28,7 +28,15 @@ exists but fails to parse is returned, not raised: the result carries
 path and cause, including the trailing pydantic documentation line) and
 ``path`` (the absolute on-disk
 file), for every one of the whole-body domains per ADR
-9080b37c-82b3-4f63-81f1-79641d0bf14c; a truly absent id still raises the
+9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for ``feat`` only
+(feat-187-list-feat-timeout, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44):
+``get_feat`` always fully parses and remains the unconditional,
+full-fidelity authority, but ``list_feat``'s own row may transiently carry
+a different (healthy-looking or dirty-stage-specific) ``error``/title/
+status until its background warmup (or an on-demand ``get_feat`` read) has
+fully parsed that file, or permanently under
+``SPECMGR_FEAT_WARMUP_DISABLED``; every other domain's property stays
+unconditional; a truly absent id still raises the
 domain's not-found error. Without one: ``list_<d>()``'s failed row, whose
 ``title``/``status`` carry the fixed ``"<failed to parse>"`` marker and
 whose ``id`` is null while ``ref``/``path``/``error`` are populated),
@@ -101,7 +109,10 @@ _ID_NOT_GIVEN_TEMPLATE = (
         "parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- "
         "the error text byte-identical to list_<d>()'s failed row for the same "
         "file; every whole-body "
-        "domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) when an id is given, or "
+        "domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for feat only, ADR "
+        "3982712a-a46b-4b2b-809f-9c6925a49b44: list_feat's own row may transiently differ until its "
+        "background warmup or an on-demand get_feat read has fully parsed that file) when an id is "
+        "given, or "
         "list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the "
         "host's own file-read tool, fix only what the error addresses while preserving the "
         "frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop "

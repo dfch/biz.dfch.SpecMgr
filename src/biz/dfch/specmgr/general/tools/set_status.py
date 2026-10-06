@@ -159,7 +159,7 @@ from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
 from ...feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
-from ...feat.tools._cache import read_feat
+from ...feat.tools._cache import read_feat, read_feat_dirty
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
@@ -676,7 +676,8 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
         with wrap_tool_errors(domain="feat", tool="set_status", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
         write_feat_file(path, new_frontmatter, raw_body)
-        read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+        read_feat(path)  # warm the clean cache (feat-107-doc-cache Phase 4, REQ-003)
+        read_feat_dirty(path)  # warm the dirty cache too (feat-187-list-feat-timeout, Task 110.130)
     return new_frontmatter
 
 

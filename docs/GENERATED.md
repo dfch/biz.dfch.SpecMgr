@@ -110,6 +110,7 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/_io.py` — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
+- `feat/tools/_warmup.py` — The ``feat`` domain's own two-phase cache warmup (feat-187-list-feat-timeout, Task 110.120).
 - `feat/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_feat`` and
 - `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
@@ -161,6 +162,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_similarity_search.py` — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
 - `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
+- `general/tools/_startup_warmup.py` — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
@@ -558,4 +560,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 381
+**Test files**: 382

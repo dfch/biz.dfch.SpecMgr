@@ -5,6 +5,14 @@ Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 Also carries the static ``similarity`` section the resource reports for the
 semantic-similarity feature (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`.
 
+feat-187-list-feat-timeout, Task 110.120: :class:`ConfigInfo` additionally
+carries ``feat_warmup_disabled``, the presence of the new
+``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag (ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44) -- a single top-level boolean field,
+not a new nested model, since it is the one additional fact this feature
+needs to report and does not warrant its own section the way the
+similarity feature's richer static configuration did.
+
 ## Classes
 
 ### `ConfigInfo`
@@ -20,6 +28,14 @@ domains:
 similarity:
     The static configuration of the semantic-similarity feature
     (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`.
+feat_warmup_disabled:
+    Whether the presence-based ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out
+    flag is set in the current process environment (any value;
+    presence-based, never the value -- the same convention
+    ``SimilarityConfig.disabled`` already follows). When set, the
+    unified startup warmup thread's ``feat`` frontmatter/full-parse
+    phases never run (feat-187-list-feat-timeout, Task 110.120, ADR
+    3982712a-a46b-4b2b-809f-9c6925a49b44).
 
 **Methods:**
 

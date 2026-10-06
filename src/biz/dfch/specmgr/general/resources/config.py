@@ -36,7 +36,11 @@ for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
 the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
-``<tempdir>/fastembed_cache``).
+``<tempdir>/fastembed_cache``). A third presence flag,
+``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
+ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
+are disabled.
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -69,6 +73,7 @@ from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from ...general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from ...general.tools._domains import ALL_DOMAINS
 from ...general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
+from ...general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR
 from ...gol.tools._paths import gol_base_dir
 from ...models import ConfigInfo, DomainConfig, SimilarityConfig
 from ...prb.tools._paths import prb_base_dir
@@ -119,7 +124,9 @@ def _similarity_cache_dir() -> str:
         "the semantic-similarity feature (feat-134): whether the `similarity` extra (fastembed) is "
         "installed (a spec lookup, never an import), whether the presence-based SPECMGR_SIMILARITY_DISABLED "
         "opt-out flag is set, the fixed model name, and the resolved model cache directory "
-        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created). "
+        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created), plus "
+        "whether the presence-based SPECMGR_FEAT_WARMUP_DISABLED opt-out flag is set (the unified startup "
+        "warmup's feat frontmatter/full-parse phases, feat-187-list-feat-timeout). "
         "Static configuration only -- the tools' own dynamic runtime availability is their structured "
         "{available, reason, message} result, not part of this resource. Never discloses the value of "
         "any environment variable except the resolved cache path, only whether the relevant "
@@ -149,6 +156,11 @@ def config_info() -> ConfigInfo:
     model is loaded/usable right now) is deliberately not part of this
     payload; it is their structured ``{available, reason, message}``
     result.
+
+    ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+    3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
+    convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
+    unified startup warmup thread's ``feat`` frontmatter/full-parse phases.
 
     Returns
     -------
@@ -238,5 +250,9 @@ def config_info() -> ConfigInfo:
         cache_dir=_similarity_cache_dir(),
     )
 
-    result = ConfigInfo(domains=domains, similarity=similarity)
+    result = ConfigInfo(
+        domains=domains,
+        similarity=similarity,
+        feat_warmup_disabled=os.environ.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None,
+    )
     return result

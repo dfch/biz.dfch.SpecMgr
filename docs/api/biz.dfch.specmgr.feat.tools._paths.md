@@ -168,14 +168,22 @@ domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
 folder's own name (ADR 8cf940c5), there is no directory scan to fall back
 on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
 checks that single path -- if it exists and the domain's own cache-backed
-:func:`._cache.read_feat` raises a parse error (``AssertionError``/
-``pydantic.ValidationError``/``yaml.YAMLError`` -- the same channels
-:func:`general.tools._listing.build_summaries` catches for the
-``list_feat`` failed row) it returns ``(path, str(exc))`` -- byte-identical
-to that row's ``error`` field (identical field path and cause, including
-the trailing pydantic documentation line -- fixed by
-feat-162-doc-cache-exception-footer, GitHub issue #162, which preserves
-that footer on a warm re-raise) -- and
+:func:`._cache.read_feat` (the **clean**, full-parse cache -- this
+function always runs a full parse, never the dirty/frontmatter-stage
+shortcut ``list_feat``'s own request path uses) raises a parse error
+(``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError`` --
+the same channels :func:`general.tools._listing.build_summaries` catches
+for the other 11 domains' own ``list_<d>`` failed rows) it returns
+``(path, str(exc))`` -- byte-identical to ``list_feat``'s own failed
+row's ``error`` field for the same file **once that file's clean stage
+has converged** (identical field path and cause, including the trailing
+pydantic documentation line -- fixed by feat-162-doc-cache-exception-footer,
+GitHub issue #162, which preserves that footer on a warm re-raise); before
+convergence (feat-187-list-feat-timeout, ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract), ``list_feat``'s
+row may instead carry a transiently-healthy or dirty-stage-specific
+``error`` text for the same file -- this function itself is unaffected,
+since it always runs the clean, full-parse read directly -- and
 ``None`` otherwise (the folder/file is missing, it vanishes mid-scan, or it
 parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on

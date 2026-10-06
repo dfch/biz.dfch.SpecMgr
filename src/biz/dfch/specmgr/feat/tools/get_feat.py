@@ -68,10 +68,13 @@ from ._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
         "many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates "
         "with raw=False raise ValueError."
         " A document that exists but fails to parse returns a `ParseFailureResult` "
-        "(`error`/`path`/`id`) instead of raising; "
-        "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
-        "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "(`error`/`path`/`id`) instead of raising; get_feat always fully parses, so its `error` text "
+        "is the full-fidelity authority for this document -- byte-identical to list_feat's own "
+        "failed-row `error` for the same file once list_feat's background warmup (or this very call) "
+        "has fully parsed it; before that (or under SPECMGR_FEAT_WARMUP_DISABLED), list_feat's row may "
+        "carry a transiently-healthy or dirty-stage-specific error instead (ADR "
+        "3982712a-a46b-4b2b-809f-9c6925a49b44, time-qualifying ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c "
+        "for feat only; every other domain's list/get error byte-identity stays unconditional). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
         " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
@@ -135,9 +138,17 @@ def get_feat(
         exists but fails to parse, a
         :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
         (``error``/``path``/``id``) is returned instead of raising --
-        ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
-        the same file (identical field path and cause, including the trailing pydantic
-        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+        ``get_feat`` always fully parses, remaining the unconditional,
+        full-fidelity authority for this document; its ``error`` converges
+        to byte-identical to ``list_feat``'s own failed-row ``error`` for
+        the same file once ``list_feat``'s background warmup (or this very
+        call) has fully parsed it -- before that (or under
+        ``SPECMGR_FEAT_WARMUP_DISABLED``), ``list_feat``'s row may instead
+        carry a transiently-healthy or dirty-stage-specific ``error`` (ADR
+        3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract,
+        time-qualifying ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c for
+        ``feat`` only -- every other domain's list/get error byte-identity
+        stays unconditional);
         ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.FeatNotFoundError` if no feature has this id.
 

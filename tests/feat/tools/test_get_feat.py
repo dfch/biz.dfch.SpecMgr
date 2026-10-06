@@ -332,20 +332,31 @@ class TestGetFeat(unittest.TestCase):  # pylint: disable=too-many-public-methods
         self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
 
     def test_broken_document_error_matches_list_failed_row_list_first(self) -> None:
-        """ParseFailureResult.error must be byte-identical to list_feat's failed-row error for the same broken
-        file, in cold-list-then-warm-get read order (REQ-003)."""
+        """ParseFailureResult.error converges to list_feat's failed-row error for the same broken file.
+
+        feat-187-list-feat-timeout (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): this fixture (no
+        headings at all) is a tier-2 defect -- a cold list_feat call resolves it via the dirty
+        (frontmatter-stage) cache, whose own H1 scan raises a dirty-stage-specific error that does
+        NOT yet match get_feat's full-parse (clean-stage) error text; the two converge to
+        byte-identical only once a clean-stage read (e.g. this very get_feat call) has passed this
+        file -- the three-tier contract's documented, deliberate exception to the pre-existing
+        list/get byte-identity property (ADR 9080b37c), time-qualified for `feat` by this feature.
+        """
         created = create_feat(_MINIMAL_BODY)
         self._doc_path(created.id).write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
-        failed = [summary for summary in list_feat().results if summary.title == "<failed to parse>"]
-        get_result = get_feat(created.id)
+        pre_convergence = [summary for summary in list_feat().results if summary.title == "<failed to parse>"]
+        self.assertEqual(len(pre_convergence), 1)
+        self.assertNotIn("heading_open", pre_convergence[0].error)  # dirty-stage text, not yet converged
 
+        get_result = get_feat(created.id)
         self.assertIsInstance(get_result, ParseFailureResult)
-        self.assertEqual(len(failed), 1)
-        self.assertEqual(get_result.error, failed[0].error)
-        # The core defect content (this fixture's structural parse failure) must be present in both texts.
         self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
-        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+        post_convergence = [summary for summary in list_feat().results if summary.title == "<failed to parse>"]
+        self.assertEqual(len(post_convergence), 1)
+        self.assertEqual(get_result.error, post_convergence[0].error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", post_convergence[0].error)
 
     def test_broken_document_list_error_is_stable_across_repeated_calls(self) -> None:
         """list_feat()'s row error text must be byte-identical across repeated calls (REQ-004)."""

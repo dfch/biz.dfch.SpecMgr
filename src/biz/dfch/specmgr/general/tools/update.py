@@ -138,7 +138,7 @@ from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter, Feature
-from ...feat.tools._cache import read_feat
+from ...feat.tools._cache import read_feat, read_feat_dirty
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
@@ -897,7 +897,8 @@ def _update_feat(
             fm_data["updated"] = now
             new_frontmatter = FeatFrontmatter(**fm_data)
             write_feat_file(path, new_frontmatter, spliced)
-            read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+            read_feat(path)  # warm the clean cache (feat-107-doc-cache Phase 4, REQ-003)
+            read_feat_dirty(path)  # warm the dirty cache too (feat-187-list-feat-timeout, Task 110.130)
         return _UpdateOutcome(frontmatter=new_frontmatter, pre_body=pre, post_body=spliced, offset=offset, limit=limit)
 
     try:
@@ -924,7 +925,8 @@ def _update_feat(
         fm_data["updated"] = now
         new_frontmatter = FeatFrontmatter(**fm_data)
         write_feat_file(path, new_frontmatter, content)
-        read_feat(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+        read_feat(path)  # warm the clean cache (feat-107-doc-cache Phase 4, REQ-003)
+        read_feat_dirty(path)  # warm the dirty cache too (feat-187-list-feat-timeout, Task 110.130)
     return _UpdateOutcome(frontmatter=new_frontmatter)
 
 
