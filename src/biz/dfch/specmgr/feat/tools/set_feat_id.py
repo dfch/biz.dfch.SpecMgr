@@ -97,7 +97,7 @@ from ...general.tools._splice import body_text
 from ...general.tools._timestamps import now_timestamp
 from ...server import mcp
 from ..models.v1 import FeatFrontmatter
-from ._cache import move_feat_cache_entry
+from ._cache import move_feat_cache_entry, move_feat_dirty_cache_entry
 from ._io import load_by_id
 from ._lock import feat_create_lock, feat_lock
 from ._paths import README_FILENAME, feat_base_dir
@@ -192,6 +192,7 @@ def set_feat_id(id: str, new_id: str) -> FeatFrontmatter:
 
         write_feat_file(new_path, new_frontmatter, raw_body)
         move_feat_cache_entry(old_path, new_path)  # feat-107-doc-cache Phase 4, REQ-004: only after the write succeeds
+        move_feat_dirty_cache_entry(old_path, new_path)  # feat-187-list-feat-timeout, Task 110.130
         move_embedding_cache(
             "feat", old_path, new_path
         )  # feat-134 Phase 3, Task 3.6, REQ-008: only after the write succeeds

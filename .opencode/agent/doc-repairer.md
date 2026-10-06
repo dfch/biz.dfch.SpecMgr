@@ -57,7 +57,13 @@ read and the write-back must be host-native.
      parse-failure message -- field path and cause, plus a 1-based line
       reference and fix hint for structural failures -- byte-identical to
       `list_<type>()`'s failed row, including the trailing pydantic
-      documentation line) and `path` (the absolute on-disk
+      documentation line; for `feat`, that identity is time-qualified
+      (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): while its background
+      warmup has not yet fully parsed the file, `list_feat`'s row may
+      instead carry tier-2 wording that only converges later, or be a
+      tier-3 transiently-healthy row at all -- `get_feat`'s own `error`
+      is the full-fidelity authority in every case, so trust it, not the
+      row) and `path` (the absolute on-disk
      file). That `error` is the defect you will fix. If the id is truly
      absent, the call raises the domain's not-found error -- use the
      `question` tool to ask for the right id (or scan `list_<type>()`'s

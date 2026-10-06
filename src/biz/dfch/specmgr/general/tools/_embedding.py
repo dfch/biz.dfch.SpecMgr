@@ -79,13 +79,16 @@ ranking logic".
 
 **Phase 3 consumers.** The two tools themselves (Phase 3, Task 3.1/3.2,
 in their own ``general/tools/`` modules -- ``find_related.py``/
-``find_similar_text.py``) and the background warmup (Phase 3, Task 3.7,
-``general/tools/_similarity_search.start_similarity_warmup``, called from
-``server.py``'s own ``_lifespan`` -- its startup gate is this module's
-:data:`SIMILARITY_DISABLED_ENV_VAR` alone, checked synchronously and
-lightweight, and its daemon-thread body, ``warmup_similarity_cache``, runs
-:func:`_similarity_availability` first thing (Phase 5, Task 5.2), so the
-backend import/model-load probe never runs on the startup path) consume
+``find_similar_text.py``) and the background warmup
+(``general/tools/_similarity_search.warmup_similarity_cache``, now invoked
+as the third phase of the unified ``general.tools._startup_warmup.start_startup_warmup``
+daemon thread ``server.py``'s own ``_lifespan`` calls, feat-187-list-feat-timeout,
+Task 110.120, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 -- this phase's own
+gate is still this module's :data:`SIMILARITY_DISABLED_ENV_VAR` alone,
+checked synchronously and lightweight, and its phase body,
+``warmup_similarity_cache``, still runs :func:`_similarity_availability`
+first thing (Phase 5, Task 5.2), so the backend import/model-load probe
+never runs on the startup path) consume
 this module's provider/availability seam. The sibling Phase 2
 concerns live in their own modules: the embedding-input text extraction
 (``general/tools/_similarity_text.py``, Task 2.2), the candidate

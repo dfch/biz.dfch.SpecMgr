@@ -40,6 +40,10 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-08-27
   - Decision-makers: OpenCode agent + user decision
+- [Two-Stage Dirty/Clean DocCache Staging and a Unified Startup Warmup Thread to Fix list_feat's Cold-Scan Timeout (#187)](3982712a-a46b-4b2b-809f-9c6925a49b44-two-stage-dirty-clean-doccache-staging-and-a-unified-startup.md)
+  - Id: 3982712a-a46b-4b2b-809f-9c6925a49b44
+  - Status: accepted
+  - Decision-makers: dfch
 - [Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports](3bf0326f-065a-424c-a2b9-87e5d5bcfa99-extract-mcp-singleton-into-its-own-module-to-break-domain-se.md)
   - Id: 3bf0326f-065a-424c-a2b9-87e5d5bcfa99
   - Status: accepted

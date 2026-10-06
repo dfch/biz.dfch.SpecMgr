@@ -21,7 +21,11 @@ for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
 the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
-``<tempdir>/fastembed_cache``).
+``<tempdir>/fastembed_cache``). A third presence flag,
+``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
+ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
+are disabled.
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -86,6 +90,11 @@ created (ACC-018). The tools' own dynamic availability (whether the
 model is loaded/usable right now) is deliberately not part of this
 payload; it is their structured ``{available, reason, message}``
 result.
+
+``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
+convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
+unified startup warmup thread's ``feat`` frontmatter/full-parse phases.
 
 Returns
 -------

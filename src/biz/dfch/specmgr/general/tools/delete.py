@@ -74,7 +74,7 @@ from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._lock import dec_lock
 from ...dec.tools._paths import dec_base_dir
-from ...feat.tools._cache import invalidate_feat_cache
+from ...feat.tools._cache import invalidate_feat_cache, invalidate_feat_dirty_cache
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
@@ -336,6 +336,7 @@ def _delete_feat(id_: str) -> str:
         except OSError as ex:
             raise DeleteError(f"failed to delete {folder}: {ex}") from ex  # REQ-005
         invalidate_feat_cache(path)  # feat-107-doc-cache Phase 4, Task 4.1a, REQ-004
+        invalidate_feat_dirty_cache(path)  # feat-187-list-feat-timeout, Task 110.130
         invalidate_embedding_cache("feat", path)  # feat-134 Phase 3, Task 3.6, REQ-008
     return str(folder)  # REQ-001
 

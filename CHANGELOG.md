@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lookup (which documents reference a given `<type> <id>`), all preserving
   `ref-finder`'s read-only posture and shared **NOT FOUND** reporting
   conventions (feat-152-ref-skill, GitHub issue #152).
+- A `SPECMGR_FEAT_WARMUP_DISABLED` environment variable
+  (feat-187-list-feat-timeout, GitHub issue #187): when present, it opts
+  the `feat` domain's two background cache-warming phases (frontmatter and
+  full-parse) out of the unified `specmgr-startup-warmup` thread, mirroring
+  the pre-existing `SPECMGR_SIMILARITY_DISABLED`'s own gate for the
+  similarity-cache phase. Its resolved state is reported by a new
+  `specmgr://config` resource field, `feat_warmup_disabled`.
 
 ### Changed
 
@@ -199,6 +206,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   same broken file are now byte-identical in both read orders (list-first
   and get-first), not merely the same defect modulo that trailing line
   (GitHub issue #162).
+- `list_feat`'s cold-scan timeout (feat-187-list-feat-timeout, GitHub
+  issue #187, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): the tool's very
+  first call against a cold server process now returns the complete
+  directory (`total` correct from call one) well under any client request
+  timeout, regardless of corpus size, instead of potentially timing out
+  on a large `.specmgr/feat` corpus (348.6 s measured over this repo's own
+  corpus at one point) -- `list_feat` now resolves every folder from one
+  file read plus a parse-free cache lookup (falling back to a
+  frontmatter-plus-H1-only "dirty" parse on a cache miss) rather than a
+  full-body parse of every file on every call. One trade-off: `list_feat`'s
+  own failure-visibility for `feat` documents is now time-qualified -- a
+  body-level parse defect in a given file may transiently appear healthy
+  in `list_feat`'s row until the background warmup, or an on-demand
+  `get_feat` call, has fully parsed that file; `get_feat` itself is
+  unaffected and remains the full-fidelity authority throughout.
 
 ## [0.34.0] - 2026-09-29
 
