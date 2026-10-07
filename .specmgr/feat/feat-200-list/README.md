@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
-status: done
+status: progress
 type: feat
-updated: '2026-10-07T09:28:39.561+02:00'
+updated: '2026-10-07T10:56:19.858+02:00'
 version: 1.0.0
 ---
 
@@ -88,9 +88,9 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 #### Phase 100: list_feat glob
 
-- [ ] Task 100.100: Add the shared id-glob filter helper in `general/tools/` (lowercase id + pattern, then `fnmatchcase`) with unit tests.
-- [ ] Task 100.110: Add the `glob: str | None = None` parameter to `list_feat`, applied after the domain's row build (both cache stages) and before `total`/paging; update the docstring.
-- [ ] Task 100.120: Tests for `list_feat` on fixture corpora (temp dir, `SPECMGR_FEAT_DIR` overridden): the `feat-7*` case, filtered `total`/`offset`/`truncated`/`error_count`, uppercase-pattern case-insensitivity, failed-row exclusion for a broken fixture (ACC-005), and unchanged `glob=None` output.
+- [x] Task 100.100: Add the shared id-glob filter helper in `general/tools/` (lowercase id + pattern, then `fnmatchcase`) with unit tests.
+- [x] Task 100.110: Add the `glob: str | None = None` parameter to `list_feat`, applied after the domain's row build (both cache stages) and before `total`/paging; update the docstring.
+- [x] Task 100.120: Tests for `list_feat` on fixture corpora (temp dir, `SPECMGR_FEAT_DIR` overridden): the `feat-7*` case, filtered `total`/`offset`/`truncated`/`error_count`, uppercase-pattern case-insensitivity, failed-row exclusion for a broken fixture (ACC-005), and unchanged `glob=None` output.
 
 #### Phase 110: Extend to the other list tools
 
@@ -105,11 +105,15 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 ### Current Status
 
-**As of 2026-10-07**: Planning. GitHub issue #200 is open; this feature folder was created from it. No implementation has started.
+**As of 2026-10-07**: In progress. Phase 100 (`list_feat` glob) is complete: the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and the new fixture test module `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003). Phases 110 (the same parameter on the other paged `list_<d>` tools) and 120 (quality gate) are not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T10:56:19.858+02:00 - Phase 100 complete: the list_feat glob parameter
+
+Implemented Phase 100 (Tasks 100.100/100.110/100.120): (1) the shared id-glob helper `filter_summaries_by_glob(summaries, pattern) -> (filtered, error_count)` in `general/tools/_listing.py` — a row matches iff `fnmatchcase(row.id.lower(), pattern.lower())`, rows with `id=None` never match, and the returned `error_count` is recomputed on the filtered list (a glob-given result therefore has `error_count = 0` by construction) — plus its unit tests in `tests/general/tools/test__listing.py`; (2) the `glob: str | None = None` parameter on `list_feat`, applied to the materialized row list after feat-187's two-stage (dirty/clean `DocCache`) resolution loop and before the `total`/paging step (never a filesystem re-scan), with the numpydoc and `@mcp.tool` description updated (regenerated into `docs/MCP.md`); (3) the new fixture tests `tests/feat/tools/test_list_feat_glob.py` (per-test temp `SPECMGR_FEAT_DIR`, both feat cache stages reset, a small hand-built corpus of two `feat-7*` + two non-matching + one broken folder): ACC-001, ACC-004 (paging composes with the filter), ACC-005 (broken row reported unfiltered, absent and `error_count = 0` for any glob), REQ-004 (uppercase patterns), the empty-string-is-a-pattern decision, `glob=None`-unchanged output, and rows produced by both cache stages. All pre-existing `tests/feat/tools/test_list_feat*.py` stay green without modification. Also corrected this feature's frontmatter `status`, which commit 722a135 had prematurely set to `done` before any implementation existed, back to `progress`.
 
 #### 2026-10-07T09:17:56.462+02:00 - Plan refined (feat-refiner pass)
 
@@ -122,6 +126,10 @@ Created the feature plan for GitHub issue #200 (an optional `glob` id-filter par
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T10:56:19.858+02:00 - Helper location and signature
+
+Per the plan's recommendation, the shared helper lives in `general/tools/_listing.py` (the existing doc-type-agnostic summary plumbing module; no `mcp` import, `__all__` extended). Named `filter_summaries_by_glob(summaries: list[_SummaryT], pattern: str) -> tuple[list[_SummaryT], int]` — bound to that module's existing `DocSummary`-bound `_SummaryT` TypeVar — returning the filtered rows *and* the recomputed `error_count` (rows whose `error` field is set) so every tool that takes the parameter calls it in one place and `error_count` cannot drift from the filtered row list. The caller keeps the `glob is not None` guard itself, so the `REQ-005` no-op path stays structurally untouched.
 
 #### 2026-10-07T07:48:18.241+02:00 - Parameter named glob; matching is case-insensitive
 

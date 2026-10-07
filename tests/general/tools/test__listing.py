@@ -32,6 +32,7 @@ from biz.dfch.specmgr.general.tools._listing import (
     FAILED_TO_PARSE_MARKER,
     build_summaries,
     default_failed_summary,
+    filter_summaries_by_glob,
 )
 
 
@@ -190,6 +191,74 @@ class TestBuildSummaries(unittest.TestCase):
 
     def test_default_error_types_is_the_three_channel_tuple(self) -> None:
         self.assertEqual(DEFAULT_ERROR_TYPES, (AssertionError, ValidationError, yaml.YAMLError))
+
+
+class TestFilterSummariesByGlob(unittest.TestCase):
+    """Tests for filter_summaries_by_glob (feat-200-list, GitHub issue #200, Task 100.100)."""
+
+    def _summaries(self) -> list[_FakeSummary]:
+        """A mixed row list: three healthy ids (input order interleaved with the two special rows)."""
+        feat_7_alpha = _FakeSummary(
+            id="feat-7-alpha", title="Alpha", status="planning", ref="feat-7-alpha", path="/base/feat-7-alpha/README.md"
+        )
+        feat_7_beta = _FakeSummary(
+            id="feat-7-beta", title="Beta", status="planning", ref="feat-7-beta", path="/base/feat-7-beta/README.md"
+        )
+        feat_8_gamma = _FakeSummary(
+            id="feat-8-gamma", title="Gamma", status="planning", ref="feat-8-gamma", path="/base/feat-8-gamma/README.md"
+        )
+        idless_healthy = _FakeSummary(
+            id=None, title="Unassigned", status="planning", ref="unassigned", path="/base/unassigned/README.md"
+        )
+        failed = default_failed_summary(_FakeSummary, Path("/base/feat-99-broken/README.md"), ValueError("boom"))
+        result = [feat_7_alpha, failed, feat_7_beta, idless_healthy, feat_8_gamma]
+        return result
+
+    def test_prefix_pattern_selects_exactly_the_matching_ids(self) -> None:
+        filtered, error_count = filter_summaries_by_glob(self._summaries(), "feat-7*")
+
+        self.assertEqual([row.id for row in filtered], ["feat-7-alpha", "feat-7-beta"])
+        self.assertEqual(error_count, 0)
+
+    def test_exact_pattern_without_wildcards_matches_only_that_id(self) -> None:
+        filtered, error_count = filter_summaries_by_glob(self._summaries(), "feat-8-gamma")
+
+        self.assertEqual([row.id for row in filtered], ["feat-8-gamma"])
+        self.assertEqual(error_count, 0)
+
+    def test_matching_is_case_insensitive_on_both_sides(self) -> None:
+        filtered_uppercase_pattern, _ = filter_summaries_by_glob(self._summaries(), "FEAT-7*")
+        self.assertEqual([row.id for row in filtered_uppercase_pattern], ["feat-7-alpha", "feat-7-beta"])
+
+        uppercase_id = _FakeSummary(
+            id="FEAT-9-UPPER", title="Upper", status="planning", ref="FEAT-9-UPPER", path="/base/FEAT-9-UPPER/README.md"
+        )
+        filtered_uppercase_id, _ = filter_summaries_by_glob([uppercase_id], "feat-9*")
+        self.assertEqual([row.id for row in filtered_uppercase_id], ["FEAT-9-UPPER"])
+
+    def test_empty_pattern_matches_nothing(self) -> None:
+        filtered, error_count = filter_summaries_by_glob(self._summaries(), "")
+
+        self.assertEqual(filtered, [])
+        self.assertEqual(error_count, 0)
+
+    def test_failed_and_idless_rows_never_match_and_error_count_is_recomputed_to_zero(self) -> None:
+        """The input carries one failed row and one healthy id-less row; ``"*"`` matches neither, and
+        the returned ``error_count`` is recomputed on the filtered set (``0``), not the pre-filter count."""
+        filtered, error_count = filter_summaries_by_glob(self._summaries(), "*")
+
+        self.assertEqual([row.id for row in filtered], ["feat-7-alpha", "feat-7-beta", "feat-8-gamma"])
+        self.assertEqual(error_count, 0)
+        for row in filtered:
+            self.assertIsNotNone(row.id)
+            self.assertIsNone(row.error)
+
+    def test_result_preserves_the_input_relative_order(self) -> None:
+        reordered = [self._summaries()[2], self._summaries()[0], self._summaries()[4]]
+
+        filtered, _ = filter_summaries_by_glob(reordered, "feat-*")
+
+        self.assertEqual([row.id for row in filtered], ["feat-7-beta", "feat-7-alpha", "feat-8-gamma"])
 
 
 if __name__ == "__main__":

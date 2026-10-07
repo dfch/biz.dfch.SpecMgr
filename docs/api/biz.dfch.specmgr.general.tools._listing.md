@@ -41,6 +41,19 @@ behavior for the identical case (a failed entry via its own
 ``_FEAT_ERROR_TYPES``, added in Phase 6/REQ-012) to match this same
 silent-omission rule every domain now gets.
 
+**feat-200-list (GitHub issue #200), Task 100.100: the shared id-glob
+filter.** :func:`filter_summaries_by_glob` is the one, doc-type-agnostic
+implementation of the optional ``glob`` parameter the paged
+``list_<domain>`` tools take: each tool calls it once on the row list it
+just built, between that row build and its own ``total``/paging step, so
+the matching rule lives in exactly this one place and cannot drift between
+domains. A row matches iff its ``id`` is not ``None`` and
+``fnmatchcase(row.id.lower(), pattern.lower())`` is true (case-insensitive
+on both sides -- see the function's own docstring for why); a failed-
+to-parse row carries ``id=None`` and therefore never matches, so a
+glob-given result has no failed rows and its recomputed ``error_count`` is
+``0`` by construction. The function never re-scans the filesystem itself.
+
 ## Functions
 
 ### `build_summaries(paths: 'Iterable[Path]', read: 'Callable[[Path], _DocT]', to_summary: 'Callable[[_DocT, Path], _SummaryT]', to_failed_summary: 'Callable[[Path, Exception], _SummaryT]', error_types: 'tuple[type[Exception], ...]' = (<class 'AssertionError'>, <class 'pydantic_core.ValidationError'>, <class 'yaml.error.YAMLError'>), silent_skip_types: 'tuple[type[Exception], ...]' = (<class 'FileNotFoundError'>,)) -> 'tuple[list[_SummaryT], int]'`
@@ -134,4 +147,55 @@ _SummaryT
     to :data:`FAILED_TO_PARSE_MARKER`, ``ref``/``path`` (always
     ``.resolve()``d) populated the same way a successful entry would
     be, and ``error=str(error)``.
+
+
+### `filter_summaries_by_glob(summaries: 'list[_SummaryT]', pattern: 'str') -> 'tuple[list[_SummaryT], int]'`
+
+Filter a materialized summary list down to the rows whose own ``id`` matches an id glob.
+
+The one shared implementation of the optional ``glob`` parameter every paged
+``list_<domain>`` tool takes (feat-200-list, GitHub issue #200, Task 100.100): each
+such tool calls this function once, on the row list it just built, between that row
+build and its own ``total``/``offset``/``max_results``/``truncated`` step
+(``general.tools._paging``) -- so the matching rule lives in exactly this one place
+and cannot drift between domains.
+
+Matching rule (REQ-001/REQ-004): a row matches iff its ``id`` is not ``None`` and
+``fnmatchcase(row.id.lower(), pattern.lower())`` is true -- both the stored id and
+the pattern are explicitly lowercased first. On POSIX, ``fnmatch.fnmatch``'s own
+``os.path.normcase`` is the identity (i.e. ``fnmatch`` is already case-sensitive
+there), so lowercase-both-sides plus ``fnmatchcase`` is the portable case-insensitive
+form. The case-insensitivity is a deliberate search-UX choice: by-id lookups
+(``get_<domain>`` and path scanning) are exact and case-sensitive, and ids are merely
+stored in one canonical lowercase form (``feat`` slugs are shape-validated as
+lowercase, document UUIDs are created as ``str(uuid.uuid4())``).
+
+Rows with ``id=None`` -- every failed-to-parse entry, and any healthy entry whose
+frontmatter never assigned an id -- never match any pattern, so a glob-given result
+carries no failed rows and its returned ``error_count`` is ``0`` by construction
+(REQ-003). The returned ``error_count`` is recomputed on the filtered list (a row's
+``error`` field set), never the caller's pre-filter count, so it can never exceed the
+filtered ``total``. An empty ``pattern`` is a pattern, not an off-switch: it matches
+no id (ids are never empty) and yields an empty result; only a caller's ``glob=None``
+(checked by the caller itself, before calling this function) disables filtering
+(REQ-005).
+
+Parameters
+----------
+summaries:
+    The complete, already-materialized summary list to filter -- the row list each
+    ``list_<domain>`` tool builds before its own ``total``/paging step (for
+    ``feat``, feat-187's two-stage dirty/clean resolution loop; for every other
+    domain, :func:`build_summaries`). This function never re-scans the filesystem
+    itself.
+pattern:
+    The glob pattern to match against each row's id (e.g. ``"feat-7*"`` for
+    ``feat``, ``"dead*"`` for a UUID prefix).
+
+Returns
+-------
+tuple[list[_SummaryT], int]
+    ``(filtered_summaries, error_count)`` -- the matching rows, in their original
+    relative order, and the count of failed entries (``error is not None``) among
+    them.
 
