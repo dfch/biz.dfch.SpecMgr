@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- An optional, case-insensitive `glob` id-filter parameter (third
+  position, after `max_results`/`offset`) on the twelve paged `list_<d>`
+  MCP tools -- `list_feat` plus `list_req`/`list_uc`/`list_tsk`/
+  `list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/
+  `list_vcr`/`list_sysrs`: a row is kept iff its full id matches the
+  pattern (the `feat-NNN-slug` folder name for `feat`, the UUID for the
+  other eleven), evaluated by one shared `general/tools/_listing.py`
+  helper (`filter_summaries_by_glob`) so the matching rule cannot drift
+  between domains; `total`, `offset`/`max_results` paging, `truncated`,
+  and `error_count` are all computed on the filtered row list
+  (failed-to-parse rows carry `id=None` and never match, so a
+  glob-given result has `error_count = 0` by construction),
+  `glob=None` (the default) leaves every outcome byte-identical to the
+  pre-glob behaviour, and an empty string is a pattern that matches
+  nothing. `list_adr` is deliberately excluded (ADR is being phased
+  out, issue #46). Covered by twelve new fixture test modules, one per
+  tool (feat-200-list, GitHub issue #200).
+
 ### Changed
 
 - Agents repeatedly emitted the literal `fff` in timestamps because the

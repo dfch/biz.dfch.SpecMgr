@@ -4,7 +4,7 @@ created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
 status: review
 type: feat
-updated: '2026-10-07T15:37:54.258+02:00'
+updated: '2026-10-07T17:03:20.962+02:00'
 version: 1.0.0
 ---
 
@@ -30,15 +30,15 @@ version: 1.0.0
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `list_feat(glob="feat-7*")` against a fixture corpus (temp dir with `SPECMGR_FEAT_DIR` overridden, holding a known set of `feat-7*` ids plus non-matching ids) returns exactly the matching features and no others, and `total` equals that count.
+- [x] ACC-001: `list_feat(glob="feat-7*")` against a fixture corpus (temp dir with `SPECMGR_FEAT_DIR` overridden, holding a known set of `feat-7*` ids plus non-matching ids) returns exactly the matching features and no others, and `total` equals that count.
 
-- [ ] ACC-002: For a document with a known UUID (e.g. from `docs/req/`), `list_req(glob="<first 4 hex chars>*")` — in any case of the pattern — returns that row and no others.
+- [x] ACC-002: For a document with a known UUID (e.g. from `docs/req/`), `list_req(glob="<first 4 hex chars>*")` — in any case of the pattern — returns that row and no others.
 
-- [ ] ACC-003: With `glob=None`, all twelve tools' output is unchanged (existing tests stay green, no new drift).
+- [x] ACC-003: With `glob=None`, all twelve tools' output is unchanged (existing tests stay green, no new drift).
 
-- [ ] ACC-004: Paging composes with the filter: for a pattern with N matches, `offset=N` returns zero rows and `truncated` reflects the filtered total.
+- [x] ACC-004: Paging composes with the filter: for a pattern with N matches, `offset=N` returns zero rows and `truncated` reflects the filtered total.
 
-- [ ] ACC-005: A corpus containing a broken (failed-to-parse) document: the unfiltered listing still shows its failed row and `error_count` counts it (today's behaviour); for any `glob` the failed row is absent and `error_count = 0`.
+- [x] ACC-005: A corpus containing a broken (failed-to-parse) document: the unfiltered listing still shows its failed row and `error_count` counts it (today's behaviour); for any `glob` the failed row is absent and `error_count = 0`.
 
 ### Scope
 
@@ -120,13 +120,17 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-10-07T17:03:20.962+02:00 - Post-implementation review findings addressed (G1/D1/D2); watch item recorded
+
+Addressed the three findings of the post-implementation code review (docs only; no production or test code changes): (G1) `CHANGELOG.md` gained the feature's missing `[Unreleased]` `### Added` bullet for the new `glob` id-filter parameter on the twelve paged `list_<d>` tools, placed before the pre-existing `### Changed` per Keep a Changelog section order; (D1) the Phase-120 entry's claim that all thirteen test files on the branch were pure additions was corrected to the factually accurate form — twelve new `test_list_<d>_glob.py` modules plus one appended `TestFilterSummariesByGlob` class in the pre-existing `tests/general/tools/test__listing.py` (the change is additive-only, zero removed or altered lines, so ACC-003's substance holds); (D2) the five `### Acceptance Criteria` boxes ACC-001..ACC-005 were ticked to `- [x]` (criterion text untouched), each covered by the named, passing tests the Phase-120 entry walks to its test. The review's watch item is recorded here: commit `52ab39c`'s message discloses that `tests/feat/tools/test_list_feat_glob.py` failed intermittently under the pre-commit hook's staged-snapshot full-suite run (order-dependent; passes standalone and in direct full-suite runs); the post-implementation review could not reproduce it (two full-suite runs, 4137 passed) and found no mechanism, so it is tracked as a watch item with no code change.
+
 #### 2026-10-07T15:36:37.959+02:00 - Status set to review
 
 All three phases (100/110/120) are implemented, committed, and gate-green (4137 tests, ruff/vulture clean, doc/schema drift idempotent); the frontmatter status moved from `progress` to `review` for the post-implementation review and the pull request against `dev`.
 
 #### 2026-10-07T15:22:39.247+02:00 - Phase 120 complete: quality gate green, ACC-001..ACC-005 walked
 
-Ran every gate of Task 120.100 — all green on the first run, no production or test changes needed. `ruff format --check`: 1925 files already formatted. `ruff check`: All checks passed! `vulture src/ whitelist.py --min-confidence 60`: no output (clean, exit 0). `pytest -n auto --cov=src --cov-report=`: 4137 passed in 72.68s. Drift checks `specmgr docs` (487 module files + GENERATED.md), `specmgr mcp-docs` (docs/MCP.md), and `specmgr coverage-badge` (docs/coverage.svg, 99%) all idempotent — `git status --short` clean after each. ACC walk (re-run with `-v`, every covering test PASSED): ACC-001 → `tests/feat/tools/test_list_feat_glob.py::TestListFeatGlob::test_acc001_glob_returns_exactly_the_matching_features_and_no_others`; ACC-002 → `tests/req/tools/test_list_req_glob.py::TestListReqGlob::test_acc002_known_repo_uuid_matches_in_any_case_of_the_pattern` (the real `docs/req` UUID `10b78b36-abad-4bfe-9281-f75677ff7d09`, subtests over `10b7*` and `10B7*`); ACC-003 → all 13 test files on this branch are pure additions (zero existing test file modified) and the full suite's pre-existing `test_list_<d>.py` suites stayed green, plus the per-module `glob=None`-unchanged tests (feat `test_acc003_glob_none_output_is_unchanged`, the other eleven domains `test_glob_none_output_is_unchanged_and_reports_the_full_corpus`); ACC-004 → `test_acc004_paging_composes_with_the_glob_filter` in both the `feat` and `req` modules; ACC-005 → `test_acc005_broken_folder_is_reported_unfiltered_but_absent_for_any_glob` (feat) and `test_acc005_broken_file_is_reported_unfiltered_but_absent_for_any_glob` (req). Scope discipline confirmed: the `src/` diff over 52ab39c..HEAD is exactly `general/tools/_listing.py` plus twelve `tools/list_<d>.py` files; `adr/tools/list_adr.py` is unmodified and contains no `glob`; the shared helper is untouched by Phase 110 (empty diff 7a0f297..HEAD). No decision was forced this phase, so Decisions Made is unchanged.
+Ran every gate of Task 120.100 — all green on the first run, no production or test changes needed. `ruff format --check`: 1925 files already formatted. `ruff check`: All checks passed! `vulture src/ whitelist.py --min-confidence 60`: no output (clean, exit 0). `pytest -n auto --cov=src --cov-report=`: 4137 passed in 72.68s. Drift checks `specmgr docs` (487 module files + GENERATED.md), `specmgr mcp-docs` (docs/MCP.md), and `specmgr coverage-badge` (docs/coverage.svg, 99%) all idempotent — `git status --short` clean after each. ACC walk (re-run with `-v`, every covering test PASSED): ACC-001 → `tests/feat/tools/test_list_feat_glob.py::TestListFeatGlob::test_acc001_glob_returns_exactly_the_matching_features_and_no_others`; ACC-002 → `tests/req/tools/test_list_req_glob.py::TestListReqGlob::test_acc002_known_repo_uuid_matches_in_any_case_of_the_pattern` (the real `docs/req` UUID `10b78b36-abad-4bfe-9281-f75677ff7d09`, subtests over `10b7*` and `10B7*`); ACC-003 → all thirteen test-file changes on this branch are additive-only (twelve new `test_list_<d>_glob.py` modules plus one appended test class in the pre-existing `tests/general/tools/test__listing.py`; no pre-existing test modified or removed) and the full suite's pre-existing `test_list_<d>.py` suites stayed green, plus the per-module `glob=None`-unchanged tests (feat `test_acc003_glob_none_output_is_unchanged`, the other eleven domains `test_glob_none_output_is_unchanged_and_reports_the_full_corpus`); ACC-004 → `test_acc004_paging_composes_with_the_glob_filter` in both the `feat` and `req` modules; ACC-005 → `test_acc005_broken_folder_is_reported_unfiltered_but_absent_for_any_glob` (feat) and `test_acc005_broken_file_is_reported_unfiltered_but_absent_for_any_glob` (req). Scope discipline confirmed: the `src/` diff over 52ab39c..HEAD is exactly `general/tools/_listing.py` plus twelve `tools/list_<d>.py` files; `adr/tools/list_adr.py` is unmodified and contains no `glob`; the shared helper is untouched by Phase 110 (empty diff 7a0f297..HEAD). No decision was forced this phase, so Decisions Made is unchanged.
 
 #### 2026-10-07T14:43:27.097+02:00 - Phase 110 complete: the glob parameter on the eleven other list tools
 
