@@ -29,7 +29,13 @@ ambiguous -- do not guess.
   result carries `error` (the parse-failure message -- field path and
   cause, plus a 1-based line reference and fix hint for structural
   failures -- byte-identical to `list_$type()`'s failed row `error`
-  for the same file, including the trailing pydantic documentation line)
+  for the same file, including the trailing pydantic documentation line --
+  **except for `feat`**, where this byte-identity is time-qualified: a
+  cold/not-yet-converged `list_feat` row may carry a transiently-healthy or
+  dirty-stage-specific `error` instead until its background warmup (or
+  this very `get_feat` call) has fully parsed the file; `get_feat` itself
+  always fully parses and is the one unconditional, full-fidelity
+  authority regardless)
   and
   `path` (the absolute on-disk file you will read in step 2 and write
   back in step 5). That `error` is the defect you will fix. If the id is
@@ -47,7 +53,11 @@ ambiguous -- do not guess.
   pattern and offending value for closed-vocabulary failures) -- read
   it. Remember the row's `path` (the on-disk file you will read and later
   write). If no row carries the `<failed to parse>` marker, nothing is
-  failing -- report that and stop. If more than one row does, use the
+  failing -- report that and stop (**except for `feat`**: a body-level
+  defect may still be present but not yet visible in `list_feat`'s row
+  until its background warmup converges -- if you suspect this, confirm
+  with `get_$type(id)` directly instead of trusting an apparently-healthy
+  `list_feat` row). If more than one row does, use the
   `question` tool to ask which document to repair -- do not guess.
 
 ## 2. Read the raw file with your own file-read tool

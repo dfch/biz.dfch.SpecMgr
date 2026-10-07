@@ -20,7 +20,7 @@ read path and the MCP write side (feat-146 Phase 1, ADR
 8c889262-152b-4b8e-ae2c-75371f7a9edf).
 
 This module is the single source of the machine-written canonical date+time
-form: ``yyyy-MM-ddTHH:mm:ss.fff`` (``T``-separated, ISO 8601's standard
+form: ``yyyy-MM-ddTHH:mm:ss.SSS`` (``T``-separated, ISO 8601's standard
 extended combined form per ADR 23a14195-339c-48af-99d2-97c9964041ae)
 followed by either ``Z`` (UTC, i.e. a zero UTC offset) or a signed
 ``±HH:mm`` offset, with milliseconds truncated to *exactly* three digits
@@ -87,7 +87,7 @@ def format_timestamp(dt: datetime) -> str:
         dt: The datetime to format.
 
     Returns:
-        `yyyy-MM-ddTHH:mm:ss.fff` followed by `Z` (`dt`'s UTC offset is
+        `yyyy-MM-ddTHH:mm:ss.SSS` followed by `Z` (`dt`'s UTC offset is
         exactly zero) or `dt`'s own signed `±HH:mm` offset (aware `dt`),
         or with no suffix at all (naive `dt`). Milliseconds are truncated
         (not rounded) from `dt.microsecond`.

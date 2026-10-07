@@ -36,7 +36,11 @@ for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
 the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
-``<tempdir>/fastembed_cache``).
+``<tempdir>/fastembed_cache``). A third presence flag,
+``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
+ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
+are disabled.
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -83,6 +87,7 @@ from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from ...general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from ...general.tools._domains import ALL_DOMAINS
 from ...general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
+from ...general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR
 from ...gol.tools._paths import gol_base_dir
 from ...models import ConfigInfo, DomainConfig, PlantumlConfig, PlantumlSourceConfig, SimilarityConfig
 from ...plantuml.chain import ENV_VAR_BIN, ENV_VAR_JAR, ENV_VAR_URL, select_source
@@ -134,9 +139,11 @@ def _similarity_cache_dir() -> str:
         "the semantic-similarity feature (feat-134): whether the `similarity` extra (fastembed) is "
         "installed (a spec lookup, never an import), whether the presence-based SPECMGR_SIMILARITY_DISABLED "
         "opt-out flag is set, the fixed model name, and the resolved model cache directory "
-        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created), "
-        "and a static `plantuml` section for the PlantUML validation source (feat-185-uc-diagrams "
-        "Phase 120): the presence-only state of the exactly-three source env vars "
+        "(FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created), plus "
+        "whether the presence-based SPECMGR_FEAT_WARMUP_DISABLED opt-out flag is set (the unified startup "
+        "warmup's feat frontmatter/full-parse phases, feat-187-list-feat-timeout), and a static `plantuml` "
+        "section for the PlantUML validation source (feat-185-uc-diagrams Phase 120): the presence-only "
+        "state of the exactly-three source env vars "
         "(SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never a "
         'value) plus `selected` -- the first-set-wins selection over them ("jar"/"bin"/"url"/'
         '"none"). Static configuration only -- the tools\' own dynamic runtime availability is '
@@ -148,7 +155,8 @@ def _similarity_cache_dir() -> str:
 )
 def config_info() -> ConfigInfo:
     """
-    Return the resolved base directory and env-var-set flag for every domain, plus the similarity and plantuml sections.
+    Return the resolved base directory and env-var-set flag for every domain, plus the similarity and
+    plantuml sections and the feat_warmup_disabled flag.
 
     Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
     reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -180,11 +188,17 @@ def config_info() -> ConfigInfo:
     of this payload; it is that tool's ``source_state``/``available``
     result.
 
+    ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+    3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
+    convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
+    unified startup warmup thread's ``feat`` frontmatter/full-parse phases.
+
     Returns
     -------
     ConfigInfo
         The resolved base directory configuration for every domain, plus
-        the static similarity section and the static plantuml section.
+        the static similarity section, the static plantuml section, and
+        the feat_warmup_disabled flag.
     """
     docs_dir_set = os.environ.get(DOCS_DIR_ENV_VAR) is not None
 
@@ -280,5 +294,10 @@ def config_info() -> ConfigInfo:
         selected=selected[0] if selected is not None else "none",
     )
 
-    result = ConfigInfo(domains=domains, similarity=similarity, plantuml=plantuml)
+    result = ConfigInfo(
+        domains=domains,
+        similarity=similarity,
+        plantuml=plantuml,
+        feat_warmup_disabled=os.environ.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None,
+    )
     return result

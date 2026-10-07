@@ -34,8 +34,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from importlib import import_module
-
 from biz.dfch.specmgr.feat.models.v1 import FeatSummary
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, ensure_feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -152,25 +150,23 @@ class TestListFeat(unittest.TestCase):
         results, total, nor error_count -- not appear as a failed entry (Phase 6/REQ-012's original,
         now-superseded choice) and not propagate an uncaught FileNotFoundError out of this tool.
         """
-        # Fetched via import_module (not `from ... import list_feat as m`/`import ... as m`,
-        # both of which resolve through `feat.tools.__init__`'s own attribute lookup -- and that
-        # package's `__init__.py` rebinds its own `list_feat` attribute to the *function* via
-        # `from .list_feat import list_feat`, shadowing the submodule): `import_module` instead
-        # looks the submodule up directly in `sys.modules`, unaffected by that shadowing.
-        list_feat_module = import_module("biz.dfch.specmgr.feat.tools.list_feat")
-
+        # feat-187-list-feat-timeout, Task 110.110: list_feat's own per-folder resolution now reads
+        # each path directly (`path.read_text()`), never through a `read_feat`-shaped callback -- so
+        # the vanish simulation patches `Path.read_text` itself instead of a `list_feat` module
+        # attribute (which no longer exists, since the rewired request path no longer imports
+        # `read_feat` at all).
         created = create_feat(_MINIMAL_BODY)
         second = create_feat(_OTHER_BODY)
         base_dir = ensure_feat_base_dir()
         path = base_dir / created.id / README_FILENAME
-        real_read_feat = list_feat_module.read_feat
+        real_read_text = Path.read_text
 
-        def _vanish_then_read(candidate_path: Path):
-            if candidate_path == path:
-                raise FileNotFoundError(f"simulated mid-scan rename race for {candidate_path}")
-            return real_read_feat(candidate_path)
+        def _vanish_then_read(self: Path, *args: object, **kwargs: object) -> str:
+            if self == path:
+                raise FileNotFoundError(f"simulated mid-scan rename race for {self}")
+            return real_read_text(self, *args, **kwargs)
 
-        with mock.patch.object(list_feat_module, "read_feat", side_effect=_vanish_then_read):
+        with mock.patch.object(Path, "read_text", _vanish_then_read):
             sut = list_feat()
 
         self.assertEqual(sut.total, 1)

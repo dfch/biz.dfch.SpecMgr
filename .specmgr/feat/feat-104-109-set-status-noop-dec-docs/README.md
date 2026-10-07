@@ -4,7 +4,7 @@ created: '2026-09-14 12:11:30.116+02:00'
 id: feat-104-109-set-status-noop-dec-docs
 status: done
 type: feat
-updated: '2026-09-30T04:36:25.000Z'
+updated: '2026-10-07T06:21:40.882Z'
 version: 1.0.0
 ---
 
@@ -131,14 +131,6 @@ placeholder timestamp" regression test (feat-67-70-71 ACC-001, `_ROUND_MILLISECO
 --check`, `ruff check`, `vulture`, `pytest tests/dec/` (228 passed), full `pytest` suite (3307
 passed), `specmgr docs` (no diff beyond the two edited data files -- `docs/dec_schema.json` is
 schema-derived, not example-derived, and was confirmed unchanged), `specmgr adr-toc` (no changes).
-
-#### 2026-09-14 17:37:32.000Z - Phase 1 complete: set_status no-op (#109)
-
-Added the no-op early-return (`if existing.frontmatter.status == status: return existing.frontmatter`) to each of the 12 whole-body `_set_status_<d>` adapters in `general/tools/set_status.py`, and the ADR-specific composed-target equivalent (`target_status = status if superseded_by is None else f"superseded by {superseded_by}"`) to `_set_status_adr` -- all 13 adapters covered, each check placed right after `assert_within` and before any write, inside the existing domain lock. Updated the module docstring, the `@mcp.tool()` `description=`, and the `set_status` function's own docstring body (behavior prose + Returns section) to document the no-op behavior. Extended `tests/general/tools/test_set_status.py` with `test_same_status_is_a_noop_leaves_file_and_updated_untouched` (iterates `_CASES`, ACC-001) and two dedicated ADR tests, `test_same_plain_status_is_a_noop_leaves_file_untouched` and `test_same_superseded_by_composition_is_a_noop_leaves_file_untouched` (ACC-002); confirmed the 3 existing "status changed" tests (`test_changes_status_bumps_updated_leaves_body_untouched`, `test_changes_plain_status_with_superseded_by_none`, `test_superseded_by_composes_status_string_in_file`) still pass unmodified (ACC-003). Quality gate green: `ruff format --check`, `ruff check`, `vulture`, `pytest tests/general/tools/test_set_status.py` (19 passed), full `pytest` suite (3307 passed), `specmgr docs` (regenerated `docs/api/biz.dfch.specmgr.general.tools.set_status.md` to reflect the docstring changes, nothing else), `specmgr adr-toc` (no changes). No design decisions needed beyond what the plan already specified -- the mechanics matched the Design Notes exactly.
-
-#### 2026-09-14 09:14:27.512Z - Created
-
-Feature folder created to bundle GitHub issues #109 (`set_status` no-op on unchanged status) and #104 (document DEC `## Updates` heading's full-timestamp form), following the existing multi-issue-bundle precedent (`feat-67-70-71`, `feat-81-83-validation`). Scope, requirements, and acceptance criteria drafted from a read-only investigation of `general/tools/set_status.py`, `tests/general/tools/test_set_status.py`, and `dec/models/v1/body.py`/`dec/data/dec_example.md`/`dec_template.md`. Implementation deliberately deferred per explicit user instruction.
 
 ### Related PRs / Commits
 

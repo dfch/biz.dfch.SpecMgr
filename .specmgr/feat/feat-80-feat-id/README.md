@@ -4,7 +4,7 @@ created: '2026-09-04 16:27:34.938+02:00'
 id: feat-80-feat-id
 status: done
 type: feat
-updated: '2026-09-30T04:53:15.000Z'
+updated: '2026-10-07T06:21:19.549Z'
 version: 1.0.0
 ---
 
@@ -125,10 +125,6 @@ changes needed), `ruff check` (all checks passed), `vulture src/ whitelist.py --
 `FeatFrontmatter` return type), and `specmgr mcp-docs` (only `docs/MCP.md`'s `set_feat_id`
 entries changed to add the frontmatter-only callout). No additional straggler tool was found
 beyond the plan's Design Notes review -- ACC-005 stands confirmed as already documented.
-
-#### 2026-09-04 16:27:34.938+02:00 - Created
-
-Feature drafted from GitHub issue #80, scoped after a source-verified review confirming `set_feat_id` as the sole straggler among non-`get_<d>` document-returning tools.
 
 ### Related PRs / Commits
 

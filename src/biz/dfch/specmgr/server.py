@@ -157,17 +157,20 @@ specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, g
                         ``SPECMGR_SIMILARITY_DISABLED`` opt-out flag is set, the fixed model
                         name (the shared ``SIMILARITY_MODEL_NAME`` constant, the single source
                         both ``get_default_provider()`` and the section read), and the resolved
-                         model cache directory (``FASTEMBED_CACHE_PATH`` if set, else
-                         ``<tempdir>/fastembed_cache`` -- reported, never created). Plus a
-                         static ``plantuml`` section for the PlantUML validation source
-                         (feat-185-uc-diagrams Phase 120): the presence-only state of the
-                         exactly-three source env vars (SPECMGR_PLANTUML_JAR/
-                         SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never
-                         a value) plus ``selected`` -- the first-set-wins selection over
-                         them ("jar"/"bin"/"url"/"none"). Static configuration only: the
-                         tools' own dynamic runtime availability is their structured
-                         ``{available, reason, message}`` result, not part of this resource
-                         (no ``loaded`` field).
+                        model cache directory (``FASTEMBED_CACHE_PATH`` if set, else
+                        ``<tempdir>/fastembed_cache`` -- reported, never created). Plus a
+                        static ``plantuml`` section for the PlantUML validation source
+                        (feat-185-uc-diagrams Phase 120): the presence-only state of the
+                        exactly-three source env vars (SPECMGR_PLANTUML_JAR/
+                        SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never
+                        a value) plus ``selected`` -- the first-set-wins selection over
+                        them ("jar"/"bin"/"url"/"none"). Plus whether the presence-based
+                        ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag is set (the unified
+                        startup warmup's ``feat`` frontmatter/full-parse phases,
+                        feat-187-list-feat-timeout, Task 110.120). Static configuration
+                        only: the tools' own dynamic runtime availability is their
+                        structured ``{available, reason, message}`` result, not part of
+                        this resource (no ``loaded`` field).
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
 through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -514,8 +517,16 @@ document that exists but fails to parse, instead of raising the domain's
 not-found error -- the ``error`` text is byte-identical to that
 domain's ``list_<d>`` tool's failed-row ``error`` for the same file (identical
 field path and cause, including the trailing pydantic documentation line --
-feat-162-doc-cache-exception-footer, GitHub issue #162), and
-``raw=True`` on a broken
+feat-162-doc-cache-exception-footer, GitHub issue #162) for every domain
+EXCEPT ``feat``, where this byte-identity is time-qualified
+(feat-187-list-feat-timeout, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44):
+``get_feat`` always fully parses and remains the unconditional,
+full-fidelity authority, but ``list_feat``'s own row may carry a
+transiently-healthy or dirty-stage-specific ``error`` instead until its
+background warmup (or an on-demand ``get_feat`` read) has fully parsed
+that file, or permanently under ``SPECMGR_FEAT_WARMUP_DISABLED`` (see
+``feat.tools.list_feat``'s own docstring for the full three-tier
+contract). ``raw=True`` on a broken
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
 extension of the ADR 519d1206 client-side-``isError``-truncation workaround
@@ -665,30 +676,44 @@ from mcp.server import MCPServer
 
 @asynccontextmanager
 async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
-    """Server lifespan: start the background similarity warmup, then run (feat-134, REQ-011).
+    """Server lifespan: start the unified background startup warmup, then run (ADR 3982712a, REQ-007).
 
-    At startup (before the first ``yield`` -- i.e. before any tool call
-    can run), ``general.tools._similarity_search.start_similarity_warmup``
-    checks **only** the lightweight, synchronous
-    ``SPECMGR_SIMILARITY_DISABLED`` presence gate and, when the flag is
-    absent, starts a daemon thread embedding the full default corpus into
-    the content-hash-validated embedding cache -- without joining it. The
-    full availability probe (the same check both similarity tools run
-    first thing in their bodies, REQ-003: the lazy ``import fastembed``
-    plus the eager model load, including the one-time first-use download)
-    runs **inside that daemon thread** (``warmup_similarity_cache``'s
-    first step; Phase 5, Task 5.2), never on this startup path -- so
-    server startup is never blocked by the embedding backend (REQ-011's
-    "warmup must not block server startup" strict reading), and on a
-    first/air-gapped run the model download, if it happens at all, is
-    backgrounded. The thread start never raises: when the feature is
-    unavailable the thread exits immediately without cache writes (a
-    mid-warmup failure is likewise logged and swallowed inside the thread,
-    leaving the cache partially warm and the demand path working), and when
-    the flag is present no thread is started at all (a no-op, and the
-    server runs exactly as before). This lifespan does not wait for the
-    thread, and the daemon thread dies with the process (REQ-011, ADR
-    750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision).
+    At startup (before the first ``yield`` -- i.e. before any tool call can
+    run), ``general.tools._startup_warmup.start_startup_warmup`` checks two
+    lightweight, synchronous presence flags and, unless *both* are set,
+    starts a single daemon thread (``specmgr-startup-warmup``) running
+    three phases in order, without joining it: (1) the ``feat`` frontmatter
+    warmup phase (every live feature folder's frontmatter + H1, cheap);
+    (2) the ``feat`` full-parse warmup phase (the same folders, fully
+    parsed through the content-hash-validated clean cache, expensive); (3)
+    the pre-existing, unchanged feat-134 similarity warmup
+    (``warmup_similarity_cache``, embedding the full default corpus into
+    the embedding cache). Phase gating is per-phase, not per-thread: the
+    new ``SPECMGR_FEAT_WARMUP_DISABLED`` presence flag gates phases 1-2
+    only, the pre-existing ``SPECMGR_SIMILARITY_DISABLED`` gates phase 3
+    only (unchanged in meaning) -- when both flags are present, no thread
+    is started at all (a true no-op, and the server runs exactly as before
+    either feature shipped). This fixes GitHub issue #187's ``list_feat``
+    cold-scan timeout by making the very first ``list_feat`` call, even
+    against a cold server process, resolve every folder via a cheap
+    frontmatter+H1 cache instead of a full body parse (see
+    ``feat.tools.list_feat``'s own docstring for the request-path contract
+    this warmup feeds) -- phases 1-2 run first, specifically so ``list_feat``
+    is already fast within roughly a second of server start, well before
+    the heavier phase 2/phase 3 work even begins.
+
+    Each phase's own availability probe/crash containment lives inside
+    that phase's own body (``feat.tools._warmup.warmup_feat_caches``'s two
+    phases; ``warmup_similarity_cache``'s own full availability probe --
+    the lazy ``import fastembed`` plus the eager model load, including the
+    one-time first-use download -- runs inside its own phase, Phase 5, Task
+    5.2 of feat-134, never on this startup path), so server startup is
+    never blocked by either warmup, and a mid-warmup failure in any phase
+    is logged and swallowed, never raised out of the thread. This lifespan
+    does not wait for the thread, and the daemon thread dies with the
+    process (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44, refining ADR
+    750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision via its
+    own v1.4.0 note).
 
     The import is function-level on purpose: the ``general.tools``
     package (via its own ``__init__``'s tool-module imports) imports this
@@ -696,9 +721,9 @@ async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
     decorators, so a module-level import here would be a circular import
     that fails on the partially-initialised ``mcp`` name.
     """
-    from .general.tools._similarity_search import start_similarity_warmup
+    from .general.tools._startup_warmup import start_startup_warmup
 
-    start_similarity_warmup()
+    start_startup_warmup()
     yield
 
 

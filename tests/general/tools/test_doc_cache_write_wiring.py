@@ -618,7 +618,18 @@ class TestAcc003DeleteInvalidatesForFeat(_FeatWiringTestCase):
 
 
 class TestAcc004ListReconcilesForFeat(_FeatWiringTestCase):
-    """ACC-004 (feat): a real ``list_feat`` invokes its caller-bound ``reconcile_feat_cache`` exactly once, with the live listing, before summary building."""
+    """ACC-004 (feat): a real ``list_feat`` invokes its caller-bound ``reconcile_feat_cache`` exactly once, with the live listing, before per-file resolution.
+
+    feat-187-list-feat-timeout, Task 110.110: ``list_feat``'s own request
+    path no longer routes through the generic ``build_summaries`` helper at
+    all (it resolves each folder via its own clean-``peek_feat``/dirty-
+    ``read_feat_dirty_preloaded`` two-stage lookup instead) -- this test's
+    "before summary building" spy target moved from the now-absent
+    ``list_feat.build_summaries`` to ``list_feat.peek_feat``, the first
+    per-file call the rewired loop makes, so the same ordering guarantee
+    (reconcile fires before any per-file resolution) still pins the right
+    thing.
+    """
 
     def test_list_invokes_the_caller_bound_reconcile_exactly_once_with_the_live_listing(self) -> None:
         with self.subTest(domain=FEAT):
@@ -626,32 +637,32 @@ class TestAcc004ListReconcilesForFeat(_FeatWiringTestCase):
             list_module = import_module("biz.dfch.specmgr.feat.tools.list_feat")
             list_fn = getattr(list_module, "list_feat")
             real_reconcile = getattr(list_module, "reconcile_feat_cache")
-            real_build = list_module.build_summaries
+            real_peek = list_module.peek_feat
             call_order: list[str] = []
 
             def _reconcile_side_effect(*args: Any, **kwargs: Any) -> Any:
                 call_order.append("reconcile")
                 return mock.DEFAULT
 
-            def _build_side_effect(*args: Any, **kwargs: Any) -> Any:
+            def _peek_side_effect(*args: Any, **kwargs: Any) -> Any:
                 # REQ-006 pins the ordering, not just the call: the reconcile must have
-                # fired before summary building (a refactor that moved it after fails here).
-                self.assertEqual(call_order, ["reconcile"], "reconcile must fire before summary building")
-                call_order.append("build")
-                return real_build(*args, **kwargs)
+                # fired before per-file resolution (a refactor that moved it after fails here).
+                self.assertEqual(call_order, ["reconcile"], "reconcile must fire before per-file resolution")
+                call_order.append("peek")
+                return real_peek(*args, **kwargs)
 
             with (
                 mock.patch.object(
                     list_module, "reconcile_feat_cache", wraps=real_reconcile, side_effect=_reconcile_side_effect
                 ) as spy,
-                mock.patch.object(list_module, "build_summaries", side_effect=_build_side_effect) as build_spy,
+                mock.patch.object(list_module, "peek_feat", side_effect=_peek_side_effect) as peek_spy,
             ):
                 result = list_fn()
 
             self.assertEqual(result.total, 1)
             # The fixture dir holds exactly one feature folder, so the live path listing is that single path.
             spy.assert_called_once_with([path])
-            build_spy.assert_called_once()
+            peek_spy.assert_called_once()
 
 
 if __name__ == "__main__":

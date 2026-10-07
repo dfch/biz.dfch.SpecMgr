@@ -21,7 +21,11 @@ for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
 the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
-``<tempdir>/fastembed_cache``).
+``<tempdir>/fastembed_cache``). A third presence flag,
+``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
+ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
+are disabled.
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -80,7 +84,8 @@ Returns:
 
 ### `config_info() -> 'ConfigInfo'`
 
-Return the resolved base directory and env-var-set flag for every domain, plus the similarity and plantuml sections.
+Return the resolved base directory and env-var-set flag for every domain, plus the similarity and
+plantuml sections and the feat_warmup_disabled flag.
 
 Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
 reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -112,9 +117,15 @@ selected source answers its canary right now) is deliberately not part
 of this payload; it is that tool's ``source_state``/``available``
 result.
 
+``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
+convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
+unified startup warmup thread's ``feat`` frontmatter/full-parse phases.
+
 Returns
 -------
 ConfigInfo
     The resolved base directory configuration for every domain, plus
-    the static similarity section and the static plantuml section.
+    the static similarity section, the static plantuml section, and
+    the feat_warmup_disabled flag.
 

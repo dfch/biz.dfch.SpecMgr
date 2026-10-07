@@ -110,6 +110,27 @@ attempt to acquire another lock.
 **Explicitly out of scope** (mirroring the feature's own Scope section): no
 TTL/size-based eviction, and no ``stat()``-based (mtime/size) pre-check fast
 path -- content-hash-only for this first version.
+
+**feat-187-list-feat-timeout, Task 110.105: two additive, single-read
+primitives (``peek_preloaded``/``read_preloaded``), ``read`` refactored
+onto them.** Added to support ``feat``'s two-stage dirty/clean cache
+staging (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44, fixing GitHub issue
+#187's ``list_feat`` cold-scan timeout) without inventing a second,
+independently-implemented cache mechanism: :meth:`DocCache.peek_preloaded`
+looks up a path's cached result against text the caller already read,
+without ever parsing or re-reading the file, so a caller holding two
+``DocCache`` instances (a "clean" full-parse one and a "dirty"
+frontmatter-only one) can check the clean one first and fall back to
+reading through the dirty one -- both against the *same* in-memory
+``text`` -- with exactly one ``path.read_text()`` call total, never a
+second, independent re-read of the same file between the two cache
+queries (the same TOCTOU-safety contract REQ-007 already established for
+``read`` itself). :meth:`DocCache.read_preloaded` has hit/miss semantics
+identical to :meth:`read`, just handed ``text`` instead of reading
+``path`` itself; :meth:`read` is now implemented in terms of it
+(behavior-preserving -- the pre-existing ``test__doc_cache.py`` suite,
+including the feat-162 footer-reconstruction tests, is the regression
+guard and needed no changes).
 """
 
 from __future__ import annotations
@@ -304,20 +325,158 @@ class DocCache(Generic[_DocT]):
         #: the exception a failed parse raised.
         self._entries: dict[Path, tuple[bytes, _DocT | Exception]] = {}
 
+    def peek_preloaded(self, path: Path, text: str) -> _DocT | Exception | None:
+        """Return the cached result for ``path`` if ``text``'s hash matches, without ever parsing (Task 110.105).
+
+        The read-only counterpart of :meth:`read_preloaded`: it never calls
+        ``parse_fn`` (it has none) and never writes to this cache's own
+        entries -- a pure lookup against a result some *other* call already
+        produced. Built for ``feat``'s two-stage dirty/clean staging (ADR
+        3982712a-a46b-4b2b-809f-9c6925a49b44): a caller holding both a
+        "clean" (full-parse) and a "dirty" (cheaper) ``DocCache`` instance
+        for the same domain calls this on the clean one first, against text
+        it already read once, and falls back to the dirty instance's own
+        :meth:`read_preloaded` only on a genuine miss (``None``) -- never a
+        second, independent re-read of the same file between the two cache
+        queries (the same TOCTOU-safety contract REQ-007 already
+        established for :meth:`read`).
+
+        On a hash match (a "hit"), the stored result is materialized
+        exactly like :meth:`read`'s own hit branch -- a fresh, deep
+        :meth:`~pydantic.BaseModel.model_copy` for a cached **success**, or
+        a fresh, equivalent reconstruction (:func:`_fresh_exception`) of a
+        cached **failure** -- except the failure is *returned*, not raised:
+        callers that need three-way ("success" / "failure" / "no entry at
+        all") control flow without a ``try``/``except`` around a lookup
+        that is not even attempting to parse can simply ``isinstance()``
+        the return value. On a hash mismatch or a path with no cached entry
+        at all (a "miss"), ``None`` is returned -- ``parse_fn`` is never
+        invoked and nothing is written to this cache's own entries, since
+        this method never parses.
+
+        Parameters
+        ----------
+        path:
+            The filesystem path whose cached entry to look up. Normalized
+            via ``.resolve()`` before use as the cache key (REQ-009).
+        text:
+            The exact text the caller already read for ``path`` (e.g. via
+            its own single ``path.read_text()`` call) -- hashed here to
+            decide hit vs. miss; never re-read from disk.
+
+        Returns
+        -------
+        _DocT | Exception | None
+            A fresh copy of the cached document, a fresh reconstruction of
+            the cached parse-failure exception (returned, not raised), or
+            ``None`` on a miss.
+        """
+        assert isinstance(path, Path), type(path)
+        assert isinstance(text, str), type(text)
+
+        resolved_path = path.resolve()
+        content_hash = hashlib.blake2b(text.encode("utf-8")).digest()
+
+        with self._lock:
+            cached = self._entries.get(resolved_path)
+        if cached is None or cached[0] != content_hash:
+            result: _DocT | Exception | None = None
+            return result
+
+        cached_result = cached[1]
+        if isinstance(cached_result, Exception):
+            result = _fresh_exception(cached_result)
+            return result
+        if isinstance(cached_result, BaseModel):
+            result = cached_result.model_copy(deep=True)
+            return result
+        result = cached_result
+        return result
+
+    def read_preloaded(self, path: Path, text: str, parse_fn: Callable[[str], _DocT]) -> _DocT:
+        """Return the cached or freshly-parsed result for ``path``, given already-read ``text`` (Task 110.105).
+
+        Identical hit/miss semantics to :meth:`read` -- see that method's
+        own docstring for the full hit/miss contract -- except this method
+        is handed the text the caller already read (e.g. for its own
+        two-stage dirty/clean cache staging, ADR
+        3982712a-a46b-4b2b-809f-9c6925a49b44) rather than reading ``path``
+        itself: :meth:`read` is now implemented in terms of this method
+        (``text = path.read_text(...); return self.read_preloaded(path,
+        text, parse_fn)``), so this is the one place the hash-then-lookup-
+        then-parse-on-miss logic actually lives.
+
+        Parameters
+        ----------
+        path:
+            The filesystem path being read. Normalized via ``.resolve()``
+            before use as the cache key (REQ-009); not itself read here.
+        text:
+            The exact text to hash and, on a miss, hand to ``parse_fn`` --
+            the caller's own single file read, never re-read here.
+        parse_fn:
+            Parses the given text into a document object on a cache miss.
+            Receives the *exact* ``text`` this call was given -- it must
+            not re-read ``path`` itself (Phase 6, REQ-007).
+
+        Returns
+        -------
+        _DocT
+            The cached (freshly copied, on a hit) or freshly-parsed
+            document.
+
+        Raises
+        ------
+        Exception
+            Raises a fresh, equivalent reconstruction (see
+            :func:`_fresh_exception`) of a cached parse failure (one of
+            :data:`CACHEABLE_ERROR_TYPES`) on a hash match, or propagates a
+            fresh ``parse_fn`` failure of one of those types after caching
+            it.
+        """
+        assert isinstance(path, Path), type(path)
+        assert isinstance(text, str), type(text)
+        assert callable(parse_fn), type(parse_fn)
+
+        resolved_path = path.resolve()
+        content_hash = hashlib.blake2b(text.encode("utf-8")).digest()
+
+        with self._lock:
+            cached = self._entries.get(resolved_path)
+        if cached is not None and cached[0] == content_hash:
+            cached_result = cached[1]
+            if isinstance(cached_result, Exception):
+                raise _fresh_exception(cached_result)
+            if isinstance(cached_result, BaseModel):
+                copied_result: _DocT = cached_result.model_copy(deep=True)
+                return copied_result
+            return cached_result
+
+        try:
+            result: _DocT = parse_fn(text)
+        except CACHEABLE_ERROR_TYPES as exc:
+            with self._lock:
+                self._entries[resolved_path] = (content_hash, exc)
+            raise
+
+        with self._lock:
+            self._entries[resolved_path] = (content_hash, result)
+        return result
+
     def read(self, path: Path, parse_fn: Callable[[str], _DocT]) -> _DocT:
         """Return the cached or freshly-parsed result for ``path``.
 
-        Reads ``path``'s full on-disk text and computes its content hash
-        exactly once per call, regardless of hit/miss (Phase 6, REQ-007):
-        that same text is both what gets hashed and, on a miss, what gets
-        handed to ``parse_fn`` -- there is no second, independent file
-        read between the two, so the stored hash and the stored result
-        can never originate from different on-disk snapshots of ``path``
-        (the TOCTOU race the Phase 1-5 implementation had, where ``read``
-        hashed one ``path.read_text()`` call and then called
-        ``parse_fn(path)``, which every domain's own ``_parse`` wrapper
-        implemented as its own second, independent ``path.read_text()``
-        call).
+        Reads ``path``'s full on-disk text and delegates to
+        :meth:`read_preloaded` for the actual hash/lookup/parse-on-miss
+        logic (Task 110.105 refactor, behavior-preserving) -- that same
+        text is both what gets hashed and, on a miss, what gets handed to
+        ``parse_fn`` -- there is no second, independent file read between
+        the two, so the stored hash and the stored result can never
+        originate from different on-disk snapshots of ``path`` (the
+        TOCTOU race the Phase 1-5 implementation had, where ``read`` hashed
+        one ``path.read_text()`` call and then called ``parse_fn(path)``,
+        which every domain's own ``_parse`` wrapper implemented as its own
+        second, independent ``path.read_text()`` call).
 
         When the computed hash matches the hash stored for ``path`` at its
         last read, the stored result is returned/re-raised without
@@ -386,30 +545,8 @@ class DocCache(Generic[_DocT]):
         assert isinstance(path, Path), type(path)
         assert callable(parse_fn), type(parse_fn)
 
-        resolved_path = path.resolve()
         text = path.read_text(encoding="utf-8")
-        content_hash = hashlib.blake2b(text.encode("utf-8")).digest()
-
-        with self._lock:
-            cached = self._entries.get(resolved_path)
-        if cached is not None and cached[0] == content_hash:
-            cached_result = cached[1]
-            if isinstance(cached_result, Exception):
-                raise _fresh_exception(cached_result)
-            if isinstance(cached_result, BaseModel):
-                copied_result: _DocT = cached_result.model_copy(deep=True)
-                return copied_result
-            return cached_result
-
-        try:
-            result: _DocT = parse_fn(text)
-        except CACHEABLE_ERROR_TYPES as exc:
-            with self._lock:
-                self._entries[resolved_path] = (content_hash, exc)
-            raise
-
-        with self._lock:
-            self._entries[resolved_path] = (content_hash, result)
+        result = self.read_preloaded(path, text, parse_fn)
         return result
 
     def invalidate(self, path: Path) -> None:

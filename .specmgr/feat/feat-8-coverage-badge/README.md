@@ -2,7 +2,7 @@
 created: '2026-08-13 00:00:00.000Z'
 id: feat-8-coverage-badge
 status: done
-updated: '2026-10-01T00:00:00.000Z'
+updated: '2026-10-07T06:21:40.950Z'
 version: 1.0.0
 ---
 
@@ -118,10 +118,6 @@ None yet. Coverage badge generation and CI/pre-commit integration is implementat
 #### 2026-08-15 00:00:00.000Z - Housekeeping: assigned GitHub issue
 
 Opened and immediately closed [GitHub issue #8](https://github.com/dfch/biz.dfch.SpecMgr/issues/8) (feature was already completed) purely to backfill an issue number; renamed the folder `feat-0-coverage-badge` → `feat-8-coverage-badge` and updated the frontmatter `id` to match.
-
-#### 2026-08-13 00:00:00.000Z - Initial implementation complete
-
-All 10 tasks above completed. Feature tested locally: `uv run --frozen coverage run -m unittest discover` produces `.coverage`; `uv run --frozen specmgr coverage-badge` generates `docs/coverage.svg` with 96% coverage; SVG displays correctly (green badge, flat style); Tests passing (new tests in `test_coverage_badge.py`); CI and pre-commit hooks wired and ready for first commit.
 
 ### Decisions Made
 

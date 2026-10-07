@@ -1,0 +1,15 @@
+# History: Remove Confluence Tools from the MCP Server
+
+#### 2026-09-10 14:00:00.000Z - Phase 2 (Removal) complete
+
+Deleted all Confluence-specific source modules (`general/tools/confluence_fetch.py`, `general/tools/confluence_update.py`, `general/tools/_confluence_config.py`, `general/tools/_confluence_url.py`, `general/prompts/confluence_fetch.py`, `general/prompts/confluence_update.py`, and their two `general/data/*.md` instruction files) and all 6 corresponding test files under `tests/general/tools/` and `tests/general/prompts/`. Updated `general/tools/__init__.py` and `general/prompts/__init__.py` (imports, `__all__`, docstrings) and `general/__init__.py`'s own docstring to drop confluence mentions. Removed the confluence-related docstring paragraphs from `server.py` (tools and prompts sections) without touching any executable code. Removed the `confluence_fetch` environment-variables bullet from `README.md`. Added a `### Removed` entry under `CHANGELOG.md`'s `[Unreleased]` heading referencing GitHub issue #120 and ADR 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c. Confirmed via `grep -rn "httpx" src/ --include=*.py` that no remaining module imports `httpx` after the deletions, then removed `"httpx>=0.27",` from `pyproject.toml`'s `mcp` extra and the entire `httpx (optional "mcp" extra)` BSD-3-Clause block from `NOTICE`. Ran `uv lock` (network-accessible in this environment) followed by `uv sync --all-extras`, which removed `httpx`/`httpcore` from `uv.lock` and the local environment. Regenerated `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`; the doc generator auto-pruned the 6 now-orphaned `docs/api/*confluence*.md` pages, and re-running both commands afterward produced no further diff. Quality gate: `ruff format --check` (1644 files formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings, no confluence-related whitelist entries existed), and `pytest -n auto` (3248 passed) all green. Left `.specmgr/feat/feat-50-confluence/README.md` untouched.
+
+
+#### 2026-09-10 13:00:00.000Z - Phase 1 (ADR) complete
+
+Created a new ADR, "Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server" (id `92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`), documenting the decision to remove the Confluence-specific MCP tools per GitHub issue #120, and explicitly superseding ADR a156fdf9-052c-4f43-93a2-eeec04a91eac. Marked the old ADR's status as `superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c` via the generic `set_status` tool. Regenerated `docs/adr/README.md` via `specmgr adr-toc`. No `src/`/`tests/` files were touched (Phase 2's job).
+
+
+#### 2026-09-10 12:00:00.000Z - Created
+
+Drafted the feature plan for removing the Confluence tools (`confluence_fetch`, `confluence_update`) and their supporting code, tests, docs, and dependency from the MCP server, per GitHub issue #120. A prior codebase inventory confirmed all Confluence-specific code lives in `general/tools/` and `general/prompts/`, added by feat-50-confluence (issue #50, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac). No implementation work has started yet.

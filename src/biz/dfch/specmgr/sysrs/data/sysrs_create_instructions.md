@@ -92,7 +92,7 @@ paraphrasing why it is referenced here.
   optional leading HTML comment (conventionally "Newest entry first"),
   then `### {timestamp} ( - | : ) {title}` entries, newest-first, where
   `{timestamp}` is the full ISO 8601 date+time form
-   `yyyy-MM-dd[T ]HH:mm:ss.fff` + `Z` or `±HH:mm` (e.g.
+   `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (e.g.
    `### 2026-08-30 14:30:00.000+02:00 - Created`), each with the entry's own
    update text directly under the H3 heading (any markdown content --
    multiple paragraphs, lists, code blocks, block quotes, not just a single

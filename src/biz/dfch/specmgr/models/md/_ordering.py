@@ -26,7 +26,7 @@ factored out here so the newer `sop.Updates`/`dec.Updates`/`vcr.Updates`/
 near-identical copies of the same `model_validator`.
 
 Every caller only ever passes full date+time timestamps (the shared
-`yyyy-MM-dd` + (`T` or space) + `HH:mm:ss.fff` + `Z`/`±HH:MM` fragment all
+`yyyy-MM-dd` + (`T` or space) + `HH:mm:ss.SSS` + `Z`/`±HH:MM` fragment all
 six entry-heading domains' own `@alias` regexes enforce; date-only values
 are rejected at parse time -- ADR
 8c889262-152b-4b8e-ae2c-75371f7a9edf), so the comparison below is a plain

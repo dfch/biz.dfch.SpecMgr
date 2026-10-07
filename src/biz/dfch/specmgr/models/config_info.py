@@ -22,6 +22,14 @@ semantic-similarity feature (feat-134 Phase 7, REQ-013): :class:`SimilarityConfi
 -- and, since feat-185-uc-diagrams Phase 120, the static ``plantuml`` section
 (the presence-only state of the exactly-three validation-source env vars plus
 the first-set-wins ``selected`` source): :class:`PlantumlConfig`.
+
+feat-187-list-feat-timeout, Task 110.120: :class:`ConfigInfo` additionally
+carries ``feat_warmup_disabled``, the presence of the new
+``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag (ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44) -- a single top-level boolean field,
+not a new nested model, since it is the one additional fact this feature
+needs to report and does not warrant its own section the way the
+similarity feature's richer static configuration did.
 """
 
 from __future__ import annotations
@@ -141,7 +149,8 @@ class PlantumlConfig(BaseModel):
 
 
 class ConfigInfo(BaseModel):
-    """Resolved base directory configuration for every document domain, plus the similarity and plantuml sections.
+    """Resolved base directory configuration for every document domain, plus the similarity and plantuml
+    sections and the feat_warmup_disabled flag.
 
     Parameters
     ----------
@@ -156,8 +165,17 @@ class ConfigInfo(BaseModel):
         The static configuration of the PlantUML validation source
         (feat-185-uc-diagrams Phase 120): :class:`PlantumlConfig` --
         presence-only (never a value of the three env vars).
+    feat_warmup_disabled:
+        Whether the presence-based ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out
+        flag is set in the current process environment (any value;
+        presence-based, never the value -- the same convention
+        ``SimilarityConfig.disabled`` already follows). When set, the
+        unified startup warmup thread's ``feat`` frontmatter/full-parse
+        phases never run (feat-187-list-feat-timeout, Task 110.120, ADR
+        3982712a-a46b-4b2b-809f-9c6925a49b44).
     """
 
     domains: dict[str, DomainConfig]
     similarity: SimilarityConfig
     plantuml: PlantumlConfig
+    feat_warmup_disabled: bool

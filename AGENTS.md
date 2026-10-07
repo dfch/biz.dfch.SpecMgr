@@ -527,7 +527,47 @@ type or cross-cutting:
     constant (feat-153-off-by-n, GitHub issue #153, ADR
     19ff316b-cd11-41a7-a616-ffd84917da51). See
    `.specmgr/feat/feat-31-feature/README.md` for the full
-   design.
+   design. `list_feat` is the one `list_<d>` tool backed by a two-stage
+   dirty/clean `DocCache` instead of the generic `build_summaries` sweep
+   every other domain uses (feat-187-list-feat-timeout, GitHub issue #187,
+   ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): its request path resolves
+   every folder from one file read plus the clean (full-parse) cache's
+   own parse-free `peek_preloaded` lookup, falling back on a miss to a
+   second, feat-local "dirty" `DocCache` instance (`feat/tools/_cache.py`)
+   whose own `parse_fn` is frontmatter-plus-H1 only (never a full body
+   parse) -- so the very first `list_feat` call against a cold server
+   process already returns the complete directory (`total` correct from
+   call one) well under any client request timeout, closing the tool's
+   own cold-scan timeout (348.6 s measured over this repo's corpus at one
+   point) at the root. Each row follows a three-tier failure-visibility
+   contract: a clean-stage success or failure is today's exact row
+   (byte-identical to `get_feat`'s `ParseFailureResult.error`, by
+   construction); a dirty-stage success is a *transiently* healthy row
+   (correct `id`/`title`/`status`, but a body-level defect this file may
+   have is not yet visible); a dirty-stage failure is either a tier-1
+   malformed-frontmatter row (byte-identical to `get_feat` by
+   construction, since both stages run the identical `parse_frontmatter`
+   call) or a tier-2 missing/wrong-shape-H1 row (a dirty-stage-specific
+   `error` text that converges to byte-identical only once a full parse
+   has passed that file). This time-qualifies the `list_<d>`/`get_<d>`
+   error byte-identity property (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+   for `feat` only -- `get_feat` remains the unconditional, full-fidelity
+   authority throughout; every other domain's property is unchanged. A
+   unified background daemon thread (`specmgr-startup-warmup`, spawned by
+   `general.tools._startup_warmup.start_startup_warmup` from `server.py`'s
+   lifespan hook) runs, in order, the `feat` frontmatter warmup phase, the
+   `feat` full-parse warmup phase (both in `feat/tools/_warmup.py`'s
+   `warmup_feat_caches()`, a plain, synchronously callable function the
+   thread merely calls), and then the pre-existing, unchanged feat-134
+   similarity warmup (`warmup_similarity_cache`) -- replacing the
+   similarity-only `start_similarity_warmup` thread that previously ran
+   alone, so at most one heavy, GIL-holding background phase runs at a
+   time instead of two in parallel. A new presence flag,
+   `SPECMGR_FEAT_WARMUP_DISABLED`, gates the two `feat` phases only (the
+   pre-existing `SPECMGR_SIMILARITY_DISABLED` still gates the similarity
+   phase only); when both flags are set, no thread starts at all (reported
+   by `specmgr://config`'s own `feat_warmup_disabled` field, mirroring
+   `SimilarityConfig.disabled`'s own precedent).
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -985,6 +1025,32 @@ re-validates the file's current content hash before deciding whether to
 skip re-parsing, so a stale entry is structurally impossible — it can only
 ever cost one extra parse, never an incorrect result.
 
+`feat-187-list-feat-timeout` (GitHub issue #187) fixed `list_feat`'s
+cold-scan timeout (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44) by adding two
+additive, generic `DocCache` primitives in `general/tools/_doc_cache.py`
+— `peek_preloaded(path, text)` (a valid stored result, document or
+cacheable failure, or `None`, never parses, materializing like `read`'s
+own hit branch) and `read_preloaded(path, text, parse_fn)` (hit/miss
+semantics identical to `read`, just handed already-read `text`) — with
+`read` itself refactored onto `read_preloaded` (behavior-preserving; the
+pre-existing `test__doc_cache.py` suite, including the feat-162 footer
+tests, needed no changes). Both primitives exist so a caller holding two
+`DocCache` instances for the same domain (`feat`'s clean/dirty pair, see
+the `feat/` bullet above) can resolve one file read against both stages
+without a second, independent re-read of the same file — the same
+single-read, TOCTOU-safe discipline `read` itself already established
+(feat-107-doc-cache Phase 6, REQ-007), extended rather than re-derived.
+The pre-existing feat-134 similarity warmup's own startup thread/gate
+(`general.tools._similarity_search.start_similarity_warmup`) was retired
+in the same feature: `general.tools._startup_warmup.start_startup_warmup`
+is the new, single entry point `server.py`'s `_lifespan` calls, spawning
+one daemon thread (`specmgr-startup-warmup`) that runs the `feat`
+frontmatter phase, the `feat` full-parse phase, and then the unchanged
+`warmup_similarity_cache()` body, in that order — `warmup_similarity_cache`
+itself (its own availability-probe-first/crash-containment/never-raising
+body, and the demand path it shares the cache with) is otherwise
+unchanged; only the startup orchestration moved.
+
 `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
 status for the ADR feature specifically and should be kept in sync with
 `src/` as this evolves; treat it as current-state tracking, not just a
@@ -1037,7 +1103,7 @@ documentation in `docs/`:
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
-  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.fff` +
+  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.SSS` +
   `Z`/`±HH:mm`; the MCP writes the `T`-separated canonical form and both
   separators are accepted on read, ADR
   8c889262-152b-4b8e-ae2c-75371f7a9edf; `updated` bumped on every
@@ -1058,10 +1124,10 @@ documentation in `docs/`:
   ADR. It belongs in the feature's own "Decisions Made" log instead if it's
   scoped entirely to that feature's implementation details. When in doubt,
   write the ADR.
-- Existing feature folders: `.specmgr/feat/feat-9-doc-in-specmgr/`
-   (development artifacts migration), `.specmgr/feat/feat-4-use-cases/` (use-case
-   modeling and examples), `.specmgr/feat/feat-5-md-model-parser/` (markdown
-   parsing infrastructure).
+- Existing feature folders: do not enumerate them here — the list grows
+  constantly and any copy kept in this file immediately drifts out of date.
+  Use the `list_feat` MCP tool (or browse `.specmgr/feat/` directly) to see
+  the current, authoritative set.
 
 ## Developer Commands
 

@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-02 16:10:31.726+02:00'
 id: feat-47-md-simple-breaks
-status: planning
+status: done
 type: feat
-updated: '2026-09-30T04:38:08.000Z'
+updated: '2026-10-07T06:21:40.937Z'
 version: 1.0.0
 ---
 
@@ -113,14 +113,6 @@ PyPI reachability from the implementation environment was confirmed directly (fe
 #### 2026-09-02 00:00:00.000Z - Implementation complete
 
 Completed Phase 1 (the plan's only phase). `uv add "mdformat-simple-breaks==0.1.0"` added the dependency to `pyproject.toml` with an exact `==` pin (verified) and regenerated `uv.lock` in the same step (Tasks 1.1/1.2). Added a module-level `_MDFORMAT_EXTENSIONS = {"simple_breaks"}` constant and wired it into the single `mdformat.text(...)` call in `format_text()` (`src/biz/dfch/specmgr/models/md/_markdown.py`, Task 1.3). Extended `tests/models/md/test__markdown.py` with four new regression tests covering `---`/`***`/`___` via `format_text` and a combined frontmatter+body case via `format_markdown_document` (Task 1.4). Ran the full suite: 3060 tests, all passing, no regressions (Task 1.5). Added a `### Fixed` entry under `[Unreleased]` in `CHANGELOG.md` referencing GitHub issue #47 (Task 1.6). Manually verified ACC-001 end-to-end via `specmgr mdformat` CLI on a scratch file containing `___`, confirming the on-disk output uses `---`. Quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, full `unittest discover`) all green. No deviations from the plan.
-
-#### 2026-09-02 00:00:00.000Z - Plan refined ahead of implementation
-
-Resolved three open items surfaced during pre-implementation review: (1) the CHANGELOG entry (Task 1.6) uses `### Fixed`, matching Keep a Changelog's standard category for a bug fix and this repo's own existing section headers; (2) the regression test (ACC-003/Task 1.4) extends the existing `tests/models/md/test__markdown.py` rather than adding a new file, since that file already targets this exact module; (3) PyPI reachability and `mdformat-simple-breaks` package metadata (exactly two releases, `0.0.1`/`0.1.0`; `requires_dist: mdformat~=1.0.0`) were verified directly from the implementation environment -- see Design Notes for the latent `mdformat` 2.x compatibility caveat this uncovered. No requirements/scope changes; implementation still not started.
-
-#### 2026-09-02 00:00:00.000Z - Created
-
-Feature folder created to track fixing GitHub issue #47 (`specmgr mdformat` converts `---` to a 70-underscore thematic break) via the `mdformat-simple-breaks` plugin, pinned to an exact version.
 
 ### Decisions Made
 

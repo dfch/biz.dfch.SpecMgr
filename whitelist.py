@@ -276,6 +276,13 @@ model_name
 jar
 bin
 
+# config (feat-187-list-feat-timeout, Task 110.120): `ConfigInfo`'s own
+# `feat_warmup_disabled` field is written in the resource's own constructor
+# (`general.resources.config.config_info`) and read back only via
+# (de)serialization when the resource is read; nothing in `src/` accesses
+# it as a plain attribute.
+feat_warmup_disabled
+
 # similarity (feat-134-related-artifact-similarity):
 # `SimilarityUnavailableResult`'s `available`/`reason` fields are written in
 # the model's own constructor (in `_embedding._similarity_availability`) and
@@ -329,6 +336,15 @@ invalidate
 reconcile
 move
 reset
+
+# feat-187-list-feat-timeout (Task 110.120): `FeatWarmupResult`'s own
+# `frontmatter_phase`/`full_parse_phase` fields are constructed in
+# `feat.tools._warmup.warmup_feat_caches` and read back only by Phase 120's
+# own (later) test assertions -- constructor keyword arguments don't count
+# as name references for vulture's name-based "used" decision, the same
+# precedent the `config`/`SimilarityConfig` entries above already document.
+frontmatter_phase
+full_parse_phase
 
 # --- similarity (feat-134-related-artifact-similarity) ------------------
 # `documents` is the `_embedding._TextEmbeddingLike` structural-protocol

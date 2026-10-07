@@ -4,7 +4,7 @@ created: '2026-09-10 19:09:06.111+02:00'
 id: feat-120-remove-confluence
 status: done
 type: feat
-updated: '2026-09-30T04:36:34.000Z'
+updated: '2026-10-07T06:21:40.887Z'
 version: 1.0.0
 ---
 
@@ -97,18 +97,6 @@ MCP tools in this server should stay domain-focused on system-specification arti
 #### 2026-09-10 15:00:00.000Z - Phase 3 (Verification) complete
 
 Ran the full quality gate from the repo root: `ruff format --check` (1644 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings), and `pytest -n auto` (3248 passed in ~21s, no confluence-related test collection errors) — all green. Re-ran `specmgr docs` and `specmgr mcp-docs`; `git status --porcelain` showed zero diff both before and after, confirming no stale confluence references remain in `docs/GENERATED.md`, `docs/MCP.md`, or `docs/api/`. Verified all seven Acceptance Criteria with concrete evidence: ACC-001 via `grep -rn "confluence" src/biz/dfch/specmgr/server.py` (zero matches) plus a live introspection of `server.mcp._tool_manager._tools` confirming neither `confluence_fetch` nor `confluence_update` is registered; ACC-002 via the quality gate above; ACC-003 via `grep -rn "import httpx\|from httpx" src/`, `grep -n httpx pyproject.toml`, and `grep -n httpx NOTICE` (all zero matches); ACC-004 via the doc-regeneration diff check above; ACC-005 via locating `docs/adr/92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-*.md` and confirming the old ADR's frontmatter reads `status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`; ACC-006 via `git diff $(git merge-base HEAD dev)...HEAD -- .specmgr/feat/feat-50-confluence/README.md` and `git log --oneline dev..HEAD -- .specmgr/feat/feat-50-confluence/README.md` (both empty); ACC-007 via `grep -n "SPECMGR_CONFLUENCE_BASE_URL\|SPECMGR_CONFLUENCE_BEARER" README.md` (zero matches). Checked off all 7 Acceptance Criteria and all 3 Phase 3 tasks, updated Current Status, and set the feature's frontmatter `status` to `done`. No `src/`/`tests/`/`docs/adr/` files were touched in this phase; `.specmgr/feat/feat-50-confluence/README.md` remains untouched.
-
-#### 2026-09-10 14:00:00.000Z - Phase 2 (Removal) complete
-
-Deleted all Confluence-specific source modules (`general/tools/confluence_fetch.py`, `general/tools/confluence_update.py`, `general/tools/_confluence_config.py`, `general/tools/_confluence_url.py`, `general/prompts/confluence_fetch.py`, `general/prompts/confluence_update.py`, and their two `general/data/*.md` instruction files) and all 6 corresponding test files under `tests/general/tools/` and `tests/general/prompts/`. Updated `general/tools/__init__.py` and `general/prompts/__init__.py` (imports, `__all__`, docstrings) and `general/__init__.py`'s own docstring to drop confluence mentions. Removed the confluence-related docstring paragraphs from `server.py` (tools and prompts sections) without touching any executable code. Removed the `confluence_fetch` environment-variables bullet from `README.md`. Added a `### Removed` entry under `CHANGELOG.md`'s `[Unreleased]` heading referencing GitHub issue #120 and ADR 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c. Confirmed via `grep -rn "httpx" src/ --include=*.py` that no remaining module imports `httpx` after the deletions, then removed `"httpx>=0.27",` from `pyproject.toml`'s `mcp` extra and the entire `httpx (optional "mcp" extra)` BSD-3-Clause block from `NOTICE`. Ran `uv lock` (network-accessible in this environment) followed by `uv sync --all-extras`, which removed `httpx`/`httpcore` from `uv.lock` and the local environment. Regenerated `docs/GENERATED.md`, `docs/MCP.md`, and `docs/api/` via `specmgr docs`/`specmgr mcp-docs`; the doc generator auto-pruned the 6 now-orphaned `docs/api/*confluence*.md` pages, and re-running both commands afterward produced no further diff. Quality gate: `ruff format --check` (1644 files formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (no findings, no confluence-related whitelist entries existed), and `pytest -n auto` (3248 passed) all green. Left `.specmgr/feat/feat-50-confluence/README.md` untouched.
-
-#### 2026-09-10 13:00:00.000Z - Phase 1 (ADR) complete
-
-Created a new ADR, "Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server" (id `92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c`), documenting the decision to remove the Confluence-specific MCP tools per GitHub issue #120, and explicitly superseding ADR a156fdf9-052c-4f43-93a2-eeec04a91eac. Marked the old ADR's status as `superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c` via the generic `set_status` tool. Regenerated `docs/adr/README.md` via `specmgr adr-toc`. No `src/`/`tests/` files were touched (Phase 2's job).
-
-#### 2026-09-10 12:00:00.000Z - Created
-
-Drafted the feature plan for removing the Confluence tools (`confluence_fetch`, `confluence_update`) and their supporting code, tests, docs, and dependency from the MCP server, per GitHub issue #120. A prior codebase inventory confirmed all Confluence-specific code lives in `general/tools/` and `general/prompts/`, added by feat-50-confluence (issue #50, ADR a156fdf9-052c-4f43-93a2-eeec04a91eac). No implementation work has started yet.
 
 ### Related PRs / Commits
 
