@@ -275,3 +275,107 @@ Phase 100) -- i.e. here, 3/3 with zero verbatim copies.
 
 Selection among the three passing candidates per Task 110.115 is recorded in this README's
 `##### Chosen Notation and Rationale (ACC-002)` subsection.
+
+## G1 follow-up: example-free paired trial (round-2 review)
+
+Phase 100/110's protocol was example-anchored: every prompt carried the concrete
+`e.g. ### 2026-08-19 05:42:00.000+02:00` line, so the one exposure path the root cause
+identifies as the actual misreading mechanism -- the notation *alone*, notably the
+example-free runtime error message -- was never measured quantitatively (round-1 review
+finding G1; recorded in this README's ACC-002 limitation sentence). This section defines
+and logs the follow-up measurement: a paired BEFORE/AFTER comparison on the example-free
+path. It is explicitly **outside the Phase 110 pass bar** -- no pass/fail gate; the
+outcome is reported as an observed BEFORE->AFTER delta with a small-N interpretation.
+
+### Shared variant template (both arms)
+
+The runtime error message is the *only* format source in this variant -- no `e.g.` anchor
+line, no instruction-file quote, no docstring quote: exactly the exposure an agent gets
+when a timestamp it wrote is rejected at runtime. The fixed task and the reply format are
+byte-identical to Phases 100/110.
+
+````text
+You are drafting a new entry for the `## Recent Updates` section of a Task List (TSK) document managed by the specmgr artifact manager. Each entry in that section is introduced by an H3 heading that carries a timestamp.
+
+You previously wrote an entry whose timestamp was rejected by the validator, which raised this error (the exact message from `src/biz/dfch/specmgr/models/md/frontmatter.py`, lines 186-187, with the offending value shown as `<value>`):
+
+```text
+created/updated '<value>' must be the date+time variant 'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.{TOKEN}' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset
+```
+
+Now suppose it is Tuesday, 2026-10-06, and the current local time in the UTC+02:00 time zone is 07:52:14.
+
+Following the timestamp format described by that error message, write the full date+time timestamp you would use for this new entry, now.
+
+Reply with:
+1. the exact timestamp string you would use, on a single line;
+2. one sentence explaining how you filled in each part of the string from the format description above.
+
+Answer directly from the error message above; no file or codebase lookup is needed.
+````
+
+### Arm derivation and quote sources
+
+Each arm is the template with `{TOKEN}` filled by exactly one mechanical substitution;
+round-trip proven: substituting one arm's token to the other's reproduces the other arm's
+variant byte-for-byte.
+
+- **BEFORE arm (`fff`), `{TOKEN}` = `fff`:** the error line quoted byte-for-byte from
+  `src/biz/dfch/specmgr/models/md/frontmatter.py` lines 186-187 **as of base commit
+  `25c7f13be4571a5af635a69eb37dcd3bdfb30025`** (the pre-rollout wording), with the
+  offending value shown as `<value>` exactly as Phase 100's template rendered it.
+- **AFTER arm (`SSS`), `{TOKEN}` = `SSS`:** the same lines **at HEAD** (the post-rollout
+  wording); the two quotes differ in exactly the one token.
+
+### Scoring
+
+The existing (a)/(b)/(c) protocol from above, (a) read per arm -- a verbatim copy of the
+arm's own placeholder (`fff` in the BEFORE arm, `SSS` in the AFTER arm) counts as a
+misread; (b) a syntactically valid full date+time timestamp with exactly three
+millisecond digits in the placeholder field (chosen digits, `T`/space separator, and
+`Z`/`±HH:mm` zone variant all acceptable and not scored); (c) anything else. Per arm:
+three independent, fresh-context `explore` sessions (the same neutral-agent discipline as
+Phases 100/110), numbering continued: `session-13.md`-`session-15.md` = BEFORE `fff`,
+`session-16.md`-`session-18.md` = AFTER `SSS`.
+
+### Mechanism and trial log
+
+Each trial ran as one independent, fresh-context `explore` subagent session via the
+reviewing agent's own `task` tool with `subagent_type="explore"` and the arm's variant
+verbatim (unlike the original implementing agent, whose config denied `task` and forced
+the headless `opencode run` relay of Phases 100/110; no relay was needed this round). All
+six trials ran on the single endpoint
+`vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2`, so the Phase 110 two-endpoint caveat does
+not apply. No instruction file, docstring, or error message was modified before or during
+the trials. `Date (UTC)` is each trial's start time.
+
+| Trial | Arm | Subagent session | Date (UTC) | Score |
+|---|---|---|---|---|
+| `session-13.md` | BEFORE `fff` | `ses_eeb046753ffe9P5NiEEc4b3R1b` | 2026-10-07T06:09:48Z | (b) correct substitution |
+| `session-14.md` | BEFORE `fff` | `ses_eeb029161ffeSbTURZJo1zeF95` | 2026-10-07T06:11:49Z | (b) correct substitution |
+| `session-15.md` | BEFORE `fff` | `ses_eeb017cf8ffe9T5FWzcqh8478e` | 2026-10-07T06:12:59Z | (b) correct substitution |
+| `session-16.md` | AFTER `SSS` | `ses_eeb0021d6ffehZTbucGNf3PGTS` | 2026-10-07T06:14:15Z | (b) correct substitution |
+| `session-17.md` | AFTER `SSS` | `ses_eeafe6ca9ffeacLANoI3OTZuQ0` | 2026-10-07T06:16:20Z | (b) correct substitution |
+| `session-18.md` | AFTER `SSS` | `ses_eeafc8aacffeLQmAAk0dHtoySA` | 2026-10-07T06:18:23Z | (b) correct substitution |
+
+**Per-arm computation:**
+
+- BEFORE `fff`: 3/3 (b) (sessions 13-15), zero verbatim `fff` copies.
+- AFTER `SSS`: 3/3 (b) (sessions 16-18), zero verbatim `SSS` copies.
+
+**Observed BEFORE->AFTER delta: none.** Both arms scored identically (3/3 correct
+substitutions, zero verbatim placeholder copies) on the example-free path at N=3 per arm; all six
+sessions derived the three-digit millisecond field from the error message alone (the BEFORE arm's
+derivation sentences read `.fff` as "the mandatory 3-digit" field, "zero millisecond fractional
+part", and "a required 3-digit millisecond field"; the AFTER arm's as "the required 3-digit
+millisecond field", ".000 appended because no millisecond value was specified", and "the format
+mandates three sub-second digits"). Honest small-N interpretation: at 3 trials per arm, this
+measurement surfaces an arm-wide verbatim-copy failure mode (the one issue #183 reports as
+repeated) and would very likely have surfaced a per-trial misread rate of ~1/3 or higher (such a
+rate has a ~70% chance of yielding at least one verbatim copy in 3 trials), but it cannot exclude
+smaller per-trial rates, and the fresh-context `explore` population is a best-available proxy for
+the unnamed, non-reproduced agent population behind the reported misreads. Consequence for the
+record: `SSS`'s selection rationale for the example-free path stands on the token's
+self-descriptiveness (it marks the digit slot by the notation's own convention -- the recorded
+root-cause defect of `fff`) rather than on a measured delta; the path is now measured, and the
+measurement's honest result is "no observable difference at this N on this population".

@@ -4,7 +4,7 @@ created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
 status: review
 type: feat
-updated: '2026-10-06T23:59:40.362+02:00'
+updated: '2026-10-07T09:03:15.075+02:00'
 version: 1.0.0
 ---
 
@@ -63,7 +63,7 @@ records (ADR 23a14195, ADR 8c889262) are deliberately left untouched -- see Scop
 
 - Changing the accepted timestamp formats, separators, or validation regexes established by feat-146-date-time -- only the human-facing notation changes.
 - Editing the historical ADR documents that illustrate the old notation (ADR 23a14195-339c-48af-99d2-97c9964041ae "Use ISO 8601 for all dates and times" and ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) -- ADRs are immutable historical decision records; this feature cites them, it does not rewrite them.
-- Rewriting historical narrative content that happens to contain the old notation (`CHANGELOG.md`'s existing entries, `.specmgr/feat/*/session-*.md` transcripts, `docs/tsk/*.md` historical task records) -- only currently-authoritative, forward-facing content is in scope.
+- Rewriting historical narrative content that happens to contain the old notation (`CHANGELOG.md`'s existing entries, `.specmgr/feat/*/session-*.md` transcripts, `docs/tsk/*.md` historical task records) -- only currently-authoritative, forward-facing content is in scope; the one deliberate forward-facing citation, this feature's own new `CHANGELOG.md` `[Unreleased]` entry quoting the old notation to name the token the substitution replaces, is likewise excluded from ACC-003's residual check.
 - The old-notation references in this feature README itself (its Overview, Requirements, Acceptance Criteria, Scope, Design Notes, and Task List name the notation being replaced as the subject of the work) -- deliberate historical references, excluded from ACC-003's residual check.
 - Adding verbose explanatory prose about timestamp formatting beyond the narrow notation substitution.
 - Re-litigating the `T`-vs-space separator decision or any other feat-146-date-time decision.
@@ -112,12 +112,16 @@ untracked `session-prompt.md`/`session-NN.md` siblings here). Method: notation-s
 
 Excluded and why: the `#fff` CSS color literal (`commands/coverage_badge.py:111,124` and its
 generated `docs/coverage.svg`); the two historical ADRs (`docs/adr/23a14195-...:60,61`,
-`docs/adr/8c889262-...:15,36`); `CHANGELOG.md:564,751,887,1208,1238`; `docs/tsk/*.md`
+`docs/adr/8c889262-...:15,36`); `CHANGELOG.md:15` (this feature's own new `[Unreleased]`
+entry, which deliberately quotes the old notation to name the token the substitution replaces)
+plus `CHANGELOG.md`'s pre-existing entries (at `564,751,887,1208,1238` in this inventory's base
+commit; shifted to `580,767,903,1224,1254` by that new entry's +16 lines); `docs/tsk/*.md`
 historical task records (plan expected them to carry the only uppercase `SS.fff` variant;
 actual at HEAD: zero `fff` occurrences); other `.specmgr/feat/*` historical feature records;
 this README's own deliberate references; the new `session-prompt.md`/`session-NN.md`
-siblings' deliberate quotes; incidental hex `fff` runs in session ids, git hashes, `uv.lock`,
-and a binary PDF.
+siblings' deliberate quotes (including the Phase 140 BEFORE arm's verbatim `fff` quotes in
+`session-13.md`-`session-15.md` and the `## G1 follow-up` section's arm derivation);
+incidental hex `fff` runs in session ids, git hashes, `uv.lock`, and a binary PDF.
 
 Deltas vs the plan's second-pass expectations: every verified expectation holds except two --
 the total instruction-file count is 32, not 33 (12 of 32 carry the notation, as expected),
@@ -184,12 +188,63 @@ the misreading mechanism on the example-free exposure paths (notably the runtime
 Prompt variants, the full trial log, and the per-candidate computation: `session-prompt.md`.
 Because every trial's prompt carried the concrete `e.g. ...05:42:00.000+02:00` anchor line, the
 quantitative comparison measures no-regression-plus-zero-verbatim-copies under example-anchored
-exposure, and the reduction claim for the example-free exposure path (notably the runtime error
-message) rests on the token's self-descriptiveness rather than on a measured delta.
+exposure; the example-free exposure path (notably the runtime error message alone) was measured
+in the Phase 140 round-2 follow-up (`##### G1 Example-Free Paired Trial (round-2 review
+follow-up)` below -- observed BEFORE->AFTER delta: none at N=3 per arm), so the reduction claim
+for that path rests on the token's self-descriptiveness rather than on a measured delta.
 
 Phase 120 rollout note: the rollout is the mechanical substitution `fff` -> `SSS` (uppercase, three
 letters) at every in-scope occurrence of Task 100.105's baseline inventory (48 files, 54
 occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
+
+##### G1 Example-Free Paired Trial (round-2 review follow-up)
+
+Round-2 review finding G1 (feat-reviewer; the round-1 pass had recorded the same point as the
+limitation sentence in the ACC-002 subsection above): the Phase 100/110 protocol was
+example-anchored -- every trial prompt carried the concrete
+`e.g. ### 2026-08-19 05:42:00.000+02:00` line -- so the one exposure path the root cause
+identifies as the actual misreading mechanism (the notation *alone*, notably the example-free
+runtime error message) was never measured quantitatively. Phase 140 closes this with a paired
+BEFORE/AFTER measurement on that path: the shared example-free variant (the runtime error
+message as the sole format source -- no anchor line, no instruction-file or docstring quotes;
+identical fixed task and reply format to Phases 100/110) with the BEFORE arm quoting the
+pre-rollout `fff` wording byte-faithful from base commit
+`25c7f13be4571a5af635a69eb37dcd3bdfb30025`'s `frontmatter.py` lines 186-187 and the AFTER arm
+quoting the post-rollout `SSS` wording from the same lines at HEAD; three independent,
+fresh-context `explore` sessions per arm (`session-13.md`-`session-15.md` = BEFORE,
+`session-16.md`-`session-18.md` = AFTER), all on the single endpoint
+`vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2`; full protocol, arm derivation, trial log, and
+per-arm computation in `session-prompt.md`'s `## G1 follow-up: example-free paired trial`
+section (explicitly outside the Phase 110 pass bar -- no pass/fail gate).
+
+| Arm | Sessions | Scores | Verbatim copies |
+|---|---|---|---|
+| BEFORE `fff` | 13-15 | 3x (b) | 0 |
+| AFTER `SSS` | 16-18 | 3x (b) | 0 |
+
+**Observed BEFORE->AFTER delta: none** -- both arms scored identically (3/3 correct
+substitutions, zero verbatim placeholder copies) on the example-free path at N=3 per arm, and
+all six sessions derived the three-digit millisecond field from the error message alone.
+Honest small-N interpretation (full text in `session-prompt.md`): at 3 trials per arm the
+measurement surfaces an arm-wide verbatim-copy failure mode (the one issue #183 reports as
+repeated) and would very likely have surfaced a per-trial misread rate of ~1/3 or higher, but
+it cannot exclude smaller per-trial rates, and the fresh-context `explore` population is a
+best-available proxy for the unnamed, non-reproduced agent population behind the reported
+misreads. Consequence for the record: `SSS`'s selection rationale for this path stands on the
+token's self-descriptiveness (it marks the digit slot by the notation's own convention -- the
+recorded root-cause defect of `fff`) rather than on a measured delta; the path is now measured,
+and the measurement's honest result is "no observable difference at this N on this population".
+
+**Contingency agreed with the user (2026-10-07, after this measurement):** if the issue #183
+error shows again after the `SSS` rollout -- i.e. an agent still emits the literal placeholder
+in the millisecond slot whatever the token is -- the follow-up is to **drop the fractional/
+millisecond part of the timestamp form completely** rather than swap to a third token, since
+this paired measurement shows the token alone does not explain the misreading on the measured
+population. That change is out of scope for this feature (it would alter the form
+feat-146-date-time established -- milliseconds are currently mandatory and exactly three
+digits -- and so would be a new feature in its own right), and it is triggered only by a
+recurrence that comes with concrete failing examples (model, context, the rejected value and
+the raised error) collected for the record first.
 
 ### Related Decisions
 
@@ -226,9 +281,31 @@ occurrences at HEAD `25c7f13be4571a5af635a69eb37dcd3bdfb30025`).
 - [x] Task 130.100: Add a `CHANGELOG.md` `[Unreleased]` entry and comment on GitHub issue #183 with the fix summary. -- depends on: Task 120.140
 - [x] Task 130.110: Final full quality gate; bump this README's frontmatter `status` to `done` (via the generic `set_status` tool) and prepend an Updates entry recording the transition. -- depends on: Task 130.100 (the task's `done` status bump was superseded for this run -- status remains `review`, `done` deferred until after the PR merge; see the Phase 130 Updates entry)
 
+#### Phase 140: Review follow-up (round 2: G1 paired measurement + I1 exclusion completeness)
+
+- [x] Task 140.100: Source both verbatim error-message quotes -- the BEFORE `fff` wording byte-faithful from base commit `25c7f13be4571a5af635a69eb37dcd3bdfb30025`'s `src/biz/dfch/specmgr/models/md/frontmatter.py` lines 186-187 and the AFTER `SSS` wording from the same lines at HEAD -- and draft the shared example-free prompt variant (the runtime error message as the sole format source: no `e.g.` anchor line, no instruction-file or docstring quotes; the two arms differ by exactly one mechanical token substitution with round-trip proof; identical fixed task and reply format to Phases 100/110), recorded up front as a new section in `session-prompt.md` explicitly outside the Phase 110 pass bar, scored with the existing (a)/(b)/(c) protocol read per arm. -- depends on: none
+- [x] Task 140.110: Run the paired measurement -- three independent, fresh-context `explore` sessions per arm, continuing the session numbering (`session-13.md`-`session-15.md` = BEFORE `fff`, `session-16.md`-`session-18.md` = AFTER `SSS`), each presented verbatim with its arm's variant -- and record the verbatim responses in one `session-NN.md` sibling per session plus the per-arm scores and the observed BEFORE->AFTER delta in the `session-prompt.md` section (honest small-N interpretation; no pass/fail gate). -- depends on: Task 140.100
+- [x] Task 140.120: Update this README -- a new `#####` subsection under `#### Investigation Findings` recording the paired trial and its delta; rewrite the ACC-002 limitation sentence (the example-anchored protocol caveat) to state the measured outcome; extend the two old-notation exclusion enumerations (the `#### Explicitly Out Of Scope` bullet covering `CHANGELOG.md`'s existing entries, and the Baseline Inventory's "Excluded and why" line) to cover this feature's own new `CHANGELOG.md` `[Unreleased]` entry quoting the old notation (round-2 review finding I1). -- depends on: Task 140.110
+- [x] Task 140.130: Verify -- re-run ACC-003's scoped residual check (expect zero in-scope `ss.fff|SS.fff` and the unchanged 48-file / 54-occurrence `ss.SSS` set) and confirm `git status` shows only the intended changes in this feature folder (docs-only: no `src/`/`tests/`/`docs/`/`CHANGELOG.md` changes, no quality-gate re-run needed); prepend the `Current Status` + `Recent Updates` completion entries. -- depends on: Task 140.120
+
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-07**: Phase 140 (round-2 review follow-up) complete. The paired example-free
+measurement (round-2 G1) closed the one unmeasured edge of the Phase 100/110 protocol: three
+independent fresh-context `explore` sessions per arm (BEFORE `fff` quoted byte-faithful from
+base `25c7f13`, AFTER `SSS` quoted from HEAD; the runtime error message as the sole format
+source, no `e.g.` anchor) scored 3/3 correct substitutions with zero verbatim placeholder
+copies each -- observed BEFORE->AFTER delta: none at N=3 per arm, with the honest small-N
+interpretation recorded in `session-prompt.md`'s `## G1 follow-up` section and the new
+`##### G1 Example-Free Paired Trial (round-2 review follow-up)` subsection. Round-2 I1: the
+exclusion enumerations now cover this feature's own new `[Unreleased]` `CHANGELOG.md` entry
+(`CHANGELOG.md:15`) quoting the old notation, completing ACC-003's residual-check exclusion
+set. Docs-only; ACC-003 re-verified (zero in-scope `ss.fff|SS.fff`, the 48-file / 54
+`ss.SSS` set unchanged) and `git status` clean of this feature folder. Branch and PR
+unchanged: frontmatter `status` remains `review`, PR #201 open; the `done` transition stays
+deferred until after the PR merge.
 
 **As of 2026-10-06**: Round-1 review findings (feat-reviewer) applied in a docs-only pass over
 this feature folder (no `src/`/`tests/`/`docs/`/`CHANGELOG.md` changes) -- see the `Round-1
@@ -272,6 +349,83 @@ investigation or implementation has started yet.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T09:03:15.075+02:00 - Follow-up contingency note added (drop milliseconds if the error recurs on `SSS`)
+
+Per user decision after the Phase 140 measurement: if the issue #183 error shows again after
+the `SSS` rollout (an agent still emits the literal placeholder in the millisecond slot
+whatever the token is), the follow-up is to drop the fractional/millisecond part of the
+timestamp form completely rather than swap to a third token -- the paired trial showed the
+token alone does not explain the misreading on the measured population. Recorded as a
+**Contingency** paragraph at the end of the `##### G1 Example-Free Paired Trial (round-2
+review follow-up)` subsection. The contingency is explicitly out of scope for this feature
+(it would alter the feat-146-established form, where milliseconds are mandatory three digits)
+and would be a new feature triggered only by a recurrence with concrete failing examples
+(model, context, rejected value, raised error) collected first. Docs-only note; frontmatter
+`status` remains `review` (no transition; `done` stays deferred until after the PR merge).
+
+#### 2026-10-07T08:42:35.080+02:00 - Phase 140 complete (round-2 review follow-up: G1 paired measurement + I1 exclusion completeness)
+
+Tasks 140.100/140.110/140.120/140.130 done. G1 (round-2): the paired example-free
+measurement ran per the protocol recorded up front in `session-prompt.md`'s new
+`## G1 follow-up: example-free paired trial` section (explicitly outside the Phase 110
+pass bar; no pass/fail gate). Both verbatim error-message quotes sourced: BEFORE `fff`
+from `git show 25c7f13be4571a5af635a69eb37dcd3bdfb30025:src/biz/dfch/specmgr/models/md/
+frontmatter.py` lines 186-187 (byte-faithful to the pre-rollout wording) and AFTER `SSS`
+from the same lines at HEAD; the two quotes differ in exactly the one token, and the two
+arm variants are one mechanical `{TOKEN}` substitution of the shared template (round-trip
+proven by construction). Six trials -- three independent, fresh-context `explore`
+sessions per arm, each via the reviewing agent's own `task` tool with the arm's variant
+verbatim (no headless relay needed this round, unlike Phases 100/110; all six on the
+single endpoint `vllm-sys0-mtp-2/qwen3.8-27b-bf16-896k-mtp-2`, so the Phase 110
+two-endpoint caveat does not apply): BEFORE `fff` = `session-13.md`-`session-15.md`
+(3/3 (b), zero verbatim `fff` copies), AFTER `SSS` = `session-16.md`-`session-18.md`
+(3/3 (b), zero verbatim `SSS` copies). **Observed BEFORE->AFTER delta: none** at N=3 per
+arm -- all six sessions derived the three-digit millisecond field from the error message
+alone; the honest small-N interpretation (at 3 trials per arm the measurement surfaces
+an arm-wide verbatim-copy failure mode -- the one issue #183 reports as repeated -- and
+would very likely have surfaced a per-trial misread rate of ~1/3 or higher, but cannot
+exclude smaller per-trial rates, and the fresh-context `explore` population is a
+best-available proxy for the unnamed, non-reproduced agent population behind the
+reported misreads) is recorded in `session-prompt.md`, and the consequence for the
+record -- `SSS`'s selection rationale for this path stands on the token's
+self-descriptiveness, and the path is now measured -- in the new `##### G1 Example-Free
+Paired Trial (round-2 review follow-up)` subsection; the ACC-002 limitation sentence
+now points to that measurement. I1 (round-2): both exclusion enumerations extended to
+cover this feature's own new `CHANGELOG.md` `[Unreleased]` entry (`CHANGELOG.md:15`,
+which deliberately quotes the old notation to name the token the substitution replaces)
+-- the `#### Explicitly Out Of Scope` bullet and the Baseline Inventory's "Excluded and
+why" line (the latter also records the +16-line shift of the pre-existing entry
+references `564,751,887,1208,1238` -> `580,767,903,1224,1254` caused by that new entry,
+and names the Phase 140 session files' verbatim `fff` quotes under the
+session-prompt.md/session-NN.md deliberate-quotes exclusion). Verification (Task
+140.130): ACC-003's scoped residual check re-run -- `git grep -lE 'ss\.fff|SS\.fff'`
+hits only the documented exclusion set (`CHANGELOG.md` x6, the two historical ADRs x2
+each, the historical `.specmgr/feat/*` records, this feature's own README/session
+deliberate references) with zero in-scope hits, and `git grep -lE 'ss\.SSS|SS\.SSS'`
+yields 50 files = the unchanged 48-file baseline set plus this feature's own two files
+(6 deliberate lines: README 152/278/354, session-prompt 124/132/140), i.e. the in-scope
+54 unchanged; `git status` shows only the intended changes in
+`.specmgr/feat/feat-183-ts-fff/` (`README.md`/`session-prompt.md` modified,
+`session-13.md`-`session-18.md` added) -- no `src/`/`tests/`/`docs/`/`CHANGELOG.md`
+changes, so no quality-gate re-run is needed. Docs-only phase; frontmatter `status`
+remains `review` (no transition; `done` stays deferred until after the PR merge).
+
+#### 2026-10-07T08:05:17.144+02:00 - Phase 140 start (round-2 review follow-up: G1 paired measurement + I1 exclusion completeness)
+
+Round-2 feat-reviewer pass over the completed feature found no errors; one gap (G1: the
+Phase 100/110 protocol was example-anchored -- every trial prompt carried the concrete
+`e.g. ...05:42:00.000+02:00` line -- so the example-free exposure path the root cause
+identifies, notably the runtime error message alone, was never measured quantitatively;
+recorded in round 1 as the ACC-002 limitation sentence) and one improvement (I1: this
+feature's own new `CHANGELOG.md` `[Unreleased]` entry quotes the old notation but is not
+covered by the README's exclusion enumerations). Per user decision, G1 is closed with a
+paired BEFORE/AFTER measurement on the example-free path (three independent, fresh-context
+`explore` sessions per arm, `session-13.md`-`session-18.md`, protocol recorded up front in
+`session-prompt.md`, explicitly outside the Phase 110 pass bar) and I1 is applied as a
+docs-only exclusion-list completion. Docs-only phase: no `src/`/`tests/`/`docs/`/
+`CHANGELOG.md` changes; frontmatter `status` remains `review` (no transition; `done` stays
+deferred until after the PR merge).
 
 #### 2026-10-06T23:58:11.794+02:00 - Round-1 review findings applied (feat-reviewer)
 
