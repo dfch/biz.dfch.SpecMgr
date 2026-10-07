@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-06T10:37:25.837+02:00'
 id: feat-198-retire-adr-tool-plan-refs
-status: progress
+status: review
 type: feat
-updated: '2026-10-07T13:20:44.307+02:00'
+updated: '2026-10-07T14:13:49.519+02:00'
 version: 1.0.0
 ---
 
@@ -49,11 +49,11 @@ maintenance liability today. That is explicitly out of scope (see Scope below).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns no results.
-- [ ] ACC-002: Verifies REQ-002 — each of the 14 original citation sites has a recorded disposition (ADR substitution or drop) in this file's Decisions Made log.
-- [ ] ACC-003: Verifies REQ-003 — `git diff` shows zero changes under `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`, `create-adr.md`, `docs-generator-cleanup-plan.md`.
-- [ ] ACC-004: Verifies REQ-004 — `AGENTS.md`'s Development Artifacts section contains the new clause.
-- [ ] ACC-005: Verifies REQ-005 — full `pytest` suite passes, including `tests/adr/prompts/test_*.py`.
+- [x] ACC-001: Verifies REQ-001 — `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns no results.
+- [x] ACC-002: Verifies REQ-002 — each of the 14 original citation sites has a recorded disposition (ADR substitution or drop) in this file's Decisions Made log.
+- [x] ACC-003: Verifies REQ-003 — `git diff` shows zero changes under `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`, `create-adr.md`, `docs-generator-cleanup-plan.md`.
+- [x] ACC-004: Verifies REQ-004 — `AGENTS.md`'s Development Artifacts section contains the new clause.
+- [x] ACC-005: Verifies REQ-005 — full `pytest` suite passes, including `tests/adr/prompts/test_*.py`.
 
 ### Scope
 
@@ -159,6 +159,22 @@ were both re-read in full during planning and confirmed to cover the cited conte
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 14:10:19.428+02:00 - Status set to review; all acceptance criteria verified and ticked
+
+Implementation complete (Phase 100: `83d102e`, Phase 110: `0815742`). All five
+acceptance criteria verified with concrete evidence: ACC-001 (`grep -rn
+"adr-tool-plan.md" src/ AGENTS.md` → no results — in fact no text file under
+`src/`/`AGENTS.md`/`tests/` contains `adr-tool-plan` at all after the
+user-decision extension of Task 110.100), ACC-002 (final per-citation
+disposition table recorded in Decisions Made below), ACC-003 (`git diff
+3c5818d --` the three frozen feat-9 files → empty), ACC-004 (new REQ-004
+clause present in `AGENTS.md`'s Development Artifacts section), ACC-005 (full
+pytest suite: 4088 passed, including `tests/adr/prompts/test_*.py`). feat-7
+Task 100.140 marked split out per that folder's convention. Status moves to
+`review`; a PR against `dev` follows. Note: branch commit `458c881` (test
+harness robustness fix) carries a patch byte-identical to `dev`'s `f27525a`;
+a test merge of `dev` into the branch confirmed a conflict-free merge.
 
 #### 2026-10-07 13:20:44.307+02:00 - Phase 110 complete (verification)
 
