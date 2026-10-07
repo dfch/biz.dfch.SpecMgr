@@ -112,9 +112,30 @@ esac
 """
 
 
+def _clean_git_env() -> dict[str, str]:
+    """A copy of the current environment with every `GIT_*` variable removed.
+
+    Every `git`/`bash` subprocess this test suite spawns for its own
+    throwaway fixture repos must use this, never the ambient environment
+    unmodified: when this suite itself runs as part of `git commit`'s own
+    pre-commit hook (the exact way an agent hits this), git exports
+    `GIT_DIR`/`GIT_INDEX_FILE`/`GIT_WORK_TREE`/`GIT_PREFIX`/
+    `GIT_CONFIG_PARAMETERS` (and friends) into the hook's whole process
+    tree -- pre-commit, then `pytest`, then every subprocess it spawns.
+    Left unsanitized, those variables silently redirect a fixture's "fresh
+    temp repo" git commands onto the *real* enclosing repository instead
+    (e.g. `checkout -b dev` then hits the real repo's actual `dev` branch
+    and fails with "fatal: A branch named 'dev' already exists.", or a
+    fixture commit collides with the real commit-in-progress's staged-only
+    index lock file) -- confusing failures with nothing to do with the
+    fixture's own git history.
+    """
+    return {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+
+
 def _git(args: list[str], cwd: Path) -> str:
     """Run a git command in `cwd` and return its stripped stdout."""
-    result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    result = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, env=_clean_git_env())
     assert result.returncode == 0, result.stderr
     return result.stdout.strip()
 
@@ -154,16 +175,21 @@ class ReleaseShGateTestCase(unittest.TestCase):
         if git_repo is not None:
             script += f'cd "{git_repo}"\n'
         script += body
-        return subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=300)
+        return subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=300, env=_clean_git_env())
 
     def make_repo(self) -> tuple[Path, str]:
         """Create a bare origin plus a dev checkout with one commit; return (repo, sha)."""
         bare = self.tmp / "origin.git"
         repo = self.tmp / "repo"
         repo.mkdir()
-        subprocess.run(["git", "init", "--bare", str(bare)], check=True, capture_output=True)
+        subprocess.run(["git", "init", "--bare", str(bare)], check=True, capture_output=True, env=_clean_git_env())
         _git(["init"], repo)
-        _git(["checkout", "-b", "dev"], repo)
+        # -B (not -b): `git init`'s own default initial branch may already be
+        # "dev" if the environment has `init.defaultBranch=dev` configured
+        # (plausible for a contributor to this repo, whose default branch is
+        # "dev") -- `checkout -b dev` would then fail with "fatal: A branch
+        # named 'dev' already exists.". `-B` creates-or-resets regardless.
+        _git(["checkout", "-B", "dev"], repo)
         (repo / "file.txt").write_text("x\n")
         _git(["add", "."], repo)
         _git(["-c", "user.email=test@test", "-c", "user.name=test", "commit", "-m", "c1"], repo)
