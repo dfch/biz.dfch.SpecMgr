@@ -16945,7 +16945,7 @@ title, joined by either ``" - "`` (space, hyphen, space) or ``" : "``
 (space, colon, space): e.g. `### 2026-08-30 14:30:00.000+02:00 -
 Approved` or `### 2026-08-30T14:30:00.000+02:00 : Approved`. The
 em-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or
-space) + ``HH:mm:ss.fff`` with an explicit UTC offset (``+02:00``,
+space) + ``HH:mm:ss.SSS`` with an explicit UTC offset (``+02:00``,
 ``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter
 ``created``/``updated`` (both separators accepted, date-only rejected;
 ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to

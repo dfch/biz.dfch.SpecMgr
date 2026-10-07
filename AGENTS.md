@@ -1008,7 +1008,7 @@ documentation in `docs/`:
   frontmatter block — `id` (the `feat-NNN-slug` folder name itself, not a
   generated UUID), `version` (semver, starts at `1.0.0`), `status`
   (`planning` | `progress` | `review` | `done`), and `created`/`updated`
-  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.fff` +
+  (full ISO 8601 date+time — `yyyy-MM-dd` + `T` or space + `HH:mm:ss.SSS` +
   `Z`/`±HH:mm`; the MCP writes the `T`-separated canonical form and both
   separators are accepted on read, ADR
   8c889262-152b-4b8e-ae2c-75371f7a9edf; `updated` bumped on every

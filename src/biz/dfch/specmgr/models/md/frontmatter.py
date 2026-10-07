@@ -53,7 +53,7 @@ DEFAULT_STATUS = "draft"
 
 #: The date+time variant accepted for ``created``/``updated`` (feat-146,
 #: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): ``yyyy-MM-dd`` + (``T`` or
-#: space) + ``HH:mm:ss.fff`` (exactly three millisecond digits), followed by
+#: space) + ``HH:mm:ss.SSS`` (exactly three millisecond digits), followed by
 #: either ``Z`` (UTC) or a signed ``±HH:mm`` offset. The machine-written
 #: canonical form is the ``T``-separated one (the MCP is the only writer of
 #: frontmatter; ``general.tools._timestamps.format_timestamp`` emits it);
@@ -94,7 +94,7 @@ class MarkdownFrontmatter(BaseModel):
     created:
         Free-form date/timestamp the document was first created. Optional.
         The required shape is ``yyyy-MM-dd`` + (``T`` or space) +
-        ``HH:mm:ss.fff`` + ``Z``/``±HH:mm``; the machine-written canonical
+        ``HH:mm:ss.SSS`` + ``Z``/``±HH:mm``; the machine-written canonical
         form is the ``T``-separated one (the MCP is the only writer of
         frontmatter). The generated JSON Schema carries a ``pattern`` key
         (derived from :data:`_DATE_TIME_PATTERN`, the same regex
@@ -184,6 +184,6 @@ class MarkdownFrontmatter(BaseModel):
         if not _DATE_TIME_PATTERN.fullmatch(value):
             raise ValueError(
                 f"created/updated {value!r} must be the date+time variant "
-                f"'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.fff' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
+                f"'yyyy-MM-dd' + 'T' or space + 'HH:mm:ss.SSS' followed by 'Z' or a signed '+HH:mm'/'-HH:mm' offset"
             )
         return value

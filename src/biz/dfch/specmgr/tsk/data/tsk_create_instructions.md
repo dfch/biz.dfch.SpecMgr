@@ -25,7 +25,7 @@ step 1 if this is genuinely a new task list.
 - `## Recent Updates` -- mandatory H2 section, an optional leading HTML
   comment (e.g. an ordering hint) followed by at least one
   `### {timestamp} ( - | : ) {title}` entry, newest-first, where
-  `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff` +
+  `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` +
   `Z` or `±HH:mm` (e.g. `### 2026-08-19 05:42:00.000+02:00 - Created`),
   each followed by the entry's own update text directly under the H3
   heading (any markdown content -- multiple paragraphs, lists, code blocks,

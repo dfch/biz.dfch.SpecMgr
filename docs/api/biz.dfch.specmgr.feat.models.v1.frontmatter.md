@@ -14,7 +14,7 @@ the base's ``"draft"`` (a `feat` document starts life ``"planning"``, not
 including its own date+time-only format validator (D5,
 `.specmgr/feat/feat-38-39-41-43-44/README.md`, broadened by feat-146 to
 accept the `T` separator) -- the `yyyy-MM-dd` + (`T` or space) +
-`HH:mm:ss.fff` + (`Z`/`±HH:mm`) shape is enforced for every domain,
+`HH:mm:ss.SSS` + (`Z`/`±HH:mm`) shape is enforced for every domain,
 including `feat`, at the base-model layer, not re-declared here. The value
 itself is produced by the shared `general.tools._timestamps.now_timestamp()`
 helper, a tool-layer concern, which writes the `T`-canonical form.

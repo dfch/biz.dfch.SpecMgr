@@ -536,7 +536,7 @@ class UpdateEntry(MarkdownSection4):
     """`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.
 
     The timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`
-    or space) + `HH:mm:ss.fff` + explicit UTC offset (`+02:00`, `-05:00`)
+    or space) + `HH:mm:ss.SSS` + explicit UTC offset (`+02:00`, `-05:00`)
     or `Z` for UTC -- the same format as frontmatter `created`/`updated`
     (both separators accepted, the `T`-separated form the machine-written
     canonical variant, date-only rejected; ADR

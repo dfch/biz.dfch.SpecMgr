@@ -50,7 +50,7 @@ type:
 created:
     Free-form date/timestamp the document was first created. Optional.
     The required shape is ``yyyy-MM-dd`` + (``T`` or space) +
-    ``HH:mm:ss.fff`` + ``Z``/``±HH:mm``; the machine-written canonical
+    ``HH:mm:ss.SSS`` + ``Z``/``±HH:mm``; the machine-written canonical
     form is the ``T``-separated one (the MCP is the only writer of
     frontmatter). The generated JSON Schema carries a ``pattern`` key
     (derived from :data:`_DATE_TIME_PATTERN`, the same regex

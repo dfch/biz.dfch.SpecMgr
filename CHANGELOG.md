@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Agents repeatedly emitted the literal `fff` in timestamps because the
+  packaged instruction files, domain docstrings, and the runtime
+  validation error described the millisecond field with the placeholder
+  notation `yyyy-MM-dd[T ]HH:mm:ss.fff[Z|±HH:MM]`; this replaces that
+  placeholder with `SSS` (the established repeated-letter millisecond
+  pattern, marking the field as exactly three digits) across the 12
+  packaged instruction files, the domain docstrings, the runtime error
+  message wording in `models/md/frontmatter.py`, the generated JSON
+  schemas (the `docs/` and packaged `data/` copies), the generated
+  `docs/api` pages, and `AGENTS.md`; the accepted timestamp formats,
+  separators, and validation regexes are unchanged, and the historical
+  ADRs 23a14195 and 8c889262 are deliberately untouched (feat-183-ts-fff,
+  GitHub issue #183).
+
 ## [0.35.0] - 2026-10-06
 
 ### Added

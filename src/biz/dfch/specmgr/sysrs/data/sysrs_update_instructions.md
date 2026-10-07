@@ -78,7 +78,7 @@ the nine sub-sections. Skip this step if the change does not touch
     the `## Updates` heading if no comment is present) -- new entries
     go first, since the section is newest-first, enforced. Each
     entry's heading is `### {timestamp} ( - | : ) {title}`, where
-    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.fff`
+    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS`
     + `Z` or `±HH:mm` (the date/time separator may be `T` or a space; a
     date-only timestamp is rejected), followed by the entry's own update
     text directly under the H3 heading (any markdown content -- multiple
