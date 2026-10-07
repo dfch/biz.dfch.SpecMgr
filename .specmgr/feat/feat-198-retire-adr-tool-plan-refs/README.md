@@ -4,7 +4,7 @@ created: '2026-10-06T10:37:25.837+02:00'
 id: feat-198-retire-adr-tool-plan-refs
 status: planning
 type: feat
-updated: '2026-10-06T10:45:58.862+02:00'
+updated: '2026-10-07T09:19:25.172+02:00'
 version: 1.0.0
 ---
 
@@ -94,7 +94,7 @@ full investigation):
 | `server.py` (specmgr://adr/{id} resource docstring) | Cite `ADR 8cf940c5-3100-485c-a12d-14b59b631712` / `ADR 7531106b-074b-4bd8-a83a-e433d01676e2` (id/addressing scheme) instead, or drop if self-evident |
 | `server.py` (prompt-surface docstring) | Cite `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
 | `uc/models/v1/use_case.py` (Options-gap comment) | Drop the file citation clause; sentence is already self-contained |
-| `models/adr/__init__.py` (module docstring, 5+ `(plan §N)` annotations) | Drop all `(plan §N)` parentheticals; prose is already self-contained |
+| `models/adr/__init__.py` (module docstring: line-20 lead-in sentence citing `adr-tool-plan.md` by name, plus 7x `(plan §N)` parentheticals) | Drop the line-20 lead-in sentence ("See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:") and all seven `(plan §N)` parentheticals; prose is already self-contained |
 | `models/adr/v1/__init__.py` (module docstring, §6 versioning) | Drop the "See adr-tool-plan.md §6..." lead-in; rest of the paragraph is already self-contained |
 | `adr/prompts/__init__.py`, `create_adr.py`, `update_adr.py`, `create_adr_test.py` (x2), `update_adr_test.py` (x2) — 7 spots across 5 files | Consolidate to **one** citation of `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` in `adr/prompts/__init__.py`'s package docstring; drop the other 6 |
 | `AGENTS.md` (`adr/` domain bullet) | Cite `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f` instead |
@@ -109,6 +109,8 @@ were both re-read in full during planning and confirmed to cover the cited conte
 - e369ee2e-3353-4f92-991c-6367d76d832e (ADR): governs `.specmgr/feat/` file layout (`README.md` + optional `history.md`); this feature's new `AGENTS.md` clause extends its silence on other siblings without amending the ADR itself.
 - ddd038f0-ae16-4f4b-beef-df06f7ed226f (ADR): prompt surface design — replaces most of the `adr/prompts/*` citations.
 - 8cf940c5-3100-485c-a12d-14b59b631712 (ADR): id/filename/addressing scheme — replaces the `server.py` resource citation.
+- 7531106b-074b-4bd8-a83a-e433d01676e2 (ADR): alternative/supplementary citation for the `server.py` `specmgr://adr/{id}` resource docstring (see Design Notes).
+- 9c687bb1-8ee7-41c8-84ec-07606356bc73 (ADR): "Enforce doc generation/lint/tests locally via pre-commit hook, not just CI" — already covers the same fact as `AGENTS.md`'s standalone "§10 Next steps" paragraph, which this feature removes as redundant.
 
 ### Task List
 
@@ -118,7 +120,7 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 - [ ] Task 100.110: Fix `uc/models/v1/use_case.py`'s citation (drop the file reference clause) — depends on: none — status: not-started
 
-- [ ] Task 100.120: Fix `models/adr/__init__.py`'s module docstring (drop all `(plan §N)` annotations) — depends on: none — status: not-started
+- [ ] Task 100.120: Fix `models/adr/__init__.py`'s module docstring — drop both the line-20 lead-in sentence that cites `adr-tool-plan.md` by name ("See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:") *and* all seven `(plan §N)` parentheticals (lines 22-38); dropping only the parentheticals leaves a literal `adr-tool-plan.md` citation and fails ACC-001 — depends on: none — status: not-started
 
 - [ ] Task 100.130: Fix `models/adr/v1/__init__.py`'s module docstring (drop the §6 lead-in) — depends on: none — status: not-started
 
@@ -126,7 +128,7 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 - [ ] Task 100.150: Fix `AGENTS.md`'s two citations (the `adr/` domain bullet, and remove the standalone "§10 Next steps" paragraph) — depends on: none — status: not-started
 
-- [ ] Task 100.160: Add the new `AGENTS.md` convention clause (REQ-004) to the "Development Artifacts (`.specmgr/`)" section — depends on: none — status: not-started
+- [ ] Task 100.160: Add the new `AGENTS.md` convention clause (REQ-004) to the "Development Artifacts (`.specmgr/`)" section — insert as a new bullet directly after the existing "No CI/pre-commit enforcement exists ..." bullet, worded along the lines of: "A feature folder may contain other local files beyond `README.md`/optional `history.md` (session transcripts, reference copies, templates, etc.), but nothing in `src/`/`AGENTS.md` may cite them by path — anything needing a stable, live citation from code must be a proper specmgr artifact (normally its own ADR)." — depends on: none — status: not-started
 
 #### Phase 110: Verification
 
@@ -134,11 +136,15 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 - [ ] Task 110.110: Confirm `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns no results (ACC-001) — depends on: Task 100.100 through Task 100.160 — status: not-started
 
+- [ ] Task 110.112: Confirm `git diff` shows zero changes under `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`, `create-adr.md`, `docs-generator-cleanup-plan.md` (ACC-003) — depends on: Task 100.100 through Task 100.160 — status: not-started
+
+- [ ] Task 110.114: Confirm `AGENTS.md`'s "Development Artifacts (`.specmgr/`)" section contains the new convention clause added by Task 100.160, e.g. via `grep -n "may not cite\|may cite them" AGENTS.md` or manual inspection (ACC-004) — depends on: Task 100.160 — status: not-started
+
 - [ ] Task 110.120: Regenerate `docs/api/`, `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 — depends on: Task 100.100 through Task 100.160 — status: not-started
 
 - [ ] Task 110.130: Verify `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest` suite — depends on: Task 110.100, Task 110.120 — status: not-started
 
-- [ ] Task 110.140: Mark feat-7-various-improvements Task 100.140 as "split out into feat-198-retire-adr-tool-plan-refs" per that folder's established convention; record this feature's Decisions Made / Recent Updates logs — depends on: Task 110.100 through Task 110.130 — status: not-started
+- [ ] Task 110.140: Mark feat-7-various-improvements Task 100.140 as "split out into feat-198-retire-adr-tool-plan-refs" per that folder's established convention; copy the Design Notes per-citation disposition table (or an equivalent per-citation summary) into a new Decisions Made entry in this file to literally satisfy ACC-002 ("each of the 14 original citation sites has a recorded disposition ... in this file's Decisions Made log"), then record the remaining Recent Updates log entries — depends on: Task 110.100 through Task 110.130 — status: not-started
 
 ## Progress
 
@@ -161,6 +167,22 @@ Split out of feat-7-various-improvements Task 100.140 (GitHub issue #198), after
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 00:00:00.000Z - Plan refinement pass (feat-refiner)
+
+Ran a plan refinement pass (feat-refiner subagent) before implementation started. Applied fixes:
+(E1) Task 100.120's scope was widened to also drop `models/adr/__init__.py`'s line-20 lead-in
+sentence, not just the `(plan §N)` parentheticals — the original wording would have left a literal
+`adr-tool-plan.md` citation and failed ACC-001; the matching Design Notes row was corrected too.
+(G1/G2) Added Task 110.112 (verify ACC-003, frozen feat-9 files untouched) and Task 110.114
+(verify ACC-004, new `AGENTS.md` clause present) — Phase 110 previously had no explicit check for
+either acceptance criterion. (D1) Added `ADR 7531106b-074b-4bd8-a83a-e433d01676e2` and
+`ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73` to Related Decisions — both already cited in Design
+Notes but missing from the catalog section. (D2/I2) Tightened Task 110.140's wording to explicitly
+require copying the Design Notes per-citation disposition table into a new Decisions Made entry,
+resolving the ambiguity over where ACC-002's "recorded disposition ... in this file's Decisions
+Made log" requirement is actually satisfied. (I1) Task 100.160 now names the exact insertion point
+and suggested wording for the new `AGENTS.md` clause.
 
 #### 2026-10-06 00:00:00.000Z - Split the (plan §N) shorthand pattern into feat-199
 
