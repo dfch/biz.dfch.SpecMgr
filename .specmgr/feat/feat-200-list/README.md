@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
-status: planning
+status: done
 type: feat
-updated: '2026-10-07T09:19:39.945+02:00'
+updated: '2026-10-07T09:28:39.561+02:00'
 version: 1.0.0
 ---
 
