@@ -4,7 +4,7 @@ created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
 status: progress
 type: feat
-updated: '2026-10-07T14:43:27.097+02:00'
+updated: '2026-10-07T15:22:39.247+02:00'
 version: 1.0.0
 ---
 
@@ -99,17 +99,30 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 #### Phase 120: Quality gate
 
-- [ ] Task 120.100: Run `ruff format --check`, `ruff check`, `vulture`, the full `pytest` suite, and the `specmgr docs`/`specmgr mcp-docs` drift checks; update this feature's Progress section.
+- [x] Task 120.100: Run `ruff format --check`, `ruff check`, `vulture`, the full `pytest` suite, and the `specmgr docs`/`specmgr mcp-docs` drift checks; update this feature's Progress section.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-07**: In progress. Phase 100 (`list_feat` glob) is complete: the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and the new fixture test module `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003). Phase 110 is complete: the same `glob` parameter on the eleven other paged `list_<d>` tools (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs), each wired to the shared helper between its row build and `total`/paging, with one new per-domain fixture test module each (`tests/<d>/tools/test_list_<d>_glob.py` — UUID-prefix match, pattern-case-insensitivity, and `glob=None`-unchanged on a hand-built corpus; the `req` module additionally carries the plan's named ACC-002/ACC-004/ACC-005 additions), docstrings updated, and `docs/MCP.md`/`docs/api/` regenerated. Phase 120 (quality gate) is not started.
+**As of 2026-10-07**: All three phases complete — the feature is ready for review.
+
+- Phase 100 (`list_feat` glob): the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003).
+- Phase 110 (eleven other tools): the same `glob` parameter on `list_req`/`list_uc`/`list_tsk`/`list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/`list_vcr`/`list_sysrs`, each wired to the shared helper between its row build and `total`/paging, one new per-domain fixture test module each (`tests/<d>/tools/test_list_<d>_glob.py`; the `req` module additionally carries the plan's named ACC-002/ACC-004/ACC-005 additions), docstrings updated, `docs/MCP.md`/`docs/api/` regenerated.
+- Phase 120 (quality gate): every gate green, each walked with per-test evidence for ACC-001..ACC-005 (see the 2026-10-07T15:22:39.247+02:00 Updates entry):
+  - `uv run --frozen ruff format --check` — 1925 files already formatted (pass)
+  - `uv run --frozen ruff check` — All checks passed! (pass)
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60` — no output, exit 0 (pass)
+  - `uv run --frozen pytest -n auto --cov=src --cov-report=` — 4137 passed in 72.68s (pass)
+  - `uv run --frozen specmgr docs` / `specmgr mcp-docs` / `specmgr coverage-badge` — all idempotent, `git status --short` clean after each (pass)
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T15:22:39.247+02:00 - Phase 120 complete: quality gate green, ACC-001..ACC-005 walked
+
+Ran every gate of Task 120.100 — all green on the first run, no production or test changes needed. `ruff format --check`: 1925 files already formatted. `ruff check`: All checks passed! `vulture src/ whitelist.py --min-confidence 60`: no output (clean, exit 0). `pytest -n auto --cov=src --cov-report=`: 4137 passed in 72.68s. Drift checks `specmgr docs` (487 module files + GENERATED.md), `specmgr mcp-docs` (docs/MCP.md), and `specmgr coverage-badge` (docs/coverage.svg, 99%) all idempotent — `git status --short` clean after each. ACC walk (re-run with `-v`, every covering test PASSED): ACC-001 → `tests/feat/tools/test_list_feat_glob.py::TestListFeatGlob::test_acc001_glob_returns_exactly_the_matching_features_and_no_others`; ACC-002 → `tests/req/tools/test_list_req_glob.py::TestListReqGlob::test_acc002_known_repo_uuid_matches_in_any_case_of_the_pattern` (the real `docs/req` UUID `10b78b36-abad-4bfe-9281-f75677ff7d09`, subtests over `10b7*` and `10B7*`); ACC-003 → all 13 test files on this branch are pure additions (zero existing test file modified) and the full suite's pre-existing `test_list_<d>.py` suites stayed green, plus the per-module `glob=None`-unchanged tests (feat `test_acc003_glob_none_output_is_unchanged`, the other eleven domains `test_glob_none_output_is_unchanged_and_reports_the_full_corpus`); ACC-004 → `test_acc004_paging_composes_with_the_glob_filter` in both the `feat` and `req` modules; ACC-005 → `test_acc005_broken_folder_is_reported_unfiltered_but_absent_for_any_glob` (feat) and `test_acc005_broken_file_is_reported_unfiltered_but_absent_for_any_glob` (req). Scope discipline confirmed: the `src/` diff over 52ab39c..HEAD is exactly `general/tools/_listing.py` plus twelve `tools/list_<d>.py` files; `adr/tools/list_adr.py` is unmodified and contains no `glob`; the shared helper is untouched by Phase 110 (empty diff 7a0f297..HEAD). No decision was forced this phase, so Decisions Made is unchanged.
 
 #### 2026-10-07T14:43:27.097+02:00 - Phase 110 complete: the glob parameter on the eleven other list tools
 
