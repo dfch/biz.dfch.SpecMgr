@@ -22,7 +22,7 @@ type or cross-cutting:
   `adr/prompts/` has
   narrated `create_adr`/`update_adr` prompts plus step-gated
   `create_adr_test`/`update_adr_test` A/B variants (see
-  `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §11). Its Pydantic
+  ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
@@ -956,10 +956,7 @@ itself (its own availability-probe-first/crash-containment/never-raising
 body, and the demand path it shares the cache with) is otherwise
 unchanged; only the startup orchestration moved.
 
-`.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md` §10 ("Next steps") tracks per-item done/not-done
-status for the ADR feature specifically and should be kept in sync with
-`src/` as this evolves; treat it as current-state tracking, not just a
-historical design doc. Don't assume any domain package exists beyond the
+Don't assume any domain package exists beyond the
 per-domain bullets in the Status section above (each with its respective
 `tools`/`prompts`/`resources` sub-packages, per the exceptions noted
 there), or anything in `general/resources/` beyond the `general/` package
@@ -1023,6 +1020,12 @@ documentation in `docs/`:
 - **No CI/pre-commit enforcement** exists for `.specmgr/` content — unlike
   `docs/adr/`, there is no `validate_adr`-equivalent check and no `adr-toc`-
   equivalent generation step wired into hooks or CI for feature folders.
+- **No live citations of feature-folder sibling files**: a feature folder may
+  contain other local files beyond `README.md`/optional `history.md`
+  (session transcripts, reference copies, templates, etc.), but nothing in
+  `src/`/`AGENTS.md` may cite them by path — anything needing a stable,
+  live citation from code must be a proper specmgr artifact (normally its
+  own ADR).
 - **ADR vs. feature-level "Decisions Made" log**: a decision belongs in a
   full ADR (`docs/adr/`) if it's architecture/structure-level, affects more
   than one feature or the repo as a whole, or reverses/supersedes a previous

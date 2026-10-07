@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-06T10:37:25.837+02:00'
 id: feat-198-retire-adr-tool-plan-refs
-status: planning
+status: progress
 type: feat
-updated: '2026-10-07T09:19:25.172+02:00'
+updated: '2026-10-07T11:30:41.528+02:00'
 version: 1.0.0
 ---
 
@@ -116,19 +116,19 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 #### Phase 100: Source and AGENTS.md Citation Cleanup
 
-- [ ] Task 100.100: Fix `server.py`'s two citations per the Design Notes table (resource docstring, prompt-surface docstring) — depends on: none — status: not-started
+- [x] Task 100.100: Fix `server.py`'s two citations per the Design Notes table (resource docstring, prompt-surface docstring) — depends on: none — status: done
 
-- [ ] Task 100.110: Fix `uc/models/v1/use_case.py`'s citation (drop the file reference clause) — depends on: none — status: not-started
+- [x] Task 100.110: Fix `uc/models/v1/use_case.py`'s citation (drop the file reference clause) — depends on: none — status: done
 
-- [ ] Task 100.120: Fix `models/adr/__init__.py`'s module docstring — drop both the line-20 lead-in sentence that cites `adr-tool-plan.md` by name ("See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:") *and* all seven `(plan §N)` parentheticals (lines 22-38); dropping only the parentheticals leaves a literal `adr-tool-plan.md` citation and fails ACC-001 — depends on: none — status: not-started
+- [x] Task 100.120: Fix `models/adr/__init__.py`'s module docstring — drop both the line-20 lead-in sentence that cites `adr-tool-plan.md` by name ("See ``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`` §3-§6 for the design this package implements:") *and* all seven `(plan §N)` parentheticals (lines 22-38); dropping only the parentheticals leaves a literal `adr-tool-plan.md` citation and fails ACC-001 — depends on: none — status: done
 
-- [ ] Task 100.130: Fix `models/adr/v1/__init__.py`'s module docstring (drop the §6 lead-in) — depends on: none — status: not-started
+- [x] Task 100.130: Fix `models/adr/v1/__init__.py`'s module docstring (drop the §6 lead-in) — depends on: none — status: done
 
-- [ ] Task 100.140: Consolidate the 7 `adr/prompts/*` citations into one, in `adr/prompts/__init__.py`'s package docstring, citing `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f`; remove the other 6 (`create_adr.py`, `update_adr.py`, `create_adr_test.py` x2, `update_adr_test.py` x2) — depends on: none — status: not-started
+- [x] Task 100.140: Consolidate the 7 `adr/prompts/*` citations into one, in `adr/prompts/__init__.py`'s package docstring, citing `ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f`; remove the other 6 (`create_adr.py`, `update_adr.py`, `create_adr_test.py` x2, `update_adr_test.py` x2) — depends on: none — status: done
 
-- [ ] Task 100.150: Fix `AGENTS.md`'s two citations (the `adr/` domain bullet, and remove the standalone "§10 Next steps" paragraph) — depends on: none — status: not-started
+- [x] Task 100.150: Fix `AGENTS.md`'s two citations (the `adr/` domain bullet, and remove the standalone "§10 Next steps" paragraph) — depends on: none — status: done
 
-- [ ] Task 100.160: Add the new `AGENTS.md` convention clause (REQ-004) to the "Development Artifacts (`.specmgr/`)" section — insert as a new bullet directly after the existing "No CI/pre-commit enforcement exists ..." bullet, worded along the lines of: "A feature folder may contain other local files beyond `README.md`/optional `history.md` (session transcripts, reference copies, templates, etc.), but nothing in `src/`/`AGENTS.md` may cite them by path — anything needing a stable, live citation from code must be a proper specmgr artifact (normally its own ADR)." — depends on: none — status: not-started
+- [x] Task 100.160: Add the new `AGENTS.md` convention clause (REQ-004) to the "Development Artifacts (`.specmgr/`)" section — insert as a new bullet directly after the existing "No CI/pre-commit enforcement exists ..." bullet, worded along the lines of: "A feature folder may contain other local files beyond `README.md`/optional `history.md` (session transcripts, reference copies, templates, etc.), but nothing in `src/`/`AGENTS.md` may cite them by path — anything needing a stable, live citation from code must be a proper specmgr artifact (normally its own ADR)." — depends on: none — status: done
 
 #### Phase 110: Verification
 
@@ -150,7 +150,7 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 ### Current Status
 
-**As of 2026-10-06**: Feature created, split out of feat-7-various-improvements Task 100.140 after a scoping discussion. Not yet implemented.
+**As of 2026-10-07**: Phase 100 (source + AGENTS.md citation cleanup, Tasks 100.100-100.160) complete — all 14 live citations removed, `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns nothing; Phase 110 (verification) pending.
 
 ### Blockers
 
@@ -160,6 +160,24 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-10-07 11:30:41.528+02:00 - Phase 100 complete (source + AGENTS.md citation cleanup)
+
+Implemented all of Phase 100 (Tasks 100.100-100.160): removed all 14 live
+citations of `adr-tool-plan.md` per the Design Notes disposition table —
+`server.py` x2 (resource docstring now cites ADR 7531106b, prompt-surface
+docstring cites ADR ddd038f0), `uc/models/v1/use_case.py` (dropped the §7
+clause), `models/adr/__init__.py` (dropped the §3-§6 lead-in sentence and
+all seven `(plan §N)` parentheticals), `models/adr/v1/__init__.py` (dropped
+the §6 lead-in), the 7 `adr/prompts/*` citations consolidated into one
+ADR ddd038f0 citation in `adr/prompts/__init__.py`, and `AGENTS.md` x2
+(`adr/` bullet now cites ADR ddd038f0; the §10 "Next steps" paragraph
+reduced to its second sentence verbatim per the orchestrator override) plus
+the new REQ-004 convention bullet. Quality gate green: ruff format/check,
+vulture, full pytest (4088 passed), coverage badge unchanged (99%),
+`specmgr docs`/`specmgr mcp-docs` regenerated and staged (MCP.md unchanged),
+`pre-commit run --all-files` all passed. `grep -rn "adr-tool-plan.md" src/
+AGENTS.md` returns nothing (ACC-001).
+
 #### 2026-10-06 00:00:00.000Z - Created
 
 Split out of feat-7-various-improvements Task 100.140 (GitHub issue #198), after investigating the actual scope: only `adr-tool-plan.md` is cited live from `src/`/`AGENTS.md` (14 sites); the other 17 feature folders' extra sibling files carry no equivalent liability and are explicitly out of scope.
@@ -167,6 +185,22 @@ Split out of feat-7-various-improvements Task 100.140 (GitHub issue #198), after
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 11:30:41.528+02:00 - Phase 100 implementation decisions
+
+(a) Task 100.100, `server.py` `specmgr://adr/{id}` resource docstring: cited
+ADR 7531106b-074b-4bd8-a83a-e433d01676e2 ("Expose listing and by-id reads as
+MCP resources in addition to tools") rather than ADR 8cf940c5 or a drop —
+7531106b's Decision Outcome is literally the decision to expose
+`specmgr://adr/{id}` as an RFC 6570 template resource, so it is the most
+directly governing ADR for that line; the plan allowed either. (b) Task
+100.150, orchestrator/user override (2026-10-07): removed only the first
+sentence of `AGENTS.md`'s standalone §10 "Next steps" paragraph (the one
+about keeping the plan's per-item done/not-done status in sync with
+`src/`); kept the second sentence — "Don't assume any domain package
+exists beyond the per-domain bullets in the Status section above ... — check
+first." — verbatim as the surviving paragraph, because it is unique,
+non-redundant guidance not covered by the "Still genuinely missing" bullet.
 
 #### 2026-10-07 00:00:00.000Z - Plan refinement pass (feat-refiner)
 

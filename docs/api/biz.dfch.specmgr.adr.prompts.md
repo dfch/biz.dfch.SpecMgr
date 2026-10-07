@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.adr.prompts`
 
-MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
 
 Each returns plain instructional text (auto-wrapped as a single
 ``UserMessage`` by the SDK) that guides an LLM through driving the
