@@ -29,12 +29,29 @@ deliberately worst-case-severity sentinel document -- see that module's own
 docstring and the feature README's Design Notes ("``RskSummary``'s extra
 fields -- sentinel-document design") for the full rationale.
 
+**feat-200-list (GitHub issue #200), Task 110.100: the optional ``glob``
+parameter.** This tool now takes an optional, case-insensitive ``glob``
+pattern matched against each document's own id (a UUID; REQ-002/REQ-004):
+the shared ``general.tools._listing.filter_summaries_by_glob`` helper runs
+on the materialized row list, between this tool's own row build and the
+``total``/paging step, so it never re-scans the filesystem on its own. A
+failed-to-parse row carries ``id=None`` and therefore never matches, so a
+glob-given result has no failed rows and ``error_count = 0`` by
+construction (REQ-003) -- for ``rsk`` exactly like the other domains, since
+the sentinel-built failed rows (``rsk.tools._sentinel``) also carry
+``id=None`` with ``error`` set; ``total`` is the match count and
+``offset``/``max_results`` paging keeps its existing meaning on that
+smaller set (ACC-004). ``glob=None`` (the default) leaves every outcome
+byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
+a pattern, not an off-switch (it matches no id and yields a zero-row
+result).
+
 ## Functions
 
 ### `_to_summary(doc: 'RskDocument', path: 'Path') -> 'RskSummary'`
 
 
-### `list_rsk(max_results: 'int | None' = None, offset: 'int | None' = None) -> 'PagedResult[RskSummary]'`
+### `list_rsk(max_results: 'int | None' = None, offset: 'int | None' = None, glob: 'str | None' = None) -> 'PagedResult[RskSummary]'`
 
 Return one page of one-line risk summaries from the configured base directory.
 
@@ -51,9 +68,12 @@ as a successful entry, and ``error`` carrying the exception's message)
 rather than being silently skipped (feat-81-83-validation Phase 3,
 REQ-006) -- a single malformed file must not break listing every other
 valid one. The complete list (successes and failures both) is
-materialized first, then paginated in memory, so the returned
-``total``/``error_count`` always reflect the whole directory,
-independent of paging.
+materialized first, then -- when ``glob`` is given -- filtered to the
+rows whose ``id`` matches it (the shared
+``general.tools._listing.filter_summaries_by_glob`` helper, applied
+between the row build and the ``total``/paging step), then paginated in
+memory, so the returned ``total``/``error_count`` always reflect the
+whole directory (or that filtered subset), independent of paging.
 
 Parameters
 ----------
@@ -66,12 +86,25 @@ offset:
     Zero-based index of the first summary to include in this page.
     Defaults to ``0`` when not given (``None``); negative values are
     floored to ``0``.
+glob:
+    Optional glob pattern matched, case-insensitively, against each
+    document's own id (a UUID) -- e.g. ``"dead*"`` (feat-200-list,
+    GitHub issue #200, REQ-002/REQ-004). Defaults to ``None`` (no
+    filtering: the complete directory is listed, exactly as before --
+    REQ-005). An empty string is a pattern, not an off-switch: it
+    matches no id (ids are never empty) and yields a zero-row result.
+    Failed-to-parse rows carry ``id=None`` and therefore never match
+    any pattern, so a glob-given result has no failed rows and
+    ``error_count = 0`` by construction (REQ-003); ``total`` is the
+    match count and ``offset``/``max_results`` paging keeps its existing
+    meaning on that smaller set.
 
 Returns
 -------
 PagedResult[RskSummary]
     One entry per ``*.md`` file within the requested page (successes
-    and failures both), in filename-sorted order. ``results`` is empty
-    if the base directory does not exist, holds no risks, or ``offset``
-    is past the end of the full list.
+    and failures both -- only entries whose ``id`` matches ``glob`` when
+    it is given), in filename-sorted order. ``results`` is empty if the
+    base directory does not exist, holds no risks, ``offset`` is past
+    the end of the full list, or no id matches ``glob``.
 

@@ -441,19 +441,19 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`get_vcr_example`](#tool-get_vcr_example) | Return a complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`get_vcr_template`](#tool-get_vcr_template) | Return a VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record. |
 | [`list_adr`](#tool-list_adr) | Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_dec`](#tool-list_dec) | Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_dec`](#tool-list_dec) | Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the decisions whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_feat`](#tool-list_feat) | Ids, titles, statuses, and refs of features in the configured feature base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_feat tool instead. An optional glob pattern (e.g. 'feat-7*') filters the listing to the features whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. The request path never fully parses a document's body (GitHub issue #187): a folder's row is resolved from its frontmatter+H1 alone until a background warmup (or an on-demand get_feat read) has fully parsed it, so a body-level parse failure may transiently appear healthy, and a missing/wrong-shape H1's error text may transiently differ from get_feat's -- both converge to get_feat's exact error once that file has been fully parsed. Set SPECMGR_FEAT_WARMUP_DISABLED to turn the background warmup off entirely (convergence then depends solely on on-demand reads). |
-| [`list_gol`](#tool-list_gol) | Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_prb`](#tool-list_prb) | Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_qa`](#tool-list_qa) | Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_gol`](#tool-list_gol) | Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the goals whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_prb`](#tool-list_prb) | Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the problem statements whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_qa`](#tool-list_qa) | Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the QA documents whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_references`](#tool-list_references) | Cross-references of one source document, resolved and paged. `type` is the source document's domain (one of adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs) and `id` the source's own identifier. The tool scans the source's frontmatter-stripped body for reference tags (the shared reference-tag vocabulary in general.tools._references: the UUID tags GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS, each carrying a canonical uuid id, plus FEAT, carrying the full feat-NNN-slug id or the bare feat-NNN number; case-insensitive tag, space/tab/dash separator, anywhere in a line), dedupes repeated occurrences (first-occurrence order preserved), and resolves each unique reference to the referenced document in its own target domain. Returns a `PagedResult` of one `ReferenceRow` per unique reference: `type`, `id`, `title` (the referenced document's H1), and `path` (the referenced document's resolved absolute file path). A reference that cannot be resolved on disk is a row with null `title`/`path` and the target domain's not-found message in `error` -- it never raises. `max_results`/`offset` control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access; a missing source document is the source domain's own `XNotFoundError`. |
-| [`list_req`](#tool-list_req) | Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_sop`](#tool-list_sop) | Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_sysrs`](#tool-list_sysrs) | Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_tsk`](#tool-list_tsk) | Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
-| [`list_vcr`](#tool-list_vcr) | Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_req`](#tool-list_req) | Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the requirements whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_rsk`](#tool-list_rsk) | Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the risks whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_sop`](#tool-list_sop) | Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the Standard Operating Procedures whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_sysrs`](#tool-list_sysrs) | Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the System Requirements Specifications whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_tsk`](#tool-list_tsk) | Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the task lists whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the use cases whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
+| [`list_vcr`](#tool-list_vcr) | Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the verification case records whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`mdformat`](#tool-mdformat) | Format a markdown file in place, preserving any YAML frontmatter. Returns True if the file was changed, False if already formatted. |
 | [`option_create`](#tool-option_create) | Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full title. |
 | [`option_delete`](#tool-option_delete) | Remove the option named full_title (plan §5), returning the remaining full titles. |
@@ -1002,12 +1002,13 @@ Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SP
 
 **List decisions**
 
-Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the decisions whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_feat
 
@@ -1025,34 +1026,37 @@ Ids, titles, statuses, and refs of features in the configured feature base direc
 
 **List goals**
 
-Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the goals whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_prb
 
 **List problem statements**
 
-Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the problem statements whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_qa
 
 **List QA documents**
 
-Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the QA documents whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_references
 
@@ -1071,78 +1075,85 @@ Cross-references of one source document, resolved and paged. `type` is the sourc
 
 **List requirements**
 
-Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the requirements whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_rsk
 
 **List risks**
 
-Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the risks whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_sop
 
 **List Standard Operating Procedures**
 
-Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the Standard Operating Procedures whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_sysrs
 
 **List System Requirements Specifications**
 
-Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the System Requirements Specifications whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_tsk
 
 **List task lists**
 
-Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the task lists whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_uc
 
 **List use cases**
 
-Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the use cases whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: list_vcr
 
 **List verification case records**
 
-Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the verification case records whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
 | `max_results` | `integer | None` | No |
 | `offset` | `integer | None` | No |
+| `glob` | `string | None` | No |
 
 ### Tool: mdformat
 

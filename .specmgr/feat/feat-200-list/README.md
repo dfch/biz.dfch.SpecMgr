@@ -4,7 +4,7 @@ created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
 status: progress
 type: feat
-updated: '2026-10-07T10:56:19.858+02:00'
+updated: '2026-10-07T14:43:27.097+02:00'
 version: 1.0.0
 ---
 
@@ -94,8 +94,8 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 #### Phase 110: Extend to the other list tools
 
-- [ ] Task 110.100: Add the same `glob` parameter to the eleven other paged `list_<d>` tools via the shared helper.
-- [ ] Task 110.110: Tests for a UUID-prefix match (e.g. `dead*`) on fixture corpora plus docstring updates and `docs/MCP.md` regeneration.
+- [x] Task 110.100: Add the same `glob` parameter to the eleven other paged `list_<d>` tools via the shared helper.
+- [x] Task 110.110: Tests for a UUID-prefix match (e.g. `dead*`) on fixture corpora plus docstring updates and `docs/MCP.md` regeneration.
 
 #### Phase 120: Quality gate
 
@@ -105,11 +105,15 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 ### Current Status
 
-**As of 2026-10-07**: In progress. Phase 100 (`list_feat` glob) is complete: the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and the new fixture test module `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003). Phases 110 (the same parameter on the other paged `list_<d>` tools) and 120 (quality gate) are not started.
+**As of 2026-10-07**: In progress. Phase 100 (`list_feat` glob) is complete: the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and the new fixture test module `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003). Phase 110 is complete: the same `glob` parameter on the eleven other paged `list_<d>` tools (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs), each wired to the shared helper between its row build and `total`/paging, with one new per-domain fixture test module each (`tests/<d>/tools/test_list_<d>_glob.py` — UUID-prefix match, pattern-case-insensitivity, and `glob=None`-unchanged on a hand-built corpus; the `req` module additionally carries the plan's named ACC-002/ACC-004/ACC-005 additions), docstrings updated, and `docs/MCP.md`/`docs/api/` regenerated. Phase 120 (quality gate) is not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T14:43:27.097+02:00 - Phase 110 complete: the glob parameter on the eleven other list tools
+
+Implemented Phase 110 (Tasks 110.100/110.110): the same optional `glob: str | None = None` parameter (third position, after `max_results`/`offset`) on `list_req`/`list_uc`/`list_tsk`/`list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/`list_vcr`/`list_sysrs`, each calling the shared `general.tools._listing.filter_summaries_by_glob` helper once, between its own `build_summaries` row build and the `total`/`offset`/`max_results`/`truncated` step (`list_adr` remains out of scope, `list_feat` already shipped in Phase 100; the helper itself is untouched). Each tool's `@mcp.tool` description gained the glob sentence (UUID-prefix example `dead*`), its numpydoc docstring the materialize→filter→paginate intro, the `glob` Parameters entry, and the Returns clarification, in the `list_feat` precedent's own style; `rsk`'s module docstring additionally notes that its sentinel-built failed rows also carry `id=None`/`error`, so the helper's `error_count = 0`-by-construction guarantee holds for it like the other domains. Eleven new fixture test modules `tests/<d>/tools/test_list_<d>_glob.py` (per-test temp `SPECMGR_DOCS_DIR`, the domain cache reset in `setUp`/`tearDown`, hand-built corpus written directly to disk: two healthy documents with known different-prefix UUIDs `deadbeef-*`/`cafe...` plus one broken file) cover the per-domain floor — UUID-prefix match (exactly the matching rows, filtered `total`, `error_count = 0`), uppercase/mixed-case pattern case-insensitivity, and `glob=None`-unchanged output reporting the full corpus including the failed row — and the `req` module additionally carries the plan's named ACC-002 (a real UUID read off `docs/req/req-10b78b36-abad-4bfe-9281-f75677ff7d09-verification-case-record-document-management.md`, pattern `10b7*`/`10B7*`), ACC-004 (paging composes with the filter on the two-match `dead*` corpus), and ACC-005 (broken file reported unfiltered, absent and `error_count = 0` for any glob including `*`). All pre-existing `tests/<d>/tools/test_list_<d>.py` stay green untouched (ACC-003). Regenerated `docs/MCP.md` (the `glob` parameter row + description sentence for all eleven tools), the eleven `docs/api/biz.dfch.specmgr.<d>.tools.list_<d>.md` files, and `docs/GENERATED.md`'s test-file count (384 → 395); `docs/coverage.svg` is unchanged (99% before and after).
 
 #### 2026-10-07T10:56:19.858+02:00 - Phase 100 complete: the list_feat glob parameter
 
@@ -126,6 +130,10 @@ Created the feature plan for GitHub issue #200 (an optional `glob` id-filter par
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T14:43:27.097+02:00 - Fixture writing: direct disk writes with hand-authored frontmatter
+
+The Phase 110 fixture corpora are written directly to disk rather than via `create_<d>` (which would assign random `uuid4` ids the filter could not be tested against deterministically): each healthy fixture is a minimal valid body copied from the domain's own pre-existing `tests/<d>/tools/test_list_<d>.py` (`_MINIMAL_BODY`, plus for `dec`/`rsk` that test's own `MANDATORY_*` helper snippet) under a hand-authored frontmatter block carrying the chosen id (`deadbeef-...`/`cafe...`), `status: draft`, and the domain's `type` discriminator. One domain-specific wrinkle: `rsk`'s closed status vocabulary (`accepted`/`closed`/`dropped`/`mitigating`/`occurred`/`open`) has no `draft`, so the `rsk` fixtures use `status: open` (surfaced by a parse failure in the first test run). The `req` corpus carries two `deadbeef-*` documents so its ACC-004 paging test has N = 2 matches; the other ten domains carry one each (the plan's floor).
 
 #### 2026-10-07T10:56:19.858+02:00 - Helper location and signature
 
