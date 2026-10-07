@@ -30,6 +30,8 @@ additionally requires the ``mcp`` extra
 (``pip install biz-dfch-specmgr[mcp]``).
 """
 
+import os
+
 import typer
 from dotenv import find_dotenv, load_dotenv
 
@@ -53,9 +55,26 @@ from .commands import (
 # .env loading
 # ---------------------------------------------------------------------------
 
+#: Sentinel env var (test hook — never set outside test runs): when set, the
+#: ``.env`` load below is skipped entirely, so the CLI process runs under the
+#: CI (source-less) condition whatever the local (gitignored) ``.env``
+#: configures. ``tests/conftest.py`` honours the same sentinel (its own copy
+#: of the name, drift-pinned in ``tests/plantuml/test_source_gate.py``); the
+#: pair is what makes the ``specmgr coverage-badge`` pre-commit hook's
+#: source-less re-run source-less end-to-end — the hook sets it so that no
+#: ``.env``-loading code path in the test process can select a PlantUML
+#: source (feat-185-uc-diagrams Phase 145, amendment C).
+NO_DOTENV_SENTINEL = "SPECMGR_TESTS_NO_DOTENV"
+
 
 def _load_default_dotenv() -> None:
-    """Load ``.env`` walking upward from this file, then from CWD as fallback."""
+    """Load ``.env`` walking upward from this file, then from CWD as fallback.
+
+    Skipped entirely when the :data:`NO_DOTENV_SENTINEL` env var is set (see
+    its docstring).
+    """
+    if os.environ.get(NO_DOTENV_SENTINEL):
+        return
     dotenv_path = find_dotenv(usecwd=False) or find_dotenv(usecwd=True)
     if dotenv_path:
         load_dotenv(dotenv_path, verbose=False)

@@ -32,9 +32,12 @@ file I/O, no network, no clock:
   receiver, else the system; self-message when the sender is the system),
   §2.9.4 UNATTRIBUTED markers (built from the shared
   :mod:`biz.dfch.specmgr.plantuml.structure` constants — never re-stringed),
-  §2.9.6 notes (top/final ``note left``, message-attached ``note right``,
-  ``note left`` when there is no message to attach to — amended 2026-10-05,
-  the real 1.2026.8 parser rejects bare ``note``), §2.9.7 extension
+   §2.9.6 notes (top/final and no-message-to-attach notes anchored as
+   ``note left of {primary-actor-alias}``, message-attached ``note right`` —
+   amended 2026-10-05, the real 1.2026.8 parser rejects bare ``note``;
+   amended 2026-10-06, a bare note after a self-message's note tile crashes
+   1.2026.8, so the unanchored notes are anchored on the primary actor's
+   alias), §2.9.7 extension
   ``alt`` fragments (anchored at the structurally validated step, single
   condition branch, no ``else``, sibling order, resumption notes for
   Return/Continue-to-step items — standalone or embedded, case-insensitive),
@@ -127,13 +130,13 @@ document order (rulebook §2.1) — the usecase/actor-union order.
 The frozen edge line (rulebook §2.8 table; ``{label}`` omitted when empty).
 
 
-### `_extension_fragment(extension: 'Extension', participants: 'list[_Participant]', system: '_Participant | None') -> 'list[str]'`
+### `_extension_fragment(extension: 'Extension', participants: 'list[_Participant]', system: '_Participant | None', anchor: 'str') -> 'list[str]'`
 
 One ``alt`` fragment (frozen, rulebook §2.9.7): the condition header,
 the items in order (the same pipeline as a main step), the resumption
-notes (full item text — no message; ``note left`` when the resumption
-item is the fragment's first item), and the bare ``end`` close (a single
-branch, no ``else``).
+notes (full item text — no message; ``note left of {anchor}`` when the
+resumption item is the fragment's first item), and the bare ``end``
+close (a single branch, no ``else``).
 
 
 ### `_first_sentence(text: 'str') -> 'str'`
@@ -146,13 +149,17 @@ The first sentence: the first line, up to the first ``". "`` or its end (ruleboo
 The §2.3 level stereotype (case-insensitive normalisation; None when unrecognised).
 
 
-### `_note_block(content_lines: 'list[str]', *, attached: 'bool') -> 'list[str]'`
+### `_note_block(content_lines: 'list[str]', *, attached: 'bool', anchor: 'str') -> 'list[str]'`
 
 One note block (frozen format): ``note right`` when attached to a
-message, ``note left`` when there is no message to attach to (rulebook
-§2.9.6, amended 2026-10-05 — the real 1.2026.8 parser rejects bare
-``note``). Content lines are pre-indented; blank lines stay truly
-empty.
+message, ``note left of {anchor}`` when there is no message to attach to
+(rulebook §2.9.6, amended 2026-10-05 — the real 1.2026.8 parser rejects
+bare ``note``; amended 2026-10-06 — a bare note after a self-message's
+note tile with no intervening non-self message crashes 1.2026.8, and a
+bare note before the first message silently drops its text, so the
+unanchored notes are anchored on ``anchor``, the primary actor's §2.9.1
+declaration alias). Content lines are pre-indented; blank lines stay
+truly empty.
 
 
 ### `_note_lines(content: 'str') -> 'list[str]'`

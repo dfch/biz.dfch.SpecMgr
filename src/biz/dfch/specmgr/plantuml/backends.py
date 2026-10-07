@@ -32,6 +32,13 @@ mapping needed):
 - **Error message shape:** the ``ERROR / {line} / {message}`` text block —
   1.2026.8 emits it as three lines (``ERROR`` / ``{line}`` / ``{message}``)
   on stderr; both byte shapes are scanned (see :func:`scan_error_blocks`).
+- **Crash signature (rulebook §5.2 crash line, verified 2026-10-06):** a
+  non-zero exit **without** a parseable ``ERROR`` block whose raw byte
+  stream carries a PlantUML server-side crash (the known 1.2026.8
+  self-message/note-left shape bug — ``ClassCastException`` on stderr, exit
+  200) is the same crash diagnostic as the URL crash page: ``valid=False``
+  with a line-0 finding carrying the crash exception class (see
+  :func:`scan_crash`).
 - **Render proof:** ``--svg --no-error-image -pipe`` — exit ``0`` **and** the
   output starts with ``<svg`` ⇒ rendered; the SVG goes to a temp file (path
   optionally reported), never inlined.
@@ -56,6 +63,9 @@ from .structure import Finding
 
 __all__ = [
     "CANARY_DIAGRAM",
+    "CRASH_EXCEPTION_MARKER",
+    "CRASH_FIX_HINT",
+    "CRASH_PAGE_MARKER",
     "FLAG_CHECKONLY",
     "FLAG_CHECK_SYNTAX",
     "LocalVerdict",
@@ -63,6 +73,7 @@ __all__ = [
     "SUBPROCESS_TIMEOUT_SECONDS",
     "clear_probe_cache",
     "probe_local",
+    "scan_crash",
     "scan_error_blocks",
     "validate_local",
 ]
@@ -102,6 +113,35 @@ _ERROR_SLASH_PATTERN = re.compile(rb"ERROR / (\d+) / ([^\r\n]+)")
 #: slash shape is retained so a build emitting either is parsed.
 _ERROR_LINES_PATTERN = re.compile(rb"ERROR[ \t]*\r?\n(\d+)\r?\n([^\r\n]+)")
 
+#: The PlantUML crash-page sentence (the URL source's crash signature — the
+#: ``/svg/`` endpoint answers 200 with an SVG that says PlantUML has crashed
+#: and embeds the Java exception trace; rulebook §5.2 crash line, verified
+#: 2026-10-06 on the dev jetty 1.2026.8).
+CRASH_PAGE_MARKER = b"has crashed"
+
+#: The known 1.2026.8 self-message/note-left shape bug's exception (the jar/
+#: bin source's crash signature — the raw process stream carries the
+#: ``ClassCastException`` trace on stderr with exit 200 and no parseable
+#: ``ERROR`` block; rulebook §5.2 crash line, verified 2026-10-06 on the
+#: same-build jar).
+CRASH_EXCEPTION_MARKER = b"ClassCastException"
+
+#: The fully-qualified Java exception class name in a crash trace (the
+#: crash diagnostic's finding carries it, e.g.
+#: ``java.lang.ClassCastException``).
+_CRASH_EXCEPTION_CLASS_PATTERN = re.compile(
+    rb"(?<![.\w$])((?:[A-Za-z_$][\w$]*\.)*[A-Za-z_$][\w$]*(?:Exception|Error))\b"
+)
+
+#: The crash diagnostic's shared fix hint (rulebook §5.2 crash line): names
+#: the known 1.2026.8 shape bug and points at the §2.9 anchored-note form.
+CRASH_FIX_HINT = (
+    "known PlantUML 1.2026.8 shape bug (verified 2026-10-06 on both sources): a bare "
+    "'note left'/'note right' block after a self-message's note tile (attached or detached) "
+    "with no intervening non-self message crashes the renderer — anchor every unanchored "
+    "note as 'note left of {primary-actor-alias}' (rulebook §2.9) and re-validate"
+)
+
 
 # --- the frozen result shapes -------------------------------------------------
 
@@ -134,7 +174,10 @@ class LocalVerdict:
 
     Attributes:
         valid: the check's exit-code verdict (``0`` ⇒ ``True``).
-        errors: the parsed ``ERROR`` blocks (empty when valid).
+        errors: the parsed ``ERROR`` blocks, or the crash diagnostic (the
+            rulebook §5.2 crash line — a non-zero exit without a parseable
+            ``ERROR`` block but with the crash signature in the raw stream)
+            or the generic no-block finding (empty when valid).
         rendered: the render-proof verdict (``None`` = not run — invalid).
         proof_path: the temp file holding the rendered SVG (``None`` when not
             rendered) — the path is reported, the bytes never inlined.
@@ -249,8 +292,8 @@ def scan_error_blocks(data: bytes) -> list[tuple[int, str]]:
     Accepts both byte shapes: the frozen ``ERROR / {line} / {message}``
     one-line block and the three-line block 1.2026.8 emits
     (``ERROR`` / ``{line}`` / ``{message}``) — verified against the live
-    build. Returns ``(line, message)`` pairs in order of appearance, deduped
-    by (line, message); the message is decoded with ``errors="replace"``
+    build. Returns ``(line, message)`` pairs sorted by ``(line, message)``,
+    deduped by (line, message); the message is decoded with ``errors="replace"``
     (the surrounding bytes can be binary-contaminated).
     """
     assert isinstance(data, bytes), type(data)
@@ -267,6 +310,27 @@ def scan_error_blocks(data: bytes) -> list[tuple[int, str]]:
     found.sort(key=lambda pair: (pair[0], pair[1]))
     result = found
     return result
+
+
+def scan_crash(data: bytes) -> str | None:
+    """The fully-qualified crash exception class name in ``data``, or ``None``.
+
+    The rulebook §5.2 crash line (verified 2026-10-06 on both independent
+    sources — the dev jetty 1.2026.8 and the same-build jar): a PlantUML
+    server-side crash is a **recognised** signature, never a transport or
+    configuration issue. Two byte shapes carry it: the URL crash page (the
+    :data:`CRASH_PAGE_MARKER` sentence + the embedded Java exception trace)
+    and the jar/bin raw process stream (the :data:`CRASH_EXCEPTION_MARKER`
+    trace on stderr — the known 1.2026.8 self-message/note-left shape bug,
+    exit 200 with no parseable ``ERROR`` block). The returned name (e.g.
+    ``java.lang.ClassCastException``) goes into the crash diagnostic's
+    finding; ``None`` = no crash signature, whatever else the bytes carry.
+    """
+    assert isinstance(data, bytes), type(data)
+    if CRASH_PAGE_MARKER not in data and CRASH_EXCEPTION_MARKER not in data:
+        return None
+    match = _CRASH_EXCEPTION_CLASS_PATTERN.search(data)
+    return match.group(1).decode("ascii") if match else "an embedded Java exception"
 
 
 # --- the canary probe (memoised per process, rulebook §3.5) ----------------------
@@ -396,7 +460,8 @@ def validate_local(kind: str, value: str, diagram: str, check_flag: str) -> Loca
         return result
 
     if exit_code != 0:
-        blocks = scan_error_blocks(out + b"\n" + err)
+        raw = out + b"\n" + err
+        blocks = scan_error_blocks(raw)
         if blocks:
             errors = [
                 Finding(
@@ -407,14 +472,29 @@ def validate_local(kind: str, value: str, diagram: str, check_flag: str) -> Loca
                 for line, message in blocks
             ]
         else:
-            errors = [
-                Finding(
-                    0,
-                    f"the PlantUML check exited {exit_code} without a parseable ERROR block",
-                    "re-run with a local jar/bin source for the parser's own error text, or inspect "
-                    "the diagram by hand (rulebook §4)",
-                )
-            ]
+            crash = scan_crash(raw)
+            if crash is not None:
+                # the rulebook §5.2 crash line on the local source: a
+                # server-side crash (the known 1.2026.8 shape bug) is a
+                # recognised INVALID with a crash diagnostic — not a silent
+                # "no parseable ERROR block" (verified 2026-10-06)
+                errors = [
+                    Finding(
+                        0,
+                        f"PlantUML crashed while checking the diagram: {crash} "
+                        f"(exit {exit_code}, no parseable ERROR block)",
+                        CRASH_FIX_HINT,
+                    )
+                ]
+            else:
+                errors = [
+                    Finding(
+                        0,
+                        f"the PlantUML check exited {exit_code} without a parseable ERROR block",
+                        "re-run with a local jar/bin source for the parser's own error text, or inspect "
+                        "the diagram by hand (rulebook §4)",
+                    )
+                ]
         result = LocalVerdict(valid=False, errors=errors)
         return result
 

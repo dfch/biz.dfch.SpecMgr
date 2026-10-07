@@ -33,7 +33,7 @@ import zlib
 from pathlib import Path
 
 from biz.dfch.specmgr.plantuml import backends, encode, url
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, require_plantuml_source
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "plantuml"
 
@@ -196,6 +196,10 @@ class TestEncodeLive(unittest.TestCase):
         self.assertIs(verdict.valid, True)
         self.assertIs(verdict.rendered, True)
         self.assertTrue(verdict.proof_path)
+        # the Phase 145 render-proof contract: the SVG body carries the diagram
+        # text and no crash marker (never is_real_svg alone)
+        assert verdict.proof_path is not None
+        assert_rendered_svg(Path(verdict.proof_path).read_bytes(), "hello")
 
 
 if __name__ == "__main__":

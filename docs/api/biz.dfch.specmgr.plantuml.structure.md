@@ -26,8 +26,11 @@ The checker **never rejects what the real parser accepts**: every lenient case
 was verified to render OK against the real parser (rulebook §6.4 — the exact
 five: unclosed fragment at EOF, missing ``@enduml``, bare ``@end``, dangling
 arrow, undeclared participant in a sequence message). A missing
-``@startuml`` is an error in **both** modes (the server classifies such
-payloads as nothing-extractable). UNATTRIBUTED markers are warnings in both
+``@startuml`` is an error in **both** modes (the emitted subset always
+starts with ``@startuml`` — the normative rule is the emitted-subset
+contract, not the server's own behaviour for such payloads, which drifts
+between builds: rulebook §5.2 drift note (a), re-probed 2026-10-06).
+UNATTRIBUTED markers are warnings in both
 modes (deliberate placeholders — syntactically ``'`` comments the real parser
 accepts; the zero-marker rule is enforced by the agent flow, not here).
 

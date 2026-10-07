@@ -17,7 +17,10 @@ never the body size, which drifts between server builds):
 ==================  =========================================================  ==================
 HTTP status         Body                                                       Classification
 ==================  =========================================================  ==================
-200                 real diagram SVG (no placeholder markers)                  VALID + RENDERED
+200                 real diagram SVG (no placeholder/crash markers)            VALID + RENDERED
+200                 crash page (``…has crashed.`` + the embedded Java          INVALID (crash diagnostic)
+                    exception trace — the recognised 1.2026.8 crash line)      — line-0 finding carries
+                                                                               the crash exception class
 400                 ``Welcome to PlantUML!`` placeholder                       SYNTAX INVALID
 200                 ``Welcome to PlantUML!`` placeholder                       REQUEST ERROR
 200                 ``…generated a bad URL`` explanatory                       ENCODE ERROR
@@ -25,11 +28,11 @@ anything else       —                                                         
 ==================  =========================================================  ==================
 
 **An unrecognised response is never classified INVALID** — only the exact
-``400 + placeholder`` combination is. A timeout (transport failure) also
-classifies INCONCLUSIVE. INCONCLUSIVE ⇒ one retry ⇒ persistent ⇒ source
-state (the result carries the §3.6 ``source_state`` vocabulary).
-Import-free and stdlib-only (ADR 7a626b12; ``urllib`` only — no third-party
-HTTP stack).
+``400 + placeholder`` combination and the recognised ``200 + crash page``
+line are. A timeout (transport failure) also classifies INCONCLUSIVE.
+INCONCLUSIVE ⇒ one retry ⇒ persistent ⇒ source state (the result carries
+the §3.6 ``source_state`` vocabulary). Import-free and stdlib-only (ADR
+7a626b12; ``urllib`` only — no third-party HTTP stack).
 
 ## Classes
 
@@ -53,7 +56,8 @@ Attributes:
     classification: one of the :data:`CLASS_*` constants.
     valid: ``True``/``False`` per the matrix; ``None`` = not a verdict
         (request error / encode error / persistent inconclusive) — never
-        "run and failed" beyond the exact 400+placeholder row.
+        "run and failed" beyond the two INVALID rows (the 400+placeholder
+        syntax row and the recognised 200+crash-page row).
     rendered: ``True`` when the valid case's body served as the render
         proof (written to a temp file); ``None`` otherwise.
     proof_path: the temp file holding the SVG body (valid case only).
@@ -83,7 +87,9 @@ Classify one (status, body) pair per the frozen §5.2 matrix.
 
 Pure and signature-based: an unrecognised combination — including every
 transport failure (``status is None``) — is INCONCLUSIVE, **never**
-INVALID. Only the exact 400 + placeholder combination is INVALID.
+INVALID. Only the two INVALID rows are: the exact 400 + placeholder
+combination (syntax) and the recognised 200 + crash-page combination
+(the §5.2 crash line, amended 2026-10-06).
 
 
 ### `clear_probe_cache() -> 'None'`
@@ -104,8 +110,12 @@ malformed URL) return ``status=None`` with the failure text.
 
 True when ``body`` is a real diagram SVG (the matrix's VALID signature).
 
-An SVG document with **no** placeholder markers — the welcome page and
-the bad-URL explanatory page are SVGs too, and they carry their markers.
+An SVG document with **no** placeholder or crash markers — the welcome
+page, the bad-URL explanatory page, and the crash page are SVGs too, and
+they carry their markers. (The crash page must not pass as a render:
+rulebook §5.2's crash line, amended 2026-10-06 — the 1.2026.8
+self-message/note-left shape bug answers 200 with a crash page, and the
+pre-amendment classifier accepted it as a real render.)
 
 
 ### `probe_url(base_url: 'str') -> 'ProbeResult'`

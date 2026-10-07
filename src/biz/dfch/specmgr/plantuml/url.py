@@ -32,7 +32,10 @@ never the body size, which drifts between server builds):
 ==================  =========================================================  ==================
 HTTP status         Body                                                       Classification
 ==================  =========================================================  ==================
-200                 real diagram SVG (no placeholder markers)                  VALID + RENDERED
+200                 real diagram SVG (no placeholder/crash markers)            VALID + RENDERED
+200                 crash page (``…has crashed.`` + the embedded Java          INVALID (crash diagnostic)
+                    exception trace — the recognised 1.2026.8 crash line)      — line-0 finding carries
+                                                                               the crash exception class
 400                 ``Welcome to PlantUML!`` placeholder                       SYNTAX INVALID
 200                 ``Welcome to PlantUML!`` placeholder                       REQUEST ERROR
 200                 ``…generated a bad URL`` explanatory                       ENCODE ERROR
@@ -40,11 +43,11 @@ anything else       —                                                         
 ==================  =========================================================  ==================
 
 **An unrecognised response is never classified INVALID** — only the exact
-``400 + placeholder`` combination is. A timeout (transport failure) also
-classifies INCONCLUSIVE. INCONCLUSIVE ⇒ one retry ⇒ persistent ⇒ source
-state (the result carries the §3.6 ``source_state`` vocabulary).
-Import-free and stdlib-only (ADR 7a626b12; ``urllib`` only — no third-party
-HTTP stack).
+``400 + placeholder`` combination and the recognised ``200 + crash page``
+line are. A timeout (transport failure) also classifies INCONCLUSIVE.
+INCONCLUSIVE ⇒ one retry ⇒ persistent ⇒ source state (the result carries
+the §3.6 ``source_state`` vocabulary). Import-free and stdlib-only (ADR
+7a626b12; ``urllib`` only — no third-party HTTP stack).
 """
 
 from __future__ import annotations
@@ -56,12 +59,13 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-from .backends import ProbeResult
+from .backends import CRASH_FIX_HINT, ProbeResult, scan_crash
 from .encode import encode_puml
 from .structure import Finding
 
 __all__ = [
     "BAD_URL_MARKER",
+    "CLASS_CRASH",
     "CLASS_ENCODE_ERROR",
     "CLASS_INCONCLUSIVE",
     "CLASS_INVALID",
@@ -97,6 +101,13 @@ BAD_URL_MARKER = b"generated a bad URL"
 
 CLASS_VALID = "valid"
 CLASS_INVALID = "invalid"
+#: The recognised 200 + crash-page line (rulebook §5.2, amended 2026-10-06):
+#: PlantUML crashed server-side while rendering — INVALID with a crash
+#: diagnostic (the line-0 finding carries the crash exception class; the
+#: fix_hint names the known 1.2026.8 self-message/note-left shape bug and
+#: points at §2.9's anchored notes). A recognised row, not an unrecognised
+#: response: the never-INVALID preamble covers only the unrecognised cases.
+CLASS_CRASH = "crash"
 CLASS_REQUEST_ERROR = "request_error"
 CLASS_ENCODE_ERROR = "encode_error"
 CLASS_INCONCLUSIVE = "inconclusive"
@@ -127,7 +138,8 @@ class UrlVerdict:
         classification: one of the :data:`CLASS_*` constants.
         valid: ``True``/``False`` per the matrix; ``None`` = not a verdict
             (request error / encode error / persistent inconclusive) — never
-            "run and failed" beyond the exact 400+placeholder row.
+            "run and failed" beyond the two INVALID rows (the 400+placeholder
+            syntax row and the recognised 200+crash-page row).
         rendered: ``True`` when the valid case's body served as the render
             proof (written to a temp file); ``None`` otherwise.
         proof_path: the temp file holding the SVG body (valid case only).
@@ -185,11 +197,20 @@ def fetch_svg(url: str) -> UrlResponse:
 def is_real_svg(body: bytes) -> bool:
     """True when ``body`` is a real diagram SVG (the matrix's VALID signature).
 
-    An SVG document with **no** placeholder markers — the welcome page and
-    the bad-URL explanatory page are SVGs too, and they carry their markers.
+    An SVG document with **no** placeholder or crash markers — the welcome
+    page, the bad-URL explanatory page, and the crash page are SVGs too, and
+    they carry their markers. (The crash page must not pass as a render:
+    rulebook §5.2's crash line, amended 2026-10-06 — the 1.2026.8
+    self-message/note-left shape bug answers 200 with a crash page, and the
+    pre-amendment classifier accepted it as a real render.)
     """
     assert isinstance(body, bytes), type(body)
-    return body.lstrip().startswith(b"<svg") and PLACEHOLDER_MARKER not in body and BAD_URL_MARKER not in body
+    return (
+        body.lstrip().startswith(b"<svg")
+        and PLACEHOLDER_MARKER not in body
+        and BAD_URL_MARKER not in body
+        and scan_crash(body) is None
+    )
 
 
 def classify_response(status: int | None, body: bytes) -> str:
@@ -197,12 +218,16 @@ def classify_response(status: int | None, body: bytes) -> str:
 
     Pure and signature-based: an unrecognised combination — including every
     transport failure (``status is None``) — is INCONCLUSIVE, **never**
-    INVALID. Only the exact 400 + placeholder combination is INVALID.
+    INVALID. Only the two INVALID rows are: the exact 400 + placeholder
+    combination (syntax) and the recognised 200 + crash-page combination
+    (the §5.2 crash line, amended 2026-10-06).
     """
     if status is None:
         return CLASS_INCONCLUSIVE
     if status == 400 and PLACEHOLDER_MARKER in body:
         return CLASS_INVALID
+    if status == 200 and scan_crash(body) is not None:
+        return CLASS_CRASH
     if status == 200 and PLACEHOLDER_MARKER in body:
         return CLASS_REQUEST_ERROR
     if status == 200 and BAD_URL_MARKER in body:
@@ -277,6 +302,25 @@ def validate_url(base_url: str, diagram: str, *, write_proof: bool = True) -> Ur
                     "PlantUML!' placeholder)",
                     "fix the diagram's syntax; for the parser's line-level error text use a local "
                     "source (SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN, rulebook §4)",
+                )
+            ],
+        )
+        return result
+    if classification == CLASS_CRASH:
+        # the recognised §5.2 crash line (amended 2026-10-06): INVALID with a
+        # crash diagnostic — the line-0 finding carries the crash exception
+        # class, the fix_hint names the known 1.2026.8 shape bug and points
+        # at §2.9's anchored notes (a crash is never "not a verdict")
+        crash = scan_crash(response.body)
+        assert crash is not None  # the classifier recognised the crash page
+        result = UrlVerdict(
+            classification=CLASS_CRASH,
+            valid=False,
+            errors=[
+                Finding(
+                    0,
+                    f"the PlantUML server crashed while rendering the diagram: {crash} (200 + the crash page)",
+                    CRASH_FIX_HINT,
                 )
             ],
         )

@@ -41,8 +41,11 @@ The checker **never rejects what the real parser accepts**: every lenient case
 was verified to render OK against the real parser (rulebook §6.4 — the exact
 five: unclosed fragment at EOF, missing ``@enduml``, bare ``@end``, dangling
 arrow, undeclared participant in a sequence message). A missing
-``@startuml`` is an error in **both** modes (the server classifies such
-payloads as nothing-extractable). UNATTRIBUTED markers are warnings in both
+``@startuml`` is an error in **both** modes (the emitted subset always
+starts with ``@startuml`` — the normative rule is the emitted-subset
+contract, not the server's own behaviour for such payloads, which drifts
+between builds: rulebook §5.2 drift note (a), re-probed 2026-10-06).
+UNATTRIBUTED markers are warnings in both
 modes (deliberate placeholders — syntactically ``'`` comments the real parser
 accepts; the zero-marker rule is enforced by the agent flow, not here).
 
@@ -198,7 +201,9 @@ _FRAGMENT_OPEN_PATTERN = re.compile(r"^\s*(alt|opt|loop|group|box|rectangle|pack
 #: A note line. A note with a colon on its line is a SINGLE-LINE placement
 #: note (``note bottom of uc1: "text"`` — the package edge notes); only a
 #: colon-free note line (``note``/``note right``/``note left``/
-#: ``note bottom of X``) OPENS a block that must end with ``end note``.
+#: ``note left of X``/``note right of X``/``note bottom of X`` — the anchored
+#: forms the renderers emit for unanchored sequence notes since the 2026-10-06
+#: amendment) OPENS a block that must end with ``end note``.
 _NOTE_LINE_PATTERN = re.compile(r"^\s*note\b")
 _STEREOTYPE_RUN_PATTERN = re.compile(r"^(?:\s*<<[^<>]*>>)+$")
 _DECLARATION_PATTERN = re.compile(r"^\s*(actor|participant|usecase)\s+(?P<rest>\S.*)$")
@@ -373,6 +378,18 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
                 )
             continue
 
+        # --- note content: the in_note state takes precedence over every
+        # block-marker detection below (rulebook §6.3 — the checker never
+        # rejects what the parser accepts; a note-content line that starts
+        # with @startuml / @enduml / @end, or that is exactly ``end``, is
+        # content — verified rendered by both sources 2026-10-06) ---
+        if in_note:
+            if _END_NOTE_PATTERN.match(line):
+                close_note(number)
+            # note content line (2-space indented or bare, including lines
+            # that start with 'note' or 'end') — verbatim, no check
+            continue
+
         # --- block markers ---
         if _AT_STARTUML_PATTERN.match(line):
             if in_block:
@@ -408,21 +425,7 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
             # (verified against 1.2026.8) — no finding
             continue
 
-        # --- note blocks ---
-        if in_note:
-            if _END_NOTE_PATTERN.match(line):
-                close_note(number)
-                continue
-            if _END_BARE_PATTERN.match(line) or _END_NAMED_PATTERN.match(line) or _AT_BARE_END_PATTERN.match(line):
-                error(
-                    number,
-                    "an 'end' line inside a note block does not close it (only 'end note' does)",
-                    "replace the 'end' with 'end note' (the real parser rejects a bare end here)",
-                )
-                continue
-            # note content line (2-space indented or bare, including lines that
-            # start with 'note') — verbatim, no check
-            continue
+        # --- note block openers ---
         if _NOTE_LINE_PATTERN.match(line):
             if ":" in line:
                 # a single-line placement note (e.g. 'note bottom of uc1: "text"'
@@ -570,8 +573,8 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
         error(
             1,
             "no @startuml line found (the diagram has no start marker)",
-            "add an '@startuml {title}' line as the first line — a payload without @startuml is "
-            "nothing-extractable to the server and exit 1 to 'specmgr plantuml-check'",
+            "add an '@startuml {title}' line as the first line — the emitted subset always starts "
+            "with @startuml (rulebook §6.1), and 'specmgr plantuml-check' exits 1 on its absence",
         )
     else:
         block_boundary(len(lines), enduml_at_line=False)

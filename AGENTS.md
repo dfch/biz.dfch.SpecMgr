@@ -889,13 +889,15 @@ is always specmgr-domain → `plantuml`, never the reverse — e.g.
 from `plantuml/structure.py`) and **stdlib-only** (no new dependency or
 extra) PlantUML support library: `encode.py` (the classic URL text
 encoder — the `SoWkI…` form, rulebook §5.1), `structure.py` (the two-mode structure checker + the shared
-marker constant), `backends.py` (jar/bin local backends), `url.py` (the
-single-endpoint `/svg/` matrix classifier), and `chain.py` (the strict
-first-set-wins, no-fall-through validation chain over exactly three env
-vars + the non-raising result model). It is deliberately extractable but
-not a separate PyPI library, and nothing in it registers with the MCP
-server (the tools/resources that wrap it arrive in later phases of
-feat-185-uc-diagrams).
+marker constant), `backends.py` (jar/bin local backends, incl. the crash
+detection on the raw byte stream), `url.py` (the single-endpoint `/svg/`
+matrix classifier — the frozen §5.2 rows incl. the recognised
+200+crash-page INVALID row (the known 1.2026.8 self-message/note-left shape
+bug; amended 2026-10-06)), and `chain.py` (the strict first-set-wins,
+no-fall-through validation chain over exactly three env vars + the
+non-raising result model). It is deliberately extractable but not a separate
+PyPI library, and nothing in it registers with the MCP server (the
+tools/resources that wrap it arrive in later phases of feat-185-uc-diagrams).
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server

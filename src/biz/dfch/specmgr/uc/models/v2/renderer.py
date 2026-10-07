@@ -47,9 +47,12 @@ file I/O, no network, no clock:
   receiver, else the system; self-message when the sender is the system),
   §2.9.4 UNATTRIBUTED markers (built from the shared
   :mod:`biz.dfch.specmgr.plantuml.structure` constants — never re-stringed),
-  §2.9.6 notes (top/final ``note left``, message-attached ``note right``,
-  ``note left`` when there is no message to attach to — amended 2026-10-05,
-  the real 1.2026.8 parser rejects bare ``note``), §2.9.7 extension
+   §2.9.6 notes (top/final and no-message-to-attach notes anchored as
+   ``note left of {primary-actor-alias}``, message-attached ``note right`` —
+   amended 2026-10-05, the real 1.2026.8 parser rejects bare ``note``;
+   amended 2026-10-06, a bare note after a self-message's note tile crashes
+   1.2026.8, so the unanchored notes are anchored on the primary actor's
+   alias), §2.9.7 extension
   ``alt`` fragments (anchored at the structurally validated step, single
   condition branch, no ``else``, sibling order, resumption notes for
   Return/Continue-to-step items — standalone or embedded, case-insensitive),
@@ -362,13 +365,18 @@ def _decompose(extent: str) -> tuple[str, str]:
     return lead, continuation
 
 
-def _note_block(content_lines: list[str], *, attached: bool) -> list[str]:
+def _note_block(content_lines: list[str], *, attached: bool, anchor: str) -> list[str]:
     """One note block (frozen format): ``note right`` when attached to a
-    message, ``note left`` when there is no message to attach to (rulebook
-    §2.9.6, amended 2026-10-05 — the real 1.2026.8 parser rejects bare
-    ``note``). Content lines are pre-indented; blank lines stay truly
-    empty."""
-    block = ["note right" if attached else "note left"]
+    message, ``note left of {anchor}`` when there is no message to attach to
+    (rulebook §2.9.6, amended 2026-10-05 — the real 1.2026.8 parser rejects
+    bare ``note``; amended 2026-10-06 — a bare note after a self-message's
+    note tile with no intervening non-self message crashes 1.2026.8, and a
+    bare note before the first message silently drops its text, so the
+    unanchored notes are anchored on ``anchor``, the primary actor's §2.9.1
+    declaration alias). Content lines are pre-indented; blank lines stay
+    truly empty."""
+    header = "note right" if attached else f"note left of {anchor}"
+    block = [header]
     block.extend(content_lines)
     block.append("end note")
     return block
@@ -668,17 +676,23 @@ def render_uc_sequence_skeleton(use_case: UseCase) -> str:
     title = str(use_case.text).strip()
     participants, system = _participants(use_case)
     info = use_case.characteristic_information
+    # the unanchored-note anchor (rulebook §2.9.6, amended 2026-10-06): the
+    # primary actor's §2.9.1 declaration alias — the first declared
+    # participant (the v2 schema requires a primary-actor paragraph, so the
+    # list is never empty for a parsed use case)
+    assert participants  # the v2 schema's non-empty primary actor guarantees an anchor
+    anchor = participants[0].alias
 
     lines: list[str] = [f"@startuml {_sanitize(title)}", ""]
     for participant in participants:
         lines.append(_declaration_line(participant))
     lines.append("")
 
-    # the preconditions note (top, unanchored — `note left`) + blank line (when present)
+    # the preconditions note (top, unanchored — `note left of {anchor}`) + blank line (when present)
     preconditions = info.preconditions.items
     if preconditions:
         content = "\n".join(entry.text for entry in preconditions)
-        lines.extend(_note_block(_note_lines(content), attached=False))
+        lines.extend(_note_block(_note_lines(content), attached=False, anchor=anchor))
         lines.append("")
 
     # the trigger (virtual step 0 — receiver fixed to the system)
@@ -694,7 +708,7 @@ def render_uc_sequence_skeleton(use_case: UseCase) -> str:
             lines.append(f"{sender.alias} -> {system.alias}: {_single_line(trigger_text)}")
             attached = True
         if trigger_continuation:
-            lines.extend(_note_block(_note_lines(trigger_continuation), attached=attached))
+            lines.extend(_note_block(_note_lines(trigger_continuation), attached=attached, anchor=anchor))
 
     # the extensions / sub-variations, grouped at their anchored step ordinals
     # (the v2 schema already validates the references — use_case.py:373)
@@ -727,13 +741,13 @@ def render_uc_sequence_skeleton(use_case: UseCase) -> str:
             lines.append(f"{sender.alias} -> {receiver.alias}: {_single_line(lead)}")
             attached = True
         if continuation:
-            lines.extend(_note_block(_note_lines(continuation), attached=attached))
+            lines.extend(_note_block(_note_lines(continuation), attached=attached, anchor=anchor))
         for sub_variation in sub_variation_by_step.get(ordinal, []):
             content = [sub_variation.text]
             content.extend(entry.text for entry in sub_variation.items)
-            lines.extend(_note_block(_note_lines("\n".join(content)), attached=attached))
+            lines.extend(_note_block(_note_lines("\n".join(content)), attached=attached, anchor=anchor))
         for extension in extension_anchors.get(ordinal, []):
-            lines.extend(_extension_fragment(extension, participants, system))
+            lines.extend(_extension_fragment(extension, participants, system, anchor))
 
     lines.append("")
 
@@ -741,7 +755,7 @@ def render_uc_sequence_skeleton(use_case: UseCase) -> str:
     for section in (info.success_end_condition, info.failed_end_condition):
         if section is not None and section.items:
             content = "\n".join(entry.text for entry in section.items)
-            lines.extend(_note_block(_note_lines(content), attached=False))
+            lines.extend(_note_block(_note_lines(content), attached=False, anchor=anchor))
 
     lines.append("@enduml")
     result = "\n".join(lines).strip("\n") + "\n"
@@ -752,12 +766,13 @@ def _extension_fragment(
     extension: Extension,
     participants: list[_Participant],
     system: _Participant | None,
+    anchor: str,
 ) -> list[str]:
     """One ``alt`` fragment (frozen, rulebook §2.9.7): the condition header,
     the items in order (the same pipeline as a main step), the resumption
-    notes (full item text — no message; ``note left`` when the resumption
-    item is the fragment's first item), and the bare ``end`` close (a single
-    branch, no ``else``)."""
+    notes (full item text — no message; ``note left of {anchor}`` when the
+    resumption item is the fragment's first item), and the bare ``end``
+    close (a single branch, no ``else``)."""
     reference_match = re.match(r"^Extension (\d+[a-z]?)\.\s+(.+)$", extension.text)
     assert reference_match is not None  # the @alias regex guarantees the shape
     extension_ref = reference_match.group(1)
@@ -769,10 +784,12 @@ def _extension_fragment(
         extent = str(item).rstrip("\n")
         lead, continuation = _decompose(extent)
         if _RESUMPTION_PATTERN.search(extent):
-            # the resumption note: the full item text (marker stripped,
-            # single-line-escaped) — information-preserving, no message
-            marker_stripped, _ = _decompose(extent)
-            fragment.extend(_note_block(_note_lines(_single_line(marker_stripped)), attached=has_message))
+            # the resumption note: the item's COMPLETE text (marker stripped,
+            # continuation included, single-line-escaped per §2.4) —
+            # information-preserving, no message (rulebook §2.9.6, the
+            # continuation included per the 2026-10-06 amendment)
+            full_text = lead + (f"\n{continuation}" if continuation else "")
+            fragment.extend(_note_block(_note_lines(_single_line(full_text)), attached=has_message, anchor=anchor))
             continue
         sender = _sender(lead, participants)
         if sender is None:
@@ -784,6 +801,6 @@ def _extension_fragment(
             attached = True
         has_message = True
         if continuation:
-            fragment.extend(_note_block(_note_lines(continuation), attached=attached))
+            fragment.extend(_note_block(_note_lines(continuation), attached=attached, anchor=anchor))
     fragment.append("end")
     return fragment

@@ -45,12 +45,16 @@ from ...server import mcp
         "parser is never called -- no subprocess, no network), then the single configured source "
         "(the first set of SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL; no "
         "fall-through -- a set-but-unavailable source is a hard failure with reason + fix hint), "
-        "and the all-unset state degrades to the structure-only floor. Content-based: pass the "
-        "diagram text (a CLI reads the file and passes its text). Never raises for validation "
-        "content -- returns the non-raising §3.6 result model: structure_ok, valid/rendered "
-        "(None = not run, never run-and-failed), checked_by (jar/bin/url/structure), errors and "
-        "warnings (1-based line + message + fix hint), source_state (ok/misconfigured/unavailable/"
-        "inconclusive/none), available, reason, fix_hint."
+        "and the all-unset state degrades to the structure-only floor. A PlantUML server crash "
+        "page (200 + the embedded Java-exception trace -- the recognised 1.2026.8 crash line of "
+        "the rulebook §5.2 matrix, the known self-message/note-left shape bug) is a recognised "
+        "INVALID row: valid=false with the line-0 crash finding carrying the exception class and "
+        "a fix hint pointing at the rulebook §2.9 anchored notes. Content-based: pass the diagram "
+        "text (a CLI reads the file and passes its text). Never raises for validation content -- "
+        "returns the non-raising §3.6 result model: structure_ok, valid/rendered (None = not run, "
+        "never run-and-failed), checked_by (jar/bin/url/structure), errors and warnings (1-based "
+        "line + message + fix hint), source_state (ok/misconfigured/unavailable/inconclusive/"
+        "none), available, reason, fix_hint."
     ),
 )
 def validate_plantuml(text: str) -> PlantumlValidationResult:

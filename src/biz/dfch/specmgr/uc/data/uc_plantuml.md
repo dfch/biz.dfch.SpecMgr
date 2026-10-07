@@ -246,19 +246,23 @@ blank line only where shown:
 
 The source ends with exactly one trailing newline.
 
-**Note block format (frozen; the unanchored header amended 2026-10-05):**
+**Note block format (frozen; the unanchored header amended 2026-10-05, anchored 2026-10-06):**
 
-    note left
+    note left of {primary-actor-alias}
       {content line, 2-space indented}
     end note
 
-`note right` (message-attached) and `note left` (top/final/unanchored) share this shape; the
-only difference is the header line. A blank line inside the note content is emitted as
-a truly empty line. Top (preconditions) and final (end condition) notes are `note left`
-blocks; all message-attached notes (continuation, sub-variation, resumption) are
-`note right` blocks — except when there is **no message to attach to** (the step's
-message is an UNATTRIBUTED marker, or the resumption item is the fragment's first
-item): then the note is a `note left` block at that position.
+`note right` (message-attached) and `note left of {primary-actor-alias}` (top/final/unanchored)
+share this shape; the only difference is the header line. `{primary-actor-alias}` is the
+primary actor's §2.9.1 declaration alias (the first declared participant — the label itself
+when it is a bare identifier, else `p1`); it is deterministic and always declared (the v2
+schema requires a primary-actor paragraph). A blank line inside the note content is
+emitted as a truly empty line. Top (preconditions) and final (end condition) notes are
+`note left of {primary-actor-alias}` blocks; all message-attached notes (continuation,
+sub-variation, resumption) are `note right` blocks — except when there is **no message to
+attach to** (the step's message is an UNATTRIBUTED marker, or the resumption item is the
+fragment's first item): then the note is a `note left of {primary-actor-alias}` block at
+that position.
 
 Amended 2026-10-05 (user-approved ruling): the unanchored notes were bare `note`
 blocks, which the real 1.2026.8 parser rejects — jetty: `GET {base}/svg/{enc}`
@@ -267,6 +271,31 @@ answers 400 with the error at the `note` line; jar: `--check-syntax -pipe` exits
 valid on both (verified 2026-10-05); the renderer therefore emits `note left` in
 all three unanchored cases, and the structure checker is unchanged (it never
 rejects what the parser accepts — a bare `note` stays accepted).
+
+Amended 2026-10-06 (user-approved ruling — PlantUML 1.2026.8 crash bug,
+verified on both independent sources: the dev jetty and the same-build
+`plantuml-cli` jar, build 1.2026.8/149874a): a **bare** `note left`/`note
+right` block following a self-message's note tile (attached **or** detached)
+with **no intervening non-self message** **crashes** the renderer
+(`java.lang.ClassCastException` in `TileBuilder.buildOne` — jetty: 200 + a
+crash page, §5.2 crash line; jar: `--check-syntax -pipe` exit 200 with the
+exception trace on stderr and no parseable `ERROR` block). The verified
+shape matrix (jetty / jar — identical on both): self-message + attached
+`note right` + `note left` (consecutive) → crash; self-message + detached
+`note right` + `note left` → crash; self-message + detached `note left` +
+`note left` (consecutive) → crash; the same shapes with a non-self message
+in between → OK; non-self message + self-message + `note left` → OK; **any
+anchored form** (`note left of {participant}` / `note right of {participant}`)
+→ OK everywhere — incl. two consecutive anchored notes after a self-message
+and anchored notes after a self-message's attached note — with the note text
+present in the rendered SVG. A bare `note left` **before the first message**
+parses without crashing, but the note **text is silently dropped from the
+rendered image** (anchored `note left of {participant}` before the first
+message renders with the text present). The unanchored notes are therefore
+emitted anchored on the primary actor's alias in all three cases (top /
+final / no-message-to-attach); message-attached notes stay `note right`; the
+structure checker's frozen contract is unchanged (the anchored form is the
+checker's existing note-block shape — it accepts it in both modes).
 
 **Message line format (frozen):** `{sender-alias} -> {receiver-alias}: {message text}`
 — exactly one space around `->`, one space after the colon; a self-message repeats the
@@ -392,14 +421,14 @@ interchange)` leads with no participant label →
 
 #### 2.9.6 Notes
 
-| Note | Source | Form | Content (one line per entry, 2-space indented) |
+| Note | Source | Form (unanchored forms amended 2026-10-06 — anchored on the primary actor's alias, §2.9) | Content (one line per entry, 2-space indented) |
 |---|---|---|---|
-| preconditions (top) | `### Preconditions` bullets | `note left`, before the trigger | each bullet's text |
-| continuation | a step / extension item / trigger's §2.9.2.3 continuation | `note right` attached to that message — `note left` when the message is an UNATTRIBUTED marker | the dedented continuation lines, verbatim |
+| preconditions (top) | `### Preconditions` bullets | `note left of {primary-actor-alias}`, before the trigger | each bullet's text |
+| continuation | a step / extension item / trigger's §2.9.2.3 continuation | `note right` attached to that message — `note left of {primary-actor-alias}` when the message is an UNATTRIBUTED marker | the dedented continuation lines, verbatim |
 | sub-variation | `### Step {N}:` matching the step's ordinal | `note right` on that step's message (after its continuation note, when both exist) | the sub-variation's full heading text (e.g. `Step 1: Buyer may use`), then each variation bullet's text |
-| resumption | an extension item containing a return/continue phrase (§2.9.7) | `note right` on the fragment's preceding message — `note left` directly after the `alt` line when the resumption item is the fragment's first item | the full item text (marker stripped, single-line-escaped) |
-| success end condition (final) | `### Success End Condition` bullets | `note left`, after the steps | each bullet's text |
-| failed end condition (final) | `### Failed End Condition` bullets | `note left`, after the success note (document order) | each bullet's text |
+| resumption | an extension item containing a return/continue phrase (§2.9.7) | `note right` on the fragment's preceding message — `note left of {primary-actor-alias}` directly after the `alt` line when the resumption item is the fragment's first item | the item's COMPLETE text (marker stripped, continuation included, single-line-escaped — amended 2026-10-06: the continuation is information too) |
+| success end condition (final) | `### Success End Condition` bullets | `note left of {primary-actor-alias}`, after the steps | each bullet's text |
+| failed end condition (final) | `### Failed End Condition` bullets | `note left of {primary-actor-alias}`, after the success note (document order) | each bullet's text |
 
 No source section → no note. Preconditions, sub-variation, and end-condition entries are
 emitted as their text (list markers stripped); no blank lines are inserted between
@@ -581,8 +610,18 @@ stdin, all output on stdout (no file arguments, no container volume mapping need
   `ERROR / {line} / Syntax Error? (Assumed diagram type: {type})` of older
   builds, and the three-line block `ERROR` / `{line}` / `Syntax Error?
   (Assumed diagram type: {type})` that current builds (1.2026.8, verified)
-  emit on **stderr** (stdout stays binary-contaminated with the placeholder
-  PNG on valid checks, as above).
+   emit on **stderr** (stdout stays binary-contaminated with the placeholder
+   PNG on valid checks, as above).
+- **Crash signature (amended 2026-10-06 — the §5.2 crash line on the local
+  source, verified on the same-build jar):** a check that exits non-zero
+  **without** a parseable `ERROR` block but whose raw byte stream carries the
+  crash signature (the known 1.2026.8 self-message/note-left shape bug —
+  `exit 200` with the `java.lang.ClassCastException` trace on stderr; the
+  `--svg` render of the same shape is exit 200 with the crash-page SVG on
+  stdout) is the same **INVALID crash diagnostic** as the URL crash page:
+  `valid=False`, the line-0 finding carries the crash exception class, and
+  the fix_hint names the shape bug and points at §2.9 (anchored notes) — a
+  shape-crash is never a silent "no parseable ERROR block" again.
 - **Render proof:** `--svg --no-error-image -pipe` — exit 0 **and** the output starts
   with `<svg` ⇒ `rendered = true`; the SVG is written to a temp file (its path
   optionally reported), never inlined into tool results.
@@ -619,29 +658,57 @@ jetty accepts both layers.
 
 ### 5.2 Classification matrix (frozen)
 
-| HTTP status | Body | Classification | Verified against (re-recorded 2026-10-04) |
+| HTTP status | Body | Classification | Verified against (re-recorded 2026-10-04; crash line 2026-10-06) |
 |---|---|---|---|
-| 200 | real diagram SVG (no placeholder markers) | **VALID + RENDERED** (the body is the render proof) | both (jetty 2095 B; plantuml.com 2100 B) |
+| 200 | real diagram SVG (no placeholder or crash markers) | **VALID + RENDERED** (the body is the render proof) | both (jetty 2095 B; plantuml.com 2100 B) |
+| 200 | the crash page — "…has crashed." + the embedded `java.lang…Exception` trace | **INVALID (crash diagnostic)** — `valid=False`, the line-0 finding carries the crash exception class; the fix_hint names the known 1.2026.8 self-message/note-left shape bug and points at §2.9 (anchored notes) — a RECOGNISED row (amended 2026-10-06) | both (jetty: 200 + the 15489 B crash page for the pre-amendment Buy Goods sequence shape — `java.lang.ClassCastException` in `TileBuilder.buildOne`; jar: `--check-syntax -pipe` exit 200 + the same trace on stderr, no parseable `ERROR` block — verified 2026-10-06 on the dev jetty + the same-build `plantuml-cli` jar, 1.2026.8/149874a) |
 | 400 | "Welcome to PlantUML!" placeholder | **SYNTAX INVALID** | both (jetty 8522 B; plantuml.com 8532 B) |
 | 200 | "Welcome to PlantUML!" placeholder | **REQUEST ERROR** (the deployment's size limit / an undecodable payload; on current builds a decodable no-`@startuml` payload answers 400 — drift note (a)) | jetty (5377 B, undecodable-payload case) |
 | 200 | "…generated a bad URL" explanatory | **ENCODE ERROR** (our payload was rejected; should be impossible — client bug/transport; the recorded case is a non-classic payload form) | plantuml.com (2957 B) |
 | anything else | — | **INCONCLUSIVE** → one retry → still inconclusive ⇒ `source_state` (§3.3) | — |
 
 **An unrecognised response is never classified INVALID** — only the exact
-400 + "Welcome to PlantUML!" combination is.
+400 + "Welcome to PlantUML!" combination and the recognised 200 + crash-page
+row above are (unrecognised ≠ the crash row: a crash page IS recognised).
+
+The local sources report the same crash (rulebook §4, amended 2026-10-06): a
+jar/bin check that exits non-zero **without** a parseable `ERROR` block but
+with the crash signature in the raw byte stream (the `ClassCastException`
+trace on stderr, exit 200 for the known shape) is the same INVALID crash
+diagnostic — the line-0 finding carries the crash exception class.
 
 **Drift note (current 1.2026.8 builds vs. the 2026-10-03 design-time records,
-re-verified 2026-10-04):** (a) a no-`@startuml` (decodable-but-diagram-less)
-payload now answers 400 + placeholder — classified SYNTAX INVALID, still
-never a source fault — while the 200-placeholder row remains the
-undecodable-payload case; (b) the dev jetty's `PLANTUML_LIMIT_SIZE=8192`
+re-verified 2026-10-04; (a) re-probed and (e) added 2026-10-06):**
+(a) the 2026-10-03 design-time record said a no-`@startuml` payload is
+"nothing-extractable" (400 + placeholder) — re-probed 2026-10-06 on the
+current dev jetty: an **inferable** payload (e.g. `A -> B: hi` without
+`@startuml`) now answers **200 + a real SEQUENCE SVG** (the diagram type is
+assumed — `data-diagram-type="SEQUENCE"`, 1971 B), while only **non-inferable**
+text (no recognisable diagram content) answers the 400 welcome placeholder
+(6295 B) — classified SYNTAX INVALID, still never a source fault; the
+200-placeholder row remains the undecodable-payload case. The normative
+missing-`@startuml` rule is **unchanged** (§6.4: an error in both checker
+modes; the CLI's `plantuml-check` exits 1 on it) — it is the emitted-subset
+contract, not the server's own behaviour for such payloads;
+(b) the dev jetty's `PLANTUML_LIMIT_SIZE=8192`
 (2026-10-03 design-time record) is no longer observed on the 2026-10-04
 build — a 20 KB+ diagram renders; (c) the 400 welcome page embeds the
 submitted input, so its size varies with the payload — every client
 assertion is signature-based (the placeholder "Welcome to PlantUML!" marker
-/ the "generated a bad URL" marker / the `<svg` prefix + `data-diagram-type`),
-never size-based; (d) the `/check/` PNG assets stayed byte-stable across the
-drift (sha-pinned, §5.6).
+/ the "generated a bad URL" marker / the "has crashed" crash marker / the
+`<svg` prefix + `data-diagram-type`), never size-based; (d) the `/check/`
+PNG assets stayed byte-stable across the drift (sha-pinned, §5.6);
+(e) **second 400 dialect** (verified 2026-10-06 on the current dev jetty): a
+syntax error located **past the first content lines** answers a **minimal**
+`[From string (line N)] … Syntax Error?` page **WITHOUT** the "Welcome to
+PlantUML!" marker — the same canonical `aass` error at line 1 answers the
+400 welcome placeholder (6260 B → SYNTAX INVALID), while the same error at
+line 3 (two message lines above it) answers the minimal 400 page (1569 B) —
+which the matrix classifies **INCONCLUSIVE** (never INVALID — the
+unrecognised preamble holds): URL-source syntax errors at line 3+ therefore
+surface as inconclusive (one retry, then `source_state`) rather than
+`valid=False`; a local source still reports them with the parser's own line
+(rulebook §4).
 
 ### 5.3 Timeouts
 
@@ -682,6 +749,14 @@ servers.
   `participant "Famous Bob" aass Bob` → exit 200 on 1.2026.8 with the `ERROR` block
   (line 1, `Syntax Error? (Assumed diagram type: sequence)` — the three-line shape
   on 1.2026.8, the one-line shape on older builds, §4)
+- the crash fixtures (recorded 2026-10-06, the §5.2 crash line):
+  `jetty_crash_svg.svg` — the REAL jetty crash page (200, 17553 B, "PlantUML
+  (1.2026.8) has crashed." + the embedded `java.lang.ClassCastException` trace)
+  elicited by `crash_shape.puml` (the minimal known-bug shape: a self-message
+  followed by an attached `note right` and a consecutive bare `note left`);
+  `jar_crash_stderr.txt` — the REAL same-build jar (`plantuml-cli` container,
+  1.2026.8/149874a) `--check-syntax --no-error-image -pipe` stderr for the same
+  shape (exit 200, the `ClassCastException` trace, no parseable `ERROR` block)
 
 ## 6. Structure checker contract (frozen)
 
@@ -701,7 +776,9 @@ sequence files):
 - usecase associations (`-->`) and package edges (`..>` with `<<include>>` /
   `<<extend>>` labels)
 - sequence messages (`->`, `-->`, self-messages) and note blocks (`note` / `note right`
-  / `end note`)
+  / `note left` / the anchored `note left of {participant}` / `note right of
+  {participant}` forms the renderers emit since the 2026-10-06 amendment, §2.9 /
+  `end note`)
 - the fragment stack: `alt` / `opt` / `loop` / `group` / `box` / `rectangle` /
   `package` with `end`, and the **implicit close of open fragments at EOF**
 - quote/label sanitisation (the `#quot;` convention, §2.4)
@@ -730,8 +807,10 @@ as warnings.
 4. a dangling `A -->` (a usecase association with no target on the line)
 5. an undeclared participant in a sequence message (auto-created by the parser)
 
-A missing `@startuml` is an **error in both modes** (the URL server classifies such
-payloads as nothing-extractable; the CLI's `plantuml-check` exits 1 on it).
+A missing `@startuml` is an **error in both modes** (the emitted subset always
+starts with `@startuml` — the CLI's `plantuml-check` exits 1 on its absence;
+the server's own behaviour for a no-`@startuml` payload drifts between builds
+and is not the normative basis: §5.2 drift note (a), re-probed 2026-10-06).
 
 ### 6.5 UNATTRIBUTED markers
 

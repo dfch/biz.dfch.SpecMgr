@@ -43,25 +43,30 @@ from biz.dfch.specmgr.plantuml import chain
 from biz.dfch.specmgr.plantuml.chain import PlantumlValidationResult
 from biz.dfch.specmgr.uc.tools.validate_plantuml import validate_plantuml
 
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, render_proof_body, require_plantuml_source
 
 _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "plantuml"
+_UC_FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "uc-diagrams"
 _EXAMPLE = read_packaged_text("uc", "plantuml_example")
 _AASS = (_FIXTURES / "aass_error.puml").read_text(encoding="utf-8")
 _AASS_DIAGRAM = f"@startuml\n{_AASS.rstrip()}\n@enduml\n"
-#: The env-gated live test's minimal green subject: a small, fully attributed sequence diagram
-#: that is valid by construction on the real parser (note left/right, no bare `note` block). The
-#: packaged example is a live subject too (its own test below): the Phase 125 amendment
-#: (2026-10-05, user-approved ruling) re-recorded its three unanchored notes as `note left`
-#: after the real 1.2026.8 parser rejected the rulebook's former bare-`note` form (see the
-#: rulebook §2.9 amendment note and the feat-185 Progress entry of 2026-10-05).
+#: The env-gated live test's minimal green subject: a small, fully attributed sequence
+#: diagram that is valid by construction on the real parser (anchored note-left / note
+#: right, no bare `note` block, no bare note after a self-message). The packaged example
+#: is a live subject too (its own test below): the Phase 125 amendment (2026-10-05,
+#: user-approved ruling) re-recorded its three unanchored notes as `note left` after the
+#: real 1.2026.8 parser rejected the rulebook's former bare-`note` form, and the Phase
+#: 145 amendment (2026-10-06) anchored them as `note left of Buyer` after the verified
+#: 1.2026.8 crash bug (a bare note after a self-message's note tile) + silent text drop
+#: (a bare `note left` before the first message — the top-note position, which is why
+#: this diagram's own top note is anchored too).
 _LIVE_DIAGRAM = (
     "@startuml Buy Goods\n"
     "\n"
     "actor Buyer\n"
     "participant Company\n"
     "\n"
-    "note left\n"
+    "note left of Buyer\n"
     "  We know Buyer\n"
     "end note\n"
     "\n"
@@ -190,6 +195,8 @@ class TestValidatePlantumlLive(unittest.TestCase):
         """A parser-valid diagram must validate valid=true/rendered=true, checked_by = the selected
         source (see the _LIVE_DIAGRAM note for why the packaged example is not the live subject)."""
         info = require_plantuml_source(self)
+        assert info.kind is not None
+        assert info.value is not None
 
         result = validate_plantuml(_LIVE_DIAGRAM)
 
@@ -199,6 +206,10 @@ class TestValidatePlantumlLive(unittest.TestCase):
         self.assertEqual(result.checked_by, info.kind)
         self.assertEqual(result.source_state, "ok")
         self.assertTrue(result.available)
+        # the Phase 145 render-proof contract: the SVG body carries the diagram
+        # text (the anchored top note's text -- a bare note here would render
+        # green but SILENTLY DROP it) and no crash marker
+        assert_rendered_svg(render_proof_body(info.kind, info.value, _LIVE_DIAGRAM), "We know Buyer")
 
     def test_aass_error_diagram_is_invalid_at_the_selected_source(self):
         """The canonical aass error fixture must return valid=false (the structure checker passes it
@@ -213,11 +224,15 @@ class TestValidatePlantumlLive(unittest.TestCase):
         self.assertTrue(result.errors)
 
     def test_packaged_example_is_green_at_the_selected_source(self):
-        """The ACC-002 enabler (Phase 125): the packaged, fully attributed example file must
-        validate green at the selected source -- its three unanchored notes were re-recorded
-        as `note left` per the user-approved 2026-10-05 ruling (the former bare-`note` form
-        was rejected by the real 1.2026.8 parser)."""
+        """The ACC-002 enabler (Phase 125, re-anchored Phase 145): the packaged, fully
+        attributed example file must validate green at the selected source -- its three
+        unanchored notes were re-recorded as `note left` per the user-approved 2026-10-05
+        ruling, then anchored as `note left of Buyer` per the 2026-10-06 ruling (the
+        pre-amendment shape returned a crash page the old classifier misread as a
+        render; the post-amendment shape renders truly -- the body check below)."""
         info = require_plantuml_source(self)
+        assert info.kind is not None
+        assert info.value is not None
 
         result = validate_plantuml(_EXAMPLE)
 
@@ -227,6 +242,41 @@ class TestValidatePlantumlLive(unittest.TestCase):
         self.assertEqual(result.checked_by, info.kind)
         self.assertEqual(result.source_state, "ok")
         self.assertTrue(result.available)
+        # the Phase 145 render-proof contract: the note text is PRESENT in the SVG
+        # body (the pre-amendment shape's crash page carried no diagram text at all)
+        assert_rendered_svg(render_proof_body(info.kind, info.value, _EXAMPLE), "Buyer has goods")
+
+    def test_re_recorded_artifacts_render_truly_at_the_selected_source(self):
+        """Phase 145 end-to-end proof (the user-approved 2026-10-06 amendment A re-records):
+        every re-recorded committed artifact -- the sequence golden, the pure walkthrough
+        .puml, and the usecase golden -- validates green AND its render-proof SVG body
+        carries the diagram text with no crash marker (the pre-amendment sequence shape
+        returned 200 + a crash page at both sources; the post-amendment anchored shape
+        renders truly)."""
+        info = require_plantuml_source(self)
+        assert info.kind is not None
+        assert info.value is not None
+
+        artifacts = {
+            "sequence golden": _UC_FIXTURES.joinpath("buy-goods.sequence.golden").read_text(encoding="utf-8"),
+            "walkthrough .puml": _UC_FIXTURES.joinpath("buy-goods.sequence.walkthrough.puml").read_text(
+                encoding="utf-8"
+            ),
+            "usecase golden": _UC_FIXTURES.joinpath("buy-goods.usecase.golden").read_text(encoding="utf-8"),
+        }
+        expected = {
+            "sequence golden": "Buyer has goods",  # the final success note's text
+            "walkthrough .puml": "Buyer has goods",
+            "usecase golden": "Credit card company",  # the quoted actor label node
+        }
+        for name, diagram in artifacts.items():
+            with self.subTest(artifact=name):
+                result = validate_plantuml(diagram)
+                self.assertTrue(result.structure_ok)
+                self.assertIs(result.valid, True)
+                self.assertIs(result.rendered, True)
+                self.assertEqual(result.checked_by, info.kind)
+                assert_rendered_svg(render_proof_body(info.kind, info.value, diagram), expected[name])
 
 
 if __name__ == "__main__":

@@ -12,9 +12,12 @@ actor "Primary actor" as p1
 actor "Secondary actor" as p2
 participant "System" as p3
 
-' --- preconditions note (§2.9.6) — a note-left top note, one line per
-' precondition bullet. Delete this block when the use case has no preconditions.
-note left
+' --- preconditions note (§2.9.6) — an anchored note-left top note (a bare
+' note left after a self-message's note tile crashes PlantUML 1.2026.8, so
+' unanchored notes are anchored on the primary actor's alias — p1 here), one
+' line per precondition bullet. Delete this block when the use case has no
+' preconditions.
+note left of p1
   {precondition, one line per bullet}
 end note
 
@@ -49,8 +52,9 @@ end note
 ' branch labelled by the extension's condition text, no else, closed by a
 ' bare end. Sibling extensions at the same step run in document order. An
 ' item containing "Return to step N" / "Continue to step N" (standalone or
-' embedded) is the fragment's resumption note — the full item text as a note,
-' NOT a message (a note-left note when it is the fragment's first item).
+' embedded) is the fragment's resumption note — the full item text (continuation
+' included) as a note, NOT a message (an anchored note-left note —
+' note left of p1 — when it is the fragment's first item).
 alt {extension condition}
   p3 -> p1: {extension item text}
   note right
@@ -58,12 +62,14 @@ alt {extension condition}
   end note
 end
 
-' --- end-condition notes (§2.9.6) — note-left final notes, success first,
-' then failed, one line per bullet. Delete a block when its section is absent.
-note left
+' --- end-condition notes (§2.9.6) — anchored note-left final notes
+' (note left of p1, the primary actor's alias — see the preconditions note
+' above for why the unanchored form is anchored), success first, then
+' failed, one line per bullet. Delete a block when its section is absent.
+note left of p1
   {success end condition, one line per bullet}
 end note
-note left
+note left of p1
   {failed end condition, one line per bullet}
 end note
 

@@ -54,7 +54,7 @@ from biz.dfch.specmgr.plantuml import chain, url
 from biz.dfch.specmgr.plantuml.backends import CANARY_DIAGRAM
 from biz.dfch.specmgr.plantuml.encode import encode_puml
 
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, render_proof_body, require_plantuml_source
 
 runner = CliRunner()
 
@@ -284,9 +284,12 @@ class TestPlantumlCheckLive(unittest.TestCase):
         """The packaged, fully attributed example file → exit 0 with checked_by = the selected source
         (valid/rendered true) — the chain's authoritative layer, not the structure floor."""
         info = require_plantuml_source(self)
+        assert info.kind is not None
+        assert info.value is not None
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
         example = tmp / "example.puml"
-        example.write_text(read_packaged_text("uc", "plantuml_example"), encoding="utf-8")
+        example_text = read_packaged_text("uc", "plantuml_example")
+        example.write_text(example_text, encoding="utf-8")
 
         result = runner.invoke(app, ["plantuml-check", str(example)])
 
@@ -294,6 +297,11 @@ class TestPlantumlCheckLive(unittest.TestCase):
         self.assertIn(f"checked_by={info.kind}", result.stdout)
         self.assertIn("valid=true", result.stdout)
         self.assertIn("rendered=true", result.stdout)
+        # the Phase 145 render-proof contract: `rendered=true` must mean a TRUE
+        # render — the selected source's own render-proof SVG body carries the
+        # diagram text and no crash marker (the pre-amendment example shape
+        # returned a crash page that read rendered=true)
+        assert_rendered_svg(render_proof_body(info.kind, info.value, example_text), "Buyer has goods")
 
 
 if __name__ == "__main__":

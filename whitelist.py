@@ -345,7 +345,8 @@ documents
 # --- plantuml (feat-185-uc-diagrams Phase 110) --------------------------
 # `PlantumlValidationResult`'s `structure_ok`/`checked_by` fields are set in
 # the result's own constructors (vulture's dataclass constructor-kwarg
-# suppression does not count that as use) and read by tests plus the MCP
+# suppression does not count that as use) and read by tests, the CLI
+# (Phase 130: `commands/plantuml_check.py` prints both per file), and the MCP
 # serialization of the §3.6 result (Phase 120): `uc.tools.validate_plantuml`
 # returns the dataclass verbatim and the mcp SDK's pydantic serializer reads
 # its fields dynamically, which vulture's static scan cannot see. The

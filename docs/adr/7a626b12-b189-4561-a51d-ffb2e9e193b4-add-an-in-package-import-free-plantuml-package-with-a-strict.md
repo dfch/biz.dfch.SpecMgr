@@ -153,6 +153,7 @@ User-confirmed 2026-10-03 (the Phase 100 brief records the decision: a full ADR 
 
 ## More Information
 
+- 2026-10-04 amendment pointer: the URL-encoding protocol this ADR's body references (the design-time `~1` freeze in the Context and the `single /svg/~1 endpoint` wording in Option 4) was amended in rulebook §5.1 to the classic `SoWkI…`-form encoding (verified 2026-10-04); this ADR's placement and chain-policy decisions stand unchanged — the historical text above is deliberately not rewritten.
 - FEAT feat-185-uc-diagrams — the feature plan (.specmgr/feat/feat-185-uc-diagrams/README.md): §1 artifact map, §2 mapping spec, §3 validation chain, §4 local invocation contract, §5 URL protocol, §6 structure checker, §8 platform adapters; Decisions Made 2026-10-03 08:05 ("Strict source selection, no fall-through", "Backends are jar/bin/url only; platforms adapt via user-owned ..._BIN scripts", "plantuml/ lives in-package (import-free, stdlib-only), not as a separate PyPI library").
 - The rulebook specmgr://uc/plantuml (uc/data/uc_plantuml.md), created in Phase 100 of the same feature, is the normative frozen spec both decisions drive; it is served as text/markdown (the domain-knowledge resource shape, the specmgr://rsk/tara precedent).
 - Non-raising structured-result precedent for the chain result model: ADR 519d1206-4d2a-4500-9046-6db635209996.

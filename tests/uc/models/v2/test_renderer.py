@@ -231,6 +231,55 @@ class TestSequenceSkeleton(unittest.TestCase):
         self.assertEqual(_strip_comments("\n".join(transformed)), _strip_comments(example))
         self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in example.split("\n")))
 
+    def test_resumption_note_carries_the_full_item_text(self):
+        """Phase 145 (2026-10-06, amendment E — the frozen §2.9.6 "full item text
+        (information-preserving)" contract): a resumption item WITH a continuation
+        paragraph emits its COMPLETE text (marker stripped, continuation included,
+        single-line-escaped per §2.4) as the note content. The pre-amendment
+        renderer emitted only the lead paragraph."""
+        example = read_packaged_text("uc", "example")
+        amended = example.replace(
+            "3. Return to step 4.\n",
+            "3. Return to step 4.\n\n   Resumption continuation: the buyer keeps the reservation.\n",
+        )
+        assert amended != example  # the substitution hit the packaged extension 3a item
+        use_case = parse_uc(amended).body
+
+        result = render_uc_sequence_skeleton(use_case)
+
+        lines = result.split("\n")
+        # the complete text, single-line-escaped (the literal two-character \n per §2.4)
+        self.assertIn("  Return to step 4.\\nResumption continuation: the buyer keeps the reservation.", lines)
+        # the pre-amendment lead-only form is gone
+        self.assertNotIn("  Return to step 4.", lines)
+
+    def test_resumption_as_first_fragment_item_is_the_anchored_note_left(self):
+        """Phase 145 (2026-10-06, amendment A): a resumption item that is the fragment's
+        FIRST item (no message to attach to) is an anchored `note left of
+        {primary-actor-alias}` block — the pre-amendment bare `note left` form
+        crashes 1.2026.8 when it follows a self-message's note tile."""
+        example = read_packaged_text("uc", "example")
+        amended = example.replace(
+            "1. Company calculates expedited shipping cost.\n"
+            "2. Company provides expedited shipping quote to buyer.\n"
+            "3. Buyer accepts or declines expedited shipping.\n"
+            "4. Return to step 5.\n",
+            "1. Return to step 5.\n",
+        )
+        assert amended != example  # the substitution hit the packaged extension 4a items
+        use_case = parse_uc(amended).body
+
+        result = render_uc_sequence_skeleton(use_case)
+
+        lines = result.split("\n")
+        # the fragment: alt header, the anchored resumption note directly after it (first
+        # item — no message), the bare end close
+        alt_index = lines.index("alt Buyer requests expedited shipping")
+        self.assertEqual(lines[alt_index + 1], "note left of Buyer")
+        self.assertEqual(lines[alt_index + 2], "  Return to step 5.")
+        self.assertEqual(lines[alt_index + 3], "end note")
+        self.assertEqual(lines[alt_index + 4], "end")
+
     def test_walkthrough_file_is_the_skeleton_with_the_frozen_attributions(self):
         """The ACC-001 walkthrough pin: the committed walkthrough `.puml` (the pure,
         comment-free source of truth the Phase 140 end-to-end run wrote) must equal

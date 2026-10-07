@@ -30,7 +30,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.plantuml import backends, url
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, require_plantuml_source
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "plantuml"
 
@@ -46,6 +46,24 @@ class TestClassifyResponse(unittest.TestCase):
         for name in ("jetty_real_svg.svg", "public_real_svg.svg"):
             with self.subTest(name=name):
                 self.assertEqual(url.classify_response(200, _body(name)), url.CLASS_VALID)
+
+    def test_200_crash_page_is_the_recognised_crash_line(self):
+        """The recorded REAL jetty crash page (2026-10-06) is the recognised INVALID
+        crash line — not VALID (the pre-amendment misread) and not unrecognised."""
+        crash = _body("jetty_crash_svg.svg")
+
+        self.assertEqual(url.classify_response(200, crash), url.CLASS_CRASH)
+        self.assertFalse(url.is_real_svg(crash))
+        self.assertEqual(backends.scan_crash(crash), "java.lang.ClassCastException")
+
+    def test_200_crash_page_only_is_the_crash_line(self):
+        """The crash line is the 200 row: any other status with a crash body is
+        unrecognised (INCONCLUSIVE, never INVALID — the preamble holds)."""
+        crash = _body("jetty_crash_svg.svg")
+
+        for status in (None, 400, 404, 500):
+            with self.subTest(status=status):
+                self.assertEqual(url.classify_response(status, crash), url.CLASS_INCONCLUSIVE)
 
     def test_400_placeholder_is_invalid(self):
         for name in ("jetty_400_placeholder.svg", "public_400_placeholder.svg"):
@@ -73,23 +91,35 @@ class TestClassifyResponse(unittest.TestCase):
             with self.subTest(status=status, size=len(body)):
                 self.assertEqual(url.classify_response(status, body), url.CLASS_INCONCLUSIVE)
 
-    def test_real_svg_marker_distinguishes_the_placeholders(self):
+    def test_real_svg_marker_distinguishes_the_placeholders_and_the_crash_page(self):
         real = _body("jetty_real_svg.svg")
         placeholder = _body("jetty_200_placeholder.svg")
         bad_url = _body("public_badurl_200.svg")
+        crash = _body("jetty_crash_svg.svg")
 
         self.assertTrue(url.is_real_svg(real))
         self.assertFalse(url.is_real_svg(placeholder))
         self.assertFalse(url.is_real_svg(bad_url))
+        self.assertFalse(url.is_real_svg(crash))  # the pre-amendment misread, pinned closed
         self.assertIn(url.PLACEHOLDER_MARKER, placeholder)
         self.assertIn(url.BAD_URL_MARKER, bad_url)
         self.assertIn(url.PLACEHOLDER_MARKER, _body("jetty_400_placeholder.svg"))
+        self.assertIn(b"has crashed", crash)
+
+    def test_aass_400_placeholder_stays_the_plain_syntax_invalid(self):
+        """No-regression pin (2026-10-06): the canonical `aass` fixture is still the plain
+        SYNTAX INVALID row — the new crash line must not absorb it (its body is the welcome
+        placeholder, not a crash page)."""
+        aass = _body("jetty_400_placeholder.svg")
+
+        self.assertIsNone(backends.scan_crash(aass))
+        self.assertEqual(url.classify_response(400, aass), url.CLASS_INVALID)
 
 
 class TestSvgUrl(unittest.TestCase):
     """The single endpoint shape (rulebook §5.1)."""
 
-    def test_endpoint_is_svg_with_the_1_payload(self):
+    def test_endpoint_is_svg_with_the_classic_payload(self):
         from biz.dfch.specmgr.plantuml.encode import encode_puml
 
         result = url.svg_url("http://localhost:8080", "diagram")
@@ -132,6 +162,29 @@ class TestValidateUrlMocked(unittest.TestCase):
         assert verdict.errors is not None
         self.assertEqual(len(verdict.errors), 1)
         self.assertIn("syntax error", verdict.errors[0].message)
+        self.assertEqual(verdict.classification, url.CLASS_INVALID)
+        self.assertNotIn("crash", verdict.errors[0].message)  # the plain syntax row, not the crash line
+
+    def test_crash_page_maps_to_valid_false_with_the_crash_finding(self):
+        """The §5.2 crash line (amended 2026-10-06): INVALID with a crash diagnostic —
+        the line-0 finding carries the crash exception class, the fix_hint names the
+        known 1.2026.8 shape bug and points at §2.9's anchored notes."""
+        with mock.patch.object(
+            url, "fetch_svg", return_value=url.UrlResponse(status=200, body=_body("jetty_crash_svg.svg"))
+        ):
+            verdict = url.validate_url("http://x", "diagram")
+
+        self.assertEqual(verdict.classification, url.CLASS_CRASH)
+        self.assertIs(verdict.valid, False)
+        self.assertIsNone(verdict.rendered)
+        self.assertIsNotNone(verdict.errors)
+        assert verdict.errors is not None
+        self.assertEqual(len(verdict.errors), 1)
+        self.assertEqual(verdict.errors[0].line, 0)
+        self.assertIn("java.lang.ClassCastException", verdict.errors[0].message)
+        self.assertIn("crashed", verdict.errors[0].message)
+        self.assertIn("note left of", verdict.errors[0].fix_hint)
+        self.assertIn("§2.9", verdict.errors[0].fix_hint)
 
     def test_request_error_is_never_invalid(self):
         with mock.patch.object(
@@ -247,6 +300,31 @@ class TestUrlLive(unittest.TestCase):
 
         self.assertIs(verdict.valid, True)
         self.assertIs(verdict.rendered, True)
+        # the Phase 145 render-proof contract: the SVG body carries the diagram
+        # text and no crash marker (never is_real_svg alone)
+        assert verdict.proof_path is not None
+        assert_rendered_svg(Path(verdict.proof_path).read_bytes(), "hello")
+
+    def test_crashing_shape_is_invalid_with_the_crash_finding(self):
+        """The recorded known-bug shape (pre-amendment unanchored `note left` after a
+        self-message's note tile) ⇒ valid=False + the line-0 crash finding at the
+        selected URL source (2026-10-06 — this is the misread the amendment closes)."""
+        info = require_plantuml_source(self)
+        if info.kind != "url":
+            self.skipTest("the live URL tests apply only to a selected URL source")
+        assert info.value is not None
+
+        crash_diagram = _body("crash_shape.puml").decode("utf-8")
+        verdict = url.validate_url(info.value, crash_diagram)
+
+        self.assertEqual(verdict.classification, url.CLASS_CRASH)
+        self.assertIs(verdict.valid, False)
+        self.assertIsNotNone(verdict.errors)
+        assert verdict.errors is not None
+        self.assertEqual(verdict.errors[0].line, 0)
+        self.assertIn("crashed", verdict.errors[0].message)
+        self.assertIn("ClassCastException", verdict.errors[0].message)
+        self.assertIn("note left of", verdict.errors[0].fix_hint)
 
 
 if __name__ == "__main__":

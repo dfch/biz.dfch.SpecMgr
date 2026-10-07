@@ -224,6 +224,104 @@ class TestUnattributedMarkers(unittest.TestCase):
         self.assertTrue(any("raw double quote" in warning.message for warning in result.warnings))
 
 
+class TestNoteContent(unittest.TestCase):
+    """Note-content lines are NOT block markers (rulebook §6.3, amended 2026-10-06 — the
+    frozen contract "the checker must never reject what the real parser accepts"; both
+    shapes below verified rendered by both independent sources, 2026-10-06)."""
+
+    def test_note_content_lines_that_look_like_block_markers_are_content(self):
+        """A note-content line starting with @startuml / @enduml / @end is content — the
+        in_note state takes precedence over the block-marker detection (pre-amendment,
+        such a line mangled the checker's block state)."""
+        text = (
+            "@startuml\n"
+            "actor Buyer\n"
+            "participant Company\n"
+            "\n"
+            "note left of Buyer\n"
+            "  a line of content\n"
+            "  @startuml\n"
+            "  @enduml\n"
+            "  @end\n"
+            "  note right\n"
+            "end note\n"
+            "\n"
+            "alt c\n"
+            "Company -> Company: self\n"
+            "end\n"
+            "@enduml\n"
+        )
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"errors in {mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_note_content_line_that_is_exactly_end_is_content(self):
+        """A note-content line that is exactly `end` is ACCEPTED (verified rendered by both
+        sources 2026-10-06) — the pre-amendment false error ('an end line inside a note
+        block ... the real parser rejects a bare end here') is gone; `end note` still
+        closes the block, and the bare-`end` lenient-case semantics outside notes are
+        unchanged (pinned by the lenient-set goldens above)."""
+        text = (
+            "@startuml\n"
+            "actor Buyer\n"
+            "participant Company\n"
+            "\n"
+            "note left of Buyer\n"
+            "  end\n"
+            "end note\n"
+            "\n"
+            "Buyer -> Company: hi\n"
+            "@enduml\n"
+        )
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"errors in {mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_end_note_still_closes_the_block(self):
+        """Regression pin: the close is still exactly `end note` — a content `end` line does
+        not close (an unclosed note is the error in both modes)."""
+        text = "@startuml\nactor Buyer\n\nnote left of Buyer\n  end\nBuyer -> Buyer: hi\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertTrue(any("never closed" in error.message for error in result.errors))
+
+    def test_anchored_note_form_is_accepted_in_both_modes(self):
+        """The amended emission form (rulebook §2.9, amended 2026-10-06): `note left of
+        {participant}` / `note right of {participant}` block notes are accepted (the
+        checker's existing note-block shape — no new rule), in both modes."""
+        for header in ("note left of Buyer", "note right of Buyer"):
+            with self.subTest(header=header):
+                text = (
+                    "@startuml\n"
+                    "actor Buyer\n"
+                    "participant Company\n"
+                    "\n"
+                    f"{header}\n"
+                    "  content\n"
+                    "end note\n"
+                    "\n"
+                    "Buyer -> Company: hi\n"
+                    "@enduml\n"
+                )
+                for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+                    with self.subTest(mode=mode):
+                        result = check_structure(text, mode)
+                        self.assertTrue(result.ok, f"errors in {mode}: {result.errors}")
+                        self.assertEqual(result.errors, [])
+                        self.assertEqual(result.warnings, [])
+
+
 class TestPackageDataFiles(unittest.TestCase):
     """The packaged template/example must pass the checker in both modes."""
 

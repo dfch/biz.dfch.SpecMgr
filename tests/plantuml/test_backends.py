@@ -20,11 +20,15 @@
 Offline: the argv shapes (list form, never a shell; charset validation), the
 byte-safe error-block scan (both byte shapes — the frozen `ERROR / {line} /
 {message}` one-liner and the three-line block 1.2026.8 actually emits,
-recorded in `tests/fixtures/plantuml/aass_check_stderr.txt`), the probe
-memoisation, and the configuration-defect verdicts (no subprocess on a bad
-path). Env-gated (real parser): the canary validates, the canonical `aass`
-fixture is invalid with the parsed error line/message, and the render proof
-is an SVG temp file.
+recorded in `tests/fixtures/plantuml/aass_check_stderr.txt`), the crash
+scan (the §5.2 crash line, recorded in
+`tests/fixtures/plantuml/jar_crash_stderr.txt` + `jetty_crash_svg.svg`),
+the probe memoisation, and the configuration-defect verdicts (no subprocess
+on a bad path). Env-gated (real parser): the canary validates, the canonical
+`aass` fixture is invalid with the parsed error line/message, the crashing
+shape is invalid with the crash diagnostic, and the render proof is an SVG
+temp file whose body carries the diagram text (the Phase 145 render-proof
+contract).
 """
 
 import os
@@ -33,7 +37,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.plantuml import backends
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, require_plantuml_source
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "plantuml"
 
@@ -179,6 +183,84 @@ class TestScanErrorBlocks(unittest.TestCase):
         self.assertEqual(backends.scan_error_blocks(b""), [])
 
 
+class TestScanCrash(unittest.TestCase):
+    """The crash-signature scan (rulebook §5.2 crash line, amended 2026-10-06)."""
+
+    def test_scans_the_recorded_jar_crash_stderr(self):
+        recorded = (_FIXTURES / "jar_crash_stderr.txt").read_bytes()
+
+        self.assertEqual(backends.scan_crash(recorded), "java.lang.ClassCastException")
+
+    def test_scans_the_recorded_jetty_crash_page(self):
+        recorded = (_FIXTURES / "jetty_crash_svg.svg").read_bytes()
+
+        self.assertEqual(backends.scan_crash(recorded), "java.lang.ClassCastException")
+
+    def test_the_aass_syntax_error_is_not_a_crash(self):
+        """No-regression pin: the plain syntax error (the `aass` fixture) carries no crash
+        signature — it stays the parser's own error, not the crash diagnostic."""
+        recorded = (_FIXTURES / "aass_check_stderr.txt").read_bytes()
+
+        self.assertIsNone(backends.scan_crash(recorded))
+
+    def test_clean_and_svg_bytes_yield_nothing(self):
+        self.assertIsNone(backends.scan_crash(b"\x89PNG\r\n\x1a\n" + b"\x00" * 64))
+        self.assertIsNone(backends.scan_crash(b""))
+        self.assertIsNone(backends.scan_crash(_FIXTURES.joinpath("jetty_real_svg.svg").read_bytes()))
+
+    def test_crash_page_with_another_exception_class_is_detected(self):
+        """The URL crash page signature ("has crashed") is generic — a future PlantUML build
+        crashing with a different exception still yields the diagnostic with THAT class."""
+        data = (
+            b"PlantUML (1.2026.8) has crashed. java.lang.NullPointerException: something\n"
+            b"\tat net.sourceforge.plantuml.X.y(X.java:1)\n"
+        )
+
+        self.assertEqual(backends.scan_crash(data), "java.lang.NullPointerException")
+
+    def test_bare_class_cast_exception_trace_is_detected(self):
+        """The jar/bin signature: the `ClassCastException` trace alone (no crash page in the
+        stream — the check path's stderr) is the known 1.2026.8 shape bug."""
+        data = b"java.lang.ClassCastException: class A cannot be cast to class B\n\tat X.y(X.java:1)\n"
+
+        self.assertEqual(backends.scan_crash(data), "java.lang.ClassCastException")
+
+
+class TestValidateLocalCrash(unittest.TestCase):
+    """The §5.2 crash line on the local source (mocked subprocess, offline)."""
+
+    def test_crash_exit_without_error_block_is_the_crash_diagnostic(self):
+        """A non-zero exit with no parseable ERROR block but the ClassCastException trace in the
+        raw stream ⇒ valid=False with the crash finding (not the silent 'no parseable ERROR
+        block' finding — the pre-amendment behaviour, amended 2026-10-06)."""
+        stderr = (_FIXTURES / "jar_crash_stderr.txt").read_bytes()
+        with mock.patch.object(backends, "_run_check", return_value=(200, b"\x89PNG\r\n\x1a\n", stderr, None)):
+            verdict = backends.validate_local("jar", "/any.jar", "diagram", backends.FLAG_CHECK_SYNTAX)
+
+        self.assertFalse(verdict.valid)
+        self.assertIsNone(verdict.rendered)
+        self.assertEqual(len(verdict.errors), 1)
+        self.assertEqual(verdict.errors[0].line, 0)
+        self.assertIn("java.lang.ClassCastException", verdict.errors[0].message)
+        self.assertIn("crashed", verdict.errors[0].message)
+        self.assertIn("exit 200", verdict.errors[0].message)
+        self.assertIn("note left of", verdict.errors[0].fix_hint)
+        self.assertIn("§2.9", verdict.errors[0].fix_hint)
+
+    def test_plain_exit_without_error_block_and_without_crash_stays_the_generic_finding(self):
+        """No crash signature + no ERROR block ⇒ the pre-existing generic finding (no
+        over-detection)."""
+        with mock.patch.object(
+            backends, "_run_check", return_value=(17, b"\x89PNG\r\n\x1a\n", b"some unrelated stderr\n", None)
+        ):
+            verdict = backends.validate_local("jar", "/any.jar", "diagram", backends.FLAG_CHECK_SYNTAX)
+
+        self.assertFalse(verdict.valid)
+        self.assertEqual(len(verdict.errors), 1)
+        self.assertIn("without a parseable ERROR block", verdict.errors[0].message)
+        self.assertNotIn("crashed", verdict.errors[0].message)
+
+
 class TestRealParser(unittest.TestCase):
     """Env-gated: run only when a jar/bin source answers its canary."""
 
@@ -206,7 +288,29 @@ class TestRealParser(unittest.TestCase):
         assert verdict.proof_path is not None
         self.assertTrue(os.path.exists(verdict.proof_path))
         with open(verdict.proof_path, "rb") as handle:
-            self.assertTrue(handle.read(4).startswith(b"<"))  # the SVG temp file (never inlined)
+            body = handle.read()
+        # the Phase 145 render-proof contract: the SVG body carries the diagram
+        # text and no crash marker (never the '<' prefix alone)
+        assert_rendered_svg(body, "hello")
+
+    def test_crashing_shape_is_invalid_with_the_crash_diagnostic(self):
+        """The recorded known-bug shape (pre-amendment unanchored `note left` after a
+        self-message's note tile) ⇒ valid=False + the line-0 crash finding at the
+        selected jar/bin source (2026-10-06)."""
+        info = require_plantuml_source(self)
+        if info.kind not in ("jar", "bin"):
+            self.skipTest("the real-parser tests apply only to a selected jar/bin source")
+        assert info.value is not None
+
+        crash_diagram = _FIXTURES.joinpath("crash_shape.puml").read_text(encoding="utf-8")
+        verdict = backends.validate_local(info.kind, info.value, crash_diagram, backends.FLAG_CHECK_SYNTAX)
+
+        self.assertFalse(verdict.valid)
+        self.assertIsNone(verdict.rendered)
+        self.assertEqual(len(verdict.errors), 1)
+        self.assertEqual(verdict.errors[0].line, 0)
+        self.assertIn("ClassCastException", verdict.errors[0].message)
+        self.assertIn("note left of", verdict.errors[0].fix_hint)
 
     def test_aass_fixture_is_invalid_with_the_parsed_error(self):
         info = require_plantuml_source(self)

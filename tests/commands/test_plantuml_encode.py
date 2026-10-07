@@ -44,7 +44,7 @@ from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
 from biz.dfch.specmgr.plantuml import url
 from biz.dfch.specmgr.plantuml.encode import decode_puml, encode_puml
 
-from tests.conftest import require_plantuml_source
+from tests.conftest import assert_rendered_svg, require_plantuml_source
 
 runner = CliRunner()
 
@@ -130,7 +130,10 @@ class TestPlantumlEncodeLive(unittest.TestCase):
         response = url.fetch_svg(f"{info.value.rstrip('/')}/svg/{encoded}")
 
         self.assertEqual(response.status, 200, f"body: {response.body[:200]!r}")
-        self.assertTrue(url.is_real_svg(response.body))
+        # the Phase 145 render-proof contract: the SVG body carries the diagram
+        # text and no crash marker (never is_real_svg alone — the pre-amendment
+        # classifier accepted a crash page as a real render)
+        assert_rendered_svg(response.body, "Buyer has goods")
 
 
 if __name__ == "__main__":

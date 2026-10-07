@@ -169,3 +169,68 @@ structure-only state (and its `' validated: structure-only` header, rulebook
 - Pre-filled arrows corrected: **0**
 - Nothing committed by the flow (commit policy belongs to the user /
   orchestrator).
+
+## 2026-10-06 correction + re-verification (Phase 145 — post-implementation review)
+
+**The `rendered=true` verdicts quoted above were a misread — they are
+superseded by this section. The original record (dated 2026-10-05) is kept
+as written; this correction does not rewrite it.**
+
+**What was misread.** The jetty `GET {base}/svg/{enc}` answer for this
+diagram was **200 + a PlantUML crash page**, not a real render: the body
+says "PlantUML (1.2026.8) has crashed." and embeds the
+`java.lang.ClassCastException` trace (`TileBuilder.buildOne`). The
+pre-amendment URL classifier accepted that crash page as a real-diagram SVG
+(`is_real_svg`), so the chain reported `valid=true` / `rendered=true`. The
+trigger is a known PlantUML 1.2026.8 crash bug: a **bare** `note left`/
+`note right` block following a self-message's note tile (attached or
+detached) with no intervening non-self message. This diagram ends with the
+self-message step 11 (`Company -> Company: Company receives payment and
+records it.`) followed by two consecutive bare `note left` final blocks —
+exactly the crashing shape. The same shape crashes the jar source (exit 200
++ the `ClassCastException` trace on stderr, no parseable `ERROR` block).
+All three committed sequence artifacts (the golden, the packaged example,
+this walkthrough file) were affected identically.
+
+**What the re-verification shows (2026-10-06, both independent sources —
+dev jetty 1.2026.8 + the same-build `plantuml-cli` jar
+1.2026.8/149874a).**
+
+1. **Old shape crashes (both sources):** the pre-correction file (sha256
+   `88979f439d6c116643d921de78ff9e553cb48992f5288e7f7ea9bf69b44fbe4a` — the
+   sha cited in the Host-native write section above) returns jetty 200 + the
+   crash-page SVG (13054 B, "has crashed" + the `ClassCastException` trace)
+   and jar `--check-syntax` exit 200 + the `ClassCastException` trace on
+   stderr (no parseable `ERROR` block). A minimal repro (the recorded
+   `tests/fixtures/plantuml/crash_shape.puml`) crashes identically on both.
+2. **New shape renders truly (both sources):** the corrected file below
+   validates green at both sources, and the render-proof SVG **body**
+   carries the diagram text (e.g. the final note line "Buyer has goods")
+   with **no** crash marker — jetty: 200 + a 36 KB real SVG; jar:
+   `--check-syntax` exit 0 and `--svg` exit 0 with the text in the body.
+   The anchored form (`note left of {participant}`) is verified OK
+   everywhere the bare form crashed (two consecutive anchored notes after a
+   self-message, anchored notes after an attached note), with the note text
+   present in the rendered SVG.
+3. **The classifier gap is closed** (rulebook §5.2 crash line): a 200 +
+   crash page is now a recognised INVALID row (`valid=false`, line-0
+   finding carrying the crash exception class, fix hint pointing at the
+   §2.9 anchored notes), and `is_real_svg` rejects the crash page — so this
+   class of misread (crash page accepted as a render) is impossible again.
+
+**The corrected artifact.** The committed
+`buy-goods.sequence.walkthrough.puml` was re-recorded on 2026-10-06 per the
+user-approved ruling (A: unanchored notes become `note left of
+{primary-actor-alias}` — here `Buyer`, the primary actor's §2.9.1
+declaration alias): its three unanchored note headers (lines 9, 112, 118)
+changed from `note left` to `note left of Buyer`; **every attribution,
+message, and comment-stripped line is otherwise byte-identical** — the
+ACC-001 pinning still holds (the corrected file == the re-recorded skeleton
+with the same frozen marker→arrow table). New sha256 of the corrected
+`.puml`: `82dae3926ffd1daa99bb889e5c5d01ab6983211095be8bdee311dbdc5ae43737`
+(the old sha above stays with the original pre-correction text). The
+packaged example (`uc/data/uc_plantuml_example.md`) and the sequence golden
+(`tests/fixtures/uc-diagrams/buy-goods.sequence.golden`) were re-recorded
+with the identical three-header change; their render proofs are pinned by
+the env-gated live tests (`tests/uc/tools/test_validate_plantuml.py`,
+Phase 145: SVG body text present, no crash marker).

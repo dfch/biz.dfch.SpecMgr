@@ -17,6 +17,13 @@ mapping needed):
 - **Error message shape:** the ``ERROR / {line} / {message}`` text block —
   1.2026.8 emits it as three lines (``ERROR`` / ``{line}`` / ``{message}``)
   on stderr; both byte shapes are scanned (see :func:`scan_error_blocks`).
+- **Crash signature (rulebook §5.2 crash line, verified 2026-10-06):** a
+  non-zero exit **without** a parseable ``ERROR`` block whose raw byte
+  stream carries a PlantUML server-side crash (the known 1.2026.8
+  self-message/note-left shape bug — ``ClassCastException`` on stderr, exit
+  200) is the same crash diagnostic as the URL crash page: ``valid=False``
+  with a line-0 finding carrying the crash exception class (see
+  :func:`scan_crash`).
 - **Render proof:** ``--svg --no-error-image -pipe`` — exit ``0`` **and** the
   output starts with ``<svg`` ⇒ rendered; the SVG goes to a temp file (path
   optionally reported), never inlined.
@@ -34,7 +41,10 @@ The outcome of a jar/bin check (+ render proof) over one diagram.
 
 Attributes:
     valid: the check's exit-code verdict (``0`` ⇒ ``True``).
-    errors: the parsed ``ERROR`` blocks (empty when valid).
+    errors: the parsed ``ERROR`` blocks, or the crash diagnostic (the
+        rulebook §5.2 crash line — a non-zero exit without a parseable
+        ``ERROR`` block but with the crash signature in the raw stream)
+        or the generic no-block finding (empty when valid).
     rendered: the render-proof verdict (``None`` = not run — invalid).
     proof_path: the temp file holding the rendered SVG (``None`` when not
         rendered) — the path is reported, the bytes never inlined.
@@ -113,6 +123,22 @@ A configuration defect (bad path, missing java, not executable) is
 source that fails the canary round-trip is ``unavailable``.
 
 
+### `scan_crash(data: 'bytes') -> 'str | None'`
+
+The fully-qualified crash exception class name in ``data``, or ``None``.
+
+The rulebook §5.2 crash line (verified 2026-10-06 on both independent
+sources — the dev jetty 1.2026.8 and the same-build jar): a PlantUML
+server-side crash is a **recognised** signature, never a transport or
+configuration issue. Two byte shapes carry it: the URL crash page (the
+:data:`CRASH_PAGE_MARKER` sentence + the embedded Java exception trace)
+and the jar/bin raw process stream (the :data:`CRASH_EXCEPTION_MARKER`
+trace on stderr — the known 1.2026.8 self-message/note-left shape bug,
+exit 200 with no parseable ``ERROR`` block). The returned name (e.g.
+``java.lang.ClassCastException``) goes into the crash diagnostic's
+finding; ``None`` = no crash signature, whatever else the bytes carry.
+
+
 ### `scan_error_blocks(data: 'bytes') -> 'list[tuple[int, str]]'`
 
 Scan raw output bytes for PlantUML ``ERROR`` blocks (rulebook §4).
@@ -120,8 +146,8 @@ Scan raw output bytes for PlantUML ``ERROR`` blocks (rulebook §4).
 Accepts both byte shapes: the frozen ``ERROR / {line} / {message}``
 one-line block and the three-line block 1.2026.8 emits
 (``ERROR`` / ``{line}`` / ``{message}``) — verified against the live
-build. Returns ``(line, message)`` pairs in order of appearance, deduped
-by (line, message); the message is decoded with ``errors="replace"``
+build. Returns ``(line, message)`` pairs sorted by ``(line, message)``,
+deduped by (line, message); the message is decoded with ``errors="replace"``
 (the surrounding bytes can be binary-contaminated).
 
 

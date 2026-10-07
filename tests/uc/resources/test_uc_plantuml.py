@@ -160,6 +160,12 @@ class TestUcPlantumlResource(unittest.TestCase):
             'note bottom of {this-alias}: Unresolved UC reference: "{inline text}"',
             "9cfe511e…",
             "cf9a9dfe…",
+            # the Phase 145 amendment (2026-10-06, user-approved ruling A + B): the anchored
+            # unanchored-note form and the recognised §5.2 crash line
+            "note left of {primary-actor-alias}",
+            "has crashed",
+            "java.lang.ClassCastException",
+            "TileBuilder.buildOne",
         ):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, result)
