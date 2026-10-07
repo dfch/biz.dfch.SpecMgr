@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T22:09:42.529+02:00'
 id: feat-187-list-feat-timeout
-status: review
+status: done
 type: feat
-updated: '2026-10-05T23:21:30.000+02:00'
+updated: '2026-10-07T06:59:02.408+02:00'
 version: 1.0.0
 ---
 

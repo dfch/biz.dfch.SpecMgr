@@ -2,12 +2,11 @@
 classification: null
 created: '2026-09-08 09:37:19.699+02:00'
 id: feat-110-truncate-validation-errors
-status: review
+status: done
 type: feat
-updated: '2026-09-30T04:36:29.000Z'
+updated: '2026-10-07T06:58:55.289+02:00'
 version: 1.0.0
 ---
-
 
 # Feature: Truncate `validate` Tool's Error Messages (#110)
 

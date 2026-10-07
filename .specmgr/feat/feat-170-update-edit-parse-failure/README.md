@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-29T15:14:11.057+02:00'
 id: feat-170-update-edit-parse-failure
-status: review
+status: done
 type: feat
-updated: '2026-10-02T09:34:59.000+02:00'
+updated: '2026-10-07T06:59:00.768+02:00'
 version: 1.0.0
 ---
 

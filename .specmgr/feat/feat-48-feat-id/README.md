@@ -1,9 +1,10 @@
 ---
+classification: null
 created: '2026-09-02 10:32:05.764Z'
 id: feat-48-feat-id
-status: review
+status: done
 type: feat
-updated: '2026-10-02T16:09:12.000Z'
+updated: '2026-10-07T06:59:03.796+02:00'
 version: 1.0.0
 ---
 

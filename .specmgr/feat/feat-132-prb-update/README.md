@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-17 09:57:31.305+02:00'
 id: feat-132-prb-update
-status: review
+status: done
 type: feat
-updated: '2026-09-30T05:12:52.000Z'
+updated: '2026-10-07T06:58:57.828+02:00'
 version: 1.0.0
 ---
 

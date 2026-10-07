@@ -1,9 +1,11 @@
 ---
-id: feat-9-doc-in-specmgr
-version: 1.0.0
-status: progress
+classification: null
 created: '2026-08-11 00:00:00.000Z'
-updated: '2026-10-01T06:05:00.000Z'
+id: feat-9-doc-in-specmgr
+status: done
+type: feat
+updated: '2026-10-07T07:03:05.036+02:00'
+version: 1.0.0
 ---
 
 # Feature: Migrate `/doc` to `.specmgr`

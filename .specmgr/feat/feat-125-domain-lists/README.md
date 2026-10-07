@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-21 17:06:37.403Z'
 id: feat-125-domain-lists
-status: review
+status: done
 type: feat
-updated: '2026-09-30T04:36:43.000Z'
+updated: '2026-10-07T06:58:56.671+02:00'
 version: 1.0.0
 ---
 

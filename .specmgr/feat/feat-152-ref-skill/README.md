@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T07:27:21.033+02:00'
 id: feat-152-ref-skill
-status: review
+status: done
 type: feat
-updated: '2026-10-03T18:49:46.806+02:00'
+updated: '2026-10-07T06:58:59.382+02:00'
 version: 1.0.0
 ---
 

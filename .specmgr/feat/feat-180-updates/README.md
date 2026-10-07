@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-02T13:15:57.269+02:00'
 id: feat-180-updates
-status: review
+status: done
 type: feat
-updated: '2026-10-03T16:18:17.000+02:00'
+updated: '2026-10-07T06:59:01.621+02:00'
 version: 1.0.0
 ---
 

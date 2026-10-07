@@ -1,9 +1,10 @@
 ---
+classification: null
 created: '2026-09-04 00:00:00.000Z'
 id: feat-92-resources
-status: review
+status: done
 type: feat
-updated: '2026-10-02T16:22:00.000Z'
+updated: '2026-10-07T07:01:22.501+02:00'
 version: 1.0.0
 ---
 

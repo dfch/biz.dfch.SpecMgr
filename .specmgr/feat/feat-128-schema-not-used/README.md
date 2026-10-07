@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-04T12:59:26.936+02:00'
 id: feat-128-schema-not-used
-status: review
+status: done
 type: feat
-updated: '2026-10-05T20:10:52.000+02:00'
+updated: '2026-10-07T06:58:57.359+02:00'
 version: 1.0.0
 ---
 

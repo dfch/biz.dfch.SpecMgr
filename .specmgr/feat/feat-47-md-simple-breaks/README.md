@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-02 16:10:31.726+02:00'
 id: feat-47-md-simple-breaks
-status: planning
+status: done
 type: feat
-updated: '2026-09-30T04:38:08.000Z'
+updated: '2026-10-07T06:58:54.469+02:00'
 version: 1.0.0
 ---
 

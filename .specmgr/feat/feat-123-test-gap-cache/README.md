@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-25T19:42:03.316+02:00'
 id: feat-123-test-gap-cache
-status: review
+status: done
 type: feat
-updated: '2026-09-30T04:36:38.000Z'
+updated: '2026-10-07T06:58:55.993+02:00'
 version: 1.0.0
 ---
 
