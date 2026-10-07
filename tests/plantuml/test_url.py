@@ -286,6 +286,15 @@ class TestProbeUrlMocked(unittest.TestCase):
         self.assertIs(first, second)
         self.assertEqual(fetch.call_count, 1)
 
+    def test_probe_is_memoised_on_the_stripped_base_url(self):
+        with mock.patch.object(
+            url, "fetch_svg", return_value=url.UrlResponse(status=200, body=_body("jetty_real_svg.svg"))
+        ) as fetch:
+            first = url.probe_url("http://mock.invalid:8080 ")
+            second = url.probe_url("http://mock.invalid:8080")
+        self.assertIs(first, second)
+        self.assertEqual(fetch.call_count, 1)  # the stripped value keys the cache — one canary, not two
+
 
 class TestUrlLive(unittest.TestCase):
     """Env-gated: run only when the selected source is an available URL backend."""

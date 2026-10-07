@@ -134,8 +134,7 @@ def select_source(env: Mapping[str, str] | None = None) -> tuple[str, str] | Non
         if value is not None:
             result = (kind, value)
             return result
-    result: tuple[str, str] | None = None
-    return result
+    return None
 
 
 # --- the §3.6 result model (frozen shape — non-raising) ------------------------

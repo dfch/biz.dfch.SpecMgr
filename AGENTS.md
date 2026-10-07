@@ -936,8 +936,9 @@ matrix classifier — the frozen §5.2 rows incl. the recognised
 bug; amended 2026-10-06)), and `chain.py` (the strict first-set-wins,
 no-fall-through validation chain over exactly three env vars + the
 non-raising result model). It is deliberately extractable but not a separate
-PyPI library, and nothing in it registers with the MCP server (the
-tools/resources that wrap it arrive in later phases of feat-185-uc-diagrams).
+PyPI library, and nothing in it registers with the MCP server itself — the
+wrapping diagram tools/resources live in the `uc` domain (see the `uc/`
+bullet above, feat-185-uc-diagrams Phase 120).
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server

@@ -105,16 +105,15 @@ UNATTRIBUTED_MARKER_FORMS = (
     "' UNATTRIBUTED trigger: <text>",
 )
 
-_UNATTRIBUTED_MARKER_PATTERN = re.compile(r"^' UNATTRIBUTED (?:step \d+: |ext \d+[a-z]? step \d+: |trigger: )")
-
 
 def is_unattributed_marker(line: str) -> bool:
     """Return ``True`` if ``line`` is an UNATTRIBUTED marker comment line.
 
-    Detection is by the shared :data:`UNATTRIBUTED_MARKER_PREFIX` plus the
-    frozen grammar tail (one of the three forms); a comment line carrying the
-    prefix but a malformed tail still matches (the checker warns on any
-    ``' UNATTRIBUTED ``-led line — the agent flow owns the zero-marker rule).
+    Detection is by the shared :data:`UNATTRIBUTED_MARKER_PREFIX` on a
+    comment line only — deliberately prefix-only, no tail-grammar
+    validation: a marker line is a comment and its tail is free text the
+    agent will replace, so strictness here would create false negatives for
+    nothing.
     """
     assert isinstance(line, str), type(line)
     return line.startswith(UNATTRIBUTED_MARKER_PREFIX)

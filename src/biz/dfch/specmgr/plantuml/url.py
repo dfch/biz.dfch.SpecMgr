@@ -59,7 +59,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
-from .backends import CRASH_FIX_HINT, ProbeResult, scan_crash
+from .backends import CANARY_DIAGRAM, CRASH_FIX_HINT, ProbeResult, scan_crash
 from .encode import encode_puml
 from .structure import Finding
 
@@ -385,11 +385,12 @@ def probe_url(base_url: str) -> ProbeResult:
     with the exact reason; a transport failure is ``unavailable`` (transient).
     """
     assert isinstance(base_url, str), type(base_url)
+    base_url = base_url.strip()
     if base_url in _URL_PROBE_CACHE:
         result = _URL_PROBE_CACHE[base_url]
         return result
 
-    if not _BASE_URL_SHAPE_PATTERN.match(base_url.strip()):
+    if not _BASE_URL_SHAPE_PATTERN.match(base_url):
         result = ProbeResult(
             ok=False,
             source_state="misconfigured",
@@ -399,9 +400,6 @@ def probe_url(base_url: str) -> ProbeResult:
         _URL_PROBE_CACHE[base_url] = result
         return result
 
-    from .backends import CANARY_DIAGRAM  # late import: backends never imports url
-
-    base_url = base_url.strip()
     response = fetch_svg(svg_url(base_url, CANARY_DIAGRAM))
     classification = classify_response(response.status, response.body)
     if classification == CLASS_VALID:

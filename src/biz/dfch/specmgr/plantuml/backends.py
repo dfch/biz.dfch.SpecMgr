@@ -215,14 +215,6 @@ def _validate_source_value(kind: str, value: str) -> tuple[str | None, str | Non
             "the configured source path contains a NUL byte",
             "remove the NUL byte from the configured path (subprocess argv is not NUL-safe)",
         )
-    try:
-        value.encode("utf-8")
-        Path(value).name  # resolve-ish: reject nothing, just exercise the API
-    except (UnicodeEncodeError, ValueError) as exc:
-        return (
-            f"the configured source path is not a usable filesystem path ({type(exc).__name__})",
-            "use a plain UTF-8 path for the configured source",
-        )
     if kind == "jar":
         if shutil.which("java") is None:
             return (
