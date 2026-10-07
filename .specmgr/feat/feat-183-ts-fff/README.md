@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:39:04.941+02:00'
 id: feat-183-ts-fff
-status: review
+status: done
 type: feat
-updated: '2026-10-07T09:03:15.075+02:00'
+updated: '2026-10-07T09:44:14.136+02:00'
 version: 1.0.0
 ---
 
@@ -292,6 +292,12 @@ the raised error) collected for the record first.
 
 ### Current Status
 
+**As of 2026-10-07**: Feature complete. PR #201 squash-merged to `dev`
+(`2f3d66a`, all CI green) and the deferred `done` transition (Task 130.110,
+held through review) has been applied post-merge. The recorded contingency
+(drop the millisecond slot entirely if the issue #183 error recurs on `SSS`)
+stands as the trigger for any follow-up feature.
+
 **As of 2026-10-07**: Phase 140 (round-2 review follow-up) complete. The paired example-free
 measurement (round-2 G1) closed the one unmeasured edge of the Phase 100/110 protocol: three
 independent fresh-context `explore` sessions per arm (BEFORE `fff` quoted byte-faithful from
@@ -349,6 +355,18 @@ investigation or implementation has started yet.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T09:44:14.136+02:00 - Status review → done (post-merge; Task 130.110 deferred bump)
+
+PR #201 was squash-merged to `dev` (commit `2f3d66a715995fea2f5d1112058e51c67346c328`,
+merged 2026-10-07T07:26:03Z, all CI green: builds 3.11/3.12/3.13, analyzers, CodeQL).
+The deferred frontmatter `status` transition `review` → `done` is now applied -- it was
+deliberately held through review (the Task 130.110 `done` bump was superseded for that
+run, per the Phase 130/140 Updates entries, with the flip deferred until after the PR
+merge). No other change: the body is otherwise byte-identical to the merged state, and
+the only frontmatter deltas are `status` and the `updated` bump for this transition.
+Feature complete; the recorded contingency (drop the millisecond slot entirely if the
+issue #183 error recurs on `SSS`) stands as the trigger for any follow-up feature.
 
 #### 2026-10-07T09:03:15.075+02:00 - Follow-up contingency note added (drop milliseconds if the error recurs on `SSS`)
 
