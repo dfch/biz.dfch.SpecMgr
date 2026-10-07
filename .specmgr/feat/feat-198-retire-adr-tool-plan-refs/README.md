@@ -4,7 +4,7 @@ created: '2026-10-06T10:37:25.837+02:00'
 id: feat-198-retire-adr-tool-plan-refs
 status: progress
 type: feat
-updated: '2026-10-07T11:30:41.528+02:00'
+updated: '2026-10-07T13:20:44.307+02:00'
 version: 1.0.0
 ---
 
@@ -132,25 +132,25 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 #### Phase 110: Verification
 
-- [ ] Task 110.100: Update `tests/adr/prompts/test_*.py` assertions that check for the literal `"adr-tool-plan.md"` string (or old docstring wording changed by Phase 100) — depends on: Task 100.140 — status: not-started
+- [x] Task 110.100: Update `tests/adr/prompts/test_*.py` assertions that check for the literal `"adr-tool-plan.md"` string (or old docstring wording changed by Phase 100) — depends on: Task 100.140 — status: done
 
-- [ ] Task 110.110: Confirm `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns no results (ACC-001) — depends on: Task 100.100 through Task 100.160 — status: not-started
+- [x] Task 110.110: Confirm `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns no results (ACC-001) — depends on: Task 100.100 through Task 100.160 — status: done
 
-- [ ] Task 110.112: Confirm `git diff` shows zero changes under `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`, `create-adr.md`, `docs-generator-cleanup-plan.md` (ACC-003) — depends on: Task 100.100 through Task 100.160 — status: not-started
+- [x] Task 110.112: Confirm `git diff` shows zero changes under `.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md`, `create-adr.md`, `docs-generator-cleanup-plan.md` (ACC-003) — depends on: Task 100.100 through Task 100.160 — status: done
 
-- [ ] Task 110.114: Confirm `AGENTS.md`'s "Development Artifacts (`.specmgr/`)" section contains the new convention clause added by Task 100.160, e.g. via `grep -n "may not cite\|may cite them" AGENTS.md` or manual inspection (ACC-004) — depends on: Task 100.160 — status: not-started
+- [x] Task 110.114: Confirm `AGENTS.md`'s "Development Artifacts (`.specmgr/`)" section contains the new convention clause added by Task 100.160, e.g. via `grep -n "may not cite\|may cite them" AGENTS.md` or manual inspection (ACC-004) — depends on: Task 100.160 — status: done
 
-- [ ] Task 110.120: Regenerate `docs/api/`, `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 — depends on: Task 100.100 through Task 100.160 — status: not-started
+- [x] Task 110.120: Regenerate `docs/api/`, `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`), Python 3.13 — depends on: Task 100.100 through Task 100.160 — status: done
 
-- [ ] Task 110.130: Verify `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest` suite — depends on: Task 110.100, Task 110.120 — status: not-started
+- [x] Task 110.130: Verify `ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest` suite — depends on: Task 110.100, Task 110.120 — status: done
 
-- [ ] Task 110.140: Mark feat-7-various-improvements Task 100.140 as "split out into feat-198-retire-adr-tool-plan-refs" per that folder's established convention; copy the Design Notes per-citation disposition table (or an equivalent per-citation summary) into a new Decisions Made entry in this file to literally satisfy ACC-002 ("each of the 14 original citation sites has a recorded disposition ... in this file's Decisions Made log"), then record the remaining Recent Updates log entries — depends on: Task 110.100 through Task 110.130 — status: not-started
+- [x] Task 110.140: Mark feat-7-various-improvements Task 100.140 as "split out into feat-198-retire-adr-tool-plan-refs" per that folder's established convention; copy the Design Notes per-citation disposition table (or an equivalent per-citation summary) into a new Decisions Made entry in this file to literally satisfy ACC-002 ("each of the 14 original citation sites has a recorded disposition ... in this file's Decisions Made log"), then record the remaining Recent Updates log entries — depends on: Task 110.100 through Task 110.130 — status: done
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-07**: Phase 100 (source + AGENTS.md citation cleanup, Tasks 100.100-100.160) complete — all 14 live citations removed, `grep -rn "adr-tool-plan.md" src/ AGENTS.md` returns nothing; Phase 110 (verification) pending.
+**As of 2026-10-07**: all phases complete — pending review. Phase 100 (source + AGENTS.md citation cleanup, Tasks 100.100-100.160) removed all 14 live citations; Phase 110 (verification, Tasks 110.100-110.140) confirmed every acceptance criterion (ACC-001..ACC-005), removed the 4 remaining plan citations from the `tests/adr/prompts/test_*.py` module docstrings, re-ran the full quality gate green, and recorded the final per-citation dispositions in Decisions Made (ACC-002).
 
 ### Blockers
 
@@ -159,6 +159,35 @@ were both re-read in full during planning and confirmed to cover the cited conte
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 13:20:44.307+02:00 - Phase 110 complete (verification)
+
+Implemented all of Phase 110 (Tasks 110.100-110.140). Task 110.100: per the
+orchestrator/user decision (Q2, 2026-10-07), first verified that no
+assertion in the 4 `tests/adr/prompts/test_*.py` files checks the literal
+`adr-tool-plan.md` string or any Phase-100-changed wording (the prompts'
+returned body text comes from the untouched packaged data files
+`src/biz/dfch/specmgr/adr/data/*.md`; `pytest tests/adr/prompts/ -q` → 44
+passed), then removed the parenthetical plan citation from the 4 test
+module docstrings — nothing else in those files changed, and after the
+edit no text file under `src/`/`AGENTS.md`/`tests/` contains
+`adr-tool-plan` at all (the only remaining grep hits are gitignored
+`__pycache__/*.pyc` bytecode, which embeds the worktree's own path
+`feat-198-retire-adr-tool-plan-refs`). Task 110.110 (ACC-001): `grep -rn
+"adr-tool-plan.md" src/ AGENTS.md` → no results. Task 110.112 (ACC-003):
+`git diff 3c5818d --` the three frozen feat-9 files (`adr-tool-plan.md`,
+`create-adr.md`, `docs-generator-cleanup-plan.md`) → empty. Task 110.114
+(ACC-004): `AGENTS.md`'s Development Artifacts section carries the new
+REQ-004 clause ("No live citations of feature-folder sibling files").
+Task 110.120: re-ran `specmgr docs` and `specmgr mcp-docs` (Python 3.13) —
+both byte-identical no-ops (`git diff --exit-code -- docs/` clean). Task
+110.130 (ACC-005): `ruff format --check` clean (1913 files), `ruff check`
+clean, vulture clean, full `pytest -n auto --cov=src` → 4088 passed
+(including the 4 edited test files), coverage badge unchanged (99%,
+`docs/coverage.svg` no diff). Task 110.140: marked
+feat-7-various-improvements Task 100.140 as split out per that folder's
+established convention, and recorded the final per-citation disposition
+for all 14 original sites in a new Decisions Made entry (ACC-002).
 
 #### 2026-10-07 11:30:41.528+02:00 - Phase 100 complete (source + AGENTS.md citation cleanup)
 
@@ -185,6 +214,34 @@ Split out of feat-7-various-improvements Task 100.140 (GitHub issue #198), after
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 13:20:44.307+02:00 - Final per-citation disposition of all 14 sites (ACC-002)
+
+Final per-citation disposition for all 14 original sites (satisfies
+ACC-002): the Design Notes table's content with the two Phase 100 outcomes
+folded in — (a) the `server.py` resource line cites ADR
+7531106b-074b-4bd8-a83a-e433d01676e2 (not 8cf940c5, not dropped; rationale
+in the Phase 100 entry below), and (b) `AGENTS.md`'s standalone §10 "Next
+steps" paragraph was reduced to its second sentence verbatim
+(orchestrator/user override 2026-10-07). Every one of the 14 sites has an
+explicit "ADR substitution" or "drop" disposition:
+
+| # | Site | Final disposition (Phase 100, 2026-10-07) |
+|---|------|-------------------------------------------|
+| 1 | `server.py` — `specmgr://adr/{id}` resource docstring | ADR substitution: cites ADR 7531106b-074b-4bd8-a83a-e433d01676e2 (not 8cf940c5, not dropped) |
+| 2 | `server.py` — prompt-surface docstring | ADR substitution: cites ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 3 | `uc/models/v1/use_case.py` — Options-gap comment | Drop: sentence already self-contained |
+| 4 | `models/adr/__init__.py` — module docstring (lead-in sentence + 7 `(plan §N)` parentheticals) | Drop: prose already self-contained (Task 100.120) |
+| 5 | `models/adr/v1/__init__.py` — module docstring (§6 versioning lead-in) | Drop: rest of the paragraph already self-contained |
+| 6 | `adr/prompts/__init__.py` — package docstring | ADR substitution: the single consolidated citation of ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 7 | `adr/prompts/create_adr.py` | Drop (consolidated into site 6) |
+| 8 | `adr/prompts/update_adr.py` | Drop (consolidated into site 6) |
+| 9 | `adr/prompts/create_adr_test.py` — 1st citation | Drop (consolidated into site 6) |
+| 10 | `adr/prompts/create_adr_test.py` — 2nd citation | Drop (consolidated into site 6) |
+| 11 | `adr/prompts/update_adr_test.py` — 1st citation | Drop (consolidated into site 6) |
+| 12 | `adr/prompts/update_adr_test.py` — 2nd citation | Drop (consolidated into site 6) |
+| 13 | `AGENTS.md` — `adr/` domain bullet | ADR substitution: cites ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f |
+| 14 | `AGENTS.md` — standalone "§10 Next steps" paragraph | Drop sentence 1; keep sentence 2 verbatim (orchestrator/user override 2026-10-07) |
 
 #### 2026-10-07 11:30:41.528+02:00 - Phase 100 implementation decisions
 
