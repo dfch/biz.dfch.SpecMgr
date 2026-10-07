@@ -28,7 +28,7 @@ specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` pac
                         embedding backend) or null when that extra is not installed -- read via
                         ``importlib.metadata``, never an import of ``fastembed`` itself (feat-134
                         Phase 7, REQ-014).
-specmgr://adr/{id} --    Full ADR document for a given id (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``).
+specmgr://adr/{id} --    Full ADR document for a given id (ADR 7531106b-074b-4bd8-a83a-e433d01676e2).
 specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
                         (kept in sync with ``docs/req_schema.json``) so it works from a
                         real, non-editable install.
@@ -506,8 +506,8 @@ pre-lock/pre-load first).
 Prompts
 -------
 ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
-text guiding an LLM through the ADR tool sequence above (``.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md``
-§11).
+text guiding an LLM through the ADR tool sequence above (ADR
+ddd038f0-ae16-4f4b-beef-df06f7ed226f).
 Use-case prompts (``uc/prompts/``): ``create_uc``, ``update_uc`` --
 instructional text guiding an LLM through the UC tool sequence above.
 Requirement prompts (``req/prompts/``): ``create_req``, ``update_req`` --

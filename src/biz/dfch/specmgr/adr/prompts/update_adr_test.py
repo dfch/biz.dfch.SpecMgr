@@ -17,7 +17,7 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+"""``@mcp.prompt()``: update_adr_test.
 
 Experimental, strictly step-gated variant of ``update_adr`` (see
 ``adr/prompts/update_adr.py``), kept as a *separate* prompt -- not a
@@ -29,8 +29,7 @@ pass a gate") instead of the softer step-by-step narration used by
 ``update_adr``. This lets a caller switch between ``update_adr`` and
 ``update_adr_test`` for the same revision and observe whether the
 stricter phrasing measurably improves compliance (e.g. always reading
-current state first, never guessing at an unspecified change) -- see
-the conversation in .specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11 for the rationale.
+current state first, never guessing at an unspecified change).
 
 The actual instructional text lives in its own packaged data file,
 ``adr/data/adr_update_test_instructions.md``, read fresh on every call via

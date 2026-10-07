@@ -19,11 +19,11 @@ First-line docstrings from each module, organized by domain:
 **adr/**
 
 - `adr/__init__.py` — The Architecture Decision Record (ADR) domain package.
-- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr.
+- `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test.
+- `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr.
+- `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test.
 - `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 - `adr/resources/adr_get.py` — Resource: specmgr://adr/{id} (plan §8, §9a).
 - `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
