@@ -34,20 +34,12 @@ tracked independently and neither blocks the other.
 
 ### Requirements
 
-**Note (2026-08-11 reconciliation):** the list below replaces the original
-`Annotated[Heading(...)]`/`parse_document`/`render_document`/`constraints.py`/
-`frontmatter.py`-shaped requirements (see prior revisions in `git log -p` on
-this file) with what `src/biz/dfch/specmgr/models/md/` and
-`tests/models/md/` actually implement, per ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
-v1.1.0's superseding design (class hierarchy + class-level alias + cursor-
-based recursive descent, not field-level `Annotated` metadata).
-
 - REQ-001: Define a `@markdown(type=, tag=)` class decorator (`markdown.py`) attaching a `_metadata` dict (markdown-it token `type`/HTML `tag`) to a `MarkdownStr` subclass, and six concrete `MarkdownSection1`..`MarkdownSection6` base classes (`markdown_section1.py`..`markdown_section6.py`) that each pin `tag` to `h1`..`h6` respectively — heading level is expressed as which base class is inherited, not as `Annotated` field metadata. Separately, an opt-in `@alias(value=, type=)` class decorator (`alias.py`, `alias_type.py`'s `AliasType.LITERAL`/`SPACE_SEPARATED`/`REGEX`) attaches `_alias_metadata` used only for identity matching at parse time (`alias_match.match_alias`), never for rendering; a class with no `@alias` at all defaults to `AliasType.SPACE_SEPARATED`'s derivation of its own class name (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0), not "accept any heading text". `LITERAL` matching is exact and case-sensitive (no normalization, no trailing-parenthetical stripping) — a heading like `"Extensions (optional)"` must be declared verbatim, since `SPACE_SEPARATED`'s automatic class-name-derived alias cannot express such suffixes. Field optionality (`X | None`) is driven only by the Python type (`MarkdownStr._unwrap_optional`), never by heading text.
 - REQ-002: Define `MarkdownStr` (`markdown_str.py`), a Pydantic base model storing its rendered text verbatim in a private `_value: str` attribute (not parsed `markdown-it-py` tokens retained on the instance), exposing `__str__`/`__repr__` that return `_value` unchanged for a leaf class (no nested `MarkdownStr` fields) or the `mdformat`-normalized concatenation of every nested field's own `__str__()` for a composite class.
 - REQ-003: Implement a recursive parser, `MarkdownStr.from_text(text) -> MarkdownStr` (overridden by `MarkdownSection.from_text` for heading-bearing classes), that tokenizes `text` once per recursion step via a shared module-level `MarkdownIt` instance (`_markdown.py`), and recursively slices it into one block per declared nested field (in declaration order) using that field type's own `get_extent(text)` to determine the block boundary, to arbitrary nesting depth. Frontmatter splitting is explicitly **not** this engine's responsibility (see REQ-006) — callers strip it before calling `from_text`.
 - REQ-004: Implement the inverse `MarkdownStr.__str__`/`MarkdownSection.__str__`, producing Markdown text from a populated model instance. Because every leaf `_value` retains its complete heading+body extent verbatim (not just inline content), `str(instance)` reproduces the exact `mdformat`-normalized text `from_text` consumed — a byte-exact round-trip by construction, not merely a structural one. **Accepted exception (2026-08-11, Task 1.6.3):** `list[MarkdownListItem]` content is the one case where this is only structural, not byte-exact — a genuinely *tight* source list round-trips to an equivalent *loose* list (see `markdown_list_item.py`'s class docstring); loose lists are unaffected. This matches this feature's own founding ADR, which already treats list-rendering variance as out of scope for byte-exact fidelity.
-- REQ-005 *(done, rescoped 2026-08-11)*: Reject raw HTML (both HTML blocks and inline HTML tags) anywhere in a parsed document. Landed as one choke point, `_markdown.py`'s `parse(text) -> list[Token]` (wrapping `md.parse(text)` plus a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` tokens only ever appear there, never in the top-level token list — verified empirically), which every `get_extent`/`from_text` in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` now calls instead of `md.parse(text)` directly — the same "one shared call site" convention `format_text` already established for `mdformat` options. `MarkdownStr.from_text`'s leaf branch (the one place that previously stored `_value` without ever tokenizing it) gained an explicit `parse(text)` call so a leaf class reached directly, not just via a composite parent's `get_extent`, is still checked. This also covers `MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/`MarkdownBlockQuote`, not only the two classes this REQ's own wording names. **Superseded scope note:** the previously-planned generic, composable `Annotated`-based constraint-marker framework (`AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, a generic `NoRawHtml()` marker, all evaluated by one shared validator, plus a `constraints.py` module) was dropped as speculative — only `@markdown`/`@alias` exist and are actually planned as class-level decorators; no `AllowedTags`/`LengthConstraint` mechanism is planned. Raw-HTML rejection is the one concrete, decided need and is tracked directly as this REQ, not as an instance of a generic marker framework. If another concrete constraint need arises later (e.g. a length limit), it should be scoped as its own fresh requirement then, not slotted into a speculative framework revived for the occasion. The previously-noted opt-in `RoundTrip()` marker remains moot regardless: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
-- REQ-006 *(done, 2026-08-11)*: Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29, added `MarkdownFrontmatter` (`models/md/frontmatter.py`), a base Pydantic model with the core fields `id`, `type`, `created`, `updated`, `status`, `version` shared by every markdown-backed document type. `type` is mandatory on the base with no default (non-blank, enforced) — a concrete document type (e.g. a future `uc`/`req`) subclasses `MarkdownFrontmatter` and narrows `type` to a fixed `Literal["..."]` value with a default, acting as a discriminator a generic loader could read before knowing which concrete subclass to validate the rest of the block against. `status` defaults to `"draft"` (blank/`None` normalizes to it too) but, unlike `AdrFrontmatter.status`'s closed six-value enum, is deliberately left free-form here — different document types may want different status vocabularies, and a subclass can add its own stricter validator. `version` is validated against this package's own `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` (`models/md/_util.py`), independent of `models.adr.v1._util`'s equivalent constants — no shared validator module was introduced (per repo-owner direction: `AdrFrontmatter` stays untouched/unconverted for now; a future convergence remains possible but undecided). Frontmatter *stripping* itself is still not this engine's job (unchanged from the original REQ-006 note) — `frontmatter.loads(text).content`/`.metadata` (`python-frontmatter`) remains the caller's responsibility; `MarkdownFrontmatter` only validates `.metadata` once stripped, it does not touch `.content`.
+- REQ-005: *(done, rescoped 2026-08-11)* Reject raw HTML (both HTML blocks and inline HTML tags) anywhere in a parsed document. Landed as one choke point, `_markdown.py`'s `parse(text) -> list[Token]` (wrapping `md.parse(text)` plus a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` tokens only ever appear there, never in the top-level token list — verified empirically), which every `get_extent`/`from_text` in `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` now calls instead of `md.parse(text)` directly — the same "one shared call site" convention `format_text` already established for `mdformat` options. `MarkdownStr.from_text`'s leaf branch (the one place that previously stored `_value` without ever tokenizing it) gained an explicit `parse(text)` call so a leaf class reached directly, not just via a composite parent's `get_extent`, is still checked. This also covers `MarkdownParagraph`/`MarkdownListItem`/`MarkdownCodeBlock`/`MarkdownBlockQuote`, not only the two classes this REQ's own wording names. **Superseded scope note:** the previously-planned generic, composable `Annotated`-based constraint-marker framework (`AllowedTags(tags)`, `LengthConstraint(min_length=, max_length=)`, a generic `NoRawHtml()` marker, all evaluated by one shared validator, plus a `constraints.py` module) was dropped as speculative — only `@markdown`/`@alias` exist and are actually planned as class-level decorators; no `AllowedTags`/`LengthConstraint` mechanism is planned. Raw-HTML rejection is the one concrete, decided need and is tracked directly as this REQ, not as an instance of a generic marker framework. If another concrete constraint need arises later (e.g. a length limit), it should be scoped as its own fresh requirement then, not slotted into a speculative framework revived for the occasion. The previously-noted opt-in `RoundTrip()` marker remains moot regardless: REQ-004's byte-exact round-trip is already the engine's unconditional default behavior, not an opt-in feature to gate.
+- REQ-006: *(done, 2026-08-11)* Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29, added `MarkdownFrontmatter` (`models/md/frontmatter.py`), a base Pydantic model with the core fields `id`, `type`, `created`, `updated`, `status`, `version` shared by every markdown-backed document type. `type` is mandatory on the base with no default (non-blank, enforced) — a concrete document type (e.g. a future `uc`/`req`) subclasses `MarkdownFrontmatter` and narrows `type` to a fixed `Literal["..."]` value with a default, acting as a discriminator a generic loader could read before knowing which concrete subclass to validate the rest of the block against. `status` defaults to `"draft"` (blank/`None` normalizes to it too) but, unlike `AdrFrontmatter.status`'s closed six-value enum, is deliberately left free-form here — different document types may want different status vocabularies, and a subclass can add its own stricter validator. `version` is validated against this package's own `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` (`models/md/_util.py`), independent of `models.adr.v1._util`'s equivalent constants — no shared validator module was introduced (per repo-owner direction: `AdrFrontmatter` stays untouched/unconverted for now; a future convergence remains possible but undecided). Frontmatter *stripping* itself is still not this engine's job (unchanged from the original REQ-006 note) — `frontmatter.loads(text).content`/`.metadata` (`python-frontmatter`) remains the caller's responsibility; `MarkdownFrontmatter` only validates `.metadata` once stripped, it does not touch `.content`.
 - REQ-007: Provide a fixture model reproducing the full nested structure of `tests/feat-5-md-model-parser/uc_example.md` (all three heading levels: `# Buy Goods` → nine `##` sections → all `###` children under `## Characteristic Information`/`## Related Information`), proving the recursive engine end-to-end, including a mix of required and `Optional[...]` fields. Landed as `UseCase`/`CharacteristicInformation`/etc. in `tests/models/md/test_uc_example.py` (distinct from the smaller, earlier `tests/models/md/various_models.py` fixture, which stays as a minimal unit-test double, not a superset of this one). This fixture is a proof of the generic engine, not the official use-case domain model (that ownership stays with `feat-4-use-cases`, if/when it chooses to adopt this engine). `Extensions`/`Sub-Variations`/`Open Issues` are modelled as leaf `MarkdownSection2`s (their dynamically-named, per-use-case h3 sub-headings are inert text) since the engine has no "repeated/list section" concept yet.
 - REQ-008: Add unit tests per building block (`@markdown`/`@alias`/`match_alias` behavior, `MarkdownStr.get_extent`/`from_text`/`__str__`, `MarkdownSection.get_extent`/`from_text`/`__str__`, `Optional[...]` field handling) plus an integration test that round-trips `MarkdownSection1.from_text`/`__str__` against both fixtures end-to-end.
 
@@ -64,7 +56,7 @@ based recursive descent, not field-level `Annotated` metadata).
 
 ### Scope
 
-**Included in this feature:**
+#### Included
 
 - `src/biz/dfch/specmgr/models/md/markdown_str.py` — `MarkdownStr` base
   model: `get_extent()` (generic, non-heading-aware fallback), `from_text()`
@@ -137,7 +129,7 @@ composable `Annotated`-based content-constraint-marker framework
 reject raw HTML anywhere in a parsed document. See REQ-005 for the
 superseded-scope rationale.
 
-**Explicitly out of scope:**
+#### Explicitly Out Of Scope
 
 - Migrating the existing ADR parser/renderer (`models/adr/v1/parser.py`, `renderer.py`) onto this engine — ADR 4c6119c9 stays as-is
 - The regex-based `MdStr`/`MdStrConstraints` single-field string type — owned by `feat-3-md-str-constraints`, a different mechanism for a different problem shape
@@ -147,11 +139,36 @@ superseded-scope rationale.
 
 ### Dependencies
 
-- Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy, shared versioned `models/`), ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (this feature's own heading-recursion engine design decision), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (this feature's frontmatter model design decision, REQ-006/Task 4.1)
+#### Depends On
+
+- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy, shared versioned `models/`), ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (this feature's own heading-recursion engine design decision), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (this feature's frontmatter model design decision, REQ-006/Task 4.1)
 - Related, not blocking: `feat-3-md-str-constraints` (separate regex-based string constraint type), `feat-4-use-cases` (may evaluate adopting this engine for its UC schema later; not assumed here)
 - External: adds `markdown-it-py` (+ a YAML frontmatter parsing dependency) to the library's **base** dependencies, since parsing is core library behavior, not CLI/MCP-only
 
 ### Design Notes
+
+Single, canonical breakdown of work phases and tasks in the Task List below.
+Status lives on the task itself — there is no separate "planned" vs.
+"executed" list to keep in sync; a task's line *is* its current status.
+Update it in place as work progresses (edit, don't duplicate).
+
+**Note (2026-08-11 reconciliation, Task List):** phases/tasks in the Task
+List below replace the original `heading.py`/`constraints.py`/
+`frontmatter.py`/`parser.py`-shaped breakdown (superseded design, see
+Requirements above) with the actual `models/md/` module layout. Task
+numbering restarts at Phase 0 but no history is lost — the original phase
+text remains recoverable via `git log -p` on this file. If a task's scope
+changes mid-flight, edit its description in place; rely on git history
+(`git log -p` on this file) to recover what was originally planned, rather
+than keeping a second copy of the task around.
+
+**Note (2026-08-11 reconciliation):** the list in Requirements above replaces
+the original `Annotated[Heading(...)]`/`parse_document`/`render_document`/
+`constraints.py`/`frontmatter.py`-shaped requirements (see prior revisions in
+`git log -p` on this file) with what `src/biz/dfch/specmgr/models/md/` and
+`tests/models/md/` actually implement, per ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
+v1.1.0's superseding design (class hierarchy + class-level alias + cursor-
+based recursive descent, not field-level `Annotated` metadata).
 
 See ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (v1.5.0) for the full rationale,
 considered alternatives (imperative class decorator; convention-only field
@@ -182,7 +199,7 @@ now-superseded bullets this replaced):
   as-is; this feature's own model/tests live under `tests/models/md/`, not
   `tests/models/markdown/v1/` as originally sketched here).
 
-### Related ADRs
+### Related Decisions
 
 - 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
 - bc5e18ad-6bbf-4265-bae4-3e34984a2d29: Generic base frontmatter model for markdown document types (`models/md/frontmatter.py`)
@@ -191,17 +208,6 @@ now-superseded bullets this replaced):
 - 4c6119c9-532f-4629-8977-108e78304f48: Parse-validate-render pipeline for ADRs (related, not superseded — this feature does not migrate the ADR pipeline)
 
 ### Task List
-
-Single, canonical breakdown of work phases and tasks. Status lives on the
-task itself — there is no separate "planned" vs. "executed" list to keep in
-sync; a task's line *is* its current status. Update it in place as work
-progresses (edit, don't duplicate).
-
-**Note (2026-08-11 reconciliation):** phases/tasks below replace the
-original `heading.py`/`constraints.py`/`frontmatter.py`/`parser.py`-shaped
-breakdown (superseded design, see Requirements above) with the actual
-`models/md/` module layout. Task numbering restarts at Phase 0 but no
-history is lost — the original phase text remains recoverable via `git log -p` on this file.
 
 #### Phase 100: Preparation
 
@@ -214,7 +220,7 @@ history is lost — the original phase text remains recoverable via `git log -p`
 - [x] Task 110.110: Create `alias_type.py` — `AliasType` (`LITERAL`/`SPACE_SEPARATED`/`REGEX`) and `alias.py` — `@alias(value=, type=)` class decorator attaching `_alias_metadata` (opt-in, parse-time identity only, never used for rendering) — depends on: none — status: done
 - [x] Task 110.120: Create `alias_match.py` — `space_separated_name(class_name)` and `match_alias(cls, heading_text)`, enforcing a declared `@alias` (or always matching if none declared) — depends on: Task 1.2 — status: done
 - [x] Task 110.130: Create `markdown_section1.py`..`markdown_section6.py` — concrete `MarkdownSection` subclasses for h1..h6, each just supplying `@markdown(type="heading_open", tag="hN")` — depends on: Task 2.1 (below) — status: done. h4/h5/h6 additionally needed a bugfix (a live, always-crashing `_tokens`-based assertion left over from before `_value` replaced `_tokens`, see Recent Updates) and dedicated test coverage (`tests/models/md/test_markdown_section_levels.py`), neither of which existed until this reconciliation.
-- [x] ~~Task 1.5: Create `metadata_utils.py`~~ — **removed 2026-08-11**: `_metadata` introspection helpers (`get_direct_metadata`, `get_inherited_metadata`, `find_metadata_source`, `get_metadata_chain`, `has_metadata`) were dead code — never called by the core recursion path, never re-exercised by any test, and its own docstring examples referenced a nonexistent `@annotate` decorator (the real one is `@markdown`). Deleted the module, its `docs/api/` page, and its `models/md/__init__.py` re-exports rather than backfilling tests for unused code — depends on: Task 1.1 — status: removed
+- [x] Task 100.120: ~~Create `metadata_utils.py`~~ — **removed 2026-08-11**: `_metadata` introspection helpers (`get_direct_metadata`, `get_inherited_metadata`, `find_metadata_source`, `get_metadata_chain`, `has_metadata`) were dead code — never called by the core recursion path, never re-exercised by any test, and its own docstring examples referenced a nonexistent `@annotate` decorator (the real one is `@markdown`). Deleted the module, its `docs/api/` page, and its `models/md/__init__.py` re-exports rather than backfilling tests for unused code — depends on: Task 1.1 — status: removed
 - [x] Task 110.140: Unit tests for Tasks 1.1–1.5 (`test_alias_match.py`: `space_separated_name` conversion cases, every `match_alias` branch including no-alias-always-matches and `LITERAL`'s case-sensitivity) — depends on: Task 1.3 — status: done
 - [x] Task 110.150: Support `list[MarkdownStr]` (or `list[SomeMarkdownStrSubclass]`) fields in `markdown_str.py`'s `_get_field_names`/`from_text`/`__str__`. Detection: `_unwrap_list(annotation) -> tuple[type, bool]` (sibling to `_unwrap_optional`, plain `list[X]` only via `typing.get_origin(annotation) is list` — no `Sequence`/`tuple` support), applied after `_unwrap_optional` so `list[X] | None` unwraps to `(X, optional=True, is_list=True)`. Consumption: `process_list_field(name, item_type, text, *, optional=False) -> tuple[str, list[MarkdownStr] | None]` — deliberately **not** mirroring `process_field`'s `(extent, value)` contract (an earlier draft did and was wrong: summing per-item extents against a locally-renormalized string silently loses lines dropped by `mdformat.text()` between items, e.g. a separating blank line, causing `from_text`'s generic `remaining_text.splitlines()[extent:]` slice to misalign against the caller's *original*, not-yet-renormalized `remaining_text` — the exact class of bug `from_text` itself already moved off a line-index `cursor` to avoid). Instead it loops `item_type.get_extent`/slice/`mdformat`-renormalize/`item_type.from_text` while extent `> 0` and returns the already-fully-reduced `remaining_text` string directly, which `from_text` adopts as-is for list fields (bypassing the generic extent-slicing step used for scalar fields). No item found on the *first* iteration is an absence (mandatory `list[X]` -> assertion error, matching today's missing-mandatory-scalar-field behavior; `list[X] | None` -> field left `None`, `text` returned unchanged) while no item found on any *subsequent* iteration just ends the list normally (items 2+ are implicitly optional without needing `Optional[X]` themselves). Rendering: `__str__` iterates the list and appends `str(item)` per element, same as today's single-field append, skipping a `None` list exactly like an absent optional scalar field — depends on: Task 2.1 — status: done
 - [x] Task 110.160: Support base object `MarkdownParagraph` (`markdown_paragraph.py`) — a single class (`@markdown(type="paragraph_open", tag="p")`, no level spectrum, no `@alias` enforcement — a paragraph's text is free-form content, not a title). Leaf case (no declared fields): `get_extent`/`from_text` claim exactly the paragraph's own line span, nothing more — content that follows (even a sibling paragraph) is left untouched, unlike a leaf `MarkdownSection`'s greedy-to-next-heading behavior. Composite case (has declared `MarkdownStr`/`list[MarkdownStr]` fields): `_value` holds only the paragraph's own inline text; the remainder is delegated to `super().from_text()` (`MarkdownStr.from_text`) for field population, exactly like `MarkdownSection.from_text` delegates its post-heading body — bounded, in `get_extent`, only by the next heading of *any* level (h1-h6), since a paragraph has no level of its own and can never itself contain a heading. `__str__` mirrors `MarkdownSection.__str__` minus the heading-marker reconstruction — depends on: Task 2.1 — status: done
@@ -233,8 +239,7 @@ history is lost — the original phase text remains recoverable via `git log -p`
 #### Phase 130: Reject raw HTML *(done, rescoped 2026-08-11)*
 
 - [x] Task 130.100: Make `MarkdownStr.from_text`/`MarkdownSection.from_text` reject raw HTML (`html_block`/`html_inline` tokens) anywhere in the tokenized text — depends on: Task 2.1 — status: done. Implemented as a single choke point rather than per-class special-casing: `_markdown.py` gained `parse(text) -> list[Token]` (wraps `md.parse(text)`, then a recursive `_assert_no_raw_html` walk that also descends into every `"inline"` token's `.children`, since `html_inline` only ever nests there) and `_RAW_HTML_TOKEN_TYPES = ("html_block", "html_inline")`. Every `md.parse(text)` call site across `markdown_str.py`/`markdown_section.py`/`markdown_paragraph.py`/`markdown_list_item.py`/`markdown_code_block.py`/`markdown_block_quote.py` (14 sites) now calls `parse(text)` instead — disabling markdown-it's `html_block`/`html_inline` rules outright (the plan's other originally-sketched option) was rejected because that would make raw HTML silently parse as something else (e.g. plain text), not raise, which contradicts "reject". `MarkdownStr.from_text`'s leaf branch also gained an explicit `parse(text)` call it previously lacked entirely (it stored `_value` unchecked), so a leaf class reached directly — not only via a composite parent's `get_extent` — is still guarded.
-- [x] Task 130.110: Unit tests for Task 3.1 — depends on: Task 3.1 — status: done. `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raising on `html_block`/on `html_inline` nested in a paragraph's or heading's `inline` children, staying unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block; plus end-to-end `MarkdownStr.from_text`/`MarkdownSection.from_text` (leaf) pass/fail cases per ACC-005.
-- **Note (rescoped 2026-08-11):** this phase no longer plans a generic `constraints.py` module with composable `AllowedTags`/`LengthConstraint`/`NoRawHtml` marker classes plus a shared validator — that framework was speculative and dropped; only `@markdown`/`@alias` exist as class-level decorators, and raw-HTML rejection above is the one concrete, decided need. The previously-noted opt-in `RoundTrip()` marker remains dropped too — REQ-004's byte-exact round-trip is already the engine's unconditional default (see Requirements/Scope above), so there is nothing left for such a marker to gate.
+- [x] Task 130.110: Unit tests for Task 3.1 — depends on: Task 3.1 — status: done. `tests/models/md/test_markdown_html_rejection.py` (12 cases): `_markdown.parse` raising on `html_block`/on `html_inline` nested in a paragraph's or heading's `inline` children, staying unaffected by plain Markdown formatting (`**strong**`/`*emphasis*`) and by HTML-looking text inside a fenced code block; plus end-to-end `MarkdownStr.from_text`/`MarkdownSection.from_text` (leaf) pass/fail cases per ACC-005. **Note (rescoped 2026-08-11):** this phase no longer plans a generic `constraints.py` module with composable `AllowedTags`/`LengthConstraint`/`NoRawHtml` marker classes plus a shared validator — that framework was speculative and dropped; only `@markdown`/`@alias` exist as class-level decorators, and raw-HTML rejection above is the one concrete, decided need. The previously-noted opt-in `RoundTrip()` marker remains dropped too — REQ-004's byte-exact round-trip is already the engine's unconditional default (see Requirements/Scope above), so there is nothing left for such a marker to gate.
 
 #### Phase 140: Frontmatter *(done, 2026-08-11)*
 
@@ -251,10 +256,6 @@ history is lost — the original phase text remains recoverable via `git log -p`
 
 - [x] Task 160.100: Module docstrings for every file under `src/biz/dfch/specmgr/models/md/` per `.specmgr/conventions.md` — depends on: Task 5.3 — status: done
 - [x] Task 160.110: Run `specmgr docs` to regenerate `docs/api/`/`docs/GENERATED.md` — depends on: Task 6.1 — status: done (`docs/api/biz.dfch.specmgr.models.md.*.md` staged; confirmed no drift on re-run during this reconciliation)
-
-**Note:** If a task's scope changes mid-flight, edit its description in place;
-rely on git history (`git log -p` on this file) to recover what was
-originally planned, rather than keeping a second copy of the task around.
 
 ## Progress
 
@@ -298,16 +299,14 @@ non-blocking items intentionally left open when this feature was closed.
 
 - [ ] None identified at this time.
 
-### Follow-ups
-
-This feature is closed (status `done`, GitHub issue #5 closed) — the items
-below are optional, explicitly non-blocking, and were left open on purpose
-when the feature was closed. They are not "next steps required to finish
-this feature"; pick any of them up as its own future work (a new
-`feat-N-slug`, or folded into whichever feature first needs it) if/when it
-becomes relevant. Earlier, now-resolved "Next" entries from this feature's
-active development are not repeated here — see git history (`git log -p`
-on this file) or the Recent Updates log below for that record.
+**Follow-ups:** This feature is closed (status `done`, GitHub issue #5
+closed) — the items below are optional, explicitly non-blocking, and were
+left open on purpose when the feature was closed. They are not "next steps
+required to finish this feature"; pick any of them up as its own future work
+(a new `feat-N-slug`, or folded into whichever feature first needs it)
+if/when it becomes relevant. Earlier, now-resolved "Next" entries from this
+feature's active development are not repeated here — see git history
+(`git log -p` on this file) or the Updates log below for that record.
 
 1. `validate_heading_structure` (`MarkdownSection`, `model_validator(mode="after")`)
    and the docstring `Example` under `name` are effectively inert (all
@@ -336,9 +335,9 @@ on this file) or the Recent Updates log below for that record.
    it. A future decision may converge the two once there is appetite to
    touch the ADR pipeline; not scheduled here.
 
-### Recent Updates
+### Updates
 
-#### 2026-08-15 — post-closure addition: new `MarkdownComment` class + `_assert_no_raw_html` inline-comment permission
+#### 2026-08-15T12:00:00.000Z - post-closure addition: new `MarkdownComment` class + `_assert_no_raw_html` inline-comment permission
 
 Requested by `feat-6-requirement-artifact`'s Task 3.20, since both changes
 land in this feature's own `models/md/` module (`markdown_comment.py`
@@ -379,7 +378,7 @@ trim.
   permitted; non-comment inline tag still rejected). Full project suite
   green (769 tests), `ruff format --check`/`ruff check`/`vulture` clean.
 
-#### 2026-08-14 — post-closure docstring shortening: `MarkdownListItem`/`MarkdownParagraph` class docstrings trimmed
+#### 2026-08-14T12:00:00.000Z - post-closure docstring shortening: `MarkdownListItem`/`MarkdownParagraph` class docstrings trimmed
 
 Requested by `feat-6-requirement-artifact`'s Task 2.6, since these two
 classes' verbose class docstrings get inlined verbatim into every JSON
@@ -405,7 +404,7 @@ code, made here since this feature owns the module, same
   reducing what these two shared base classes contribute per-reference,
   not the REQ schema's overall size on this particular pass.
 
-#### 2026-08-13 — post-closure bug fix: `MarkdownSection.text` now returns everything for a leaf section
+#### 2026-08-13T12:00:00.000Z - post-closure bug fix: `MarkdownSection.text` now returns everything for a leaf section
 
 Discovered while `feat-6-requirement-artifact`'s `parse_req` MCP tool
 serialized a parsed `Requirement` via `model_dump()` — again the same
@@ -462,7 +461,7 @@ genuine bug in already-shipped code, fixed in place.
   `model_dump()`/`.text` angle specifically — the round-trip (`__str__`)
   guarantee itself was already correct and unaffected by this bug.
 
-#### 2026-08-12 — post-closure bug fix: `get_extent` now also checks `@alias`
+#### 2026-08-12T12:00:00.000Z - post-closure bug fix: `get_extent` now also checks `@alias`
 
 Discovered while `feat-4-use-cases` adopted this engine for its own `uc`
 schema (exactly the scenario anticipated by Follow-up #3 above) — not new
@@ -515,7 +514,7 @@ code, fixed in place rather than worked around downstream.
   the difference is `feat-4-use-cases`' own new `uc/models/v2` test files,
   not related to this fix's own test fallout).
 
-#### 2026-08-11 (continued, part 12) — feature closed
+#### 2026-08-11T23:00:00.000Z - (continued, part 12) feature closed
 
 - Confirmed Task 4.1/4.2's commit (`8d99dd3`) was pushed and GitHub issue #5
   was closed. Set frontmatter `status: done` (from `in-progress`); every
@@ -538,7 +537,7 @@ code, fixed in place rather than worked around downstream.
   place, rely on git history" convention -- their resolution is already
   recorded in this Recent Updates log and in git history.
 
-#### 2026-08-11 (continued, part 11)
+#### 2026-08-11T22:00:00.000Z - (continued, part 11)
 
 - Completed: Task 4.1/4.2 (REQ-006/ACC-006), the last not-started item in
   this feature's Task List. Preceded by a design discussion with
@@ -587,7 +586,7 @@ code, fixed in place rather than worked around downstream.
     Dependencies/Related ADRs (new ADR) accordingly. All phases in this
     feature's Task List are now done.
 
-#### 2026-08-11 (continued, part 10)
+#### 2026-08-11T21:00:00.000Z - (continued, part 10)
 
 - Completed: Task 3.1/3.2 (REQ-005/ACC-005) — raw HTML rejection, the last
   item Phase 3 needed. Implemented as one choke point rather than
@@ -638,7 +637,7 @@ code, fixed in place rather than worked around downstream.
     4 (REQ-006, typed frontmatter) is now the only not-started work left
     in this feature's Task List.
 
-#### 2026-08-11 (continued, part 9)
+#### 2026-08-11T20:00:00.000Z - (continued, part 9)
 
 - Found and fixed one more piece of stale documentation missed by the
   ADR-reconciliation/REQ-005-rescoping passes above: the plan's own
@@ -656,7 +655,7 @@ code, fixed in place rather than worked around downstream.
   state" section can drift silently in exactly the way dated history entries
   can't.
 
-#### 2026-08-11 (continued, part 8)
+#### 2026-08-11T19:00:00.000Z - (continued, part 8)
 
 - Rescoped: REQ-005 (and its Phase 3/Task 3.1/3.2/ACC-005 counterparts), per
   repo-owner direction. Prior text planned a generic, composable
@@ -674,7 +673,7 @@ code, fixed in place rather than worked around downstream.
   (ACC-005), Scope (reconciliation note + "Explicitly out of scope"), and
   Task List (Phase 3 header/Task 3.1/3.2) accordingly.
 
-#### 2026-08-11 (continued, part 7)
+#### 2026-08-11T18:00:00.000Z - (continued, part 7)
 
 - Completed: Task 1.6.3 -- `MarkdownListItem` (`markdown_list_item.py`), the
   final Phase 1 building block, resolving a stalled prior session (see
@@ -770,7 +769,7 @@ code, fixed in place rather than worked around downstream.
 - Next: see item 5 above (optional future adoption in `test_uc_example.py`'s
   fixture); items 2-4 above are unchanged, not touched this session.
 
-#### 2026-08-11 (continued, part 6)
+#### 2026-08-11T17:00:00.000Z - (continued, part 6)
 
 - Completed: Task 1.6.2 -- `MarkdownParagraph` (`markdown_paragraph.py`), a
   single class (no `MarkdownParagraph1..6` spectrum -- a paragraph has no
@@ -813,7 +812,7 @@ code, fixed in place rather than worked around downstream.
   - Full suite: 402 passed, 0 failed (390 -> 402, 12 new). `ruff format --check`/`ruff check`/`vulture` clean.
   - Task 1.6.3 (`MarkdownList`) remains not-started.
 
-#### 2026-08-11 (continued, part 5)
+#### 2026-08-11T16:00:00.000Z - (continued, part 5)
 
 - Completed: Task 1.6.1 -- `list[MarkdownStr]`/`list[MarkdownStr] | None` field
   support in `markdown_str.py`, added ad hoc (not part of the original task
@@ -872,7 +871,7 @@ code, fixed in place rather than worked around downstream.
     repo-owner, deliberately deferred to a later session per explicit
     instruction this session.
 
-#### 2026-08-11 (continued, part 4)
+#### 2026-08-11T15:00:00.000Z - (continued, part 4)
 
 - Completed: Corrected an error in ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   (now v1.4.0) and in `alias_match.py`'s actual code, per explicit
@@ -915,7 +914,7 @@ code, fixed in place rather than worked around downstream.
   - REQ-001/ACC-001 above updated to stop claiming "a class with no `@alias`
     at all always matches any heading text", stale since before v1.2.0.
 
-#### 2026-08-11 (continued, part 3)
+#### 2026-08-11T14:00:00.000Z - (continued, part 3)
 
 - Completed: Brought `alias_match.py`/`markdown_section.py` in line with
   ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.2.0/v1.3.1 (previously
@@ -958,7 +957,7 @@ code, fixed in place rather than worked around downstream.
     unrelated `F841`). `specmgr docs` regenerated, no drift beyond the
     docstring content changes above (still 80 modules).
 
-#### 2026-08-11 (continued, part 2)
+#### 2026-08-11T13:00:00.000Z - (continued, part 2)
 
 - Completed: `markdown_section4.py`/`5.py`/`6.py` were also flagged as
   unreferenced (no import anywhere outside their own file, no test
@@ -986,7 +985,7 @@ code, fixed in place rather than worked around downstream.
     clean (same 81 modules, only content diffs). `ruff format --check`/
     `ruff check` clean (same pre-existing, unrelated `F841`).
 
-#### 2026-08-11 (continued)
+#### 2026-08-11T12:00:00.000Z - (continued)
 
 - Completed: Deleted `src/biz/dfch/specmgr/models/md/metadata_utils.py`
   (`get_direct_metadata`/`get_inherited_metadata`/`find_metadata_source`/
@@ -1002,7 +1001,7 @@ code, fixed in place rather than worked around downstream.
   Updated Scope/Task List above (Task 1.5 struck through as removed rather
   than done).
 
-#### 2026-08-11
+#### 2026-08-11T11:00:00.000Z - Reconciliation
 
 - Completed: Reconciled the Requirements/Acceptance Criteria/Task List
   sections above with the actual `src/biz/dfch/specmgr/models/md/`
@@ -1064,7 +1063,7 @@ code, fixed in place rather than worked around downstream.
   richer content — left for a future session to re-check, not assumed
   either way here).
 
-#### 2026-08-10
+#### 2026-08-10T20:00:00.000Z - Core recursive extraction mechanics
 
 - Completed (this session): Implemented and unit-tested the core recursive
   extraction mechanics under `src/biz/dfch/specmgr/models/md/`:
@@ -1117,7 +1116,7 @@ code, fixed in place rather than worked around downstream.
   heading-triple validation), then rewrite `test_main_document_from_text`
   against realistic multi-heading input.
 
-#### 2026-08-10 (continued)
+#### 2026-08-10T19:00:00.000Z - (continued)
 
 - Completed: Fixed the two items from the "Next" list above, plus a bug
   discovered while prototyping the first fix:
@@ -1183,7 +1182,7 @@ code, fixed in place rather than worked around downstream.
   `MarkdownSection`/`MarkdownStr` rendering (`__str__`) so a composite
   section re-emits its own heading, not just its children's text.
 
-#### 2026-08-10 (continued, part 2)
+#### 2026-08-10T18:00:00.000Z - (continued, part 2)
 
 - Completed: Added `MarkdownSection.__str__`, overriding
   `MarkdownStr.__str__`. Derives the heading level from `cls._metadata['tag']`
@@ -1213,7 +1212,7 @@ code, fixed in place rather than worked around downstream.
   implementation, and decide whether leaf sections need a second field to
   retain body content.
 
-#### 2026-08-10 (continued, part 3)
+#### 2026-08-10T17:00:00.000Z - (continued, part 3)
 
 - Completed: Corrected a design error in the previous two entries, caught
   by the repo owner: `MarkdownSection._value` was being set to the
@@ -1261,7 +1260,7 @@ code, fixed in place rather than worked around downstream.
   implementation; the leaf-body-text question from previous entries is now
   resolved and removed from "Next".
 
-#### 2026-08-10 (continued, part 4)
+#### 2026-08-10T16:00:00.000Z - (continued, part 4)
 
 - Completed: Per repo-owner request, `MarkdownSection.from_text` now
   honours `@alias` (previously `_alias_metadata`, set by `@alias`, was
@@ -1312,7 +1311,7 @@ code, fixed in place rather than worked around downstream.
   task list — the Task List below has drifted from what's actually
   implemented and needs reconciliation (see "Next" item 1).
 
-#### 2026-08-08 (even later)
+#### 2026-08-08T14:00:00.000Z - (even later)
 
 - Completed: Added a committed, standalone spike-test suite under
   `tests/feat-5-md-model-parser/` proving out several of the design
@@ -1351,7 +1350,7 @@ code, fixed in place rather than worked around downstream.
 - Notes: None of this spike work touches `feat-3-md-str-constraints` or
   `feat-4-use-cases`.
 
-#### 2026-08-08 (later)
+#### 2026-08-08T13:00:00.000Z - (later)
 
 - Completed: Revised the design (and ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae,
   now v1.1.0) after further review of `req_parser.py`: replaced the
@@ -1380,7 +1379,7 @@ code, fixed in place rather than worked around downstream.
   or `feat-4-use-cases` content. See `tests/feat-5-md-model-parser/req_parser.py`'s
   top-of-file notes block for the fullest up-to-date design detail.
 
-#### 2026-08-08
+#### 2026-08-08T12:00:00.000Z - Created
 
 - Completed: Examined `tests/feat-5-md-model-parser/req_parser.py` and
   `uc_example.md`; clarified design (declarative `Heading` metadata, opt-in
@@ -1395,26 +1394,34 @@ code, fixed in place rather than worked around downstream.
 
 ### Decisions Made
 
-- **[2026-08-08]**: Kept this generic AST/`markdown-it-py`-based engine as a
-  separate feature from `feat-3-md-str-constraints`'s regex-based `MdStr`,
-  rather than superseding it or merging the two — they address different
-  problem shapes (whole-document structural parsing vs. single-field inline
-  constraint checking) and neither blocks the other.
-- **[2026-08-08]**: `RoundTrip()` fidelity checking is opt-in per field/class,
-  never a default constraint, since Markdown has many equally valid
-  renderings of the same semantic content.
-- **[2026-08-08]**: Superseded the `Annotated[Heading(tag=, alias=)]` field
-  metadata mechanism with a `MarkdownHeading1`..`MarkdownHeading6` class
-  hierarchy + class-level alias + sequential cursor-based recursive-descent
-  parser (see ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.1.0 for full
-  rationale) — level is now a type, not metadata; alias is parse-time-only
-  identity, never used for rendering; heading tokens are stored and replayed
-  verbatim instead of resynthesized, so inline formatting round-trips.
+#### 2026-08-08T16:00:00.000Z - Superseded the Annotated field-metadata mechanism
+
+Superseded the `Annotated[Heading(tag=, alias=)]` field
+metadata mechanism with a `MarkdownHeading1`..`MarkdownHeading6` class
+hierarchy + class-level alias + sequential cursor-based recursive-descent
+parser (see ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.1.0 for full
+rationale) — level is now a type, not metadata; alias is parse-time-only
+identity, never used for rendering; heading tokens are stored and replayed
+verbatim instead of resynthesized, so inline formatting round-trips.
+
+#### 2026-08-08T15:00:00.000Z - RoundTrip() fidelity is opt-in
+
+`RoundTrip()` fidelity checking is opt-in per field/class,
+never a default constraint, since Markdown has many equally valid
+renderings of the same semantic content.
+
+#### 2026-08-08T14:30:00.000Z - Kept as a separate feature from feat-3
+
+Kept this generic AST/`markdown-it-py`-based engine as a
+separate feature from `feat-3-md-str-constraints`'s regex-based `MdStr`,
+rather than superseding it or merging the two — they address different
+problem shapes (whole-document structural parsing vs. single-field inline
+constraint checking) and neither blocks the other.
 
 ### Related PRs / Commits
 
 - [Issue #5](https://github.com/dfch/biz.dfch.SpecMgr/issues/5): Generic heading-mapped Markdown-to-Pydantic document parser
 
-## Technical Debt
+### More Information
 
 (No technical debt identified yet for this feature.)
