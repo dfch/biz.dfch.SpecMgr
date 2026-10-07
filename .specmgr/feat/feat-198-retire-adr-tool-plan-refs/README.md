@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-06T10:37:25.837+02:00'
 id: feat-198-retire-adr-tool-plan-refs
-status: review
+status: done
 type: feat
-updated: '2026-10-07T14:13:49.519+02:00'
+updated: '2026-10-07T19:57:37.362+02:00'
 version: 1.0.0
 ---
 
@@ -150,7 +150,7 @@ were both re-read in full during planning and confirmed to cover the cited conte
 
 ### Current Status
 
-**As of 2026-10-07**: all phases complete — pending review. Phase 100 (source + AGENTS.md citation cleanup, Tasks 100.100-100.160) removed all 14 live citations; Phase 110 (verification, Tasks 110.100-110.140) confirmed every acceptance criterion (ACC-001..ACC-005), removed the 4 remaining plan citations from the `tests/adr/prompts/test_*.py` module docstrings, re-ran the full quality gate green, and recorded the final per-citation dispositions in Decisions Made (ACC-002).
+**As of 2026-10-07**: all phases complete and the independent review passed — status `done`. Phase 100 (source + AGENTS.md citation cleanup, Tasks 100.100-100.160) removed all 14 live citations; Phase 110 (verification, Tasks 110.100-110.140) confirmed every acceptance criterion (ACC-001..ACC-005). The feat-reviewer pass (2026-10-07) found no Errors and no Gaps; post-review improvement I2 (name `tests/` in the new `AGENTS.md` no-live-citations clause, matching the scope the scrub was actually applied to under the recorded user decision) is applied in this update. Remaining close-out: rebase onto `dev` to drop the byte-identical duplicate test-harness commit (I1), then push, CI, and merge of the PR into `dev`.
 
 ### Blockers
 
@@ -159,6 +159,26 @@ were both re-read in full during planning and confirmed to cover the cited conte
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 19:57:37.362+02:00 - Review passed; post-review improvement I2 applied; status set to done
+
+Independent feature review (feat-reviewer subagent) over the 4-commit diff vs
+merge-base `3c5818d` (28 files): no Errors, no Gaps — all five requirements
+implemented, all five acceptance criteria verified with concrete evidence
+(ACC-001 grep, ACC-003 frozen-folder diff, ACC-004 clause presence, ACC-005
+full pytest 4088 passed, ACC-002 per-citation disposition table). Findings
+and dispositions: D1 (Task 110.100's wording says "assertions" but the change
+was in 4 test module *docstrings* — no assertion ever checked the literal;
+already disclosed in the Phase 110 entry; left as documented history, no fix),
+I1 (branch commit `458c881` is patch-byte-identical to `dev`'s `f27525a` —
+verified — so the branch will be rebased onto `dev` before the PR, dropping
+the duplicate), I2 (the new `AGENTS.md` clause named `src/`/`AGENTS.md` only,
+but the scrub also covered `tests/` per the recorded user decision — applied
+now: clause extended to name `tests/`), I3 (the ~90 bare `(plan §N)` shorthand
+citations are in scope of feat-199; when feat-199 lands, re-check the clause
+against that residue so convention and codebase don't silently diverge).
+Status moves from `review` to `done`; close-out (rebase, push, PR, CI, merge
+into `dev`) follows.
 
 #### 2026-10-07 14:10:19.428+02:00 - Status set to review; all acceptance criteria verified and ticked
 
@@ -230,6 +250,17 @@ Split out of feat-7-various-improvements Task 100.140 (GitHub issue #198), after
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07 19:57:37.362+02:00 - Post-review improvement I2 applied (user-approved)
+
+Per feat-reviewer finding I2 and explicit user approval (2026-10-07): extended
+the new `AGENTS.md` no-live-citations clause from "nothing in
+`src/`/`AGENTS.md` may cite them by path" to "nothing in `src/`, `tests/`, or
+`AGENTS.md` may cite them by path", so the codified convention
+matches the scope the scrub was actually applied to under the recorded user
+decision behind the Task 110.100 extension. The plan's REQ-004 text is left
+unchanged as the historical record of the requirement as accepted; this entry
+is the disclosure of the post-review widening.
 
 #### 2026-10-07 13:20:44.307+02:00 - Final per-citation disposition of all 14 sites (ACC-002)
 

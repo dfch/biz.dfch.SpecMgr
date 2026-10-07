@@ -1023,9 +1023,9 @@ documentation in `docs/`:
 - **No live citations of feature-folder sibling files**: a feature folder may
   contain other local files beyond `README.md`/optional `history.md`
   (session transcripts, reference copies, templates, etc.), but nothing in
-  `src/`/`AGENTS.md` may cite them by path — anything needing a stable,
-  live citation from code must be a proper specmgr artifact (normally its
-  own ADR).
+  `src/`, `tests/`, or `AGENTS.md` may cite them by path — anything needing
+  a stable, live citation from code must be a proper specmgr artifact
+  (normally its own ADR).
 - **ADR vs. feature-level "Decisions Made" log**: a decision belongs in a
   full ADR (`docs/adr/`) if it's architecture/structure-level, affects more
   than one feature or the repo as a whole, or reverses/supersedes a previous
