@@ -20,16 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   false-positive guards (docstring-prose/comment mentions, and the
   `_SPECMGR_ROOT` identifier that merely contains the prefix) are pinned by
   negative fixture cases (feat-126-server-json-env-drift, GitHub issue #126).
-- `server.json` (the MCP Registry publisher manifest) now lists the two
+- `server.json` (the MCP Registry publisher manifest) now lists the six
   `SPECMGR_*` environment variables the code reads that were previously
-  undocumented: `SPECMGR_SIMILARITY_DISABLED` (presence-based opt-out for
-  the semantic-similarity search feature and its server-startup warmup
-  phase) and `SPECMGR_FEAT_WARMUP_DISABLED` (presence-based opt-out for
-  the `feat` domain's two server-startup cache-warming phases). Both
-  entries carry a `name` and a presence-based `description` only -- no
-  `default`, mirroring the gating the code performs (set to any value to
-  enable the gate; unset by default) and what `specmgr://config` reports
-  (the `similarity.disabled` and `feat_warmup_disabled` fields)
+  undocumented: the two presence-based feature gates `SPECMGR_SIMILARITY_DISABLED`
+  (opt-out for the semantic-similarity search feature and its server-startup
+  warmup phase) and `SPECMGR_FEAT_WARMUP_DISABLED` (opt-out for the `feat`
+  domain's two server-startup cache-warming phases); the three PlantUML
+  validation-source selectors `SPECMGR_PLANTUML_JAR` /
+  `SPECMGR_PLANTUML_BIN` / `SPECMGR_PLANTUML_URL`, of which the first one
+  set (in that order) is the only source used, with no fall-through, no
+  PATH discovery, and no public default (all three unset is the offline
+  structure-only floor, and diagram content is only sent to a PlantUML
+  server if the URL is set); and `SPECMGR_TESTS_NO_DOTENV`, the
+  presence-based test/CI sentinel that skips the CLI's module-level
+  default `.env` load entirely when set. All six entries carry a `name`
+  and a presence-based `description` only -- no `default`, mirroring the
+  gating the code performs (set to any value to enable; unset by default)
+  and what `specmgr://config` reports (the `similarity.disabled`,
+  `feat_warmup_disabled`, and `plantuml` fields)
   (feat-126-server-json-env-drift, GitHub issue #126).
 
 ### Changed

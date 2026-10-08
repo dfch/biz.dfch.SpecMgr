@@ -35,7 +35,13 @@ regions blanked -- not a full parser (the plan pins the line-regex design, with
 tightening as the sanctioned remedy for false positives; this blanking is that
 tightening, pinned by the negative fixtures below). A single-line string whose content
 quotes one of the shapes verbatim is a known accepted limitation (no such line exists
-in the corpus, and one would fail visibly, naming the entry, if introduced).
+in the corpus, and one would fail visibly, naming the entry, if introduced). The
+default-presence classifier is line-anchored where it needs line context, for the same
+reason: only an explicit second argument or a statement line whose entire code is
+`<identifier> = get(NEEDLE)` (the corpus's assignment read, the caller applying the
+fallback) counts as a read with a default; a plain get in any other context -- a
+`return`, or an `if` condition, which is a presence read and is pinned as such --
+counts as no default.
 """
 
 from __future__ import annotations
@@ -283,20 +289,27 @@ def _compile_read_patterns(needle: str) -> tuple[re.Pattern[str], ...]:
             identifier (shape (1)) or the quote-agnostic quoted name (shapes (2)/(3)).
 
     Returns:
-        Five compiled patterns: an explicit second argument (default present), a
+        Six compiled patterns: an explicit second argument (default present), a
         membership test (no default), a subscript access (no default), an
-        explicit-`None`-comparison presence check (no default), and a plain `get`
-        (default present -- the corpus's plain-get + caller-applied-fallback pattern).
-        The plain-`get` pattern carries a negative lookahead so a presence-check read
-        (`get(NEEDLE) is [not] None`, which contains the plain-`get` substring) never
-        classifies as default-present.
+        explicit-`None`-comparison presence check (no default), a line-anchored
+        conditional presence read -- an `if [not] get(NEEDLE):` statement, a
+        truthiness test (no default) -- and a line-anchored plain-`get` read in an
+        assignment context (default present -- the corpus's genuine default shape: a
+        statement line whose entire code is `<identifier> = get(NEEDLE)`, the line
+        ending right after the call's closing paren, the caller applying the
+        fallback, e.g. `Path(value) if value else DEFAULT_X`). The last two patterns
+        are compiled with `re.MULTILINE`; the assignment-context pattern replaces the
+        former substring plain-`get` pattern, whose negative lookahead could not
+        exclude a conditional truthiness read (`if os.environ.get(NEEDLE):`) that is a
+        presence check, now carried by its own line-anchored pattern.
     """
     result = (
         re.compile(rf"(?<!\w)(?:environ\.get|getenv)\(\s*{needle}\s*,"),
         re.compile(rf"{needle}\s+in\s+os\.environ"),
         re.compile(rf"(?<!\w)environ\[\s*{needle}\s*\]"),
         re.compile(rf"(?<!\w)(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*is\s+(?:not\s+)?None"),
-        re.compile(rf"(?<!\w)(?:environ\.get|getenv)\(\s*{needle}\s*\)(?!\s*is\s+(?:not\s+)?None)"),
+        re.compile(rf"(?m)^\s*if\s+(?:not\s+)?(?:os\.)?(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*:"),
+        re.compile(rf"(?m)^\s*[A-Za-z_]\w*\s*=\s*(?:os\.)?(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*$"),
     )
     return result
 
@@ -311,16 +324,19 @@ def _read_verdict(code_text: str, patterns: tuple[re.Pattern[str], ...]) -> bool
 
     Returns:
         True when at least one read carries a code-side default (an explicit second
-        argument, or a plain-`get` read), False when the file reads the needle only
-        through the no-default shapes (a membership test, a subscript access, or a
-        presence check), and None when the file does not read the needle at all.
+        argument, or a line-anchored plain-`get` read in an assignment context), False
+        when the file reads the needle only through the no-default shapes (a
+        membership test, a subscript access, an explicit-`None`-comparison presence
+        check, or a line-anchored conditional presence read), and None when the file
+        does not read the needle at all.
     """
-    if patterns[0].search(code_text) is not None or patterns[4].search(code_text) is not None:
+    if patterns[0].search(code_text) is not None or patterns[5].search(code_text) is not None:
         return True
     reads_without_default = (
         patterns[1].search(code_text) is not None
         or patterns[2].search(code_text) is not None
         or patterns[3].search(code_text) is not None
+        or patterns[4].search(code_text) is not None
     )
     if reads_without_default:
         return False
@@ -387,8 +403,9 @@ def _name_has_code_default(name_sites: list[EnvVarReadSite], code_texts: dict[Pa
     """Whether at least one of a name's read sites carries a code-side default.
 
     A name's sites are OR'ed: a single default-carrying read (an explicit second
-    argument, the corpus's plain-`get` + caller-applied-fallback pattern, or an
-    Annotated option default) suffices. The presence-based feature gates have no such
+    argument, the corpus's assignment-context plain-`get` + caller-applied-fallback
+    pattern, or an Annotated option default) suffices. The presence-based feature
+    gates, the PlantUML source selectors, and the test/CI dotenv sentinel have no such
     site (only presence-check reads), which is exactly why their manifest entries
     carry no `default`.
 
@@ -425,8 +442,8 @@ def env_var_code_defaults(root: Path = REPO_ROOT) -> dict[str, bool]:
 
     Returns:
         `name -> True` iff at least one of the name's read sites is a read with a
-        code-side default, `False` otherwise (presence-only reads, subscript reads, or
-        an undetermined read).
+        code-side default, `False` otherwise (presence-only reads -- explicit
+        `None`-comparison or conditional, subscript reads, or an undetermined read).
     """
     assert isinstance(root, Path), type(root)
     sites, code_texts = _scan_tree(root)
@@ -582,7 +599,8 @@ class TestScanNegativeFixtures(unittest.TestCase):
             "\n"
             "def read_fake() -> str | None:\n"
             '    """A function docstring mentioning SPECMGR_FAKE_FUNC_DOC_VAR."""\n'
-            "    return os.environ.get(FAKE_ENV_VAR)\n"
+            "    value = os.environ.get(FAKE_ENV_VAR)\n"
+            "    return value\n"
         )
         self._write_module("fake_mod.py", source)
 
@@ -613,7 +631,8 @@ class TestScanNegativeFixtures(unittest.TestCase):
             "\n"
             "\n"
             "def read_real() -> str | None:\n"
-            "    return os.getenv(REAL_ENV_VAR)\n"
+            "    value = os.getenv(REAL_ENV_VAR)\n"
+            "    return value\n"
         )
         self._write_module("fake_mod.py", source)
 

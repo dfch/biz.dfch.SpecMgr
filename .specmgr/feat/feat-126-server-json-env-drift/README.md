@@ -4,7 +4,7 @@ created: '2026-10-07T21:21:13.282+02:00'
 id: feat-126-server-json-env-drift
 status: review
 type: feat
-updated: '2026-10-08T10:05:22.971+02:00'
+updated: '2026-10-08T11:19:56.649+02:00'
 version: 1.0.0
 ---
 
@@ -107,11 +107,15 @@ Verified state at planning time (2026-10-07):
 
 ### Current Status
 
-**As of 2026-10-08**: Implementation of both phases is complete and committed — Phase 100 (Manifest completion) and Phase 120 (Drift regression test) — with all six acceptance criteria (ACC-001 through ACC-006) verified; status is set to review, pending final review.
+**As of 2026-10-08**: All phases complete, including the post-merge manifest extension (the origin/dev merge brought feat-185-uc-diagrams into the source): `server.json`'s `environmentVariables` now covers the twelve `SPECMGR_*` variables the merged source reads, the drift test's default-presence classifier was refined for the post-merge corpus, and the `CHANGELOG.md` manifest bullet was extended to the six previously-undocumented variables; all six acceptance criteria (ACC-001 through ACC-006) verified; status is review, pending final review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T09:19:56.000Z - Post-merge manifest completion (origin/dev merge, feat-185 content)
+
+Merging origin/dev into this branch brought feat-185-uc-diagrams into the source, adding four `SPECMGR_*` read sites: the three PlantUML validation-source selectors (`SPECMGR_PLANTUML_JAR`, `SPECMGR_PLANTUML_BIN`, `SPECMGR_PLANTUML_URL` — first-set-wins, no public default) and the `SPECMGR_TESTS_NO_DOTENV` test/CI sentinel (skips the CLI's module-level default `.env` load). The new drift test flagged all four as read in `src/` but missing from the manifest — the feature working as designed. Completed in this feature: `server.json` gained the four entries (`name` + description only, no `default`, mirroring the code's presence-based reads); the test's default-presence classifier was refined (the former substring plain-`get` pattern replaced by a line-anchored assignment-context pattern, plus a new line-anchored conditional-truthiness presence pattern in the no-default group), so `SPECMGR_TESTS_NO_DOTENV` now classifies no-default like the other presence reads; the `CHANGELOG.md` manifest bullet was extended to all six previously-undocumented variables; and the root `README.md` needed no change — feat-185 already documents the plantuml trio in its "Environment Variables" bullet and "UC → PlantUML Diagrams" section, and the sentinel is deliberately test/CI-internal, staying documented in `cli.py`'s `NO_DOTENV_SENTINEL` docstring and `tests/conftest.py`.
 
 #### 2026-10-08T08:05:22.000Z - Status set to review
 
@@ -132,6 +136,10 @@ Round-1 refinement of the plan (no implementation). Applied: D1 corrected the sc
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T09:19:56.000Z - Complete the four post-merge variables into the manifest in this feature; keep the sentinel manifest-only
+
+The origin/dev merge (feat-185-uc-diagrams content) added four `SPECMGR_*` read sites the manifest did not yet carry. They are completed into `server.json` in THIS feature rather than deferred: the drift test's invariant is manifest ⇄ source on the merged tree, so deferring would leave the suite (and CI) red on this branch. The `SPECMGR_TESTS_NO_DOTENV` sentinel is manifest-only — it gains no root-`README.md` section, since it is test/CI-internal by feat-185's own documentation choice (documented in `cli.py`'s `NO_DOTENV_SENTINEL` docstring and `tests/conftest.py`, honoured by the `specmgr coverage-badge` hook's source-less re-run).
 
 #### 2026-10-08T04:59:17.000Z - Correct the stale pre-existing `SPECMGR_MCP_*` manifest entries in this feature
 
