@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_qa(path: 'str') -> 'QaDocument'`
+### `parse_qa(path: 'str') -> 'QaDocument | ValidateResult'`
 
 Parse the QA file at ``path`` into a :class:`QaDocument`.
 

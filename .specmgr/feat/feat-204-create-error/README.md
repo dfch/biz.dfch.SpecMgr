@@ -4,7 +4,7 @@ created: '2026-10-08T11:50:25.678+02:00'
 id: feat-204-create-error
 status: progress
 type: feat
-updated: '2026-10-08T19:15:40.000+02:00'
+updated: '2026-10-08T22:59:48.000+02:00'
 version: 1.0.0
 ---
 
@@ -114,10 +114,10 @@ Observed live dogfooding this repo's own tooling (2026-10-07): `create_feat` cal
 
 #### Phase 120: `parse_<d>` ValidateResult channel (12 domains)
 
-- [ ] Task 120.100: Add the existing-but-broken-file branch to the 12 `parse_<d>` tools (same catch tuple, same `ValidateResult` shape); a truly-absent/unreadable path keeps raising the `OSError`-family file-access error from `Path.read_text()` (`FileNotFoundError`/`PermissionError`/`OSError`) unchanged.
-- [ ] Task 120.110: Widen the 12 `parse_<d>` tools' return-type union annotations to include `ValidateResult`.
-- [ ] Task 120.120: Tests: the per-domain parse-failure channel, the truly-absent-path regression guard (still raises `FileNotFoundError`/`OSError` -- the documented file-access contract, never a not-found error), happy-path regression tests; convert any existing raise-asserting parse tests to the new non-raising shape.
-- [ ] Task 120.130: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest), then exactly one Conventional Commit for the phase.
+- [x] Task 120.100: Add the existing-but-broken-file branch to the 12 `parse_<d>` tools (same catch tuple, same `ValidateResult` shape); a truly-absent/unreadable path keeps raising the `OSError`-family file-access error from `Path.read_text()` (`FileNotFoundError`/`PermissionError`/`OSError`) unchanged.
+- [x] Task 120.110: Widen the 12 `parse_<d>` tools' return-type union annotations to include `ValidateResult`.
+- [x] Task 120.120: Tests: the per-domain parse-failure channel, the truly-absent-path regression guard (still raises `FileNotFoundError`/`OSError` -- the documented file-access contract, never a not-found error), happy-path regression tests; convert any existing raise-asserting parse tests to the new non-raising shape.
+- [x] Task 120.130: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest), then exactly one Conventional Commit for the phase.
 
 #### Phase 130: Docs sync
 
@@ -134,11 +134,19 @@ Observed live dogfooding this repo's own tooling (2026-10-07): `create_feat` cal
 
 ### Current Status
 
-**As of 2026-10-08**: Phase 110 (`create_<d>` ValidateResult channel, 12 domains) complete -- the 11 flat-domain `create_<d>` tools plus `create_feat` each return the non-raising `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS))])` on a content-validation failure of the caller-submitted body (catching the generic `validate` tool's own `_CAUGHT_EXCEPTIONS` tuple around their existing `wrap_tool_errors` block, nothing written), their return unions widened to `<d>Frontmatter | ValidateResult`, and `create_feat`'s documented compound-failure precedence ("first-in-execution-order wins"; no reordering) pinned by new tests; every existing raise-asserting create test (12 per-domain modules + `test_error_context` + regression `test_issue_27`/`test_issue_70`/`test_issue_71`) converted to the non-raising shape; full phase-end quality gate green (Task 110.140 -- the Conventional Commit itself is the orchestrator's). Phase 120 (`parse_<d>` ValidateResult channel, 12 domains) is next.
+**As of 2026-10-08**: Phase 120 (`parse_<d>` ValidateResult channel, 12 domains) complete -- the 11 flat-domain `parse_<d>` tools plus `parse_feat` each return the non-raising `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS))])` for an existing file that fails to parse (catching the generic `validate` tool's own `_CAUGHT_EXCEPTIONS` tuple around their existing `wrap_tool_errors` block; the `Path.read_text()` line stays outside the `try`, so a truly-absent/unreadable path still raises the `OSError`-family file-access error unchanged -- the documented file-access contract, REQ-002/ACC-002), their return unions widened to `<d>Document | ValidateResult`; every existing raise-asserting parse test (12 per-domain modules; 26 conversions incl. `qa`'s v1-shaped/unnumbered-question cases) converted to the non-raising shape, the 12 `FileNotFoundError` absent-path regression guards kept unchanged, and a whole-`tests/` search confirmed no other tool-level `parse_<d>` raise assertions (every other `parse_<d>` reference in `tests/` is a model-level free function, which still raises by design); no docstring/`@mcp.tool()` description changes (Phase 130 owns those, mirroring Phase 110); full phase-end quality gate green (Task 120.130 -- the Conventional Commit itself is the orchestrator's). Phase 130 (docs sync) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T22:59:48.000+02:00 - Phase 120 (`parse_<d>` ValidateResult channel) complete
+
+All 12 `parse_<d>` tools (the 11 flat domains + `parse_feat`) now return the existing non-raising `ValidateResult(valid=False, errors=[ValidationErrorEntry(message=snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS))])` for an existing file that fails to parse -- the generic `validate` tool's own `_CAUGHT_EXCEPTIONS` tuple (`AssertionError`, `pydantic.ValidationError`, `yaml.YAMLError`) caught around each tool's existing `with wrap_tool_errors(...):` block exactly where it sits today. The `Path.read_text()` line stays OUTSIDE the `try` in every one of the 12 tools, so a truly-absent/unreadable path still raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) unchanged -- REQ-002/ACC-002's documented file-access contract, never intercepted. The 12 return unions widened to `<d>Document | ValidateResult`. No docstring/`@mcp.tool()` description changes (Phase 130 owns those, exactly as Phase 110 left the `create_<d>` tools).
+
+Tests: per domain (all 12) -- (b-parse) the parse-failure channel converted 1:1 from the old raise-asserting shape: `test_invalid_frontmatter_returns_validate_result` + `test_malformed_structure_returns_validate_result` (and, for `qa`, `test_v1_shaped_document_returns_validate_result` + `test_unnumbered_question_returns_validate_result`), each asserting `ValidateResult(valid=False)` with exactly one non-empty `errors` entry carrying the `"<d> parse_<d>: "` prefix (no `(body)` channel token on parse) and message <= `_MAX_VALIDATE_ERROR_CHARS + len("... (truncated)")`, with the `"... (truncated)"` suffix pinned for the fixtures that exceed the cap (req/uc/gol/rsk/dec invalid-frontmatter; `qa` v1-shaped + `qa` unnumbered-question, the latter asserting the surviving-substring set per the `test_issue_71` precedent), (b-absent) the existing `test_raises_for_nonexistent_file` regression guards kept unchanged (still `assertRaises(FileNotFoundError)` -- the documented file-access contract), (d) happy-path regression tests unchanged. No straggler conversions outside the 12 per-domain modules: a whole-`tests/` search found no other tool-level `parse_<d>` raise assertions (`tests/general/tools/test_error_context.py` carries no parse-tool class, `tests/regression/` none at all; every other `parse_<d>` reference in `tests/` is a model-level free function, which still raises by design). Now-unused `pydantic.ValidationError` test imports removed (ruff F401 clean).
+
+Gate green: ruff format --check (2008 files), ruff check, vulture (clean), pytest 4416 passed / 16 skipped (baseline unchanged -- the conversions are 1:1 in test count), `specmgr docs` (exactly the 12 changed `parse_<d>` API pages regenerated, left in the working tree), `specmgr mcp-docs` (`docs/MCP.md` unchanged -- the `@mcp.tool` description strings are Phase 130's), `specmgr schema` (all unchanged), coverage badge under the CI source-less condition (99%, `docs/coverage.svg` byte-identical).
 
 #### 2026-10-08T19:15:40.000+02:00 - Phase 110 (`create_<d>` ValidateResult channel) complete
 

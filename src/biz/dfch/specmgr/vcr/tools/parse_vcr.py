@@ -29,7 +29,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ...general.models import ValidateResult, ValidationErrorEntry
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
+from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v1 import VcrDocument, parse_vcr as _parse_vcr
 
@@ -42,7 +45,7 @@ from ..models.v1 import VcrDocument, parse_vcr as _parse_vcr
         "into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`."
     ),
 )
-def parse_vcr(path: str) -> VcrDocument:
+def parse_vcr(path: str) -> VcrDocument | ValidateResult:
     """Parse the verification case record file at ``path`` into a :class:`VcrDocument`.
 
     Reads the file from disk, then parses and validates its content. "Parse"
@@ -87,5 +90,9 @@ def parse_vcr(path: str) -> VcrDocument:
         actionable; out of this feature's scope).
     """
     text = Path(path).read_text(encoding="utf-8")
-    with wrap_tool_errors(domain="vcr", tool="parse_vcr"):
-        return _parse_vcr(text)
+    try:
+        with wrap_tool_errors(domain="vcr", tool="parse_vcr"):
+            return _parse_vcr(text)
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])

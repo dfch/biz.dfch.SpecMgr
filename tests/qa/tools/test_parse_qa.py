@@ -24,8 +24,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.qa.models.v2 import QaDocument
 from biz.dfch.specmgr.qa.tools.parse_qa import parse_qa
 
@@ -246,53 +246,83 @@ class TestParseQaTool(unittest.TestCase):
             self.assertIn("Stakeholder: Product Management", introduction["body"]["text"])
             self.assertIn("Constraint: Must support 500 req/s", introduction["body"]["text"])
 
-    def test_raises_for_invalid_frontmatter(self) -> None:
-        """parse_qa must let a frontmatter validation failure propagate."""
+    def test_invalid_frontmatter_returns_validate_result(self) -> None:
+        """parse_qa must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        frontmatter validation failure (feat-204-create-error, Phase 120)."""
         text = _VALID_DOC.replace("status: draft", "status: not-a-real-status")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(ValidationError):
-                parse_qa(str(path))
+            result = parse_qa(str(path))
 
-    def test_raises_for_malformed_structure(self) -> None:
-        """parse_qa must let a structural parse failure propagate."""
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("qa parse_qa: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+
+    def test_malformed_structure_returns_validate_result(self) -> None:
+        """parse_qa must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        structural parse failure (feat-204-create-error, Phase 120)."""
         text = "# Title\n\nJust a paragraph, no recognized QA sections.\n"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(AssertionError):
-                parse_qa(str(path))
+            result = parse_qa(str(path))
+
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("qa parse_qa: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
 
     def test_raises_for_nonexistent_file(self) -> None:
         """parse_qa must raise FileNotFoundError for a nonexistent path."""
         with self.assertRaises(FileNotFoundError):
             parse_qa("/nonexistent/path/to/file.md")
 
-    def test_raises_structural_error_for_v1_shaped_document(self) -> None:
+    def test_v1_shaped_document_returns_validate_result(self) -> None:
         """A v1-shaped document (per-question `### {heading}` sub-sections, no
         `## Elicitation Context`) must fail with the same structural
         `AssertionError`/`pydantic.ValidationError` that
         `qa.models.v2.parser.parse_qa`/`Qa.from_text` raise on their own --
         there is no version gate and no silent fallback to v1 parsing (ACC-005,
-        REQ-004 revised 2026-08-23).
+        REQ-004 revised 2026-08-23) -- surfaced since
+        feat-204-create-error (Phase 120) as the non-raising
+        ``ValidateResult(valid=False, ...)``.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(_V1_SHAPED_DOC, encoding="utf-8")
 
-            with self.assertRaises(AssertionError):
-                parse_qa(str(path))
+            result = parse_qa(str(path))
 
-    def test_raises_validation_error_for_unnumbered_question(self) -> None:
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("qa parse_qa: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+            self.assertTrue(message.endswith("... (truncated)"), message)
+
+    def test_unnumbered_question_returns_validate_result(self) -> None:
         """A v2-shaped document whose question lacks the bold `**<d>.<NNNN>**: ` number
         prefix (feat-156) must fail with the validator's own actionable
-        `pydantic.ValidationError` -- the tool's `wrap_tool_errors` re-raise
-        keeps the type and the domain/tool label (feat-156 ACC-001).
+        `pydantic.ValidationError` -- surfaced since feat-204-create-error
+        (Phase 120) as the non-raising ``ValidateResult(valid=False, ...)`` whose
+        message keeps the domain/tool label (feat-156 ACC-001). The message is
+        capped at `_MAX_VALIDATE_ERROR_CHARS` via `snippet` plus the
+        `"... (truncated)"` suffix -- the surviving substrings are asserted
+        past the cap (mirroring its own `validate`/`update` tests).
         """
         text = _VALID_DOC.replace("> **1.0010**: Is this acceptable?", "> Is this acceptable?")
 
@@ -300,13 +330,17 @@ class TestParseQaTool(unittest.TestCase):
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(ValidationError) as ctx:
-                parse_qa(str(path))
+            result = parse_qa(str(path))
 
-            message = str(ctx.exception)
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
             self.assertIn("qa parse_qa", message)
             self.assertIn("question must start with the bold question-number prefix", message)
-            self.assertIn("Is this acceptable?", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+            self.assertTrue(message.endswith("... (truncated)"), message)
 
 
 if __name__ == "__main__":

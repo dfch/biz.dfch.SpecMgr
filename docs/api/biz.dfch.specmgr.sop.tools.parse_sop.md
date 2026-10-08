@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_sop(path: 'str') -> 'SopDocument'`
+### `parse_sop(path: 'str') -> 'SopDocument | ValidateResult'`
 
 Parse the SOP file at ``path`` into a :class:`SopDocument`.
 

@@ -35,7 +35,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ...general.models import ValidateResult, ValidationErrorEntry
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
+from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v1 import FeatDocument, parse_feat as _parse_feat
 
@@ -48,7 +51,7 @@ from ..models.v1 import FeatDocument, parse_feat as _parse_feat
         ":class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`."
     ),
 )
-def parse_feat(path: str) -> FeatDocument:
+def parse_feat(path: str) -> FeatDocument | ValidateResult:
     """Parse the feature file at ``path`` into a :class:`FeatDocument`.
 
     Reads the file from disk, then parses and validates its content. "Parse"
@@ -94,5 +97,9 @@ def parse_feat(path: str) -> FeatDocument:
         actionable; out of this feature's scope).
     """
     text = Path(path).read_text(encoding="utf-8")
-    with wrap_tool_errors(domain="feat", tool="parse_feat"):
-        return _parse_feat(text)
+    try:
+        with wrap_tool_errors(domain="feat", tool="parse_feat"):
+            return _parse_feat(text)
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])

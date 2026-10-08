@@ -10,7 +10,7 @@ markdown file the caller points it at directly.
 
 ## Functions
 
-### `parse_uc(path: 'str') -> 'UcDocument'`
+### `parse_uc(path: 'str') -> 'UcDocument | ValidateResult'`
 
 Parse the use-case file at ``path`` into a :class:`UcDocument`.
 

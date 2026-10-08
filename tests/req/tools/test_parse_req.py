@@ -24,8 +24,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.req.models.v1 import ReqDocument
 from biz.dfch.specmgr.req.tools.parse_req import parse_req
 
@@ -146,27 +146,44 @@ class TestParseReqTool(unittest.TestCase):
                 "## Notes\n\nThis optional section can contain additional notes.\n",
             )
 
-    def test_raises_for_invalid_frontmatter(self) -> None:
-        """parse_req must let a frontmatter validation failure propagate."""
+    def test_invalid_frontmatter_returns_validate_result(self) -> None:
+        """parse_req must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        frontmatter validation failure (feat-204-create-error, Phase 120)."""
         text = _VALID_DOC.replace("status: draft", "status: not-a-real-status")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(ValidationError):
-                parse_req(str(path))
+            result = parse_req(str(path))
 
-    def test_raises_for_malformed_structure(self) -> None:
-        """parse_req must let a structural parse failure propagate."""
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("req parse_req: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+            self.assertTrue(message.endswith("... (truncated)"), message)
+
+    def test_malformed_structure_returns_validate_result(self) -> None:
+        """parse_req must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        structural parse failure (feat-204-create-error, Phase 120)."""
         text = "# Title\n\nJust a paragraph, no recognized requirement sections.\n"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(AssertionError):
-                parse_req(str(path))
+            result = parse_req(str(path))
+
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("req parse_req: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
 
     def test_raises_for_nonexistent_file(self) -> None:
         """parse_req must raise FileNotFoundError for a nonexistent path."""

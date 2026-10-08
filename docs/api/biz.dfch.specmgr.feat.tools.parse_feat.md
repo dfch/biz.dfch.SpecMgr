@@ -17,7 +17,7 @@ is a *tool-layer addressing* concern, REQ-003, not something a bare
 
 ## Functions
 
-### `parse_feat(path: 'str') -> 'FeatDocument'`
+### `parse_feat(path: 'str') -> 'FeatDocument | ValidateResult'`
 
 Parse the feature file at ``path`` into a :class:`FeatDocument`.
 

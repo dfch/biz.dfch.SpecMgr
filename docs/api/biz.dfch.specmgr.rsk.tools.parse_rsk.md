@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_rsk(path: 'str') -> 'RskDocument'`
+### `parse_rsk(path: 'str') -> 'RskDocument | ValidateResult'`
 
 Parse the risk file at ``path`` into a :class:`RskDocument`.
 

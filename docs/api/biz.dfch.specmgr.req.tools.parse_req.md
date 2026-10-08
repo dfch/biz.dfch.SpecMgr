@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_req(path: 'str') -> 'ReqDocument'`
+### `parse_req(path: 'str') -> 'ReqDocument | ValidateResult'`
 
 Parse the requirement file at ``path`` into a :class:`ReqDocument`.
 

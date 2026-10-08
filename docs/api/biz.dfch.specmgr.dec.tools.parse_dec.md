@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_dec(path: 'str') -> 'DecDocument'`
+### `parse_dec(path: 'str') -> 'DecDocument | ValidateResult'`
 
 Parse the decision file at ``path`` into a :class:`DecDocument`.
 

@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_vcr(path: 'str') -> 'VcrDocument'`
+### `parse_vcr(path: 'str') -> 'VcrDocument | ValidateResult'`
 
 Parse the verification case record file at ``path`` into a :class:`VcrDocument`.
 

@@ -11,7 +11,7 @@ model. Errors (propagated uncaught from the parser's
 
 ## Functions
 
-### `parse_prb(path: 'str') -> 'PrbDocument'`
+### `parse_prb(path: 'str') -> 'PrbDocument | ValidateResult'`
 
 Parse the problem statement file at ``path`` into a :class:`PrbDocument`.
 

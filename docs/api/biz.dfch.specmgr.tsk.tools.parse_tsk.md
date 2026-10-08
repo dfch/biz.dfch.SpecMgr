@@ -16,7 +16,7 @@ free function of the same name -- see the feature README's Decisions Made.
 
 ## Functions
 
-### `parse_tsk(path: 'str') -> 'TskDocument'`
+### `parse_tsk(path: 'str') -> 'TskDocument | ValidateResult'`
 
 Parse the task list file at ``path`` into a :class:`TskDocument`.
 

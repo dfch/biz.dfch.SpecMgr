@@ -11,7 +11,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_gol(path: 'str') -> 'GolDocument'`
+### `parse_gol(path: 'str') -> 'GolDocument | ValidateResult'`
 
 Parse the goal file at ``path`` into a :class:`GolDocument`.
 

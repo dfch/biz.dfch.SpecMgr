@@ -24,8 +24,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.sop.models.v1 import SopDocument
 from biz.dfch.specmgr.sop.tools.parse_sop import parse_sop
 
@@ -98,27 +98,44 @@ class TestParseSopTool(unittest.TestCase):
                 "## Scope\n\nAll new hires in the engineering organization.\n",
             )
 
-    def test_raises_for_invalid_frontmatter(self) -> None:
-        """parse_sop must let a frontmatter validation failure propagate (`implemented` is GOL's, not SOP's)."""
+    def test_invalid_frontmatter_returns_validate_result(self) -> None:
+        """parse_sop must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        frontmatter validation failure (`implemented` is GOL's, not SOP's;
+        feat-204-create-error, Phase 120)."""
         text = _VALID_DOC.replace("status: draft", "status: implemented")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(ValidationError):
-                parse_sop(str(path))
+            result = parse_sop(str(path))
 
-    def test_raises_for_malformed_structure(self) -> None:
-        """parse_sop must let a structural parse failure propagate."""
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("sop parse_sop: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+
+    def test_malformed_structure_returns_validate_result(self) -> None:
+        """parse_sop must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        structural parse failure (feat-204-create-error, Phase 120)."""
         text = "# Title\n\nJust a paragraph, no recognized SOP sections.\n"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(AssertionError):
-                parse_sop(str(path))
+            result = parse_sop(str(path))
+
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("sop parse_sop: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
 
     def test_raises_for_nonexistent_file(self) -> None:
         """parse_sop must raise FileNotFoundError for a nonexistent path."""

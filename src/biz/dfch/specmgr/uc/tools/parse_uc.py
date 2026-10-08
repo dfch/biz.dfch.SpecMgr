@@ -28,7 +28,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from ...general.models import ValidateResult, ValidationErrorEntry
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md._errors import wrap_tool_errors
+from ...models.md._markdown import snippet
 from ...server import mcp
 from ..models.v2 import UcDocument, parse_uc as _parse_uc
 
@@ -38,7 +41,7 @@ from ..models.v2 import UcDocument, parse_uc as _parse_uc
     title="Parse use case",
     description="Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document.",
 )
-def parse_uc(path: str) -> UcDocument:
+def parse_uc(path: str) -> UcDocument | ValidateResult:
     """Parse the use-case file at ``path`` into a :class:`UcDocument`.
 
     Reads the file from disk, then parses and validates its content. "Parse"
@@ -84,5 +87,9 @@ def parse_uc(path: str) -> UcDocument:
         actionable; out of this feature's scope).
     """
     text = Path(path).read_text(encoding="utf-8")
-    with wrap_tool_errors(domain="uc", tool="parse_uc"):
-        return _parse_uc(text)
+    try:
+        with wrap_tool_errors(domain="uc", tool="parse_uc"):
+            return _parse_uc(text)
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])

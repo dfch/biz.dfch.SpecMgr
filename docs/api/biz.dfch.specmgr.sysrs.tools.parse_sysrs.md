@@ -12,7 +12,7 @@ MCP tool errors to the caller.
 
 ## Functions
 
-### `parse_sysrs(path: 'str') -> 'SysrsDocument'`
+### `parse_sysrs(path: 'str') -> 'SysrsDocument | ValidateResult'`
 
 Parse the System Requirements Specification file at ``path`` into a :class:`SysrsDocument`.
 
