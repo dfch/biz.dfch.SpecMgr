@@ -83,7 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   phases (the `feat` frontmatter and full-parse warmup, then the
   similarity warmup) and the previously missing
   `SPECMGR_FEAT_WARMUP_DISABLED` gate, so the "Environment Variables"
-  section is accurate for all eight `SPECMGR_*` variables the code reads
+  section is accurate for all eight `SPECMGR_*` variables the code read
+  at that point (the three plantuml selectors and the test/CI dotenv
+  sentinel added by the merged feat-185 content are covered by the Added
+  entry above)
   (feat-126-server-json-env-drift, GitHub issue #126).
 
 ## [0.35.0] - 2026-10-06
