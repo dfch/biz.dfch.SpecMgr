@@ -53,17 +53,18 @@
           "default": "stdio",
           "choices": [
             "stdio",
-            "sse"
+            "sse",
+            "streamable-http"
           ]
         },
         {
           "name": "SPECMGR_MCP_HOST",
-          "description": "Bind address, SSE transport only.",
+          "description": "Bind address, SSE/streamable-http mode only.",
           "default": "localhost"
         },
         {
           "name": "SPECMGR_MCP_PORT",
-          "description": "TCP port, SSE transport only.",
+          "description": "TCP port, SSE/streamable-http mode only.",
           "default": "8000",
           "format": "number"
         },
@@ -84,6 +85,14 @@
           "description": "Base directory scanned for Feature folders (<base>/<id>/README.md).",
           "default": ".specmgr/feat",
           "format": "filepath"
+        },
+        {
+          "name": "SPECMGR_SIMILARITY_DISABLED",
+          "description": "Presence-based opt-out for the semantic-similarity search feature (the find_related and find_similar_text tools): set to any value to disable the feature, so that every call returns a structured unavailable result and the embedding model is never loaded, and to skip the similarity phase of the unified server-startup warmup thread. Unset by default. Its resolved state is reported by the similarity section of the specmgr://config resource."
+        },
+        {
+          "name": "SPECMGR_FEAT_WARMUP_DISABLED",
+          "description": "Presence-based opt-out for the feat domain's two background cache-warming phases (frontmatter and full-parse) of the unified server-startup warmup thread: set to any value to skip both phases; when set together with SPECMGR_SIMILARITY_DISABLED, no warmup thread is started at all. Unset by default. Its resolved state is reported by the feat_warmup_disabled field of the specmgr://config resource."
         }
       ]
     }

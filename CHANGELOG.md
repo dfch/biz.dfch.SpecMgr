@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `server.json` (the MCP Registry publisher manifest) now lists the two
+  `SPECMGR_*` environment variables the code reads that were previously
+  undocumented: `SPECMGR_SIMILARITY_DISABLED` (presence-based opt-out for
+  the semantic-similarity search feature and its server-startup warmup
+  phase) and `SPECMGR_FEAT_WARMUP_DISABLED` (presence-based opt-out for
+  the `feat` domain's two server-startup cache-warming phases). Both
+  entries carry a `name` and a presence-based `description` only -- no
+  `default`, mirroring the gating the code performs (set to any value to
+  enable the gate; unset by default) and what `specmgr://config` reports
+  (the `similarity.disabled` and `feat_warmup_disabled` fields)
+  (feat-126-server-json-env-drift, GitHub issue #126).
+
 ### Changed
 
 - Agents repeatedly emitted the literal `fff` in timestamps because the
@@ -22,6 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separators, and validation regexes are unchanged, and the historical
   ADRs 23a14195 and 8c889262 are deliberately untouched (feat-183-ts-fff,
   GitHub issue #183).
+- `server.json`'s three stale `SPECMGR_MCP_*` entries were corrected to
+  match the code (`commands/mcp.py`): `SPECMGR_MCP_TRANSPORT`'s `choices`
+  now list all three supported transports (`stdio`/`sse`/
+  `streamable-http`, previously `stdio`/`sse` only), and
+  `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions now read
+  "SSE/streamable-http mode only" (previously "SSE transport only"). The
+  root `README.md`'s "Background warmup at server startup" paragraph now
+  documents the unified server-startup warmup thread's three ordered
+  phases (the `feat` frontmatter and full-parse warmup, then the
+  similarity warmup) and the previously missing
+  `SPECMGR_FEAT_WARMUP_DISABLED` gate, so the "Environment Variables"
+  section is accurate for all eight `SPECMGR_*` variables the code reads
+  (feat-126-server-json-env-drift, GitHub issue #126).
 
 ## [0.35.0] - 2026-10-06
 

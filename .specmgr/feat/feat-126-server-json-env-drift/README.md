@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T21:21:13.282+02:00'
 id: feat-126-server-json-env-drift
-status: planning
+status: progress
 type: feat
-updated: '2026-10-08T06:59:17.550+02:00'
+updated: '2026-10-08T07:32:41.291+02:00'
 version: 1.0.0
 ---
 
@@ -91,10 +91,10 @@ Verified state at planning time (2026-10-07):
 
 #### Phase 100: Manifest completion
 
-- [ ] Task 100.100: Add the `SPECMGR_SIMILARITY_DISABLED` and `SPECMGR_FEAT_WARMUP_DISABLED` entries to `server.json`'s `environmentVariables` (name + presence-based description, no `default`), and correct the 3 stale pre-existing `SPECMGR_MCP_*` entries per REQ-001/ACC-001: `SPECMGR_MCP_TRANSPORT`'s `choices` to all three transports the code supports (`stdio`/`sse`/`streamable-http`), and `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions to name SSE/streamable-http mode only.
-- [ ] Task 100.110: Verify `README.md`'s "Environment Variables" section (and the `specmgr mcp` section for the transport/host/port entries) against all 8 and correct: the root `README.md`'s warmup section already omits `SPECMGR_FEAT_WARMUP_DISABLED` (known drift recorded in the Verified state), so this task is planned as guaranteed correction, not a possibly-no-op check.
-- [ ] Task 100.120: `CHANGELOG.md` `[Unreleased]` entry.
-- [ ] Task 100.130: Phase-end gate (full quality gate, per Design Notes): `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, and every doc-drift check the phase touches (expected no-op: no `src/` module changes) green; exactly one Conventional Commit.
+- [x] Task 100.100: Add the `SPECMGR_SIMILARITY_DISABLED` and `SPECMGR_FEAT_WARMUP_DISABLED` entries to `server.json`'s `environmentVariables` (name + presence-based description, no `default`), and correct the 3 stale pre-existing `SPECMGR_MCP_*` entries per REQ-001/ACC-001: `SPECMGR_MCP_TRANSPORT`'s `choices` to all three transports the code supports (`stdio`/`sse`/`streamable-http`), and `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions to name SSE/streamable-http mode only.
+- [x] Task 100.110: Verify `README.md`'s "Environment Variables" section (and the `specmgr mcp` section for the transport/host/port entries) against all 8 and correct: the root `README.md`'s warmup section already omits `SPECMGR_FEAT_WARMUP_DISABLED` (known drift recorded in the Verified state), so this task is planned as guaranteed correction, not a possibly-no-op check.
+- [x] Task 100.120: `CHANGELOG.md` `[Unreleased]` entry.
+- [x] Task 100.130: Phase-end gate (full quality gate, per Design Notes): `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, and every doc-drift check the phase touches (expected no-op: no `src/` module changes) green; exactly one Conventional Commit.
 
 #### Phase 120: Drift regression test
 
@@ -107,11 +107,15 @@ Verified state at planning time (2026-10-07):
 
 ### Current Status
 
-**As of 2026-10-08**: Plan refined after round-1 feat-refiner review (see Updates / Decisions Made): the scan-shape inventory is corrected (only shapes (1)+(4) present for `SPECMGR_` names today), the 3 stale pre-existing `SPECMGR_MCP_*` manifest entries are in scope for correction in Phase 100, the scan is pinned to `src/**/*.py`, the known root-README drift for `SPECMGR_FEAT_WARMUP_DISABLED` is recorded, `_SPECMGR_ROOT` is named correctly, and the three feature references carry `FEAT` tags. Manifest and scan state verified (see Overview): 6 of 8 environment variables present in `server.json`, no test coverage. Implementation pending.
+**As of 2026-10-08**: Phase 100 (Manifest completion) is complete — `server.json`'s `environmentVariables` now lists all eight `SPECMGR_*` variables the code reads (the two presence-based feature gates added, the three stale `SPECMGR_MCP_*` entries corrected), the root `README.md` documents the unified warmup thread and both opt-out flags, and the `CHANGELOG.md` `[Unreleased]` entry is in place. Phase 120 (drift regression test) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T05:32:41.000Z - Phase 100 (Manifest completion) implemented
+
+Task 100.100: `server.json`'s `environmentVariables` gained the two missing presence-based feature-gate entries (`SPECMGR_SIMILARITY_DISABLED`, `SPECMGR_FEAT_WARMUP_DISABLED` — `name` + description only, no `default`, mirroring the gating the code performs and what `specmgr://config` reports) and the three stale `SPECMGR_MCP_*` entries were corrected (`SPECMGR_MCP_TRANSPORT`'s `choices` now `stdio`/`sse`/`streamable-http`; `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions now "SSE/streamable-http mode only", matching the code and the root `README.md`'s `specmgr mcp` table). Task 100.110: the root `README.md`'s "Background warmup at server startup" paragraph now describes the unified `specmgr-startup-warmup` thread's three ordered phases (feat frontmatter, feat full-parse, similarity) and both per-phase opt-out flags (both set = no thread starts at all); the "Environment Variables", "Opt-out", and "Introspection" paragraphs name `SPECMGR_FEAT_WARMUP_DISABLED` too, so all 8 variables are covered. Task 100.120: `CHANGELOG.md` `[Unreleased]` gained an `### Added` entry (the 2 new manifest entries) and an `### Changed` entry (the 3 corrections + the README fix), citing feat-126-server-json-env-drift, GitHub issue #126. Task 100.130: full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, and the doc-drift checks as no-ops — no `src/` module changes).
 
 #### 2026-10-08T04:59:17.000Z - Plan refined (round-1 feat-refiner review)
 
