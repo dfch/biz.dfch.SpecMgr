@@ -113,6 +113,23 @@ same-named ``_to_summary``/``_to_failed_summary`` functions, so
 ``vulture``'s name-based matching already treats these names as used
 across the whole scanned tree (confirmed via
 ``uv run --frozen vulture src/ whitelist.py --min-confidence 60``).
+
+**feat-200-list (GitHub issue #200), Task 100.110: the optional ``glob``
+parameter.** This tool now takes an optional, case-insensitive ``glob``
+pattern matched against each feature's own ``id`` (``feat-NNN-slug``;
+REQ-001/REQ-004): the shared
+``general.tools._listing.filter_summaries_by_glob`` helper runs on the
+materialized row list, after this tool's own two-stage (dirty/clean
+``DocCache``) resolution loop and before the ``total``/paging step, so it
+never re-scans the filesystem on its own (the cold-scan fix of ADR
+3982712a-a46b-4b2b-809f-9c6925a49b44 is preserved). A failed-to-parse row
+carries ``id=None`` and therefore never matches, so a glob-given result
+has no failed rows and ``error_count = 0`` by construction (REQ-003);
+``total`` is the match count and ``offset``/``max_results`` paging keeps
+its existing meaning on that smaller set (ACC-004). ``glob=None`` (the
+default) leaves every outcome byte-identical to the pre-glob behaviour
+(REQ-005), and an empty string is a pattern, not an off-switch (it
+matches no id and yields a zero-row result).
 """
 
 from __future__ import annotations
@@ -120,7 +137,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import PagedResult
-from ...general.tools._listing import DEFAULT_ERROR_TYPES, default_failed_summary
+from ...general.tools._listing import DEFAULT_ERROR_TYPES, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
 from ...server import mcp
 from ..models.v1 import FeatDocument, FeatSummary
@@ -200,7 +217,10 @@ def _failed_summary(path: Path, error: Exception) -> FeatSummary:
         "Ids, titles, statuses, and refs of features in the configured feature base directory, "
         "one page at a time, for context before addressing one by id. 'ref' is an opaque, "
         "extensionless identifier -- not a filename to read from disk -- for documents that "
-        "have no assigned id; use it with the get_feat tool instead. max_results/offset control "
+        "have no assigned id; use it with the get_feat tool instead. An optional glob pattern "
+        "(e.g. 'feat-7*') filters the listing to the features whose id matches it, case-insensitively; "
+        "glob=None (the default) lists everything, and an empty string matches nothing. "
+        "max_results/offset control "
         "paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. "
         "The request path never fully parses a document's body (GitHub issue #187): a folder's row "
         "is resolved from its frontmatter+H1 alone until a background warmup (or an on-demand "
@@ -211,7 +231,11 @@ def _failed_summary(path: Path, error: Exception) -> FeatSummary:
         "depends solely on on-demand reads)."
     ),
 )
-def list_feat(max_results: int | None = None, offset: int | None = None) -> PagedResult[FeatSummary]:
+def list_feat(
+    max_results: int | None = None,
+    offset: int | None = None,
+    glob: str | None = None,
+) -> PagedResult[FeatSummary]:
     """Return one page of one-line feature summaries from the configured base directory.
 
     **The request path never fully parses a document's body (ADR
@@ -249,9 +273,13 @@ def list_feat(max_results: int | None = None, offset: int | None = None) -> Page
     Phase 6's original choice, REQ-012, to report this exact case as a
     failed entry via a now-removed, ``feat``-only ``_FEAT_ERROR_TYPES``).
     The complete list (successes and failures both, excluding any silently
-    omitted path) is materialized first, then paginated in memory, so the
-    returned ``total``/``error_count`` always reflect the whole directory,
-    independent of paging.
+    omitted path) is materialized first, then -- when ``glob`` is given --
+    filtered to the rows whose ``id`` matches it (the shared
+    ``general.tools._listing.filter_summaries_by_glob`` helper, applied
+    after this tool's own two-stage resolution loop and before the
+    ``total``/paging step), then paginated in memory, so the returned
+    ``total``/``error_count`` always reflect the whole directory (or that
+    filtered subset), independent of paging.
 
     Parameters
     ----------
@@ -264,15 +292,28 @@ def list_feat(max_results: int | None = None, offset: int | None = None) -> Page
         Zero-based index of the first summary to include in this page.
         Defaults to ``0`` when not given (``None``); negative values are
         floored to ``0``.
+    glob:
+        Optional glob pattern matched, case-insensitively, against each
+        feature's own ``id`` (``feat-NNN-slug``) -- e.g. ``"feat-7*"``
+        (feat-200-list, GitHub issue #200, REQ-001/REQ-004). Defaults to
+        ``None`` (no filtering: the complete directory is listed, exactly
+        as before -- REQ-005). An empty string is a pattern, not an
+        off-switch: it matches no id (ids are never empty) and yields a
+        zero-row result. Failed-to-parse rows carry ``id=None`` and
+        therefore never match any pattern, so a glob-given result has no
+        failed rows and ``error_count = 0`` by construction (REQ-003);
+        ``total`` is the match count and ``offset``/``max_results`` paging
+        keeps its existing meaning on that smaller set.
 
     Returns
     -------
     PagedResult[FeatSummary]
         One entry per ``README.md`` file within the requested page
-        (successes and failures both), in folder-name-sorted order.
+        (successes and failures both -- only entries whose ``id`` matches
+        ``glob`` when it is given), in folder-name-sorted order.
         ``results`` is empty if the base directory does not exist, holds no
-        feature folders at all, or ``offset`` is past the end of the full
-        list.
+        feature folders at all, ``offset`` is past the end of the full
+        list, or no id matches ``glob``.
     """
     paths = list(iter_feat_paths(feat_base_dir()))
     reconcile_feat_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
@@ -302,5 +343,10 @@ def list_feat(max_results: int | None = None, offset: int | None = None) -> Page
             error_count += 1
             continue
         summaries.append(_dirty_summary(dirty_result, path))
+
+    # feat-200-list, Task 100.110 (REQ-001/REQ-003): the id-glob filter runs between the row build
+    # above (both cache stages) and the total/paging step below -- never a filesystem re-scan.
+    if glob is not None:
+        summaries, error_count = filter_summaries_by_glob(summaries, glob)
 
     return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)
