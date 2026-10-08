@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_gol(content: 'str') -> 'GolFrontmatter'`
+### `create_gol(content: 'str') -> 'GolFrontmatter | ValidateResult'`
 
 Create and write a new goal document.
 

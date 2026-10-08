@@ -1,11 +1,23 @@
 # `biz.dfch.specmgr.general.models.validate_result`
 
-The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
+The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 
-No precedent exists elsewhere in this codebase for a non-raising structured
-result -- every other validating tool (``create_<d>``, the generic
-``update``/``set_status``/``set_classification``) raises on failure. This
-module is greenfield, backing only ``general.tools.validate``.
+Originally greenfield for the generic ``validate`` tool alone; since
+feat-204-create-error (case 5 of the ADR 519d1206 non-raising chain) it
+also backs the ``create_<d>``/``parse_<d>`` tools' own
+content-validation-failure branches, and since feat-170 the generic
+``update``/``edit`` tools'. This module therefore owns the two
+module-scope constants every such branch must import --
+:data:`_CAUGHT_EXCEPTIONS` (the exact exception channels to catch) and
+:data:`_MAX_VALIDATE_ERROR_CHARS` (the ``ValidationErrorEntry.message``
+cap, feat-110) -- and ``general.tools.validate`` re-exports them under
+the same private names (its header imports them *before* its own
+domain-model imports, so a ``create_<d>`` tool's
+``from ...general.tools.validate import _CAUGHT_EXCEPTIONS,
+_MAX_VALIDATE_ERROR_CHARS`` finds both names bound even while
+``validate``'s own import of the domain packages is still mid-flight --
+that ordering is load-bearing for the server's domain-import chain, see
+the comment at the re-export site).
 
 ## Classes
 

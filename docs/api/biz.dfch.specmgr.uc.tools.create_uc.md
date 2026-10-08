@@ -18,7 +18,7 @@ state, never an independent fact.
 
 ## Functions
 
-### `create_uc(content: 'str') -> 'UcFrontmatter'`
+### `create_uc(content: 'str') -> 'UcFrontmatter | ValidateResult'`
 
 Create and write a new use-case document.
 

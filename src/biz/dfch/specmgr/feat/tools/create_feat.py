@@ -44,11 +44,13 @@ Decisions Made.
 
 from __future__ import annotations
 
+from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.tools._path_safety import assert_feat_id
 from ...general.tools._timestamps import now_timestamp
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...server import mcp
 from ..models.v1 import FeatFrontmatter, Feature
 from ._cache import read_feat, read_feat_dirty
@@ -69,7 +71,7 @@ from ._write import write_feat_file
         "document afterward."
     ),
 )
-def create_feat(content: str, id: str | None = None) -> FeatFrontmatter:
+def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | ValidateResult:
     """Create and write a new feature document.
 
     ``content`` is body markdown only (the ``Feature`` H1 and its sections)
@@ -109,6 +111,18 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter:
     A malformed caller-supplied ``id`` is validated in that same
     before-any-lock window and raises a bare ``ValueError`` (see Raises
     below), also before anything is written.
+
+    Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR
+    f14f125e's item 3): the content validation above runs *before* both
+    id guards in the existing execution order, and this feature does not
+    re-order that. Consequently, a compound failure (invalid ``content``
+    *plus* a malformed or already-existing ``id``/folder) surfaces the
+    content error first: the tool returns
+    ``ValidateResult(valid=False, ...)`` and the guard never runs in that
+    call -- "first-in-execution-order wins." Each guard still raises
+    unchanged whenever the content is valid (malformed ``id`` shape ->
+    ``ValueError``; valid content + already-existing ``id``/folder ->
+    ``FileExistsError``).
 
     No body rendering is ever needed: the caller's own already-validated
     ``content`` is persisted byte-for-byte, exactly as submitted; only the
@@ -151,8 +165,12 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter:
         A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
         written.
     """
-    with wrap_tool_errors(domain="feat", tool="create_feat", channel=BODY_CHANNEL):
-        body = Feature.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="feat", tool="create_feat", channel=BODY_CHANNEL):
+            body = Feature.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
     slug = slugify(feature_title(body.text))
 
     if id is not None:

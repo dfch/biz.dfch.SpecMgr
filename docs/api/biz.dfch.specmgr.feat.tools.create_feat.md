@@ -28,7 +28,7 @@ Decisions Made.
 
 ## Functions
 
-### `create_feat(content: 'str', id: 'str | None' = None) -> 'FeatFrontmatter'`
+### `create_feat(content: 'str', id: 'str | None' = None) -> 'FeatFrontmatter | ValidateResult'`
 
 Create and write a new feature document.
 
@@ -69,6 +69,18 @@ touched (validation happens before the create lock is even acquired).
 A malformed caller-supplied ``id`` is validated in that same
 before-any-lock window and raises a bare ``ValueError`` (see Raises
 below), also before anything is written.
+
+Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR
+f14f125e's item 3): the content validation above runs *before* both
+id guards in the existing execution order, and this feature does not
+re-order that. Consequently, a compound failure (invalid ``content``
+*plus* a malformed or already-existing ``id``/folder) surfaces the
+content error first: the tool returns
+``ValidateResult(valid=False, ...)`` and the guard never runs in that
+call -- "first-in-execution-order wins." Each guard still raises
+unchanged whenever the content is valid (malformed ``id`` shape ->
+``ValueError``; valid content + already-existing ``id``/folder ->
+``FileExistsError``).
 
 No body rendering is ever needed: the caller's own already-validated
 ``content`` is persisted byte-for-byte, exactly as submitted; only the

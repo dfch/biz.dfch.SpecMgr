@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_sop(content: 'str') -> 'SopFrontmatter'`
+### `create_sop(content: 'str') -> 'SopFrontmatter | ValidateResult'`
 
 Create and write a new SOP document.
 

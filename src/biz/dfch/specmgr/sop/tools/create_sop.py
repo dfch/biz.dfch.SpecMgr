@@ -36,11 +36,13 @@ from __future__ import annotations
 
 import uuid
 
+from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.tools._doc_paths import slugify
 from ...general.tools._timestamps import now_timestamp
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...server import mcp
 from ..models.v1 import Sop, SopFrontmatter
 from ._io import read_sop
@@ -58,7 +60,7 @@ from ._write import write_sop_file
         "`get_sop` tool to fetch the full document afterward."
     ),
 )
-def create_sop(content: str) -> SopFrontmatter:
+def create_sop(content: str) -> SopFrontmatter | ValidateResult:
     """Create and write a new SOP document.
 
     ``content`` is body markdown only (the ``Sop`` H1 and its sections)
@@ -104,8 +106,12 @@ def create_sop(content: str) -> SopFrontmatter:
         A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
         written.
     """
-    with wrap_tool_errors(domain="sop", tool="create_sop", channel=BODY_CHANNEL):
-        body = Sop.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="sop", tool="create_sop", channel=BODY_CHANNEL):
+            body = Sop.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     new_id = str(uuid.uuid4())
     now = now_timestamp()

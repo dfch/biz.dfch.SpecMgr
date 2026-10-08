@@ -20,7 +20,7 @@ state, never an independent fact.
 
 ## Functions
 
-### `create_req(content: 'str') -> 'ReqFrontmatter'`
+### `create_req(content: 'str') -> 'ReqFrontmatter | ValidateResult'`
 
 Create and write a new requirement document.
 

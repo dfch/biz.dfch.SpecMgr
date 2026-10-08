@@ -30,7 +30,7 @@ state, never an independent fact.
 
 ## Functions
 
-### `create_tsk(content: 'str') -> 'TskFrontmatter'`
+### `create_tsk(content: 'str') -> 'TskFrontmatter | ValidateResult'`
 
 Create and write a new task list document.
 

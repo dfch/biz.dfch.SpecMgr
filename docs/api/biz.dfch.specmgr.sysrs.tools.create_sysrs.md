@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_sysrs(content: 'str') -> 'SysrsFrontmatter'`
+### `create_sysrs(content: 'str') -> 'SysrsFrontmatter | ValidateResult'`
 
 Create and write a new System Requirements Specification document.
 

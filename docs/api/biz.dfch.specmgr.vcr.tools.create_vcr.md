@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_vcr(content: 'str') -> 'VcrFrontmatter'`
+### `create_vcr(content: 'str') -> 'VcrFrontmatter | ValidateResult'`
 
 Create and write a new verification case record document.
 

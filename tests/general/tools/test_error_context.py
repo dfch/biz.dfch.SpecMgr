@@ -17,8 +17,10 @@
 
 """feat-27-validation Phase 3, Task 3.4: tool-layer tests for the shared error-context wrapper.
 
-ACC-003: asserts that the exception string surfaced by ``create_<d>`` (still raising), plus the
-``message`` returned by the generic ``validate`` tool's non-raising result (feat-81-83-validation
+ACC-003: asserts that the ``message`` surfaced by ``create_<d>``'s non-raising
+``ValidateResult`` (feat-204-create-error Phase 110, case 5 of the ADR 519d1206
+non-raising chain), plus the ``message`` returned by the generic ``validate``
+tool's non-raising result (feat-81-83-validation
 Phase 2, retiring the former ``validate_<d>`` tools) and the generic ``update`` adapter's
 non-raising ``ValidateResult`` (feat-170 Phase 120, Bug 2, ADR
 b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), prepend domain + tool context (built by
@@ -44,8 +46,6 @@ import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
-
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.general.models import InvalidStatusResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
@@ -109,19 +109,30 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestCreateToolErrorContext(TempDocsDirTestCase):
-    """``create_<d>``: a structural/field failure names the domain and the tool."""
+    """``create_<d>``: a structural/field failure names the domain and the tool.
+
+    Since feat-204-create-error (Phase 110, case 5 of the ADR 519d1206 non-raising
+    chain), ``create_<d>`` never raises for a content-validation failure -- it
+    returns the non-raising ``ValidateResult(valid=False, ...)`` instead, so these
+    tests assert against ``result.errors[0].message`` rather than a raised
+    exception (the same pattern ``TestValidateToolErrorContext`` above follows).
+    """
 
     def test_create_tsk_structural_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_tsk(_TSK_MALFORMED_BODY)
+        result = create_tsk(_TSK_MALFORMED_BODY)
 
-        self.assertIn("tsk create_tsk", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("tsk create_tsk", result.errors[0].message)
 
     def test_create_req_field_validation_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(ValidationError) as ctx:
-            create_req(_REQ_OUT_OF_VOCABULARY_BODY)
+        result = create_req(_REQ_OUT_OF_VOCABULARY_BODY)
 
-        self.assertIn("req create_req", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("req create_req", result.errors[0].message)
 
 
 class TestValidateToolErrorContext(unittest.TestCase):

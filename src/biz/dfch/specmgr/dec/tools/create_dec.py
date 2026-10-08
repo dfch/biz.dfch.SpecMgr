@@ -36,11 +36,13 @@ from __future__ import annotations
 
 import uuid
 
+from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.tools._doc_paths import slugify
 from ...general.tools._timestamps import now_timestamp
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...server import mcp
 from ..models.v1 import DecFrontmatter, Decision
 from ._io import read_dec
@@ -59,7 +61,7 @@ from ._write import write_dec_file
         "full document afterward."
     ),
 )
-def create_dec(content: str) -> DecFrontmatter:
+def create_dec(content: str) -> DecFrontmatter | ValidateResult:
     """Create and write a new decision document.
 
     ``content`` is body markdown only (the ``Decision`` H1 and its sections)
@@ -105,8 +107,12 @@ def create_dec(content: str) -> DecFrontmatter:
         A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
         written.
     """
-    with wrap_tool_errors(domain="dec", tool="create_dec", channel=BODY_CHANNEL):
-        body = Decision.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="dec", tool="create_dec", channel=BODY_CHANNEL):
+            body = Decision.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     new_id = str(uuid.uuid4())
     now = now_timestamp()

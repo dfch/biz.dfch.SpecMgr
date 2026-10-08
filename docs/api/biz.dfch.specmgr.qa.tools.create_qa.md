@@ -21,7 +21,7 @@ state, never an independent fact.
 
 ## Functions
 
-### `create_qa(content: 'str') -> 'QaFrontmatter'`
+### `create_qa(content: 'str') -> 'QaFrontmatter | ValidateResult'`
 
 Create and write a new Question and Answer (QA) document.
 

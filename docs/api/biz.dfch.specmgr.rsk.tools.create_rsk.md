@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_rsk(content: 'str') -> 'RskFrontmatter'`
+### `create_rsk(content: 'str') -> 'RskFrontmatter | ValidateResult'`
 
 Create and write a new risk document.
 

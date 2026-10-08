@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_dec(content: 'str') -> 'DecFrontmatter'`
+### `create_dec(content: 'str') -> 'DecFrontmatter | ValidateResult'`
 
 Create and write a new decision document.
 

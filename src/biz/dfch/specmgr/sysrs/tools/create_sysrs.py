@@ -36,11 +36,13 @@ from __future__ import annotations
 
 import uuid
 
+from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.tools._doc_paths import slugify
 from ...general.tools._timestamps import now_timestamp
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...server import mcp
 from ..models.v1 import Sysrs, SysrsFrontmatter
 from ._io import read_sysrs
@@ -59,7 +61,7 @@ from ._write import write_sysrs_file
         "to fetch the full document afterward."
     ),
 )
-def create_sysrs(content: str) -> SysrsFrontmatter:
+def create_sysrs(content: str) -> SysrsFrontmatter | ValidateResult:
     """Create and write a new System Requirements Specification document.
 
     ``content`` is body markdown only (the ``Sysrs`` H1 and its sections) --
@@ -105,8 +107,12 @@ def create_sysrs(content: str) -> SysrsFrontmatter:
         A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
         written.
     """
-    with wrap_tool_errors(domain="sysrs", tool="create_sysrs", channel=BODY_CHANNEL):
-        body = Sysrs.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="sysrs", tool="create_sysrs", channel=BODY_CHANNEL):
+            body = Sysrs.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     new_id = str(uuid.uuid4())
     now = now_timestamp()

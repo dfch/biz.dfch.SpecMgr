@@ -18,7 +18,7 @@ codebase.
 
 ## Functions
 
-### `create_prb(content: 'str') -> 'PrbFrontmatter'`
+### `create_prb(content: 'str') -> 'PrbFrontmatter | ValidateResult'`
 
 Create and write a new problem statement document.
 
