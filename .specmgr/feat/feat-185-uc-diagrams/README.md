@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-03T09:46:57.279+02:00'
 id: feat-185-uc-diagrams
-status: review
+status: done
 type: feat
-updated: '2026-10-08T07:08:35.197+02:00'
+updated: '2026-10-08T09:42:12.162+02:00'
 version: 1.0.0
 ---
 
