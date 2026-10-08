@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-08T11:50:25.678+02:00'
 id: feat-204-create-error
-status: planning
+status: progress
 type: feat
-updated: '2026-10-08T13:08:11.717+02:00'
+updated: '2026-10-08T14:44:51.000+02:00'
 version: 1.0.0
 ---
 
@@ -94,15 +94,15 @@ Observed live dogfooding this repo's own tooling (2026-10-07): `create_feat` cal
 - ADR b399f1ce-ed42-4929-b01c-7a57d18e8014: case 2 -- extended the workaround to `set_status`'s invalid-status case via `InvalidStatusResult`.
 - ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c: case 3 -- extended the workaround to `get_<d>`'s parse-failure case via `ParseFailureResult`.
 - ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f: case 4 -- the non-raising `ParseFailureResult`/`ValidateResult` branches for the four generic mutation tools (FEAT feat-170-update-edit-parse-failure, GitHub issue #170); it quotes the scope sentence this feature refines and records `delete` as the chain's candidate case 5, which the case-5 ADR addresses.
-- (The case-5 ADR for this feature will be recorded here once created in Phase 100.)
+- ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e: case 5 -- the non-raising `ValidateResult` branches for the 12 `create_<d>` tools and 12 `parse_<d>` tools (this feature, GitHub issue #204); refines the 'create/parse keep raising' scope sentence of ADR 519d1206 by reference and resolves ADR b8c9bfea's `delete` 'candidate case 5' forward pointer (`delete` stays raise-based, a later candidate).
 
 ### Task List
 
 #### Phase 100: ADR
 
-- [ ] Task 100.100: Draft the case-5 ADR recording this decision, referencing GitHub issue #204, naming the locked scope (12 `create_<d>` + 12 `parse_<d>` tools), the out-of-scope items (`create_adr`, `delete`/`set_feat_id` -- incl. `delete`'s unchanged raise on an existing-but-broken document, `get_<d>`), the reuse-not-new-models design, refining the "create/parse keep raising" scope sentence (ADR 519d1206's own Decision Outcome, quoted by ADR b8c9bfea) by reference per the chain's precedent, and explicitly addressing b8c9bfea's `delete` "candidate case 5" forward pointer (this feature takes the case-5 slot; `delete` stays raise-based, a later candidate).
-- [ ] Task 100.110: Get the ADR to `accepted` status before or alongside the Phase 110/120 code landing, and record its UUID in this README's Related Decisions.
-- [ ] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest, `specmgr adr-toc`), then exactly one Conventional Commit for the phase.
+- [x] Task 100.100: Draft the case-5 ADR recording this decision, referencing GitHub issue #204, naming the locked scope (12 `create_<d>` + 12 `parse_<d>` tools), the out-of-scope items (`create_adr`, `delete`/`set_feat_id` -- incl. `delete`'s unchanged raise on an existing-but-broken document, `get_<d>`), the reuse-not-new-models design, refining the "create/parse keep raising" scope sentence (ADR 519d1206's own Decision Outcome, quoted by ADR b8c9bfea) by reference per the chain's precedent, and explicitly addressing b8c9bfea's `delete` "candidate case 5" forward pointer (this feature takes the case-5 slot; `delete` stays raise-based, a later candidate).
+- [x] Task 100.110: Get the ADR to `accepted` status before or alongside the Phase 110/120 code landing, and record its UUID in this README's Related Decisions.
+- [x] Task 100.120: Phase-end gate: full quality gate green (ruff format/check, vulture, pytest, `specmgr adr-toc`), then exactly one Conventional Commit for the phase.
 
 #### Phase 110: `create_<d>` ValidateResult channel (12 domains)
 
@@ -134,11 +134,15 @@ Observed live dogfooding this repo's own tooling (2026-10-07): `create_feat` cal
 
 ### Current Status
 
-**As of 2026-10-08**: Feature created from GitHub issue #204 via the planning conversation; no implementation started. Plan refined the same day by a feat-refiner pass (see Updates below). Phase 100 (ADR) is the next actionable step, starting with Task 100.100.
+**As of 2026-10-08**: Phase 100 (ADR) complete -- case-5 ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e drafted through the specmgr MCP structured tools, validated, and `accepted` ahead of the Phase 110/120 code landing (Tasks 100.100/100.110); its UUID recorded in Related Decisions; phase-end quality gate green (Task 100.120 -- the Conventional Commit itself is the orchestrator's). Phase 110 (`create_<d>` ValidateResult channel, 12 domains) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T14:44:51.000+02:00 - Phase 100 (ADR) complete
+
+Case-5 ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e ("Extend the non-raising structured-result workaround to the create_<d>/parse_<d> content-validation cases") drafted through the specmgr MCP `create_adr` structured tool (per ADR 898bfcd0's authoring mandate -- no hand-written markdown), validated via `validate_adr`, and set to `accepted` via the generic `set_status` tool (`type="adr"`) ahead of the Phase 110/120 code landing. The ADR records GitHub issue #204 (incl. the 2026-10-07 live `create_feat` dogfooding repro: soft-wrapped list item -> the bare `Error executing tool create_feat`), the locked scope (the 12 `create_<d>` tools' content-validation-failure branch and the 12 `parse_<d>` tools' existing-but-broken-file branch, `parse_<d>`'s `OSError`-family file-access contract never intercepted), all out-of-scope items (`create_adr`/the ADR domain, `delete`/`set_feat_id` incl. `delete`'s unchanged raise on an existing-but-broken document, `get_<d>`, the generic `validate` tool's own behavior/cap, `update`/`edit`'s case-4 branches, the client-side `isError` truncation defect itself), the reuse-not-new-models design (`ValidateResult`/`ValidationErrorEntry` plus the `validate` tool's own `_CAUGHT_EXCEPTIONS` tuple and `_MAX_VALIDATE_ERROR_CHARS` constant imported from `general/tools/validate.py` per the case-4 `update.py`/`edit.py` import precedent), and the `create_feat` execution-order subtlety (content validation runs before its id-shape `ValueError` guard and its `FileExistsError` check -- not re-ordered; a compound failure returns `ValidateResult` first, "first-in-execution-order wins", documented per REQ-003 and pinned by test per ADR b8c9bfea item 4's precedent). Per the chain's by-reference precedent, the ADR refines the "create/parse keep raising" scope sentence of ADR 519d1206's own Decision Outcome by reference (accepted predecessors left unedited; no supersession, no dated revision) and explicitly resolves ADR b8c9bfea's `delete` "candidate case 5" forward pointer: feat-204 takes the case-5 slot for `create_<d>`/`parse_<d>`, `delete`'s raise-based Bug-1 contract stays unchanged, and `delete` becomes a later candidate (case 6) if ever addressed. Applied to this README: Related Decisions placeholder replaced with the tag-first ADR entry; Tasks 100.100/100.110/100.120 marked done in place; frontmatter `status` moved `planning` -> `progress`. Phase-end gate: full quality gate green (ruff format/check, vulture, pytest ~4414 passed/16 skipped, `specmgr adr-toc` -- the regenerated TOC picking up the new ADR is expected drift that travels with the orchestrator's single phase commit).
 
 #### 2026-10-08T13:08:11.717+02:00 - Plan refined (feat-refiner pass)
 
