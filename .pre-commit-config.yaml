@@ -300,13 +300,24 @@ repos:
         files: ^(src|tests)/.*\.py$
 
       - id: specmgr-coverage-badge
-        name: specmgr coverage-badge
+        name: specmgr coverage-badge (CI source-less condition)
         description: >-
-          Generate coverage badge SVG, then fail if that changed anything
-          -- standard formatter-hook UX: review and `git add` the regenerated
-          badge, then commit again. Must run after the pytest hook above,
-          since it reads the .coverage data pytest-cov just produced.
-        entry: bash -c 'uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
+          Generate the coverage badge SVG from a source-less test run, then
+          fail if the badge changed -- standard formatter-hook UX: review
+          and `git add` the regenerated badge, then commit again.
+          feat-185-uc-diagrams introduced the repo's first env-gated tests
+          (a PlantUML source via the gitignored root .env): the pytest hook
+          above runs them where a source is configured (~99% coverage), but
+          GitHub CI has no SPECMGR_PLANTUML_* configured (the env-gated
+          tests skip, ~98%), and the committed badge must match the CI
+          condition. The hook therefore re-runs the suite under exactly
+          that condition -- env -u on all three source vars plus the
+          SPECMGR_TESTS_NO_DOTENV sentinel, honoured by BOTH .env loaders
+          (tests/conftest.py and cli.py's module-level load -- without the
+          cli.py half, any in-process CLI test import re-selects the local
+          .env source) -- and regenerates the badge from that run's
+          .coverage data.
+        entry: bash -c 'env -u SPECMGR_PLANTUML_JAR -u SPECMGR_PLANTUML_BIN -u SPECMGR_PLANTUML_URL SPECMGR_TESTS_NO_DOTENV=1 uv run --frozen pytest -n auto --cov=src --cov-report= -q && uv run --frozen specmgr coverage-badge && git diff --exit-code -- docs/coverage.svg'
         language: system
         pass_filenames: false
         files: ^(src|tests)/.*\.py$

@@ -448,6 +448,33 @@ across two physical source lines.
   even under heavy load.
 ```
 
+### UC Diagram Authoring (feat-185-uc-diagrams)
+
+**Requirement:** Author UC documents and their PlantUML diagram files per the
+frozen rulebook `specmgr://uc/plantuml` (content source
+`src/biz/dfch/specmgr/uc/data/uc_plantuml.md`). Three points:
+
+1. **Attribution authoring style** — write `Main Success Scenario` steps and
+   extension items that **start with the participant's cleaned label**
+   (e.g. `Company checks inventory for requested goods.` /
+   `Buyer confirms order details and signs for order.`), so the sequence
+   skeleton's longest-prefix pre-fill (rulebook §2.9.3) hits and leaves the
+   agent the fewest `UNATTRIBUTED` markers to resolve. The pre-fill is
+   **positional, not semantic** — the agent may still correct any pre-filled
+   arrow the free text shows to be wrong in the
+   `generate_uc_sequence_diagram` prompt flow.
+2. **Diagram file layout** (rulebook §2.10, CWD-relative for the CLI) —
+   `<project>/diagrams/uc/<id>.usecase.puml` + `package.puml` are
+   **git-tracked and CLI-regenerable** (`specmgr diagram uc` / `--check`);
+   `<id>.sequence.puml` is **git-tracked but agent-owned** — written by the
+   prompt flow after attribution (possibly with corrected arrows); the CLI
+   **never creates, overwrites, or diffs** it.
+3. **The `' validated: structure-only` header** — agent path only, and only
+   in the all-unset source state (rulebook §3.4): the sequence file is
+   written with that comment as its **first line** (above `@startuml`) so
+   the file's provenance is visible. Deterministic CLI output never carries
+   it (checker-clean by construction).
+
 ## TODO
 
 * Use "uv", do not use "pip"
@@ -478,3 +505,5 @@ These conventions were chosen to:
 - **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
 - **2026-09-09:** Added markdown list-item soft-wrap convention (structurally-checked list items
   must stay on one physical line; call `MarkdownListItem.single_line_text()`)
+- **2026-10-05:** Added UC diagram authoring convention (attribution authoring style, diagram
+  file layout, structure-only header) — feat-185-uc-diagrams Phase 140

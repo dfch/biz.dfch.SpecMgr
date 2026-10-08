@@ -42,7 +42,7 @@ genuinely a new use case.
   - `### Channels to Secondary Actors` -- optional bullet list.
   - `### Related Use Cases` -- optional bullet list of cross-references.
 - `## Main Success Scenario` -- mandatory numbered list of steps, the
-  "everything goes right" path.
+  "everything goes right" path. (Attribution authoring style: start each step with the actor who performs it, e.g. `Company checks inventory for requested goods.` -- the PlantUML sequence-skeleton attribution pre-fill, rulebook `specmgr://uc/plantuml`, keys on that participant-label prefix.)
 - `## Extensions` -- optional. An optional introductory paragraph
   followed by zero or more `### Extension {step}{letter}. {condition}`
   sub-sections (e.g. `### Extension 3a. Company is out of stock`), each
