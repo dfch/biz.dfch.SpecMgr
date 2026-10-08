@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
-status: done
+status: review
 type: feat
-updated: '2026-10-07T09:28:39.561+02:00'
+updated: '2026-10-07T17:03:20.962+02:00'
 version: 1.0.0
 ---
 
@@ -30,15 +30,15 @@ version: 1.0.0
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `list_feat(glob="feat-7*")` against a fixture corpus (temp dir with `SPECMGR_FEAT_DIR` overridden, holding a known set of `feat-7*` ids plus non-matching ids) returns exactly the matching features and no others, and `total` equals that count.
+- [x] ACC-001: `list_feat(glob="feat-7*")` against a fixture corpus (temp dir with `SPECMGR_FEAT_DIR` overridden, holding a known set of `feat-7*` ids plus non-matching ids) returns exactly the matching features and no others, and `total` equals that count.
 
-- [ ] ACC-002: For a document with a known UUID (e.g. from `docs/req/`), `list_req(glob="<first 4 hex chars>*")` — in any case of the pattern — returns that row and no others.
+- [x] ACC-002: For a document with a known UUID (e.g. from `docs/req/`), `list_req(glob="<first 4 hex chars>*")` — in any case of the pattern — returns that row and no others.
 
-- [ ] ACC-003: With `glob=None`, all twelve tools' output is unchanged (existing tests stay green, no new drift).
+- [x] ACC-003: With `glob=None`, all twelve tools' output is unchanged (existing tests stay green, no new drift).
 
-- [ ] ACC-004: Paging composes with the filter: for a pattern with N matches, `offset=N` returns zero rows and `truncated` reflects the filtered total.
+- [x] ACC-004: Paging composes with the filter: for a pattern with N matches, `offset=N` returns zero rows and `truncated` reflects the filtered total.
 
-- [ ] ACC-005: A corpus containing a broken (failed-to-parse) document: the unfiltered listing still shows its failed row and `error_count` counts it (today's behaviour); for any `glob` the failed row is absent and `error_count = 0`.
+- [x] ACC-005: A corpus containing a broken (failed-to-parse) document: the unfiltered listing still shows its failed row and `error_count` counts it (today's behaviour); for any `glob` the failed row is absent and `error_count = 0`.
 
 ### Scope
 
@@ -88,28 +88,57 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 #### Phase 100: list_feat glob
 
-- [ ] Task 100.100: Add the shared id-glob filter helper in `general/tools/` (lowercase id + pattern, then `fnmatchcase`) with unit tests.
-- [ ] Task 100.110: Add the `glob: str | None = None` parameter to `list_feat`, applied after the domain's row build (both cache stages) and before `total`/paging; update the docstring.
-- [ ] Task 100.120: Tests for `list_feat` on fixture corpora (temp dir, `SPECMGR_FEAT_DIR` overridden): the `feat-7*` case, filtered `total`/`offset`/`truncated`/`error_count`, uppercase-pattern case-insensitivity, failed-row exclusion for a broken fixture (ACC-005), and unchanged `glob=None` output.
+- [x] Task 100.100: Add the shared id-glob filter helper in `general/tools/` (lowercase id + pattern, then `fnmatchcase`) with unit tests.
+- [x] Task 100.110: Add the `glob: str | None = None` parameter to `list_feat`, applied after the domain's row build (both cache stages) and before `total`/paging; update the docstring.
+- [x] Task 100.120: Tests for `list_feat` on fixture corpora (temp dir, `SPECMGR_FEAT_DIR` overridden): the `feat-7*` case, filtered `total`/`offset`/`truncated`/`error_count`, uppercase-pattern case-insensitivity, failed-row exclusion for a broken fixture (ACC-005), and unchanged `glob=None` output.
 
 #### Phase 110: Extend to the other list tools
 
-- [ ] Task 110.100: Add the same `glob` parameter to the eleven other paged `list_<d>` tools via the shared helper.
-- [ ] Task 110.110: Tests for a UUID-prefix match (e.g. `dead*`) on fixture corpora plus docstring updates and `docs/MCP.md` regeneration.
+- [x] Task 110.100: Add the same `glob` parameter to the eleven other paged `list_<d>` tools via the shared helper.
+- [x] Task 110.110: Tests for a UUID-prefix match (e.g. `dead*`) on fixture corpora plus docstring updates and `docs/MCP.md` regeneration.
 
 #### Phase 120: Quality gate
 
-- [ ] Task 120.100: Run `ruff format --check`, `ruff check`, `vulture`, the full `pytest` suite, and the `specmgr docs`/`specmgr mcp-docs` drift checks; update this feature's Progress section.
+- [x] Task 120.100: Run `ruff format --check`, `ruff check`, `vulture`, the full `pytest` suite, and the `specmgr docs`/`specmgr mcp-docs` drift checks; update this feature's Progress section.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-07**: Planning. GitHub issue #200 is open; this feature folder was created from it. No implementation has started.
+**As of 2026-10-07**: All three phases complete — the feature is ready for review.
+
+- Phase 100 (`list_feat` glob): the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003).
+- Phase 110 (eleven other tools): the same `glob` parameter on `list_req`/`list_uc`/`list_tsk`/`list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/`list_vcr`/`list_sysrs`, each wired to the shared helper between its row build and `total`/paging, one new per-domain fixture test module each (`tests/<d>/tools/test_list_<d>_glob.py`; the `req` module additionally carries the plan's named ACC-002/ACC-004/ACC-005 additions), docstrings updated, `docs/MCP.md`/`docs/api/` regenerated.
+- Phase 120 (quality gate): every gate green, each walked with per-test evidence for ACC-001..ACC-005 (see the 2026-10-07T15:22:39.247+02:00 Updates entry):
+  - `uv run --frozen ruff format --check` — 1925 files already formatted (pass)
+  - `uv run --frozen ruff check` — All checks passed! (pass)
+  - `uv run --frozen vulture src/ whitelist.py --min-confidence 60` — no output, exit 0 (pass)
+  - `uv run --frozen pytest -n auto --cov=src --cov-report=` — 4137 passed in 72.68s (pass)
+  - `uv run --frozen specmgr docs` / `specmgr mcp-docs` / `specmgr coverage-badge` — all idempotent, `git status --short` clean after each (pass)
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T17:03:20.962+02:00 - Post-implementation review findings addressed (G1/D1/D2); watch item recorded
+
+Addressed the three findings of the post-implementation code review (docs only; no production or test code changes): (G1) `CHANGELOG.md` gained the feature's missing `[Unreleased]` `### Added` bullet for the new `glob` id-filter parameter on the twelve paged `list_<d>` tools, placed before the pre-existing `### Changed` per Keep a Changelog section order; (D1) the Phase-120 entry's claim that all thirteen test files on the branch were pure additions was corrected to the factually accurate form — twelve new `test_list_<d>_glob.py` modules plus one appended `TestFilterSummariesByGlob` class in the pre-existing `tests/general/tools/test__listing.py` (the change is additive-only, zero removed or altered lines, so ACC-003's substance holds); (D2) the five `### Acceptance Criteria` boxes ACC-001..ACC-005 were ticked to `- [x]` (criterion text untouched), each covered by the named, passing tests the Phase-120 entry walks to its test. The review's watch item is recorded here: commit `52ab39c`'s message discloses that `tests/feat/tools/test_list_feat_glob.py` failed intermittently under the pre-commit hook's staged-snapshot full-suite run (order-dependent; passes standalone and in direct full-suite runs); the post-implementation review could not reproduce it (two full-suite runs, 4137 passed) and found no mechanism, so it is tracked as a watch item with no code change.
+
+#### 2026-10-07T15:36:37.959+02:00 - Status set to review
+
+All three phases (100/110/120) are implemented, committed, and gate-green (4137 tests, ruff/vulture clean, doc/schema drift idempotent); the frontmatter status moved from `progress` to `review` for the post-implementation review and the pull request against `dev`.
+
+#### 2026-10-07T15:22:39.247+02:00 - Phase 120 complete: quality gate green, ACC-001..ACC-005 walked
+
+Ran every gate of Task 120.100 — all green on the first run, no production or test changes needed. `ruff format --check`: 1925 files already formatted. `ruff check`: All checks passed! `vulture src/ whitelist.py --min-confidence 60`: no output (clean, exit 0). `pytest -n auto --cov=src --cov-report=`: 4137 passed in 72.68s. Drift checks `specmgr docs` (487 module files + GENERATED.md), `specmgr mcp-docs` (docs/MCP.md), and `specmgr coverage-badge` (docs/coverage.svg, 99%) all idempotent — `git status --short` clean after each. ACC walk (re-run with `-v`, every covering test PASSED): ACC-001 → `tests/feat/tools/test_list_feat_glob.py::TestListFeatGlob::test_acc001_glob_returns_exactly_the_matching_features_and_no_others`; ACC-002 → `tests/req/tools/test_list_req_glob.py::TestListReqGlob::test_acc002_known_repo_uuid_matches_in_any_case_of_the_pattern` (the real `docs/req` UUID `10b78b36-abad-4bfe-9281-f75677ff7d09`, subtests over `10b7*` and `10B7*`); ACC-003 → all thirteen test-file changes on this branch are additive-only (twelve new `test_list_<d>_glob.py` modules plus one appended test class in the pre-existing `tests/general/tools/test__listing.py`; no pre-existing test modified or removed) and the full suite's pre-existing `test_list_<d>.py` suites stayed green, plus the per-module `glob=None`-unchanged tests (feat `test_acc003_glob_none_output_is_unchanged`, the other eleven domains `test_glob_none_output_is_unchanged_and_reports_the_full_corpus`); ACC-004 → `test_acc004_paging_composes_with_the_glob_filter` in both the `feat` and `req` modules; ACC-005 → `test_acc005_broken_folder_is_reported_unfiltered_but_absent_for_any_glob` (feat) and `test_acc005_broken_file_is_reported_unfiltered_but_absent_for_any_glob` (req). Scope discipline confirmed: the `src/` diff over 52ab39c..HEAD is exactly `general/tools/_listing.py` plus twelve `tools/list_<d>.py` files; `adr/tools/list_adr.py` is unmodified and contains no `glob`; the shared helper is untouched by Phase 110 (empty diff 7a0f297..HEAD). No decision was forced this phase, so Decisions Made is unchanged.
+
+#### 2026-10-07T14:43:27.097+02:00 - Phase 110 complete: the glob parameter on the eleven other list tools
+
+Implemented Phase 110 (Tasks 110.100/110.110): the same optional `glob: str | None = None` parameter (third position, after `max_results`/`offset`) on `list_req`/`list_uc`/`list_tsk`/`list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/`list_vcr`/`list_sysrs`, each calling the shared `general.tools._listing.filter_summaries_by_glob` helper once, between its own `build_summaries` row build and the `total`/`offset`/`max_results`/`truncated` step (`list_adr` remains out of scope, `list_feat` already shipped in Phase 100; the helper itself is untouched). Each tool's `@mcp.tool` description gained the glob sentence (UUID-prefix example `dead*`), its numpydoc docstring the materialize→filter→paginate intro, the `glob` Parameters entry, and the Returns clarification, in the `list_feat` precedent's own style; `rsk`'s module docstring additionally notes that its sentinel-built failed rows also carry `id=None`/`error`, so the helper's `error_count = 0`-by-construction guarantee holds for it like the other domains. Eleven new fixture test modules `tests/<d>/tools/test_list_<d>_glob.py` (per-test temp `SPECMGR_DOCS_DIR`, the domain cache reset in `setUp`/`tearDown`, hand-built corpus written directly to disk: two healthy documents with known different-prefix UUIDs `deadbeef-*`/`cafe...` plus one broken file) cover the per-domain floor — UUID-prefix match (exactly the matching rows, filtered `total`, `error_count = 0`), uppercase/mixed-case pattern case-insensitivity, and `glob=None`-unchanged output reporting the full corpus including the failed row — and the `req` module additionally carries the plan's named ACC-002 (a real UUID read off `docs/req/req-10b78b36-abad-4bfe-9281-f75677ff7d09-verification-case-record-document-management.md`, pattern `10b7*`/`10B7*`), ACC-004 (paging composes with the filter on the two-match `dead*` corpus), and ACC-005 (broken file reported unfiltered, absent and `error_count = 0` for any glob including `*`). All pre-existing `tests/<d>/tools/test_list_<d>.py` stay green untouched (ACC-003). Regenerated `docs/MCP.md` (the `glob` parameter row + description sentence for all eleven tools), the eleven `docs/api/biz.dfch.specmgr.<d>.tools.list_<d>.md` files, and `docs/GENERATED.md`'s test-file count (384 → 395); `docs/coverage.svg` is unchanged (99% before and after).
+
+#### 2026-10-07T10:56:19.858+02:00 - Phase 100 complete: the list_feat glob parameter
+
+Implemented Phase 100 (Tasks 100.100/100.110/100.120): (1) the shared id-glob helper `filter_summaries_by_glob(summaries, pattern) -> (filtered, error_count)` in `general/tools/_listing.py` — a row matches iff `fnmatchcase(row.id.lower(), pattern.lower())`, rows with `id=None` never match, and the returned `error_count` is recomputed on the filtered list (a glob-given result therefore has `error_count = 0` by construction) — plus its unit tests in `tests/general/tools/test__listing.py`; (2) the `glob: str | None = None` parameter on `list_feat`, applied to the materialized row list after feat-187's two-stage (dirty/clean `DocCache`) resolution loop and before the `total`/paging step (never a filesystem re-scan), with the numpydoc and `@mcp.tool` description updated (regenerated into `docs/MCP.md`); (3) the new fixture tests `tests/feat/tools/test_list_feat_glob.py` (per-test temp `SPECMGR_FEAT_DIR`, both feat cache stages reset, a small hand-built corpus of two `feat-7*` + two non-matching + one broken folder): ACC-001, ACC-004 (paging composes with the filter), ACC-005 (broken row reported unfiltered, absent and `error_count = 0` for any glob), REQ-004 (uppercase patterns), the empty-string-is-a-pattern decision, `glob=None`-unchanged output, and rows produced by both cache stages. All pre-existing `tests/feat/tools/test_list_feat*.py` stay green without modification. Also corrected this feature's frontmatter `status`, which commit 722a135 had prematurely set to `done` before any implementation existed, back to `progress`.
 
 #### 2026-10-07T09:17:56.462+02:00 - Plan refined (feat-refiner pass)
 
@@ -122,6 +151,14 @@ Created the feature plan for GitHub issue #200 (an optional `glob` id-filter par
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-07T14:43:27.097+02:00 - Fixture writing: direct disk writes with hand-authored frontmatter
+
+The Phase 110 fixture corpora are written directly to disk rather than via `create_<d>` (which would assign random `uuid4` ids the filter could not be tested against deterministically): each healthy fixture is a minimal valid body copied from the domain's own pre-existing `tests/<d>/tools/test_list_<d>.py` (`_MINIMAL_BODY`, plus for `dec`/`rsk` that test's own `MANDATORY_*` helper snippet) under a hand-authored frontmatter block carrying the chosen id (`deadbeef-...`/`cafe...`), `status: draft`, and the domain's `type` discriminator. One domain-specific wrinkle: `rsk`'s closed status vocabulary (`accepted`/`closed`/`dropped`/`mitigating`/`occurred`/`open`) has no `draft`, so the `rsk` fixtures use `status: open` (surfaced by a parse failure in the first test run). The `req` corpus carries two `deadbeef-*` documents so its ACC-004 paging test has N = 2 matches; the other ten domains carry one each (the plan's floor).
+
+#### 2026-10-07T10:56:19.858+02:00 - Helper location and signature
+
+Per the plan's recommendation, the shared helper lives in `general/tools/_listing.py` (the existing doc-type-agnostic summary plumbing module; no `mcp` import, `__all__` extended). Named `filter_summaries_by_glob(summaries: list[_SummaryT], pattern: str) -> tuple[list[_SummaryT], int]` — bound to that module's existing `DocSummary`-bound `_SummaryT` TypeVar — returning the filtered rows *and* the recomputed `error_count` (rows whose `error` field is set) so every tool that takes the parameter calls it in one place and `error_count` cannot drift from the filtered row list. The caller keeps the `glob is not None` guard itself, so the `REQ-005` no-op path stays structurally untouched.
 
 #### 2026-10-07T07:48:18.241+02:00 - Parameter named glob; matching is case-insensitive
 
