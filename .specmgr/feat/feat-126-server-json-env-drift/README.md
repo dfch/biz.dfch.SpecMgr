@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T21:21:13.282+02:00'
 id: feat-126-server-json-env-drift
-status: progress
+status: review
 type: feat
-updated: '2026-10-08T09:20:43.000+02:00'
+updated: '2026-10-08T10:05:22.971+02:00'
 version: 1.0.0
 ---
 
@@ -35,12 +35,12 @@ Verified state at planning time (2026-10-07):
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `server.json`'s `environmentVariables` names are exactly the 8 read in the source; the two feature-gate entries have no `default` and presence-based descriptions; the three pre-existing `SPECMGR_MCP_*` entries are faithful to the code (`SPECMGR_MCP_TRANSPORT`'s `choices` cover all three supported transports; `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions name SSE/streamable-http mode only); `name`s are unique, every `description` non-empty, and `default` present iff the code has one.
-- [ ] ACC-002: The drift test is green against the committed source and manifest.
-- [ ] ACC-003: Manual mutation of `server.json` (remove one entry → the test fails naming the missing variable; add a bogus `SPECMGR_BOGUS` → the test fails naming the extra variable) is verified during Phase 120 and reverted.
-- [ ] ACC-004: The scan does not report `_SPECMGR_ROOT` (`src/biz/dfch/specmgr/_paths.py`) — the fixture asserts the bare `SPECMGR_ROOT` substring too, since the guard's purpose is identifiers that merely contain the prefix — and does not report docstring-prose mentions (pinned by the test's own negative fixture cases).
-- [ ] ACC-005: The full quality gate is green: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`.
-- [ ] ACC-006: `README.md`'s "Environment Variables" section and the `CHANGELOG.md` `[Unreleased]` entry are committed inside their phase's commit.
+- [x] ACC-001: `server.json`'s `environmentVariables` names are exactly the 8 read in the source; the two feature-gate entries have no `default` and presence-based descriptions; the three pre-existing `SPECMGR_MCP_*` entries are faithful to the code (`SPECMGR_MCP_TRANSPORT`'s `choices` cover all three supported transports; `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions name SSE/streamable-http mode only); `name`s are unique, every `description` non-empty, and `default` present iff the code has one.
+- [x] ACC-002: The drift test is green against the committed source and manifest.
+- [x] ACC-003: Manual mutation of `server.json` (remove one entry → the test fails naming the missing variable; add a bogus `SPECMGR_BOGUS` → the test fails naming the extra variable) is verified during Phase 120 and reverted.
+- [x] ACC-004: The scan does not report `_SPECMGR_ROOT` (`src/biz/dfch/specmgr/_paths.py`) — the fixture asserts the bare `SPECMGR_ROOT` substring too, since the guard's purpose is identifiers that merely contain the prefix — and does not report docstring-prose mentions (pinned by the test's own negative fixture cases).
+- [x] ACC-005: The full quality gate is green: `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`.
+- [x] ACC-006: `README.md`'s "Environment Variables" section and the `CHANGELOG.md` `[Unreleased]` entry are committed inside their phase's commit.
 
 ### Scope
 
@@ -107,11 +107,15 @@ Verified state at planning time (2026-10-07):
 
 ### Current Status
 
-**As of 2026-10-08**: Phase 120 (Drift regression test) is complete — `tests/test_server_json.py` guards `server.json`'s `environmentVariables` against the `SPECMGR_*` read sites in `src/` bidirectionally (failure messages name the specific missing/extra entries), pins the REQ-002 structural invariants (unique `name`s, non-empty `description`s, `default` iff the code has one), and pins the ACC-004 false-positive guards (the `_SPECMGR_ROOT` bare-substring assert plus synthetic docstring/comment-quoting fixtures). ACC-003 was verified by mutating `server.json` in both directions (the failing runs named `SPECMGR_FEAT_DIR`/`SPECMGR_BOGUS` respectively) and reverting. `docs/GENERATED.md` was regenerated for the new test file (test-file count 383 → 384), and the `CHANGELOG.md` `[Unreleased]` gained the test bullet. All phases' gates are green; the feature implementation is done and pending final review.
+**As of 2026-10-08**: Implementation of both phases is complete and committed — Phase 100 (Manifest completion) and Phase 120 (Drift regression test) — with all six acceptance criteria (ACC-001 through ACC-006) verified; status is set to review, pending final review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T08:05:22.000Z - Status set to review
+
+All acceptance criteria (ACC-001 through ACC-006) verified with evidence: the drift test is green 7/7 against the committed source and manifest (ACC-001/ACC-002); ACC-003's manual mutation of `server.json` was verified in both directions — removing `SPECMGR_FEAT_DIR` failed the suite naming the variable missing from the manifest, adding a bogus `SPECMGR_BOGUS` failed it naming that entry extra — and reverted; ACC-004's negative fixtures pin the `_SPECMGR_ROOT`/bare-`SPECMGR_ROOT` and docstring-prose guards; the full quality gate is green (ACC-005; `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src` — 4095 passed); and the root `README.md` correction plus the `CHANGELOG.md` `[Unreleased]` entry are committed inside their phase's commits (ACC-006). The feature is ready for review.
 
 #### 2026-10-08T07:20:43.000Z - Phase 120 (Drift regression test) implemented
 
