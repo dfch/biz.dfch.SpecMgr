@@ -4,7 +4,7 @@ created: '2026-10-03T09:46:57.279+02:00'
 id: feat-185-uc-diagrams
 status: done
 type: feat
-updated: '2026-10-08T09:42:12.162+02:00'
+updated: '2026-10-08T10:08:01.481+02:00'
 version: 1.0.0
 ---
 
@@ -365,6 +365,17 @@ Feature created from the design conversation: formalised UC → PlantUML pipelin
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08 08:08:01.000Z - Phase 160 code smells — deferred (second-round review, 2026-10-08)
+
+The second-round review's (2026-10-08) Code Smells category was deliberately left out of Phase 160's scope (E/G/D/I only, user-approved). They are recorded here so the deferral does not disappear with the review conversation. None is a functional defect — the Phase 160 gate was green throughout:
+
+1. `plantuml/chain.py:134-136` — `select_source`'s loop-local `result = (kind, value); return result` could be a plain `return (kind, value)` (style only).
+2. `plantuml/backends.py:405-411` ≡ `plantuml/url.py:240-246` — byte-identical `_write_proof` (temp-file writer, `delete=False`) duplicated in two modules; a shared private helper in `plantuml/` would keep them in lockstep (the package is import-free/stdlib-only either way).
+3. `backends.py:407` / `url.py:242` — render-proof temp files are created `delete=False` and never cleaned up (the path is "optionally reported" only, rulebook §4) — every successful validation leaks one file in the OS temp dir.
+4. `plantuml/structure.py:310` — `undeclared_reported: dict[str, int]` stores the first-seen line number but only the keys are used (dedup; values never read); a `set[str]` says the same.
+
+Still open alongside these, the Phase 145 deferrals S1/S2/S6/S7 (recorded in the 2026-10-06 entries): S1 (local transport-failure post-canary — candidate for exit 3), S2 (dead defensive branch in `backends.py`), S6 (assert on degenerate Scope in `_receiver`), S7 (trigger multi-paragraph continuation join). (S4 was closed in Phase 150.) All are candidates for a future follow-up feature, not planned as of 2026-10-08.
 
 #### 2026-10-08 05:08:35.000Z - Phase 160 implementation decisions (feature-scoped)
 
