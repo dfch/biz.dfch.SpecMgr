@@ -210,9 +210,18 @@ def diagram_uc(
         slots = _slots_from_listing()
         for slot in slots:
             if slot.use_case is None:
+                # name the skipped document (the 2026-10-08 actionable-warning fix):
+                # the id when present, else the resolved path — a list_uc failed
+                # row's id is None (the frontmatter is unreadable), its path is not
+                if slot.id is not None:
+                    identifier = f"(id: {slot.id})"
+                elif slot.path is not None:
+                    identifier = f"(path: {slot.path})"
+                else:
+                    identifier = "(unknown document)"
                 typer.echo(
-                    "⚠ skipped an existing-but-broken document (no per-UC file; its references take the "
-                    "package's deterministic note path)"
+                    f"⚠ skipped an existing-but-broken document {identifier} — no per-UC file; its "
+                    "references take the package's deterministic note path"
                 )
     else:
         for id_ in ids:

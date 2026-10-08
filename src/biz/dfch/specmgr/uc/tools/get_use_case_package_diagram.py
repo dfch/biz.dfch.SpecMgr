@@ -90,17 +90,21 @@ def _slots_from_listing() -> list[PackageDocument]:
     base_dir = uc_base_dir()
     slots: list[PackageDocument] = []
     for row in _list_uc_all_rows():
+        # the row's own scan-resolved path rides on the slot (the renderer
+        # ignores it — the CLI's all-mode skip warning names a skipped
+        # document by id, else by this path: a list_uc failed row's id is
+        # None — the frontmatter is unreadable — but its path always is)
         if row.title == FAILED_TO_PARSE_MARKER:
-            slots.append(PackageDocument(id=row.id, use_case=None))
+            slots.append(PackageDocument(id=row.id, use_case=None, path=row.path))
             continue
         path = Path(row.path)  # the row's own scan-resolved path (within the base dir)
         assert_within(base_dir, path)
         try:
             doc = read_uc(path)
         except (AssertionError, ValidationError, yaml.YAMLError, FileNotFoundError):
-            slots.append(PackageDocument(id=row.id, use_case=None))
+            slots.append(PackageDocument(id=row.id, use_case=None, path=row.path))
             continue
-        slots.append(PackageDocument(id=row.id, use_case=doc.body))
+        slots.append(PackageDocument(id=row.id, use_case=doc.body, path=row.path))
     return slots
 
 

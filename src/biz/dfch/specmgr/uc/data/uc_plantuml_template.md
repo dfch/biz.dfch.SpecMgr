@@ -33,6 +33,7 @@ p1 -> p3: {trigger text}
 ' self-message when the sender is the system). A step the skeleton cannot
 ' attribute is NOT an arrow — it is a comment-line marker, one of the three
 ' frozen forms (shared constant in the import-free plantuml package):
+' Note: the marker forms below start with a SINGLE quote in real diagrams; they are shown in double quotes here so this template stays warning-clean.
 '   - main steps:    " UNATTRIBUTED step {N}: <text>" (leading quote mark)
 '   - extension items: " UNATTRIBUTED ext {N}{a} step {M}: <text>"
 '   - trigger:       " UNATTRIBUTED trigger: <text>"

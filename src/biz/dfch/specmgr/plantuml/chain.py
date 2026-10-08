@@ -225,7 +225,13 @@ def clear_probe_caches() -> None:
 
     Clears both the jar/bin probe cache (:func:`backends.clear_probe_cache`)
     and the URL probe cache (:func:`url.clear_probe_cache`), so a changed
-    environment is re-probed from scratch. Never called from ``src/``.
+    environment is re-probed from scratch. Because FAILURE outcomes
+    (``misconfigured`` / ``unavailable``) are memoised for the process
+    lifetime exactly like successes (rulebook §3.5, operator note
+    2026-10-08), this hook is also the only mid-process remedy for a
+    stale failure in a long-lived process (e.g. a running MCP server) after
+    the configuration is fixed — otherwise the restart is. Never called
+    from ``src/``.
     """
     backends.clear_probe_cache()
     url.clear_probe_cache()

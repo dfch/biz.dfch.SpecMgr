@@ -60,6 +60,21 @@ class TestGetUcPlantumlTemplateTool(unittest.TestCase):
                 self.assertEqual(check.errors, [])
         self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in result.split("\n")))
 
+    def test_marker_forms_note_line_is_present_and_not_a_marker(self):
+        """The 2026-10-08 note line — the three marker forms are shown in double quotes in the
+        template (keeping it warning-clean) but start with a SINGLE quote in real diagrams —
+        must be present as a plain comment (no UNATTRIBUTED_MARKER_PREFIX, so the template
+        stays warning-free in both modes) directly above the three marker-form lines."""
+        result = get_uc_plantuml_template()
+        lines = result.split("\n")
+
+        note_lines = [line for line in lines if line.startswith("' Note:")]
+        self.assertEqual(len(note_lines), 1)
+        self.assertIn("SINGLE quote", note_lines[0])
+        self.assertFalse(S.is_unattributed_marker(note_lines[0]))
+        note_index = lines.index(note_lines[0])
+        self.assertTrue(lines[note_index + 1].lstrip().removeprefix("'").strip().startswith("- main steps:"))
+
     def test_delegates_to_shared_data_reader(self):
         """The tool must return whatever general.tools._packaged_data.read_packaged_text() returns."""
         with tempfile.TemporaryDirectory() as tmp:

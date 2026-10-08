@@ -57,11 +57,17 @@ resolution (which document is on disk, which parses, which is in the
 package) is the caller's job (the Phase 120 tool / the Phase 130 CLI via
 ``general.tools._doc_paths`` / the uc read path). A slot whose
 ``use_case`` is ``None`` (exists but failed to parse) is skipped as a
-node; any reference to it takes the §2.8 unresolvable-note path.
+node; any reference to it takes the §2.8 unresolvable-note path. The
+optional ``path`` is caller metadata the renderer ignores — the CLI's
+all-mode skip warning names the skipped document by id, else by path
+(a ``list_uc`` failed row's id is ``None`` — the frontmatter is unreadable
+— but its resolved path always is; the 2026-10-08 actionable-warning fix).
 
 Attributes:
     id: the document's frontmatter uuid (``None`` when unknown).
     use_case: the parsed document, or ``None`` for a broken slot.
+    path: the document's resolved on-disk path (``None`` when the caller
+        does not carry one — the renderer never reads it).
 
 
 ### `_Participant`
@@ -262,6 +268,16 @@ Messages leading with no participant label are emitted as UNATTRIBUTED
 markers (§2.9.4 — the shared :mod:`plantuml.structure` constants); the
 agent flow (Phase 120) resolves them. Pure and deterministic.
 
+Raises
+------
+AssertionError
+    The primary actor's label cleans to empty under the §2.1 rule — the
+    sequence skeleton is UNRENDERABLE (the primary actor's declaration
+    alias anchors the §2.9.6 unanchored notes, so there is no degraded
+    render; rulebook §2.9.1, amended 2026-10-08). The message is
+    actionable (cause + fix hint), and it fires before any output is
+    built.
+
 
 ### `render_use_case_package(documents: 'list[PackageDocument]') -> 'str'`
 
@@ -271,7 +287,12 @@ Layout (frozen, rulebook §2.7): ``@startuml UC Package``, the frozen
 ``left to right direction``, a blank line, the usecase nodes (one per
 parsed slot, package order — the title as alias when bare-identifier,
 else ``uc{N}`` with N the 1-based node position; the §2.3 stereotype on
-the same line when present), the actor declarations (the deduplicated
+the same line when present — the 2026-10-08 collision fallback: a LATER
+document whose cleaned title collides with an already-assigned alias
+takes its positional alias instead, and a positional name already
+assigned by an earlier document's bare title increments past the
+assigned aliases, so the emitted aliases are always unique), the actor
+declarations (the deduplicated
 union of all documents' distinct cleaned labels, first-appearance order:
 document order, within a document primary then secondaries), a blank
 line, the associations (per document, per its own actor declaration

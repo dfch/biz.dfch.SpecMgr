@@ -179,6 +179,83 @@ class TestBothModeErrors(unittest.TestCase):
                 self.assertTrue(any("unbalanced double quote" in error.message for error in result.errors))
 
 
+class TestDeclarationStereotypes(unittest.TestCase):
+    """Declarations with a trailing balanced ``<<stereotype>>`` — with or without
+    an ``as`` alias (rulebook §6.1's declaration enumeration; the 2026-10-08
+    amendment — the pre-amendment checker misparsed a bare label +
+    ``<<stereotype>>`` WITHOUT an alias: the split consumed the `` <<``
+    separator, misread the stereotype's inside as the alias, and the leftover
+    ``>>`` failed the run check — a false rejection in BOTH modes of shapes
+    the real 1.2026.8 parser accepts (verified live: 200 + real SVG))."""
+
+    def test_bare_label_with_stereotype_and_no_alias_is_accepted_both_modes(self):
+        for line in (
+            "participant Alice <<user>>",
+            "actor Bob <<customer>>",
+            "usecase Login <<user goal>>",
+        ):
+            with self.subTest(line=line):
+                text = f"@startuml\n{line}\n@enduml\n"
+                for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+                    with self.subTest(mode=mode):
+                        result = check_structure(text, mode)
+                        self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                        self.assertEqual(result.errors, [])
+                        self.assertEqual(result.warnings, [])
+
+    def test_stereotype_with_and_without_alias_is_accepted_both_modes(self):
+        # the carried shapes (alias before the run, double run, quoted label)
+        # stay accepted — byte-identical to the pre-amendment behavior
+        for line in (
+            "participant Alice as al <<user>>",
+            'actor "Credit card company" as p2',
+            'usecase "Buy Goods" as uc <<summary>>',
+            "participant A <<user>> <<admin>>",
+            'actor "Bob" <<customer>>',
+        ):
+            with self.subTest(line=line):
+                text = f"@startuml\n{line}\n@enduml\n"
+                for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+                    with self.subTest(mode=mode):
+                        result = check_structure(text, mode)
+                        self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                        self.assertEqual(result.errors, [])
+
+    def test_unbalanced_stereotype_still_errors_both_modes(self):
+        # the negative control: a GENUINELY unbalanced <<stereotype>> (the real
+        # parser answers it 400 SYNTAX INVALID — verified live) is an error in
+        # both modes — the pre-amendment checker missed this shape entirely
+        # (the ' <<' separator swallowed into the alias)
+        text = "@startuml\nparticipant A <<user\nA -> A: x\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertTrue(any("unbalanced <<stereotype>>" in error.message for error in result.errors))
+
+    def test_stereotype_before_the_alias_still_errors_both_modes(self):
+        # the frozen shape is label [as alias] <<run>> — the reversed order is
+        # not the emitted subset and the real parser rejects it (verified live:
+        # 400 SYNTAX INVALID) — the pre-amendment error is preserved
+        text = "@startuml\nparticipant A <<user>> as al\nA -> A: x\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertTrue(any("unbalanced <<stereotype>>" in error.message for error in result.errors))
+
+    def test_quoted_label_with_unbalanced_stereotype_still_errors_both_modes(self):
+        text = '@startuml\nactor "A" <<user\nA -> A: x\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertTrue(any("unbalanced <<stereotype>>" in error.message for error in result.errors))
+
+
 class TestUnattributedMarkers(unittest.TestCase):
     """UNATTRIBUTED-marker detection (rulebook §6.5: warnings in both modes)."""
 
@@ -320,6 +397,93 @@ class TestNoteContent(unittest.TestCase):
                         self.assertTrue(result.ok, f"errors in {mode}: {result.errors}")
                         self.assertEqual(result.errors, [])
                         self.assertEqual(result.warnings, [])
+
+
+class TestMultiBlockScoping(unittest.TestCase):
+    """Each ``@startuml``…``@enduml`` block is an independent linting unit
+    (the 2026-10-08 amendment — the block-scoped state resets at every block
+    boundary; the parser accepts multi-block files, verified against 1.2026.8)."""
+
+    def test_unclosed_fragment_in_first_block_is_attributed_within_that_block(self):
+        # (a) two blocks, an unclosed alt in block 1: the lenient finding is
+        # attributed to the alt's own line (within block 1) — standalone:
+        # error, preflight: warning — and block 2 is unaffected
+        text = (
+            "@startuml d1\n"
+            "participant A\n"
+            "participant B\n"
+            "alt c\n"
+            "A -> B: x\n"
+            "@enduml\n"
+            "@startuml d2\n"
+            "participant C\n"
+            "participant D\n"
+            "C -> D: y\n"
+            "@enduml\n"
+        )
+
+        preflight = check_structure(text, MODE_PREFLIGHT)
+        standalone = check_structure(text, MODE_STANDALONE)
+
+        self.assertTrue(preflight.ok)
+        self.assertEqual(len(preflight.warnings), 1)
+        self.assertEqual(preflight.warnings[0].line, 4)  # the alt line, within block 1
+        self.assertIn("unclosed 'alt' fragment", preflight.warnings[0].message)
+        self.assertFalse(standalone.ok)
+        self.assertEqual(len(standalone.errors), 1)
+        self.assertEqual(standalone.errors[0].line, 4)
+        self.assertIn("unclosed 'alt' fragment", standalone.errors[0].message)
+
+    def test_two_clean_blocks_have_no_findings(self):
+        # (b) two clean blocks — no findings at all in either mode
+        text = (
+            "@startuml d1\nactor X\nparticipant Y\nX -> Y: hi\n@enduml\n"
+            "@startuml d2\nactor Z\nparticipant W\nZ -> W: hi\n@enduml\n"
+        )
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, result.errors)
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_block2_name_does_not_dedup_against_block1_tables(self):
+        # (c) X is declared in block 1 only; block 2 uses X in a message
+        # without declaring it — the pre-amendment shared declaration table
+        # suppressed the lenient #5 finding for block 2; per-block scoping
+        # reports it (standalone: error, preflight: warning)
+        text = (
+            "@startuml d1\nactor X\nparticipant Y\nX -> Y: hi\n@enduml\n"
+            "@startuml d2\nparticipant Z\nX -> Z: hi\n@enduml\n"
+        )
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                findings = result.warnings if mode == MODE_PREFLIGHT else result.errors
+                self.assertTrue(
+                    any(finding.line == 8 and "undeclared participant 'X'" in finding.message for finding in findings),
+                    findings,
+                )
+                self.assertEqual(len(findings), 1)
+
+    def test_lines_between_blocks_carry_no_findings(self):
+        # an 'alt' opened OUTSIDE any block (between the two diagrams) is not
+        # part of any linting unit — no spurious "unclosed fragment at EOF"
+        # finding attributed to it (the pre-amendment bug: the shared fragment
+        # stack carried it to the file's EOF)
+        text = (
+            "@startuml d1\nparticipant A\nA -> A: x\n@enduml\n"
+            "alt stray\n"
+            "@startuml d2\nparticipant B\nB -> B: y\n@enduml\n"
+        )
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
 
 
 class TestPackageDataFiles(unittest.TestCase):

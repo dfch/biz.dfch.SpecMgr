@@ -345,11 +345,20 @@ def probe_local(kind: str, value: str) -> ProbeResult:
     """Probe a jar/bin source with the canary (rulebook §3.5 + §4 flag auto-detect).
 
     The probe is memoised per process per ``(kind, value)`` — the agent's
-    validate loop never re-probes. The canary round-trip doubles as the flag
-    probe: a build answering ``--check-syntax`` keeps it; a build whose
-    canary fails with that flag is retried once with the legacy
-    ``-checkonly`` flag (unknown options are ignored by the parser, so a
-    failing canary means the build genuinely cannot check).
+    validate loop never re-probes. A FAILURE outcome (``misconfigured`` /
+    ``unavailable``) is memoised for the process lifetime exactly like a
+    success — a long-lived MCP server therefore keeps a stale failure after
+    the configuration is fixed (a JDK installed, a path corrected) until it
+    is restarted, or the probe cache is cleared (rulebook §3.5, operator
+    note 2026-10-08). The canary round-trip doubles as the flag probe: a
+    build answering ``--check-syntax`` keeps it; a build whose canary fails
+    with that flag is retried once with the legacy ``-checkonly`` flag
+    (unknown options are ignored by the parser, so a failing canary means
+    the build genuinely cannot check). Auto-detect caveat (2026-10-08):
+    that assumption is verified for current builds (rulebook §4: 1.2026.8)
+    — a pre-``--check-syntax`` legacy build that RENDERS on the unrecognised
+    flag (exit 0) would make the probe select "check" on a build that
+    treats it as render; such legacy builds are out of support scope.
 
     A configuration defect (bad path, missing java, not executable) is
     ``misconfigured`` and is decided **without** any subprocess; a reachable

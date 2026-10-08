@@ -219,6 +219,36 @@ class TestValidateUrlMocked(unittest.TestCase):
         self.assertEqual(verdict.classification, url.CLASS_INCONCLUSIVE)
         self.assertIsNotNone(verdict.reason)
 
+    def test_persistent_inconclusive_hint_names_the_dialect_limitation(self):
+        """The 2026-10-08 amended hint (the CLASSIFICATION is frozen — only the hint text
+        moved): under a URL source, a line-level syntax error from line 3 onward surfaces
+        as inconclusive (the deployment's minimal-400 dialect carries no line detail —
+        rulebook §5.2 drift note (e)); retrying cannot fix that, so the hint names the
+        limitation and the remedy (a local source carries the parser's own line)."""
+        # the minimal-400 dialect: a 400 WITHOUT the placeholder marker — the
+        # frozen matrix classifies it INCONCLUSIVE (never INVALID)
+        inconclusive = url.UrlResponse(status=400, body=b"[From string (line 3)] ... Syntax Error?")
+        with mock.patch.object(url, "fetch_svg", return_value=inconclusive):
+            verdict = url.validate_url("http://x", "diagram")
+
+        self.assertEqual(verdict.classification, url.CLASS_INCONCLUSIVE)
+        self.assertIsNone(verdict.valid)  # the frozen classification — unchanged
+        self.assertIn("drift note (e)", verdict.fix_hint or "")
+        self.assertIn("line 3 onward", verdict.fix_hint or "")
+        self.assertIn("SPECMGR_PLANTUML_JAR", verdict.fix_hint or "")
+        self.assertIn("SPECMGR_PLANTUML_BIN", verdict.fix_hint or "")
+
+    def test_transport_failure_inconclusive_keeps_the_retry_hint(self):
+        """The transport-failure branch is a genuine transient — the amended dialect note
+        (line-3+ syntax errors) does not apply to it; the original retry hint stands."""
+        inconclusive = url.UrlResponse(status=None, body=b"", transport_error="ConnectionRefusedError: [Errno 111]")
+        with mock.patch.object(url, "fetch_svg", return_value=inconclusive):
+            verdict = url.validate_url("http://x", "diagram")
+
+        self.assertEqual(verdict.classification, url.CLASS_INCONCLUSIVE)
+        self.assertIn("retry later", verdict.fix_hint or "")
+        self.assertNotIn("drift note (e)", verdict.fix_hint or "")
+
     def test_inconclusive_retry_that_recovers_is_valid(self):
         first = url.UrlResponse(status=None, body=b"", transport_error="timeout")
         second = url.UrlResponse(status=200, body=_body("jetty_real_svg.svg"))

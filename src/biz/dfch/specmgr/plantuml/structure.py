@@ -27,6 +27,18 @@ usecase associations (``-->``), package edges (``..>``), sequence messages
 sanitisation (the ``#quot;`` convention), and ``'`` comment lines — including
 UNATTRIBUTED-marker detection.
 
+Each ``@startuml``…``@enduml`` block is an **independent linting unit**
+(the 2026-10-08 amendment): the block-scoped state — the declaration table,
+the undeclared-name dedup table, the fragment stack, and the note state —
+resets at every block boundary (an ``@enduml``, a stray ``@enduml``, or the
+next ``@startuml`` closing a block that is missing its ``@enduml``). A
+lenient finding (e.g. an unclosed fragment) is attributed within the block it
+belongs to, and lines outside any block (before the first ``@startuml``, or
+between two blocks) carry no findings. The parser is authoritative for
+multi-block files — it accepts them (verified against 1.2026.8, including
+the missing-``@enduml``-then-next-``@startuml`` shape); the packaged shape
+is a single block.
+
 Every finding carries a **1-based line number + cause + fix hint** (the
 feat-27 actionable-error convention). Findings split into ``errors`` and
 ``warnings`` by mode:
@@ -224,13 +236,84 @@ def _strip_operand(token: str) -> str:
     return token
 
 
+#: A balanced stereotype run — one or more ``<<…>>`` pairs (whitespace
+#: allowed inside the brackets, no nesting) with its leading whitespace.
+#: The frozen declaration shape's tail (rulebook §6.1): a quoted or bare
+#: label, an optional ``as <ident>`` alias, and an optional trailing run —
+#: the run is the stereotype **with or without the alias** (the 2026-10-08
+#: amendment — the pre-amendment split consumed a `` <<`` separator and
+#: misread the stereotype's inside as the alias, false-rejecting
+#: ``participant Alice <<user>>`` in both modes).
+_STEREOTYPE_RUN = r"(?:\s*<<[^<>]*>>)+"
+
+#: The frozen declaration shapes (rulebook §6.1, amended 2026-10-08) — the
+#: bare form (label = one token; a multi-word bare label is not the emitted
+#: subset) and the quoted form's remainder after the closing quote.
+_BARE_DECLARATION_SHAPE = re.compile(rf"^(\S+)(?:\s+as\s+([A-Za-z_][A-Za-z0-9_]*))?({_STEREOTYPE_RUN})?\s*$")
+_QUOTED_DECLARATION_SHAPE = re.compile(rf"^\s*(?:as\s+([A-Za-z_][A-Za-z0-9_]*))?({_STEREOTYPE_RUN})?\s*$")
+
+
 def _declaration_parts(rest: str) -> tuple[str, str | None, str | None, list[Finding]]:
     """Split a declaration's ``rest`` into (label, alias, stereotype_tail).
 
     Returns the parts plus local findings (unbalanced quote / stereotype).
-    The label is the quoted substring's content or the bare run up to
-    `` as ``/`` <<``; the alias only from a trailing ``as <ident>``.
+    The label is the quoted substring's content or the bare token; the alias
+    only from an ``as <ident>``; a trailing balanced ``<<…>>`` run is the
+    stereotype tail — with or without the alias in between (the 2026-10-08
+    amendment). A bracket shape that is NOT the frozen one is an unbalanced
+    ``<<stereotype>>`` error (the negative control ``participant A <<user``
+    — the real parser answers it 400 — errors in both modes).
     """
+    findings: list[Finding] = []
+    if rest.startswith('"'):
+        close = rest.find('"', 1)
+        if close == -1:
+            return (
+                "",
+                None,
+                None,
+                [
+                    Finding(
+                        0,
+                        "unbalanced double quote in declaration label (the quote never closes on this line)",
+                        "close the label's quote, or sanitise an embedded quote as #quot; (rulebook §2.4)",
+                    )
+                ],
+            )
+        label = rest[1:close]
+        remainder = rest[close + 1 :]
+        shape = _QUOTED_DECLARATION_SHAPE.match(remainder)
+        if shape is not None:
+            tail = (shape.group(2) or "").strip()
+            return label, shape.group(1), tail, findings
+    else:
+        shape = _BARE_DECLARATION_SHAPE.match(rest)
+        if shape is not None:
+            tail = (shape.group(3) or "").strip()
+            return shape.group(1), shape.group(2), tail, findings
+        if "<<" in rest or ">>" in rest:
+            # a bracket shape outside the frozen form: the legacy walk
+            # below derives label/alias as before, and the unbalanced
+            # finding is added when the legacy walk did not already flag
+            # the tail ('participant A <<user' swallows the ' <<' separator
+            # into the alias, so the legacy tail check alone misses it)
+            label, alias, tail, findings = _declaration_parts_legacy(rest)
+            if not findings:
+                findings.append(
+                    Finding(
+                        0,
+                        "unbalanced <<stereotype>> in declaration (an opening/closing << is missing)",
+                        "write the stereotype as <<word>> (both brackets, no nesting)",
+                    )
+                )
+            return label, alias, tail, findings
+    return _declaration_parts_legacy(rest)
+
+
+def _declaration_parts_legacy(rest: str) -> tuple[str, str | None, str | None, list[Finding]]:
+    """The pre-2026-10-08 ``_declaration_parts`` walk, kept for the shapes the
+    frozen-form regexes above do not cover (byte-identical behavior for
+    every shape the legacy path handles)."""
     findings: list[Finding] = []
     if rest.startswith('"'):
         close = rest.find('"', 1)
@@ -389,24 +472,35 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
             # that start with 'note' or 'end') — verbatim, no check
             continue
 
-        # --- block markers ---
+        # --- block markers (each @startuml...@enduml block is an independent
+        # linting unit — the 2026-10-08 amendment: on every boundary the
+        # fragment stack closes out the way EOF does, then the block-scoped
+        # state resets, so findings never leak across blocks) ---
         if _AT_STARTUML_PATTERN.match(line):
             if in_block:
                 # the parser accepts multiple diagrams in one file (verified
-                # against 1.2026.8) — close the previous block leniently
+                # against 1.2026.8, including a missing @enduml answered by
+                # the next @startuml) — close the previous block leniently,
+                # then start fresh
                 block_boundary(number, enduml_at_line=False)
+                declared = set()
+                undeclared_reported = {}
             startuml_seen = True
             in_block = True
             continue
         if _AT_ENDUML_PATTERN.match(line):
             # a stray @enduml (no open block) is silently ignored — the real
-            # parser is authoritative, and the missing-@startuml finding at
-            # EOF already covers the no-diagram case
+            # parser is authoritative (verified: it answers 200 for a stray
+            # @enduml), and the missing-@startuml finding at EOF already
+            # covers the no-diagram case
             if in_block:
                 block_boundary(number, enduml_at_line=True)
+                declared = set()
+                undeclared_reported = {}
             continue
-        if not in_block and not startuml_seen:
-            # content before any @startuml — not the emitted subset; the
+        if not in_block:
+            # content outside any @startuml...@enduml block (before the first
+            # diagram, or between two) — not part of any linting unit; the
             # missing-@startuml finding is reported at EOF instead
             continue
 

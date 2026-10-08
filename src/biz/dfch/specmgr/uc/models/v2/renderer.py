@@ -465,15 +465,22 @@ class PackageDocument:
     package) is the caller's job (the Phase 120 tool / the Phase 130 CLI via
     ``general.tools._doc_paths`` / the uc read path). A slot whose
     ``use_case`` is ``None`` (exists but failed to parse) is skipped as a
-    node; any reference to it takes the §2.8 unresolvable-note path.
+    node; any reference to it takes the §2.8 unresolvable-note path. The
+    optional ``path`` is caller metadata the renderer ignores — the CLI's
+    all-mode skip warning names the skipped document by id, else by path
+    (a ``list_uc`` failed row's id is ``None`` — the frontmatter is unreadable
+    — but its resolved path always is; the 2026-10-08 actionable-warning fix).
 
     Attributes:
         id: the document's frontmatter uuid (``None`` when unknown).
         use_case: the parsed document, or ``None`` for a broken slot.
+        path: the document's resolved on-disk path (``None`` when the caller
+            does not carry one — the renderer never reads it).
     """
 
     id: str | None
     use_case: UseCase | None
+    path: str | None = None
 
 
 def _bullet_kind(bullet: str) -> str:
@@ -565,7 +572,12 @@ def render_use_case_package(documents: list[PackageDocument]) -> str:
     ``left to right direction``, a blank line, the usecase nodes (one per
     parsed slot, package order — the title as alias when bare-identifier,
     else ``uc{N}`` with N the 1-based node position; the §2.3 stereotype on
-    the same line when present), the actor declarations (the deduplicated
+    the same line when present — the 2026-10-08 collision fallback: a LATER
+    document whose cleaned title collides with an already-assigned alias
+    takes its positional alias instead, and a positional name already
+    assigned by an earlier document's bare title increments past the
+    assigned aliases, so the emitted aliases are always unique), the actor
+    declarations (the deduplicated
     union of all documents' distinct cleaned labels, first-appearance order:
     document order, within a document primary then secondaries), a blank
     line, the associations (per document, per its own actor declaration
@@ -587,9 +599,29 @@ def render_use_case_package(documents: list[PackageDocument]) -> str:
     lines: list[str] = [f"@startuml {_PACKAGE_TITLE}", _PACKAGE_DIRECTION, ""]
 
     usecase_aliases: dict[str | None, str] = {}
+    assigned_aliases: set[str] = set()
     for position, (doc_id, use_case) in enumerate(parsed, start=1):
         title = str(use_case.text).strip()
-        alias = title if _BARE_ALIAS_PATTERN.match(title) else f"uc{position}"
+        if _BARE_ALIAS_PATTERN.match(title) and title not in assigned_aliases:
+            # the FIRST document with a given cleaned title keeps the bare
+            # alias (the rulebook §2.7 item 4 scheme, amended 2026-10-08)
+            alias = title
+        else:
+            # a LATER document whose cleaned title collides with an
+            # already-assigned alias (or is not bare-identifier) takes the
+            # positional alias `uc{N}` — N the 1-based position in the
+            # rendered list, incremented past any already-assigned alias:
+            # the only case where the positional name differs from the
+            # position is an earlier document whose bare title literally
+            # reads `uc{N}` (the 2026-10-08 collision fallback — the
+            # emitted aliases stay unique, so the alias-targeted edges
+            # `uc ..> uc` never address an ambiguous name)
+            number = position
+            alias = f"uc{number}"
+            while alias in assigned_aliases:
+                number += 1
+                alias = f"uc{number}"
+        assigned_aliases.add(alias)
         usecase_aliases[doc_id] = alias
         stereotype = _level_stereotype(use_case)
         node_line = f'usecase "{_sanitize(title)}" as {alias}'
@@ -670,17 +702,45 @@ def render_uc_sequence_skeleton(use_case: UseCase) -> str:
     Messages leading with no participant label are emitted as UNATTRIBUTED
     markers (§2.9.4 — the shared :mod:`plantuml.structure` constants); the
     agent flow (Phase 120) resolves them. Pure and deterministic.
+
+    Raises
+    ------
+    AssertionError
+        The primary actor's label cleans to empty under the §2.1 rule — the
+        sequence skeleton is UNRENDERABLE (the primary actor's declaration
+        alias anchors the §2.9.6 unanchored notes, so there is no degraded
+        render; rulebook §2.9.1, amended 2026-10-08). The message is
+        actionable (cause + fix hint), and it fires before any output is
+        built.
     """
     assert isinstance(use_case, UseCase), type(use_case)
 
+    info = use_case.characteristic_information
+    # the unrenderable edge (rulebook §2.9.1, amended 2026-10-08): a
+    # PARSEABLE document whose primary actor's label cleans to empty under
+    # the §2.1 rule (the v2 schema requires a non-empty primary-actor
+    # paragraph, not one that survives cleaning — e.g. a quoted substring
+    # containing only whitespace) cannot be rendered as a sequence skeleton
+    # — the primary actor's declaration alias anchors the §2.9.6 unanchored
+    # notes, so there is no sensible degraded render. The hard failure stays,
+    # made actionable (feat-27 cause + fix hint), and is checked before any
+    # output is built.
+    primary_paragraphs = info.primary_actor.body
+    primary_label = _actor_label(str(primary_paragraphs[0]).strip()) if primary_paragraphs else ""
+    if not primary_label:
+        raise AssertionError(
+            "the sequence skeleton cannot be rendered: the primary actor's label cleans to empty under "
+            "the §2.1 cleaning rule (the v2 schema requires a non-empty primary-actor paragraph, not one "
+            "that survives cleaning — e.g. a quoted substring containing only whitespace); fix: give the "
+            "primary actor a non-whitespace label — the skeleton's unanchored notes anchor on its §2.9.1 "
+            "declaration alias, which does not exist without it (rulebook §2.9.1, amended 2026-10-08)"
+        )
     title = str(use_case.text).strip()
     participants, system = _participants(use_case)
-    info = use_case.characteristic_information
     # the unanchored-note anchor (rulebook §2.9.6, amended 2026-10-06): the
     # primary actor's §2.9.1 declaration alias — the first declared
-    # participant (the v2 schema requires a primary-actor paragraph, so the
-    # list is never empty for a parsed use case)
-    assert participants  # the v2 schema's non-empty primary actor guarantees an anchor
+    # participant (the non-empty cleaned primary label checked above
+    # guarantees it)
     anchor = participants[0].alias
 
     lines: list[str] = [f"@startuml {_sanitize(title)}", ""]

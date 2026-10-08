@@ -12,6 +12,18 @@ usecase associations (``-->``), package edges (``..>``), sequence messages
 sanitisation (the ``#quot;`` convention), and ``'`` comment lines — including
 UNATTRIBUTED-marker detection.
 
+Each ``@startuml``…``@enduml`` block is an **independent linting unit**
+(the 2026-10-08 amendment): the block-scoped state — the declaration table,
+the undeclared-name dedup table, the fragment stack, and the note state —
+resets at every block boundary (an ``@enduml``, a stray ``@enduml``, or the
+next ``@startuml`` closing a block that is missing its ``@enduml``). A
+lenient finding (e.g. an unclosed fragment) is attributed within the block it
+belongs to, and lines outside any block (before the first ``@startuml``, or
+between two blocks) carry no findings. The parser is authoritative for
+multi-block files — it accepts them (verified against 1.2026.8, including
+the missing-``@enduml``-then-next-``@startuml`` shape); the packaged shape
+is a single block.
+
 Every finding carries a **1-based line number + cause + fix hint** (the
 feat-27 actionable-error convention). Findings split into ``errors`` and
 ``warnings`` by mode:
@@ -69,8 +81,19 @@ Attributes:
 Split a declaration's ``rest`` into (label, alias, stereotype_tail).
 
 Returns the parts plus local findings (unbalanced quote / stereotype).
-The label is the quoted substring's content or the bare run up to
-`` as ``/`` <<``; the alias only from a trailing ``as <ident>``.
+The label is the quoted substring's content or the bare token; the alias
+only from an ``as <ident>``; a trailing balanced ``<<…>>`` run is the
+stereotype tail — with or without the alias in between (the 2026-10-08
+amendment). A bracket shape that is NOT the frozen one is an unbalanced
+``<<stereotype>>`` error (the negative control ``participant A <<user``
+— the real parser answers it 400 — errors in both modes).
+
+
+### `_declaration_parts_legacy(rest: 'str') -> 'tuple[str, str | None, str | None, list[Finding]]'`
+
+The pre-2026-10-08 ``_declaration_parts`` walk, kept for the shapes the
+frozen-form regexes above do not cover (byte-identical behavior for
+every shape the legacy path handles).
 
 
 ### `_strip_operand(token: 'str') -> 'str'`

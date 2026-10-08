@@ -156,8 +156,11 @@ Renders N parsed v2 UC documents (the package) to one diagram. Layout, in order:
 4. the usecase nodes, one per document, in package order (the given `ids` order, or
    `list_uc` order when `ids=None`): `usecase "{title}" as {alias}` with the §2.3
    stereotype appended on the same line when present; the alias is the title itself
-   when the title is a bare identifier per the v1 `_BARE_ALIAS_PATTERN`, else `uc{N}`
-   with `N` the 1-based position in package order
+   when the title is a bare identifier per the v1 `_BARE_ALIAS_PATTERN` **and no
+   earlier document has already taken that alias**, else `uc{N}` with `N` the 1-based
+   position in package order (incremented past any already-assigned alias when even
+   that positional name is taken by an earlier document's bare title) — amended
+   2026-10-08
 5. the actor declarations: the **deduplicated union** of all documents' distinct
    cleaned actor labels, in order of first appearance (document order; within a
    document, primary actor then secondary actors in document order): `actor {label}` /
@@ -173,6 +176,21 @@ Renders N parsed v2 UC documents (the package) to one diagram. Layout, in order:
 The source ends with exactly one trailing newline. Documents that exist but fail to
 parse (including `list_uc` failed rows in `ids=None` mode) are skipped as nodes; any
 reference to such a document takes the §2.8 unresolvable-note path.
+
+**Amended 2026-10-08 (user-approved second-round review fix — the alias collision
+for duplicate bare titles):** two documents with the same bare-identifier title
+(e.g. both `Login`) each emitted `usecase "Login" as Login`, so the alias-targeted
+edges (`{this} ..> {target}`, §2.8) addressed an ambiguous name — the structure
+checker has no duplicate-declaration detection, and the real parser renders such a
+file (the collision is a spec-level gap, not a parser error). The frozen collision
+fallback (deterministic, document order): the **first** document with a given
+cleaned title keeps the bare alias; every **later** document whose cleaned title
+collides with an already-assigned alias takes the positional alias `uc{N}` (`N` its
+1-based position in the rendered list); if even that positional name is already
+assigned — the only case: an earlier document's bare title literally reads
+`uc{N}` — the positional number increments past the already-assigned aliases
+(`uc{N+1}`, …). The emitted aliases are therefore always unique, so every
+alias-targeted edge addresses exactly one node.
 
 ### 2.8 Package edge rules
 
@@ -326,6 +344,18 @@ actor Bank
 actor "Shipping service" as p4
 participant Company
 ```
+
+**Unrenderable edge (amended 2026-10-08 — user-approved second-round review
+fix):** a UC whose primary actor's label cleans to empty under the §2.1 rule
+(the v2 schema requires a non-empty primary-actor paragraph, not one that
+survives cleaning — e.g. a quoted substring containing only whitespace) is
+**UNRENDERABLE for the sequence skeleton**: the primary actor's declaration
+alias anchors the §2.9.6 unanchored notes, and there is no sensible degraded
+render — the renderers and the `get_uc_sequence_skeleton` tool fail with an
+actionable error (cause: the label cleans to empty under §2.1; fix: give the
+primary actor a non-whitespace label). A normative edge, not a checker matter
+(the checker lints the emitted subset, which never contains such a
+declaration).
 
 #### 2.9.2 Step decomposition (frozen)
 
@@ -549,6 +579,15 @@ render). The canary result is **memoised per process** per (kind, value) — the
 validate loop must not re-probe on every call. The canary doubles as diagnosis: e.g. an
 HTTP 404 from the canary yields the fix hint "check the base URL path prefix (bare vs
 `/plantuml`)".
+
+**Operator note (2026-10-08, verified fact — not a normative rule change):** the
+memoisation is outcome-agnostic — a `misconfigured`/`unavailable` failure is cached for
+the process lifetime exactly like a success, so fixing the configuration mid-session
+(installing a JDK, correcting a URL) is not reflected in a long-lived process (e.g. a
+running MCP server) until it is restarted, or the probe caches are cleared (the
+`clear_probe_caches` test hook of the §3 chain). The memoisation itself stands: its
+rationale (the agent's validate loop must not re-probe on every call) covers re-probing
+cost, which is exactly what an outcome-agnostic cache delivers.
 
 ### 3.6 Result model (frozen shape — non-raising structured result, the ADR 519d1206 chain precedent)
 

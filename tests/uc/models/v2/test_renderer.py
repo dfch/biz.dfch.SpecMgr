@@ -55,6 +55,7 @@ from biz.dfch.specmgr.uc.models.v2.renderer import (
 )
 from biz.dfch.specmgr.uc.tools._io import load_by_id
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
+from tests.conftest import assert_rendered_svg, render_proof_body, require_plantuml_source
 
 _FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "uc-diagrams"
 
@@ -231,6 +232,27 @@ class TestSequenceSkeleton(unittest.TestCase):
         self.assertEqual(_strip_comments("\n".join(transformed)), _strip_comments(example))
         self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in example.split("\n")))
 
+    def test_empty_cleaning_primary_actor_is_an_actionable_failure(self):
+        """The unrenderable edge (rulebook §2.9.1, amended 2026-10-08): a PARSEABLE
+        document whose primary actor's label cleans to empty under the §2.1 rule
+        (a quoted substring containing only whitespace) fails with the actionable
+        error — cause + fix hint — before any output is built (no partial render)."""
+        example = read_packaged_text("uc", "example")
+        lines = example.split("\n")
+        position = lines.index("### Primary Actor") + 1
+        while lines[position].strip() == "":
+            position += 1
+        lines[position] = '"  "'
+        use_case = parse_uc("\n".join(lines)).body  # still parses — the schema requires a paragraph, not a survivor
+
+        with self.assertRaises(AssertionError) as ctx:
+            render_uc_sequence_skeleton(use_case)
+
+        message = str(ctx.exception)
+        self.assertIn("cleans to empty", message)  # the cause
+        self.assertIn("non-whitespace label", message)  # the fix hint
+        self.assertIn("§2.9.1", message)  # the frozen edge, cross-referenced
+
     def test_resumption_note_carries_the_full_item_text(self):
         """Phase 145 (2026-10-06, amendment E — the frozen §2.9.6 "full item text
         (information-preserving)" contract): a resumption item WITH a continuation
@@ -368,6 +390,116 @@ class TestUseCasePackage(unittest.TestCase):
         self.assertIn('note bottom of uc1: Unresolved UC reference: "Legacy item"', lines)
         self.assertIn('note bottom of uc1: Unresolved UC reference: ""', lines)
         self.assertIn('note bottom of uc2: Unresolved UC reference: "Unknown service"', lines)
+
+
+class TestPackageAliasCollision(unittest.TestCase):
+    """The frozen collision fallback for duplicate bare titles (rulebook §2.7 item 4,
+    amended 2026-10-08): the FIRST document with a given cleaned title keeps the
+    bare alias; every LATER document whose cleaned title collides with an
+    already-assigned alias takes the positional ``uc{N}`` (incremented past any
+    already-assigned alias) — the emitted aliases stay unique, so the
+    alias-targeted edges address the right node, and the render is deterministic."""
+
+    @staticmethod
+    def _titled_use_case(fixture_name: str, title: str):
+        """One package fixture document re-titled (its H1 replaced) — the body
+        (incl. the cross-referencing ``Related Use Cases``) stays the fixture's."""
+        lines = (_FIXTURES / "package" / fixture_name).read_text(encoding="utf-8").split("\n")
+        replaced = False
+        for index, line in enumerate(lines):
+            if line.startswith("# "):
+                lines[index] = f"# {title}"
+                replaced = True
+                break
+        assert replaced, f"no H1 found in {fixture_name}"
+        result = parse_uc("\n".join(lines)).body
+        return result
+
+    def test_two_duplicate_bare_titles_get_unique_aliases_and_correct_edges(self):
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "Login")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"], use_case=self._titled_use_case("charge-card.md", "Login")
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        # the first keeps the bare alias, the later collider takes the positional
+        # (the fixtures' own §2.3 level stereotypes ride on the node lines)
+        self.assertIn('usecase "Login" as Login <<user goal>>', lines)
+        self.assertIn('usecase "Login" as uc2 <<subfunction>>', lines)
+        # the edges address the right node: place-order's include references
+        # charge-card (uc2); charge-card's superordinate references place-order (Login)
+        self.assertIn("Login ..> uc2 : <<include>> Charge card", lines)
+        self.assertIn("Login ..> uc2 : Place order", lines)
+        # deterministic: a second render is byte-equal
+        self.assertEqual(rendered, render_use_case_package(documents))
+        # checker-clean in both modes (the structure checker has no
+        # duplicate-declaration detection — the uniqueness is the renderer's)
+        for mode in (S.MODE_PREFLIGHT, S.MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = S.check_structure(rendered, mode)
+                self.assertTrue(result.ok, result.errors)
+                self.assertEqual(result.warnings, [])
+
+    def test_three_duplicate_bare_titles_get_unique_aliases(self):
+        documents = [
+            PackageDocument(id=_PACKAGE_FIXTURE_IDS[name], use_case=self._titled_use_case(name, "Login"))
+            for name in ("place-order.md", "charge-card.md", "refund-order.md")
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        self.assertIn('usecase "Login" as Login <<user goal>>', lines)
+        self.assertIn('usecase "Login" as uc2 <<subfunction>>', lines)
+        self.assertIn('usecase "Login" as uc3 <<subfunction>>', lines)
+        self.assertEqual(rendered, render_use_case_package(documents))
+
+    def test_positional_bump_when_an_earlier_bare_title_reads_ucN(self):
+        # the frozen edge: an earlier document whose bare title literally reads
+        # `uc2` keeps that alias; the later non-bare document's positional `uc2`
+        # is already assigned and increments past it (the only case where the
+        # positional name differs from the 1-based position)
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "uc2")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"],
+                use_case=self._titled_use_case("charge-card.md", "Long Two Words"),
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        self.assertIn('usecase "uc2" as uc2 <<user goal>>', lines)
+        self.assertIn('usecase "Long Two Words" as uc3 <<subfunction>>', lines)
+
+    def test_collision_package_renders_at_the_live_source(self):
+        """Env-gated: the 2-document collision package (ambiguous before the
+        amendment) renders 200 + a real SVG at the selected source — the
+        unique aliases address the right nodes for the real parser."""
+        info = require_plantuml_source(self)
+        assert info.kind is not None and info.value is not None  # available ⇒ a concrete source
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "Login")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"], use_case=self._titled_use_case("charge-card.md", "Login")
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        body = render_proof_body(info.kind, info.value, rendered)
+
+        assert_rendered_svg(body, "Login")
 
 
 class TestReferencePatternParity(unittest.TestCase):

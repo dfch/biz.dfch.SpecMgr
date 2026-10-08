@@ -134,14 +134,35 @@ class TestDiagramUcAllWrite(_DiagramUcTestBase):
             )
 
     def test_all_with_broken_doc_skips_it_without_failing(self):
-        """(g) all with the broken document present → exit 0, a skip warning, no per-UC file for it, and
-        the package carries its deterministic unresolvable note (REQ-002 — the render never fails)."""
+        """(g) all with the broken document present → exit 0, a skip warning NAMING THE DOCUMENT —
+        by id when present, else by the resolved path (a list_uc failed row's id is None, so the
+        path names it — the 2026-10-08 actionable-warning fix), no per-UC file for it, and the
+        package carries its deterministic unresolvable note (REQ-002 — the render never fails)."""
         result = self._invoke("all", "--out", str(self.out_dir))
 
         self.assertEqual(result.exit_code, 0, result.output)
         self.assertIn("skipped", result.stdout)
+        self.assertIn(f"uc-{_BROKEN}-broken.md", result.stdout)  # the resolved path names the skipped document
         self.assertFalse((self.out_dir / f"{_BROKEN}.usecase.puml").exists())
         self.assertIn("Unresolved UC reference", (self.out_dir / "package.puml").read_text(encoding="utf-8"))
+
+    def test_all_skip_warning_names_the_id_when_present(self):
+        """The actionable-warning id branch (2026-10-08): a skipped slot whose id IS present
+        is named by id — the path is only the fallback for a list_uc failed row (id None)."""
+        from biz.dfch.specmgr.uc.models.v2.renderer import PackageDocument
+
+        slots = [
+            PackageDocument(id=_BROKEN, use_case=None, path=None),
+            PackageDocument(id=_PLACE, use_case=None, path=None),
+        ]
+        with mock.patch(
+            "biz.dfch.specmgr.uc.tools.get_use_case_package_diagram._slots_from_listing", return_value=slots
+        ):
+            result = self._invoke("all", "--out", str(self.out_dir))
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn(f"(id: {_BROKEN})", result.stdout)
+        self.assertIn(f"(id: {_PLACE})", result.stdout)
 
     def test_sequence_file_never_touched(self):
         """(h) SEQUENCE-FILE IMMUNITY: a pre-existing <id>.sequence.puml (agent-owned) is byte-identical

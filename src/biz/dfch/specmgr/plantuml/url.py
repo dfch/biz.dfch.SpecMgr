@@ -249,14 +249,28 @@ def _write_proof(svg_bytes: bytes) -> str:
 def _inconclusive_reason(response: UrlResponse) -> tuple[str, str]:
     if response.transport_error is not None:
         reason = f"no HTTP response from the server (transport failure: {response.transport_error})"
-    else:
-        reason = (
-            f"an unrecognised response (status {response.status}, {len(response.body)} bytes) — "
-            "the frozen matrix classifies it INCONCLUSIVE, never INVALID"
+        # a genuine transient — the original retry hint stands (the amended
+        # dialect note below does not apply to a transport failure)
+        fix_hint = (
+            "retry later (transient), or check the deployment (status endpoint, proxy) — an unrecognised "
+            "response is never INVALID (rulebook §5.2)"
         )
+        return reason, fix_hint
+    reason = (
+        f"an unrecognised response (status {response.status}, {len(response.body)} bytes) — "
+        "the frozen matrix classifies it INCONCLUSIVE, never INVALID"
+    )
+    # the 2026-10-08 amended hint (the classification is frozen — only the
+    # hint text moved): an unrecognised response under a URL source is often
+    # a REAL syntax error the deployment's minimal-400 dialect cannot place
+    # (rulebook §5.2 drift note (e)) — retrying cannot fix that; name the
+    # limitation and the remedy (a local source carries the parser's own line)
     fix_hint = (
         "retry later (transient), or check the deployment (status endpoint, proxy) — an unrecognised "
-        "response is never INVALID (rulebook §5.2)"
+        "response is never INVALID (rulebook §5.2); under a URL source, a line-level syntax error from "
+        "line 3 onward can surface as inconclusive (the deployment's minimal-400 dialect carries no "
+        "line detail — rulebook §5.2 drift note (e)) — use a local "
+        "SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN source for line-level syntax errors"
     )
     return reason, fix_hint
 
@@ -377,12 +391,17 @@ def clear_probe_cache() -> None:
 def probe_url(base_url: str) -> ProbeResult:
     """Probe a URL source with the canary (rulebook §3.5).
 
-    Memoised per process per base URL. A malformed base URL (no
-    ``scheme://``) is ``misconfigured`` without any network call; a reachable
-    server whose canary does not classify VALID (including a 404 — the
-    path-prefix diagnosis — and the request-error / bad-URL cases of a
-    deployment that does not decode the classic payload) is ``unavailable``
-    with the exact reason; a transport failure is ``unavailable`` (transient).
+    Memoised per process per base URL. A FAILURE outcome (``misconfigured`` /
+    ``unavailable``) is memoised for the process lifetime exactly like a
+    success — a long-lived MCP server therefore keeps a stale failure after
+    the URL is corrected until it is restarted, or the probe cache is
+    cleared (rulebook §3.5, operator note 2026-10-08). A malformed base URL
+    (no ``scheme://``) is ``misconfigured`` without any network call; a
+    reachable server whose canary does not classify VALID (including a 404
+    — the path-prefix diagnosis — and the request-error / bad-URL cases of
+    a deployment that does not decode the classic payload) is
+    ``unavailable`` with the exact reason; a transport failure is
+    ``unavailable`` (transient).
     """
     assert isinstance(base_url, str), type(base_url)
     base_url = base_url.strip()

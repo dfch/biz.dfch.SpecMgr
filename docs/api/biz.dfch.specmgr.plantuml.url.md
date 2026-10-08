@@ -122,12 +122,17 @@ pre-amendment classifier accepted it as a real render.)
 
 Probe a URL source with the canary (rulebook §3.5).
 
-Memoised per process per base URL. A malformed base URL (no
-``scheme://``) is ``misconfigured`` without any network call; a reachable
-server whose canary does not classify VALID (including a 404 — the
-path-prefix diagnosis — and the request-error / bad-URL cases of a
-deployment that does not decode the classic payload) is ``unavailable``
-with the exact reason; a transport failure is ``unavailable`` (transient).
+Memoised per process per base URL. A FAILURE outcome (``misconfigured`` /
+``unavailable``) is memoised for the process lifetime exactly like a
+success — a long-lived MCP server therefore keeps a stale failure after
+the URL is corrected until it is restarted, or the probe cache is
+cleared (rulebook §3.5, operator note 2026-10-08). A malformed base URL
+(no ``scheme://``) is ``misconfigured`` without any network call; a
+reachable server whose canary does not classify VALID (including a 404
+— the path-prefix diagnosis — and the request-error / bad-URL cases of
+a deployment that does not decode the classic payload) is
+``unavailable`` with the exact reason; a transport failure is
+``unavailable`` (transient).
 
 
 ### `svg_url(base_url: 'str', diagram: 'str') -> 'str'`

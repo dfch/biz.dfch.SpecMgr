@@ -168,6 +168,25 @@ class TestGetUcSequenceSkeleton(unittest.TestCase):
         with self.assertRaises(UcNotFoundError):
             get_uc_sequence_skeleton(_MISSING_UUID)
 
+    def test_empty_cleaning_primary_actor_raises_the_actionable_wrapped_error(self):
+        """The unrenderable edge (rulebook §2.9.1, amended 2026-10-08): the tool path
+        raises the WRAPPED (actionable) error — cause + fix hint — not a bare
+        message-less assert, and no partial output is returned (the failure is
+        checked before any rendering)."""
+        body_lines = _example_body().split("\n")
+        position = body_lines.index("### Primary Actor") + 1
+        while body_lines[position].strip() == "":
+            position += 1
+        body_lines[position] = '"  "'
+        created = create_uc("\n".join(body_lines))
+
+        with self.assertRaises(AssertionError) as ctx:
+            get_uc_sequence_skeleton(created.id)
+
+        message = str(ctx.exception)
+        self.assertIn("cleans to empty", message)  # the cause
+        self.assertIn("non-whitespace label", message)  # the fix hint
+
     def test_broken_document_returns_parse_failure_result(self):
         """An id whose on-disk file exists but fails to parse must return the feat-150
         ParseFailureResult channel, never the not-found error and never a skeleton."""
