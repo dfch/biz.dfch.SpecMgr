@@ -26,6 +26,7 @@ them as "extras" (see [Installation](#installation)).
 - [Concepts](#concepts)
 - [Installation](#installation)
 - [CLI Usage](#cli-usage)
+- [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
 - [MCP Server](#mcp-server)
 - [Usage](#usage)
 - [Referencing Artifacts](#referencing-artifacts)
@@ -112,13 +113,47 @@ in pre-commit hooks and `ci.yml`.
 
 _No domain document-management commands (create/update/status/etc.) exist
 in the CLI yet — those are currently MCP-only, see
-[MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), and a
-handful of cross-cutting/doc-generation commands (`specmgr --help` for the
-full list)._
+[MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), a
+handful of cross-cutting/doc-generation commands, and the UC → PlantUML
+diagram commands — see [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
+(`specmgr --help` for the full list)._
 
 ```bash
 specmgr version
 ```
+
+## UC → PlantUML Diagrams
+
+Specmgr can turn UC artifacts into PlantUML diagrams — deterministic
+use-case and package diagrams, plus sequence diagrams attributed by the
+agent flow.
+
+**Sequence diagrams (agent path).** The `generate_uc_sequence_diagram` MCP
+prompt (in OpenCode: the self-triggering `uc-diagram` skill or the
+`/uc-diagram <id>` command) runs the frozen rulebook flow: the agent
+attributes every `UNATTRIBUTED` message (asking via the `question` tool when
+not confident), validates with `validate_plantuml`, and writes
+`diagrams/uc/<id>.sequence.puml` host-natively — no specmgr tool writes
+`.puml` files.
+
+**Deterministic diagrams + tooling (CLI, deterministic-only — the CLI never
+creates, overwrites, or diffs the agent-owned `*.sequence.puml` files):**
+
+```bash
+specmgr diagram uc <id>|all --out <dir> [--check]  # per-UC <id>.usecase.puml + package.puml; --check byte-diffs without writing (exit 0 ok / 1 diff / 2 usage-or-render error)
+specmgr plantuml-check <path...>                   # validates any .puml through the chain (exit 0 valid / 1 invalid / 2 source misconfigured-or-unavailable / 3 inconclusive)
+specmgr plantuml-encode <path|->                   # offline classic SoWkI… encoding
+```
+
+**Validation source.** Exactly three env vars, the first one **set** is the
+only source used (no fall-through, no PATH discovery, no public default):
+`SPECMGR_PLANTUML_JAR` (a plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an
+executable speaking the PlantUML CLI contract), `SPECMGR_PLANTUML_URL` (a
+PlantUML server base URL). All unset ⇒ offline structure-only validation.
+Diagram content is never sent to plantuml.com unless you set that URL.
+
+The normative rulebook ships as the `specmgr://uc/plantuml` resource; the
+full MCP surface is in [docs/MCP.md](docs/MCP.md).
 
 ## MCP Server
 
@@ -148,6 +183,13 @@ tool call, so hand-editing a file between calls is safe.
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
+- PlantUML validation source (UC diagrams): `SPECMGR_PLANTUML_JAR` (a
+  plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an executable speaking the
+  PlantUML CLI contract), and `SPECMGR_PLANTUML_URL` (a PlantUML server base
+  URL) — the first one set is the only source used (no fall-through, no
+  PATH discovery, no public default); all unset is the offline
+  structure-only floor. See [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
+  for the how-to.
 
 The `find_related`/`find_similar_text` tools (semantic-similarity search,
 requires the `similarity` extra) are turned off by setting the

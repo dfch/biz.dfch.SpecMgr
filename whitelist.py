@@ -265,6 +265,16 @@ env_var_set
 extra_installed
 disabled
 model_name
+# config (feat-185-uc-diagrams Phase 120): `PlantumlConfig`'s `jar`/`bin`
+# fields read only via (de)serialization; nothing in `src/` accesses them as
+# plain attributes (constructor keyword arguments don't count, same as the
+# entries above). `url` needs no entry -- the `plantuml.chain` module's own
+# `from . import ... url` marks the name used; `PlantumlSourceConfig.set`
+# needs none either (the `set` builtin call in `general.resources.config`
+# marks it), nor does `selected` (the local variable of that name in
+# `config_info()`).
+jar
+bin
 
 # config (feat-187-list-feat-timeout, Task 110.120): `ConfigInfo`'s own
 # `feat_warmup_disabled` field is written in the resource's own constructor
@@ -347,3 +357,22 @@ full_parse_phase
 # `WholeBodyDomain`/`WholeBodyType`/`WholeBodyOrAdrType`/`whole_body_domain`
 # registry names need no entries: vulture treats `__all__`-listed names as used.
 documents
+
+# --- plantuml (feat-185-uc-diagrams Phase 110) --------------------------
+# `PlantumlValidationResult`'s `structure_ok`/`checked_by` fields are set in
+# the result's own constructors (vulture's dataclass constructor-kwarg
+# suppression does not count that as use) and read by tests, the CLI
+# (Phase 130: `commands/plantuml_check.py` prints both per file), and the MCP
+# serialization of the §3.6 result (Phase 120): `uc.tools.validate_plantuml`
+# returns the dataclass verbatim and the mcp SDK's pydantic serializer reads
+# its fields dynamically, which vulture's static scan cannot see. The
+# remaining fields (`valid`/`rendered`/`errors`/`warnings`/`source_state`/
+# `available`/`reason`/`fix_hint`) need no entry: `chain.validate_plantuml`
+# reads the backend verdicts' same-named attributes, marking the names used.
+structure_ok
+checked_by
+# `UNATTRIBUTED_MARKER_FORMS` is the documentation/test pin of the three
+# frozen marker grammar forms (rulebook §2.9.4); the live shared constant is
+# `UNATTRIBUTED_MARKER_PREFIX` (used by both the renderer and the checker),
+# so the forms tuple itself is read only by the rulebook pin in tests.
+UNATTRIBUTED_MARKER_FORMS

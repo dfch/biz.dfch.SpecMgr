@@ -10,11 +10,11 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.__main__`](biz.dfch.specmgr.__main__.md) — Entry point for ``python -m biz.dfch.specmgr``.
 - [`biz.dfch.specmgr._paths`](biz.dfch.specmgr._paths.md) — Private, dependency-free repo-root-relative path constants.
 - [`biz.dfch.specmgr.adr`](biz.dfch.specmgr.adr.md) — The Architecture Decision Record (ADR) domain package.
-- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
+- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr.
+- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test.
+- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr.
+- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test.
 - [`biz.dfch.specmgr.adr.resources`](biz.dfch.specmgr.adr.resources.md) — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.resources.adr_get`](biz.dfch.specmgr.adr.resources.adr_get.md) — Resource: specmgr://adr/{id} (plan §8, §9a).
 - [`biz.dfch.specmgr.adr.tools`](biz.dfch.specmgr.adr.tools.md) — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
@@ -36,10 +36,13 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands`](biz.dfch.specmgr.commands.md) — commands module.
 - [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- [`biz.dfch.specmgr.commands.diagram`](biz.dfch.specmgr.commands.diagram.md) — ``diagram`` -- the deterministic PlantUML diagram generation sub-command group (feat-185-uc-diagrams, Phase 130).
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - [`biz.dfch.specmgr.commands.mdformat`](biz.dfch.specmgr.commands.mdformat.md) — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- [`biz.dfch.specmgr.commands.plantuml_check`](biz.dfch.specmgr.commands.plantuml_check.md) — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- [`biz.dfch.specmgr.commands.plantuml_encode`](biz.dfch.specmgr.commands.plantuml_encode.md) — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - [`biz.dfch.specmgr.commands.req_parse`](biz.dfch.specmgr.commands.req_parse.md) — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -222,6 +225,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.plantuml`](biz.dfch.specmgr.plantuml.md) — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- [`biz.dfch.specmgr.plantuml.backends`](biz.dfch.specmgr.plantuml.backends.md) — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- [`biz.dfch.specmgr.plantuml.chain`](biz.dfch.specmgr.plantuml.chain.md) — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- [`biz.dfch.specmgr.plantuml.encode`](biz.dfch.specmgr.plantuml.encode.md) — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- [`biz.dfch.specmgr.plantuml.structure`](biz.dfch.specmgr.plantuml.structure.md) — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- [`biz.dfch.specmgr.plantuml.url`](biz.dfch.specmgr.plantuml.url.md) — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
 - [`biz.dfch.specmgr.prb`](biz.dfch.specmgr.prb.md) — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
 - [`biz.dfch.specmgr.prb.models`](biz.dfch.specmgr.prb.models.md) — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.prb.models.v1`](biz.dfch.specmgr.prb.models.v1.md) — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -444,13 +453,18 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
 - [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- [`biz.dfch.specmgr.uc.models.v2.renderer`](biz.dfch.specmgr.uc.models.v2.renderer.md) — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
 - [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.prompts.create_uc`](biz.dfch.specmgr.uc.prompts.create_uc.md) — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram`](biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram.md) — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml`](biz.dfch.specmgr.uc.resources.uc_plantuml.md) — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_example`](biz.dfch.specmgr.uc.resources.uc_plantuml_example.md) — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_template`](biz.dfch.specmgr.uc.resources.uc_plantuml_template.md) — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -461,10 +475,17 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.get_uc_diagram`](biz.dfch.specmgr.uc.tools.get_uc_diagram.md) — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_example`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_example.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_template`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_template.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton`](biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton.md) — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- [`biz.dfch.specmgr.uc.tools.get_use_case_package_diagram`](biz.dfch.specmgr.uc.tools.get_use_case_package_diagram.md) — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
+- [`biz.dfch.specmgr.uc.tools.plantuml_encode`](biz.dfch.specmgr.uc.tools.plantuml_encode.md) — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.validate_plantuml`](biz.dfch.specmgr.uc.tools.validate_plantuml.md) — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 - [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

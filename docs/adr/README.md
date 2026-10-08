@@ -77,6 +77,11 @@ Index of all ADRs in this repository.
   - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
   - Status: accepted
   - Decision-makers: dfch
+- [Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain](7a626b12-b189-4561-a51d-ffb2e9e193b4-add-an-in-package-import-free-plantuml-package-with-a-strict.md)
+  - Id: 7a626b12-b189-4561-a51d-ffb2e9e193b4
+  - Status: accepted
+  - Date: 2026-10-03
+  - Decision-makers: dfch
 - [Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints](832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md)
   - Id: 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   - Status: accepted

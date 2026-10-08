@@ -21,13 +21,18 @@ See `.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py` for the design sketch 
 package implements, and `uc/models/v1/` for the original custom-parser
 implementation this package supersedes. `parse_uc` (Task 1.8) is the
 `UcDocument`-level `from_text` entry point; `render_uc_diagram` (Task 2.1's
-v1 equivalent) has not been ported yet.
+v1 equivalent) is ported in `uc/models/v2/renderer.py` (feat-185-uc-diagrams,
+Phase 110) -- alongside the rulebook's package-diagram and sequence-skeleton
+renderers (`render_use_case_package` / `render_uc_sequence_skeleton`), all
+deterministic over their parsed-model inputs, the normative spec being the
+frozen rulebook `specmgr://uc/plantuml` (`uc/data/uc_plantuml.md`).
 """
 
 from ._util import SCHEMA_COMMENT_VERSION
 from .document import UcDocument
 from .frontmatter import UcFrontmatter
 from .parser import parse_uc
+from .renderer import PackageDocument, render_uc_diagram, render_uc_sequence_skeleton, render_use_case_package
 from .summary import UcSummary
 from .use_case import (
     Assumptions,
@@ -60,6 +65,7 @@ from .use_case import (
 )
 
 __all__ = [
+    "PackageDocument",
     "SCHEMA_COMMENT_VERSION",
     "Assumptions",
     "ChannelsToPrimaryActor",
@@ -92,4 +98,7 @@ __all__ = [
     "UcSummary",
     "UseCase",
     "parse_uc",
+    "render_uc_diagram",
+    "render_uc_sequence_skeleton",
+    "render_use_case_package",
 ]

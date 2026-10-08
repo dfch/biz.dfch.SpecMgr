@@ -26,6 +26,7 @@ import re
 import unittest
 from importlib.metadata import version
 
+from typer.main import get_command
 from typer.testing import CliRunner
 
 from biz.dfch.specmgr.cli import app
@@ -77,6 +78,74 @@ class TestMcpCommand(unittest.TestCase):
         stdout = _strip_ansi(result.stdout)
         for option in ("--transport", "-t", "--host", "-h", "--port", "-p"):
             self.assertIn(option, stdout)
+
+
+class TestDiagramAndPlantumlCommands(unittest.TestCase):
+    """Registration + help smoke for the feat-185-uc-diagrams Phase 130 commands.
+
+    Pins the ``_callback`` gotcha in both directions: the new ``diagram`` sub-group and the two flat
+    ``plantuml-*`` commands register alongside every pre-existing subcommand, and a pre-existing
+    subcommand still dispatches (the explicit callback keeps Typer from collapsing the app).
+    """
+
+    def test_all_commands_still_registered(self):
+        """The full registered command set: the ten pre-existing commands + plantuml-check,
+        plantuml-encode, and the diagram sub-group."""
+        names = set(get_command(app).commands)
+
+        self.assertEqual(
+            names,
+            {
+                "version",
+                "mcp",
+                "docs",
+                "mcp-docs",
+                "adr-toc",
+                "coverage-badge",
+                "schema",
+                "unused-code",
+                "req-parse",
+                "mdformat",
+                "plantuml-check",
+                "plantuml-encode",
+                "diagram",
+            },
+        )
+
+    def test_diagram_help_lists_the_uc_subcommand(self):
+        """``specmgr diagram --help`` renders and lists the ``uc`` subcommand."""
+        result = runner.invoke(app, ["diagram", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("uc", _strip_ansi(result.stdout))
+
+    def test_diagram_uc_help_lists_out_and_check(self):
+        """``specmgr diagram uc --help`` renders and documents the ``--out``/``--check`` options."""
+        result = runner.invoke(app, ["diagram", "uc", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        stdout = _strip_ansi(result.stdout)
+        for option in ("--out", "--check"):
+            self.assertIn(option, stdout)
+
+    def test_plantuml_check_help_renders(self):
+        """``specmgr plantuml-check --help`` renders."""
+        result = runner.invoke(app, ["plantuml-check", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+
+    def test_plantuml_encode_help_renders(self):
+        """``specmgr plantuml-encode --help`` renders."""
+        result = runner.invoke(app, ["plantuml-encode", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+
+    def test_preexisting_command_still_dispatches(self):
+        """A pre-existing subcommand still dispatches end-to-end (the ``_callback`` gotcha)."""
+        result = runner.invoke(app, ["version"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), version("biz-dfch-specmgr"))
 
 
 if __name__ == "__main__":

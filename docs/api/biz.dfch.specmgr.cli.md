@@ -30,3 +30,6 @@ registered. Remove this docstring note once a second command exists.
 
 Load ``.env`` walking upward from this file, then from CWD as fallback.
 
+Skipped entirely when the :data:`NO_DOTENV_SENTINEL` env var is set (see
+its docstring).
+
