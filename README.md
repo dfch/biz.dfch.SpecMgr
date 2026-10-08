@@ -200,6 +200,14 @@ server startup, the model cache location, and the structured unavailable
 result both tools return when the feature is disabled or the backend/model
 fails to load).
 
+The `feat` domain's two background cache-warming phases (frontmatter and
+full-parse, run by the same unified server-startup warmup thread as the
+similarity warmup) are likewise turned off by setting the
+`SPECMGR_FEAT_WARMUP_DISABLED` environment variable (any value;
+presence-based) — see the background warmup paragraph of [Semantic
+Similarity Search](#semantic-similarity-search) below for the thread's
+full behavior and both opt-out flags.
+
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var
 (or, for the shared `SPECMGR_DOCS_DIR` root, unless the server was started
@@ -235,33 +243,45 @@ point only; after that, inference is fully offline). It is cached in
 `$FASTEMBED_CACHE_PATH` if that environment variable is set, otherwise in
 `<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on Linux).
 
-**Background warmup at server startup.** Whenever
-`SPECMGR_SIMILARITY_DISABLED` is not set, the server starts a background
-daemon thread at startup that embeds the full document corpus into the
-in-memory cache — the gate is the opt-out flag only, regardless of whether
-the `similarity` extra is installed. With the extra missing, or with the
-model failing to load, the thread runs the availability probe inside
-itself and exits immediately without cache writes (still never raising).
-The thread is non-blocking — server
-startup never waits for it (the model load/download, if needed, happens
-inside the thread, not on the startup path) — and a mid-warmup failure is
-logged and swallowed, leaving the cache partially warm. Its purpose is to
-keep the first tool call fast: against a cold cache the tools embed the
-corpus on demand, which can cost minutes of CPU.
+**Background warmup at server startup.** Unless both
+`SPECMGR_FEAT_WARMUP_DISABLED` and `SPECMGR_SIMILARITY_DISABLED` are set,
+the server starts a single background daemon thread at startup that runs
+three warmup phases, strictly in order: the `feat` frontmatter phase
+(cheap: frontmatter plus H1 only), the `feat` full-parse phase (expensive:
+the full `feat` corpus), and the similarity phase, which embeds the full
+document corpus into the in-memory cache. Each phase is independently
+gated by its own opt-out flag: `SPECMGR_FEAT_WARMUP_DISABLED` (any value;
+presence-based) skips the two `feat` phases, and
+`SPECMGR_SIMILARITY_DISABLED` (any value; presence-based) skips the
+similarity phase, regardless of whether the `similarity` extra is
+installed. With the extra missing, or with the model failing to load, the
+similarity phase runs the availability probe inside itself and exits
+immediately without cache writes (still never raising). The thread is
+non-blocking — server startup never waits for it (the model load/download,
+if needed, happens inside the thread, not on the startup path) — and a
+mid-warmup failure is logged and swallowed, leaving the cache partially
+warm. Its purpose is to keep the first tool call fast: against a cold
+cache, `list_feat` scans and re-parses the whole `feat` corpus on the
+request path, and the similarity tools embed the corpus on demand — both
+can cost minutes of CPU.
 
 **Opt-out.** Set `SPECMGR_SIMILARITY_DISABLED` (any value; presence-based)
 to disable the feature without uninstalling the extra — e.g. to skip the
 model download entirely, on a host where the model was never downloaded,
 or to free the memory the model and cache use. Both tools stay registered
-either way.
+either way. Set `SPECMGR_FEAT_WARMUP_DISABLED` (any value; presence-based)
+to skip the two `feat` cache-warming phases without any other effect —
+e.g. on a host where `list_feat`/`get_feat` are rarely called. With both
+opt-out flags set, no warmup thread is started at all.
 
 **Introspection.** Read the `specmgr://config` resource for the feature's
 static configuration — its `similarity` section reports whether the
 `similarity` extra is installed, whether the opt-out flag is set, the
 model name, and the resolved cache directory (static facts only; reading
-the resource never loads the model or creates the cache directory) — and
-the `specmgr://version` resource for the installed `fastembed` version
-(`null` when the extra is not installed).
+the resource never loads the model or creates the cache directory), and
+its `feat_warmup_disabled` field reports whether the `feat` warmup opt-out
+flag is set — and the `specmgr://version` resource for the installed
+`fastembed` version (`null` when the extra is not installed).
 
 ### Start the MCP Server
 

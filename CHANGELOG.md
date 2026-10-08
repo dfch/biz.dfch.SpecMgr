@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A bidirectional drift regression test (`tests/test_server_json.py`) guarding
+  `server.json`'s `environmentVariables` against the `SPECMGR_*` environment
+  variables the code actually reads in `src/`: the test scans the source for the
+  four read-site shapes (string-literal assignment, `getenv`, `environ` access,
+  and Typer `envvar=` option), asserts set equality in both directions (a failure
+  names the specific entries missing from the manifest or extra in it), and pins
+  the manifest's structural invariants (unique `name`s, non-empty `description`s,
+  and `default` present iff the code reads the variable with a default); the
+  false-positive guards (docstring-prose/comment mentions, and the
+  `_SPECMGR_ROOT` identifier that merely contains the prefix) are pinned by
+  negative fixture cases (feat-126-server-json-env-drift, GitHub issue #126).
+- `server.json` (the MCP Registry publisher manifest) now lists the six
+  `SPECMGR_*` environment variables the code reads that were previously
+  undocumented: the two presence-based feature gates `SPECMGR_SIMILARITY_DISABLED`
+  (opt-out for the semantic-similarity search feature and its server-startup
+  warmup phase) and `SPECMGR_FEAT_WARMUP_DISABLED` (opt-out for the `feat`
+  domain's two server-startup cache-warming phases); the three PlantUML
+  validation-source selectors `SPECMGR_PLANTUML_JAR` /
+  `SPECMGR_PLANTUML_BIN` / `SPECMGR_PLANTUML_URL`, of which the first one
+  set (in that order) is the only source used, with no fall-through, no
+  PATH discovery, and no public default (all three unset is the offline
+  structure-only floor, and diagram content is only sent to a PlantUML
+  server if the URL is set); and `SPECMGR_TESTS_NO_DOTENV`, the
+  presence-based test/CI sentinel that skips the CLI's module-level
+  default `.env` load entirely when set. All six entries carry a `name`
+  and a presence-based `description` only -- no `default`, mirroring the
+  gating the code performs (set to any value to enable; unset by default)
+  and what `specmgr://config` reports (the `similarity.disabled`,
+  `feat_warmup_disabled`, and `plantuml` fields)
+  (feat-126-server-json-env-drift, GitHub issue #126).
 - An optional, case-insensitive `glob` id-filter parameter (third
   position, after `max_results`/`offset`) on the twelve paged `list_<d>`
   MCP tools -- `list_feat` plus `list_req`/`list_uc`/`list_tsk`/
@@ -42,6 +72,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separators, and validation regexes are unchanged, and the historical
   ADRs 23a14195 and 8c889262 are deliberately untouched (feat-183-ts-fff,
   GitHub issue #183).
+- `server.json`'s three stale `SPECMGR_MCP_*` entries were corrected to
+  match the code (`commands/mcp.py`): `SPECMGR_MCP_TRANSPORT`'s `choices`
+  now list all three supported transports (`stdio`/`sse`/
+  `streamable-http`, previously `stdio`/`sse` only), and
+  `SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`'s descriptions now read
+  "SSE/streamable-http mode only" (previously "SSE transport only"). The
+  root `README.md`'s "Background warmup at server startup" paragraph now
+  documents the unified server-startup warmup thread's three ordered
+  phases (the `feat` frontmatter and full-parse warmup, then the
+  similarity warmup) and the previously missing
+  `SPECMGR_FEAT_WARMUP_DISABLED` gate, so the "Environment Variables"
+  section is accurate for all eight `SPECMGR_*` variables the code read
+  at that point (the three plantuml selectors and the test/CI dotenv
+  sentinel added by the merged feat-185 content are covered by the Added
+  entry above)
+  (feat-126-server-json-env-drift, GitHub issue #126).
 
 ## [0.35.0] - 2026-10-06
 
