@@ -1,0 +1,26 @@
+@startuml UC Package
+left to right direction
+
+usecase "Place Order" as uc1 <<user goal>>
+usecase "Charge Card" as uc2 <<subfunction>>
+usecase "Refund Order" as uc3 <<subfunction>>
+actor Buyer
+actor "Credit card company" as actor2
+actor Bank
+
+Buyer --> uc1
+actor2 --> uc1
+Buyer --> uc2
+actor2 --> uc2
+Bank --> uc2
+Buyer --> uc3
+Bank --> uc3
+uc1 ..> uc2 : <<include>> Charge card
+uc1 ..> uc3 : <<include>> Refund order
+note bottom of uc1: Unresolved UC reference: "Legacy item"
+note bottom of uc1: Unresolved UC reference: ""
+uc1 ..> uc2 : Place order
+uc3 ..> uc2 : <<extend>> Refund order
+note bottom of uc2: Unresolved UC reference: "Unknown service"
+
+@enduml

@@ -27,6 +27,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The formalised UC → PlantUML diagram pipeline (feat-185-uc-diagrams,
+  GitHub issue #185, ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4): the
+  import-free, stdlib-only `plantuml/` package — the classic `SoWkI…`-form
+  URL text encoder, the two-mode structure checker, the jar/bin/url
+  validation backends, and the strict first-set-wins, no-fall-through
+  validation chain over exactly three `SPECMGR_PLANTUML_*` env vars (a
+  set-but-unavailable source is a hard failure; only the all-unset state
+  degrades to the structure-only floor); the three deterministic v2
+  renderers (`render_uc_diagram`, `render_use_case_package`,
+  `render_uc_sequence_skeleton` — sequence participants/trigger/notes/`alt`
+  fragments deterministic, unattributable messages as `UNATTRIBUTED`
+  markers for the agent; unanchored sequence notes emitted as
+  `note left of {primary-actor-alias}` — amended 2026-10-05 from bare
+  `note`, then anchored 2026-10-06 after the verified PlantUML 1.2026.8
+  self-message/note-left crash bug); the frozen rulebook resource
+  `specmgr://uc/plantuml` (the normative UC → PlantUML mapping + validation
+  spec, incl. the URL classification matrix with its recognised
+  200+crash-page INVALID row) plus the packaged PlantUML-source
+  template/example pair (`specmgr://uc/plantuml-template` /
+  `specmgr://uc/plantuml-example`); seven new MCP tools (`get_uc_diagram`,
+  `get_use_case_package_diagram`, `get_uc_sequence_skeleton`,
+  `validate_plantuml`, `get_uc_plantuml_template`,
+  `get_uc_plantuml_example`, `plantuml_encode`); the
+  `generate_uc_sequence_diagram` prompt (the rulebook §3.8 agent flow:
+  attribute every `UNATTRIBUTED` marker — `question` tool whenever not
+  confident — green at the highest available layer before the host-native
+  write); the `specmgr://config` plantuml section (presence-only
+  `jar`/`bin`/`url` + `selected`); three CLI commands (`specmgr diagram uc`
+  — the deterministic per-UC + package diagrams with `--check` byte-diff,
+  never touching agent-owned sequence files; `specmgr plantuml-check` —
+  any `.puml` through the chain, exit codes 0/1/2/3;
+  `specmgr plantuml-encode` — offline classic encodings); and the OpenCode
+  host surface (the self-triggering `uc-diagram` skill + the
+  `/uc-diagram <id>` command). Real-parser tests are env-gated: they run
+  where a `SPECMGR_PLANTUML_*` source is configured and skip cleanly (with
+  a reason) on unconfigured checkouts.
 - A `refine-feature`/`review-feature` OpenCode command+skill+agent trio
   (`.opencode/command/refine-feature.md`, `.opencode/skills/refine-feature/
   SKILL.md`, `.opencode/agent/feat-refiner.md`; `.opencode/command/

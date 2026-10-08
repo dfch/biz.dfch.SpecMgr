@@ -47,10 +47,13 @@ First-line docstrings from each module, organized by domain:
 - `commands/__init__.py` — commands module.
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram generation sub-command group (feat-185-uc-diagrams, Phase 130).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- `commands/plantuml_check.py` — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- `commands/plantuml_encode.py` — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - `commands/req_parse.py` — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -254,6 +257,15 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_section6_with_comment.py` — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
+
+**plantuml/**
+
+- `plantuml/__init__.py` — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- `plantuml/backends.py` — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- `plantuml/chain.py` — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- `plantuml/encode.py` — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- `plantuml/structure.py` — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- `plantuml/url.py` — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
 
 **prb/**
 
@@ -506,12 +518,17 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- `uc/models/v2/renderer.py` — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
 - `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- `uc/prompts/generate_uc_sequence_diagram.py` — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
+- `uc/resources/uc_plantuml.py` — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- `uc/resources/uc_plantuml_example.py` — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- `uc/resources/uc_plantuml_template.py` — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
@@ -522,10 +539,17 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- `uc/tools/get_uc_diagram.py` — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- `uc/tools/get_uc_plantuml_example.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_plantuml_template.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_sequence_skeleton.py` — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- `uc/tools/get_use_case_package_diagram.py` — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
+- `uc/tools/plantuml_encode.py` — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/validate_plantuml.py` — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 
 **vcr/**
 
@@ -560,4 +584,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 383
+**Test files**: 405

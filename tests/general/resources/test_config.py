@@ -232,5 +232,115 @@ class TestConfigResourceSimilarity(unittest.TestCase):
         self.assertNotIn("fastembed", sys.modules)
 
 
+class TestConfigResourcePlantuml(unittest.TestCase):
+    """The static ``plantuml`` section (feat-185-uc-diagrams Phase 120, rulebook §3.1/§3.2).
+
+    ``specmgr://config`` reports the PlantUML validation source's static
+    configuration -- presence only for the exactly-three source env vars
+    (never a value: a jar path, a bin path, or a server URL would be a
+    disclosure violation, REQ-002's own contract) plus ``selected``, the
+    first-set-wins selection over them (``"none"`` when all unset). The
+    section is static configuration only: whether the selected source
+    answers its canary right now is the ``validate_plantuml`` tool's own
+    ``source_state``/``available`` result, deliberately not part of this
+    payload.
+    """
+
+    def test_returns_a_plantuml_config_with_the_frozen_shape(self):
+        """The payload must carry a plantuml section with exactly the frozen shape: three {set: bool}
+        sources plus the closed selected vocabulary."""
+        from biz.dfch.specmgr.models import PlantumlConfig
+
+        result = config_info()
+        self.assertIsInstance(result.plantuml, PlantumlConfig)
+        self.assertEqual(
+            set(result.plantuml.model_dump()),
+            {"jar", "bin", "url", "selected"},
+        )
+        for source in ("jar", "bin", "url"):
+            with self.subTest(source=source):
+                self.assertEqual(set(getattr(result.plantuml, source).model_dump()), {"set"})
+                self.assertIsInstance(getattr(result.plantuml, source).set, bool)
+        self.assertIn(result.plantuml.selected, ("jar", "bin", "url", "none"))
+
+    def test_all_unset_selects_none(self):
+        """All three vars absent: every {set} is False and selected is "none" (the structure-only floor)."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SPECMGR_PLANTUML_JAR", None)
+            os.environ.pop("SPECMGR_PLANTUML_BIN", None)
+            os.environ.pop("SPECMGR_PLANTUML_URL", None)
+            result = config_info()
+
+        self.assertFalse(result.plantuml.jar.set)
+        self.assertFalse(result.plantuml.bin.set)
+        self.assertFalse(result.plantuml.url.set)
+        self.assertEqual(result.plantuml.selected, "none")
+
+    def test_first_set_wins_over_the_frozen_order(self):
+        """selected must follow the §3.2 order JAR -> BIN -> URL, first set wins (matrix)."""
+        cases = [
+            # (jar, bin, url) -> selected
+            ((True, False, False), "jar"),
+            ((True, True, True), "jar"),
+            ((False, True, False), "bin"),
+            ((False, True, True), "bin"),
+            ((False, False, True), "url"),
+        ]
+        for (jar, bin_, url), expected in cases:
+            with self.subTest(jar=jar, bin=bin_, url=url):
+                env = {}
+                if jar:
+                    env["SPECMGR_PLANTUML_JAR"] = "/some/plantuml.jar"
+                if bin_:
+                    env["SPECMGR_PLANTUML_BIN"] = "/some/plantuml-adapter"
+                if url:
+                    env["SPECMGR_PLANTUML_URL"] = "http://localhost:8080"
+                with mock.patch.dict(os.environ, env, clear=False):
+                    os.environ.pop("SPECMGR_PLANTUML_JAR", None)
+                    os.environ.pop("SPECMGR_PLANTUML_BIN", None)
+                    os.environ.pop("SPECMGR_PLANTUML_URL", None)
+                    os.environ.update(env)
+                    result = config_info()
+                self.assertEqual(result.plantuml.selected, expected)
+                self.assertEqual(result.plantuml.jar.set, jar)
+                self.assertEqual(result.plantuml.bin.set, bin_)
+                self.assertEqual(result.plantuml.url.set, url)
+
+    def test_set_but_empty_counts_as_set(self):
+        """Presence-based: a set-but-empty value still counts (the chain's own strictness rule selects
+        it, then probes it as misconfigured -- the section reports the presence only)."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("SPECMGR_PLANTUML_JAR", None)
+            os.environ.pop("SPECMGR_PLANTUML_BIN", None)
+            os.environ.pop("SPECMGR_PLANTUML_URL", None)
+            os.environ["SPECMGR_PLANTUML_JAR"] = ""
+            result = config_info()
+
+        self.assertTrue(result.plantuml.jar.set)
+        self.assertEqual(result.plantuml.selected, "jar")
+
+    def test_source_values_never_appear_in_the_payload(self):
+        """REQ-002 (the resource's own no-disclosure contract, extended to the plantuml section):
+        the values of the three vars (a jar path, a bin path, a server URL) must never leak."""
+        secret_jar = "/secrets/plantuml.jar-should-never-leak"
+        secret_bin = "/secrets/plantuml-adapter-should-never-leak"
+        secret_url = "http://secrets.internal:8080/should-never-leak"
+        with mock.patch.dict(
+            os.environ,
+            {
+                "SPECMGR_PLANTUML_JAR": secret_jar,
+                "SPECMGR_PLANTUML_BIN": secret_bin,
+                "SPECMGR_PLANTUML_URL": secret_url,
+            },
+            clear=False,
+        ):
+            result = config_info()
+            as_json = result.model_dump_json()
+
+        for secret in (secret_jar, secret_bin, secret_url):
+            with self.subTest(secret=secret):
+                self.assertNotIn(secret, as_json)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,7 @@ from .adr import (
     AdrSummary,
     parse_adr,
 )
-from .config_info import ConfigInfo, DomainConfig, SimilarityConfig
+from .config_info import ConfigInfo, DomainConfig, PlantumlConfig, PlantumlSourceConfig, SimilarityConfig
 from .iso25010 import Characteristic, Iso25010, SubCharacteristic, parse_iso25010
 from .version_info import VersionInfo
 
@@ -45,6 +45,8 @@ __all__ = [
     "ConfigInfo",
     "DomainConfig",
     "Iso25010",
+    "PlantumlConfig",
+    "PlantumlSourceConfig",
     "SimilarityConfig",
     "SubCharacteristic",
     "VersionInfo",

@@ -1,0 +1,525 @@
+# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""Tests for the v2 renderers (`uc/models/v2/renderer.py`).
+
+Golden-pinned (ACC-001): the Buy Goods usecase diagram is byte-identical to
+the rulebook §2.6 reference rendering; the Buy Goods sequence skeleton and
+the multi-UC package diagram are pinned against committed goldens under
+`tests/fixtures/uc-diagrams/`. Every renderer output passes the structure
+checker (both modes where applicable — the skeleton carries UNATTRIBUTED
+marker warnings only; the package/usecase goldens are clean). The packaged
+fully-attributed example (`uc/data/uc_plantuml_example.md`) is pinned as the
+skeleton with each UNATTRIBUTED marker line replaced by the frozen test-local
+attribution table, so it cannot drift from the renderer; the Phase 140
+end-to-end walkthrough's committed `.puml`
+(`buy-goods.sequence.walkthrough.puml` — the pure, comment-free source of
+truth, ACC-002 evidence) is pinned the same way with exact byte equality
+(no comment-stripping).
+"""
+
+import os
+import shutil
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.plantuml import structure as S
+from biz.dfch.specmgr.uc.models.v1.uc_diagram import (
+    _BARE_ALIAS_PATTERN as V1_BARE_ALIAS_PATTERN,
+)
+from biz.dfch.specmgr.uc.models.v1.uc_diagram import _actor_label as v1_actor_label
+from biz.dfch.specmgr.uc.models.v2 import parse_uc
+from biz.dfch.specmgr.uc.models.v2.renderer import (
+    _UC_REFERENCE_PATTERN,
+    PackageDocument,
+    render_uc_diagram,
+    render_uc_sequence_skeleton,
+    render_use_case_package,
+)
+from biz.dfch.specmgr.uc.tools._io import load_by_id
+from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
+from tests.conftest import assert_rendered_svg, render_proof_body, require_plantuml_source
+
+_FIXTURES = Path(__file__).resolve().parents[3] / "fixtures" / "uc-diagrams"
+
+#: The frozen attribution table for the packaged example: every UNATTRIBUTED
+#: marker line of the skeleton → its reasoned arrow (the test-local source of
+#: truth the pinning test applies; the reasons live in the example file's
+#: own ' comments).
+_ATTRIBUTIONS = {
+    "' UNATTRIBUTED trigger: Purchase request comes in (via phone, fax, web form, or electronic interchange)": "Buyer -> Company: Purchase request comes in (via phone, fax, web form, or electronic interchange)",
+    "' UNATTRIBUTED ext 7a step 2: If backup service also unavailable, company informs buyer of delay.": "Company -> Buyer: If backup service also unavailable, company informs buyer of delay.",
+    "' UNATTRIBUTED ext 8a step 2: If all channels fail, company logs issue for manual follow-up.": "Company -> Company: If all channels fail, company logs issue for manual follow-up.",
+    "' UNATTRIBUTED ext 10b step 3: Dispute is resolved (refund, credit, or confirmation of charge).": "p2 -> Company: Dispute is resolved (refund, credit, or confirmation of charge).",
+    "' UNATTRIBUTED ext 10c step 2: If retry fails, company contacts buyer to resolve payment issue.": "Company -> Buyer: If retry fails, company contacts buyer to resolve payment issue.",
+}
+
+_PACKAGE_FIXTURE_IDS = {
+    "place-order.md": "11111111-1111-4111-8111-111111111111",
+    "charge-card.md": "22222222-2222-4222-8222-222222222222",
+    "refund-order.md": "33333333-3333-4333-8333-333333333333",
+    "broken.md": "44444444-4444-4444-8444-444444444444",
+}
+
+
+def _example_use_case():
+    return parse_uc(read_packaged_text("uc", "example")).body
+
+
+def _strip_comments(text: str) -> list[str]:
+    return [line for line in text.split("\n") if not line.lstrip().startswith("'")]
+
+
+class TestUsecaseDiagram(unittest.TestCase):
+    """render_uc_diagram — the rulebook §2.6 frozen reference rendering."""
+
+    def test_buy_goods_renders_the_frozen_golden(self):
+        sut = render_uc_diagram
+
+        golden = (_FIXTURES / "buy-goods.usecase.golden").read_text(encoding="utf-8")
+        result = sut(_example_use_case())
+
+        self.assertEqual(result, golden)
+        self.assertEqual(
+            result,
+            '@startuml Buy Goods\n\nactor Buyer\nactor "Credit card company" as actor2\nactor Bank\n'
+            'actor "Shipping service" as actor4\nusecase "Buy Goods" as uc <<summary>>\n\nBuyer --> uc\n'
+            "actor2 --> uc\nBank --> uc\nactor4 --> uc\n\n@enduml\n",
+        )
+
+    def test_golden_passes_the_structure_checker_both_modes(self):
+        golden = (_FIXTURES / "buy-goods.usecase.golden").read_text(encoding="utf-8")
+
+        for mode in (S.MODE_PREFLIGHT, S.MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = S.check_structure(golden, mode)
+                self.assertTrue(result.ok)
+                self.assertEqual(result.warnings, [])
+
+    def test_level_normalisation(self):
+        use_case = _example_use_case()
+
+        with mock.patch.object(
+            type(use_case.characteristic_information.level.body[0]), "__str__", return_value="User Goal\n"
+        ):
+            self.assertIn("<<user goal>>", render_uc_diagram(use_case))
+        with mock.patch.object(
+            type(use_case.characteristic_information.level.body[0]), "__str__", return_value="  SubFUNCTION  \n"
+        ):
+            self.assertIn("<<subfunction>>", render_uc_diagram(use_case))
+        with mock.patch.object(
+            type(use_case.characteristic_information.level.body[0]), "__str__", return_value="Epic\n"
+        ):
+            rendered = render_uc_diagram(use_case)
+            self.assertNotIn("<<", rendered)
+
+    def test_actor_label_parity_with_v1(self):
+        from biz.dfch.specmgr.uc.models.v2.renderer import _actor_label
+
+        corpus = [
+            "Buyer (any agent or computer acting for the customer)",
+            "Credit card company (for payment processing)",
+            'Company refers to buyer as "Buyer" (any agent...)',
+            '"Quoted only"',
+            'Mixed "Quoted" (with parenthetical)',
+            "Plain",
+            "  spaced  ( padded )",
+            "",
+        ]
+        for text in corpus:
+            with self.subTest(text=text):
+                self.assertEqual(_actor_label(text), v1_actor_label(text))
+
+    def test_bare_alias_pattern_parity_with_v1(self):
+        from biz.dfch.specmgr.uc.models.v2.renderer import _BARE_ALIAS_PATTERN
+
+        self.assertEqual(_BARE_ALIAS_PATTERN.pattern, V1_BARE_ALIAS_PATTERN.pattern)
+
+
+class TestSequenceSkeleton(unittest.TestCase):
+    """render_uc_sequence_skeleton — the rulebook §2.9 frozen layout."""
+
+    def test_buy_goods_renders_the_frozen_golden(self):
+        sut = render_uc_sequence_skeleton
+
+        golden = (_FIXTURES / "buy-goods.sequence.golden").read_text(encoding="utf-8")
+        result = sut(_example_use_case())
+
+        self.assertEqual(result, golden)
+
+    def test_golden_carries_the_five_expected_markers(self):
+        golden = (_FIXTURES / "buy-goods.sequence.golden").read_text(encoding="utf-8")
+        markers = [line for line in golden.split("\n") if line.startswith(S.UNATTRIBUTED_MARKER_PREFIX)]
+
+        self.assertEqual(len(markers), 5)
+        self.assertTrue(any(line.startswith("' UNATTRIBUTED trigger:") for line in markers))
+        self.assertTrue(any("ext 7a step 2" in line for line in markers))
+        self.assertTrue(any("ext 8a step 2" in line for line in markers))
+        self.assertTrue(any("ext 10b step 3" in line for line in markers))
+        self.assertTrue(any("ext 10c step 2" in line for line in markers))
+
+    def test_golden_attribution_spot_checks(self):
+        golden = (_FIXTURES / "buy-goods.sequence.golden").read_text(encoding="utf-8")
+        lines = golden.split("\n")
+
+        # the frozen worked examples (rulebook §2.9.3)
+        self.assertIn("Buyer -> Company: Buyer calls in with a purchase request.", lines)
+        self.assertIn(
+            "Company -> Buyer: Company captures buyer's name, address, requested goods, quantity, and delivery date preference.",
+            lines,
+        )
+        self.assertIn("Company -> Company: Company checks inventory for requested goods.", lines)
+        # the D4 disambiguation: positional receiver, not a self-message
+        self.assertIn("Company -> p4: Company attempts to use backup shipping service.", lines)
+        # the single-line-escaped soft-wrapped extension item
+        self.assertIn(
+            "Company -> Buyer: Company informs buyer of out-of-stock items.\\nThis should rarely happen. Still we have to address this.",
+            lines,
+        )
+        # the resumption notes (full item text, no message)
+        self.assertIn("  Return to step 4.", lines)
+        self.assertIn("  Continue to step 6.", lines)
+        self.assertIn("  Once payment is received, continue to step 11.", lines)
+        # the sub-variation note (heading text + bullets verbatim)
+        self.assertIn("  Step 1: Buyer may use", lines)
+        self.assertIn("  Electronic data interchange (EDI)", lines)
+
+    def test_golden_passes_the_structure_checker_zero_errors_marker_warnings_only(self):
+        golden = (_FIXTURES / "buy-goods.sequence.golden").read_text(encoding="utf-8")
+
+        for mode in (S.MODE_PREFLIGHT, S.MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = S.check_structure(golden, mode)
+                self.assertTrue(result.ok)
+                self.assertEqual(len(result.warnings), 5)
+                for warning in result.warnings:
+                    self.assertIn("UNATTRIBUTED marker", warning.message)
+
+    def test_example_file_is_the_skeleton_with_the_frozen_attributions(self):
+        """The ACC-001 pinning: the committed example cannot drift from the renderer.
+
+        The example file (with its ' reasoning comments stripped) must equal
+        the skeleton with each UNATTRIBUTED marker line replaced by its frozen
+        attribution — and the attribution table must cover every marker.
+        """
+        use_case = _example_use_case()
+
+        skeleton = render_uc_sequence_skeleton(use_case)
+        skeleton_lines = skeleton.split("\n")
+        marker_lines = {line for line in skeleton_lines if line.startswith(S.UNATTRIBUTED_MARKER_PREFIX)}
+        self.assertEqual(marker_lines, set(_ATTRIBUTIONS))
+
+        transformed = [_ATTRIBUTIONS.get(line, line) for line in skeleton_lines]
+        example = read_packaged_text("uc", "plantuml_example")
+
+        self.assertEqual(_strip_comments("\n".join(transformed)), _strip_comments(example))
+        self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in example.split("\n")))
+
+    def test_empty_cleaning_primary_actor_is_an_actionable_failure(self):
+        """The unrenderable edge (rulebook §2.9.1, amended 2026-10-08): a PARSEABLE
+        document whose primary actor's label cleans to empty under the §2.1 rule
+        (a quoted substring containing only whitespace) fails with the actionable
+        error — cause + fix hint — before any output is built (no partial render)."""
+        example = read_packaged_text("uc", "example")
+        lines = example.split("\n")
+        position = lines.index("### Primary Actor") + 1
+        while lines[position].strip() == "":
+            position += 1
+        lines[position] = '"  "'
+        use_case = parse_uc("\n".join(lines)).body  # still parses — the schema requires a paragraph, not a survivor
+
+        with self.assertRaises(AssertionError) as ctx:
+            render_uc_sequence_skeleton(use_case)
+
+        message = str(ctx.exception)
+        self.assertIn("cleans to empty", message)  # the cause
+        self.assertIn("non-whitespace label", message)  # the fix hint
+        self.assertIn("§2.9.1", message)  # the frozen edge, cross-referenced
+
+    def test_resumption_note_carries_the_full_item_text(self):
+        """Phase 145 (2026-10-06, amendment E — the frozen §2.9.6 "full item text
+        (information-preserving)" contract): a resumption item WITH a continuation
+        paragraph emits its COMPLETE text (marker stripped, continuation included,
+        single-line-escaped per §2.4) as the note content. The pre-amendment
+        renderer emitted only the lead paragraph."""
+        example = read_packaged_text("uc", "example")
+        amended = example.replace(
+            "3. Return to step 4.\n",
+            "3. Return to step 4.\n\n   Resumption continuation: the buyer keeps the reservation.\n",
+        )
+        assert amended != example  # the substitution hit the packaged extension 3a item
+        use_case = parse_uc(amended).body
+
+        result = render_uc_sequence_skeleton(use_case)
+
+        lines = result.split("\n")
+        # the complete text, single-line-escaped (the literal two-character \n per §2.4)
+        self.assertIn("  Return to step 4.\\nResumption continuation: the buyer keeps the reservation.", lines)
+        # the pre-amendment lead-only form is gone
+        self.assertNotIn("  Return to step 4.", lines)
+
+    def test_resumption_as_first_fragment_item_is_the_anchored_note_left(self):
+        """Phase 145 (2026-10-06, amendment A): a resumption item that is the fragment's
+        FIRST item (no message to attach to) is an anchored `note left of
+        {primary-actor-alias}` block — the pre-amendment bare `note left` form
+        crashes 1.2026.8 when it follows a self-message's note tile."""
+        example = read_packaged_text("uc", "example")
+        amended = example.replace(
+            "1. Company calculates expedited shipping cost.\n"
+            "2. Company provides expedited shipping quote to buyer.\n"
+            "3. Buyer accepts or declines expedited shipping.\n"
+            "4. Return to step 5.\n",
+            "1. Return to step 5.\n",
+        )
+        assert amended != example  # the substitution hit the packaged extension 4a items
+        use_case = parse_uc(amended).body
+
+        result = render_uc_sequence_skeleton(use_case)
+
+        lines = result.split("\n")
+        # the fragment: alt header, the anchored resumption note directly after it (first
+        # item — no message), the bare end close
+        alt_index = lines.index("alt Buyer requests expedited shipping")
+        self.assertEqual(lines[alt_index + 1], "note left of Buyer")
+        self.assertEqual(lines[alt_index + 2], "  Return to step 5.")
+        self.assertEqual(lines[alt_index + 3], "end note")
+        self.assertEqual(lines[alt_index + 4], "end")
+
+    def test_walkthrough_file_is_the_skeleton_with_the_frozen_attributions(self):
+        """The ACC-001 walkthrough pin: the committed walkthrough `.puml` (the pure,
+        comment-free source of truth the Phase 140 end-to-end run wrote) must equal
+        the skeleton with each UNATTRIBUTED marker line replaced by its frozen
+        attribution -- exact byte equality, no comment-stripping.
+        """
+        use_case = _example_use_case()
+
+        skeleton = render_uc_sequence_skeleton(use_case)
+        transformed = [_ATTRIBUTIONS.get(line, line) for line in skeleton.split("\n")]
+        walkthrough = (_FIXTURES / "buy-goods.sequence.walkthrough.puml").read_text(encoding="utf-8")
+
+        self.assertEqual(walkthrough, "\n".join(transformed))
+        self.assertFalse(any(line.startswith(S.UNATTRIBUTED_MARKER_PREFIX) for line in walkthrough.split("\n")))
+        self.assertFalse(any(line.lstrip().startswith("'") for line in walkthrough.split("\n")))
+        result = S.check_structure(walkthrough, S.MODE_STANDALONE)
+        self.assertTrue(result.ok)
+        self.assertEqual(result.warnings, [])
+
+
+class TestUseCasePackage(unittest.TestCase):
+    """render_use_case_package — the multi-UC fixture (ACC-001) via an isolated docs dir."""
+
+    def _package_documents(self) -> list[PackageDocument]:
+        """Load the package fixtures via the uc read path under the patched ``SPECMGR_DOCS_DIR``."""
+        documents: list[PackageDocument] = []
+        for name in ("place-order.md", "charge-card.md", "refund-order.md", "broken.md"):
+            doc_id = _PACKAGE_FIXTURE_IDS[name]
+            try:
+                _path, doc = load_by_id(uc_base_dir(), doc_id)
+                documents.append(PackageDocument(id=doc_id, use_case=doc.body))
+            except UcNotFoundError:
+                documents.append(PackageDocument(id=doc_id, use_case=None))
+        return documents
+
+    def test_package_renders_the_frozen_golden(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            uc_dir = Path(tmp) / "uc"
+            uc_dir.mkdir()
+            for name, doc_id in _PACKAGE_FIXTURE_IDS.items():
+                shutil.copy(_FIXTURES / "package" / name, uc_dir / f"{doc_id}.md")
+            with mock.patch.dict(os.environ, {"SPECMGR_DOCS_DIR": tmp}):
+                documents = self._package_documents()
+
+        rendered = render_use_case_package(documents)
+        golden = (_FIXTURES / "package.golden").read_text(encoding="utf-8")
+
+        self.assertEqual(rendered, golden)
+
+    def test_package_golden_passes_the_structure_checker_both_modes(self):
+        golden = (_FIXTURES / "package.golden").read_text(encoding="utf-8")
+
+        for mode in (S.MODE_PREFLIGHT, S.MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = S.check_structure(golden, mode)
+                self.assertTrue(result.ok)
+                self.assertEqual(result.warnings, [])
+
+    def test_broken_slot_is_skipped_and_referenced_as_unresolvable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            uc_dir = Path(tmp) / "uc"
+            uc_dir.mkdir()
+            for name, doc_id in _PACKAGE_FIXTURE_IDS.items():
+                shutil.copy(_FIXTURES / "package" / name, uc_dir / f"{doc_id}.md")
+            with mock.patch.dict(os.environ, {"SPECMGR_DOCS_DIR": tmp}):
+                documents = self._package_documents()
+
+        broken_slot = documents[3]
+        self.assertIsNone(broken_slot.use_case)
+        rendered = render_use_case_package(documents)
+        self.assertNotIn("Broken Fixture", rendered)  # skipped as a node
+        self.assertIn('note bottom of uc1: Unresolved UC reference: ""', rendered)  # the ref to it (empty label)
+
+    def test_edge_kinds_and_note_paths_in_the_golden(self):
+        golden = (_FIXTURES / "package.golden").read_text(encoding="utf-8")
+        lines = golden.split("\n")
+
+        # resolvable include (Subordinate:), one per reference in the multi-ref bullet
+        self.assertIn("uc1 ..> uc2 : <<include>> Charge card", lines)
+        self.assertIn("uc1 ..> uc3 : <<include>> Refund order", lines)
+        # resolvable extend (Extension:) — referenced ..> this
+        self.assertIn("uc3 ..> uc2 : <<extend>> Refund order", lines)
+        # resolvable superordinate — superordinate ..> this, no stereotype
+        self.assertIn("uc1 ..> uc2 : Place order", lines)
+        # unresolvable: legacy UC-NNN, broken document (empty label), outside package
+        self.assertIn('note bottom of uc1: Unresolved UC reference: "Legacy item"', lines)
+        self.assertIn('note bottom of uc1: Unresolved UC reference: ""', lines)
+        self.assertIn('note bottom of uc2: Unresolved UC reference: "Unknown service"', lines)
+
+
+class TestPackageAliasCollision(unittest.TestCase):
+    """The frozen collision fallback for duplicate bare titles (rulebook §2.7 item 4,
+    amended 2026-10-08): the FIRST document with a given cleaned title keeps the
+    bare alias; every LATER document whose cleaned title collides with an
+    already-assigned alias takes the positional ``uc{N}`` (incremented past any
+    already-assigned alias) — the emitted aliases stay unique, so the
+    alias-targeted edges address the right node, and the render is deterministic."""
+
+    @staticmethod
+    def _titled_use_case(fixture_name: str, title: str):
+        """One package fixture document re-titled (its H1 replaced) — the body
+        (incl. the cross-referencing ``Related Use Cases``) stays the fixture's."""
+        lines = (_FIXTURES / "package" / fixture_name).read_text(encoding="utf-8").split("\n")
+        replaced = False
+        for index, line in enumerate(lines):
+            if line.startswith("# "):
+                lines[index] = f"# {title}"
+                replaced = True
+                break
+        assert replaced, f"no H1 found in {fixture_name}"
+        result = parse_uc("\n".join(lines)).body
+        return result
+
+    def test_two_duplicate_bare_titles_get_unique_aliases_and_correct_edges(self):
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "Login")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"], use_case=self._titled_use_case("charge-card.md", "Login")
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        # the first keeps the bare alias, the later collider takes the positional
+        # (the fixtures' own §2.3 level stereotypes ride on the node lines)
+        self.assertIn('usecase "Login" as Login <<user goal>>', lines)
+        self.assertIn('usecase "Login" as uc2 <<subfunction>>', lines)
+        # the edges address the right node: place-order's include references
+        # charge-card (uc2); charge-card's superordinate references place-order (Login)
+        self.assertIn("Login ..> uc2 : <<include>> Charge card", lines)
+        self.assertIn("Login ..> uc2 : Place order", lines)
+        # deterministic: a second render is byte-equal
+        self.assertEqual(rendered, render_use_case_package(documents))
+        # checker-clean in both modes (the structure checker has no
+        # duplicate-declaration detection — the uniqueness is the renderer's)
+        for mode in (S.MODE_PREFLIGHT, S.MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = S.check_structure(rendered, mode)
+                self.assertTrue(result.ok, result.errors)
+                self.assertEqual(result.warnings, [])
+
+    def test_three_duplicate_bare_titles_get_unique_aliases(self):
+        documents = [
+            PackageDocument(id=_PACKAGE_FIXTURE_IDS[name], use_case=self._titled_use_case(name, "Login"))
+            for name in ("place-order.md", "charge-card.md", "refund-order.md")
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        self.assertIn('usecase "Login" as Login <<user goal>>', lines)
+        self.assertIn('usecase "Login" as uc2 <<subfunction>>', lines)
+        self.assertIn('usecase "Login" as uc3 <<subfunction>>', lines)
+        self.assertEqual(rendered, render_use_case_package(documents))
+
+    def test_positional_bump_when_an_earlier_bare_title_reads_ucN(self):
+        # the frozen edge: an earlier document whose bare title literally reads
+        # `uc2` keeps that alias; the later non-bare document's positional `uc2`
+        # is already assigned and increments past it (the only case where the
+        # positional name differs from the 1-based position)
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "uc2")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"],
+                use_case=self._titled_use_case("charge-card.md", "Long Two Words"),
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        lines = rendered.split("\n")
+
+        self.assertIn('usecase "uc2" as uc2 <<user goal>>', lines)
+        self.assertIn('usecase "Long Two Words" as uc3 <<subfunction>>', lines)
+
+    def test_collision_package_renders_at_the_live_source(self):
+        """Env-gated: the 2-document collision package (ambiguous before the
+        amendment) renders 200 + a real SVG at the selected source — the
+        unique aliases address the right nodes for the real parser."""
+        info = require_plantuml_source(self)
+        assert info.kind is not None and info.value is not None  # available ⇒ a concrete source
+        documents = [
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["place-order.md"], use_case=self._titled_use_case("place-order.md", "Login")
+            ),
+            PackageDocument(
+                id=_PACKAGE_FIXTURE_IDS["charge-card.md"], use_case=self._titled_use_case("charge-card.md", "Login")
+            ),
+        ]
+
+        rendered = render_use_case_package(documents)
+        body = render_proof_body(info.kind, info.value, rendered)
+
+        assert_rendered_svg(body, "Login")
+
+
+class TestReferencePatternParity(unittest.TestCase):
+    """The renderer's UC-token regex must agree with the shared reference vocabulary."""
+
+    def test_uuid_tokens_match_the_shared_vocabulary(self):
+        from biz.dfch.specmgr.general.tools._references import find_references
+
+        bullet = (
+            "Subordinate: Charge card (UC 22222222-2222-4222-8222-222222222222), "
+            "Refund order (UC-33333333-3333-4333-8333-333333333333), Legacy item (UC-099)"
+        )
+
+        renderer_uuids = [match.group(1) for match in _UC_REFERENCE_PATTERN.finditer(bullet) if "-" in match.group(1)]
+        shared = [ref_id for ref_type, ref_id in find_references(bullet) if ref_type == "uc"]
+
+        self.assertEqual(renderer_uuids, shared)
+        # the legacy token is a renderer-only addition (unresolvable by definition)
+        self.assertEqual(len(list(_UC_REFERENCE_PATTERN.finditer(bullet))), 3)
+
+
+if __name__ == "__main__":
+    unittest.main()
