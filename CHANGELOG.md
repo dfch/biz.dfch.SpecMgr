@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A bidirectional drift regression test (`tests/test_server_json.py`) guarding
+  `server.json`'s `environmentVariables` against the `SPECMGR_*` environment
+  variables the code actually reads in `src/`: the test scans the source for the
+  four read-site shapes (string-literal assignment, `getenv`, `environ` access,
+  and Typer `envvar=` option), asserts set equality in both directions (a failure
+  names the specific entries missing from the manifest or extra in it), and pins
+  the manifest's structural invariants (unique `name`s, non-empty `description`s,
+  and `default` present iff the code reads the variable with a default); the
+  false-positive guards (docstring-prose/comment mentions, and the
+  `_SPECMGR_ROOT` identifier that merely contains the prefix) are pinned by
+  negative fixture cases (feat-126-server-json-env-drift, GitHub issue #126).
 - `server.json` (the MCP Registry publisher manifest) now lists the two
   `SPECMGR_*` environment variables the code reads that were previously
   undocumented: `SPECMGR_SIMILARITY_DISABLED` (presence-based opt-out for

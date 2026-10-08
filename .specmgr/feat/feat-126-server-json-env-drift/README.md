@@ -4,7 +4,7 @@ created: '2026-10-07T21:21:13.282+02:00'
 id: feat-126-server-json-env-drift
 status: progress
 type: feat
-updated: '2026-10-08T07:32:41.291+02:00'
+updated: '2026-10-08T09:20:43.000+02:00'
 version: 1.0.0
 ---
 
@@ -98,20 +98,24 @@ Verified state at planning time (2026-10-07):
 
 #### Phase 120: Drift regression test
 
-- [ ] Task 120.100: Implement `tests/test_server_json.py`: parse `server.json` (stdlib `json`), scan `src/**/*.py` for environment-variable read sites per the four syntactic shapes of the Design Notes, assert set equality in both directions plus the structural invariants of REQ-002 (unique `name`s, non-empty `description`s, `default` present iff the code has one), failure message naming the specific missing/extra entries.
-- [ ] Task 120.110: Pin the false-positive guards (ACC-004): `_SPECMGR_ROOT` in `_paths.py` (and the bare `SPECMGR_ROOT` substring) must not be reported; add the docstring-quoting negative fixture; tighten the regex if the corpus yields false positives.
-- [ ] Task 120.120: Manually verify ACC-003 (mutate `server.json` both directions, observe the naming failure messages, revert).
-- [ ] Task 120.130: Phase-end gate (full quality gate, per Design Notes): `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, and every doc-drift check the phase touches (expected no-op: no `src/` module changes) green; exactly one Conventional Commit.
+- [x] Task 120.100: Implement `tests/test_server_json.py`: parse `server.json` (stdlib `json`), scan `src/**/*.py` for environment-variable read sites per the four syntactic shapes of the Design Notes, assert set equality in both directions plus the structural invariants of REQ-002 (unique `name`s, non-empty `description`s, `default` present iff the code has one), failure message naming the specific missing/extra entries.
+- [x] Task 120.110: Pin the false-positive guards (ACC-004): `_SPECMGR_ROOT` in `_paths.py` (and the bare `SPECMGR_ROOT` substring) must not be reported; add the docstring-quoting negative fixture; tighten the regex if the corpus yields false positives.
+- [x] Task 120.120: Manually verify ACC-003 (mutate `server.json` both directions, observe the naming failure messages, revert).
+- [x] Task 120.130: Phase-end gate (full quality gate, per Design Notes): `ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`, and every doc-drift check the phase touches (expected no-op: no `src/` module changes) green; exactly one Conventional Commit.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-08**: Phase 100 (Manifest completion) is complete — `server.json`'s `environmentVariables` now lists all eight `SPECMGR_*` variables the code reads (the two presence-based feature gates added, the three stale `SPECMGR_MCP_*` entries corrected), the root `README.md` documents the unified warmup thread and both opt-out flags, and the `CHANGELOG.md` `[Unreleased]` entry is in place. Phase 120 (drift regression test) is next.
+**As of 2026-10-08**: Phase 120 (Drift regression test) is complete — `tests/test_server_json.py` guards `server.json`'s `environmentVariables` against the `SPECMGR_*` read sites in `src/` bidirectionally (failure messages name the specific missing/extra entries), pins the REQ-002 structural invariants (unique `name`s, non-empty `description`s, `default` iff the code has one), and pins the ACC-004 false-positive guards (the `_SPECMGR_ROOT` bare-substring assert plus synthetic docstring/comment-quoting fixtures). ACC-003 was verified by mutating `server.json` in both directions (the failing runs named `SPECMGR_FEAT_DIR`/`SPECMGR_BOGUS` respectively) and reverting. `docs/GENERATED.md` was regenerated for the new test file (test-file count 383 → 384), and the `CHANGELOG.md` `[Unreleased]` gained the test bullet. All phases' gates are green; the feature implementation is done and pending final review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-08T07:20:43.000Z - Phase 120 (Drift regression test) implemented
+
+Task 120.100: `tests/test_server_json.py` scans `src/**/*.py` for the four read-site shapes (string-literal assignment, `getenv`, `environ` access, Typer `envvar=` option — prefix-anchored on a quoted `SPECMGR_[A-Z0-9_]+` name, with `#`-comment and triple-quoted docstring regions blanked so prose/shape-quoting in docstrings and comments cannot be reported), asserts the bidirectional set equality against `server.json`'s `environmentVariables` with a failure message naming the specific missing (read in `src/`, absent from the manifest) and extra (in the manifest, never read in `src/`) entries, and pins the REQ-002 structural invariants (unique `name`s, non-empty `description`s, and `default` present iff the code-side classification says the variable has a default — shape-(1) constants are followed to their whole-tree read sites, Typer options to their Annotated close + assignment line). Task 120.110: the false-positive guards are pinned — an explicit assert that the bare `SPECMGR_ROOT` substring (from `_SPECMGR_ROOT` in `src/biz/dfch/specmgr/_paths.py`) is not reported, plus two synthetic fixture trees proving that docstring prose, comment mentions, and even docstring/comment lines quoting a full shape verbatim are not reported while real sites still are. Task 120.120: ACC-003 verified by mutation — removing `SPECMGR_FEAT_DIR` from `server.json` fails the suite naming it as missing from the manifest, adding a bogus `SPECMGR_BOGUS` entry fails it naming that entry as extra in the manifest; `server.json` was reverted to the committed state (suite green again, `git status` clean for it). Task 120.130: full quality gate green (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto --cov=src`); `docs/GENERATED.md` regenerated for the new test file (test-file count 383 → 384 — the one doc-drift check this phase is not a no-op on), `specmgr adr-toc` and `specmgr mcp-docs` verified no-op; `CHANGELOG.md` `[Unreleased]` gained the test bullet.
 
 #### 2026-10-08T05:32:41.000Z - Phase 100 (Manifest completion) implemented
 
