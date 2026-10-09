@@ -1179,7 +1179,13 @@ running the suite in parallel also cut its own wall time from 9-11 minutes
 the primary dev machine. `specmgr coverage-badge` must stay immediately
 after it, since it reads the `.coverage` data `pytest-cov` just produced.
 (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
-locally via pre-commit hook, not just CI")
+locally via pre-commit hook, not just CI") If a commit is blocked by a dangling
+or stale `INSTALL_PYTHON` pointer in the shared `.git/hooks/pre-commit` (e.g. it
+points at a deleted worktree venv and the hook aborts with `` `pre-commit` not
+found ``), treat this as a true error and stop — do not attempt auto-repair from
+within a worktree; ask the user to re-run `uv run --frozen pre-commit install`
+in the main repo (`~/src/biz.dfch.SpecMgr`, the `dev` branch) to restore the
+canonical pointer.
 
 ## Extras split (base library has no CLI/MCP deps)
 
