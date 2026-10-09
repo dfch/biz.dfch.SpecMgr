@@ -707,7 +707,20 @@ type or cross-cutting:
     12-value `type` enum) — `set_status`'s out-of-vocabulary
     `InvalidStatusResult` (case 2 of the same chain, ADR
     b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs pre-lock/pre-load
-    (first), and nothing is written in any failure case; `edit`, the
+    (first), and nothing is written in any failure case; a fifth extension
+    of the same chain (feat-204-create-error, GitHub issue #204, ADR
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e) gives every `create_<d>` tool (the
+    12 whole-body domains) the non-raising `ValidateResult` for a
+    content-validation failure of the caller-submitted body (nothing
+    written), and every `parse_<d>` tool the same for an existing-but-broken
+    file — `parse_<d>`'s `OSError`-family file-access errors from
+    `Path.read_text()` and every caller-usage `ValueError`/`FileExistsError`
+    (incl. `create_feat`'s guards, whose execution order relative to content
+    validation is unchanged: a compound failure returns `ValidateResult`
+    first, "first-in-execution-order wins") still raise;
+    `_CAUGHT_EXCEPTIONS`/`_MAX_VALIDATE_ERROR_CHARS` are defined in
+    `general/models/validate_result.py` and re-exported by
+    `general/tools/validate.py` (their one source of truth); `edit`, the
     generic surgical exact-match
     string replacement of an existing document's frontmatter-stripped body
     across the whole-body domains (`type` is one of

@@ -544,7 +544,18 @@ on the submitted new content / post-edit result instead of raising
 ``errors[].message`` capped at 300 chars as ``validate`` caps it, feat-110;
 every caller-usage ``ValueError`` still raises, and
 ``set_status``'s own ``InvalidStatusResult`` check still runs
-pre-lock/pre-load first).
+pre-lock/pre-load first). A fifth extension (feat-204-create-error,
+GitHub issue #204, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e) adds the
+non-raising ``ValidateResult`` to every ``create_<d>`` tool (a
+content-validation failure of the caller-submitted body; nothing written)
+and every ``parse_<d>`` tool (an existing file that fails to parse);
+``parse_<d>``'s ``OSError``-family file-access errors from
+``Path.read_text()`` and every caller-usage ``ValueError``/``FileExistsError``
+(``create_feat``'s id guards keep their existing execution order -- a
+compound failure returns ``ValidateResult`` first) still raise; the shared
+catch tuple and 300-char cap constant are defined in
+``general/models/validate_result.py`` and re-exported by
+``general/tools/validate.py``.
 
 Prompts
 -------

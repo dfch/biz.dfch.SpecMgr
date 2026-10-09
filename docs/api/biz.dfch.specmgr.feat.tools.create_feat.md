@@ -60,15 +60,22 @@ if the resulting id's folder already exists on disk, this raises
 
 ``content`` is validated by constructing a
 :class:`~biz.dfch.specmgr.feat.models.v1.Feature` from it
-(``Feature.from_text(format_text(content))``); a structural failure
+(``Feature.from_text(format_text(content))``). A structural failure
 raises ``AssertionError`` and a field/cross-field failure raises
-``pydantic.ValidationError``, both re-raised with domain/tool context
-prepended (see Raises below) -- nothing is written in
-either case, and neither the base directory nor any new folder is
-touched (validation happens before the create lock is even acquired).
-A malformed caller-supplied ``id`` is validated in that same
-before-any-lock window and raises a bare ``ValueError`` (see Raises
-below), also before anything is written.
+``pydantic.ValidationError`` -- but this tool catches both
+(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+structured-result workaround chain) and returns the enriched message
+(domain/tool/channel context prepended by the shared tool-boundary
+wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,
+on top of the engine's own field-path/line/snippet enrichment,
+feat-27-validation Phases 1/2) as the non-raising
+``ValidateResult(valid=False, ...)`` (see Returns below) instead --
+nothing is written in that case, and neither the base directory nor
+any new folder is touched (validation happens before the create lock
+is even acquired). A malformed caller-supplied ``id`` is validated in
+that same before-any-lock window and raises a bare ``ValueError``
+(see Raises below), also before anything is written.
 
 Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR
 f14f125e's item 3): the content validation above runs *before* both
@@ -98,10 +105,25 @@ id:
 
 Returns
 -------
-FeatFrontmatter
+FeatFrontmatter | ValidateResult
     The newly created document's frontmatter only (no body), with its
     assigned ``feat-NNN-slug`` id in ``.id``. Use the corresponding
-    ``get_feat`` tool to fetch the full document afterward.
+    ``get_feat`` tool to fetch the full document afterward. On a
+    content-validation failure of ``content``, a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+    (``valid=False``) with exactly one ``errors`` entry whose
+    ``message`` is the enriched exception text capped at 300 chars
+    exactly as the generic ``validate`` tool caps it (feat-110, via
+    :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
+    ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
+    in that case (feat-204-create-error, ADR
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+    workaround chain); because content validation runs before both id
+    guards, a compound failure (invalid ``content`` plus a malformed or
+    already-existing ``id``/folder) returns this ``ValidateResult`` and
+    the guard never runs in that call (see the Compound-failure
+    precedence paragraph above).
 
 Raises
 ------
@@ -113,13 +135,4 @@ ValueError
 FileExistsError
     The resulting id's folder (caller-supplied or defaulted) already
     exists on disk. Nothing is written.
-AssertionError
-    A structural failure in ``content``. The message is prefixed with domain/tool/channel
-    context (e.g. ``"feat create_feat (body): ..."``) by the shared tool-boundary
-    wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
-    of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
-    Nothing is written.
-pydantic.ValidationError
-    A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
-    written.
 

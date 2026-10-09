@@ -66,9 +66,17 @@ from ._write import write_feat_file
         "Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, "
         "or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives "
         "a filename from the body's H1 title, validates the submitted body-only content, and writes "
-        "the new document to the feature base directory. Returns the newly created document's "
-        "frontmatter only (no body); use the corresponding `get_feat` tool to fetch the full "
-        "document afterward."
+        "the new document to the feature base directory. A content-validation failure of the "
+        "submitted body returns a non-raising `ValidateResult` (`valid=False`, a single "
+        "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
+        "instead of raising `AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
+        "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
+        "chain); nothing is written in that case. Content validation runs BEFORE the id-shape "
+        "`ValueError` and already-existing-id/folder `FileExistsError` guards, so a compound failure "
+        "(invalid content + a malformed or already-existing id) returns the `ValidateResult` and the "
+        "guard never runs in that call; each guard still raises whenever the content is valid. "
+        "Returns the newly created document's frontmatter only (no body); use the corresponding "
+        "`get_feat` tool to fetch the full document afterward."
     ),
 )
 def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | ValidateResult:
@@ -102,15 +110,22 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | Valida
 
     ``content`` is validated by constructing a
     :class:`~biz.dfch.specmgr.feat.models.v1.Feature` from it
-    (``Feature.from_text(format_text(content))``); a structural failure
+    (``Feature.from_text(format_text(content))``). A structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both re-raised with domain/tool context
-    prepended (see Raises below) -- nothing is written in
-    either case, and neither the base directory nor any new folder is
-    touched (validation happens before the create lock is even acquired).
-    A malformed caller-supplied ``id`` is validated in that same
-    before-any-lock window and raises a bare ``ValueError`` (see Raises
-    below), also before anything is written.
+    ``pydantic.ValidationError`` -- but this tool catches both
+    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    structured-result workaround chain) and returns the enriched message
+    (domain/tool/channel context prepended by the shared tool-boundary
+    wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,
+    on top of the engine's own field-path/line/snippet enrichment,
+    feat-27-validation Phases 1/2) as the non-raising
+    ``ValidateResult(valid=False, ...)`` (see Returns below) instead --
+    nothing is written in that case, and neither the base directory nor
+    any new folder is touched (validation happens before the create lock
+    is even acquired). A malformed caller-supplied ``id`` is validated in
+    that same before-any-lock window and raises a bare ``ValueError``
+    (see Raises below), also before anything is written.
 
     Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR
     f14f125e's item 3): the content validation above runs *before* both
@@ -140,10 +155,25 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | Valida
 
     Returns
     -------
-    FeatFrontmatter
+    FeatFrontmatter | ValidateResult
         The newly created document's frontmatter only (no body), with its
         assigned ``feat-NNN-slug`` id in ``.id``. Use the corresponding
-        ``get_feat`` tool to fetch the full document afterward.
+        ``get_feat`` tool to fetch the full document afterward. On a
+        content-validation failure of ``content``, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+        (``valid=False``) with exactly one ``errors`` entry whose
+        ``message`` is the enriched exception text capped at 300 chars
+        exactly as the generic ``validate`` tool caps it (feat-110, via
+        :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
+        ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
+        in that case (feat-204-create-error, ADR
+        f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain); because content validation runs before both id
+        guards, a compound failure (invalid ``content`` plus a malformed or
+        already-existing ``id``/folder) returns this ``ValidateResult`` and
+        the guard never runs in that call (see the Compound-failure
+        precedence paragraph above).
 
     Raises
     ------
@@ -155,15 +185,6 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | Valida
     FileExistsError
         The resulting id's folder (caller-supplied or defaulted) already
         exists on disk. Nothing is written.
-    AssertionError
-        A structural failure in ``content``. The message is prefixed with domain/tool/channel
-        context (e.g. ``"feat create_feat (body): ..."``) by the shared tool-boundary
-        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
-        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
-        Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
-        written.
     """
     try:
         with wrap_tool_errors(domain="feat", tool="create_feat", channel=BODY_CHANNEL):
