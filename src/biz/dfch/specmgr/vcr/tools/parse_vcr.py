@@ -79,7 +79,7 @@ def parse_vcr(path: str) -> VcrDocument | ValidateResult:
     caps it (feat-110), as the non-raising ``ValidateResult(valid=False, ...)``
     (see Returns below) -- the caller still gets something concrete to
     self-correct from, in-band. File-access errors for a truly-absent or
-    unreadable path are never caught: they still migrate as
+    unreadable path are never caught: they still propagate as
     ``FileNotFoundError``/``PermissionError``/``OSError`` (see Raises below).
 
     Parameters

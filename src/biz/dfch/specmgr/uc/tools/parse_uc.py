@@ -21,7 +21,15 @@ Reads a use-case markdown file from disk and parses it into a structured
 :class:`UcDocument`. Path-based (not id-based) by design -- ``get_uc``
 (``uc.tools.get_uc``) is the id-based read path over the use-case base
 directory (``uc.tools._paths``/``_io``); this tool instead parses any
-markdown file the caller points it at directly.
+markdown file the caller points it at directly. A content-validation
+failure of an existing file (the parser's
+``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``) is
+caught and returned as the non-raising ``ValidateResult``
+(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
+5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+structured-result workaround chain); only the file-access errors raised
+by ``Path.read_text()`` for a truly-absent or unreadable path still
+surface as MCP tool errors to the caller.
 """
 
 from __future__ import annotations
@@ -74,7 +82,7 @@ def parse_uc(path: str) -> UcDocument | ValidateResult:
     (see Returns below) -- the caller still gets something concrete to
     self-correct from, in-band. File-access errors (missing file, permission
     denied) for a truly-absent or unreadable path are never caught: they still
-    migrate as ``FileNotFoundError``/``PermissionError``/``OSError`` (see
+    propagate as ``FileNotFoundError``/``PermissionError``/``OSError`` (see
     Raises below).
 
     Parameters

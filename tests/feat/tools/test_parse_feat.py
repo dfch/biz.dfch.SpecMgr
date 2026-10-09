@@ -23,6 +23,7 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument
 from biz.dfch.specmgr.feat.tools.parse_feat import parse_feat
@@ -152,6 +153,15 @@ class TestParseFeatTool(unittest.TestCase):
         """parse_feat must raise FileNotFoundError for a nonexistent path."""
         with self.assertRaises(FileNotFoundError):
             parse_feat("/nonexistent/path/to/README.md")
+
+    def test_unreadable_file_raises_permission_error(self) -> None:
+        """parse_feat must raise PermissionError for an unreadable path -- ``Path.read_text()``
+        sits outside the tool's own catch, so the unreadable half of the "truly-absent or
+        unreadable path" file-access contract (feat-204-create-error REQ-002/ACC-002) is never
+        intercepted by the non-raising ``ValidateResult`` branch (Phase 150)."""
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("permission denied")):
+            with self.assertRaises(PermissionError):
+                parse_feat("/path/to/README.md")
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
@@ -288,6 +289,15 @@ class TestParseQaTool(unittest.TestCase):
         """parse_qa must raise FileNotFoundError for a nonexistent path."""
         with self.assertRaises(FileNotFoundError):
             parse_qa("/nonexistent/path/to/file.md")
+
+    def test_unreadable_file_raises_permission_error(self) -> None:
+        """parse_qa must raise PermissionError for an unreadable path -- ``Path.read_text()``
+        sits outside the tool's own catch, so the unreadable half of the "truly-absent or
+        unreadable path" file-access contract (feat-204-create-error REQ-002/ACC-002) is never
+        intercepted by the non-raising ``ValidateResult`` branch (Phase 150)."""
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("permission denied")):
+            with self.assertRaises(PermissionError):
+                parse_qa("/path/to/file.md")
 
     def test_v1_shaped_document_returns_validate_result(self) -> None:
         """A v1-shaped document (per-question `### {heading}` sub-sections, no
