@@ -17,6 +17,7 @@
 
 """Tests for the specmgr://config resource (feat-51-mcp-cwd, plus the static similarity section, feat-134 Phase 7)."""
 
+import difflib
 import json
 import os
 import sys
@@ -25,6 +26,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import pydantic_core
+
+from biz.dfch.specmgr import _envregistry
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, DEFAULT_ADR_DIR
 from biz.dfch.specmgr.feat.tools._paths import DEFAULT_FEAT_DIR, FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.resources.config import config_info
@@ -392,6 +396,90 @@ class TestConfigResourcePlantuml(unittest.TestCase):
         for secret in (secret_jar, secret_bin, secret_url):
             with self.subTest(secret=secret):
                 self.assertNotIn(secret, as_json)
+
+
+#: The Phase 110 pre-migration ``specmgr://config`` golden fixture (feat-208 Task 110.115,
+#: REQ-005/ACC-005): the resource's exact JSON payload captured before any read-site migration,
+#: under the controlled conditions documented in ``tests/fixtures/config-golden/README.md``.
+_CONFIG_GOLDEN_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "fixtures" / "config-golden" / "specmgr-config.pre-migration.json"
+)
+
+
+class TestConfigGoldenIdentity(unittest.TestCase):
+    """feat-208 Task 140.120 (REQ-005, ACC-005): the post-migration ``specmgr://config`` output is
+    byte-identical to the Phase 110 pre-migration golden fixture once the temp-dir prefixes are
+    normalized.
+
+    The golden was captured under a fresh temp-dir CWD with none of the 13 registered env vars set
+    (``tests/fixtures/config-golden/README.md``); this test re-runs the same capture procedure
+    against the migrated code and requires byte-identity after normalizing exactly the two
+    machine-dependent locations -- the capture's CWD prefix (derived from the fixture itself) and
+    each side's own ``similarity.cache_dir`` value (the process temp dir, read out of the payload,
+    never string-guessed).
+    """
+
+    def test_post_migration_output_is_byte_identical_to_the_phase_110_golden(self):
+        """Re-capture ``config_info()`` through the mcp SDK's own resource serialization path under
+        the golden's controlled conditions (fresh temp-dir CWD, every registered env var popped),
+        normalize both temp-dir locations on both sides, and require byte-identity with the
+        fixture."""
+        golden_text = _CONFIG_GOLDEN_FIXTURE.read_text(encoding="utf-8")
+        golden = json.loads(golden_text)
+        # The capture's CWD prefix T0, derived from the fixture itself (the default ADR dir is
+        # <CWD>/docs/adr, so the prefix sits two levels above it).
+        t0 = str(Path(golden["domains"]["adr"]["base_dir"]).parent.parent)
+        # The golden's own cache-dir value (the capture process's temp dir, not T0).
+        golden_cache_dir = golden["similarity"]["cache_dir"]
+
+        original_cwd = os.getcwd()
+        # Save+pop every registered name (the registry is complete in the test process once this
+        # module's import chain has run) plus the cli-owned 13th var by its literal name -- the
+        # same environment handling as the capture script; config_info() never reads that one, so
+        # it cannot affect the payload either way.
+        env_names = [entry.name for entry in _envregistry.all_vars()] + ["SPECMGR_TESTS_NO_DOTENV"]
+        saved_env: dict[str, str | None] = {name: os.environ.get(name) for name in dict.fromkeys(env_names)}
+        for name in saved_env:
+            os.environ.pop(name, None)
+        try:
+            with tempfile.TemporaryDirectory() as t1:
+                os.chdir(t1)
+                result = config_info()
+                # The mcp SDK's own resource serialization path (FunctionResource.read for a
+                # non-str return; the fixture's README documents the exact call).
+                current_text = pydantic_core.to_json(result, fallback=str, indent=2).decode()
+        finally:
+            os.chdir(original_cwd)
+            for name, old_value in saved_env.items():
+                if old_value is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = old_value
+
+        current_cache_dir = result.similarity.cache_dir
+
+        # Normalize both sides: each side's own cache-dir value becomes one common token, then
+        # the capture's CWD prefix (t0 in the golden, t1 in the current text) becomes a second
+        # common token. The two locations are disjoint and the tokens appear nowhere else in the
+        # payload, so the replacement order cannot corrupt the other.
+        normalized_golden = golden_text.replace(golden_cache_dir, "@@CACHE_DIR@@").replace(t0, "@@CWD@@")
+        normalized_current = current_text.replace(current_cache_dir, "@@CACHE_DIR@@").replace(t1, "@@CWD@@")
+
+        self.assertEqual(
+            normalized_current,
+            normalized_golden,
+            "specmgr://config's post-migration output differs from the pre-migration golden fixture "
+            f"{_CONFIG_GOLDEN_FIXTURE} after temp-dir normalization:\n"
+            + "\n".join(
+                difflib.unified_diff(
+                    normalized_golden.splitlines(),
+                    normalized_current.splitlines(),
+                    fromfile=str(_CONFIG_GOLDEN_FIXTURE),
+                    tofile="post-migration config_info() (this run)",
+                    lineterm="",
+                )
+            ),
+        )
 
 
 if __name__ == "__main__":

@@ -33,13 +33,17 @@ registry's raw accessor ``_envregistry.get(name) is not None`` (the three
 base-dir vars since feat-208 Phase 120; ``SPECMGR_SIMILARITY_DISABLED``,
 ``SPECMGR_FEAT_WARMUP_DISABLED``, and the three PlantUML source vars since
 Phase 130) -- never their value and never any other environment variable.
-The one remaining direct ``os.environ`` read is the *value* read of
-``FASTEMBED_CACHE_PATH`` (routed through the registry in Phase 140), and
-this module never iterates over or dumps ``os.environ`` wholesale. Two
+Since feat-208 Phase 140 the module carries **no** direct ``os.environ``
+read at all: the one remaining *value* read, ``FASTEMBED_CACHE_PATH``,
+likewise goes through the registry -- its ``get_with_default`` accessor
+(inserting the record's registered default for an unset or set-but-empty
+value) -- and this module never iterates over or dumps ``os.environ``
+wholesale. Two
 deliberate, user-requested additions
 for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 ``SPECMGR_SIMILARITY_DISABLED`` is likewise reported (flag only, never its
-value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
+value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read (through
+the registry's ``get_with_default`` accessor) to report
 the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
 ``<tempdir>/fastembed_cache``). A third presence flag,
@@ -82,7 +86,6 @@ part of this resource.
 
 from __future__ import annotations
 
-import os
 import tempfile
 from importlib.util import find_spec
 from pathlib import Path
@@ -116,12 +119,13 @@ from ...vcr.tools._paths import vcr_base_dir
 FASTEMBED_CACHE_PATH_ENV_VAR = "FASTEMBED_CACHE_PATH"
 
 # The registry record for :data:`FASTEMBED_CACHE_PATH_ENV_VAR` (feat-208,
-# Phase 110), registered at its read site: the default is the code's own
-# fallback expression, evaluated at registration -- an unset or empty
-# value falls back to ``<tempdir>/fastembed_cache`` (the
-# ``empty_falls_back_to_default`` flag; one of the four empty-fallback
-# variables, the user-approved Option A decision recorded in the feature
-# plan's 2026-10-10 update entry).
+# Phase 110; the value read below migrated to the registry's
+# ``get_with_default`` accessor in Phase 140), registered at its read
+# site: the default is the code's own fallback expression, evaluated at
+# registration -- an unset or empty value falls back to
+# ``<tempdir>/fastembed_cache`` (the ``empty_falls_back_to_default`` flag;
+# one of the four empty-fallback variables, the user-approved Option A
+# decision recorded in the feature plan's 2026-10-10 update entry).
 _envregistry.register(
     FASTEMBED_CACHE_PATH_ENV_VAR,
     default=str(Path(tempfile.gettempdir()) / "fastembed_cache"),
@@ -145,8 +149,13 @@ def _similarity_cache_dir() -> str:
     ``<tempdir>/fastembed_cache`` -- minus its ``mkdir(parents=True,
     exist_ok=True)`` side effect: reading ``specmgr://config`` must never
     create a directory (the resource's own no-side-effects contract,
-    ACC-018). The duplication is deliberate, since this module must not
-    import ``fastembed`` (the ``similarity`` extra may not even be
+    ACC-018). The value read goes through the central env-var registry's
+    ``get_with_default`` accessor (feat-208 Phase 140), whose registered
+    default is this same ``<tempdir>/fastembed_cache`` expression -- so an
+    unset or set-but-empty ``FASTEMBED_CACHE_PATH`` falls back to the
+    default, exactly as the pre-migration ``os.environ.get(...) or
+    default`` did. The duplication is deliberate, since this module must
+    not import ``fastembed`` (the ``similarity`` extra may not even be
     installed); it is also the drift watchpoint -- a future ``fastembed``
     release that changes ``define_cache_dir``'s resolution logic would
     silently desync this helper, so keep the two in step on a
@@ -157,7 +166,7 @@ def _similarity_cache_dir() -> str:
         empty ``FASTEMBED_CACHE_PATH`` falls back to the default, so the
         result is always absolute); the directory is never created here.
     """
-    cache_dir = os.environ.get("FASTEMBED_CACHE_PATH") or str(Path(tempfile.gettempdir()) / "fastembed_cache")
+    cache_dir = _envregistry.get_with_default(FASTEMBED_CACHE_PATH_ENV_VAR)
     result = str(Path(cache_dir).resolve())
     return result
 

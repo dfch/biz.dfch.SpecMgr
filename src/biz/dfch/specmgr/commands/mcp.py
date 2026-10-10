@@ -47,6 +47,13 @@ Environment variables (all optional, CLI flags take precedence):
     Bind address for SSE/streamable-http mode (default ``localhost``).
 ``SPECMGR_MCP_PORT``
     TCP port for SSE/streamable-http mode (default ``8000``).
+
+The three defaults are sourced from the central env-var registry's
+records for these variables (registered below; feat-208 Phase 140) and
+evaluated to the same static import-time values as before the migration
+(``stdio``/``localhost``/``8000``); the ``envvar=`` wiring itself stays
+Typer's (Typer reads the variables from the environment at parse time,
+overriding the defaults).
 """
 
 import os
@@ -58,7 +65,8 @@ import typer
 from .. import _envregistry
 
 # ---------------------------------------------------------------------------
-# env-var registration (feat-208, Phase 110)
+# env-var registration (feat-208, Phase 110; the mcp() option defaults
+# sourced from the records, Phase 140)
 # ---------------------------------------------------------------------------
 # The three Typer MCP options' environment variables, registered at module
 # level so the central env-var registry is complete by the time any CLI
@@ -67,28 +75,49 @@ from .. import _envregistry
 # Design Notes "Registry placement"). The `envvar=` literals on the
 # `mcp()` options below stay the read sites Typer itself uses (they are the
 # feat-126 drift test's shape-4 anchor, so no name constant is introduced
-# here -- the registration uses the same literals), and Phase 140 will
-# source the options' Python-side `default=` values from these registry
-# records.
-_envregistry.register(
+# here -- the registration uses the same literals); the options'
+# Python-side `default=` values are sourced from these registry records
+# (feat-208 Phase 140) -- `register()` performs no environment read, so
+# the signature defaults are the same static import-time constants as the
+# pre-migration literals ("stdio"/"localhost"/8000).
+_mcp_transport_var = _envregistry.register(
     "SPECMGR_MCP_TRANSPORT",
     default="stdio",
     description="Transport mode for the MCP server.",
     owner="cli",
     choices=("stdio", "sse", "streamable-http"),
 )
-_envregistry.register(
+_mcp_host_var = _envregistry.register(
     "SPECMGR_MCP_HOST",
     default="localhost",
     description="Bind address, SSE/streamable-http mode only.",
     owner="cli",
 )
-_envregistry.register(
+_mcp_port_var = _envregistry.register(
     "SPECMGR_MCP_PORT",
     default="8000",
     description="TCP port, SSE/streamable-http mode only.",
     owner="cli",
     format="number",
+)
+
+# Type-narrowing asserts for static checkers only (feat-208 Phase 140,
+# conventions Rule 2, mirroring the base-dir modules' Phase 120
+# derived-constant asserts and `_envregistry.get_with_default`'s own
+# narrowing): each of the three register() calls above registered a
+# non-None literal default, so the record's `.default` is a str here and
+# the `mcp()` signature defaults below can read it.
+assert _mcp_transport_var.default is not None, (
+    "'SPECMGR_MCP_TRANSPORT' is registered with a non-None default in the register() call above; "
+    "the mcp() signature default cannot be None"
+)
+assert _mcp_host_var.default is not None, (
+    "'SPECMGR_MCP_HOST' is registered with a non-None default in the register() call above; "
+    "the mcp() signature default cannot be None"
+)
+assert _mcp_port_var.default is not None, (
+    "'SPECMGR_MCP_PORT' is registered with a non-None default in the register() call above; "
+    "the mcp() signature default cannot be None"
 )
 
 
@@ -120,7 +149,7 @@ def mcp(
             help="Transport mode: 'stdio', 'sse', or 'streamable-http'.",
             show_default=True,
         ),
-    ] = "stdio",
+    ] = _mcp_transport_var.default,
     host: Annotated[
         str,
         typer.Option(
@@ -130,7 +159,7 @@ def mcp(
             help="Bind address (SSE/streamable-http mode only).",
             show_default=True,
         ),
-    ] = "localhost",
+    ] = _mcp_host_var.default,
     port: Annotated[
         int,
         typer.Option(
@@ -140,7 +169,7 @@ def mcp(
             help="TCP port (SSE/streamable-http mode only).",
             show_default=True,
         ),
-    ] = 8000,
+    ] = int(_mcp_port_var.default),
 ) -> None:
     """Start the ``biz-dfch-specmgr`` MCP server."""
     try:
