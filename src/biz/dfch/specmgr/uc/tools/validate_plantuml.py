@@ -31,9 +31,54 @@ CLI reads the file and passes its text).
 
 from __future__ import annotations
 
+from ... import _envregistry
 from ...plantuml import chain
-from ...plantuml.chain import PlantumlValidationResult
+from ...plantuml.chain import ENV_VAR_BIN, ENV_VAR_JAR, ENV_VAR_URL, PlantumlValidationResult
 from ...server import mcp
+
+# The PlantUML validation-source trio, registered by this uc-domain
+# consumer (feat-208, Phase 110): the import-free ``plantuml/`` package
+# itself (ADR 7a626b12) cannot register them, so its uc-domain consumer
+# that imports ``plantuml.chain`` does -- the names come from
+# ``chain.py``'s own ``ENV_VAR_*`` constants (never a second hardcoded
+# copy), and the trio's read sites in ``plantuml/chain.py`` keep their
+# direct ``os.environ`` reads (the import-free carve-out; the registry is
+# the single source of truth for the documentation-tracking tests, not for
+# the reads). Presence-based, no defaults, no empty-fallback: the
+# first-set-wins selection semantics (rulebook §3.2) are unchanged.
+_envregistry.register(
+    ENV_VAR_JAR,
+    description=(
+        "Path to a plantuml.jar, one of exactly three PlantUML validation-source selectors (the first "
+        "one set, in JAR then BIN then URL order, is the only source used; no fall-through, no PATH "
+        "discovery, no public default; all three unset is the offline structure-only floor). Unset by "
+        "default. The selected source is reported by the plantuml section of the specmgr://config "
+        "resource."
+    ),
+    owner="plantuml/uc",
+)
+_envregistry.register(
+    ENV_VAR_BIN,
+    description=(
+        "Path to an executable speaking the PlantUML CLI contract, one of exactly three PlantUML "
+        "validation-source selectors (the first one set, in JAR then BIN then URL order, is the only "
+        "source used; no fall-through, no PATH discovery, no public default; all three unset is the "
+        "offline structure-only floor). Unset by default. The selected source is reported by the "
+        "plantuml section of the specmgr://config resource."
+    ),
+    owner="plantuml/uc",
+)
+_envregistry.register(
+    ENV_VAR_URL,
+    description=(
+        "PlantUML server base URL, one of exactly three PlantUML validation-source selectors (the "
+        "first one set, in JAR then BIN then URL order, is the only source used; no fall-through, no "
+        "PATH discovery, no public default; all three unset is the offline structure-only floor). "
+        "Diagram content is only sent to a PlantUML server if this variable is set. Unset by default. "
+        "The selected source is reported by the plantuml section of the specmgr://config resource."
+    ),
+    owner="plantuml/uc",
+)
 
 
 @mcp.tool(

@@ -37,10 +37,13 @@ No ADR file found matching the given id.
 
 Return the configured ADR base directory, without creating it.
 
-Reads :data:`ADR_DIR_ENV_VAR` from the environment, falling back to
-:data:`DEFAULT_ADR_DIR`. Read-only tools (``get_adr``, ``option_list``,
-...) use this so merely reading never has the side effect of creating
-the directory -- see :func:`ensure_adr_base_dir` for the write path.
+Reads :data:`ADR_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_ADR_DIR`) when the variable is unset or
+set-but-empty (feat-208, Phase 120). Read-only tools (``get_adr``,
+``option_list``, ...) use this so merely reading never has the side
+effect of creating the directory -- see :func:`ensure_adr_base_dir`
+for the write path.
 
 
 ### `ensure_adr_base_dir() -> 'Path'`

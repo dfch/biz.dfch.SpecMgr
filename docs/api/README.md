@@ -8,6 +8,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 
 - [`biz.dfch.specmgr`](biz.dfch.specmgr.md) — The main library init file.
 - [`biz.dfch.specmgr.__main__`](biz.dfch.specmgr.__main__.md) — Entry point for ``python -m biz.dfch.specmgr``.
+- [`biz.dfch.specmgr._envregistry`](biz.dfch.specmgr._envregistry.md) — Central, stdlib-only environment-variable registry (feat-208).
 - [`biz.dfch.specmgr._paths`](biz.dfch.specmgr._paths.md) — Private, dependency-free repo-root-relative path constants.
 - [`biz.dfch.specmgr.adr`](biz.dfch.specmgr.adr.md) — The Architecture Decision Record (ADR) domain package.
 - [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
