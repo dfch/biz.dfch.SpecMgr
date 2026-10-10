@@ -133,7 +133,18 @@ class TestEnvVarRecord(unittest.TestCase):
 
 
 class TestRegister(_IsolatedRegistry):
-    """``register``: storage, idempotency, and conflict detection."""
+    """``register``: storage, idempotency, and conflict detection.
+
+    The tests here assert the registry's *full* contents, so the registry
+    is cleared after the parent's snapshot: Phase 110's real import-time
+    registrations are present in the process (the owning modules import
+    during collection in the same pytest process), and
+    ``_IsolatedRegistry``'s ``tearDown`` restores them.
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        _envregistry._REGISTRY.clear()
 
     def test_stores_and_returns_the_record(self):
         expected = EnvVar(
@@ -340,7 +351,17 @@ class TestGetWithDefault(_IsolatedRegistry):
 
 
 class TestAllVars(_IsolatedRegistry):
-    """``all_vars``: full registry snapshot in registration order."""
+    """``all_vars``: full registry snapshot in registration order.
+
+    The tests here assert the registry's *full* contents, so the registry
+    is cleared after the parent's snapshot (Phase 110's real import-time
+    registrations are present in the process; ``_IsolatedRegistry``'s
+    ``tearDown`` restores them).
+    """
+
+    def setUp(self) -> None:
+        super().setUp()
+        _envregistry._REGISTRY.clear()
 
     def test_returns_every_record_in_registration_order(self):
         first = register(_NAME_PRESENCE, description="Presence gate.", owner="general")

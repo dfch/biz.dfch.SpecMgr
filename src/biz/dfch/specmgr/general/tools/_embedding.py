@@ -106,6 +106,7 @@ import threading
 from collections.abc import Iterable, Sequence
 from typing import Any, Protocol
 
+from ... import _envregistry
 from ...general.models import REASON_BACKEND_UNAVAILABLE, REASON_DISABLED, SimilarityUnavailableResult
 
 __all__ = [
@@ -135,6 +136,21 @@ Vector = Sequence[float]
 #: convention in ``general.resources.config``: ``specmgr://config`` reports
 #: env vars by presence, never value).
 SIMILARITY_DISABLED_ENV_VAR = "SPECMGR_SIMILARITY_DISABLED"
+
+# The registry record for :data:`SIMILARITY_DISABLED_ENV_VAR` (feat-208,
+# Phase 110): presence-based (no default -- a set-but-empty value still
+# disables the feature, ``os.environ.get(name) is not None``).
+_envregistry.register(
+    SIMILARITY_DISABLED_ENV_VAR,
+    description=(
+        "Presence-based opt-out for the semantic-similarity search feature (the find_related and "
+        "find_similar_text tools): set to any value to disable the feature, so that every call "
+        "returns a structured unavailable result and the embedding model is never loaded, and to "
+        "skip the similarity phase of the unified server-startup warmup thread. Unset by default. "
+        "Its resolved state is reported by the similarity section of the specmgr://config resource."
+    ),
+    owner="general",
+)
 
 #: The default backend's model name, fixed for v1 (ADR 750842b2, Backend
 #: sub-decision: configurability is deferred -- a quality upgrade means a

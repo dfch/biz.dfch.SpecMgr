@@ -55,6 +55,42 @@ from typing import Annotated
 
 import typer
 
+from .. import _envregistry
+
+# ---------------------------------------------------------------------------
+# env-var registration (feat-208, Phase 110)
+# ---------------------------------------------------------------------------
+# The three Typer MCP options' environment variables, registered at module
+# level so the central env-var registry is complete by the time any CLI
+# entry point runs (REQ-001, ACC-001). The registry import is safe at
+# module level in a `[cli]`-only install (the registry is stdlib-only;
+# Design Notes "Registry placement"). The `envvar=` literals on the
+# `mcp()` options below stay the read sites Typer itself uses (they are the
+# feat-126 drift test's shape-4 anchor, so no name constant is introduced
+# here -- the registration uses the same literals), and Phase 140 will
+# source the options' Python-side `default=` values from these registry
+# records.
+_envregistry.register(
+    "SPECMGR_MCP_TRANSPORT",
+    default="stdio",
+    description="Transport mode for the MCP server.",
+    owner="cli",
+    choices=("stdio", "sse", "streamable-http"),
+)
+_envregistry.register(
+    "SPECMGR_MCP_HOST",
+    default="localhost",
+    description="Bind address, SSE/streamable-http mode only.",
+    owner="cli",
+)
+_envregistry.register(
+    "SPECMGR_MCP_PORT",
+    default="8000",
+    description="TCP port, SSE/streamable-http mode only.",
+    owner="cli",
+    format="number",
+)
+
 
 def _warn_on_public_binding(host: str) -> None:
     """Warn when binding to all interfaces outside a container."""

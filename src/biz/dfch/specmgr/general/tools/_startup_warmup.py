@@ -58,6 +58,7 @@ from __future__ import annotations
 import os
 import threading
 
+from ... import _envregistry
 from ...feat.tools._warmup import warmup_feat_caches
 from ._embedding import SIMILARITY_DISABLED_ENV_VAR
 from ._similarity_search import warmup_similarity_cache
@@ -69,6 +70,21 @@ __all__ = ["FEAT_WARMUP_DISABLED_ENV_VAR", "start_startup_warmup"]
 #: (mirrors ``SPECMGR_SIMILARITY_DISABLED``). Absent (the default): both
 #: ``feat`` phases run.
 FEAT_WARMUP_DISABLED_ENV_VAR = "SPECMGR_FEAT_WARMUP_DISABLED"
+
+# The registry record for :data:`FEAT_WARMUP_DISABLED_ENV_VAR` (feat-208,
+# Phase 110): presence-based (no default -- a set-but-empty value still
+# gates the phases, ``os.environ.get(name) is not None``).
+_envregistry.register(
+    FEAT_WARMUP_DISABLED_ENV_VAR,
+    description=(
+        "Presence-based opt-out for the feat domain's two background cache-warming phases (frontmatter "
+        "and full-parse) of the unified server-startup warmup thread: set to any value to skip both "
+        "phases; when set together with SPECMGR_SIMILARITY_DISABLED, no warmup thread is started at "
+        "all. Unset by default. Its resolved state is reported by the feat_warmup_disabled field of "
+        "the specmgr://config resource."
+    ),
+    owner="general",
+)
 
 #: The unified warmup thread's own name (diagnostics: shows up as its own
 #: thread in ``threading.enumerate()``/profilers; a daemon, so it dies with

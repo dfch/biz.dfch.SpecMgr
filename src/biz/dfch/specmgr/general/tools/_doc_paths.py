@@ -127,6 +127,8 @@ from typing import TypeVar
 import yaml
 from pydantic import ValidationError
 
+from ... import _envregistry
+
 __all__ = [
     "DEFAULT_DOCS_ROOT",
     "DOCS_DIR_ENV_VAR",
@@ -142,8 +144,35 @@ __all__ = [
 #: Environment variable that overrides the shared documents root directory.
 DOCS_DIR_ENV_VAR = "SPECMGR_DOCS_DIR"
 
-#: Default documents root directory, relative to the current working directory.
-DEFAULT_DOCS_ROOT = Path("docs")
+#: The registry record for :data:`DOCS_DIR_ENV_VAR` (feat-208, Phase 110):
+#: the central env-var registry is the single authority for the variable's
+#: default and for its set-but-empty-falls-back-to-default read semantics
+#: (:func:`_docs_root` resolves ``Path(value) if value else
+#: DEFAULT_DOCS_ROOT`` -- an empty value falls back to the default).
+_docs_dir_var = _envregistry.register(
+    DOCS_DIR_ENV_VAR,
+    default="docs",
+    description=(
+        "Shared base directory root for the document-type domains that do not have their own dedicated "
+        "directory environment variable (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs). Each "
+        "domain's own subdirectory is appended automatically, e.g. docs/req."
+    ),
+    owner="general",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
+
+#: Default documents root directory, relative to the current working
+#: directory (derived from the registry record above -- the registry is the
+#: single authority for the default; feat-208, Phase 110). The assert
+#: narrows the type for static checkers only (the record was registered
+#: with the non-None default literally above -- a program invariant,
+#: conventions Rule 2, mirroring ``_envregistry.get_with_default``'s own
+#: narrowing).
+assert _docs_dir_var.default is not None, (
+    f"{DOCS_DIR_ENV_VAR!r} is registered with a non-None default above; the derived constant cannot be None"
+)
+DEFAULT_DOCS_ROOT = Path(_docs_dir_var.default)
 
 #: Anything that isn't a lowercase ASCII letter or digit, run-collapsed.
 _NON_ALNUM_RUN_PATTERN = re.compile(r"[^a-z0-9]+")

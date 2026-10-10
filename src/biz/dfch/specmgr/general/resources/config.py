@@ -81,6 +81,7 @@ import tempfile
 from importlib.util import find_spec
 from pathlib import Path
 
+from ... import _envregistry
 from ...adr.tools._paths import ADR_DIR_ENV_VAR, adr_base_dir
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
@@ -101,6 +102,33 @@ from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._paths import tsk_base_dir
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._paths import vcr_base_dir
+
+
+#: The third-party environment variable that overrides the similarity
+#: feature's model cache directory (``fastembed``'s own
+#: ``FASTEMBED_CACHE_PATH``), read by :func:`_similarity_cache_dir` below.
+FASTEMBED_CACHE_PATH_ENV_VAR = "FASTEMBED_CACHE_PATH"
+
+# The registry record for :data:`FASTEMBED_CACHE_PATH_ENV_VAR` (feat-208,
+# Phase 110), registered at its read site: the default is the code's own
+# fallback expression, evaluated at registration -- an unset or empty
+# value falls back to ``<tempdir>/fastembed_cache`` (the
+# ``empty_falls_back_to_default`` flag; one of the four empty-fallback
+# variables, the user-approved Option A decision recorded in the feature
+# plan's 2026-10-10 update entry).
+_envregistry.register(
+    FASTEMBED_CACHE_PATH_ENV_VAR,
+    default=str(Path(tempfile.gettempdir()) / "fastembed_cache"),
+    description=(
+        "Cache directory for the semantic-similarity feature's embedding model (the fastembed "
+        "BAAI/bge-small-en-v1.5): set to a directory to cache the model there; an unset or empty "
+        "value falls back to the default <tempdir>/fastembed_cache. Unset by default. The resolved "
+        "directory is reported by the similarity section of the specmgr://config resource."
+    ),
+    owner="general/similarity",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
 
 
 def _similarity_cache_dir() -> str:

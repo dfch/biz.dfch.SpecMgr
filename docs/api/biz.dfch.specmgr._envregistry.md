@@ -27,9 +27,11 @@ AST walk (mirroring ``plantuml/``'s import-free pin in
 ``tests/plantuml/test_structure.py``).
 
 Registration happens at import time of each owning module (feat-208
-Phase 110+); until then the registry starts empty and nothing in
-``src/`` calls it. The environment is always read at call time
-(``get``/``get_with_default``), never at registration time.
+Phase 110), so the registry is complete by the time any server/CLI
+entry point runs; the read sites migrate onto ``get``/
+``get_with_default`` in Phase 120-140. The environment is always read
+at call time (``get``/``get_with_default``), never at registration
+time.
 
 ## Classes
 
@@ -49,8 +51,16 @@ Attributes:
     choices: The ``server.json`` manifest ``choices`` for the variable
         (empty when the manifest carries none).
     empty_falls_back_to_default: Whether a set-but-empty value falls
-        back to ``default`` -- the documented ``FASTEMBED_CACHE_PATH``
-        micro-deviation; ``False`` for every other variable.
+        back to ``default`` -- ``True`` for the four empty-or-unset-to-
+        default read sites (``SPECMGR_ADR_DIR``, ``SPECMGR_DOCS_DIR``,
+        ``SPECMGR_FEAT_DIR`` -- whose read code is
+        ``Path(value) if value else DEFAULT`` -- and
+        ``FASTEMBED_CACHE_PATH``, whose read code is
+        ``value or default``); ``False`` for every other variable
+        (set-but-empty stays set there). The four-variable set is the
+        user-approved Option A decision recorded in the feat-208 plan
+        (2026-10-10 update entry), which supersedes the plan's original
+        single-variable wording.
 
 
 ## Functions
@@ -98,9 +108,11 @@ Read one registered variable with its default inserted (feat-208, Phase 100).
 The environment is read at call time: a set value (including a
 set-but-empty one) is returned as-is, except that a set-but-empty
 value falls back to the registered default when the entry's
-``empty_falls_back_to_default`` flag is set (the documented
-``FASTEMBED_CACHE_PATH`` micro-deviation). An unset variable yields
-the registered default.
+``empty_falls_back_to_default`` flag is set -- the four empty-fallback
+variables (``SPECMGR_ADR_DIR``, ``SPECMGR_DOCS_DIR``,
+``SPECMGR_FEAT_DIR``, ``FASTEMBED_CACHE_PATH``; the user-approved
+Option A decision, feat-208 Phase 110). An unset variable yields the
+registered default.
 
 Args:
     name: A registered environment variable name carrying a default.

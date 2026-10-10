@@ -35,6 +35,7 @@ import os
 import typer
 from dotenv import find_dotenv, load_dotenv
 
+from . import _envregistry
 from .commands import (
     adr_toc,
     coverage_badge,
@@ -65,6 +66,24 @@ from .commands import (
 #: ``.env``-loading code path in the test process can select a PlantUML
 #: source (feat-185-uc-diagrams Phase 145, amendment C).
 NO_DOTENV_SENTINEL = "SPECMGR_TESTS_NO_DOTENV"
+
+# The registry record for :data:`NO_DOTENV_SENTINEL` (feat-208, Phase
+# 110): presence-based (no default). The constant stays the name
+# authority -- the registration sources its name from it, and the
+# :func:`_load_default_dotenv` check below is a truthiness test
+# (``if os.environ.get(NO_DOTENV_SENTINEL):``), so a set-but-empty value
+# behaves as absent there.
+_envregistry.register(
+    NO_DOTENV_SENTINEL,
+    description=(
+        "Presence-based test/CI sentinel: set to any value to skip the CLI's module-level default "
+        ".env load entirely, so the process runs under the CI (source-less) condition whatever the "
+        "local (gitignored) .env configures; this is what keeps the specmgr coverage-badge "
+        "pre-commit hook's source-less re-run source-less end-to-end. Unset by default, never set "
+        "outside test runs."
+    ),
+    owner="cli",
+)
 
 
 def _load_default_dotenv() -> None:
