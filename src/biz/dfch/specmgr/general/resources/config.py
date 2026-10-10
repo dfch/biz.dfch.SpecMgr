@@ -27,13 +27,16 @@ explicitly set -- without requiring shell access to the server's host
 (REQ-001/ACC-001).
 
 **Never discloses arbitrary environment variables (REQ-002/ACC-002).** Only
-the known ``SPECMGR_*_DIR`` env var *names* are read here, and only
-their *presence* (the three base-dir vars via the central env-var
-registry's raw accessor -- ``_envregistry.get(name) is not None``,
-feat-208 Phase 120; every other var via
-``os.environ.get(name) is not None``), never their value and never any
-other environment variable -- this module never iterates over or dumps
-``os.environ`` wholesale. Two deliberate, user-requested additions
+the known env var *names* are read here, and the presence flags report
+only their *presence* -- every one of them through the central env-var
+registry's raw accessor ``_envregistry.get(name) is not None`` (the three
+base-dir vars since feat-208 Phase 120; ``SPECMGR_SIMILARITY_DISABLED``,
+``SPECMGR_FEAT_WARMUP_DISABLED``, and the three PlantUML source vars since
+Phase 130) -- never their value and never any other environment variable.
+The one remaining direct ``os.environ`` read is the *value* read of
+``FASTEMBED_CACHE_PATH`` (routed through the registry in Phase 140), and
+this module never iterates over or dumps ``os.environ`` wholesale. Two
+deliberate, user-requested additions
 for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 ``SPECMGR_SIMILARITY_DISABLED`` is likewise reported (flag only, never its
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
@@ -210,8 +213,9 @@ def config_info() -> ConfigInfo:
 
     The ``plantuml`` section (feat-185-uc-diagrams Phase 120) is static
     configuration only: the **presence** of each of the exactly-three
-    validation-source env vars (``os.environ.get(var) is not None`` --
-    never a value), plus ``selected``, derived from
+    validation-source env vars (the registry's raw accessor
+    ``_envregistry.get(var) is not None`` -- never a value; feat-208
+    Phase 130), plus ``selected``, derived from
     ``plantuml.chain.select_source`` (the rulebook §3.2 first-set-wins
     order JAR → BIN → URL; ``"none"`` when all three are unset). The
     ``validate_plantuml`` tool's own dynamic availability (whether the
@@ -308,7 +312,7 @@ def config_info() -> ConfigInfo:
 
     similarity = SimilarityConfig(
         extra_installed=find_spec("fastembed") is not None,
-        disabled=os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None,
+        disabled=_envregistry.get(SIMILARITY_DISABLED_ENV_VAR) is not None,
         model_name=SIMILARITY_MODEL_NAME,
         cache_dir=_similarity_cache_dir(),
     )
@@ -319,9 +323,9 @@ def config_info() -> ConfigInfo:
     # is reported -- the value would be a disclosure violation, REQ-002).
     selected = select_source()
     plantuml = PlantumlConfig(
-        jar=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_JAR) is not None),
-        bin=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_BIN) is not None),
-        url=PlantumlSourceConfig(set=os.environ.get(ENV_VAR_URL) is not None),
+        jar=PlantumlSourceConfig(set=_envregistry.get(ENV_VAR_JAR) is not None),
+        bin=PlantumlSourceConfig(set=_envregistry.get(ENV_VAR_BIN) is not None),
+        url=PlantumlSourceConfig(set=_envregistry.get(ENV_VAR_URL) is not None),
         selected=selected[0] if selected is not None else "none",
     )
 
@@ -329,6 +333,6 @@ def config_info() -> ConfigInfo:
         domains=domains,
         similarity=similarity,
         plantuml=plantuml,
-        feat_warmup_disabled=os.environ.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None,
+        feat_warmup_disabled=_envregistry.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None,
     )
     return result

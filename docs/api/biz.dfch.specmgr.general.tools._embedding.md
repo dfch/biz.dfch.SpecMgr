@@ -57,8 +57,9 @@ SimilarityUnavailableResult` (mirroring the ``set_status``
 ``InvalidStatusResult`` precedent, ADR b399f1ce) when either (a) the
 embedding backend fails to import or to load -- including a first-use
 model-download failure -- or (b) ``SPECMGR_SIMILARITY_DISABLED`` is present
-(presence-based, any value, ``os.environ.get(name) is not None`` -- the
-repo's own env-flag convention, ``general.resources.config``). One code
+(presence-based, any value -- read through the central env-var registry's
+raw accessor, ``_envregistry.get(name) is not None``, feat-208 Phase 130;
+the repo's own env-flag convention, ``general.resources.config``). One code
 path, two triggers. ``None`` means "available -- proceed with the real
 ranking logic".
 
@@ -300,10 +301,11 @@ SimilarityUnavailableResult`, mirroring the ``set_status``
 ``InvalidStatusResult`` precedent):
 
 - :data:`REASON_DISABLED` -- ``SPECMGR_SIMILARITY_DISABLED`` is present
-  in the environment (any value; presence-based,
-  ``os.environ.get(name) is not None`` -- the repo's own env-flag
-  convention, ``general.resources.config``). Checked first, before any
-  backend import or model load is even attempted.
+  in the environment (any value; presence-based -- read through the
+  central env-var registry's raw accessor, ``_envregistry.get(name) is
+  not None``, feat-208 Phase 130; the repo's own env-flag convention,
+  ``general.resources.config``). Checked first, before any backend
+  import or model load is even attempted.
 - :data:`REASON_BACKEND_UNAVAILABLE` -- the backend failed to import
   (the ``similarity`` extra is not installed) or the model failed to
   load (including a first-use download failure, e.g. no network).

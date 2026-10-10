@@ -36,6 +36,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DEFAULT_DOCS_ROOT, DOCS_DI
 #: single SPECMGR_DOCS_DIR root env var.
 from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, WHOLE_BODY_NO_FEAT_DOMAINS
 from biz.dfch.specmgr.general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
+from biz.dfch.specmgr.general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR
 from biz.dfch.specmgr.models import ConfigInfo, SimilarityConfig
 
 #: The env vars this resource is allowed to read/report on at all.
@@ -252,6 +253,35 @@ class TestConfigResourceSimilarity(unittest.TestCase):
 
         self.assertEqual(after, before, "config_info() must not import any module (side-effect-free)")
         self.assertNotIn("fastembed", sys.modules)
+
+
+class TestConfigResourceFeatWarmup(unittest.TestCase):
+    """The top-level ``feat_warmup_disabled`` flag (feat-187-list-feat-timeout, Task 110.120).
+
+    The presence-based ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag is
+    reported the same way as ``SimilarityConfig.disabled``: presence only,
+    never the value. The read goes through the central env-var registry's
+    raw accessor (feat-208 Phase 130), so a set-but-empty value still
+    reports ``True`` (the ``None``-vs-``""`` distinction preserved).
+    """
+
+    def test_feat_warmup_disabled_flag_unset_reports_false(self):
+        """ACC matrix: ``SPECMGR_FEAT_WARMUP_DISABLED`` absent -> ``feat_warmup_disabled`` is False."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(FEAT_WARMUP_DISABLED_ENV_VAR, None)
+            self.assertFalse(config_info().feat_warmup_disabled)
+
+    def test_feat_warmup_disabled_flag_set_reports_true(self):
+        """ACC matrix: ``SPECMGR_FEAT_WARMUP_DISABLED`` present (any value) -> ``feat_warmup_disabled`` is True."""
+        with mock.patch.dict(os.environ, {FEAT_WARMUP_DISABLED_ENV_VAR: "1"}, clear=False):
+            self.assertTrue(config_info().feat_warmup_disabled)
+
+    def test_feat_warmup_disabled_set_but_empty_reports_true(self):
+        """feat-208 Phase 130: the presence check reads the registry's raw ``get`` accessor, so a
+        set-but-empty ``SPECMGR_FEAT_WARMUP_DISABLED`` still counts as set (``""`` is reported
+        ``True``, exactly as the pre-migration ``os.environ.get(name) is not None`` did)."""
+        with mock.patch.dict(os.environ, {FEAT_WARMUP_DISABLED_ENV_VAR: ""}, clear=False):
+            self.assertTrue(config_info().feat_warmup_disabled)
 
 
 class TestConfigResourcePlantuml(unittest.TestCase):

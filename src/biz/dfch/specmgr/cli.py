@@ -30,8 +30,6 @@ additionally requires the ``mcp`` extra
 (``pip install biz-dfch-specmgr[mcp]``).
 """
 
-import os
-
 import typer
 from dotenv import find_dotenv, load_dotenv
 
@@ -68,11 +66,12 @@ from .commands import (
 NO_DOTENV_SENTINEL = "SPECMGR_TESTS_NO_DOTENV"
 
 # The registry record for :data:`NO_DOTENV_SENTINEL` (feat-208, Phase
-# 110): presence-based (no default). The constant stays the name
-# authority -- the registration sources its name from it, and the
+# 110; the read site migrated to the registry accessor in Phase 130):
+# presence-based (no default). The constant stays the name authority
+# -- the registration sources its name from it, and the
 # :func:`_load_default_dotenv` check below is a truthiness test
-# (``if os.environ.get(NO_DOTENV_SENTINEL):``), so a set-but-empty value
-# behaves as absent there.
+# (``if _envregistry.get(NO_DOTENV_SENTINEL):``), so a set-but-empty
+# value behaves as absent there.
 _envregistry.register(
     NO_DOTENV_SENTINEL,
     description=(
@@ -92,7 +91,7 @@ def _load_default_dotenv() -> None:
     Skipped entirely when the :data:`NO_DOTENV_SENTINEL` env var is set (see
     its docstring).
     """
-    if os.environ.get(NO_DOTENV_SENTINEL):
+    if _envregistry.get(NO_DOTENV_SENTINEL):
         return
     dotenv_path = find_dotenv(usecwd=False) or find_dotenv(usecwd=True)
     if dotenv_path:

@@ -72,8 +72,9 @@ SimilarityUnavailableResult` (mirroring the ``set_status``
 ``InvalidStatusResult`` precedent, ADR b399f1ce) when either (a) the
 embedding backend fails to import or to load -- including a first-use
 model-download failure -- or (b) ``SPECMGR_SIMILARITY_DISABLED`` is present
-(presence-based, any value, ``os.environ.get(name) is not None`` -- the
-repo's own env-flag convention, ``general.resources.config``). One code
+(presence-based, any value -- read through the central env-var registry's
+raw accessor, ``_envregistry.get(name) is not None``, feat-208 Phase 130;
+the repo's own env-flag convention, ``general.resources.config``). One code
 path, two triggers. ``None`` means "available -- proceed with the real
 ranking logic".
 
@@ -101,7 +102,6 @@ ranking (``general/tools/_similarity_ranking.py``, Task 2.4).
 from __future__ import annotations
 
 import math
-import os
 import threading
 from collections.abc import Iterable, Sequence
 from typing import Any, Protocol
@@ -138,8 +138,10 @@ Vector = Sequence[float]
 SIMILARITY_DISABLED_ENV_VAR = "SPECMGR_SIMILARITY_DISABLED"
 
 # The registry record for :data:`SIMILARITY_DISABLED_ENV_VAR` (feat-208,
-# Phase 110): presence-based (no default -- a set-but-empty value still
-# disables the feature, ``os.environ.get(name) is not None``).
+# Phase 110; the read site migrated to the registry accessor in Phase
+# 130): presence-based (no default -- a set-but-empty value still disables
+# the feature: the gate reads the raw ``_envregistry.get(name) is not
+# None``, never ``get_with_default``).
 _envregistry.register(
     SIMILARITY_DISABLED_ENV_VAR,
     description=(
@@ -608,10 +610,11 @@ def _similarity_availability() -> SimilarityUnavailableResult | None:
     ``InvalidStatusResult`` precedent):
 
     - :data:`REASON_DISABLED` -- ``SPECMGR_SIMILARITY_DISABLED`` is present
-      in the environment (any value; presence-based,
-      ``os.environ.get(name) is not None`` -- the repo's own env-flag
-      convention, ``general.resources.config``). Checked first, before any
-      backend import or model load is even attempted.
+      in the environment (any value; presence-based -- read through the
+      central env-var registry's raw accessor, ``_envregistry.get(name) is
+      not None``, feat-208 Phase 130; the repo's own env-flag convention,
+      ``general.resources.config``). Checked first, before any backend
+      import or model load is even attempted.
     - :data:`REASON_BACKEND_UNAVAILABLE` -- the backend failed to import
       (the ``similarity`` extra is not installed) or the model failed to
       load (including a first-use download failure, e.g. no network).
@@ -623,7 +626,7 @@ def _similarity_availability() -> SimilarityUnavailableResult | None:
         ``None`` when the feature is available and the caller should
         proceed with the real ranking logic.
     """
-    if os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None:
+    if _envregistry.get(SIMILARITY_DISABLED_ENV_VAR) is not None:
         result = SimilarityUnavailableResult(
             available=False,
             reason=REASON_DISABLED,

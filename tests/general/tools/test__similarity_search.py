@@ -296,6 +296,65 @@ class TestAcc009ExhaustiveFlagGating(_FeatCacheResetSimilarityTestCase):
         self.assertEqual(fake.embed_calls, 0)
 
 
+class TestSetButEmptyFlagGating(_FeatCacheResetSimilarityTestCase):
+    """feat-208 Phase 130: the migrated presence gates keep their exact set-but-empty semantics.
+
+    The four ``os.environ.get`` read sites in ``general.tools._startup_warmup``
+    (the two ``is None`` phase checks in ``_run_all_phases`` and the two
+    ``is not None`` early-return assignments in ``start_startup_warmup``) now
+    read through the registry's raw ``get`` accessor, which preserves the
+    ``None``-vs-``""`` distinction: a set-but-empty flag still gates exactly
+    as a set, non-empty one does -- never as absent.
+    """
+
+    def test_feat_warmup_disabled_set_but_empty_skips_feat_phases(self) -> None:
+        os.environ[FEAT_WARMUP_DISABLED_ENV_VAR] = ""
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+
+        thread = start_startup_warmup()
+
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(
+            self._feat_is_warm(path),
+            "feat phases must be skipped when SPECMGR_FEAT_WARMUP_DISABLED is set-but-empty",
+        )
+        self.assertGreater(fake.embed_calls, 0, "phase 3 must still run with only the (set-but-empty) feat flag set")
+
+    def test_similarity_disabled_set_but_empty_skips_the_similarity_phase(self) -> None:
+        self.set_disabled("")
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+
+        thread = start_startup_warmup()
+
+        self.assertIsInstance(thread, threading.Thread)
+        thread.join(timeout=15)
+        self.assertFalse(thread.is_alive())
+        self.assertTrue(
+            self._feat_is_warm(path),
+            "feat phases must still run with only the (set-but-empty) similarity flag set",
+        )
+        self.assertEqual(
+            fake.embed_calls, 0, "phase 3 must be skipped when SPECMGR_SIMILARITY_DISABLED is set-but-empty"
+        )
+
+    def test_both_flags_set_but_empty_no_thread_started_at_all(self) -> None:
+        self.set_disabled("")
+        os.environ[FEAT_WARMUP_DISABLED_ENV_VAR] = ""
+        path = self._seed_cold_feat_doc()
+        fake = self.install_fake()
+
+        thread = start_startup_warmup()
+
+        self.assertIsNone(thread, "both flags set-but-empty must be a true no-op -- no thread started at all")
+        self.assertFalse(any(t.name == _WARMUP_THREAD_NAME for t in threading.enumerate()))
+        self.assertFalse(self._feat_is_warm(path))
+        self.assertEqual(fake.embed_calls, 0)
+
+
 class TestCollectCandidates(SimilarityTestCase):
     """The shared per-candidate loop: row metadata + cached vector; a vanished file is skipped, not raised."""
 
