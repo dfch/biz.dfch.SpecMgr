@@ -4,7 +4,7 @@ created: '2026-10-02T11:28:09.942+02:00'
 id: feat-177-list-ref-feat
 status: done
 type: feat
-updated: '2026-10-07T06:21:40.912Z'
+updated: '2026-10-10T09:51:46.495+02:00'
 version: 1.0.0
 ---
 
@@ -28,7 +28,7 @@ version: 1.0.0
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: the issue #177 repro as a test fixture -- a QA document whose body mentions `FEAT feat-1-frontend-technology-decision` (the feature folder seeded in a temp `SPECMGR_FEAT_DIR` -- the issue's original repro folder lives in the demo repo, not this one) -- returns that reference as a resolved row (title, path) from `list_references` instead of `total: 0`.
+- [ ] ACC-001: the issue #177 repro as a test fixture -- a QA document whose body carries a `FEAT`-tagged reference to the fixture feature `feat-1-frontend-technology-decision` (the feature folder seeded in a temp `SPECMGR_FEAT_DIR` -- the issue's original repro folder lives in the demo repo, not this one) -- returns that reference as a resolved row (title, path) from `list_references` instead of `total: 0`.
 - [ ] ACC-002: a bare-number mention (`FEAT feat-177`) resolves to the matching `feat-177-*` feature as a resolved row (title, path) whose `id` stays the bare `feat-177` as it appeared in the source body.
 - [ ] ACC-003: all references of the existing 10 UUID tags extract and resolve exactly as before, and `FEAT <uuid>`-shaped text still matches nothing; the existing test suite passes with exactly one pinned exception -- the vocabulary-loop test in `test__references.py` special-cases `feat` (its UUID form is not a feat reference), with a separate FEAT-form loop added.
 - [ ] ACC-004: a FEAT reference (full or bare) pointing at an absent feature yields a row with null title/path and a not-found error -- no exception.
