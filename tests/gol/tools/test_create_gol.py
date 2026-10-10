@@ -25,9 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.gol.models.v1 import GolDocument, GolFrontmatter, parse_gol
 from biz.dfch.specmgr.gol.tools._paths import gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
@@ -119,18 +119,32 @@ class TestCreateGol(TempGolDirTestCase):
 
         self.assertTrue(gol_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_gol(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_gol(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("gol create_gol (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(gol_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A field-level validation failure (bad `## Priority` value) must raise, writing nothing."""
-        with self.assertRaises(ValidationError):
-            create_gol(_BAD_PRIORITY_BODY)
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A field-level validation failure (bad `## Priority` value) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_gol(_BAD_PRIORITY_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("gol create_gol (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(gol_base_dir().exists())
 
 

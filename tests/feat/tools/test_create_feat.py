@@ -26,12 +26,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter, parse_feat
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
+from biz.dfch.specmgr.general.models import ValidateResult
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 
 _MINIMAL_BODY = textwrap.dedent(
@@ -198,31 +198,60 @@ class TestCreateFeat(TempFeatDirTestCase):
 
         self.assertTrue(feat_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_feat(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_feat(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("feat create_feat (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(feat_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A field-level validation failure (malformed ACC item) must raise, writing nothing."""
-        with self.assertRaises(ValidationError):
-            create_feat(_BAD_ACC_BODY)
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A field-level validation failure (malformed ACC item) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110).
 
+        This fixture's message exceeds the 300-char cap, so it also pins
+        feat-110's truncation contract (issue #110): capped at
+        `_MAX_VALIDATE_ERROR_CHARS` via `snippet` plus the `"... (truncated)"`
+        suffix.
+        """
+        result = create_feat(_BAD_ACC_BODY)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
         self.assertFalse(feat_base_dir().exists())
 
-    def test_soft_wrapped_requirement_item_raises_actionable_error_and_writes_nothing(self) -> None:
-        """feat-99-list-item: a soft-wrapped `REQ-NNN:` bullet must raise with the shared
-        `MarkdownListItem.single_line_text` guard's actionable message end-to-end through the
-        real write path, and must write nothing -- not a generic "Error executing tool" string
-        or an opaque, unrelated regex-mismatch failure."""
-        with self.assertRaises(ValidationError) as ctx:
-            create_feat(_SOFT_WRAPPED_REQUIREMENT_BODY)
+    def test_soft_wrapped_requirement_item_returns_actionable_validate_result_and_writes_nothing(self) -> None:
+        """feat-99-list-item: a soft-wrapped `REQ-NNN:` bullet must return
+        ``ValidateResult(valid=False, ...)`` carrying the shared
+        `MarkdownListItem.single_line_text` guard's actionable message end-to-end
+        through the real write path, and must write nothing -- not a generic
+        "Error executing tool" string or an opaque, unrelated regex-mismatch
+        failure (feat-204-create-error, Phase 110).
 
-        message = str(ctx.exception)
+        The message is capped at `_MAX_VALIDATE_ERROR_CHARS` (issue #110) with
+        the `"... (truncated)"` suffix -- the actionable guard phrase survives
+        truncation, which is the point of the non-raising channel.
+        """
+        result = create_feat(_SOFT_WRAPPED_REQUIREMENT_BODY)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
         self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
-        self.assertIn("join the text onto one physical line", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
         self.assertFalse(feat_base_dir().exists())
 
 
@@ -280,6 +309,44 @@ class TestCreateFeatWithExplicitId(TempFeatDirTestCase):
 
         # Nothing beyond the pre-seeded folder itself must have been written.
         self.assertFalse((colliding_folder / README_FILENAME).exists())
+
+    def test_invalid_content_with_existing_id_returns_validate_result_not_file_exists_error(self) -> None:
+        """Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR f14f125e's item 3):
+        invalid content plus an already-existing id returns ``ValidateResult(valid=False, ...)`` --
+        NOT ``FileExistsError``: content validation runs before the existence check in the existing
+        execution order (not re-ordered), so "first-in-execution-order wins" and the guard never
+        runs in that call. The pre-existing document stays byte-identical (nothing written)."""
+        first = create_feat(_body_with_title("First Title"), id="feat-28-get-update")
+        expected_path = feat_base_dir() / "feat-28-get-update" / README_FILENAME
+        before = expected_path.read_bytes()
+
+        result = create_feat(_MALFORMED_BODY, id="feat-28-get-update")
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertTrue(result.errors[0].message)
+        self.assertIn("feat create_feat (body): ", result.errors[0].message)
+        self.assertEqual(expected_path.read_bytes(), before)
+        self.assertEqual(first.id, parse_feat(before.decode("utf-8")).frontmatter.id)
+
+    def test_invalid_content_with_malformed_id_returns_validate_result_not_value_error(self) -> None:
+        """Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR f14f125e's item 3):
+        invalid content plus a malformed id returns ``ValidateResult(valid=False, ...)`` -- NOT
+        ``ValueError``: content validation runs before the id-shape guard in the existing execution
+        order (not re-ordered), so "first-in-execution-order wins" and the guard never runs in that
+        call. Nothing is written."""
+        malformed_ids = ["not-a-valid-id", "feat-abc-slug", "Feat-1-Slug"]
+        for malformed_id in malformed_ids:
+            with self.subTest(malformed_id=malformed_id):
+                result = create_feat(_MALFORMED_BODY, id=malformed_id)
+
+                self.assertIsInstance(result, ValidateResult)
+                self.assertFalse(result.valid)
+                self.assertEqual(len(result.errors), 1)
+                self.assertTrue(result.errors[0].message)
+                self.assertIn("feat create_feat (body): ", result.errors[0].message)
+                self.assertFalse(feat_base_dir().exists())
 
 
 class TestCreateFeatConcurrency(TempFeatDirTestCase):

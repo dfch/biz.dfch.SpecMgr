@@ -25,7 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter, parse_prb
 from biz.dfch.specmgr.prb.tools._paths import prb_base_dir
@@ -130,18 +132,32 @@ class TestCreatePrb(TempPrbDirTestCase):
 
         self.assertTrue(prb_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_prb(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_prb(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("prb create_prb (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(prb_base_dir().exists())
 
-    def test_missing_mandatory_section_raises_and_writes_nothing(self) -> None:
-        """A body missing the mandatory `## Future State` section must raise, writing nothing."""
-        with self.assertRaises(AssertionError):
-            create_prb(_MISSING_FUTURE_STATE_BODY)
+    def test_missing_mandatory_section_returns_validate_result_and_writes_nothing(self) -> None:
+        """A body missing the mandatory `## Future State` section must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
+        result = create_prb(_MISSING_FUTURE_STATE_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("prb create_prb (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(prb_base_dir().exists())
 
 

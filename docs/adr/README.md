@@ -188,3 +188,8 @@ Index of all ADRs in this repository.
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
   - Status: accepted
   - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to the create_<d>/parse_<d> content-validation cases](f14f125e-eaad-4f4f-a6fd-3c931bed726e-extend-the-non-raising-structured-result-workaround-to-the-c.md)
+  - Id: f14f125e-eaad-4f4f-a6fd-3c931bed726e
+  - Status: accepted
+  - Date: 2026-10-08
+  - Decision-makers: OpenCode agent + user decision

@@ -138,7 +138,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/similarity_unavailable.py` — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
 - `general/models/update_result.py` — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
-- `general/models/validate_result.py` — The generic ``validate`` tool's non-raising, structured result shape (feat-81-83-validation Phase 2, REQ-004).
+- `general/models/validate_result.py` — The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/prompts/repair.py` — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).

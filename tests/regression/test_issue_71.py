@@ -53,7 +53,10 @@ shortcut around it. Since feat-81-83-validation Phase 2, ``validate_feat`` is re
 the generic ``validate`` tool (``type="feat"``), which never raises for a content-validation
 failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the two
 ``validate``-tool tests below assert against ``result.errors[0].message`` rather than a raised
-exception.
+exception. Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206 non-raising chain),
+``create_feat`` never raises for a content-validation failure either -- the same non-raising
+``ValidateResult`` shape, capped exactly as ``validate``'s is -- so the two ``create_feat``-tool
+tests below assert against ``result.errors[0].message`` as well.
 """
 
 from __future__ import annotations
@@ -63,8 +66,6 @@ import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
-
-import pydantic
 
 from biz.dfch.specmgr.feat.tools._io import load_by_id
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
@@ -200,11 +201,12 @@ _MALFORMED_HEADING_SUBSTRINGS = (
 )
 
 #: Feat-110 (issue #110): the same substrings above, minus the literal `_MALFORMED_HEADING`
-#: itself, which now falls past `validate()`'s `_MAX_VALIDATE_ERROR_CHARS` cap for this
-#: fixture's raw message length and is truncated away -- `create_feat`/`update` still raise the
-#: full, untruncated exception (`validate.py`'s truncation is scoped to the non-raising
-#: `ValidateResult` path only, REQ-002), so only the `validate`-tool surface below needs this
-#: weaker substring set.
+#: itself, which now falls past the `_MAX_VALIDATE_ERROR_CHARS` cap for this fixture's raw
+#: message length and is truncated away on every non-raising surface -- the generic
+#: `validate`/`update` tools' own `ValidateResult` messages (feat-81-83-validation Phase 2 /
+#: feat-170 Phase 120) and, since feat-204-create-error Phase 110, `create_feat`'s own
+#: non-raising `ValidateResult` message -- so only those capped surfaces need this weaker
+#: substring set.
 _MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE = _MALFORMED_HEADING_SUBSTRINGS[:-1]
 
 
@@ -300,10 +302,19 @@ class TestIssue71MalformedHeadingRegression(unittest.TestCase):
         self.assertTrue(message.endswith("... (truncated)"), message)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_feat(_FEAT_MALFORMED_HEADING_BODY)
+        """Since feat-204-create-error Phase 110, ``create_feat`` no longer raises for this
+        content-validation failure -- it returns the non-raising ``ValidateResult`` whose message
+        is capped exactly as ``validate``'s is; this fixture's message exceeds the cap, so (as in
+        the ``validate`` test above) assert only the substrings that survive, plus the
+        truncation marker."""
+        result = create_feat(_FEAT_MALFORMED_HEADING_BODY)
 
-        _assert_actionable(str(ctx.exception), "feat create_feat (body):", _MALFORMED_HEADING_SUBSTRINGS)
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        _assert_actionable(message, "feat create_feat (body):", _MALFORMED_HEADING_SUBSTRINGS_VIA_VALIDATE)
+        self.assertTrue(message.endswith("... (truncated)"), message)
 
         # Validation happens before the create lock/base-dir creation (create_feat's own
         # docstring), so nothing at all should exist on disk after a failed create.
@@ -360,10 +371,16 @@ class TestIssue71NewestFirstOrderingRegression(unittest.TestCase):
         _assert_actionable(result.errors[0].message, "feat validate (body):", _ORDER_VIOLATION_SUBSTRINGS)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
-        with self.assertRaises(pydantic.ValidationError) as ctx:
-            create_feat(_FEAT_ORDER_VIOLATION_BODY)
+        """Since feat-204-create-error Phase 110, ``create_feat`` no longer raises for this
+        content-validation failure -- it returns the non-raising ``ValidateResult`` whose message
+        is capped exactly as ``validate``'s is; this fixture's message fits under the cap, so the
+        full substring set is asserted, as in the ``validate`` test above."""
+        result = create_feat(_FEAT_ORDER_VIOLATION_BODY)
 
-        _assert_actionable(str(ctx.exception), "feat create_feat (body):", _ORDER_VIOLATION_SUBSTRINGS)
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable(result.errors[0].message, "feat create_feat (body):", _ORDER_VIOLATION_SUBSTRINGS)
 
         self.assertFalse(feat_base_dir().exists())
 

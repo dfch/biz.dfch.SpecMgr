@@ -138,8 +138,9 @@ ValidateResult` (``valid=False``, ``errors=[...]``) instead of raising
 ``errors[].message`` is the enriched exception text capped exactly as the
 generic ``validate`` tool caps it (300 chars via
 :func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
-exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
-tuple). Stage-1's OC-parity ``ValueError``s (identical input, empty
+exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
+:mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
+``general.tools.validate``). Stage-1's OC-parity ``ValueError``s (identical input, empty
 ``old_str``, not found, multiple matches) and every pre-dispatch
 caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
 ``type``) are never caught and still raise exactly as before.

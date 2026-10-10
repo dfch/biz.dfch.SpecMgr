@@ -25,7 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter, parse_tsk
 from biz.dfch.specmgr.tsk.tools._paths import tsk_base_dir
@@ -130,28 +132,43 @@ class TestCreateTsk(TempTskDirTestCase):
 
         self.assertTrue(tsk_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_tsk(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_tsk(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("tsk create_tsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(tsk_base_dir().exists())
 
-    def test_zero_recent_updates_entries_raises_and_writes_nothing(self) -> None:
-        """A body with no `## Recent Updates` section at all must raise, writing nothing.
+    def test_zero_recent_updates_entries_returns_validate_result_and_writes_nothing(self) -> None:
+        """A body with no `## Recent Updates` section at all must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110).
 
         Confirms `create_tsk` does no auto-seeding: a caller who omits the
         mandatory `## Recent Updates` section (`RecentUpdates.updates` requires
         `min_length=1`) gets a validation failure, the same as an empty
         checklist would -- not a silently-injected "Created" entry.
         """
-        with self.assertRaises(AssertionError):
-            create_tsk(_NO_RECENT_UPDATES_BODY)
+        result = create_tsk(_NO_RECENT_UPDATES_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("tsk create_tsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(tsk_base_dir().exists())
 
-    def test_malformed_checkbox_marker_raises_and_writes_nothing(self) -> None:
-        """A malformed checklist marker (e.g. `- [z] ...`) must raise and write nothing.
+    def test_malformed_checkbox_marker_returns_validate_result_and_writes_nothing(self) -> None:
+        """A malformed checklist marker (e.g. `- [z] ...`) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110).
 
         Regression test: `TaskItem.checked`/`.description` are lazily-evaluated
         `@computed_field`s, so `Task.from_text` alone would not have caught
@@ -160,9 +177,15 @@ class TestCreateTsk(TempTskDirTestCase):
         tool could have written a malformed file to disk before any error
         ever surfaced.
         """
-        with self.assertRaises((AssertionError, ValueError)):
-            create_tsk(_MALFORMED_CHECKBOX_MARKER_BODY)
+        result = create_tsk(_MALFORMED_CHECKBOX_MARKER_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("tsk create_tsk (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(tsk_base_dir().exists())
 
 

@@ -86,8 +86,19 @@ from collections.abc import Callable
 
 import frontmatter
 import yaml
-from pydantic import ValidationError
 
+# Re-exported from ``general.models.validate_result`` (their one source of
+# truth) under the same private names every other branch imports them by.
+# This import MUST stay above the domain-model imports below: those trigger
+# every domain package's own ``__init__`` (prompts -> server -> tools ->
+# ``create_<d>``), and since feat-204-create-error (Phase 110) each
+# ``create_<d>`` tool's own ``from ...general.tools.validate import
+# _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS`` needs both names already
+# bound on this module by the time that first domain import runs --
+# defining them here, below the domain imports, would be a circular import
+# at server start (the names would be unbound while ``validate`` is
+# mid-initialization).
+from ...general.models.validate_result import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...dec.models.v1 import Decision, parse_dec
 from ...feat.models.v1 import Feature, parse_feat
 from ...general.models import ValidateResult, ValidationErrorEntry
@@ -108,21 +119,6 @@ from ...vcr.models.v1 import Vcr, parse_vcr
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 
 __all__ = ["validate"]
-
-#: Exactly the three content-validation-failure channels REQ-004 requires be caught and turned
-#: into a non-raising {valid: False, errors: [...]} result. A bare ValueError (the full/
-#: content-shape-mismatch case, or an unsupported type) is deliberately NOT in this tuple, so it
-#: still propagates instead of being absorbed.
-_CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (AssertionError, ValidationError, yaml.YAMLError)
-
-#: Caps `ValidationErrorEntry.message`'s length (issue #110): a structurally malformed document
-#: (e.g. an unexpected/duplicate heading) can produce a `str(AssertionError)`/
-#: `str(pydantic.ValidationError)` several hundred characters long once `wrap_tool_errors`'s
-#: domain/tool/channel label is prepended, with no cap today. `300` deliberately matches
-#: `snippet()`'s own default `max_chars` (see `models/md/_markdown.py::snippet`), but is kept as
-#: its own named constant here rather than relying on that default implicitly, per
-#: `.specmgr/conventions.md`'s "Comparison Constants" rule.
-_MAX_VALIDATE_ERROR_CHARS = 300
 
 
 def _detect_frontmatter(content: str, *, domain: str) -> bool:
