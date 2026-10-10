@@ -59,6 +59,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The 12 `create_<d>` and 12 `parse_<d>` MCP tools now return the
+  non-raising `ValidateResult` (`valid=False`, a single capped
+  `errors[].message` -- 300 chars, exactly as the generic `validate`
+  tool caps it, feat-110) on a content-validation failure (the
+  caller-submitted body for `create_<d>`; an existing-but-broken file
+  for `parse_<d>`) instead of raising
+  `AssertionError`/`pydantic.ValidationError`; `parse_<d>`'s
+  `OSError`-family file-access errors from `Path.read_text()`
+  (a truly-absent or unreadable path) and `create_feat`'s `ValueError`
+  (malformed id) / `FileExistsError` (already-existing id/folder)
+  caller-usage errors still raise -- compound-failure precedence:
+  content validation runs before `create_feat`'s id guards, so a
+  compound failure (invalid content + a malformed or already-existing
+  id) returns the `ValidateResult` first and the guard never runs in
+  that call; the success return shapes are unchanged (the
+  frontmatter-only write-tool shape, feat-69). Case 5 of the ADR
+  519d1206-4d2a-4500-9046-6db635209996 non-raising structured-result
+  chain (feat-204-create-error, GitHub issue #204, ADR
+  f14f125e-eaad-4f4f-a6fd-3c931bed726e).
 - Agents repeatedly emitted the literal `fff` in timestamps because the
   packaged instruction files, domain docstrings, and the runtime
   validation error described the millisecond field with the placeholder

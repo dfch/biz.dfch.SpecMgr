@@ -109,8 +109,9 @@ post-splice validation) returns the non-raising
 ``errors[].message`` is the enriched exception text capped exactly as the
 generic ``validate`` tool caps it (300 chars via
 :func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
-exactly (the generic ``validate`` tool's own ``_CAUGHT_EXCEPTIONS``
-tuple). The mode-dependent precedence when both failures hold at once is
+exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
+:mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
+``general.tools.validate``). The mode-dependent precedence when both failures hold at once is
 intentional (whole-body mode validates before loading, so
 ``ValidateResult`` wins; range mode loads first, so
 ``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``

@@ -25,9 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.qa.models.v2 import QaDocument, QaFrontmatter, parse_qa
 from biz.dfch.specmgr.qa.tools._paths import qa_base_dir
@@ -171,30 +171,47 @@ class TestCreateQa(TempQaDirTestCase):
 
         self.assertTrue(qa_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all.
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110).
 
         The other error channel -- a field-level `pydantic.ValidationError` --
-        is exercised by `test_invalid_question_prefix_raises_validation_error_and_writes_nothing`
+        is exercised by `test_invalid_question_prefix_returns_validate_result_and_writes_nothing`
         (a question lacking its own bold `**<d>.<NNNN>**: ` number prefix,
         feat-156), which gives `qa` the same caller-controllable field-level
         `pydantic.ValidationError` path `req.tools.create_req`'s closed-set
         fields (e.g. `## Level`) already had.
         """
-        with self.assertRaises(AssertionError):
-            create_qa(_MALFORMED_BODY)
+        result = create_qa(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("qa create_qa (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(qa_base_dir().exists())
 
-    def test_invalid_question_prefix_raises_validation_error_and_writes_nothing(self) -> None:
+    def test_invalid_question_prefix_returns_validate_result_and_writes_nothing(self) -> None:
         """A structurally valid body whose question lacks the bold `**<d>.<NNNN>**: `
-        number prefix (feat-156) must raise `pydantic.ValidationError` and write no
-        file at all (feat-156 ACC-001).
-        """
-        with self.assertRaises(ValidationError) as ctx:
-            create_qa(_UNNUMBERED_QUESTION_BODY)
+        number prefix (feat-156) must return `ValidateResult(valid=False, ...)` and write no
+        file at all (feat-156 ACC-001; feat-204-create-error, Phase 110).
 
-        self.assertIn("question must start with the bold question-number prefix", str(ctx.exception))
+        This fixture's message exceeds the 300-char cap, so it also pins
+        feat-110's truncation contract (issue #110): capped at
+        `_MAX_VALIDATE_ERROR_CHARS` via `snippet` plus the `"... (truncated)"`
+        suffix.
+        """
+        result = create_qa(_UNNUMBERED_QUESTION_BODY)
+
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertIn("question must start with the bold question-number prefix", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+        self.assertTrue(message.endswith("... (truncated)"), message)
         self.assertFalse(qa_base_dir().exists())
 
 

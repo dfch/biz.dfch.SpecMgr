@@ -23,9 +23,10 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.uc.models.v2 import UcDocument
 from biz.dfch.specmgr.uc.tools.parse_uc import parse_uc
 
@@ -117,32 +118,58 @@ class TestParseUcTool(unittest.TestCase):
             self.assertEqual(ci["primary_actor"]["body"][0]["text"], "Buyer.")
             self.assertEqual(ci["trigger"]["body"][0]["text"], "Purchase request comes in.")
 
-    def test_raises_for_invalid_frontmatter(self) -> None:
-        """parse_uc must let a frontmatter validation failure propagate."""
+    def test_invalid_frontmatter_returns_validate_result(self) -> None:
+        """parse_uc must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        frontmatter validation failure (feat-204-create-error, Phase 120)."""
         text = _VALID_DOC.replace("status: draft", "status: not-a-real-status")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(ValidationError):
-                parse_uc(str(path))
+            result = parse_uc(str(path))
 
-    def test_raises_for_malformed_structure(self) -> None:
-        """parse_uc must let a structural parse failure propagate."""
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("uc parse_uc: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
+            self.assertTrue(message.endswith("... (truncated)"), message)
+
+    def test_malformed_structure_returns_validate_result(self) -> None:
+        """parse_uc must return the non-raising ``ValidateResult(valid=False, ...)`` for a
+        structural parse failure (feat-204-create-error, Phase 120)."""
         text = "# Title\n\nJust a paragraph, no recognized use-case sections.\n"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "test.md"
             path.write_text(text, encoding="utf-8")
 
-            with self.assertRaises(AssertionError):
-                parse_uc(str(path))
+            result = parse_uc(str(path))
+
+            self.assertIsInstance(result, ValidateResult)
+            self.assertFalse(result.valid)
+            self.assertEqual(len(result.errors), 1)
+            message = result.errors[0].message
+            self.assertTrue(message)
+            self.assertIn("uc parse_uc: ", message)
+            self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
 
     def test_raises_for_nonexistent_file(self) -> None:
         """parse_uc must raise FileNotFoundError for a nonexistent path."""
         with self.assertRaises(FileNotFoundError):
             parse_uc("/nonexistent/path/to/file.md")
+
+    def test_unreadable_file_raises_permission_error(self) -> None:
+        """parse_uc must raise PermissionError for an unreadable path -- ``Path.read_text()``
+        sits outside the tool's own catch, so the unreadable half of the "truly-absent or
+        unreadable path" file-access contract (feat-204-create-error REQ-002/ACC-002) is never
+        intercepted by the non-raising ``ValidateResult`` branch (Phase 150)."""
+        with mock.patch.object(Path, "read_text", side_effect=PermissionError("permission denied")):
+            with self.assertRaises(PermissionError):
+                parse_uc("/path/to/file.md")
 
 
 if __name__ == "__main__":

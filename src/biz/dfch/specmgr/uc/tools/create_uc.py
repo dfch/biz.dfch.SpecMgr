@@ -36,11 +36,13 @@ from __future__ import annotations
 
 import uuid
 
+from ...general.models import ValidateResult, ValidationErrorEntry
 from ...general.tools._doc_paths import slugify
 from ...general.tools._timestamps import now_timestamp
+from ...general.tools.validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
 from ...models.md import CURRENT_SCHEMA_VERSION
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
-from ...models.md._markdown import format_text
+from ...models.md._markdown import format_text, snippet
 from ...server import mcp
 from ..models.v2 import UcFrontmatter, UseCase
 from ._io import read_uc
@@ -54,12 +56,17 @@ from ._write import write_uc_file
     description=(
         "Create a new use case: assigns a fresh id, derives a filename from the body's "
         "H1 title, validates the submitted body-only content, and writes the new document "
-        "to the use-case base directory. Returns the newly created document's frontmatter "
+        "to the use-case base directory. A content-validation failure of the submitted body "
+        "returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` capped "
+        "at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising "
+        "`AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
+        "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
+        "chain); nothing is written in that case. Returns the newly created document's frontmatter "
         "only (no body); use the corresponding `get_uc` tool to fetch the full document "
         "afterward."
     ),
 )
-def create_uc(content: str) -> UcFrontmatter:
+def create_uc(content: str) -> UcFrontmatter | ValidateResult:
     """Create and write a new use-case document.
 
     ``content`` is body markdown only (the ``UseCase`` H1 and its sections)
@@ -71,11 +78,18 @@ def create_uc(content: str) -> UcFrontmatter:
 
     ``content`` is validated by constructing a
     :class:`~biz.dfch.specmgr.uc.models.v2.UseCase` from it
-    (``UseCase.from_text(format_text(content))``); a structural failure
+    (``UseCase.from_text(format_text(content))``). A structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
-    ``pydantic.ValidationError``, both re-raised with domain/tool context
-    prepended (see Raises below) -- nothing is written in
-    either case.
+    ``pydantic.ValidationError`` -- but this tool catches both
+    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    structured-result workaround chain) and returns the enriched message
+    (domain/tool/channel context prepended by the shared tool-boundary
+    wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,
+    on top of the engine's own field-path/line/snippet enrichment,
+    feat-27-validation Phases 1/2) as the non-raising
+    ``ValidateResult(valid=False, ...)`` (see Returns below) instead --
+    nothing is written in that case.
 
     No body rendering is ever needed: the caller's own already-validated
     ``content`` is persisted byte-for-byte, exactly as submitted; only the
@@ -88,25 +102,28 @@ def create_uc(content: str) -> UcFrontmatter:
 
     Returns
     -------
-    UcFrontmatter
+    UcFrontmatter | ValidateResult
         The newly created document's frontmatter only (no body), with its
         assigned id in ``.id``. Use the corresponding ``get_uc`` tool to
-        fetch the full document afterward.
-
-    Raises
-    ------
-    AssertionError
-        A structural failure in ``content``. The message is prefixed with domain/tool/channel
-        context (e.g. ``"uc create_uc (body): ..."``) by the shared tool-boundary
-        wrapper (:func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`), layered on top
-        of the engine's own field-path/line/snippet enrichment (feat-27-validation Phases 1/2).
-        Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in ``content`` -- similarly prefixed. Nothing is
-        written.
+        fetch the full document afterward. On a content-validation failure
+        of ``content``, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+        (``valid=False``) with exactly one ``errors`` entry whose
+        ``message`` is the enriched exception text capped at 300 chars
+        exactly as the generic ``validate`` tool caps it (feat-110, via
+        :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
+        ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
+        in that case (feat-204-create-error, ADR
+        f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain).
     """
-    with wrap_tool_errors(domain="uc", tool="create_uc", channel=BODY_CHANNEL):
-        body = UseCase.from_text(format_text(content))
+    try:
+        with wrap_tool_errors(domain="uc", tool="create_uc", channel=BODY_CHANNEL):
+            body = UseCase.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
     new_id = str(uuid.uuid4())
     now = now_timestamp()

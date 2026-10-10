@@ -12,12 +12,22 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
   ``UcSummary``, ``TskSummary``, ``QaSummary``) subclasses.
 
 Also backs feat-81-83-validation Phase 2's generic ``validate`` tool
-(REQ-004):
+(REQ-004) -- originally greenfield for that tool alone; since feat-170
+(case 4 of the ADR 519d1206 non-raising chain) it also backs the generic
+``update``/``edit`` tools' own content-validation-failure branches, and
+since feat-204-create-error (case 5 of the same chain) the 24
+``create_<d>``/``parse_<d>`` tools' branches:
 
 - :class:`ValidateResult`/:class:`ValidationErrorEntry` -- the non-raising,
-  structured ``{valid, errors}`` result the generic ``validate`` tool
-  (``general.tools.validate``) returns for a content-validation failure
-  instead of letting the exception propagate.
+  structured ``{valid, errors}`` result those tools return for a
+  content-validation failure instead of letting the exception propagate.
+  The ``validate_result`` submodule
+  (``biz.dfch.specmgr.general.models.validate_result``) is the chain
+  record and owns the two shared constants every such branch must
+  import -- ``_CAUGHT_EXCEPTIONS`` (the exact exception channels to
+  catch) and ``_MAX_VALIDATE_ERROR_CHARS`` (the
+  ``ValidationErrorEntry.message`` cap, feat-110) -- re-exported by
+  ``general.tools.validate`` under the same private names.
 
 Also backs feat-103-set-status-error's narrow extension of that same
 non-raising workaround to the generic ``set_status`` tool's own single
