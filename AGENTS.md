@@ -474,7 +474,7 @@ type or cross-cutting:
   (a full `feat-NNN-slug`, validated against that shape) and, when `id`
   is omitted, now defaults to `feat-0-<slug-from-title>` — not an
   auto-incrementing number — failing with `FileExistsError` before any
-  write if the resulting id/folder already exists; `set_feat_id(id,
+  write if the resulting id/folder already exists (whenever the content is valid); `set_feat_id(id,
   new_id)` is the one tool that renames an existing feature's id
   afterwards (e.g. once a GitHub issue number becomes known), atomically
   renaming `<base>/<id>/` to `<base>/<new_id>/` and rewriting the

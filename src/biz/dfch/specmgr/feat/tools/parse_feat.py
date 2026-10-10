@@ -56,7 +56,7 @@ from ..models.v1 import FeatDocument, parse_feat as _parse_feat
         ":class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`. An existing file that fails to "
         "parse returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` "
         "capped at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising "
-        "`AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
+        "`AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
         "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
         "chain); a truly-absent or unreadable path still raises the `OSError`-family file-access "
         "error (`FileNotFoundError`/`PermissionError`/`OSError`) from `Path.read_text()`."
