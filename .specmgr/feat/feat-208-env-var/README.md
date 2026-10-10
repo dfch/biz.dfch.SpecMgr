@@ -4,7 +4,7 @@ created: '2026-10-09T09:58:41.413+02:00'
 id: feat-208-env-var
 status: planning
 type: feat
-updated: '2026-10-10T08:08:11.556+02:00'
+updated: '2026-10-10T12:19:20.168+02:00'
 version: 1.0.0
 ---
 
@@ -104,8 +104,8 @@ Verified state at planning time (2026-10-09):
 
 #### Phase 100: Registry core
 
-- [ ] Task 100.100: Implement the registry module `biz/dfch/specmgr/_envregistry.py` (top-level, stdlib-only per Design Notes; `EnvVar` record with `name`/`default`/`description`/`owner`/`format`/`choices`/`empty_falls_back_to_default`, `register`, `get`, `get_with_default`, duplicate/conflict detection) per Design Notes (REQ-001/REQ-002).
-- [ ] Task 100.110: Unit tests for the registry (default insertion, presence-based, set-but-empty, unknown name, conflicting re-registration), plus the import-graph pin: an AST test that `_envregistry.py` imports stdlib only (mirroring `plantuml/`'s import-free pin), so a `[cli]`-only import cannot reach `mcp`/`server` (REQ-001, ACC-001).
+- [x] Task 100.100: Implement the registry module `biz/dfch/specmgr/_envregistry.py` (top-level, stdlib-only per Design Notes; `EnvVar` record with `name`/`default`/`description`/`owner`/`format`/`choices`/`empty_falls_back_to_default`, `register`, `get`, `get_with_default`, duplicate/conflict detection) per Design Notes (REQ-001/REQ-002).
+- [x] Task 100.110: Unit tests for the registry (default insertion, presence-based, set-but-empty, unknown name, conflicting re-registration), plus the import-graph pin: an AST test that `_envregistry.py` imports stdlib only (mirroring `plantuml/`'s import-free pin), so a `[cli]`-only import cannot reach `mcp`/`server` (REQ-001, ACC-001).
 - [ ] Task 100.120: Phase-end gate (full quality gate per Design Notes) plus exactly one Conventional Commit.
 
 #### Phase 110: Register all env vars
@@ -159,7 +159,7 @@ Verified state at planning time (2026-10-09):
 
 ### Current Status
 
-**As of 2026-10-10**: planning -- feature created from GitHub issue #208 (the issue body is an explicit draft/rough idea; the registry design above, including the top-level `_envregistry` placement decision -- relocated from the originally drafted `general/tools/` home during planning review, since `general/tools/__init__.py`'s eager tool imports would pull the `mcp` extra into every CLI command in a `[cli]`-only install -- and the `plantuml/` import-free carve-out, is the planning interpretation to be confirmed with the maintainer). No implementation has started.
+**As of 2026-10-10**: Phase 100 (Registry core) implemented and gate-green, pending its commit -- `src/biz/dfch/specmgr/_envregistry.py` (the stdlib-only `EnvVar` record + `register`/`get`/`get_with_default`/`all_vars` API, idempotent registration with loud conflict detection, call-time environment reads with today's exact set-but-empty semantics) and `tests/test_envregistry.py` (25 tests, incl. the AST import-graph pin that the module imports stdlib only), plus the resulting `specmgr docs` regeneration (the new module's API page + index entry + the test-file count). The full phase-end quality gate is green (4453 passed, 16 skipped vs. the 4428/16 baseline; `ruff format --check`/`ruff check`/`vulture` clean, no whitelist additions); the feature's design decisions (the top-level `_envregistry` placement relocated from the originally drafted `general/tools/` home during planning review, the `plantuml/` import-free carve-out) are now built and import-graph-pinned as planned.
 
 ### Blockers
 
@@ -168,6 +168,10 @@ Verified state at planning time (2026-10-09):
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-10T12:19:20.168+02:00 - Phase 100: Registry core implemented
+
+Tasks 100.100/100.110: the stdlib-only registry module `src/biz/dfch/specmgr/_envregistry.py` (top-level, sibling of `_paths.py`, per the Design Notes "Registry placement" decision): the frozen `EnvVar` record (`name`/`default`/`description`/`owner`/`format`/`choices`/`empty_falls_back_to_default`, with `__post_init__` invariants incl. flag-requires-non-None-default), `register` (idempotent for identical metadata; a conflicting re-registration fails loudly with an `AssertionError` naming the var and every conflicting field, leaving the stored record unchanged), `get(name) -> str | None` (raw environment read at call time, no default insertion -- the presence-based accessor; an unknown name is a loud failure naming it), `get_with_default(name) -> str` (environment read at call time, the registered default inserted only when unset; a set-but-empty value stays set unless the entry's `empty_falls_back_to_default` flag carries the documented `FASTEMBED_CACHE_PATH` micro-deviation; a presence-based var read while unset fails loudly directing the caller to `get`), and `all_vars()` (the registration-order snapshot, the read surface for the Phase 150/160 registry-backed tests). `tests/test_envregistry.py` adds 25 tests covering default insertion, presence-based, set-but-empty (both flag states), unknown-name loud failures, idempotent and conflicting re-registration, the record invariants, and the import-graph pin: an AST walk asserting every import in `_envregistry.py` (top-level and nested) resolves to a stdlib module via `sys.stdlib_module_names` (dotted imports by top-level package, relative imports resolved against the module's own package), mirroring `plantuml/`'s import-free pin in `tests/plantuml/test_structure.py` (REQ-001, ACC-001). The phase is purely additive (REQ-005): the registry starts empty, nothing in `src/` calls it yet, and the full quality gate is green (4453 passed, 16 skipped vs. the 4428/16 baseline; `ruff format --check`/`ruff check`/`vulture` clean, no whitelist additions -- every `EnvVar` field is attribute-read in `src/`). Adding the module/test file does drift `specmgr docs` (the new `docs/api/biz.dfch.specmgr._envregistry.md` page, its `docs/api/README.md` index entry, and `docs/GENERATED.md`'s test-file count 418 -> 419), so the regeneration is part of this phase's change set (the Design Notes' "expected no-op except the final phase" predates the first module's arrival); `docs/MCP.md` is byte-identical. Task 100.120's commit is pending (the orchestrator performs it).
 
 #### 2026-10-10T05:59:36.000Z - Plan refined
 
