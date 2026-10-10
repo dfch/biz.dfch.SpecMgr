@@ -128,6 +128,16 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         Event-driven requirements, Unwanted behaviours, State-driven
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
+specmgr://reference-graph -- The frozen reference-graph rulebook: the deterministic
+                             PlantUML component-diagram emission layout for the
+                             cross-reference network (the 14-entry palette, the bracketed
+                             alias/label/truncation rules, the title override + defaults,
+                             the FEAT-exclusion rule, the bare-`feat-NNN` source-id
+                             rejection with the `list_feat` discovery pointer, the SCC
+                             cycle rule + red-arrow syntax, the construction semantics,
+                             the CLI file layout) plus the pointer at the UC rulebook
+                             §3–§6 for the validation chain reused as-is -- raw markdown
+                             domain-knowledge guidance (feat-207-reference-graph Phase 100).
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
                         rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is

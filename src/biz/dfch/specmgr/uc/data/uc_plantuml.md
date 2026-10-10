@@ -810,8 +810,11 @@ It lints exactly the subset of PlantUML the renderers emit (plus the agent's att
 sequence files):
 
 - `@startuml` / `@enduml` presence (and the `@startuml {title}` line)
-- declarations: `actor` / `participant` / `usecase` with quoted or bare labels, `as`
-  aliases, `<<stereotype>>`
+- declarations: `actor` / `participant` / `usecase` / `component` with quoted or bare
+  labels, `as` aliases (a bare identifier, or — since the 2026-10-10 amendment,
+  feat-207-reference-graph — a bracketed `[...]` token with no whitespace and no
+  brackets inside, recorded in the declared set unbracketed so declaration and
+  edge operands compare identically), `<<stereotype>>`
 - usecase associations (`-->`) and package edges (`..>` with `<<include>>` /
   `<<extend>>` labels)
 - sequence messages (`->`, `-->`, self-messages) and note blocks (`note` / `note right`

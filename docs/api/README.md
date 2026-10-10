@@ -128,6 +128,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- [`biz.dfch.specmgr.general.resources.reference_graph`](biz.dfch.specmgr.general.resources.reference_graph.md) — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - [`biz.dfch.specmgr.general.tools._doc_cache`](biz.dfch.specmgr.general.tools._doc_cache.md) — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).

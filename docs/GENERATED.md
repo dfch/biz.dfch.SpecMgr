@@ -148,6 +148,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- `general/resources/reference_graph.py` — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
@@ -584,4 +585,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 418
+**Test files**: 420

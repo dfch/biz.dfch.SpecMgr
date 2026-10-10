@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-09T08:16:24.927+02:00'
 id: feat-207-reference-graph
-status: planning
+status: progress
 type: feat
-updated: '2026-10-10T08:01:22.119+02:00'
+updated: '2026-10-10T12:29:18.454+02:00'
 version: 1.0.0
 ---
 
@@ -175,13 +175,13 @@ end package
 
 #### Phase 100: Spec freeze + structure-checker amendment
 
-- [ ] Task 100.100: Author the reference-graph rulebook `general/data/general_reference_graph.md` (the frozen emission layout + palette + alias/label/truncation + title override/defaults + FEAT-exclusion + the bare-`feat-NNN` source-id rejection with the `list_feat` discovery pointer + cycle rule + construction semantics + file layout of Design Notes §2-§5) with a pointer to the UC rulebook §3-§6 for the reused validation chain.
-- [ ] Task 100.110: Register the `specmgr://reference-graph` resource (`general/resources/reference_graph.py`, raw markdown passthrough) + the `general/resources/__init__.py` import.
-- [ ] Task 100.120: Real-parser gate (env-gated): verify the candidate emission subset -- `component "..." as [alias] <<ST>>` declarations, the 14-entry skinparam colour block, `-->` / red-arrow edges with the `: refers to` label, self-loops, `package ... end package` groups, top-level unresolved nodes -- and freeze the exact red-arrow syntax in the rulebook; record the verdict (on a clean skip: "skipped -- candidate `-[#red]->` retained, re-verify where a source is configured", noted in the rulebook's dated entry + a Progress entry).
-- [ ] Task 100.130: Implement the checker amendment in `plantuml/structure.py`: `component` in `_DECLARATION_PATTERN`; the bracketed-alias grammar (frozen shapes + legacy walk, declared unbracketed); the `_strip_operand` bracket unwrap; the module docstring's frozen-grammar enumeration updated.
-- [ ] Task 100.140: The dated amendment note in `uc/data/uc_plantuml.md` §6.1 (citing this feature).
-- [ ] Task 100.150: Amendment tests: a component declaration registers its label + alias; a zero-finding assertion over the emitted subset in both modes; the negative controls (a bracketed alias containing whitespace, an unbalanced stereotype) still error; the existing UC goldens byte-identical.
-- [ ] Task 100.160: Phase-end gate (including the doc-drift checks the phase touches), then exactly one Conventional Commit for the phase.
+- [x] Task 100.100: Author the reference-graph rulebook `general/data/general_reference_graph.md` (the frozen emission layout + palette + alias/label/truncation + title override/defaults + FEAT-exclusion + the bare-`feat-NNN` source-id rejection with the `list_feat` discovery pointer + cycle rule + construction semantics + file layout of Design Notes §2-§5) with a pointer to the UC rulebook §3-§6 for the reused validation chain.
+- [x] Task 100.110: Register the `specmgr://reference-graph` resource (`general/resources/reference_graph.py`, raw markdown passthrough) + the `general/resources/__init__.py` import.
+- [x] Task 100.120: Real-parser gate (env-gated): verify the candidate emission subset -- `component "..." as [alias] <<ST>>` declarations, the 14-entry skinparam colour block, `-->` / red-arrow edges with the `: refers to` label, self-loops, `package ... end package` groups, top-level unresolved nodes -- and freeze the exact red-arrow syntax in the rulebook; record the verdict (on a clean skip: "skipped -- candidate `-[#red]->` retained, re-verify where a source is configured", noted in the rulebook's dated entry + a Progress entry).
+- [x] Task 100.130: Implement the checker amendment in `plantuml/structure.py`: `component` in `_DECLARATION_PATTERN`; the bracketed-alias grammar (frozen shapes + legacy walk, declared unbracketed); the `_strip_operand` bracket unwrap; the module docstring's frozen-grammar enumeration updated.
+- [x] Task 100.140: The dated amendment note in `uc/data/uc_plantuml.md` §6.1 (citing this feature).
+- [x] Task 100.150: Amendment tests: a component declaration registers its label + alias; a zero-finding assertion over the emitted subset in both modes; the negative controls (a bracketed alias containing whitespace, an unbalanced stereotype) still error; the existing UC goldens byte-identical.
+- [x] Task 100.160: Phase-end gate (including the doc-drift checks the phase touches), then exactly one Conventional Commit for the phase.
 
 #### Phase 110: Library (model + renderer + builder + env helper)
 
@@ -225,7 +225,7 @@ end package
 
 ### Current Status
 
-**As of 2026-10-09**: Feature created from GitHub issue #207 via the planning conversation; no implementation started. Phase 100 (spec freeze + structure-checker amendment) is the next actionable step, starting with Task 100.100.
+**As of 2026-10-10**: Phase 100 (spec freeze + structure-checker amendment) is complete — the `specmgr://reference-graph` rulebook is authored and registered, the structure-checker amendment (the `component` declaration keyword, the bracketed `as` alias recorded unbracketed, the `_strip_operand` bracket unwrap) is implemented with the negative controls and the UC-golden byte-identity pinned, and the real-parser gate skipped cleanly (no `SPECMGR_PLANTUML_*` source configured): "skipped -- candidate `-[#red]->` retained, re-verify where a source is configured". Next actionable step: Phase 110 (Library), starting with Task 110.100.
 
 ### Blockers
 
@@ -234,6 +234,10 @@ end package
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-10T12:29:18.454+02:00 - Phase 100 complete: spec freeze + structure-checker amendment
+
+Phase 100 landed (Tasks 100.100–100.160). Rulebook: `general/data/general_reference_graph.md` freezes the emission layout of Design Notes §2 (the 14-entry skinparam block always emitted in full, in block order; the bracketed `[TYPE-{uuid}]` alias for the 12 UUID domains + the verbatim `feat-NNN-slug` alias for feat; the sanitised + truncated H1 labels, unresolved ids verbatim; unresolved nodes top-level sorted by alias before the first package; packages per non-empty domain in `ALL_DOMAINS` order with the NAMED `end package` close; nodes sorted by id inside packages; edges deduped + sorted by (source_type, source_id, target_type, target_id) with the uniform `: refers to` label; the single trailing newline), plus §3 construction semantics (forward BFS depth 1..5 default 1, additive direct-only reverse over the 13-domain scan, registry-wide, broken docs skipped / broken scoped source = tool-level ParseFailureResult, the FEAT-exclusion ONE rule, the visited-set cycle safety, the inherited extractor caveats), §4 cycle rule (self-loop or same SCC ≥ 2, iterative Tarjan) with the red-arrow syntax, §5 `SPECMGR_DIAGRAM_MAX_TITLE` (int, default 40, word-boundary cut + `…`, exactly-N untouched, resolved-node H1 labels only — the title sanitized but never truncated), the title override + defaults (source H1 scoped / `Reference Graph` all), the bare-`feat-NNN` SOURCE-id rejection with the `list_feat` discovery pointer, the CLI file layout, and a pointer at the UC rulebook §3–§6 for the validation chain reused as-is; registered as `specmgr://reference-graph` (raw markdown passthrough, the `specmgr://dtais`/`specmgr://rasci` style — no parse model, sanity pins in `tests/general/resources/test_reference_graph.py` per the `specmgr://uc/plantuml` precedent) with the `server.py` docstring entry and regenerated `docs/MCP.md` + `docs/api/` + `docs/GENERATED.md`. Checker amendment (Design Notes §6, exactly three code changes + the docstring enumeration in `plantuml/structure.py`): (a) `component` in `_DECLARATION_PATTERN`'s keyword set; (b) the alias grammar — `_AS_ALIAS_PATTERN`, `_QUOTED_DECLARATION_SHAPE`, `_BARE_DECLARATION_SHAPE` (via the shared `_ALIAS_TOKEN` constant) AND the legacy walk — accepts a bracketed token `[<no whitespace, no brackets>]`, recorded in the declared set UNBRACKETED; (c) `_strip_operand` also unwraps a fully-bracketed token, so declaration and edge operands compare identically; the dated note lands in `uc/data/uc_plantuml.md` §6.1 citing this feature. Tests: `tests/plantuml/test_reference_graph_subset.py` — a component declaration registers its label + alias (edges on the quoted label, the bracketed alias, and a self-loop contribute zero findings); the rulebook §2.9 worked example (the candidate emission subset: component declarations, the 14-entry skinparam block, `-->`/red-arrow edges with the `: refers to` label, self-loops, `package … end package` groups, top-level `<<UNRESOLVED>>` node) passes the amended checker with zero findings in BOTH modes; the negative controls (a bracketed alias containing whitespace, an unbalanced stereotype) still error in both modes; the existing UC goldens stay zero-finding (byte-identity of the renderer output itself pinned in `tests/uc/models/v2/test_renderer.py`). Parser-gate verdict (Task 100.120): **skipped -- candidate `-[#red]->` retained, re-verify where a source is configured** — no `SPECMGR_PLANTUML_*` source is configured in this environment, so the env-gated test (`tests/plantuml/test_reference_graph_subset.py::TestReferenceGraphSubsetParserGate`, the `tests/conftest.py` `plantuml_source()` machinery) skipped cleanly (reported via `pytest -rs`); the subset additionally passes the structure-only chain floor (`structure_ok=True`, zero findings) in this environment, and the gate re-verifies the full subset through the real parser (parse + render) where a source is configured; the candidate `-[#red]->` ships as the frozen red-arrow form (rulebook §4.3 dated entry).
 
 #### 2026-10-10T08:00:13.081+02:00 - Plan refined: second refiner pass applied (4 design decisions + 8 mechanical fixes)
 
@@ -250,6 +254,10 @@ Feature drafted from GitHub issue #207 -- the deterministic reference-graph visu
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-10T12:29:18.454+02:00 - Phase 100 implementation decisions (rulebook freeze gaps + resource shape)
+
+Three implementation-level resolutions where the frozen plan text left a gap the rulebook (the spec Phase 110+ implements against) had to settle — recorded per the plan's Phase 100 freeze mandate; no locked decision was re-litigated. (1) `specmgr://reference-graph` is RAW-MARKDOWN-PASSTHROUGH with NO per-call parse model: the plan's "raw markdown passthrough, the `specmgr://dtais`/`specmgr://rasci` style" names precedents that differ (dtais/rasci parse via a dedicated model per ADR 356d8781 to fail fast on drift; the closest analogue, the UC rulebook `specmgr://uc/plantuml`, is pure passthrough with sanity pins in tests, since a rulebook has no schema to parse against) — the UC rulebook precedent won (alternatives considered: adding a parse model, which would mean inventing a schema for the rulebook — out of Phase 100's task scope; passthrough without test pins — rejected, a silent edit of the frozen spec must be caught in `tests/general/resources/test_reference_graph.py`). (2) The degenerate block structure of the §2 layout (the plan's schematic only shows the fully-populated case): frozen in rulebook §2.1 as "five content blocks (the `@startuml` title line, the skinparam block, the `left to right direction` line, the node section — unresolved node lines then the packages with NO blank line between consecutive packages, the edge section) separated by exactly one blank line; an empty block is omitted entirely (no residual blank line); `@enduml` always follows the last non-empty block directly; one trailing newline" (alternatives considered: always emitting all five blocks with the empty ones as blank-line gaps — rejected, that would emit double blank lines the schematic does not show; a per-case enumeration — rejected, the block-join rule is shorter and covers every case deterministically). (3) Title newline handling under "sanitised single-line `#quot;`": a literal newline in the title text is emitted as the two-character sequence `\n` — the UC rulebook §2.4 single-line escape, the stack's existing frozen convention for every single-line emission (alternatives considered: collapsing to a space — invents a sanitisation the stack does not have; rejecting the input — the renderer is pure and must never fail on content). The checker amendment itself landed exactly per §6 — the shared `_ALIAS_TOKEN` constant is a mechanical factorisation of change (b), not a fourth change; the parser-gate verdict wording is the plan's frozen sentence; no ADR was created (the amendment is rulebook-note-documented per the plan).
 
 #### 2026-10-10T08:00:13.081+02:00 - Second refinement decisions (user-confirmed)
 
