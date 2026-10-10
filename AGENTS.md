@@ -829,7 +829,11 @@ type or cross-cutting:
     (`specmgr://version` — the package version plus the installed
     `fastembed` version (or `null` when the `similarity` extra is missing,
     feat-134 Phase 7), `specmgr://config` — every domain's resolved base
-    directory plus whether its `SPECMGR_*_DIR` env var is set, and since
+    directory plus whether its `SPECMGR_*_DIR` env var is set (the
+    env-var names/defaults it reports are registered in the top-level
+    `biz.dfch.specmgr._envregistry`, see the note after the `plantuml/`
+    paragraph — not in `general/tools/`, for the import-chain reason
+    given there), and since
     feat-134 Phase 7 a static `similarity` section
     (`extra_installed`/`disabled`/`model_name`/`cache_dir`), plus since
     feat-185-uc-diagrams Phase 120 a static `plantuml` section
@@ -952,6 +956,39 @@ non-raising result model). It is deliberately extractable but not a separate
 PyPI library, and nothing in it registers with the MCP server itself — the
 wrapping diagram tools/resources live in the `uc` domain (see the `uc/`
 bullet above, feat-185-uc-diagrams Phase 120).
+
+A top-level **private module** also exists:
+`biz.dfch.specmgr/_envregistry.py` (sibling of the top-level private
+`_paths.py`; feat-208-env-var, GitHub issue #208) — the single source of
+truth for every environment variable the package reads: name, default
+(or presence-based, no default), description, owner, the `server.json`
+manifest's `format`/`choices`, and the `empty_falls_back_to_default` flag.
+Its `get`/`get_with_default` accessors read the process environment at
+call time (presence-based vars via `get`, default-carrying vars via
+`get_with_default`; the four flagged empty-fallback vars are the three
+base-dir vars plus `FASTEMBED_CACHE_PATH`). It is stdlib-only and its
+import graph is AST-pinned (mirroring `plantuml/`'s import-free pin)
+because `cli.py`/`commands/mcp.py` import it at module level in a
+`[cli]`-only install — the originally drafted `general/tools/` home is
+rejected precisely because `general/tools/__init__.py` eagerly imports all
+ten `@mcp.tool()` modules (→ `server` → third-party `mcp`), which would
+crash every CLI command in a `[cli]`-only install; do not move it there.
+Registration happens at import time of each owning module (the nine
+modules; the plantuml trio via its uc-domain consumer
+`uc/tools/validate_plantuml.py` since `plantuml/` is import-free;
+`SPECMGR_TESTS_NO_DOTENV`'s name sourced from `cli.NO_DOTENV_SENTINEL`,
+which stays the authority). Every read site in `src/` (except the
+`plantuml/` carve-out and the three hosting-platform probes in
+`commands/mcp.py`, both documented out of scope) goes through the
+accessors; the three Typer MCP option defaults are sourced from the
+registry records. The registry-anchored drift tests:
+`tests/test_envregistry_completeness.py` (read-site ↔ registry
+completeness), `tests/test_envregistry_coverage.py` (registry ↔ README
+"Environment Variables" section + `server.json` fidelity, incl. the Typer
+default check), the shared read-site scanner `tests/_env_scan.py` (feat-
+126's drift test runs on it too, on the registry-aware discovery pattern),
+and the `specmgr://config` golden at `tests/fixtures/config-golden/`
+(byte-identity across the migration).
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server
