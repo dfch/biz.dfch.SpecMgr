@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-09T09:58:41.413+02:00'
 id: feat-208-env-var
-status: planning
+status: review
 type: feat
-updated: '2026-10-11T00:33:22.361+02:00'
+updated: '2026-10-11T01:19:28.977+02:00'
 version: 1.0.0
 ---
 
@@ -168,6 +168,10 @@ Verified state at planning time (2026-10-09):
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-11T01:09:50.437+02:00 - Finalization: status set to review
+
+All implementation phases (100/110/120/130/140/150/160/170) are committed -- one Conventional Commit per phase (a67a0b7 Phase 100 registry core, 0bc5e34 Phase 110 registrations (Option A in force), 32138e8 Phase 120 base-dir read sites, ac06901 Phase 130 presence-gate read sites, be46b24 Phase 140 Typer defaults + cache-dir read + golden identity, 8426c61 Phase 150 completeness guard on the shared scanner, f166aab Phase 160 documentation coverage + gap fixes, b6c1052 Phase 170 finalization) -- and the frontmatter status is set to `review` via the generic `set_status` tool (this commit; orchestrator finalization). Acceptance-criteria evidence: all six ACCs ticked against tree evidence (the ACC-walk table in the Phase 170 entry above: the import-graph-pinned registry with the 13 faithful registrations (ACC-001); every read site through the accessor except the plantuml carve-out and the hosting probes, Typer defaults registry-sourced (ACC-002); the completeness and coverage drift guards with their mutation evidence (ACC-003/ACC-004); the byte-identical `specmgr://config` pinned by the committed golden test over the full green gate (ACC-005); the CHANGELOG entry, no-drift docs regeneration, and AGENTS.md notes inside the feature's commits (ACC-006)). The branch push and the PR against `dev` follow this commit.
 
 #### 2026-10-11T00:33:22.361+02:00 - Phase 170: Finalization (gate green; the phase commit is pending, orchestrator's)
 
