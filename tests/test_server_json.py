@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Bidirectional drift guard between `server.json`'s `environmentVariables` and the
-`SPECMGR_*` environment variables the code actually reads in `src/`
+environment variables the code actually reads in `src/`
 (feat-126-server-json-env-drift, GitHub issue #126).
 
 `server.json` is the hand-maintained MCP registry manifest; it has already drifted once
@@ -29,6 +29,13 @@ failure messages naming the specific missing (read in `src/`, absent from the ma
 and extra (in the manifest, never read in `src/`) entries. It additionally pins the
 manifest's structural invariants (REQ-002): unique `name`s, non-empty `description`s,
 and `default` present on an entry iff the code reads that variable with a default.
+
+Since feat-208 Phase 160 the `setUp` scan runs on the shared helper's
+registry-aware `discovery_name_pattern` (the `SPECMGR_` prefix net union the
+quoted form of every registered name, the nine owning-module side-effect
+imports above making the registry complete) rather than the bare `SPECMGR_`
+net, so the manifest's third-party `FASTEMBED_CACHE_PATH` entry is visible
+to the scan; the test-class assertions are unchanged.
 
 The scan is a regex over source text with `#` comments and triple-quoted (docstring)
 regions blanked -- not a full parser (the plan pins the line-regex design, with
@@ -62,7 +69,18 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-from tests._env_scan import REPO_ROOT, env_var_code_defaults, scan_env_var_read_sites
+import biz.dfch.specmgr.adr.tools._paths  # noqa: F401 (side-effects only: SPECMGR_ADR_DIR registration)
+import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_DOTENV registration)
+import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
+import biz.dfch.specmgr.feat.tools._paths  # noqa: F401 (side-effects only: SPECMGR_FEAT_DIR registration)
+import biz.dfch.specmgr.general.resources.config  # noqa: F401 (side-effects only: FASTEMBED_CACHE_PATH registration)
+import biz.dfch.specmgr.general.tools._doc_paths  # noqa: F401 (side-effects only: SPECMGR_DOCS_DIR registration)
+import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects only: SPECMGR_SIMILARITY_DISABLED registration)
+import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
+import biz.dfch.specmgr.uc.tools.validate_plantuml  # noqa: F401 (side-effects only: the plantuml trio's registration)
+
+from biz.dfch.specmgr import _envregistry
+from tests._env_scan import REPO_ROOT, discovery_name_pattern, env_var_code_defaults, scan_env_var_read_sites
 
 #: The hand-maintained manifest this test guards.
 SERVER_JSON = REPO_ROOT / "server.json"
@@ -99,7 +117,14 @@ class TestServerJsonDrift(unittest.TestCase):
     """Bidirectional drift between the `src/` read sites and `server.json` (ACC-002/ACC-003)."""
 
     def setUp(self) -> None:
-        self.sites = scan_env_var_read_sites()
+        # feat-208 Phase 160: the registry-aware discovery pattern (the
+        # `SPECMGR_` prefix net union the quoted form of every registered
+        # name), so the manifest's third-party `FASTEMBED_CACHE_PATH` entry
+        # is visible to the scan -- the nine owning-module side-effect
+        # imports above make the registry complete when this runs. The
+        # assertions below are unchanged; only this discovery input is.
+        name_pattern = discovery_name_pattern({entry.name for entry in _envregistry.all_vars()})
+        self.sites = scan_env_var_read_sites(name_pattern=name_pattern)
         self.source_names: set[str] = set(self.sites)
         self.manifest_entries = _load_manifest_env_vars(SERVER_JSON)
         self.manifest_names: set[str] = set()
@@ -107,7 +132,7 @@ class TestServerJsonDrift(unittest.TestCase):
             name = entry.get("name")
             if isinstance(name, str):
                 self.manifest_names.add(name)
-        self.code_defaults = env_var_code_defaults()
+        self.code_defaults = env_var_code_defaults(name_pattern=name_pattern)
 
     def test_source_names_match_manifest_names_bidirectionally(self) -> None:
         """Every name read in `src/` is in the manifest, and every manifest name is read in `src/`."""

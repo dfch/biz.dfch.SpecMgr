@@ -25,12 +25,14 @@ docstring/comment blanking, the eight-pattern default-presence classifier, and
 the Typer `Annotated` option-default scan. The consumers are:
 
 * `tests/test_server_json.py` -- feat-126's bidirectional `server.json` drift
-  guard (its unchanged assertions run on the default `SPECMGR_` name pattern),
-  and
+  guard (since feat-208 Phase 160 its `setUp` runs on the registry-aware
+  `discovery_name_pattern` -- the `SPECMGR_` prefix net union the quoted form
+  of every registered name -- so the manifest's third-party
+  `FASTEMBED_CACHE_PATH` entry is visible to the scan; the assertions are
+  unchanged), and
 * `tests/test_envregistry_completeness.py` -- feat-208's registry-to-source
-  completeness test (REQ-003), which passes a broadened name pattern (the
-  `SPECMGR_` prefix net union the quoted form of every registered name, so the
-  third-party `FASTEMBED_CACHE_PATH` is visible to the scan).
+  completeness test (REQ-003), which passes the same broadened name pattern
+  (the helper's own `discovery_name_pattern`).
 
 The scan is a regex over source text with `#` comments and triple-quoted
 (docstring) regions blanked -- not a full parser (the plan pins the line-regex
@@ -67,6 +69,7 @@ __all__ = [
     "SHAPE_ENVIRON",
     "SHAPE_GETENV",
     "SHAPE_TYPER_ENVVAR",
+    "discovery_name_pattern",
     "env_var_code_defaults",
     "scan_env_var_read_sites",
     "typer_option_default_expression",
@@ -77,8 +80,42 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 #: The default environment-variable name pattern: the `SPECMGR_` prefix net
 #: every manifest-relevant specmgr variable carries (feat-126's own pattern --
-#: the default keeps feat-126's scan behaviour byte-identical).
+#: the default keeps a default-pattern call's scan behaviour byte-identical to
+#: feat-126's pre-extraction test).
 DEFAULT_NAME_PATTERN = r"SPECMGR_[A-Z0-9_]+"
+
+
+def discovery_name_pattern(registered_names: set[str]) -> str:
+    """The registry-aware discovery name pattern (feat-208, Phase 160).
+
+    The `SPECMGR_` prefix net (the helper's own default,
+    `DEFAULT_NAME_PATTERN`) stays in the pattern so an unregistered
+    `SPECMGR_*` variable read in `src/` is still discovered and reported;
+    every registered name the net does not already cover (the non-`SPECMGR_`
+    names -- today the third-party `FASTEMBED_CACHE_PATH`) is added as its
+    own `re.escape`d alternation, so those names become visible to the scan
+    (the helper inserts the pattern verbatim as the quoted-name group, so the
+    alternation scopes correctly). The pattern is built at test time from the
+    registry's current name set (`_envregistry.all_vars()`); the callers are
+    `tests/test_envregistry_completeness.py` (the registry-to-source
+    completeness guard, feat-208 Phase 150) and `tests/test_server_json.py`
+    (feat-126's manifest drift guard, whose `setUp` was wired onto this
+    pattern in Phase 160 so the manifest can carry the third-party variable),
+    both preceded by the nine owning-module side-effect imports that make the
+    registry complete.
+
+    Args:
+        registered_names: The registry's current name set.
+
+    Returns:
+        The alternation pattern for `scan_env_var_read_sites`'s
+        `name_pattern`.
+    """
+    alternatives: list[str] = [DEFAULT_NAME_PATTERN]
+    alternatives.extend(re.escape(name) for name in sorted(registered_names) if not name.startswith("SPECMGR_"))
+    result = "|".join(alternatives)
+    return result
+
 
 #: Shape (1): a string-literal assignment -- `CONST = "NAME"` (the `_*_ENV_VAR`
 #: constants). The lvalue is required to be an UPPER_CASE identifier: it is the

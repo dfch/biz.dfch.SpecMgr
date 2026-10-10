@@ -34,7 +34,9 @@ both directions:
 The scan runs on the shared `tests/_env_scan.py` helper (extracted by Task
 150.100 from feat-126's drift test, behaviour-preserving on its default
 `SPECMGR_` name pattern), with the name pattern built at test time from
-`_envregistry.all_vars()` (see `_discovery_name_pattern`).
+`_envregistry.all_vars()` (the helper's own `discovery_name_pattern`,
+factored out of this test in Phase 160 so `tests/test_server_json.py`'s
+`setUp` can share it).
 
 Self-contained: the nine owning modules' import-time registrations (feat-208
 Phase 110) are triggered by the explicit side-effect imports below -- the same
@@ -48,7 +50,6 @@ neither registered nor part of this test's own discovered set.
 
 from __future__ import annotations
 
-import re
 import unittest
 
 import biz.dfch.specmgr.adr.tools._paths  # noqa: F401 (side-effects only: SPECMGR_ADR_DIR registration)
@@ -62,7 +63,7 @@ import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effect
 import biz.dfch.specmgr.uc.tools.validate_plantuml  # noqa: F401 (side-effects only: the plantuml trio's registration)
 
 from biz.dfch.specmgr import _envregistry
-from tests._env_scan import DEFAULT_NAME_PATTERN, REPO_ROOT, scan_env_var_read_sites
+from tests._env_scan import REPO_ROOT, discovery_name_pattern, scan_env_var_read_sites
 
 #: The hosting-platform probe variables `commands/mcp.py`'s
 #: `_warn_on_public_binding` reads (feat-185/Phase 120's container detection).
@@ -76,35 +77,12 @@ from tests._env_scan import DEFAULT_NAME_PATTERN, REPO_ROOT, scan_env_var_read_s
 _HOSTING_PROBE_EXCLUSIONS = frozenset({"KUBERNETES_SERVICE_HOST", "RAILWAY_PROJECT_ID", "RENDER"})
 
 
-def _discovery_name_pattern(registered_names: set[str]) -> str:
-    """The discovery name pattern: the `SPECMGR_` prefix net union the registered names' quoted forms.
-
-    The `SPECMGR_` prefix net (the helper's own default, `DEFAULT_NAME_PATTERN`)
-    stays in the pattern so an unregistered `SPECMGR_*` variable read in `src/`
-    is still discovered and reported; every registered name the net does not
-    already cover (the non-`SPECMGR_` names -- today the third-party
-    `FASTEMBED_CACHE_PATH`) is added as its own `re.escape`d alternation, so
-    those names become visible to the scan (the helper inserts the pattern
-    verbatim as the quoted-name group, so the alternation scopes correctly).
-
-    Args:
-        registered_names: The registry's current name set (`_envregistry.all_vars()`).
-
-    Returns:
-        The alternation pattern for `scan_env_var_read_sites`'s `name_pattern`.
-    """
-    alternatives: list[str] = [DEFAULT_NAME_PATTERN]
-    alternatives.extend(re.escape(name) for name in sorted(registered_names) if not name.startswith("SPECMGR_"))
-    result = "|".join(alternatives)
-    return result
-
-
 class TestRegistryToSourceCompleteness(unittest.TestCase):
     """REQ-003/ACC-003: the registry and the `src/` read sites name the same set of variables."""
 
     def setUp(self) -> None:
         self.registered_names: set[str] = {entry.name for entry in _envregistry.all_vars()}
-        sites = scan_env_var_read_sites(name_pattern=_discovery_name_pattern(self.registered_names))
+        sites = scan_env_var_read_sites(name_pattern=discovery_name_pattern(self.registered_names))
         self.discovered_names: set[str] = set(sites)
 
     def test_every_read_var_is_registered(self) -> None:
@@ -136,7 +114,7 @@ class TestRegistryToSourceCompleteness(unittest.TestCase):
                 f"hosting probe {probe} is no longer read in commands/mcp.py -- its exclusion set "
                 "entry is stale (drop it from _HOSTING_PROBE_EXCLUSIONS)",
             )
-        broadened = _discovery_name_pattern(self.registered_names) + "|" + "|".join(sorted(_HOSTING_PROBE_EXCLUSIONS))
+        broadened = discovery_name_pattern(self.registered_names) + "|" + "|".join(sorted(_HOSTING_PROBE_EXCLUSIONS))
         broadened_names = set(scan_env_var_read_sites(name_pattern=broadened))
         self.assertEqual(
             [],
