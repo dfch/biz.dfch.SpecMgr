@@ -28,9 +28,12 @@ explicitly set -- without requiring shell access to the server's host
 
 **Never discloses arbitrary environment variables (REQ-002/ACC-002).** Only
 the known ``SPECMGR_*_DIR`` env var *names* are read here, and only
-their *presence* (``os.environ.get(name) is not None``), never their value
-and never any other environment variable -- this module never iterates over
-or dumps ``os.environ`` wholesale. Two deliberate, user-requested additions
+their *presence* (the three base-dir vars via the central env-var
+registry's raw accessor -- ``_envregistry.get(name) is not None``,
+feat-208 Phase 120; every other var via
+``os.environ.get(name) is not None``), never their value and never any
+other environment variable -- this module never iterates over or dumps
+``os.environ`` wholesale. Two deliberate, user-requested additions
 for the similarity section (feat-134 Phase 7, REQ-013): the *presence* of
 ``SPECMGR_SIMILARITY_DISABLED`` is likewise reported (flag only, never its
 value, the same convention), and ``FASTEMBED_CACHE_PATH`` is read to report
@@ -228,13 +231,13 @@ def config_info() -> ConfigInfo:
         the static similarity section, the static plantuml section, and
         the feat_warmup_disabled flag.
     """
-    docs_dir_set = os.environ.get(DOCS_DIR_ENV_VAR) is not None
+    docs_dir_set = _envregistry.get(DOCS_DIR_ENV_VAR) is not None
 
     domains = {
         "adr": DomainConfig(
             base_dir=str(adr_base_dir().resolve()),
             env_var=ADR_DIR_ENV_VAR,
-            env_var_set=os.environ.get(ADR_DIR_ENV_VAR) is not None,
+            env_var_set=_envregistry.get(ADR_DIR_ENV_VAR) is not None,
         ),
         "req": DomainConfig(
             base_dir=str(req_base_dir().resolve()),
@@ -284,7 +287,7 @@ def config_info() -> ConfigInfo:
         "feat": DomainConfig(
             base_dir=str(feat_base_dir().resolve()),
             env_var=FEAT_DIR_ENV_VAR,
-            env_var_set=os.environ.get(FEAT_DIR_ENV_VAR) is not None,
+            env_var_set=_envregistry.get(FEAT_DIR_ENV_VAR) is not None,
         ),
         "vcr": DomainConfig(
             base_dir=str(vcr_base_dir().resolve()),

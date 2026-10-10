@@ -123,15 +123,22 @@ No document file found matching the given id, under a given base directory.
 
 Return the configured documents root directory, without creating it.
 
+Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
+set-but-empty (feat-208, Phase 120).
+
 
 ### `doc_base_dir(type_name: 'str') -> 'Path'`
 
 Return the base directory for ``type_name`` documents, without creating it.
 
-Reads :data:`DOCS_DIR_ENV_VAR` from the environment, falling back to
-:data:`DEFAULT_DOCS_ROOT`, then appends ``type_name`` as a subdirectory
-(e.g. ``docs/req`` for ``type_name="req"``). Read-only tools/resources
-use this so merely reading never has the side effect of creating the
+Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
+set-but-empty, then appends ``type_name`` as a subdirectory (e.g.
+``docs/req`` for ``type_name="req"``). Read-only tools/resources use
+this so merely reading never has the side effect of creating the
 directory -- see :func:`ensure_doc_base_dir` for the write path.
 
 Parameters

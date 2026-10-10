@@ -37,11 +37,14 @@ tightening, pinned by the negative fixtures below). A single-line string whose c
 quotes one of the shapes verbatim is a known accepted limitation (no such line exists
 in the corpus, and one would fail visibly, naming the entry, if introduced). The
 default-presence classifier is line-anchored where it needs line context, for the same
-reason: only an explicit second argument or a statement line whose entire code is
+reason: only an explicit second argument, a statement line whose entire code is
 `<identifier> = get(NEEDLE)` (the corpus's assignment read, the caller applying the
-fallback) counts as a read with a default; a plain get in any other context -- a
-`return`, or an `if` condition, which is a presence read and is pinned as such --
-counts as no default.
+fallback), or the central env-var registry's own `get_with_default(NEEDLE)` accessor
+call (the post-migration corpus read shape, feat-208 Phase 120 -- the accessor itself
+inserts the registered default) counts as a read with a default; a plain get in any
+other context -- a `return`, an `if` condition, or the registry's raw `get(NEEDLE)`
+presence accessor, which is a presence read and is pinned as such -- counts as no
+default.
 """
 
 from __future__ import annotations
@@ -289,19 +292,26 @@ def _compile_read_patterns(needle: str) -> tuple[re.Pattern[str], ...]:
             identifier (shape (1)) or the quote-agnostic quoted name (shapes (2)/(3)).
 
     Returns:
-        Six compiled patterns: an explicit second argument (default present), a
+        Eight compiled patterns: an explicit second argument (default present), a
         membership test (no default), a subscript access (no default), an
         explicit-`None`-comparison presence check (no default), a line-anchored
         conditional presence read -- an `if [not] get(NEEDLE):` statement, a
-        truthiness test (no default) -- and a line-anchored plain-`get` read in an
-        assignment context (default present -- the corpus's genuine default shape: a
-        statement line whose entire code is `<identifier> = get(NEEDLE)`, the line
-        ending right after the call's closing paren, the caller applying the
-        fallback, e.g. `Path(value) if value else DEFAULT_X`). The last two patterns
-        are compiled with `re.MULTILINE`; the assignment-context pattern replaces the
-        former substring plain-`get` pattern, whose negative lookahead could not
-        exclude a conditional truthiness read (`if os.environ.get(NEEDLE):`) that is a
-        presence check, now carried by its own line-anchored pattern.
+        truthiness test (no default) --, a line-anchored plain-`get` read in an
+        assignment context (default present -- the corpus's pre-migration genuine
+        default shape: a statement line whose entire code is
+        `<identifier> = get(NEEDLE)`, the line ending right after the call's closing
+        paren, the caller applying the fallback, e.g. `Path(value) if value else
+        DEFAULT_X`), the central env-var registry's `get_with_default(NEEDLE)`
+        accessor call (default present -- the post-migration corpus read shape,
+        feat-208 Phase 120: the accessor itself inserts the registered default, so
+        the call's context carries no further classification), and the registry's
+        raw `get(NEEDLE)` accessor call (no default -- the presence-based read,
+        whose whole point is the `None`-vs-set distinction). The conditional and
+        assignment-context patterns are compiled with `re.MULTILINE`; the
+        assignment-context pattern replaces the former substring plain-`get`
+        pattern, whose negative lookahead could not exclude a conditional
+        truthiness read (`if os.environ.get(NEEDLE):`) that is a presence check,
+        now carried by its own line-anchored pattern.
     """
     result = (
         re.compile(rf"(?<!\w)(?:environ\.get|getenv)\(\s*{needle}\s*,"),
@@ -310,6 +320,8 @@ def _compile_read_patterns(needle: str) -> tuple[re.Pattern[str], ...]:
         re.compile(rf"(?<!\w)(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*is\s+(?:not\s+)?None"),
         re.compile(rf"(?m)^\s*if\s+(?:not\s+)?(?:os\.)?(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*:"),
         re.compile(rf"(?m)^\s*[A-Za-z_]\w*\s*=\s*(?:os\.)?(?:environ\.get|getenv)\(\s*{needle}\s*\)\s*$"),
+        re.compile(rf"(?<!\w)_envregistry\.get_with_default\(\s*{needle}\s*\)"),
+        re.compile(rf"(?<!\w)_envregistry\.get\(\s*{needle}\s*\)"),
     )
     return result
 
@@ -324,19 +336,26 @@ def _read_verdict(code_text: str, patterns: tuple[re.Pattern[str], ...]) -> bool
 
     Returns:
         True when at least one read carries a code-side default (an explicit second
-        argument, or a line-anchored plain-`get` read in an assignment context), False
-        when the file reads the needle only through the no-default shapes (a
-        membership test, a subscript access, an explicit-`None`-comparison presence
-        check, or a line-anchored conditional presence read), and None when the file
-        does not read the needle at all.
+        argument, a line-anchored plain-`get` read in an assignment context, or the
+        registry's `get_with_default` accessor call), False when the file reads the
+        needle only through the no-default shapes (a membership test, a subscript
+        access, an explicit-`None`-comparison presence check, a line-anchored
+        conditional presence read, or the registry's raw `get` accessor call), and
+        None when the file does not read the needle at all.
     """
-    if patterns[0].search(code_text) is not None or patterns[5].search(code_text) is not None:
+    has_default = (
+        patterns[0].search(code_text) is not None
+        or patterns[5].search(code_text) is not None
+        or patterns[6].search(code_text) is not None
+    )
+    if has_default:
         return True
     reads_without_default = (
         patterns[1].search(code_text) is not None
         or patterns[2].search(code_text) is not None
         or patterns[3].search(code_text) is not None
         or patterns[4].search(code_text) is not None
+        or patterns[7].search(code_text) is not None
     )
     if reads_without_default:
         return False
@@ -404,10 +423,11 @@ def _name_has_code_default(name_sites: list[EnvVarReadSite], code_texts: dict[Pa
 
     A name's sites are OR'ed: a single default-carrying read (an explicit second
     argument, the corpus's assignment-context plain-`get` + caller-applied-fallback
-    pattern, or an Annotated option default) suffices. The presence-based feature
-    gates, the PlantUML source selectors, and the test/CI dotenv sentinel have no such
-    site (only presence-check reads), which is exactly why their manifest entries
-    carry no `default`.
+    pattern, the registry's `get_with_default` accessor call, or an Annotated option
+    default) suffices. The presence-based feature gates, the PlantUML source
+    selectors, and the test/CI dotenv sentinel have no such site (only
+    presence-check reads), which is exactly why their manifest entries carry no
+    `default`.
 
     Args:
         name_sites: Every read site of one name, in file/line order.

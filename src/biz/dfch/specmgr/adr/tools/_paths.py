@@ -32,7 +32,6 @@ matching the "the on-disk file is the sole source of truth" design (plan
 
 from __future__ import annotations
 
-import os
 import re
 from collections.abc import Iterator
 from pathlib import Path
@@ -56,11 +55,12 @@ __all__ = [
 #: Environment variable that overrides the ADR base directory (plan §9a).
 ADR_DIR_ENV_VAR = "SPECMGR_ADR_DIR"
 
-#: The registry record for :data:`ADR_DIR_ENV_VAR` (feat-208, Phase 110):
-#: the central env-var registry is the single authority for the variable's
-#: default and for its set-but-empty-falls-back-to-default read semantics
-#: (:func:`adr_base_dir` resolves ``Path(value) if value else
-#: DEFAULT_ADR_DIR`` -- an empty value falls back to the default).
+#: The registry record for :data:`ADR_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`adr_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
 _adr_dir_var = _envregistry.register(
     ADR_DIR_ENV_VAR,
     default="docs/adr",
@@ -95,13 +95,16 @@ class AdrNotFoundError(LookupError):
 def adr_base_dir() -> Path:
     """Return the configured ADR base directory, without creating it.
 
-    Reads :data:`ADR_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_ADR_DIR`. Read-only tools (``get_adr``, ``option_list``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_adr_base_dir` for the write path.
+    Reads :data:`ADR_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_ADR_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_adr``,
+    ``option_list``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_adr_base_dir`
+    for the write path.
     """
-    value = os.environ.get(ADR_DIR_ENV_VAR)
-    return Path(value) if value else DEFAULT_ADR_DIR
+    result = Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))
+    return result
 
 
 def ensure_adr_base_dir() -> Path:

@@ -25,10 +25,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
-from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
+from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, DEFAULT_ADR_DIR
+from biz.dfch.specmgr.feat.tools._paths import DEFAULT_FEAT_DIR, FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.resources.config import config_info
-from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools._doc_paths import DEFAULT_DOCS_ROOT, DOCS_DIR_ENV_VAR
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
 #: ``ALL_DOMAINS`` -- all document domains this resource must report on
@@ -107,6 +107,28 @@ class TestConfigResource(unittest.TestCase):
             for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
                 with self.subTest(domain=domain):
                     self.assertTrue(result.domains[domain].env_var_set)
+
+    def test_env_var_set_counts_a_set_but_empty_value_as_set(self):
+        """The three base-dir env vars' presence checks read through the registry's raw ``get``
+        accessor (feat-208 Phase 120): a set-but-empty value still reports ``env_var_set`` as
+        True (the ``None``-vs-``""`` distinction preserved), while the resolved ``base_dir``
+        falls back to the default (the ``empty_falls_back_to_default`` flag) -- the two
+        distinctions must not bleed into each other."""
+        with mock.patch.dict(
+            os.environ,
+            {ADR_DIR_ENV_VAR: "", FEAT_DIR_ENV_VAR: "", DOCS_DIR_ENV_VAR: ""},
+            clear=False,
+        ):
+            result = config_info()
+
+        self.assertTrue(result.domains["adr"].env_var_set)
+        self.assertEqual(result.domains["adr"].base_dir, str(DEFAULT_ADR_DIR.resolve()))
+        self.assertTrue(result.domains["feat"].env_var_set)
+        self.assertEqual(result.domains["feat"].base_dir, str(DEFAULT_FEAT_DIR.resolve()))
+        for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
+            with self.subTest(domain=domain):
+                self.assertTrue(result.domains[domain].env_var_set)
+                self.assertEqual(result.domains[domain].base_dir, str((DEFAULT_DOCS_ROOT / domain).resolve()))
 
 
 class TestConfigResourceNonDisclosure(unittest.TestCase):

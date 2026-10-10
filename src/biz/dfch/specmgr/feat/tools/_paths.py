@@ -106,7 +106,6 @@ failure at this shortcut already produces.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -139,11 +138,12 @@ __all__ = [
 #: plan's own folder).
 FEAT_DIR_ENV_VAR = "SPECMGR_FEAT_DIR"
 
-#: The registry record for :data:`FEAT_DIR_ENV_VAR` (feat-208, Phase 110):
-#: the central env-var registry is the single authority for the variable's
-#: default and for its set-but-empty-falls-back-to-default read semantics
-#: (:func:`feat_base_dir` resolves ``Path(value) if value else
-#: DEFAULT_FEAT_DIR`` -- an empty value falls back to the default).
+#: The registry record for :data:`FEAT_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`feat_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
 _feat_dir_var = _envregistry.register(
     FEAT_DIR_ENV_VAR,
     default=".specmgr/feat",
@@ -204,18 +204,20 @@ class FeatNotFoundError(LookupError):
 def feat_base_dir() -> Path:
     """Return the configured feature base directory, without creating it.
 
-    Reads :data:`FEAT_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_FEAT_DIR`. Read-only tools (``get_feat``, ``list_feat``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_feat_base_dir` for the write path.
+    Reads :data:`FEAT_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_FEAT_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_feat``,
+    ``list_feat``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_feat_base_dir`
+    for the write path.
 
     Returns
     -------
     Path
         The resolved feature base directory.
     """
-    value = os.environ.get(FEAT_DIR_ENV_VAR)
-    result = Path(value) if value else DEFAULT_FEAT_DIR
+    result = Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))
     return result
 
 
