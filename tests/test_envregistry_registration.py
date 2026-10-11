@@ -26,9 +26,13 @@ alone), and pins:
 * the registry contains **exactly** those 13 names,
 * each record's ``default``/``format``/``choices``/
   ``empty_falls_back_to_default``/``owner`` against the Phase 110
-  registration table (the ``description`` is pinned to the ``server.json``
-  manifest's text verbatim by the Phase 160 documentation-coverage test,
-  not duplicated here),
+  registration table (the ``description`` is not pinned here: the Phase 160
+  documentation-coverage test (REQ-004/ACC-004) pins ``default``/``choices``/
+  ``format`` fidelity against the ``server.json`` manifest, not
+  ``description``; the twelve ``SPECMGR_*`` descriptions track the manifest
+  verbatim by construction (registered from it), while the third-party
+  ``FASTEMBED_CACHE_PATH`` manifest text intentionally carries the
+  ``<tempdir>`` placeholder explanation its manifest ``default`` uses),
 * the three base-dir modules' derived ``DEFAULT_*`` constants stay
   byte-identical to their pre-Phase-110 values (the registry is the single
   authority for the default; the constants are kept for the ~29 existing

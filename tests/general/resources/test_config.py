@@ -23,6 +23,7 @@ import os
 import sys
 import tempfile
 import unittest
+from importlib.util import find_spec
 from pathlib import Path
 from unittest import mock
 
@@ -414,11 +415,22 @@ class TestConfigGoldenIdentity(unittest.TestCase):
     The golden was captured under a fresh temp-dir CWD with none of the 13 registered env vars set
     (``tests/fixtures/config-golden/README.md``); this test re-runs the same capture procedure
     against the migrated code and requires byte-identity after normalizing exactly the two
-    machine-dependent locations -- the capture's CWD prefix (derived from the fixture itself) and
-    each side's own ``similarity.cache_dir`` value (the process temp dir, read out of the payload,
-    never string-guessed).
+    machine-dependent locations -- the CWD prefix on each side (derived from each side's own
+    payload -- the fixture for the golden, the re-captured result for the current text; the
+    payload's ``base_dir`` values are resolved paths, so a raw tempdir path is not a substring of
+    them on symlinked tempdirs, e.g. macOS's ``/var`` -> ``/private/var``) and each side's own
+    ``similarity.cache_dir`` value (the process temp dir, read out of the payload, never
+    string-guessed). The test skips when the ``similarity`` extra (``fastembed``) is not
+    installed: the golden pins ``similarity.extra_installed=true`` (the README's capture
+    precondition), so a base- or mcp-only venv would fail with a byte-diff that reads like a
+    migration defect rather than an environment mismatch.
     """
 
+    @unittest.skipUnless(
+        find_spec("fastembed") is not None,
+        "the golden pins similarity.extra_installed=true; it requires the similarity extra "
+        "(tests/fixtures/config-golden/README.md capture precondition)",
+    )
     def test_post_migration_output_is_byte_identical_to_the_phase_110_golden(self):
         """Re-capture ``config_info()`` through the mcp SDK's own resource serialization path under
         the golden's controlled conditions (fresh temp-dir CWD, every registered env var popped),
@@ -457,13 +469,18 @@ class TestConfigGoldenIdentity(unittest.TestCase):
                     os.environ[name] = old_value
 
         current_cache_dir = result.similarity.cache_dir
+        # The current text's CWD prefix, derived from the payload itself the same way t0 is (the
+        # default ADR dir is <CWD>/docs/adr, so the prefix sits two levels above it): the
+        # payload's base_dir values are resolved paths, so the raw tempdir path t1 is not a
+        # substring of them on symlinked tempdirs (macOS /var -> /private/var, some containers).
+        t1_resolved = str(Path(result.domains["adr"].base_dir).parent.parent)
 
         # Normalize both sides: each side's own cache-dir value becomes one common token, then
-        # the capture's CWD prefix (t0 in the golden, t1 in the current text) becomes a second
-        # common token. The two locations are disjoint and the tokens appear nowhere else in the
-        # payload, so the replacement order cannot corrupt the other.
+        # each side's own CWD prefix (t0 in the golden, t1_resolved in the current text) becomes
+        # a second common token. The two locations are disjoint and the tokens appear nowhere
+        # else in the payload, so the replacement order cannot corrupt the other.
         normalized_golden = golden_text.replace(golden_cache_dir, "@@CACHE_DIR@@").replace(t0, "@@CWD@@")
-        normalized_current = current_text.replace(current_cache_dir, "@@CACHE_DIR@@").replace(t1, "@@CWD@@")
+        normalized_current = current_text.replace(current_cache_dir, "@@CACHE_DIR@@").replace(t1_resolved, "@@CWD@@")
 
         self.assertEqual(
             normalized_current,

@@ -52,8 +52,10 @@ class DomainConfig(BaseModel):
         for the other domains rooted under it).
     env_var_set:
         Whether ``env_var`` is explicitly set in the current process
-        environment (``os.environ.get(env_var) is not None``) -- never the
-        env var's *value*, only whether it is present (REQ-002).
+        environment (presence via the central env-var registry's raw
+        accessor, ``_envregistry.get(env_var) is not None``, feat-208
+        Phase 120) -- never the env var's *value*, only whether it is
+        present (REQ-002).
     """
 
     base_dir: str
@@ -105,8 +107,10 @@ class PlantumlSourceConfig(BaseModel):
     Presence-only, mirroring :class:`DomainConfig`'s ``env_var_set``
     convention (the resource's own no-disclosure contract, feat-51-mcp-cwd
     REQ-002): whether the variable is set in the current process
-    environment (``os.environ.get(name) is not None``) -- never its *value*
-    (a jar path, a bin path, or a server URL would be disclosed by it).
+    environment (presence via the central env-var registry's raw accessor,
+    ``_envregistry.get(name) is not None``, feat-208 Phase 130) -- never
+    its *value* (a jar path, a bin path, or a server URL would be disclosed
+    by it).
 
     Parameters
     ----------

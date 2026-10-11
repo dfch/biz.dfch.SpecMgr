@@ -4,7 +4,7 @@ created: '2026-10-09T09:58:41.413+02:00'
 id: feat-208-env-var
 status: review
 type: feat
-updated: '2026-10-11T01:19:28.977+02:00'
+updated: '2026-10-11T03:07:25.178+02:00'
 version: 1.0.0
 ---
 
@@ -168,6 +168,10 @@ Verified state at planning time (2026-10-09):
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-11T03:07:25.178+02:00 - Finalization review fixes (E1/D1/I1/I2 from the feat-reviewer pass, PR #209 ship-with-fixes verdict)
+
+Post-implementation review fixes for the four findings; no plan tasks are ticked (these are not plan tasks). **E1 (error)** -- the golden identity test's current-side CWD normalization token was the raw `tempfile.TemporaryDirectory()` path, which is not a substring of the payload's resolved `base_dir` values on symlinked tempdirs (macOS `/var` -> `/private/var`, some containers), failing the byte comparison spuriously; it is now derived from the payload the same way the golden-side token is (`Path(result.domains["adr"].base_dir).parent.parent`), with the test's docstring/comments updated to stay truthful -- no assertion, fixture, or golden-side change. **D1 (discrepancy)** -- `tests/test_envregistry_registration.py`'s module docstring falsely claimed the `description` field is pinned to the `server.json` manifest verbatim by the Phase 160 coverage test; reworded to state that the coverage test (REQ-004/ACC-004) pins `default`/`choices`/`format` fidelity (not `description`), that the twelve `SPECMGR_*` descriptions track the manifest verbatim by construction, and that `FASTEMBED_CACHE_PATH`'s manifest text intentionally carries the `<tempdir>` placeholder explanation. **I1 (improvement)** -- `DomainConfig.env_var_set`'s and `PlantumlSourceConfig`'s docstrings in `src/biz/dfch/specmgr/models/config_info.py` cited `os.environ.get(...) is not None` as the presence mechanism; both parentheticals now name the central env-var registry's raw accessor (`_envregistry.get(...) is not None`, feat-208 Phase 120/130), with the field-meaning content unchanged, and `specmgr docs` regenerated exactly one API page (`docs/api/biz.dfch.specmgr.models.config_info.md`). **I2 (improvement)** -- the golden test now skips via `skipUnless(find_spec("fastembed") is not None, ...)` when the `similarity` extra is absent, since the golden pins `similarity.extra_installed=true` (the fixture README's capture precondition) and a base-/mcp-only venv would otherwise fail with a byte-diff reading like a migration defect rather than an environment mismatch.
 
 #### 2026-10-11T01:09:50.437+02:00 - Finalization: status set to review
 
