@@ -47,7 +47,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/__init__.py` — commands module.
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
-- `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram generation sub-command group (feat-185-uc-diagrams, Phase 130).
+- `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
@@ -590,4 +590,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 425
+**Test files**: 426
