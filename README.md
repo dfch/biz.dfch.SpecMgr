@@ -27,6 +27,7 @@ them as "extras" (see [Installation](#installation)).
 - [Installation](#installation)
 - [CLI Usage](#cli-usage)
 - [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
+- [Reference Graph Diagrams](#reference-graph-diagrams)
 - [MCP Server](#mcp-server)
 - [Usage](#usage)
 - [Referencing Artifacts](#referencing-artifacts)
@@ -114,9 +115,11 @@ in pre-commit hooks and `ci.yml`.
 _No domain document-management commands (create/update/status/etc.) exist
 in the CLI yet — those are currently MCP-only, see
 [MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), a
-handful of cross-cutting/doc-generation commands, and the UC → PlantUML
-diagram commands — see [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
-(`specmgr --help` for the full list)._
+handful of cross-cutting/doc-generation commands, and the diagram commands
+— UC → PlantUML (see
+[UC → PlantUML Diagrams](#uc--plantuml-diagrams)) and reference-graph (see
+[Reference Graph Diagrams](#reference-graph-diagrams)) (`specmgr --help`
+for the full list)._
 
 ```bash
 specmgr version
@@ -154,6 +157,62 @@ Diagram content is never sent to plantuml.com unless you set that URL.
 
 The normative rulebook ships as the `specmgr://uc/plantuml` resource; the
 full MCP surface is in [docs/MCP.md](docs/MCP.md).
+
+## Reference Graph Diagrams
+
+Specmgr can render the deterministic cross-reference network between its
+artifacts (the `<TYPE> <id>` tag vocabulary behind the `list_references`
+tool) as a PlantUML component diagram — one node per artifact (label = the
+document title, truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` limit, default
+`40`), a stereotype + colour per artifact type (a frozen 14-entry palette),
+nodes grouped into per-domain `package` blocks, one edge per unique reference
+(`{src} --> {dst} : refers to`), every edge that lies on a cycle (self-loops
+and same-SCC ≥ 2) drawn with a red `-[#red]->` arrow, and every reference
+whose target cannot be resolved on disk drawn as a top-level `<<UNRESOLVED>>`
+node. Fully deterministic: the same registry and the same arguments always
+emit byte-identical source.
+
+**MCP tools.** `get_reference_diagram(type, id, depth=1, reverse=False,
+include_feat=True, title=None)` renders one source document's reference
+neighbourhood (the forward walk to `depth`, 1..5; `reverse=True` adds the
+direct incoming references, additive and direct-only);
+`get_reference_diagram_all(include_feat=True, title=None)` renders the
+registry-wide graph. Both return the PlantUML source directly (no file
+writes); the scoped tool accepts all 13 domains (`adr` included) and returns
+the non-raising `ParseFailureResult` for an existing-but-broken source; the
+registry-wide tool never raises for content.
+
+**CLI (writes the artifact, deterministic-only):**
+
+```bash
+specmgr diagram refs <type> <id> [--depth N] [--reverse] [--no-feat] [--title T] [--out diagrams/refs] [--check]  # scoped → <id>.refs.puml
+specmgr diagram refs all [--no-feat] [--title T] [--out diagrams/refs] [--check]                                   # registry-wide → reference-graph.puml
+```
+
+`--no-feat` drops every FEAT node except the explicitly requested source
+(then every edge touching a dropped node). Exit codes: `0` written / no
+diff, `1` a `--check` diff (a missing file counts as differing) or the
+missing `mcp` extra, `2` a usage-or-resolution error (wrong-format
+`type`/`id`/`depth` — a bare `feat-NNN` is rejected, use `list_feat` to
+discover the exact id — a missing source, an existing-but-broken source,
+`all` combined with a source). Written artifacts carry no structure-only
+header (checker-clean by construction).
+
+**Validation.** `specmgr plantuml-check <path...>` (or the `validate_plantuml`
+MCP tool over the source) validates the diagram through the same strict
+chain as the UC diagrams (the three `SPECMGR_PLANTUML_*` source env vars,
+see [UC → PlantUML Diagrams](#uc--plantuml-diagrams); all unset is the
+offline structure-only floor).
+
+**Label limit.** `SPECMGR_DIAGRAM_MAX_TITLE` (an int, default `40`) bounds
+the resolved-node H1 labels (word-boundary cut + `…`; a set-but-invalid
+value falls back to `40`); the `@startuml` diagram title is sanitized but
+never truncated. Its set/valid/default/resolved status is reported by the
+`diagram` section of the `specmgr://config` resource (the raw value is
+never disclosed).
+
+The normative rulebook ships as the `specmgr://reference-graph` resource;
+the full MCP surface is in [docs/MCP.md](docs/MCP.md).
 
 ## MCP Server
 

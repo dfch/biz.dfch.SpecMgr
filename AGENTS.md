@@ -808,7 +808,69 @@ type or cross-cutting:
     self-triggering `specmgr-refs` OpenCode Skill
     (`.opencode/skills/specmgr-refs/SKILL.md`, feat-152, GitHub issue
     #152) that routes single-document requests to `list_references`
-    and codifies the graph/batch/reverse workflows.
+    and codifies the graph/batch/reverse workflows and, since
+    feat-207-reference-graph (GitHub issue #207), the rendered-diagram
+    workflow (the skill's fifth row — the diagram phrasings route to the
+    two `get_reference_*` tools below or the `specmgr diagram refs` CLI,
+    the bare "show me the reference graph[, N levels deep]" phrasing
+    stays with the multi-hop text row, and the new `/ref-graph <type>
+    <id> [depth] [--reverse] [--no-feat] | all` command
+    (`.opencode/command/ref-graph.md`, no dedicated subagent — the flow
+    is the deterministic CLI itself) is its host surface).
+    `get_reference_diagram` (feat-207-reference-graph Phase 120, REQ-004) —
+    the read-only, id-based reference-graph diagram tool: renders one
+    source document's reference neighbourhood as the deterministic
+    PlantUML component diagram of the frozen `specmgr://reference-graph`
+    rulebook — one node per artifact (label = the document title,
+    truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` label limit, default 40),
+    a stereotype + colour per artifact type (the frozen 14-entry palette),
+    nodes grouped into per-domain `package` blocks, one edge per unique
+    reference (`{src} --> {dst} : refers to`, the referenced item carries
+    the incoming arrow), every edge on a cycle (a self-loop or both
+    endpoints in the same strongly connected component of size ≥ 2) drawn
+    with the red `-[#red]->` arrow, and every reference whose target
+    cannot be resolved on disk drawn as a top-level `<<UNRESOLVED>>` node.
+    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 13
+    domains, `adr` INCLUDED — an ADR document referencing a REQ is a real
+    edge; the 13-vs-12 split vs the skill's 12-domain text workflows is
+    reconciled in the skill's own note, above) + `id`, with the rulebook
+    §7 guard order: `validate_id` AND the `depth` 1..5 check (a plain
+    `int`, default 1) are BOTH a `ValueError` before any filesystem
+    access (for `type="feat"` the full `feat-NNN-slug` only — a bare
+    `feat-NNN` is rejected, `list_feat` discovers the exact id); a missing
+    source raises the source domain's own `XNotFoundError` (identical to
+    `get_<d>`/`list_references`); an existing-but-broken source returns
+    the non-raising `ParseFailureResult` (`error`/`path`/`id`, byte-
+    identical `error` to the domain's `list_<d>` failed row — ADR
+    9080b37c, case 3 of the ADR 519d1206 chain); `reverse` is additive
+    (the forward expansion to `depth` plus the direct incoming edges,
+    direct-only on the incoming side), `include_feat=False` drops every
+    FEAT node except the explicitly requested source (then every edge
+    touching a dropped node), and `title` overrides the diagram title
+    (sanitized but never truncated; default the source's H1). It returns
+    the PlantUML source itself (not a specmgr document).
+    `get_reference_diagram_all` (Phase 120, REQ-005) — the registry-wide
+    counterpart: no id guards, broken documents skipped (the render never
+    fails for content), the same FEAT switch minus the source exception,
+    title default `Reference Graph`; it never raises for content. Both
+    are thin over the Phase 110 pure library (`general/models/
+    reference_graph.py`'s frozen model + byte-stable renderer + iterative
+    Tarjan SCC cycle marking, `general/tools/_reference_graph.py`'s
+    builders, `general/tools/_diagram_config.py`'s
+    `SPECMGR_DIAGRAM_MAX_TITLE` helper), and their CLI half is `specmgr
+    diagram refs <type> <id> [--depth N] [--reverse] [--no-feat] [--title
+    T] [--out diagrams/refs] [--check]` → `<id>.refs.puml`, and `specmgr
+    diagram refs all [...]` → `reference-graph.puml` (Phase 130,
+    `commands/diagram.py`'s second member — thin over these two tools,
+    lazy import, needs the `mcp` extra, missing ⇒ exit 1; exit codes **0**
+    written / no diff, **1** a `--check` diff (a missing file counts as
+    differing) / missing `mcp` extra, **2** a usage-or-resolution error
+    (wrong-format `type`/`id`/`depth` before any file access, a missing
+    source, an existing-but-broken source — the parse error is reported,
+    `all` combined with a source, `refs <type>` without an id); written
+    artifacts carry no structure-only header, checker-clean by
+    construction, and `specmgr plantuml-check` / `plantuml-encode` work on
+    them unchanged).
     On a successful write, `set_status` (its non-`adr`
     adapters), `set_classification`, and every per-domain
     `create_<d>` tool return the domain's frontmatter object only (no
@@ -835,15 +897,26 @@ type or cross-cutting:
     feat-185-uc-diagrams Phase 120 a static `plantuml` section
     (`jar`/`bin`/`url` each presence-only `{set: bool}` + `selected` —
     the first-set-wins source per rulebook §3.2, `"none"` when all unset;
-    never a value of the three `SPECMGR_PLANTUML_*` vars),
+    never a value of the three `SPECMGR_PLANTUML_*` vars), plus since
+    feat-207-reference-graph Phase 120 a static `diagram` section
+    (`SPECMGR_DIAGRAM_MAX_TITLE`: `set`/`valid`/`default` 40/`resolved` —
+    `resolved` is the effective int label limit the diagram tools/CLI
+    render with (40 when unset or set-but-invalid), the
+    `base_dir`/`cache_dir` resolved-value precedent; never the raw env
+    value),
     `specmgr://ears` — the EARS requirement-phrasing templates (feat-92),
     `specmgr://iso25010` — the ISO/IEC 25010:2023
     quality model, `specmgr://dtais` — the DTAIS verification-method
     vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
     than under `vcr/resources/` since it is domain-knowledge other document
-    types may also want to reference, and `specmgr://rasci` — the generic
+    types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-      but not scoped to it), and `general/prompts/` (`compact_history` — rotates
+      but not scoped to it, and `specmgr://reference-graph` — the frozen
+      reference-graph → PlantUML rulebook (the emission layout + 14-entry
+      palette, the alias/label/truncation rules, the title override +
+      defaults, the FEAT-exclusion + cycle + construction semantics, the
+      CLI file layout; raw markdown passthrough, the `specmgr://uc/plantuml`
+      style; feat-207-reference-graph, GitHub issue #207)), and `general/prompts/` (`compact_history` — rotates
       older `Recent Updates` entries out of any feature folder's `README.md`
       into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
       GitHub issue #150, Phase 1) — cross-cutting, takes `type` (one of the
@@ -942,16 +1015,25 @@ is always specmgr-domain → `plantuml`, never the reverse — e.g.
 from `plantuml/structure.py`) and **stdlib-only** (no new dependency or
 extra) PlantUML support library: `encode.py` (the classic URL text
 encoder — the `SoWkI…` form, rulebook §5.1), `structure.py` (the two-mode structure checker + the shared
-marker constant), `backends.py` (jar/bin local backends, incl. the crash
+marker constant — its declaration grammar since the 2026-10-10 amendment
+(feat-207-reference-graph Phase 100) also includes the `component`
+keyword and a bracketed `as` alias `[<no whitespace, no brackets>]`,
+recorded in the declared set UNBRACKETED, with `_strip_operand` unwrapping
+a fully-bracketed token so declaration and edge operands compare
+identically — the dated note lives in the UC rulebook §6.1; `-[#red]->`
+and `skinparam` lines are outside the frozen line grammar and silently
+accepted), `backends.py` (jar/bin local backends, incl. the crash
 detection on the raw byte stream), `url.py` (the single-endpoint `/svg/`
 matrix classifier — the frozen §5.2 rows incl. the recognised
 200+crash-page INVALID row (the known 1.2026.8 self-message/note-left shape
 bug; amended 2026-10-06)), and `chain.py` (the strict first-set-wins,
 no-fall-through validation chain over exactly three env vars + the
 non-raising result model). It is deliberately extractable but not a separate
-PyPI library, and nothing in it registers with the MCP server itself — the
-wrapping diagram tools/resources live in the `uc` domain (see the `uc/`
-bullet above, feat-185-uc-diagrams Phase 120).
+ PyPI library, and nothing in it registers with the MCP server itself — the
+ wrapping diagram tools/resources live in the `uc` domain (see the `uc/`
+ bullet above, feat-185-uc-diagrams Phase 120) and the reference-graph
+ ones in `general/` (feat-207-reference-graph Phases 120/130, see the
+ `general/` bullet above).
 
 `server.py`'s own module docstring is the single most authoritative,
 currently-maintained list of every resource/tool/prompt this MCP server

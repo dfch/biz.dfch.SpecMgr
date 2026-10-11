@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The deterministic reference-graph → PlantUML diagram pipeline
+  (feat-207-reference-graph, GitHub issue #207): the frozen rulebook
+  shipped as the `specmgr://reference-graph` resource (raw markdown) —
+  the 14-entry palette, the bracketed alias/label/truncation rules, the
+  title override + defaults, the FEAT-exclusion rule, the bare-`feat-NNN`
+  source-id rejection (use `list_feat` to discover the exact id), the
+  SCC cycle rule + red `-[#red]->` arrow, the construction semantics,
+  and the CLI file layout, with the validation chain reused as-is from
+  the UC rulebook §3–§6; the structure-checker amendment in the
+  import-free `plantuml/` package (the declaration grammar gains the
+  `component` keyword and a bracketed `as` alias, recorded unbracketed,
+  with the `_strip_operand` bracket unwrap — the dated note lives in the
+  UC rulebook §6.1; the existing UC goldens stay byte-identical); the
+  pure, stdlib-only library (`general/models/reference_graph.py`'s
+  frozen model + byte-stable renderer + iterative Tarjan SCC cycle
+  marking, `general/tools/_reference_graph.py`'s builders,
+  `general/tools/_diagram_config.py`'s env helper); the
+  `get_reference_diagram`/`get_reference_diagram_all` MCP tools (the
+  13-domain `WholeBodyOrAdrType` surface — `adr` included; the guard
+  order: `ValueError` for a wrong-format `type`/`id`/`depth` before any
+  filesystem access, the source domain's `XNotFoundError` for a missing
+  source, the non-raising `ParseFailureResult` for an existing-but-
+  broken scoped source; the registry-wide tool never raises for
+  content); the `specmgr://config` static `diagram` section
+  (`SPECMGR_DIAGRAM_MAX_TITLE`'s set/valid/default 40/resolved — the
+  raw env value never disclosed); the `SPECMGR_DIAGRAM_MAX_TITLE` env
+  var (an int, default 40 — the resolved-node H1 label limit,
+  word-boundary cut + `…`; the diagram title is sanitized but never
+  truncated; a set-but-invalid value falls back to 40), documented in
+  `server.json`, the root `README.md`, the rulebook, and the tool/CLI
+  docstrings; the `specmgr diagram refs <type> <id> [...]` / `specmgr
+  diagram refs all` CLI (exit codes 0/1/2, the lazy `mcp`-extra import,
+  `<id>.refs.puml` / `reference-graph.puml` under `diagrams/refs/`,
+  written artifacts checker-clean by construction); and the host surface
+  (the `specmgr-refs` skill's fifth diagram workflow row — the
+  rendered/diagram/PlantUML/`.puml` phrasings; the bare "show me the
+  reference graph[, N levels deep]" phrasing stays with the multi-hop
+  text row — plus the new `/ref-graph` command).
 - A bidirectional drift regression test (`tests/test_server_json.py`) guarding
   `server.json`'s `environmentVariables` against the `SPECMGR_*` environment
   variables the code actually reads in `src/`: the test scans the source for the
