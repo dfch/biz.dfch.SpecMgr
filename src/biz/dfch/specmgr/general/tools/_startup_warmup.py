@@ -55,9 +55,9 @@ own Design Notes for the full GIL-contention analysis.
 
 from __future__ import annotations
 
-import os
 import threading
 
+from ... import _envregistry
 from ...feat.tools._warmup import warmup_feat_caches
 from ._embedding import SIMILARITY_DISABLED_ENV_VAR
 from ._similarity_search import warmup_similarity_cache
@@ -69,6 +69,23 @@ __all__ = ["FEAT_WARMUP_DISABLED_ENV_VAR", "start_startup_warmup"]
 #: (mirrors ``SPECMGR_SIMILARITY_DISABLED``). Absent (the default): both
 #: ``feat`` phases run.
 FEAT_WARMUP_DISABLED_ENV_VAR = "SPECMGR_FEAT_WARMUP_DISABLED"
+
+# The registry record for :data:`FEAT_WARMUP_DISABLED_ENV_VAR` (feat-208,
+# Phase 110; the read sites migrated to the registry accessor in Phase
+# 130): presence-based (no default -- a set-but-empty value still gates
+# the phases: every gate reads the raw ``_envregistry.get(name) is not
+# None``, never ``get_with_default``).
+_envregistry.register(
+    FEAT_WARMUP_DISABLED_ENV_VAR,
+    description=(
+        "Presence-based opt-out for the feat domain's two background cache-warming phases (frontmatter "
+        "and full-parse) of the unified server-startup warmup thread: set to any value to skip both "
+        "phases; when set together with SPECMGR_SIMILARITY_DISABLED, no warmup thread is started at "
+        "all. Unset by default. Its resolved state is reported by the feat_warmup_disabled field of "
+        "the specmgr://config resource."
+    ),
+    owner="general",
+)
 
 #: The unified warmup thread's own name (diagnostics: shows up as its own
 #: thread in ``threading.enumerate()``/profilers; a daemon, so it dies with
@@ -87,9 +104,9 @@ def _run_all_phases() -> None:
     both already never raise) -- this function adds only the per-phase
     gating, strictly in order.
     """
-    if os.environ.get(FEAT_WARMUP_DISABLED_ENV_VAR) is None:
+    if _envregistry.get(FEAT_WARMUP_DISABLED_ENV_VAR) is None:
         warmup_feat_caches()
-    if os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is None:
+    if _envregistry.get(SIMILARITY_DISABLED_ENV_VAR) is None:
         warmup_similarity_cache()
 
 
@@ -117,8 +134,8 @@ def start_startup_warmup() -> threading.Thread | None:
         The started daemon thread, or ``None`` when both opt-out flags are
         present and no thread was started.
     """
-    feat_disabled = os.environ.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None
-    similarity_disabled = os.environ.get(SIMILARITY_DISABLED_ENV_VAR) is not None
+    feat_disabled = _envregistry.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None
+    similarity_disabled = _envregistry.get(SIMILARITY_DISABLED_ENV_VAR) is not None
     if feat_disabled and similarity_disabled:
         result: threading.Thread | None = None
         return result

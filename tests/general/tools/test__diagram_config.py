@@ -21,10 +21,12 @@ The ``SPECMGR_DIAGRAM_MAX_TITLE`` env-var helper (rulebook §5.2): unset ⇒
 ``(40, True)`` (the default, valid); a valid int N ⇒ ``(N, True)``;
 set-but-invalid (empty, non-int, or < 1) ⇒ ``(40, False)`` (the fallback
 with the invalidity flag the Phase 120 ``specmgr://config`` ``diagram``
-section surfaces). The helper follows the ``plantuml/chain.py``
-``ENV_VAR_*`` + ``os.environ.get`` idiom (the int parse with fallback +
-validity flag is the new part); the pure renderer never reads the env var
-itself (it takes ``max_label`` as a plain parameter).
+section surfaces). The helper registers the variable in the central
+env-var registry at import time and reads it through the registry's
+``get_with_default`` accessor (the feat-208 dev sync; the int parse with
+fallback + validity flag on top is the helper's own part); the pure
+renderer never reads the env var itself (it takes ``max_label`` as a plain
+parameter).
 """
 
 from __future__ import annotations
@@ -32,6 +34,7 @@ from __future__ import annotations
 import os
 import unittest
 
+from biz.dfch.specmgr import _envregistry
 from biz.dfch.specmgr.general.models.reference_graph import DEFAULT_MAX_LABEL
 from biz.dfch.specmgr.general.tools._diagram_config import (
     DEFAULT_MAX_TITLE,
@@ -81,6 +84,15 @@ class TestDiagramMaxTitle(unittest.TestCase):
 
     def test_env_var_name(self):
         self.assertEqual(ENV_VAR_DIAGRAM_MAX_TITLE, "SPECMGR_DIAGRAM_MAX_TITLE")
+
+    def test_the_registry_record_default_equals_the_frozen_default(self):
+        """feat-208 dev sync: the registry record's own default ("40") must equal
+        ``str(DEFAULT_MAX_TITLE)`` -- the manifest/registry/code triple cannot
+        drift (the ``server.json`` entry documents the same "40", pinned by
+        ``tests/test_envregistry_coverage.py``'s manifest-fidelity tests)."""
+        record = next(entry for entry in _envregistry.all_vars() if entry.name == ENV_VAR_DIAGRAM_MAX_TITLE)
+        self.assertEqual(record.default, str(DEFAULT_MAX_TITLE))
+        self.assertEqual(record.default, "40")
 
 
 if __name__ == "__main__":

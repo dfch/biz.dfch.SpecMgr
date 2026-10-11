@@ -32,13 +32,13 @@ matching the "the on-disk file is the sole source of truth" design (plan
 
 from __future__ import annotations
 
-import os
 import re
 from collections.abc import Iterator
 from pathlib import Path
 
 from pydantic import ValidationError
 
+from ... import _envregistry
 from ...models.adr import AdrParseError, parse_adr
 
 __all__ = [
@@ -55,8 +55,31 @@ __all__ = [
 #: Environment variable that overrides the ADR base directory (plan §9a).
 ADR_DIR_ENV_VAR = "SPECMGR_ADR_DIR"
 
-#: Default ADR base directory, relative to the current working directory.
-DEFAULT_ADR_DIR = Path("docs/adr")
+#: The registry record for :data:`ADR_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`adr_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
+_adr_dir_var = _envregistry.register(
+    ADR_DIR_ENV_VAR,
+    default="docs/adr",
+    description="Base directory scanned for Architecture Decision Record (.md) files.",
+    owner="adr",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
+
+#: Default ADR base directory, relative to the current working directory
+#: (derived from the registry record above -- the registry is the single
+#: authority for the default; feat-208, Phase 110). The assert narrows the
+#: type for static checkers only (the record was registered with the
+#: non-None default literally above -- a program invariant, conventions
+#: Rule 2, mirroring ``_envregistry.get_with_default``'s own narrowing).
+assert _adr_dir_var.default is not None, (
+    f"{ADR_DIR_ENV_VAR!r} is registered with a non-None default above; the derived constant cannot be None"
+)
+DEFAULT_ADR_DIR = Path(_adr_dir_var.default)
 
 #: Anything that isn't a lowercase ASCII letter or digit, run-collapsed.
 _NON_ALNUM_RUN_PATTERN = re.compile(r"[^a-z0-9]+")
@@ -72,13 +95,16 @@ class AdrNotFoundError(LookupError):
 def adr_base_dir() -> Path:
     """Return the configured ADR base directory, without creating it.
 
-    Reads :data:`ADR_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_ADR_DIR`. Read-only tools (``get_adr``, ``option_list``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_adr_base_dir` for the write path.
+    Reads :data:`ADR_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_ADR_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_adr``,
+    ``option_list``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_adr_base_dir`
+    for the write path.
     """
-    value = os.environ.get(ADR_DIR_ENV_VAR)
-    return Path(value) if value else DEFAULT_ADR_DIR
+    result = Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))
+    return result
 
 
 def ensure_adr_base_dir() -> Path:
