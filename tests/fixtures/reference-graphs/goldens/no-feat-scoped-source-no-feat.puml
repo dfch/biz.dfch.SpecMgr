@@ -1,0 +1,25 @@
+@startuml No Feat Source
+
+skinparam component {
+  backgroundColor<<ADR>> LightYellow
+  backgroundColor<<REQ>> LightBlue
+  backgroundColor<<UC>> Pink
+  backgroundColor<<TSK>> Honeydew
+  backgroundColor<<QA>> LemonChiffon
+  backgroundColor<<PRB>> LightCoral
+  backgroundColor<<GOL>> Lavender
+  backgroundColor<<RSK>> Orange
+  backgroundColor<<DEC>> LightGreen
+  backgroundColor<<SOP>> PowderBlue
+  backgroundColor<<FEAT>> PaleTurquoise
+  backgroundColor<<VCR>> Khaki
+  backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<UNRESOLVED>> DarkRed
+}
+
+left to right direction
+
+package "REQ"
+component "No Feat Source" as [REQ-c008c008-c008-4c08-8c08-c008c008c008] <<REQ>>
+end package
+@enduml

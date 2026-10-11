@@ -107,6 +107,12 @@
           "description": "PlantUML server base URL, one of exactly three PlantUML validation-source selectors (the first one set, in JAR then BIN then URL order, is the only source used; no fall-through, no PATH discovery, no public default; all three unset is the offline structure-only floor). Diagram content is only sent to a PlantUML server if this variable is set. Unset by default. The selected source is reported by the plantuml section of the specmgr://config resource."
         },
         {
+          "name": "SPECMGR_DIAGRAM_MAX_TITLE",
+          "description": "Maximum length (in characters) of a resolved node's title label in the reference-graph diagrams (the get_reference_diagram / get_reference_diagram_all MCP tools and the specmgr diagram refs CLI): labels longer than the limit are cut at the last word boundary within the limit (a hard cut when there is none) with an ellipsis appended; the diagram title itself and unresolved node ids are never truncated. An integer; the default 40 applies when the variable is unset or set to an invalid value (empty, non-integer, or less than 1).",
+          "default": "40",
+          "format": "number"
+        },
+        {
           "name": "SPECMGR_TESTS_NO_DOTENV",
           "description": "Presence-based test/CI sentinel: set to any value to skip the CLI's module-level default .env load entirely, so the process runs under the CI (source-less) condition whatever the local (gitignored) .env configures; this is what keeps the specmgr coverage-badge pre-commit hook's source-less re-run source-less end-to-end. Unset by default, never set outside test runs."
         }

@@ -114,6 +114,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.parse_failure_result`](biz.dfch.specmgr.general.models.parse_failure_result.md) — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
 - [`biz.dfch.specmgr.general.models.reference`](biz.dfch.specmgr.general.models.reference.md) — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
+- [`biz.dfch.specmgr.general.models.reference_graph`](biz.dfch.specmgr.general.models.reference_graph.md) — The frozen reference-graph model + the deterministic PlantUML renderer (feat-207-reference-graph,
 - [`biz.dfch.specmgr.general.models.similarity_hit`](biz.dfch.specmgr.general.models.similarity_hit.md) — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
 - [`biz.dfch.specmgr.general.models.similarity_unavailable`](biz.dfch.specmgr.general.models.similarity_unavailable.md) — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
@@ -131,6 +132,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources.reference_graph`](biz.dfch.specmgr.general.resources.reference_graph.md) — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- [`biz.dfch.specmgr.general.tools._diagram_config`](biz.dfch.specmgr.general.tools._diagram_config.md) — The ``SPECMGR_DIAGRAM_MAX_TITLE`` env-var helper (feat-207-reference-graph, Phase 110, REQ-008).
 - [`biz.dfch.specmgr.general.tools._doc_cache`](biz.dfch.specmgr.general.tools._doc_cache.md) — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
 - [`biz.dfch.specmgr.general.tools._domains`](biz.dfch.specmgr.general.tools._domains.md) — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
@@ -140,6 +142,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
 - [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- [`biz.dfch.specmgr.general.tools._reference_graph`](biz.dfch.specmgr.general.tools._reference_graph.md) — The reference-graph builders: scoped source-centred and registry-wide graph construction
 - [`biz.dfch.specmgr.general.tools._references`](biz.dfch.specmgr.general.tools._references.md) — Shared cross-reference extraction and per-domain target resolution
 - [`biz.dfch.specmgr.general.tools._similarity_corpus`](biz.dfch.specmgr.general.tools._similarity_corpus.md) — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
 - [`biz.dfch.specmgr.general.tools._similarity_ranking`](biz.dfch.specmgr.general.tools._similarity_ranking.md) — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).

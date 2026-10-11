@@ -84,15 +84,23 @@ end package
 @enduml
 ```
 
-Block structure (the precise reading of "blank lines as shown"): five content
-blocks — (1) the `@startuml {title}` line, (2) the `skinparam component { … }`
-block, (3) the `left to right direction` line, (4) the node section (the
-top-level unresolved node lines, then the per-domain packages, with NO blank
-line between consecutive packages), (5) the edge section — are separated by
-exactly one blank line; a block with no content is omitted entirely (it
-leaves no residual blank line); `@enduml` always follows the last
-non-empty block directly (no blank line before it). The source ends with
-exactly one trailing newline.
+Section structure (the precise reading of "blank lines as shown"): the
+content sections — the `@startuml {title}` line, the `skinparam component
+{ … }` block, the `left to right direction` line, the top-level unresolved
+node lines (one subgroup), one `package "TYPE" … end package` per non-empty
+domain (one subgroup each, in the 13-domain order), and the edge section —
+are separated by exactly one blank line; an empty subgroup/section is
+omitted entirely (it leaves no residual blank line); `@enduml` always
+follows the last non-empty section directly (no blank line before it). The
+source ends with exactly one trailing newline.
+
+**§2.1 corrected 2026-10-11 (feat-207-reference-graph Phase 110):** the node
+section's subgroups (the top-level unresolved lines, then one package per
+non-empty domain) are separated by exactly one blank line, as §2.9's worked
+example and the plan's emission schematic show; the earlier "no blank line
+between consecutive packages" wording was a defect. The §2.9 byte layout is
+the frozen one (the Phase 100 gate test's candidate subset, the renderer,
+and the goldens all pin it).
 
 ### 2.2 Title
 
