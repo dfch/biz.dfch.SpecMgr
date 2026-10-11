@@ -536,7 +536,11 @@ a missing source raises the source domain's own ``XNotFoundError``
 (identical to ``get_<d>``); an existing-but-broken source returns the
 non-raising ``ParseFailureResult`` (``error``/``path``/``id``, the
 ``error`` text byte-identical to the domain's ``list_<d>`` failed-row
-``error`` for the same file, ADR 9080b37c);
+``error`` for the same file (ADR 9080b37c) for the 12 whole-body domains --
+time-qualified by ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 for ``feat``
+(``get_feat`` the unconditional full-fidelity authority), and the leg-read
+``AdrParseError``'s own text for ``adr`` (whose ``list_adr`` carries no
+failed row: broken ADRs are skipped));
 ``get_reference_diagram_all`` (feat-207-reference-graph, Phase 120,
 REQ-005) -- the read-only, registry-wide reference-diagram tool: the same
 deterministic PlantUML component diagram over every parseable document of

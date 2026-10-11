@@ -840,9 +840,13 @@ type or cross-cutting:
     `feat-NNN` is rejected, `list_feat` discovers the exact id); a missing
     source raises the source domain's own `XNotFoundError` (identical to
     `get_<d>`/`list_references`); an existing-but-broken source returns
-    the non-raising `ParseFailureResult` (`error`/`path`/`id`, byte-
-    identical `error` to the domain's `list_<d>` failed row — ADR
-    9080b37c, case 3 of the ADR 519d1206 chain); `reverse` is additive
+    the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error`
+    byte-identical to the domain's `list_<d>` failed row (ADR 9080b37c) for
+    the 12 whole-body domains — time-qualified by ADR 3982712a for `feat`
+    (`get_feat` the unconditional full-fidelity authority), and the leg-read
+    `AdrParseError`'s own text for `adr` (whose `list_adr` carries no failed
+    row: broken ADRs are skipped), case 3 of the ADR 519d1206 chain);
+    `reverse` is additive
     (the forward expansion to `depth` plus the direct incoming edges,
     direct-only on the incoming side), `include_feat=False` drops every
     FEAT node except the explicitly requested source (then every edge
@@ -1053,7 +1057,7 @@ import graph is AST-pinned (mirroring `plantuml/`'s import-free pin)
 because `cli.py`/`commands/mcp.py` import it at module level in a
 `[cli]`-only install — the originally drafted `general/tools/` home is
 rejected precisely because `general/tools/__init__.py` eagerly imports all
-ten `@mcp.tool()` modules (→ `server` → third-party `mcp`), which would
+twelve `@mcp.tool()` modules (→ `server` → third-party `mcp`), which would
 crash every CLI command in a `[cli]`-only install; do not move it there.
 Registration happens at import time of each owning module (the ten
 modules; the plantuml trio via its uc-domain consumer

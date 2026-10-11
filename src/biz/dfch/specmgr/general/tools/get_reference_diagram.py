@@ -45,8 +45,12 @@ error mapping (a missing source raises the source domain's own
 existing-but-broken source returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` -- case 3 of the
 ADR 519d1206 workaround chain -- with the ``error`` text byte-identical to
-that domain's ``list_<d>`` failed-row ``error`` for the same file, ADR
-9080b37c), the ``title`` override (replaces the graph's title before
+the domain's ``list_<d>`` failed-row ``error`` for the same file (ADR
+9080b37c) for the 12 whole-body domains -- time-qualified by ADR
+3982712a for ``feat`` (``get_feat`` the unconditional full-fidelity
+authority) -- and, for ``adr`` (whose ``list_adr`` carries no failed row:
+broken ADRs are skipped), the leg-read ``AdrParseError``'s own text), the
+``title`` override (replaces the graph's title before
 rendering; the renderer sanitizes the title but never truncates it), and the
 ``max_label`` read via the shared env-var helper (the pure renderer takes it
 as a plain parameter and never reads the env var itself).
@@ -127,16 +131,22 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
     own ``_raise_broken_source`` runs the identical probes and re-raises;
     this one returns instead): ``feat`` goes through
     ``feat.tools._paths.find_feat_parse_failure`` (the folder-per-document
-    counterpart), every other domain through the shared flat-file
-    ``find_parse_failure`` name-match scan called with the domain's own
-    cache-backed ``read_<d>`` (the same ``read_fn`` the domain's ``list_<d>``
-    failed row reads with, so the captured ``str(exc)`` is byte-identical to
-    that row's ``error`` -- ADR 9080b37c). For ``adr``, ``find_parse_failure``
+    counterpart -- its ``error`` is byte-identical to ``list_feat``'s own
+    failed row for the same file once that file's clean stage has converged,
+    time-qualified by ADR 3982712a), every other domain through the shared
+    flat-file ``find_parse_failure`` name-match scan called with the
+    domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
+    whole-body domains, whose ``list_<d>`` failed row reads with the same
+    ``read_fn``, so the captured ``str(exc)`` is byte-identical to that
+    row's ``error`` -- ADR 9080b37c). For ``adr``, ``find_parse_failure``
     's own leg read propagates the domain's parse error (``AdrParseError`` is
     outside its catch tuple -- the Phase 110 mechanism's own adr channel), in
-    which case the single name-matching file is the broken source itself. The
-    probed path passes the same ``assert_within`` guard every
-    ``get_<d>``/``update`` branch applies.
+    which case the single name-matching file is the broken source itself and
+    the captured ``str(exc)`` is that ``AdrParseError``'s own text
+    (``list_adr`` carries no failed row -- broken ADRs are skipped -- so the
+    ADR 9080b37c byte-identity has no referent there). The probed path
+    passes the same ``assert_within`` guard every ``get_<d>``/``update``
+    branch applies.
 
     Parameters
     ----------
@@ -204,8 +214,11 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
         "id) and `depth` are both a `ValueError` raised before any filesystem access; a missing "
         "source raises the source domain's own `XNotFoundError`; an existing-but-broken source "
         "returns the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error` text "
-        "byte-identical to the domain's `list_<d>` failed-row `error` for the same file, ADR "
-        "9080b37c). Returns PlantUML source (not a specmgr document) -- run it through "
+        "byte-identical to the domain's `list_<d>` failed-row `error` for the same file (ADR "
+        "9080b37c) for the 12 whole-body domains -- time-qualified by ADR 3982712a for `feat`; "
+        "for `adr` (whose `list_adr` carries no failed row: broken ADRs are skipped), the "
+        "leg-read `AdrParseError`'s own text). Returns PlantUML source (not a specmgr document) "
+        "-- run it through "
         "`specmgr plantuml-check` (CLI) or the `validate_plantuml` tool for a validation verdict."
     ),
 )
@@ -247,7 +260,11 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` (case 3 of
     the ADR 519d1206 workaround chain) instead of raising -- its ``error``
     text is byte-identical to that domain's ``list_<d>`` failed-row
-    ``error`` for the same file (ADR 9080b37c). The build then never raises
+    ``error`` for the same file (ADR 9080b37c) for the 12 whole-body domains
+    -- time-qualified by ADR 3982712a for ``feat`` (``get_feat`` the
+    unconditional full-fidelity authority) -- and, for ``adr`` (whose
+    ``list_adr`` carries no failed row: broken ADRs are skipped), the
+    leg-read ``AdrParseError``'s own text. The build then never raises
     for target-side content (a dangling target becomes the unresolved node),
     and the render is pure.
 

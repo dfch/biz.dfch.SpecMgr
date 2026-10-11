@@ -129,6 +129,15 @@ and the goldens all pin it).
 - Labels are always emitted in double quotes; the structural quotes are added
   after sanitisation and remain real `"` (UC rulebook §2.4).
 
+**§2.4 corrected 2026-10-12 (feat-207-reference-graph review fixes):** a
+resolved FEAT node's label is its H1 WITH the `Feature: ` prefix stripped
+(the `feature_title` derivation, the §3.1 "node title via the reference
+resolution") before the §5 sanitisation + truncation — the first bullet's
+unstripped "its H1" reading is the non-FEAT one. The §2.9 worked example's
+FEAT label (`"Feature: PlantUML Reference Graph Diagrams"`) is the
+hand-built renderer anchor's verbatim text (see the §2.9 note below), not
+builder output.
+
 ### 2.5 Palette (the frozen 14-entry skinparam block)
 
 The `skinparam component { … }` block of §2.1, verbatim — always emitted in
@@ -222,6 +231,13 @@ This exact source is the candidate emission subset the Phase 100
 real-parser gate (§4.3) verifies, and it must pass the amended structure
 checker in both modes with ZERO findings (ACC-002).
 
+**§2.9 note 2026-10-12 (feat-207-reference-graph review fixes):** the
+worked example is the `max_label=42` rendering of its own fact collection —
+its 42-character FEAT label is the §5.2 exactly-N no-op case, and at the
+default 40 that label would truncate (the renderer unit test,
+`tests/general/models/test_reference_graph.py`, renders the anchor at 42
+for byte-identity).
+
 ### 2.10 File layout (CLI)
 
 `specmgr diagram refs` writes, CWD-relative under `--out` (default
@@ -259,10 +275,12 @@ forward part only and is never a no-op.
 
 ### 3.3 Registry-wide
 
-The same 13-domain scan: every successfully-parsed document is a node; every
-extracted reference is an edge; a target not present as a scanned document
-gets its title via the reference resolution (dangling ⇒ the unresolved node
-of §2.6).
+The same 13-domain scan: every successfully-parsed document is a node — a
+document whose frontmatter `id` is `None` is skipped (it carries no
+`(type, id)` graph key; reachable today only for hand-authored id-less
+ADRs); every extracted reference is an edge; a target not present as a
+scanned document gets its title via the reference resolution (dangling ⇒
+the unresolved node of §2.6).
 
 ### 3.4 Broken documents
 

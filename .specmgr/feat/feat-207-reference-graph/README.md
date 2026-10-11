@@ -4,7 +4,7 @@ created: '2026-10-09T08:16:24.927+02:00'
 id: feat-207-reference-graph
 status: review
 type: feat
-updated: '2026-10-11T19:41:05.121+02:00'
+updated: '2026-10-12T01:22:11.401+02:00'
 version: 1.0.0
 ---
 
@@ -234,6 +234,10 @@ end package
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-12T01:22:11.401+02:00 - feat-reviewer pass applied: review fixes G2/G3/G4 + I1/I2 landed (wording/docs only, no behavior change)
+
+Applied the post-implementation feat-reviewer pass (verdict: ship-ready-with-notes) — wording/docs fixes only; the renderer, builders, tools, CLI, and checker are untouched. G2: `AGENTS.md`'s `_envregistry` paragraph now says `general/tools/__init__.py` eagerly imports all **twelve** `@mcp.tool()` modules (verified against the current import list — feat-207 added `get_reference_diagram`/`get_reference_diagram_all`; the adjacent feat-208 "ten owning modules" wording names a different set and stays as-is). G3: rulebook §2.4 gains a dated correction note — a resolved FEAT node's label is its H1 WITH the `Feature: ` prefix stripped (the `feature_title` derivation, as in §3.1's "node title via the reference resolution"), and the §2.9 worked example's FEAT label is the hand-built renderer anchor's verbatim text, not builder output. I1: rulebook §2.9 gains a dated note that the worked example is the `max_label=42` rendering — its 42-character FEAT label is the §5.2 exactly-N no-op case, and at the default 40 that label would truncate (the renderer unit test, `tests/general/models/test_reference_graph.py`, renders the anchor at 42 for byte-identity). I2: rulebook §3.3 now states that a document whose frontmatter `id` is `None` is skipped (it carries no `(type, id)` graph key; reachable today only for hand-authored id-less ADRs). G4: the `ParseFailureResult` byte-identity claim (ADR 9080b37c) now carries its `adr`/`feat` carve-out in every text that carries it — the `get_reference_diagram` module docstring, the private `_broken_source_failure` helper docstring, the `@mcp.tool()` description, the function docstring, the `server.py` module docstring entry, and the `AGENTS.md` general bullet (byte-identity for the 12 whole-body domains; time-qualified by ADR 3982712a for `feat`, `get_feat` the unconditional full-fidelity authority; for `adr`, `list_adr` carries no failed row — broken ADRs are skipped — so the `error` is the leg-read `AdrParseError`'s own text). G1 (flipping the six ACC checkboxes) is explicitly NOT applied here — it belongs to the post-merge `done` step: all `- [ ] ACC-...` boxes, every task box, and `status: review` are untouched. `docs/api/` and `docs/MCP.md` regenerated for the docstring/description changes. Full suite green at 4649 passed, 17 skipped, 5644 subtests (the merge-commit baseline, unchanged).
 
 #### 2026-10-11T19:41:05.121+02:00 - origin/dev sync (feat-208 env-var registry): 4 conflicts resolved, `SPECMGR_DIAGRAM_MAX_TITLE` migrated onto the central registry
 
