@@ -90,7 +90,24 @@ returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
 reference (``type``/``id``/``title``/``path``, plus ``error`` for
 references that could not be resolved -- the shared ``list_*`` paging
 mechanism, ADR ec9f5262; feat-144-ref-artifact, the ``feat`` tag added
-by feat-177-list-ref-feat).
+by feat-177-list-ref-feat). ``get_reference_diagram`` -- the
+read-only, id-based reference-diagram tool (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): renders one source
+document's reference neighbourhood as the deterministic PlantUML component
+diagram of the frozen ``specmgr://reference-graph`` rulebook (one node per
+artifact, a stereotype + colour per type, per-domain packages, one edge per
+unique reference, on-cycle edges red, dangling targets top-level
+``<<UNRESOLVED>>`` nodes) -- the guard order is ``validate_id`` + the
+``depth`` 1..5 range check (both ``ValueError`` before any filesystem
+access), a missing source raises the source domain's own ``XNotFoundError``,
+and an existing-but-broken source returns the non-raising
+``ParseFailureResult`` (feat-207-reference-graph, Phase 120).
+``get_reference_diagram_all`` -- the read-only, registry-wide
+reference-diagram tool: the same deterministic PlantUML component diagram
+over every parseable document of all 13 domains (broken documents are
+skipped -- the render never fails for content), with the
+``include_feat`` switch and an optional ``title`` override
+(feat-207-reference-graph, Phase 120).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)
@@ -100,6 +117,8 @@ from .delete import delete
 from .edit import edit
 from .find_related import find_related
 from .find_similar_text import find_similar_text
+from .get_reference_diagram import get_reference_diagram
+from .get_reference_diagram_all import get_reference_diagram_all
 from .list_references import list_references
 from .mdformat import mdformat
 from .set_classification import set_classification
@@ -112,6 +131,8 @@ __all__ = [
     "edit",
     "find_related",
     "find_similar_text",
+    "get_reference_diagram",
+    "get_reference_diagram_all",
     "list_references",
     "mdformat",
     "set_classification",

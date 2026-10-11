@@ -15,7 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the specmgr://config resource (feat-51-mcp-cwd, plus the static similarity section, feat-134 Phase 7)."""
+"""Tests for the specmgr://config resource (feat-51-mcp-cwd, plus the static similarity (feat-134 Phase 7),
+plantuml (feat-185-uc-diagrams Phase 120), and diagram (feat-207-reference-graph Phase 120) sections)."""
 
 import json
 import os
@@ -28,6 +29,7 @@ from unittest import mock
 from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.resources.config import config_info
+from biz.dfch.specmgr.general.tools._diagram_config import ENV_VAR_DIAGRAM_MAX_TITLE
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
@@ -321,7 +323,7 @@ class TestConfigResourcePlantuml(unittest.TestCase):
 
     def test_source_values_never_appear_in_the_payload(self):
         """REQ-002 (the resource's own no-disclosure contract, extended to the plantuml section):
-        the values of the three vars (a jar path, a bin path, a server URL) must never leak."""
+        the values of the three vars (a jar path, a bin path, or a server URL) must never leak."""
         secret_jar = "/secrets/plantuml.jar-should-never-leak"
         secret_bin = "/secrets/plantuml-adapter-should-never-leak"
         secret_url = "http://secrets.internal:8080/should-never-leak"
@@ -340,6 +342,79 @@ class TestConfigResourcePlantuml(unittest.TestCase):
         for secret in (secret_jar, secret_bin, secret_url):
             with self.subTest(secret=secret):
                 self.assertNotIn(secret, as_json)
+
+
+class TestConfigResourceDiagram(unittest.TestCase):
+    """The static ``diagram`` section (feat-207-reference-graph Phase 120, REQ-010, rulebook §5).
+
+    ``specmgr://config`` reports the ``SPECMGR_DIAGRAM_MAX_TITLE``
+    reference-graph label limit's status: **presence only** for the env
+    value (never the raw value -- the resource's own no-disclosure
+    contract, feat-51-mcp-cwd REQ-002), the shared helper's validity flag,
+    the frozen default (40), and ``resolved`` -- a DERIVED value, the
+    effective limit the reference-graph tools render with (40 when unset
+    or set-but-invalid, the set int otherwise -- the ``base_dir``/
+    ``cache_dir`` resolved-value precedent).
+    """
+
+    def test_returns_a_diagram_config_with_the_frozen_shape(self):
+        """The payload must carry a diagram section with exactly the frozen shape: set/valid/
+        default/resolved, the default the frozen 40."""
+        from biz.dfch.specmgr.models import DiagramConfig
+
+        result = config_info()
+        self.assertIsInstance(result.diagram, DiagramConfig)
+        self.assertEqual(set(result.diagram.model_dump()), {"set", "valid", "default", "resolved"})
+        self.assertIsInstance(result.diagram.set, bool)
+        self.assertIsInstance(result.diagram.valid, bool)
+        self.assertIsInstance(result.diagram.default, int)
+        self.assertIsInstance(result.diagram.resolved, int)
+        self.assertEqual(result.diagram.default, 40)
+
+    def test_unset_reports_the_default_resolved_and_valid(self):
+        """The helper's own contract (Phase 110): unset => (40, True)."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(ENV_VAR_DIAGRAM_MAX_TITLE, None)
+            result = config_info()
+
+        self.assertFalse(result.diagram.set)
+        self.assertTrue(result.diagram.valid)
+        self.assertEqual(result.diagram.resolved, 40)
+
+    def test_a_valid_set_value_is_the_resolved_one(self):
+        """A valid int N => set=True, valid=True, resolved=N (the helper's (N, True))."""
+        for value, expected in (("1", 1), ("12", 12), ("40", 40), ("999", 999)):
+            with self.subTest(value=value):
+                with mock.patch.dict(os.environ, {ENV_VAR_DIAGRAM_MAX_TITLE: value}, clear=False):
+                    result = config_info()
+                self.assertTrue(result.diagram.set)
+                self.assertTrue(result.diagram.valid)
+                self.assertEqual(result.diagram.resolved, expected)
+
+    def test_a_set_but_invalid_value_falls_back_with_the_invalid_flag(self):
+        """Set-but-invalid (empty, non-int, or < 1) => set=True, valid=False, resolved=40 (the
+        helper's (40, False))."""
+        for value in ("", "abc", "0", "-5", "3.5"):
+            with self.subTest(value=value):
+                with mock.patch.dict(os.environ, {ENV_VAR_DIAGRAM_MAX_TITLE: value}, clear=False):
+                    result = config_info()
+                self.assertTrue(result.diagram.set)
+                self.assertFalse(result.diagram.valid)
+                self.assertEqual(result.diagram.resolved, 40)
+
+    def test_a_set_but_invalid_raw_value_never_appears_in_the_payload(self):
+        """REQ-002 (the resource's own no-disclosure contract, extended to the diagram section):
+        the raw env value (a string when set-but-invalid) must never leak into the payload --
+        only its presence (set), validity (valid), and the derived effective limit (resolved)."""
+        raw = "definitely-not-a-number-should-never-leak"
+        with mock.patch.dict(os.environ, {ENV_VAR_DIAGRAM_MAX_TITLE: raw}, clear=False):
+            result = config_info()
+            as_json = result.model_dump_json()
+
+        self.assertNotIn(raw, as_json)
+        self.assertTrue(result.diagram.set)
+        self.assertFalse(result.diagram.valid)
+        self.assertEqual(result.diagram.resolved, 40)
 
 
 if __name__ == "__main__":

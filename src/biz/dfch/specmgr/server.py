@@ -174,7 +174,15 @@ specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, g
                         exactly-three source env vars (SPECMGR_PLANTUML_JAR/
                         SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never
                         a value) plus ``selected`` -- the first-set-wins selection over
-                        them ("jar"/"bin"/"url"/"none"). Plus whether the presence-based
+                        them ("jar"/"bin"/"url"/"none"). Plus a static ``diagram`` section
+                        for the reference-graph label limit (feat-207-reference-graph Phase
+                        120, REQ-010): the presence-only state of
+                        ``SPECMGR_DIAGRAM_MAX_TITLE`` ({set: bool}, never a value), the
+                        helper's validity flag ({valid: bool}), the frozen default (40), and
+                        ``resolved`` -- a derived value, the effective label limit the
+                        ``get_reference_diagram``/``get_reference_diagram_all`` tools render
+                        with (40 when unset or set-but-invalid, the set int otherwise). Plus
+                        whether the presence-based
                         ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag is set (the unified
                         startup warmup's ``feat`` frontmatter/full-parse phases,
                         feat-187-list-feat-timeout, Task 110.120). Static configuration
@@ -506,7 +514,37 @@ It applies the same ``_path_safety`` guards: an invalid source
 ``type``/``id`` (unknown type, path-injection attempt, or wrong-format
 id) is a ``ValueError`` before any filesystem access, and a source
 document that does not exist on disk raises the source domain's own
-``XNotFoundError`` (identical to ``get_<d>``).
+``XNotFoundError`` (identical to ``get_<d>``);
+``get_reference_diagram`` (feat-207-reference-graph, Phase 120, REQ-004)
+-- the read-only, id-based reference-diagram tool: takes a *source*
+document's ``type`` (one of
+``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
+and its ``id``, plus ``depth`` (1..5, default 1, the forward BFS depth),
+``reverse`` (additive, direct-only on the incoming side), ``include_feat``
+(the FEAT exclusion, applied last), and an optional ``title`` override;
+renders the source document's reference neighbourhood as the deterministic
+PlantUML component diagram of the frozen ``specmgr://reference-graph``
+rulebook (one node per artifact -- label = the document title, truncated
+to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40 -- a stereotype + colour per
+type, per-domain packages, one edge per unique reference, on-cycle edges
+red, dangling targets top-level ``<<UNRESOLVED>>`` nodes), returning the
+byte-stable PlantUML source. Guard order: ``id`` (for ``type="feat"`` the
+full ``feat-NNN-slug`` only -- a bare ``feat-NNN`` is a wrong-format id,
+not a normalization candidate; use ``list_feat`` to discover the exact
+id) and ``depth`` are both a ``ValueError`` before any filesystem access;
+a missing source raises the source domain's own ``XNotFoundError``
+(identical to ``get_<d>``); an existing-but-broken source returns the
+non-raising ``ParseFailureResult`` (``error``/``path``/``id``, the
+``error`` text byte-identical to the domain's ``list_<d>`` failed-row
+``error`` for the same file, ADR 9080b37c);
+``get_reference_diagram_all`` (feat-207-reference-graph, Phase 120,
+REQ-005) -- the read-only, registry-wide reference-diagram tool: the same
+deterministic PlantUML component diagram over every parseable document of
+all 13 domains (broken documents are skipped -- the render never fails for
+content), with the ``include_feat`` switch (the FEAT exclusion, applied
+last) and an optional ``title`` override (default: ``Reference Graph``;
+the diagram title is sanitized but never truncated, the node labels are
+truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40).
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, the generic

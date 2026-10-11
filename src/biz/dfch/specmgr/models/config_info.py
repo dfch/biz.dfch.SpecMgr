@@ -30,6 +30,12 @@ carries ``feat_warmup_disabled``, the presence of the new
 not a new nested model, since it is the one additional fact this feature
 needs to report and does not warrant its own section the way the
 similarity feature's richer static configuration did.
+
+feat-207-reference-graph, Phase 120, REQ-010: :class:`ConfigInfo`
+additionally carries the static ``diagram`` section (the
+``SPECMGR_DIAGRAM_MAX_TITLE`` reference-graph label limit: presence +
+validity of the env value, the frozen default, and the derived ``resolved``
+effective limit): :class:`DiagramConfig`.
 """
 
 from __future__ import annotations
@@ -148,9 +154,46 @@ class PlantumlConfig(BaseModel):
     selected: Literal["jar", "bin", "url", "none"]
 
 
+class DiagramConfig(BaseModel):
+    """The static ``diagram`` section of ``specmgr://config`` (feat-207-reference-graph Phase 120, REQ-010).
+
+    The ``SPECMGR_DIAGRAM_MAX_TITLE`` reference-graph label limit's status:
+    the presence-only state of the env var (never its *value* -- the
+    resource's own no-disclosure contract, feat-51-mcp-cwd REQ-002) plus the
+    helper's validity flag and the DERIVED ``resolved`` effective limit
+    (the ``base_dir``/``cache_dir`` resolved-value precedent).
+
+    Parameters
+    ----------
+    set:
+        Whether ``SPECMGR_DIAGRAM_MAX_TITLE`` is present in the current
+        process environment (``os.environ.get(name) is not None`` -- any
+        value counts; presence-only, never the value).
+    valid:
+        Whether the set value actually determines the limit: ``True`` when
+        unset (the default is valid) or set to a valid int ≥ 1; ``False``
+        when set-but-invalid (empty, non-int, or < 1 -- the helper's
+        fallback flag).
+    default:
+        The frozen default label limit (40 -- the env var's own default,
+        the shared ``general.tools._diagram_config.DEFAULT_MAX_TITLE``
+        constant).
+    resolved:
+        The DERIVED effective label limit the reference-graph tools (and
+        CLI) render with: the value from the shared
+        ``general.tools._diagram_config.diagram_max_title()`` helper -- 40
+        when unset or set-but-invalid, the set int otherwise.
+    """
+
+    set: bool
+    valid: bool
+    default: int
+    resolved: int
+
+
 class ConfigInfo(BaseModel):
-    """Resolved base directory configuration for every document domain, plus the similarity and plantuml
-    sections and the feat_warmup_disabled flag.
+    """Resolved base directory configuration for every document domain, plus the similarity, plantuml,
+    and diagram sections and the feat_warmup_disabled flag.
 
     Parameters
     ----------
@@ -165,6 +208,11 @@ class ConfigInfo(BaseModel):
         The static configuration of the PlantUML validation source
         (feat-185-uc-diagrams Phase 120): :class:`PlantumlConfig` --
         presence-only (never a value of the three env vars).
+    diagram:
+        The static configuration of the reference-graph label limit
+        (feat-207-reference-graph Phase 120, REQ-010):
+        :class:`DiagramConfig` -- presence-only for the env value, plus the
+        derived ``resolved`` effective limit.
     feat_warmup_disabled:
         Whether the presence-based ``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out
         flag is set in the current process environment (any value;
@@ -178,4 +226,5 @@ class ConfigInfo(BaseModel):
     domains: dict[str, DomainConfig]
     similarity: SimilarityConfig
     plantuml: PlantumlConfig
+    diagram: DiagramConfig
     feat_warmup_disabled: bool

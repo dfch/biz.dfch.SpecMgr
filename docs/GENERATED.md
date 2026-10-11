@@ -175,6 +175,8 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
 - `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
+- `general/tools/get_reference_diagram.py` — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
+- `general/tools/get_reference_diagram_all.py` — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
@@ -588,4 +590,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 423
+**Test files**: 425

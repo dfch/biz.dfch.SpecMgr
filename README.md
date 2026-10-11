@@ -190,6 +190,13 @@ tool call, so hand-editing a file between calls is safe.
   PATH discovery, no public default); all unset is the offline
   structure-only floor. See [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
   for the how-to.
+- Reference-graph diagram label limit: `SPECMGR_DIAGRAM_MAX_TITLE` (an int,
+  default `40`) — the maximum length of a resolved node's H1 label in the
+  `get_reference_diagram` / `get_reference_diagram_all` PlantUML diagrams
+  (word-boundary cut + `…`; the diagram title itself is never truncated). A
+  set-but-invalid value (empty, non-int, or < 1) falls back to `40`. Its
+  set/valid/default/resolved status is reported by the `diagram` section of
+  the `specmgr://config` resource (the raw value is never disclosed).
 
 The `find_related`/`find_similar_text` tools (semantic-similarity search,
 requires the `similarity` extra) are turned off by setting the

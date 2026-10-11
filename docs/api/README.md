@@ -155,6 +155,8 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools.edit`](biz.dfch.specmgr.general.tools.edit.md) — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - [`biz.dfch.specmgr.general.tools.find_related`](biz.dfch.specmgr.general.tools.find_related.md) — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools.find_similar_text`](biz.dfch.specmgr.general.tools.find_similar_text.md) — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
+- [`biz.dfch.specmgr.general.tools.get_reference_diagram`](biz.dfch.specmgr.general.tools.get_reference_diagram.md) — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
+- [`biz.dfch.specmgr.general.tools.get_reference_diagram_all`](biz.dfch.specmgr.general.tools.get_reference_diagram_all.md) — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
 - [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
