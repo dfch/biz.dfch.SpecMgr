@@ -83,6 +83,7 @@ from biz.dfch.specmgr import _envregistry
 from tests._env_scan import (
     REPO_ROOT,
     SHAPE_TYPER_ENVVAR,
+    _code_lines,
     scan_env_var_read_sites,
     typer_option_default_expression,
 )
@@ -354,6 +355,11 @@ class TestTyperMcpOptionDefaults(unittest.TestCase):
             "the central env-var registry is empty -- the nine owning-module side-effect imports did not run"
         )
         self.mcp_source = MCP_COMMAND_PATH.read_text(encoding="utf-8")
+        # Code text (docstring/comment-blanked) for the default-expression
+        # extraction, per its documented contract (and its internal consumer's
+        # own usage): a `] =`-shaped line inside a docstring in the scan region
+        # must not be mistaken for the option's Annotated close.
+        self.mcp_code_text = "\n".join(_code_lines(self.mcp_source))
         self.mcp_globals: dict[str, object] = dict(vars(sys.modules["biz.dfch.specmgr.commands.mcp"]))
         sites = scan_env_var_read_sites()
         self.option_sites: dict[str, list] = {var: [] for var in _MCP_OPTION_VARS}
@@ -375,7 +381,7 @@ class TestTyperMcpOptionDefaults(unittest.TestCase):
             if len(sites) != 1:
                 problems.append(f"{var} has {len(sites)} Typer envvar option site(s) in commands/mcp.py (expected 1)")
                 continue
-            expression = typer_option_default_expression(self.mcp_source, sites[0].line)
+            expression = typer_option_default_expression(self.mcp_code_text, sites[0].line)
             if expression is None or expression == "":
                 problems.append(f"{var}'s Typer option in commands/mcp.py carries no extractable `default=` expression")
                 continue
@@ -414,11 +420,18 @@ class TestTyperMcpOptionDefaults(unittest.TestCase):
             sites = self.option_sites.get(var, [])
             if len(sites) != 1:
                 continue  # named by the other tests
-            expression = typer_option_default_expression(self.mcp_source, sites[0].line)
+            expression = typer_option_default_expression(self.mcp_code_text, sites[0].line)
             if expression is None or expression == "":
                 continue  # named by the other tests
+            if _REGISTRY_REF_RE.fullmatch(expression) is None:
+                problems.append(
+                    f"{var}'s Typer option default is the raw expression {expression!r}, not a reference to the "
+                    "registry record's default (expected `<identifier>.default` or `int(<identifier>.default)`) -- "
+                    "refusing to eval an unvalidated expression (the sibling reference test applies the same gate)"
+                )
+                continue
             expected = int(record.default) if expression.startswith("int(") else record.default
-            value = eval(expression, self.mcp_globals)  # the expression is regex-validated as a record reference
+            value = eval(expression, self.mcp_globals)  # the expression is regex-validated as a record reference above
             if value != expected:
                 problems.append(
                     f"{var}'s Typer option default {expression!r} evaluates to {value!r}, but the registry "

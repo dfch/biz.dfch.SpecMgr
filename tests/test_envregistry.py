@@ -340,6 +340,18 @@ class TestGetWithDefault(_IsolatedRegistry):
         self.assertIn("presence-based", message)
         self.assertIn("get()", message)
 
+    def test_presence_based_set_value_is_returned_unchanged(self):
+        # The accessor's set-value pass-through (its final ``else`` branch) for a
+        # presence-based variable: a set value -- the only value state reachable
+        # without tripping the unset loud-failure -- is returned as-is.
+        register(_NAME_PRESENCE, description="Presence gate.", owner="general")
+        sut = get_with_default
+
+        with mock.patch.dict(os.environ, {_NAME_PRESENCE: "set"}):
+            result = sut(_NAME_PRESENCE)
+
+        self.assertEqual(result, "set")
+
     def test_unknown_name_fails_loudly_naming_it(self):
         sut = get_with_default
 

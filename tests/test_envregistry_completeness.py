@@ -41,11 +41,20 @@ factored out of this test in Phase 160 so `tests/test_server_json.py`'s
 Self-contained: the nine owning modules' import-time registrations (feat-208
 Phase 110) are triggered by the explicit side-effect imports below -- the same
 module list `tests/test_envregistry_registration.py` uses -- so this test is
-green when run alone. These tests read the registry; they never register into
-it. The hosting probes are additionally pinned below: they are read in
-`commands/mcp.py` (raw-text grep plus a broadened-pattern scan, so their
-exclusion is a tested fact rather than an unexamined literal), yet they are
-neither registered nor part of this test's own discovered set.
+green when run alone. The entry-point completeness test
+(`TestEntryPointCompleteness`) additionally imports the two real entry points
+-- `biz.dfch.specmgr.server` and `biz.dfch.specmgr.cli` -- at module level, so
+it pins the registry's completeness in the production import context (the
+`_envregistry.py` module docstring's "complete by the time any server/CLI entry
+point runs" claim), not just the nine-module test context; `server` is already
+in this module's import closure (the `general.resources.config` and
+`uc.tools.validate_plantuml` imports above each carry `from ...server import
+mcp`), so the explicit import adds no dependency. These tests read the
+registry; they never register into it. The hosting probes are additionally
+pinned below: they are read in `commands/mcp.py` (raw-text grep plus a
+broadened-pattern scan, so their exclusion is a tested fact rather than an
+unexamined literal), yet they are neither registered nor part of this test's
+own discovered set.
 """
 
 from __future__ import annotations
@@ -60,6 +69,7 @@ import biz.dfch.specmgr.general.resources.config  # noqa: F401 (side-effects onl
 import biz.dfch.specmgr.general.tools._doc_paths  # noqa: F401 (side-effects only: SPECMGR_DOCS_DIR registration)
 import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects only: SPECMGR_SIMILARITY_DISABLED registration)
 import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
+import biz.dfch.specmgr.server  # noqa: F401 (side-effects only: imports every domain package -- the real entry point that must leave the registry complete)
 import biz.dfch.specmgr.uc.tools.validate_plantuml  # noqa: F401 (side-effects only: the plantuml trio's registration)
 
 from biz.dfch.specmgr import _envregistry
@@ -75,6 +85,34 @@ from tests._env_scan import REPO_ROOT, discovery_name_pattern, scan_env_var_read
 #: in `commands/mcp.py`, visible to a broadened-pattern scan, yet absent from
 #: both the registry and this test's own (completeness-pattern) discovered set.
 _HOSTING_PROBE_EXCLUSIONS = frozenset({"KUBERNETES_SERVICE_HOST", "RAILWAY_PROJECT_ID", "RENDER"})
+
+#: The literal set of the 13 environment variables the registry must hold once
+#: the two real entry points (`biz.dfch.specmgr.server` and
+#: `biz.dfch.specmgr.cli`, imported at module level above) have run their
+#: import-time registrations (feat-208 Phase 110). Hardcoded on purpose -- not
+#: derived from `_envregistry.all_vars()` or from
+#: `tests/test_envregistry_registration.py`'s own table: if a future refactor
+#: moves a `register()` call into a module the entry points never import (or
+#: out of one they do), this set is what keeps the entry-point test below
+#: meaningful (it fails naming the var, instead of silently agreeing with the
+#: drifted registry).
+_ENTRY_POINT_NAME_SET = frozenset(
+    {
+        "SPECMGR_ADR_DIR",
+        "SPECMGR_DOCS_DIR",
+        "SPECMGR_FEAT_DIR",
+        "SPECMGR_MCP_TRANSPORT",
+        "SPECMGR_MCP_HOST",
+        "SPECMGR_MCP_PORT",
+        "SPECMGR_SIMILARITY_DISABLED",
+        "SPECMGR_FEAT_WARMUP_DISABLED",
+        "SPECMGR_PLANTUML_JAR",
+        "SPECMGR_PLANTUML_BIN",
+        "SPECMGR_PLANTUML_URL",
+        "SPECMGR_TESTS_NO_DOTENV",
+        "FASTEMBED_CACHE_PATH",
+    }
+)
 
 
 class TestRegistryToSourceCompleteness(unittest.TestCase):
@@ -133,6 +171,35 @@ class TestRegistryToSourceCompleteness(unittest.TestCase):
             sorted(_HOSTING_PROBE_EXCLUSIONS & self.discovered_names),
             "hosting probes in the completeness test's own discovered set -- the exclusion set "
             "must subtract them, not the name pattern",
+        )
+
+
+class TestEntryPointCompleteness(unittest.TestCase):
+    """The two real entry points (`server`, `cli`) leave the registry complete.
+
+    Every other registry-backed test in this feature imports the nine owning
+    modules directly (a documented self-containment choice, see the module
+    docstring). If a future refactor moved a `register()` call into a module
+    neither entry point imports, the registry would be silently incomplete in
+    production while those tests stayed green. This test's own imports are the
+    entry points themselves (module level above, so they run no matter which
+    other tests the worker process collected first), and the assertion is
+    against the literal 13-name set (`_ENTRY_POINT_NAME_SET`), pinning the
+    `_envregistry.py` module docstring's "complete by the time any server/CLI
+    entry point runs" claim (feat-208, REQ-001/ACC-001).
+    """
+
+    def test_registry_name_set_equals_the_13_names_after_the_entry_point_imports(self):
+        result = {entry.name for entry in _envregistry.all_vars()}
+
+        self.assertEqual(
+            result,
+            _ENTRY_POINT_NAME_SET,
+            "the central env-var registry is not complete after importing the real entry points "
+            "(biz.dfch.specmgr.server and biz.dfch.specmgr.cli, module level above): "
+            f"missing {sorted(_ENTRY_POINT_NAME_SET - result)}, "
+            f"extra {sorted(result - _ENTRY_POINT_NAME_SET)} -- a register() call moved to a module "
+            "the entry points never import (feat-208, REQ-001/ACC-001)",
         )
 
 

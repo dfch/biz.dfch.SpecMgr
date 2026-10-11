@@ -4,7 +4,7 @@ created: '2026-10-09T09:58:41.413+02:00'
 id: feat-208-env-var
 status: review
 type: feat
-updated: '2026-10-11T03:07:25.178+02:00'
+updated: '2026-10-11T15:09:21.700+02:00'
 version: 1.0.0
 ---
 
@@ -106,47 +106,47 @@ Verified state at planning time (2026-10-09):
 
 - [x] Task 100.100: Implement the registry module `biz/dfch/specmgr/_envregistry.py` (top-level, stdlib-only per Design Notes; `EnvVar` record with `name`/`default`/`description`/`owner`/`format`/`choices`/`empty_falls_back_to_default`, `register`, `get`, `get_with_default`, duplicate/conflict detection) per Design Notes (REQ-001/REQ-002).
 - [x] Task 100.110: Unit tests for the registry (default insertion, presence-based, set-but-empty, unknown name, conflicting re-registration), plus the import-graph pin: an AST test that `_envregistry.py` imports stdlib only (mirroring `plantuml/`'s import-free pin), so a `[cli]`-only import cannot reach `mcp`/`server` (REQ-001, ACC-001).
-- [ ] Task 100.120: Phase-end gate (full quality gate per Design Notes) plus exactly one Conventional Commit.
+- [x] Task 100.120: Phase-end gate (full quality gate per Design Notes) plus exactly one Conventional Commit.
 
 #### Phase 110: Register all env vars
 
 - [x] Task 110.100: Register all 12 `SPECMGR_*` vars at their owning modules with faithful defaults/descriptions/owners and the manifest's `format`s (`number` on `SPECMGR_MCP_PORT`, `filepath` on the three base-dir vars) (`SPECMGR_ADR_DIR` in `adr/tools/_paths.py`, `SPECMGR_DOCS_DIR` in `general/tools/_doc_paths.py`, `SPECMGR_FEAT_DIR` in `feat/tools/_paths.py`, the three Typer MCP vars in `commands/mcp.py`, `SPECMGR_SIMILARITY_DISABLED` in `general/tools/_embedding.py`, `SPECMGR_FEAT_WARMUP_DISABLED` in `general/tools/_startup_warmup.py`, the plantuml trio in the uc-domain consumer, `SPECMGR_TESTS_NO_DOTENV` in `cli.py`) (REQ-001, ACC-001).
 - [x] Task 110.110: Register `FASTEMBED_CACHE_PATH` at its read site in `general/resources/config.py` (owner: general/similarity, with the `empty_falls_back_to_default` flag) (REQ-001, ACC-001).
 - [x] Task 110.115: Capture the pre-migration `specmgr://config` golden: build the resource payload under a controlled environment (temp-dir CWD, none of the 13 registered vars set, the standard all-extras install so the `fastembed` spec lookup is stable) and commit the JSON as a test fixture under `tests/fixtures/` (the `base_dir`/`cache_dir` fields are absolute -- the comparison normalizes the temp-dir prefix); the capture must predate Phase 120's base-dir migration (REQ-005, ACC-005).
-- [ ] Task 110.120: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 110.120: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 120: Migrate the base-dir read sites
 
 - [x] Task 120.100: Migrate the base-dir read sites (`SPECMGR_ADR_DIR`, `SPECMGR_DOCS_DIR`, `SPECMGR_FEAT_DIR`) to the registry accessor (REQ-002, ACC-002).
 - [x] Task 120.110: Regression tests: base-dir resolution behaviour unchanged for default/override/set-but-empty.
-- [ ] Task 120.120: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 120.120: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 130: Migrate the presence-gate read sites
 
 - [x] Task 130.100: Migrate the presence-gate read sites (`SPECMGR_SIMILARITY_DISABLED`, `SPECMGR_FEAT_WARMUP_DISABLED`, `SPECMGR_TESTS_NO_DOTENV`) to the registry accessor, keeping `cli.NO_DOTENV_SENTINEL` a module-level constant of its current value (it is drift-pinned against `conftest.NO_DOTENV_SENTINEL` in `tests/plantuml/test_source_gate.py`'s `test_cli_and_conftest_sentinel_names_agree`); the registry's `SPECMGR_TESTS_NO_DOTENV` entry sources its name from the constant (the constant stays the authority), and `tests/conftest.py`'s own copy stays unchanged (tests/ are outside the registry's scope) (REQ-002, ACC-002).
 - [x] Task 130.110: Verify `plantuml/chain.py`'s trio read sites are untouched (the import-free carve-out per Design Notes) and their registrations (Task 110.100) are complete.
-- [ ] Task 130.120: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 130.120: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 140: Typer defaults + config read + identity check
 
 - [x] Task 140.100: Source the three Typer MCP option defaults (`SPECMGR_MCP_TRANSPORT`/`HOST`/`PORT` in `commands/mcp.py`) from the registry; keep the `envvar=` wiring.
 - [x] Task 140.110: Route `FASTEMBED_CACHE_PATH`'s `specmgr://config` read in `general/resources/config.py` through the registry accessor (preserving the empty-value-to-default fallback and the no-`mkdir` side effect).
 - [x] Task 140.120: Test that `specmgr://config`'s post-migration JSON output is byte-identical to the Phase 110 golden fixture (temp-dir prefix normalized) (ACC-005 evidence).
-- [ ] Task 140.130: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 140.130: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 150: Registry-to-source completeness test
 
 - [x] Task 150.100: Extract the read-site scanner from feat-126's drift test (`tests/test_server_json.py`: the four read shapes, the docstring/comment blanking, the default-presence classifier, the Typer `Annotated` default scan) into a shared test helper (e.g. `tests/_env_scan.py`), parameterizing the name pattern (default: today's `SPECMGR_` prefix net, so feat-126's test keeps byte-identical behaviour) and extending the Annotated scan to also capture the default literal; refactor `tests/test_server_json.py` onto the helper -- regression: feat-126's suite is green before and after with unchanged assertions (REQ-003, ACC-003).
 - [x] Task 150.105: Implement the completeness test on the shared helper: read-site discovery = the quoted form of every registered name (so `FASTEMBED_CACHE_PATH` is visible) union the `SPECMGR_` prefix net, minus the documented hosting-probe exclusion set; assert the discovered set equals the registry name set, failures naming the specific vars in both directions (REQ-003, ACC-003).
 - [x] Task 150.110: Mutation verification: register a bogus var -> the test fails naming it; unregister a read var -> the test fails naming it; revert.
-- [ ] Task 150.120: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 150.120: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 160: Documentation coverage test
 
 - [x] Task 160.100: Implement the coverage test (every registered var appears in the README "Environment Variables" section and in `server.json`'s `environmentVariables`, with `default`/`choices`/`format` fidelity; plus the three Typer MCP options' `default=` values equal the registry's, via the shared helper's Annotated default-literal extraction) (REQ-004, ACC-002/ACC-004).
 - [x] Task 160.110: Fix the documentation gaps -- the Overview's known set first (the README section gains `SPECMGR_MCP_TRANSPORT`/`SPECMGR_MCP_HOST`/`SPECMGR_MCP_PORT`, `SPECMGR_TESTS_NO_DOTENV`, and `FASTEMBED_CACHE_PATH`; a registered third-party var is intended in both the section and the manifest, so `server.json`'s `environmentVariables` gains `FASTEMBED_CACHE_PATH`), plus anything else the test surfaces (REQ-004, ACC-004).
 - [x] Task 160.120: Mutation verification: remove a var from the README/manifest -> the test fails naming it; revert.
-- [ ] Task 160.130: Phase-end gate plus exactly one Conventional Commit.
+- [x] Task 160.130: Phase-end gate plus exactly one Conventional Commit.
 
 #### Phase 170: Finalization
 
@@ -159,7 +159,7 @@ Verified state at planning time (2026-10-09):
 
 ### Current Status
 
-**As of 2026-10-11**: all eight phases (100-170) implemented and all six acceptance criteria (ACC-001 through ACC-006) ticked with the evidence in the tree (the final ACC-walk evidence table is in the Phase 170 Updates entry below); the final full quality gate is green -- 4479 passed, 16 skipped (vs. the 4428/16 pre-feature baseline, all 51 new tests added by this feature; Phase 170 itself adds none), `ruff format --check` (2018 files), `ruff check`, and `vulture` clean, `specmgr docs`/`specmgr adr-toc` no drift. Phase 170 (Finalization) delivers (REQ-006, ACC-006): the `CHANGELOG.md` `[Unreleased]` entry (four new `### Added` bullets -- the registry module and its placement rationale, the registry-anchored drift tests on the shared `tests/_env_scan.py` scanner, the pre-migration `specmgr://config` golden fixture + byte-comparison test, and the previously-undocumented variables in the README/`server.json` -- plus one new `### Changed` bullet: the read-site migration with per-site semantics preserved, the registry-derived `DEFAULT_*` constants and Typer option defaults (values unchanged), the byte-identical `specmgr://config` pinned by test), the no-drift confirmation of the `docs/` regeneration, and the `AGENTS.md` structural notes (the new top-level private-module `biz.dfch.specmgr._envregistry` paragraph after the `plantuml/` package paragraph, plus the pointer clause in the `general/` bullet's `specmgr://config` resource description). Pending: this phase's single Conventional Commit -- the orchestrator's (the implementer does not commit; the working tree holds exactly this phase's three files: `CHANGELOG.md`, `AGENTS.md`, and this plan README). The frontmatter `status` stays `planning` (the orchestrator sets `review` in a separate commit after this one, per the repo precedent).
+**As of 2026-10-11**: all eight phases (100-170) implemented and committed -- one Conventional Commit per phase (the hashes are enumerated in the 2026-10-11T01:09:50 entry below) -- and all six acceptance criteria (ACC-001 through ACC-006) ticked with the evidence in the tree (the final ACC-walk evidence table is in the Phase 170 Updates entry); both review-fix rounds have landed (round 1: E1/D1/I1/I2 from the feat-reviewer pass, commit b5bddae, the PR #209 ship-with-fixes verdict; round 2: G1/G2/D1/D2/I1/I2/I3, the 2026-10-11T15:09:21.700 entry), the frontmatter `status` is `review` (set in commit f3e7739), and the full quality gate is green -- 4481 passed, 16 skipped (vs. the 4428/16 pre-feature baseline: this feature's 51 tests plus the two new round-2 tests), `ruff format --check` (2018 files), `ruff check`, and `vulture` clean, `specmgr docs`/`specmgr adr-toc` no drift, with the byte-identical `specmgr://config` pinned by the golden test (ACC-005). Pending: the review verdict on PR #209.
 
 ### Blockers
 
@@ -168,6 +168,10 @@ Verified state at planning time (2026-10-09):
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-11T15:09:21.700+02:00 - Round-2 review fixes (G1/G2/D1/D2/I1/I2/I3 from the feat-reviewer pass)
+
+Post-implementation review fixes for the seven round-2 findings; no plan tasks are ticked as a result except the seven phase-end gate lines (100.120/110.120/120.120/130.120/140.130/150.120/160.130), which record already-completed phase-end work (one Conventional Commit per phase, all eight enumerated by hash in the 2026-10-11T01:09:50 entry). **G1 (gap)** -- no test pinned the registry's completeness in the production import context: every registry-backed test imports the nine owning modules directly (a documented self-containment choice), so a `register()` call moved into a module the server/CLI entry points never import would have been silently incomplete in production while the suite stayed green; `tests/test_envregistry_completeness.py` now imports the two real entry points at module level (`biz.dfch.specmgr.server` -- already in that module's import closure via `general.resources.config`/`uc.tools.validate_plantuml`'s own `from ...server import mcp`, so no new dependency -- and `biz.dfch.specmgr.cli`, which it already imported), and a new `TestEntryPointCompleteness` asserts the registry's name set equals the **literal** 13-name set (`_ENTRY_POINT_NAME_SET`, hardcoded on purpose rather than derived, so the test stays meaningful if a registration moves), pinning `_envregistry.py`'s own "complete by the time any server/CLI entry point runs" claim. **G2 (gap)** -- `get_with_default`'s set-value pass-through (its final `else` branch) had no test for a presence-based variable (the unset case fails loudly, and the flagged-empty case requires a default the record invariants forbid on presence-based entries); `tests/test_envregistry.py::TestGetWithDefault` gains `test_presence_based_set_value_is_returned_unchanged`, pinning that a set presence-based value is returned as-is. **D1 (discrepancy)** -- the Current Status paragraph still described the Phase 170 commit as pending and the frontmatter `status` as `planning`; rewritten to the current at-a-glance state (all eight phases committed, ACC-001..ACC-006 ticked with in-tree evidence, both review-fix rounds landed, `status` `review`, gate green with this round's test counts). **D2 (discrepancy)** -- the seven phase-end gate lines (100.120/110.120/120.120/130.120/140.130/150.120/160.130) were unticked although each phase's gate + single Conventional Commit is done and asserted in the Progress entries; ticked in place (170.120 was already ticked; no other line touched, nothing renumbered). **I1 (improvement)** -- `tests/test_envregistry_coverage.py::test_each_option_default_evaluates_to_the_registry_default` called `eval(expression, ...)` on the scanner-extracted expression without first applying the `_REGISTRY_REF_RE` shape gate its sibling reference test applies; the same gate now runs before the eval and a non-match is a test failure -- an arbitrary changed default expression can no longer be executed. **I2 (improvement)** -- `typer_option_default_expression` in `tests/_env_scan.py` documents its first parameter as code text (docstring/comment-blanked), but both coverage-test call sites passed raw source; resolved in the **blanked-text direction** (the smaller, clearer change: the helper's internal consumer `_name_has_code_default` already passes the blanked `code_texts`, so the call sites now do too -- `TestTyperMcpOptionDefaults.setUp` computes the blanked text with the helper's own `_code_lines` and both calls pass it; the helper and its docstring are unchanged), closing the spurious-match window a `] =`-shaped docstring line in the scan region would otherwise open; feat-126's `tests/test_server_json.py` (assertions byte-unchanged) and the coverage suite re-verified green (7 passed alone). **I3 (improvement)** -- the golden test's save+pop comment claimed "the registry is complete in the test process once this module's import chain has run" -- inaccurate: that chain (`config` -> `server` -> the domain packages) registers the 12 non-cli vars and never imports `cli`, so the 13th (`SPECMGR_TESTS_NO_DOTENV`) enters the set only via the explicit literal-name addition, which is what makes the save/pop set complete in workers that did not also run `tests/test_cli.py` (`dict.fromkeys` dedupes it when the registry already carries it); the code was correct, the comment now states the correct causal claim. The `### Related PRs / Commits` section gains the PR #209 line (number verified against the 2026-10-11T03:07:25 entry). Quality gate: `ruff format --check` (2018 files), `ruff check`, `vulture` clean; `pytest -n auto --cov=src --cov-report=` 4481 passed, 16 skipped (the previous 4479/16 plus this round's two new tests -- G1's entry-point test, G2's pass-through test); `specmgr docs` no drift (no `src/` docstring changed this round -- every fix is in `tests/` and this plan README, no `src/` behaviour change).
 
 #### 2026-10-11T03:07:25.178+02:00 - Finalization review fixes (E1/D1/I1/I2 from the feat-reviewer pass, PR #209 ship-with-fixes verdict)
 
@@ -231,3 +235,4 @@ Feature plan created from GitHub issue #208 ("Consolidate ENV VAR definitions"):
 ### Related PRs / Commits
 
 - [GitHub issue #208](https://github.com/dfch/biz.dfch.SpecMgr/issues/208): the tracking issue.
+- [PR #209](https://github.com/dfch/biz.dfch.SpecMgr/pull/209): this feature's pull request against `dev` (the round-1 feat-reviewer pass ran against it; verdict: ship with fixes, per the 2026-10-11T03:07:25 entry).

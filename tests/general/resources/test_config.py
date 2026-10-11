@@ -445,10 +445,14 @@ class TestConfigGoldenIdentity(unittest.TestCase):
         golden_cache_dir = golden["similarity"]["cache_dir"]
 
         original_cwd = os.getcwd()
-        # Save+pop every registered name (the registry is complete in the test process once this
-        # module's import chain has run) plus the cli-owned 13th var by its literal name -- the
-        # same environment handling as the capture script; config_info() never reads that one, so
-        # it cannot affect the payload either way.
+        # Save+pop every registered name plus the cli-owned 13th var by its literal name: this
+        # module's import chain (config -> server -> the domain packages) registers the 12
+        # non-cli vars but never imports cli, so a worker that did not also run
+        # tests/test_cli.py holds SPECMGR_TESTS_NO_DOTENV only from the explicit literal below
+        # -- it is what makes the save/pop set complete in every worker (dict.fromkeys dedupes
+        # it when the registry already carries it); the same environment handling as the
+        # capture script. config_info() never reads that one, so it cannot affect the payload
+        # either way.
         env_names = [entry.name for entry in _envregistry.all_vars()] + ["SPECMGR_TESTS_NO_DOTENV"]
         saved_env: dict[str, str | None] = {name: os.environ.get(name) for name in dict.fromkeys(env_names)}
         for name in saved_env:
