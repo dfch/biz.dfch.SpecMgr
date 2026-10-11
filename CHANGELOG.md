@@ -9,6 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A central, stdlib-only environment-variable registry
+  (`biz.dfch.specmgr._envregistry`, a top-level private module, sibling of
+  the top-level `_paths.py` -- deliberately NOT under `general/tools/`,
+  whose eager `@mcp.tool()` imports would pull the `server`/third-party-
+  `mcp` import chain into `cli.py`/`commands/mcp.py`'s module level and
+  break `[cli]`-only installs; its stdlib-only import graph is pinned by an
+  AST test, mirroring `plantuml/`'s import-free pin): every environment
+  variable the package reads is registered at import time of its owning
+  module with its name, default (or a presence-based marker carrying no
+  default), description, owner, the `server.json` manifest's
+  `format`/`choices`, and the `empty_falls_back_to_default` flag -- the 12
+  `SPECMGR_*` vars plus the third-party `FASTEMBED_CACHE_PATH` (the
+  plantuml trio `SPECMGR_PLANTUML_JAR`/`SPECMGR_PLANTUML_BIN`/
+  `SPECMGR_PLANTUML_URL` is registered by its uc-domain consumer
+  `uc/tools/validate_plantuml.py` since the `plantuml/` package is
+  import-free, and `SPECMGR_TESTS_NO_DOTENV`'s name is sourced from
+  `cli.NO_DOTENV_SENTINEL`, which stays the authority)
+  (feat-208-env-var, GitHub issue #208).
+- Registry-anchored drift tests pinning the registry as the single source
+  of truth: `tests/test_envregistry_completeness.py` (every env var read in
+  `src/` is registered and every registered var is read in `src/`, both
+  directions failing with the specific drifted var named; read-site
+  discovery is the `SPECMGR_` prefix net unioned with the quoted form of
+  every registered name -- so the third-party var is visible to the scan --
+  minus the documented hosting-probe exclusion set, which is pinned) and
+  `tests/test_envregistry_coverage.py` (every registered var documented in
+  the root `README.md`'s "Environment Variables" section and in
+  `server.json`'s `environmentVariables` with faithful `default`/`choices`/
+  `format` -- the one machine-dependent default normalized through a pinned
+  `<tempdir>` placeholder -- plus the three `specmgr mcp` Typer options'
+  `default=` values pinned to be registry-record references that evaluate
+  to the registry defaults), both on the shared read-site scanner
+  `tests/_env_scan.py` extracted from feat-126's drift test, whose own
+  `setUp` now runs on the registry-aware discovery pattern so the
+  manifest's third-party var is visible to it as well (assertions
+  unchanged) (feat-208-env-var, GitHub issue #208).
+- The pre-migration `specmgr://config` golden fixture
+  (`tests/fixtures/config-golden/specmgr-config.pre-migration.json`,
+  captured under a documented controlled environment: a temp-dir CWD, none
+  of the 13 registered vars set, the standard all-extras install so the
+  `fastembed` spec lookup is stable) and its byte-comparison test
+  (`tests/general/resources/test_config.py::TestConfigGoldenIdentity`,
+  temp-dir prefixes normalized), pinning that the read-site migration
+  changed no observable behaviour (feat-208-env-var, GitHub issue #208).
+- The previously-undocumented environment variables, now in the root
+  `README.md`'s "Environment Variables" section: `SPECMGR_MCP_TRANSPORT` /
+  `SPECMGR_MCP_HOST` / `SPECMGR_MCP_PORT` (the three `specmgr mcp` option
+  env vars, previously documented only in the CLI options table),
+  `SPECMGR_TESTS_NO_DOTENV` (the presence-based test/CI dotenv sentinel,
+  previously undocumented anywhere), and `FASTEMBED_CACHE_PATH`
+  (previously mentioned only in the "Semantic Similarity Search" section)
+  -- and in `server.json`'s `environmentVariables`: `FASTEMBED_CACHE_PATH`
+  (whose machine-dependent default is documented with the `<tempdir>`
+  placeholder) (feat-208-env-var, GitHub issue #208).
 - A bidirectional drift regression test (`tests/test_server_json.py`) guarding
   `server.json`'s `environmentVariables` against the `SPECMGR_*` environment
   variables the code actually reads in `src/`: the test scans the source for the
@@ -59,6 +113,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every env-var read site in `src/` -- except the import-free `plantuml/`
+  package (which keeps its own direct `os.environ` reads behind its
+  injectable `env` mapping, the trio registered by its uc-domain consumer)
+  and `commands/mcp.py`'s three out-of-scope hosting-platform probes
+  (`KUBERNETES_SERVICE_HOST`, `RAILWAY_PROJECT_ID`, `RENDER`) -- now reads
+  through the registry's `get`/`get_with_default` accessors, with today's
+  exact per-site semantics preserved: set-but-empty stays present for the
+  `is not None` gates and the `specmgr://config` presence reports, falls
+  back to the registered default for the four flagged vars
+  (`SPECMGR_ADR_DIR`/`SPECMGR_DOCS_DIR`/`SPECMGR_FEAT_DIR`/
+  `FASTEMBED_CACHE_PATH`), and stays absent for the truthiness-read
+  `SPECMGR_TESTS_NO_DOTENV` sentinel; the three base-dir modules'
+  `DEFAULT_*` constants and the three Typer MCP option defaults are now
+  derived from the registry records (values unchanged: `docs/adr` /
+  `docs` / `.specmgr/feat` and `stdio` / `localhost` / `8000`);
+  `specmgr://config`'s JSON output is byte-identical to the pre-migration
+  golden (pinned by test), and no env var name, default, or observable
+  behaviour changed -- the existing suite stays green throughout (4428 ->
+  4479 passed, all new) (feat-208-env-var, GitHub issue #208).
 - The 12 `create_<d>` and 12 `parse_<d>` MCP tools now return the
   non-raising `ValidateResult` (`valid=False`, a single capped
   `errors[].message` -- 300 chars, exactly as the generic `validate`

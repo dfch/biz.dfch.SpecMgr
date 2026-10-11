@@ -129,10 +129,13 @@ Path
 
 Return the configured feature base directory, without creating it.
 
-Reads :data:`FEAT_DIR_ENV_VAR` from the environment, falling back to
-:data:`DEFAULT_FEAT_DIR`. Read-only tools (``get_feat``, ``list_feat``,
-...) use this so merely reading never has the side effect of creating
-the directory -- see :func:`ensure_feat_base_dir` for the write path.
+Reads :data:`FEAT_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_FEAT_DIR`) when the variable is unset or
+set-but-empty (feat-208, Phase 120). Read-only tools (``get_feat``,
+``list_feat``, ...) use this so merely reading never has the side
+effect of creating the directory -- see :func:`ensure_feat_base_dir`
+for the write path.
 
 Returns
 -------

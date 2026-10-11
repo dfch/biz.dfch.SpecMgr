@@ -94,6 +94,12 @@ class TestAdrBaseDir(unittest.TestCase):
         with mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: "/tmp/some-custom-adr-dir"}):
             self.assertEqual(adr_base_dir(), Path("/tmp/some-custom-adr-dir"))
 
+    def test_set_but_empty_env_var_falls_back_to_default(self):
+        """SPECMGR_ADR_DIR, when set but empty, falls back to the default (the Option A
+        ``empty_falls_back_to_default`` registry flag, feat-208 Phase 110/120)."""
+        with mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: ""}):
+            self.assertEqual(adr_base_dir(), DEFAULT_ADR_DIR)
+
     def test_does_not_create_the_directory(self):
         """adr_base_dir must never create the directory as a side effect."""
         with tempfile.TemporaryDirectory() as tmp:

@@ -109,6 +109,12 @@
         {
           "name": "SPECMGR_TESTS_NO_DOTENV",
           "description": "Presence-based test/CI sentinel: set to any value to skip the CLI's module-level default .env load entirely, so the process runs under the CI (source-less) condition whatever the local (gitignored) .env configures; this is what keeps the specmgr coverage-badge pre-commit hook's source-less re-run source-less end-to-end. Unset by default, never set outside test runs."
+        },
+        {
+          "name": "FASTEMBED_CACHE_PATH",
+          "description": "Cache directory for the semantic-similarity feature's embedding model (the third-party fastembed backend's own variable, not a SPECMGR_* one): set to a directory to cache the model there; an unset or empty value falls back to the default <tempdir>/fastembed_cache, where <tempdir> is the process's temporary directory (e.g. /tmp on Linux). Unset by default. The resolved directory is reported by the similarity section of the specmgr://config resource.",
+          "default": "<tempdir>/fastembed_cache",
+          "format": "filepath"
         }
       ]
     }

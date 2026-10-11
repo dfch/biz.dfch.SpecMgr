@@ -191,6 +191,15 @@ tool call, so hand-editing a file between calls is safe.
   structure-only floor. See [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
   for the how-to.
 
+The `specmgr mcp` command's own transport settings are likewise
+environment-driven: `SPECMGR_MCP_TRANSPORT` selects the transport (default
+`stdio`; the allowed values are `stdio`, `sse`, and `streamable-http`), and
+`SPECMGR_MCP_HOST` (default `localhost`) and `SPECMGR_MCP_PORT` (default
+`8000`) are the bind address and TCP port, used only in
+`sse`/`streamable-http` mode. The command's `--transport`/`--host`/`--port`
+flags take precedence over the variables — see [Start the MCP
+Server](#start-the-mcp-server) below for the options table.
+
 The `find_related`/`find_similar_text` tools (semantic-similarity search,
 requires the `similarity` extra) are turned off by setting the
 `SPECMGR_SIMILARITY_DISABLED` environment variable (any value;
@@ -200,6 +209,14 @@ server startup, the model cache location, and the structured unavailable
 result both tools return when the feature is disabled or the backend/model
 fails to load).
 
+The semantic-similarity feature's model cache directory is the
+`FASTEMBED_CACHE_PATH` environment variable (the third-party `fastembed`
+backend's own variable, not a `SPECMGR_*` one): an unset or empty value
+falls back to `<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on
+Linux). The resolved directory is reported by the `similarity` section of
+the `specmgr://config` resource — see [Semantic Similarity
+Search](#semantic-similarity-search) below for the full behavior.
+
 The `feat` domain's two background cache-warming phases (frontmatter and
 full-parse, run by the same unified server-startup warmup thread as the
 similarity warmup) are likewise turned off by setting the
@@ -207,6 +224,12 @@ similarity warmup) are likewise turned off by setting the
 presence-based) — see the background warmup paragraph of [Semantic
 Similarity Search](#semantic-similarity-search) below for the thread's
 full behavior and both opt-out flags.
+
+`SPECMGR_TESTS_NO_DOTENV` is a presence-based test/CI sentinel (no
+default; never set outside test runs): set to any value to skip the
+CLI's module-level default `.env` load entirely, so a test run sees no
+local (gitignored) `.env` configuration whatever the developer's machine
+has.
 
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var

@@ -1,0 +1,88 @@
+{
+  "domains": {
+    "adr": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/adr",
+      "env_var": "SPECMGR_ADR_DIR",
+      "env_var_set": false
+    },
+    "req": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/req",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "uc": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/uc",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "tsk": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/tsk",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "qa": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/qa",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "prb": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/prb",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "gol": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/gol",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "rsk": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/rsk",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "dec": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/dec",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "sop": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/sop",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "feat": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/.specmgr/feat",
+      "env_var": "SPECMGR_FEAT_DIR",
+      "env_var_set": false
+    },
+    "vcr": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/vcr",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "sysrs": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/sysrs",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    }
+  },
+  "similarity": {
+    "extra_installed": true,
+    "disabled": false,
+    "model_name": "BAAI/bge-small-en-v1.5",
+    "cache_dir": "/tmp/fastembed_cache"
+  },
+  "plantuml": {
+    "jar": {
+      "set": false
+    },
+    "bin": {
+      "set": false
+    },
+    "url": {
+      "set": false
+    },
+    "selected": "none"
+  },
+  "feat_warmup_disabled": false
+}

@@ -106,13 +106,13 @@ failure at this shortcut already produces.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
 import yaml
 from pydantic import ValidationError
 
+from ... import _envregistry
 from ...general.tools._doc_paths import slugify
 from ._cache import read_feat
 
@@ -138,10 +138,33 @@ __all__ = [
 #: plan's own folder).
 FEAT_DIR_ENV_VAR = "SPECMGR_FEAT_DIR"
 
+#: The registry record for :data:`FEAT_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`feat_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
+_feat_dir_var = _envregistry.register(
+    FEAT_DIR_ENV_VAR,
+    default=".specmgr/feat",
+    description="Base directory scanned for Feature folders (<base>/<id>/README.md).",
+    owner="feat",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
+
 #: Default feature base directory, relative to the current working
 #: directory -- the same folder this feature's own plan file lives in, in
-#: production.
-DEFAULT_FEAT_DIR = Path(".specmgr/feat")
+#: production (derived from the registry record above -- the registry is
+#: the single authority for the default; feat-208, Phase 110). The assert
+#: narrows the type for static checkers only (the record was registered
+#: with the non-None default literally above -- a program invariant,
+#: conventions Rule 2, mirroring ``_envregistry.get_with_default``'s own
+#: narrowing).
+assert _feat_dir_var.default is not None, (
+    f"{FEAT_DIR_ENV_VAR!r} is registered with a non-None default above; the derived constant cannot be None"
+)
+DEFAULT_FEAT_DIR = Path(_feat_dir_var.default)
 
 #: The doc-type name, for symmetry with every other domain's own
 #: ``<D>_TYPE_NAME`` constant (e.g. ``dec.tools._paths.DEC_TYPE_NAME``),
@@ -181,18 +204,20 @@ class FeatNotFoundError(LookupError):
 def feat_base_dir() -> Path:
     """Return the configured feature base directory, without creating it.
 
-    Reads :data:`FEAT_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_FEAT_DIR`. Read-only tools (``get_feat``, ``list_feat``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_feat_base_dir` for the write path.
+    Reads :data:`FEAT_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_FEAT_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_feat``,
+    ``list_feat``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_feat_base_dir`
+    for the write path.
 
     Returns
     -------
     Path
         The resolved feature base directory.
     """
-    value = os.environ.get(FEAT_DIR_ENV_VAR)
-    result = Path(value) if value else DEFAULT_FEAT_DIR
+    result = Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))
     return result
 
 

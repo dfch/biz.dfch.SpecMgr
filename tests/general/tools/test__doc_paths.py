@@ -122,6 +122,12 @@ class TestDocBaseDir(unittest.TestCase):
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/some-custom-docs-dir"}):
             self.assertEqual(doc_base_dir("req"), Path("/tmp/some-custom-docs-dir/req"))
 
+    def test_set_but_empty_env_var_falls_back_to_default(self):
+        """SPECMGR_DOCS_DIR, when set but empty, falls back to the default root (the Option A
+        ``empty_falls_back_to_default`` registry flag, feat-208 Phase 110/120)."""
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: ""}):
+            self.assertEqual(doc_base_dir("req"), DEFAULT_DOCS_ROOT / "req")
+
     def test_different_type_names_yield_different_subdirectories(self):
         """Each doc type gets its own subdirectory under the shared root."""
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/some-custom-docs-dir"}):
