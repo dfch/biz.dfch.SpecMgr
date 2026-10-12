@@ -303,6 +303,36 @@ class TestRendererGoldens(unittest.TestCase):
         self.assertTrue(rendered.startswith(f"@startuml {long_title}\n"))
         self.assertIn('component "Truncation Default Title With Far More…"', rendered)
 
+    def test_empty_title_emits_startuml_with_one_trailing_space(self):
+        # The §2.2 degenerate corner (dated note 2026-10-12, review pass 3
+        # I2): the frozen sanitisation does not strip whitespace, so an
+        # empty title renders the first line as "@startuml " — @startuml +
+        # exactly one trailing space (the layout's own separator). Valid
+        # PlantUML, checker-clean in both modes.
+        graph = ReferenceGraph(title="", nodes=(GraphNode("req", _S1, "A Title"),), edges=())
+        rendered = render_reference_graph(graph)
+        self.assertEqual(rendered.split("\n", 1)[0], "@startuml ")
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(rendered, mode)
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_whitespace_only_title_emits_the_whitespace_verbatim(self):
+        # The §2.2 degenerate corner, whitespace-only variant (dated note
+        # 2026-10-12, review pass 3 I2): a single-space title renders the
+        # first line as "@startuml  " — the layout's one separator space +
+        # the title's space, verbatim (never stripped). Valid PlantUML,
+        # checker-clean in both modes.
+        graph = ReferenceGraph(title=" ", nodes=(GraphNode("req", _S1, "A Title"),), edges=())
+        rendered = render_reference_graph(graph)
+        self.assertEqual(rendered.split("\n", 1)[0], "@startuml  ")
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(rendered, mode)
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
     def test_hard_cut_inside_the_quote_escape_emits_the_incomplete_fragment(self):
         # The §5.2 truncation corner (dated note 2026-10-12): sanitisation
         # (an embedded " -> the six-character sequence #quot;) runs BEFORE

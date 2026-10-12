@@ -251,8 +251,9 @@ def _unique_references(text: str) -> list[tuple[str, str]]:
 def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
     """Every parseable document across all 13 source domains (rulebook §3.2/§3.3's full scan).
 
-    The paged full scan the reverse and registry-wide builders share, in
-    ``ALL_DOMAINS`` order (adr first) and each domain's own sorted path
+    The full scan the reverse and registry-wide builders share (no listing,
+    no pagination), in ``ALL_DOMAINS`` order (adr first) and each domain's
+    own sorted path
     order (the domain's own path iterator: the shared flat-file
     ``iter_doc_paths`` for every whole-body domain other than ``feat``,
     ``iter_feat_paths`` for ``feat``, ``iter_adr_paths`` for ``adr``). Each

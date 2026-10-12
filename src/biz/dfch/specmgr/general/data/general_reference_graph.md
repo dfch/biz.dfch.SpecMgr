@@ -110,6 +110,18 @@ and the goldens all pin it).
   when the scoped H1 is longer than the §5.2 truncation limit (a >40-char-H1
   golden pins this, ACC-001).
 
+**§2.2 note 2026-10-12 (feat-207-reference-graph review pass 3, I2):** the
+frozen sanitisation (§5.1) does not strip whitespace, so a degenerate `title`
+override emits verbatim after the `@startuml {title}` layout's own one
+space: an empty `title` (`""`) renders the diagram's first line as
+`@startuml ` — `@startuml` + exactly one trailing space — and a
+whitespace-only `title` renders `@startuml` + the layout's space + the
+whitespace verbatim (e.g. `" "` ⇒ `@startuml  ` — two trailing spaces).
+Both outcomes are valid PlantUML and checker-clean (zero findings in both
+modes); the corner is pinned by renderer tests
+(`tests/general/models/test_reference_graph.py`). The frozen
+sanitize-but-never-truncate algorithm is unchanged.
+
 ### 2.3 Alias (bracketed)
 
 - The 12 UUID domains (every domain except `feat` —
@@ -263,8 +275,9 @@ access.
 
 ### 3.2 Reverse (additive, direct-only)
 
-A paged full scan (all pages) of all 13 source domains (`ALL_DOMAINS` — adr
-included) reusing the `list_references` source-scan legs (the per-domain
+A full scan of all 13 source domains (`ALL_DOMAINS` — adr included),
+iterating each domain's own path iterator directly — no listing, no
+pagination — reusing the `list_references` source-scan legs (the per-domain
 cache-aware reads; the never-cached adr leg). A scanned document becomes a
 node + one incoming edge iff it carries a reference matching the source on
 (type, id) — with the feat dual-spelling rule: a full `feat-NNN-slug` source
@@ -272,6 +285,14 @@ also matches a bare `feat-NNN` reference. Reverse is ADDITIVE with the
 forward expansion (the graph is the union) and DIRECT-ONLY on the incoming
 side (no transitive incoming expansion — out of scope); `depth` governs the
 forward part only and is never a no-op.
+
+**§3.2 corrected 2026-10-12 (feat-207-reference-graph review pass 3, D1):**
+the scan iterates each domain's own path iterator directly (no listing, no
+pagination); the earlier "A paged full scan (all pages)" wording named a
+paged-listing mechanism the implementation does not use. The outcome is
+equivalent — every parseable document of all 13 domains is seen, broken and
+id-less documents skipped — so the frozen construction semantics are
+unchanged.
 
 ### 3.3 Registry-wide
 
