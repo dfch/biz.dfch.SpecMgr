@@ -56,6 +56,8 @@ from __future__ import annotations
 
 import shutil
 import unittest
+from pathlib import Path
+from unittest import mock
 
 import yaml
 from pydantic import ValidationError
@@ -73,6 +75,7 @@ from ._reference_graph_helpers import (
     _MISSING_UUID,
     _SeededRegistryTestCase,
     _A001,
+    _B001,
     _C001,
     _C002,
     _D001,
@@ -210,6 +213,181 @@ class TestReverseRegistry(_SeededRegistryTestCase):
         # (resolved to the same document) gets its own return edge
         self.assertNotIn(f"[feat-42] -[#red]-> [REQ-{_R001}]", depth1_reverse)
         self.assertIn(f"[feat-42] -[#red]-> [REQ-{_R001}]", depth2_reverse)
+
+
+class TestReverseFeatSourceRegistry(_SeededRegistryTestCase):
+    """Scenario 15 (G1): the FEAT-source reverse dual-spelling rule (rulebook §3.2) -- the
+    ``dec-b001`` fixture carries the BARE ``FEAT feat-42`` spelling only (plus the bare
+    ``FEAT feat-43`` negative control), so the incoming edge to the full-spelling source
+    exists via the bare-spelling branch alone (strict equality cannot match ``feat-42``
+    against ``feat-42-reverse-feat``); the negative control must never surface (no
+    ``feat-43`` node, no ``feat-43`` edge)."""
+
+    SEEDS = (
+        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
+        ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
+    )
+
+    def test_bare_spelling_reverse_match_and_negative_control(self):
+        graph = build_source_graph("feat", "feat-42-reverse-feat", depth=1, reverse=True)
+
+        node_keys = {(node.type, node.id) for node in graph.nodes}
+        edge_keys = {(edge.source_type, edge.source_id, edge.target_type, edge.target_id) for edge in graph.edges}
+
+        # the dec-b001 -> feat edge is only possible via the bare-spelling
+        # branch: dec-b001's body carries `FEAT feat-42` (bare) and
+        # `FEAT feat-43` (the negative control) -- strict (type, id)
+        # equality matches neither against the full-spelling source
+        self.assertIn(("dec", _B001, "feat", "feat-42-reverse-feat"), edge_keys)
+        # the negative control never surfaces: no feat-43 node, no feat-43 edge
+        self.assertNotIn(("feat", "feat-43"), node_keys)
+        self.assertNotIn(("dec", _B001, "feat", "feat-43"), edge_keys)
+        # the full shape: the source, req-r001 (forward target AND incoming-edge
+        # source), and the new dec -- dec-d001 is NOT a node (it references no
+        # feat), and the feat-42/feat-43 spellings of dec-b001's references are
+        # reverse-scan-only (never forward edges)
+        self.assertEqual(node_keys, {("feat", "feat-42-reverse-feat"), ("req", _R001), ("dec", _B001)})
+        self.assertEqual(
+            edge_keys,
+            {
+                ("feat", "feat-42-reverse-feat", "req", _R001),
+                ("req", _R001, "feat", "feat-42-reverse-feat"),
+                ("dec", _B001, "feat", "feat-42-reverse-feat"),
+            },
+        )
+
+    def test_reverse_feat_source_golden(self):
+        self._render_golden(
+            "reverse-feat-source-reverse.puml",
+            build_source_graph("feat", "feat-42-reverse-feat", depth=1, reverse=True),
+        )
+
+    def test_golden_shape(self):
+        # the 2-cycle (feat <-> req) is red, the off-cycle dec edge is plain,
+        # the title is the scoped source-H1 default (the feature_title derivation)
+        rendered = self._golden("reverse-feat-source-reverse.puml")
+        self.assertTrue(rendered.startswith("@startuml Reverse Feature\n"))
+        self.assertIn(f"[feat-42-reverse-feat] -[#red]-> [REQ-{_R001}] : refers to", rendered)
+        self.assertIn(f"[REQ-{_R001}] -[#red]-> [feat-42-reverse-feat] : refers to", rendered)
+        self.assertIn(f"[DEC-{_B001}] --> [feat-42-reverse-feat] : refers to", rendered)
+        self.assertNotIn("-[#red]-> [DEC-", rendered)  # the dec edge is off-cycle
+        self.assertNotIn("feat-43", rendered)  # the negative control never surfaces
+        self.assertNotIn(f"[DEC-{_D001}]", rendered)  # dec-d001 references no feat: not a node
+
+
+class TestVanishedFiles(_SeededRegistryTestCase):
+    """Scenario 16 (I3): the mid-build vanished-file guard on the three EXTRACTION legs --
+    ``body_text`` is re-read beyond the scan's own parse-leg vanish skip (the forward BFS's
+    resolved-node read, the reverse pass's scanned-document read, and the registry build's
+    scanned-document read); a ``FileNotFoundError`` at any of them skips per the frozen
+    semantics (forward: the node's expansion only, the node + reaching edge remain;
+    reverse/registry: the document entirely, no node, no edges) -- the build never raises.
+    Deterministic (no real timing): the module's ``body_text`` is patched with a
+    ``side_effect`` that delegates to the real function except for one chosen path, which
+    raises ``FileNotFoundError``."""
+
+    SEEDS = (
+        ("cycle/req-c001.md", f"docs/req/{_C001}.md"),
+        ("cycle/req-c002.md", f"docs/req/{_C002}.md"),
+        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
+    )
+
+    def _vanish(self, vanish: Path) -> None:
+        import biz.dfch.specmgr.general.tools._reference_graph as rg
+
+        real = rg.body_text
+
+        def fake(path: Path) -> str:
+            if Path(path).resolve() == vanish:
+                raise FileNotFoundError(str(vanish))
+            return real(path)
+
+        self.enterContext(mock.patch.object(rg, "body_text", side_effect=fake))
+
+    def test_forward_vanish_skips_the_expansion_only(self):
+        # c002 vanishes between its resolution and the level-1 re-read: the
+        # build succeeds, the edge set is exactly the SOURCE's own references
+        # (c001 -> c002 + the dangling DEC d900) -- c002's own outgoing
+        # references (c002 -> c001, the c002 self-loop) are never read, so
+        # the 2-cycle is incomplete: no red edge
+        self._vanish((self.docs_root / "req" / f"{_C002}.md").resolve())
+        graph = build_source_graph("req", _C001, depth=2)
+
+        edges = {(edge.source_type, edge.source_id, edge.target_type, edge.target_id) for edge in graph.edges}
+        self.assertEqual(edges, {("req", _C001, "req", _C002), ("req", _C001, "dec", _D900)})
+        # the node and the edge that reached it remain, with the resolved title
+        # (resolved BEFORE the vanish; the expansion -- not the node -- skips)
+        titles = {node.id: node.title for node in graph.nodes}
+        self.assertEqual(titles[_C002], "Cycle Requirement Two")
+        rendered = render_reference_graph(graph)
+        self.assertNotIn("-[#red]->", rendered)
+        self.assertNotIn(f"[REQ-{_C002}] -->", rendered)  # no outgoing edge from the vanished doc
+
+    def test_reverse_vanish_skips_the_document_entirely(self):
+        # d001 vanishes between the parse leg and the reverse re-read: WITHOUT
+        # the guard its body (which references REQ r001) would match the
+        # source and d001 would appear as node + incoming edge (and the raw
+        # FileNotFoundError would propagate); WITH it, d001 is absent from
+        # both
+        self._vanish((self.docs_root / "dec" / f"{_D001}.md").resolve())
+        graph = build_source_graph("req", _R001, depth=1, reverse=True)
+
+        node_keys = {(node.type, node.id) for node in graph.nodes}
+        edge_keys = {(e.source_type, e.source_id, e.target_type, e.target_id) for e in graph.edges}
+        self.assertNotIn(("dec", _D001), node_keys)
+        self.assertFalse(any(edge[1] == _D001 for edge in edge_keys))
+        self.assertEqual(
+            node_keys,
+            {("req", _R001), ("feat", "feat-42"), ("feat", "feat-42-reverse-feat")},
+        )
+        self.assertEqual(
+            edge_keys,
+            {
+                ("req", _R001, "feat", "feat-42"),
+                ("req", _R001, "feat", "feat-42-reverse-feat"),
+                ("feat", "feat-42-reverse-feat", "req", _R001),
+            },
+        )
+
+    def test_registry_vanish_skips_the_document_entirely(self):
+        # d001 vanishes between the parse leg and the registry re-read: the
+        # build succeeds, d001 is absent as a node, and its extracted
+        # references (REQ r001 + the dangling GOL g900) are absent as edges
+        # (and g900 therefore never becomes an unresolved node either)
+        self._vanish((self.docs_root / "dec" / f"{_D001}.md").resolve())
+        graph = build_registry_graph()
+
+        node_keys = {(node.type, node.id) for node in graph.nodes}
+        edge_keys = {(e.source_type, e.source_id, e.target_type, e.target_id) for e in graph.edges}
+        self.assertNotIn(("dec", _D001), node_keys)
+        self.assertFalse(any(edge[1] == _D001 or edge[3] == _G900 for edge in edge_keys))
+        self.assertEqual(
+            node_keys,
+            {
+                ("req", _C001),
+                ("req", _C002),
+                ("req", _R001),
+                ("feat", "feat-42-reverse-feat"),
+                ("feat", "feat-42"),
+                ("dec", _D900),
+            },
+        )
+        self.assertEqual(
+            edge_keys,
+            {
+                ("req", _C001, "req", _C002),
+                ("req", _C001, "dec", _D900),
+                ("req", _C002, "req", _C001),
+                ("req", _C002, "req", _C002),
+                ("req", _R001, "feat", "feat-42"),
+                ("req", _R001, "feat", "feat-42-reverse-feat"),
+                ("feat", "feat-42-reverse-feat", "req", _R001),
+            },
+        )
 
 
 class TestNoFeatRegistry(_SeededRegistryTestCase):
@@ -378,6 +556,7 @@ class TestFixtureValidity(unittest.TestCase):
             ("chain/rsk-k001.md", parse_rsk),
             ("reverse/req-r001.md", parse_req),
             ("reverse/dec-d001.md", parse_dec),
+            ("reverse/dec-b001.md", parse_dec),
             ("reverse/feat-42-reverse-feat/README.md", parse_feat),
             ("no-feat/req-n001.md", parse_req),
             ("no-feat/feat-7-no-feat/README.md", parse_feat),

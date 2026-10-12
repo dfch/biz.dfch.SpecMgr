@@ -23,7 +23,10 @@ module adds only the ``title`` override (replaces the graph's title before
 rendering; the frozen default is ``Reference Graph``) and the ``max_label``
 read. There are no id guards (there is no id), and the tool never raises
 for content -- a broken document anywhere in the registry is simply absent
-from the diagram.
+from the diagram, and so is a document that vanishes mid-build between the
+scan's parse leg and the builder's own extraction legs (the ``body_text``
+re-reads; the builders' own ``FileNotFoundError`` skips -- the
+``_reference_graph`` module docstring's vanished-mid-build rule).
 
 ## Functions
 
@@ -37,10 +40,13 @@ parsed document is a node (its H1 as the label), every extracted
 reference an edge, and a target not present as a scanned document gets
 its title via the shared target resolution (dangling ⇒ the unresolved
 node). Broken documents are skipped (never a node, never an edge
-source; the render never fails for content). There are no id guards
-(there is no id): the only inputs are the ``include_feat`` switch and
-the optional ``title`` override, so this tool never raises for content
--- it always returns the diagram.
+source; the render never fails for content), and documents vanishing
+mid-build on the builder's extraction legs (the ``body_text`` re-reads)
+are skipped the same way (the ``_reference_graph`` module docstring's
+vanished-mid-build rule). There are no id guards (there is no id): the
+only inputs are the ``include_feat`` switch and the optional ``title``
+override, so this tool never raises for content -- it always returns
+the diagram.
 
 The FEAT exclusion (``include_feat=False``, rulebook §3.5) is applied
 last: drop every FEAT node, then every edge touching a dropped node.

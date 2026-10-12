@@ -119,6 +119,23 @@ alone):
    ``_get_classes``/``_get_functions`` filter, ``obj.__module__ ==
    module.__name__``), never merely re-exported ones.
 
+Also backs feat-207-reference-graph (Phase 110, REQ-001/REQ-003):
+
+- :class:`GraphNode`/:class:`GraphEdge`/:class:`ReferenceGraph` -- the
+  frozen reference-graph fact dataclasses the ``general.tools.
+  _reference_graph`` builders and the pure renderer share, and
+  :func:`render_reference_graph` -- the pure, byte-stable PlantUML
+  component-diagram renderer over them (the frozen rulebook
+  ``specmgr://reference-graph`` §2 layout, the SCC-based red cycle
+  marking). :data:`DEFAULT_MAX_LABEL` (40) is the label limit the
+  renderer takes as a plain ``max_label`` parameter (the
+  ``general.tools._diagram_config`` helper shares it as the
+  ``SPECMGR_DIAGRAM_MAX_TITLE`` env var's own default). ``reference_graph``
+  is import-free (top-level imports exactly ``__future__``/
+  ``collections.abc``/``dataclasses``, the ``plantuml/`` package's bar), so
+  a plain EAGER import is safe here -- no PEP 562 laziness needed, unlike
+  the ``update_result`` names.
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult

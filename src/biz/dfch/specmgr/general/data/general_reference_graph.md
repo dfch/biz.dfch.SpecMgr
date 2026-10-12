@@ -374,6 +374,26 @@ the zero-finding property over the full subset in both modes).
   at `candidate`; append `…`. The result is ≤ N characters. Labels of
   exactly N characters are untouched.
 
+**§5.2 note 2026-10-12 (feat-207-reference-graph review fixes):** the env
+var's parse is Python `int()` (the helper's own `int(value)` call) — it
+accepts surrounding whitespace, a leading sign, and underscored digit
+groups, so values such as `" 10 "` and `"1_0"` are VALID limits
+(`(10, True)`), not set-but-invalid (the `< 1` range check still applies
+after the parse, so a negative value such as `"-5"` stays set-but-invalid);
+the helper's pinned invalid set stops at the non-int cases (`"3.5"`,
+`"0x28"`).
+
+**§5.2 note 2026-10-12 (feat-207-reference-graph review fixes):** the §5.1
+sanitisation (an embedded `"` → the six-character sequence `#quot;`) runs
+BEFORE the truncation, so a hard cut (no space within `label[:N-1]`) can
+land INSIDE a `#quot;` escape — emitting an incomplete escape fragment plus
+`…` (at the default 40, a 56-character space-less title whose `"` sits at
+index 35 truncates to its first 35 characters + `#quo` + `…`). The output
+stays syntactically valid (checker-clean); the degradation is cosmetic
+only. The frozen algorithm is implemented as-is (not amended); the corner
+is pinned by a renderer test
+(`tests/general/models/test_reference_graph.py`).
+
 ## 6. Source-id addressing
 
 The scoped surface's `id` argument takes the domain's own id shape (the canonical lowercase-hex uuid for every domain other than `feat`; the full `feat-NNN-slug` for `feat`) — the `validate_id` strictness: a `ValueError` before any filesystem access. **A bare `feat-NNN` as the source id is REJECTED** — a wrong-format id, not a normalization candidate (`get_feat` / `list_references` parity; the bare spelling appears only as an extracted reference row, never as an addressing form). To discover the exact `feat-NNN-slug` id, call `list_feat` (its rows carry id + title + path).

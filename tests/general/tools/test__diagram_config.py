@@ -70,6 +70,16 @@ class TestDiagramMaxTitle(unittest.TestCase):
         os.environ[ENV_VAR_DIAGRAM_MAX_TITLE] = "  7  "
         self.assertEqual(diagram_max_title(), (7, True))
 
+    def test_underscored_digit_groups_and_whitespace_are_valid_not_invalid(self):
+        # Python int() acceptance (rulebook §5.2 dated note 2026-10-12):
+        # underscored digit groups ("1_0") and surrounding whitespace
+        # (" 10 ") are VALID limits, not set-but-invalid (the pinned
+        # invalid set below stops at the non-int cases "3.5"/"0x28")
+        for value, expected in (("1_0", (10, True)), (" 10 ", (10, True))):
+            with self.subTest(value=value):
+                os.environ[ENV_VAR_DIAGRAM_MAX_TITLE] = value
+                self.assertEqual(diagram_max_title(), expected)
+
     def test_set_but_invalid_values_fall_back_with_the_flag(self):
         for value in ("", "abc", "0", "-5", "3.5", "0x28", "40chars"):
             with self.subTest(value=value):

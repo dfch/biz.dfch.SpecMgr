@@ -303,6 +303,34 @@ class TestRendererGoldens(unittest.TestCase):
         self.assertTrue(rendered.startswith(f"@startuml {long_title}\n"))
         self.assertIn('component "Truncation Default Title With Far More…"', rendered)
 
+    def test_hard_cut_inside_the_quote_escape_emits_the_incomplete_fragment(self):
+        # The §5.2 truncation corner (dated note 2026-10-12): sanitisation
+        # (an embedded " -> the six-character sequence #quot;) runs BEFORE
+        # the truncation, so a hard cut (no space within label[:N-1]) can
+        # land INSIDE the #quot; escape -- at the default 40, this 56-char
+        # space-less title (the quote at index 35) emits its first 35
+        # characters + the incomplete #quo fragment + …. The pin records
+        # the EXACT current emitted label (the frozen algorithm,
+        # implemented as-is -- the corner is documented, not amended):
+        # cosmetically degraded, still checker-clean.
+        title = "x" * 35 + '"' + "y" * 20
+        self.assertEqual(len(title), 56)
+        graph = ReferenceGraph(
+            title="Quote Escape Corner",
+            nodes=(GraphNode("req", "eeee0008-0000-4000-8000-eeeeeeeeeeee", title),),
+            edges=(),
+        )
+        rendered = render_reference_graph(graph)
+        self.assertIn(
+            'component "' + "x" * 35 + "#quo…" + '" as [REQ-eeee0008-0000-4000-8000-eeeeeeeeeeee] <<REQ>>',
+            rendered,
+        )
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(rendered, mode)
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
     def test_duplicate_nodes_dedupe_first_title_wins(self):
         graph = ReferenceGraph(
             title="Dup",
@@ -351,6 +379,35 @@ class TestRendererGoldens(unittest.TestCase):
                 )
                 imported.append(name or "")
         self.assertEqual(sorted(imported), ["__future__", "collections.abc", "dataclasses"])
+
+
+class TestPackageReExports(unittest.TestCase):
+    """The package-level re-export surface (Phase 150, I2): the five ``reference_graph``
+    names import from ``biz.dfch.specmgr.general.models`` (the eager import -- the module
+    is import-free, so no PEP 562 laziness is needed) and are the SAME objects the
+    module owns."""
+
+    def test_the_five_names_import_from_the_package_and_are_the_module_objects(self):
+        from biz.dfch.specmgr.general.models import (
+            DEFAULT_MAX_LABEL as package_default_max_label,
+            GraphEdge as package_graph_edge,
+            GraphNode as package_graph_node,
+            ReferenceGraph as package_reference_graph,
+            render_reference_graph as package_render_reference_graph,
+        )
+
+        self.assertIs(package_default_max_label, DEFAULT_MAX_LABEL)
+        self.assertIs(package_graph_edge, GraphEdge)
+        self.assertIs(package_graph_node, GraphNode)
+        self.assertIs(package_reference_graph, ReferenceGraph)
+        self.assertIs(package_render_reference_graph, render_reference_graph)
+
+    def test_the_five_names_are_in_the_package_all(self):
+        from biz.dfch.specmgr.general import models as package
+
+        for name in ("DEFAULT_MAX_LABEL", "GraphEdge", "GraphNode", "ReferenceGraph", "render_reference_graph"):
+            with self.subTest(name=name):
+                self.assertIn(name, package.__all__)
 
 
 class TestAllGoldensPassTheChecker(unittest.TestCase):

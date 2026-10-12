@@ -45,7 +45,16 @@ Two builders, one frozen construction semantics each (rulebook §3):
 
 Broken documents in any scan are **skipped** (never a node, never an edge
 source; the render never fails -- the ``get_use_case_package_diagram``
-precedent). The builders **never raise for target-side content** (a dangling
+precedent). A document that **vanishes mid-build** (a concurrent delete
+between the scan's parse leg and one of the builders' own ``body_text``
+re-reads -- the three EXTRACTION legs: the forward BFS's resolved-node read,
+the reverse pass's scanned-document read, and the registry build's
+scanned-document read) is skipped the same way the parse-leg vanish is: the
+forward leg skips that node's EXPANSION only (the node and the edge that
+reached it remain; no outgoing references from the vanished document are
+added), the reverse/registry legs skip the document entirely (no node, no
+incoming edge / no edges) -- the render never fails for content. The
+builders **never raise for target-side content** (a dangling
 target becomes a ``title=None`` node); a **missing** source raises the source
 domain's own ``XNotFoundError`` (propagated unchanged from the source
 domain's own ``load_by_id``), and an **existing-but-broken** source raises
@@ -252,7 +261,12 @@ def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
     ``read_adr`` for ``adr``); a document that fails to parse
     (:data:`_SCAN_ERROR_TYPES` channels) or vanishes mid-scan
     (``FileNotFoundError``) is skipped (rulebook §3.4 -- never a node, never
-    an edge source), so the scan never raises for content.
+    an edge source), so the scan never raises for content. That guard
+    covers the PARSE leg (the domain's read call); each builder's own
+    EXTRACTION leg -- the ``body_text`` re-read over the yielded path --
+    carries its own ``FileNotFoundError`` skip (a document vanishing between
+    the two reads is handled there, module docstring), so the scan plus its
+    extraction legs together never raise for content.
 
     Yields ``(type, path, doc)`` -- the document's own parsed model, whose
     frontmatter id and derived title the builders read; the reference
@@ -450,7 +464,14 @@ def build_source_graph(
     dual-spelling rule: a full ``feat-NNN-slug`` source also matches a bare
     ``feat-NNN`` reference) -- no transitive incoming expansion (a scanned
     document's own references are never walked; only the forward frontier
-    grows with ``depth``). The graph title is the source's derived H1
+    grows with ``depth``). A document that vanishes mid-build between the
+    parse leg and one of the two EXTRACTION legs (the forward BFS's
+    resolved-node ``body_text`` re-read, the reverse pass's
+    scanned-document re-read) is skipped on that leg only: the forward leg
+    drops the node's expansion (the node and the edge that reached it
+    remain), the reverse leg drops the document entirely (no node, no
+    incoming edge) -- the build never raises for content (module
+    docstring). The graph title is the source's derived H1
     (the :func:`_doc_title` derivation -- the same one a reference to the
     source would resolve to). The visited (type, id) set bounds the build
     (rulebook §3.6); the FEAT exclusion is applied last (rulebook §3.5).
@@ -519,14 +540,22 @@ def build_source_graph(
 
     # The forward BFS: level 0 = the source; a level-k node is expanded
     # only if k < depth (the range-depth loop) and it resolved (it sits in
-    # resolved_paths); each unique reference adds one edge + one node.
+    # resolved_paths); each unique reference adds one edge + one node. A
+    # resolved node whose file vanishes between its resolution and this
+    # re-read skips its EXPANSION only (the node and the edge that reached
+    # it remain; no outgoing references from the vanished document are
+    # added -- the module docstring's vanished-mid-build rule).
     frontier: list[tuple[str, str]] = [source_key]
     for _level in range(depth):
         if not frontier:
             break
         next_frontier: list[tuple[str, str]] = []
         for key in frontier:
-            for ref_type, ref_id in _unique_references(body_text(resolved_paths[key])):
+            try:
+                references = _unique_references(body_text(resolved_paths[key]))
+            except FileNotFoundError:
+                continue  # vanished mid-build: skip this node's expansion only (the render never fails)
+            for ref_type, ref_id in references:
                 target_key = (ref_type, ref_id)
                 edges.add((key[0], key[1], ref_type, ref_id))
                 if target_key not in nodes:
@@ -543,7 +572,10 @@ def build_source_graph(
     # a scanned document as a node + one incoming edge to the source iff it
     # carries a matching reference (the feat dual-spelling rule for a full
     # feat source). The source's own document is skipped (its self-reference,
-    # if any, already came from the forward pass).
+    # if any, already came from the forward pass). A scanned document whose
+    # file vanishes between the scan's parse leg and this re-read is skipped
+    # entirely (no node, no incoming edge -- exactly the parse-leg vanished
+    # rule, the module docstring's vanished-mid-build rule).
     if reverse:
         source_bare_id = _bare_feat_id(source_id) if source_type == FEAT else None
         for scan_type, scan_path, scan_doc in _iter_source_documents():
@@ -553,7 +585,11 @@ def build_source_graph(
             scan_key = (scan_type, scan_id)
             if scan_key == source_key:
                 continue
-            for reference in _unique_references(body_text(scan_path)):
+            try:
+                references = _unique_references(body_text(scan_path))
+            except FileNotFoundError:
+                continue  # vanished mid-build: skipped entirely (the render never fails)
+            for reference in references:
                 if _reference_matches_source(reference, source_key, source_bare_id):
                     nodes.setdefault(scan_key, _doc_title(scan_type, scan_doc))
                     edges.add((scan_type, scan_id, source_type, source_id))
@@ -574,10 +610,15 @@ def build_registry_graph(*, include_feat: bool = True) -> ReferenceGraph:
     node). Broken documents are skipped (rulebook §3.4) and documents whose
     frontmatter id is ``None`` are not addressable nor referenceable, so
     they contribute no node (every reference id is a concrete uuid or feat
-    id; the builders' graph keys are (type, id) pairs). The graph title is
-    the frozen ``Reference Graph`` default (the tool layer's ``title``
-    override replaces it before rendering). The FEAT exclusion is applied
-    last (rulebook §3.5 -- ``source_key=None``: every FEAT node drops).
+    id; the builders' graph keys are (type, id) pairs). A scanned document
+    that vanishes mid-build between the scan's parse leg and this builder's
+    own EXTRACTION leg (the ``body_text`` re-read -- the body is read first
+    and the node added only on a successful read) is skipped entirely (no
+    node, no edges) -- the build never raises for registry content (module
+    docstring). The graph title is the frozen ``Reference Graph`` default
+    (the tool layer's ``title`` override replaces it before rendering). The
+    FEAT exclusion is applied last (rulebook §3.5 -- ``source_key=None``:
+    every FEAT node drops).
 
     Parameters
     ----------
@@ -604,8 +645,16 @@ def build_registry_graph(*, include_feat: bool = True) -> ReferenceGraph:
         scan_id = scan_doc.frontmatter.id
         if scan_id is None:
             continue  # not addressable and not referenceable (see the module docstring)
+        # The body is read FIRST and the node added only on a successful
+        # read: a document whose file vanishes between the scan's parse leg
+        # and this re-read is skipped entirely (no node, no edges -- the
+        # module docstring's vanished-mid-build rule).
+        try:
+            references = _unique_references(body_text(scan_path))
+        except FileNotFoundError:
+            continue  # vanished mid-build: skipped entirely (the render never fails)
         nodes[(scan_type, scan_id)] = _doc_title(scan_type, scan_doc)
-        for ref_type, ref_id in _unique_references(body_text(scan_path)):
+        for ref_type, ref_id in references:
             edges.add((scan_type, scan_id, ref_type, ref_id))
     for ref_type, ref_id in {(edge[2], edge[3]) for edge in edges}:
         if (ref_type, ref_id) not in nodes:

@@ -78,6 +78,7 @@ from ._reference_graph_helpers import (
     _MISSING_UUID,
     _SeededRegistryTestCase,
     _A001,
+    _B001,
     _C001,
     _C002,
     _D001,
@@ -397,6 +398,28 @@ class TestReverseRegistryTool(_SeededRegistryTestCase):
         _checker_clean(result)
 
 
+class TestReverseFeatSourceRegistryTool(_SeededRegistryTestCase):
+    """The scoped tool's byte-stable return over the G1 FEAT-source reverse registry (Phase 150):
+    ``get_reference_diagram(type="feat", id="feat-42-reverse-feat", depth=1, reverse=True)`` pins
+    the full tool path end-to-end -- including the ``feat`` source-id guard accepting the full
+    spelling -- to the builder-level ``reverse-feat-source-reverse.puml`` golden (the
+    bare-spelling branch's ``dec-b001 -> feat`` edge is only reachable through the tool's own
+    reverse scan over this seed set)."""
+
+    SEEDS = (
+        ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
+        ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
+        ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
+    )
+
+    def test_reverse_feat_source_golden(self):
+        result = get_reference_diagram(type="feat", id=_SEEDED_FEAT_ID, depth=1, reverse=True)
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, self._golden("reverse-feat-source-reverse.puml"))
+        _checker_clean(result)
+
+
 class TestNoFeatRegistryTool(_SeededRegistryTestCase):
     """The scoped tool's byte-stable return over the ``include_feat`` drop-semantics registry:
     the req source's plain and ``include_feat=False`` goldens, and the feat SOURCE's plain and
@@ -525,6 +548,7 @@ class TestGetReferenceDiagramGoldenRoundTrip(_SeededRegistryTestCase):
         ("chain/rsk-k001.md", f"docs/rsk/{_K001}.md"),
         ("reverse/req-r001.md", f"docs/req/{_R001}.md"),
         ("reverse/dec-d001.md", f"docs/dec/{_D001}.md"),
+        ("reverse/dec-b001.md", f"docs/dec/{_B001}.md"),
         ("reverse/feat-42-reverse-feat", "feat/feat-42-reverse-feat"),
         ("no-feat/req-n001.md", f"docs/req/{_N001}.md"),
         ("no-feat/feat-7-no-feat", "feat/feat-7-no-feat"),
@@ -545,6 +569,12 @@ class TestGetReferenceDiagramGoldenRoundTrip(_SeededRegistryTestCase):
             ("reverse-scoped-depth1.puml", "req", {"id": _R001, "depth": 1}, "reverse"),
             ("reverse-scoped-depth1-reverse.puml", "req", {"id": _R001, "depth": 1, "reverse": True}, "reverse"),
             ("reverse-scoped-depth2-reverse.puml", "req", {"id": _R001, "depth": 2, "reverse": True}, "reverse"),
+            (
+                "reverse-feat-source-reverse.puml",
+                "feat",
+                {"id": _SEEDED_FEAT_ID, "depth": 1, "reverse": True},
+                "reverse",
+            ),
             ("no-feat-scoped-source.puml", "req", {"id": _N001, "depth": 1}, "no-feat"),
             ("no-feat-scoped-source-no-feat.puml", "req", {"id": _N001, "depth": 1, "include_feat": False}, "no-feat"),
             ("no-feat-scoped-feat-source.puml", "feat", {"id": "feat-7-no-feat", "depth": 1}, "no-feat"),

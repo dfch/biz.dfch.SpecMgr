@@ -68,6 +68,7 @@ _U001 = "c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a"  # uc "Wide Use Case"
 _WG001 = "c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b"  # gol "Wide Goal"
 _A001 = "c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c"  # adr "Wide ADR"
 _D002 = "c00dc00d-c00d-4c0d-8c0d-c00dc00dc00d"  # dec "Broken Decision" (deliberately unparseable)
+_B001 = "c00ec00e-c00e-4c0e-8c0e-c00ec00ec00e"  # dec "Bare Referrer" (bare-`feat-42` reference + the bare-`feat-43` negative control)
 
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"  # well-formed, never seeded
 
