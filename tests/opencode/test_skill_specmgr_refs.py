@@ -24,20 +24,28 @@ being the previous one and feat-150's ``repair`` skill,
 feat-144 cross-reference retrieval stack (the ``list_references`` MCP tool, the
 ``ref-finder`` subagent, and the ``/refs`` command). These tests pin: the file's location
 (pin a); its frontmatter (pin b -- exactly the ``name``/``description`` keys, ``name``
-matching the folder, a non-empty third-person ``description`` carrying the eight
-plan-locked trigger keywords -- keyword matching is case-insensitive, a deliberate choice
-documented here, since opencode surfaces the description verbatim to agents in whatever
-casing it was authored in); the inherited ``ref-finder`` reporting vocabulary (pin c --
-every token of the locked ``_REPORTING_TOKENS`` tuple occurs in the body as a literal
-substring, backticks included); the single-document delegation pointer (pin d -- the
-locked delegation phrase in the whitespace-normalized body, plus all three names of the
-existing stack); the read-only posture (pin e -- both locked read-only phrases in the
-whitespace-normalized body); and the workflow presence (pin f -- the three codified
-workflow headings as literal body substrings, plus the load-bearing workflow constants
-(the canonical 12-domain string, the ``N = 2`` default-depth wording, and the deliberate
-``adr``-exclusion wording) in the whitespace-normalized body). All pins are mechanical
-string checks on the committed file; none of them import from ``src/``, so the test
-guards the skill wording, not the tool behavior.
+matching the folder, a non-empty third-person ``description`` carrying the eleven
+plan-locked trigger keywords -- the original eight plus, since
+feat-207-reference-graph Phase 140, the three diagram-phrasing ones -- keyword matching
+is case-insensitive, a deliberate choice documented here, since opencode surfaces the
+description verbatim to agents in whatever casing it was authored in); the inherited
+``ref-finder`` reporting vocabulary (pin c -- every token of the locked
+``_REPORTING_TOKENS`` tuple occurs in the body as a literal substring, backticks
+included); the single-document delegation pointer (pin d -- the locked delegation phrase
+in the whitespace-normalized body, plus all three names of the existing stack); the
+read-only posture (pin e -- both locked read-only phrases in the whitespace-normalized
+body); the workflow presence (pin f -- the four codified workflow headings as literal
+body substrings, plus the load-bearing workflow constants (the canonical 12-domain
+string, the ``N = 2`` default-depth wording, and the deliberate ``adr``-exclusion
+wording) in the whitespace-normalized body); and, since feat-207-reference-graph Phase
+140 (the rendered-diagram extension, REQ-011/ACC-005), the diagram workflow (pin g --
+the fifth routing-table row, the frozen rendered-vs-text disambiguation phrases, the
+13-domain (diagram surface, ``adr`` included) vs 12-domain (text workflows, ``adr``
+excluded by design) reconciliation note, and the load-bearing diagram facts: the tool /
+CLI / verdict / rulebook names, ``SPECMGR_DIAGRAM_MAX_TITLE`` default 40, the red
+``-[#red]->`` cycle syntax, the FEAT switch) in the whitespace-normalized body. All pins
+are mechanical string checks on the committed file; none of them import from ``src/``, so
+the test guards the skill wording, not the tool behavior.
 """
 
 from __future__ import annotations
@@ -59,6 +67,11 @@ _TRIGGER_KEYWORDS: tuple[str, ...] = (
     "show me the reference graph",
     "do all cross-references resolve",
     "which documents reference X",
+    # feat-207-reference-graph Phase 140: the diagram-phrasing trigger additions
+    # (the description's own new wording, mirrored here).
+    "render the reference graph as a plantuml diagram",
+    ".puml",
+    "get_reference_diagram",
 )
 _REPORTING_TOKENS: tuple[str, ...] = (
     "**NOT FOUND**",
@@ -77,11 +90,44 @@ _WORKFLOW_HEADINGS: tuple[str, ...] = (
     "## Graph workflow (multi-hop traversal)",
     "## Batch workflow (resolution validation)",
     '## Reverse workflow ("which documents reference X?")',
+    "## Diagram workflow (rendered reference graph)",  # feat-207 Phase 140: the fifth workflow row's section
 )
 _WORKFLOW_CONSTANTS: tuple[str, ...] = (
     "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs",
     "N = 2",
     "deliberate",
+)
+# feat-207-reference-graph Phase 140 (pin g): the rendered-diagram workflow's
+# load-bearing wording -- the routing-table row, the frozen disambiguation, the
+# 13-vs-12-domain reconciliation note, the diagram surface names, and the
+# diagram facts (env var, red-cycle syntax, FEAT switch).
+_DIAGRAM_ROUTING_ROW_PHRASES: tuple[str, ...] = ("Diagram rendering", "The diagram workflow, below")
+_DISAMBIGUATION_PHRASES: tuple[str, ...] = (
+    "stays with the multi-hop graph workflow",
+    "must not be stolen",
+)
+_RECONCILIATION_PHRASES: tuple[str, ...] = (
+    "13 domains",
+    "12 whole-body",
+    "bfd76370-b59b-4d65-b550-a969f6c93c9d",
+    "intentionally differ",
+)
+_DIAGRAM_SURFACE_NAMES: tuple[str, ...] = (
+    "get_reference_diagram",
+    "get_reference_diagram_all",
+    "specmgr diagram refs",
+    "specmgr plantuml-check",
+    "validate_plantuml",
+    "specmgr://reference-graph",
+)
+_DIAGRAM_FACT_PHRASES: tuple[str, ...] = (
+    "SPECMGR_DIAGRAM_MAX_TITLE",
+    "default 40",
+    "never truncated",
+    "-[#red]->",
+    "strongly connected component",
+    "--no-feat",
+    "include_feat=False",
 )
 
 
@@ -219,8 +265,9 @@ class TestSkillReadOnlyPosture(unittest.TestCase):
 
 
 class TestSkillWorkflowPresence(unittest.TestCase):
-    """Pin f: the three codified workflows are present in the body — the feature's
-    core deliverable cannot be stripped silently."""
+    """Pin f: the four codified workflows are present in the body — the feature's
+    core deliverable cannot be stripped silently (the diagram workflow's own
+    load-bearing wording is pinned separately, pin g)."""
 
     def test_workflow_headings_present(self):
         """Every codified workflow heading occurs in the body as a literal substring."""
@@ -237,6 +284,67 @@ class TestSkillWorkflowPresence(unittest.TestCase):
 
         for constant in _WORKFLOW_CONSTANTS:
             self.assertIn(constant, normalized_body)
+
+
+class TestSkillDiagramWorkflow(unittest.TestCase):
+    """Pin g (feat-207-reference-graph Phase 140, REQ-011/ACC-005): the fifth
+    workflow row — the rendered reference-graph diagram — and its frozen wording:
+    the routing-table row, the rendered-vs-text disambiguation (the bare
+    "show me the reference graph[, N levels deep]" phrasing stays with the
+    multi-hop row), the 13-domain (adr included) vs 12-domain (adr excluded by
+    design) reconciliation note, the diagram surface names (the two MCP tools,
+    the CLI, the verdict tools, the rulebook URI), and the load-bearing diagram
+    facts (the env var + default, the red-cycle syntax, the FEAT switch)."""
+
+    def test_routing_table_row_present(self):
+        """The fifth routing-table row occurs in the body as a literal substring."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for phrase in _DIAGRAM_ROUTING_ROW_PHRASES:
+            self.assertIn(phrase, normalized_body)
+
+    def test_frozen_disambiguation_phrases_present(self):
+        """The rendered-vs-text disambiguation is pinned: the bare graph phrasing
+        stays with the multi-hop row and must not be stolen."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for phrase in _DISAMBIGUATION_PHRASES:
+            self.assertIn(phrase, normalized_body)
+
+    def test_domain_count_reconciliation_note_present(self):
+        """The explicit 13-domain (diagram surface, adr included) vs 12-domain
+        (text workflows, adr excluded by design, ADR bfd76370) reconciliation
+        note is pinned."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for phrase in _RECONCILIATION_PHRASES:
+            self.assertIn(phrase, normalized_body)
+
+    def test_diagram_surface_names_present(self):
+        """The body names the whole diagram surface: the two MCP tools, the
+        specmgr diagram refs CLI, both verdict tools, and the rulebook URI."""
+        _, body = _split_frontmatter(_skill_text())
+
+        for name in _DIAGRAM_SURFACE_NAMES:
+            self.assertIn(name, body)
+
+    def test_diagram_fact_phrases_present(self):
+        """The load-bearing diagram facts occur in the body once whitespace is
+        normalized: the env var + default 40 + never-truncated title, the red
+        on-cycle arrow syntax, the strongly-connected-component wording, and the
+        FEAT switch in both spellings."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for phrase in _DIAGRAM_FACT_PHRASES:
+            self.assertIn(phrase, normalized_body)
 
 
 if __name__ == "__main__":

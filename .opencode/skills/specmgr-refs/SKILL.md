@@ -1,6 +1,6 @@
 ---
 name: specmgr-refs
-description: Use when resolving or retrieving specmgr cross-references -- single-document requests ("what does document X reference", "list the references of X"), reference-graph requests ("show me the reference graph"), batch-resolution requests ("do all cross-references resolve"), and reverse-lookup requests ("which documents reference X") -- by routing single-document retrieval to the `list_references` MCP tool (or the `ref-finder` subagent / `/refs` command) and following the codified graph, batch, and reverse workflows.
+description: Use when resolving or retrieving specmgr cross-references -- single-document requests ("what does document X reference", "list the references of X"), reference-graph requests ("show me the reference graph"), reference-graph DIAGRAM requests ("render the reference graph as a PlantUML diagram", "show me the reference diagram", "give me a .puml of the references of X"), batch-resolution requests ("do all cross-references resolve"), and reverse-lookup requests ("which documents reference X") -- by routing single-document retrieval to the `list_references` MCP tool (or the `ref-finder` subagent / `/refs` command), routing diagram requests to the `get_reference_diagram` / `get_reference_diagram_all` MCP tools or the `specmgr diagram refs` CLI (then `specmgr plantuml-check` / `validate_plantuml` for the verdict), and following the codified graph, batch, reverse, and diagram workflows.
 ---
 
 # SpecMgr Cross-Reference Router
@@ -10,13 +10,17 @@ You are a router over the specmgr cross-reference retrieval stack
 `ref-finder` subagent (`.opencode/agent/ref-finder.md`), and the `/refs`
 command (`.opencode/command/refs.md`). Single-document reference retrieval
 already has a home there -- you point to it, you never re-implement it. What
-you codify are the three compositions that have nowhere else: multi-hop
-graph traversal, batch resolution validation, and reverse lookup.
+you codify are the four compositions that have nowhere else: multi-hop
+graph traversal, batch resolution validation, reverse lookup, and the
+rendered reference-graph diagram (PlantUML, feat-207-reference-graph).
 
-You are read-only: you never edit, write, create, or delete any document,
-and you never commit. Your only actions of consequence are calling
-`list_references` and the paged `list_<d>` scans the batch and reverse
-workflows need.
+You are read-only over specmgr documents: you never edit, write, create,
+or delete any specmgr document, and you never commit. Your only actions of
+consequence are calling `list_references`, the paged `list_<d>` scans the
+batch and reverse workflows need, and the diagram workflow's own surface —
+the `get_reference_diagram` / `get_reference_diagram_all` tools (read-only
+source returns) and the `specmgr diagram refs` CLI (which writes its own
+deterministic `.puml` artifact, never a specmgr document).
 
 ## Route by task shape
 
@@ -26,6 +30,7 @@ workflows need.
 | Multi-hop graph | "show me the reference graph, two levels deep" | The graph workflow, below |
 | Batch validation | "do all cross-references resolve?" | The batch workflow, below |
 | Reverse lookup | "which documents reference REQ `<uuid>`?" | The reverse workflow, below |
+| Diagram rendering | "render the reference graph as a PlantUML diagram" / "give me a `.puml` of X's references" | The diagram workflow, below |
 
 If the task does not name a specmgr `<type> <id>` pair (or a registry-wide
 request), ask for one rather than guessing.
@@ -134,6 +139,64 @@ Use for "which documents reference REQ `<uuid>`?" -- any target `<type>
    the number of matching reference rows in it. A document with no matching
    row is not a hit and is not listed. If the target document itself is a
    hit (a self-reference), report it like any other hit and mark it as one.
+
+## Diagram workflow (rendered reference graph)
+
+Use for the RENDERED, diagrammatic phrasings: "render the reference graph
+as a PlantUML diagram", "show me the reference diagram", "give me a
+`.puml` of the references of X", "visualize the references".
+**Disambiguation (frozen):** any rendered/diagram/PlantUML/`.puml`
+phrasing routes to THIS workflow; the bare "show me the reference graph[,
+N levels deep]" phrasing — a text-traversal request — stays with the
+multi-hop graph workflow above and must not be stolen by this one (and
+vice versa).
+
+1. **Read the rulebook first**: `specmgr://reference-graph` — the frozen
+   emission layout (the 14-entry palette, the bracketed aliases, the label
+   truncation), the construction semantics, and the pointer at the UC
+   rulebook §3–§6 for the validation chain reused as-is. Where anything
+   below and the rulebook differ, the rulebook wins.
+2. **Produce the source** — either surface, chosen by task shape:
+   - **MCP tools (no file writes):** `get_reference_diagram(type, id,
+     depth=1, reverse=False, include_feat=True, title=None)` — one source
+     document's neighbourhood (the forward BFS to `depth` 1..5; `reverse`
+     additive and direct-only on the incoming side); or
+     `get_reference_diagram_all(include_feat=True, title=None)` — the
+     registry-wide graph (never raises for content). Both return the
+     byte-stable PlantUML source directly (not a specmgr document); a
+     scoped call over an existing-but-broken source returns the
+     non-raising `ParseFailureResult` — report it verbatim and stop.
+   - **CLI (writes the artifact):** `specmgr diagram refs <type> <id>
+     [--depth N] [--reverse] [--no-feat] [--title T] [--out diagrams/refs]
+     [--check]` → `<id>.refs.puml`, or `specmgr diagram refs all [...]` →
+     `reference-graph.puml` (exit 0 written / no diff, 1 a `--check` diff
+     or the missing `mcp` extra, 2 a usage-or-resolution error — report
+     exit-2 stderr verbatim and stop; a bare `feat-NNN` as the source id
+     is rejected, `list_feat` discovers the exact id).
+3. **The verdict:** `specmgr plantuml-check <path...>` over the written
+   file (or the `validate_plantuml` MCP tool over the source) — the SAME
+   strict chain as the UC diagrams (rulebook §7); report `checked_by` /
+   `valid` / `source_state` + every finding.
+4. **Notes the report must carry:**
+   - `SPECMGR_DIAGRAM_MAX_TITLE` (an int, default 40) bounds the
+     resolved-node H1 labels (word-boundary cut + `…`); the `@startuml`
+     diagram title is sanitized but never truncated; unresolved ids stay
+     verbatim.
+   - On-cycle edges — a self-loop, or both endpoints in the same strongly
+     connected component of size ≥ 2 — render with the red `-[#red]->`
+     arrow; every off-cycle edge renders plain `-->`.
+   - The FEAT switch: `include_feat=False` (CLI `--no-feat`) drops every
+     FEAT node except the explicitly requested source (scoped), then drops
+     every edge touching a dropped node — a feat target never surfaces as
+     a node in any mode.
+   - **Domain-count reconciliation (do not "fix" either):** the diagram
+     surface spans 13 domains — `adr` INCLUDED (a scoped `type` accepts
+     `adr`; an ADR document referencing a REQ is a real edge) — while the
+     text workflows above (graph, batch, reverse) stay 12 whole-body
+     domains with their deliberate `adr` exclusion (`adr` is slated for
+     removal, GitHub issue #46, ADR
+     bfd76370-b59b-4d65-b550-a969f6c93c9d). The two surfaces intentionally
+     differ.
 
 ## Reporting conventions (every workflow)
 

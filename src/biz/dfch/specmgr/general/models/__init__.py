@@ -134,6 +134,23 @@ alone):
    ``_get_classes``/``_get_functions`` filter, ``obj.__module__ ==
    module.__name__``), never merely re-exported ones.
 
+Also backs feat-207-reference-graph (Phase 110, REQ-001/REQ-003):
+
+- :class:`GraphNode`/:class:`GraphEdge`/:class:`ReferenceGraph` -- the
+  frozen reference-graph fact dataclasses the ``general.tools.
+  _reference_graph`` builders and the pure renderer share, and
+  :func:`render_reference_graph` -- the pure, byte-stable PlantUML
+  component-diagram renderer over them (the frozen rulebook
+  ``specmgr://reference-graph`` §2 layout, the SCC-based red cycle
+  marking). :data:`DEFAULT_MAX_LABEL` (40) is the label limit the
+  renderer takes as a plain ``max_label`` parameter (the
+  ``general.tools._diagram_config`` helper shares it as the
+  ``SPECMGR_DIAGRAM_MAX_TITLE`` env var's own default). ``reference_graph``
+  is import-free (top-level imports exactly ``__future__``/
+  ``collections.abc``/``dataclasses``, the ``plantuml/`` package's bar), so
+  a plain EAGER import is safe here -- no PEP 562 laziness needed, unlike
+  the ``update_result`` names.
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
@@ -164,6 +181,13 @@ from .paged_result import PagedResult
 from .parse_failure_result import ParseFailureResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
 from .reference import ReferenceRow
+from .reference_graph import (
+    DEFAULT_MAX_LABEL,
+    GraphEdge,
+    GraphNode,
+    ReferenceGraph,
+    render_reference_graph,
+)
 from .similarity_hit import SimilarityHit
 from .similarity_unavailable import (
     REASON_BACKEND_UNAVAILABLE,
@@ -177,9 +201,12 @@ __all__ = [
     "CombiningPatterns",
     "CoverageItem",
     "CoverageRelationship",
+    "DEFAULT_MAX_LABEL",
     "Dtais",
     "DocSummary",
     "Ears",
+    "GraphEdge",
+    "GraphNode",
     "InvalidStatusResult",
     "MethodItem",
     "PagedResult",
@@ -190,6 +217,7 @@ __all__ = [
     "REASON_DISABLED",
     "Rasci",
     "RasciVsRaci",
+    "ReferenceGraph",
     "ReferenceRow",
     "RoleItem",
     "Roles",
@@ -207,6 +235,7 @@ __all__ = [
     "parse_dtais",
     "parse_ears",
     "parse_rasci",
+    "render_reference_graph",
 ]
 
 #: PEP 562: the names this package exports lazily from its ``update_result``

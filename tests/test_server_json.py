@@ -32,7 +32,7 @@ and `default` present on an entry iff the code reads that variable with a defaul
 
 Since feat-208 Phase 160 the `setUp` scan runs on the shared helper's
 registry-aware `discovery_name_pattern` (the `SPECMGR_` prefix net union the
-quoted form of every registered name, the nine owning-module side-effect
+quoted form of every registered name, the ten owning-module side-effect
 imports above making the registry complete) rather than the bare `SPECMGR_`
 net, so the manifest's third-party `FASTEMBED_CACHE_PATH` entry is visible
 to the scan; the test-class assertions are unchanged.
@@ -74,6 +74,7 @@ import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_D
 import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
 import biz.dfch.specmgr.feat.tools._paths  # noqa: F401 (side-effects only: SPECMGR_FEAT_DIR registration)
 import biz.dfch.specmgr.general.resources.config  # noqa: F401 (side-effects only: FASTEMBED_CACHE_PATH registration)
+import biz.dfch.specmgr.general.tools._diagram_config  # noqa: F401 (side-effects only: SPECMGR_DIAGRAM_MAX_TITLE registration)
 import biz.dfch.specmgr.general.tools._doc_paths  # noqa: F401 (side-effects only: SPECMGR_DOCS_DIR registration)
 import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects only: SPECMGR_SIMILARITY_DISABLED registration)
 import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
@@ -120,7 +121,7 @@ class TestServerJsonDrift(unittest.TestCase):
         # feat-208 Phase 160: the registry-aware discovery pattern (the
         # `SPECMGR_` prefix net union the quoted form of every registered
         # name), so the manifest's third-party `FASTEMBED_CACHE_PATH` entry
-        # is visible to the scan -- the nine owning-module side-effect
+        # is visible to the scan -- the ten owning-module side-effect
         # imports above make the registry complete when this runs. The
         # assertions below are unchanged; only this discovery input is.
         name_pattern = discovery_name_pattern({entry.name for entry in _envregistry.all_vars()})

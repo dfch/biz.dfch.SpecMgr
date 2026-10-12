@@ -1,0 +1,27 @@
+@startuml Truncation Default Title With Far More Than Forty Characters
+
+skinparam component {
+  backgroundColor<<ADR>> LightYellow
+  backgroundColor<<REQ>> LightBlue
+  backgroundColor<<UC>> Pink
+  backgroundColor<<TSK>> Honeydew
+  backgroundColor<<QA>> LemonChiffon
+  backgroundColor<<PRB>> LightCoral
+  backgroundColor<<GOL>> Lavender
+  backgroundColor<<RSK>> Orange
+  backgroundColor<<DEC>> LightGreen
+  backgroundColor<<SOP>> PowderBlue
+  backgroundColor<<FEAT>> PaleTurquoise
+  backgroundColor<<VCR>> Khaki
+  backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<UNRESOLVED>> DarkRed
+}
+
+left to right direction
+
+package "REQ"
+component "Alpha Beta Gamma Delta Epsilon Zeta…" as [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
+component "abcdefghijklmnopqrstuvwxyz0123456789ABC…" as [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
+component "Alpha Beta Gamma Delta Epsilon Zeta Etas" as [REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
+end package
+@enduml

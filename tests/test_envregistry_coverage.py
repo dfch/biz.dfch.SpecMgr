@@ -41,9 +41,11 @@ shared helper's `typer_option_default_expression` (Task 150.100 extended
 the Annotated scan to capture the expression text for exactly this
 comparison).
 
-Self-contained: the nine owning modules' import-time registrations
-(feat-208 Phase 110) are triggered by the explicit side-effect imports
-below -- the same module list `tests/test_envregistry_completeness.py`
+Self-contained: the ten owning modules' import-time registrations
+(feat-208 Phase 110; `SPECMGR_DIAGRAM_MAX_TITLE`'s owning module
+`general.tools._diagram_config` joined the list in the feat-207 dev sync)
+are triggered by the explicit side-effect imports below -- the same
+module list `tests/test_envregistry_completeness.py`
 uses -- so this test is green when run alone. These tests read the
 registry; they never register into it. The manifest's one
 machine-dependent default (`FASTEMBED_CACHE_PATH`'s
@@ -74,6 +76,7 @@ import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_D
 import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
 import biz.dfch.specmgr.feat.tools._paths  # noqa: F401 (side-effects only: SPECMGR_FEAT_DIR registration)
 import biz.dfch.specmgr.general.resources.config  # noqa: F401 (side-effects only: FASTEMBED_CACHE_PATH registration)
+import biz.dfch.specmgr.general.tools._diagram_config  # noqa: F401 (side-effects only: SPECMGR_DIAGRAM_MAX_TITLE registration)
 import biz.dfch.specmgr.general.tools._doc_paths  # noqa: F401 (side-effects only: SPECMGR_DOCS_DIR registration)
 import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects only: SPECMGR_SIMILARITY_DISABLED registration)
 import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
@@ -222,7 +225,7 @@ class TestReadmeEnvironmentVariablesCoverage(unittest.TestCase):
     def setUp(self) -> None:
         self.records: dict[str, _envregistry.EnvVar] = {entry.name: entry for entry in _envregistry.all_vars()}
         assert self.records, (
-            "the central env-var registry is empty -- the nine owning-module side-effect imports did not run"
+            "the central env-var registry is empty -- the ten owning-module side-effect imports did not run"
         )
         self.readme_section = _extract_markdown_section(
             README_MD.read_text(encoding="utf-8"), README_ENV_SECTION_HEADING
@@ -248,7 +251,7 @@ class TestServerJsonEnvironmentVariablesCoverage(unittest.TestCase):
     def setUp(self) -> None:
         self.records: dict[str, _envregistry.EnvVar] = {entry.name: entry for entry in _envregistry.all_vars()}
         assert self.records, (
-            "the central env-var registry is empty -- the nine owning-module side-effect imports did not run"
+            "the central env-var registry is empty -- the ten owning-module side-effect imports did not run"
         )
         self.manifest_entries = _manifest_env_vars()
 
@@ -352,7 +355,7 @@ class TestTyperMcpOptionDefaults(unittest.TestCase):
     def setUp(self) -> None:
         self.records: dict[str, _envregistry.EnvVar] = {entry.name: entry for entry in _envregistry.all_vars()}
         assert self.records, (
-            "the central env-var registry is empty -- the nine owning-module side-effect imports did not run"
+            "the central env-var registry is empty -- the ten owning-module side-effect imports did not run"
         )
         self.mcp_source = MCP_COMMAND_PATH.read_text(encoding="utf-8")
         # Code text (docstring/comment-blanked) for the default-expression

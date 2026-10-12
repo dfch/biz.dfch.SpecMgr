@@ -32,7 +32,8 @@ only their *presence* -- every one of them through the central env-var
 registry's raw accessor ``_envregistry.get(name) is not None`` (the three
 base-dir vars since feat-208 Phase 120; ``SPECMGR_SIMILARITY_DISABLED``,
 ``SPECMGR_FEAT_WARMUP_DISABLED``, and the three PlantUML source vars since
-Phase 130) -- never their value and never any other environment variable.
+Phase 130; ``SPECMGR_DIAGRAM_MAX_TITLE`` since the feat-208 dev sync) --
+never their value and never any other environment variable.
 Since feat-208 Phase 140 the module carries **no** direct ``os.environ``
 read at all: the one remaining *value* read, ``FASTEMBED_CACHE_PATH``,
 likewise goes through the registry -- its ``get_with_default`` accessor
@@ -50,7 +51,13 @@ to know where the model is cached; unset or empty falls back to the default
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
 ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
 whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
-are disabled.
+are disabled. A fourth, ``SPECMGR_DIAGRAM_MAX_TITLE``
+(feat-207-reference-graph Phase 120, REQ-010), is likewise presence-only
+(the ``diagram`` section's ``set`` flag); the raw value is never disclosed
+-- what the section reports instead is ``resolved``, a *derived* effective
+value (an int the tools render with: 40 when unset or set-but-invalid, the
+set int otherwise -- the ``base_dir``/``cache_dir`` resolved-value
+precedent).
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -82,6 +89,19 @@ structure-only floor). Static configuration only, like ``similarity``:
 whether the selected source actually *answers its canary right now* is the
 ``validate_plantuml`` tool's own ``source_state``/``available`` result, not
 part of this resource.
+
+**Static diagram section (feat-207-reference-graph Phase 120, REQ-010).**
+The payload additionally carries a ``diagram`` section (``DiagramConfig``):
+the **presence-only** state of the ``SPECMGR_DIAGRAM_MAX_TITLE``
+reference-graph label-limit env var (never its value -- the same
+no-disclosure contract), the helper's validity flag, the frozen default
+(40), and ``resolved`` -- a DERIVED value, the effective label limit the
+``get_reference_diagram``/``get_reference_diagram_all`` tools (and the
+Phase 130 CLI) render with, per the shared
+``general.tools._diagram_config.diagram_max_title`` helper (40 when unset
+or set-but-invalid, the set int otherwise -- the ``base_dir``/``cache_dir``
+resolved-value precedent). Static configuration only, like ``similarity``
+and ``plantuml``.
 """
 
 from __future__ import annotations
@@ -94,12 +114,20 @@ from ... import _envregistry
 from ...adr.tools._paths import ADR_DIR_ENV_VAR, adr_base_dir
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
+from ...general.tools._diagram_config import DEFAULT_MAX_TITLE, ENV_VAR_DIAGRAM_MAX_TITLE, diagram_max_title
 from ...general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from ...general.tools._domains import ALL_DOMAINS
 from ...general.tools._embedding import SIMILARITY_DISABLED_ENV_VAR, SIMILARITY_MODEL_NAME
 from ...general.tools._startup_warmup import FEAT_WARMUP_DISABLED_ENV_VAR
 from ...gol.tools._paths import gol_base_dir
-from ...models import ConfigInfo, DomainConfig, PlantumlConfig, PlantumlSourceConfig, SimilarityConfig
+from ...models import (
+    ConfigInfo,
+    DiagramConfig,
+    DomainConfig,
+    PlantumlConfig,
+    PlantumlSourceConfig,
+    SimilarityConfig,
+)
 from ...plantuml.chain import ENV_VAR_BIN, ENV_VAR_JAR, ENV_VAR_URL, select_source
 from ...prb.tools._paths import prb_base_dir
 from ...qa.tools._paths import qa_base_dir
@@ -189,17 +217,23 @@ def _similarity_cache_dir() -> str:
         "state of the exactly-three source env vars "
         "(SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL, each {set: bool}, never a "
         'value) plus `selected` -- the first-set-wins selection over them ("jar"/"bin"/"url"/'
-        '"none"). Static configuration only -- the tools\' own dynamic runtime availability is '
-        "their structured {available, reason, message} result, not part of this resource. Never "
-        "discloses the value of any environment variable except the resolved cache path, only "
-        "whether the relevant directory-path/opt-out env vars are present."
+        '"none"), and a static `diagram` section for the reference-graph label limit '
+        "(feat-207-reference-graph Phase 120, REQ-010): the presence-only state of "
+        "SPECMGR_DIAGRAM_MAX_TITLE ({set: bool}, never a value), the helper's validity flag "
+        "({valid: bool}), the frozen default (40), and `resolved` -- a derived value, the "
+        "effective label limit the get_reference_diagram/get_reference_diagram_all tools render "
+        "with (40 when unset or set-but-invalid, the set int otherwise). Static configuration "
+        "only -- the tools' own dynamic runtime availability is their structured "
+        "{available, reason, message} result, not part of this resource. Never discloses the "
+        "value of any environment variable except the resolved cache path, only whether the "
+        "relevant directory-path/opt-out env vars are present."
     ),
     mime_type="application/json",
 )
 def config_info() -> ConfigInfo:
     """
-    Return the resolved base directory and env-var-set flag for every domain, plus the similarity and
-    plantuml sections and the feat_warmup_disabled flag.
+    Return the resolved base directory and env-var-set flag for every domain, plus the similarity,
+    plantuml, and diagram sections and the feat_warmup_disabled flag.
 
     Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
     reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -232,6 +266,17 @@ def config_info() -> ConfigInfo:
     of this payload; it is that tool's ``source_state``/``available``
     result.
 
+    The ``diagram`` section (feat-207-reference-graph Phase 120, REQ-010)
+    is static configuration only: the **presence** of
+    ``SPECMGR_DIAGRAM_MAX_TITLE`` (the registry's raw accessor
+    ``_envregistry.get(var) is not None`` -- never a value; the read
+    migrated to the registry in the feat-208 dev sync), the shared
+    ``_diagram_config.diagram_max_title`` helper's validity flag, the
+    frozen default (40), and ``resolved`` -- a *derived* value, the
+    effective label limit the reference-graph tools (and the Phase 130
+    CLI) render with: 40 when unset or set-but-invalid, the set int
+    otherwise.
+
     ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
     3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
     convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
@@ -241,8 +286,8 @@ def config_info() -> ConfigInfo:
     -------
     ConfigInfo
         The resolved base directory configuration for every domain, plus
-        the static similarity section, the static plantuml section, and
-        the feat_warmup_disabled flag.
+        the static similarity section, the static plantuml section, the
+        static diagram section, and the feat_warmup_disabled flag.
     """
     docs_dir_set = _envregistry.get(DOCS_DIR_ENV_VAR) is not None
 
@@ -338,10 +383,25 @@ def config_info() -> ConfigInfo:
         selected=selected[0] if selected is not None else "none",
     )
 
+    # The static diagram section (feat-207-reference-graph Phase 120,
+    # REQ-010): presence-only over SPECMGR_DIAGRAM_MAX_TITLE (never the raw
+    # value -- the resource's own no-disclosure contract, REQ-002), plus the
+    # helper's validity flag and the DERIVED resolved effective limit
+    # (diagram_max_title returns (effective, valid) -- 40 when unset or
+    # set-but-invalid, the set int otherwise).
+    resolved_max_title, max_title_valid = diagram_max_title()
+    diagram = DiagramConfig(
+        set=_envregistry.get(ENV_VAR_DIAGRAM_MAX_TITLE) is not None,
+        valid=max_title_valid,
+        default=DEFAULT_MAX_TITLE,
+        resolved=resolved_max_title,
+    )
+
     result = ConfigInfo(
         domains=domains,
         similarity=similarity,
         plantuml=plantuml,
+        diagram=diagram,
         feat_warmup_disabled=_envregistry.get(FEAT_WARMUP_DISABLED_ENV_VAR) is not None,
     )
     return result

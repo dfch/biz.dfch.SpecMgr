@@ -283,6 +283,16 @@ bin
 # it as a plain attribute.
 feat_warmup_disabled
 
+# config (feat-207-reference-graph Phase 120, REQ-010): `DiagramConfig`'s
+# `resolved` field is written in the resource's own constructor
+# (`general.resources.config.config_info`, from the shared
+# `general.tools._diagram_config.diagram_max_title` helper's effective value)
+# and read back only via (de)serialization when the resource is read; nothing
+# in `src/` accesses it as a plain attribute (the `set`/`valid`/`default`
+# siblings need no entries -- vulture's built-in whitelist already covers
+# them, empirically confirmed by the Phase 120 gate run).
+resolved
+
 # similarity (feat-134-related-artifact-similarity):
 # `SimilarityUnavailableResult`'s `available`/`reason` fields are written in
 # the model's own constructor (in `_embedding._similarity_availability`) and

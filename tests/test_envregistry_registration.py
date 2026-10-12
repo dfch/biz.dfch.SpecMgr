@@ -17,19 +17,21 @@
 
 """Tests pinning Phase 110's real import-time registrations (feat-208, ACC-001).
 
-Phase 100's registry started empty; Phase 110 registers all 13 environment
-variables (the 12 ``SPECMGR_*`` vars plus ``FASTEMBED_CACHE_PATH``) at
-import time of their nine owning modules. This test explicitly imports every
+Phase 100's registry started empty; Phase 110 registers all 14 environment
+variables (the 13 ``SPECMGR_*`` vars plus ``FASTEMBED_CACHE_PATH``) at
+import time of their ten owning modules (the 14th, ``SPECMGR_DIAGRAM_MAX_TITLE``,
+and its owning module ``general.tools._diagram_config``, joined the list in
+the feat-207 dev sync). This test explicitly imports every
 owning module at module level, so it is self-contained (green when run
 alone), and pins:
 
-* the registry contains **exactly** those 13 names,
+* the registry contains **exactly** those 14 names,
 * each record's ``default``/``format``/``choices``/
   ``empty_falls_back_to_default``/``owner`` against the Phase 110
   registration table (the ``description`` is not pinned here: the Phase 160
   documentation-coverage test (REQ-004/ACC-004) pins ``default``/``choices``/
   ``format`` fidelity against the ``server.json`` manifest, not
-  ``description``; the twelve ``SPECMGR_*`` descriptions track the manifest
+  ``description``; the thirteen ``SPECMGR_*`` descriptions track the manifest
   verbatim by construction (registered from it), while the third-party
   ``FASTEMBED_CACHE_PATH`` manifest text intentionally carries the
   ``<tempdir>`` placeholder explanation its manifest ``default`` uses),
@@ -38,7 +40,7 @@ alone), and pins:
   authority for the default; the constants are kept for the ~29 existing
   test references).
 
-The exact-13 assertion assumes no other test module in the worker process
+The exact-14 assertion assumes no other test module in the worker process
 registers a name that survives into this read: ``tests/test_envregistry.py``
 only ever registers its own test-only names inside
 ``_IsolatedRegistry`` subclasses, whose ``tearDown`` restores the
@@ -55,6 +57,7 @@ from pathlib import Path
 import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_DOTENV registration)
 import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
 import biz.dfch.specmgr.general.resources.config  # noqa: F401 (side-effects only: FASTEMBED_CACHE_PATH registration)
+import biz.dfch.specmgr.general.tools._diagram_config  # noqa: F401 (side-effects only: SPECMGR_DIAGRAM_MAX_TITLE registration)
 import biz.dfch.specmgr.general.tools._embedding  # noqa: F401 (side-effects only: SPECMGR_SIMILARITY_DISABLED registration)
 import biz.dfch.specmgr.general.tools._startup_warmup  # noqa: F401 (side-effects only: SPECMGR_FEAT_WARMUP_DISABLED registration)
 import biz.dfch.specmgr.uc.tools.validate_plantuml  # noqa: F401 (side-effects only: the plantuml trio's registration)
@@ -73,6 +76,7 @@ from biz.dfch.specmgr._envregistry import all_vars
 #: import time).
 _EXPECTED_METADATA: dict[str, tuple[str | None, str | None, tuple[str, ...], bool, str]] = {
     "SPECMGR_ADR_DIR": ("docs/adr", "filepath", (), True, "adr"),
+    "SPECMGR_DIAGRAM_MAX_TITLE": ("40", "number", (), False, "general"),
     "SPECMGR_DOCS_DIR": ("docs", "filepath", (), True, "general"),
     "SPECMGR_FEAT_DIR": (".specmgr/feat", "filepath", (), True, "feat"),
     "SPECMGR_MCP_TRANSPORT": ("stdio", None, ("stdio", "sse", "streamable-http"), False, "cli"),
@@ -95,9 +99,9 @@ _EXPECTED_METADATA: dict[str, tuple[str | None, str | None, tuple[str, ...], boo
 
 
 class TestPhase110Registrations(unittest.TestCase):
-    """The 13 real import-time registrations, pinned against the Phase 110 table."""
+    """The 14 real import-time registrations, pinned against the Phase 110 table."""
 
-    def test_registry_contains_exactly_the_13_registered_names(self):
+    def test_registry_contains_exactly_the_14_registered_names(self):
         result = {entry.name for entry in all_vars()}
 
         self.assertEqual(

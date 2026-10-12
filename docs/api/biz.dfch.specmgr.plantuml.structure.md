@@ -4,8 +4,10 @@ The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED
 
 A line-oriented subset linter — **not** a grammar engine. It lints exactly the
 subset of PlantUML the specmgr renderers emit (plus the agent's attributed
-sequence files): ``@startuml``/``@enduml`` presence, actor/participant/usecase
-declarations (quoted or bare labels, ``as`` aliases, ``<<stereotypes>>``),
+sequence files): ``@startuml``/``@enduml`` presence,
+actor/participant/usecase/component declarations (quoted or bare labels,
+``as`` aliases — a bare identifier or, since the 2026-10-10 amendment, a
+bracketed ``[...]`` token recorded unbracketed — ``<<stereotypes>>``),
 usecase associations (``-->``), package edges (``..>``), sequence messages
 (``->``/``-->``/self), note blocks, the fragment stack (``alt``/``opt``/
 ``loop``/``group``/``box``/``rectangle``/``package`` with ``end``), quote
@@ -82,11 +84,13 @@ Split a declaration's ``rest`` into (label, alias, stereotype_tail).
 
 Returns the parts plus local findings (unbalanced quote / stereotype).
 The label is the quoted substring's content or the bare token; the alias
-only from an ``as <ident>``; a trailing balanced ``<<…>>`` run is the
-stereotype tail — with or without the alias in between (the 2026-10-08
-amendment). A bracket shape that is NOT the frozen one is an unbalanced
-``<<stereotype>>`` error (the negative control ``participant A <<user``
-— the real parser answers it 400 — errors in both modes).
+only from an ``as <alias>`` (a bare identifier or, since the 2026-10-10
+amendment, a bracketed ``[...]`` token — recorded unbracketed); a
+trailing balanced ``<<…>>`` run is the stereotype tail — with or without
+the alias in between (the 2026-10-08 amendment). A bracket shape that is
+NOT the frozen one is an unbalanced ``<<stereotype>>`` error (the
+negative control ``participant A <<user`` — the real parser answers it
+400 — errors in both modes).
 
 
 ### `_declaration_parts_legacy(rest: 'str') -> 'tuple[str, str | None, str | None, list[Finding]]'`
@@ -98,7 +102,11 @@ every shape the legacy path handles).
 
 ### `_strip_operand(token: 'str') -> 'str'`
 
-Unwrap a quoted operand and undo the ``#quot;`` sanitisation.
+Unwrap a quoted or fully-bracketed operand and undo the ``#quot;`` sanitisation.
+
+The bracket unwrap (the 2026-10-10 amendment, rulebook §6.1) makes a
+bracketed edge operand (e.g. ``[REQ-{uuid}]``) compare identically to the
+unbracketed name a declaration's bracketed ``as`` alias records.
 
 
 ### `check_structure(text: 'str', mode: 'str' = 'standalone') -> 'StructureCheckResult'`

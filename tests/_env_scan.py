@@ -101,7 +101,7 @@ def discovery_name_pattern(registered_names: set[str]) -> str:
     completeness guard, feat-208 Phase 150) and `tests/test_server_json.py`
     (feat-126's manifest drift guard, whose `setUp` was wired onto this
     pattern in Phase 160 so the manifest can carry the third-party variable),
-    both preceded by the nine owning-module side-effect imports that make the
+    both preceded by the ten owning-module side-effect imports that make the
     registry complete.
 
     Args:

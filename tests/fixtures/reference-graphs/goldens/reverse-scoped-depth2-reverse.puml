@@ -1,0 +1,40 @@
+@startuml Reverse Target
+
+skinparam component {
+  backgroundColor<<ADR>> LightYellow
+  backgroundColor<<REQ>> LightBlue
+  backgroundColor<<UC>> Pink
+  backgroundColor<<TSK>> Honeydew
+  backgroundColor<<QA>> LemonChiffon
+  backgroundColor<<PRB>> LightCoral
+  backgroundColor<<GOL>> Lavender
+  backgroundColor<<RSK>> Orange
+  backgroundColor<<DEC>> LightGreen
+  backgroundColor<<SOP>> PowderBlue
+  backgroundColor<<FEAT>> PaleTurquoise
+  backgroundColor<<VCR>> Khaki
+  backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<UNRESOLVED>> DarkRed
+}
+
+left to right direction
+
+package "REQ"
+component "Reverse Target" as [REQ-c006c006-c006-4c06-8c06-c006c006c006] <<REQ>>
+end package
+
+package "DEC"
+component "Reverse Referrer" as [DEC-c007c007-c007-4c07-8c07-c007c007c007] <<DEC>>
+end package
+
+package "FEAT"
+component "Reverse Feature" as [feat-42] <<FEAT>>
+component "Reverse Feature" as [feat-42-reverse-feat] <<FEAT>>
+end package
+
+[DEC-c007c007-c007-4c07-8c07-c007c007c007] --> [REQ-c006c006-c006-4c06-8c06-c006c006c006] : refers to
+[feat-42] -[#red]-> [REQ-c006c006-c006-4c06-8c06-c006c006c006] : refers to
+[feat-42-reverse-feat] -[#red]-> [REQ-c006c006-c006-4c06-8c06-c006c006c006] : refers to
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] -[#red]-> [feat-42] : refers to
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] -[#red]-> [feat-42-reverse-feat] : refers to
+@enduml

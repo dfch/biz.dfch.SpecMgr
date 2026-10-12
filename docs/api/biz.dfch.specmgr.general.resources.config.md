@@ -17,7 +17,8 @@ only their *presence* -- every one of them through the central env-var
 registry's raw accessor ``_envregistry.get(name) is not None`` (the three
 base-dir vars since feat-208 Phase 120; ``SPECMGR_SIMILARITY_DISABLED``,
 ``SPECMGR_FEAT_WARMUP_DISABLED``, and the three PlantUML source vars since
-Phase 130) -- never their value and never any other environment variable.
+Phase 130; ``SPECMGR_DIAGRAM_MAX_TITLE`` since the feat-208 dev sync) --
+never their value and never any other environment variable.
 Since feat-208 Phase 140 the module carries **no** direct ``os.environ``
 read at all: the one remaining *value* read, ``FASTEMBED_CACHE_PATH``,
 likewise goes through the registry -- its ``get_with_default`` accessor
@@ -35,7 +36,13 @@ to know where the model is cached; unset or empty falls back to the default
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
 ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
 whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
-are disabled.
+are disabled. A fourth, ``SPECMGR_DIAGRAM_MAX_TITLE``
+(feat-207-reference-graph Phase 120, REQ-010), is likewise presence-only
+(the ``diagram`` section's ``set`` flag); the raw value is never disclosed
+-- what the section reports instead is ``resolved``, a *derived* effective
+value (an int the tools render with: 40 when unset or set-but-invalid, the
+set int otherwise -- the ``base_dir``/``cache_dir`` resolved-value
+precedent).
 
 Read-only, like every other domain's own ``*_base_dir()`` -- this resource
 never creates a directory as a side effect of being read (it never calls any
@@ -68,6 +75,19 @@ whether the selected source actually *answers its canary right now* is the
 ``validate_plantuml`` tool's own ``source_state``/``available`` result, not
 part of this resource.
 
+**Static diagram section (feat-207-reference-graph Phase 120, REQ-010).**
+The payload additionally carries a ``diagram`` section (``DiagramConfig``):
+the **presence-only** state of the ``SPECMGR_DIAGRAM_MAX_TITLE``
+reference-graph label-limit env var (never its value -- the same
+no-disclosure contract), the helper's validity flag, the frozen default
+(40), and ``resolved`` -- a DERIVED value, the effective label limit the
+``get_reference_diagram``/``get_reference_diagram_all`` tools (and the
+Phase 130 CLI) render with, per the shared
+``general.tools._diagram_config.diagram_max_title`` helper (40 when unset
+or set-but-invalid, the set int otherwise -- the ``base_dir``/``cache_dir``
+resolved-value precedent). Static configuration only, like ``similarity``
+and ``plantuml``.
+
 ## Functions
 
 ### `_similarity_cache_dir() -> 'str'`
@@ -99,8 +119,8 @@ Returns:
 
 ### `config_info() -> 'ConfigInfo'`
 
-Return the resolved base directory and env-var-set flag for every domain, plus the similarity and
-plantuml sections and the feat_warmup_disabled flag.
+Return the resolved base directory and env-var-set flag for every domain, plus the similarity,
+plantuml, and diagram sections and the feat_warmup_disabled flag.
 
 Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
 reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
@@ -133,6 +153,17 @@ selected source answers its canary right now) is deliberately not part
 of this payload; it is that tool's ``source_state``/``available``
 result.
 
+The ``diagram`` section (feat-207-reference-graph Phase 120, REQ-010)
+is static configuration only: the **presence** of
+``SPECMGR_DIAGRAM_MAX_TITLE`` (the registry's raw accessor
+``_envregistry.get(var) is not None`` -- never a value; the read
+migrated to the registry in the feat-208 dev sync), the shared
+``_diagram_config.diagram_max_title`` helper's validity flag, the
+frozen default (40), and ``resolved`` -- a *derived* value, the
+effective label limit the reference-graph tools (and the Phase 130
+CLI) render with: 40 when unset or set-but-invalid, the set int
+otherwise.
+
 ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
 3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
 convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
@@ -142,6 +173,6 @@ Returns
 -------
 ConfigInfo
     The resolved base directory configuration for every domain, plus
-    the static similarity section, the static plantuml section, and
-    the feat_warmup_disabled flag.
+    the static similarity section, the static plantuml section, the
+    static diagram section, and the feat_warmup_disabled flag.
 

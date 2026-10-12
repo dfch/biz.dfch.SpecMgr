@@ -19,8 +19,10 @@
 
 A line-oriented subset linter — **not** a grammar engine. It lints exactly the
 subset of PlantUML the specmgr renderers emit (plus the agent's attributed
-sequence files): ``@startuml``/``@enduml`` presence, actor/participant/usecase
-declarations (quoted or bare labels, ``as`` aliases, ``<<stereotypes>>``),
+sequence files): ``@startuml``/``@enduml`` presence,
+actor/participant/usecase/component declarations (quoted or bare labels,
+``as`` aliases — a bare identifier or, since the 2026-10-10 amendment, a
+bracketed ``[...]`` token recorded unbracketed — ``<<stereotypes>>``),
 usecase associations (``-->``), package edges (``..>``), sequence messages
 (``->``/``-->``/self), note blocks, the fragment stack (``alt``/``opt``/
 ``loop``/``group``/``box``/``rectangle``/``package`` with ``end``), quote
@@ -217,7 +219,10 @@ _FRAGMENT_OPEN_PATTERN = re.compile(r"^\s*(alt|opt|loop|group|box|rectangle|pack
 #: amendment) OPENS a block that must end with ``end note``.
 _NOTE_LINE_PATTERN = re.compile(r"^\s*note\b")
 _STEREOTYPE_RUN_PATTERN = re.compile(r"^(?:\s*<<[^<>]*>>)+$")
-_DECLARATION_PATTERN = re.compile(r"^\s*(actor|participant|usecase)\s+(?P<rest>\S.*)$")
+#: The declaration keywords (rulebook §6.1, amended 2026-10-10 — the
+#: reference-graph emission's ``component`` nodes join the UC subset's
+#: actor/participant/usecase).
+_DECLARATION_PATTERN = re.compile(r"^\s*(actor|participant|usecase|component)\s+(?P<rest>\S.*)$")
 #: Fragments a BARE ``end`` may close (the real parser rejects a bare ``end``
 #: on box/package/rectangle and on an empty stack — verified against 1.2026.8).
 _BARE_END_CLOSEABLE = ("alt", "opt", "loop", "group")
@@ -226,13 +231,25 @@ _ARROW_PATTERN = re.compile(
     rf"^\s*(?P<src>{_OPERAND})\s+(?P<arrow>-->|->)\s*(?P<dst>{_OPERAND})?\s*(?::\s*(?P<text>.*))?$"
 )
 _EDGE_PATTERN = re.compile(rf"^\s*(?P<src>{_OPERAND})\s+\.\.>\s*(?P<dst>{_OPERAND})?\s*(?::\s*(?P<label>.*))?$")
-_AS_ALIAS_PATTERN = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*")
+#: The frozen alias token (rulebook §6.1, amended 2026-10-10): a bare
+#: identifier, or a bracketed ``[...]`` token with no whitespace and no
+#: brackets inside (the reference-graph alias shape) — the declared name is
+#: recorded UNBRACKETED (via :func:`_strip_operand`'s own bracket unwrap).
+_ALIAS_TOKEN = r"(?:[A-Za-z_][A-Za-z0-9_]*|\[[^\[\]\s]+\])"
+_AS_ALIAS_PATTERN = re.compile(rf"^\s*({_ALIAS_TOKEN})\s*")
 
 
 def _strip_operand(token: str) -> str:
-    """Unwrap a quoted operand and undo the ``#quot;`` sanitisation."""
+    """Unwrap a quoted or fully-bracketed operand and undo the ``#quot;`` sanitisation.
+
+    The bracket unwrap (the 2026-10-10 amendment, rulebook §6.1) makes a
+    bracketed edge operand (e.g. ``[REQ-{uuid}]``) compare identically to the
+    unbracketed name a declaration's bracketed ``as`` alias records.
+    """
     if len(token) >= 2 and token.startswith('"') and token.endswith('"'):
         return token[1:-1].replace("#quot;", '"')
+    if len(token) >= 2 and token.startswith("[") and token.endswith("]"):
+        return token[1:-1]
     return token
 
 
@@ -246,11 +263,12 @@ def _strip_operand(token: str) -> str:
 #: ``participant Alice <<user>>`` in both modes).
 _STEREOTYPE_RUN = r"(?:\s*<<[^<>]*>>)+"
 
-#: The frozen declaration shapes (rulebook §6.1, amended 2026-10-08) — the
-#: bare form (label = one token; a multi-word bare label is not the emitted
-#: subset) and the quoted form's remainder after the closing quote.
-_BARE_DECLARATION_SHAPE = re.compile(rf"^(\S+)(?:\s+as\s+([A-Za-z_][A-Za-z0-9_]*))?({_STEREOTYPE_RUN})?\s*$")
-_QUOTED_DECLARATION_SHAPE = re.compile(rf"^\s*(?:as\s+([A-Za-z_][A-Za-z0-9_]*))?({_STEREOTYPE_RUN})?\s*$")
+#: The frozen declaration shapes (rulebook §6.1, amended 2026-10-08 and
+#: 2026-10-10 — the bracketed ``as`` alias) — the bare form (label = one
+#: token; a multi-word bare label is not the emitted subset) and the quoted
+#: form's remainder after the closing quote.
+_BARE_DECLARATION_SHAPE = re.compile(rf"^(\S+)(?:\s+as\s+({_ALIAS_TOKEN}))?({_STEREOTYPE_RUN})?\s*$")
+_QUOTED_DECLARATION_SHAPE = re.compile(rf"^\s*(?:as\s+({_ALIAS_TOKEN}))?({_STEREOTYPE_RUN})?\s*$")
 
 
 def _declaration_parts(rest: str) -> tuple[str, str | None, str | None, list[Finding]]:
@@ -258,11 +276,13 @@ def _declaration_parts(rest: str) -> tuple[str, str | None, str | None, list[Fin
 
     Returns the parts plus local findings (unbalanced quote / stereotype).
     The label is the quoted substring's content or the bare token; the alias
-    only from an ``as <ident>``; a trailing balanced ``<<…>>`` run is the
-    stereotype tail — with or without the alias in between (the 2026-10-08
-    amendment). A bracket shape that is NOT the frozen one is an unbalanced
-    ``<<stereotype>>`` error (the negative control ``participant A <<user``
-    — the real parser answers it 400 — errors in both modes).
+    only from an ``as <alias>`` (a bare identifier or, since the 2026-10-10
+    amendment, a bracketed ``[...]`` token — recorded unbracketed); a
+    trailing balanced ``<<…>>`` run is the stereotype tail — with or without
+    the alias in between (the 2026-10-08 amendment). A bracket shape that is
+    NOT the frozen one is an unbalanced ``<<stereotype>>`` error (the
+    negative control ``participant A <<user`` — the real parser answers it
+    400 — errors in both modes).
     """
     findings: list[Finding] = []
     if rest.startswith('"'):
@@ -285,12 +305,18 @@ def _declaration_parts(rest: str) -> tuple[str, str | None, str | None, list[Fin
         shape = _QUOTED_DECLARATION_SHAPE.match(remainder)
         if shape is not None:
             tail = (shape.group(2) or "").strip()
-            return label, shape.group(1), tail, findings
+            alias = shape.group(1)
+            if alias is not None:
+                alias = _strip_operand(alias)  # 2026-10-10: a bracketed alias records unbracketed
+            return label, alias, tail, findings
     else:
         shape = _BARE_DECLARATION_SHAPE.match(rest)
         if shape is not None:
             tail = (shape.group(3) or "").strip()
-            return shape.group(1), shape.group(2), tail, findings
+            alias = shape.group(2)
+            if alias is not None:
+                alias = _strip_operand(alias)  # 2026-10-10: a bracketed alias records unbracketed
+            return shape.group(1), alias, tail, findings
         if "<<" in rest or ">>" in rest:
             # a bracket shape outside the frozen form: the legacy walk
             # below derives label/alias as before, and the unbalanced
@@ -342,7 +368,7 @@ def _declaration_parts_legacy(rest: str) -> tuple[str, str | None, str | None, l
     alias = None
     alias_match = _AS_ALIAS_PATTERN.match(remainder)
     if alias_match is not None:
-        alias = alias_match.group(1)
+        alias = _strip_operand(alias_match.group(1))  # 2026-10-10: a bracketed alias records unbracketed
         remainder = remainder[alias_match.end() :]
     tail = remainder.strip()
     if ("<<" in tail or ">>" in tail) and not _STEREOTYPE_RUN_PATTERN.match(tail):
