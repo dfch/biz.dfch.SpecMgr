@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-09T08:16:24.927+02:00'
 id: feat-207-reference-graph
-status: review
+status: done
 type: feat
-updated: '2026-10-12T16:03:57.856+02:00'
+updated: '2026-10-12T17:56:15.762+02:00'
 version: 1.0.0
 ---
 
@@ -38,12 +38,12 @@ It reuses the feat-185-uc-diagrams PlantUML stack almost as-is (the import-free 
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: (REQ-001/002/003/008) Byte-stable goldens under `tests/fixtures/reference-graphs/` -- pure renderer over hand-built `ReferenceGraph`s and builders over a synthetic seeded registry covering at least: a 2-node cycle (both edges red), a self-loop (red), a dangling reference (top-level `<<UNRESOLVED>>` node, id verbatim), feat dual spellings (two distinct nodes), a depth-2 chain (depth 1 vs 2 differ), a reverse hit (the additive union: the forward neighborhood plus the direct incoming edges, incl. a `depth=2` reverse call where only the forward part grows), the `include_feat=False` drop semantics (source exception), the registry-wide + `include_feat=False` combination with a non-feat→feat reference (the feat target must not appear as a node or edge), registry-wide, title override + both defaults, and truncation at the default 40 and a custom value (word-boundary cut, hard cut, exactly-N no-op) alongside an untruncated diagram title at a >40-char scoped H1; every golden passes `check_structure` in both modes with zero findings.
-- [ ] ACC-002: (REQ-006) The amended checker accepts the full emitted subset with zero findings in both modes (env-gated real-parser verification green where a source is configured; the existing UC goldens byte-identical); the negative controls (a bracketed alias containing whitespace, an unbalanced stereotype) still error in both modes.
-- [ ] ACC-003: (REQ-004/005) The error contract: `ValueError` for malformed `type`/`id`/`depth` before any filesystem access; the source domain's `XNotFoundError` for a missing source; the non-raising `ParseFailureResult` for an existing-but-broken source; `get_reference_diagram_all` never raises for content.
-- [ ] ACC-004: (REQ-009) The CLI exit codes 0/1/2 pinned by test, the missing-mcp-extra path exits 1, and `--check` detects a diff including a missing output file.
-- [ ] ACC-005: (REQ-011) The skill row and the `/ref-graph` command wording are drift-pinned by tests.
-- [ ] ACC-006: (REQ-007/012/013) Docs consistency: the `server.json` entry present in the same commit as the first read site (drift test green), the README env bullet, the `specmgr://config` section, the `specmgr://reference-graph` resource serving the packaged rulebook (frozen palette, alias/label/truncation rules, the red syntax, the construction semantics), the `server.py` docstring, `docs/MCP.md` + `docs/api/` + `docs/GENERATED.md` regenerated, `AGENTS.md` + `CHANGELOG.md` updated; the full suite green at every phase end.
+- [x] ACC-001: (REQ-001/002/003/008) Byte-stable goldens under `tests/fixtures/reference-graphs/` -- pure renderer over hand-built `ReferenceGraph`s and builders over a synthetic seeded registry covering at least: a 2-node cycle (both edges red), a self-loop (red), a dangling reference (top-level `<<UNRESOLVED>>` node, id verbatim), feat dual spellings (two distinct nodes), a depth-2 chain (depth 1 vs 2 differ), a reverse hit (the additive union: the forward neighborhood plus the direct incoming edges, incl. a `depth=2` reverse call where only the forward part grows), the `include_feat=False` drop semantics (source exception), the registry-wide + `include_feat=False` combination with a non-feat→feat reference (the feat target must not appear as a node or edge), registry-wide, title override + both defaults, and truncation at the default 40 and a custom value (word-boundary cut, hard cut, exactly-N no-op) alongside an untruncated diagram title at a >40-char scoped H1; every golden passes `check_structure` in both modes with zero findings.
+- [x] ACC-002: (REQ-006) The amended checker accepts the full emitted subset with zero findings in both modes (env-gated real-parser verification green where a source is configured; the existing UC goldens byte-identical); the negative controls (a bracketed alias containing whitespace, an unbalanced stereotype) still error in both modes.
+- [x] ACC-003: (REQ-004/005) The error contract: `ValueError` for malformed `type`/`id`/`depth` before any filesystem access; the source domain's `XNotFoundError` for a missing source; the non-raising `ParseFailureResult` for an existing-but-broken source; `get_reference_diagram_all` never raises for content.
+- [x] ACC-004: (REQ-009) The CLI exit codes 0/1/2 pinned by test, the missing-mcp-extra path exits 1, and `--check` detects a diff including a missing output file.
+- [x] ACC-005: (REQ-011) The skill row and the `/ref-graph` command wording are drift-pinned by tests.
+- [x] ACC-006: (REQ-007/012/013) Docs consistency: the `server.json` entry present in the same commit as the first read site (drift test green), the README env bullet, the `specmgr://config` section, the `specmgr://reference-graph` resource serving the packaged rulebook (frozen palette, alias/label/truncation rules, the red syntax, the construction semantics), the `server.py` docstring, `docs/MCP.md` + `docs/api/` + `docs/GENERATED.md` regenerated, `AGENTS.md` + `CHANGELOG.md` updated; the full suite green at every phase end.
 
 ### Scope
 
@@ -219,7 +219,7 @@ end package
 - [x] Task 140.130: The root `README.md` `## Reference Graph Diagrams` how-to section (+ the TOC entry; the placement immediately after feat-185's `## UC → PlantUML Diagrams` section, so the TOC order is `## CLI Usage` → `## UC → PlantUML Diagrams` → `## Reference Graph Diagrams` → `## MCP Server`).
 - [x] Task 140.140: The `AGENTS.md` updates (the `general/` bullet: the two tools + the `diagram refs` CLI + the rulebook resource + the env var; the `plantuml/` bullet: the checker's declaration grammar now includes `component` + the bracketed alias).
 - [x] Task 140.150: The `CHANGELOG.md` `[Unreleased]` entry.
-- [x] Task 140.160: Walk every ACC-001..006 with concrete evidence; run the full quality gate end-to-end one last time; update the Progress section; set the feature status to `done`. (the ACC flip + status-`done` component deferred to the post-merge `done` step per the user's 2026-10-12 directive — see Current Status)
+- [x] Task 140.160: Walk every ACC-001..006 with concrete evidence; run the full quality gate end-to-end one last time; update the Progress section; set the feature status to `done`. (the ACC flip + status-`done` component executed in the post-merge `done` step — see the 2026-10-12T17:56 Updates entry below)
 
 #### Phase 150: Review pass 2 fixes (G1 test gap, I3 vanished-file guard, I2 model re-exports, I5 corner notes, plan hygiene)
 
@@ -245,7 +245,7 @@ end package
 
 ### Current Status
 
-**As of 2026-10-12**: All six phases are committed (Phase 100 `74369cc`, Phase 110 `78cf0f3`, Phase 120 `51431dc`, Phase 130 `20d479c`, Phase 140 `d16ae06`, Phase 150 `bf7205b`) and all three feat-reviewer passes are addressed: pass 1 (verdict: ship-ready-with-notes) landed as the wording-only fix `f7fc7f0` (G2/G3/G4 + I1/I2 — alongside the `origin/dev` feat-208 sync `667d96a` merged as `9de46e3`, which migrated `SPECMGR_DIAGRAM_MAX_TITLE`'s read onto the central registry, semantics unchanged); pass 2 (verdict: ship-ready-with-notes) landed as Phase 150 `bf7205b` (G1 FEAT-reverse test gap + I2 model re-exports + I3 vanished-file guard + I5 corner notes + plan hygiene; I4 deferred — see Decisions Made); pass 3 (verdict: ship-ready, no errors) lands as Phase 160 (D1/D2 wording corrections + the I2 empty-title degenerate-corner pin + the G1 accepted-as-designed and I1 deferred decision records — see Decisions Made). The deterministic reference-graph → PlantUML pipeline is fully landed: the frozen rulebook (`specmgr://reference-graph`) + structure-checker amendment, the pure library (`general/models/reference_graph.py` + `general/tools/_reference_graph.py` + `_diagram_config.py`), the two MCP tools (`get_reference_diagram` / `get_reference_diagram_all`) + the `specmgr://config` `diagram` section, the `specmgr diagram refs [all]` CLI (exit codes 0/1/2), and the host surface (the `specmgr-refs` skill's fifth diagram workflow row + the `/ref-graph` command, drift-pinned). Status remains `review` per the user's 2026-10-12 directive (the ACC-001..006 flip + the status `done` + Task 140.160's deferred component stay with the post-merge `done` step). Next step: push, merge PR #210, then the post-merge `done` step.
+**As of 2026-10-12**: DONE. PR #210 (feat-207-reference-graph → dev) is merged (merge commit `0d1c2aa`, head `95101eb`). All six phases landed: Phase 100 `74369cc`, Phase 110 `78cf0f3`, Phase 120 `51431dc`, Phase 130 `20d479c`, Phase 140 `d16ae06`, Phase 150 `bf7205b`, Phase 160 `95101eb`; all three feat-reviewer passes addressed — pass 1 as the wording-only fix `f7fc7f0`, pass 2 as Phase 150, pass 3 as Phase 160 (G1 accepted-as-designed and I1 deferred — see Decisions Made). ACC-001..006 flipped, status `done`, CI 7/7 green at the merged head. No next step — the feature is complete.
 
 ### Blockers
 
@@ -254,6 +254,10 @@ end package
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-12T17:56:15.762+02:00 - Post-merge done step: PR #210 merged — ACC-001..006 flipped, status `done`
+
+Executed the post-merge `done` step (the component deferred by the user's 2026-10-12 directive). PR #210 (feat-207-reference-graph → dev) merged: merge commit `0d1c2aa`, head `95101eb` (Phase 160). All six acceptance criteria flipped to checked (ACC-001..006), the frontmatter `status` moved from `review` to `done`, and Task 140.160's deferred component (the ACC flip + status-`done` part) is closed. Evidence: CI 7/7 green at `95101eb` (build 3.11/3.12/3.13 + CodeQL analyze; the 3.13 job includes the docs-drift checks); the final local gate at Phase 160 — 4662 passed / 17 skipped, ruff format/check + vulture clean, `specmgr docs` + `specmgr mcp-docs` zero drift. G1 (accepted-as-designed) and I1 (deferred) are recorded in `### Decisions Made`.
 
 #### 2026-10-12T15:08:47.420+02:00 - Phase 160 complete: review pass 3 fixes (D1/D2 wording corrections, I2 corner pin, G1/I1 decision records; plan hygiene)
 
