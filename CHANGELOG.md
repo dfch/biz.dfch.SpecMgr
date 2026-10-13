@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-10-13
+
 ### Added
 
 - A central, stdlib-only environment-variable registry
@@ -218,6 +220,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sentinel added by the merged feat-185 content are covered by the Added
   entry above)
   (feat-126-server-json-env-drift, GitHub issue #126).
+
+### Fixed
+
+- `scripts/release.sh`: three defects surfaced by the v0.35.0 release are
+  fixed -- the dev CI gate (`latest_dev_run_tsv`) now also filters by
+  workflow name ("Lint and Test") and `event == "push"`, since a green
+  dependabot "Graph Update" run on the same head SHA could previously
+  satisfy the gate while the real CI run was still in flight; `pr-create`'s
+  `wait_for_pr_checks` now treats this environment's `gh` 2.4.0 exit code 1
+  for PENDING checks (not just failing ones) as "keep polling" rather than
+  a fatal error, only dying on a genuine terminal failure state; and
+  `pr-merge`'s PR close is now `close_pr_if_open`, which reads the PR's
+  state via the REST API and skips the close when GitHub has already
+  marked it merged/closed after the local fast-forward merge + push (the
+  previous unconditional `gh pr close` failed with a GraphQL error in that
+  case). `status`'s `pr` line also now reports `merged (tag vX.Y.Z on
+  origin/main)` for the normal post-release state, and `help`'s usage
+  output is no longer truncated. Covered by a new `tests/test_release_sh.py`
+  fake-`gh`-shim unittest suite.
 
 ## [0.35.0] - 2026-10-06
 
