@@ -4,7 +4,7 @@ created: '2026-10-15T11:38:21.870+02:00'
 id: feat-213-release
 status: review
 type: feat
-updated: '2026-10-15T14:38:47.000+02:00'
+updated: '2026-10-15T15:58:16.000+02:00'
 version: 1.0.0
 ---
 
@@ -31,12 +31,12 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `close_pr_if_open` retries the state read with a bounded backoff and skips the close when the state becomes `merged`/`closed` within the budget; a genuinely open PR is still closed once the budget is exhausted (REQ-001).
-- [ ] ACC-002: A failed `gh pr close` triggers the state re-verify: the helper succeeds with an info note when the re-read is `merged`/`closed`, and dies with an actionable, PR-naming message when it is not (REQ-002).
-- [ ] ACC-003: The already-merged-by-GitHub path through `stage_pr_merge` prints `pr-merge: done (...)` and exits 0 without a re-run (REQ-003).
-- [ ] ACC-004: The three new fake-`gh`-shim test cases (stale→`merged` read, failing close with never-`merged` state, failing close with `merged` re-verify) are green and the entire pre-existing `tests/test_release_sh.py` suite stays green (REQ-004).
-- [ ] ACC-005: The release SOP's Updates section carries the prepended dated entry for the v0.36.0 incident + hardened behavior, in the SOP's own entry shape (REQ-005).
-- [ ] ACC-006: The diff is confined to `close_pr_if_open` in `scripts/release.sh`, the shim extensions + new test cases in `tests/test_release_sh.py`, the SOP Updates entry, and the CHANGELOG entry — no other stage's behavior changes (REQ-006).
+- [x] ACC-001: `close_pr_if_open` retries the state read with a bounded backoff and skips the close when the state becomes `merged`/`closed` within the budget; a genuinely open PR is still closed once the budget is exhausted (REQ-001).
+- [x] ACC-002: A failed `gh pr close` triggers the state re-verify: the helper succeeds with an info note when the re-read is `merged`/`closed`, and dies with an actionable, PR-naming message when it is not (REQ-002).
+- [x] ACC-003: The already-merged-by-GitHub path through `stage_pr_merge` prints `pr-merge: done (...)` and exits 0 without a re-run (REQ-003).
+- [x] ACC-004: The three new fake-`gh`-shim test cases (stale→`merged` read, failing close with never-`merged` state, failing close with `merged` re-verify) are green and the entire pre-existing `tests/test_release_sh.py` suite stays green (REQ-004).
+- [x] ACC-005: The release SOP's Updates section carries the prepended dated entry for the v0.36.0 incident + hardened behavior, in the SOP's own entry shape (REQ-005).
+- [x] ACC-006: The diff is confined to `close_pr_if_open` in `scripts/release.sh`, the shim extensions + new test cases in `tests/test_release_sh.py`, the SOP Updates entry, and the CHANGELOG entry — no other stage's behavior changes (REQ-006).
 
 ### Scope
 
