@@ -19,9 +19,9 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "Alpha Beta Gamma Delta Epsilon Zeta…" as [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
 component "abcdefghijklmnopqrstuvwxyz0123456789ABC…" as [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
 component "Alpha Beta Gamma Delta Epsilon Zeta Etas" as [REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
-end package
+}
 @enduml

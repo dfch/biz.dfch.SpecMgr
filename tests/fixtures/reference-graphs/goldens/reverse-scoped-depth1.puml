@@ -19,15 +19,15 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "Reverse Target" as [REQ-c006c006-c006-4c06-8c06-c006c006c006] <<REQ>>
-end package
+}
 
-package "FEAT"
+component "FEAT" {
 component "Reverse Feature" as [feat-42] <<FEAT>>
 component "Reverse Feature" as [feat-42-reverse-feat] <<FEAT>>
-end package
+}
 
-[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42] : refers to
-[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42-reverse-feat] : refers to
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42]
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42-reverse-feat]
 @enduml

@@ -325,8 +325,8 @@ class TestDiagramRefsNoFeat(_DiagramRefsTestBase):
         self.assertEqual(result.exit_code, 0, result.output)
         text = (self.out_dir / "reference-graph.puml").read_text(encoding="utf-8")
         self.assertEqual(text, self._golden("no-feat-registry-no-feat.puml"))
-        self.assertNotIn('package "FEAT"', text)
-        self.assertNotIn(": refers to", text)  # every edge touched a dropped feat node
+        self.assertNotIn('component "FEAT"', text)
+        self.assertNotIn("-->", text)  # every edge touched a dropped feat node
 
 
 class TestDiagramRefsTitleOverride(_DiagramRefsTestBase):

@@ -37,20 +37,20 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
 - :class:`ReferenceGraph` -- the diagram's title (the scoped source's H1 or
   the registry-wide ``Reference Graph`` default, or a caller override) plus
   the node and edge collections.
-- :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8):
-  the ``@startuml {title}`` line (sanitised, **never truncated**, §2.2/§5),
-  the full 14-entry skinparam colour block (always, in block order, §2.5),
-  the ``left to right direction`` line, the top-level unresolved node lines
-  (sorted by alias, §2.6), one ``package "TYPE"`` … ``end package`` per
-  non-empty domain (in the 13-domain order, nodes sorted by id, §2.7), and
-  the deduped + sorted edge lines (uniform ``: refers to`` label, the red
-   ``-[#red]->`` form on cycle edges only, §2.8/§4). The content sections
-   (the ``@startuml`` line, the skinparam block, the direction line, the
-   top-level unresolved node lines, each non-empty package, and the edge
-   section) are separated by exactly one blank line, an empty section is
-   omitted entirely, ``@enduml`` follows the last non-empty section
-   directly, and the source ends with exactly one trailing newline (§2.1,
-   corrected 2026-10-11).
+- :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8,
+  corrected 2026-10-15): the ``@startuml {title}`` line (sanitised, **never
+  truncated**, §2.2/§5), the full 14-entry skinparam colour block (always,
+  in block order, §2.5), the ``left to right direction`` line, the
+  top-level unresolved node lines (sorted by alias, §2.6), one curly
+  domain group ``component "TYPE" { … }`` per non-empty domain (in the
+  13-domain order, nodes sorted by id, §2.7), and the deduped + sorted
+  label-free edge lines (the red ``-[#red]->`` form on cycle edges only,
+  §2.8/§4). The content sections (the ``@startuml`` line, the skinparam
+  block, the direction line, the top-level unresolved node lines, each
+  non-empty domain group, and the edge section) are separated by exactly
+  one blank line, an empty section is omitted entirely, ``@enduml`` follows
+  the last non-empty section directly, and the source ends with exactly one
+  trailing newline (§2.1, corrected 2026-10-11 and 2026-10-15).
 
 Cycle detection (REQ-003, rulebook §4): an edge lies on a cycle iff it is a
 self-loop or both endpoints belong to the same strongly connected component
@@ -96,7 +96,7 @@ DEFAULT_MAX_LABEL = 40
 #: registry-unique); every other domain takes the ``[TYPE-{id}]`` form.
 _FEAT = "feat"
 
-#: The frozen 13-domain package order (rulebook §2.7 -- ``ALL_DOMAINS``):
+#: The frozen 13-domain group order (rulebook §2.7 -- ``ALL_DOMAINS``):
 #: the one constant this pure module may not import from
 #: ``general.tools._domains`` (the import-free bar); the drift is pinned by
 #: ``tests/general/models/test_reference_graph.py``.
@@ -140,13 +140,10 @@ _DIRECTION = "left to right direction"
 
 #: The two frozen arrow forms (rulebook §2.8/§4.3): the plain form for
 #: off-cycle edges, the red form for on-cycle edges (the Phase 100
-#: real-parser gate's retained candidate).
+#: real-parser gate's retained candidate; the edges are LABEL-FREE since
+#: the 2026-10-15 correction -- the uniform ``: refers to`` label is gone).
 _PLAIN_ARROW = "-->"
 _RED_ARROW = "-[#red]->"
-
-#: The frozen uniform edge label (rulebook §2.8 -- per-type edge labels are
-#: out of scope).
-_EDGE_LABEL = ": refers to"
 
 #: The frozen stereotype of an unresolved node (rulebook §2.6).
 _UNRESOLVED_STEREOTYPE = "UNRESOLVED"
@@ -448,21 +445,22 @@ def _on_cycle_edges(
 def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MAX_LABEL) -> str:
     """Render ``graph`` to the frozen PlantUML component-diagram source (rulebook §2).
 
-    The deterministic, byte-stable mapping the rulebook freezes: the
-    ``@startuml {title}`` line (sanitised, never truncated), the full
-    14-entry skinparam block, the ``left to right direction`` line, the
-    top-level unresolved node lines (sorted by alias, before the first
-    package), one ``package "TYPE"`` … ``end package`` per non-empty domain
-    (in the 13-domain order, nodes sorted by id), and the deduped + sorted
-    edge lines (uniform ``: refers to`` label; the red ``-[#red]->`` form
-    exactly for the on-cycle edges of :func:`_on_cycle_edges`, plain
-    ``-->`` otherwise). The content sections -- the ``@startuml`` line, the
-    skinparam block, the direction line, the top-level unresolved node
-    lines, each non-empty package, and the edge section -- are separated by
-    exactly one blank line; an empty section is omitted entirely (no
-    residual blank line); ``@enduml`` follows the last non-empty section
-    directly; the source ends with exactly one trailing newline (rulebook
-    §2.1, corrected 2026-10-11).
+    The deterministic, byte-stable mapping the rulebook freezes (corrected
+    2026-10-15): the ``@startuml {title}`` line (sanitised, never
+    truncated), the full 14-entry skinparam block, the ``left to right
+    direction`` line, the top-level unresolved node lines (sorted by alias,
+    before the first domain group), one curly domain group ``component
+    "TYPE" { … }`` per non-empty domain (in the 13-domain order, nodes
+    sorted by id), and the deduped + sorted label-free edge lines (the red
+    ``-[#red]->`` form exactly for the on-cycle edges of
+    :func:`_on_cycle_edges`, plain ``-->`` otherwise). The content sections
+    -- the ``@startuml`` line, the skinparam block, the direction line, the
+    top-level unresolved node lines, each non-empty domain group, and the
+    edge section -- are separated by exactly one blank line; an empty
+    section is omitted entirely (no residual blank line); ``@enduml``
+    follows the last non-empty section directly; the source ends with
+    exactly one trailing newline (rulebook §2.1, corrected 2026-10-11 and
+    2026-10-15).
 
     The input is treated as pure facts: duplicate (type, id) nodes dedupe
     (first occurrence's title wins), edges dedupe, and an edge endpoint
@@ -529,10 +527,12 @@ def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MA
         top_level.sort(key=lambda node: _alias(node.type, node.id))
         sections.append("\n".join(_node_line(node, max_label) for node in top_level))
 
-    # One package per non-empty domain, in the frozen 13-domain order
-    # (nodes sorted by id inside); the close is the NAMED ``end package``
-    # form (a bare ``end`` on a package fragment is a hard checker error in
-    # both modes -- rulebook §2.7/§7.1).
+    # One curly domain group per non-empty domain, in the frozen 13-domain
+    # order (nodes sorted by id inside): the group is a ``component``
+    # declaration opened with ``{`` and closed with the ``}`` line (the
+    # 2026-10-15 parser-verified form -- the former braceless ``package
+    # "TYPE"`` … ``end package`` grouping is a real-parser syntax error over
+    # component declarations: rulebook §2.7/§4.3).
     for domain in _DOMAIN_ORDER:
         domain_nodes = sorted(
             (node for node in nodes.values() if node.type == domain and node.title is not None),
@@ -540,21 +540,20 @@ def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MA
         )
         if not domain_nodes:
             continue
-        package_lines = [f'package "{domain.upper()}"']
-        package_lines.extend(_node_line(node, max_label) for node in domain_nodes)
-        package_lines.append("end package")
-        sections.append("\n".join(package_lines))
+        group_lines = [f'component "{domain.upper()}" {{']
+        group_lines.extend(_node_line(node, max_label) for node in domain_nodes)
+        group_lines.append("}")
+        sections.append("\n".join(group_lines))
 
     # The edge section: deduped + sorted by
     # (source_type, source_id, target_type, target_id); the red form
-    # exactly for the on-cycle edges.
+    # exactly for the on-cycle edges; the edges are label-free (the 2026-10-15
+    # correction -- the former uniform ``: refers to`` label is gone).
     if edges:
         edge_lines: list[str] = []
         for source_type, source_id, target_type, target_id in sorted(edges):
             arrow = _RED_ARROW if (source_type, source_id, target_type, target_id) in on_cycle else _PLAIN_ARROW
-            edge_lines.append(
-                f"[{_alias(source_type, source_id)}] {arrow} [{_alias(target_type, target_id)}] {_EDGE_LABEL}"
-            )
+            edge_lines.append(f"[{_alias(source_type, source_id)}] {arrow} [{_alias(target_type, target_id)}]")
         sections.append("\n".join(edge_lines))
 
     # The content sections, separated by exactly one blank line; the

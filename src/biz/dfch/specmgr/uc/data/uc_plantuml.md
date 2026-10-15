@@ -826,6 +826,20 @@ sequence files):
 - quote/label sanitisation (the `#quot;` convention, §2.4)
 - `'` comment lines — including UNATTRIBUTED-marker detection (§6.5)
 
+**Amended 2026-10-15 (feat-214-rel-invalid-diag Phase 100 — the
+package-component tripwire):** a `package` fragment that collects
+component declarations (a `component` keyword declaration line or a
+short-form `[X]` line — a line of exactly one bracketed token) must close
+with a `}` line: a named `end package` close (after a braceless-open or a
+curly-open) and an unclosed such fragment at a block boundary are errors
+in BOTH modes, with a fix hint naming the curly-brace group form
+(`component "TYPE" { … }`). The rule is content-conditional — `package`
+fragments holding sequence content (participants, the UC subset) are
+unaffected, and the UC goldens stay byte-identical (zero findings in both
+modes). The normative detail (firing sites, the parser isolation matrix,
+the checker-contract restatement) lives in the reference-graph rulebook
+§7.1 (same date).
+
 ### 6.2 Error format
 
 Every finding carries a **1-based line number + cause + fix hint** (the feat-27

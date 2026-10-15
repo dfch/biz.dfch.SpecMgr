@@ -19,24 +19,24 @@ skinparam component {
 
 left to right direction
 
-package "ADR"
+component "ADR" {
 component "Wide ADR" as [ADR-c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c] <<ADR>>
-end package
+}
 
-package "REQ"
+component "REQ" {
 component "Wide Requirement One" as [REQ-c009c009-c009-4c09-8c09-c009c009c009] <<REQ>>
-end package
+}
 
-package "UC"
+component "UC" {
 component "Wide Use Case" as [UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] <<UC>>
-end package
+}
 
-package "GOL"
+component "GOL" {
 component "Wide Goal" as [GOL-c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b] <<GOL>>
-end package
+}
 
-[ADR-c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c] --> [REQ-c009c009-c009-4c09-8c09-c009c009c009] : refers to
-[REQ-c009c009-c009-4c09-8c09-c009c009c009] --> [GOL-c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b] : refers to
-[REQ-c009c009-c009-4c09-8c09-c009c009c009] -[#red]-> [UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] : refers to
-[UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] -[#red]-> [REQ-c009c009-c009-4c09-8c09-c009c009c009] : refers to
+[ADR-c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c] --> [REQ-c009c009-c009-4c09-8c09-c009c009c009]
+[REQ-c009c009-c009-4c09-8c09-c009c009c009] --> [GOL-c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b]
+[REQ-c009c009-c009-4c09-8c09-c009c009c009] -[#red]-> [UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a]
+[UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] -[#red]-> [REQ-c009c009-c009-4c09-8c09-c009c009c009]
 @enduml
