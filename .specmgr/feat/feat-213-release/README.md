@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-15T11:38:21.870+02:00'
 id: feat-213-release
-status: planning
+status: progress
 type: feat
-updated: '2026-10-15T11:38:21.870+02:00'
+updated: '2026-10-15T13:11:00.712+02:00'
 version: 1.0.0
 ---
 
@@ -78,9 +78,9 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 #### Phase 100: close_pr_if_open layered defense
 
-- [ ] Task 100.100: Implement the bounded state-read retry in `close_pr_if_open` (dedicated `PR_STATE_RETRY_ATTEMPTS`/`PR_STATE_RETRY_INTERVAL` variables next to `POLL_INTERVAL`, each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget) (REQ-001, ACC-001).
-- [ ] Task 100.110: Implement the failed-close state re-verify in `close_pr_if_open` (on `gh pr close` failure, re-read the state; `merged`/`closed` → info note + success, otherwise → actionable `die` naming the PR) so the already-merged path through `stage_pr_merge` reaches `pr-merge: done (...)` (REQ-002/REQ-003, ACC-002/ACC-003).
-- [ ] Task 100.120: Phase-end gate (full quality gate per Design Notes) plus exactly one Conventional Commit.
+- [x] Task 100.100: Implement the bounded state-read retry in `close_pr_if_open` (dedicated `PR_STATE_RETRY_ATTEMPTS`/`PR_STATE_RETRY_INTERVAL` variables next to `POLL_INTERVAL`, each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget) (REQ-001, ACC-001).
+- [x] Task 100.110: Implement the failed-close state re-verify in `close_pr_if_open` (on `gh pr close` failure, re-read the state; `merged`/`closed` → info note + success, otherwise → actionable `die` naming the PR) so the already-merged path through `stage_pr_merge` reaches `pr-merge: done (...)` (REQ-002/REQ-003, ACC-002/ACC-003).
+- [x] Task 100.120: Phase-end gate (full quality gate per Design Notes) plus exactly one Conventional Commit.
 
 #### Phase 110: Pin the race outcomes in tests
 
@@ -98,11 +98,15 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 ### Current Status
 
-**As of 2026-10-15**: planned. The race is understood and reproduced live (v0.36.0, PR #212); the layered-defense approach (state-read retry + failed-close re-verify) is chosen and user-approved; no code changes yet.
+**As of 2026-10-15**: Phase 100 complete — the layered defense is implemented in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is a bounded retry (`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s between — never after the last), each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget, and a failed close re-verifies the state once (known race → info note + success, otherwise actionable `die` naming the PR). Phases 110 (tests) and 120 (SOP + CHANGELOG record) are pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-15 11:11:00.712Z - Phase 100 complete: layered defense in close_pr_if_open
+
+Implemented the layered defense in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is now a bounded retry loop — `PR_STATE_RETRY_ATTEMPTS=5` attempts with `PR_STATE_RETRY_INTERVAL=3` s slept between (never after the last one, worst case ~12 s added) — each attempt info-logged, and the first `merged`/`closed` read returns early with the existing success message (the common path exits with zero sleeps). After the budget is exhausted the helper proceeds to `gh pr close` exactly as before, and a failed close now re-verifies the state once: `merged`/`closed` is the known async-merge race (info note, success), anything else dies with an actionable message naming the PR and the observed state. The two new variables are plain assignments next to `POLL_INTERVAL` in the script's variable block, so test bodies can override them after sourcing. The pre-existing `tests/test_release_sh.py` suite stays green (8/8, including the open-PR close test, which now sleeps 12 s under the defaults).
 
 #### 2026-10-15 09:25:57.040Z - Created
 

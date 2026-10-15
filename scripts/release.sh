@@ -65,6 +65,10 @@ PUBLISH_WORKFLOW="Publish to PyPI"
 # flight (v0.35.0 release, SOP Updates 2026-10-06).
 CI_WORKFLOW="Lint and Test"
 POLL_INTERVAL=30
+# close_pr_if_open's bounded PR-state read retry (issue #213): the attempt
+# budget, and the seconds slept between attempts (never after the last one).
+PR_STATE_RETRY_ATTEMPTS=5
+PR_STATE_RETRY_INTERVAL=3
 DEV_CI_TIMEOUT_MIN=40
 PUBLISH_TIMEOUT_MIN=45
 
@@ -282,18 +286,50 @@ wait_for_pr_checks() {
 # everything substantive had succeeded. The state comes from the REST API
 # (`gh pr view`'s default GraphQL field set breaks on today's GitHub in
 # this gh build — the Projects-classic deprecation error), matching the
-# script's other `gh api` call sites. $1 = PR number.
+# script's other `gh api` call sites.
+#
+# That same already-merged symptom recurred live in the v0.36.0 release
+# (issue #213): the single state read can land in the window before
+# GitHub's async merge detection flips the PR to MERGED and come back
+# empty/stale. The read is therefore a layered defense: (1) it is retried
+# a bounded number of times (PR_STATE_RETRY_ATTEMPTS, sleeping
+# PR_STATE_RETRY_INTERVAL seconds between attempts — never after the
+# last), returning early with the success message once the state reads
+# merged/closed; (2) when the budget is exhausted the close is attempted
+# exactly as before, since a genuinely open PR must still be closed; (3)
+# a failed close re-verifies the state once — treating the failure as the
+# known race (info note, success) only when the state is now merged/
+# closed, and dying with an actionable message otherwise. The re-verify
+# keys on the state (ground truth), not on `gh`'s close error text — a
+# message-gated `|| true` was rejected as brittle across gh versions.
+# $1 = PR number.
 close_pr_if_open() {
-  local pr_num="$1" pr_state
-  pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
-  case "$pr_state" in
-    merged | closed)
-      info "PR #$pr_num already $pr_state — nothing to close"
-      ;;
-    *)
-      gh pr close "$pr_num"
-      ;;
-  esac
+  local pr_num="$1" pr_state="" attempt=0
+  while [ "$attempt" -lt "$PR_STATE_RETRY_ATTEMPTS" ]; do
+    attempt=$((attempt + 1))
+    pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
+    case "$pr_state" in
+      merged | closed)
+        info "PR #$pr_num already $pr_state — nothing to close"
+        return 0
+        ;;
+    esac
+    info "PR #$pr_num state read: '${pr_state:-<empty>}' (attempt ${attempt}/${PR_STATE_RETRY_ATTEMPTS})"
+    if [ "$attempt" -lt "$PR_STATE_RETRY_ATTEMPTS" ]; then
+      sleep "$PR_STATE_RETRY_INTERVAL"
+    fi
+  done
+  if ! gh pr close "$pr_num"; then
+    pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
+    case "$pr_state" in
+      merged | closed)
+        info "PR #$pr_num: gh pr close failed but the state re-read is $pr_state — GitHub's async merge detection marked the PR merged after the push; the close failure is the known race (issue #213), nothing to do"
+        return 0
+        ;;
+    esac
+    die "PR #$pr_num could not be closed and the state re-read is '${pr_state:-<empty>}' (not merged/closed) — close the PR manually or investigate, then resume from the failed stage"
+  fi
+  return 0
 }
 
 # Tracked files differing from HEAD (staged or unstaged); untracked paths are
