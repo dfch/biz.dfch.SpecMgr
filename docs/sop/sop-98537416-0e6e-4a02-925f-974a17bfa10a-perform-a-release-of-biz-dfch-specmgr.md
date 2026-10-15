@@ -3,7 +3,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-15 13:05:00.000Z'
+updated: '2026-10-15 12:38:47.000Z'
 version: 1.0.0
 ---
 
@@ -384,7 +384,7 @@ directly against the local checkout.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-10-15 15:05:00.000+02:00 - v0.36.0 released under this SOP; the pr-merge already-merged close race recurred (issue #213) and close_pr_if_open was hardened
+### 2026-10-15 14:38:47.000+02:00 - v0.36.0 released under this SOP; the pr-merge already-merged close race recurred (issue #213) and close_pr_if_open was hardened
 
 The v0.36.0 release (PR #212) hit the already-merged-close symptom a
 second time: `pr-merge`'s local fast-forward merge of `origin/dev` onto
