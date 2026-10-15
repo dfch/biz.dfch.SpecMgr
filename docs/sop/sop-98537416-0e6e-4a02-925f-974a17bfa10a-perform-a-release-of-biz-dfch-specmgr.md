@@ -3,7 +3,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-06 18:15:56.000Z'
+updated: '2026-10-15 13:05:00.000Z'
 version: 1.0.0
 ---
 
@@ -383,6 +383,37 @@ directly against the local checkout.
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-10-15 15:05:00.000+02:00 - v0.36.0 released under this SOP; the pr-merge already-merged close race recurred (issue #213) and close_pr_if_open was hardened
+
+The v0.36.0 release (PR #212) hit the already-merged-close symptom a
+second time: `pr-merge`'s local fast-forward merge of `origin/dev` onto
+`main` + direct push succeeded fully (`origin/main` and `origin/dev` both
+at `91d2b57`), but the final `close_pr_if_open` read the PR state in the
+window before GitHub's async merge detection flipped the PR to `MERGED` —
+the read came back empty/stale, so `gh pr close` was issued against the
+already-merged PR and failed ("can't be closed because it was already
+merged"), killing the stage non-zero under `set -euo pipefail` after the
+work had succeeded: `pr-merge: done` was never printed. (The first
+occurrence, v0.35.0 — logged in the 2026-10-06 entry — is what introduced
+`close_pr_if_open` itself, commit `0cdaa98`; issue #213 is the residual
+race inside the helper.) The workaround was to re-run `pr-merge` once the
+race had settled — safe because the early-return guard (`origin/main`
+already equals `origin/dev` → "nothing to merge") makes the re-run a
+no-op.
+
+`close_pr_if_open` is now hardened (feat-213-release, GitHub issue #213)
+as a layered defense: (1) the state read is a bounded retry —
+`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s
+between (never after the last), each attempt info-logged, early return
+on `merged`/`closed`; (2) after the budget, `gh pr close` is attempted
+exactly as before (a genuinely open PR must still close); (3) a failed
+close re-verifies the state once — `merged`/`closed` is the known race
+(info note, success), anything else dies with an actionable message
+naming the PR. The re-verify keys on the state (ground truth), not on
+`gh`'s error text; the race outcomes are pinned by new fake-`gh`-shim
+tests in `tests/test_release_sh.py`, and `pr-merge` now ends with
+`pr-merge: done (...)` in the already-merged-by-GitHub case.
 
 ### 2026-10-06 20:15:56.000+02:00 - v0.35.0 released under this SOP; three release-script defects found and fixed
 

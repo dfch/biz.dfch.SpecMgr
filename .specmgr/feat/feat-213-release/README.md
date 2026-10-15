@@ -4,7 +4,7 @@ created: '2026-10-15T11:38:21.870+02:00'
 id: feat-213-release
 status: progress
 type: feat
-updated: '2026-10-15T13:42:45.518+02:00'
+updated: '2026-10-15T15:05:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -90,19 +90,23 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 #### Phase 120: SOP + CHANGELOG record
 
-- [ ] Task 120.100: Prepend the dated Updates entry to the release SOP recording the v0.36.0 incident (issue #213, PR #212, the re-run workaround used) and the layered hardening of `close_pr_if_open`, in the existing entry shape (REQ-005, ACC-005).
-- [ ] Task 120.110: Add the `CHANGELOG.md` `[Unreleased]` → `### Fixed` entry in the v0.36.0 entry's style, citing feat-213-release / issue #213 (REQ-006, ACC-006).
-- [ ] Task 120.120: Phase-end gate (full quality gate; the SOP change is docs-only, no `specmgr docs` regeneration needed) plus exactly one Conventional Commit.
+- [x] Task 120.100: Prepend the dated Updates entry to the release SOP recording the v0.36.0 incident (issue #213, PR #212, the re-run workaround used) and the layered hardening of `close_pr_if_open`, in the existing entry shape (REQ-005, ACC-005).
+- [x] Task 120.110: Add the `CHANGELOG.md` `[Unreleased]` → `### Fixed` entry in the v0.36.0 entry's style, citing feat-213-release / issue #213 (REQ-006, ACC-006).
+- [x] Task 120.120: Phase-end gate (full quality gate; the SOP change is docs-only, no `specmgr docs` regeneration needed) plus exactly one Conventional Commit.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-15**: Phases 100 and 110 complete — Phase 100 implemented the layered defense in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is a bounded retry (`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s between — never after the last), each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget, and a failed close re-verifies the state once (known race → info note + success, otherwise actionable `die` naming the PR). Phase 110 extended the fake-`gh` shim in `tests/test_release_sh.py` with per-call PR-state sequences (flip-counter style) and a state-file-gated `gh pr close` failure, and pinned the three ACC-004 race outcomes (stale/empty → `merged` within the budget skips the close with no `gh pr close` issued; never-flipping state + failing close dies rc 1 with the actionable message; failing close + `merged` re-verify returns rc 0 with the known-race info note) — the full suite (now 11 tests) stays green and fast. Phase 120 (SOP + CHANGELOG record) is pending.
+**As of 2026-10-15**: All three phases complete — Phase 100 implemented the layered defense in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is a bounded retry (`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s between — never after the last), each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget, and a failed close re-verifies the state once (known race → info note + success, otherwise actionable `die` naming the PR). Phase 110 extended the fake-`gh` shim in `tests/test_release_sh.py` with per-call PR-state sequences (flip-counter style) and a state-file-gated `gh pr close` failure, and pinned the three ACC-004 race outcomes (stale/empty → `merged` within the budget skips the close with no `gh pr close` issued; never-flipping state + failing close dies rc 1 with the actionable message; failing close + `merged` re-verify returns rc 0 with the known-race info note) — the full suite (now 11 tests) stays green and fast. Phase 120 recorded the release-side artifacts: the release SOP's `## Updates` section gained the prepended dated entry for the v0.36.0 incident (issue #213, PR #212, the re-run workaround, and the layered hardening now in `close_pr_if_open`), and `CHANGELOG.md`'s `[Unreleased]` gained the `### Fixed` entry in the v0.36.0 entry's style. The feature implementation (Phases 100–120) is complete and ready for review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-15 13:05:00.000Z - Phase 120 complete: SOP + CHANGELOG record
+
+Recorded the release-side artifacts: prepended the dated `## Updates` entry to the release SOP `docs/sop/sop-98537416-0e6e-4a02-925f-974a17bfa10a-perform-a-release-of-biz-dfch-specmgr.md` — the SOP's own `### {timestamp} - {title}` shape with the `+02:00`-offset heading timestamp, directly below the ordering comment above the 2026-10-06 v0.35.0 entry — recording the v0.36.0 occurrence (PR #212; `close_pr_if_open`'s state read landing in the window before GitHub's async merge detection flipped the PR to `MERGED` and coming back empty/stale; `gh pr close` issued against the already-merged PR and failing, killing the stage non-zero under `set -euo pipefail` after the fast-forward merge + push had fully succeeded with `origin/main`/`origin/dev` both at `91d2b57`; the second occurrence after v0.35.0's, which introduced the helper itself — commit `0cdaa98`), the re-run workaround actually used (safe via the stage's early-return guard, `origin/main` already equals `origin/dev` → "nothing to merge"), and the layered hardening now in the script (bounded state-read retry, `gh pr close` attempted after the budget, failed-close state re-verify keyed on the state — ground truth — not on `gh`'s error text), citing feat-213-release / GitHub issue #213; the SOP frontmatter `updated` was bumped to the same instant (`2026-10-15 13:05:00.000Z`, the `Z`-suffixed form) with no other field touched, and the specmgr MCP `parse_sop` on the file returns a healthy parsed document (the new entry first in `updates`, no parse-failure result). Added the `### Fixed` entry to `CHANGELOG.md`'s previously-empty `[Unreleased]` section: a single bullet in the v0.36.0 `### Fixed` entry's style (`` `scripts/release.sh`: `` lead, dense semicolon prose, ending with the feat-213-release / GitHub issue #213 citation) describing the same incident and layered hardening; no other CHANGELOG section touched. Phase-end gate green: `ruff format --check` (2062 files already formatted), `ruff check` (all checks passed), `vulture` (clean), full `pytest -n auto --cov=src` suite 4665 passed / 17 skipped in 69.65 s. With this, the full feature implementation (Phases 100–120) is complete; the feature is ready for review.
 
 #### 2026-10-15 11:42:45.519Z - Phase 110 complete: race outcomes pinned in the fake-gh-shim tests
 
