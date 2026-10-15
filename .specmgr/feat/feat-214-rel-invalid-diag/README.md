@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: planning
 type: feat
-updated: '2026-10-15T18:14:32.539+02:00'
+updated: '2026-10-15T23:36:38.841+02:00'
 version: 1.0.0
 ---
 
@@ -105,9 +105,9 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 #### Phase 110: Skill reverse workflow + docs
 
-- [ ] Task 110.100: Update the `specmgr-refs` skill's diagram workflow (`.opencode/skills/specmgr-refs/SKILL.md`): scoped diagrams ALWAYS request `reverse` (MCP `reverse=True`, CLI `--reverse`), the cost note (the scoped diagram includes the full 13-domain scan, O(registry size)) added to the workflow's report notes, the edge-label note updated (label-free arrows, red form on cycles), registry-wide surface unchanged, and the frozen disambiguation rule intact.
-- [ ] Task 110.110: Update the doc surfaces: the `get_reference_diagram`/`get_reference_diagram_all`/`diagram_refs` docstrings where they describe the emission layout or the `: refers to` label, the README how-to (the tool + CLI paragraphs), the `AGENTS.md` `general/` bullet (the reference-graph layout + edge wording), then regenerate `docs/` (`uv run --frozen specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`) and commit the diff.
-- [ ] Task 110.120: Confirm the API defaults are untouched: the `reverse=False` schema-default pin in `tests/general/tools/test_get_reference_diagram.py` and every explicit `reverse=True` builder/tool test stay green with NO signature change (REQ-008 evidence).
+- [x] Task 110.100: Update the `specmgr-refs` skill's diagram workflow (`.opencode/skills/specmgr-refs/SKILL.md`): scoped diagrams ALWAYS request `reverse` (MCP `reverse=True`, CLI `--reverse`), the cost note (the scoped diagram includes the full 13-domain scan, O(registry size)) added to the workflow's report notes, the edge-label note updated (label-free arrows, red form on cycles), registry-wide surface unchanged, and the frozen disambiguation rule intact.
+- [x] Task 110.110: Update the doc surfaces: the `get_reference_diagram`/`get_reference_diagram_all`/`diagram_refs` docstrings where they describe the emission layout or the `: refers to` label, the README how-to (the tool + CLI paragraphs), the `AGENTS.md` `general/` bullet (the reference-graph layout + edge wording), then regenerate `docs/` (`uv run --frozen specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`) and commit the diff.
+- [x] Task 110.120: Confirm the API defaults are untouched: the `reverse=False` schema-default pin in `tests/general/tools/test_get_reference_diagram.py` and every explicit `reverse=True` builder/tool test stay green with NO signature change (REQ-008 evidence).
 
 #### Phase 120: CI real-parser gate job
 
@@ -125,11 +125,75 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 ### Current Status
 
-**As of 2026-10-15**: Phase 100 complete (Tasks 100.100–100.140 done; Phase 110 not started). The pre-implementation design verification re-confirmed the diagnosis against the live registry (Task 100.100: the four current real-registry emissions all fail the pinned 1.2026.8 parser with the syntax error; the mechanically-transformed emissions + the regenerated §2.9 worked example pass with palette fills, node titles, and red `#F00` arrows in the SVGs). The structure-checker tripwire is implemented with control tests (a `package` fragment collecting component declarations must close with `}` — error in both modes, curly-brace fix hint; sequence packages and the corrected curly form stay zero-finding). The renderer emits the curly `component "TYPE" { … }` domain groups and label-free edges; the rulebook (§2.1/§2.7/§2.8/§2.9/§4.3/§7.1) and the UC rulebook §6.1 carry the dated 2026-10-15 corrections incl. the real-parser verdict and the checker-contract restatement; all 22 goldens are regenerated; the env-gated subset gate + the new golden parser sweep run (not skip) under the locally configured pinned jar and pass.
+**As of 2026-10-15**: Phase 110 complete (Tasks 110.100–110.120 done; Phase 120 not started). The `specmgr-refs` skill's diagram workflow now mandates `reverse` for every scoped diagram (MCP `reverse=True`, CLI `--reverse`) with the O(registry-size) cost in the report notes and the label-free edge note (the registry-wide surface and the frozen disambiguation rule are unchanged; the skill pin test gained the matching new phrases). All doc surfaces matching the new behaviour: the `get_reference_diagram`/`get_reference_diagram_all` tool docstrings + MCP descriptions, the `general/tools` package docstring, the `server.py` registration docstring, the README how-to, and the `AGENTS.md` `general/` bullet — `docs/api/` + `docs/MCP.md` regenerated (`: refers to` / package-grouping wording gone from every generated surface). REQ-008 confirmed: the `reverse=False` MCP schema-default pin and every explicit `reverse=True` builder/tool test stay green with NO signature change (AST-verified identical to HEAD for `get_reference_diagram`, `get_reference_diagram_all`, `diagram_refs`, and both builders).
+
+**Phase 100 record (Tasks 100.100–100.140 done).** The pre-implementation design verification re-confirmed the diagnosis against the live registry (Task 100.100: the four current real-registry emissions all fail the pinned 1.2026.8 parser with the syntax error; the mechanically-transformed emissions + the regenerated §2.9 worked example pass with palette fills, node titles, and red `#F00` arrows in the SVGs). The structure-checker tripwire is implemented with control tests (a `package` fragment collecting component declarations must close with `}` — error in both modes, curly-brace fix hint; sequence packages and the corrected curly form stay zero-finding). The renderer emits the curly `component "TYPE" { … }` domain groups and label-free edges; the rulebook (§2.1/§2.7/§2.8/§2.9/§4.3/§7.1) and the UC rulebook §6.1 carry the dated 2026-10-15 corrections incl. the real-parser verdict and the checker-contract restatement; all 22 goldens are regenerated; the env-gated subset gate + the new golden parser sweep run (not skip) under the locally configured pinned jar and pass.
 
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-15T21:36:38.842Z - Phase 110 complete (skill reverse mandate, doc surfaces, REQ-008 confirmation)
+
+**Task 110.100 (skill):** the `specmgr-refs` skill's diagram workflow
+(`.opencode/skills/specmgr-refs/SKILL.md`) now mandates reverse for every
+SCOPED diagram — the MCP bullet reads `get_reference_diagram(type, id,
+depth=1, reverse=True, include_feat=True, title=None)` with "**Scoped
+diagrams ALWAYS request `reverse=True`**" (the tool's own default stays
+`False`, opt-in; only this agent flow opts in), the CLI bullet prescribes
+`specmgr diagram refs <type> <id> [--depth N] --reverse …` with "**scoped
+diagrams ALWAYS pass `--reverse`**" (the flag stays opt-in in the
+signature); the step-4 report notes gained the cost bullet (the reverse
+mandate makes the scoped build run the FULL 13-DOMAIN SCAN for the direct
+incoming references — O(registry size), the same cost the separate reverse
+workflow already states before running) and the edge note now reads "The
+edges are LABEL-FREE (no text on the arrow — feat-214)" ahead of the
+unchanged red-`-[#red]->`-on-cycle / plain-`-->`-off-cycle sentence. The
+registry-wide surface is explicitly unchanged (its edges already run both
+ways) and the frozen disambiguation rule is intact. The existing skill pin
+test (`tests/opencode/test_skill_specmgr_refs.py`) gained a matching
+`_REVERSE_MANDATE_PHRASES` tuple + one new test method (17 passed) — the
+pre-existing pins (frontmatter, reporting vocabulary, delegation,
+read-only, workflow headings/constants, pin g's routing row /
+disambiguation / reconciliation / surface names / diagram facts) all stay
+green.
+
+**Task 110.110 (docs):** the emission-layout/edge-label wording was updated
+to the new behaviour in every doc surface that carried it: the
+`get_reference_diagram` module docstring + `@mcp.tool()` description (curly
+component groups, label-free edges, red arrow label-free as well), the
+`get_reference_diagram_all` module docstring + description (label-free
+edges), the `general/tools` package docstring and the `server.py`
+registration docstring (both carried a short "per-domain packages, one
+edge per unique reference" summary — now "per-domain curly-brace component
+groups, one label-free edge per unique reference"), the README "Reference
+Graph Diagrams" how-to layout sentence, and the `AGENTS.md` `general/`
+bullet's `get_reference_diagram` layout sentence. The `diagram_refs` CLI
+docstrings needed no change (they describe the layout only via the
+rulebook pointer, which Phase 100 corrected). `uv run --frozen specmgr
+docs` + `specmgr mcp-docs` regenerated `docs/api/` (4 module pages) and
+`docs/MCP.md`; a repo-wide sweep shows `: refers to` / "per-domain
+packages" no longer appear in any doc surface (the only remaining
+occurrences are the rulebook's own dated correction notes, the Phase 100
+historical comments in `reference_graph.py`, and the checker-behaviour
+tests that feed label-carrying edges as INPUT to the checker grammar — all
+deliberate). The `reverse` parameter descriptions keep their existing
+semantics (additive, direct-only on the incoming side) untouched.
+
+**Task 110.120 (REQ-008 confirmation):** the `reverse=False` MCP
+schema-default pin (`tests/general/tools/test_get_reference_diagram.py`,
+`TestGetReferenceDiagramRegistration::test_get_reference_diagram_registered
+_with_13_value_type_enum`: `schema["properties"]["reverse"].get("default")
+== False`) and every explicit `reverse=True` builder/tool test
+(`TestReverseRegistryTool` ×4, `TestReverseFeatSourceRegistryTool`,
+`TestWideRegistryTool::test_scoped_reverse_golden`, plus the builder-level
+reverse goldens in `tests/general/tools/test__reference_graph.py`) stay
+green with NO signature change — an AST comparison of
+`get_reference_diagram`, `get_reference_diagram_all`, `diagram_refs`,
+`build_source_graph`, and `build_registry_graph` between HEAD and the
+working tree reports every signature identical (all five `reverse`
+defaults `False` in the tool/CLI layers; the `git diff` of the tool/CLI
+files is docstring/description-only).
 
 #### 2026-10-15T16:14:32.540Z - Phase 100 complete (design verification, tripwire, renderer, rulebook, goldens)
 
@@ -189,6 +253,9 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 - **2026-10-15 (Phase 100) — tripwire diagnostic names the recorded open shape:** the plan's Design Notes record the open shape (`{` or not) on the fragment stack; vulture flagged the field as unread, so the named-close error now names it in the message (`opened at line N, braceless` / `opened at line N, curly-open`) — the diagnostic is richer and the recording is pinned by the control tests.
 - **2026-10-15 (Phase 100) — render-proof string derivation:** the node-title proof for the gate + the golden sweep is the LONGEST ALL-ALPHA word of the FIRST resolved node's label (`#quot;` escapes undone; unresolved `<<UNRESOLVED>>` verbatim-id lines skipped). PlantUML wraps long labels across SVG lines at word boundaries only, so one word is guaranteed present contiguously in the SVG body — verified for all 22 goldens under the jar.
 - **2026-10-15 (Phase 100) — vacuous old-form pins updated in the ripple files:** `test_get_reference_diagram_all.py` and `test_diagram_refs.py`'s FEAT-exclusion pins (`assertNotIn('package "FEAT"')`) and no-edge pins (`assertNotIn(": refers to")`) became vacuous under the new layout (no emission contains the old forms any more) and were re-pointed at the new-form equivalents (`assertNotIn('component "FEAT"')`, `assertNotIn("-->")`) to stay meaningful; every POSITIVE old-layout pin in the builder/tool tests was updated to the label-free/curly-group form (the minimal change keeping the suite green — the tool/CLI docstrings themselves still describe the old layout by design and are Phase 110's).
+- **2026-10-15 (Phase 110) — doc-surface scope:** the task named the two tool modules' docstrings/descriptions, the README, and `AGENTS.md`; a sweep found TWO more surfaces carrying the short "per-domain packages, one edge per unique reference" layout summary — the `general/tools` package docstring and the `server.py` registration docstring (the authoritative per AGENTS.md). Both were updated (REQ-010's "every documentation surface describing the emission layout" clause); the `diagram_refs` CLI docstrings were judged to need NO change (they describe the layout only via the rulebook pointer, which Phase 100 corrected).
+- **2026-10-15 (Phase 110) — skill pin extension is additive:** the new mandate/cost/label-free wording is pinned by a NEW `_REVERSE_MANDATE_PHRASES` tuple + one new test method in `tests/opencode/test_skill_specmgr_refs.py`; the pre-existing pin-g tuples (feat-207's load-bearing diagram facts) are untouched, so the feat-207 wording pins stay as historical regression anchors. The skill's label-free note is phrased "no text on the arrow" (not the literal old label string) so no stale emission wording survives on the skill surface.
+- **2026-10-15 (Phase 110) — REQ-008 evidence method:** signature invariance is proven by an AST comparison of `get_reference_diagram` / `get_reference_diagram_all` / `diagram_refs` / `build_source_graph` / `build_registry_graph` between HEAD and the working tree (all identical; every `reverse` default `False` in the tool/CLI layers), in addition to the green `reverse=False` MCP schema-default pin and the explicit `reverse=True` tests.
 
 ### More Information
 

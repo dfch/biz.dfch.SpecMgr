@@ -158,21 +158,29 @@ vice versa).
    below and the rulebook differ, the rulebook wins.
 2. **Produce the source** — either surface, chosen by task shape:
    - **MCP tools (no file writes):** `get_reference_diagram(type, id,
-     depth=1, reverse=False, include_feat=True, title=None)` — one source
+     depth=1, reverse=True, include_feat=True, title=None)` — one source
      document's neighbourhood (the forward BFS to `depth` 1..5; `reverse`
-     additive and direct-only on the incoming side); or
-     `get_reference_diagram_all(include_feat=True, title=None)` — the
-     registry-wide graph (never raises for content). Both return the
+     additive and direct-only on the incoming side). **Scoped diagrams
+     ALWAYS request `reverse=True`** (the feat-214 mandate — the tool's
+     own default stays `False`, opt-in; only this agent flow opts in):
+     the diagram then also carries the direct incoming references to the
+     source. Or `get_reference_diagram_all(include_feat=True,
+     title=None)` — the registry-wide graph (never raises for content;
+     its edges already run both ways, so the reverse mandate does not
+     apply to it — the surface is unchanged). Both return the
      byte-stable PlantUML source directly (not a specmgr document); a
      scoped call over an existing-but-broken source returns the
      non-raising `ParseFailureResult` — report it verbatim and stop.
    - **CLI (writes the artifact):** `specmgr diagram refs <type> <id>
-     [--depth N] [--reverse] [--no-feat] [--title T] [--out diagrams/refs]
-     [--check]` → `<id>.refs.puml`, or `specmgr diagram refs all [...]` →
-     `reference-graph.puml` (exit 0 written / no diff, 1 a `--check` diff
-     or the missing `mcp` extra, 2 a usage-or-resolution error — report
-     exit-2 stderr verbatim and stop; a bare `feat-NNN` as the source id
-     is rejected, `list_feat` discovers the exact id).
+     [--depth N] --reverse [--no-feat] [--title T] [--out diagrams/refs]
+     [--check]` → `<id>.refs.puml` — **scoped diagrams ALWAYS pass
+     `--reverse`** (the same mandate as the MCP surface; the flag stays
+     opt-in in the signature) — or `specmgr diagram refs all [...]` →
+     `reference-graph.puml` (the registry-wide surface is unchanged; exit
+     0 written / no diff, 1 a `--check` diff or the missing `mcp` extra,
+     2 a usage-or-resolution error — report exit-2 stderr verbatim and
+     stop; a bare `feat-NNN` as the source id is rejected, `list_feat`
+     discovers the exact id).
 3. **The verdict:** `specmgr plantuml-check <path...>` over the written
    file (or the `validate_plantuml` MCP tool over the source) — the SAME
    strict chain as the UC diagrams (rulebook §7); report `checked_by` /
@@ -182,9 +190,17 @@ vice versa).
      resolved-node H1 labels (word-boundary cut + `…`); the `@startuml`
      diagram title is sanitized but never truncated; unresolved ids stay
      verbatim.
-   - On-cycle edges — a self-loop, or both endpoints in the same strongly
+   - The edges are LABEL-FREE (no text on the arrow — feat-214): on-cycle
+     edges — a self-loop, or both endpoints in the same strongly
      connected component of size ≥ 2 — render with the red `-[#red]->`
      arrow; every off-cycle edge renders plain `-->`.
+   - **The reverse mandate's cost (scoped diagrams only):** the
+     `reverse`/`--reverse` the workflow always requests makes the scoped
+     build run the FULL 13-DOMAIN SCAN for the direct incoming
+     references — O(registry size), the same cost the reverse workflow
+     above states before running; state it in the report whenever you
+     produced a scoped diagram. The registry-wide surface pays no such
+     cost (its edges already run both ways).
    - The FEAT switch: `include_feat=False` (CLI `--no-feat`) drops every
      FEAT node except the explicitly requested source (scoped), then drops
      every edge touching a dropped node — a feat target never surfaces as

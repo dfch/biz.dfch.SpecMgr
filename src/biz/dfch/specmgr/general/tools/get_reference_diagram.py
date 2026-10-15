@@ -25,12 +25,13 @@ the reference-graph rulebook (``specmgr://reference-graph`` /
 ``general/data/general_reference_graph.md`` §2–§5): one node per artifact
 (label = the document title, truncated to the ``SPECMGR_DIAGRAM_MAX_TITLE``
 label limit, default 40), a stereotype + colour per artifact type (the
-frozen 14-entry palette), nodes grouped into per-domain ``package`` blocks,
-one edge per unique reference (``{src} --> {dst} : refers to`` -- the
-referenced item carries the incoming arrow), every edge lying on a cycle
-(SCC-based) drawn with the red ``-[#red]->`` arrow, and every reference
-whose target cannot be resolved on disk drawn as a top-level
-``<<UNRESOLVED>>`` node.
+frozen 14-entry palette), nodes grouped into per-domain curly
+``component "TYPE" { … }`` domain groups (the 2026-10-15 corrected form,
+rulebook §2.7), one label-free edge per unique reference (``{src} -->
+{dst}`` -- the referenced item carries the incoming arrow), every edge
+lying on a cycle (SCC-based) drawn with the red label-free ``-[#red]->``
+arrow, and every reference whose target cannot be resolved on disk drawn
+as a top-level ``<<UNRESOLVED>>`` node.
 
 Thin over the Phase 110 library (``_reference_graph.build_source_graph`` +
 ``reference_graph.render_reference_graph`` + ``_diagram_config.
@@ -199,10 +200,12 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
         "reference neighbourhood (the frozen rulebook specmgr://reference-graph §2–§5): one node "
         "per artifact (label = the document title, truncated to SPECMGR_DIAGRAM_MAX_TITLE, "
         "default 40), a stereotype + colour per artifact type, nodes grouped into per-domain "
-        "packages, one edge per unique reference (`{src} --> {dst} : refers to`, the referenced "
-        "item carries the incoming arrow), every edge lying on a cycle (SCC-based) drawn with the "
-        "red `-[#red]->` arrow, and every reference whose target cannot be resolved on disk drawn "
-        f"as a top-level `<<UNRESOLVED>>` node. `type` is the source document's domain (one of "
+        "curly-brace component groups (one per non-empty domain, closed with `}` -- the "
+        "2026-10-15 corrected form), one label-free edge per unique reference (`{src} --> "
+        "`{dst}`, the referenced item carries the incoming arrow), every edge lying on a cycle "
+        "(SCC-based) drawn with the red label-free `-[#red]->` arrow, and every reference whose "
+        "target cannot be resolved on disk drawn as a top-level `<<UNRESOLVED>>` node. `type` "
+        f"is the source document's domain (one of "
         f"{', '.join(ALL_DOMAINS)}) and `id` the source's own identifier; `depth` (1..5, "
         "default 1) is the forward BFS depth; `reverse=True` is additive (the forward expansion "
         "to `depth` plus the direct incoming references to the source, direct-only on the "
