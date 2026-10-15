@@ -4,7 +4,7 @@ created: '2026-10-15T11:38:21.870+02:00'
 id: feat-213-release
 status: progress
 type: feat
-updated: '2026-10-15T13:11:00.712+02:00'
+updated: '2026-10-15T13:42:45.518+02:00'
 version: 1.0.0
 ---
 
@@ -84,9 +84,9 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 #### Phase 110: Pin the race outcomes in tests
 
-- [ ] Task 110.100: Extend the fake-`gh` shim in `tests/test_release_sh.py` for per-call PR-state sequences (flip-counter style, mirroring the existing `run_<id>_flip`/`run_<id>_views` mechanics) and for a `gh pr close` that fails with a recorded message/exit code (state-file gated; unconditional `exit 0` stays the default) (REQ-004, ACC-004).
-- [ ] Task 110.110: Add the three test cases: (a) stale/empty state flips to `merged` within the retry budget — no `gh pr close` issued, rc 0; (b) state never flips and `gh pr close` fails — rc non-zero, actionable message on stderr; (c) `gh pr close` fails and the re-verify read returns `merged` — rc 0, info note (REQ-004, ACC-004).
-- [ ] Task 110.120: Phase-end gate (incl. the full pre-existing `tests/test_release_sh.py` suite green) plus exactly one Conventional Commit.
+- [x] Task 110.100: Extend the fake-`gh` shim in `tests/test_release_sh.py` for per-call PR-state sequences (flip-counter style, mirroring the existing `run_<id>_flip`/`run_<id>_views` mechanics) and for a `gh pr close` that fails with a recorded message/exit code (state-file gated; unconditional `exit 0` stays the default) (REQ-004, ACC-004).
+- [x] Task 110.110: Add the three test cases: (a) stale/empty state flips to `merged` within the retry budget — no `gh pr close` issued, rc 0; (b) state never flips and `gh pr close` fails — rc non-zero, actionable message on stderr; (c) `gh pr close` fails and the re-verify read returns `merged` — rc 0, info note (REQ-004, ACC-004).
+- [x] Task 110.120: Phase-end gate (incl. the full pre-existing `tests/test_release_sh.py` suite green) plus exactly one Conventional Commit.
 
 #### Phase 120: SOP + CHANGELOG record
 
@@ -98,11 +98,15 @@ This feature hardens `close_pr_if_open` with a layered defense: it retries the P
 
 ### Current Status
 
-**As of 2026-10-15**: Phase 100 complete — the layered defense is implemented in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is a bounded retry (`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s between — never after the last), each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget, and a failed close re-verifies the state once (known race → info note + success, otherwise actionable `die` naming the PR). Phases 110 (tests) and 120 (SOP + CHANGELOG record) are pending.
+**As of 2026-10-15**: Phases 100 and 110 complete — Phase 100 implemented the layered defense in `close_pr_if_open` (`scripts/release.sh`): the PR-state read is a bounded retry (`PR_STATE_RETRY_ATTEMPTS=5` attempts, `PR_STATE_RETRY_INTERVAL=3` s between — never after the last), each attempt info-logged, early return on `merged`/`closed`, proceed to `gh pr close` after the budget, and a failed close re-verifies the state once (known race → info note + success, otherwise actionable `die` naming the PR). Phase 110 extended the fake-`gh` shim in `tests/test_release_sh.py` with per-call PR-state sequences (flip-counter style) and a state-file-gated `gh pr close` failure, and pinned the three ACC-004 race outcomes (stale/empty → `merged` within the budget skips the close with no `gh pr close` issued; never-flipping state + failing close dies rc 1 with the actionable message; failing close + `merged` re-verify returns rc 0 with the known-race info note) — the full suite (now 11 tests) stays green and fast. Phase 120 (SOP + CHANGELOG record) is pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-15 11:42:45.519Z - Phase 110 complete: race outcomes pinned in the fake-gh-shim tests
+
+Extended the fake `gh` shim in `tests/test_release_sh.py` for the v0.36.0 async-merge race (issue #213): the `api` PR-state branch now serves a per-call sequence when a `pull_<n>_flip` file is present — stale value for reads 1..N, final value afterwards, the `run_<id>_flip`/`run_<id>_views` counter mechanics (an empty stale file reproduces the incident's empty read) — and falls back to the existing single `pull_<n>_state` file (default `open`) when no flip file exists, so every pre-existing fixture keeps working; the `pr close` branch now fails with a recorded `close_rc`/`close_msg` when seeded (message to stderr, exit with the recorded rc), with the unconditional `exit 0` staying the default. Added the three ACC-004 test cases: `test_close_pr_if_open_stale_flips_to_merged_skips_close` (stale/empty → `merged` on read 3 of 5, no `gh pr close` issued, rc 0), `test_close_pr_if_open_never_merged_close_fails_dies` (state never flips, close fails, rc 1 with the actionable `die` message naming the PR and the observed state on stderr), and `test_close_pr_if_open_close_fails_reverify_merged` (close fails, re-verify read is `merged`, rc 0 with the known-race info note). The existing `test_close_pr_if_open_closes_open_pr` now pins `PR_STATE_RETRY_ATTEMPTS=1; PR_STATE_RETRY_INTERVAL=0` in its body (assertions unchanged) so the suite stays fast under the new retry loop; `test_close_pr_if_open_skips_merged_pr` needed no change (first read already `merged`). Phase-end gate green: `pytest tests/test_release_sh.py -v` 11/11 in 1.44 s, `ruff format --check`/`ruff check` clean, `vulture` clean, full suite 4665 passed / 17 skipped.
 
 #### 2026-10-15 11:11:00.712Z - Phase 100 complete: layered defense in close_pr_if_open
 

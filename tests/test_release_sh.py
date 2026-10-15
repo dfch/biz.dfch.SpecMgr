@@ -20,6 +20,15 @@ regressions: the dev CI gate matching the wrong workflow, the PR-check
 polling failing fast on pending checks, and the post-merge PR close
 failing on an already-merged PR).
 
+The post-merge close also pins the v0.36.0 async-merge race (issue #213):
+the PR-state read can come back empty/stale before GitHub's server-side
+detection flips the PR to MERGED, so `close_pr_if_open` retries the read
+with a bounded backoff and re-verifies the state after a failed
+`gh pr close`. For these cases the fake `gh` shim answers the state from
+a per-call sequence (a flip counter in the `run_<id>_flip`/`run_<id>_views`
+style) and its `pr close` branch fails with a recorded message/exit code
+when one is seeded.
+
 `release.sh` is a bash file; each test sources its functions in a
 throwaway `bash -c` process (the file's `BASH_SOURCE` dispatch guard keeps
 a source from running `main`) and intercepts every `gh` call with a fake
@@ -88,6 +97,10 @@ case "$cmd" in
         exit "$(cat "$rcf")"
         ;;
       close)
+        if [ -f "$S/close_rc" ]; then
+          [ -f "$S/close_msg" ] && cat "$S/close_msg" >&2
+          exit "$(cat "$S/close_rc")"
+        fi
         exit 0
         ;;
       *)
@@ -103,7 +116,15 @@ case "$cmd" in
       esac
     done
     n="${pull##*/pulls/}"
-    if [ -f "$S/pull_${n}_state" ]; then cat "$S/pull_${n}_state"; else echo "open"; fi
+    if [ -f "$S/pull_${n}_flip" ]; then
+      views=0
+      if [ -f "$S/pull_${n}_views" ]; then views=$(cat "$S/pull_${n}_views"); fi
+      views=$((views + 1))
+      printf '%s' "$views" >"$S/pull_${n}_views"
+      flip=$(cat "$S/pull_${n}_flip")
+      if [ "$views" -le "$flip" ]; then f="$S/pull_${n}_stale"; else f="$S/pull_${n}_final"; fi
+      if [ -f "$f" ]; then cat "$f"; else echo "open"; fi
+    elif [ -f "$S/pull_${n}_state" ]; then cat "$S/pull_${n}_state"; else echo "open"; fi
     ;;
   *)
     echo "shim: unsupported gh command: $cmd" >&2; exit 3
@@ -235,6 +256,20 @@ class ReleaseShGateTestCase(unittest.TestCase):
         )
         self.write_state(f"run_{run_id}_flip", str(flip))
 
+    def write_pull_state_sequence(self, pr: int, flip: int, stale: str, final: str) -> None:
+        """Give pull `pr` a per-call state sequence: `stale` for reads 1..`flip`,
+        `final` thereafter (the `run_<id>_flip`/`run_<id>_views` mechanics for
+        PR-state reads; an empty `stale` reproduces the incident's empty read)."""
+        self.write_state(f"pull_{pr}_flip", str(flip))
+        self.write_state(f"pull_{pr}_stale", stale)
+        self.write_state(f"pull_{pr}_final", final)
+
+    def write_close_failure(self, rc: int = 1, msg: str = "") -> None:
+        """Record a failing `gh pr close` (exit code `rc`, optional `msg` on stderr)."""
+        self.write_state("close_rc", str(rc))
+        if msg:
+            self.write_state("close_msg", msg)
+
     def test_sourcing_does_not_run_main(self) -> None:
         """Sourcing the file must not dispatch `main` (BASH_SOURCE guard)."""
         result = self.run_release("true")
@@ -310,13 +345,56 @@ class ReleaseShGateTestCase(unittest.TestCase):
         self.assertNotIn("pr close", (self.state / "gh_calls.log").read_text())
 
     def test_close_pr_if_open_closes_open_pr(self) -> None:
-        """An open PR must still be closed."""
+        """An open PR must still be closed (the retry budget is pinned to one
+        attempt so the test does not sleep under the script's defaults)."""
         self.write_state("pull_456_state", "open")
 
-        result = self.run_release("close_pr_if_open 456")
+        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=1; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
+
+    def test_close_pr_if_open_stale_flips_to_merged_skips_close(self) -> None:
+        """A stale/empty state read that flips to merged within the retry budget
+        must skip the close entirely (the v0.36.0 race, issue #213)."""
+        self.write_pull_state_sequence(456, flip=2, stale="", final="merged")
+
+        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=5; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
+
+        gh_calls = (self.state / "gh_calls.log").read_text()
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("already merged", result.stdout)
+        self.assertIn("state read: '<empty>' (attempt 1/5)", result.stdout)
+        self.assertNotIn("pr close", gh_calls)
+        self.assertGreaterEqual(sum("pulls/456" in line for line in gh_calls.splitlines()), 3)
+
+    def test_close_pr_if_open_never_merged_close_fails_dies(self) -> None:
+        """A state that never flips to merged plus a failing `gh pr close`
+        must die with the actionable message naming the PR."""
+        self.write_state("pull_456_state", "open")
+        self.write_close_failure(msg="ERROR:  could not close the pull request (already merged)")
+
+        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
+        self.assertIn("PR #456 could not be closed", result.stderr)
+        self.assertIn("state re-read is 'open'", result.stderr)
+        self.assertIn("resume from the failed stage", result.stderr)
+        self.assertIn("could not close the pull request (already merged)", result.stderr)
+
+    def test_close_pr_if_open_close_fails_reverify_merged(self) -> None:
+        """A failing `gh pr close` whose re-verify read is merged is the known
+        async-merge race: success with the info note (issue #213)."""
+        self.write_pull_state_sequence(456, flip=2, stale="open", final="merged")
+        self.write_close_failure(msg="ERROR:  could not close the pull request (already merged)")
+
+        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
+        self.assertIn("state re-read is merged", result.stdout)
+        self.assertIn("known race (issue #213)", result.stdout)
 
     def test_help_prints_full_usage(self) -> None:
         """`help` must exit 2 and print the complete usage (incl. the final
