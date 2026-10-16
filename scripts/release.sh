@@ -69,6 +69,10 @@ POLL_INTERVAL=30
 # budget, and the seconds slept between attempts (never after the last one).
 PR_STATE_RETRY_ATTEMPTS=5
 PR_STATE_RETRY_INTERVAL=3
+# close_pr_if_open's failed-close re-verify read budget (issue #213
+# hardening): the re-verify reads are separated by PR_STATE_RETRY_INTERVAL
+# seconds (never after the last one).
+PR_STATE_REVERIFY_ATTEMPTS=3
 DEV_CI_TIMEOUT_MIN=40
 PUBLISH_TIMEOUT_MIN=45
 
@@ -297,14 +301,23 @@ wait_for_pr_checks() {
 # last), returning early with the success message once the state reads
 # merged/closed; (2) when the budget is exhausted the close is attempted
 # exactly as before, since a genuinely open PR must still be closed; (3)
-# a failed close re-verifies the state once — treating the failure as the
-# known race (info note, success) only when the state is now merged/
-# closed, and dying with an actionable message otherwise. The re-verify
-# keys on the state (ground truth), not on `gh`'s close error text — a
-# message-gated `|| true` was rejected as brittle across gh versions.
+# a failed close re-verifies the state with a bounded budget of reads
+# (PR_STATE_REVERIFY_ATTEMPTS, sleeping PR_STATE_RETRY_INTERVAL seconds
+# between them — never after the last, each read info-logged), treating
+# the failure as the known race (info note, success) as soon as a read is
+# merged/closed and dying with an actionable message when the budget is
+# exhausted. The re-verify keys on the state (ground truth), not on `gh`'s
+# close error text — a message-gated `|| true` was rejected as brittle
+# across gh versions. Before any read or sleep runs, the three retry
+# variables are guard-checked: an empty or non-numeric value dies with an
+# actionable message naming the variable and the bad value, instead of an
+# opaque arithmetic/sleep error under `set -euo pipefail`.
 # $1 = PR number.
 close_pr_if_open() {
   local pr_num="$1" pr_state="" attempt=0
+  [[ "$PR_STATE_RETRY_ATTEMPTS" =~ ^[1-9][0-9]*$ ]] || die "PR_STATE_RETRY_ATTEMPTS must be a positive integer (got: '${PR_STATE_RETRY_ATTEMPTS}')"
+  [[ "$PR_STATE_RETRY_INTERVAL" =~ ^[0-9]+$ ]] || die "PR_STATE_RETRY_INTERVAL must be a non-negative integer (got: '${PR_STATE_RETRY_INTERVAL}')"
+  [[ "$PR_STATE_REVERIFY_ATTEMPTS" =~ ^[1-9][0-9]*$ ]] || die "PR_STATE_REVERIFY_ATTEMPTS must be a positive integer (got: '${PR_STATE_REVERIFY_ATTEMPTS}')"
   while [ "$attempt" -lt "$PR_STATE_RETRY_ATTEMPTS" ]; do
     attempt=$((attempt + 1))
     pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
@@ -320,13 +333,21 @@ close_pr_if_open() {
     fi
   done
   if ! gh pr close "$pr_num"; then
-    pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
-    case "$pr_state" in
-      merged | closed)
-        info "PR #$pr_num: gh pr close failed but the state re-read is $pr_state — GitHub's async merge detection marked the PR merged after the push; the close failure is the known race (issue #213), nothing to do"
-        return 0
-        ;;
-    esac
+    local reverify=0
+    while [ "$reverify" -lt "$PR_STATE_REVERIFY_ATTEMPTS" ]; do
+      reverify=$((reverify + 1))
+      pr_state=$(gh api repos/{owner}/{repo}/pulls/"$pr_num" --jq .state 2>/dev/null || true)
+      case "$pr_state" in
+        merged | closed)
+          info "PR #$pr_num: gh pr close failed but the state re-read is $pr_state (re-verify attempt ${reverify}/${PR_STATE_REVERIFY_ATTEMPTS}) — GitHub's async merge detection marked the PR merged after the push; the close failure is the known race (issue #213), nothing to do"
+          return 0
+          ;;
+      esac
+      info "PR #$pr_num state re-read: '${pr_state:-<empty>}' (re-verify attempt ${reverify}/${PR_STATE_REVERIFY_ATTEMPTS})"
+      if [ "$reverify" -lt "$PR_STATE_REVERIFY_ATTEMPTS" ]; then
+        sleep "$PR_STATE_RETRY_INTERVAL"
+      fi
+    done
     die "PR #$pr_num could not be closed and the state re-read is '${pr_state:-<empty>}' (not merged/closed) — close the PR manually or investigate, then resume from the failed stage"
   fi
   return 0

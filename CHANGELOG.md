@@ -19,10 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PR_STATE_RETRY_INTERVAL=3` s, each attempt info-logged, early return
   once the state reads `merged`/`closed`), still attempts `gh pr close`
   after the budget (a genuinely open PR must close), and re-verifies the
-  state once after a failed close -- treating the failure as the known
-  race (info note, success) only when the state is now `merged`/`closed`,
-  dying with an actionable message otherwise (re-verify keys on the
-  state, not on `gh`'s error text); `pr-merge` now ends with
+  state with a bounded budget of reads after a failed close
+  (`PR_STATE_REVERIFY_ATTEMPTS=3`, `PR_STATE_RETRY_INTERVAL` s between,
+  never after the last, each info-logged) -- treating the failure as the
+  known race (info note, success) as soon as the state reads
+  `merged`/`closed`, dying with an actionable message otherwise
+  (re-verify keys on the state, not on `gh`'s error text), while the
+  three retry variables are guard-checked with an actionable error when
+  empty or non-numeric; `pr-merge` now ends with
   `pr-merge: done (...)` in the already-merged-by-GitHub case. Covered
   by new fake-`gh`-shim test cases in `tests/test_release_sh.py`
   (feat-213-release, GitHub issue #213).

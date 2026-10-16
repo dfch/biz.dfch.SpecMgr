@@ -354,6 +354,25 @@ class ReleaseShGateTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
 
+    def test_close_pr_if_open_never_sleeps_after_last_attempt(self) -> None:
+        """The retry loop sleeps only BETWEEN attempts: ATTEMPTS-1 sleeps,
+        never after the last one (pinned through a logged fake `sleep`)."""
+        self.write_state("pull_456_state", "open")
+        sleep_shim = self.shim_dir / "sleep"
+        sleep_shim.write_text(
+            "#!/usr/bin/env bash\n"
+            'S="${RELEASE_TEST_STATE:?RELEASE_TEST_STATE must be set by the test}"\n'
+            'printf \'%s\\n\' "$*" >>"$S/sleep.log"\n'
+            "exit 0\n"
+        )
+        os.chmod(sleep_shim, 0o755)
+
+        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=3; PR_STATE_RETRY_INTERVAL=7; close_pr_if_open 456")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
+        self.assertEqual((self.state / "sleep.log").read_text().splitlines(), ["7", "7"])
+
     def test_close_pr_if_open_stale_flips_to_merged_skips_close(self) -> None:
         """A stale/empty state read that flips to merged within the retry budget
         must skip the close entirely (the v0.36.0 race, issue #213)."""
@@ -366,7 +385,7 @@ class ReleaseShGateTestCase(unittest.TestCase):
         self.assertIn("already merged", result.stdout)
         self.assertIn("state read: '<empty>' (attempt 1/5)", result.stdout)
         self.assertNotIn("pr close", gh_calls)
-        self.assertGreaterEqual(sum("pulls/456" in line for line in gh_calls.splitlines()), 3)
+        self.assertEqual(sum("pulls/456" in line for line in gh_calls.splitlines()), 3)
 
     def test_close_pr_if_open_never_merged_close_fails_dies(self) -> None:
         """A state that never flips to merged plus a failing `gh pr close`
@@ -374,7 +393,9 @@ class ReleaseShGateTestCase(unittest.TestCase):
         self.write_state("pull_456_state", "open")
         self.write_close_failure(msg="ERROR:  could not close the pull request (already merged)")
 
-        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
+        result = self.run_release(
+            "PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; PR_STATE_REVERIFY_ATTEMPTS=3; close_pr_if_open 456"
+        )
 
         self.assertEqual(result.returncode, 1)
         self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
@@ -389,12 +410,40 @@ class ReleaseShGateTestCase(unittest.TestCase):
         self.write_pull_state_sequence(456, flip=2, stale="open", final="merged")
         self.write_close_failure(msg="ERROR:  could not close the pull request (already merged)")
 
-        result = self.run_release("PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; close_pr_if_open 456")
+        result = self.run_release(
+            "PR_STATE_RETRY_ATTEMPTS=2; PR_STATE_RETRY_INTERVAL=0; PR_STATE_REVERIFY_ATTEMPTS=3; close_pr_if_open 456"
+        )
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
         self.assertIn("state re-read is merged", result.stdout)
         self.assertIn("known race (issue #213)", result.stdout)
+
+    def test_close_pr_if_open_close_fails_reverify_flips_on_later_read(self) -> None:
+        """A failing `gh pr close` whose state flips to merged only on a LATER
+        re-verify read still succeeds (the bounded re-verify budget, issue #213)."""
+        self.write_pull_state_sequence(456, flip=3, stale="open", final="merged")
+        self.write_close_failure(msg="ERROR:  could not close the pull request (already merged)")
+
+        result = self.run_release(
+            "PR_STATE_RETRY_ATTEMPTS=1; PR_STATE_RETRY_INTERVAL=0; PR_STATE_REVERIFY_ATTEMPTS=3; close_pr_if_open 456"
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("pr close 456", (self.state / "gh_calls.log").read_text())
+        self.assertIn("state re-read is merged", result.stdout)
+        self.assertIn("known race (issue #213)", result.stdout)
+
+    def test_close_pr_if_open_guard_rejects_empty_interval(self) -> None:
+        """An empty retry variable dies with the actionable guard message
+        before any state read or sleep runs (issue #213 hardening)."""
+        self.write_state("pull_456_state", "open")
+
+        result = self.run_release("PR_STATE_RETRY_INTERVAL=; close_pr_if_open 456")
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("release: ERROR:", result.stderr)
+        self.assertIn("PR_STATE_RETRY_INTERVAL", result.stderr)
 
     def test_help_prints_full_usage(self) -> None:
         """`help` must exit 2 and print the complete usage (incl. the final
