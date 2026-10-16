@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: planning
 type: feat
-updated: '2026-10-15T23:36:38.841+02:00'
+updated: '2026-10-16T08:15:43.751+02:00'
 version: 1.0.0
 ---
 
@@ -111,9 +111,9 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 #### Phase 120: CI real-parser gate job
 
-- [ ] Task 120.100: Add the CI job to `.github/workflows/ci.yml` (single pinned Python 3.13, mirroring the docs-drift pin): download `https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar`, verify SHA-256 `5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462` (fail the job on mismatch), export `SPECMGR_PLANTUML_JAR`, and run `uv run --frozen pytest -n auto -rs` so the env-gated real-parser tests execute and their skip/pass state is visible.
-- [ ] Task 120.110: Make the job green: fix any failure the newly-enabled gate surfaces (none expected — the 10 `require_plantuml_source`-gated files were designed against 1.2026.8); if an unrelated pre-existing failure appears, record it as a new issue and scope this job to the `tests/plantuml/` + reference-graph + UC selections, documenting the reason in the job.
-- [ ] Task 120.120: Update the rulebook §4.3 verdict and the gate test's docstring: the gate now RUNS in CI (replacing the "skipped — re-verify where a source is configured" wording) and the local `.env` dev flow is documented.
+- [x] Task 120.100: Add the CI job to `.github/workflows/ci.yml` (single pinned Python 3.13, mirroring the docs-drift pin): download `https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar`, verify SHA-256 `5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462` (fail the job on mismatch), export `SPECMGR_PLANTUML_JAR`, and run `uv run --frozen pytest -n auto -rs` so the env-gated real-parser tests execute and their skip/pass state is visible.
+- [x] Task 120.110: Make the job green: fix any failure the newly-enabled gate surfaces (none expected — the 10 `require_plantuml_source`-gated files were designed against 1.2026.8); if an unrelated pre-existing failure appears, record it as a new issue and scope this job to the `tests/plantuml/` + reference-graph + UC selections, documenting the reason in the job.
+- [x] Task 120.120: Update the rulebook §4.3 verdict and the gate test's docstring: the gate now RUNS in CI (replacing the "skipped — re-verify where a source is configured" wording) and the local `.env` dev flow is documented.
 
 #### Phase 130: Verification + closeout
 
@@ -125,13 +125,81 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 ### Current Status
 
-**As of 2026-10-15**: Phase 110 complete (Tasks 110.100–110.120 done; Phase 120 not started). The `specmgr-refs` skill's diagram workflow now mandates `reverse` for every scoped diagram (MCP `reverse=True`, CLI `--reverse`) with the O(registry-size) cost in the report notes and the label-free edge note (the registry-wide surface and the frozen disambiguation rule are unchanged; the skill pin test gained the matching new phrases). All doc surfaces matching the new behaviour: the `get_reference_diagram`/`get_reference_diagram_all` tool docstrings + MCP descriptions, the `general/tools` package docstring, the `server.py` registration docstring, the README how-to, and the `AGENTS.md` `general/` bullet — `docs/api/` + `docs/MCP.md` regenerated (`: refers to` / package-grouping wording gone from every generated surface). REQ-008 confirmed: the `reverse=False` MCP schema-default pin and every explicit `reverse=True` builder/tool test stay green with NO signature change (AST-verified identical to HEAD for `get_reference_diagram`, `get_reference_diagram_all`, `diagram_refs`, and both builders).
+**As of 2026-10-16**: Phase 120 complete (Tasks 120.100–120.120 done; Phase 130 not started). The `plantuml-parser` CI job is in `.github/workflows/ci.yml` (single pinned Python 3.13.13, mirroring the `build` job's docs-drift pin): it downloads the pinned PlantUML 1.2026.8 release jar to `$RUNNER_TEMP` (kept out of the repo), hash-verifies it in its own step BEFORE any use (the job fails on mismatch), exports `SPECMGR_PLANTUML_JAR`, and runs the FULL suite with `uv run --frozen pytest -n auto -rs` — so every `require_plantuml_source`-gated test (incl. the reference-graph subset gate and the 22-golden parser sweep) runs and passes on the commit path instead of skipping (ACC-005). Local proxy evidence (GitHub Actions itself cannot run here): the workflow YAML parses, the job's exact `sha256sum --check --strict` line passes against the verified local jar and FAILS (rc=1) on a wrong hash, and the job's exact pytest invocation reports 4687 passed / 4 skipped with the ONLY skip reasons the URL-matrix ones (zero `require_plantuml_source` skips). Rulebook §4.3 gained the dated Phase 120 amendment note (the gate now RUNS in CI; the local `.env` dev flow documented) and the gate test's docstrings match; the resource drift pin was extended additively for the note (all pins green). The Task 120.110 scoping branch was NOT needed (no pre-existing failure surfaced).
+
+**Phase 110 record (Tasks 110.100–110.120 done).** The `specmgr-refs` skill's diagram workflow now mandates `reverse` for every scoped diagram (MCP `reverse=True`, CLI `--reverse`) with the O(registry-size) cost in the report notes and the label-free edge note (the registry-wide surface and the frozen disambiguation rule are unchanged; the skill pin test gained the matching new phrases). All doc surfaces matching the new behaviour: the `get_reference_diagram`/`get_reference_diagram_all` tool docstrings + MCP descriptions, the `general/tools` package docstring, the `server.py` registration docstring, the README how-to, and the `AGENTS.md` `general/` bullet — `docs/api/` + `docs/MCP.md` regenerated (`: refers to` / package-grouping wording gone from every generated surface). REQ-008 confirmed: the `reverse=False` MCP schema-default pin and every explicit `reverse=True` builder/tool test stay green with NO signature change (AST-verified identical to HEAD for `get_reference_diagram`, `get_reference_diagram_all`, `diagram_refs`, and both builders).
 
 **Phase 100 record (Tasks 100.100–100.140 done).** The pre-implementation design verification re-confirmed the diagnosis against the live registry (Task 100.100: the four current real-registry emissions all fail the pinned 1.2026.8 parser with the syntax error; the mechanically-transformed emissions + the regenerated §2.9 worked example pass with palette fills, node titles, and red `#F00` arrows in the SVGs). The structure-checker tripwire is implemented with control tests (a `package` fragment collecting component declarations must close with `}` — error in both modes, curly-brace fix hint; sequence packages and the corrected curly form stay zero-finding). The renderer emits the curly `component "TYPE" { … }` domain groups and label-free edges; the rulebook (§2.1/§2.7/§2.8/§2.9/§4.3/§7.1) and the UC rulebook §6.1 carry the dated 2026-10-15 corrections incl. the real-parser verdict and the checker-contract restatement; all 22 goldens are regenerated; the env-gated subset gate + the new golden parser sweep run (not skip) under the locally configured pinned jar and pass.
 
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-16T06:15:43.752Z - Phase 120 complete (CI real-parser gate job, §4.3 CI-run amendment, gate docstrings)
+
+**Task 120.100 (the CI job):** the new top-level `plantuml-parser` job was
+added to `.github/workflows/ci.yml` (sibling of `build`, running on the same
+push/PR triggers). Shape: single pinned Python 3.13.13 (mirroring the
+`build` job's docs-drift pin — `setup-uv` + `uv sync --frozen --python
+3.13.13 --all-extras`, same pinned action SHAs + `FORCE_JAVASCRIPT_ACTIONS_
+TO_NODE24` + `permissions: contents: read` as `build`); a `Verify tools`
+preflight (uv/python/`java -version` — the jar needs a JVM, preinstalled on
+the GitHub-hosted ubuntu runners); `Download the pinned PlantUML 1.2026.8
+release jar` (`curl -fSL --retry 3` from
+`https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar`
+to `$RUNNER_TEMP/plantuml.jar` — kept out of the repo, the planning-session
+"jar by pinned download, not in git" decision); `Verify the jar's SHA-256
+(fail on mismatch)` (the job's exact line: `echo
+"5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462  $RUNNER_TEMP/plantuml.jar"
+| sha256sum --check --strict` — hash-verified BEFORE any use, non-zero exit
+fails the job under `bash -e`); and `Run the full suite with the real
+parser configured` with `env: SPECMGR_PLANTUML_JAR: ${{ runner.temp }}/plantuml.jar`
+running `uv run --frozen pytest -n auto -rs` (full suite, `-rs` so every
+skip reason — incl. any residual `require_plantuml_source` skip — is visible
+in the report; ACC-005 expects none).
+
+**Task 120.110 (job green — local proxy evidence, since GitHub Actions
+itself cannot run in this session):** (a) the edited workflow parses
+(`yaml.safe_load`: jobs = `build`, `plantuml-parser`, 7 steps, the test
+step's `env` = `SPECMGR_PLANTUML_JAR: ${{ runner.temp }}/plantuml.jar`);
+(b) the job's exact sha256 line, run against the verified local copy of the
+pinned jar, answers `OK` (rc=0), and the same line with a wrong hash
+answers `FAILED` + `1 computed checksum did NOT match` (rc=1) — the
+mismatch branch fails the job, not the suite; (c) the job's exact pytest
+invocation, `SPECMGR_PLANTUML_JAR=/home/user/plantuml.jar uv run --frozen
+pytest -n auto -rs`, reports **4687 passed, 4 skipped** — the `-rs` short
+summary carries ONLY the URL-matrix skip reasons ("the live URL tests apply
+only to a selected URL source" ×3, "the selected source is 'jar'; the live
+render needs a URL base" ×1): ZERO `require_plantuml_source` skips — the
+reference-graph subset gate (`TestReferenceGraphSubsetParserGate`) and the
+golden parser sweep (`TestReferenceGraphGoldenParserSweep`) are in the
+PASSED set (ACC-005). **The scoping branch was NOT needed** — no
+pre-existing, unrelated failure surfaced; the full suite is green as-is, so
+the job runs the full suite (no `tests/plantuml/`-only selection) and no
+issue was recorded.
+
+**Task 120.120 (docs):** rulebook §4.3 gained a dated amendment note
+("§4.3 amended 2026-10-15 (feat-214-rel-invalid-diag Phase 120) — the gate
+now RUNS in CI") naming the `plantuml-parser` job (pinned Python 3.13.13,
+jar hash-verified before use, full suite with `-rs`, ACC-005's no-
+`require_plantuml_source`-skip expectation), stating the 2026-10-10
+"skipped — re-verify where a source is configured" outcome is
+structurally impossible on the commit path, and documenting the local-dev
+flow (gitignored repo-root `.env` loaded by `tests/conftest.py` at
+collection — e.g. `SPECMGR_PLANTUML_JAR=/home/user/plantuml.jar` — running
+the identical gates locally with zero repo changes; the gates remain
+env-gated and skip cleanly off the commit path). The Phase 100 verdict
+paragraph itself is preserved verbatim (its three fragments are the
+resource drift pin's). The gate test's docstrings were updated to match:
+the module docstring (the gates "on the commit path … RUN" via the named
+job + the local `.env` flow), `TestReferenceGraphSubsetParserGate` (clean
+local skips stay possible; on the commit path the gate RUNS, no
+`require_plantuml_source` skip tolerated, ACC-005), and
+`TestReferenceGraphGoldenParserSweep` (forward reference to the Phase 120
+job turned present-tense). The resource drift pin was extended ADDITIVELY
+(new `_PHASE_120_NOTE_FRAGMENTS` tuple + `test_pins_the_phase_120_ci_run_note`
+method; the pre-existing `_GATE_VERDICT_FRAGMENTS` pins are untouched) —
+all 11 resource tests + all 18 gate/subset tests green.
 
 #### 2026-10-15T21:36:38.842Z - Phase 110 complete (skill reverse mandate, doc surfaces, REQ-008 confirmation)
 
@@ -256,6 +324,10 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 - **2026-10-15 (Phase 110) — doc-surface scope:** the task named the two tool modules' docstrings/descriptions, the README, and `AGENTS.md`; a sweep found TWO more surfaces carrying the short "per-domain packages, one edge per unique reference" layout summary — the `general/tools` package docstring and the `server.py` registration docstring (the authoritative per AGENTS.md). Both were updated (REQ-010's "every documentation surface describing the emission layout" clause); the `diagram_refs` CLI docstrings were judged to need NO change (they describe the layout only via the rulebook pointer, which Phase 100 corrected).
 - **2026-10-15 (Phase 110) — skill pin extension is additive:** the new mandate/cost/label-free wording is pinned by a NEW `_REVERSE_MANDATE_PHRASES` tuple + one new test method in `tests/opencode/test_skill_specmgr_refs.py`; the pre-existing pin-g tuples (feat-207's load-bearing diagram facts) are untouched, so the feat-207 wording pins stay as historical regression anchors. The skill's label-free note is phrased "no text on the arrow" (not the literal old label string) so no stale emission wording survives on the skill surface.
 - **2026-10-15 (Phase 110) — REQ-008 evidence method:** signature invariance is proven by an AST comparison of `get_reference_diagram` / `get_reference_diagram_all` / `diagram_refs` / `build_source_graph` / `build_registry_graph` between HEAD and the working tree (all identical; every `reverse` default `False` in the tool/CLI layers), in addition to the green `reverse=False` MCP schema-default pin and the explicit `reverse=True` tests.
+- **2026-10-16 (Phase 120) — job name + download location:** the new job is named `plantuml-parser` (descriptive: it is the parser-authority half of CI, complementing `build`'s lint/test/docs-drift role) and is a top-level sibling of `build` (independent, parallel — no `needs:`; it re-runs the full suite by design, because its whole purpose is the suite under a real parser). The jar downloads to `$RUNNER_TEMP/plantuml.jar` (the runner's temp dir — keeps the ~28.5 MB binary out of the checkout; the test step references it via the `${{ runner.temp }}` context in `env:`).
+- **2026-10-16 (Phase 120) — Python pin 3.13.13:** "mirroring the docs-drift pin" is taken literally at the PATCH level: `setup-uv`'s `python-version` and `uv sync`/`pytest`'s `--python` are all pinned to `3.13.13` (the exact interpreter the `build` job's docs-drift steps force), not just "3.13" — a single, fully determined Python per the plan's "single pinned Python (3.13)" wording.
+- **2026-10-16 (Phase 120) — `java` reliance:** the job does NOT install a JDK: the GitHub-hosted ubuntu runners ship Temurin Java preinstalled on PATH, so the jar runs as-is; the `Verify tools` preflight prints `java -version` and fails the job early (with an unmistakable message) if that assumption ever changes.
+- **2026-10-16 (Phase 120) — resource drift pin extended additively:** the new §4.3 Phase 120 note is pinned by a NEW `_PHASE_120_NOTE_FRAGMENTS` tuple + `test_pins_the_phase_120_ci_run_note` method in `tests/general/resources/test_reference_graph.py` (the pre-existing `_GATE_VERDICT_FRAGMENTS` pins are untouched and stay green) — the same additive precedent as Phase 110's skill pin extension; a silent removal of the CI-run note now breaks the suite.
 
 ### More Information
 

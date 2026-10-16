@@ -47,12 +47,21 @@ machinery): where a ``SPECMGR_PLANTUML_*`` source is configured they run the
 subset — and, since feat-214 Phase 100, EVERY committed reference-graph
 golden (the parser sweep below) — through the real parser (parse + render,
 with the render proof); where none is configured they skip cleanly
-(reported via ``pytest -rs``). The 2026-10-15 verdict — the pre-correction
-layout FAILS (``ERROR 25`` — Syntax Error? (Assumed diagram type:
-component)), the corrected layout + label-free edges PASS (exit 0; the SVG
-carries the palette fills, the node titles, and the red ``#F00`` arrows),
-and "an emission layout is not frozen on a skipped gate" — is recorded in
-the reference-graph rulebook §4.3 and in the feature plan's Progress.
+(reported via ``pytest -rs``) — but on the commit path they RUN: the CI job
+``plantuml-parser`` (``.github/workflows/ci.yml``, feat-214 Phase 120;
+single pinned Python 3.13.13, mirroring the docs-drift pin) hash-verifies
+the pinned 1.2026.8 jar BEFORE use, exports ``SPECMGR_PLANTUML_JAR``, and
+runs the full suite with ``pytest -n auto -rs`` so the gates execute and
+pass instead of skipping (ACC-005 — rulebook §4.3, the Phase 120 amendment
+note). Local dev runs the identical gates with zero repo changes via the
+gitignored repo-root ``.env`` (loaded by ``tests/conftest.py`` at
+collection — e.g. ``SPECMGR_PLANTUML_JAR=<jar path>``). The 2026-10-15
+verdict — the pre-correction layout FAILS (``ERROR 25`` — Syntax Error?
+(Assumed diagram type: component)), the corrected layout + label-free edges
+PASS (exit 0; the SVG carries the palette fills, the node titles, and the
+red ``#F00`` arrows), and "an emission layout is not frozen on a skipped
+gate" — is recorded in the reference-graph rulebook §4.3 and in the feature
+plan's Progress.
 """
 
 import re
@@ -395,9 +404,14 @@ class TestReferenceGraphSubsetParserGate(unittest.TestCase):
     worked example) PASSES (exit 0, palette fills + node titles + the red
     ``#F00`` arrows in the SVG) — the red-arrow syntax ``-[#red]->`` and the
     label-free edge forms ship on this verdict. On a clean skip (no
-    ``SPECMGR_PLANTUML_*`` source configured) the gate skips with the
-    ``require_plantuml_source`` reason; an emission layout is NOT frozen on
-    a skipped gate (the 2026-10-15 convention)."""
+    ``SPECMGR_PLANTUML_*`` source configured, e.g. a sourceless local run)
+    the gate skips with the ``require_plantuml_source`` reason; an emission
+    layout is NOT frozen on a skipped gate (the 2026-10-15 convention) —
+    on the commit path the gate RUNS: the CI job ``plantuml-parser`` (feat-
+    214 Phase 120) configures the hash-verified pinned jar and runs this
+    test with ``-rs``, where no ``require_plantuml_source`` skip is
+    tolerated (ACC-005), and the local dev flow is the gitignored repo-root
+    ``.env`` (``SPECMGR_PLANTUML_JAR=...``, rulebook §4.3 Phase 120 note)."""
 
     def test_candidate_subset_renders_valid_through_the_real_parser(self):
         info = require_plantuml_source(self)
@@ -426,8 +440,11 @@ class TestReferenceGraphGoldenParserSweep(unittest.TestCase):
     ``tests/fixtures/reference-graphs/goldens/`` — must parse + render
     through the REAL PlantUML source, extending the parser verification from
     the one synthetic subset (the §2.9 worked example) to the whole frozen
-    golden set (the root-cause fix for the ship-on-a-skipped-gate gap: the
-    CI real-parser job, Phase 120, makes this sweep run on every commit)."""
+    golden set (the root-cause fix for the ship-on-a-skipped-gate gap: on
+    the commit path the CI job ``plantuml-parser`` — feat-214 Phase 120,
+    hash-verified pinned jar, full suite with ``-rs`` — makes this sweep
+    RUN on every commit; the gitignored repo-root ``.env`` dev flow does
+    the same locally, rulebook §4.3 Phase 120 note)."""
 
     def test_every_golden_renders_valid_through_the_real_parser(self):
         info = require_plantuml_source(self)

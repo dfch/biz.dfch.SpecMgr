@@ -444,6 +444,27 @@ Phase 120) makes the skip impossible on the commit path. Where a source IS
 configured, the gate's env-gated tests re-verify the subset and every
 golden before this rulebook's forms may be changed.
 
+**§4.3 amended 2026-10-15 (feat-214-rel-invalid-diag Phase 120) — the gate
+now RUNS in CI:** the `plantuml-parser` job in `.github/workflows/ci.yml`
+(single pinned Python 3.13.13, mirroring the `build` job's docs-drift pin)
+runs on every push to `main`/`dev` and on every PR: it downloads the
+pinned jar (URL + SHA-256 above), hash-verifies it in its own step BEFORE
+any use (the job fails on mismatch), exports `SPECMGR_PLANTUML_JAR`, and
+runs the FULL suite with `uv run --frozen pytest -n auto -rs` — so the
+env-gated real-parser tests (this subset gate, the golden parser sweep,
+and every other `require_plantuml_source`-gated test) execute and PASS on
+the commit path instead of skipping (ACC-005: the `-rs` short summary
+carries no `require_plantuml_source` skip reason; the only legitimate
+skips are the live URL-matrix tests, which apply only to a selected URL
+source), making the 2026-10-10 "skipped — re-verify where a source is
+configured" outcome structurally impossible there. The gates remain
+env-gated off the commit path: where no `SPECMGR_PLANTUML_*` source is
+configured they skip cleanly (reported via `pytest -rs`), and the
+documented local-dev flow is the gitignored repo-root `.env` (loaded by
+`tests/conftest.py` at collection — e.g.
+`SPECMGR_PLANTUML_JAR=/home/user/plantuml.jar` on the authoring machine),
+which runs the identical gates locally with zero repo changes.
+
 ## 5. Sanitisation and truncation (frozen)
 
 ### 5.1 Sanitisation (UC rulebook §2.4, reused as-is)
