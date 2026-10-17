@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-06T10:45:41.464+02:00'
 id: feat-199-plan-section-refs-cleanup
-status: progress
+status: review
 type: feat
-updated: '2026-10-17T10:06:02.773+02:00'
+updated: '2026-10-17T11:21:47.408+02:00'
 version: 1.0.0
 ---
 
@@ -57,10 +57,10 @@ domain in the repo (ADR tooling).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 — a sweep for the bare `plan §` pattern across all of `src/` returns no results (the same pattern and scope Task 100.100's investigation uses, so the acceptance check and the investigation cannot diverge).
-- [ ] ACC-002: Verifies REQ-002 — disposition table recorded in this file's Design Notes, one row per distinct reference site (or logical group).
-- [ ] ACC-003: Verifies REQ-003 — `uc/models/v1/parser.py`'s hit is explicitly addressed (confirmed in/out) with rationale recorded.
-- [ ] ACC-004: Verifies REQ-004 — `git diff` shows no changes under `.specmgr/feat/feat-9-doc-in-specmgr/`.
+- [x] ACC-001: Verifies REQ-001 — a sweep for the bare `plan §` pattern across all of `src/` returns no results (the same pattern and scope Task 100.100's investigation uses, so the acceptance check and the investigation cannot diverge).
+- [x] ACC-002: Verifies REQ-002 — disposition table recorded in this file's Design Notes, one row per distinct reference site (or logical group).
+- [x] ACC-003: Verifies REQ-003 — `uc/models/v1/parser.py`'s hit is explicitly addressed (confirmed in/out) with rationale recorded.
+- [x] ACC-004: Verifies REQ-004 — `git diff` shows no changes under `.specmgr/feat/feat-9-doc-in-specmgr/`.
 
 ### Scope
 
@@ -195,7 +195,7 @@ this feature.
 
 ### Current Status
 
-**As of 2026-10-17**: Phase 110 (Implementation) is complete — status `progress`. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004); the `tests/` residue is 16 bare-shorthand hits in 15 files (no paths), and the I3 re-check found one pre-existing, out-of-scope by-path sibling citation (`uc/models/v2/__init__.py` → the stale `feat-4-use-cases/uc_model_v2_draft.py` path) reported for a separate follow-up. The feature is ready for the orchestrator's acceptance-criteria walk.
+**As of 2026-10-17**: implementation complete (Phase 100 `ca8f3a8`, Phase 110 `d36ae69`) — all four acceptance criteria verified with concrete evidence and ticked; status `review`. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004); the `tests/` residue is 16 bare-shorthand hits in 15 files (no paths), and the I3 re-check found one pre-existing, out-of-scope by-path sibling citation (`uc/models/v2/__init__.py` → the stale `feat-4-use-cases/uc_model_v2_draft.py` path) reported for a separate follow-up. A PR against `dev` follows.
 
 ### Blockers
 
@@ -204,6 +204,29 @@ this feature.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 11:19:36.680+02:00 - Status set to review; all acceptance criteria verified and ticked
+
+Implementation complete (Phase 100: `ca8f3a8`, Phase 110: `d36ae69`). All
+four acceptance criteria verified by the orchestrator against the committed
+tree with concrete evidence: ACC-001 (`rg -n "plan §" src/` → no results,
+exit 1 — the 124 dropped citations comprise the 122 bare-pattern hits plus
+the 2 line-wrapped ones the bare pattern cannot see; the wrapped-residue
+check confirms no `plan`/`§N` split citations remain), ACC-002 (the 27-row
+per-reference disposition table recorded in Design Notes — all-Drop, with
+the governing formal ADR for each cited plan § recorded per row), ACC-003
+(the `uc/models/v1/parser.py` hit confirmed as the same `adr-tool-plan.md`
+referent — §7, cross-cutting design decisions — with four converging lines
+of evidence in Design Notes, and dropped in Phase 110), ACC-004 (`git diff
+5d2450a -- .specmgr/feat/feat-9-doc-in-specmgr/` → empty; nothing under that
+path touched). Recorded for separate follow-up (out of scope here): the
+`tests/` residue of 16 bare-shorthand hits in 15 files (no paths, nothing
+asserts on the pattern) and one pre-existing by-path sibling citation with a
+stale path (`uc/models/v2/__init__.py` →
+`.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py`, which in fact lives at
+`v1/uc_model_v2_draft.py`) — the I3 re-check confirms AGENTS.md's
+no-live-citations clause is otherwise intact against the post-cleanup state.
+Status moves `progress` → `review`; a PR against `dev` follows.
 
 #### 2026-10-17 10:06:02.773+02:00 - Phase 110 complete (implementation)
 
