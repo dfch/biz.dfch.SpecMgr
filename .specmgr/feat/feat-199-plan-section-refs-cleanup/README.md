@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-06T10:45:41.464+02:00'
 id: feat-199-plan-section-refs-cleanup
-status: planning
+status: progress
 type: feat
-updated: '2026-10-17T04:25:57.955+02:00'
+updated: '2026-10-17T07:04:57.312+02:00'
 version: 1.0.0
 ---
 
@@ -90,14 +90,84 @@ domain in the repo (ADR tooling).
 
 ### Design Notes
 
-No per-reference disposition table yet — this needs its own investigation
-pass (reading each citing docstring's surrounding prose, checking whether it
-already self-explains per feat-198's precedent, and checking whether the
-cited plan section maps to an existing formal ADR) before any edits are
-made. Do not treat this as a blanket find/replace: feat-198 found that some
-citations are pure decoration (self-contained prose already) while others
-needed an actual ADR substitution — the same per-site judgment applies here,
-at roughly 6x the scale.
+Per-reference disposition table for the bare `plan §` shorthand citations
+(Task 100.100; sweep of 2026-10-17: **122 hits in 27 files** under
+`src/biz/dfch/specmgr/` via the ACC-001 pattern `rg -n "plan §" src/`,
+byte-identical to the orchestrator baseline measured moments before this
+phase and consistent with the at-filing estimate of ~120 hits / ~25 files).
+Every hit is an `adr-tool-plan.md` citation — the referent was confirmed at
+filing by `git blame`/`git log --follow` across four independent files (see
+Overview), and the cited §N at every site was verified on 2026-10-17 to match
+that file's actual sections. The `Cited §` column names the plan section(s)
+a group cites, with the formal ADR(s) that govern that section: the plan file
+itself names these ADRs at the top of each section, and all nine were re-read
+in full on 2026-10-17 and confirmed to govern the cited content. §9 (open
+backlog) and §10 (next steps) carry no ADR — they are the plan's own progress
+sections. All 122 dispositions are Drop (per-site rationale in the `Fix`
+column): every citing docstring states the cited design verbatim, so no ADR
+substitution is needed; the governing ADR is recorded per row in case Phase
+110 or review wants a citation at any site.
+
+| Location(s) | Cited § | Fix |
+|---|---|---|
+| `server.py` — module docstring, registry lead-in (line 22) | §8, §9a (7531106b, 8cf940c5) | Drop: the exhaustive registry list that follows is self-evident, and its scope (all 13 domains) has long outgrown the plan's ADR-only §8/§9a enumeration. |
+| `models/adr/v1/summary.py` — module docstring, class docstring, `id` parameter (lines 18, 41, 48) | §8, §9a (7531106b, 8cf940c5) | Drop: the docstrings describe the `list_adr` output shape and the `id`/`None` semantics inline; the cited §8/§9a surface enumeration is stale (listing became the `list_adr` tool in feat-13, which the same docstring records). |
+| `models/adr/v1/_util.py` — `SCHEMA_MAJOR_VERSION`/`CURRENT_SCHEMA_VERSION` comments, `validate_schema_version` docstring (lines 25, 33, 79) | §3, §6 (bbf412a7, ece4554b) | Drop: the vN versioning rule (major matches the folder name; non-breaking → bump minor/patch in place; breaking → new sibling package) is stated verbatim in the same comments. |
+| `models/adr/v1/adr.py` — module + class docstrings (lines 21, 41, 44, 46) | §3, §7, §8, §9 (bbf412a7, 33c5ab08, 7531106b; §9 has no ADR) | Drop (with staleness note): line 21's "still an open backlog item (plan §9)" is stale — §9 was resolved in §9a (ADR 8cf940c5) — and the model's own two fields make the no-path scope self-evident; Phase 110 should drop the citation together with that stale clause. Lines 41/44/46 state the tool-exchange shape and the version-on-frontmatter round-trip rationale inline. |
+| `models/adr/v1/frontmatter.py` — module + class + `id`/`version` parameter docstrings (lines 18, 38, 46, 55, 58) | §3, §6, §7, §9a (bbf412a7, ece4554b, 4c6119c9, 8cf940c5) | Drop: the whole-object full-replace contract, the system-owned `id`, the specmgr-only extension keys, and the vN-dispatch rationale are all stated verbatim in the same docstrings. |
+| `models/adr/v1/body.py` — module docstring, field-constant comments, class docstring (lines 19, 31, 38, 44, 46, 49, 56, 74, 84) | §4, §5 (71fd95d7, d54abe50) | Drop: the mandatory/optional split, the deletion-sentinel rejection, the Considered-Options/Option drift acceptance, and the derived-container-iff-non-empty rule are each stated in the very sentence that cites them. |
+| `models/adr/v1/option.py` — module + class docstrings (lines 18, 30, 32) | §4, §5, §8 (71fd95d7, d54abe50, 7531106b) | Drop: the no-sentinel-for-options rule and the option_delete-only removal are stated inline. |
+| `models/adr/v1/parser.py` — module docstring (lines 18, 20, 23–24, 25, 30, 34, 42) | §2, §7, §8, §10 (c73e4f9d, 33c5ab08, 4c6119c9, 7531106b; §10 has no ADR) | Drop: the parse/validate/render split, the MADR-derived heading layout, the "no separate validation pass" design, and the quoted §7 validator wording are all in the same docstring; the §10 item 2 marker is self-evident (this module is that item). Lines 23–24 carry one **line-wrapped** citation ("plan" / "§7/§8" across the break) the bare sweep does not see — drop it with the sentence. |
+| `models/adr/v1/parser.py` — heading-table comments, `_Node`/`_stringify_metadata` docstrings (lines 62, 67, 78, 82, 88, 96, 126, 185) | §3, §4, §5 (bbf412a7, 71fd95d7, d54abe50) | Drop: the comments restate the §4 field table and §5 option-heading rules inline (the dict literals *are* the table), and line 185 quotes §3's date-not-enforced wording verbatim. |
+| `models/adr/v1/renderer.py` — module docstring, `_FRONTMATTER_KEYS` comment (lines 18, 20, 24, 38, 41, 44, 59, 61) | §3, §4, §5, §7, §9a, §10 (bbf412a7, 71fd95d7, d54abe50, 4c6119c9, 8cf940c5; §10 has no ADR) | Drop: the pipeline stage split, the no-AST-round-trip rationale, the fixed emission order, and the §4/§5 render rules are all stated in the same docstrings. |
+| `models/adr/v1/mutations.py` — module docstring + every exception/function docstring (lines 18, 21, 27, 36, 44, 70, 79, 85, 89, 95, 101, 132, 158, 170, 178, 182, 206, 224, 227) | §4, §5, §7, §8 (71fd95d7, d54abe50, 33c5ab08, 7531106b) | Drop: each function docstring states its own semantics (deletion sentinel, mandatory-section rejection, never-reused numbering, gaps-on-delete, full-content replace) verbatim, and the module docstring states the purity + no-file-I/O + re-read-cycle design inline, including the quoted §7 wording. |
+| `adr/tools/_paths.py` — module docstring + constant/function docstrings (lines 19, 27, 29–30, 55, 87, 122, 147) | §7, §9a (33c5ab08, 8cf940c5) | Drop: the module docstring states the no-cache fresh-scan design, the `SPECMGR_ADR_DIR` default, the slug rules, and the staleness rationale verbatim, and each function docstring repeats the scheme inline. Lines 29–30 carry one **line-wrapped** citation ("(plan" / "§7)" across the break) inside the same sentence — drop it together with line 27's "(plan §9a)". |
+| `adr/tools/_lock.py` — module docstring (lines 18, 27) | §7, §9a (33c5ab08, 8cf940c5) | Drop: the docstring states the no-cache premise and the full lost-update-race rationale the lock exists to guard inline. |
+| `adr/tools/_io.py` — module docstring + `read_adr`/`write_adr` docstrings (lines 18, 36, 41) | §7, §9a (33c5ab08, 8cf940c5) | Drop: the quoted "re-read, re-parse" / "re-render, re-write" phrases are inline and the module identity is self-evident. |
+| `adr/tools/__init__.py` — package docstring (line 18) | §6, §8, §10 (ece4554b, 7531106b; §10 has no ADR) | Drop: self-evident package lead-in; the docstring continues with the one-module-per-tool layout and the side-effecting-import convention. |
+| The 10 tool-wrapper module lead-ins — `get_adr.py` (line 20), `create_adr.py` (18), `update_frontmatter.py` (20), `update_section.py` (20), `option_create.py` (20), `option_update.py` (20), `option_read.py` (20), `option_delete.py` (20), `option_list.py` (20), `validate_adr.py` (20) | §4, §5, §7, §8, §9a, §10 (71fd95d7, d54abe50, 33c5ab08, 7531106b, 8cf940c5; §10 has no ADR) | Drop: the wrapper identity is the module's own name, and §10 item 4 is a stale progress marker. The "Task 3.2" marks in `create_adr.py`/`validate_adr.py` cite feat-9's own README task list (a different document, a different citation shape, outside this feature's pattern) — leave them. |
+| The 10 tool-wrapper "no in-memory cache" sentences — `get_adr.py` (line 24), `create_adr.py` (21), `update_frontmatter.py` (24), `update_section.py` (25), `option_create.py` (25), `option_update.py` (25), `option_read.py` (24), `option_list.py` (24), `option_delete.py` (25), `validate_adr.py` (24) | §7, §9a (33c5ab08, 8cf940c5) | Drop: each sentence states the no-cache, file-is-source-of-truth design verbatim (ADR 33c5ab08 is the governing decision if a citation is wanted; `_lock.py`'s docstring carries the most complete statement of its rationale). |
+| `update_frontmatter.py` — `@mcp.tool` description (line 42) + function docstring (lines 47, 52) | §3, §9a (bbf412a7, 8cf940c5) | Drop: the whole-object full-replace semantics and the system-managed `id` re-injection exception are stated in the same docstring. |
+| `update_section.py` — `@mcp.tool` description (line 48) + function docstring (line 53) | §4 (71fd95d7) | Drop: the sentinel semantics (blank/`"REMOVE"` case-insensitive, mandatory-field rejection, nothing written on error) are stated inline. |
+| The 5 `option_*` `@mcp.tool` descriptions — `option_create.py` (line 47), `option_update.py` (47), `option_read.py` (43), `option_delete.py` (47), `option_list.py` (43) | §5 (d54abe50) | Drop: each one-line description is complete without the citation; the function docstrings carry the semantics. |
+| `option_delete.py` — function docstring (line 53) | §5 (d54abe50) | Drop: the no-renumbering, gaps-on-delete rule is stated inline. |
+| `get_adr.py` — `id` parameter docstring (line 52) | §9a (8cf940c5) | Drop: "specmgr-assigned identifier" states what the `id` is inline. |
+| `create_adr.py` — function docstring (lines 58, 61) | §9a (8cf940c5) | Drop: the fresh-UUID, assigned-once, `{id}-{slug}.md` filename, and slug-derived-from-title scheme are all stated in the same docstring. |
+| `validate_adr.py` — function docstring (line 55) | §7 (4c6119c9) | Drop: "validate" = the Pydantic validators running during parsing, "no separate validation pass" — stated inline. |
+| `adr/resources/__init__.py` — package docstring (line 18) | §8, §9a (7531106b, 8cf940c5) | Drop: self-evident package lead-in; the docstring already explains the `adr_list` → `list_adr` history with a live feat-13 citation. |
+| `adr/resources/adr_get.py` — module + function docstrings (lines 20, 22, 49, 57) | §7, §8, §9a (33c5ab08, 7531106b, 8cf940c5) | Drop: the resource-instead-of-tool decision and its rationale (context attachment without a tool round-trip, same id-resolution, no cache) are stated verbatim (ADR 7531106b is the governing decision if a citation is wanted). |
+| `uc/models/v1/parser.py` — module docstring (line 4) | §7 (4c6119c9) | Drop (referent **confirmed**, see note below): the sentence already names ``models/adr/v1/parser.py`` as the source of the mirrored "parse -> validate -> render" split; "ADR's plan §7" is redundant provenance. |
+
+**`uc/models/v1/parser.py` (REQ-003) — referent confirmed: same `adr-tool-plan.md`, in scope.**
+The hit reads: 'mirrors ``models/adr/v1/parser.py``'s "parse -> validate -> render"
+split, ADR's plan §7'. It was introduced with the module in commit `0544d2bb`
+(2026-08-05, "feat(uc): add use case domain with models and parser"), two days
+after the 2026-08-03 ADR-tooling authoring window that introduced every other
+hit. The referent is `adr-tool-plan.md` §7 (cross-cutting design decisions), for
+four converging reasons: (a) the sentence names the ADR domain's parser module
+as what is being mirrored, and that module cites the identical pipeline split
+as "(plan §7)"; (b) §7's actual content — "Pipeline: parse → validate →
+render" plus "one schema-driven validate_adr check", i.e. no separate
+validation pass — is exactly the design the docstring describes; (c) the same
+author/feature (feat-4-use-cases) writes the identical "ADR's … §7" framing
+explicitly as `adr-tool-plan.md` §7 in that README's DEC-008 entry; (d) the UC
+feature plan — the document line 1 of the same docstring calls "feature plan"
+(Task 1.3A) — has no `§N` sub-numbering anywhere in its `## Plan` section, so
+it cannot be the referent. REQ-003 is resolved as **confirmed in**; the
+disposition is the Drop in the table row above.
+
+**Line-wrapped citations (invisible to the bare sweep):** two of the 124
+actual citations wrap across a line break ("plan" ends a line, "§N" starts the
+next) and so do not match `plan §`: `models/adr/v1/parser.py` lines 23–24
+("plan" / "§7/§8)") and `adr/tools/_paths.py` lines 29–30 ("(plan" / "§7)").
+Both are already covered by their rows above; Phase 110 must drop them
+together with the same-line citation in the same sentence.
+
+**Out-of-pattern markers recorded for Phase 110's awareness (not dispositioned
+here):** the "Task 3.2" marks in the `create_adr.py`/`validate_adr.py` module
+leads cite feat-9's own README task list — a different document and a different
+citation shape; they do not match the `plan §` pattern and are untouched by
+this feature.
 
 ### Related Decisions
 
@@ -107,9 +177,9 @@ at roughly 6x the scale.
 
 #### Phase 100: Investigation
 
-- [ ] Task 100.100: Re-run the `plan §` sweep against the current tree (counts may have shifted since this feature was filed) and produce the per-reference disposition table in this file's Design Notes, one row per distinct citation site — depends on: none — status: not-started
+- [x] Task 100.100: Re-run the `plan §` sweep against the current tree (counts may have shifted since this feature was filed) and produce the per-reference disposition table in this file's Design Notes, one row per distinct citation site — depends on: none — status: done
 
-- [ ] Task 100.110: Confirm or rule out the `uc/models/v1/parser.py` stray hit (REQ-003) — depends on: none — status: not-started
+- [x] Task 100.110: Confirm or rule out the `uc/models/v1/parser.py` stray hit (REQ-003) — depends on: none — status: done
 
 #### Phase 110: Implementation
 
@@ -125,7 +195,7 @@ at roughly 6x the scale.
 
 ### Current Status
 
-**As of 2026-10-17**: Filed as a follow-up during feat-198's scoping discussion. Not yet investigated in depth — status `planning` reflects that an investigation pass (Phase 100) is needed before a real task breakdown exists. The sole dependency (feat-198) has been `done` since 2026-10-07, so this feature is fully unblocked and can move `planning` → `progress` the moment Phase 100 starts.
+**As of 2026-10-17**: Phase 100 (Investigation) is complete — status `progress`. The final sweep (`rg -n "plan §" src/`) measured **122 hits in 27 files**, byte-identical to the orchestrator baseline and consistent with the at-filing estimate (~120/~25). The per-reference disposition table (27 rows, one per file, with three defensible group rows enumerating their 10/10/5 member files) is recorded in Design Notes and covers every swept file; all 122 citations are Drop-disposed (every citing docstring states the cited design verbatim) with the governing formal ADR for each cited plan § recorded per row (nine ADRs re-read and confirmed). The stray `uc/models/v1/parser.py` hit (REQ-003) is **confirmed** as the same `adr-tool-plan.md` referent (§7, cross-cutting design decisions) and is in scope for Phase 110. No `src/` edits have been made — Phase 110 implements the table.
 
 ### Blockers
 
@@ -134,6 +204,47 @@ at roughly 6x the scale.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 06:33:49.568+02:00 - Phase 100 complete (investigation)
+
+Implemented Task 100.100 and Task 100.110 (investigation only — no `src/` or
+`tests/` edits; the only file written is this README). Final sweep:
+`rg -n "plan §" src/` → **122 hits in 27 files**, per-file counts byte-identical
+to the orchestrator baseline measured moments earlier (`mutations.py` 19,
+`parser.py` 14, `body.py` 9, `renderer.py` 8, `_paths.py` 6, `frontmatter.py`
+5, `update_frontmatter.py` 5; `adr.py`, `update_section.py`, `option_delete.py`,
+`create_adr.py`, `adr_get.py` 4 each; 10 files ×3 (`models/adr/v1/_util.py`,
+`models/adr/v1/summary.py`, `models/adr/v1/option.py`, `adr/tools/validate_adr.py`,
+`adr/tools/option_update.py`, `adr/tools/option_read.py`, `adr/tools/option_list.py`,
+`adr/tools/option_create.py`, `adr/tools/_io.py`, `adr/tools/get_adr.py`);
+`adr/tools/_lock.py` 2; and 1 each in `uc/models/v1/parser.py`, `server.py`,
+`adr/tools/__init__.py`, `adr/resources/__init__.py`). Disposition
+table written to Design Notes: 27 rows covering all 27 files (group rows
+enumerate their member files), **all 122 dispositions are Drop** — each citing
+docstring states the cited design verbatim, so no ADR substitution is needed;
+the governing ADR for every cited plan § is recorded in the table's `Cited §`
+column (nine formal ADRs re-read in full and confirmed: 33c5ab08, 4c6119c9,
+8cf940c5, 7531106b, bbf412a7, 71fd95d7, d54abe50, c73e4f9d, ece4554b). Also
+recorded in Design Notes: 2 **line-wrapped** citations invisible to the bare
+pattern (`models/adr/v1/parser.py` lines 23–24 "plan"/"§7/§8)" and
+`adr/tools/_paths.py` lines 29–30 "(plan"/"§7)") that Phase 110 must drop with
+their sentences; 2 stale-content flags (`adr.py` line 21 "still an open
+backlog item (plan §9)" — §9 was resolved in §9a; `summary.py`'s §8/§9a
+enumeration — listing became the `list_adr` tool in feat-13); 2 out-of-pattern
+"Task 3.2" markers (`create_adr.py`/`validate_adr.py`, citing feat-9's README
+task list — left untouched). Task 100.110 (REQ-003): the
+`uc/models/v1/parser.py` line-4 hit is **confirmed in** — "ADR's plan §7" is
+`adr-tool-plan.md` §7 (cross-cutting decisions: parse→validate→render pipeline,
+no separate validation pass): the sentence names the ADR parser module as what
+is mirrored (which cites the identical split as "(plan §7)"), the module dates
+from commit `0544d2bb` (2026-08-05, two days after the ADR-tooling authoring
+window), feat-4-use-cases's own DEC-008 entry uses the identical "ADR's … §7"
+framing for `adr-tool-plan.md` §7, and the UC feature plan's `## Plan` section
+has no `§N` sub-numbering at all; disposition is Drop (the sentence already
+names the mirrored module). Gate evidence: per-file `rg -c "plan §" src/`
+counts sum to 122 = `rg -n "plan §" src/ | wc -l`; all 27 files enumerated in
+the table rows; this README re-parses cleanly via the `get_feat` MCP tool
+(structured body returned, no ParseFailureResult).
 
 #### 2026-10-17 02:25:57.000Z - Refinement pass
 
@@ -146,6 +257,37 @@ Split out from feat-198-retire-adr-tool-plan-refs's scoping discussion (GitHub i
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 06:33:49.568+02:00 - All 122 citations Drop-disposed; per-§ ADR governance map recorded
+
+Non-obvious judgment calls from Phase 100: (a) Unlike feat-198 (4 of its 14
+sites were ADR substitutions), **every** site here is Drop — the ADR-tooling
+docstrings were written in the same 2026-08-03 authoring session as
+`adr-tool-plan.md` and quote its wording verbatim, so each citing prose is
+already self-contained; a substitution would add a pointer without adding
+content. The governing formal ADR for every cited plan § is nevertheless
+recorded in the table's `Cited §` column (all nine re-read in full on
+2026-10-17 and confirmed to govern: 33c5ab08 filesystem-is-the-sole-source-of-
+truth, 4c6119c9 parse-validate-render pipeline, 8cf940c5
+id/filename/addressing scheme, 7531106b listing/by-id reads as resources,
+bbf412a7 frontmatter extension fields + full-replace contract, 71fd95d7
+generic update_section + deletion sentinel, d54abe50 derived Options container
+with a dedicated Option sub-API, c73e4f9d MADR 4.0.0 template, ece4554b
+domain-first layout + vN versioning), so Phase 110 or a reviewer can cite one
+at any site without re-deriving it. (b) Two citations are flagged as stale **in content**, not
+just form: `adr.py` line 21's "still an open backlog item (plan §9)" (§9 was
+resolved in §9a / ADR 8cf940c5) and `summary.py`'s §8/§9a surface enumeration
+(listing became the `list_adr` tool in feat-13) — both rows instruct Phase 110
+to drop the citation together with the stale clause. (c) Two line-wrapped
+citations the bare `plan §` pattern cannot see (`models/adr/v1/parser.py`
+lines 23–24, `adr/tools/_paths.py` lines 29–30) are explicitly recorded so
+they get dropped with their sentences. (d) No "other" disposition was needed:
+every cited plan section that carries content has a formal ADR, and the two
+ADR-less sections (§9 open backlog, §10 next steps) appear only in
+self-evident or stale sites that are dropped. (e) The `uc/models/v1/parser.py`
+referent was confirmed as `adr-tool-plan.md` §7 (in scope, Drop) rather than
+ruled out — see the Design Notes note for the four converging lines of
+evidence.
 
 #### 2026-10-06 00:00:00.000Z - Kept separate from feat-198
 
