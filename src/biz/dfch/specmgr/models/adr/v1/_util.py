@@ -22,7 +22,7 @@ from __future__ import annotations
 import re
 
 #: The schema major version this ``v1`` package implements. Matches this
-#: package's folder name (plan §6) and is the value every
+#: package's folder name and is the value every
 #: ``AdrFrontmatter.version`` produced by this package must share the major
 #: component with -- a ``v1.AdrFrontmatter`` can never legitimately carry a
 #: ``"2.x.x"`` version.
@@ -30,7 +30,7 @@ SCHEMA_MAJOR_VERSION = 1
 
 #: The current, default schema version for newly created v1 documents.
 #: Bump the minor/patch component here for non-breaking schema evolutions
-#: that don't warrant a new ``vN`` package (plan §6); only a breaking change
+#: that don't warrant a new ``vN`` package; only a breaking change
 #: gets a new major version, hence a new sibling package.
 CURRENT_SCHEMA_VERSION = f"{SCHEMA_MAJOR_VERSION}.0.0"
 
@@ -76,7 +76,7 @@ def validate_schema_version(value: str) -> str:
 
     ``value`` must be a ``major.minor.patch`` string whose major component
     equals :data:`SCHEMA_MAJOR_VERSION`. Used by ``AdrFrontmatter.version``
-    (plan §3/§6) -- this schema-tracking field is a specmgr-only extension
+    -- this schema-tracking field is a specmgr-only extension
     to the frontmatter block, not part of the MADR standard, kept alongside
     the MADR-defined keys (``status``, ``date``, ...) purely so it survives
     the parse/render round-trip of the on-disk ``.md`` file.

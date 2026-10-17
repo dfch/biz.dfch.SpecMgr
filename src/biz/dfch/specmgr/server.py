@@ -19,7 +19,7 @@
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
-Registers the following resources and tools so far (plan §8, §9a):
+Registers the following resources and tools so far:
 
 Resources
 ---------

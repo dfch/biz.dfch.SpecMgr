@@ -3,8 +3,9 @@
 Pydantic model for a full ADR document (frontmatter + body).
 
 Deliberately holds no file/id/path information -- the file/directory
-naming and id-assignment scheme is still an open backlog item (plan §9)
-and is out of scope for this schema.
+naming and id-assignment scheme is the specmgr-assigned ``{id}-{slug}.md``
+scheme (ADR 8cf940c5-3100-485c-a12d-14b59b631712), implemented in
+``adr/tools/`` and out of scope for this schema.
 
 ## Classes
 
@@ -14,12 +15,12 @@ A full ADR document: YAML frontmatter and body.
 
 This is the structured object the future parser produces from an
 on-disk ``.md`` file and the renderer consumes to produce one, and the
-shape ``get_adr``/``create_adr`` (plan §8) are expected to exchange
+shape ``get_adr``/``create_adr`` are expected to exchange
 with the LLM instead of raw markdown text.
 
-The specmgr schema version lives on ``frontmatter.version`` (plan §3),
+The specmgr schema version lives on ``frontmatter.version``,
 not here -- it must round-trip through the on-disk file's YAML block,
-which only ``frontmatter``/``body`` do (plan §7); a top-level field on
+which only ``frontmatter``/``body`` do; a top-level field on
 this wrapper class would never be persisted.
 
 Parameters

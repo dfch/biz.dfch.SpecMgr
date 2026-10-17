@@ -4,7 +4,7 @@ created: '2026-10-06T10:45:41.464+02:00'
 id: feat-199-plan-section-refs-cleanup
 status: progress
 type: feat
-updated: '2026-10-17T07:04:57.312+02:00'
+updated: '2026-10-17T10:06:02.773+02:00'
 version: 1.0.0
 ---
 
@@ -183,19 +183,19 @@ this feature.
 
 #### Phase 110: Implementation
 
-- [ ] Task 110.100: Apply the dispositions from Task 100.100's table — depends on: Task 100.100, Task 100.110 — status: not-started
+- [x] Task 110.100: Apply the dispositions from Task 100.100's table — depends on: Task 100.100, Task 100.110 — status: done
 
-- [ ] Task 110.110: Update any test assertions affected by the docstring changes — depends on: Task 110.100 — status: not-started
+- [x] Task 110.110: Update any test assertions affected by the docstring changes — depends on: Task 110.100 — status: done
 
-- [ ] Task 110.120: Regenerate `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`; verify `ruff format --check`/`ruff check`/`vulture`/full test suite — depends on: Task 110.100, Task 110.110 — status: not-started
+- [x] Task 110.120: Regenerate `docs/api/`, `docs/GENERATED.md`, `docs/MCP.md`; verify `ruff format --check`/`ruff check`/`vulture`/full test suite — depends on: Task 110.100, Task 110.110 — status: done
 
-- [ ] Task 110.130: Final verification — re-run the `plan §` sweep across `src/` (must return no results, ACC-001), confirm `git diff` shows no changes under `.specmgr/feat/feat-9-doc-in-specmgr/` (ACC-004), re-run the sweep over `tests/` and record the residue, then re-check AGENTS.md's no-live-citations clause against that post-cleanup residue state (feat-198's post-review follow-up I3) — depends on: Task 110.120 — status: not-started
+- [x] Task 110.130: Final verification — re-run the `plan §` sweep across `src/` (must return no results, ACC-001), confirm `git diff` shows no changes under `.specmgr/feat/feat-9-doc-in-specmgr/` (ACC-004), re-run the sweep over `tests/` and record the residue, then re-check AGENTS.md's no-live-citations clause against that post-cleanup residue state (feat-198's post-review follow-up I3) — depends on: Task 110.120 — status: done
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-17**: Phase 100 (Investigation) is complete — status `progress`. The final sweep (`rg -n "plan §" src/`) measured **122 hits in 27 files**, byte-identical to the orchestrator baseline and consistent with the at-filing estimate (~120/~25). The per-reference disposition table (27 rows, one per file, with three defensible group rows enumerating their 10/10/5 member files) is recorded in Design Notes and covers every swept file; all 122 citations are Drop-disposed (every citing docstring states the cited design verbatim) with the governing formal ADR for each cited plan § recorded per row (nine ADRs re-read and confirmed). The stray `uc/models/v1/parser.py` hit (REQ-003) is **confirmed** as the same `adr-tool-plan.md` referent (§7, cross-cutting design decisions) and is in scope for Phase 110. No `src/` edits have been made — Phase 110 implements the table.
+**As of 2026-10-17**: Phase 110 (Implementation) is complete — status `progress`. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004); the `tests/` residue is 16 bare-shorthand hits in 15 files (no paths), and the I3 re-check found one pre-existing, out-of-scope by-path sibling citation (`uc/models/v2/__init__.py` → the stale `feat-4-use-cases/uc_model_v2_draft.py` path) reported for a separate follow-up. The feature is ready for the orchestrator's acceptance-criteria walk.
 
 ### Blockers
 
@@ -204,6 +204,105 @@ this feature.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 10:06:02.773+02:00 - Phase 110 complete (implementation)
+
+Implemented Task 110.100, Task 110.110, Task 110.120, Task 110.130 (no
+commit — the orchestrator owns that). **Task 110.100**: all 124 citations
+dropped across the 27 table files, worked in table order (per-file drop
+counts: `mutations.py` 19, `parser.py` 15 (14 bare + the line-wrapped
+citation of its lines 23–24), `body.py` 9, `renderer.py` 8, `_paths.py` 7
+(6 bare + the line-wrapped citation of its lines 29–30), `frontmatter.py`
+5, `update_frontmatter.py` 5; `adr.py`, `update_section.py`,
+`option_delete.py`, `create_adr.py`, `adr_get.py` 4 each; 10 files ×3
+(`_util.py`, `summary.py`, `option.py`, `validate_adr.py`,
+`option_update.py`, `option_read.py`, `option_list.py`, `option_create.py`,
+`_io.py`, `get_adr.py`); `_lock.py` 2; and 1 each in
+`uc/models/v1/parser.py`, `server.py`, `adr/tools/__init__.py`,
+`adr/resources/__init__.py` — the two wrapped citations dropped together
+with the same-sentence bare citation, as their rows instruct). Both
+stale-in-content clauses handled per their rows: (1)
+`models/adr/v1/adr.py`'s module docstring, before → "the file/directory
+naming and id-assignment scheme is still an open backlog item (plan §9)
+and is out of scope for this schema." after → "the file/directory naming
+and id-assignment scheme is the specmgr-assigned ``{id}-{slug}.md`` scheme
+(ADR 8cf940c5-3100-485c-a12d-14b59b631712), implemented in ``adr/tools/``
+and out of scope for this schema." — the plain formal-ADR-UUID citation was
+chosen over a citation-free statement because the governing decision is the
+content of the corrected sentence, and every other design fact in these
+docstrings cites its formal ADR the same way; (2)
+`models/adr/v1/summary.py` needed no rewrite — dropping its §8/§9a
+citations removes the stale surface enumeration outright, while the same
+docstrings' existing `list_adr`/feat-13 history text stays byte-identical.
+The `uc/models/v1/parser.py` line-4 hit dropped exactly as specified:
+before → '... "parse -> validate -> render" split, ADR's plan §7).' after
+→ '... "parse -> validate -> render" split).' (the sentence already names
+the mirrored module). Where a dropped possessive or referent citation left
+a sentence ungrammatical or dangling, the repair was minimal (content
+unchanged, disclosed): determiner substitution for possessive citations
+("mirrors plan §4's rule" → "mirrors the rule", "(plan §8's narrow
+convenience wrapper)" → "(a narrow convenience wrapper)",
+"(plan §4/§5's H2 sections other" → "(the H2 sections other"), deletion of
+now-referent-less phrases ("the table's" in body.py, "from plan §4" in
+option.py), and citation-within-parenthetical drops that keep the
+parenthetical's own content ("(plan §5, likewise" → "(likewise",
+"(plan §10 item 2, second half)" → "(second half)", "(plan §9a's filename
+scheme)" → parenthetical gone, the quoted design wordings in
+`_io.py`/`mutations.py`/`parser.py` kept verbatim with only the "plan
+§N's"/"plan §N:" citation dropped). The "Task 3.2" markers in
+`create_adr.py`/`validate_adr.py` left untouched as instructed. One line
+break inside `models/adr/v1/parser.py`'s module docstring moved (to after
+"uses) --"): the byte-level drop of the line-wrapped citation joined its
+two lines into a 134-character line, which ruff's E501 (line-length 120)
+rejects — prose otherwise byte-identical. **Task 110.110**: no test
+assertions broke — the MCP tool description strings these docstrings feed
+are pinned by no assertion (feat-198's precedent); pytest evidence:
+4668 passed, 17 skipped, 5662 subtests passed in 69.26 s (first run,
+immediately after the src/ edits) and 4668 passed, 17 skipped in 69.20 s
+(final run, after docs regeneration) — zero test files edited.
+**Task 110.120**: `specmgr docs` regenerated 515 module files +
+`docs/GENERATED.md`, `specmgr mcp-docs` regenerated `docs/MCP.md`;
+`rg -c "plan §" docs/` now returns hits ONLY in the frozen
+`docs/adr/7a626b12-….md` (1 hit). Gate evidence: (1) `uv run --frozen ruff
+format --check` → "2062 files already formatted" (pass); (2) `uv run
+--frozen ruff check` → "All checks passed!" (pass); (3) `uv run --frozen
+vulture src/ whitelist.py --min-confidence 60` → no findings (pass); (4)
+`uv run --frozen pytest -n auto --cov=src --cov-report=` → 4668 passed,
+17 skipped (pass); (5) `git diff --stat -- docs/` → 30 files changed, 167
+insertions(+), 168 deletions(-), exclusively `docs/api/*` +
+`docs/GENERATED.md` + `docs/MCP.md` (no frozen doc touched).
+**Task 110.130** (all five results): (1) ACC-001 sweep
+`rg -n "plan §" src/` → no results, exit status 1 (pass); (2)
+wrapped-residue check `rg -n "plan$|^\s*§" src/` → no `plan`/`§N` split
+citations remain (both known wrapped sites gone; every remaining hit is a
+pre-existing legitimate line — rulebook § continuations, ISO/IEC 25010
+§9.5.x references, the "feat-208 plan" update-entry mention, the "plan
+Overview layer 3" feature-plan mention in `commands/diagram.py`); (3)
+ACC-004 `git diff 5d2450a -- .specmgr/feat/feat-9-doc-in-specmgr/` → empty
+(0 bytes) and `git status --short` shows nothing under that path (pass);
+(4) tests/ residue `rg -c "plan §" tests/` → 16 hits in 15 files
+(`tests/adr/tools/` 10 files ×1: `test_get_adr.py`, `test_create_adr.py`,
+`test_update_frontmatter.py`, `test_update_section.py`,
+`test_option_create.py`, `test_option_update.py`, `test_option_read.py`,
+`test_option_delete.py`, `test_option_list.py`, `test_validate_adr.py`;
+`tests/models/adr/v1/`: `test_examples.py` 1, `test_parser.py` 1,
+`test_mutations.py` 1, `test_renderer.py` 2; plus
+`tests/models/adr/v1/examples/README.md` 1) — all bare `plan §` shorthand
+in module docstrings/comments, nothing asserts on the pattern, the
+at-filing estimate was ~19; (5) I3 re-check against AGENTS.md's
+no-live-citations clause (which forbids citing feature-folder sibling
+files — anything other than `README.md`/`history.md` — BY PATH from
+src/, tests/, or AGENTS.md): (a) the src/ tree contains ONE by-path
+sibling citation, found by the sweep but pre-existing and out of scope —
+`uc/models/v2/__init__.py` line 20 cites
+`.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py`, a file that in fact
+lives one level down at `v1/uc_model_v2_draft.py` (stale path; no
+`plan §` hit, not in the disposition table) — left untouched and reported
+to the orchestrator for a separate follow-up; (b) the tests/ residue does
+not violate the clause — every one of its 16 hits is bare `plan §`
+shorthand with no path; (c) AGENTS.md itself cites no sibling file by
+path (its `.specmgr/feat/` mentions are all README.md, directory, or
+feature-id references — consistent with feat-198's fix).
 
 #### 2026-10-17 06:33:49.568+02:00 - Phase 100 complete (investigation)
 
@@ -257,6 +356,32 @@ Split out from feat-198-retire-adr-tool-plan-refs's scoping discussion (GitHub i
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 10:06:02.773+02:00 - Stale-clause rewrite wording and minimal grammar-repair policy
+
+Phase 110's judgment calls: (a) For the `adr.py` stale clause (the id/naming
+scheme "still an open backlog item"), the rewrite states the now-true fact
+WITH a plain formal-ADR-UUID citation (ADR 8cf940c5-3100-485c-a12d-14b59b631712)
+rather than a citation-free statement — the governing decision is the content
+of the corrected sentence, not provenance for the dropped citation, and every
+other design fact in these docstrings cites its formal ADR the same way; the
+`summary.py` stale flag needed no wording change, since dropping its citations
+removes the stale §8/§9a surface enumeration outright and the docstrings'
+existing `list_adr`/feat-13 history text already records the correct account.
+(b) Where a dropped possessive or referent citation ("plan §N's X", "the
+table's") left a sentence ungrammatical or dangling, the minimal repair was a
+determiner substitution ("the rule", "a narrow convenience wrapper", "the H2
+sections other") or deletion of the now referent-less phrase — no wording
+improved beyond that, per the phase's byte-identity instruction. (c) One line
+break inside `models/adr/v1/parser.py`'s module docstring moved (to after
+"uses) --") because the byte-level drop of the line-wrapped citation joined
+its two lines into a 134-character line and ruff's E501 (line-length 120)
+rejects it; the prose is otherwise byte-identical. (d) The I3 re-check found
+one pre-existing by-path sibling citation in src/ (`uc/models/v2/__init__.py`
+→ `.specmgr/feat/feat-4-use-cases/uc_model_v2_draft.py`, the file actually
+living at `v1/uc_model_v2_draft.py`): out of this feature's scope (no
+`plan §` hit, not in the table) — left untouched, reported for a separate
+follow-up.
 
 #### 2026-10-17 06:33:49.568+02:00 - All 122 citations Drop-disposed; per-§ ADR governance map recorded
 

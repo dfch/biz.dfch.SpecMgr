@@ -15,23 +15,23 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
+"""Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
 
-Pipeline stage 1 of "parse -> validate -> render" (plan §7). This module only
+Pipeline stage 1 of "parse -> validate -> render". This module only
 does the "parse" half; "validate" is simply letting :class:`Adr`/
 :class:`AdrBody`/:class:`AdrFrontmatter`'s own Pydantic validators run (the
-same schema-driven check the future ``validate_adr`` MCP tool uses, plan
-§7/§8) -- there is no separate validation pass here. "render" is a later,
-separate module (plan §10 item 2, second half).
+same schema-driven check the future ``validate_adr`` MCP tool uses) --
+there is no separate validation pass here. "render" is a later,
+separate module (second half).
 
 Two error channels, by design:
 
 - :class:`AdrParseError` -- the markdown *structure* doesn't fit the fixed
-  MADR-derived heading layout (plan §2): an unrecognized/duplicate/misplaced
+  MADR-derived heading layout: an unrecognized/duplicate/misplaced
   heading, more than one H1, a heading nesting level this schema doesn't
   define (H4+), a "superseded"-style duplicate option number, or stray
   non-blank text before the first heading. These are structural problems a
-  human hand-editing the file (plan §7) could introduce that no amount of
+  human hand-editing the file could introduce that no amount of
   Pydantic field validation could catch, because the offending content never
   even makes it into a field.
 - ``pydantic.ValidationError`` -- once headings are correctly mapped onto
@@ -39,7 +39,7 @@ Two error channels, by design:
   :class:`Adr` from that data raises this the normal Pydantic way (missing
   mandatory section, bad ``status``, bad ``version``, ...). Deliberately not
   caught/wrapped here -- it is already "one schema-driven validate_adr check,
-  shared identically between LLM tool calls and human edits" (plan §7).
+  shared identically between LLM tool calls and human edits".
 """
 
 from __future__ import annotations
@@ -59,12 +59,12 @@ from .option import AdrOption
 
 __all__ = ["AdrParseError", "parse_adr"]
 
-#: Fixed H2 heading text -> AdrBody field name (plan §4's table) for the
+#: Fixed H2 heading text -> AdrBody field name for the
 #: "leaf" sections -- ones with no recognized sub-heading of their own, so
 #: anything nested underneath them (any heading level, any title) is just
 #: opaque content of that field, never separate structure. Excludes
 #: "Decision Outcome" (a composite section, handled on its own below) and
-#: the derived "Pros and Cons of the Options" container (plan §5, likewise
+#: the derived "Pros and Cons of the Options" container (likewise
 #: composite and never stored as a field itself).
 _LEAF_H2_FIELD_BY_TITLE = {
     "Context and Problem Statement": "context_and_problem_statement",
@@ -75,17 +75,17 @@ _LEAF_H2_FIELD_BY_TITLE = {
 
 #: The one composite H2 with a field of its own: its own text (before any
 #: recognized child heading) is "decision_outcome"; "Consequences" and
-#: "Confirmation" are its recognized H3 children (plan §4's table).
+#: "Confirmation" are its recognized H3 children.
 _DECISION_OUTCOME_HEADING = "Decision Outcome"
 
 #: The one recognized-but-not-stored H2: rendered automatically from
-#: ``options`` (plan §5), never parsed into a field. Composite like
+#: ``options``, never parsed into a field. Composite like
 #: "Decision Outcome" above -- its only recognized children are
 #: "Option N: ..." headings.
 _PROS_AND_CONS_HEADING = "Pros and Cons of the Options"
 
 #: Fixed H3 heading text -> AdrBody field name (the two sub-sections of
-#: "Decision Outcome", plan §4's table). These are themselves "leaf"
+#: "Decision Outcome"). These are themselves "leaf"
 #: headings: anything nested underneath one (H4+, any title) is opaque
 #: content of that field, exactly like an "Option N: ..." heading's content.
 _H3_FIELD_BY_TITLE = {
@@ -93,7 +93,7 @@ _H3_FIELD_BY_TITLE = {
     "Confirmation": "confirmation",
 }
 
-#: ``### Option N: {partial_title}`` (plan §5) -- the other kind of H3.
+#: ``### Option N: {partial_title}`` -- the other kind of H3.
 _OPTION_HEADING_PATTERN = re.compile(r"^Option (?P<number>\d+): (?P<partial_title>.+)$")
 
 #: ATX heading marker stripped from the raw source line to recover the
@@ -123,7 +123,7 @@ class _Node:
     level, that is nested more deeply and not itself nested under some other
     heading in between (the same "outline" rule browsers/editors use to build
     a table of contents from arbitrary heading levels, including skipped
-    ones). This is what lets a "leaf" heading (plan §4/§5's H2 sections other
+    ones). This is what lets a "leaf" heading (the H2 sections other
     than "Decision Outcome", plus "Consequences"/"Confirmation"/"Option N:
     ...") swallow *any* heading nested underneath it -- whatever its level or
     title -- as opaque text content, while a "composite" heading ("Decision
@@ -182,7 +182,7 @@ def _stringify_metadata(metadata: dict[str, object]) -> dict[str, object]:
     ``python-frontmatter`` parses the YAML block with a standard YAML
     loader, which auto-converts an unquoted ``date: 2024-01-01`` into a
     ``datetime.date`` -- but every :class:`AdrFrontmatter` field is
-    ``str | None`` (plan §3: "not enforced here since the ``.md`` file is
+    ``str | None`` ("not enforced here since the ``.md`` file is
     the source of truth"), so a raw ``date`` object would fail Pydantic's
     (deliberately non-coercive) string validation. Converting via ``str()``
     reproduces the same ``YYYY-MM-DD`` text a human would have written.

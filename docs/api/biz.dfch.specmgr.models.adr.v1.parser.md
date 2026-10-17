@@ -1,22 +1,22 @@
 # `biz.dfch.specmgr.models.adr.v1.parser`
 
-Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
+Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
 
-Pipeline stage 1 of "parse -> validate -> render" (plan §7). This module only
+Pipeline stage 1 of "parse -> validate -> render". This module only
 does the "parse" half; "validate" is simply letting :class:`Adr`/
 :class:`AdrBody`/:class:`AdrFrontmatter`'s own Pydantic validators run (the
-same schema-driven check the future ``validate_adr`` MCP tool uses, plan
-§7/§8) -- there is no separate validation pass here. "render" is a later,
-separate module (plan §10 item 2, second half).
+same schema-driven check the future ``validate_adr`` MCP tool uses) --
+there is no separate validation pass here. "render" is a later,
+separate module (second half).
 
 Two error channels, by design:
 
 - :class:`AdrParseError` -- the markdown *structure* doesn't fit the fixed
-  MADR-derived heading layout (plan §2): an unrecognized/duplicate/misplaced
+  MADR-derived heading layout: an unrecognized/duplicate/misplaced
   heading, more than one H1, a heading nesting level this schema doesn't
   define (H4+), a "superseded"-style duplicate option number, or stray
   non-blank text before the first heading. These are structural problems a
-  human hand-editing the file (plan §7) could introduce that no amount of
+  human hand-editing the file could introduce that no amount of
   Pydantic field validation could catch, because the offending content never
   even makes it into a field.
 - ``pydantic.ValidationError`` -- once headings are correctly mapped onto
@@ -24,7 +24,7 @@ Two error channels, by design:
   :class:`Adr` from that data raises this the normal Pydantic way (missing
   mandatory section, bad ``status``, bad ``version``, ...). Deliberately not
   caught/wrapped here -- it is already "one schema-driven validate_adr check,
-  shared identically between LLM tool calls and human edits" (plan §7).
+  shared identically between LLM tool calls and human edits".
 
 ## Classes
 
@@ -62,7 +62,7 @@ also knows its *direct children* -- every subsequent heading, of any
 level, that is nested more deeply and not itself nested under some other
 heading in between (the same "outline" rule browsers/editors use to build
 a table of contents from arbitrary heading levels, including skipped
-ones). This is what lets a "leaf" heading (plan §4/§5's H2 sections other
+ones). This is what lets a "leaf" heading (the H2 sections other
 than "Decision Outcome", plus "Consequences"/"Confirmation"/"Option N:
 ...") swallow *any* heading nested underneath it -- whatever its level or
 title -- as opaque text content, while a "composite" heading ("Decision
@@ -130,7 +130,7 @@ Coerce YAML-native scalar types back to ``str`` (or ``None``).
 ``python-frontmatter`` parses the YAML block with a standard YAML
 loader, which auto-converts an unquoted ``date: 2024-01-01`` into a
 ``datetime.date`` -- but every :class:`AdrFrontmatter` field is
-``str | None`` (plan §3: "not enforced here since the ``.md`` file is
+``str | None`` ("not enforced here since the ``.md`` file is
 the source of truth"), so a raw ``date`` object would fail Pydantic's
 (deliberately non-coercive) string validation. Converting via ``str()``
 reproduces the same ``YYYY-MM-DD`` text a human would have written.

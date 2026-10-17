@@ -1,7 +1,7 @@
 # `biz.dfch.specmgr.adr.tools._paths`
 
 ADR base directory resolution, filename slugification, and id -> path
-lookup (plan §9a).
+lookup.
 
 Deliberately excludes any ``mcp``/file-write dependency beyond read-only
 directory listing/parsing, so this module stays testable without an MCP
@@ -9,10 +9,10 @@ server: ``adr_base_dir`` never creates the directory (a read-only tool
 shouldn't have that side effect), only ``ensure_adr_base_dir`` does, and
 only ``create_adr`` (in ``tools.py``) calls it.
 
-There is deliberately no in-memory id -> path cache (plan §9a): every
+There is deliberately no in-memory id -> path cache: every
 lookup re-scans the base directory and re-parses each file's frontmatter,
-matching the "the on-disk file is the sole source of truth" design (plan
-§7) and avoiding a staleness problem against concurrent human edits.
+matching the "the on-disk file is the sole source of truth" design
+and avoiding a staleness problem against concurrent human edits.
 
 ## Classes
 
@@ -56,7 +56,7 @@ the read-only :func:`adr_base_dir` instead.
 
 ### `find_adr_path(base_dir: 'Path', id_: 'str') -> 'Path'`
 
-Resolve an ``id`` to its on-disk file path (plan §9a).
+Resolve an ``id`` to its on-disk file path.
 
 Scans every ``*.md`` file under ``base_dir``, parsing each and
 comparing ``frontmatter.id`` against ``id_``. A file that fails to
@@ -79,7 +79,7 @@ Yields nothing (rather than raising) if ``base_dir`` does not exist.
 
 ### `slugify(title: 'str') -> 'str'`
 
-Derive a filename-safe slug from an ADR title (plan §9a).
+Derive a filename-safe slug from an ADR title.
 
 Lowercases ``title``, collapses every run of non-``[a-z0-9]``
 characters into a single ``-``, strips leading/trailing ``-``,
