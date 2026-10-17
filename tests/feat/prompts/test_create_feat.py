@@ -103,21 +103,22 @@ class TestCreateFeatPrompt(unittest.TestCase):
         result = create_feat("Some topic")
         self.assertIn("skip", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_feat_template/get_feat_example
+        tools and name the conditional specmgr://feat/schema fetch."""
         result = create_feat("Some topic")
-        self.assertIn("specmgr://feat/template", result)
-        self.assertIn("specmgr://feat/example", result)
+        self.assertIn("get_feat_template", result)
+        self.assertIn("get_feat_example", result)
         self.assertIn("specmgr://feat/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_feat tool, the template/example
-        resources, specmgr://feat/schema, and create_feat, in that order,
+        tools, specmgr://feat/schema, and create_feat, in that order,
         matching the intended sequence."""
         result = create_feat("Some topic")
         markers = [
             "list_feat",
-            "specmgr://feat/template",
+            "get_feat_template",
             "specmgr://feat/schema",
             "create_feat(content)",
         ]

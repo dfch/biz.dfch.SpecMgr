@@ -92,11 +92,12 @@ class TestCreateSysrsPrompt(unittest.TestCase):
         self.assertIn("## Requirements", result)
         self.assertLess(result.index("specmgr://iso25010"), result.index("## 3. Build a todo list"))
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_sysrs_template/get_sysrs_example
+        tools and name the conditional specmgr://sysrs/schema fetch."""
         result = create_sysrs("Some topic")
-        self.assertIn("specmgr://sysrs/template", result)
-        self.assertIn("specmgr://sysrs/example", result)
+        self.assertIn("get_sysrs_template", result)
+        self.assertIn("get_sysrs_example", result)
         self.assertIn("specmgr://sysrs/schema", result)
 
     def test_mentions_create_and_validate_tools(self):
@@ -107,13 +108,13 @@ class TestCreateSysrsPrompt(unittest.TestCase):
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention list_sysrs, the iso25010 resource, the
-        template/schema resources, and create_sysrs, in that order,
+        template/schema tools, and create_sysrs, in that order,
         matching the intended sequence."""
         result = create_sysrs("Some topic")
         markers = [
             "list_sysrs",
             "specmgr://iso25010",
-            "specmgr://sysrs/template",
+            "get_sysrs_template",
             "specmgr://sysrs/schema",
             "create_sysrs(content)",
         ]

@@ -86,21 +86,22 @@ class TestCreateGolPrompt(unittest.TestCase):
         self.assertIn("No `## Characteristics` section exists", result)
         self.assertIn("no `## Level` section", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_gol_template/get_gol_example
+        tools and name the conditional specmgr://gol/schema fetch."""
         result = create_gol("Some topic")
-        self.assertIn("specmgr://gol/template", result)
-        self.assertIn("specmgr://gol/example", result)
+        self.assertIn("get_gol_template", result)
+        self.assertIn("get_gol_example", result)
         self.assertIn("specmgr://gol/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_gol tool, the template/example
-        resources, specmgr://gol/schema, and create_gol, in that order,
+        tools, specmgr://gol/schema, and create_gol, in that order,
         matching the intended sequence."""
         result = create_gol("Some topic")
         markers = [
             "list_gol",
-            "specmgr://gol/template",
+            "get_gol_template",
             "specmgr://gol/schema",
             "create_gol(content)",
         ]

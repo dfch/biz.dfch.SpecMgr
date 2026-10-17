@@ -39,21 +39,22 @@ class TestCreateReqPrompt(unittest.TestCase):
         result = create_req("Some topic")
         self.assertIn("list_req", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_req_template/get_req_example
+        tools and name the conditional specmgr://req/schema fetch."""
         result = create_req("Some topic")
-        self.assertIn("specmgr://req/template", result)
-        self.assertIn("specmgr://req/example", result)
+        self.assertIn("get_req_template", result)
+        self.assertIn("get_req_example", result)
         self.assertIn("specmgr://req/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_req tool, the template/example
-        resources, specmgr://req/schema, and create_req, in that order,
+        tools, specmgr://req/schema, and create_req, in that order,
         matching the intended sequence."""
         result = create_req("Some topic")
         markers = [
             "list_req",
-            "specmgr://req/template",
+            "get_req_template",
             "specmgr://req/schema",
             "create_req(content)",
         ]

@@ -104,13 +104,13 @@ Support/Consulted/Informed may each be present with zero items). Unlike
 SOP's own optional `## Roles and Responsibilities`, this section is
 mandatory on every `dec` document, so this step is never skipped.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://dec/template` or `specmgr://dec/example` as a starting
-point/style reference, then check `specmgr://dec/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_dec_template` and `get_dec_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Fetch
+`specmgr://dec/schema` (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 

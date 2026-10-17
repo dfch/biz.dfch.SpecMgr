@@ -45,12 +45,12 @@ Elicit (asking the user if not already given): the requirement statement,
 its characteristics, obligation level, and source, and optionally
 priority, tags, related artifacts, description, and notes.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://req/template` or `specmgr://req/example` as a starting
-point/style reference, then check `specmgr://req/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+## 3. Use the template/example tools as references
+Call the `get_req_template` and `get_req_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Fetch
+`specmgr://req/schema` (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.

@@ -52,13 +52,13 @@ explicitly telling the user they may skip any optional field they
 cannot or do not want to answer yet -- a freshly created goal may
 have zero optional sections.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://gol/template` or `specmgr://gol/example` as a starting
-point/style reference, then check `specmgr://gol/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_gol_template` and `get_gol_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Fetch
+`specmgr://gol/schema` (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 

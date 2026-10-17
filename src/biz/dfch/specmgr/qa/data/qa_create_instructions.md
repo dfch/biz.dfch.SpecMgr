@@ -66,12 +66,13 @@ characteristic-relevant questions and recording the answers. Not every
 category needs a question -- an internal-only change, for example, may
 legitimately leave `Compatibility` empty.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://qa/template` or `specmgr://qa/example` as a starting
-point/style reference, then check `specmgr://qa/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there, and do not rename or reorder the ten fixed category headings.
+## 3. Use the template/example tools as references
+Call the `get_qa_template` and `get_qa_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there, and do not rename
+or reorder the ten fixed category headings. Fetch `specmgr://qa/schema`
+(the generated JSON Schema) only when you are structurally uncertain or
+are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.

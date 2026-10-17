@@ -99,13 +99,13 @@ paragraph; Responsible needs at least one bullet; Support/Consulted/
 Informed may each be present with zero items). Skip this step only if
 the SOP will not have a `## Roles and Responsibilities` section at all.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://sop/template` or `specmgr://sop/example` as a starting
-point/style reference, then check `specmgr://sop/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_sop_template` and `get_sop_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Fetch
+`specmgr://sop/schema` (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 

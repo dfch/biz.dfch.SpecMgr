@@ -194,21 +194,22 @@ class TestCreatePrbPrompt(unittest.TestCase):
         self.assertIn("formal root-cause analysis remains a separate, later activity", result.lower())
         self.assertNotIn("free of assumed causes", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_prb_template/get_prb_example
+        tools and name the conditional specmgr://prb/schema fetch."""
         result = create_prb("Some topic")
-        self.assertIn("specmgr://prb/template", result)
-        self.assertIn("specmgr://prb/example", result)
+        self.assertIn("get_prb_template", result)
+        self.assertIn("get_prb_example", result)
         self.assertIn("specmgr://prb/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_prb tool, the template/example
-        resources, specmgr://prb/schema, and create_prb, in that order,
+        tools, specmgr://prb/schema, and create_prb, in that order,
         matching the intended sequence."""
         result = create_prb("Some topic")
         markers = [
             "list_prb",
-            "specmgr://prb/template",
+            "get_prb_template",
             "specmgr://prb/schema",
             "create_prb(content)",
         ]

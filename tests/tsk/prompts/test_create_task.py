@@ -39,21 +39,22 @@ class TestCreateTaskPrompt(unittest.TestCase):
         result = create_task("Some topic")
         self.assertIn("list_tsk", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_tsk_template/get_tsk_example
+        tools and name the conditional specmgr://tsk/schema fetch."""
         result = create_task("Some topic")
-        self.assertIn("specmgr://tsk/template", result)
-        self.assertIn("specmgr://tsk/example", result)
+        self.assertIn("get_tsk_template", result)
+        self.assertIn("get_tsk_example", result)
         self.assertIn("specmgr://tsk/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_tsk tool, the template/example
-        resources, specmgr://tsk/schema, and create_tsk, in that order,
+        tools, specmgr://tsk/schema, and create_tsk, in that order,
         matching the intended sequence."""
         result = create_task("Some topic")
         markers = [
             "list_tsk",
-            "specmgr://tsk/template",
+            "get_tsk_template",
             "specmgr://tsk/schema",
             "create_tsk(content)",
         ]

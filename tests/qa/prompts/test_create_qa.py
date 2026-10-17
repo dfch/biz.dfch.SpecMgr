@@ -39,21 +39,22 @@ class TestCreateQaPrompt(unittest.TestCase):
         result = create_qa("Some topic")
         self.assertIn("list_qa", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_qa_template/get_qa_example
+        tools and name the conditional specmgr://qa/schema fetch."""
         result = create_qa("Some topic")
-        self.assertIn("specmgr://qa/template", result)
-        self.assertIn("specmgr://qa/example", result)
+        self.assertIn("get_qa_template", result)
+        self.assertIn("get_qa_example", result)
         self.assertIn("specmgr://qa/schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_qa tool, the template/example
-        resources, specmgr://qa/schema, and create_qa, in that order,
+        tools, specmgr://qa/schema, and create_qa, in that order,
         matching the intended sequence."""
         result = create_qa("Some topic")
         markers = [
             "list_qa",
-            "specmgr://qa/template",
+            "get_qa_template",
             "specmgr://qa/schema",
             "create_qa(content)",
         ]
