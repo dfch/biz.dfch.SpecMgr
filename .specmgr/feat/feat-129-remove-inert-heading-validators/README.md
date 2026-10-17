@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-17T08:55:17.578+02:00'
+updated: '2026-10-17T11:53:03.681+02:00'
 version: 1.0.0
 ---
 
@@ -50,10 +50,10 @@ version: 1.0.0
 - `tests/models/md/test_markdown_section.py`: update the test(s) referencing the removed validator.
 - `docs/api/` regeneration via `specmgr docs`.
 - ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae`: new dated revision entry recording the resolution.
+- `markdown_str.py`: remove the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` and `# @model_validator(mode="after") ... model_validator_after` dead-code block (lines ~687-707) -- not named by issue #129 itself, but the same class of dead code, found during this feature's own repo-wide no-op scan (see Phase 135).
 
 #### Explicitly Out Of Scope
 
-- The unrelated, fully-commented-out `model_validator_after`/`validate_and_convert_text` dead-code block in `markdown_str.py` (not named by issue #129; a separate cleanup if ever pursued).
 - Designing or implementing a genuine second-layer heading-structure check (the rejected "redesign" resolution).
 - Any change to `MarkdownSection.get_extent` or `MarkdownStr.from_text`'s trailing-completeness check -- these already provide the real invariant and are unaffected by this feature.
 
@@ -89,6 +89,12 @@ Consequences of removal: there is no behavioral change for any document, since b
 - [ ] Task 130.100: Regenerate `docs/api/` via `specmgr docs` and confirm the stale entries are gone.
 - [ ] Task 130.110: Add the dated revision entry to ADR `832cd6c1-...` recording the removal decision.
 
+#### Phase 135: Remove the markdown_str.py Dead-Code Block
+
+- [ ] Task 135.100: Delete the fully-commented-out `# @field_validator("_value") ... def validate_and_convert_text` block in `markdown_str.py`.
+- [ ] Task 135.110: Delete the fully-commented-out `# @model_validator(mode="after") ... def model_validator_after` block in `markdown_str.py` (asserts on the same stale `self._tokens` concept the ADR already says was abandoned in favor of `_value: str`).
+- [ ] Task 135.120: Re-run `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` to confirm the removal leaves no dangling unused imports or whitelist entries.
+
 #### Phase 140: Verification
 
 - [ ] Task 140.100: Run the full test suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`) and confirm no regressions.
@@ -103,6 +109,10 @@ Consequences of removal: there is no behavioral change for any document, since b
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17T13:30:00.000Z - Added Phase 135 for a second dead-code block in markdown_str.py
+
+A repo-wide scan for similar inert/fully-commented-out validators found one more instance outside issue #129's named files: `markdown_str.py`'s fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` and `# @model_validator(mode="after") ... model_validator_after` block, which also references the abandoned `_tokens` concept. Added Phase 135 to remove it in the same pass, and moved the corresponding bullet from Scope's "Explicitly Out Of Scope" to "Included" accordingly.
 
 #### 2026-10-17T12:00:00.000Z - Created
 
