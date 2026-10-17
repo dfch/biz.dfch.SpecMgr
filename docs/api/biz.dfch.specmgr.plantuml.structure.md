@@ -64,6 +64,23 @@ fragments holding sequence content (participants — the UC subset,
 parser-verified in feat-185) collect no component declaration and stay
 exactly as before.
 
+The 2026-10-17 fix (feat-214-rel-invalid-diag Phase 140, E1) corrects a
+false positive the pre-fix implementation introduced against its own rule:
+a ``}`` line was silently skipped by the line grammar and never popped the
+fragment stack, so a curly-opened ``package "X" {`` fragment that collected
+a component declaration and was closed with the rule's OWN required close
+(a ``}`` line — real-parser-accepted, verified against the pinned 1.2026.8)
+was reported at the block boundary as "never closed with '}'" — an error in
+BOTH modes and a factually wrong diagnosis (the close was present). A
+``}`` line now closes (pops) the innermost curly-open fragment, with no
+finding on the pop itself; the tripwire fires only on a named ``end
+package`` close over a component-collecting fragment and on such a fragment
+still open at a block boundary (where the diagnostic's "never closed"
+wording is factually correct again). A ``}`` with no curly-open fragment
+open (the curly ``component "TYPE" { … }`` domain groups and the ``skinparam
+component { … }`` block — declarations/skinparam, not fragments) stays
+silently accepted, exactly as before.
+
 Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot

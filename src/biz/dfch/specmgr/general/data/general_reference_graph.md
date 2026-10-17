@@ -169,9 +169,20 @@ appear in the diagram.
 ### 2.6 Unresolved nodes
 
 A reference whose target cannot be resolved on disk is drawn as a top-level
-`component "{id}" as [TYPE-{id}] <<UNRESOLVED>>` node — outside any package,
-sorted by alias (the bracketed alias's text, lexicographic), BEFORE the first
-package. For the UUID domains the label is the verbatim uuid and the alias `[TYPE-{uuid}]`; for feat the label is the verbatim feat id and the alias the same id unbracketed-and-verbatim (e.g. `component "feat-207" as [feat-207] <<UNRESOLVED>>`).
+`component "{id}" as [TYPE-{id}] <<UNRESOLVED>>` node — outside any domain
+group, sorted by alias (the bracketed alias's text, lexicographic), BEFORE
+the first domain group (the §2.7 curly-brace `component "TYPE" { … }` form).
+For the UUID domains the label is the verbatim uuid and the alias `[TYPE-{uuid}]`; for feat the label is the verbatim feat id and the alias the same id unbracketed-and-verbatim (e.g. `component "feat-207" as [feat-207] <<UNRESOLVED>>`).
+
+**§2.6 corrected 2026-10-17 (feat-214-rel-invalid-diag Phase 140 — D1):**
+the placement wording still named the removed `package` grouping ("outside
+any package … BEFORE the first package") — the 2026-10-15 correction scope
+(§2.1/§2.7/§2.8/§2.9) missed this section, so a reader implementing against
+§2.6 alone would anchor the unresolved nodes to a `package` that no longer
+exists in the emission. The groups are now the §2.7 curly-brace `component
+"TYPE" { … }` domain groups, and the placement reads "outside any domain
+group … BEFORE the first domain group" (the §2.9 worked example pins the
+byte layout).
 
 ### 2.7 Domain groups (curly)
 
@@ -575,6 +586,29 @@ re-run), actionable line/cause/fix-hint diagnostics, UNATTRIBUTED-marker
 detection (comments the parser cannot see), millisecond speed without a
 JVM, and the pre-flight short-circuit that never invokes the parser on a
 structure red.
+
+**§7.1 tripwire fix (2026-10-17, feat-214-rel-invalid-diag Phase 140 —
+E1):** the pre-fix implementation false-positived on the very close (a)
+requires: the checker's line grammar silently skipped `}` lines (the
+"anything else" branch) and never popped the fragment stack, so a
+curly-opened `package "X" {` fragment that collected a component
+declaration and was closed with a `}` line — REAL-PARSER-ACCEPTED (the
+isolation matrix's "OK" row, re-verified against the pinned 1.2026.8) —
+was reported at the block boundary as "never closed with '}' before the
+diagram ends" (an error in BOTH modes, and a factually wrong diagnosis:
+the close was present). The fix honours the rule as written: a `}` line
+now closes (pops) the innermost curly-open fragment, with no finding on
+the pop itself, so the tripwire fires only on a named `end package` close
+over a component-collecting fragment and on such a fragment still open at
+a block boundary (where the "never closed" wording is factually correct
+again). A `}` with no curly-open fragment open (the curly `component
+"TYPE" { … }` domain groups and the `skinparam component { … }` block —
+declarations/skinparam, not fragments) is silently accepted, exactly as
+before; every UC + reference golden stays zero-finding in both modes. The
+false positive was the exact class the checker's own invariant forbids
+("never rejects what the real parser accepts" — UC rulebook §6.3): it
+blocked in the `validate_plantuml`/`plantuml-check` chain a shape the real
+parser accepts, before the parser ever ran.
 
 ## 8. References
 

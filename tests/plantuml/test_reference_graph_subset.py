@@ -393,6 +393,52 @@ class TestPackageComponentTripwire(unittest.TestCase):
         self.assertEqual(len(standalone.errors), 1)
         self.assertIn("unclosed 'package' fragment", standalone.errors[0].message)
 
+    # --- the 2026-10-17 fix (feat-214-rel-invalid-diag Phase 140, E1): the
+    # parser-OK shapes — a curly-opened 'package' fragment closed with a '}'
+    # line is REAL-PARSER-ACCEPTED over component declarations (the plan's
+    # isolation matrix; re-verified against the pinned 1.2026.8, both shapes
+    # exit 0), so the tripwire's own required close must not be reported as
+    # unclosed at the block boundary (the pre-fix false positive) ---
+
+    def test_curly_open_package_quoted_with_component_and_brace_close_is_zero_finding_both_modes(self):
+        # parser-OK shape (quoted name, verified exit 0 on 1.2026.8): zero
+        # findings in both modes — no tripwire, no lenient unclosed finding
+        text = '@startuml t\npackage "REQ" {\ncomponent Foo\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_curly_open_package_bare_name_with_component_and_brace_close_is_zero_finding_both_modes(self):
+        # parser-OK shape (the isolation matrix's literal unquoted row,
+        # verified exit 0 on 1.2026.8): zero findings in both modes
+        text = "@startuml t\npackage REQ {\ncomponent Foo\n}\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_nested_curly_packages_with_components_close_innermost_first(self):
+        # parser-OK nested shape (verified exit 0 on 1.2026.8): each '}' pops
+        # the INNERMOST curly-open fragment (the inner package first), so no
+        # fragment reaches the block boundary — zero findings in both modes.
+        # (The pre-fix code left both open and reported BOTH with the
+        # factually-wrong "never closed with '}'" tripwire error.)
+        text = '@startuml t\npackage "A" {\npackage "B" {\ncomponent Foo\n}\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
 
 class TestReferenceGraphSubsetParserGate(unittest.TestCase):
     """The Phase 100 real-parser gate (env-gated, ACC-001/ACC-002's parser half):

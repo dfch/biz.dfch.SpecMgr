@@ -283,6 +283,13 @@ jobs:
         enable-cache: true
         python-version: "3.13.13"
 
+    - name: Install dependencies
+      # --all-extras, mirroring `build`: typer/mcp (the CLI + MCP tools under
+      # test) and fastembed (the similarity extra) must be present. Sync FIRST
+      # (the `build` job's order): a `uv run` before the sync would implicitly
+      # build the base (no-extras) environment, which the sync then re-syncs.
+      run: uv sync --frozen --python 3.13.13 --all-extras
+
     - name: Verify tools
       # `java` is preinstalled on the GitHub-hosted ubuntu runners (the plantuml
       # jar needs a JVM); printing the version fails the job early if it is not.
@@ -305,11 +312,6 @@ jobs:
       # a tampered/substituted jar must fail here, not inside the suite.
       run: |
         echo "5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462  $RUNNER_TEMP/plantuml.jar" | sha256sum --check --strict
-
-    - name: Install dependencies
-      # --all-extras, mirroring `build`: typer/mcp (the CLI + MCP tools under
-      # test) and fastembed (the similarity extra) must be present.
-      run: uv sync --frozen --python 3.13.13 --all-extras
 
     - name: Run the full suite with the real parser configured
       # SPECMGR_PLANTUML_JAR makes tests/conftest.py's plantuml_source() gate

@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: review
 type: feat
-updated: '2026-10-17T06:06:08.272+02:00'
+updated: '2026-10-17T12:49:44.212+02:00'
 version: 1.0.0
 ---
 
@@ -121,9 +121,21 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 - [x] Task 130.110: Walkthrough evidence with `SPECMGR_PLANTUML_JAR` configured (local `.env`): `specmgr diagram refs <type> <id> --reverse` + `specmgr plantuml-check` (expect `checked_by=jar`, `valid=true`) and `specmgr diagram refs all` rendered to SVG (eyeball the palette + label-free arrows) — recorded in `### Updates`.
 - [x] Task 130.120: Closeout: `CHANGELOG.md` `[Unreleased]` entry, mark the verified ACCs `- [x]`, and `set_status(id, type="feat", status="review")`.
 
+#### Phase 140: Review fixes (feat-reviewer pass)
+
+- [x] Task 140.100: Fix the E1 tripwire false-positive: a curly-opened `package` fragment closed with a `}` line is real-parser-accepted (the plan's isolation matrix; verified against the pinned 1.2026.8) and must not error — `plantuml/structure.py`: make a `}` line close the innermost curly-open fragment so the tripwire fires only on a named `end package` close over a component-collecting fragment or such a fragment still open at a block boundary; control tests pin the parser-OK shapes (`package "REQ" { component Foo }` and `package REQ { component Foo }` → zero findings in both modes), every existing firing/zero-finding pin stays green, and every UC + reference golden stays zero-finding; dated fix note in rulebook §7.1 (and UC §6.1 if its wording misdescribes the behaviour); extend the resource drift pin if an asserted fragment changes.
+- [x] Task 140.110: Fix the E2 backtick split: restore the single `{src} --> {dst}` code span in the `get_reference_diagram` MCP tool description (currently split across two spans in the string concatenation); regenerate `docs/MCP.md` (`specmgr mcp-docs`) and `docs/api/` (`specmgr docs`) if touched.
+- [x] Task 140.120: Fix the D1 §2.6 wording: the rulebook §2.6 normative body still names the removed `package` grouping ("outside any package … BEFORE the first package") — the 2026-10-15 correction scope missed it; replace with the curly domain-group form + a dated correction note.
+- [x] Task 140.130: Fix the D2/D3 plan-record precision: the Phase 130 record's "bodies verbatim" claim is 9/11 (two bodies took a leading-capitalization normalization at their new paragraph-initial position), and the ACC-005 entry cites a local 4693 run the plan never records — amend both entries in place to be exact (the 4693 claim is verified true at HEAD by this phase's gate).
+- [x] Task 140.140: Fix the I1 CI job step order: the `plantuml-parser` job in `.github/workflows/ci.yml` runs `Verify tools` (with its implicit `uv run` base-env build) BEFORE `Install dependencies` — reorder to sync-first, mirroring the `build` job's pattern.
+- [x] Task 140.150: Record the G1 process gap as a NEW GitHub issue: no commit-path parseability check exists for the repo's own `.specmgr/` specification documents (the sibling class of the root cause this feature fixed — this plan itself shipped unparseable in three consecutive commits, masked by `list_feat`'s dirty-stage frontmatter+H1 parse); a CI step or test running `parse_feat` over every feat README (the full 84-document corpus parses in seconds) closes the class; out of scope for this feature's code.
+- [x] Task 140.160: Phase end: run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, full suite with the jar configured), update the plan Progress (Current Status, a dated Updates entry, Decisions Made if any, tick the Phase 140 checkboxes), and confirm `get_feat(id="feat-214-rel-invalid-diag")` parses cleanly with `status: review` unchanged.
+
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-17**: PHASE 140 COMPLETE (review fixes) — the feat-reviewer pass (ship-ready-with-minor-fixes) is fully addressed: E1 (the tripwire false-positive on the parser-accepted `}`-closed curly-open `package` — `plantuml/structure.py` now pops the innermost curly-open fragment on a `}` line, 3 new control tests pin the parser-OK shapes, dated fix note in rulebook §7.1), E2 (the split `` `{src} --> `` / `` `{dst}` `` code span in the `get_reference_diagram` MCP description — restored to the single `` `{src} --> {dst}` `` span, `docs/MCP.md` regenerated), D1 (rulebook §2.6 still naming the removed `package` grouping — corrected to the curly domain-group form + dated correction note), D2/D3 (the "bodies verbatim" claim amended to the exact 9/11 statement, the ACC-005 entry now cites the post-merge local 4693 run explicitly — re-verified at HEAD by this phase's gate), I1 (the `plantuml-parser` CI job reordered sync-first, mirroring `build`), and G1 (recorded as NEW GitHub issue #218 — no commit-path parseability check for the repo's own `.specmgr/` documents; NOT implemented here, out of scope for this feature's code). Phase 140 quality gate green with the jar configured: `4696 passed, 4 skipped` (URL-matrix only; the +3 over the 4693 HEAD baseline are the new E1 control tests), targeted `tests/plantuml/test_reference_graph_subset.py` `21 passed` / ZERO skips, `ruff format --check` / `ruff check` / `vulture` clean. Status stays `review`.
 
 **As of 2026-10-16**: CLOSED OUT — all four phases complete (Tasks 100.100–130.120); status is `review` (set via the `set_status` MCP tool in Task 130.120). The Task 130.100 quality gate is green (`ruff format --check` / `ruff check` / `vulture` clean; full suite 4687 passed / 4 skipped — all four the URL-matrix skips, ZERO `require_plantuml_source` skips). The Task 130.110 walkthrough confirmed the new layout end-to-end over the real CLI surfaces with the locally configured pinned jar: scoped `specmgr diagram refs feat feat-207-reference-graph --reverse` (16 label-free edges incl. the incoming `[feat-214-rel-invalid-diag] --> [feat-207-reference-graph]`, curly domain groups) → `specmgr plantuml-check` answered `checked_by=jar valid=true rendered=true source_state=ok` (the CLI picks up the gitignored repo-root `.env` — no inline env var needed); registry-wide `specmgr diagram refs all` (8 curly groups, 306 label-free edges) rendered through the pinned jar to a 332 KB SVG carrying the palette fills, 20 red `#F00` cycle-arrow segments, and node titles, with ZERO `refers to` text and no crash marker. Closeout (Task 130.120): `CHANGELOG.md` `[Unreleased]` entry added, ACC-001/002/003/004/006 marked verified — and ACC-005 is now verified and marked too: the first `plantuml-parser` CI run (PR #216, 2026-10-17) executed and passed (SHA-256 step OK; `4693 passed, 4 skipped` with every skip a URL-matrix test — zero `require_plantuml_source` skips), so ALL SIX ACCs are verified (status stays `review`). The walkthrough also surfaced and fixed a LATENT parseability defect in this plan document (the bullet-form `Decisions Made` section introduced in Phase 100 failed `parse_feat` — `list_feat` kept showing it transiently healthy per the ADR 3982712a time-qualification while the reference-graph builders silently skipped it, dropping feat-214 from the live diagrams; see the Phase 130 entry in Decisions Made).
 
@@ -136,6 +148,113 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-17T10:49:44.000Z - Phase 140 complete (feat-reviewer pass: E1/E2/D1/D2/D3/I1 fixed, G1 recorded as issue #218)
+
+The post-implementation feat-reviewer pass (ship-ready-with-minor-fixes)
+is fully addressed; status stays `review`.
+
+**Task 140.100 (E1 — the tripwire false-positive):** `plantuml/structure.
+py` now closes (pops) the innermost curly-open fragment on a `}` line — a
+new branch after the fragment-open push, no finding on the pop, and a `}`
+with no curly-open fragment open stays silently accepted (exactly as
+before). The GENERAL innermost-curly-open pop was needed — no `package`-
+only narrowing (no existing golden or control test regressed; see the
+Decisions Made entry). Parser verification against the pinned 1.2026.8:
+`package "REQ" { component Foo }` exit 0, `package REQ { component Foo }`
+exit 0, nested `package "A" { package "B" { component Foo } }` exit 0 —
+all three now pin ZERO findings in both modes as 3 NEW control tests in
+`TestPackageComponentTripwire` (12 tests total; the 9 pre-existing tests
+are byte-unchanged — `git diff` on the test file is 46 insertions, 0
+deletions — and green, covering all unchanged firing/zero-finding shapes
+of the fix matrix). Dated fix note added to rulebook §7.1. UC rulebook
+§6.1 checked: its 2026-10-15 note states the rule correctly ("must close
+with a `}` line") and does NOT misdescribe the behaviour, so it needed no
+amendment. The resource drift pin was NOT extended — no asserted fragment
+changed (the §7.1 note is additive; the pins are `assertIn`-fragment
+based, and the one `assertNotIn("\nend package")` pin was checked against
+the note's line starts). `docs/api/biz.dfch.specmgr.plantuml.structure.
+md` regenerated for the new module-docstring paragraph.
+
+**Task 140.110 (E2 — the backtick split):** the `get_reference_diagram`
+MCP tool description now carries the single code span `` `{src} --> {dst}`
+`` (matching the sibling `get_reference_diagram_all`). `docs/MCP.md`
+regenerated via `specmgr mcp-docs`: the diff is exactly the two mirror
+lines (the tool table row + the tool section body), both now showing the
+single span. `specmgr docs` run: the defect was description-only (no
+module/function docstring touched), so `docs/api/` gained NO diff for
+`get_reference_diagram.py` (verified — the only `docs/api` change in this
+phase is the structure.py paragraph above).
+
+**Task 140.120 (D1 — §2.6 wording):** the §2.6 normative body now reads
+"outside any domain group … BEFORE the first domain group (the §2.7
+curly-brace `component "TYPE" { … }` form)" with a dated 2026-10-17
+correction note (feat-207 style, matching the §2.1/§2.7/§2.8 note format)
+recording that the 2026-10-15 correction scope missed this section. The
+other residual "package" mentions (the dated correction notes, the
+checker's `package` fragment type, the `get_use_case_package_diagram` tool
+name) were left in place per the reviewer's confirmation.
+
+**Task 140.130 (D2/D3 — plan-record precision):** both "bodies verbatim"
+occurrences (the Phase 130 Updates entry and its matching Decisions Made
+entry) amended to the exact 9/11 statement: 9 of the 11 bodies carry a
+leading-capitalization normalization at their new paragraph-initial
+position; the 2 bodies beginning with a non-alphabetic character (a
+backtick, a double quote) are byte-identical — re-verified in this phase
+by diffing the pre-reformat bullets (commit 6714117) against the reformed
+entries (commit dc2905f): 2/11 byte-identical, 9/11 capitalization-only.
+The ACC-005 Updates entry now cites the post-merge local run explicitly
+("re-verified at HEAD by the Phase 140 gate: 4693 passed / 4 URL-matrix
+skipped; the Phase 130 record's local run is the PRE-merge 4687, and
+feat-213's 6 merged tests account for the delta") — the HEAD
+re-verification is this phase's baseline full-suite run (4693 passed / 4
+skipped, the same 4 URL-matrix test ids as CI's `-rs` summary), performed
+BEFORE any Phase 140 test was added.
+
+**Task 140.140 (I1 — CI step order):** the `plantuml-parser` job now runs
+`Install dependencies` BEFORE `Verify tools` (mirroring the `build`
+job's sync-first pattern — a `uv run` before the sync would implicitly
+build the base no-extras environment, which the sync then re-syncs; the
+reason is recorded in the `Install dependencies` step's comment). Step
+bodies, names, and the jar-download/verify/suite steps otherwise
+unchanged. Verified: `yaml.safe_load` parses the workflow; the step order
+is Checkout → Install uv → Install dependencies → Verify tools → Download
+the pinned PlantUML 1.2026.8 release jar → Verify the jar's SHA-256 (fail
+on mismatch) → Run the full suite with the real parser configured;
+`java -version` remains checked in `Verify tools`.
+
+**Task 140.150 (G1 — process gap):** recorded as NEW GitHub issue #218
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/218) — "No commit-path
+parseability check for the repo's own .specmgr/ specification documents":
+the finding (this plan shipped unparseable in three consecutive commits,
+`f578e69` through `6714117`, each failing `parse_feat` at
+`Progress > DecisionsMade > DecisionEntry`; masked by `list_feat`'s
+dirty-stage frontmatter+H1 parse per ADR 3982712a and by the
+reference-graph builders' §3.4 skip), why it matters (the sibling class
+of feat-214's root cause — an unverified artifact shipped on a
+skipped/absent gate), and the proposed cheap fix (a CI step or test
+running FULL `parse_feat` over every feat README — the 84-document corpus
+parses in seconds; a listing-based gate would reproduce the masking, so
+the gate must do FULL parses). NOT implemented here (out of scope for
+this feature's code). No labels: `gh label` is unavailable in this `gh`
+build, so per the instruction none were guessed.
+
+**Task 140.160 (phase end — quality gate):** `uv run --frozen ruff format
+--check` → `2062 files already formatted`; `uv run --frozen ruff check`
+→ `All checks passed!`; `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` → no output (rc=0); `uv run --frozen pytest -n auto
+--cov=src --cov-report= -rs` → **4696 passed, 4 skipped** (the 4 skips
+are the URL-matrix tests only — zero `require_plantuml_source` skips with
+the jar configured; the +3 over the 4693 HEAD baseline are this phase's
+new E1 control tests). Targeted real-parser run: `uv run --frozen pytest
+tests/plantuml/test_reference_graph_subset.py -rs` → **21 passed in
+58.25s, ZERO skips** (the subset gate + the 22-golden parser sweep
+executed and passed under the jar). Doc drift: `specmgr docs` + `specmgr
+mcp-docs` regenerated; `git diff --stat docs/` = exactly `docs/MCP.md`
+(4 lines — the E2 span fix on both mirror lines) + `docs/api/biz.dfch.
+specmgr.plantuml.structure.md` (17 lines — the E1 docstring paragraph).
+`specmgr adr-toc` / `specmgr schema` not run — no ADR or model was
+touched in this phase.
 
 #### 2026-10-17T04:06:08.272Z - PR #216 CI green (dev-merge conflict resolved) — ACC-005 verified and marked
 
@@ -154,9 +273,12 @@ summary lists exactly 4 skips, ALL URL-matrix tests (`tests/commands/
 test_plantuml_encode.py:114`, `tests/plantuml/test_encode.py:187`,
 `tests/plantuml/test_url.py:332`, `tests/plantuml/test_url.py:347`): ZERO
 `require_plantuml_source` skip reasons. The 4693-passed count matches the
-local jar-configured run count exactly, so the reference-graph subset gate
-and the 22-golden parser sweep executed and passed under the job — the
-commit-path evidence ACC-005 required. ACC-005 is therefore VERIFIED and
+post-merge local jar-configured run count exactly — re-verified at HEAD by
+the Phase 140 gate (4693 passed / 4 URL-matrix skipped; the Phase 130
+record's local run is the PRE-merge 4687, and feat-213's 6 merged tests
+account for the delta) — so the reference-graph subset gate and the
+22-golden parser sweep executed and passed under the job — the commit-path
+evidence ACC-005 required. ACC-005 is therefore VERIFIED and
 its checkbox marked `- [x]` (the canonical ACC line text is unchanged); all
 six ACCs are now verified. Status stays `review`.
 
@@ -213,10 +335,12 @@ below proves the CLI's own dotenv load):**
   dirty-stage frontmatter+H1 parse — the ADR 3982712a time-qualification,
   which is exactly why the builder-level full parse is the authority). The
   section was reformatted to the packaged feat template's
-  `#### <ISO8601> - <title>` H4-entry form (11 entries, bodies verbatim,
-  newest first + a Phase 130 entry recording the fix); `parse_feat` now
-  returns the full document, and the re-run scoped diagram carries the
-  incoming edge. The document has therefore been unparseable in its
+  `#### <ISO8601> - <title>` H4-entry form (11 entries, newest first, + a
+  Phase 130 entry recording the fix; 9 of the 11 bodies carry a
+  leading-capitalization normalization at their new paragraph-initial
+  position — the 2 bodies that begin with a non-alphabetic character are
+  byte-identical); `parse_feat` now returns the full document, and the
+  re-run scoped diagram carries the incoming edge. The document has therefore been unparseable in its
   committed state since f578e69 — worth a one-line mention for the review
   pass.
 
@@ -421,6 +545,40 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
 
+#### 2026-10-17T10:49:44.000Z - Phase 140: E1 pop rule — the general innermost-curly-open pop (no narrowing needed)
+
+The E1 fix implements the GENERAL rule the orchestrator specified first:
+a `}` line pops the innermost open fragment with `curly_open=True` (scan
+from the stack top, skipping braceless-open fragments) for EVERY fragment
+kind — not a `package`-only narrow. The narrowing branch was NOT needed:
+no existing golden or control test regressed (every `}` line in the
+committed goldens closes a `component "TYPE" { … }` domain group or the
+`skinparam component { … }` block — declarations/skinparam, never checker
+fragments — so the pop is a no-op there, and no UC sequence golden
+carries a curly-open fragment). The general rule is also the
+parser-faithful one for the verified nested shape (`package "A" {
+package "B" { component Foo } }`, exit 0 on the pinned 1.2026.8): each
+`}` pops the innermost curly-open fragment, innermost-first. A `}` with
+no curly-open fragment open is silently accepted (no finding), so every
+pre-fix zero-finding golden stays zero-finding byte-for-byte in checker
+output.
+
+#### 2026-10-17T10:49:44.000Z - Phase 140: G1 process gap recorded, not implemented (out of scope)
+
+The G1 finding (no commit-path parseability check for the repo's own
+`.specmgr/` specification documents) is recorded as NEW GitHub issue #218
+(https://github.com/dfch/biz.dfch.SpecMgr/issues/218) and deliberately
+NOT implemented in this feature: feat-214's scope is the reference-graph
+diagrams' parser-valid layout + the commit-path real-parser gate for
+EMITTED artifacts (REQ-009/ACC-005), and the process-gap fix (a
+full-`parse_feat` sweep over the in-tree spec corpus — as a CI step or a
+plain test) is a separate, cheap change that belongs to issue #218's own
+follow-up. The issue body names the three affected commits
+(`f578e69`–`6714117`), the masking mechanism (`list_feat`'s dirty-stage
+frontmatter+H1 parse, ADR 3982712a; the builders' §3.4 skip), and the
+required FULL-parse property of any such gate (a listing-based check
+would reproduce the masking).
+
 #### 2026-10-17T04:06:08.272Z - PR #216 dev-merge: CHANGELOG `[Unreleased]` conflict resolved by consolidation
 
 The only merge conflict when resolving PR #216 against `dev` was
@@ -433,7 +591,7 @@ file.
 
 #### 2026-10-16T09:36:54.589Z - Phase 130: Decisions Made reformatted to the feat schema's H4 date-entry form
 
-The bullet form this section first carried (`- **<date> (Phase NNN) — <title>:** <body>`) FAILED the feat document's full parse (`parse_feat` error at `Feature > Progress > DecisionsMade > DecisionEntry`: each entry must be an H4 heading matching `^<ISO8601-ms>Z - <title>`, per the packaged feat template) — the defect shipped with the Phase 100 progress update and was only surfaced by the Task 130.110 walkthrough: `list_feat` kept showing feat-214 transiently healthy (the dirty-stage frontmatter+H1 parse, the ADR 3982712a time-qualification), while the reference-graph builders' full-parse scan legs SKIPPED the document — dropping feat-214 from every live diagram (the missing `--reverse` incoming edge to `feat-207-reference-graph`) and would have blocked the closeout's `set_status`. All eleven pre-existing entries were reformatted to the template's `#### <ISO8601> - <title>` form (newest first, bodies verbatim); the section now parses.
+The bullet form this section first carried (`- **<date> (Phase NNN) — <title>:** <body>`) FAILED the feat document's full parse (`parse_feat` error at `Feature > Progress > DecisionsMade > DecisionEntry`: each entry must be an H4 heading matching `^<ISO8601-ms>Z - <title>`, per the packaged feat template) — the defect shipped with the Phase 100 progress update and was only surfaced by the Task 130.110 walkthrough: `list_feat` kept showing feat-214 transiently healthy (the dirty-stage frontmatter+H1 parse, the ADR 3982712a time-qualification), while the reference-graph builders' full-parse scan legs SKIPPED the document — dropping feat-214 from every live diagram (the missing `--reverse` incoming edge to `feat-207-reference-graph`) and would have blocked the closeout's `set_status`. All eleven pre-existing entries were reformatted to the template's `#### <ISO8601> - <title>` form (newest first; 9 of the 11 bodies carry a leading-capitalization normalization at their new paragraph-initial position — the 2 bodies that begin with a non-alphabetic character are byte-identical, verified by diffing the pre-reformat bullets against the reformed entries); the section now parses.
 
 #### 2026-10-16T06:15:43.752Z - Phase 120: resource drift pin extended additively
 
