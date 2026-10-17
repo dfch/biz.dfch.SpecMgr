@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: review
 type: feat
-updated: '2026-10-16T16:04:35.264+02:00'
+updated: '2026-10-17T06:06:08.272+02:00'
 version: 1.0.0
 ---
 
@@ -41,7 +41,7 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 - [x] ACC-002: Every regenerated golden under `tests/fixtures/reference-graphs/goldens/` passes the structure checker with ZERO findings in both modes (the existing goldens-directory sweep stays green), and the new golden parser sweep passes for every golden under a configured source (REQ-003's sweep).
 - [x] ACC-003: The tripwire rule fires (error, both modes, curly fix hint) on the verified parser-failing shapes (braceless `package` + inner component; curly-open `package` + `end package` close) and on no existing UC/reference golden (zero false positives; sequence-diagram packages with participants unaffected).
 - [x] ACC-004: The `specmgr-refs` skill's diagram workflow text mandates `reverse` for scoped diagrams (MCP `reverse=True` / CLI `--reverse`) with the O(registry-size) cost note, while the builder/tool/CLI signatures keep the `reverse=False` default (the existing schema-default pin test stays green unchanged).
-- [ ] ACC-005: The new CI job verifies the pinned jar's SHA-256, runs the suite, and reports the real-parser gates as PASSED, not skipped — `pytest -rs` under the job shows no `require_plantuml_source` skip reason for the reference-graph subset gate or the golden parser sweep.
+- [x] ACC-005: The new CI job verifies the pinned jar's SHA-256, runs the suite, and reports the real-parser gates as PASSED, not skipped — `pytest -rs` under the job shows no `require_plantuml_source` skip reason for the reference-graph subset gate or the golden parser sweep.
 - [x] ACC-006: `ruff format --check`, `ruff check`, `vulture`, and the full test suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`) are green with the layout + label fix, tripwire rule, rulebook amendment, regenerated goldens, sweep test, skill change, CI job, and doc updates committed.
 
 ### Scope
@@ -125,7 +125,7 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 ### Current Status
 
-**As of 2026-10-16**: CLOSED OUT — all four phases complete (Tasks 100.100–130.120); status is `review` (set via the `set_status` MCP tool in Task 130.120). The Task 130.100 quality gate is green (`ruff format --check` / `ruff check` / `vulture` clean; full suite 4687 passed / 4 skipped — all four the URL-matrix skips, ZERO `require_plantuml_source` skips). The Task 130.110 walkthrough confirmed the new layout end-to-end over the real CLI surfaces with the locally configured pinned jar: scoped `specmgr diagram refs feat feat-207-reference-graph --reverse` (16 label-free edges incl. the incoming `[feat-214-rel-invalid-diag] --> [feat-207-reference-graph]`, curly domain groups) → `specmgr plantuml-check` answered `checked_by=jar valid=true rendered=true source_state=ok` (the CLI picks up the gitignored repo-root `.env` — no inline env var needed); registry-wide `specmgr diagram refs all` (8 curly groups, 306 label-free edges) rendered through the pinned jar to a 332 KB SVG carrying the palette fills, 20 red `#F00` cycle-arrow segments, and node titles, with ZERO `refers to` text and no crash marker. Closeout (Task 130.120): `CHANGELOG.md` `[Unreleased]` entry added, ACC-001/002/003/004/006 marked verified, ACC-005 deliberately left open pending the first `plantuml-parser` CI run on GitHub (its local proxy evidence is green — Phase 120 record + this walkthrough). The walkthrough also surfaced and fixed a LATENT parseability defect in this plan document (the bullet-form `Decisions Made` section introduced in Phase 100 failed `parse_feat` — `list_feat` kept showing it transiently healthy per the ADR 3982712a time-qualification while the reference-graph builders silently skipped it, dropping feat-214 from the live diagrams; see the Phase 130 entry in Decisions Made).
+**As of 2026-10-16**: CLOSED OUT — all four phases complete (Tasks 100.100–130.120); status is `review` (set via the `set_status` MCP tool in Task 130.120). The Task 130.100 quality gate is green (`ruff format --check` / `ruff check` / `vulture` clean; full suite 4687 passed / 4 skipped — all four the URL-matrix skips, ZERO `require_plantuml_source` skips). The Task 130.110 walkthrough confirmed the new layout end-to-end over the real CLI surfaces with the locally configured pinned jar: scoped `specmgr diagram refs feat feat-207-reference-graph --reverse` (16 label-free edges incl. the incoming `[feat-214-rel-invalid-diag] --> [feat-207-reference-graph]`, curly domain groups) → `specmgr plantuml-check` answered `checked_by=jar valid=true rendered=true source_state=ok` (the CLI picks up the gitignored repo-root `.env` — no inline env var needed); registry-wide `specmgr diagram refs all` (8 curly groups, 306 label-free edges) rendered through the pinned jar to a 332 KB SVG carrying the palette fills, 20 red `#F00` cycle-arrow segments, and node titles, with ZERO `refers to` text and no crash marker. Closeout (Task 130.120): `CHANGELOG.md` `[Unreleased]` entry added, ACC-001/002/003/004/006 marked verified — and ACC-005 is now verified and marked too: the first `plantuml-parser` CI run (PR #216, 2026-10-17) executed and passed (SHA-256 step OK; `4693 passed, 4 skipped` with every skip a URL-matrix test — zero `require_plantuml_source` skips), so ALL SIX ACCs are verified (status stays `review`). The walkthrough also surfaced and fixed a LATENT parseability defect in this plan document (the bullet-form `Decisions Made` section introduced in Phase 100 failed `parse_feat` — `list_feat` kept showing it transiently healthy per the ADR 3982712a time-qualification while the reference-graph builders silently skipped it, dropping feat-214 from the live diagrams; see the Phase 130 entry in Decisions Made).
 
 **Phase 120 record (Tasks 120.100–120.120 done).** The `plantuml-parser` CI job is in `.github/workflows/ci.yml` (single pinned Python 3.13.13, mirroring the `build` job's docs-drift pin): it downloads the pinned PlantUML 1.2026.8 release jar to `$RUNNER_TEMP` (kept out of the repo), hash-verifies it in its own step BEFORE any use (the job fails on mismatch), exports `SPECMGR_PLANTUML_JAR`, and runs the FULL suite with `uv run --frozen pytest -n auto -rs` — so every `require_plantuml_source`-gated test (incl. the reference-graph subset gate and the 22-golden parser sweep) runs and passes on the commit path instead of skipping (ACC-005). Local proxy evidence (GitHub Actions itself cannot run here): the workflow YAML parses, the job's exact `sha256sum --check --strict` line passes against the verified local jar and FAILS (rc=1) on a wrong hash, and the job's exact pytest invocation reports 4687 passed / 4 skipped with the ONLY skip reasons the URL-matrix ones (zero `require_plantuml_source` skips). Rulebook §4.3 gained the dated Phase 120 amendment note (the gate now RUNS in CI; the local `.env` dev flow documented) and the gate test's docstrings match; the resource drift pin was extended additively for the note (all pins green). The Task 120.110 scoping branch was NOT needed (no pre-existing failure surfaced).
 
@@ -136,6 +136,29 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-17T04:06:08.272Z - PR #216 CI green (dev-merge conflict resolved) — ACC-005 verified and marked
+
+PR #216 (github.com/dfch/biz.dfch.SpecMgr/pull/216) now has its
+merge-conflicts resolved against `dev` and its CI is FULLY GREEN. The only
+conflict was `CHANGELOG.md`'s `## [Unreleased]` (feat-213 had landed its own
+`[Unreleased]` entry meanwhile); it was resolved by consolidating both
+sides' entries into single `### Fixed` / `### Added` sections (feat-213's
+entry first in Fixed, chronological), no entry dropped or reworded (see the
+matching Decisions Made entry). The `plantuml-parser` job added by this
+feature RAN on the PR and PASSED (4m15s; CI run 38998130206, job
+117295101630, completed 2026-10-17T03:20Z): the SHA-256 verification step
+answered `/home/runner/work/_temp/plantuml.jar: OK`, and the final pytest
+line was `4693 passed, 4 skipped in 242.54s (0:04:02)` — the `-rs` short
+summary lists exactly 4 skips, ALL URL-matrix tests (`tests/commands/
+test_plantuml_encode.py:114`, `tests/plantuml/test_encode.py:187`,
+`tests/plantuml/test_url.py:332`, `tests/plantuml/test_url.py:347`): ZERO
+`require_plantuml_source` skip reasons. The 4693-passed count matches the
+local jar-configured run count exactly, so the reference-graph subset gate
+and the 22-golden parser sweep executed and passed under the job — the
+commit-path evidence ACC-005 required. ACC-005 is therefore VERIFIED and
+its checkbox marked `- [x]` (the canonical ACC line text is unchanged); all
+six ACCs are now verified. Status stays `review`.
 
 #### 2026-10-16T12:42:04.025Z - Phase 130 complete (quality gate, CLI walkthrough, closeout — status `review`)
 
@@ -397,6 +420,16 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 ### Decisions Made
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-17T04:06:08.272Z - PR #216 dev-merge: CHANGELOG `[Unreleased]` conflict resolved by consolidation
+
+The only merge conflict when resolving PR #216 against `dev` was
+`CHANGELOG.md`'s `## [Unreleased]` section (feat-213 had landed its own
+`[Unreleased]` entry in the meantime). Resolution: both sides' entries were
+consolidated into single `### Fixed` / `### Added` subsections (feat-213's
+entry first in `### Fixed`, chronological), with no entry dropped or
+reworded — both features' changelog records survive verbatim in the merged
+file.
 
 #### 2026-10-16T09:36:54.589Z - Phase 130: Decisions Made reformatted to the feat schema's H4 date-entry form
 
