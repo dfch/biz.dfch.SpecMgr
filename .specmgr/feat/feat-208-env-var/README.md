@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-09T09:58:41.413+02:00'
 id: feat-208-env-var
-status: review
+status: done
 type: feat
-updated: '2026-10-11T15:09:21.700+02:00'
+updated: '2026-10-16T11:37:53.003+02:00'
 version: 1.0.0
 ---
 
@@ -159,7 +159,7 @@ Verified state at planning time (2026-10-09):
 
 ### Current Status
 
-**As of 2026-10-11**: all eight phases (100-170) implemented and committed -- one Conventional Commit per phase (the hashes are enumerated in the 2026-10-11T01:09:50 entry below) -- and all six acceptance criteria (ACC-001 through ACC-006) ticked with the evidence in the tree (the final ACC-walk evidence table is in the Phase 170 Updates entry); both review-fix rounds have landed (round 1: E1/D1/I1/I2 from the feat-reviewer pass, commit b5bddae, the PR #209 ship-with-fixes verdict; round 2: G1/G2/D1/D2/I1/I2/I3, the 2026-10-11T15:09:21.700 entry), the frontmatter `status` is `review` (set in commit f3e7739), and the full quality gate is green -- 4481 passed, 16 skipped (vs. the 4428/16 pre-feature baseline: this feature's 51 tests plus the two new round-2 tests), `ruff format --check` (2018 files), `ruff check`, and `vulture` clean, `specmgr docs`/`specmgr adr-toc` no drift, with the byte-identical `specmgr://config` pinned by the golden test (ACC-005). Pending: the review verdict on PR #209.
+**As of 2026-10-16**: all eight phases (100-170) implemented and committed -- one Conventional Commit per phase (the hashes are enumerated in the 2026-10-11T01:09:50 entry below) -- and all six acceptance criteria (ACC-001 through ACC-006) ticked with the evidence in the tree (the final ACC-walk evidence table is in the Phase 170 Updates entry); both review-fix rounds have landed (round 1: E1/D1/I1/I2 from the feat-reviewer pass, commit b5bddae, the PR #209 ship-with-fixes verdict; round 2: G1/G2/D1/D2/I1/I2/I3, the 2026-10-11T15:09:21.700 entry), and the full quality gate is green -- 4481 passed, 16 skipped (vs. the 4428/16 pre-feature baseline: this feature's 51 tests plus the two new round-2 tests), `ruff format --check` (2018 files), `ruff check`, and `vulture` clean, `specmgr docs`/`specmgr adr-toc` no drift, with the byte-identical `specmgr://config` pinned by the golden test (ACC-005). PR #209 merged into `dev` on 2026-10-11 (commit 667d96a); the frontmatter `status` is now `done` (set 2026-10-16, this entry). Nothing pending.
 
 ### Blockers
 
@@ -168,6 +168,10 @@ Verified state at planning time (2026-10-09):
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-16T11:36:47.467+02:00 - Finalization: status set to done
+
+PR #209 (branch `feat-208` against `dev`) merged 2026-10-11T15:23:41Z (commit 667d96a `feat(feat-208): consolidate env var definitions into a central registry (issue #208) (#209)`), the last outstanding item in the Current Status paragraph. All implementation phases (100-170) are committed, ACC-001 through ACC-006 are ticked with in-tree evidence, both review-fix rounds have landed, and the full quality gate was green at merge (4481 passed, 16 skipped; `ruff format --check`, `ruff check`, `vulture` clean; `specmgr docs`/`specmgr adr-toc` no drift; byte-identical `specmgr://config` golden). The frontmatter `status` is set from `review` to `done` via the generic `set_status` tool (this commit), and GitHub issue #208 is closed with a comment referencing this feature.
 
 #### 2026-10-11T15:09:21.700+02:00 - Round-2 review fixes (G1/G2/D1/D2/I1/I2/I3 from the feat-reviewer pass)
 
