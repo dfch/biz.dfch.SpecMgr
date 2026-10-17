@@ -4,7 +4,7 @@ created: '2026-10-06T10:45:41.464+02:00'
 id: feat-199-plan-section-refs-cleanup
 status: review
 type: feat
-updated: '2026-10-17T20:02:44.860+02:00'
+updated: '2026-10-17T21:52:26.503+02:00'
 version: 1.0.0
 ---
 
@@ -203,11 +203,13 @@ this feature.
 
 - [x] Task 120.140: Final verification — repo-wide `plan §` residue = exactly the two frozen historical artifacts (`CHANGELOG.md`, `docs/adr/7a626b12-….md`), `tests/` and `src/` clean, `.specmgr/feat/feat-9-doc-in-specmgr/` still untouched, no by-path sibling citation left in `src/`, progress records updated — depends on: Task 120.130 — status: done
 
+- [x] Task 120.150: Fix the last stale "future (existing component)" phrasing in the ADR model package — `models/adr/v1/body.py`'s "the future ``update_section(key, value)`` MCP tool" (the tool exists now, `adr/tools/update_section.py`); found during the Phase 120 verification review — drop "future" (one word), regenerate the module's docs/api page, re-verify the "the future" sweep over the ADR package (only the legitimate `frontmatter.py:58` schema-dispatch mention may remain), and run the gate — depends on: Task 120.140 — status: done
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-17**: implementation complete (Phase 100 `ca8f3a8`, Phase 110 `d36ae69`) — all four acceptance criteria verified with concrete evidence and ticked; status `review`. A user-directed Phase 120 (Post-Review Improvements) was added for the feat-reviewer's I1–I4 and the recorded tests/-residue follow-up — see Decisions Made. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004). Phase 120 (Post-Review Improvements, user-directed — see Decisions Made) is complete: the feat-reviewer's I1 (the `adr_get.py` noqa comment is now a self-contained statement), I2 (the referent-less "(second half)" fragment dropped), I3 (the six pre-existing stale-wording sites in the touched files corrected against the current tree), and I4 (the `uc/models/v2/__init__.py` by-path sibling citation removed, the sentence made self-contained) are applied, the recorded `tests/` residue — the 16 bare `plan §` hits in 15 files — is dropped with the same minimal mechanics, and the repo-wide `plan §` residue is now exactly the two frozen historical artifacts (`CHANGELOG.md`, `docs/adr/7a626b12-….md`) with `src/` + `tests/` clean and the full gate green (4668 passed / 17 skipped / 5662 subtests). A PR against `dev` (#217) is open.
+**As of 2026-10-17**: implementation complete (Phase 100 `ca8f3a8`, Phase 110 `d36ae69`) — all four acceptance criteria verified with concrete evidence and ticked; status `review`. A user-directed Phase 120 (Post-Review Improvements) was added for the feat-reviewer's I1–I4 and the recorded tests/-residue follow-up — see Decisions Made. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004). Phase 120 (Post-Review Improvements, user-directed — see Decisions Made) is complete: the feat-reviewer's I1 (the `adr_get.py` noqa comment is now a self-contained statement), I2 (the referent-less "(second half)" fragment dropped), I3 (the six pre-existing stale-wording sites in the touched files corrected against the current tree), and I4 (the `uc/models/v2/__init__.py` by-path sibling citation removed, the sentence made self-contained) are applied, the recorded `tests/` residue — the 16 bare `plan §` hits in 15 files — is dropped with the same minimal mechanics, and the repo-wide `plan §` residue is now exactly the two frozen historical artifacts (`CHANGELOG.md`, `docs/adr/7a626b12-….md`) with `src/` + `tests/` clean and the full gate green (4668 passed / 17 skipped / 5662 subtests). A PR against `dev` (#217) is open. Review-correction Task 120.150 is complete: the ADR model package carries no remaining stale "future (existing component)" phrasing.
 
 ### Blockers
 
@@ -216,6 +218,21 @@ this feature.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17 21:41:17.812+02:00 - Phase 120 review correction (Task 120.150)
+
+The verification review of Phase 120 (resumed feat-reviewer session)
+found one last same-class stale phrasing at `models/adr/v1/body.py:46`
+("the future ``update_section`` MCP tool" — the tool exists now, at
+`adr/tools/update_section.py`); fixed by dropping "future" (one word),
+regenerating `docs/api/biz.dfch.specmgr.models.adr.v1.body.md` (the only
+docs file changed — `docs/MCP.md` and `docs/GENERATED.md` rewritten but
+byte-identical), and re-running the ADR-package "the future" sweep, which
+now leaves only the legitimate `models/adr/v1/frontmatter.py:58`
+schema-dispatch mention ("lets a future parser dispatch" — no
+version-dispatch code exists in the tree). The full gate is green:
+`ruff format --check` (2062 files), `ruff check`, `vulture` pass;
+pytest 4668 passed, 17 skipped, 5662 subtests.
 
 #### 2026-10-17 18:57:56.185+02:00 - Phase 120 complete (post-review improvements)
 

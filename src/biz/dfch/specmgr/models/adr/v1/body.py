@@ -43,7 +43,7 @@ class AdrBody(BaseModel):
     ``Option`` collection that backs the derived ``## Pros and Cons of the
     Options`` section.
 
-    Each whole-section field maps 1:1 to the ``key`` values the future
+    Each whole-section field maps 1:1 to the ``key`` values the
     ``update_section(key, value)`` MCP tool accepts,
     using this model's snake_case attribute names rather than
     camelCase key strings -- the tool layer, not this model, is responsible
