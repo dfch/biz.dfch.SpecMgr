@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-17T11:53:03.681+02:00'
+updated: '2026-10-17T15:45:00.000+02:00'
 version: 1.0.0
 ---
 
@@ -72,6 +72,13 @@ Consequences of removal: there is no behavioral change for any document, since b
 - [ ] Task 100.100: Re-verify no other code path reads `MarkdownSection._tokens` or depends on `validate_heading_structure`/`validate_headings` (repo-wide grep).
 - [ ] Task 100.110: Draft the ADR revision wording (removal decision + rationale) for review before editing the ADR.
 
+#### Phase 105: Address Plan-Refinement Findings
+
+- [ ] Task 105.100: E1 -- Bump frontmatter `updated` to be no earlier than the latest `### Updates` entry (`2026-10-17T13:30:00.000Z`) it is supposed to reflect.
+- [ ] Task 105.110: G1 -- Add a REQ-010 (Requirements) and ACC-010 (Acceptance Criteria) entry covering Phase 135's `markdown_str.py` dead-code removal, closing the traceability gap between the Task List and Requirements/Acceptance Criteria.
+- [ ] Task 105.120: I1 -- Normalize every ADR cross-reference citation (e.g. the `### Related Decisions` bullet) to the plain `ADR <uuid>` tag form (no backticks, tag before id) so `list_references`/the reference-graph diagram tooling can resolve this feature's one external dependency.
+- [ ] Task 105.130: I2 -- Add a one-line note (e.g. near `### Related Decisions`) confirming this feature intentionally has no Depends-On/Blocks relationships beyond the founding ADR, to disambiguate "none" from "forgotten."
+
 #### Phase 110: Remove Dead Validators
 
 - [ ] Task 110.100: Remove `validate_heading_structure` and the `_tokens` `PrivateAttr` from `markdown_section.py`; drop now-unused imports.
@@ -109,6 +116,15 @@ Consequences of removal: there is no behavioral change for any document, since b
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17T15:45:00.000+02:00 - Added Phase 105 to track plan-refinement findings
+
+Ran a plan refinement pass and added `#### Phase 105: Address Plan-Refinement Findings`
+(between Phase 100 and Phase 110, per the feat-numbering insertion convention) tracking the
+identified error (E1: stale `updated` timestamp), gap (G1: Phase 135 missing its own
+REQ/ACC entries), and improvements (I1: non-machine-resolvable ADR citation style; I2: no
+explicit no-dependencies note) as Task 105.100-105.130, to be addressed before implementation
+begins.
 
 #### 2026-10-17T13:30:00.000Z - Added Phase 135 for a second dead-code block in markdown_str.py
 
