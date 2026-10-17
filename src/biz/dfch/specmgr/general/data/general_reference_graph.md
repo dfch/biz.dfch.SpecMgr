@@ -18,12 +18,13 @@ Never reinterpret a rule locally in a renderer, builder, checker, or CLI.
 
 One node per artifact (label = the document title, truncated per §5), one
 stereotype + colour per artifact type (the frozen 14-entry palette, §2.5),
-nodes grouped into per-domain `package` blocks, one edge per unique reference
-(the referenced item carries the incoming arrow, uniform `: refers to`
-label), every edge that lies on a cycle drawn with a red arrow (§4), and
-every reference whose target cannot be resolved on disk drawn as a top-level
-`<<UNRESOLVED>>` node (§2.6). Fully deterministic: the same registry and the
-same arguments always emit byte-identical PlantUML source.
+nodes grouped into per-domain curly `component "TYPE" { … }` domain groups
+(§2.7), one LABEL-FREE edge per unique reference (the referenced item
+carries the incoming arrow, §2.8), every edge that lies on a cycle drawn
+with a red arrow (§4), and every reference whose target cannot be resolved
+on disk drawn as a top-level `<<UNRESOLVED>>` node (§2.6). Fully
+deterministic: the same registry and the same arguments always emit
+byte-identical PlantUML source.
 
 Two entry surfaces, one frozen layout:
 
@@ -71,36 +72,44 @@ left to right direction
 component "{id}" as [REQ-{uuid}] <<UNRESOLVED>>
 (… one top-level line per unresolved node, sorted by alias …)
 
-package "REQ"
+component "REQ" {
 component "{label}" as [REQ-{uuid}] <<REQ>>
 (… nodes sorted by id …)
-end package
-(… one package per non-empty domain, in ALL_DOMAINS order …)
+}
+(… one curly domain group per non-empty domain, in ALL_DOMAINS order …)
 
-[REQ-{uuid}] --> [DEC-{uuid}] : refers to
-[REQ-{uuid}] -[#red]-> [UC-{uuid}] : refers to
+[REQ-{uuid}] --> [DEC-{uuid}]
+[REQ-{uuid}] -[#red]-> [UC-{uuid}]
 (… edges deduped + sorted by (source_type, source_id, target_type, target_id);
-    the red form -[#red]-> only for on-cycle edges (§4) …)
+    label-free; the red form -[#red]-> only for on-cycle edges (§4) …)
 @enduml
 ```
 
 Section structure (the precise reading of "blank lines as shown"): the
 content sections — the `@startuml {title}` line, the `skinparam component
 { … }` block, the `left to right direction` line, the top-level unresolved
-node lines (one subgroup), one `package "TYPE" … end package` per non-empty
-domain (one subgroup each, in the 13-domain order), and the edge section —
-are separated by exactly one blank line; an empty subgroup/section is
-omitted entirely (it leaves no residual blank line); `@enduml` always
-follows the last non-empty section directly (no blank line before it). The
-source ends with exactly one trailing newline.
+node lines (one subgroup), one `component "TYPE" { … }` curly domain group
+per non-empty domain (one subgroup each, in the 13-domain order), and the
+edge section — are separated by exactly one blank line; an empty
+subgroup/section is omitted entirely (it leaves no residual blank line);
+`@enduml` always follows the last non-empty section directly (no blank line
+before it). The source ends with exactly one trailing newline.
 
 **§2.1 corrected 2026-10-11 (feat-207-reference-graph Phase 110):** the node
-section's subgroups (the top-level unresolved lines, then one package per
-non-empty domain) are separated by exactly one blank line, as §2.9's worked
-example and the plan's emission schematic show; the earlier "no blank line
-between consecutive packages" wording was a defect. The §2.9 byte layout is
-the frozen one (the Phase 100 gate test's candidate subset, the renderer,
-and the goldens all pin it).
+section's subgroups (the top-level unresolved lines, then one domain group
+per non-empty domain) are separated by exactly one blank line, as §2.9's
+worked example and the plan's emission schematic show; the earlier "no blank
+line between consecutive packages" wording was a defect. The §2.9 byte
+layout is the frozen one (the Phase 100 gate test's candidate subset, the
+renderer, and the goldens all pin it).
+
+**§2.1 corrected 2026-10-15 (feat-214-rel-invalid-diag Phase 100):** the
+per-domain grouping is the curly-brace `component "TYPE" { … }` domain group
+(above), replacing the former braceless `package "TYPE"` … `end package`
+block — a real-parser syntax error over component declarations (the §4.3
+verdict) — and the edges are label-free (the former uniform `: refers to`
+label is gone, §2.8). The shape above is the frozen one (the §2.9 worked
+example, the renderer, and the goldens all pin it).
 
 ### 2.2 Title
 
@@ -160,31 +169,69 @@ appear in the diagram.
 ### 2.6 Unresolved nodes
 
 A reference whose target cannot be resolved on disk is drawn as a top-level
-`component "{id}" as [TYPE-{id}] <<UNRESOLVED>>` node — outside any package,
-sorted by alias (the bracketed alias's text, lexicographic), BEFORE the first
-package. For the UUID domains the label is the verbatim uuid and the alias `[TYPE-{uuid}]`; for feat the label is the verbatim feat id and the alias the same id unbracketed-and-verbatim (e.g. `component "feat-207" as [feat-207] <<UNRESOLVED>>`).
+`component "{id}" as [TYPE-{id}] <<UNRESOLVED>>` node — outside any domain
+group, sorted by alias (the bracketed alias's text, lexicographic), BEFORE
+the first domain group (the §2.7 curly-brace `component "TYPE" { … }` form).
+For the UUID domains the label is the verbatim uuid and the alias `[TYPE-{uuid}]`; for feat the label is the verbatim feat id and the alias the same id unbracketed-and-verbatim (e.g. `component "feat-207" as [feat-207] <<UNRESOLVED>>`).
 
-### 2.7 Packages
+**§2.6 corrected 2026-10-17 (feat-214-rel-invalid-diag Phase 140 — D1):**
+the placement wording still named the removed `package` grouping ("outside
+any package … BEFORE the first package") — the 2026-10-15 correction scope
+(§2.1/§2.7/§2.8/§2.9) missed this section, so a reader implementing against
+§2.6 alone would anchor the unresolved nodes to a `package` that no longer
+exists in the emission. The groups are now the §2.7 curly-brace `component
+"TYPE" { … }` domain groups, and the placement reads "outside any domain
+group … BEFORE the first domain group" (the §2.9 worked example pins the
+byte layout).
 
-One `package "{TYPE}"` … `end package` per NON-EMPTY domain (a domain with
-no node emits no package), in `ALL_DOMAINS` order (adr, req, uc, tsk, qa,
-prb, gol, rsk, dec, sop, feat, vcr, sysrs); the package title is the
-UPPERCASE type tag. The close is the NAMED form `end package` — a bare
-`end` on a `package` fragment is a hard checker error in both modes (UC
-rulebook §6.1 / §7.1 below). Nodes are sorted by id (the verbatim id string,
-lexicographic) inside a package.
+### 2.7 Domain groups (curly)
 
-### 2.8 Edges
+One `component "{TYPE}" { … }` curly domain group per NON-EMPTY domain (a
+domain with no node emits no group), in `ALL_DOMAINS` order (adr, req, uc,
+tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs); the group title is the
+UPPERCASE type tag. The group is a `component` declaration line ending with
+`{`, closed by the `}` line. Nodes are sorted by id (the verbatim id string,
+lexicographic) inside a group.
 
-- One edge per UNIQUE reference: `{src-alias} --> {dst-alias} : refers to`
-  — the referenced item carries the incoming arrow; the label is the uniform
-  `: refers to` (per-type edge labels are out of scope — the 11 tag types
-  carry no consistently defined semantics).
+**§2.7 corrected 2026-10-15 (feat-214-rel-invalid-diag Phase 100):** the
+grouping form is the curly-brace domain group above, replacing the former
+`package "{TYPE}"` … `end package` block (this section's pre-correction
+text). The replacement is parser-verified, not stylistic: the real
+PlantUML 1.2026.8 parser rejects a component declaration inside a `package`
+block — EVERY braceless `package NAME … end package` form over component
+declarations fails (bare `component Foo`, quoted component, with/without
+alias, and the short `[Foo]` form), and a curly-open `package "NAME" {`
+closed with a named `end package` fails too (the §4.3 isolation matrix);
+the curly-brace `component "TYPE" { … }` group is the accepted form (the
+issue's own diagnosis: a component grouping must use curly braces). The
+structure checker gains a matching tripwire (a `package` fragment
+collecting component declarations must close with `}` — §7.1), so the
+false-negative class that let the old layout ship cannot re-enter through
+the checker-only path.
+
+### 2.8 Edges (label-free)
+
+- One edge per UNIQUE reference: `{src-alias} --> {dst-alias}` — the
+  referenced item carries the incoming arrow; the edge is LABEL-FREE (no
+  `: refers to` or any other label — per-type edge labels were always out
+  of scope, and the former uniform label was never intentionally approved).
 - Edges are deduped (one edge per (source, target) pair) and sorted by the
   tuple (source_type, source_id, target_type, target_id) — the type is the
   LOWERCASE domain name, the id the verbatim id string, lexicographic
   tuple order.
-- An on-cycle edge (§4) renders the red form `{src-alias} -[#red]-> {dst-alias} : refers to`; every off-cycle edge renders plain `-->`.
+- An on-cycle edge (§4) renders the red form `{src-alias} -[#red]->
+  {dst-alias}`; every off-cycle edge renders plain `-->`. Both forms are
+  label-free.
+
+**§2.8 corrected 2026-10-15 (feat-214-rel-invalid-diag Phase 100):** the
+edges are label-free, removing the former uniform `: refers to` label
+(planning-session ruling for issue #214 — the label was never intentionally
+approved; the requested form is a plain arrow connector from source to
+destination). Parser-verified: the label-free forms exit 0 in the real
+1.2026.8 parser and carry ZERO structure-checker findings in both modes
+(the edge operands are declared bracketed aliases, so the association
+branch emits no undeclared-node warning; the `-[#red]->` form is outside
+the checker's frozen line grammar and silently accepted, as before).
 
 ### 2.9 Worked example (frozen)
 
@@ -219,23 +266,23 @@ left to right direction
 
 component "9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b" as [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b] <<UNRESOLVED>>
 
-package "REQ"
+component "REQ" {
 component "Requirement A" as [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] <<REQ>>
-end package
+}
 
-package "UC"
+component "UC" {
 component "Use Case B" as [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] <<UC>>
-end package
+}
 
-package "FEAT"
+component "FEAT" {
 component "Feature: PlantUML Reference Graph Diagrams" as [feat-207-reference-graph] <<FEAT>>
-end package
+}
 
-[feat-207-reference-graph] --> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] --> [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] : refers to
-[UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
+[feat-207-reference-graph] --> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] --> [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c]
+[UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
 @enduml
 ```
 
@@ -249,6 +296,13 @@ its 42-character FEAT label is the §5.2 exactly-N no-op case, and at the
 default 40 that label would truncate (the renderer unit test,
 `tests/general/models/test_reference_graph.py`, renders the anchor at 42
 for byte-identity).
+
+**§2.9 regenerated 2026-10-15 (feat-214-rel-invalid-diag Phase 100):** the
+worked example is re-rendered BYTE-EXACT from the corrected layout (the
+§2.7 curly domain groups, the §2.8 label-free edges — same fact
+collection, same `max_label=42`). This text is the 2026-10-15 §4.3
+real-parser verdict's passing artifact and the Phase 100 gate test's
+`_EMITTED_SUBSET` verbatim (the rulebook↔gate drift pin).
 
 ### 2.10 File layout (CLI)
 
@@ -350,23 +404,77 @@ the rest of it, so a cycle's nodes form (a subset of) one SCC.
 Iterative Tarjan (stdlib, deterministic node order) inside the renderer —
 the model stays pure facts.
 
-### 4.3 Red-arrow syntax + Phase 100 gate verdict
+### 4.3 Red-arrow syntax + real-parser gate verdict
 
-On-cycle edges render `{src-alias} -[#red]-> {dst-alias} : refers to` (the
-candidate syntax `-[#red]->`, retained as the frozen form). The exact
-syntax was to be frozen by the Phase 100 real-parser gate — an env-gated
-test that runs where a `SPECMGR_PLANTUML_*` source is configured (the
-`tests/conftest.py` `plantuml_source()` machinery) and skips cleanly where
-none is — verifying the full candidate emission subset (§2.9: `component "…" as [alias] <<ST>>`
-declarations, the 14-entry skinparam colour block, `-->` / red-arrow edges
-with the `: refers to` label, self-loops, `package … end package` groups,
-top-level unresolved nodes) end-to-end through the real parser (parse +
-render).
+On-cycle edges render `{src-alias} -[#red]-> {dst-alias}` (label-free, §2.8
+— the red-arrow syntax `-[#red]->` is the frozen form). The gate is the
+env-gated test(s) that run where a `SPECMGR_PLANTUML_*` source is
+configured (the `tests/conftest.py` `plantuml_source()` machinery) and skip
+cleanly where none is — verifying the full emission subset (§2.9:
+`component "…" as [alias] <<ST>>` declarations, the 14-entry skinparam
+colour block, label-free `-->` / red-arrow edges, self-loops, the curly
+`component "TYPE" { … }` domain groups, top-level unresolved nodes)
+end-to-end through the real parser (parse + render), and — since
+feat-214 Phase 100 — the env-gated golden parser sweep over EVERY
+committed reference-graph golden (`tests/fixtures/reference-graphs/
+goldens/`): parser verification of the whole frozen set, not just the one
+synthetic subset.
 
-**Verdict, 2026-10-10 (Phase 100):** skipped -- candidate `-[#red]->` retained, re-verify where a source is configured — no `SPECMGR_PLANTUML_*` source was configured in the environment Phase 100 landed in, so the gate skipped cleanly and the candidate `-[#red]->` ships as the frozen red-arrow form. Where a source IS configured, the gate's env-gated test re-verifies the subset before this rulebook's red form may be changed. A
-`-[#red]->`-shaped line is outside the checker's frozen line grammar and is
-silently accepted by the structure checker (verified by trace; ACC-002 pins
-the zero-finding property over the full subset in both modes).
+**Verdict, 2026-10-15 (feat-214-rel-invalid-diag Phase 100 — replacing the
+2026-10-10 skip verdict):** VERIFIED against the pinned PlantUML 1.2026.8
+release jar (the 149874a build; pinned URL
+`https://github.com/plantuml/plantuml/releases/download/v1.2026.8/plantuml-1.2026.8.jar`,
+SHA-256 `5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462`,
+verified before use) — (a) the PRE-CORRECTION frozen layout FAILS: the
+former §2.9 worked example answers `ERROR 25 — Syntax Error? (Assumed
+diagram type: component)` (line 25 the first component declaration inside
+the braceless `package "REQ"` block), and EVERY braceless
+`package NAME … end package` form over component declarations fails the
+same way (bare `component Foo`, quoted component, with/without alias, the
+short `[Foo]` form), as does a curly-open `package "NAME" {` closed with a
+named `end package`; over four CURRENT real-registry emissions
+(registry-wide `include_feat=False` + scoped `reverse=True` over feat,
+req, and sysrs sources) the same syntax error lands on a component line
+inside the first braceless `package` block of each. (b) the CORRECTED
+layout PASSES: the regenerated §2.9 worked example (curly domain groups +
+label-free edges) exits 0 through the pinned jar and renders a real SVG
+carrying the palette fills (Pink `#FFC0CB`, PaleTurquoise `#AFEEEE`,
+LightBlue `#ADD8E6`, DarkRed `#8B0000`), the node titles, and the red
+`#F00` arrows; the four mechanically-transformed real-registry emissions
+(the same fix applied to the pre-correction sources) exit 0 with the same
+render proof. The `-[#red]->` form is the frozen red-arrow syntax on this
+verdict, and the label-free edge forms are frozen with it. A
+`-[#red]->`-shaped line is outside the checker's frozen line grammar and
+is silently accepted by the structure checker (verified by trace; ACC-002
+pins the zero-finding property over the full subset in both modes).
+**Convention (replacing the skip verdict's "re-verify where a source is
+configured"): an emission layout is NOT frozen on a skipped gate** — the
+2026-10-10 ship happened exactly that way (the gate skipped, the
+parser-INVALID layout shipped), and the CI real-parser job (feat-214
+Phase 120) makes the skip impossible on the commit path. Where a source IS
+configured, the gate's env-gated tests re-verify the subset and every
+golden before this rulebook's forms may be changed.
+
+**§4.3 amended 2026-10-15 (feat-214-rel-invalid-diag Phase 120) — the gate
+now RUNS in CI:** the `plantuml-parser` job in `.github/workflows/ci.yml`
+(single pinned Python 3.13.13, mirroring the `build` job's docs-drift pin)
+runs on every push to `main`/`dev` and on every PR: it downloads the
+pinned jar (URL + SHA-256 above), hash-verifies it in its own step BEFORE
+any use (the job fails on mismatch), exports `SPECMGR_PLANTUML_JAR`, and
+runs the FULL suite with `uv run --frozen pytest -n auto -rs` — so the
+env-gated real-parser tests (this subset gate, the golden parser sweep,
+and every other `require_plantuml_source`-gated test) execute and PASS on
+the commit path instead of skipping (ACC-005: the `-rs` short summary
+carries no `require_plantuml_source` skip reason; the only legitimate
+skips are the live URL-matrix tests, which apply only to a selected URL
+source), making the 2026-10-10 "skipped — re-verify where a source is
+configured" outcome structurally impossible there. The gates remain
+env-gated off the commit path: where no `SPECMGR_PLANTUML_*` source is
+configured they skip cleanly (reported via `pytest -rs`), and the
+documented local-dev flow is the gitignored repo-root `.env` (loaded by
+`tests/conftest.py` at collection — e.g.
+`SPECMGR_PLANTUML_JAR=/home/user/plantuml.jar` on the authoring machine),
+which runs the identical gates locally with zero repo changes.
 
 ## 5. Sanitisation and truncation (frozen)
 
@@ -446,9 +554,61 @@ the checker's frozen line grammar and are silently accepted (verified by
 trace, pinned by ACC-002's zero-finding assertion over the full subset in
 both modes); the named `end package` close is already accepted (a bare
 `end` on a `package` fragment is a hard error in both modes — which is why
-§2.7 closes packages with the named form). The existing UC subset +
-goldens stay byte-identical (regression-pinned by the existing goldens;
-ACC-002).
+§2.7 closed the former packages with the named form). The existing UC
+subset + goldens stay byte-identical (regression-pinned by the existing
+goldens; ACC-002).
+
+**§7.1 tripwire amendment + checker-contract restatement (2026-10-15,
+feat-214-rel-invalid-diag):** (a) TRIPWIRE — the demonstrated
+false-negative class becomes a verified true-positive rule: a `package`
+fragment that COLLECTS component declarations (a `component` keyword
+declaration line or a short-form `[X]` line — a line of exactly one
+bracketed token) must close with a `}` line; a named `end package` close
+(after a braceless-open or a curly-open) and an unclosed such fragment at
+a block boundary (an `@enduml`, a next `@startuml`, or a true EOF) are
+errors in BOTH modes, with a fix hint naming the curly-brace group form
+(`component "TYPE" { … }`). The rule is content-conditional: `package`
+fragments holding sequence content (participants — the UC subset,
+parser-verified in feat-185) collect no component declaration and stay
+exactly as before (the UC goldens stay byte-identical, zero-finding in
+both modes; the matching dated note lives in the UC rulebook §6.1). The
+pre-amendment checker reported zero findings in both modes over the
+parser-rejected braceless `package` grouping: the "never reject what the
+parser accepts" invariant forbids false positives, not false negatives,
+and the real parser is the sole validity authority (the 2026-10-15 §4.3
+verdict). (b) CHECKER CONTRACT, RESTATEATED — a `valid=True` verdict is a
+PARSER verdict only when `checked_by != structure`: the structure-only
+outcome (the all-unset `SPECMGR_PLANTUML_*` floor and every pre-flight
+short-circuit) means "plausible / marker-clean", never "valid". The
+checker keeps every load-bearing role: the sourceless validation floor
+(incl. the deliberate sourceless pre-commit `SPECMGR_TESTS_NO_DOTENV`
+re-run), actionable line/cause/fix-hint diagnostics, UNATTRIBUTED-marker
+detection (comments the parser cannot see), millisecond speed without a
+JVM, and the pre-flight short-circuit that never invokes the parser on a
+structure red.
+
+**§7.1 tripwire fix (2026-10-17, feat-214-rel-invalid-diag Phase 140 —
+E1):** the pre-fix implementation false-positived on the very close (a)
+requires: the checker's line grammar silently skipped `}` lines (the
+"anything else" branch) and never popped the fragment stack, so a
+curly-opened `package "X" {` fragment that collected a component
+declaration and was closed with a `}` line — REAL-PARSER-ACCEPTED (the
+isolation matrix's "OK" row, re-verified against the pinned 1.2026.8) —
+was reported at the block boundary as "never closed with '}' before the
+diagram ends" (an error in BOTH modes, and a factually wrong diagnosis:
+the close was present). The fix honours the rule as written: a `}` line
+now closes (pops) the innermost curly-open fragment, with no finding on
+the pop itself, so the tripwire fires only on a named `end package` close
+over a component-collecting fragment and on such a fragment still open at
+a block boundary (where the "never closed" wording is factually correct
+again). A `}` with no curly-open fragment open (the curly `component
+"TYPE" { … }` domain groups and the `skinparam component { … }` block —
+declarations/skinparam, not fragments) is silently accepted, exactly as
+before; every UC + reference golden stays zero-finding in both modes. The
+false positive was the exact class the checker's own invariant forbids
+("never rejects what the real parser accepts" — UC rulebook §6.3): it
+blocked in the `validate_plantuml`/`plantuml-check` chain a shape the real
+parser accepts, before the parser ever ran.
 
 ## 8. References
 

@@ -43,9 +43,12 @@ the fifth routing-table row, the frozen rendered-vs-text disambiguation phrases,
 13-domain (diagram surface, ``adr`` included) vs 12-domain (text workflows, ``adr``
 excluded by design) reconciliation note, and the load-bearing diagram facts: the tool /
 CLI / verdict / rulebook names, ``SPECMGR_DIAGRAM_MAX_TITLE`` default 40, the red
-``-[#red]->`` cycle syntax, the FEAT switch) in the whitespace-normalized body. All pins
-are mechanical string checks on the committed file; none of them import from ``src/``, so
-the test guards the skill wording, not the tool behavior.
+``-[#red]->`` cycle syntax, the FEAT switch, and — since feat-214-rel-invalid-diag Phase
+110 (REQ-007) — the scoped reverse mandate (ALWAYS request ``reverse=True`` / ALWAYS
+pass ``--reverse``, the API default staying ``False``), its O(registry size) cost, and
+the label-free edge fact) in the whitespace-normalized body. All pins are mechanical
+string checks on the committed file; none of them import from ``src/``, so the test
+guards the skill wording, not the tool behavior.
 """
 
 from __future__ import annotations
@@ -128,6 +131,15 @@ _DIAGRAM_FACT_PHRASES: tuple[str, ...] = (
     "strongly connected component",
     "--no-feat",
     "include_feat=False",
+)
+# feat-214-rel-invalid-diag Phase 110 (pin g extension, REQ-007): the scoped
+# reverse mandate (both surfaces, the API default staying False) + its stated
+# cost + the label-free edge fact — the mandate must not be stripped silently.
+_REVERSE_MANDATE_PHRASES: tuple[str, ...] = (
+    "ALWAYS request `reverse=True`",
+    "ALWAYS pass `--reverse`",
+    "O(registry size)",
+    "LABEL-FREE",
 )
 
 
@@ -344,6 +356,18 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
         normalized_body = _normalize_whitespace(body)
 
         for phrase in _DIAGRAM_FACT_PHRASES:
+            self.assertIn(phrase, normalized_body)
+
+    def test_reverse_mandate_cost_and_label_free_fact_present(self):
+        """feat-214-rel-invalid-diag Phase 110 (REQ-007): scoped diagrams ALWAYS
+        request reverse on both surfaces (MCP ``reverse=True`` / CLI
+        ``--reverse`` — the API default stays ``False``), the report must carry
+        the O(registry size) cost, and the edges are label-free."""
+        _, body = _split_frontmatter(_skill_text())
+
+        normalized_body = _normalize_whitespace(body)
+
+        for phrase in _REVERSE_MANDATE_PHRASES:
             self.assertIn(phrase, normalized_body)
 
 

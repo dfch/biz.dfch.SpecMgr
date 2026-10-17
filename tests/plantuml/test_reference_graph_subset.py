@@ -16,28 +16,55 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """The 2026-10-10 structure-checker amendment (feat-207-reference-graph Phase 100) + the
-env-gated real-parser gate for the candidate reference-graph emission subset.
+2026-10-15 tripwire amendment (feat-214-rel-invalid-diag Phase 100) + the env-gated
+real-parser gates for the reference-graph emission subset.
 
-The amendment (rulebook §6.1, both rulebooks): ``component`` joins the
-declaration keyword set; the ``as`` alias grammar (frozen shapes + legacy
+The 2026-10-10 amendment (rulebook §7.1, both rulebooks): ``component`` joins
+the declaration keyword set; the ``as`` alias grammar (frozen shapes + legacy
 walk) accepts a bracketed ``[...]`` token with no whitespace and no brackets
 inside, recorded in the declared set UNBRACKETED; ``_strip_operand`` unwraps
 a fully-bracketed token so declaration and edge operands compare identically.
-``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim — the
-frozen candidate emission subset the Phase 100 real-parser gate verifies
-(component declarations, the 14-entry skinparam block, ``-->``/red-arrow
-edges with the ``: refers to`` label, a self-loop, ``package … end package``
-groups, a top-level ``<<UNRESOLVED>>`` node).
 
-The gate is env-gated (the ``tests/conftest.py`` ``plantuml_source()``
-machinery): where a ``SPECMGR_PLANTUML_*`` source is configured it runs the
-subset through the real parser (parse + render); where none is configured it
-skips cleanly (reported via ``pytest -rs``). The 2026-10-10 verdict of a
-clean skip — "skipped -- candidate ``-[#red]->`` retained, re-verify where a
-source is configured" — is recorded in the reference-graph rulebook §4.3 and
-in the feature plan's Progress.
+The 2026-10-15 tripwire amendment (the reference-graph rulebook §7.1): a
+``package`` fragment that COLLECTS component declarations (a ``component``
+keyword declaration line or a short-form ``[X]`` line) must close with a
+``}`` line — a named ``end package`` close (after a braceless-open or a
+curly-open) and an unclosed such fragment at a block boundary are errors in
+BOTH modes with a curly-brace fix hint (the demonstrated false-negative
+class: the pre-amendment checker reported zero findings in both modes over
+the real-parser-rejected braceless ``package`` grouping). Content-
+conditional: ``package`` fragments holding sequence content (participants —
+the UC subset) are untouched.
+
+``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim (the
+corrected 2026-10-15 layout) — the frozen emission subset the real-parser
+gate verifies (component declarations, the 14-entry skinparam block,
+label-free ``-->``/red-arrow edges, a self-loop, the curly ``component
+"TYPE" { … }`` domain groups, a top-level ``<<UNRESOLVED>>`` node).
+
+The gates are env-gated (the ``tests/conftest.py`` ``plantuml_source()``
+machinery): where a ``SPECMGR_PLANTUML_*`` source is configured they run the
+subset — and, since feat-214 Phase 100, EVERY committed reference-graph
+golden (the parser sweep below) — through the real parser (parse + render,
+with the render proof); where none is configured they skip cleanly
+(reported via ``pytest -rs``) — but on the commit path they RUN: the CI job
+``plantuml-parser`` (``.github/workflows/ci.yml``, feat-214 Phase 120;
+single pinned Python 3.13.13, mirroring the docs-drift pin) hash-verifies
+the pinned 1.2026.8 jar BEFORE use, exports ``SPECMGR_PLANTUML_JAR``, and
+runs the full suite with ``pytest -n auto -rs`` so the gates execute and
+pass instead of skipping (ACC-005 — rulebook §4.3, the Phase 120 amendment
+note). Local dev runs the identical gates with zero repo changes via the
+gitignored repo-root ``.env`` (loaded by ``tests/conftest.py`` at
+collection — e.g. ``SPECMGR_PLANTUML_JAR=<jar path>``). The 2026-10-15
+verdict — the pre-correction layout FAILS (``ERROR 25`` — Syntax Error?
+(Assumed diagram type: component)), the corrected layout + label-free edges
+PASS (exit 0; the SVG carries the palette fills, the node titles, and the
+red ``#F00`` arrows), and "an emission layout is not frozen on a skipped
+gate" — is recorded in the reference-graph rulebook §4.3 and in the feature
+plan's Progress.
 """
 
+import re
 import unittest
 from pathlib import Path
 
@@ -49,7 +76,7 @@ from biz.dfch.specmgr.plantuml.structure import (
 )
 from tests.conftest import assert_rendered_svg, render_proof_body, require_plantuml_source
 
-#: The candidate emission subset (the reference-graph rulebook §2.9 worked
+#: The frozen emission subset (the reference-graph rulebook §2.9 worked
 #: example, verbatim — the drift pin between the rulebook and this gate).
 _EMITTED_SUBSET = """\
 @startuml Requirement A
@@ -75,27 +102,61 @@ left to right direction
 
 component "9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b" as [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b] <<UNRESOLVED>>
 
-package "REQ"
+component "REQ" {
 component "Requirement A" as [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] <<REQ>>
-end package
+}
 
-package "UC"
+component "UC" {
 component "Use Case B" as [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] <<UC>>
-end package
+}
 
-package "FEAT"
+component "FEAT" {
 component "Feature: PlantUML Reference Graph Diagrams" as [feat-207-reference-graph] <<FEAT>>
-end package
+}
 
-[feat-207-reference-graph] --> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] --> [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
-[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] : refers to
-[UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] : refers to
+[feat-207-reference-graph] --> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] --> [DEC-9cfe511e-3f0f-4f0e-b3f4-9c8f5f1c1a2b]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
+[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d] -[#red]-> [UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c]
+[UC-6f7e8d9c-5b4a-4f3e-8d7c-6b5a4f3e2d1c] -[#red]-> [REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]
 @enduml
 """
 
 _FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "uc-diagrams"
+_GOLDENS = Path(__file__).resolve().parents[1] / "fixtures" / "reference-graphs" / "goldens"
+
+#: One resolved node line of the emission (``component "{label}" as
+#: [alias] <<ST>>`` with a domain stereotype — the ``<<UNRESOLVED>>`` lines
+#: are node lines too, but their verbatim-id label is an id, not a title).
+_RESOLVED_NODE_LINE = re.compile(r'^component "(?P<label>.*)" as \[[^\[\]]+\] <<(?P<stereotype>[A-Z]+)>>$')
+
+
+def _node_title_proof(text: str) -> str:
+    """The render-proof string for one emission: the longest word of the FIRST resolved node's label.
+
+    The label's ``#quot;`` escapes are undone before word selection (the
+    rendered SVG carries the real quote character), and the proof is the
+    longest ALL-ALPHA word of the label: the real renderer may wrap a long
+    label across SVG lines at word boundaries, never inside a word, so one
+    word is always present contiguously in the SVG body (the render-proof
+    contract of the label-free layout — the former uniform edge label is
+    no longer a text the SVG must carry).
+    """
+    first_label: str | None = None
+    for line in text.split("\n"):
+        match = _RESOLVED_NODE_LINE.match(line)
+        if match is not None and match.group("stereotype") != "UNRESOLVED":
+            first_label = match.group("label")
+            break
+    assert first_label is not None, "the emission carries no resolved node label for a render proof"
+    label = first_label.replace("#quot;", '"')
+    words = [word.strip('…"') for word in label.split()]
+    candidates = [word for word in words if word and word.isalpha()]
+    if not candidates:
+        candidates = [word for word in words if word]
+    assert candidates, f"no usable node-title word in label {first_label!r}"
+    result = max(candidates, key=len)
+    return result
 
 
 class TestReferenceGraphSubsetChecker(unittest.TestCase):
@@ -196,14 +257,207 @@ class TestReferenceGraphSubsetChecker(unittest.TestCase):
                     self.assertIn("UNATTRIBUTED marker", warning.message)
 
 
+class TestPackageComponentTripwire(unittest.TestCase):
+    """The 2026-10-15 tripwire amendment (feat-214-rel-invalid-diag Phase 100, REQ-004 /
+    rulebook §7.1): a ``package`` fragment that collects component
+    declarations (a ``component`` keyword declaration line or a short-form
+    ``[X]`` line) must close with a ``}`` line — a named ``end package``
+    close (braceless-open or curly-open) and an unclosed such fragment at a
+    block boundary are errors in BOTH modes with a curly-brace fix hint.
+    Content-conditional: sequence ``package`` fragments (participants) and
+    the corrected curly ``component "TYPE" { … }`` form stay zero-finding."""
+
+    def test_braceless_package_with_component_and_named_close_errors_both_modes(self):
+        # the verified parser-failing shape Q1 (the pre-correction shipped
+        # layout): the tripwire fires on the close line in both modes
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\nend package\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertEqual(len(result.errors), 1, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors[0].line, 4)
+                self.assertIn("named 'end package' close", result.errors[0].message)
+                self.assertIn("opened at line 2, braceless", result.errors[0].message)
+                self.assertIn("curly-brace", result.errors[0].fix_hint)
+                self.assertIn('component "TYPE" {', result.errors[0].fix_hint)
+                self.assertEqual(result.warnings, [])
+
+    def test_curly_open_package_with_named_close_errors_both_modes(self):
+        # the verified parser-failing shape R1 (curly-open + 'end package'
+        # close): the open shape does not matter — the named close over a
+        # component declaration is the error
+        text = '@startuml t\npackage "REQ" {\ncomponent Foo\nend package\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertEqual(len(result.errors), 1, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors[0].line, 4)
+                self.assertIn("named 'end package' close", result.errors[0].message)
+                self.assertIn("opened at line 2, curly-open", result.errors[0].message)
+                self.assertIn("curly-brace", result.errors[0].fix_hint)
+
+    def test_unclosed_component_package_at_enduml_errors_both_modes(self):
+        # the block-boundary firing site: the tripwire error is attributed
+        # to the OPEN line (the note-unclosed error's own convention)
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertEqual(len(result.errors), 1, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors[0].line, 2)
+                self.assertIn("never closed with", result.errors[0].message)
+                self.assertIn("curly-brace", result.errors[0].fix_hint)
+
+    def test_unclosed_component_package_at_true_eof_errors_both_modes(self):
+        # true EOF (no @enduml): the tripwire error fires alongside the
+        # missing-@enduml lenient finding (promoted in standalone) — the
+        # tripwire itself is an error in BOTH modes
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                tripwire = [error for error in result.errors if "never closed with" in error.message]
+                self.assertEqual(len(tripwire), 1, f"{mode}: {result.errors}")
+                self.assertEqual(tripwire[0].line, 2)
+
+    def test_short_form_component_line_trips_the_package(self):
+        # the Q1 matrix's short `[Foo]` form: a line of exactly one bracketed
+        # token is a component declaration to the parser — it trips the
+        # braceless package
+        text = "@startuml t\npackage REQ\n[Foo]\nend package\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertFalse(result.ok)
+                self.assertTrue(any("named 'end package' close" in error.message for error in result.errors))
+
+    def test_component_declarations_outside_a_package_do_not_trip(self):
+        # top-level component declarations (no enclosing package fragment)
+        # carry no tripwire — the new layout's own shape
+        text = "@startuml t\ncomponent Foo\ncomponent Bar\n[Foo] --> [Bar]\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_the_corrected_curly_component_group_is_zero_finding(self):
+        # the parser-verified fix shape (the corrected emission layout's own
+        # domain group): zero findings in both modes
+        text = '@startuml t\ncomponent "REQ" {\ncomponent Foo\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_sequence_package_stays_zero_finding(self):
+        # the content condition: a package fragment holding SEQUENCE content
+        # (participants — the UC subset) collects no component declaration
+        # and keeps its zero-finding behavior (named close included)
+        text = "@startuml t\npackage p\nparticipant A\nparticipant B\nA -> B: x\nend package\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_unclosed_sequence_package_keeps_only_the_lenient_finding(self):
+        # an unclosed package WITHOUT a component declaration keeps the
+        # pre-amendment lenient behavior (warning in preflight, promoted
+        # error in standalone) — no tripwire message
+        text = "@startuml t\npackage p\nparticipant A\nA -> A: x\n@enduml\n"
+
+        preflight = check_structure(text, MODE_PREFLIGHT)
+        self.assertTrue(preflight.ok)
+        self.assertEqual(len(preflight.warnings), 1)
+        self.assertIn("unclosed 'package' fragment", preflight.warnings[0].message)
+
+        standalone = check_structure(text, MODE_STANDALONE)
+        self.assertFalse(standalone.ok)
+        self.assertEqual(len(standalone.errors), 1)
+        self.assertIn("unclosed 'package' fragment", standalone.errors[0].message)
+
+    # --- the 2026-10-17 fix (feat-214-rel-invalid-diag Phase 140, E1): the
+    # parser-OK shapes — a curly-opened 'package' fragment closed with a '}'
+    # line is REAL-PARSER-ACCEPTED over component declarations (the plan's
+    # isolation matrix; re-verified against the pinned 1.2026.8, both shapes
+    # exit 0), so the tripwire's own required close must not be reported as
+    # unclosed at the block boundary (the pre-fix false positive) ---
+
+    def test_curly_open_package_quoted_with_component_and_brace_close_is_zero_finding_both_modes(self):
+        # parser-OK shape (quoted name, verified exit 0 on 1.2026.8): zero
+        # findings in both modes — no tripwire, no lenient unclosed finding
+        text = '@startuml t\npackage "REQ" {\ncomponent Foo\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_curly_open_package_bare_name_with_component_and_brace_close_is_zero_finding_both_modes(self):
+        # parser-OK shape (the isolation matrix's literal unquoted row,
+        # verified exit 0 on 1.2026.8): zero findings in both modes
+        text = "@startuml t\npackage REQ {\ncomponent Foo\n}\n@enduml\n"
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+    def test_nested_curly_packages_with_components_close_innermost_first(self):
+        # parser-OK nested shape (verified exit 0 on 1.2026.8): each '}' pops
+        # the INNERMOST curly-open fragment (the inner package first), so no
+        # fragment reaches the block boundary — zero findings in both modes.
+        # (The pre-fix code left both open and reported BOTH with the
+        # factually-wrong "never closed with '}'" tripwire error.)
+        text = '@startuml t\npackage "A" {\npackage "B" {\ncomponent Foo\n}\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                self.assertTrue(result.ok, f"{mode}: {result.errors}")
+                self.assertEqual(result.errors, [])
+                self.assertEqual(result.warnings, [])
+
+
 class TestReferenceGraphSubsetParserGate(unittest.TestCase):
-    """The Phase 100 real-parser gate (env-gated, ACC-002's parser half): the
-    candidate emission subset must parse + render through the REAL PlantUML
-    source — the frozen red-arrow syntax ``-[#red]->`` ships on this verdict.
-    On a clean skip (no ``SPECMGR_PLANTUML_*`` source configured) the
-    recorded verdict is: "skipped -- candidate ``-[#red]->`` retained,
-    re-verify where a source is configured" (rulebook §4.3, the feature
-    plan's Progress)."""
+    """The Phase 100 real-parser gate (env-gated, ACC-001/ACC-002's parser half):
+    the frozen emission subset must parse + render through the REAL PlantUML
+    source. The 2026-10-15 verdict (rulebook §4.3, the feature plan's
+    Progress): the pre-correction layout FAILS the pinned 1.2026.8 parser
+    (``ERROR 25`` — Syntax Error? (Assumed diagram type: component)), the
+    corrected subset (curly domain groups + label-free edges — the §2.9
+    worked example) PASSES (exit 0, palette fills + node titles + the red
+    ``#F00`` arrows in the SVG) — the red-arrow syntax ``-[#red]->`` and the
+    label-free edge forms ship on this verdict. On a clean skip (no
+    ``SPECMGR_PLANTUML_*`` source configured, e.g. a sourceless local run)
+    the gate skips with the ``require_plantuml_source`` reason; an emission
+    layout is NOT frozen on a skipped gate (the 2026-10-15 convention) —
+    on the commit path the gate RUNS: the CI job ``plantuml-parser`` (feat-
+    214 Phase 120) configures the hash-verified pinned jar and runs this
+    test with ``-rs``, where no ``require_plantuml_source`` skip is
+    tolerated (ACC-005), and the local dev flow is the gitignored repo-root
+    ``.env`` (``SPECMGR_PLANTUML_JAR=...``, rulebook §4.3 Phase 120 note)."""
 
     def test_candidate_subset_renders_valid_through_the_real_parser(self):
         info = require_plantuml_source(self)
@@ -218,9 +472,48 @@ class TestReferenceGraphSubsetParserGate(unittest.TestCase):
         self.assertTrue(result.structure_ok)
         self.assertIs(result.valid, True)
         self.assertIs(result.rendered, True)
-        # the render-proof contract: the selected source's own SVG body carries
-        # the diagram's uniform edge label and no crash marker
-        assert_rendered_svg(render_proof_body(info.kind, info.value, _EMITTED_SUBSET), "refers to")
+        # the render-proof contract (the 2026-10-15 proof-string change): the
+        # selected source's own SVG body carries a node title (the label-free
+        # edges no longer carry the uniform edge label) and no crash marker
+        assert_rendered_svg(
+            render_proof_body(info.kind, info.value, _EMITTED_SUBSET), _node_title_proof(_EMITTED_SUBSET)
+        )
+
+
+class TestReferenceGraphGoldenParserSweep(unittest.TestCase):
+    """The env-gated golden parser sweep (feat-214-rel-invalid-diag Phase 100, REQ-003/REQ-006):
+    EVERY committed reference-graph golden — all 22 byte-stable files under
+    ``tests/fixtures/reference-graphs/goldens/`` — must parse + render
+    through the REAL PlantUML source, extending the parser verification from
+    the one synthetic subset (the §2.9 worked example) to the whole frozen
+    golden set (the root-cause fix for the ship-on-a-skipped-gate gap: on
+    the commit path the CI job ``plantuml-parser`` — feat-214 Phase 120,
+    hash-verified pinned jar, full suite with ``-rs`` — makes this sweep
+    RUN on every commit; the gitignored repo-root ``.env`` dev flow does
+    the same locally, rulebook §4.3 Phase 120 note)."""
+
+    def test_every_golden_renders_valid_through_the_real_parser(self):
+        info = require_plantuml_source(self)
+        assert info.kind is not None
+        assert info.value is not None  # an available source always carries its configured value
+
+        goldens = sorted(_GOLDENS.glob("*.puml"))
+        self.assertEqual(len(goldens), 22)  # the whole frozen set — the count is part of the pin
+        for path in goldens:
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(golden=path.name):
+                result = chain.validate_plantuml(text)
+
+                self.assertEqual(result.checked_by, info.kind)
+                self.assertTrue(result.available)
+                self.assertEqual(result.source_state, chain.STATE_OK)
+                self.assertTrue(result.structure_ok)
+                self.assertIs(result.valid, True, f"{path.name}: {result}")
+                self.assertIs(result.rendered, True, f"{path.name}: {result}")
+                # the render-proof contract: the selected source's own SVG body
+                # carries a node title (the label-free edges carry no text to
+                # prove against) and no crash marker
+                assert_rendered_svg(render_proof_body(info.kind, info.value, text), _node_title_proof(text))
 
 
 if __name__ == "__main__":

@@ -31,6 +31,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   by new fake-`gh`-shim test cases in `tests/test_release_sh.py`
   (feat-213-release, GitHub issue #213).
 
+- The reference-graph diagram emission layout is now real-parser-valid: the
+  per-domain grouping changed from the braceless `package "TYPE" … end
+  package` block (a syntax error in PlantUML 1.2026.8 — component
+  declarations inside such a block are rejected) to curly `component "TYPE"
+  { … }` domain groups, and the never-approved uniform `: refers to` edge
+  label is gone — edges render label-free (`{src} --> {dst}` off-cycle,
+  `{src} -[#red]-> {dst}` on-cycle). All 22 byte-stable goldens, the
+  rulebook §2.9 worked example, and every doc surface were regenerated/
+  updated to match (feat-214-rel-invalid-diag, GitHub issue #214).
+- A structure-checker false-negative class: a `package` fragment collecting
+  component declarations now must close with a `}` line — a named `end
+  package` close (braceless- or curly-open) and an unclosed such fragment at
+  a block boundary are errors in both modes with a curly-brace fix hint;
+  `package` fragments holding sequence content (the UC subset) are
+  unaffected (feat-214-rel-invalid-diag, GitHub issue #214).
+
+### Added
+
+- An env-gated golden parser sweep (every reference-graph golden through
+  `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
+  node-title render proof) and a new `plantuml-parser` CI job (pinned Python
+  3.13.13) that downloads the pinned PlantUML 1.2026.8 release jar (pinned
+  URL + SHA-256, hash-verified before use) and runs the full suite with
+  `pytest -n auto -rs` — the env-gated real-parser tests (incl. the
+  reference-graph subset gate and the golden sweep) now execute and pass on
+  the commit path instead of skipping (feat-214-rel-invalid-diag, GitHub
+  issue #214).
+- The `specmgr-refs` skill's diagram workflow now requests `reverse` for
+  every SCOPED diagram (MCP `reverse=True` / CLI `--reverse`) and states the
+  O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
+  stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
+
 ## [0.36.0] - 2026-10-13
 
 ### Added

@@ -19,15 +19,15 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "No Feat Source" as [REQ-c008c008-c008-4c08-8c08-c008c008c008] <<REQ>>
-end package
+}
 
-package "FEAT"
+component "FEAT" {
 component "No Feat Feature" as [feat-7-no-feat] <<FEAT>>
 component "No Feat Feature Two" as [feat-8-no-feat-two] <<FEAT>>
-end package
+}
 
-[feat-7-no-feat] --> [feat-8-no-feat-two] : refers to
-[feat-7-no-feat] --> [REQ-c008c008-c008-4c08-8c08-c008c008c008] : refers to
+[feat-7-no-feat] --> [feat-8-no-feat-two]
+[feat-7-no-feat] --> [REQ-c008c008-c008-4c08-8c08-c008c008c008]
 @enduml

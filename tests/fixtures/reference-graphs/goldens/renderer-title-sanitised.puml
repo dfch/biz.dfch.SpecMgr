@@ -19,7 +19,7 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "A #quot;quoted#quot; title" as [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
-end package
+}
 @enduml

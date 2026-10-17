@@ -48,6 +48,39 @@ UNATTRIBUTED markers are warnings in both
 modes (deliberate placeholders — syntactically ``'`` comments the real parser
 accepts; the zero-marker rule is enforced by the agent flow, not here).
 
+The 2026-10-15 tripwire amendment (feat-214-rel-invalid-diag, the reference-
+graph rulebook §7.1): the ``never rejects what the parser accepts`` invariant
+forbids false positives, not false negatives — and the demonstrated gap was a
+false negative (the pre-amendment checker reported zero findings in both
+modes over the parser-rejected braceless ``package "TYPE" … end package``
+grouping of component declarations). The amendment is the reverse direction:
+a ``package`` fragment that COLLECTS component declarations (a ``component``
+keyword declaration line or a short-form ``[X]`` line) must close with a
+``}`` line — a named ``end package`` close (after a braceless-open or a
+curly-open) and an unclosed such fragment at a block boundary are errors in
+BOTH modes, with a fix hint naming the curly-brace group form
+(``component "TYPE" { … }``). The rule is content-conditional: ``package``
+fragments holding sequence content (participants — the UC subset,
+parser-verified in feat-185) collect no component declaration and stay
+exactly as before.
+
+The 2026-10-17 fix (feat-214-rel-invalid-diag Phase 140, E1) corrects a
+false positive the pre-fix implementation introduced against its own rule:
+a ``}`` line was silently skipped by the line grammar and never popped the
+fragment stack, so a curly-opened ``package "X" {`` fragment that collected
+a component declaration and was closed with the rule's OWN required close
+(a ``}`` line — real-parser-accepted, verified against the pinned 1.2026.8)
+was reported at the block boundary as "never closed with '}'" — an error in
+BOTH modes and a factually wrong diagnosis (the close was present). A
+``}`` line now closes (pops) the innermost curly-open fragment, with no
+finding on the pop itself; the tripwire fires only on a named ``end
+package`` close over a component-collecting fragment and on such a fragment
+still open at a block boundary (where the diagnostic's "never closed"
+wording is factually correct again). A ``}`` with no curly-open fragment
+open (the curly ``component "TYPE" { … }`` domain groups and the ``skinparam
+component { … }`` block — declarations/skinparam, not fragments) stays
+silently accepted, exactly as before.
+
 Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot
@@ -76,6 +109,26 @@ Attributes:
         markers and raw-quote notices; the lenient set in preflight).
 
 
+### `_FragmentState`
+
+One open fragment on the checker's line-oriented stack (internal state).
+
+The 2026-10-15 tripwire amendment extends the pre-amendment
+``(kind, open line)`` tuple with two recorded facts: :attr:`curly_open`
+(the open line ends with ``{``) and :attr:`has_component` (the fragment
+collected a component declaration — a ``component`` keyword line or a
+short-form ``[X]`` line — since the open). Only ``package`` fragments are
+subject to the tripwire; the fields are recorded for every fragment kind.
+
+Attributes:
+    kind: the fragment keyword (``alt``/``opt``/``loop``/``group``/
+        ``box``/``rectangle``/``package``).
+    open_line: the 1-based line of the fragment open.
+    curly_open: ``True`` when the open line ends with ``{``.
+    has_component: ``True`` once the fragment collected a component
+        declaration (the tripwire's content condition).
+
+
 ## Functions
 
 ### `_declaration_parts(rest: 'str') -> 'tuple[str, str | None, str | None, list[Finding]]'`
@@ -98,6 +151,18 @@ negative control ``participant A <<user`` — the real parser answers it
 The pre-2026-10-08 ``_declaration_parts`` walk, kept for the shapes the
 frozen-form regexes above do not cover (byte-identical behavior for
 every shape the legacy path handles).
+
+
+### `_mark_component_fragment(fragments: 'list[_FragmentState]') -> 'None'`
+
+Record a component declaration on the innermost open ``package`` fragment (internal state).
+
+The 2026-10-15 tripwire's content condition: a component declaration
+(a ``component`` keyword line or a short-form ``[X]`` line) marks the
+nearest enclosing ``package`` fragment as component-collecting. A
+declaration outside any ``package`` fragment (top-level, or inside a
+non-package fragment) is a no-op — the tripwire is scoped to ``package``
+fragments only (the reference-graph rulebook §7.1).
 
 
 ### `_strip_operand(token: 'str') -> 'str'`

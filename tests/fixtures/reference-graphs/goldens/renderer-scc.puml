@@ -21,27 +21,27 @@ left to right direction
 
 component "eeee0007-0000-4000-8000-eeeeeeeeeeee" as [DEC-eeee0007-0000-4000-8000-eeeeeeeeeeee] <<UNRESOLVED>>
 
-package "REQ"
+component "REQ" {
 component "Scc Node A" as [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
 component "Scc Node B" as [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
 component "Scc Node C" as [REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] <<REQ>>
-end package
+}
 
-package "UC"
+component "UC" {
 component "Scc Node D" as [UC-eeee0004-0000-4000-8000-eeeeeeeeeeee] <<UC>>
 component "Scc Node E" as [UC-eeee0005-0000-4000-8000-eeeeeeeeeeee] <<UC>>
-end package
+}
 
-package "GOL"
+component "GOL" {
 component "Scc Node G" as [GOL-eeee0006-0000-4000-8000-eeeeeeeeeeee] <<GOL>>
-end package
+}
 
-[REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] --> [DEC-eeee0007-0000-4000-8000-eeeeeeeeeeee] : refers to
-[REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] : refers to
-[REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] : refers to
-[REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] : refers to
-[REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] : refers to
-[REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] --> [UC-eeee0004-0000-4000-8000-eeeeeeeeeeee] : refers to
-[UC-eeee0004-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [UC-eeee0005-0000-4000-8000-eeeeeeeeeeee] : refers to
-[UC-eeee0005-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [UC-eeee0004-0000-4000-8000-eeeeeeeeeeee] : refers to
+[REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] --> [DEC-eeee0007-0000-4000-8000-eeeeeeeeeeee]
+[REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee]
+[REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee]
+[REQ-eeee0002-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee]
+[REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [REQ-eeee0001-0000-4000-8000-eeeeeeeeeeee]
+[REQ-eeee0003-0000-4000-8000-eeeeeeeeeeee] --> [UC-eeee0004-0000-4000-8000-eeeeeeeeeeee]
+[UC-eeee0004-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [UC-eeee0005-0000-4000-8000-eeeeeeeeeeee]
+[UC-eeee0005-0000-4000-8000-eeeeeeeeeeee] -[#red]-> [UC-eeee0004-0000-4000-8000-eeeeeeeeeeee]
 @enduml
