@@ -20,9 +20,9 @@
 Pipeline stage 1 of "parse -> validate -> render". This module only
 does the "parse" half; "validate" is simply letting :class:`Adr`/
 :class:`AdrBody`/:class:`AdrFrontmatter`'s own Pydantic validators run (the
-same schema-driven check the future ``validate_adr`` MCP tool uses) --
+same schema-driven check the ``validate_adr`` MCP tool uses) --
 there is no separate validation pass here. "render" is a later,
-separate module (second half).
+separate module.
 
 Two error channels, by design:
 

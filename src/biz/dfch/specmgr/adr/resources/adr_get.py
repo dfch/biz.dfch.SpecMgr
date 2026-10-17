@@ -42,7 +42,7 @@ from ..tools._paths import adr_base_dir
     ),
     mime_type="application/json",
 )
-def adr_get(id: str) -> Adr:  # noqa: A002 -- "id" matches the plan's tool/resource parameter name throughout
+def adr_get(id: str) -> Adr:  # noqa: A002 -- "id" matches the parameter name used across the ADR tool/resource surface
     """Return the ADR identified by ``id`` as a template resource.
 
     Same id-resolution and no-cache, re-read-per-call design as

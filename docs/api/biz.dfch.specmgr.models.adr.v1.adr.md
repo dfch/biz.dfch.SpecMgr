@@ -13,10 +13,10 @@ scheme (ADR 8cf940c5-3100-485c-a12d-14b59b631712), implemented in
 
 A full ADR document: YAML frontmatter and body.
 
-This is the structured object the future parser produces from an
+This is the structured object the parser produces from an
 on-disk ``.md`` file and the renderer consumes to produce one, and the
-shape ``get_adr``/``create_adr`` are expected to exchange
-with the LLM instead of raw markdown text.
+shape ``get_adr``/``create_adr`` exchange with the LLM instead of raw
+markdown text.
 
 The specmgr schema version lives on ``frontmatter.version``,
 not here -- it must round-trip through the on-disk file's YAML block,

@@ -3,7 +3,7 @@
 Thin file read/write helpers over ``parse_adr``/``render_adr``.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters,
-kept separate from the ``@mcp.tool()``-decorated functions in ``tools.py``
+kept separate from the ``@mcp.tool()``-decorated functions in ``adr/tools/``
 so they stay independently testable.
 
 ## Functions

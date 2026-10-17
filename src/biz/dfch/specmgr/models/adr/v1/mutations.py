@@ -17,11 +17,12 @@
 
 """Structured edit operations on an :class:`Adr`.
 
-This is the model-layer half of the future MCP tool surface's
-``update_section``/``option_*``/``set_status`` tools: it implements
-their semantics against an in-memory :class:`Adr`, deliberately excluding any
-file I/O (reading/writing/finding a document by id) -- that belongs to a
-future ``tools/`` package, not here. Every function here is pure: it takes an
+This is the model-layer half of the ``update_section``/``option_*`` ADR
+tools and the generic ``set_status`` tool (called with ``type="adr"``):
+it implements their semantics against an in-memory :class:`Adr`,
+deliberately excluding any file I/O (reading/writing/finding a document
+by id) -- that belongs to the ``adr/tools/`` package, not here. Every
+function here is pure: it takes an
 :class:`Adr` and returns a *new* one (or, for read-only lookups, plain data),
 never mutating its argument, so the tool layer's own "re-read, re-parse,
 re-render, re-write" cycle around each call ("source of truth is

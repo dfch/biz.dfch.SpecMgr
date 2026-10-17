@@ -22,7 +22,7 @@ Deliberately excludes any ``mcp``/file-write dependency beyond read-only
 directory listing/parsing, so this module stays testable without an MCP
 server: ``adr_base_dir`` never creates the directory (a read-only tool
 shouldn't have that side effect), only ``ensure_adr_base_dir`` does, and
-only ``create_adr`` (in ``tools.py``) calls it.
+only the ``create_adr`` tool calls it.
 
 There is deliberately no in-memory id -> path cache: every
 lookup re-scans the base directory and re-parses each file's frontmatter,
@@ -110,7 +110,7 @@ def adr_base_dir() -> Path:
 def ensure_adr_base_dir() -> Path:
     """Return the configured ADR base directory, creating it if missing.
 
-    Only ``create_adr`` (``tools.py``) calls this -- every other tool uses
+    Only the ``create_adr`` tool calls this -- every other tool uses
     the read-only :func:`adr_base_dir` instead.
     """
     path = adr_base_dir()
