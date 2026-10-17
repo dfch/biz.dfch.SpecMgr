@@ -4,7 +4,7 @@ created: '2026-10-05T09:40:30.333+02:00'
 id: feat-189-reduce-agent-round-trips
 status: planning
 type: feat
-updated: '2026-10-05T20:10:52.000+02:00'
+updated: '2026-10-17T05:35:35.653+02:00'
 version: 1.0.0
 ---
 
@@ -33,17 +33,17 @@ measurable targets T1-T3 are in the Acceptance Criteria.
 
 ### Requirements
 
-- REQ-001: The markdown-level artifacts a create agent fetches (template/example) carry every closed-form rule the Phase 100 evidence shows agents fail on, verbatim and before the first create call: the prb lead-sentence bracketed frame in the template and example, the tsk task-text fidelity directive, and the req/rsk/qa closed sets as template comments (plan inventory C1-C3, C9-C11; audit gaps 04, 05, 07, 08, 09; instruction gap 3).
+- REQ-001: The markdown-level artifacts a create agent fetches (template/example) carry every closed-form rule the Phase 100 evidence shows agents fail on, verbatim and before the first create call: the prb lead-sentence bracketed frame in the template and example, the tsk task-text fidelity directive, the req/rsk/qa closed sets as template comments, and the vcr coverage set as a template comment (plan inventory C1-C3, C9-C12; audit gaps 04, 07, 08, 09, 10; instruction gap 3).
 - REQ-002: The 12 create instruction files reference the `get_<d>_template`/`get_<d>_example` tools (1 hop) and make the schema fetch conditional, and the 12 update instruction files make the schema fetch conditional on whole-body or structural changes (plan inventory C4, C5; instruction gaps 2, 4).
-- REQ-003: The agent-facing metadata names the structure reference without prescribing a fetch: the 12 `create_<d>` tool descriptions plus the generic `update` and `validate` tool descriptions, the 12 schema resource descriptions (usage-oriented, parsed-JSON view, template pointer), and the 24 create/update prompt descriptions (plan inventory C6-C8; audit gaps 11, 12, 13, 15, 16; instruction gap 1).
+- REQ-003: The agent-facing metadata names the structure reference without prescribing a fetch: the 12 `create_<d>` tool descriptions plus the generic `update` and `validate` tool descriptions, the 12 `get_<d>_schema` tool descriptions (usage-oriented, parsed-JSON view, template pointer), and the 24 create/update prompt descriptions (plan inventory C6, C8; audit gaps 12, 13, 15; instruction gap 1).
 - REQ-004: The 12 generated schemas carry the closed sets as machine-readable metadata (enum/pattern) emitted via `json_schema_extra` only, with zero change to parse/validation behavior, regenerated with `specmgr schema` and the packaged copies refreshed (plan inventory C13, C14; audit gaps 02-10).
 - REQ-005: The absence of a `specmgr://adr/schema` resource is documented as a deliberate exclusion in the `create_adr` tool description (the tool's own typed input parameters are the authoritative ADR structure reference), with no new schema generator entry for adr (plan inventory C15; audit gap 01).
-- REQ-006: The re-run of the feat-128 Phase 100 methodology (identical instruction strings and seeds, pinned model, worktree server surface, n>=3 per cell) meets the measurable targets T1-T3, and the outcome is recorded in this feature folder (plan inventory verification phase; the "linked follow-up feature" branch of feat-128 ACC-003).
+- REQ-006: The re-run of the feat-128 Phase 100 methodology (identical instruction strings and seed content -- fresh UUIDs per the harness -- pinned model, worktree server surface, n>=3 per cell) meets the measurable targets T1-T3, and the outcome is recorded in this feature folder (plan inventory verification phase; the "linked follow-up feature" branch of feat-128 ACC-003).
 - REQ-007: The schema access surface converts from the 12 `specmgr://<domain>/schema` resources to 12 `get_<d>_schema` tools under a new ADR extending ddfb1109-422d-4507-8dbc-dc5e4bec9614 and ec9f5262-9912-49d0-903f-fcfb54f28c13; each tool returns the generated schema with a usage-oriented description (absorbing plan C7), the resources are removed, and all plan pointers (C6, C8) name the tool (plan inventory C17; audit gaps 11, 13; instruction gap 4).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: The prb template and prb example both carry the exact bracketed lead-sentence frame, the tsk template's leading comment no longer induces task-text rewrites, and the req/rsk/qa templates name their closed sets in comments -- each modified file round-trips through its domain parser (REQ-001; T1's structural precondition).
+- [ ] ACC-001: The prb template and prb example both carry the exact bracketed lead-sentence frame, the tsk template's leading comment no longer induces task-text rewrites, the req/rsk/qa templates name their closed sets in comments, and the vcr template names the coverage set in a comment -- each modified file round-trips through its domain parser (REQ-001; T1's structural precondition).
 - [ ] ACC-002: All 12 create instruction files reference the `get_<d>_template`/`get_<d>_example` tools and carry a conditional schema step, and all 12 update instruction files carry the context-sensitive schema step (REQ-002).
 - [ ] ACC-003: The live worktree server surface carries the new clauses -- probed via `tools/list`, `list_resources`, and the prompt metadata (harness `mcp_probe.py`/`mcp_descs.py`): the 12 `create_<d>` + `update` + `validate` tool descriptions, the 12 `get_<d>_schema` tool descriptions (usage-oriented; the 12 `specmgr://<domain>/schema` resources are gone), and the 24 create/update prompt descriptions -- and the `create_adr` description documents the adr schema exclusion; the C17 ADR exists under `docs/adr/` and is listed via `specmgr adr-toc` (REQ-003, REQ-005, REQ-007).
 - [ ] ACC-004: `uv run --frozen specmgr schema` exits 0 with the 12 updated `docs/<domain>_schema.json` carrying the inventory's enum/pattern metadata and byte-identical packaged copies, and the parse-behavior invariance tests pass (every closed set accepted/rejected exactly as before the metadata change) (REQ-004).
@@ -53,11 +53,11 @@ measurable targets T1-T3 are in the Acceptance Criteria.
 
 #### Included
 
-- The packaged data files: the prb template and example (lead-sentence frame), the tsk template (comment rewording), the req/rsk/qa templates (closed-set comments), all 12 create instruction files, and all 12 update instruction files.
+- The packaged data files: the prb template and example (lead-sentence frame), the tsk template (comment rewording), the req/rsk/qa templates (closed-set comments), the vcr template (coverage-set comment), all 12 create instruction files, and all 12 update instruction files.
 - The agent-facing metadata clauses: the 12 `create_<d>` tool descriptions, the generic `update` and `validate` tool descriptions, the `create_adr` tool description, the 12 `get_<d>_schema` tool descriptions (new tools) with the 12 schema resources removed, and the 24 create/update prompt descriptions.
 - The schema access surface conversion (plan C17): the ADR under `docs/adr/`, the 12 `get_<d>_schema` tools, the 12 resource removals, and the registration updates (`server.py` docstring, `AGENTS.md`, `docs/MCP.md`, `docs/api/`).
 - The model `json_schema_extra` metadata for the 12 domains, schema regeneration (`specmgr schema`) with packaged-copy refresh, and the parse-behavior invariance tests.
-- The Phase 130 verification re-run: the harness extension to the worktree server, 8 cells x n>=3, and the outcome report in this feature folder.
+- The Phase 130 verification re-run: the harness extension to the worktree server, 8 cells x n>=3, the outcome report, and the raw run evidence (event streams, per-run digests, harness outputs) in a sibling `evidence/` folder of this feature directory.
 
 #### Explicitly Out Of Scope
 
@@ -65,13 +65,13 @@ measurable targets T1-T3 are in the Acceptance Criteria.
 - New tools other than the 12 `get_<d>_schema` read tools (plan C17) and new resources.
 - An adr schema generator entry (the exclusion is documented instead, REQ-005).
 - The generator-level authoring-view / payload split of the schemas (audit gap 14, deferred in the plan) and gap 03's per-leaf content hints (resolved by the resource-description wording plus the schema demotion instead).
-- Releasing the changed surface (verification runs against the worktree server; publishing is the release SOP's job, audit gap 16) and any performance work on the doc cache or similarity features.
+- Releasing the changed surface (verification runs against the worktree server; publishing and the `CHANGELOG.md` [Unreleased] entry for the 12 new tools + 12 removed resources are the release SOP's job, audit gap 16) and any performance work on the doc cache or similarity features.
 
 ### Dependencies
 
 #### Depends On
 
-- feat-128-schema-not-used: the investigation feature whose Phase 110 plan this implements -- `.specmgr/feat/feat-128-schema-not-used/round-trip-reduction-plan.md` (change inventory C1-C15, measurable targets T1-T3), grounded in its Phase 100 artifacts (`root-cause-analysis.md`, `schema-audit.md`, `round-trip-baseline.md`, `evidence/`).
+- FEAT feat-128-schema-not-used: the investigation feature whose Phase 110 plan this implements -- `.specmgr/feat/feat-128-schema-not-used/round-trip-reduction-plan.md` (change inventory C1-C15, measurable targets T1-T3), grounded in its Phase 100 artifacts (`root-cause-analysis.md`, `schema-audit.md`, `round-trip-baseline.md`, `evidence/`).
 - GitHub issue #189 (https://github.com/dfch/biz.dfch.SpecMgr/issues/189): the tracking issue for this feature.
 
 ### Design Notes
@@ -138,8 +138,8 @@ retry-once protocol. Harness reference:
 
 #### Phase 105: P1-pre -- Schema Access Surface: ADR + `get_<d>_schema` Tools (C17)
 
-- [ ] Task 105.100: (C17) Write the ADR recording the schema access surface conversion -- the 12 `get_<d>_schema` tools replacing the 12 `specmgr://<domain>/schema` resources -- extending ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-reads) and ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (listing) to the last per-domain authoring resource; record the rationale (the plan's P2 enrichment falsifies the zero-constraint rejection argument; the RCA's #1 root cause is discoverability in the always-in-context tool surface; the 2-hop resource route is eliminated; C6/C7 collapse into one surface; 94 -> 106 tool cost acknowledged); create via the `create_adr` MCP tool, validate, register via `specmgr adr-toc`.
-- [ ] Task 105.110: (C17) Implement the 12 `get_<d>_schema` tools (one per whole-body domain, mirroring the `get_<d>_template`/`get_<d>_example` tool shape) returning the domain's generated schema with usage-oriented descriptions (absorbing C7: when to fetch -- constraint discovery, structural questions, unresolved validation errors -- what it is -- the parsed-JSON view, not the markdown view, point at the domain template -- provenance sentence kept); remove the 12 `specmgr://<domain>/schema` resources; add registration tests (all 12 tools registered, no schema resources remain) and content-identity tests (each tool's output byte-identical to `docs/<domain>_schema.json`); regenerate `specmgr docs`/`mcp-docs`/`adr-toc` and update the registration surfaces (`server.py` module docstring, `AGENTS.md` per-domain bullets, `docs/MCP.md`).
+- [ ] Task 105.100: (C17) Write the ADR recording the schema access surface conversion -- the 12 `get_<d>_schema` tools replacing the 12 `specmgr://<domain>/schema` resources -- extending ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-reads) and ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (listing) to the last per-domain authoring resource; record the rationale (the plan's P2 enrichment falsifies the zero-constraint rejection argument; the RCA's #1 root cause is discoverability in the always-in-context tool surface; the 2-hop resource route is eliminated; C6/C7 collapse into one surface; the tool-count delta is recorded as measured at writing time against the current worktree surface -- the published 0.34.0 probe count of 94 is stale, the worktree already carries 103 `@mcp.tool` decorators, expected figure 103 -> 115, confirmed by the Task 130.100 probe)); create via the `create_adr` MCP tool, validate, register via `specmgr adr-toc`; include one lineage sentence noting ADR 7531106b-074b-4bd8-a83a-e433d01676e2 as the mechanism's ancestor (listing/by-id reads as resources in addition to tools) and that the schema resources were never within that ADR's decision scope -- the tool-only direction continues ec9f5262's partial reversal of it.
+- [ ] Task 105.110: (C17) Implement the 12 `get_<d>_schema` tools (one per whole-body domain, mirroring the `get_<d>_template`/`get_<d>_example` tool shape) returning the domain's generated schema with usage-oriented descriptions (absorbing C7: when to fetch -- constraint discovery, structural questions, unresolved validation errors -- what it is -- the parsed-JSON view, not the markdown view, point at the domain template -- provenance sentence kept); remove the 12 `specmgr://<domain>/schema` resources; add registration tests (all 12 tools registered, no schema resources remain) and content-identity tests (each tool's output byte-identical to `docs/<domain>_schema.json`); regenerate `specmgr docs`/`mcp-docs`/`adr-toc` and update the registration surfaces (`server.py` module docstring, `AGENTS.md` per-domain bullets, `docs/MCP.md`); keep vulture green for the 12 new tool modules (`whitelist.py` pass; pre-commit enforced).
 
 #### Phase 110: P1 -- Non-Prescriptive Pointers in Always-In-Context Metadata
 
@@ -157,19 +157,23 @@ retry-once protocol. Harness reference:
 #### Phase 130: Verification -- Re-Run the Phase 100 Methodology, Check T1-T3
 
 - [ ] Task 130.100: Extend the harness (reused from `.specmgr/feat/feat-128-schema-not-used/evidence/harness/`: `run_all.sh`, `mcp_probe.py`, `parse_events.py`, `instructions/`, `seeds/`) so the opencode runs register the worktree's specmgr server instead of the published uvx server (per-run-directory project opencode config), and probe the live surface (`tools/list` + `list_resources` + prompt metadata) to record the worktree-surface deviation in the report.
-- [ ] Task 130.110: Re-run all 8 cells (tsk + prb x create + update x with/without prompt) with the identical instruction strings and seeds, n>=3 per cell, the pinned model, the 600 s timeout, and the retry-once protocol.
-- [ ] Task 130.120: Check the measurable targets -- T1 (create without prompt: tsk at most 5 calls with the requested task texts verbatim; prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries, 0 schema fetches), T2 (create with prompt: at most 7 calls per successful create in both domains, 0 schema fetches, 0 timeouts), T3 (update: at or below the baseline call count per cell, 0 schema fetches for local edits, 0 closed-form validation failures) -- and write the outcome report `round-trip-rerun.md` in this feature folder, with each target holding in all n runs of the cell.
-- [ ] Task 130.130: Update this feature's Progress with the verification outcome; if any target is missed, add a corrective task using in-between numbering (e.g. Phase 135) rather than renumbering, and leave feat-128's ACC-003 closure to the feat-128 reviewer.
+- [ ] Task 130.110: Re-run all 8 cells (tsk + prb x create + update x with/without prompt) with the identical instruction strings and seed content (fresh UUIDs per the harness), n>=3 per cell, the pinned model, the 600 s timeout, and the retry-once protocol.
+- [ ] Task 130.120: Check the measurable targets -- T1 (create without prompt: tsk at most 5 calls with the requested task texts verbatim; prb first-try `create_prb` success, at most 5 calls, 0 validation-failure retries, 0 schema fetches), T2 (create with prompt: at most 7 calls per successful create in both domains, 0 schema fetches, 0 timeouts), T3 (update: at or below the baseline call count per cell, 0 schema fetches for local edits, 0 closed-form validation failures) -- and write the outcome report `round-trip-rerun.md` in this feature folder, persisting the raw run evidence (event streams, per-run digests, harness outputs) in a sibling `evidence/` folder so the all-n-runs claim stays auditable after the /tmp run dirs are gone -- with each target holding in all n runs of the cell.
+- [ ] Task 130.130: Update this feature's Progress with the verification outcome; if any target is missed, add a corrective task using in-between numbering (e.g. Phase 135) rather than renumbering.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-05**: Feature created (status: planning). feat-128 complete through Phase 110 (planning); this feature's implementation pending.
+**As of 2026-10-17**: Plan refined per the feat-refiner pass (all 10 findings G1-G2/D1-D4/I1-I4 applied; see the Updates entry of the same date). Status remains planning; implementation of Phases 100-130 pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-17T05:29:43.000+02:00 - Plan refinement: feat-refiner findings applied (G1-G2, D1-D4, I1-I4)
+
+Plan refinement (feat-refiner pass; all 10 findings applied after independent verification against the live tree): G1 -- the C12/vcr coverage-set fold is no longer orphaned (REQ-001, ACC-001, Scope Included); G2 -- the `CHANGELOG.md` [Unreleased] entry is named as release-SOP-owned (Scope Out Of Scope) and Task 105.110 gains a vulture/`whitelist.py` green-keeping clause; D1 -- REQ-003 retargeted from the 12 schema resource descriptions to the 12 `get_<d>_schema` tool descriptions (cites C6, C8; audit gaps 12, 13, 15 -- gap 11 solely REQ-007's, gap 16 solely the Out-Of-Scope bullet's); D2 -- audit gap 05 dropped from REQ-001's citation; D3 -- the Depends On bullet retagged as the machine-resolvable `FEAT feat-128-schema-not-used` (feat-128's mirror `Blocks` bullet deliberately left untouched -- feat-128 is closed); D4 -- Task 130.130's stale closure-delegation clause dropped (feat-128 is done, ACC-003 already checked); I1 -- Task 105.100 now directs the ADR 7531106b-074b-4bd8-a83a-e433d01676e2 lineage sentence; I2 -- "identical seeds" tightened to "seed content, fresh UUIDs per the harness" (REQ-006, Task 130.110); I3 -- Task 105.100's hard-coded "94 -> 106 tool cost" replaced with the at-writing-time measurement (the worktree already carries 103 `@mcp.tool` decorators; expected 103 -> 115, confirmed by the Task 130.100 probe); I4 -- Phase 130 now persists the raw run evidence in a sibling `evidence/` folder (Scope Included, Task 130.120). Refiner-report corrections verified before editing: 12 (not 13) `*_schema.py` resource files exist, and `tsk_implement_instructions.md` is a third tsk instruction file that stays out of scope. T1-T3, all phase numbers, the task numbering (including the deliberate Task 110.110 gap), and the frontmatter status (`planning`) are unchanged.
 
 #### 2026-10-05T20:10:52.000+02:00 - Plan revision: schema access surface converts to `get_<d>_schema` tools (C17)
 
