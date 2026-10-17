@@ -34,7 +34,7 @@ Validate a schema version string against this package's major version.
 
 ``value`` must be a ``major.minor.patch`` string whose major component
 equals :data:`SCHEMA_MAJOR_VERSION`. Used by ``AdrFrontmatter.version``
-(plan §3/§6) -- this schema-tracking field is a specmgr-only extension
+-- this schema-tracking field is a specmgr-only extension
 to the frontmatter block, not part of the MADR standard, kept alongside
 the MADR-defined keys (``status``, ``date``, ...) purely so it survives
 the parse/render round-trip of the on-disk ``.md`` file.

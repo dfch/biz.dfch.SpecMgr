@@ -17,11 +17,11 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
+"""``@mcp.tool()`` wrapper: update_frontmatter.
 
 Thin file-I/O/id-lookup adapter -- re-reads and re-parses the current
 on-disk state, then re-renders and re-writes the full file; there is no
-in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file
+in-memory cache of a parsed :class:`Adr`: the ``.md`` file
 itself is always the source of truth. The whole sequence runs under
 ``_lock.adr_lock(id)`` so a concurrent mutation against the same id cannot
 interleave with it and cause a lost update.
@@ -39,17 +39,17 @@ from ._paths import adr_base_dir
 @mcp.tool(
     name="update_frontmatter",
     title="Update ADR Frontmatter",
-    description="Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id.",
+    description="Whole-object replace of an ADR's frontmatter, preserving its existing id.",
 )
 def update_frontmatter(id: str, frontmatter: AdrFrontmatter) -> Adr:
     """Replace the frontmatter of the ADR identified by ``id``.
 
-    Whole-object, full-replace semantics (plan §3): the submitted
+    Whole-object, full-replace semantics: the submitted
     ``frontmatter`` entirely replaces the current one. The one exception
     is ``id`` itself -- it is always re-injected from the currently
     resolved document, ignoring whatever ``frontmatter.id`` the caller
     submitted, because the id is system-managed and never changes via this
-    tool (plan §9a), even though every other frontmatter key follows
+    tool, even though every other frontmatter key follows
     normal full-replace semantics.
 
     Parameters

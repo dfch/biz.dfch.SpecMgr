@@ -494,11 +494,11 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`list_uc`](#tool-list_uc) | Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the use cases whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`list_vcr`](#tool-list_vcr) | Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the verification case records whose id matches it, case-insensitively; glob=None (the default) lists everything, and an empty string matches nothing. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. |
 | [`mdformat`](#tool-mdformat) | Format a markdown file in place, preserving any YAML frontmatter. Returns True if the file was changed, False if already formatted. |
-| [`option_create`](#tool-option_create) | Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full title. |
-| [`option_delete`](#tool-option_delete) | Remove the option named full_title (plan §5), returning the remaining full titles. |
-| [`option_list`](#tool-option_list) | Full titles of every current 'Option N: ...' sub-section, in document order (plan §5). |
-| [`option_read`](#tool-option_read) | Return the current content of the option named full_title (plan §5). |
-| [`option_update`](#tool-option_update) | Full-content replace of the option named full_title (plan §5), returning the new content. |
+| [`option_create`](#tool-option_create) | Append a new 'Option N: ...' sub-section, returning its assigned full title. |
+| [`option_delete`](#tool-option_delete) | Remove the option named full_title, returning the remaining full titles. |
+| [`option_list`](#tool-option_list) | Full titles of every current 'Option N: ...' sub-section, in document order. |
+| [`option_read`](#tool-option_read) | Return the current content of the option named full_title. |
+| [`option_update`](#tool-option_update) | Full-content replace of the option named full_title, returning the new content. |
 | [`parse_dec`](#tool-parse_dec) | Parse a decision markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.dec.models.v1.DecDocument`. An existing file that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround chain); a truly-absent or unreadable path still raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) from `Path.read_text()`. |
 | [`parse_feat`](#tool-parse_feat) | Parse a feature markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`. An existing file that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround chain); a truly-absent or unreadable path still raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) from `Path.read_text()`. |
 | [`parse_gol`](#tool-parse_gol) | Parse a goal markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.gol.models.v1.GolDocument`. An existing file that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround chain); a truly-absent or unreadable path still raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) from `Path.read_text()`. |
@@ -516,8 +516,8 @@ Full ADR document (frontmatter and body) for the given id, as structured JSON --
 | [`set_feat_id`](#tool-set_feat_id) | Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does not update or search for references to the old id in any other document. Returns the renamed document's frontmatter only (no body); use the corresponding `get_feat` tool to fetch the full document afterward. |
 | [`set_status`](#tool-set_status) | Replace the status of an existing document across every domain (`type` is one of adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), also bumping `updated` (the whole-body domains) and leaving the body untouched. When `status` (or, for `type="adr"` with `superseded_by` given, the composed "superseded by X" value) already equals the document's current status, this is a no-op -- no write, no `updated` bump -- and still returns the same value shape a changed-status call would (issue #109). The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); an out-of-vocabulary `status` does NOT raise -- it returns a structured, non-raising `InvalidStatusResult` ({valid: false, type, status, allowed_values, message}) instead, so the allowed-values detail survives MCP clients that truncate error content. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising the domain's not-found error (a truly-absent id still raises, and the out-of-vocabulary-status `InvalidStatusResult` check above still runs first, pre-lock/pre-load) -- its `error` text is byte-identical to the domain's `list_<d>` failed row's `error` for the same file (identical field path and cause, including the trailing pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 non-raising-structured-result workaround chain). Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body, except for the unchanged `adr` branch) on success; use the corresponding `get_<d>` tool to fetch the full document afterward. |
 | [`update`](#tool-update) | Whole-body or line-range replace of an existing document's content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `offset`/`limit` address the frontmatter-stripped body, never the raw on-disk `.md` file: the YAML frontmatter block is variable-length, so a raw file read's line numbers are never the same as body-line coordinates -- the only safe source of coordinates is a `get_<d>(id, raw=True)` read, never a raw file read minus an assumed constant. A `get_<d>(raw=True, numbered=True)` read's numbered output must never be fed back verbatim into `content` -- strip the `"<n>: "` prefix from each line first (it is likewise never a valid `edit` `old_str`). `status` is never settable -- use the generic `set_status` tool. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text is byte-identical to the domain's `list_<d>` failed row's `error` for the same file (identical field path and cause, including the trailing pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's not-found error. A content-validation failure on the submitted new content (or, in range mode, on the spliced result) returns a non-raising `ValidateResult` (`valid=False`, `errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 non-raising-structured-result workaround chain). An invalid `id` (path-injection attempt or wrong format for `type`) or misused range coordinates (`limit` without `offset`) is a `ValueError` raised before any file access. Returns an `UpdateResult`: `frontmatter`, the updated frontmatter (no body) of the dispatched domain, plus `snippet` -- in range mode, the before/after window of the touched range (dropped lines numbered pre-splice, inserted lines numbered post-splice, up to 2 unchanged context lines per side, each line `<marker> <n>: <line text>`); `snippet` is `None` in whole-body mode and for the whole-body-equivalent range (`offset=1` with `limit` omitted). Use the corresponding `get_<d>` tool to fetch the full document afterward. |
-| [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id. |
-| [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field (plan §4). |
+| [`update_frontmatter`](#tool-update_frontmatter) | Whole-object replace of an ADR's frontmatter, preserving its existing id. |
+| [`update_section`](#tool-update_section) | Whole-section replace/delete of one AdrBody field. |
 | [`validate`](#tool-validate) | Disk-free, id-free dry run validating document content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). Never raises for a content-validation failure: always returns `{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is `True`, and each `message` is truncated to at most `_MAX_VALIDATE_ERROR_CHARS` (300) characters (plus an `"... (truncated)"` suffix when truncation occurred) rather than returned verbatim without limit. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage error and still raises `ValueError` before any validation runs. This is the sole validate entry point for these domains -- the former per-domain `validate_<d>` tools are removed; `validate_adr` remains a separate, unchanged, id-based tool. |
 | [`validate_adr`](#tool-validate_adr) | Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run. |
 | [`validate_plantuml`](#tool-validate_plantuml) | Validate PlantUML diagram text through the strict validation chain (the frozen rulebook specmgr://uc/plantuml §3): the structure check always runs first (on a structure red the parser is never called -- no subprocess, no network), then the single configured source (the first set of SPECMGR_PLANTUML_JAR/SPECMGR_PLANTUML_BIN/SPECMGR_PLANTUML_URL; no fall-through -- a set-but-unavailable source is a hard failure with reason + fix hint), and the all-unset state degrades to the structure-only floor. A PlantUML server crash page (200 + the embedded Java-exception trace -- the recognised 1.2026.8 crash line of the rulebook §5.2 matrix, the known self-message/note-left shape bug) is a recognised INVALID row: valid=false with the line-0 crash finding carrying the exception class and a fix hint pointing at the rulebook §2.9 anchored notes. Content-based: pass the diagram text (a CLI reads the file and passes its text). Never raises for validation content -- returns the non-raising §3.6 result model: structure_ok, valid/rendered (None = not run, never run-and-failed), checked_by (jar/bin/url/structure), errors and warnings (1-based line + message + fix hint), source_state (ok/misconfigured/unavailable/inconclusive/none), available, reason, fix_hint. |
@@ -1278,7 +1278,7 @@ Format a markdown file in place, preserving any YAML frontmatter. Returns True i
 
 **Create ADR Option**
 
-Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full title.
+Append a new 'Option N: ...' sub-section, returning its assigned full title.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1290,7 +1290,7 @@ Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full
 
 **Delete ADR Option**
 
-Remove the option named full_title (plan §5), returning the remaining full titles.
+Remove the option named full_title, returning the remaining full titles.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1301,7 +1301,7 @@ Remove the option named full_title (plan §5), returning the remaining full titl
 
 **List ADR Options**
 
-Full titles of every current 'Option N: ...' sub-section, in document order (plan §5).
+Full titles of every current 'Option N: ...' sub-section, in document order.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1311,7 +1311,7 @@ Full titles of every current 'Option N: ...' sub-section, in document order (pla
 
 **Read ADR Option**
 
-Return the current content of the option named full_title (plan §5).
+Return the current content of the option named full_title.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1322,7 +1322,7 @@ Return the current content of the option named full_title (plan §5).
 
 **Update ADR Option**
 
-Full-content replace of the option named full_title (plan §5), returning the new content.
+Full-content replace of the option named full_title, returning the new content.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1514,7 +1514,7 @@ Whole-body or line-range replace of an existing document's content across the wh
 
 **Update ADR Frontmatter**
 
-Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id.
+Whole-object replace of an ADR's frontmatter, preserving its existing id.
 
 | Parameter | Type | Required |
 | --- | --- | --- |
@@ -1525,7 +1525,7 @@ Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing
 
 **Update ADR Section**
 
-Whole-section replace/delete of one AdrBody field (plan §4).
+Whole-section replace/delete of one AdrBody field.
 
 | Parameter | Type | Required |
 | --- | --- | --- |

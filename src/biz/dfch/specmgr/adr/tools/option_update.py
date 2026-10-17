@@ -17,12 +17,12 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
+"""``@mcp.tool()`` wrapper: option_update.
 
 Thin file-I/O/id-lookup adapter over
 ``models.adr.v1.mutations.option_update``: re-reads and re-parses the
 current on-disk state, then re-renders and re-writes the full file; there
-is no in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md``
+is no in-memory cache of a parsed :class:`Adr`: the ``.md``
 file itself is always the source of truth. The whole sequence runs
 under ``_lock.adr_lock(id)`` so a concurrent mutation against the same
 id cannot interleave with it and cause a lost update.
@@ -44,7 +44,7 @@ from ._paths import adr_base_dir
 @mcp.tool(
     name="option_update",
     title="Update ADR Option",
-    description="Full-content replace of the option named full_title (plan §5), returning the new content.",
+    description="Full-content replace of the option named full_title, returning the new content.",
 )
 def option_update(id: str, full_title: str, value: str) -> str:
     """Replace the content of one option on the ADR identified by ``id``.

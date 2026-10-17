@@ -15,13 +15,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
+"""Render an :class:`Adr` back into the canonical on-disk ``.md`` text.
 
-Pipeline stage 3 of "parse -> validate -> render" (plan §7). "parse" and
+Pipeline stage 3 of "parse -> validate -> render". "parse" and
 "validate" are ``parser.py`` and the models' own Pydantic validators
 respectively; this module only does the "render" half, and it always
 regenerates the *full* file deterministically from the parsed/constructed
-:class:`Adr` rather than patching text in place (plan §7) -- there is no
+:class:`Adr` rather than patching text in place -- there is no
 AST-preserving round-trip requirement, so a human's original spacing/comment
 choices are never reproduced, only the canonical form the schema defines.
 
@@ -35,13 +35,13 @@ Two independent building blocks:
   order (``status``, ``date``, ``decision-makers``, ``consulted``,
   ``informed``, ``version``) via ``sort_keys=False`` on an already-ordered
   dict, and any field that is ``None`` is omitted entirely -- consistent with
-  ``AdrFrontmatter``'s "whole object, full replace" contract (plan §3): there
+  ``AdrFrontmatter``'s "whole object, full replace" contract: there
   is nothing partial to reconcile at render time, the model already reflects
   exactly what should be written.
-- :func:`_render_body` -- walks the fixed section table (plan §4) in
+- :func:`_render_body` -- walks the fixed section table in
   document order, omitting any optional field that is ``None`` (heading and
   all), then appends the derived ``## Pros and Cons of the Options``
-  container (plan §5) iff ``options`` is non-empty, and finally
+  container iff ``options`` is non-empty, and finally
   ``## More Information`` (always last, per the table).
 """
 
@@ -56,9 +56,8 @@ from .frontmatter import AdrFrontmatter
 __all__ = ["render_adr"]
 
 #: ``AdrFrontmatter`` attribute name -> rendered YAML key, in the fixed
-#: emission order (plan §3's table order, ``id``/``version`` last since
-#: both are specmgr-only extensions appended after the MADR-defined keys,
-#: plan §9a).
+#: emission order (``id``/``version`` last since
+#: both are specmgr-only extensions appended after the MADR-defined keys).
 _FRONTMATTER_KEYS: tuple[tuple[str, str], ...] = (
     ("status", "status"),
     ("date", "date"),
