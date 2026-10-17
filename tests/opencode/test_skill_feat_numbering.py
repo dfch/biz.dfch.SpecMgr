@@ -26,8 +26,9 @@ List/Phase/specmgr -- keyword matching is case-insensitive, a deliberate choice 
 here, since opencode surfaces the description verbatim to agents in whatever casing it was
 authored in); the scheme wording (the canonical "Task List numbering scheme:" paragraph,
 extracted from both packaged prompt instruction files and asserted to occur verbatim in
-the skill body once whitespace is normalized, plus the key constants and the three
-``specmgr://feat/*`` resource pointers); the concrete examples (each must also occur in
+the skill body once whitespace is normalized, plus the key constants and the two
+``specmgr://feat/*`` resource pointers and the ``get_feat_schema`` tool pointer);
+the concrete examples (each must also occur in
 the packaged template or example, so the skill cannot drift from the packaged shapes);
 and the absence of stale legacy guidance (no ``unpadded`` wording anywhere, no 1-2 digit
 phase numbers, no task number with a non-3-digit component -- the negative lookarounds
@@ -52,8 +53,10 @@ _TRIGGER_KEYWORDS: tuple[str, ...] = ("FEAT", "Task List", "Phase", "specmgr")
 _RESOURCE_URIS: tuple[str, ...] = (
     "specmgr://feat/template",
     "specmgr://feat/example",
-    "specmgr://feat/schema",
 )
+#: The generated schema is served by the ``get_feat_schema`` tool, not a resource
+#: (the former ``specmgr://feat/schema`` resource, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3).
+_SCHEMA_TOOL = "get_feat_schema"
 _CANONICAL_START = "Task List numbering scheme:"
 _CANONICAL_END = "removals leave gaps."
 _SCHEME_FRAGMENTS: tuple[str, ...] = (
@@ -187,7 +190,8 @@ class TestSkillFrontmatter(unittest.TestCase):
 
 class TestSkillSchemeAgreement(unittest.TestCase):
     """ACC-006: the skill's scheme wording agrees with the packaged prompts and points
-    agents at the three authoritative ``specmgr://feat/*`` resources."""
+    agents at the two authoritative ``specmgr://feat/*`` resources plus the
+    ``get_feat_schema`` tool (the former ``specmgr://feat/schema`` resource)."""
 
     def test_scheme_paragraph_verbatim_from_both_prompts(self):
         """The canonical paragraph from both instruction files must occur verbatim (modulo
@@ -213,11 +217,13 @@ class TestSkillSchemeAgreement(unittest.TestCase):
             self.assertIn(fragment, normalized_body)
 
     def test_resource_pointers_present(self):
-        """All three specmgr://feat/template|example|schema URIs are named in the body."""
+        """Both specmgr://feat/template|example URIs and the get_feat_schema tool
+        name are named in the body."""
         _, body = _split_frontmatter(_skill_text())
 
         for uri in _RESOURCE_URIS:
             self.assertIn(uri, body)
+        self.assertIn(_SCHEMA_TOOL, body)
 
 
 class TestSkillPackagedDataCrossAgreement(unittest.TestCase):

@@ -105,21 +105,21 @@ class TestCreateFeatPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_feat_template/get_feat_example
-        tools and name the conditional specmgr://feat/schema fetch."""
+        tools and name the conditional get_feat_schema fetch."""
         result = create_feat("Some topic")
         self.assertIn("get_feat_template", result)
         self.assertIn("get_feat_example", result)
-        self.assertIn("specmgr://feat/schema", result)
+        self.assertIn("get_feat_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_feat tool, the template/example
-        tools, specmgr://feat/schema, and create_feat, in that order,
+        tools, get_feat_schema, and create_feat, in that order,
         matching the intended sequence."""
         result = create_feat("Some topic")
         markers = [
             "list_feat",
             "get_feat_template",
-            "specmgr://feat/schema",
+            "get_feat_schema",
             "create_feat(content)",
         ]
         positions = [result.index(marker) for marker in markers]

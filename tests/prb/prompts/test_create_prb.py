@@ -196,21 +196,21 @@ class TestCreatePrbPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_prb_template/get_prb_example
-        tools and name the conditional specmgr://prb/schema fetch."""
+        tools and name the conditional get_prb_schema fetch."""
         result = create_prb("Some topic")
         self.assertIn("get_prb_template", result)
         self.assertIn("get_prb_example", result)
-        self.assertIn("specmgr://prb/schema", result)
+        self.assertIn("get_prb_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_prb tool, the template/example
-        tools, specmgr://prb/schema, and create_prb, in that order,
+        tools, get_prb_schema, and create_prb, in that order,
         matching the intended sequence."""
         result = create_prb("Some topic")
         markers = [
             "list_prb",
             "get_prb_template",
-            "specmgr://prb/schema",
+            "get_prb_schema",
             "create_prb(content)",
         ]
         positions = [result.index(marker) for marker in markers]

@@ -24,6 +24,10 @@ document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
 data file rather than anything on the caller's filesystem (Task 2.2; the
 real packaged data files arrive in Phase 3 Task 3.1/3.2).
+``get_sop_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://sop/schema`` resource).
 ``get_sop`` reads, parses, and returns a full SOP document by id -- the
 sole id-based read path for SOP (there is no ``specmgr://sop/{id}`` resource,
 ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_sop`` returns one page of
@@ -52,6 +56,7 @@ frontmatter field except ``updated``; status changes go through the generic
 from .create_sop import create_sop
 from .get_sop import get_sop
 from .get_sop_example import get_sop_example
+from .get_sop_schema import get_sop_schema
 from .get_sop_template import get_sop_template
 from .list_sop import list_sop
 from .parse_sop import parse_sop
@@ -60,6 +65,7 @@ __all__ = [
     "create_sop",
     "get_sop",
     "get_sop_example",
+    "get_sop_schema",
     "get_sop_template",
     "list_sop",
     "parse_sop",

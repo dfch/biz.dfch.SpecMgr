@@ -56,8 +56,8 @@ have zero optional sections.
 
 Call the `get_gol_template` and `get_gol_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
-names or section headings that are not present there. Fetch
-`specmgr://gol/schema` (the generated JSON Schema) only when you are
+names or section headings that are not present there. Call the
+`get_gol_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence

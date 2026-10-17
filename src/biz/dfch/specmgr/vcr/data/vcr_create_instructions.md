@@ -73,7 +73,7 @@ case record may have zero optional sections.
 Call the `get_vcr_template` and `get_vcr_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
 names, section headings, or method words that are not present there.
-Fetch `specmgr://vcr/schema` (the generated JSON Schema) only when you
+Call the `get_vcr_schema` tool (the generated JSON Schema) only when you
 are structurally uncertain or are resolving a validation error. Fetch
 `specmgr://dtais` if you or the user are unsure which DTAIS method
 word applies to a given criterion.

@@ -108,8 +108,8 @@ mandatory on every `dec` document, so this step is never skipped.
 
 Call the `get_dec_template` and `get_dec_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
-names or section headings that are not present there. Fetch
-`specmgr://dec/schema` (the generated JSON Schema) only when you are
+names or section headings that are not present there. Call the
+`get_dec_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence

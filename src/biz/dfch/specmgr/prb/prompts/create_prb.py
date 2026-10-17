@@ -20,7 +20,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Problem Statement (PRB) document using the
 existing ``prb/tools/``/``prb/resources/`` surface (``list_prb``,
-``specmgr://prb/template``/``specmgr://prb/example``, ``specmgr://prb/schema``,
+``specmgr://prb/template``/``specmgr://prb/example``, ``get_prb_schema``,
 ``create_prb``, generic ``validate`` tool), plus -- when an optional QA id
 is supplied -- the ``qa/tools/`` surface (``get_qa``) to carry over already-
 answered 5W2H questions from that linked Question and Answer (QA) interview.

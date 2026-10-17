@@ -41,11 +41,11 @@ class TestCreateRiskPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_rsk_template/get_rsk_example
-        tools and name the conditional specmgr://rsk/schema fetch."""
+        tools and name the conditional get_rsk_schema fetch."""
         result = create_risk("Some topic")
         self.assertIn("get_rsk_template", result)
         self.assertIn("get_rsk_example", result)
-        self.assertIn("specmgr://rsk/schema", result)
+        self.assertIn("get_rsk_schema", result)
 
     def test_mentions_domain_knowledge_resources(self):
         """The prompt must point at the TARA and risk-matrix domain-knowledge resources."""
@@ -55,13 +55,13 @@ class TestCreateRiskPrompt(unittest.TestCase):
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_rsk tool, the template/example
-        tools, specmgr://rsk/schema, and create_rsk, in that order,
+        tools, get_rsk_schema, and create_rsk, in that order,
         matching the intended sequence."""
         result = create_risk("Some topic")
         markers = [
             "list_rsk",
             "get_rsk_template",
-            "specmgr://rsk/schema",
+            "get_rsk_schema",
             "create_rsk(content)",
         ]
         positions = [result.index(marker) for marker in markers]

@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Decision (DEC) document using the existing
 ``dec/tools/``/``dec/resources/`` surface (``list_dec``,
 ``specmgr://dec/template``/``specmgr://dec/example``,
-``specmgr://dec/schema``, ``create_dec``, generic ``validate`` tool) plus
+``get_dec_schema``, ``create_dec``, generic ``validate`` tool) plus
 the cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 

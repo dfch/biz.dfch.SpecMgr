@@ -11,9 +11,8 @@ shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import uc  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_uc``, ``get_uc``, ``list_uc``, ``get_uc_example``,
-``get_uc_template``, ``create_uc``), ``resources``
-(``specmgr://uc/schema``,
-``specmgr://uc/example``, ``specmgr://uc/template``), and ``prompts``
+``get_uc_template``, ``get_uc_schema``, ``create_uc``), ``resources``
+(``specmgr://uc/example``, ``specmgr://uc/template``), and ``prompts``
 (``create_uc``, ``update_uc``) all exist; whole-body and
 line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="uc"``), and status changes
@@ -24,3 +23,8 @@ through the generic ``validate`` tool in ``general.tools`` (``type="uc"``)
 (feat-81-83-validation). The former
 ``specmgr://uc/list`` resource was replaced by the ``list_uc`` tool, so
 that paging parameters could be accepted (feat-13-list-paging).
+
+The former ``specmgr://uc/schema`` resource was converted into the
+``get_uc_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, ADR
+112b6498-078b-4a59-88b8-8ffb7a5041b3).

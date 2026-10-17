@@ -4,7 +4,7 @@ created: '2026-09-03 10:26:32.304+02:00'
 id: 64065cad-bb84-45c4-9e18-b2a8c5ce6865
 status: draft
 type: req
-updated: '2026-09-30T14:56:47.919+02:00'
+updated: '2026-10-17T16:58:01.945+02:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,7 @@ THE system shall provide requirement (REQ) document management, including create
 
 ## Description
 
-AGENTS.md's Status section documents the `req` package's tools (`create_req`, `parse_req`, `list_req`, `validate_req`), with whole-body/line-range updates, status changes, classification changes, and deletions dispatched through the generic `update`/`set_status`/`set_classification`/`delete` tools (`type="req"`). The `specmgr://req/schema` shows a REQ document's mandatory `## Characteristics` field must name at least one ISO/IEC 25010:2023 main characteristic.
+AGENTS.md's Status section documents the `req` package's tools (`create_req`, `parse_req`, `list_req`, `validate_req`), with whole-body/line-range updates, status changes, classification changes, and deletions dispatched through the generic `update`/`set_status`/`set_classification`/`delete` tools (`type="req"`). The `get_req_schema` tool shows a REQ document's mandatory `## Characteristics` field must name at least one ISO/IEC 25010:2023 main characteristic.
 
 ## Characteristics
 

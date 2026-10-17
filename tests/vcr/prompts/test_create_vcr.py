@@ -87,23 +87,23 @@ class TestCreateVcrPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_vcr_template/get_vcr_example
-        tools, name the conditional specmgr://vcr/schema fetch, plus
+        tools, name the conditional get_vcr_schema fetch, plus
         specmgr://dtais."""
         result = create_vcr("Some topic")
         self.assertIn("get_vcr_template", result)
         self.assertIn("get_vcr_example", result)
-        self.assertIn("specmgr://vcr/schema", result)
+        self.assertIn("get_vcr_schema", result)
         self.assertIn("specmgr://dtais", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_vcr tool, the template/example
-        tools, specmgr://vcr/schema, and create_vcr, in that order,
+        tools, get_vcr_schema, and create_vcr, in that order,
         matching the intended sequence."""
         result = create_vcr("Some topic")
         markers = [
             "list_vcr",
             "get_vcr_template",
-            "specmgr://vcr/schema",
+            "get_vcr_schema",
             "create_vcr(content)",
         ]
         positions = [result.index(marker) for marker in markers]

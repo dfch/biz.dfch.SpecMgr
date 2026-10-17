@@ -109,7 +109,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/req/data/req_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://req/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_req_schema` MCP tool
       # via importlib.resources (Task 3.8) so it works from a real, non-editable install.
       # Same generator as the step above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -120,7 +120,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/uc/data/uc_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://uc/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_uc_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the step above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -131,7 +131,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://tsk/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_tsk_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -142,7 +142,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/rsk/data/rsk_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://rsk/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_rsk_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -153,7 +153,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/qa/data/qa_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://qa/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_qa_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -164,7 +164,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/prb/data/prb_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://prb/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_prb_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -175,7 +175,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/gol/data/gol_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://gol/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_gol_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -186,7 +186,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/dec/data/dec_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://dec/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_dec_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -197,7 +197,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/sop/data/sop_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://sop/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_sop_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -208,7 +208,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/feat/data/feat_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://feat/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_feat_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -219,7 +219,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/vcr/data/vcr_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://vcr/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_vcr_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'
@@ -230,7 +230,7 @@ jobs:
         }
 
     - name: Make sure `src/biz/dfch/specmgr/sysrs/data/sysrs_schema.json` is correct
-      # Packaged copy of the same schema, read by the `specmgr://sysrs/schema` MCP resource
+      # Packaged copy of the same schema, read by the `get_sysrs_schema` MCP tool
       # via importlib.resources so it works from a real, non-editable install.
       # Same generator as the `docs/*_schema.json` steps above, just a second --output-dir.
       if: matrix.python-version == '3.13'

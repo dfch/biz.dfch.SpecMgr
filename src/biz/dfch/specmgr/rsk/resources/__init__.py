@@ -17,8 +17,7 @@
 
 """MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
 
-``rsk_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://rsk/schema``). ``rsk_example`` registers the packaged sample
+``rsk_example`` registers the packaged sample
 risk document resource (``specmgr://rsk/example``). ``rsk_template``
 registers the packaged risk template resource (``specmgr://rsk/template``)
 -- every field present, populated with short placeholder ("blind text")
@@ -39,14 +38,19 @@ rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). There is no
 tool (``rsk.tools.list_rsk``), so that paging parameters
 (``max_results``/``offset``) can be accepted (feat-13-list-paging, ADR
 ec9f5262-9912-49d0-903f-fcfb54f28c13).
+The former schema resource (``rsk_schema``, ``specmgr://rsk/schema``) was
+converted the same way into the ``get_rsk_schema`` ``@mcp.tool()``
+(``rsk.tools.get_rsk_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).
 """
 
-from . import rsk_example, rsk_schema, rsk_template, risk_matrix, tara  # noqa: F401
+from . import rsk_example, rsk_template, risk_matrix, tara  # noqa: F401
 
 __all__ = [
     "rsk_example",
     "risk_matrix",
-    "rsk_schema",
     "rsk_template",
     "tara",
 ]

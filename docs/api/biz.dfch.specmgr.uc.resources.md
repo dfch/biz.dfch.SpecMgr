@@ -2,8 +2,7 @@
 
 MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 
-``uc_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://uc/schema``). ``uc_example`` registers the packaged sample
+``uc_example`` registers the packaged sample
 use-case document resource (``specmgr://uc/example``). ``uc_template``
 registers the packaged use-case template resource (``specmgr://uc/template``)
 -- every field present, populated with short placeholder ("blind text")
@@ -31,3 +30,9 @@ ddfb1109-422d-4507-8dbc-dc5e4bec9614). The former listing resource
 by the ``list_uc`` ``@mcp.tool()`` (``uc.tools.list_uc``), so that paging
 parameters (``max_results``/``offset``) could be accepted -- see
 ``.specmgr/feat/feat-13-list-paging/README.md``.
+The former schema resource (``uc_schema``, ``specmgr://uc/schema``) was
+converted the same way into the ``get_uc_schema`` ``@mcp.tool()``
+(``uc.tools.get_uc_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).

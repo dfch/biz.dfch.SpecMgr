@@ -72,8 +72,8 @@ assumptions.
 ## 3. Use the template/example tools as references
 Call the `get_uc_template` and `get_uc_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
-names or section headings that are not present there. Fetch
-`specmgr://uc/schema` (the generated JSON Schema) only when you are
+names or section headings that are not present there. Call the
+`get_uc_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence

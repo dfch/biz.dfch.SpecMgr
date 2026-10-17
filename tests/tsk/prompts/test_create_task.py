@@ -41,21 +41,21 @@ class TestCreateTaskPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_tsk_template/get_tsk_example
-        tools and name the conditional specmgr://tsk/schema fetch."""
+        tools and name the conditional get_tsk_schema fetch."""
         result = create_task("Some topic")
         self.assertIn("get_tsk_template", result)
         self.assertIn("get_tsk_example", result)
-        self.assertIn("specmgr://tsk/schema", result)
+        self.assertIn("get_tsk_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_tsk tool, the template/example
-        tools, specmgr://tsk/schema, and create_tsk, in that order,
+        tools, get_tsk_schema, and create_tsk, in that order,
         matching the intended sequence."""
         result = create_task("Some topic")
         markers = [
             "list_tsk",
             "get_tsk_template",
-            "specmgr://tsk/schema",
+            "get_tsk_schema",
             "create_tsk(content)",
         ]
         positions = [result.index(marker) for marker in markers]

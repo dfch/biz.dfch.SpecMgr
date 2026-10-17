@@ -121,7 +121,7 @@ revise.
 
 ## 5. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://feat/schema` (the generated JSON Schema) only for a
+Call the `get_feat_schema` tool (the generated JSON Schema) only for a
 whole-body rewrite or a structural change -- adding, removing, or
 renaming sections, or editing closed-form content -- to confirm field
 names and constraints. Skip the fetch for a local splice (a line-range

@@ -92,7 +92,7 @@ ask which ones (if any) they want to add to or revise.
 
 ## 5. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://vcr/schema` (the generated JSON Schema) only for a
+Call the `get_vcr_schema` tool (the generated JSON Schema) only for a
 whole-body rewrite or a structural change -- adding, removing, or
 renaming sections, or editing closed-form content -- to confirm field
 names and constraints, and `specmgr://dtais` if you are unsure which

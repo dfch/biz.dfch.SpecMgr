@@ -114,7 +114,7 @@ the nine sub-sections. Skip this step if the change does not touch
 
 ## 6. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://sysrs/schema` (the generated JSON Schema) only for a
+Call the `get_sysrs_schema` tool (the generated JSON Schema) only for a
 whole-body rewrite or a structural change -- adding, removing, or
 renaming sections, or editing closed-form content -- to confirm field
 names and constraints. Skip the fetch for a local splice (a line-range

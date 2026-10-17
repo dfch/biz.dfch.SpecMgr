@@ -94,11 +94,11 @@ class TestCreateSysrsPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_sysrs_template/get_sysrs_example
-        tools and name the conditional specmgr://sysrs/schema fetch."""
+        tools and name the conditional get_sysrs_schema fetch."""
         result = create_sysrs("Some topic")
         self.assertIn("get_sysrs_template", result)
         self.assertIn("get_sysrs_example", result)
-        self.assertIn("specmgr://sysrs/schema", result)
+        self.assertIn("get_sysrs_schema", result)
 
     def test_mentions_create_and_validate_tools(self):
         """The prompt must name the create_sysrs tool and the generic validate tool."""
@@ -115,7 +115,7 @@ class TestCreateSysrsPrompt(unittest.TestCase):
             "list_sysrs",
             "specmgr://iso25010",
             "get_sysrs_template",
-            "specmgr://sysrs/schema",
+            "get_sysrs_schema",
             "create_sysrs(content)",
         ]
         positions = [result.index(marker) for marker in markers]

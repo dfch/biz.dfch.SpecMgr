@@ -174,8 +174,8 @@ filled-in blanks: `[Current state] is causing [specific issue], for [stakeholder
 
 Call the `get_prb_template` and `get_prb_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
-names or section headings that are not present there. Fetch
-`specmgr://prb/schema` (the generated JSON Schema) only when you are
+names or section headings that are not present there. Call the
+`get_prb_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
 ## 11. Tool call sequence

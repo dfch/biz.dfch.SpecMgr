@@ -85,11 +85,11 @@ class TestCreateSopPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_sop_template/get_sop_example
-        tools and name the conditional specmgr://sop/schema fetch."""
+        tools and name the conditional get_sop_schema fetch."""
         result = create_sop("Some topic")
         self.assertIn("get_sop_template", result)
         self.assertIn("get_sop_example", result)
-        self.assertIn("specmgr://sop/schema", result)
+        self.assertIn("get_sop_schema", result)
 
     def test_mentions_create_and_validate_tools(self):
         """The prompt must name the create_sop tool and the generic validate tool."""

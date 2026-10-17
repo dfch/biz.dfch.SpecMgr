@@ -70,7 +70,7 @@ legitimately leave `Compatibility` empty.
 Call the `get_qa_template` and `get_qa_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
 names or section headings that are not present there, and do not rename
-or reorder the ten fixed category headings. Fetch `specmgr://qa/schema`
+or reorder the ten fixed category headings. Call the `get_qa_schema` tool
 (the generated JSON Schema) only when you are structurally uncertain or
 are resolving a validation error.
 

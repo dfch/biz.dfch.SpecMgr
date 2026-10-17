@@ -29,15 +29,9 @@ specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` pac
                         ``importlib.metadata``, never an import of ``fastembed`` itself (feat-134
                         Phase 7, REQ-014).
 specmgr://adr/{id} --    Full ADR document for a given id (ADR 7531106b-074b-4bd8-a83a-e433d01676e2).
-specmgr://req/schema -- The generated REQ JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/req_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
-specmgr://uc/schema --  The generated UC JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/uc_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://uc/example -- A complete, valid sample use case document as raw markdown.
 specmgr://uc/template -- A use-case template (every field present, placeholder text)
                           as raw markdown.
@@ -58,35 +52,20 @@ specmgr://uc/plantuml-example -- The complete, fully attributed sequence diagram
                          validate-able) -- text/plain; the model for the
                          generate_uc_sequence_diagram prompt flow (feat-185-uc-diagrams
                          Phase 120).
-specmgr://tsk/schema -- The generated TSK JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/tsk_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://tsk/example -- A complete, valid sample task list document as raw markdown.
 specmgr://tsk/template -- A task list template (every field present, placeholder text)
                           as raw markdown.
-specmgr://qa/schema --  The generated QA JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/qa_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://qa/example -- A complete, valid sample question-and-answer document as raw
                         markdown.
 specmgr://qa/template -- A question-and-answer template (every field present,
                           placeholder text) as raw markdown.
-specmgr://prb/schema -- The generated PRB JSON Schema, read from a packaged data copy
-                         (kept in sync with ``docs/prb_schema.json``) so it works from a
-                         real, non-editable install.
 specmgr://prb/example -- A complete, valid sample problem statement document as raw
                          markdown.
 specmgr://prb/template -- A problem statement template (every field present,
                            placeholder text) as raw markdown.
-specmgr://gol/schema -- The generated GOL JSON Schema, read from a packaged data copy
-                         (kept in sync with ``docs/gol_schema.json``) so it works from a
-                         real, non-editable install.
 specmgr://gol/example -- A complete, valid sample goal document as raw markdown.
 specmgr://gol/template -- A goal template (every field present,
                            placeholder text) as raw markdown.
-specmgr://rsk/schema -- The generated RSK JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/rsk_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://rsk/example -- A complete, valid sample risk document as raw markdown.
 specmgr://rsk/template -- A risk template (every field present, placeholder text)
                            as raw markdown.
@@ -97,35 +76,20 @@ specmgr://rsk/tara --     The TARA risk-response framework: what TARA is (Transf
 specmgr://rsk/risk-matrix -- The 5x5 risk matrix: probability/impact scale anchors, the
                            zone table, and the product thresholds (what 'high risk' and
                            'low risk' mean) -- raw markdown domain-knowledge guidance.
-specmgr://dec/schema -- The generated DEC JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/dec_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://dec/example -- A complete, valid sample decision document as raw markdown.
 specmgr://dec/template -- A decision template (every field present, placeholder text)
                           as raw markdown.
- specmgr://sop/schema -- The generated SOP JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/sop_schema.json``) so it works from a
-                        real, non-editable install.
  specmgr://sop/example -- A complete, valid sample standard operating procedure document as
                          raw markdown.
  specmgr://sop/template -- A standard operating procedure template (every field present,
                           placeholder text) as raw markdown.
- specmgr://feat/schema -- The generated FEAT JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/feat_schema.json``) so it works from a
-                        real, non-editable install.
  specmgr://feat/example -- A complete, valid sample feature document as raw markdown.
  specmgr://feat/template -- A feature template (every field present, placeholder text)
                           as raw markdown.
-specmgr://vcr/schema -- The generated VCR JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/vcr_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://vcr/example -- A complete, valid sample verification case record document as
                         raw markdown.
 specmgr://vcr/template -- A verification case record template (every field present,
                           placeholder text) as raw markdown.
-specmgr://sysrs/schema -- The generated SYSRS JSON Schema, read from a packaged data copy
-                        (kept in sync with ``docs/sysrs_schema.json``) so it works from a
-                        real, non-editable install.
 specmgr://sysrs/example -- A complete, valid sample system requirements specification
                         document as raw markdown.
 specmgr://sysrs/template -- A system requirements specification template (every field
@@ -243,7 +207,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_uc``,
 ``get_uc_example``,
-``get_uc_template``, ``create_uc``, and the read-only diagram surface
+``get_uc_template``, ``get_uc_schema``, ``create_uc``, and the read-only diagram surface
 (feat-185-uc-diagrams Phase 120, thin over the Phase 110
 ``uc.models.v2.renderer`` + the import-free ``plantuml`` package):
 ``get_uc_diagram`` (the per-UC usecase diagram by id),
@@ -273,7 +237,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_req``,
 ``get_req_example``,
-``get_req_template``, ``create_req``.
+``get_req_template``, ``get_req_schema``, ``create_req``.
 Task list tools (``tsk/tools/``): ``parse_tsk``, ``get_tsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -283,7 +247,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_tsk``,
 ``get_tsk_example``,
-``get_tsk_template``, ``create_tsk``.
+``get_tsk_template``, ``get_tsk_schema``, ``create_tsk``.
 QA tools (``qa/tools/``): ``parse_qa``, ``get_qa`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -293,7 +257,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_qa``,
 ``get_qa_example``,
-``get_qa_template``, ``create_qa``.
+``get_qa_template``, ``get_qa_schema``, ``create_qa``.
 Problem statement tools (``prb/tools/``): ``parse_prb``, ``get_prb`` (``raw=True`` returns
 the frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -302,7 +266,7 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
 body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_prb``,
-``get_prb_example``, ``get_prb_template``, ``create_prb``.
+``get_prb_example``, ``get_prb_template``, ``get_prb_schema``, ``create_prb``.
 Goal tools (``gol/tools/``): ``parse_gol``, ``get_gol`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -311,7 +275,7 @@ windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
 body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_gol``,
-``get_gol_example``, ``get_gol_template``, ``create_gol``.
+``get_gol_example``, ``get_gol_template``, ``get_gol_schema``, ``create_gol``.
  Risk tools (``rsk/tools/``): ``parse_rsk``, ``get_rsk`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -321,7 +285,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_rsk``,
  ``get_rsk_example``,
- ``get_rsk_template``, ``create_rsk``.
+ ``get_rsk_template``, ``get_rsk_schema``, ``create_rsk``.
     Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -331,7 +295,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_dec``,
     ``get_dec_example``,
-    ``get_dec_template``, ``create_dec``.
+    ``get_dec_template``, ``get_dec_schema``, ``create_dec``.
      SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -341,7 +305,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_sop``,
     ``get_sop_example``,
-    ``get_sop_template``, ``create_sop``. SOP is the first domain with NO
+    ``get_sop_template``, ``get_sop_schema``, ``create_sop``. SOP is the first domain with NO
     per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
     updates go through the generic ``update`` tool in ``general/tools/`` (``type="sop"``)
     and status changes through the generic ``set_status`` tool (``type="sop"``), per ADR
@@ -359,7 +323,7 @@ body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers fro
 the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_feat``,
   ``get_feat_example``,
-  ``get_feat_template``, ``create_feat``, ``set_feat_id`` (renames an existing feature's
+  ``get_feat_template``, ``get_feat_schema``, ``create_feat``, ``set_feat_id`` (renames an existing feature's
   ``feat-NNN-slug`` id: validates the new id's shape, refuses if the target folder already
   exists, renames the folder, rewrites the frontmatter ``id``/``updated``, leaves the body
   byte-identical). Unlike every other domain here, ``feat``
@@ -375,7 +339,7 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   its 1-based absolute body-line number in the ``"<n>: "`` form -- a windowed
   numbered read numbers from the clamped offset and never restarts, so a number
   seen can be fed straight back into the generic ``update`` tool's
-  ``offset``)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
+  ``offset``)), ``list_vcr``, ``get_vcr_example``, ``get_vcr_schema``, ``get_vcr_template``,
   ``create_vcr``.
   System Requirements Specification tools (``sysrs/tools/``): ``parse_sysrs``,
   ``get_sysrs`` (``raw=True`` returns the frontmatter-stripped body text verbatim
@@ -386,7 +350,7 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   ``"<n>: "`` form -- a windowed numbered read numbers from the clamped offset and
   never restarts, so a number seen can be fed straight back into the generic
   ``update`` tool's ``offset``)), ``list_sysrs``, ``get_sysrs_example``,
-  ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
+  ``get_sysrs_schema``, ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
   aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
   ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section
   type-tagged cross-reference lists, and is built dispatch-only from day one (ADR
@@ -663,8 +627,8 @@ instructional text guiding an LLM through a ``TodoWrite`` +
 SOP prompts (``sop/prompts/``): ``create_sop``, ``update_sop`` --
 instructional text guiding an LLM through a ``TodoWrite`` +
 ``question``-tool-driven interview flow over the SOP surface (the
-``specmgr://sop/template``/``/example``/``/schema`` starting-point resources,
-the ``specmgr://rasci`` read-first step before ``## Roles and Responsibilities``,
+``specmgr://sop/template``/``/example`` starting-point resources plus the
+``get_sop_schema`` tool, the ``specmgr://rasci`` read-first step before ``## Roles and Responsibilities``,
 and the ``create_sop``/generic ``validate`` (``type="sop"``) tool calls); ``create_sop`` first checks
 ``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
 ``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range

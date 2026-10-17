@@ -128,8 +128,8 @@ any optional field they cannot or do not want to answer yet.
 
 Call the `get_sysrs_template` and `get_sysrs_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
-names or section headings that are not present there. Fetch
-`specmgr://sysrs/schema` (the generated JSON Schema) only when you are
+names or section headings that are not present there. Call the
+`get_sysrs_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence

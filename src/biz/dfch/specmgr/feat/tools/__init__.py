@@ -30,6 +30,10 @@ document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
 data file rather than anything on the caller's filesystem (the packaged
 files themselves are Phase 3's job -- see each tool's own module docstring).
+``get_feat_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://feat/schema`` resource).
 
 ``get_feat`` reads, parses, and returns a full feature document by id -- the
 sole id-based read path for FEAT (there is no ``specmgr://feat/{id}``
@@ -71,6 +75,7 @@ register all feature tools at once::
 from .create_feat import create_feat
 from .get_feat import get_feat
 from .get_feat_example import get_feat_example
+from .get_feat_schema import get_feat_schema
 from .get_feat_template import get_feat_template
 from .list_feat import list_feat
 from .parse_feat import parse_feat
@@ -80,6 +85,7 @@ __all__ = [
     "create_feat",
     "get_feat",
     "get_feat_example",
+    "get_feat_schema",
     "get_feat_template",
     "list_feat",
     "parse_feat",

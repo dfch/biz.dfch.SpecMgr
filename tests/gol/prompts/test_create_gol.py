@@ -88,21 +88,21 @@ class TestCreateGolPrompt(unittest.TestCase):
 
     def test_mentions_template_example_tools_and_conditional_schema(self):
         """The prompt must point at the get_gol_template/get_gol_example
-        tools and name the conditional specmgr://gol/schema fetch."""
+        tools and name the conditional get_gol_schema fetch."""
         result = create_gol("Some topic")
         self.assertIn("get_gol_template", result)
         self.assertIn("get_gol_example", result)
-        self.assertIn("specmgr://gol/schema", result)
+        self.assertIn("get_gol_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_gol tool, the template/example
-        tools, specmgr://gol/schema, and create_gol, in that order,
+        tools, get_gol_schema, and create_gol, in that order,
         matching the intended sequence."""
         result = create_gol("Some topic")
         markers = [
             "list_gol",
             "get_gol_template",
-            "specmgr://gol/schema",
+            "get_gol_schema",
             "create_gol(content)",
         ]
         positions = [result.index(marker) for marker in markers]
