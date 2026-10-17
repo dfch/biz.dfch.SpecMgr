@@ -66,7 +66,10 @@ from ...server import mcp
     title="Create a goal",
     description=(
         "Guides the LLM through checking for an existing similar goal, gathering the "
-        "required information, and driving create_gol/validate to author a new GOL document."
+        "required information, and driving create_gol/validate to author a new GOL document. The "
+        "structure reference is the `get_gol_schema` tool (the generated JSON Schema); the "
+        "`get_gol_template`/`get_gol_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_gol(topic: str) -> str:

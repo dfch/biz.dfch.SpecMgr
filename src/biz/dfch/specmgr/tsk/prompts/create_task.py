@@ -58,7 +58,10 @@ from ...server import mcp
     title="Create a task list",
     description=(
         "Guides the LLM through checking for an existing similar task list, gathering the "
-        "required information, and driving create_tsk/validate to author a new TSK document."
+        "required information, and driving create_tsk/validate to author a new TSK document. The "
+        "structure reference is the `get_tsk_schema` tool (the generated JSON Schema); the "
+        "`get_tsk_template`/`get_tsk_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_task(topic: str) -> str:

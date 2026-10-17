@@ -60,7 +60,10 @@ from ...server import mcp
     title="Create a risk",
     description=(
         "Guides the LLM through checking for an existing similar risk, gathering the "
-        "required information, and driving create_rsk/validate to author a new RSK document."
+        "required information, and driving create_rsk/validate to author a new RSK document. The "
+        "structure reference is the `get_rsk_schema` tool (the generated JSON Schema); the "
+        "`get_rsk_template`/`get_rsk_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_risk(topic: str) -> str:

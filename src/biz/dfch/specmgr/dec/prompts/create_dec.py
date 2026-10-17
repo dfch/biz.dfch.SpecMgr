@@ -78,7 +78,10 @@ from ...server import mcp
     title="Create a decision",
     description=(
         "Guides the LLM through checking for an existing similar decision, gathering the "
-        "required information, and driving create_dec/validate to author a new DEC document."
+        "required information, and driving create_dec/validate to author a new DEC document. The "
+        "structure reference is the `get_dec_schema` tool (the generated JSON Schema); the "
+        "`get_dec_template`/`get_dec_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_dec(topic: str) -> str:

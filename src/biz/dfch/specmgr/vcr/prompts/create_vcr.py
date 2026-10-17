@@ -71,7 +71,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar verification case record, "
         "gathering the required information, and driving create_vcr/validate to author a "
-        "new VCR document."
+        "new VCR document. The structure reference is the `get_vcr_schema` tool (the generated "
+        "JSON Schema); the `get_vcr_template`/`get_vcr_example` tools return the authoring template "
+        "and a complete sample."
     ),
 )
 def create_vcr(topic: str) -> str:

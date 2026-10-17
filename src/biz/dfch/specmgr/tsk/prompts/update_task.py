@@ -65,7 +65,9 @@ from ...server import mcp
     title="Update a task list",
     description=(
         "Guides the LLM through revising an existing task list by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_tsk_schema` tool (the generated JSON Schema); the "
+        "`get_tsk_template`/`get_tsk_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_task(id: str, instructions: str | None = None) -> str:

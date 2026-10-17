@@ -74,7 +74,10 @@ from ...server import mcp
     title="Create a standard operating procedure",
     description=(
         "Guides the LLM through checking for an existing similar SOP, gathering the "
-        "required information, and driving create_sop/validate to author a new SOP document."
+        "required information, and driving create_sop/validate to author a new SOP document. The "
+        "structure reference is the `get_sop_schema` tool (the generated JSON Schema); the "
+        "`get_sop_template`/`get_sop_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_sop(topic: str) -> str:

@@ -60,7 +60,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar QA document, gathering answers "
         "to ISO/IEC 25010:2023 characteristic-relevant questions, and driving "
-        "create_qa/validate to author a new QA document."
+        "create_qa/validate to author a new QA document. The structure reference is the "
+        "`get_qa_schema` tool (the generated JSON Schema); the `get_qa_template`/`get_qa_example` "
+        "tools return the authoring template and a complete sample."
     ),
 )
 def create_qa(topic: str) -> str:

@@ -57,7 +57,10 @@ from ...server import mcp
     title="Create a use case",
     description=(
         "Guides the LLM through checking for an existing similar use case, gathering the "
-        "required information, and driving create_uc/validate to author a new UC document."
+        "required information, and driving create_uc/validate to author a new UC document. The "
+        "structure reference is the `get_uc_schema` tool (the generated JSON Schema); the "
+        "`get_uc_template`/`get_uc_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_uc(topic: str) -> str:

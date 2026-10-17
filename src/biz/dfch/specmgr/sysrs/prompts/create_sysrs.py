@@ -75,7 +75,10 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar system requirements "
         "specification, gathering the required information, and driving "
-        "create_sysrs/validate to author a new SYSRS document."
+        "create_sysrs/validate to author a new SYSRS document. The structure reference is the "
+        "`get_sysrs_schema` tool (the generated JSON Schema); the "
+        "`get_sysrs_template`/`get_sysrs_example` tools return the authoring template and a "
+        "complete sample."
     ),
 )
 def create_sysrs(topic: str) -> str:

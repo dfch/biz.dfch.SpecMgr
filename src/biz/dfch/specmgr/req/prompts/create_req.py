@@ -57,7 +57,10 @@ from ...server import mcp
     title="Create a requirement",
     description=(
         "Guides the LLM through checking for an existing similar requirement, gathering the "
-        "required information, and driving create_req/validate to author a new REQ document."
+        "required information, and driving create_req/validate to author a new REQ document. The "
+        "structure reference is the `get_req_schema` tool (the generated JSON Schema); the "
+        "`get_req_template`/`get_req_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_req(topic: str) -> str:

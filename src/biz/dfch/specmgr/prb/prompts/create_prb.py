@@ -76,7 +76,9 @@ from ...server import mcp
         "optionally carrying over already-answered 5W2H questions from a linked QA document "
         "(qa_id), interviewing the user for whichever 5W2H current-state questions remain, "
         "synthesizing the Summary and Gap, composing the mandatory Problem Statement lead "
-        "sentence, and driving create_prb/validate to author a new PRB document."
+        "sentence, and driving create_prb/validate to author a new PRB document. The structure "
+        "reference is the `get_prb_schema` tool (the generated JSON Schema); the "
+        "`get_prb_template`/`get_prb_example` tools return the authoring template and a complete sample."
     ),
 )
 def create_prb(topic: str, qa_id: str | None = None) -> str:
