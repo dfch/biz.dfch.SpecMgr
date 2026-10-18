@@ -610,6 +610,41 @@ false positive was the exact class the checker's own invariant forbids
 blocked in the `validate_plantuml`/`plantuml-check` chain a shape the real
 parser accepts, before the parser ever ran.
 
+**§7.1 tripwire correction (2026-10-18, feat-214-rel-invalid-diag
+Phase 150 — E1/E2/I1):** the 2026-10-15 note's block-boundary claim ("an
+unclosed such fragment at a block boundary … are errors in BOTH modes") was
+frozen WITHOUT a parser verdict — the 2026-10-15 isolation matrix verified
+only the NAMED-CLOSE shapes. Phase 150 parser-verified the two unverified
+firing sites against the pinned 1.2026.8 (SHA-256 re-verified; file- AND
+pipe-form — the chain's own `--check-syntax`/`--svg -pipe` contract): EVERY
+unclosed-at-boundary variant (braceless `package "REQ"` + `component Foo`
++ `@enduml`; curly-open `package "REQ" {` + component, unclosed; unclosed
+braceless with later content; braceless + a stray `}` line) and the bare
+`@end` close of a component-collecting `package` (both open shapes) is
+parser-ACCEPTED (rc=0 + a rendered SVG carrying the node labels — the
+feature plan's More Information isolation matrix, extended with these rows),
+while both NAMED-CLOSE shapes (braceless + `end package`; curly-open +
+`end package`) remain parser-REJECTED (rc=200, `Syntax Error? (Assumed
+diagram type: component)`). Corrections: (a) the block-boundary firing site
+is a LENIENT finding — a warning in preflight, promoted to an error in
+standalone (a content-conditional variant of the UC rulebook §6.4 "unclosed
+fragment at EOF" lenient case; the "never rejects what the parser accepts"
+invariant is restored at that site — `specmgr plantuml-check` over a
+parser-valid diagram of this shape no longer exits 1 with
+`checked_by=structure valid=not-run`); (b) the bare-`@end` site emits the
+tripwire's own lenient finding (a content-conditional variant of the §6.4
+"bare `@end`" case) instead of the generic name-omission finding — whose
+hint would steer the author to the parser-rejected NAMED close; (c) the
+NAMED-CLOSE site STAYS an error in BOTH modes (the only remaining tripwire
+error — parser-rejected and re-verified); (d) the fix hint is split by the
+recorded open shape — curly-open: replace the `end package` close with a
+`}` line; braceless: add the missing `}` line; either: or convert the group
+to the `component "TYPE" { … }` domain-group form (the 2026-10-15 single
+hint's "an unclosed block over component declarations is a parser syntax
+error" clause was factually false for the accepted shapes). The matching
+dated note lives in the UC rulebook §6.1; the control tests re-pin the two
+block-boundary pins and pin every verified shape (feature plan Task 150.130).
+
 ## 8. References
 
 - Feature plan (requirements, acceptance criteria, phase task list): `.specmgr/feat/feat-207-reference-graph/README.md` — FEAT feat-207-reference-graph (GitHub issue #207).

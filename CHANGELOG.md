@@ -42,10 +42,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   updated to match (feat-214-rel-invalid-diag, GitHub issue #214).
 - A structure-checker false-negative class: a `package` fragment collecting
   component declarations now must close with a `}` line — a named `end
-  package` close (braceless- or curly-open) and an unclosed such fragment at
-  a block boundary are errors in both modes with a curly-brace fix hint;
-  `package` fragments holding sequence content (the UC subset) are
-  unaffected (feat-214-rel-invalid-diag, GitHub issue #214).
+  package` close (braceless- or curly-open) is an error in both modes, and
+  an unclosed such fragment at a block boundary (or a bare `@end` close of
+  it) is a lenient finding (warning in preflight, promoted error in
+  standalone), with the fix hint split by the recorded open shape (both
+  naming the curly-brace group form); `package` fragments holding sequence
+  content (the UC subset) are unaffected (feat-214-rel-invalid-diag,
+  GitHub issue #214).
 
 ### Added
 

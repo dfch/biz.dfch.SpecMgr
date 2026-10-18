@@ -81,6 +81,30 @@ open (the curly ``component "TYPE" { … }`` domain groups and the ``skinparam
 component { … }`` block — declarations/skinparam, not fragments) stays
 silently accepted, exactly as before.
 
+The 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1) corrects
+the two tripwire firing sites the 2026-10-15 amendment froze WITHOUT a
+parser verdict (the 2026-10-15 isolation matrix verified only the NAMED-
+CLOSE shapes): a component-collecting ``package`` fragment UNCLOSED AT THE
+BLOCK BOUNDARY (every open shape) and one closed by a BARE ``@end`` (every
+open shape) are parser-ACCEPTED by the pinned 1.2026.8 (file- and
+pipe-form, recorded in the feature plan's More Information matrix). The
+block-boundary site is therefore a LENIENT finding — mirroring the generic
+else branch: a warning in preflight, promoted to an error in standalone, a
+content-conditional variant of the "unclosed fragment at EOF" lenient case;
+the 2026-10-15 comment's claim that "the parser does not implicitly close
+such a block into a valid diagram" was empirically false for these shapes.
+The bare-``@end`` site emits the tripwire's own lenient finding (a
+content-conditional variant of the "bare ``@end``" lenient case) instead of
+the generic name-omission finding — whose hint would steer the author to
+the parser-rejected named close. The NAMED-CLOSE site (an ``end package``
+over a component declaration, both open shapes) STAYS an error in BOTH
+modes — parser-rejected, re-verified 2026-10-18. The fix hint is split by
+the recorded open shape (curly-open: replace the ``end package`` close with
+a ``}`` line; braceless: add the missing ``}`` line; either: or convert the
+group to the ``component "TYPE" { … }`` domain-group form) — the 2026-10-15
+single hint's "an unclosed block over component declarations is a parser
+syntax error" clause was factually false for the accepted shapes.
+
 Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot
@@ -163,6 +187,32 @@ nearest enclosing ``package`` fragment as component-collecting. A
 declaration outside any ``package`` fragment (top-level, or inside a
 non-package fragment) is a no-op — the tripwire is scoped to ``package``
 fragments only (the reference-graph rulebook §7.1).
+
+
+### `_package_component_fix(open_shape: 'str') -> 'str'`
+
+The tripwire fix hint, split by the recorded open shape (2026-10-18, I1).
+
+The 2026-10-15 single hint conflated the two remedies and was
+factually false for the parser-accepted unclosed shapes (its "an
+unclosed block over component declarations is a parser syntax error"
+clause — the pinned 1.2026.8 accepts every unclosed-at-boundary variant
+and the bare-``@end`` close, file- and pipe-form; the reference-graph
+rulebook §7.1 Phase 150 note). Split by the open shape recorded on the
+fragment stack:
+
+- ``curly-open`` — the mixed-close shape (a curly-opened block closed
+  with ``end package``) is parser-rejected: the remedy is to REPLACE
+  the close with a ``}`` line (or convert the group to the curly-brace
+  domain-group form).
+- ``braceless`` — the remedy is to ADD the missing ``}`` line (or
+  convert the group to the same domain-group form).
+
+``open_shape`` is the recorded shape's own vocabulary (``"curly-open"``
+/ ``"braceless"`` — the same strings the diagnostics emit); the named
+curly-brace domain-group form the real parser accepts for a
+component-diagram group holding component declarations is named in
+both variants.
 
 
 ### `_strip_operand(token: 'str') -> 'str'`

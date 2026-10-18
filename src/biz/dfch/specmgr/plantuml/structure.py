@@ -96,6 +96,30 @@ open (the curly ``component "TYPE" { … }`` domain groups and the ``skinparam
 component { … }`` block — declarations/skinparam, not fragments) stays
 silently accepted, exactly as before.
 
+The 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1) corrects
+the two tripwire firing sites the 2026-10-15 amendment froze WITHOUT a
+parser verdict (the 2026-10-15 isolation matrix verified only the NAMED-
+CLOSE shapes): a component-collecting ``package`` fragment UNCLOSED AT THE
+BLOCK BOUNDARY (every open shape) and one closed by a BARE ``@end`` (every
+open shape) are parser-ACCEPTED by the pinned 1.2026.8 (file- and
+pipe-form, recorded in the feature plan's More Information matrix). The
+block-boundary site is therefore a LENIENT finding — mirroring the generic
+else branch: a warning in preflight, promoted to an error in standalone, a
+content-conditional variant of the "unclosed fragment at EOF" lenient case;
+the 2026-10-15 comment's claim that "the parser does not implicitly close
+such a block into a valid diagram" was empirically false for these shapes.
+The bare-``@end`` site emits the tripwire's own lenient finding (a
+content-conditional variant of the "bare ``@end``" lenient case) instead of
+the generic name-omission finding — whose hint would steer the author to
+the parser-rejected named close. The NAMED-CLOSE site (an ``end package``
+over a component declaration, both open shapes) STAYS an error in BOTH
+modes — parser-rejected, re-verified 2026-10-18. The fix hint is split by
+the recorded open shape (curly-open: replace the ``end package`` close with
+a ``}`` line; braceless: add the missing ``}`` line; either: or convert the
+group to the ``component "TYPE" { … }`` domain-group form) — the 2026-10-15
+single hint's "an unclosed block over component declarations is a parser
+syntax error" clause was factually false for the accepted shapes.
+
 Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot
@@ -277,15 +301,46 @@ _FRAGMENT_OPEN_PATTERN = re.compile(r"^\s*(alt|opt|loop|group|box|rectangle|pack
 #: rulebook §4.3), so for the tripwire it counts as a component declaration
 #: the enclosing package fragment collects.
 _SHORT_COMPONENT_LINE = re.compile(r"^\s*(\[[^\[\]\s]+\])\s*$")
-#: The curly-brace group fix hint (the 2026-10-15 tripwire amendment, both
-#: firing sites): the named curly-brace domain-group form the real parser
-#: accepts for a component-diagram group holding component declarations.
-_PACKAGE_COMPONENT_FIX = (
-    "close the group with a '}' line (the curly-brace domain-group form: "
-    "'component \"TYPE\" { … }' — a component-diagram group holding component "
-    "declarations must open and close with curly braces; an 'end package' close "
-    "(or an unclosed block) over component declarations is a parser syntax error)"
-)
+
+
+def _package_component_fix(open_shape: str) -> str:
+    """The tripwire fix hint, split by the recorded open shape (2026-10-18, I1).
+
+    The 2026-10-15 single hint conflated the two remedies and was
+    factually false for the parser-accepted unclosed shapes (its "an
+    unclosed block over component declarations is a parser syntax error"
+    clause — the pinned 1.2026.8 accepts every unclosed-at-boundary variant
+    and the bare-``@end`` close, file- and pipe-form; the reference-graph
+    rulebook §7.1 Phase 150 note). Split by the open shape recorded on the
+    fragment stack:
+
+    - ``curly-open`` — the mixed-close shape (a curly-opened block closed
+      with ``end package``) is parser-rejected: the remedy is to REPLACE
+      the close with a ``}`` line (or convert the group to the curly-brace
+      domain-group form).
+    - ``braceless`` — the remedy is to ADD the missing ``}`` line (or
+      convert the group to the same domain-group form).
+
+    ``open_shape`` is the recorded shape's own vocabulary (``"curly-open"``
+    / ``"braceless"`` — the same strings the diagnostics emit); the named
+    curly-brace domain-group form the real parser accepts for a
+    component-diagram group holding component declarations is named in
+    both variants.
+    """
+    assert open_shape in ("curly-open", "braceless"), open_shape
+    if open_shape == "curly-open":
+        result = (
+            "replace the 'end package' close with a '}' line (or convert the group to the "
+            "curly-brace domain-group form 'component \"TYPE\" { … }')"
+        )
+    else:
+        result = (
+            "add the missing '}' line (or convert the group to the curly-brace domain-group "
+            "form 'component \"TYPE\" { … }')"
+        )
+    return result
+
+
 #: A note line. A note with a colon on its line is a SINGLE-LINE placement
 #: note (``note bottom of uc1: "text"`` — the package edge notes); only a
 #: colon-free note line (``note``/``note right``/``note left``/
@@ -547,15 +602,25 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
         while fragments:
             fragment = fragments.pop()
             if fragment.kind == "package" and fragment.has_component:
-                # the 2026-10-15 tripwire: an unclosed package fragment that
-                # collected a component declaration is an error in BOTH modes
-                # (not one of the five lenient cases — the parser does not
-                # implicitly close such a block into a valid diagram)
-                error(
+                # the 2026-10-15 tripwire, 2026-10-18 demotion (feat-214-
+                # rel-invalid-diag Phase 150, E1): the unclosed-at-boundary
+                # shape is parser-ACCEPTED (pinned 1.2026.8, file- and
+                # pipe-form, every open shape — rulebook §7.1 Phase 150
+                # note), so the site is a lenient finding mirroring the
+                # else branch: a content-conditional variant of the
+                # "unclosed fragment at EOF" lenient case (warning in
+                # preflight, promoted error in standalone). The 2026-10-15
+                # comment's claim ("the parser does not implicitly close
+                # such a block into a valid diagram") was verified only for
+                # the NAMED-CLOSE shapes and is empirically false here; the
+                # named-close site stays an error in BOTH modes.
+                open_shape = "curly-open" if fragment.curly_open else "braceless"
+                lenient_finding(
                     fragment.open_line,
                     f"package fragment that collects component declarations (opened at line "
-                    f"{fragment.open_line}) is never closed with '}}' before the diagram ends",
-                    _PACKAGE_COMPONENT_FIX,
+                    f"{fragment.open_line}, {open_shape}) is unclosed at the block boundary "
+                    "(the parser accepts the omission and closes the block implicitly)",
+                    _package_component_fix(open_shape),
                 )
             else:
                 lenient_finding(
@@ -637,12 +702,32 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
         if _AT_BARE_END_PATTERN.match(line):
             if fragments:
                 fragment = fragments.pop()
-                lenient_finding(
-                    number,
-                    f"bare @end closes the {fragment.kind!r} fragment opened at line "
-                    f"{fragment.open_line} by name omission (the parser accepts it)",
-                    "write the named close ('end' or 'end {kind}') instead (the real parser accepts the bare @end)",
-                )
+                if fragment.kind == "package" and fragment.has_component:
+                    # the 2026-10-18 fix (feat-214-rel-invalid-diag Phase
+                    # 150, E2): a component-collecting package closed by a
+                    # bare @end is parser-ACCEPTED (pinned 1.2026.8, file-
+                    # and pipe-form, every open shape) — the tripwire's own
+                    # lenient finding (aligned with the block-boundary
+                    # treatment) instead of the generic name-omission
+                    # finding, whose hint would steer the author to the
+                    # NAMED 'end package' close — exactly the parser-
+                    # rejected shape the named-close error site fires on
+                    # (rulebook §7.1 Phase 150 note).
+                    open_shape = "curly-open" if fragment.curly_open else "braceless"
+                    lenient_finding(
+                        number,
+                        f"bare @end closes the package fragment that collects component "
+                        f"declarations (opened at line {fragment.open_line}, {open_shape}) by "
+                        "name omission (the parser accepts it)",
+                        _package_component_fix(open_shape),
+                    )
+                else:
+                    lenient_finding(
+                        number,
+                        f"bare @end closes the {fragment.kind!r} fragment opened at line "
+                        f"{fragment.open_line} by name omission (the parser accepts it)",
+                        "write the named close ('end' or 'end {kind}') instead (the real parser accepts the bare @end)",
+                    )
             # a bare @end with an empty fragment stack is also parser-accepted
             # (verified against 1.2026.8) — no finding
             continue
@@ -724,9 +809,11 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
                 elif top.kind == "package" and top.has_component:
                     # the 2026-10-15 tripwire (verified parser-failing shapes —
                     # both the braceless-open + 'end package' close and the
-                    # curly-open + 'end package' close): an error in BOTH modes,
-                    # reported on the close line (the recorded open shape is
-                    # named — the parser rejects both opens the same way)
+                    # curly-open + 'end package' close; re-verified against the
+                    # pinned 1.2026.8 in Phase 150, file- and pipe-form): an
+                    # error in BOTH modes, reported on the close line (the
+                    # recorded open shape is named — the parser rejects both
+                    # opens the same way)
                     open_shape = "curly-open" if top.curly_open else "braceless"
                     error(
                         number,
@@ -734,7 +821,7 @@ def check_structure(text: str, mode: str = MODE_STANDALONE) -> StructureCheckRes
                         f"declarations (opened at line {top.open_line}, {open_shape}) — the real "
                         "PlantUML parser rejects component declarations in a package block closed "
                         "with 'end package'",
-                        _PACKAGE_COMPONENT_FIX,
+                        _package_component_fix(open_shape),
                     )
                 fragments.pop()
             continue

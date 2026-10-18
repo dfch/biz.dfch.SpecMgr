@@ -36,6 +36,19 @@ the real-parser-rejected braceless ``package`` grouping). Content-
 conditional: ``package`` fragments holding sequence content (participants —
 the UC subset) are untouched.
 
+The 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1): the two
+firing sites the 2026-10-15 note froze WITHOUT a parser verdict — an
+unclosed-at-block-boundary component-collecting ``package`` (every open
+shape) and a bare-``@end`` close of one (every open shape) — are
+parser-ACCEPTED by the pinned 1.2026.8 (file- and pipe-form; the feature
+plan's More Information matrix), so the block-boundary site is a lenient
+finding (warning in preflight, promoted error in standalone) and the
+bare-``@end`` site carries the tripwire's own lenient finding; the NAMED-
+CLOSE site stays an error in BOTH modes (parser-rejected, re-verified), and
+the fix hint is split by the recorded open shape (curly-open: replace the
+``end package`` close with a ``}`` line; braceless: add the missing ``}``
+line). Pinned below (rulebook §7.1 Phase 150 note).
+
 ``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim (the
 corrected 2026-10-15 layout) — the frozen emission subset the real-parser
 gate verifies (component declarations, the 14-entry skinparam block,
@@ -262,10 +275,14 @@ class TestPackageComponentTripwire(unittest.TestCase):
     rulebook §7.1): a ``package`` fragment that collects component
     declarations (a ``component`` keyword declaration line or a short-form
     ``[X]`` line) must close with a ``}`` line — a named ``end package``
-    close (braceless-open or curly-open) and an unclosed such fragment at a
-    block boundary are errors in BOTH modes with a curly-brace fix hint.
-    Content-conditional: sequence ``package`` fragments (participants) and
-    the corrected curly ``component "TYPE" { … }`` form stay zero-finding."""
+    close (braceless-open or curly-open) is an error in BOTH modes with a
+    curly-brace fix hint (the 2026-10-18 Phase 150 fix: the NAMED-CLOSE
+    site is the only remaining both-modes error — the unclosed-at-boundary
+    shapes it froze alongside were parser-accepted, and the block-boundary
+    site is now a lenient finding, as is the bare-``@end`` close of a
+    component-collecting ``package``). Content-conditional: sequence
+    ``package`` fragments (participants) and the corrected curly
+    ``component "TYPE" { … }`` form stay zero-finding."""
 
     def test_braceless_package_with_component_and_named_close_errors_both_modes(self):
         # the verified parser-failing shape Q1 (the pre-correction shipped
@@ -300,33 +317,55 @@ class TestPackageComponentTripwire(unittest.TestCase):
                 self.assertIn("opened at line 2, curly-open", result.errors[0].message)
                 self.assertIn("curly-brace", result.errors[0].fix_hint)
 
-    def test_unclosed_component_package_at_enduml_errors_both_modes(self):
-        # the block-boundary firing site: the tripwire error is attributed
-        # to the OPEN line (the note-unclosed error's own convention)
+    def test_unclosed_component_package_at_enduml_is_lenient_both_modes(self):
+        # RE-PINNED 2026-10-18 (Phase 150, E1): the pre-fix version pinned
+        # the block-boundary HARD ERROR on this parser-ACCEPTED shape
+        # (braceless 'package "REQ"' + 'component Foo' + '@enduml' — the
+        # pinned 1.2026.8 renders it, rc=0 + SVG, file- and pipe-form). The
+        # lenient finding is attributed to the OPEN line (the note-unclosed
+        # error's own convention), warning in preflight / promoted error in
+        # standalone, with the braceless fix-hint variant
         text = '@startuml t\npackage "REQ"\ncomponent Foo\n@enduml\n'
 
-        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
-            with self.subTest(mode=mode):
-                result = check_structure(text, mode)
-                self.assertFalse(result.ok)
-                self.assertEqual(len(result.errors), 1, f"{mode}: {result.errors}")
-                self.assertEqual(result.errors[0].line, 2)
-                self.assertIn("never closed with", result.errors[0].message)
-                self.assertIn("curly-brace", result.errors[0].fix_hint)
+        preflight = check_structure(text, MODE_PREFLIGHT)
+        self.assertTrue(preflight.ok)
+        self.assertEqual(preflight.errors, [])
+        self.assertEqual(len(preflight.warnings), 1)
+        self.assertEqual(preflight.warnings[0].line, 2)
+        self.assertIn("unclosed at the block boundary", preflight.warnings[0].message)
+        self.assertIn("opened at line 2, braceless", preflight.warnings[0].message)
+        self.assertIn("add the missing '}'", preflight.warnings[0].fix_hint)
+        self.assertIn('component "TYPE" {', preflight.warnings[0].fix_hint)
 
-    def test_unclosed_component_package_at_true_eof_errors_both_modes(self):
-        # true EOF (no @enduml): the tripwire error fires alongside the
-        # missing-@enduml lenient finding (promoted in standalone) — the
-        # tripwire itself is an error in BOTH modes
+        standalone = check_structure(text, MODE_STANDALONE)
+        self.assertFalse(standalone.ok)
+        self.assertEqual(len(standalone.errors), 1)
+        self.assertEqual(standalone.errors[0].line, 2)
+        self.assertIn("unclosed at the block boundary", standalone.errors[0].message)
+        self.assertIn("add the missing '}'", standalone.errors[0].fix_hint)
+        self.assertEqual(standalone.warnings, [])
+
+    def test_unclosed_component_package_at_true_eof_is_lenient_both_modes(self):
+        # RE-PINNED 2026-10-18 (Phase 150, E1): true EOF (no @enduml) — the
+        # lenient tripwire finding fires alongside the missing-@enduml
+        # lenient finding (two lenient findings: warning in preflight,
+        # promoted errors in standalone); the pre-fix version pinned the
+        # tripwire as a both-modes ERROR on this parser-accepted shape
         text = '@startuml t\npackage "REQ"\ncomponent Foo\n'
 
-        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
-            with self.subTest(mode=mode):
-                result = check_structure(text, mode)
-                self.assertFalse(result.ok)
-                tripwire = [error for error in result.errors if "never closed with" in error.message]
-                self.assertEqual(len(tripwire), 1, f"{mode}: {result.errors}")
-                self.assertEqual(tripwire[0].line, 2)
+        preflight = check_structure(text, MODE_PREFLIGHT)
+        self.assertTrue(preflight.ok)
+        self.assertEqual(len(preflight.warnings), 2)
+        tripwire = [w for w in preflight.warnings if "unclosed at the block boundary" in w.message]
+        self.assertEqual(len(tripwire), 1)
+        self.assertEqual(tripwire[0].line, 2)
+
+        standalone = check_structure(text, MODE_STANDALONE)
+        self.assertFalse(standalone.ok)
+        self.assertEqual(len(standalone.errors), 2)
+        tripwire = [error for error in standalone.errors if "unclosed at the block boundary" in error.message]
+        self.assertEqual(len(tripwire), 1)
+        self.assertEqual(tripwire[0].line, 2)
 
     def test_short_form_component_line_trips_the_package(self):
         # the Q1 matrix's short `[Foo]` form: a line of exactly one bracketed
@@ -439,6 +478,119 @@ class TestPackageComponentTripwire(unittest.TestCase):
                 self.assertEqual(result.errors, [])
                 self.assertEqual(result.warnings, [])
 
+    # --- the 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1):
+    # the parser-ACCEPTED unclosed-at-boundary shapes (every open shape) and
+    # the bare-@end close of a component-collecting package (every open
+    # shape) are pinned to the lenient treatment with the split fix hint —
+    # each shape verified against the pinned 1.2026.8, file- AND pipe-form
+    # (rc=0 + SVG; the feature plan's More Information matrix) ---
+
+    def test_unclosed_curly_open_component_package_at_enduml_is_lenient_both_modes(self):
+        # Phase 150 shape a2 (parser-ACCEPTED: curly-open 'package "REQ" {'
+        # + component, unclosed at @enduml — rc=0 + SVG, both forms): the
+        # lenient finding names the curly-open shape and carries the
+        # curly-open fix-hint variant (replace the 'end package' close)
+        text = '@startuml t\npackage "REQ" {\ncomponent Foo\n@enduml\n'
+
+        preflight = check_structure(text, MODE_PREFLIGHT)
+        self.assertTrue(preflight.ok)
+        self.assertEqual(len(preflight.warnings), 1)
+        self.assertEqual(preflight.warnings[0].line, 2)
+        self.assertIn("unclosed at the block boundary", preflight.warnings[0].message)
+        self.assertIn("opened at line 2, curly-open", preflight.warnings[0].message)
+        self.assertIn("replace the 'end package' close", preflight.warnings[0].fix_hint)
+
+        standalone = check_structure(text, MODE_STANDALONE)
+        self.assertFalse(standalone.ok)
+        self.assertEqual(len(standalone.errors), 1)
+        self.assertIn("opened at line 2, curly-open", standalone.errors[0].message)
+        self.assertIn("replace the 'end package' close", standalone.errors[0].fix_hint)
+        self.assertEqual(standalone.warnings, [])
+
+    def test_unclosed_braceless_component_package_with_later_content_is_lenient_both_modes(self):
+        # Phase 150 shape a3 (parser-ACCEPTED: later content after the
+        # unclosed braceless package — rc=0 + SVG, both forms): later
+        # content does not change the treatment — the lenient finding is
+        # attributed to the OPEN line
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\ncomponent Bar\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                findings = result.warnings if mode == MODE_PREFLIGHT else result.errors
+                self.assertEqual(len(findings), 1, f"{mode}: {findings}")
+                self.assertEqual(findings[0].line, 2)
+                self.assertIn("unclosed at the block boundary", findings[0].message)
+                self.assertIn("opened at line 2, braceless", findings[0].message)
+                self.assertIn("add the missing '}'", findings[0].fix_hint)
+                if mode == MODE_PREFLIGHT:
+                    self.assertTrue(result.ok)
+                    self.assertEqual(result.errors, [])
+                else:
+                    self.assertFalse(result.ok)
+                    self.assertEqual(result.warnings, [])
+
+    def test_unclosed_braceless_component_package_with_stray_brace_is_lenient_both_modes(self):
+        # Phase 150 shape a4 (parser-ACCEPTED: braceless package + a stray
+        # '}' line — rc=0 + SVG, both forms): the '}' does NOT pop the
+        # braceless fragment (the Phase 140 pop closes curly-open fragments
+        # only), so EXACTLY ONE lenient finding fires — the pre-fix code
+        # errored here with the factually-wrong "never closed with '}'"
+        # diagnosis (the author had already followed the old hint)
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\n}\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                findings = result.warnings if mode == MODE_PREFLIGHT else result.errors
+                self.assertEqual(len(findings), 1, f"{mode}: {findings}")
+                self.assertEqual(findings[0].line, 2)
+                self.assertIn("unclosed at the block boundary", findings[0].message)
+                self.assertIn("opened at line 2, braceless", findings[0].message)
+                self.assertIn("add the missing '}'", findings[0].fix_hint)
+
+    def test_bare_atend_closing_component_package_is_the_tripwire_lenient_finding(self):
+        # Phase 150 shape b1 (parser-ACCEPTED: braceless package + bare
+        # @end — rc=0 + SVG, both forms): the tripwire's OWN lenient
+        # finding on the @end line (not the generic name-omission finding —
+        # whose hint would steer the author to the parser-rejected 'end
+        # package' close), with the braceless fix-hint variant
+        text = '@startuml t\npackage "REQ"\ncomponent Foo\n@end\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                findings = result.warnings if mode == MODE_PREFLIGHT else result.errors
+                self.assertEqual(len(findings), 1, f"{mode}: {findings}")
+                self.assertEqual(findings[0].line, 4)
+                self.assertIn(
+                    "bare @end closes the package fragment that collects component declarations",
+                    findings[0].message,
+                )
+                self.assertIn("opened at line 2, braceless", findings[0].message)
+                self.assertIn("add the missing '}'", findings[0].fix_hint)
+                self.assertIn('component "TYPE" {', findings[0].fix_hint)
+
+    def test_bare_atend_closing_curly_component_package_is_the_tripwire_lenient_finding(self):
+        # Phase 150 shape b2 (parser-ACCEPTED: curly-open package + bare
+        # @end — rc=0 + SVG, both forms): the same treatment with the
+        # curly-open fix-hint variant (pins the open_shape split at this
+        # site)
+        text = '@startuml t\npackage "REQ" {\ncomponent Foo\n@end\n@enduml\n'
+
+        for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
+            with self.subTest(mode=mode):
+                result = check_structure(text, mode)
+                findings = result.warnings if mode == MODE_PREFLIGHT else result.errors
+                self.assertEqual(len(findings), 1, f"{mode}: {findings}")
+                self.assertEqual(findings[0].line, 4)
+                self.assertIn(
+                    "bare @end closes the package fragment that collects component declarations",
+                    findings[0].message,
+                )
+                self.assertIn("opened at line 2, curly-open", findings[0].message)
+                self.assertIn("replace the 'end package' close", findings[0].fix_hint)
+
 
 class TestReferenceGraphSubsetParserGate(unittest.TestCase):
     """The Phase 100 real-parser gate (env-gated, ACC-001/ACC-002's parser half):
@@ -493,12 +645,16 @@ class TestReferenceGraphGoldenParserSweep(unittest.TestCase):
     the same locally, rulebook §4.3 Phase 120 note)."""
 
     def test_every_golden_renders_valid_through_the_real_parser(self):
+        goldens = sorted(_GOLDENS.glob("*.puml"))
+        # the whole frozen set — the count is part of the pin; it holds on a
+        # sourceless (skipped) run too (the 2026-10-18 fix, Phase 150, I2 —
+        # the pre-fix assert ran only after require_plantuml_source, so a
+        # sourceless run would add a 23rd golden silently)
+        self.assertEqual(len(goldens), 22)
         info = require_plantuml_source(self)
         assert info.kind is not None
         assert info.value is not None  # an available source always carries its configured value
 
-        goldens = sorted(_GOLDENS.glob("*.puml"))
-        self.assertEqual(len(goldens), 22)  # the whole frozen set — the count is part of the pin
         for path in goldens:
             text = path.read_text(encoding="utf-8")
             with self.subTest(golden=path.name):
