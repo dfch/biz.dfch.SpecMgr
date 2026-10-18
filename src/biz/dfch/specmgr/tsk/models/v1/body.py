@@ -195,7 +195,7 @@ class RecentUpdates(MarkdownSection2WithComment):
         `models.md`'s generic list-parsing engine already enforces this
         during `from_text` for any non-`Optional` `list[X]` field regardless
         of `min_length`, so this constraint makes direct Python construction
-        (e.g. a future `create_tsk` tool) consistent with parsing instead of
+        (e.g. the `create_tsk` tool) consistent with parsing instead of
         silently allowing `RecentUpdates(updates=[])`. A newly created `tsk`
         document must therefore seed a first entry (e.g. "Created") -- see
         the feature README's Decisions Made.

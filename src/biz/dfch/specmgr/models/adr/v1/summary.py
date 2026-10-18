@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic model for one line of ADR listing output (plan §8, §9a).
+"""Pydantic model for one line of ADR listing output.
 
 **Deliberately does not subclass**
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary`, unlike
@@ -38,14 +38,14 @@ from pydantic import BaseModel
 
 
 class AdrSummary(BaseModel):
-    """One line of ``list_adr`` tool output (plan §8, §9a).
+    """One line of ``list_adr`` tool output.
 
     Parameters
     ----------
     id:
         The document's specmgr-assigned identifier, or ``None`` if the file
         has not been assigned one yet (e.g. hand-authored without the
-        ``id`` frontmatter key -- plan §9a).
+        ``id`` frontmatter key).
     title:
         The ADR's ``# {title}`` H1.
     status:

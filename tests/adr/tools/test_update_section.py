@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``update_section`` ``@mcp.tool()`` wrapper (plan §4, §8, §9a)."""
+"""Tests for the ``update_section`` ``@mcp.tool()`` wrapper."""
 
 import unittest
 

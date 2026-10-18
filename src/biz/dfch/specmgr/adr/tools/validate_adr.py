@@ -17,11 +17,11 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
+"""``@mcp.tool()`` wrapper: validate_adr (Task 3.2).
 
 Thin file-I/O/id-lookup adapter -- re-reads and re-parses the current
 on-disk state on every call; there is no in-memory cache of a parsed
-:class:`Adr` (plan §7, §9a): the ``.md`` file itself is always the source
+:class:`Adr`: the ``.md`` file itself is always the source
 of truth.
 
 ADR's own structural error channel is :class:`~biz.dfch.specmgr.models.adr.
@@ -51,8 +51,8 @@ def validate_adr(id: str) -> bool:
     """Validate the ADR identified by ``id``.
 
     "Validate" is simply letting :class:`Adr`/:class:`AdrBody`/
-    :class:`AdrFrontmatter`'s own Pydantic validators run during parsing
-    (plan §7): there is no separate validation pass here. Successfully
+    :class:`AdrFrontmatter`'s own Pydantic validators run during parsing:
+    there is no separate validation pass here. Successfully
     constructing the :class:`Adr` *is* the validation, so this function
     only ever returns ``True`` -- it never returns ``False``. Any parse or
     validation failure instead propagates as
