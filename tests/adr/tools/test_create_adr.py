@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``create_adr`` ``@mcp.tool()`` wrapper (plan §8, §9a)."""
+"""Tests for the ``create_adr`` ``@mcp.tool()`` wrapper."""
 
 import unittest
 from unittest import mock

@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the structured edit operations in :mod:`mutations` (plan §4, §5, §8)."""
+"""Tests for the structured edit operations in :mod:`mutations`."""
 
 import unittest
 

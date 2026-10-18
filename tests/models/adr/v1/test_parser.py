@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for :func:`parse_adr` (plan §7/§10 item 2)."""
+"""Tests for :func:`parse_adr`."""
 
 import textwrap
 import unittest

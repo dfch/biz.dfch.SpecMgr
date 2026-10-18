@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.adr.resources`
 
-MCP resource registrations for Architecture Decision Records (plan §8, §9a).
+MCP resource registrations for Architecture Decision Records.
 
 ``adr_get`` registers the by-id template resource (``specmgr://adr/{id}``).
 The former ADR listing resource (``adr_list``, ``specmgr://adr/list``) was

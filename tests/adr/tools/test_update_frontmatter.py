@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``update_frontmatter`` ``@mcp.tool()`` wrapper (plan §8, §9a)."""
+"""Tests for the ``update_frontmatter`` ``@mcp.tool()`` wrapper."""
 
 import unittest
 

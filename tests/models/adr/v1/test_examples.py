@@ -19,7 +19,7 @@
 
 Fixtures live in ``examples/`` (verbatim copies, see that directory's own
 ``README.md`` for provenance/license). These are *unfilled placeholder*
-templates, not real ADRs -- plan §2's source document, not hand-written
+templates, not real ADRs -- the source document, not hand-written
 test data -- so most of them are expected to fail parsing/validation
 exactly because a mandatory section (or ``status``) still holds template
 placeholder text instead of real content. Each test documents which error
