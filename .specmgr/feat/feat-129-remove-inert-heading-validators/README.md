@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T19:38:03.617+02:00'
+updated: '2026-10-18T20:18:30.641+02:00'
 version: 1.0.0
 ---
 
@@ -92,9 +92,9 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 110: Remove Dead Validators
 
-- [ ] Task 110.100: Remove `validate_heading_structure` and the `_tokens` `PrivateAttr` from `markdown_section.py`; drop now-unused imports.
-- [ ] Task 110.110: Remove `validate_headings` from `markdown_section1.py` through `markdown_section6.py`; drop now-unused `model_validator` imports.
-- [ ] Task 110.120: Update stale class/method docstrings in all seven files to accurately describe current behavior.
+- [x] Task 110.100: Remove `validate_heading_structure` and the `_tokens` `PrivateAttr` from `markdown_section.py`; drop now-unused imports.
+- [x] Task 110.110: Remove `validate_headings` from `markdown_section1.py` through `markdown_section6.py`; drop now-unused `model_validator` imports.
+- [x] Task 110.120: Update stale class/method docstrings in all seven files to accurately describe current behavior.
 
 #### Phase 120: Test & Lint Cleanup
 
@@ -123,11 +123,24 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-17**: Planning. GitHub issue #129 (opened 2026-09-13) leaves the redesign-vs-removal decision open; this plan adopts removal, confirmed with the repo owner, who requested the consequences be documented explicitly (see Design Notes) before implementation begins. No code changes have been made yet.
+**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phases 120 (test/whitelist cleanup), 130 (regenerate `docs/api` + CHANGELOG entry; the ADR revision itself already landed under Task 100.110), 135 (the `markdown_str.py` dead-code block), and 140 (final verification) remain.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:18:00.000+02:00 - Closed Phase 110: removed the inert heading validators
+
+Removed `validate_heading_structure` (together with the never-populated `_tokens` `PrivateAttr`) from
+`markdown_section.py` and `validate_headings` from `markdown_section1.py`..`markdown_section6.py`,
+dropping the now-unused `Token`, `PrivateAttr`, and `model_validator` imports (REQ-001..REQ-003), and
+corrected the six sibling class docstrings to state that a deeper heading is allowed and silently
+retained while a same-or-higher heading ends the section -- enforced by `MarkdownSection.get_extent`
+plus `MarkdownStr.from_text`'s trailing-completeness check, not by any model validator (REQ-004/
+ACC-003). No behavioral change: `ruff format --check`, `ruff check`, and `vulture` are all clean,
+`tests/models/md/` is green (365 passed, 48 subtests), and the full suite passed (4668 passed, 17
+skipped, 5662 subtests). The stale `whitelist.py` entries and the `test_markdown_section.py` docstring
+reference to `validate_headings` are deliberately left for Phase 120.
 
 #### 2026-10-18T19:30:00.000+02:00 - Closed Phase 100: verified no dependents and landed the ADR revision
 
