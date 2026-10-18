@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T20:18:30.641+02:00'
+updated: '2026-10-18T20:37:36.307+02:00'
 version: 1.0.0
 ---
 
@@ -98,9 +98,9 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 120: Test & Lint Cleanup
 
-- [ ] Task 120.100: Update `tests/models/md/test_markdown_section.py` to remove the stale `validate_headings` reference.
-- [ ] Task 120.110: Remove `_.validate_heading_structure`/`_.validate_headings` from `whitelist.py`.
-- [ ] Task 120.120: Run `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60`; fix any fallout.
+- [x] Task 120.100: Update `tests/models/md/test_markdown_section.py` to remove the stale `validate_headings` reference.
+- [x] Task 120.110: Remove `_.validate_heading_structure`/`_.validate_headings` from `whitelist.py`.
+- [x] Task 120.120: Run `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60`; fix any fallout.
 
 #### Phase 130: Docs & ADR
 
@@ -123,11 +123,27 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phases 120 (test/whitelist cleanup), 130 (regenerate `docs/api` + CHANGELOG entry; the ADR revision itself already landed under Task 100.110), 135 (the `markdown_str.py` dead-code block), and 140 (final verification) remain.
+**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phases 130 (regenerate `docs/api` + CHANGELOG entry; the ADR revision itself already landed under Task 100.110), 135 (the `markdown_str.py` dead-code block), and 140 (final verification) remain.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:37:00.000+02:00 - Closed Phase 120: test and lint-whitelist cleanup
+
+Updated `tests/models/md/test_markdown_section.py`'s
+`test_directly_assigning_a_nested_heading_to_value_raises_nothing` docstring (REQ-006): it no
+longer describes the removed `validate_headings` as "a no-op" but now states that no model
+validator re-checks `_value`'s content shape after construction, citing ADR
+832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.6.0 / feat-129 -- the test body is unchanged and,
+together with its untouched sibling `test_leaf_section_silently_retains_a_deeper_nested_heading`,
+still covers ACC-005. Removed the two stale `_.validate_heading_structure`/`_.validate_headings`
+vulture whitelist entries from `whitelist.py` (REQ-005/ACC-004), leaving the surrounding block
+intact. Gate evidence: `ruff format --check` (2063 files already formatted), `ruff check` (all
+checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean, nothing new reported),
+a repo-wide grep for both removed names across `tests/`/`src/`/`whitelist.py` (zero matches),
+the targeted `test_markdown_section.py` run green (22 passed, 6 subtests), and the full suite
+passed (4668 passed, 17 skipped, 5662 subtests).
 
 #### 2026-10-18T20:18:00.000+02:00 - Closed Phase 110: removed the inert heading validators
 

@@ -325,9 +325,10 @@ class TestMarkdownSectionNestedHeadingContent(unittest.TestCase):
         self.assertIn("#### A nested heading", instance._value)
 
     def test_directly_assigning_a_nested_heading_to_value_raises_nothing(self) -> None:
-        """`validate_headings` (MarkdownSection1..6) is currently a no-op: its body
-        is fully commented out, so nothing re-validates `_value`'s content shape
-        after construction."""
+        """No model validator re-checks `_value`'s content shape after
+        construction (the inert heading validators were removed -- see ADR
+        832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.6.0 / feat-129), so directly
+        assigning a nested heading to `_value` raises nothing."""
         instance = MarkdownSection3()
         instance._value = "### Leaf H3\n\n#### nested heading\n"
         self.assertIn("#### nested heading", instance._value)
