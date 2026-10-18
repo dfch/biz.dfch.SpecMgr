@@ -18,7 +18,7 @@ audience is an LLM agent that needs to read guidance, not code that needs
 data. Registered as a flat,
 top-level ``specmgr://dtais`` URI (like
 ``specmgr://iso25010``, not ``specmgr://vcr/dtais``) since the DTAIS
-vocabulary is domain-knowledge that other domains (e.g. a future `sysrs`)
+vocabulary is domain-knowledge that other domains (e.g. `sysrs`)
 may want to reference too, not owned by `vcr`'s own schema -- see
 `.specmgr/feat/feat-33-vcr/README.md` REQ-006/Design Notes for the full
 rationale.
