@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T09:27:00.492+02:00'
+updated: '2026-10-18T19:38:03.617+02:00'
 version: 1.0.0
 ---
 
@@ -38,7 +38,7 @@ version: 1.0.0
 - [ ] ACC-004: `whitelist.py` no longer lists `_.validate_heading_structure`/`_.validate_headings`.
 - [ ] ACC-005: `tests/models/md/test_markdown_section.py` has no reference to the removed `validate_headings` method, and still documents/tests that a leaf section silently retains a deeper nested heading via `get_extent`.
 - [ ] ACC-006: `docs/api/` no longer lists `validate_heading_structure`/`validate_headings` anywhere, confirmed by regenerating docs via `specmgr docs`.
-- [ ] ACC-007: ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae carries a new dated revision entry documenting the removal decision and rationale.
+- [x] ACC-007: ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae carries a new dated revision entry documenting the removal decision and rationale (v1.6.0, 2026-10-18).
 - [ ] ACC-008: Full test suite (`uv run --frozen pytest -n auto`) passes with no regressions.
 - [ ] ACC-009: `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` all pass clean.
 - [ ] ACC-010: `markdown_str.py` no longer contains the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` or `# @model_validator(mode="after") ... model_validator_after` blocks.
@@ -78,8 +78,8 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 100: Confirm Scope
 
-- [ ] Task 100.100: Re-verify no other code path reads `MarkdownSection._tokens` or depends on `validate_heading_structure`/`validate_headings` (repo-wide grep).
-- [ ] Task 100.110: Draft the ADR revision wording (removal decision + rationale) for review before editing the ADR.
+- [x] Task 100.100: Re-verified via repo-wide grep -- no code path outside the seven declaring files reads `MarkdownSection._tokens` or depends on `validate_heading_structure`/`validate_headings`; `Token`/`PrivateAttr`/`model_validator` are each used exactly once per file, confirming REQ-003's unused-import prediction.
+- [x] Task 100.110: Drafted and applied the ADR revision wording -- see ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae's `more_information` (v1.6.0, dated 2026-10-18) and Task 130.110 below.
 
 #### Phase 105: Address Plan-Refinement Findings
 
@@ -105,7 +105,7 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 #### Phase 130: Docs & ADR
 
 - [ ] Task 130.100: Regenerate `docs/api/` via `specmgr docs` and confirm the stale entries are gone.
-- [ ] Task 130.110: Add the dated revision entry to ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae recording the removal decision.
+- [x] Task 130.110: Added the dated revision entry to ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae recording the removal decision (bumped to v1.6.0, dated 2026-10-18; full wording in the ADR's own `more_information`, drafted under Task 100.110 above).
 - [ ] Task 130.120: Add a brief `[Unreleased]` entry to `CHANGELOG.md` documenting this internal cleanup (dead-validator/dead-code removal), satisfying REQ-011/ACC-011.
 
 #### Phase 135: Remove the markdown_str.py Dead-Code Block
@@ -128,6 +128,17 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T19:30:00.000+02:00 - Closed Phase 100: verified no dependents and landed the ADR revision
+
+Completed Task 100.100 (repo-wide grep: confirmed no code path outside the seven declaring files
+reads `MarkdownSection._tokens` or depends on `validate_heading_structure`/`validate_headings`,
+and that `Token`/`PrivateAttr`/`model_validator` are each used exactly once per file -- matching
+REQ-003's unused-import prediction exactly) and Task 100.110 (drafted the ADR revision wording,
+reviewed, and applied it). Added the dated revision entry to ADR
+832cd6c1-ef8a-4bfc-990e-a610823f61ae's `more_information` and bumped its version to v1.6.0,
+closing Task 130.110 and ACC-007 ahead of the rest of implementation. Phase 100 is now fully
+closed; Phase 110 (the actual code removal) can begin.
 
 #### 2026-10-18T09:00:00.000+02:00 - Second refinement pass: closed Phase 105's open items and added two new findings
 
