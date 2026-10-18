@@ -4,7 +4,7 @@ created: '2026-10-06T10:45:41.464+02:00'
 id: feat-199-plan-section-refs-cleanup
 status: review
 type: feat
-updated: '2026-10-17T21:52:26.503+02:00'
+updated: '2026-10-18T09:22:34.817+02:00'
 version: 1.0.0
 ---
 
@@ -205,11 +205,13 @@ this feature.
 
 - [x] Task 120.150: Fix the last stale "future (existing component)" phrasing in the ADR model package — `models/adr/v1/body.py`'s "the future ``update_section(key, value)`` MCP tool" (the tool exists now, `adr/tools/update_section.py`); found during the Phase 120 verification review — drop "future" (one word), regenerate the module's docs/api page, re-verify the "the future" sweep over the ADR package (only the legitimate `frontmatter.py:58` schema-dispatch mention may remain), and run the gate — depends on: Task 120.140 — status: done
 
+- [x] Task 120.160: TSK-domain follow-up (user-directed 2026-10-18; outside feat-199's own requirements — found by the repo-wide "the future" sweep run while verifying Phase 120): fix the last stale same-class phrasing, `tsk/models/v1/body.py`'s "a future `create_tsk` tool" (`tsk/tools/create_tsk.py` exists; the same docstring already refers to it in the present tense at line 257) — "a future" → "the" — then regenerate its three generated mirrors (`docs/tsk_schema.json` via `specmgr schema`, the package copy `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` via `specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data`, `docs/api/biz.dfch.specmgr.tsk.models.v1.body.md` via `specmgr docs`) and run the gate — depends on: Task 120.150 — status: done
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-17**: implementation complete (Phase 100 `ca8f3a8`, Phase 110 `d36ae69`) — all four acceptance criteria verified with concrete evidence and ticked; status `review`. A user-directed Phase 120 (Post-Review Improvements) was added for the feat-reviewer's I1–I4 and the recorded tests/-residue follow-up — see Decisions Made. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004). Phase 120 (Post-Review Improvements, user-directed — see Decisions Made) is complete: the feat-reviewer's I1 (the `adr_get.py` noqa comment is now a self-contained statement), I2 (the referent-less "(second half)" fragment dropped), I3 (the six pre-existing stale-wording sites in the touched files corrected against the current tree), and I4 (the `uc/models/v2/__init__.py` by-path sibling citation removed, the sentence made self-contained) are applied, the recorded `tests/` residue — the 16 bare `plan §` hits in 15 files — is dropped with the same minimal mechanics, and the repo-wide `plan §` residue is now exactly the two frozen historical artifacts (`CHANGELOG.md`, `docs/adr/7a626b12-….md`) with `src/` + `tests/` clean and the full gate green (4668 passed / 17 skipped / 5662 subtests). A PR against `dev` (#217) is open. Review-correction Task 120.150 is complete: the ADR model package carries no remaining stale "future (existing component)" phrasing.
+**As of 2026-10-17**: implementation complete (Phase 100 `ca8f3a8`, Phase 110 `d36ae69`) — all four acceptance criteria verified with concrete evidence and ticked; status `review`. A user-directed Phase 120 (Post-Review Improvements) was added for the feat-reviewer's I1–I4 and the recorded tests/-residue follow-up — see Decisions Made. All **124 citations** (the 122 bare-`plan §` hits across 27 `src/` files plus the 2 line-wrapped citations the bare pattern cannot see) were dropped per Task 100.100's disposition table — 0 ADR substitutions — with the two stale-in-content clauses handled per their rows: `models/adr/v1/adr.py`'s module docstring now states the resolved specmgr-assigned `{id}-{slug}.md` id/naming scheme (with a plain ADR 8cf940c5-3100-485c-a12d-14b59b631712 citation; the "still an open backlog item" clause is gone), and `models/adr/v1/summary.py` needed no rewrite (dropping its §8/§9a citations removes the stale surface enumeration; its existing `list_adr`/feat-13 history text stays byte-identical). The `uc/models/v1/parser.py` hit dropped exactly as the table specifies, and the out-of-pattern "Task 3.2" markers in `create_adr.py`/`validate_adr.py` are untouched. No test assertions broke (4668 passed / 17 skipped / 5662 subtests on the first run, 4668 passed / 17 skipped on the final run), the full quality gate is green (`ruff format --check` over 2062 files, `ruff check`, `vulture`, full suite), and `docs/api/` + `docs/GENERATED.md` + `docs/MCP.md` were regenerated so the pattern now survives in `docs/` only in the frozen ADR `docs/adr/7a626b12-….md`. ACC-001's sweep (`rg -n "plan §" src/`) returns no results and the feat-9 frozen directory is untouched (ACC-004). Phase 120 (Post-Review Improvements, user-directed — see Decisions Made) is complete: the feat-reviewer's I1 (the `adr_get.py` noqa comment is now a self-contained statement), I2 (the referent-less "(second half)" fragment dropped), I3 (the six pre-existing stale-wording sites in the touched files corrected against the current tree), and I4 (the `uc/models/v2/__init__.py` by-path sibling citation removed, the sentence made self-contained) are applied, the recorded `tests/` residue — the 16 bare `plan §` hits in 15 files — is dropped with the same minimal mechanics, and the repo-wide `plan §` residue is now exactly the two frozen historical artifacts (`CHANGELOG.md`, `docs/adr/7a626b12-….md`) with `src/` + `tests/` clean and the full gate green (4668 passed / 17 skipped / 5662 subtests). Review-correction Task 120.150 is complete: the ADR model package carries no remaining stale "future (existing component)" phrasing. Task 120.160 (the user-directed TSK follow-up) is complete: the TSK stale phrasing (`tsk/models/v1/body.py`'s "a future `create_tsk` tool" — the tool exists) is fixed, its three generated mirrors regenerated, and `rg "a future .create_tsk"` over `src/` + `docs/` is clean. The orchestrator's adjudication of the remaining repo-wide "the future"/"a future" sweep hits (read-verified 2026-10-18) found four further pre-existing same-class sites in other domains — `models/md/frontmatter.py:23` ("a future `uc`/`req`"), `general/resources/dtais.py:36` ("a future `sysrs`"), `general/tools/_packaged_data.py:19` ("a future artifact domain (UC, goal, acc, ...)") and :24 ("a future `uc/data/uc_example.md`") — each named component exists; they are out of this feature's scope (the user's 2026-10-18 instruction covered the TSK site only) and are recorded here for a separate follow-up decision. A PR against `dev` (#217) is open.
 
 ### Blockers
 
@@ -218,6 +220,26 @@ this feature.
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18 08:52:15.685+02:00 - Task 120.160 complete (user-directed TSK follow-up)
+
+One-word-class fix in `tsk/models/v1/body.py` (the `RecentUpdates`
+class docstring's `updates:` parameter block, line 198): "a future
+`create_tsk` tool" is now "the `create_tsk` tool" — the tool exists
+at `tsk/tools/create_tsk.py`, and the same docstring already refers
+to it in the present tense at line 257. Regenerated the three
+generated mirrors (exactly one changed line in each, the same
+wording): `docs/tsk_schema.json` (via `specmgr schema`), the package
+copy `src/biz/dfch/specmgr/tsk/data/tsk_schema.json` (via
+`specmgr schema --type tsk --output-dir src/biz/dfch/specmgr/tsk/data`),
+and `docs/api/biz.dfch.specmgr.tsk.models.v1.body.md` (via
+`specmgr docs`); `specmgr mcp-docs` ran too and `docs/MCP.md` came
+back byte-identical (no diff). `rg -n "a future .create_tsk" docs/
+src/` returns nothing (exit 1). Gate: `ruff format --check` (2062
+files already formatted), `ruff check` (all checks passed),
+`vulture src/ whitelist.py --min-confidence 60` (no findings) all
+pass; pytest `-n auto --cov=src --cov-report= -q` → 4668 passed,
+17 skipped, 5662 subtests passed in 73.76 s.
 
 #### 2026-10-17 21:41:17.812+02:00 - Phase 120 review correction (Task 120.150)
 
@@ -519,6 +541,23 @@ Split out from feat-198-retire-adr-tool-plan-refs's scoping discussion (GitHub i
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18 08:33:44.534+02:00 - User-directed TSK follow-up (Task 120.160)
+
+While verifying Phase 120, the orchestrator's repo-wide "the future" sweep
+found one last stale same-class phrasing outside feat-199's own
+requirements: `tsk/models/v1/body.py`'s "a future `create_tsk` tool"
+although `tsk/tools/create_tsk.py` exists (the same docstring's line 257
+already refers to it in the present tense). It was disclosed in the final
+report and the PR body as an out-of-scope observation; the user directed
+(2026-10-18) that it be fixed on this branch before the merge, so Task
+120.160 records the fix here rather than in a separate feature — same
+rationale as the Phase 120 user-directed extension: a same-class
+correction found by this feature's own sweep, kept auditable in one place.
+Scope of the fix: the single phrasing in `body.py` plus regeneration of
+its three generated mirrors (`docs/tsk_schema.json`, the package copy
+`src/biz/dfch/specmgr/tsk/data/tsk_schema.json`, the `docs/api` module
+page) — no other TSK change.
 
 #### 2026-10-17 19:59:30.739+02:00 - Phase 120 wording: self-contained rewordings, no new citations
 
