@@ -45,9 +45,13 @@ plan's More Information matrix), so the block-boundary site is a lenient
 finding (warning in preflight, promoted error in standalone) and the
 bare-``@end`` site carries the tripwire's own lenient finding; the NAMED-
 CLOSE site stays an error in BOTH modes (parser-rejected, re-verified), and
-the fix hint is split by the recorded open shape (curly-open: replace the
-``end package`` close with a ``}`` line; braceless: add the missing ``}``
-line). Pinned below (rulebook §7.1 Phase 150 note).
+the fix hint is split by the CLOSE KIND (the firing site — the Phase 160
+axis correction of the 2026-10-18 open-shape split, which was precise for
+only 2 of the 6 site × open-shape combinations: named close — replace the
+``end package`` close with a ``}`` line; unclosed at boundary — add the
+missing ``}`` line; bare ``@end`` close — replace the bare ``@end`` close
+with a ``}`` line; the open shape stays named in the messages). Pinned
+below (rulebook §7.1 Phase 150 note, Phase 160 correction).
 
 ``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim (the
 corrected 2026-10-15 layout) — the frozen emission subset the real-parser
@@ -286,7 +290,9 @@ class TestPackageComponentTripwire(unittest.TestCase):
 
     def test_braceless_package_with_component_and_named_close_errors_both_modes(self):
         # the verified parser-failing shape Q1 (the pre-correction shipped
-        # layout): the tripwire fires on the close line in both modes
+        # layout): the tripwire fires on the close line in both modes —
+        # the Phase 160 strengthening pins the primary clause precise
+        # (named-close site: replace the 'end package' close)
         text = '@startuml t\npackage "REQ"\ncomponent Foo\nend package\n@enduml\n'
 
         for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
@@ -297,6 +303,7 @@ class TestPackageComponentTripwire(unittest.TestCase):
                 self.assertEqual(result.errors[0].line, 4)
                 self.assertIn("named 'end package' close", result.errors[0].message)
                 self.assertIn("opened at line 2, braceless", result.errors[0].message)
+                self.assertIn("replace the 'end package' close", result.errors[0].fix_hint)
                 self.assertIn("curly-brace", result.errors[0].fix_hint)
                 self.assertIn('component "TYPE" {', result.errors[0].fix_hint)
                 self.assertEqual(result.warnings, [])
@@ -304,7 +311,9 @@ class TestPackageComponentTripwire(unittest.TestCase):
     def test_curly_open_package_with_named_close_errors_both_modes(self):
         # the verified parser-failing shape R1 (curly-open + 'end package'
         # close): the open shape does not matter — the named close over a
-        # component declaration is the error
+        # component declaration is the error — the Phase 160
+        # strengthening pins the primary clause precise (named-close site:
+        # replace the 'end package' close)
         text = '@startuml t\npackage "REQ" {\ncomponent Foo\nend package\n@enduml\n'
 
         for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
@@ -315,6 +324,7 @@ class TestPackageComponentTripwire(unittest.TestCase):
                 self.assertEqual(result.errors[0].line, 4)
                 self.assertIn("named 'end package' close", result.errors[0].message)
                 self.assertIn("opened at line 2, curly-open", result.errors[0].message)
+                self.assertIn("replace the 'end package' close", result.errors[0].fix_hint)
                 self.assertIn("curly-brace", result.errors[0].fix_hint)
 
     def test_unclosed_component_package_at_enduml_is_lenient_both_modes(self):
@@ -324,7 +334,8 @@ class TestPackageComponentTripwire(unittest.TestCase):
         # pinned 1.2026.8 renders it, rc=0 + SVG, file- and pipe-form). The
         # lenient finding is attributed to the OPEN line (the note-unclosed
         # error's own convention), warning in preflight / promoted error in
-        # standalone, with the braceless fix-hint variant
+        # standalone, with the block-boundary fix-hint variant (add the
+        # missing '}' line — the Phase 160 close-kind key)
         text = '@startuml t\npackage "REQ"\ncomponent Foo\n@enduml\n'
 
         preflight = check_structure(text, MODE_PREFLIGHT)
@@ -478,18 +489,23 @@ class TestPackageComponentTripwire(unittest.TestCase):
                 self.assertEqual(result.errors, [])
                 self.assertEqual(result.warnings, [])
 
-    # --- the 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1):
-    # the parser-ACCEPTED unclosed-at-boundary shapes (every open shape) and
-    # the bare-@end close of a component-collecting package (every open
-    # shape) are pinned to the lenient treatment with the split fix hint —
-    # each shape verified against the pinned 1.2026.8, file- AND pipe-form
-    # (rc=0 + SVG; the feature plan's More Information matrix) ---
+    # --- the 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1,
+    # hint axis corrected Phase 160): the parser-ACCEPTED
+    # unclosed-at-boundary shapes (every open shape) and the bare-@end close
+    # of a component-collecting package (every open shape) are pinned to the
+    # lenient treatment with the close-kind-keyed fix hint — each shape
+    # verified against the pinned 1.2026.8, file- AND pipe-form (rc=0 +
+    # SVG; the feature plan's More Information matrix) ---
 
     def test_unclosed_curly_open_component_package_at_enduml_is_lenient_both_modes(self):
         # Phase 150 shape a2 (parser-ACCEPTED: curly-open 'package "REQ" {'
         # + component, unclosed at @enduml — rc=0 + SVG, both forms): the
         # lenient finding names the curly-open shape and carries the
-        # curly-open fix-hint variant (replace the 'end package' close)
+        # block-boundary fix-hint variant (add the missing '}' line — the
+        # Phase 160 axis correction: the close kind, not the open shape,
+        # keys the hint; the pre-fix pin asserted the open-shape variant,
+        # "replace the 'end package' close", which named a line that does
+        # not exist here)
         text = '@startuml t\npackage "REQ" {\ncomponent Foo\n@enduml\n'
 
         preflight = check_structure(text, MODE_PREFLIGHT)
@@ -498,13 +514,13 @@ class TestPackageComponentTripwire(unittest.TestCase):
         self.assertEqual(preflight.warnings[0].line, 2)
         self.assertIn("unclosed at the block boundary", preflight.warnings[0].message)
         self.assertIn("opened at line 2, curly-open", preflight.warnings[0].message)
-        self.assertIn("replace the 'end package' close", preflight.warnings[0].fix_hint)
+        self.assertIn("add the missing '}'", preflight.warnings[0].fix_hint)
 
         standalone = check_structure(text, MODE_STANDALONE)
         self.assertFalse(standalone.ok)
         self.assertEqual(len(standalone.errors), 1)
         self.assertIn("opened at line 2, curly-open", standalone.errors[0].message)
-        self.assertIn("replace the 'end package' close", standalone.errors[0].fix_hint)
+        self.assertIn("add the missing '}'", standalone.errors[0].fix_hint)
         self.assertEqual(standalone.warnings, [])
 
     def test_unclosed_braceless_component_package_with_later_content_is_lenient_both_modes(self):
@@ -554,7 +570,10 @@ class TestPackageComponentTripwire(unittest.TestCase):
         # @end — rc=0 + SVG, both forms): the tripwire's OWN lenient
         # finding on the @end line (not the generic name-omission finding —
         # whose hint would steer the author to the parser-rejected 'end
-        # package' close), with the braceless fix-hint variant
+        # package' close), with the bare-@end fix-hint variant (replace the
+        # bare '@end' close — the Phase 160 axis correction; the pre-fix
+        # pin asserted the open-shape variant, "add the missing '}'", which
+        # is imprecise: the block IS closed, by the '@end' line)
         text = '@startuml t\npackage "REQ"\ncomponent Foo\n@end\n@enduml\n'
 
         for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
@@ -568,14 +587,17 @@ class TestPackageComponentTripwire(unittest.TestCase):
                     findings[0].message,
                 )
                 self.assertIn("opened at line 2, braceless", findings[0].message)
-                self.assertIn("add the missing '}'", findings[0].fix_hint)
+                self.assertIn("replace the bare '@end' close", findings[0].fix_hint)
                 self.assertIn('component "TYPE" {', findings[0].fix_hint)
 
     def test_bare_atend_closing_curly_component_package_is_the_tripwire_lenient_finding(self):
         # Phase 150 shape b2 (parser-ACCEPTED: curly-open package + bare
         # @end — rc=0 + SVG, both forms): the same treatment with the
-        # curly-open fix-hint variant (pins the open_shape split at this
-        # site)
+        # bare-@end fix-hint variant (pins the close-kind keying at this
+        # site — the Phase 160 axis correction; the open shape stays named
+        # in the message; the pre-fix pin asserted the open-shape variant,
+        # "replace the 'end package' close", which named a line that does
+        # not exist here)
         text = '@startuml t\npackage "REQ" {\ncomponent Foo\n@end\n@enduml\n'
 
         for mode in (MODE_PREFLIGHT, MODE_STANDALONE):
@@ -589,7 +611,7 @@ class TestPackageComponentTripwire(unittest.TestCase):
                     findings[0].message,
                 )
                 self.assertIn("opened at line 2, curly-open", findings[0].message)
-                self.assertIn("replace the 'end package' close", findings[0].fix_hint)
+                self.assertIn("replace the bare '@end' close", findings[0].fix_hint)
 
 
 class TestReferenceGraphSubsetParserGate(unittest.TestCase):

@@ -855,9 +855,12 @@ tripwire's own lenient finding (a content-conditional variant of the §6.4
 the author to the parser-rejected NAMED close); the NAMED `end package`
 close over a component-collecting `package` (both open shapes,
 parser-rejected, re-verified) STAYS an error in BOTH modes. The fix hint is
-split by the recorded open shape (curly-open: replace the `end package`
-close with a `}` line; braceless: add the missing `}` line; either: or
-convert to the `component "TYPE" { … }` form).
+split by the CLOSE KIND (the firing site — corrected 2026-10-18, Phase
+160, where the open-shape split proved precise for only 2 of the 6 site ×
+open-shape combinations): named close — replace the `end package` close
+with a `}` line; unclosed at boundary — add the missing `}` line; bare
+`@end` close — replace the bare `@end` close with a `}` line; each variant
+keeps the common tail "or convert to the `component "TYPE" { … }` form".
 
 ### 6.2 Error format
 

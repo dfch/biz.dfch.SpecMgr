@@ -619,10 +619,12 @@ firing sites against the pinned 1.2026.8 (SHA-256 re-verified; file- AND
 pipe-form — the chain's own `--check-syntax`/`--svg -pipe` contract): EVERY
 unclosed-at-boundary variant (braceless `package "REQ"` + `component Foo`
 + `@enduml`; curly-open `package "REQ" {` + component, unclosed; unclosed
-braceless with later content; braceless + a stray `}` line) and the bare
-`@end` close of a component-collecting `package` (both open shapes) is
+braceless with later content; braceless + a stray `}` line — incl. the
+next-`@startuml` boundary variant, verified 2026-10-18, Phase 160) and the
+bare `@end` close of a component-collecting `package` (both open shapes) is
 parser-ACCEPTED (rc=0 + a rendered SVG carrying the node labels — the
-feature plan's More Information isolation matrix, extended with these rows),
+feature plan's More Information isolation matrix, extended with these rows
+and the Phase 160 row),
 while both NAMED-CLOSE shapes (braceless + `end package`; curly-open +
 `end package`) remain parser-REJECTED (rc=200, `Syntax Error? (Assumed
 diagram type: component)`). Corrections: (a) the block-boundary firing site
@@ -637,11 +639,15 @@ tripwire's own lenient finding (a content-conditional variant of the §6.4
 hint would steer the author to the parser-rejected NAMED close; (c) the
 NAMED-CLOSE site STAYS an error in BOTH modes (the only remaining tripwire
 error — parser-rejected and re-verified); (d) the fix hint is split by the
-recorded open shape — curly-open: replace the `end package` close with a
-`}` line; braceless: add the missing `}` line; either: or convert the group
-to the `component "TYPE" { … }` domain-group form (the 2026-10-15 single
-hint's "an unclosed block over component declarations is a parser syntax
-error" clause was factually false for the accepted shapes). The matching
+CLOSE KIND (the firing site — corrected 2026-10-18, Phase 160, where the
+open-shape split proved precise for only 2 of the 6 site × open-shape
+combinations): named close — replace the `end package` close with a `}`
+line; unclosed at boundary — add the missing `}` line; bare `@end` close —
+replace the bare `@end` close with a `}` line; each variant keeps the
+common tail "or convert the group to the `component "TYPE" { … }`
+domain-group form" (the 2026-10-15 single hint's "an unclosed block over
+component declarations is a parser syntax error" clause was factually
+false for the accepted shapes). The matching
 dated note lives in the UC rulebook §6.1; the control tests re-pin the two
 block-boundary pins and pin every verified shape (feature plan Task 150.130).
 

@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: review
 type: feat
-updated: '2026-10-18T12:35:08.907+02:00'
+updated: '2026-10-18T21:09:51.172+02:00'
 version: 1.0.0
 ---
 
@@ -39,7 +39,7 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 
 - [x] ACC-001: The §2.9 worked example (rulebook + `_EMITTED_SUBSET` + the anchor golden) contains no `package "…"`/`end package` lines, uses `component "TYPE" { … }` groups, carries no edge labels, and parses + renders through the real PlantUML 1.2026.8 parser (the env-gated gate passes where a source is configured; the render-proof finds a node title in the SVG body and no crash marker).
 - [x] ACC-002: Every regenerated golden under `tests/fixtures/reference-graphs/goldens/` passes the structure checker with ZERO findings in both modes (the existing goldens-directory sweep stays green), and the new golden parser sweep passes for every golden under a configured source (REQ-003's sweep).
-- [x] ACC-003: The tripwire rule fires on the parser-verified shapes: a named `end package` close over a component-collecting `package` (braceless- or curly-open — parser-rejected, verified) is an error in BOTH modes with the open-shape-split curly-brace fix hint, and an unclosed such fragment at a block boundary (or a bare `@end` close of it — parser-accepted, verified 2026-10-18) is a lenient finding (warning in preflight, promoted error in standalone) — and on no existing UC/reference golden (zero false positives; sequence-diagram packages with participants unaffected).
+- [x] ACC-003: The tripwire rule fires on the parser-verified shapes: a named `end package` close over a component-collecting `package` (braceless- or curly-open — parser-rejected, verified) is an error in BOTH modes with the close-kind-split curly-brace fix hint, and an unclosed such fragment at a block boundary (or a bare `@end` close of it — parser-accepted, verified 2026-10-18) is a lenient finding (warning in preflight, promoted error in standalone) — and on no existing UC/reference golden (zero false positives; sequence-diagram packages with participants unaffected).
 - [x] ACC-004: The `specmgr-refs` skill's diagram workflow text mandates `reverse` for scoped diagrams (MCP `reverse=True` / CLI `--reverse`) with the O(registry-size) cost note, while the builder/tool/CLI signatures keep the `reverse=False` default (the existing schema-default pin test stays green unchanged).
 - [x] ACC-005: The new CI job verifies the pinned jar's SHA-256, runs the suite, and reports the real-parser gates as PASSED, not skipped — `pytest -rs` under the job shows no `require_plantuml_source` skip reason for the reference-graph subset gate or the golden parser sweep.
 - [x] ACC-006: `ruff format --check`, `ruff check`, `vulture`, and the full test suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`) are green with the layout + label fix, tripwire rule, rulebook amendment, regenerated goldens, sweep test, skill change, CI job, and doc updates committed.
@@ -141,9 +141,19 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 - [x] Task 150.150: Doc corrections: dated correction note in rulebook §7.1 correcting the 2026-10-15 note's block-boundary-error claim per the 150.100/150.110 verdicts, a matching UC rulebook §6.1 note ONLY IF its wording misdescribes the new behaviour (the Phase 140 precedent: check before amending), the CHANGELOG `[Unreleased]` entry wording corrected, ACC-003 amended IN PLACE (G2: its "verified parser-failing shapes" wording claims the unclosed-at-boundary shape is verified-parser-failing — reword to match what the code fires on after 150.110, the D2/D3 in-place-amendment precedent), and the golden-sweep count pin (`assertEqual(len(goldens), 22)`) moved BEFORE the `require_plantuml_source` skip so the pin holds in sourceless runs too (I2).
 - [x] Task 150.160: Phase end: run the full quality gate with the jar configured (`ruff format --check`, `ruff check`, `vulture`, full suite `uv run --frozen pytest -n auto --cov=src --cov-report= -rs` — zero `require_plantuml_source` skips — and the targeted `tests/plantuml/test_reference_graph_subset.py` green with zero skips), regenerate `specmgr docs` + `specmgr mcp-docs` if any docstring changed, update the plan Progress (Current Status, a dated Updates entry, Decisions Made if any, tick the Phase 150 checkboxes), and confirm `get_feat(id="feat-214-rel-invalid-diag")` parses cleanly with `status: review` unchanged.
 
+#### Phase 160: Third review pass (hint axis re-key + record completion)
+
+- [x] Task 160.100: I1 code fix in `plantuml/structure.py`: re-key the tripwire fix hint on the CLOSE KIND (the firing site) instead of the recorded open shape — `_package_component_fix` becomes site-keyed with three variants, each keeping the common tail "(or convert the group to the curly-brace domain-group form 'component \"TYPE\" { … }')": named-close site (both open shapes) → "replace the 'end package' close with a '}' line"; block-boundary site (both open shapes) → "add the missing '}' line"; bare-`@end` site (both open shapes) → "replace the bare '@end' close with a '}' line" — each variant's remedy produces one of the parser-verified ACCEPTED `}`-close shapes (re-probe the post-remedy shapes against the pinned jar in pipe-form BEFORE finalizing: braceless + `}` (the matrix a4 row) and curly-open + `}` (the matrix curly-close row), both must be rc=0); the open shape stays named in all three sites' MESSAGES (unchanged — no information lost); correct the 2026-10-18 module-docstring paragraph's hint-split description IN PLACE (same-day correction, D2/D3 discipline) with a brief "axis corrected in Phase 160" marker.
+- [x] Task 160.110: I1 test re-pins in `tests/plantuml/test_reference_graph_subset.py`: the a2 pin (curly-open unclosed at boundary — currently asserts "replace the 'end package' close") → "add the missing '}'"; the b1 pin (braceless bare-`@end` — currently asserts "add the missing '}'") → "replace the bare '@end' close"; the b2 pin (curly-open bare-`@end` — currently asserts "replace the 'end package' close") → "replace the bare '@end' close"; STRENGTHEN both named-close pins (the braceless `test_braceless_package_with_component_and_named_close_errors_both_modes` and its curly-open sibling) to additionally assert "replace the 'end package' close" — pinning the primary clause precise in all six (site × open-shape) combinations; update the affected test comments and the module/class fix-record docstrings (e.g. the a2 comment's "curly-open fix-hint variant (replace the 'end package' close)").
+- [x] Task 160.120: G1 record completion: parser-verify the next-`@startuml` multi-block boundary variant (braceless `package "REQ"` + `component Foo`, NO `@enduml`, then a second `@startuml` block — the third block-boundary kind rulebook §7.1's own wording names) against the pinned jar in BOTH forms (the round-3 reviewer's pipe-form probe was rc=0/accepted; reproduce the file form too and record exit codes + SVG evidence); add the row to the More Information isolation matrix and the one-word completion in the §7.1 2026-10-18 note (its unclosed-variant enumeration gains "incl. the next-`@startuml` boundary variant").
+- [x] Task 160.130: I1 coordinated doc corrections (same-day, in place, brief Phase 160 correction markers): rulebook §7.1's (d) clause ("the fix hint is split by the recorded open shape — curly-open: replace …; braceless: add …" → "split by the close kind (the firing site) — named close: replace the 'end package' close …; unclosed at boundary: add …; bare '@end' close: replace …"), the matching UC rulebook §6.1 clause, the CHANGELOG `[Unreleased]` tripwire clause ("with the fix hint split by the recorded open shape" → split by close kind), ACC-003's "open-shape-split" phrase → "close-kind-split", then regenerate `docs/api` (`specmgr docs`) for the structure.py docstring change and confirm `docs/MCP.md` no-diff (no tool description touched).
+- [x] Task 160.140: Phase end: run the full quality gate with the jar configured (`ruff format --check`, `ruff check`, `vulture`, full suite `uv run --frozen pytest -n auto --cov=src --cov-report= -rs` — zero `require_plantuml_source` skips — and the targeted `tests/plantuml/test_reference_graph_subset.py` green with zero skips), update the plan Progress (Current Status, a dated Updates entry, a Decisions Made entry on the in-place same-day correction choice + the close-kind axis, tick the Phase 160 checkboxes), bump the frontmatter `updated` to the NEW entries' timestamp ms-identical (fixing round-3 D1 — Phase 150's `updated` 10:35:08.907Z predates its own 10:49:30.810Z entries; the house rule per the `25a0049` precedent is `updated` == newest entry timestamp, ms-identical, +02:00 form), and confirm `get_feat(id="feat-214-rel-invalid-diag")` parses cleanly with `status: review` unchanged.
+
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-18**: PHASE 160 COMPLETE (third review pass — hint axis re-key + record completion; Tasks 160.100–160.140 done, status stays `review`). The round-3 reviewer's I1 finding is fixed: the tripwire's fix hint is now keyed on the CLOSE KIND (the firing site) instead of the recorded open shape — named-close → "replace the 'end package' close with a '}' line"; block-boundary → "add the missing '}' line"; bare-`@end` → "replace the bare '@end' close with a '}' line" — each variant keeping the common curly-brace domain-group tail, so the primary clause is precise in all six (site × open-shape) combinations (the open shape stays named in all three sites' messages — no information lost; every message/severity and the named-close both-modes ERROR status unchanged). The post-remedy shapes were re-probed against the pinned jar (SHA-256 re-check OK, OpenJDK 11.0.32.1) BEFORE finalizing: braceless + `}` (the matrix a4 row) and curly-open + `}` (the matrix curly-close row) both rc=0 in pipe-form (ACCEPTED + `--svg` render proofs carrying the Foo/REQ node labels), so every variant's remedy lands on a parser-verified `}`-close shape. G1 record completion: the next-`@startuml` multi-block boundary variant (braceless `package "REQ"` + `component Foo`, NO `@enduml`, then a second `@startuml` block) is parser-ACCEPTED rc=0 in BOTH forms (file-form SVG carries the second block's node — the file-level extraction drops the unclosed first block without parsing its content, proven by a negative control answering rc=0 with a parser-rejected `end package` close in the first block; pipe-form verdict + render byte-identical) — recorded as the matrix's new Phase 160 row + the one-word completion in the §7.1 2026-10-18 note. The coordinated same-day in-place doc corrections (rulebook §7.1 (d) clause, UC §6.1, CHANGELOG `[Unreleased]` tripwire clause, ACC-003 "close-kind-split") carry brief Phase 160 markers. D1 fixed: the frontmatter `updated` (21:09:51.172+02:00) is now ms-identical to the newest entry timestamp (19:09:51.172Z). Quality gate with the jar configured: `ruff format --check` → `2062 files already formatted`; `ruff check` → `All checks passed!`; `vulture` → no output (rc=0); full suite → **4701 passed, 4 skipped in 81.62s** (the 4 skips are the URL-matrix tests only — ZERO `require_plantuml_source` skips); targeted `tests/plantuml/test_reference_graph_subset.py` → **26 passed, 62 subtests passed, ZERO skips**; `specmgr docs` + `specmgr mcp-docs` regenerated → `git diff --stat docs/` is exactly `docs/api/biz.dfch.specmgr.plantuml.structure.md`, `docs/MCP.md` no diff (no tool description touched).
 
 **As of 2026-10-18**: PHASE 150 COMPLETE (second review pass — tripwire parser-verification fixes; Tasks 150.100–150.160 done, status stays `review`). The 150.100 pre-code-change parser verification (SHA-256 re-check of the pinned jar OK, OpenJDK 11.0.32.1) reproduced the reviewer's verdict on the pinned 1.2026.8 for BOTH invocation forms (file-form `-tsvg` and the chain's own `--check-syntax`/`--svg -pipe` contract): EVERY unclosed-at-block-boundary variant of a component-collecting `package` (braceless + `component Foo` + `@enduml`; curly-open, unclosed; braceless with later content; braceless + a stray `}` line) and the bare-`@end` close (both open shapes) is parser-ACCEPTED (rc=0 + a rendered SVG carrying the node labels), while both NAMED-CLOSE shapes remain parser-REJECTED (rc=200, `Syntax Error? (Assumed diagram type: component)`) — the More Information isolation matrix gained the six new variant rows + a re-verification note. Per the pre-fixed approach, the 150.110/150.120/150.140 fixes in `plantuml/structure.py`: the block-boundary firing site is demoted from a both-modes hard error to a lenient finding (warning in preflight, promoted error in standalone — mirroring the existing lenient branch; message and the empirically-wrong "the parser does not implicitly close such a block" comment corrected), the bare-`@end` site now emits the tripwire's own lenient finding for a component-collecting `package` (previously: the generic name-omission finding whose hint steered the author to the parser-rejected named close), the NAMED-CLOSE site STAYS an error in both modes, and the shared fix hint is split by the recorded `open_shape` (curly-open: replace `end package` with `}` / convert to the `component "TYPE" { … }` group; braceless: add the missing `}`) — `specmgr plantuml-check` over a parser-valid diagram of the unclosed shapes now answers `checked_by=jar valid=true rendered=true` exit 0 (previously `checked_by=structure valid=not-run` exit 1 — demonstrated on the plain-unclosed and the stray-`}` shape, where the author had already followed the old hint). 150.130: the two block-boundary HARD-ERROR pins re-pinned to the lenient outcome, 5 new control tests pin every verified shape, and every pre-existing firing/zero-finding pin + every UC + reference golden stays green / zero-finding. 150.150: dated 2026-10-18 correction note in rulebook §7.1, the matching UC §6.1 note (its 2026-10-15 wording misdescribed the new behaviour — the check-before-amending judged a note warranted, unlike Phase 140), the CHANGELOG `[Unreleased]` tripwire entry reworded, ACC-003 amended IN PLACE to the post-150.110 firing behaviour (G2), and the golden-sweep count pin moved before the `require_plantuml_source` skip (I2 — negative control: a simulated 23rd golden now fails the pin in a sourceless run). Phase-end gate with the jar configured: `ruff format --check` → `2062 files already formatted`; `ruff check` → `All checks passed!`; `vulture` → clean (rc=0); full suite → **4701 passed, 4 skipped** (URL-matrix only — zero `require_plantuml_source` skips; +5 over the 4696 baseline = the new control tests); targeted `tests/plantuml/test_reference_graph_subset.py` → **26 passed, zero skips**; `docs/api/biz.dfch.specmgr.plantuml.structure.md` regenerated (+50 lines — the module-docstring paragraph + the hint-split function), `docs/MCP.md` no diff.
 
@@ -162,6 +172,111 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-18T19:09:51.172Z - Phase 160 complete (third review pass: hint axis re-keyed to close kind, next-@startuml matrix row, updated bump)
+
+All five tasks (160.100–160.140) done; status stays `review`.
+
+**Task 160.100 (I1 — the hint axis re-key):** `plantuml/structure.py`:
+`_package_component_fix` is now site-keyed on the CLOSE KIND with three
+variants, each keeping the common tail "(or convert the group to the
+curly-brace domain-group form 'component "TYPE" { … }')": named-close →
+"replace the 'end package' close with a '}' line"; block-boundary → "add
+the missing '}' line"; bare-@end → "replace the bare '@end' close with a
+'}' line". The three call sites pass their own site string
+("named-close" / "block-boundary" / "bare-@end"); the open shape STAYS
+named in all three sites' messages (unchanged — no information lost), and
+every message/severity/both-modes-ERROR status is untouched. Each
+variant's remedy produces one of the parser-verified ACCEPTED `}`-close
+shapes — re-probed BEFORE finalizing against the pinned jar (SHA-256
+re-check: `/home/user/plantuml.jar: OK`; OpenJDK 11.0.32.1), pipe-form
+verdict rc=0 (green check-image) + `--svg` render proof in both cases:
+braceless + `}` (the matrix a4 row; SVG 1653 B carrying the Foo/REQ node
+labels) and curly-open + `}` (the matrix curly-close row, quoted name;
+SVG 1632 B, same labels). A one-shot probe over `check_structure`
+confirms the six (site × open-shape) combinations now carry a precise
+primary clause. The 2026-10-18 module-docstring paragraph's hint-split
+description is corrected IN PLACE (same-day, D2/D3 discipline) with the
+"axis corrected in Phase 160" marker.
+
+**Task 160.110 (I1 — test re-pins):** in `tests/plantuml/
+test_reference_graph_subset.py`: the a2 pin (curly-open unclosed at
+boundary) now asserts "add the missing '}'" (was "replace the 'end
+package' close"); the b1 pin (braceless bare-@end) now asserts "replace
+the bare '@end' close" (was "add the missing '}'"); the b2 pin (curly-
+open bare-@end) now asserts "replace the bare '@end' close" (was
+"replace the 'end package' close"); BOTH named-close pins (the braceless
+`test_braceless_package_with_component_and_named_close_errors_both_modes`
+and its curly-open sibling) are STRENGTHENED to additionally assert
+"replace the 'end package' close" — pinning the primary clause precise
+in all six (site × open-shape) combinations. Affected test comments, the
+module fix-record docstring, and the Phase 150 section comment updated to
+the close-kind axis; the a1/a3/a4 pins (block-boundary, "add the missing
+'}'") and every zero-finding pin stay as-is. Targeted run: 26 passed,
+62 subtests passed, ZERO skips.
+
+**Task 160.120 (G1 — record completion):** the next-`@startuml`
+multi-block boundary variant (braceless `package "REQ"` + `component Foo`,
+NO `@enduml`, then a second `@startuml` block — the third block-boundary
+kind rulebook §7.1's own wording names) is parser-verified against the
+pinned jar in BOTH forms: file-form (`java -jar /home/user/plantuml.jar
+-tsvg` over the written file) → rc=0 + a rendered SVG (1042 B) carrying
+the second block's node (Bar); pipe-form `--check-syntax` verdict rc=0
+(765 B green check-image) + `--svg` render rc=0 — the pipe and file SVGs
+are byte-IDENTICAL (cmp). Evidence nuance recorded with the row: the
+file-level extraction DROPS the unclosed first block without parsing its
+content — proven by a negative control (the same file with the
+parser-REJECTED `end package` close in the first block answers rc=0 in
+BOTH forms, stderr empty, the second block's SVG rendered — in contrast
+to the single-block named-close shapes: rc=200, no SVG). The More
+Information isolation matrix gained the Phase 160 row, and the §7.1
+2026-10-18 note's unclosed-variant enumeration gained "incl. the
+next-`@startuml` boundary variant, verified 2026-10-18, Phase 160" —
+every tripwire firing site (all three boundary kinds) now carries a
+recorded parser verdict.
+
+**Task 160.130 (I1 — coordinated doc corrections, same-day in place with
+brief Phase 160 markers):** (a) reference-graph rulebook §7.1 (d) clause:
+"the fix hint is split by the recorded open shape — curly-open: replace
+…; braceless: add …" → "split by the CLOSE KIND (the firing site —
+corrected 2026-10-18, Phase 160, where the open-shape split proved
+precise for only 2 of the 6 site × open-shape combinations): named close
+— replace the `end package` close with a `}` line; unclosed at boundary
+— add the missing `}` line; bare `@end` close — replace the bare `@end`
+close with a `}` line; each variant keeps the common tail …". (b) UC
+rulebook §6.1: the matching clause corrected the same way (its own
+shorter tail phrasing kept). (c) CHANGELOG `[Unreleased]` tripwire
+clause: "with the fix hint split by the recorded open shape (both naming
+the curly-brace group form)" → "with the fix hint split by the close kind
+(the firing site), each variant naming the curly-brace group form".
+(d) ACC-003: "open-shape-split" → "close-kind-split". Then `specmgr
+docs` + `specmgr mcp-docs` regenerated: `git diff --stat docs/` is
+exactly `docs/api/biz.dfch.specmgr.plantuml.structure.md` (41
+insertions / 24 deletions — the module-docstring axis correction + the
+`_package_component_fix` docstring); `docs/MCP.md` NO diff (no tool
+description touched). No resource drift pin asserts on the corrected
+fragments (checked before amending — the §7.1 Phase 150 note and the UC
+§6.1 note are not pin-covered; all resource tests green in the full run).
+
+**Task 160.140 (phase-end gate + record):** `uv run --frozen ruff format
+--check` → `2062 files already formatted`; `uv run --frozen ruff check`
+→ `All checks passed!`; `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` → no output (rc=0); `uv run --frozen pytest -n auto
+--cov=src --cov-report= -rs` → **4701 passed, 4 skipped in 81.62s** —
+the four skips are the URL-matrix tests only (`tests/plantuml/test_url.
+py:332`, `tests/plantuml/test_url.py:347`, `tests/plantuml/test_encode.
+py:187`, `tests/commands/test_plantuml_encode.py:114`): ZERO
+`require_plantuml_source` skips (the count is unchanged from the Phase
+150 baseline — the re-pins/strengthenings touch assertions, not test
+counts). Targeted: `uv run --frozen pytest tests/plantuml/
+test_reference_graph_subset.py -rs` → **26 passed, 62 subtests passed in
+56.80s, ZERO skips**. D1 fix: the frontmatter `updated` is now
+'2026-10-18T21:09:51.172+02:00' — ms-identical to the newest entry
+timestamp (19:09:51.172Z), the `25a0049` house rule (Phase 150's
+`updated` 12:35:08.907+02:00 = 10:35:08.907Z PREDATED its own
+10:49:30.810Z entries — corrected). `get_feat(id="feat-214-
+rel-invalid-diag")` parses cleanly (verified via `list_feat`
+glob `feat-214*`: `error: null`), `status: review` unchanged.
 
 #### 2026-10-18T10:49:30.810Z - Phase 150 complete (second review pass: E1 block-boundary demotion, E2 bare-@end alignment, I1 hint split, docs corrected)
 
@@ -788,6 +903,14 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
 
+#### 2026-10-18T19:09:51.172Z - Phase 160: the hint axis is the close kind (the firing site), not the recorded open shape
+
+The Phase 150 open-shape split was the round-2 review's/plan's mis-transcription of the actual remediation dependency: the remedy depends on which CLOSE LINE exists at the firing site, not how the block OPENED. Of the six (site × open-shape) combinations only two were precise under the old key — named-close × curly-open ("replace the 'end package' close") and block-boundary × braceless ("add the missing '}'"); the other four steered the author at lines that do not exist or are already present (a braceless named-close told to "add" a `}` when the block IS closed — by the parser-rejected `end package`; a curly-open block-boundary told to "replace" an `end package` that does not exist; both bare-`@end` sites told to "replace the 'end package' close" / "add the missing '}'" when the close is the `@end` line). The re-key loses no information: the open shape stays named in all three sites' MESSAGES (the site-specific cause), and each variant's remedy lands on one of the parser-verified ACCEPTED `}`-close shapes (re-probed pipe-form rc=0 BEFORE finalizing — braceless+`}` the a4 row, curly-open+`}` the curly-close row). The primary clause is now pinned precise in all six combinations by the strengthened/re-pinned control tests.
+
+#### 2026-10-18T19:09:51.172Z - Phase 160: same-day in-place correction of the 2026-10-18 records (vs. a new dated note) + the D1 updated bump
+
+The round-3 findings correct records written earlier the SAME day (the 2026-10-18 rulebook notes, the structure.py module docstring, the CHANGELOG clause, ACC-003, the test fix-record comments) — a new dated note would describe a state that never existed in any commit (the open-shape split is being replaced before the phase's work is committed; a "2026-10-18 correction of the 2026-10-18 note" pair is exactly the noise the D2/D3 discipline exists to avoid). So every correction lands IN PLACE with a brief "corrected 2026-10-18, Phase 160" / "axis corrected in Phase 160" marker, and the G1 matrix gain is the one purely-additive record (a new row + the §7.1 note's "incl. the next-`@startuml` boundary variant" completion). The D1 frontmatter defect (Phase 150's `updated` 10:35:08.907Z predating its own 10:49:30.810Z entries) is fixed in the same pass: `updated` = '2026-10-18T21:09:51.172+02:00', ms-identical to the newest entry timestamp (19:09:51.172Z) per the `25a0049` house rule.
+
 #### 2026-10-18T10:49:30.810Z - Phase 150: the demotion is the naive mirror — the lenient branch, not zero-finding silence
 
 The block-boundary site was demoted exactly as the plan pre-fixed it: a `lenient_finding` (the existing else branch's own mechanism), not a zero-finding suppression. The two-mode semantics are preserved: in preflight (a source configured) the finding is a non-blocking warning and the parser — the sole validity authority — actually runs (`checked_by=jar valid=true rendered=true`, exit 0, demonstrated); on the all-unset standalone floor the lenient set is promoted to errors, exactly as the generic unclosed-fragment case already is — a sourceless floor going SILENT on a shape it cannot verify would weaken the floor without adding validity. The finding also stays actionable (open line, recorded open shape, the split hint) instead of disappearing, and the bare-`@end` site gets the same treatment (its own tripwire lenient finding) so the two parser-accepted unclosed-ish shapes are treated consistently — the E2 inconsistency the review flagged.
@@ -948,6 +1071,7 @@ Line 25 is the first `component` declaration inside the braceless `package "REQ"
 | `package "REQ"` / `component Foo` / `}` / `@enduml` (unclosed braceless + a stray `}` line) | OK (2026-10-18, Phase 150 — rc=0 + SVG, both forms) |
 | `package "REQ"` / `component Foo` / `@end` / `@enduml` (BARE `@end` close — braceless) | OK (2026-10-18, Phase 150 — rc=0 + SVG, both forms) |
 | `package "REQ" {` / `component Foo` / `@end` / `@enduml` (bare `@end` close — curly-open) | OK (2026-10-18, Phase 150 — rc=0 + SVG, both forms) |
+| `package "REQ"` / `component Foo` / next `@startuml` / `component Bar` / `@enduml` (unclosed at the next-`@startuml` block boundary — braceless, multi-block file) | OK (2026-10-18, Phase 160 — rc=0, file- AND pipe-form; the rendered SVG carries the second block's node (Bar) — the file-level extraction drops the unclosed first block without parsing its content (negative control: a parser-rejected `end package` close in the first block is rc=0 too, file- AND pipe-form)) |
 
 The two NAMED-CLOSE rows above were re-verified 2026-10-18 (Phase 150,
 SHA-256 re-check of the pinned jar first): both remain Syntax errors
