@@ -4,7 +4,7 @@ created: '2026-10-15T11:46:49.911+02:00'
 id: feat-214-rel-invalid-diag
 status: review
 type: feat
-updated: '2026-10-17T12:49:44.212+02:00'
+updated: '2026-10-18T10:00:13.758+02:00'
 version: 1.0.0
 ---
 
@@ -131,9 +131,21 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 - [x] Task 140.150: Record the G1 process gap as a NEW GitHub issue: no commit-path parseability check exists for the repo's own `.specmgr/` specification documents (the sibling class of the root cause this feature fixed — this plan itself shipped unparseable in three consecutive commits, masked by `list_feat`'s dirty-stage frontmatter+H1 parse); a CI step or test running `parse_feat` over every feat README (the full 84-document corpus parses in seconds) closes the class; out of scope for this feature's code.
 - [x] Task 140.160: Phase end: run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, full suite with the jar configured), update the plan Progress (Current Status, a dated Updates entry, Decisions Made if any, tick the Phase 140 checkboxes), and confirm `get_feat(id="feat-214-rel-invalid-diag")` parses cleanly with `status: review` unchanged.
 
+#### Phase 150: Second review pass (tripwire parser-verification fixes)
+
+- [ ] Task 150.100: Parser-verify the two tripwire firing shapes that were NEVER rendered through the pinned parser before being frozen (SHA-256 re-verified 1.2026.8 jar, file- and pipe-form): (a) a component-collecting `package` fragment UNCLOSED AT THE BLOCK BOUNDARY (braceless `package "REQ"` + `component Foo` + `@enduml`; curly-open `package "REQ" {` + component, unclosed; braceless with later content after it; braceless + a stray `}` line), and (b) a component-collecting `package` fragment closed with a BARE `@end` instead of `@enduml` — record the exit code + SVG evidence in `### Updates` and extend the More Information isolation matrix (the 2026-10-15 table) with the new variant rows, so that EVERY tripwire firing site carries a recorded parser verdict (the feature's own root-cause discipline: nothing is frozen on an unverified premise — G1).
+- [ ] Task 150.110: E1 fix in `plantuml/structure.py`: per the 150.100 verdict, demote the tripwire's BLOCK-BOUNDARY firing site from a hard error to a lenient finding (mirroring the existing lenient branch) when the parser accepts the unclosed-at-boundary shape — the named-close site (a named `end package` close over a component-collecting fragment, parser-rejected and verified) STAYS an error in both modes; correct the block-boundary code comment (its "the parser does not implicitly close such a block into a valid diagram" claim is empirically false for the accepted shapes) and the emitted message, so a parser-valid diagram of this shape no longer yields `checked_by=structure valid=not-run` exit 1 from `specmgr plantuml-check`.
+- [ ] Task 150.120: E2 fix in `plantuml/structure.py`: align the BARE-`@end` close path's treatment of a component-collecting `package` fragment with the 150.110 outcome (today the tripwire is bypassed entirely on that path and only the generic lenient finding fires, so two parser-accepted unclosed-ish shapes get inconsistent treatment) — per the 150.100 verdict.
+- [ ] Task 150.130: Control tests in `tests/plantuml/test_reference_graph_subset.py`: re-pin the two control tests that currently pin the block-boundary HARD ERROR to the 150.110 outcome (zero findings or the new lenient severity, both modes), and ADD control tests for the unclosed-at-boundary shapes and the bare-`@end` + component shape; every pre-existing firing/zero-finding pin and every UC + reference golden stays green / zero-finding.
+- [ ] Task 150.140: I1 — split the shared tripwire fix hint by the recorded `open_shape` (already computed on the fragment stack): for the mixed-close shape (curly open + `end package`) the actionable remedy is to REPLACE `end package` with `}` (or convert to a `component "TYPE" { … }` group), while for a braceless open it is to ADD the missing `}` — the current single hint ("close the group with a '}' line … an unclosed block over component declarations is a parser syntax error") is factually false for the parser-accepted unclosed shapes and, for the braceless open, produces exactly the E1 false-positive state (the author follows the hint, adds the `}`, and is still told the block was "never closed").
+- [ ] Task 150.150: Doc corrections: dated correction note in rulebook §7.1 correcting the 2026-10-15 note's block-boundary-error claim per the 150.100/150.110 verdicts, a matching UC rulebook §6.1 note ONLY IF its wording misdescribes the new behaviour (the Phase 140 precedent: check before amending), the CHANGELOG `[Unreleased]` entry wording corrected, ACC-003 amended IN PLACE (G2: its "verified parser-failing shapes" wording claims the unclosed-at-boundary shape is verified-parser-failing — reword to match what the code fires on after 150.110, the D2/D3 in-place-amendment precedent), and the golden-sweep count pin (`assertEqual(len(goldens), 22)`) moved BEFORE the `require_plantuml_source` skip so the pin holds in sourceless runs too (I2).
+- [ ] Task 150.160: Phase end: run the full quality gate with the jar configured (`ruff format --check`, `ruff check`, `vulture`, full suite `uv run --frozen pytest -n auto --cov=src --cov-report= -rs` — zero `require_plantuml_source` skips — and the targeted `tests/plantuml/test_reference_graph_subset.py` green with zero skips), regenerate `specmgr docs` + `specmgr mcp-docs` if any docstring changed, update the plan Progress (Current Status, a dated Updates entry, Decisions Made if any, tick the Phase 150 checkboxes), and confirm `get_feat(id="feat-214-rel-invalid-diag")` parses cleanly with `status: review` unchanged.
+
 ## Progress
 
 ### Current Status
+
+**As of 2026-10-18**: PHASE 150 PLANNED (second review pass — tripwire parser-verification fixes; nothing implemented yet). A second feat-reviewer pass over the Phase 140 HEAD re-confirmed the rest (full suite 4696 passed / 4 skipped URL-matrix under the pinned jar with zero `require_plantuml_source` skips, clean-clone `specmgr docs` / `mcp-docs` / `adr-toc` regeneration byte-clean, local jar SHA-256 re-verified against the plan's pin) but found two defects in THIS feature's own tripwire deliverable (the Phase 100 build, the Phase 140 partial fix): **E1** — the block-boundary firing site is a false positive: a component-collecting `package` fragment unclosed at the block boundary is parser-ACCEPTED by the pinned 1.2026.8 (reviewer-verified, file- and pipe-form, rc=0 + valid SVG), yet the checker hard-errors in both modes, so `specmgr plantuml-check` exits 1 with `checked_by=structure valid=not-run` on a parser-valid diagram (the parser is never invoked) and the emitted fix hint is factually false; the code comment, rulebook §7.1, the UC §6.1 note, and the CHANGELOG entry all inherit the same unverified premise. **E2** — the bare-`@end` close path bypasses the tripwire entirely for a component-collecting `package` (parser-accepted → only the generic lenient finding; no control test pins the shape), so two parser-accepted unclosed-ish shapes get inconsistent treatment. **Root cause (G1):** the 2026-10-15 isolation matrix verified only the NAMED-CLOSE package shapes before REQ-004 froze "unclosed at block end" as a both-modes error — the feature's own "frozen on an unverified gate" root cause re-occurring on the checker side. Decision: fix as PHASE 150 of this feature (not a new feature/issue — the defects are in this feature's own deliverable and the feature is still unmerged `review`; the Phase 140 precedent, in contrast to Task 140.150's out-of-scope escalation to issue #218): parser-verify both shapes first (150.100), demote the block-boundary site to a lenient finding (150.110), align the bare-`@end` path (150.120), re-pin + add control tests (150.130), split the fix hint by recorded open shape (150.140), doc corrections incl. ACC-003 in place + the I2 count-pin move (150.150), phase-end gate (150.160). Status stays `review`.
 
 **As of 2026-10-17**: PHASE 140 COMPLETE (review fixes) — the feat-reviewer pass (ship-ready-with-minor-fixes) is fully addressed: E1 (the tripwire false-positive on the parser-accepted `}`-closed curly-open `package` — `plantuml/structure.py` now pops the innermost curly-open fragment on a `}` line, 3 new control tests pin the parser-OK shapes, dated fix note in rulebook §7.1), E2 (the split `` `{src} --> `` / `` `{dst}` `` code span in the `get_reference_diagram` MCP description — restored to the single `` `{src} --> {dst}` `` span, `docs/MCP.md` regenerated), D1 (rulebook §2.6 still naming the removed `package` grouping — corrected to the curly domain-group form + dated correction note), D2/D3 (the "bodies verbatim" claim amended to the exact 9/11 statement, the ACC-005 entry now cites the post-merge local 4693 run explicitly — re-verified at HEAD by this phase's gate), I1 (the `plantuml-parser` CI job reordered sync-first, mirroring `build`), and G1 (recorded as NEW GitHub issue #218 — no commit-path parseability check for the repo's own `.specmgr/` documents; NOT implemented here, out of scope for this feature's code). Phase 140 quality gate green with the jar configured: `4696 passed, 4 skipped` (URL-matrix only; the +3 over the 4693 HEAD baseline are the new E1 control tests), targeted `tests/plantuml/test_reference_graph_subset.py` `21 passed` / ZERO skips, `ruff format --check` / `ruff check` / `vulture` clean. Status stays `review`.
 
@@ -148,6 +160,94 @@ This feature fixes the frozen emission layout (the `package` blocks become curly
 ### Updates
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-18T08:00:13.758Z - Phase 150 planned (second review pass: tripwire firing sites frozen unverified)
+
+The second feat-reviewer pass over the Phase 140 HEAD (the plan's own
+review-fix phase) re-confirmed everything else — full suite re-run 4696
+passed / 4 skipped (URL-matrix only, zero `require_plantuml_source`
+skips under the pinned jar), clean-clone regeneration of `specmgr docs`
++ `specmgr mcp-docs` + `specmgr adr-toc` byte-clean, the local jar
+SHA-256 re-verified against the plan's pin, and the Phase 140 E1 fix
+re-validated (all three parser-OK shapes exit 0 with zero checker
+findings; that test addition is purely additive) — but found two
+defects in the tripwire itself: the exact defect class this feature set
+out to close, surviving the Phase 100 build and the Phase 140 review
+because only the NAMED-CLOSE shapes were parser-verified.
+
+**E1 (block-boundary false positive):** a component-collecting `package`
+fragment that is unclosed at the block boundary is parser-ACCEPTED by
+the pinned 1.2026.8 (reviewer-verified directly, file- and pipe-form,
+all rc=0 with valid SVGs: braceless `package "REQ"` + `component Foo` +
+`@enduml`; curly-open `package "REQ" {` + component, unclosed; unclosed
+braceless with later content; braceless + a stray `}` line), yet the
+block-boundary firing site reports a hard error in BOTH modes — incl.
+preflight mode, where the parser is the sole validity authority and
+lenient shapes are warnings. The code comment ("the parser does not
+implicitly close such a block into a valid diagram") is empirically
+wrong, and the normative text inherits the same unverified premise:
+rulebook §7.1, the UC §6.1 note, and the CHANGELOG entry. Practical
+impact demonstrated end-to-end: `specmgr plantuml-check` over a
+parser-valid diagram of this shape exits 1 with `checked_by=structure
+valid=not-run` — the parser is never invoked — and the emitted fix hint
+("close the group with a '}' line … an unclosed block over component
+declarations is a parser syntax error") is factually false; the worst
+instance is the braceless-open + stray-`}` shape, where the author has
+ALREADY followed the hint yet is still told the block was "never closed
+with '}'". The two control tests pinning the false positive must be
+re-pinned.
+
+**E2 (bare-`@end` bypass):** the bare-`@end` close path silently bypasses
+the tripwire for a component-collecting `package`: the parser ACCEPTS
+`package "REQ"` + component + bare `@end` (reviewer-verified rc=0), and
+the checker emits only the generic lenient finding — so two
+parser-accepted unclosed-ish shapes get inconsistent treatment (bare
+`@end` → warning in preflight; no close at all → hard error in both
+modes, per E1). No control test pins the bare-`@end` + component shape
+at all.
+
+**Root cause (G1):** the plan's 2026-10-15 isolation matrix (Design
+Notes + the More Information table) verified only the NAMED-CLOSE
+package shapes before REQ-004 mandated "unclosed at block end" as a
+both-modes error — the same "frozen on an unverified gate" root cause
+the feature fixed for emissions, re-occurring on the checker side.
+
+**G2 (ACC-003 wording):** ACC-003 states the tripwire fires on "the
+verified parser-failing shapes (braceless `package` + inner component;
+curly-open `package` + `end package` close)" — but the shipped rule
+fires on a third, unverified shape (unclosed at block end), so the
+acceptance criterion as worded is not what the code implements; the ACC
+line is amended in place once 150.110 lands (the D2/D3 precedent).
+
+**I1 (fix hint):** the shared fix hint conflates two remedies — for the
+mixed-close shape the actionable step is to REPLACE `end package` with
+`}` (or convert to a `component "TYPE" { … }` group), while as worded it
+reads as "add a '}' line", which for a braceless open produces exactly
+the E1 false-positive state. The hint is split by the recorded open
+shape (150.140).
+
+**I2 (count pin):** the golden-sweep count pin
+(`assertEqual(len(goldens), 22)`) only executes when a parser source is
+configured; on a sourceless run a 23rd golden would be added silently.
+Low-risk (the commit path always has the jar) but the assert moves
+before `require_plantuml_source` (150.150).
+
+**Decision: PHASE 150 of this feature, not a new feature/issue.** The
+defects are in this feature's own deliverable (the Phase 100 tripwire,
+the Phase 140 partial fix); the feature is still `review` with PR #216
+unmerged; every touched artifact belongs to this feature (the control
+tests, rulebook §7.1, the UC §6.1 note, the CHANGELOG entry, ACC-003).
+This mirrors Phase 140 (the first-review equivalent) and contrasts with
+Task 140.150's escalation to issue #218 (out-of-scope sibling work).
+Approach fixed in advance: 150.100 parser-verifies BOTH unverified
+shapes before any code change (the feature's own root-cause
+discipline); the block-boundary site is demoted to a lenient finding
+(mirroring the existing lenient branch) if — as the reviewer verified —
+the parser accepts the shapes, while the named-close site STAYS an
+error (parser-rejected, verified); the bare-`@end` path is aligned to
+the same outcome (150.120); control tests re-pin + extend (150.130).
+Phase 150 is PLANNED ONLY — no code, test, or doc change has been made;
+status stays `review`.
 
 #### 2026-10-17T10:49:44.000Z - Phase 140 complete (feat-reviewer pass: E1/E2/D1/D2/D3/I1 fixed, G1 recorded as issue #218)
 
@@ -544,6 +644,29 @@ Feature created from GitHub issue #214 ("Relationship diagram creates invalid pl
 ### Decisions Made
 
 <!-- Newest entry first — prepend new entries directly below this comment. -->
+
+#### 2026-10-18T08:00:13.758Z - Phase 150: second-review fixes stay in this feature (a phase, not a new feature)
+
+The second feat-reviewer pass's findings (E1 block-boundary false
+positive, E2 bare-`@end` bypass, G1 unverified-shapes root cause, G2
+ACC-003 wording, I1 fix-hint conflation, I2 conditional count pin) are
+planned as PHASE 150 of feat-214 rather than a new feature/issue: the
+defects are in this feature's own tripwire deliverable (the Phase 100
+build, the Phase 140 partial fix), the feature is still `review` with
+PR #216 unmerged, and every touched artifact (the control tests,
+rulebook §7.1 / the UC §6.1 dated notes, the CHANGELOG entry, ACC-003)
+belongs to this feature. This mirrors Phase 140 (the first-review
+equivalent: "Review fixes (feat-reviewer pass)") and contrasts with
+Task 140.150's escalation to issue #218, which was out-of-scope sibling
+work (a repo-wide `.specmgr/` parseability check — not this feature's
+code). The approach is fixed in advance: 150.100 parser-verifies both
+unverified shapes against the pinned jar BEFORE any code change (the
+feature's own root-cause discipline — nothing frozen on an unverified
+premise), the block-boundary site is demoted to a lenient finding if
+the parser accepts the shapes (the named-close site stays an error —
+parser-rejected and verified), the bare-`@end` path is aligned to the
+same outcome, and the fix hint is split by the recorded open shape.
+This commit is planning-only: no code/test/doc implementation.
 
 #### 2026-10-17T10:49:44.000Z - Phase 140: E1 pop rule — the general innermost-curly-open pop (no narrowing needed)
 
