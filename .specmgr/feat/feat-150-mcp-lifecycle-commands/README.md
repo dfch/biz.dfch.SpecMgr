@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-23 23:16:12.456+02:00'
 id: feat-150-mcp-lifecycle-commands
-status: review
+status: done
 type: feat
-updated: '2026-09-30T05:13:02.000Z'
+updated: '2026-10-18T22:32:30.053+02:00'
 version: 1.0.0
 ---
 
@@ -278,11 +278,15 @@ The unifying design principle (see Design Notes) is: every new capability gets a
 
 ### Current Status
 
-**As of 2026-09-27**: Phase 1a (`get_<d>` parse-failure error channel, REQ-013/ACC-015/ACC-016) and Phase 1 (repair, REQ-001/REQ-002/REQ-012), including Task 1a.8's Option B amendment pass, are implemented, gate-green, and committed (5c94030, b82eef4, af93f96, 10a4b62). ACC-001, ACC-002, ACC-014, ACC-015, and ACC-016 are met; post-implementation review (PR #155) approved with two doc fixes, now applied (the no-generic-write-tool narration extended to the merged `edit` tool; ACC-014 checked). The plan's own parse failure (bare `<d>` html_inline tokens, plus two further model violations the `<d>` error had masked: the `Phase 1a:` Task List heading and the two-paragraph 2026-09-25 19:49:40.000Z update entry) was repaired as part of this closeout. Status moves to `review` via the orchestrator's `set_status` call; remaining: push, PR, post-implementation review. Phases 2-6 remain unstarted (user scope: Phase 1 only).
+**As of 2026-10-18**: Feature complete and closed at its fixed scope (Phase 0: the `get_*` parse-failure error channel, REQ-013/ACC-015/ACC-016; Phase 1: `repair`, REQ-001/REQ-002/REQ-012 — the remaining Phases 2-6 were split to feat-167-mcp-lifecycle-commands-2 per the 2026-09-28 03:46:33.000Z entry). Both in-scope phases merged into `dev` via PR #155 (squash commit 3569c02, 2026-09-28); ACC-001, ACC-002, ACC-014, ACC-015, and ACC-016 are met; the post-implementation review (PR #155) approved with its two doc fixes applied (the no-generic-write-tool narration extended to the merged `edit` tool; ACC-014 checked), plus the post-review polish of the 2026-09-28 02:57:00.000Z entry; GitHub issue #150 is closed. Frontmatter status moved `review` to `done`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:30:36.000Z - Status set to done; PR #155 merge and issue #150 closure recorded
+
+PR #155 ("feat-150: MCP-native repair command + get_* parse-failure error channel (Phase 1 scope)") merged into `dev` on 2026-09-28 (squash commit 3569c02); the in-scope ACC-001, ACC-002, ACC-014, ACC-015, and ACC-016 are met with the post-implementation review fixes and the post-review polish applied; the remaining issue #150 items live on as feat-167-mcp-lifecycle-commands-2 under GitHub issue #167 (status `planning`). GitHub issue #150 is closed. This close-out moves the frontmatter status from `review` to `done` and supersedes the stale "remaining: push, PR, post-implementation review" wording in the prior Current Status; no code or plan changes accompany it.
 
 #### 2026-09-28 03:46:33.000Z - Split: Phases 2-6 moved to feat-167-mcp-lifecycle-commands-2 (GitHub issue #167)
 
