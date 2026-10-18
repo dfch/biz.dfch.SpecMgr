@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T20:57:08.254+02:00'
+updated: '2026-10-18T21:17:24.066+02:00'
 version: 1.0.0
 ---
 
@@ -116,18 +116,22 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 140: Verification
 
-- [ ] Task 140.100: Run the full test suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`) and confirm no regressions.
-- [ ] Task 140.110: Spot-check that at least one fixture/example per domain still round-trips correctly.
+- [x] Task 140.100: Run the full test suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`) and confirm no regressions.
+- [x] Task 140.110: Spot-check that at least one fixture/example per domain still round-trips correctly.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phase 130 is closed: `docs/api` regeneration was verified to produce zero residual diff (the regenerated pages already landed in Phase 110's commit via the pre-commit drift hook, ACC-006 proven), the ADR v1.6.0 revision entry was re-verified in place (Task 130.110), and the `CHANGELOG.md` `[Unreleased]` `### Changed` entry was added (Task 130.120, REQ-011/ACC-011). Phase 135 is closed: the fully commented-out `validate_and_convert_text`/`model_validator_after` dead-code block at the end of `markdown_str.py` was removed (REQ-010, ACC-010) with no import fallout and all gates green (ruff format/check, vulture, grep proof, `tests/models/md/` and the full suite). Only Phase 140 (final verification) remains.
+**As of 2026-10-18**: Implementation complete -- all phases (100/105/110/120/130/135/140) closed, and all acceptance criteria verified with concrete evidence in the 2026-10-18T21:17 Phase 140 entry: the full suite passed (4668 passed, 17 skipped -- identical counts to every prior phase's baseline, no regressions, ACC-008), the 12-domain packaged-example round-trip spot-check (Task 140.110, REQ-009) PASSed 7 domains with the 5 failing domains (req/uc/dec/sop/vcr) proven pre-existing via byte-identical behavior at the pre-implementation base `3b746d4`, and every ACC grep/lint gate was clean (zero residual `validate_heading*`/`validate_and_convert_text`/`model_validator_after` matches in `src/`/`tests/`/`whitelist.py`/`docs/api/`, ruff format/check + vulture all green, CHANGELOG `[Unreleased]` entry in place, ADR v1.6.0 revision line present). Awaiting review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T21:17:00.000+02:00 - Closed Phase 140: final verification passed
+
+Ran the full suite (`uv run --frozen pytest -n auto --cov=src --cov-report=`): **4668 passed, 17 skipped** in 47.50s (exit 0) -- identical passed/skipped counts to the Phase 110/120/130/135 baseline, so Task 140.100/ACC-008 ("no regressions") holds (the "5662 subtests" figure in prior entries is the unittest-discovery gate's count; this pytest configuration reports no subtests line in its summary). Task 140.110 (REQ-009): a spot-check script (`/tmp/opencode/roundtrip_spotcheck.py`, kept outside the repo) parsed each of the 12 packaged examples (`<d>/data/<d>_example.md`) with the domain's own `parse_<d>` entry point and asserted the repo-canonical round-trip used by every domain's own parser tests (`str(document.body) == format_text(frontmatter.loads(raw).content)`): **PASS x7** (tsk, qa, prb, gol, rsk, feat, sysrs) and **FAIL x5** (req, uc, dec, sop, vcr). The five failures are a pre-existing engine/example property (the rendered body inserts a blank line between consecutive list items those examples author without one), **not** a regression: re-running the identical script at the pre-implementation base `3b746d4` in a throwaway worktree (removed afterward) produced byte-identical PASS/FAIL lines for all 12 domains, and a dump of every domain's rendered example body diffed empty between base and branch -- no behavioral change, evidence-backed. ACC evidence: the `validate_heading_structure|validate_headings|validate_and_convert_text|model_validator_after` grep across `src/`/`tests/`/`whitelist.py` returns zero matches (exit 1; ACC-001/ACC-002/ACC-010), `whitelist.py` has zero `validate_heading` matches (ACC-004), `docs/api/` has zero matches (ACC-006), `ruff format --check` (2063 files already formatted), `ruff check` (All checks passed!), and `vulture src/ whitelist.py --min-confidence 60` (exit 0) are all clean (ACC-009), `CHANGELOG.md` carries the `[Unreleased]` `### Changed` entry (line 23, ACC-011), and ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae carries exactly one `Revised 2026-10-18 (v1.6.0)` line (ACC-007). All acceptance criteria verified; the ACC boxes are intentionally left unticked for the orchestrator's review-status commit per repo precedent.
 
 #### 2026-10-18T20:57:00.000+02:00 - Closed Phase 135: removed the markdown_str.py dead-code block
 
@@ -209,6 +213,10 @@ Drafted the feature plan from GitHub issue #129, grounded in a read of `markdown
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T21:17:00.000+02:00 - Phase 140 round-trip criterion: domain `parse_<d>` + canonical body comparison, byte-identical base attribution for the pre-existing failures
+
+Task 140.110's literal `cls.from_text(raw)` / `str(parsed) == raw` form does not exist at the document level: every domain's `<DocClass>` (e.g. `ReqDocument`) is a plain frontmatter+body `BaseModel` wrapper whose `document.py` docstring explicitly declines a `from_text`, and the domain's actual parse machinery is the free function `parse_<d>(raw)` the `parse_<d>`/`create_<d>` tools delegate to. The spot-check therefore parses via `parse_<d>` and asserts the repo-canonical round-trip every domain's own parser tests use (`str(document.body) == format_text(frontmatter.loads(raw).content)`), keeping the task's byte-exact spirit by additionally diffing every domain's rendered example body between the branch and the pre-implementation base `3b746d4` -- the two sides are byte-identical for all 12 domains, the strongest available no-behavioral-change evidence (the 5 canonical-form failures -- req/uc/dec/sop/vcr -- exist identically on both sides and are a pre-existing list-spacing rendering property of those packaged examples).
 
 #### 2026-10-17T12:00:00.000Z - Resolved redesign vs. removal: removal
 
