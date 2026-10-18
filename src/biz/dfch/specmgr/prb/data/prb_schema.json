@@ -188,7 +188,8 @@
         },
         "problem_statement": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence following the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`."
+          "description": "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence following the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`.",
+          "pattern": "^(?:.+)\\s+is\\s+causing\\s+(?:.+),\\s+for\\s+(?:.+)\\s+because\\s+(?:.+)\\.$"
         },
         "references": {
           "anyOf": [
@@ -254,6 +255,12 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "active",
+            "cancelled",
+            "draft",
+            "resolved"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -287,42 +294,63 @@
     },
     "Question1": {
       "description": "`### What Is the Problem?` under `## Current State` -- the 1st 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "What Is the Problem?"
+      ],
       "properties": {},
       "title": "Question1",
       "type": "object"
     },
     "Question2": {
       "description": "`### Why Is It a Problem?` under `## Current State` -- the 2nd 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "Why Is It a Problem?"
+      ],
       "properties": {},
       "title": "Question2",
       "type": "object"
     },
     "Question3": {
       "description": "`### Where Is the Problem Observed?` under `## Current State` -- the 3rd 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "Where Is the Problem Observed?"
+      ],
       "properties": {},
       "title": "Question3",
       "type": "object"
     },
     "Question4": {
       "description": "`### Who Is Impacted?` under `## Current State` -- the 4th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "Who Is Impacted?"
+      ],
       "properties": {},
       "title": "Question4",
       "type": "object"
     },
     "Question5": {
       "description": "`### When Was the Problem First Observed?` under `## Current State` -- the 5th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "When Was the Problem First Observed?"
+      ],
       "properties": {},
       "title": "Question5",
       "type": "object"
     },
     "Question6": {
       "description": "`### How Is the Problem Observed?` under `## Current State` -- the 6th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "How Is the Problem Observed?"
+      ],
       "properties": {},
       "title": "Question6",
       "type": "object"
     },
     "Question7": {
       "description": "`### How Often Is the Problem Observed?` under `## Current State` -- the 7th 5W2H question. Optional.\n\nLeaf class (no declared fields) -- captures the answer text verbatim.",
+      "enum": [
+        "How Often Is the Problem Observed?"
+      ],
       "properties": {},
       "title": "Question7",
       "type": "object"

@@ -82,6 +82,7 @@
     },
     "TaskItem": {
       "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.\ncontent:\n    An optional list of paragraphs with details content of the task item.",
+      "pattern": "^\\[( |x|X)\\]\\s*(.*)$",
       "properties": {
         "content": {
           "anyOf": [
@@ -144,6 +145,12 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "active",
+            "cancelled",
+            "done",
+            "draft"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -177,6 +184,7 @@
     },
     "UpdateEntry": {
       "description": "`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-19 05:42:00.000+02:00 - Kickoff` or\n`### 2026-08-19T05:42:00.000Z : Kickoff`. The em-dash separator is\nrejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +\n``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or\n``Z`` for UTC variant -- date-only is rejected (ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC/VCR's own\n`UpdateEntry` shape exactly.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})(?: - | : ).+$",
       "properties": {
         "content": {
           "$ref": "#/$defs/UpdateEntryContent",

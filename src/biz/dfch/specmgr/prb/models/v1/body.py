@@ -76,7 +76,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from ....models.md import (
     MarkdownParagraph,
@@ -152,6 +152,14 @@ class Question1(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only: each
+    # `QuestionN` accepts exactly its own heading (the `@alias` REGEX above,
+    # enforced by `match_alias` at parse time), so the emitted closed set is
+    # this class's singleton. The seven classes jointly cover the seven
+    # fixed 5W2H headings of the inventory.
+    model_config = ConfigDict(json_schema_extra={"enum": ["What Is the Problem?"]})
+
 
 @alias(value=r"Why Is It a Problem\?", type=AliasType.REGEX)
 class Question2(MarkdownSection3):
@@ -159,6 +167,11 @@ class Question2(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
+
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["Why Is It a Problem?"]})
 
 
 @alias(value=r"Where Is the Problem Observed\?", type=AliasType.REGEX)
@@ -168,6 +181,11 @@ class Question3(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["Where Is the Problem Observed?"]})
+
 
 @alias(value=r"Who Is Impacted\?", type=AliasType.REGEX)
 class Question4(MarkdownSection3):
@@ -175,6 +193,11 @@ class Question4(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
+
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["Who Is Impacted?"]})
 
 
 @alias(value=r"When Was the Problem First Observed\?", type=AliasType.REGEX)
@@ -184,6 +207,11 @@ class Question5(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["When Was the Problem First Observed?"]})
+
 
 @alias(value=r"How Is the Problem Observed\?", type=AliasType.REGEX)
 class Question6(MarkdownSection3):
@@ -192,6 +220,11 @@ class Question6(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["How Is the Problem Observed?"]})
+
 
 @alias(value=r"How Often Is the Problem Observed\?", type=AliasType.REGEX)
 class Question7(MarkdownSection3):
@@ -199,6 +232,11 @@ class Question7(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
+
+    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
+    # key on its generated JSON Schema entry -- metadata only; see
+    # `Question1` for the singleton-per-class rationale.
+    model_config = ConfigDict(json_schema_extra={"enum": ["How Often Is the Problem Observed?"]})
 
 
 class CurrentState(MarkdownSection2):
@@ -337,7 +375,16 @@ class Prb(MarkdownSection1WithComment):
             "Mandatory lead paragraph directly under the H1 title, holding exactly one sentence "
             "following the fixed template `[Current state] is causing [specific issue], for "
             "[stakeholder] because [underlying cause].`."
-        )
+        ),
+        # feat-189 Phase 120 (C13): the `_PROBLEM_STATEMENT_PATTERN`
+        # skeleton as a `pattern` key in the generated JSON Schema --
+        # metadata only (the field's own schema is a `$ref` to
+        # `MarkdownParagraph`, so the key lands sibling to the `$ref`): the
+        # pattern's own `re.DOTALL` flag is a Python-engine detail (soft-
+        # wrapped sentences), not part of the schema-level shape, and
+        # `_validate_problem_statement` below remains the sole enforcement
+        # point.
+        json_schema_extra={"pattern": _PROBLEM_STATEMENT_PATTERN.pattern},
     )
     current_state: CurrentState = Field(description="`## Current State` section. Mandatory.")
     gap: Gap = Field(description="`## Gap` section. Mandatory.")

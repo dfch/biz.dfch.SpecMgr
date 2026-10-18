@@ -47,7 +47,10 @@ from ._paths import ensure_adr_base_dir, slugify
     title="Create ADR",
     description=(
         "Create a new ADR: assigns a fresh id, derives a filename from the title, "
-        "validates, renders, and writes the new document to the ADR base directory."
+        "validates, renders, and writes the new document to the ADR base directory. "
+        "There is deliberately no `specmgr://adr/schema` resource -- this tool's own "
+        "typed input parameters (`frontmatter`: `AdrFrontmatter`, `body`: `AdrBody`) "
+        "are the authoritative ADR structure reference."
     ),
 )
 def create_adr(frontmatter: AdrFrontmatter, body: AdrBody) -> Adr:

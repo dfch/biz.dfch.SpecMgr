@@ -80,6 +80,12 @@ class Level(MarkdownSection2WithComment):
     )
     value: MarkdownParagraph = Field(
         description='Single-line value giving the requirement\'s obligation strength (e.g. "MUST").',
+        # feat-189 Phase 120 (C13): the `_LEVEL_PATTERN` closed set as an
+        # `enum` key in the generated JSON Schema -- metadata only (the
+        # field's own schema is a `$ref` to `MarkdownParagraph`, so the key
+        # lands sibling to the `$ref`): pydantic-core never enforces it, and
+        # `_validate_value` below remains the sole enforcement point.
+        json_schema_extra={"enum": ["MUST", "SHOULD", "MUST NOT", "SHOULD NOT", "MAY"]},
     )
 
     @field_validator("value")

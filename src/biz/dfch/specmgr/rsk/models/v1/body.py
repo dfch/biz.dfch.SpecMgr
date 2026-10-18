@@ -119,7 +119,13 @@ class Strategy(MarkdownSection2):
     """
 
     value: MarkdownParagraph = Field(
-        description="Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`."
+        description="Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`.",
+        # feat-189 Phase 120 (C13): the `_TARA_PATTERN` closed 4-value set as
+        # an `enum` key in the generated JSON Schema -- metadata only (the
+        # field's own schema is a `$ref` to `MarkdownParagraph`, so the key
+        # lands sibling to the `$ref`): pydantic-core never enforces it, and
+        # `_validate_value` below remains the sole enforcement point.
+        json_schema_extra={"enum": ["transfer", "accept", "reduce", "avoid"]},
     )
 
     @field_validator("value")

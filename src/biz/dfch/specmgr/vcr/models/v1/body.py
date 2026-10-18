@@ -56,7 +56,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, field_validator, model_validator
+from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
 from ....models.md import (
     MarkdownListItem,
@@ -139,7 +139,16 @@ class Coverage(MarkdownSection2):
     `## Coverage` is the only outcome signal (REQ-002).
     """
 
-    value: MarkdownParagraph = Field(description="Single-line coverage assessment. One of `full`, `partial`, `none`.")
+    value: MarkdownParagraph = Field(
+        description="Single-line coverage assessment. One of `full`, `partial`, `none`.",
+        # feat-189 Phase 120 (C13): the `_COVERAGE_PATTERN` closed 3-value
+        # set as an `enum` key in the generated JSON Schema -- metadata
+        # only (the field's own schema is a `$ref` to `MarkdownParagraph`,
+        # so the key lands sibling to the `$ref`): pydantic-core never
+        # enforces it, and `_validate_value` below remains the sole
+        # enforcement point.
+        json_schema_extra={"enum": ["full", "partial", "none"]},
+    )
 
     @field_validator("value")
     @classmethod
@@ -184,8 +193,21 @@ class TestSteps(MarkdownSection4):
 _AC_HEADING_PATTERN = r"AC-(\d{3}) \((Demonstration|Test|Analysis|Inspection|Special)\): .+"
 _AC_HEADING_RE = re.compile(_AC_HEADING_PATTERN)
 
+#: The anchored form of `_AC_HEADING_PATTERN` the `@alias` decorator below
+#: enforces. Lifted into a module constant so the alias (the parse-time
+#: enforcement) and `AcceptanceCriterion`'s own `json_schema_extra` metadata
+#: (feat-189 Phase 120, C13 -- schema-level documentation only) share one
+#: source.
+_AC_ALIAS_PATTERN = rf"^{_AC_HEADING_PATTERN}$"
 
-@alias(value=rf"^{_AC_HEADING_PATTERN}$", type=AliasType.REGEX)
+#: The closed DTAIS method-word set carried by `_AC_HEADING_PATTERN`'s own
+#: group 2 (Demonstration, Test, Analysis, Inspection, Special -- the
+#: `specmgr://dtais` vocabulary), for `AcceptanceCriterion`'s `enum`
+#: metadata (feat-189 Phase 120, C13).
+_DTAIS_METHODS = ["Demonstration", "Test", "Analysis", "Inspection", "Special"]
+
+
+@alias(value=_AC_ALIAS_PATTERN, type=AliasType.REGEX)
 class AcceptanceCriterion(MarkdownSection3):
     """`### AC-NNN (Method): <criterion text>` under `## Acceptance Criteria` -- one verification criterion.
 
@@ -237,6 +259,23 @@ class AcceptanceCriterion(MarkdownSection3):
         (not lowercased/normalized). Never stored separately -- derived
         from the retained heading text.
     """
+
+    # feat-189 Phase 120 (C13): the heading constraint as `json_schema_extra`
+    # metadata on this class's own generated JSON Schema entry -- metadata
+    # only: neither the heading text nor the method word is a schema-
+    # surfaced field (the heading lives in private `_value` state, and
+    # `number`/`method` are computed fields, which the generator's
+    # validation-mode `model_json_schema()` omits), so both keys land on the
+    # class's own entry: `pattern` = the full `AC-NNN (Method): <text>`
+    # heading shape (the `@alias` REGEX above, enforced by `match_alias` at
+    # parse time, remains the sole enforcement point) and `enum` = the
+    # closed DTAIS method-word set that shape's own group 2 accepts.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "pattern": _AC_ALIAS_PATTERN,
+            "enum": _DTAIS_METHODS,
+        }
+    )
 
     description: MarkdownParagraph | None = Field(
         default=None,
