@@ -27,10 +27,10 @@ from .markdown import markdown
 class MarkdownSection6(MarkdownSection):
     """Markdown content starting with an h6 heading.
 
-    A heading deeper than h6 (level > 6, a nested subsection) is allowed
-    and silently retained inside the section's extent, while a heading of
-    the same or a higher level (level <= 6) ends the section. This is
-    enforced procedurally by `MarkdownSection.get_extent`'s own stop
-    condition plus `MarkdownStr.from_text`'s trailing-completeness check,
-    not by any model validator (none exists).
+    No heading deeper than h6 exists, so `MarkdownSection6` is always a
+    leaf with respect to nesting: any following heading (all are level
+    <= 6) ends the section. This is enforced procedurally by
+    `MarkdownSection.get_extent`'s own stop condition plus
+    `MarkdownStr.from_text`'s trailing-completeness check, not by any
+    model validator (none exists).
     """
