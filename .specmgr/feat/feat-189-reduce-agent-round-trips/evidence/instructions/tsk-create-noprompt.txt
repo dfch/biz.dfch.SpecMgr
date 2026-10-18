@@ -1,0 +1,3 @@
+Create a new task list document titled 'Onboarding the new build server' with exactly three tasks: 'Provision the machine', 'Install the toolchain', 'Run a smoke build'.
+
+Use only the specmgr MCP tools to complete the task. When the document change is complete, reply DONE.
