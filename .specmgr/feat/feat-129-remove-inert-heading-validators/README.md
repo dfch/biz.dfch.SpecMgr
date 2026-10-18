@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
-status: planning
+status: review
 type: feat
-updated: '2026-10-18T21:17:24.066+02:00'
+updated: '2026-10-18T21:31:21.164+02:00'
 version: 1.0.0
 ---
 
@@ -32,17 +32,17 @@ version: 1.0.0
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `markdown_section.py` no longer declares `validate_heading_structure` or the `_tokens` `PrivateAttr`; `markdown_section1.py`..`markdown_section6.py` no longer declare `validate_headings`.
-- [ ] ACC-002: No import of `model_validator`, `PrivateAttr`, or `Token` remains unused in these seven files (ruff/vulture clean).
-- [ ] ACC-003: `MarkdownSection1`'s docstring (and any sibling class docstring with the same stale claim) accurately describes current behavior.
-- [ ] ACC-004: `whitelist.py` no longer lists `_.validate_heading_structure`/`_.validate_headings`.
-- [ ] ACC-005: `tests/models/md/test_markdown_section.py` has no reference to the removed `validate_headings` method, and still documents/tests that a leaf section silently retains a deeper nested heading via `get_extent`.
-- [ ] ACC-006: `docs/api/` no longer lists `validate_heading_structure`/`validate_headings` anywhere, confirmed by regenerating docs via `specmgr docs`.
+- [x] ACC-001: `markdown_section.py` no longer declares `validate_heading_structure` or the `_tokens` `PrivateAttr`; `markdown_section1.py`..`markdown_section6.py` no longer declare `validate_headings`.
+- [x] ACC-002: No import of `model_validator`, `PrivateAttr`, or `Token` remains unused in these seven files (ruff/vulture clean).
+- [x] ACC-003: `MarkdownSection1`'s docstring (and any sibling class docstring with the same stale claim) accurately describes current behavior.
+- [x] ACC-004: `whitelist.py` no longer lists `_.validate_heading_structure`/`_.validate_headings`.
+- [x] ACC-005: `tests/models/md/test_markdown_section.py` has no reference to the removed `validate_headings` method, and still documents/tests that a leaf section silently retains a deeper nested heading via `get_extent`.
+- [x] ACC-006: `docs/api/` no longer lists `validate_heading_structure`/`validate_headings` anywhere, confirmed by regenerating docs via `specmgr docs`.
 - [x] ACC-007: ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae carries a new dated revision entry documenting the removal decision and rationale (v1.6.0, 2026-10-18).
-- [ ] ACC-008: Full test suite (`uv run --frozen pytest -n auto`) passes with no regressions.
-- [ ] ACC-009: `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` all pass clean.
-- [ ] ACC-010: `markdown_str.py` no longer contains the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` or `# @model_validator(mode="after") ... model_validator_after` blocks.
-- [ ] ACC-011: `CHANGELOG.md`'s `[Unreleased]` section includes an entry for this removal.
+- [x] ACC-008: Full test suite (`uv run --frozen pytest -n auto`) passes with no regressions.
+- [x] ACC-009: `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` all pass clean.
+- [x] ACC-010: `markdown_str.py` no longer contains the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` or `# @model_validator(mode="after") ... model_validator_after` blocks.
+- [x] ACC-011: `CHANGELOG.md`'s `[Unreleased]` section includes an entry for this removal.
 
 ### Scope
 
