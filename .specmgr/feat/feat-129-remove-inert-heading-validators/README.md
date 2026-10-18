@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T20:47:18.865+02:00'
+updated: '2026-10-18T20:57:08.254+02:00'
 version: 1.0.0
 ---
 
@@ -110,9 +110,9 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 135: Remove the markdown_str.py Dead-Code Block
 
-- [ ] Task 135.100: Delete the fully-commented-out `# @field_validator("_value") ... def validate_and_convert_text` block in `markdown_str.py`.
-- [ ] Task 135.110: Delete the fully-commented-out `# @model_validator(mode="after") ... def model_validator_after` block in `markdown_str.py` (asserts on the same stale `self._tokens` concept the ADR already says was abandoned in favor of `_value: str`).
-- [ ] Task 135.120: Re-run `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` to confirm the removal leaves no dangling unused imports or whitelist entries.
+- [x] Task 135.100: Delete the fully-commented-out `# @field_validator("_value") ... def validate_and_convert_text` block in `markdown_str.py`.
+- [x] Task 135.110: Delete the fully-commented-out `# @model_validator(mode="after") ... def model_validator_after` block in `markdown_str.py` (asserts on the same stale `self._tokens` concept the ADR already says was abandoned in favor of `_value: str`).
+- [x] Task 135.120: Re-run `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` to confirm the removal leaves no dangling unused imports or whitelist entries.
 
 #### Phase 140: Verification
 
@@ -123,11 +123,15 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phase 130 is closed: `docs/api` regeneration was verified to produce zero residual diff (the regenerated pages already landed in Phase 110's commit via the pre-commit drift hook, ACC-006 proven), the ADR v1.6.0 revision entry was re-verified in place (Task 130.110), and the `CHANGELOG.md` `[Unreleased]` `### Changed` entry was added (Task 130.120, REQ-011/ACC-011). Phases 135 (the `markdown_str.py` dead-code block) and 140 (final verification) remain.
+**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phase 130 is closed: `docs/api` regeneration was verified to produce zero residual diff (the regenerated pages already landed in Phase 110's commit via the pre-commit drift hook, ACC-006 proven), the ADR v1.6.0 revision entry was re-verified in place (Task 130.110), and the `CHANGELOG.md` `[Unreleased]` `### Changed` entry was added (Task 130.120, REQ-011/ACC-011). Phase 135 is closed: the fully commented-out `validate_and_convert_text`/`model_validator_after` dead-code block at the end of `markdown_str.py` was removed (REQ-010, ACC-010) with no import fallout and all gates green (ruff format/check, vulture, grep proof, `tests/models/md/` and the full suite). Only Phase 140 (final verification) remains.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:57:00.000+02:00 - Closed Phase 135: removed the markdown_str.py dead-code block
+
+Deleted the fully commented-out dead-code block at the end of `MarkdownStr` in `src/biz/dfch/specmgr/models/md/markdown_str.py` (lines 687-707: the `# @field_validator("_value") ... validate_and_convert_text` and `# @model_validator(mode="after") ... model_validator_after` methods, plus the preceding blank separator line so the file ends with a single trailing newline per ruff convention) (REQ-010, ACC-010). The names referenced inside the block (`md`, `Token`, `field_validator`, `model_validator`) appear only within comments and were never imported, so no import changes were needed and the file is now 685 lines. Gate evidence: `ruff format --check` (2063 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), zero grep matches for the removed names or `_tokens` in the file and repo-wide for `validate_and_convert_text`, `tests/models/md/` green (365 passed, 48 subtests), and the full suite passed (4668 passed, 17 skipped, 5662 subtests).
 
 #### 2026-10-18T20:47:00.000+02:00 - Closed Phase 130: docs regeneration verified, CHANGELOG entry added
 
