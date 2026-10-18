@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-18T20:37:36.307+02:00'
+updated: '2026-10-18T20:47:18.865+02:00'
 version: 1.0.0
 ---
 
@@ -104,9 +104,9 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 #### Phase 130: Docs & ADR
 
-- [ ] Task 130.100: Regenerate `docs/api/` via `specmgr docs` and confirm the stale entries are gone.
+- [x] Task 130.100: Regenerate `docs/api/` via `specmgr docs` and confirm the stale entries are gone.
 - [x] Task 130.110: Added the dated revision entry to ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae recording the removal decision (bumped to v1.6.0, dated 2026-10-18; full wording in the ADR's own `more_information`, drafted under Task 100.110 above).
-- [ ] Task 130.120: Add a brief `[Unreleased]` entry to `CHANGELOG.md` documenting this internal cleanup (dead-validator/dead-code removal), satisfying REQ-011/ACC-011.
+- [x] Task 130.120: Add a brief `[Unreleased]` entry to `CHANGELOG.md` documenting this internal cleanup (dead-validator/dead-code removal), satisfying REQ-011/ACC-011.
 
 #### Phase 135: Remove the markdown_str.py Dead-Code Block
 
@@ -123,11 +123,15 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phases 130 (regenerate `docs/api` + CHANGELOG entry; the ADR revision itself already landed under Task 100.110), 135 (the `markdown_str.py` dead-code block), and 140 (final verification) remain.
+**As of 2026-10-18**: Implementation in progress. Phase 110 is closed: the inert `validate_heading_structure`/`validate_headings` model validators, the never-populated `_tokens` `PrivateAttr`, and their now-unused `Token`/`PrivateAttr`/`model_validator` imports are removed from `markdown_section.py` and `markdown_section1.py`..`markdown_section6.py`, and the six sibling class docstrings were corrected to describe the current heading-nesting behavior (REQ-001..REQ-004) -- no behavioral change, full test suite green. Phase 120 is closed: the stale `validate_headings` reference in `tests/models/md/test_markdown_section.py` was rewritten (REQ-006, ACC-005) and the two corresponding vulture whitelist entries removed from `whitelist.py` (REQ-005, ACC-004), with ruff/vulture clean and the full suite green. Phase 130 is closed: `docs/api` regeneration was verified to produce zero residual diff (the regenerated pages already landed in Phase 110's commit via the pre-commit drift hook, ACC-006 proven), the ADR v1.6.0 revision entry was re-verified in place (Task 130.110), and the `CHANGELOG.md` `[Unreleased]` `### Changed` entry was added (Task 130.120, REQ-011/ACC-011). Phases 135 (the `markdown_str.py` dead-code block) and 140 (final verification) remain.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:47:00.000+02:00 - Closed Phase 130: docs regeneration verified, CHANGELOG entry added
+
+Ran `uv run --frozen specmgr docs` (515 module pages + `docs/GENERATED.md` rewritten) and confirmed zero working-tree changes under `docs/` (`git status --short docs/` empty) -- the regenerated `docs/api/` pages already landed in Phase 110's commit (48175dd) via the pre-commit drift hook, so Task 130.100 is a verification pass proving ACC-006 with no generated page listing the removed `validate_heading_structure`/`validate_headings` (the only remaining `docs/`-wide matches are the ADR's own revision-history prose, out of scope, and the sysrs appendix's point-in-time snapshot, expected drift per Design Notes). Added a new `### Changed` subsection under `## [Unreleased]` in `CHANGELOG.md`, positioned before the existing `### Fixed`, with one bullet documenting the feature's dead-validator/dead-code removal and its no-behavioral-change rationale (REQ-011/ACC-011); Task 130.110's ADR v1.6.0 dated revision entry was re-verified in place (line 52).
 
 #### 2026-10-18T20:37:00.000+02:00 - Closed Phase 120: test and lint-whitelist cleanup
 

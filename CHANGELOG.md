@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the inert (fully commented-out, no-op)
+  `validate_heading_structure`/`validate_headings` Pydantic
+  `model_validator`s from `models/md`'s `MarkdownSection`/
+  `MarkdownSection1`..`MarkdownSection6` classes, together with the
+  never-populated `_tokens: list[Token]` `PrivateAttr` they would have
+  depended on, and `markdown_str.py`'s own fully commented-out dead
+  validator block. There is no behavioral change: the removed checks
+  were already no-ops, and the real structural invariant ("no
+  same-or-higher-level nested heading") remains enforced by
+  `MarkdownSection.get_extent`'s stop condition plus
+  `MarkdownStr.from_text`'s trailing-completeness check
+  (feat-129-remove-inert-heading-validators, GitHub issue #129).
+
 ### Fixed
 
 - `scripts/release.sh`: the v0.36.0 release (PR #212) showed
