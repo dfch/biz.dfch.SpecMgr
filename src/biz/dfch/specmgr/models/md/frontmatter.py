@@ -20,7 +20,7 @@
 Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
 ``feat-5-md-model-parser``): this is a *base* frontmatter model carrying only
 the handful of fields every document type shares. A concrete document type
-(e.g. a future ``uc``/``req``) defines its own frontmatter model that
+(e.g. ``uc``/``req``) defines its own frontmatter model that
 subclasses :class:`MarkdownFrontmatter` and adds its own fields, narrowing
 ``type`` to a fixed ``Literal[...]`` value, e.g.::
 
