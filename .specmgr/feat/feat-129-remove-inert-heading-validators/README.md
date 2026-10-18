@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: planning
 type: feat
-updated: '2026-10-17T15:45:00.000+02:00'
+updated: '2026-10-18T09:27:00.492+02:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,7 @@ version: 1.0.0
 
 ### Overview
 
-`models/md/markdown_section.py` and `markdown_section1.py`..`markdown_section6.py` each declare a `@model_validator(mode="after")` (`validate_heading_structure` on the base `MarkdownSection`, `validate_headings` on each `MarkdownSectionN`) that runs on every parsed instance but whose actual assertions have been commented out since they were drafted -- they do nothing today. This is documented as a known follow-up in the founding ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae` (v1.5.0). The real structural invariant ("no illegal same-or-higher nested heading") is already enforced procedurally by `MarkdownSection.get_extent`'s own stop condition plus `MarkdownStr.from_text`'s mandatory trailing-completeness check -- the inert validators were only ever meant as a second, defense-in-depth layer. The drafted `MarkdownSection1.validate_headings` body is also incompatible with real usage: it would reject *any* heading after the H1's own triple, but domains like `req` legitimately nest a `##`-rendering `Description` field inside `Requirement(MarkdownSection1)`, so every real top-level document would fail this check if it were simply uncommented. This feature removes the dead validators, the never-populated `_tokens: list[Token]` `PrivateAttr` they would have depended on, and the now-stale docstrings that contradict real usage (e.g. `MarkdownSection1`'s "no nested headings allowed" claim) -- and records the resolution as a dated revision on the founding ADR.
+`models/md/markdown_section.py` and `markdown_section1.py`..`markdown_section6.py` each declare a `@model_validator(mode="after")` (`validate_heading_structure` on the base `MarkdownSection`, `validate_headings` on each `MarkdownSectionN`) that runs on every parsed instance but whose actual assertions have been commented out since they were drafted -- they do nothing today. This is documented as a known follow-up in the founding ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (v1.5.0). The real structural invariant ("no illegal same-or-higher nested heading") is already enforced procedurally by `MarkdownSection.get_extent`'s own stop condition plus `MarkdownStr.from_text`'s mandatory trailing-completeness check -- the inert validators were only ever meant as a second, defense-in-depth layer. The drafted `MarkdownSection1.validate_headings` body is also incompatible with real usage: it would reject *any* heading after the H1's own triple, but domains like `req` legitimately nest a `##`-rendering `Description` field inside `Requirement(MarkdownSection1)`, so every real top-level document would fail this check if it were simply uncommented. This feature removes the dead validators, the never-populated `_tokens: list[Token]` `PrivateAttr` they would have depended on, and the now-stale docstrings that contradict real usage (e.g. `MarkdownSection1`'s "no nested headings allowed" claim) -- and records the resolution as a dated revision on the founding ADR.
 
 ### Requirements
 
@@ -25,8 +25,10 @@ version: 1.0.0
 - REQ-005: Remove the now-stale `_.validate_heading_structure` / `_.validate_headings` vulture whitelist entries from `whitelist.py`.
 - REQ-006: Update `tests/models/md/test_markdown_section.py`'s `test_directly_assigning_a_nested_heading_to_value_raises_nothing` (and its docstring, which currently describes `validate_headings` as "currently a no-op") since the method it describes no longer exists.
 - REQ-007: Regenerate `docs/api/` via `specmgr docs` so every generated page's stale `validate_heading_structure`/`validate_headings` entries are pruned.
-- REQ-008: Add a dated revision entry to ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae` recording the removal decision and its rationale, per the ADR's own established revision-entry convention.
+- REQ-008: Add a dated revision entry to ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae recording the removal decision and its rationale, per the ADR's own established revision-entry convention.
 - REQ-009: Every existing domain fixture/example (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`, `dec`, `sop`, `feat`, `vcr`, `sysrs`) must continue to parse/round-trip exactly as before this removal -- no behavioral change, since the removed checks were already no-ops.
+- REQ-010: `markdown_str.py`'s fully-commented-out `validate_and_convert_text`/`model_validator_after` dead-code block (Phase 135) must be removed as a first-class requirement of this feature, not treated as an unscoped side effect of the Scope `Included` bullet alone.
+- REQ-011: Add a brief `[Unreleased]` entry to `CHANGELOG.md` documenting this internal dead-code/dead-validator removal, consistent with the project's established convention of recording internal reorganizations there.
 
 ### Acceptance Criteria
 
@@ -36,9 +38,11 @@ version: 1.0.0
 - [ ] ACC-004: `whitelist.py` no longer lists `_.validate_heading_structure`/`_.validate_headings`.
 - [ ] ACC-005: `tests/models/md/test_markdown_section.py` has no reference to the removed `validate_headings` method, and still documents/tests that a leaf section silently retains a deeper nested heading via `get_extent`.
 - [ ] ACC-006: `docs/api/` no longer lists `validate_heading_structure`/`validate_headings` anywhere, confirmed by regenerating docs via `specmgr docs`.
-- [ ] ACC-007: ADR `832cd6c1-...` carries a new dated revision entry documenting the removal decision and rationale.
+- [ ] ACC-007: ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae carries a new dated revision entry documenting the removal decision and rationale.
 - [ ] ACC-008: Full test suite (`uv run --frozen pytest -n auto`) passes with no regressions.
 - [ ] ACC-009: `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` all pass clean.
+- [ ] ACC-010: `markdown_str.py` no longer contains the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` or `# @model_validator(mode="after") ... model_validator_after` blocks.
+- [ ] ACC-011: `CHANGELOG.md`'s `[Unreleased]` section includes an entry for this removal.
 
 ### Scope
 
@@ -49,8 +53,9 @@ version: 1.0.0
 - `whitelist.py`: remove the two now-stale vulture entries.
 - `tests/models/md/test_markdown_section.py`: update the test(s) referencing the removed validator.
 - `docs/api/` regeneration via `specmgr docs`.
-- ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae`: new dated revision entry recording the resolution.
+- ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae: new dated revision entry recording the resolution.
 - `markdown_str.py`: remove the fully-commented-out `# @field_validator("_value") ... validate_and_convert_text` and `# @model_validator(mode="after") ... model_validator_after` dead-code block (lines ~687-707) -- not named by issue #129 itself, but the same class of dead code, found during this feature's own repo-wide no-op scan (see Phase 135).
+- `CHANGELOG.md`: add a brief `[Unreleased]` entry documenting this internal dead-code/dead-validator removal.
 
 #### Explicitly Out Of Scope
 
@@ -61,9 +66,13 @@ version: 1.0.0
 
 Consequences of removal: there is no behavioral change for any document, since both validators are already no-ops -- their assertions are fully commented out, so no document that currently parses successfully will newly fail, and no currently-invalid document will newly be accepted. What is given up is only an already-nonexistent "second layer" of defense-in-depth the founding ADR originally envisioned; since the drafted `MarkdownSection1.validate_headings` body (`assert not any(heading in self._tokens[3:] ...)`) is incompatible with real multi-level documents (e.g. REQ's nested `## Description`) and also depends on a `_tokens` attribute the current design never populates, it could not have been safely uncommented as-is regardless -- removal does not forfeit a check that could realistically have shipped without a nontrivial rework. The real structural invariant ("no illegal same-or-higher nested heading") remains fully enforced by `MarkdownSection.get_extent`'s own stop condition plus `MarkdownStr.from_text`'s trailing completeness check, unaffected by this change. Leaving the dead validators in place carries its own risk: a future maintainer debugging a heading-structure bug could assume `validate_headings` still provides protection (it is still invoked on every parse) when it does nothing -- removing it removes that false sense of security, which is a net benefit, not merely a neutral cleanup.
 
+Note: `docs/sysrs/sysrs-8d752304-...-appendix.md` embeds a manually-generated, point-in-time snapshot of this ADR's `more_information` text (GitHub issue #86); it is not auto-regenerated, so once REQ-008/Task 130.110 adds a new dated revision entry to the live ADR, that snapshot will intentionally no longer match it verbatim -- this is expected drift, not a defect introduced by this feature.
+
 ### Related Decisions
 
-- 832cd6c1-ef8a-4bfc-990e-a610823f61ae (ADR): founding ADR for `models/md`'s heading-mapped parser; this feature adds the dated revision entry resolving its documented "known follow-up."
+- ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae: founding ADR for `models/md`'s heading-mapped parser; this feature adds the dated revision entry resolving its documented "known follow-up."
+
+This feature intentionally has no `Depends On`/`Blocks` relationships beyond the founding ADR above -- the plan's `dependencies: null` is deliberate, not an oversight.
 
 ### Task List
 
@@ -74,10 +83,12 @@ Consequences of removal: there is no behavioral change for any document, since b
 
 #### Phase 105: Address Plan-Refinement Findings
 
-- [ ] Task 105.100: E1 -- Bump frontmatter `updated` to be no earlier than the latest `### Updates` entry (`2026-10-17T13:30:00.000Z`) it is supposed to reflect.
-- [ ] Task 105.110: G1 -- Add a REQ-010 (Requirements) and ACC-010 (Acceptance Criteria) entry covering Phase 135's `markdown_str.py` dead-code removal, closing the traceability gap between the Task List and Requirements/Acceptance Criteria.
-- [ ] Task 105.120: I1 -- Normalize every ADR cross-reference citation (e.g. the `### Related Decisions` bullet) to the plain `ADR <uuid>` tag form (no backticks, tag before id) so `list_references`/the reference-graph diagram tooling can resolve this feature's one external dependency.
-- [ ] Task 105.130: I2 -- Add a one-line note (e.g. near `### Related Decisions`) confirming this feature intentionally has no Depends-On/Blocks relationships beyond the founding ADR, to disambiguate "none" from "forgotten."
+- [x] Task 105.100: E1 (resolved) -- the frontmatter `updated` timestamp already matched the newest `### Updates` entry as of the prior refinement pass; the described defect no longer applied (see D1 in the 2026-10-18 refinement round).
+- [x] Task 105.110: G1 -- Added REQ-010 (Requirements) and ACC-010 (Acceptance Criteria) covering Phase 135's `markdown_str.py` dead-code removal, closing the traceability gap between the Task List and Requirements/Acceptance Criteria.
+- [x] Task 105.120: I1/D2 -- Normalized every ADR cross-reference citation in this document (Overview, REQ-008, ACC-007, Scope, Related Decisions, Task 130.110) to the plain `ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae` tag form (no backticks, tag before id, no truncation), so `list_references`/the reference-graph diagram tooling can resolve this feature's one external dependency.
+- [x] Task 105.130: I2 -- Added a one-line note under `### Related Decisions` confirming this feature intentionally has no Depends-On/Blocks relationships beyond the founding ADR, to disambiguate "none" from "forgotten."
+- [x] Task 105.140: G2 -- Added REQ-011/ACC-011, a `CHANGELOG.md` Scope bullet, and Task 130.120 to add a brief `[Unreleased]` entry recording this internal cleanup, closing the gap of an undecided CHANGELOG question.
+- [x] Task 105.150: I3 -- Added a Design Notes line acknowledging that `docs/sysrs/sysrs-8d752304-...-appendix.md`'s manually-snapshotted ADR `more_information` text (GitHub issue #86) will intentionally diverge from the ADR after Task 130.110's new revision entry.
 
 #### Phase 110: Remove Dead Validators
 
@@ -94,7 +105,8 @@ Consequences of removal: there is no behavioral change for any document, since b
 #### Phase 130: Docs & ADR
 
 - [ ] Task 130.100: Regenerate `docs/api/` via `specmgr docs` and confirm the stale entries are gone.
-- [ ] Task 130.110: Add the dated revision entry to ADR `832cd6c1-...` recording the removal decision.
+- [ ] Task 130.110: Add the dated revision entry to ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae recording the removal decision.
+- [ ] Task 130.120: Add a brief `[Unreleased]` entry to `CHANGELOG.md` documenting this internal cleanup (dead-validator/dead-code removal), satisfying REQ-011/ACC-011.
 
 #### Phase 135: Remove the markdown_str.py Dead-Code Block
 
@@ -116,6 +128,18 @@ Consequences of removal: there is no behavioral change for any document, since b
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T09:00:00.000+02:00 - Second refinement pass: closed Phase 105's open items and added two new findings
+
+Ran a second plan refinement pass. Closed Tasks 105.100-130: corrected the now-moot E1 description
+(D1 -- `updated` already matched the newest Updates entry), normalized every ADR cross-reference in
+this document to the plain `ADR <uuid>` tag form (I1, also fixing D2's truncated `ACC-007` citation),
+and added the no-dependencies note under `### Related Decisions` (I2). Added REQ-010/ACC-010 (G1)
+explicitly covering Phase 135's `markdown_str.py` removal. Added two new findings as Tasks
+105.140/105.150: G2 (no decision had been recorded on whether this cleanup warrants a
+`CHANGELOG.md` entry -- resolved yes, via new REQ-011/ACC-011/Task 130.120) and I3 (a Design Notes
+line acknowledging that `docs/sysrs/sysrs-8d752304-...-appendix.md`'s manually-snapshotted ADR text
+will diverge once Task 130.110 lands).
 
 #### 2026-10-17T15:45:00.000+02:00 - Added Phase 105 to track plan-refinement findings
 
