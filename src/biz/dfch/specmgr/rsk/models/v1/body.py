@@ -119,13 +119,14 @@ class Strategy(MarkdownSection2):
     """
 
     value: MarkdownParagraph = Field(
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set already lives in
+        # the description; `_validate_value` below remains the sole
+        # enforcement point.
         description="Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`.",
-        # feat-189 Phase 120 (C13): the `_TARA_PATTERN` closed 4-value set as
-        # an `enum` key in the generated JSON Schema -- metadata only (the
-        # field's own schema is a `$ref` to `MarkdownParagraph`, so the key
-        # lands sibling to the `$ref`): pydantic-core never enforces it, and
-        # `_validate_value` below remains the sole enforcement point.
-        json_schema_extra={"enum": ["transfer", "accept", "reduce", "avoid"]},
     )
 
     @field_validator("value")

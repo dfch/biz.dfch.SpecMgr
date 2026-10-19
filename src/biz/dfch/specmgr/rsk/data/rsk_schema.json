@@ -352,13 +352,7 @@
       "properties": {
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`.",
-          "enum": [
-            "transfer",
-            "accept",
-            "reduce",
-            "avoid"
-          ]
+          "description": "Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`."
         }
       },
       "required": [

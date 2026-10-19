@@ -419,3 +419,54 @@ timeout 600 /home/user/.opencode/bin/opencode run --dir <run-dir> \
 The full runner (`evidence/harness/run_all.sh`) is resumable via
 `evidence/runner-status.tsv`; `evidence/runner.log` carries the
 per-attempt audit trail including the D6 incident.
+
+## Phase 135 re-verification (Task 135.110; attempt of 2026-10-18)
+
+**Fix reference:** Task 135.100 (Phase 135, the C13 corrective) removed
+exactly the 11 breaking object-node `enum` emissions (req `Level.value`,
+rsk `Strategy.value`, vcr `Coverage.value`, vcr `AcceptanceCriterion`
+[only the `enum` entry; the `pattern` entry stays], prb
+`Question1`..`Question7`); the 21 kept keys (12 status enums + 9 patterns),
+every validator/alias/pattern constant, and the instruction/seeds/protocol
+are untouched. The fixed surface is proven by the Phase 135 gate's wire
+reproduction (`evidence/wire-reproduction-135.txt`): /tmp dirs seeded with
+the packaged prb/vcr/req/rsk examples, worktree server
+(`.venv/bin/specmgr mcp`, cwd = seed dir) -- `list_<d>` then NON-raw
+`get_<d>` for all four domains, **every call succeeds** (before the fix all
+four failed `-32602` "Invalid structured content"; prb was the proven one).
+This is the R2 sanity check that the runs would hit the FIXED server.
+
+**BLOCKED before any run -- the pinned model is no longer served (environment,
+not protocol):** the preflight of 2026-10-18 found the pinned endpoint
+(127.0.0.1:8007, the `vllm-sys0-2` provider's baseURL) now serves
+`qwen3.8-27b-bf16-896k` instead of the Phase 130 pin
+`qwen3.8-27b-bf16-896k-mtp-2`; a chat-completions probe with the pinned name
+gets `404 {"error": "The model 'qwen3.8-27b-bf16-896k-mtp-2' does not
+exist."}`, and no other local endpoint (8001 down; 8008 non-MTP-only) serves
+the MTP model (`evidence/preflight-135.txt` carries the full probe output).
+The opencode binary (1.19.3) and the two instruction files (sha256
+`395ba85f...`/`53ddec39...`, byte-identical to the Phase 130 copies per
+`evidence/instruction-hashes.txt`) are unchanged. Per the Phase 135 hard
+rule ("if the model endpoint is down ... STOP and report"), **no formal run
+was launched and none is claimed**: `evidence/runner-status-135.tsv` is
+header-only (zero attempts), no seed UUID was consumed
+(`evidence/phase135-seed-manifest.md`), and there is no per-run table for
+the six runs.
+
+**T1b / T3d verdicts:** NOT re-verified (environment-blocked) -- the Phase
+130 miss stands on record (T1b n3: 6 calls + 1 schema fetch; T3d n2: 6 calls
++ 1 schema fetch), now root-caused to the server defect that Task 135.100
+fixed and wire-reproduction-proven. ACC-005 stays unchecked.
+
+**Re-launch (ready):** `evidence/harness/run_135.sh` -- a minimal delta of
+`run_all.sh` (same project-config shape per D3, same seed/verify/digest/
+mirror logic; CELLS = the two cells only; run ids `<cell>-135-n<k>`; fresh
+/tmp root `/tmp/opencode/feat189-135`; separate `runner-status-135.tsv` /
+`runner-135.log` mirrors so the Phase 130 audit trail stays byte-identical;
+a pre-launch sha256 check refuses to run on any instruction deviation).
+Run it once the MTP endpoint serves `qwen3.8-27b-bf16-896k-mtp-2` again; it
+is resumable via the 135 status file. When it completes, append the
+per-run tables here, verdict T1b (first-try `create_prb`, at most 5 calls,
+0 validation-failure retries, 0 schema fetches in all 3) and T3d (at most 5
+calls, 0 schema fetches, 0 closed-form validation failures in all 3), and
+check ACC-005 iff both hold.

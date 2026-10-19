@@ -894,7 +894,9 @@ The number, method, and criterion text all live in the heading itself
 constrained by the regex `@alias` above and enforced by `match_alias`
 (`re.fullmatch`) at parse time -- a missing/out-of-range/malformed
 number, an unknown method word, or a title-less heading all fail the
-parse eagerly (REQ-003). AC numbers need not be contiguous (gaps are
+parse eagerly (REQ-003). The method word is one of the five DTAIS words:
+`Demonstration`, `Test`, `Analysis`, `Inspection`, `Special` (the
+`specmgr://dtais` vocabulary). AC numbers need not be contiguous (gaps are
 allowed, numbers are never renumbered); duplicates are rejected by
 `Vcr`'s own after-validator (the `ValidationError` channel, mirroring
 DEC's `Decision._validate_option_numbers_unique`).

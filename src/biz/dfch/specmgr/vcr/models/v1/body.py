@@ -140,14 +140,14 @@ class Coverage(MarkdownSection2):
     """
 
     value: MarkdownParagraph = Field(
-        description="Single-line coverage assessment. One of `full`, `partial`, `none`.",
-        # feat-189 Phase 120 (C13): the `_COVERAGE_PATTERN` closed 3-value
-        # set as an `enum` key in the generated JSON Schema -- metadata
-        # only (the field's own schema is a `$ref` to `MarkdownParagraph`,
-        # so the key lands sibling to the `$ref`): pydantic-core never
-        # enforces it, and `_validate_value` below remains the sole
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set already lives in
+        # the description; `_validate_value` below remains the sole
         # enforcement point.
-        json_schema_extra={"enum": ["full", "partial", "none"]},
+        description="Single-line coverage assessment. One of `full`, `partial`, `none`.",
     )
 
     @field_validator("value")
@@ -200,12 +200,6 @@ _AC_HEADING_RE = re.compile(_AC_HEADING_PATTERN)
 #: source.
 _AC_ALIAS_PATTERN = rf"^{_AC_HEADING_PATTERN}$"
 
-#: The closed DTAIS method-word set carried by `_AC_HEADING_PATTERN`'s own
-#: group 2 (Demonstration, Test, Analysis, Inspection, Special -- the
-#: `specmgr://dtais` vocabulary), for `AcceptanceCriterion`'s `enum`
-#: metadata (feat-189 Phase 120, C13).
-_DTAIS_METHODS = ["Demonstration", "Test", "Analysis", "Inspection", "Special"]
-
 
 @alias(value=_AC_ALIAS_PATTERN, type=AliasType.REGEX)
 class AcceptanceCriterion(MarkdownSection3):
@@ -216,7 +210,9 @@ class AcceptanceCriterion(MarkdownSection3):
     constrained by the regex `@alias` above and enforced by `match_alias`
     (`re.fullmatch`) at parse time -- a missing/out-of-range/malformed
     number, an unknown method word, or a title-less heading all fail the
-    parse eagerly (REQ-003). AC numbers need not be contiguous (gaps are
+    parse eagerly (REQ-003). The method word is one of the five DTAIS words:
+    `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special` (the
+    `specmgr://dtais` vocabulary). AC numbers need not be contiguous (gaps are
     allowed, numbers are never renumbered); duplicates are rejected by
     `Vcr`'s own after-validator (the `ValidationError` channel, mirroring
     DEC's `Decision._validate_option_numbers_unique`).
@@ -260,20 +256,25 @@ class AcceptanceCriterion(MarkdownSection3):
         from the retained heading text.
     """
 
-    # feat-189 Phase 120 (C13): the heading constraint as `json_schema_extra`
-    # metadata on this class's own generated JSON Schema entry -- metadata
-    # only: neither the heading text nor the method word is a schema-
-    # surfaced field (the heading lives in private `_value` state, and
-    # `number`/`method` are computed fields, which the generator's
-    # validation-mode `model_json_schema()` omits), so both keys land on the
-    # class's own entry: `pattern` = the full `AC-NNN (Method): <text>`
-    # heading shape (the `@alias` REGEX above, enforced by `match_alias` at
-    # parse time, remains the sole enforcement point) and `enum` = the
-    # closed DTAIS method-word set that shape's own group 2 accepts.
+    # feat-189 Phase 120 (C13), corrected in Phase 135: the heading
+    # constraint as `json_schema_extra` metadata on this class's own
+    # generated JSON Schema entry -- metadata only: neither the heading text
+    # nor the method word is a schema-surfaced field (the heading lives in
+    # private `_value` state, and `number`/`method` are computed fields,
+    # which the generator's validation-mode `model_json_schema()` omits), so
+    # the key lands on the class's own entry: `pattern` = the full
+    # `AC-NNN (Method): <text>` heading shape (the `@alias` REGEX above,
+    # enforced by `match_alias` at parse time, remains the sole enforcement
+    # point). The Phase 120 `enum` key (the closed DTAIS method-word set)
+    # was removed in Phase 135 -- it sat on this class's object-typed schema
+    # node, and the MCP SDK validates every `structuredContent` payload
+    # against the generated output schema, where an object instance can
+    # never equal a string `enum` member (round-trip-rerun.md, feat-189);
+    # the DTAIS set now lives in the class docstring's own `description` and
+    # in the `pattern`'s own group 2.
     model_config = ConfigDict(
         json_schema_extra={
             "pattern": _AC_ALIAS_PATTERN,
-            "enum": _DTAIS_METHODS,
         }
     )
 

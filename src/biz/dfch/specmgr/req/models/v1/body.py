@@ -79,13 +79,17 @@ class Level(MarkdownSection2WithComment):
         "e.g. listing the allowed obligation-strength values.",
     )
     value: MarkdownParagraph = Field(
-        description='Single-line value giving the requirement\'s obligation strength (e.g. "MUST").',
-        # feat-189 Phase 120 (C13): the `_LEVEL_PATTERN` closed set as an
-        # `enum` key in the generated JSON Schema -- metadata only (the
-        # field's own schema is a `$ref` to `MarkdownParagraph`, so the key
-        # lands sibling to the `$ref`): pydantic-core never enforces it, and
-        # `_validate_value` below remains the sole enforcement point.
-        json_schema_extra={"enum": ["MUST", "SHOULD", "MUST NOT", "SHOULD NOT", "MAY"]},
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set now lives in the
+        # description; `_validate_value` below remains the sole enforcement
+        # point.
+        description=(
+            'Single-line value giving the requirement\'s obligation strength (e.g. "MUST"). '
+            "One of `MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`, `MAY` (RFC 2119)."
+        ),
     )
 
     @field_validator("value")

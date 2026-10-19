@@ -76,7 +76,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from ....models.md import (
     MarkdownParagraph,
@@ -145,20 +145,20 @@ class Summary(MarkdownSection3):
     """
 
 
+# feat-189 Phase 135: the Phase 120 (C13) per-class singleton `enum` keys on
+# these seven `QuestionN` classes' object-typed JSON Schema entries were
+# removed -- the MCP SDK validates every `structuredContent` payload against
+# the generated output schema, and an object instance can never equal a
+# string `enum` member (round-trip-rerun.md, feat-189). Each class's fixed
+# heading -- the `@alias` REGEX below, enforced by `match_alias` at parse
+# time -- remains documented in the class's own docstring, which is the
+# generated `description`.
 @alias(value=r"What Is the Problem\?", type=AliasType.REGEX)
 class Question1(MarkdownSection3):
     """`### What Is the Problem?` under `## Current State` -- the 1st 5W2H question. Optional.
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
-
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only: each
-    # `QuestionN` accepts exactly its own heading (the `@alias` REGEX above,
-    # enforced by `match_alias` at parse time), so the emitted closed set is
-    # this class's singleton. The seven classes jointly cover the seven
-    # fixed 5W2H headings of the inventory.
-    model_config = ConfigDict(json_schema_extra={"enum": ["What Is the Problem?"]})
 
 
 @alias(value=r"Why Is It a Problem\?", type=AliasType.REGEX)
@@ -168,11 +168,6 @@ class Question2(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["Why Is It a Problem?"]})
-
 
 @alias(value=r"Where Is the Problem Observed\?", type=AliasType.REGEX)
 class Question3(MarkdownSection3):
@@ -180,11 +175,6 @@ class Question3(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
-
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["Where Is the Problem Observed?"]})
 
 
 @alias(value=r"Who Is Impacted\?", type=AliasType.REGEX)
@@ -194,11 +184,6 @@ class Question4(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["Who Is Impacted?"]})
-
 
 @alias(value=r"When Was the Problem First Observed\?", type=AliasType.REGEX)
 class Question5(MarkdownSection3):
@@ -206,11 +191,6 @@ class Question5(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
-
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["When Was the Problem First Observed?"]})
 
 
 @alias(value=r"How Is the Problem Observed\?", type=AliasType.REGEX)
@@ -220,11 +200,6 @@ class Question6(MarkdownSection3):
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
 
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["How Is the Problem Observed?"]})
-
 
 @alias(value=r"How Often Is the Problem Observed\?", type=AliasType.REGEX)
 class Question7(MarkdownSection3):
@@ -232,11 +207,6 @@ class Question7(MarkdownSection3):
 
     Leaf class (no declared fields) -- captures the answer text verbatim.
     """
-
-    # feat-189 Phase 120 (C13): this class's own fixed heading as an `enum`
-    # key on its generated JSON Schema entry -- metadata only; see
-    # `Question1` for the singleton-per-class rationale.
-    model_config = ConfigDict(json_schema_extra={"enum": ["How Often Is the Problem Observed?"]})
 
 
 class CurrentState(MarkdownSection2):
