@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-05T09:40:30.333+02:00'
 id: feat-189-reduce-agent-round-trips
-status: planning
+status: review
 type: feat
-updated: '2026-10-19T16:03:45.000+02:00'
+updated: '2026-10-19T16:52:47.802+02:00'
 version: 1.0.0
 ---
 
