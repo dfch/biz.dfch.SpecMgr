@@ -8,10 +8,11 @@ diagram of the whole reference registry (rulebook
 §2–§5, the registry-wide construction of §3.3): one node per parseable
 document across all 13 domains (broken documents are skipped -- the render
 never fails for content, the ``get_use_case_package_diagram`` precedent),
-one edge per unique extracted reference (``{src} --> {dst} : refers to`` --
+one label-free edge per unique extracted reference (``{src} --> {dst}`` --
 the referenced item carries the incoming arrow), every edge lying on a
-cycle (SCC-based) drawn with the red ``-[#red]->`` arrow, and every
-reference whose target cannot be resolved on disk drawn as a top-level
+cycle (SCC-based) drawn with the red label-free ``-[#red]->`` arrow (the
+2026-10-15 correction -- the edges carry no label), and every reference
+whose target cannot be resolved on disk drawn as a top-level
 ``<<UNRESOLVED>>`` node. Labels (the node H1s) are truncated to the
 ``SPECMGR_DIAGRAM_MAX_TITLE`` env var's effective value (the shared
 ``_diagram_config.diagram_max_title`` helper; default 40) -- the diagram

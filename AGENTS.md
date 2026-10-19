@@ -824,12 +824,13 @@ type or cross-cutting:
     rulebook — one node per artifact (label = the document title,
     truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` label limit, default 40),
     a stereotype + colour per artifact type (the frozen 14-entry palette),
-    nodes grouped into per-domain `package` blocks, one edge per unique
-    reference (`{src} --> {dst} : refers to`, the referenced item carries
-    the incoming arrow), every edge on a cycle (a self-loop or both
-    endpoints in the same strongly connected component of size ≥ 2) drawn
-    with the red `-[#red]->` arrow, and every reference whose target
-    cannot be resolved on disk drawn as a top-level `<<UNRESOLVED>>` node.
+    nodes grouped into per-domain curly `component "TYPE" { … }` domain
+    groups, one label-free edge per unique reference (`{src} --> {dst}`,
+    the referenced item carries the incoming arrow), every edge on a cycle
+    (a self-loop or both endpoints in the same strongly connected component
+    of size ≥ 2) drawn with the red label-free `-[#red]->` arrow, and every
+    reference whose target cannot be resolved on disk drawn as a top-level
+    `<<UNRESOLVED>>` node.
     `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 13
     domains, `adr` INCLUDED — an ADR document referencing a REQ is a real
     edge; the 13-vs-12 split vs the skill's 12-domain text workflows is

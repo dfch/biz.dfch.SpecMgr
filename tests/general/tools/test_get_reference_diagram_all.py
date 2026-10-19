@@ -102,8 +102,8 @@ class TestWideRegistryAllTool(_SeededRegistryTestCase):
         """The never-cached adr leg (ADR bfd76370): the ADR document is a node and its reference
         an edge in the registry-wide diagram too."""
         result = get_reference_diagram_all()
-        self.assertIn('package "ADR"', result)
-        self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}] : refers to", result)
+        self.assertIn('component "ADR" {', result)
+        self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}]", result)
 
 
 class TestNoFeatRegistryAllTool(_SeededRegistryTestCase):
@@ -127,10 +127,10 @@ class TestNoFeatRegistryAllTool(_SeededRegistryTestCase):
         result = get_reference_diagram_all(include_feat=False)
         self.assertIsInstance(result, str)
         self.assertEqual(result, self._golden("no-feat-registry-no-feat.puml"))
-        self.assertNotIn('package "FEAT"', result)
+        self.assertNotIn('component "FEAT"', result)
         self.assertNotIn("feat-7-no-feat", result)
         self.assertNotIn("feat-8-no-feat-two", result)
-        self.assertNotIn(": refers to", result)  # every edge touched a dropped feat node
+        self.assertNotIn("-->", result)  # every edge touched a dropped feat node
 
 
 class TestGetReferenceDiagramAllTitleOverride(_SeededRegistryTestCase):

@@ -19,7 +19,7 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "No Feat Source" as [REQ-c008c008-c008-4c08-8c08-c008c008c008] <<REQ>>
-end package
+}
 @enduml

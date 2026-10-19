@@ -8,12 +8,13 @@ the reference-graph rulebook (``specmgr://reference-graph`` /
 ``general/data/general_reference_graph.md`` §2–§5): one node per artifact
 (label = the document title, truncated to the ``SPECMGR_DIAGRAM_MAX_TITLE``
 label limit, default 40), a stereotype + colour per artifact type (the
-frozen 14-entry palette), nodes grouped into per-domain ``package`` blocks,
-one edge per unique reference (``{src} --> {dst} : refers to`` -- the
-referenced item carries the incoming arrow), every edge lying on a cycle
-(SCC-based) drawn with the red ``-[#red]->`` arrow, and every reference
-whose target cannot be resolved on disk drawn as a top-level
-``<<UNRESOLVED>>`` node.
+frozen 14-entry palette), nodes grouped into per-domain curly
+``component "TYPE" { … }`` domain groups (the 2026-10-15 corrected form,
+rulebook §2.7), one label-free edge per unique reference (``{src} -->
+{dst}`` -- the referenced item carries the incoming arrow), every edge
+lying on a cycle (SCC-based) drawn with the red label-free ``-[#red]->``
+arrow, and every reference whose target cannot be resolved on disk drawn
+as a top-level ``<<UNRESOLVED>>`` node.
 
 Thin over the Phase 110 library (``_reference_graph.build_source_graph`` +
 ``reference_graph.render_reference_graph`` + ``_diagram_config.

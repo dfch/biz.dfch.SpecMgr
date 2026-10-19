@@ -19,18 +19,18 @@ skinparam component {
 
 left to right direction
 
-package "REQ"
+component "REQ" {
 component "Chain Top Requirement With A Very Long…" as [REQ-c003c003-c003-4c03-8c03-c003c003c003] <<REQ>>
-end package
+}
 
-package "GOL"
+component "GOL" {
 component "Chain Middle Goal" as [GOL-c004c004-c004-4c04-8c04-c004c004c004] <<GOL>>
-end package
+}
 
-package "RSK"
+component "RSK" {
 component "Chain Leaf Risk" as [RSK-c005c005-c005-4c05-8c05-c005c005c005] <<RSK>>
-end package
+}
 
-[GOL-c004c004-c004-4c04-8c04-c004c004c004] --> [RSK-c005c005-c005-4c05-8c05-c005c005c005] : refers to
-[REQ-c003c003-c003-4c03-8c03-c003c003c003] --> [GOL-c004c004-c004-4c04-8c04-c004c004c004] : refers to
+[GOL-c004c004-c004-4c04-8c04-c004c004c004] --> [RSK-c005c005-c005-4c05-8c05-c005c005c005]
+[REQ-c003c003-c003-4c03-8c03-c003c003c003] --> [GOL-c004c004-c004-4c04-8c04-c004c004c004]
 @enduml

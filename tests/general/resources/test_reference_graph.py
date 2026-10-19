@@ -17,15 +17,20 @@
 
 """Tests for the `specmgr://reference-graph` resource (`general.resources.reference_graph.reference_graph`).
 
-The resource serves the Phase 100 frozen reference-graph rulebook
+The resource serves the frozen reference-graph rulebook
 (``general/data/general_reference_graph.md``) as raw markdown (no dedicated
 parse model — like ``specmgr://uc/plantuml``). Because the rulebook is the
-spec the later phases implement against, these tests pin the load-bearing
-frozen strings (the 14-entry palette in block order, the red-arrow syntax +
-the 2026-10-10 gate verdict, the worked example, the env var + truncation,
-the FEAT-exclusion / bare-`feat-NNN` rejection, the UC rulebook pointer) so
-a silent edit of the packaged data file is caught here rather than surfacing
-as a renderer/checker drift in Phase 110+.
+spec the renderers, builders, and checker implement against, these tests pin
+the load-bearing frozen strings (the 14-entry palette in block order, the
+red-arrow syntax + the 2026-10-15 real-parser gate verdict (replacing the
+2026-10-10 skip verdict) incl. the "not frozen on a skipped gate"
+convention + the Phase 120 amendment note (the gate now RUNS in CI on the
+`plantuml-parser` job, pinned jar hash-verified before use, local `.env`
+dev flow), the curly `component "TYPE" { … }` domain-group form + the
+label-free edge form, the worked example, the env var + truncation, the
+FEAT-exclusion / bare-`feat-NNN` rejection, the UC rulebook pointer) so a
+silent edit of the packaged data file is caught here rather than surfacing
+as a renderer/checker drift.
 """
 
 import tempfile
@@ -59,8 +64,28 @@ _PALETTE_LINES = [
     "backgroundColor<<UNRESOLVED>> DarkRed",
 ]
 
-#: The 2026-10-10 Phase 100 parser-gate verdict, verbatim (rulebook §4.3).
-_GATE_VERDICT = "skipped -- candidate `-[#red]->` retained, re-verify where a source is configured"
+#: The 2026-10-15 Phase 100 parser-gate verdict, verbatim fragments
+#: (rulebook §4.3 — the verdict heading wraps across two lines in the
+#: markdown, and the convention line is the load-bearing new rule).
+_GATE_VERDICT_FRAGMENTS = (
+    "Verdict, 2026-10-15 (feat-214-rel-invalid-diag Phase 100",
+    "2026-10-10 skip verdict)",
+    "an emission layout is NOT frozen on a skipped gate",
+)
+
+#: The 2026-10-15 Phase 120 amendment note (rulebook §4.3), verbatim
+#: fragments: the gate now RUNS in CI on the named job (pinned jar,
+#: hash-verified before use, full suite with ``-rs``) and the local
+#: gitignored-``.env`` dev flow is documented.
+_PHASE_120_NOTE_FRAGMENTS = (
+    "§4.3 amended 2026-10-15 (feat-214-rel-invalid-diag Phase 120)",
+    "now RUNS in CI",
+    "plantuml-parser",
+    "hash-verifies",
+    "pytest -n auto -rs",
+    "SPECMGR_PLANTUML_JAR",
+    "gitignored repo-root `.env`",
+)
 
 
 def _registered_resource(uri: str) -> Resource:
@@ -102,13 +127,27 @@ class TestReferenceGraphResource(unittest.TestCase):
     def test_pins_the_gate_verdict_and_red_syntax(self):
         result = reference_graph()
 
-        self.assertIn(_GATE_VERDICT, result)
+        for fragment in _GATE_VERDICT_FRAGMENTS:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, result)
         self.assertIn("-[#red]->", result)
         self.assertIn("@startuml", result)
         self.assertIn("left to right direction", result)
-        self.assertIn(": refers to", result)
-        self.assertIn("end package", result)
+        self.assertIn('component "REQ" {', result)  # the corrected §2.7 domain-group form (in the shape + §2.9)
+        self.assertNotIn(" : refers to", result)  # the edges are label-free — the former uniform label is gone
+        self.assertNotIn("\nend package", result)  # no named-close group line anywhere in the emission shape
         self.assertIn("@enduml", result)
+
+    def test_pins_the_phase_120_ci_run_note(self):
+        # the Phase 120 amendment note (rulebook §4.3): the gate RUNS in CI on
+        # the named job (pinned jar, hash-verified before use, full suite with
+        # -rs) and the local .env dev flow is documented — a silent removal of
+        # the note must break this pin
+        result = reference_graph()
+
+        for fragment in _PHASE_120_NOTE_FRAGMENTS:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, result)
 
     def test_pins_the_worked_example_emitted_subset(self):
         # drift pin: the rulebook §2.9 worked example and the parser-gate's

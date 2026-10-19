@@ -48,6 +48,69 @@ UNATTRIBUTED markers are warnings in both
 modes (deliberate placeholders — syntactically ``'`` comments the real parser
 accepts; the zero-marker rule is enforced by the agent flow, not here).
 
+The 2026-10-15 tripwire amendment (feat-214-rel-invalid-diag, the reference-
+graph rulebook §7.1): the ``never rejects what the parser accepts`` invariant
+forbids false positives, not false negatives — and the demonstrated gap was a
+false negative (the pre-amendment checker reported zero findings in both
+modes over the parser-rejected braceless ``package "TYPE" … end package``
+grouping of component declarations). The amendment is the reverse direction:
+a ``package`` fragment that COLLECTS component declarations (a ``component``
+keyword declaration line or a short-form ``[X]`` line) must close with a
+``}`` line — a named ``end package`` close (after a braceless-open or a
+curly-open) and an unclosed such fragment at a block boundary are errors in
+BOTH modes, with a fix hint naming the curly-brace group form
+(``component "TYPE" { … }``). The rule is content-conditional: ``package``
+fragments holding sequence content (participants — the UC subset,
+parser-verified in feat-185) collect no component declaration and stay
+exactly as before.
+
+The 2026-10-17 fix (feat-214-rel-invalid-diag Phase 140, E1) corrects a
+false positive the pre-fix implementation introduced against its own rule:
+a ``}`` line was silently skipped by the line grammar and never popped the
+fragment stack, so a curly-opened ``package "X" {`` fragment that collected
+a component declaration and was closed with the rule's OWN required close
+(a ``}`` line — real-parser-accepted, verified against the pinned 1.2026.8)
+was reported at the block boundary as "never closed with '}'" — an error in
+BOTH modes and a factually wrong diagnosis (the close was present). A
+``}`` line now closes (pops) the innermost curly-open fragment, with no
+finding on the pop itself; the tripwire fires only on a named ``end
+package`` close over a component-collecting fragment and on such a fragment
+still open at a block boundary (where the diagnostic's "never closed"
+wording is factually correct again). A ``}`` with no curly-open fragment
+open (the curly ``component "TYPE" { … }`` domain groups and the ``skinparam
+component { … }`` block — declarations/skinparam, not fragments) stays
+silently accepted, exactly as before.
+
+The 2026-10-18 fix (feat-214-rel-invalid-diag Phase 150, E1/E2/I1) corrects
+the two tripwire firing sites the 2026-10-15 amendment froze WITHOUT a
+parser verdict (the 2026-10-15 isolation matrix verified only the NAMED-
+CLOSE shapes): a component-collecting ``package`` fragment UNCLOSED AT THE
+BLOCK BOUNDARY (every open shape) and one closed by a BARE ``@end`` (every
+open shape) are parser-ACCEPTED by the pinned 1.2026.8 (file- and
+pipe-form, recorded in the feature plan's More Information matrix). The
+block-boundary site is therefore a LENIENT finding — mirroring the generic
+else branch: a warning in preflight, promoted to an error in standalone, a
+content-conditional variant of the "unclosed fragment at EOF" lenient case;
+the 2026-10-15 comment's claim that "the parser does not implicitly close
+such a block into a valid diagram" was empirically false for these shapes.
+The bare-``@end`` site emits the tripwire's own lenient finding (a
+content-conditional variant of the "bare ``@end``" lenient case) instead of
+the generic name-omission finding — whose hint would steer the author to
+the parser-rejected named close. The NAMED-CLOSE site (an ``end package``
+over a component declaration, both open shapes) STAYS an error in BOTH
+modes — parser-rejected, re-verified 2026-10-18. The fix hint is split by
+the CLOSE KIND (the firing site; axis corrected in Phase 160 — the
+2026-10-18 open-shape split proved precise for only 2 of the 6 site ×
+open-shape combinations, because the remedy depends on which close line
+exists, not how the block opened; the open shape stays named in all three
+sites' messages): named close — replace the ``end package`` close with a
+``}`` line; unclosed at boundary — add the missing ``}`` line; bare
+``@end`` close — replace the bare ``@end`` close with a ``}`` line; each
+variant keeps the common tail "or convert the group to the ``component
+"TYPE" { … }`` domain-group form" — the 2026-10-15 single hint's "an
+unclosed block over component declarations is a parser syntax error"
+clause was factually false for the accepted shapes.
+
 Import-free and stdlib-only (ADR 7a626b12): no specmgr imports. The
 UNATTRIBUTED marker prefix lives here as ONE shared constant used by both the
 renderer (``uc/models/v2/renderer.py``) and this checker, so the two cannot
@@ -76,6 +139,26 @@ Attributes:
         markers and raw-quote notices; the lenient set in preflight).
 
 
+### `_FragmentState`
+
+One open fragment on the checker's line-oriented stack (internal state).
+
+The 2026-10-15 tripwire amendment extends the pre-amendment
+``(kind, open line)`` tuple with two recorded facts: :attr:`curly_open`
+(the open line ends with ``{``) and :attr:`has_component` (the fragment
+collected a component declaration — a ``component`` keyword line or a
+short-form ``[X]`` line — since the open). Only ``package`` fragments are
+subject to the tripwire; the fields are recorded for every fragment kind.
+
+Attributes:
+    kind: the fragment keyword (``alt``/``opt``/``loop``/``group``/
+        ``box``/``rectangle``/``package``).
+    open_line: the 1-based line of the fragment open.
+    curly_open: ``True`` when the open line ends with ``{``.
+    has_component: ``True`` once the fragment collected a component
+        declaration (the tripwire's content condition).
+
+
 ## Functions
 
 ### `_declaration_parts(rest: 'str') -> 'tuple[str, str | None, str | None, list[Finding]]'`
@@ -98,6 +181,55 @@ negative control ``participant A <<user`` — the real parser answers it
 The pre-2026-10-08 ``_declaration_parts`` walk, kept for the shapes the
 frozen-form regexes above do not cover (byte-identical behavior for
 every shape the legacy path handles).
+
+
+### `_mark_component_fragment(fragments: 'list[_FragmentState]') -> 'None'`
+
+Record a component declaration on the innermost open ``package`` fragment (internal state).
+
+The 2026-10-15 tripwire's content condition: a component declaration
+(a ``component`` keyword line or a short-form ``[X]`` line) marks the
+nearest enclosing ``package`` fragment as component-collecting. A
+declaration outside any ``package`` fragment (top-level, or inside a
+non-package fragment) is a no-op — the tripwire is scoped to ``package``
+fragments only (the reference-graph rulebook §7.1).
+
+
+### `_package_component_fix(close_kind: 'str') -> 'str'`
+
+The tripwire fix hint, keyed by the close kind — the firing site (2026-10-18, I1; axis corrected in Phase 160).
+
+The 2026-10-15 single hint conflated the remedies and was
+factually false for the parser-accepted unclosed shapes (its "an
+unclosed block over component declarations is a parser syntax error"
+clause — the pinned 1.2026.8 accepts every unclosed-at-boundary
+variant and the bare-``@end`` close, file- and pipe-form; the
+reference-graph rulebook §7.1 Phase 150 note). The Phase 150 split
+keyed the remedy on the recorded OPEN SHAPE — precise for only 2 of
+the 6 site × open-shape combinations (a braceless open at the
+named-close site has nothing missing to add: its block IS closed, by
+the parser-rejected ``end package`` line; a curly open at the
+block-boundary site has no ``end package`` line to replace). The
+remedy depends on which CLOSE LINE exists at the firing site, so the
+axis is the close kind (the open shape stays named in all three
+sites' messages — no information lost):
+
+- ``named-close`` — the ``end package`` close is parser-rejected:
+  REPLACE it with a ``}`` line (→ one of the parser-verified
+  ACCEPTED ``}``-close shapes, re-probed Phase 160, both open
+  shapes, pipe-form rc=0).
+- ``block-boundary`` — no close line exists (the parser closes the
+  block implicitly): ADD the missing ``}`` line (→ the same
+  verified shapes).
+- ``bare-@end`` — the bare ``@end`` close is parser-accepted but
+  names no fragment: REPLACE it with a ``}`` line (→ the same
+  verified shapes).
+
+``close_kind`` is the firing site's own vocabulary (``"named-close"``
+/ ``"block-boundary"`` / ``"bare-@end"`` — the same strings the call
+sites pass); every variant keeps the common tail naming the
+curly-brace domain-group form the real parser accepts for a
+component-diagram group holding component declarations.
 
 
 ### `_strip_operand(token: 'str') -> 'str'`

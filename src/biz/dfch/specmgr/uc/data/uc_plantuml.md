@@ -826,6 +826,42 @@ sequence files):
 - quote/label sanitisation (the `#quot;` convention, §2.4)
 - `'` comment lines — including UNATTRIBUTED-marker detection (§6.5)
 
+**Amended 2026-10-15 (feat-214-rel-invalid-diag Phase 100 — the
+package-component tripwire):** a `package` fragment that collects
+component declarations (a `component` keyword declaration line or a
+short-form `[X]` line — a line of exactly one bracketed token) must close
+with a `}` line: a named `end package` close (after a braceless-open or a
+curly-open) and an unclosed such fragment at a block boundary are errors
+in BOTH modes, with a fix hint naming the curly-brace group form
+(`component "TYPE" { … }`). The rule is content-conditional — `package`
+fragments holding sequence content (participants, the UC subset) are
+unaffected, and the UC goldens stay byte-identical (zero findings in both
+modes). The normative detail (firing sites, the parser isolation matrix,
+the checker-contract restatement) lives in the reference-graph rulebook
+§7.1 (same date).
+
+**Corrected 2026-10-18 (feat-214-rel-invalid-diag Phase 150 — E1/E2):** the
+2026-10-15 note's block-boundary claim ("an unclosed such fragment at a
+block boundary … are errors in BOTH modes") was verified only for the
+NAMED-CLOSE shapes and is corrected per the pinned 1.2026.8 parser verdicts
+(file- and pipe-form; the reference-graph rulebook §7.1 Phase 150 note):
+EVERY unclosed-at-boundary variant of a component-collecting `package` (and
+its bare-`@end` close, both open shapes) is parser-ACCEPTED — the
+block-boundary firing site is a LENIENT finding (warning in preflight,
+promoted error in standalone — a content-conditional variant of the §6.4
+"unclosed fragment at EOF" case) and the bare-`@end` site carries the
+tripwire's own lenient finding (a content-conditional variant of the §6.4
+"bare `@end`" case — the generic name-omission finding's hint would steer
+the author to the parser-rejected NAMED close); the NAMED `end package`
+close over a component-collecting `package` (both open shapes,
+parser-rejected, re-verified) STAYS an error in BOTH modes. The fix hint is
+split by the CLOSE KIND (the firing site — corrected 2026-10-18, Phase
+160, where the open-shape split proved precise for only 2 of the 6 site ×
+open-shape combinations): named close — replace the `end package` close
+with a `}` line; unclosed at boundary — add the missing `}` line; bare
+`@end` close — replace the bare `@end` close with a `}` line; each variant
+keeps the common tail "or convert to the `component "TYPE" { … }` form".
+
 ### 6.2 Error format
 
 Every finding carries a **1-based line number + cause + fix hint** (the feat-27
