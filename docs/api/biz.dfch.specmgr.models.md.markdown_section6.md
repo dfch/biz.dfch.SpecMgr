@@ -6,10 +6,14 @@ Markdown section starting with h6 heading.
 
 ### `MarkdownSection6`
 
-Markdown content starting with an h6 heading, no nested headings allowed.
+Markdown content starting with an h6 heading.
 
-Tokens [0:3] form the opening h6 heading triple (heading_open/inline/heading_close).
-All tokens after index 3 must not contain any heading tags (h1-h6).
+No heading deeper than h6 exists, so `MarkdownSection6` is always a
+leaf with respect to nesting: any following heading (all are level
+<= 6) ends the section. This is enforced procedurally by
+`MarkdownSection.get_extent`'s own stop condition plus
+`MarkdownStr.from_text`'s trailing-completeness check, not by any
+model validator (none exists).
 
 **Methods:**
 
@@ -831,16 +835,4 @@ All tokens after index 3 must not contain any heading tags (h1-h6).
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection6'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h6 and no nested headings in tokens [3:].
 
