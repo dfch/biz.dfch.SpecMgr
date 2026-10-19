@@ -66,12 +66,23 @@ Count ``test_*.py`` files under ``tests/`` -- static, no subprocess.
 Extract the first docstring from a Python file.
 
 
+### `_find_ruff() -> pathlib.Path | None`
+
+Locate the ``ruff`` binary once per command run, or ``None`` when unavailable.
+
+Prefers the current interpreter's own ``bin/`` directory (``Path(sys.executable).parent
+/ "ruff"`` -- the uv-managed venv's ruff, the same binary ``uv run --frozen ruff``
+drives), falling back to a bare ``ruff`` on ``PATH``. ``ruff`` lives in the ``test``
+extra, so a published ``[cli]``/``[mcp]``-only install may not have it at all; the
+caller degrades to unformatted output (with one warning) rather than failing.
+
+
 ### `_format_signature(func: Any) -> str`
 
 Format a function signature, tolerating uninspectable callables.
 
 
-### `_generate_api_docs(api_dir: pathlib.Path, package: str) -> tuple[int, int]`
+### `_generate_api_docs(api_dir: pathlib.Path, package: str, ruff: pathlib.Path | None = None) -> tuple[int, int]`
 
 Write one Markdown file per module of ``package`` under ``api_dir``, plus a README index.
 
@@ -87,6 +98,9 @@ module collection was truncated before the walk completed.
 Args:
     api_dir: Directory to write the module pages and index into.
     package: Dotted name of the package to document.
+    ruff: Resolved ``ruff`` binary (``_find_ruff``) to run every rendered
+        page through ``_ruff_format_markdown`` before writing; ``None``
+        writes the rendered text verbatim (the pre-fix behavior).
 
 Returns:
     ``(written, pruned)`` -- the number of module files written and
@@ -130,6 +144,21 @@ every import has already been cached in ``sys.modules`` by the run
 itself. A healthy run with nothing to prune passes both checks.
 
 
+### `_ruff_format_markdown(ruff: pathlib.Path | None, text: str, filename: str) -> str`
+
+Pass rendered markdown through ``ruff format`` (embedded code blocks only) before writing.
+
+``ruff format --stdin-filename <filename> -`` reformats the fenced code blocks inside
+the markdown while leaving the prose byte-identical, so the generated ``docs/`` tree is
+``ruff format --check``-clean without the pre-commit ``ruff-format`` hook and the
+``specmgr docs`` byte-identity check being mutually exclusive on the same file (first
+hit: a docstring embedded in ``biz.dfch.specmgr.server.md`` carries an Example block
+ruff would reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not
+installed) returns the text verbatim; a non-zero ruff exit (unexpected for
+well-formed markdown) degrades the same way, warning for that file, so the command
+never fails on this.
+
+
 ### `_stable_signature_str(func: Any) -> str | None`
 
 Render ``func``'s signature as a string, stable across repeated runs and Python versions.
@@ -160,6 +189,23 @@ stale ``api/*.md`` pages are pruned; the pruning count is echoed only
 when non-zero, and a warning is echoed whenever pruning was skipped
 because the run was untrustworthy (see ``_generate_api_docs``). Run this
 after any structural change and commit the result (see ``AGENTS.md``).
+
+Every rendered markdown document (the per-module ``api/*.md`` pages, the
+``api/README.md`` index, and ``GENERATED.md``) is passed through
+``ruff format`` (embedded fenced code blocks only -- the prose stays
+byte-identical) before being written, so docstrings that embed code
+ruff would reformat (first hit: an mcp-SDK ``Example`` block pulled into
+``biz.dfch.specmgr.server.md``) no longer make the pre-commit
+``ruff-format`` hook and this command's byte-identity check mutually
+exclusive. This joins the existing ``_stable_signature_str``
+normalizations that already make the output reproducible over raw
+source. The ``ruff`` binary is resolved once per run (``_find_ruff``:
+the current interpreter's ``bin/`` first, then ``PATH``); when it is
+unavailable -- ``ruff`` lives in the ``test`` extra, so a published
+``[cli]``/``[mcp]``-only install lacks it -- one warning is emitted and
+the content is written verbatim instead, so the command never fails on
+this (the ``similarity`` extra's availability-decided-at-call-time
+precedent).
 
 
 ### `generate_generated_md() -> str`

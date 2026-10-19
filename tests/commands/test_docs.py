@@ -29,13 +29,22 @@ branch is exercised without touching the real ``docs/`` tree).
 deletes pre-seeded flat ``*.md`` orphans while leaving ``README.md``,
 non-``.md`` files, and nested directories untouched, and an untrustworthy run
 (zero pages, a mocked per-module import failure) skips pruning entirely.
+``TestDocsRuffFormat`` covers the feat-221 unblock: the generator passes every
+rendered markdown document through ``ruff format`` (embedded code blocks only)
+before writing, a fixture whose docstring embeds an SDK-style, ruff-not-clean
+``python`` block must come out ruff-clean on disk, two full generations are
+byte-identical, and a missing ``ruff`` binary degrades to one stderr warning
+plus verbatim (unformatted) output -- the command never fails on it.
 """
 
 import contextlib
 import importlib
 import io
+import subprocess
+import sys
 import tempfile
 import unittest
+from collections.abc import Iterator
 from pathlib import Path
 from unittest import mock
 
@@ -394,6 +403,138 @@ class TestStableSignatureStr(unittest.TestCase):
         rendered = _stable_signature_str(_example)
         self.assertIn("somepkg.Thing", rendered)
         self.assertNotIn("_internal", rendered)
+
+
+_FIXTURE_PACKAGE = "fixture_ruff_format_pkg"
+_FIXTURE_MODULE = "block"
+
+#: An SDK-style python block ruff would reformat (one blank line between two
+#: top-level defs where ruff wants two), embedded in a method docstring -- the
+#: same shape the mcp SDK's ``MCPServer.resource`` Example block has in
+#: ``docs/api/biz.dfch.specmgr.server.md`` (feat-221 Phase 100 unblock).
+_FIXTURE_MODULE_SOURCE = '''\
+"""Fixture module with a ruff-not-clean python block in a method docstring."""
+
+
+class Fixture:
+    """A fixture class."""
+
+    def example(self) -> None:
+        """Carries an SDK-style python block that ruff would reformat.
+
+        Example:
+            ```python
+            @server.resource("resource://a")
+            def get_a() -> str:
+                return "a"
+
+            @server.resource("resource://b")
+            def get_b() -> str:
+                return "b"
+            ```
+        """
+'''
+
+
+def _write_fixture_package(tmp_root: Path) -> None:
+    pkg_dir = tmp_root / _FIXTURE_PACKAGE
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text('"""Fixture package for the docs ruff-format tests."""\n', encoding="utf-8")
+    (pkg_dir / f"{_FIXTURE_MODULE}.py").write_text(_FIXTURE_MODULE_SOURCE, encoding="utf-8")
+
+
+@contextlib.contextmanager
+def _fixture_on_sys_path(tmp_root: Path) -> Iterator[None]:
+    """Put the fixture package's root on ``sys.path``; purge stale fixture modules on entry and exit."""
+    stale = [name for name in sys.modules if name == _FIXTURE_PACKAGE or name.startswith(_FIXTURE_PACKAGE + ".")]
+    for name in stale:
+        del sys.modules[name]
+    sys.path.insert(0, str(tmp_root))
+    try:
+        yield
+    finally:
+        sys.path.remove(str(tmp_root))
+        stale = [name for name in sys.modules if name == _FIXTURE_PACKAGE or name.startswith(_FIXTURE_PACKAGE + ".")]
+        for name in stale:
+            del sys.modules[name]
+
+
+class TestDocsRuffFormat(unittest.TestCase):
+    """feat-221 unblock: the generator ruff-formats its own markdown output before writing."""
+
+    def _fixture_page(self, api_dir: Path) -> Path:
+        return api_dir / f"{_FIXTURE_PACKAGE}.{_FIXTURE_MODULE}.md"
+
+    def test_generated_page_with_sdk_style_block_is_ruff_clean(self):
+        """A fixture docstring embedding a ruff-not-clean python block must come out ruff-clean on disk."""
+        ruff = docs_module._find_ruff()
+        self.assertIsNotNone(ruff)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            _write_fixture_package(tmp_root)
+            api_dir = tmp_root / "api"
+            with _fixture_on_sys_path(tmp_root):
+                written, pruned = _generate_api_docs(api_dir, _FIXTURE_PACKAGE, ruff=ruff)
+
+            self.assertEqual(written, 2)
+            self.assertEqual(pruned, 0)
+            page = self._fixture_page(api_dir).read_text(encoding="utf-8")
+            # formatted shape: two blank lines between the block's two top-level defs
+            self.assertIn('return "a"\n\n\n', page)
+            # and ruff itself agrees the written page is clean
+            check = subprocess.run(
+                [str(ruff), "format", "--check", str(self._fixture_page(api_dir))], capture_output=True, check=False
+            )
+            self.assertEqual(check.returncode, 0)
+
+    def test_ruff_none_writes_rendered_text_verbatim(self):
+        """With no resolved ruff binary (ruff=None), the written page keeps the single-blank, unformatted shape."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_root = Path(tmp)
+            _write_fixture_package(tmp_root)
+            api_dir = tmp_root / "api"
+            with _fixture_on_sys_path(tmp_root):
+                _generate_api_docs(api_dir, _FIXTURE_PACKAGE, ruff=None)
+
+            page = self._fixture_page(api_dir).read_text(encoding="utf-8")
+            self.assertNotIn('return "a"\n\n\n', page)
+            self.assertIn('return "a"\n\n', page)
+
+    def test_two_full_generations_are_byte_identical(self):
+        """Two consecutive docs() runs into separate directories must write byte-identical trees."""
+        with tempfile.TemporaryDirectory() as tmp:
+            first_dir = Path(tmp) / "first"
+            second_dir = Path(tmp) / "second"
+
+            docs(output=first_dir)
+            docs(output=second_dir)
+
+            first_files = {
+                p.relative_to(first_dir).as_posix(): p.read_bytes() for p in first_dir.rglob("*") if p.is_file()
+            }
+            second_files = {
+                p.relative_to(second_dir).as_posix(): p.read_bytes() for p in second_dir.rglob("*") if p.is_file()
+            }
+            self.assertGreater(len(first_files), 0)
+            self.assertEqual(first_files, second_files)
+
+    def test_ruff_missing_warns_once_and_command_succeeds(self):
+        """A _find_ruff that resolves nothing must emit one stderr warning and write the docs anyway (no failure)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            docs_dir = Path(tmp) / "docs"
+            stderr_buffer = io.StringIO()
+
+            with mock.patch.object(docs_module, "_find_ruff", return_value=None):
+                with contextlib.redirect_stderr(stderr_buffer):
+                    docs(output=docs_dir)
+            stderr = stderr_buffer.getvalue()
+
+            self.assertIn("ruff not found", stderr)
+            self.assertIn("specmgr docs", stderr)
+            self.assertEqual(stderr.count("ruff not found"), 1)
+            self.assertTrue((docs_dir / "GENERATED.md").is_file())
+            self.assertTrue((docs_dir / "api" / "README.md").is_file())
 
 
 if __name__ == "__main__":

@@ -44,6 +44,9 @@ import importlib
 import inspect
 import pkgutil
 import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -55,6 +58,56 @@ _REPO_ROOT = _SRC_ROOT.parent.parent.parent.parent  # repo root
 _DOCS_DIR = _REPO_ROOT / "docs"
 _PACKAGE = "biz.dfch.specmgr"
 _INDEX_FILENAME = "README.md"
+
+
+def _find_ruff() -> Path | None:
+    """Locate the ``ruff`` binary once per command run, or ``None`` when unavailable.
+
+    Prefers the current interpreter's own ``bin/`` directory (``Path(sys.executable).parent
+    / "ruff"`` -- the uv-managed venv's ruff, the same binary ``uv run --frozen ruff``
+    drives), falling back to a bare ``ruff`` on ``PATH``. ``ruff`` lives in the ``test``
+    extra, so a published ``[cli]``/``[mcp]``-only install may not have it at all; the
+    caller degrades to unformatted output (with one warning) rather than failing.
+    """
+    venv_ruff = Path(sys.executable).parent / "ruff"
+    if venv_ruff.is_file():
+        result: Path | None = venv_ruff
+        return result
+    path_ruff = shutil.which("ruff")
+    result = Path(path_ruff) if path_ruff is not None else None
+    return result
+
+
+def _ruff_format_markdown(ruff: Path | None, text: str, filename: str) -> str:
+    """Pass rendered markdown through ``ruff format`` (embedded code blocks only) before writing.
+
+    ``ruff format --stdin-filename <filename> -`` reformats the fenced code blocks inside
+    the markdown while leaving the prose byte-identical, so the generated ``docs/`` tree is
+    ``ruff format --check``-clean without the pre-commit ``ruff-format`` hook and the
+    ``specmgr docs`` byte-identity check being mutually exclusive on the same file (first
+    hit: a docstring embedded in ``biz.dfch.specmgr.server.md`` carries an Example block
+    ruff would reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not
+    installed) returns the text verbatim; a non-zero ruff exit (unexpected for
+    well-formed markdown) degrades the same way, warning for that file, so the command
+    never fails on this.
+    """
+    if ruff is None:
+        return text
+    completed = subprocess.run(
+        [str(ruff), "format", "--stdin-filename", filename, "-"],
+        input=text,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        typer.echo(
+            f"⚠ ruff format failed for {filename} (exit {completed.returncode}); writing unformatted content.",
+            err=True,
+        )
+        return text
+    result = completed.stdout
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +435,7 @@ def _generate_module_markdown(module_name: str) -> str | None:
     return "\n".join(lines)
 
 
-def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
+def _generate_api_docs(api_dir: Path, package: str, ruff: Path | None = None) -> tuple[int, int]:
     """Write one Markdown file per module of ``package`` under ``api_dir``, plus a README index.
 
     After the current pages are written, stale pages are pruned: every flat
@@ -397,6 +450,9 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
     Args:
         api_dir: Directory to write the module pages and index into.
         package: Dotted name of the package to document.
+        ruff: Resolved ``ruff`` binary (``_find_ruff``) to run every rendered
+            page through ``_ruff_format_markdown`` before writing; ``None``
+            writes the rendered text verbatim (the pre-fix behavior).
 
     Returns:
         ``(written, pruned)`` -- the number of module files written and
@@ -415,7 +471,7 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
             import_failures += 1
             continue
         filename = f"{module_name}.md"
-        (api_dir / filename).write_text(markdown, encoding="utf-8")
+        (api_dir / filename).write_text(_ruff_format_markdown(ruff, markdown, filename), encoding="utf-8")
         written_names.add(filename)
 
         # Extract first-line docstring for the index
@@ -455,7 +511,10 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
                     index_lines.append(f"- [`{module_name}`]({filename})")
             index_lines.append("")
 
-        (api_dir / _INDEX_FILENAME).write_text("\n".join(index_lines), encoding="utf-8")
+        index_markdown = "\n".join(index_lines)
+        (api_dir / _INDEX_FILENAME).write_text(
+            _ruff_format_markdown(ruff, index_markdown, _INDEX_FILENAME), encoding="utf-8"
+        )
 
     pruned: int = 0
     if index_entries and import_failures == 0 and collection_complete:
@@ -508,11 +567,37 @@ def docs(
     when non-zero, and a warning is echoed whenever pruning was skipped
     because the run was untrustworthy (see ``_generate_api_docs``). Run this
     after any structural change and commit the result (see ``AGENTS.md``).
+
+    Every rendered markdown document (the per-module ``api/*.md`` pages, the
+    ``api/README.md`` index, and ``GENERATED.md``) is passed through
+    ``ruff format`` (embedded fenced code blocks only -- the prose stays
+    byte-identical) before being written, so docstrings that embed code
+    ruff would reformat (first hit: an mcp-SDK ``Example`` block pulled into
+    ``biz.dfch.specmgr.server.md``) no longer make the pre-commit
+    ``ruff-format`` hook and this command's byte-identity check mutually
+    exclusive. This joins the existing ``_stable_signature_str``
+    normalizations that already make the output reproducible over raw
+    source. The ``ruff`` binary is resolved once per run (``_find_ruff``:
+    the current interpreter's ``bin/`` first, then ``PATH``); when it is
+    unavailable -- ``ruff`` lives in the ``test`` extra, so a published
+    ``[cli]``/``[mcp]``-only install lacks it -- one warning is emitted and
+    the content is written verbatim instead, so the command never fails on
+    this (the ``similarity`` extra's availability-decided-at-call-time
+    precedent).
     """
     docs_dir = output if output is not None else _DOCS_DIR
 
+    ruff = _find_ruff()
+    if ruff is None:
+        venv_candidate = Path(sys.executable).parent / "ruff"
+        typer.echo(
+            f"⚠ ruff not found (looked for {venv_candidate} and 'ruff' on PATH); "
+            "`specmgr docs` output will not be ruff-formatted (embedded code blocks stay as rendered).",
+            err=True,
+        )
+
     api_dir = docs_dir / "api"
-    module_count, pruned = _generate_api_docs(api_dir, _PACKAGE)
+    module_count, pruned = _generate_api_docs(api_dir, _PACKAGE, ruff)
     typer.echo(f"✓ Wrote {module_count} module file(s) to {api_dir}")
     if pruned > 0:
         typer.echo(f"✓ Pruned {pruned} stale page(s) from {api_dir}")
@@ -520,5 +605,6 @@ def docs(
         typer.echo("⚠ Pruning skipped due to import problems; stale pages were not removed.")
 
     generated_md_path = docs_dir / "GENERATED.md"
-    generated_md_path.write_text(generate_generated_md(), encoding="utf-8")
+    generated_md = _ruff_format_markdown(ruff, generate_generated_md(), "GENERATED.md")
+    generated_md_path.write_text(generated_md, encoding="utf-8")
     typer.echo(f"✓ Wrote {generated_md_path}")
