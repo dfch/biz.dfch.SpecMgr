@@ -4,7 +4,7 @@ created: '2026-10-19T13:34:10.017+02:00'
 id: feat-221-mcp-220-error-contract
 status: planning
 type: feat
-updated: '2026-10-19T13:34:10.017+02:00'
+updated: '2026-10-19T14:06:11.879+02:00'
 version: 1.0.0
 ---
 
@@ -18,24 +18,24 @@ GitHub issue #221 / Dependabot alert #27 (GHSA-84m7-p3x7-pcfv, CVE-2026-59951, m
 
 The patched version nonetheless cannot be adopted as-is: SDK v2.1.0 changed handler-exception surfacing (upstream #3314). Verified against the shipped source of 2.0.0 vs 2.1.0/2.2.0: in 2.0.0 a tool raising `ValueError("Invalid id: …")` returns `CallToolResult(is_error=True, text="Error executing tool get_req: Invalid id: …")` to the client; in 2.1.0+ the same raise produces `UnexpectedToolError("Error executing tool get_req")` on the wire — the original message is swallowed (by design, "nothing from an unexpected exception reaches the client") and survives only in `__cause__` and the server log. This repo has ~152 raise sites (the `_path_safety` invalid-id `ValueError`s, the 12× `XNotFoundError`s, `create_feat`'s `FileExistsError`, …) whose documented caller contract *is* that message text (the AGENTS.md tool bullets; the ADR 519d1206 non-raising chain head deliberately converted only content-validation/parse-failure errors and left usage errors raising precisely because their messages must be visible — see also open issue #211 on the client-side `isError` truncation of exactly that channel).
 
-This feature upgrades the dependency to the patched line and restores the 2.0.0 wire contract at a single seam: a thin `SpecMgrServer(MCPServer)` subclass in `server.py` overriding the public `call_tool` to re-raise `UnexpectedToolError.__cause__`, plus a new wire-level regression test pinning the contract against future 2.x bumps.
+This feature upgrades the dependency to the patched line and restores the 2.0.0 caller-visible tool-error text at a single seam: a thin `SpecMgrServer(MCPServer)` subclass in `server.py` overriding the public `call_tool` to re-raise `UnexpectedToolError.__cause__`, plus a new wire-level regression test pinning the restored contract against future 2.x bumps (2.0.0's shape minus the `Error executing tool <name>: ` prefix — the Wire shape design note covers which message families that affects).
 
 ### Requirements
 
 - REQ-001: The `mcp` extra in `pyproject.toml` moves `mcp>=2.0.0` → `mcp>=2.2.0`, and `uv lock --upgrade-package mcp` resolves `mcp` to ≥ 2.2.0 (with lockstep `mcp-types` at the same version); no other `pyproject.toml` change.
 - REQ-002: `server.py` defines `SpecMgrServer(MCPServer)` overriding only the public `call_tool(name, arguments, context=None)`: `try: return await super().call_tool(...)` / `except UnexpectedToolError as exc: raise exc.__cause__ from None` (imported from `mcp.server.mcpserver.exceptions`); the singleton becomes `mcp = SpecMgrServer(name="specmgr", instructions=..., lifespan=_lifespan)` with unchanged arguments; the override is uniform for every tool registered on the server (ADR-domain tools included — no per-domain logic).
 - REQ-003: The Python-level raise contract stays byte-unchanged: every tool function called directly still raises the same exception types with the same messages (all existing raise-asserting tests pass unmodified); the `read_resource`/`get_prompt` paths are untouched (our `@mcp.resource()` functions raise nothing, and prompt error text is preserved in both SDK versions — re-raised as `ValueError(str(e))` at the dispatcher boundary); `commands/mcp.py`'s `run(transport=…)` calls are unchanged (signatures verified against the v2.2.0 overloads, incl. `stateless_http`).
-- REQ-004: A new `tests/test_mcp_error_contract.py` exercises the in-memory `mcp.call_tool` (no transport): (a) malformed id → `is_error=True` with content text equal to the original `ValueError` message; (b) well-formed-but-absent id → `is_error=True` with the domain's not-found message; (c) a healthy call → success shape unchanged. This test, not the locked version number, is the behavioral guard for future 2.x bumps.
-- REQ-005: A new ADR in `docs/adr/` (created via `create_adr`, accepted before/alongside the code landing, linked from this feature's Related Decisions) records: preserve 2.0.0 caller-visible exception text across mcp ≥2.1.0 by re-raising `UnexpectedToolError.__cause__` at the `call_tool` seam; rationale = the documented raise-based usage-error contract and ADR 519d1206's scoping of which errors go non-raising; and the relation to issue #211 (the shim preserves the status quo — including client-side `isError` truncation of those messages — and does not reopen the chain's scope).
-- REQ-006: Docs sync: `server.py`'s module docstring (the authoritative registration list — names the subclass and why), `AGENTS.md`'s `server.py` bullet, a `CHANGELOG.md` `[Unreleased]` entry, and clean regeneration of `docs/api/` + `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`).
+- REQ-004: A new `tests/test_mcp_error_contract.py` pins the client-visible wire shape in-process (no transport: no stdio/sse/http) — via an in-process client session over anyio memory streams (the SDK's own test-suite pattern; if that proves unstable at implementation time, drive the SDK's private `_handle_call_tool` boundary directly — the layer that converts a raised handler exception into the `CallToolResult` the client receives — per the deep-import precedent) — because the public `call_tool` itself raises the original exception post-shim and never returns an `is_error` result: (a) malformed id → `is_error=True` with content text equal to the original `ValueError` message; (b) well-formed-but-absent id → `is_error=True` with the domain's not-found message; (c) a healthy call → success shape unchanged. This test, not the locked version number, is the behavioral guard for future 2.x bumps.
+- REQ-005: A new ADR in `docs/adr/` (created via `create_adr` in Phase 110 — Task 110.100 — and accepted before the feature is marked `done`, i.e. before Task 110.120's final gate; linked from this feature's Related Decisions) records: preserve 2.0.0 caller-visible exception text across mcp ≥2.1.0 by re-raising `UnexpectedToolError.__cause__` at the `call_tool` seam; rationale = the documented raise-based usage-error contract and ADR 519d1206's scoping of which errors go non-raising; and the relation to issue #211 (the shim preserves the status quo — including client-side `isError` truncation of those messages — and does not reopen the chain's scope).
+- REQ-006: Docs sync: `server.py`'s module docstring (the authoritative registration list — names the subclass and why), `AGENTS.md`'s `server.py` bullet, a `CHANGELOG.md` `[Unreleased]` entry, and clean regeneration of `docs/api/` + `docs/GENERATED.md` (`specmgr docs`), `docs/MCP.md` (`specmgr mcp-docs`), and `docs/adr/README.md` (`specmgr adr-toc` — the new accepted ADR's TOC entry moves with it; the pre-commit `adr-toc` hook would force this at commit time anyway).
 - REQ-007: Quality gates green: `ruff format --check` + `ruff check`, `vulture src/ whitelist.py --min-confidence 60` (whitelist entry for the override only if flagged), `pylint` advisory, full `pytest -n auto` (local 3.13; the CI matrix covers 3.11/3.12).
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: (REQ-001) `uv.lock` resolves `mcp` to ≥ 2.2.0 (the alert's `first_patched_version`) and Dependabot alert #27 reports fixed on the change.
-- [ ] ACC-002: (REQ-002/REQ-004) `tests/test_mcp_error_contract.py` passes: a malformed id through `mcp.call_tool` returns `is_error=True` with the original message text (the pre-shim 2.1.0+ semantics would return the bare `Error executing tool <name>` — the test pins the post-shim behavior).
+- [ ] ACC-001: (REQ-001) `uv.lock` resolves `mcp` to ≥ 2.2.0 (the alert's `first_patched_version`) for the full CI-matrix floor (Python 3.11 — no interpreter marker restricting the resolution to ≥ 3.12) and Dependabot alert #27 reports fixed on the change.
+- [ ] ACC-002: (REQ-002/REQ-004) `tests/test_mcp_error_contract.py` passes: a malformed id through the in-process session returns `is_error=True` with the original message text (the pre-shim 2.1.0+ wire would carry the bare `Error executing tool <name>` — the test pins the post-shim wire shape).
 - [ ] ACC-003: (REQ-003) The full existing suite passes with zero test modifications (no raise-asserting test touched).
-- [ ] ACC-004: (REQ-005/REQ-006) The ADR exists, is accepted, and is linked from this feature; `server.py`'s docstring, `AGENTS.md`, and `CHANGELOG.md` are accurate; both doc regenerations run clean.
+- [ ] ACC-004: (REQ-005/REQ-006) The ADR exists, is accepted, and is linked from this feature; `server.py`'s docstring, `AGENTS.md`, and `CHANGELOG.md` are accurate; all three doc regenerations (`specmgr docs`, `specmgr mcp-docs`, `specmgr adr-toc`) run clean.
 - [ ] ACC-005: (REQ-007) All lint gates and the full test suite are green.
 
 ### Scope
@@ -46,7 +46,7 @@ This feature upgrades the dependency to the patched line and restores the 2.0.0 
 - The `SpecMgrServer(MCPServer)` subclass in `server.py` with the `call_tool` override (`UnexpectedToolError.__cause__` re-raise) and the singleton construction switch.
 - The new wire-level regression test `tests/test_mcp_error_contract.py`.
 - A new ADR recording the error-contract-preservation decision (accepted, linked).
-- Docs sync: `server.py` module docstring, `AGENTS.md`'s `server.py` bullet, `CHANGELOG.md` `[Unreleased]`, `specmgr docs` + `specmgr mcp-docs` regeneration.
+- Docs sync: `server.py` module docstring, `AGENTS.md`'s `server.py` bullet, `CHANGELOG.md` `[Unreleased]`, `specmgr docs` + `specmgr mcp-docs` + `specmgr adr-toc` regeneration.
 - The full quality gate (ruff, vulture, pylint advisory, pytest).
 
 #### Explicitly Out Of Scope
@@ -61,7 +61,7 @@ This feature upgrades the dependency to the patched line and restores the 2.0.0 
 #### Depends On
 
 - GitHub issue #221 (tracking vehicle; this feature folder's `NNN` infix is its number).
-- Verified SDK source facts: v2.0.0 `Tool.call` wraps a handler exception as `ToolError(f"Error executing tool {name}: {e}")` (message on the wire); v2.1.0/v2.2.0 `Tool.call` wraps it as `UnexpectedToolError(f"Error executing tool {name}")` (no text; `__cause__` = the original, always set via `raise … from exc`); both versions' `_handle_call_tool` return the caught exception's `str()` as `is_error` content; `get_prompt` re-raises `ValueError(str(e))` at the dispatcher boundary in both versions.
+- Verified SDK source facts: v2.0.0 `Tool.call` wraps a handler exception as `ToolError(f"Error executing tool {name}: {e}")` (message on the wire); v2.1.0/v2.2.0 `Tool.call` wraps it as `UnexpectedToolError(f"Error executing tool {name}")` (no text; `__cause__` = the original, always set via `raise … from exc`); v2.0.0's `_handle_call_tool` catches with `except MCPError: raise` then `except Exception` (returning the caught exception's `str()` as `is_error` content), v2.2.0's with a bare `except Exception` (same return) — so the shim's re-raised original (a plain `ValueError`/`NotFoundError`, never an `MCPError`) is stringified, not re-raised, in both versions; `get_prompt` re-raises `ValueError(str(e))` at the dispatcher boundary in both versions; import surface — `from mcp.server import MCPServer` (the subclass's base, `server.py:738`) and `mcp.server.mcpserver.resources.base` (the four existing test files' deep imports — ACC-003's zero-test-modifications depends on both still resolving in 2.2.0).
 
 #### Blocks
 
@@ -70,7 +70,7 @@ This feature upgrades the dependency to the patched line and restores the 2.0.0 
 ### Design Notes
 
 - **Why a `call_tool` override (not middleware or an `Extension` interceptor):** both layers sit *outside* `_handle_call_tool`, which catches the exception into a `CallToolResult` before either can see it. Only a handler-level (`call_tool`) override can recover the original exception via `UnexpectedToolError.__cause__`.
-- **Wire shape after the shim:** `_handle_call_tool`'s existing catch returns `CallToolResult(content=[TextContent(str(original))], is_error=True)` — 2.0.0's shape minus the `Error executing tool <name>: ` prefix (our messages already name the tool, e.g. `repair() received a blank id…`); logging is retained (`logger.exception` in the catch).
+- **Wire shape after the shim:** `_handle_call_tool`'s existing catch returns `CallToolResult(content=[TextContent(str(original))], is_error=True)` — 2.0.0's shape minus the `Error executing tool <name>: ` prefix; logging is retained (`logger.exception` in the catch). The prefix loss is accepted but not uniform: some messages already self-identify (e.g. `repair() received a blank id…`), while the `_path_safety` id-validation `ValueError`s (`id '…' is not a canonical lowercase-hex UUID…`) and the 12× `XNotFoundError`s (`no document found with id '…' under …`) do not name the tool, so their post-shim client-visible text is strictly less informative than 2.0.0's — the failing id/value and base path remain, so the messages stay actionable. The alternative (the shim re-prepending `Error executing tool {name}: ` when the original message does not self-identify) was considered and rejected: it adds per-exception text inspection to a seam meant to be uniform, and the only lost piece is the tool name, which the client already knows from its own `call_tool` request.
 - **The deep import** `mcp.server.mcpserver.exceptions.UnexpectedToolError` is acceptable — the project already deep-imports `mcp.server.mcpserver.resources.base` in four test files.
 - **Version drift:** the lock may resolve mcp > 2.2.0 (the latest 2.x at lock time); REQ-004's regression test is the behavioral guard, not the version number.
 - **`raise exc.__cause__ from None`** avoids a doubled exception chain in the server log; `__cause__` is total (the SDK raises with `from exc`).
@@ -84,15 +84,15 @@ This feature upgrades the dependency to the patched line and restores the 2.0.0 
 
 #### Phase 100: The fix
 
-- [ ] Task 100.100: Bump the `mcp` extra to `>=2.2.0` in `pyproject.toml`; run `uv lock --upgrade-package mcp`; verify `uv.lock` resolves `mcp` to ≥ 2.2.0 (and lockstep `mcp-types`); `uv sync --all-extras --frozen` (REQ-001, ACC-001).
+- [ ] Task 100.100: Bump the `mcp` extra to `>=2.2.0` in `pyproject.toml`; run `uv lock --upgrade-package mcp`; verify `uv.lock` resolves `mcp` to ≥ 2.2.0 (and lockstep `mcp-types`); confirm the resolution applies to the full CI-matrix floor — no interpreter marker restricting the ≥ 2.2.0 entry to Python ≥ 3.12 (`uv lock` resolves per-interpreter; a floor-excluding marker would leave the 3.11 job on the vulnerable pin or break its `uv sync`); `uv sync --all-extras --frozen` (REQ-001, ACC-001).
 - [ ] Task 100.110: Add the `UnexpectedToolError` import, the `SpecMgrServer(MCPServer)` subclass with the `call_tool` override (`__cause__` re-raise, `from None`), and the singleton switch in `server.py`; update the module docstring (REQ-002, REQ-006).
-- [ ] Task 100.120: Write `tests/test_mcp_error_contract.py` — (a) malformed id → `is_error=True` + original message, (b) well-formed-but-absent id → not-found text, (c) healthy call → unchanged shape (REQ-004, ACC-002).
+- [ ] Task 100.120: Write `tests/test_mcp_error_contract.py` driving the in-process client session over anyio memory streams (the public `call_tool` raises the original post-shim; the `is_error` result is produced one layer up in `_handle_call_tool` — fall back to driving that boundary directly if the session proves unstable) — (a) malformed id → `is_error=True` + original message, (b) well-formed-but-absent id → not-found text, (c) healthy call → unchanged shape (REQ-004, ACC-002).
 - [ ] Task 100.130: Run the full suite + quality gates; confirm every existing raise-asserting test passes unmodified (REQ-003, REQ-007, ACC-003/ACC-005).
 
 #### Phase 110: Decision record and docs
 
 - [ ] Task 110.100: Create the ADR via `create_adr` (2.0.0 error-text parity via the `call_tool` seam; cite the CVE, SDK #3314, the ADR 519d1206 chain's scoping, and #211); accept it; link it in this feature's Related Decisions (REQ-005, ACC-004).
-- [ ] Task 110.110: Update `AGENTS.md`'s `server.py` bullet and add the `CHANGELOG.md` `[Unreleased]` entry; regenerate `specmgr docs` + `specmgr mcp-docs` and confirm clean diffs (REQ-006, ACC-004).
+- [ ] Task 110.110: Update `AGENTS.md`'s `server.py` bullet and add the `CHANGELOG.md` `[Unreleased]` entry; regenerate `specmgr docs` + `specmgr mcp-docs` + `specmgr adr-toc` (the new ADR's TOC entry) and confirm clean diffs (REQ-006, ACC-004).
 - [ ] Task 110.120: Final verification — full `pytest -n auto`, ruff/vulture/pylint gates, and confirm Dependabot alert #27 is resolved by the lock change (ACC-001/ACC-005).
 
 ## Progress
@@ -105,7 +105,11 @@ This feature upgrades the dependency to the patched line and restores the 2.0.0 
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-10-19T13:27:10.000+02:00 - Created
+#### 2026-10-19T14:05:52.267+02:00 - Plan refined after the feat-refiner pass (E1, G1, G2, D1, D2, D3, I1, I2 applied)
+
+All findings from the feat-refiner review applied: E1 (the regression test now drives the in-process client session over anyio memory streams — the public `call_tool` raises the original post-shim, and the `is_error` result is produced one layer up in `_handle_call_tool` — REQ-004/ACC-002/Task 100.120 reworded); G1 (`specmgr adr-toc` added to the docs-sync set — REQ-006, ACC-004, Task 110.110, Included); G2 (the verified-facts list now records the `mcp.server` import surface the subclass design and ACC-003 depend on); D1 (REQ-005's ADR timing reworded to "accepted before the feature is marked `done`"); D2 (the Wire shape note names the prefix-losing message families — the `_path_safety` id-validation and not-found `ValueError`s — and records the re-prepend alternative as considered and rejected); D3 (body entry timestamps aligned to the frontmatter `created`); I1 (2.2.0's `_handle_call_tool` bare-`except Exception` catch behavior recorded in the verified facts); I2 (Task 100.100/ACC-001 gain the Python 3.11 floor-resolution check). Status stays `planning`.
+
+#### 2026-10-19T13:34:10.017+02:00 - Created
 
 Feature created to track GitHub issue #221 (Dependabot alert #27, CVE-2026-59951): the `mcp` upgrade to ≥ 2.2.0 plus the `SpecMgrServer.call_tool` shim preserving caller-visible tool error text across the SDK's 2.1.0 exception change. Plan settled (approach chosen over dismiss-as-not-affected after the exposure analysis); implementation deliberately not started at creation.
 
@@ -113,7 +117,7 @@ Feature created to track GitHub issue #221 (Dependabot alert #27, CVE-2026-59951
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-10-19T13:27:10.000+02:00 - Approach: bump to `mcp>=2.2.0` plus the `call_tool` error-contract shim (not dismiss-as-not-affected, not a bare bump)
+#### 2026-10-19T13:34:10.017+02:00 - Approach: bump to `mcp>=2.2.0` plus the `call_tool` error-contract shim (not dismiss-as-not-affected, not a bare bump)
 
 Three options were considered for alert #27: (1) bump plus the shim preserving the documented raise-based usage-error contract (chosen, per the maintainer decision in the planning session); (2) a bare bump — rejected, because the SDK 2.1.0 #3314 behavior change would silently strip the actionable message text off the wire for the ~152 still-raising call paths, breaking the contract the ADR 519d1206 chain's scoping and the AGENTS.md tool bullets document; (3) dismiss as not affected (valid on its own: stdio/SSE-only plus `stateless_http=True`) — rejected, because the next lock upgrade would land on 2.1.0+ unprepared for the same behavior change, papering over the alert instead of resolving it.
 
