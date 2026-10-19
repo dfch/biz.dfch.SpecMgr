@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-19T13:34:10.017+02:00'
 id: feat-221-mcp-220-error-contract
-status: progress
+status: review
 type: feat
-updated: '2026-10-19T23:20:29.756+02:00'
+updated: '2026-10-19T23:34:18.860+02:00'
 version: 1.0.0
 ---
 
