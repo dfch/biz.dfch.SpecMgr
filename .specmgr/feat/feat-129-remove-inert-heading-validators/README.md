@@ -4,7 +4,7 @@ created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
 status: review
 type: feat
-updated: '2026-10-18T22:49:27.627+02:00'
+updated: '2026-10-19T07:16:34.047+02:00'
 version: 1.0.0
 ---
 
@@ -123,11 +123,26 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation complete -- all phases (100/105/110/120/130/135/140) closed, and all acceptance criteria verified with concrete evidence in the 2026-10-18T21:17 Phase 140 entry: the full suite passed (4668 passed, 17 skipped -- identical counts to every prior phase's baseline, no regressions, ACC-008), the 12-domain packaged-example round-trip spot-check (Task 140.110, REQ-009) PASSed 7 domains with the 5 failing domains (req/uc/dec/sop/vcr) proven pre-existing via byte-identical behavior at the pre-implementation base `3b746d4`, and every ACC grep/lint gate was clean (zero residual `validate_heading*`/`validate_and_convert_text`/`model_validator_after` matches in `src/`/`tests/`/`whitelist.py`/`docs/api/`, ruff format/check + vulture all green, CHANGELOG `[Unreleased]` entry in place, ADR v1.6.0 revision line present). The post-implementation review findings G-1/D-1/D-2/I-1 were applied and D-3/I-2 deferred (see the 2026-10-18T22:49 Updates entry). Awaiting review.
+**As of 2026-10-18**: Implementation complete -- all phases (100/105/110/120/130/135/140) closed, and all acceptance criteria verified with concrete evidence in the 2026-10-18T21:17 Phase 140 entry: the full suite passed (4668 passed, 17 skipped -- identical counts to every prior phase's baseline, no regressions, ACC-008), the 12-domain packaged-example round-trip spot-check (Task 140.110, REQ-009) PASSed 7 domains with the 5 failing domains (req/uc/dec/sop/vcr) proven pre-existing via byte-identical behavior at the pre-implementation base `3b746d4`, and every ACC grep/lint gate was clean (zero residual `validate_heading*`/`validate_and_convert_text`/`model_validator_after` matches in `src/`/`tests/`/`whitelist.py`/`docs/api/`, ruff format/check + vulture all green, CHANGELOG `[Unreleased]` entry in place, ADR v1.6.0 revision line present). The post-implementation review findings G-1/D-1/D-2/I-1 were applied and D-3/I-2 deferred (see the 2026-10-18T22:49 Updates entry). The second review round (2026-10-19T07:14) was a clean pass -- zero errors/gaps/discrepancies, no new changes required, PR #220 CI-green. Awaiting review.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-19T07:14:00.000+02:00 - Second post-implementation review round (feat-reviewer): clean pass, no new changes required
+
+Ran a second `feat-reviewer` pass over the full branch diff (`833739f..HEAD`, 10 commits, 44 files)
+including the round-1 fix commit (`07f8da8`): **zero errors, zero gaps, zero discrepancies**. All 11
+REQ/ACC were independently re-verified (full suite exact match: 4668 passed / 17 skipped / 5662
+subtests; ruff format/check + vulture clean; zero residual-name matches in `src/`/`tests/`/
+`whitelist.py`/`docs/api/`; the 12-domain packaged-example round-trip re-run on both HEAD and the
+pre-implementation base `3b746d4` with a byte-identical 7 PASS / 5 FAIL split; and a 250-hunk
+`docs/api` check against the dev tip confirming the mid-implementation merge lost no feat-199
+content). The round-1 fixes were confirmed in place (their P2), and the two improvement items
+resolved as: I1 = the previously deferred D-3 (the reviewer confirmed the deferral's factual basis
+is accurate -- left deferred), I2 = the CHANGELOG `### Changed` vs `### Removed` subsection
+question (resolved in favor of keeping `### Changed` per the repo's own precedent -- see the
+Decisions Made entry of the same date). No new changes were required; PR #220 remains CI-green.
 
 #### 2026-10-18T22:49:00.000+02:00 - Applied post-implementation review findings (feat-reviewer)
 
@@ -217,6 +232,19 @@ Drafted the feature plan from GitHub issue #129, grounded in a read of `markdown
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-19T07:14:00.000+02:00 - CHANGELOG subsection for this removal: keep `### Changed` (second review round, I2)
+
+The second review round raised a strict Keep-a-Changelog reading that would file the removal of
+the documented no-op surface (`validate_heading_structure`/`validate_headings`, `_tokens`) under
+`### Removed` rather than `### Changed`. Resolved in favor of keeping `### Changed`: every
+`### Removed` entry in this CHANGELOG so far is a **BREAKING** functional removal (v0.35.0's
+cross-reference sub-lists, v0.27.0's Confluence tools/env vars/dependency, v0.24.0's
+`validate_<d>` tools), whereas internal non-breaking reorganizations are consistently recorded
+under `### Changed` (e.g. v0.31.0's `_domains.py` consolidation -- the exact convention REQ-011
+invokes); the entry's explicit "no behavioral change" sentence covers discoverability, and
+REQ-011 mandates no subsection. The I1/D-3 deferral from the first round was re-confirmed by the
+reviewer (factual basis accurate) and stays closed.
 
 #### 2026-10-18T22:49:00.000+02:00 - Post-implementation review: D-3 and I-2 deferred
 
