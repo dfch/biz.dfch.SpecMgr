@@ -1,7 +1,7 @@
 # MADR 4.0.0 example templates
 
 Verbatim, byte-for-byte copies of the four official MADR 4.0.0 templates
-(plan §2's source document), used as parser fixtures in
+used as parser fixtures in
 `tests/models/adr/v1/test_examples.py`:
 
 - `adr-template-bare-minimal.md`

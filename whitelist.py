@@ -86,8 +86,6 @@ _._validate_at_least_one_present
 # validation machinery, never called directly.
 _._validate_question
 _.validate_actions_numbered_sequentially
-_.validate_heading_structure
-_.validate_headings
 _.validate_level
 _.validate_status
 _.validate_step_references_resolve_and_are_unique

@@ -19,29 +19,18 @@
 
 from __future__ import annotations
 
-from pydantic import model_validator
-
 from .markdown_section import MarkdownSection
 from .markdown import markdown
 
 
 @markdown(type="heading_open", tag="h2")
 class MarkdownSection2(MarkdownSection):
-    """Markdown content starting with an h2 heading, no nested headings allowed.
+    """Markdown content starting with an h2 heading.
 
-    Tokens [0:3] form the opening h2 heading triple (heading_open/inline/heading_close).
-    All tokens after index 3 must not contain any heading tags (h1-h6).
+    A heading deeper than h2 (level > 2, a nested subsection) is allowed
+    and silently retained inside the section's extent, while a heading of
+    the same or a higher level (level <= 2) ends the section. This is
+    enforced procedurally by `MarkdownSection.get_extent`'s own stop
+    condition plus `MarkdownStr.from_text`'s trailing-completeness check,
+    not by any model validator (none exists).
     """
-
-    @model_validator(mode="after")
-    def validate_headings(self) -> MarkdownSection2:
-        """Validate heading level and no nested headings.
-
-        Base class validates the heading triple structure.
-        This validates: specific tag h2 and no nested headings in tokens [3:].
-        """
-        # assert self._tokens[0].tag == "h2", f"Expected h2, got {self._tokens[0].tag}"
-        # assert not any(
-        #     t.tag in ("h1", "h2", "h3", "h4", "h5", "h6") for t in self._tokens[3:] if t.type == "heading_open"
-        # ), "Nested headings not allowed"
-        return self

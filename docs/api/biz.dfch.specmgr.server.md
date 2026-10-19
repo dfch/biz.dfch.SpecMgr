@@ -4,7 +4,7 @@ MCP server for ``biz-dfch-specmgr``.
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
-Registers the following resources and tools so far (plan §8, §9a):
+Registers the following resources and tools so far:
 
 Resources
 ---------
@@ -475,8 +475,9 @@ renders the source document's reference neighbourhood as the deterministic
 PlantUML component diagram of the frozen ``specmgr://reference-graph``
 rulebook (one node per artifact -- label = the document title, truncated
 to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40 -- a stereotype + colour per
-type, per-domain packages, one edge per unique reference, on-cycle edges
-red, dangling targets top-level ``<<UNRESOLVED>>`` nodes), returning the
+type, per-domain curly-brace component groups, one label-free edge per
+unique reference, on-cycle edges red, dangling targets top-level
+``<<UNRESOLVED>>`` nodes), returning the
 byte-stable PlantUML source. Guard order: ``id`` (for ``type="feat"`` the
 full ``feat-NNN-slug`` only -- a bare ``feat-NNN`` is a wrong-format id,
 not a normalization candidate; use ``list_feat`` to discover the exact

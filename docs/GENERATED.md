@@ -24,23 +24,23 @@ First-line docstrings from each module, organized by domain:
 - `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test.
 - `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr.
 - `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test.
-- `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
-- `adr/resources/adr_get.py` — Resource: specmgr://adr/{id} (plan §8, §9a).
-- `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
-- `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
-- `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
+- `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records.
+- `adr/resources/adr_get.py` — Resource: specmgr://adr/{id}.
+- `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records.
+- `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr``.
+- `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations.
 - `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
-- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
-- `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (Task 3.2).
+- `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr.
 - `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
-- `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
-- `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
+- `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create.
+- `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete.
+- `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list.
+- `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read.
+- `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update.
+- `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter.
+- `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section.
+- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (Task 3.2).
 
 **commands/**
 
@@ -221,13 +221,13 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/__init__.py` — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
 - `models/adr/v1/_util.py` — Shared, private validation helpers for the ``models.adr`` subpackage.
 - `models/adr/v1/adr.py` — Pydantic model for a full ADR document (frontmatter + body).
-- `models/adr/v1/body.py` — Pydantic model for the ADR body -- whole-section fields plus options
-- `models/adr/v1/frontmatter.py` — Pydantic model for the ADR YAML frontmatter block (plan §3).
-- `models/adr/v1/mutations.py` — Structured edit operations on an :class:`Adr` (plan §4, §5, §8).
-- `models/adr/v1/option.py` — Pydantic model for one ``### Option N: {title}`` sub-section (plan §5).
-- `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
-- `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
-- `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- `models/adr/v1/body.py` — Pydantic model for the ADR body -- whole-section fields plus options.
+- `models/adr/v1/frontmatter.py` — Pydantic model for the ADR YAML frontmatter block.
+- `models/adr/v1/mutations.py` — Structured edit operations on an :class:`Adr`.
+- `models/adr/v1/option.py` — Pydantic model for one ``### Option N: {title}`` sub-section.
+- `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
+- `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text.
+- `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output.
 - `models/config_info.py` — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.

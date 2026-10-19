@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T21:21:13.282+02:00'
 id: feat-126-server-json-env-drift
-status: review
+status: done
 type: feat
-updated: '2026-10-08T13:15:10.981+02:00'
+updated: '2026-10-18T22:32:28.283+02:00'
 version: 1.0.0
 ---
 
@@ -107,11 +107,15 @@ Verified state at planning time (2026-10-07):
 
 ### Current Status
 
-**As of 2026-10-08**: All phases complete, including the post-merge manifest extension (the origin/dev merge brought feat-185-uc-diagrams into the source): `server.json`'s `environmentVariables` now covers the twelve `SPECMGR_*` variables the merged source reads, the drift test's default-presence classifier was refined for the post-merge corpus, and the `CHANGELOG.md` manifest bullet was extended to the six previously-undocumented variables; all six acceptance criteria (ACC-001 through ACC-006) verified; status is review, pending final review.
+**As of 2026-10-18**: Feature complete and closed. The implementation merged into `dev` via PR #205 (squash commit 0bb54fa, 2026-10-08), including the post-merge manifest extension: `server.json`'s `environmentVariables` covers the twelve `SPECMGR_*` variables the merged source reads (the four feat-185 additions were completed in this feature), the drift test's default-presence classifier is refined for the post-merge corpus, and the `CHANGELOG.md` manifest bullet is extended to the six previously-undocumented variables; all six acceptance criteria (ACC-001 through ACC-006) verified; the round-1 post-implementation review (feat-reviewer) verdicted ship as-is; GitHub issue #126 is closed. Frontmatter status moved `review` to `done`.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:30:36.000Z - Status set to done; PR #205 merge and issue #126 closure recorded
+
+PR #205 ("fix(feat-126): server.json environment-variable drift detection") merged into `dev` on 2026-10-08 (squash commit 0bb54fa), including the post-merge manifest completion of the four feat-185 variables; all six acceptance criteria (ACC-001 through ACC-006) are ticked with verified evidence; the round-1 post-implementation review (feat-reviewer) verdicted ship as-is with its D1/D2/D3 wording fixes applied. GitHub issue #126 is closed as part of this close-out. This entry moves the frontmatter status from `review` to `done` via `set_status`; no code or plan changes accompany it.
 
 #### 2026-10-08T11:15:10.000Z - Round-1 post-implementation review (feat-reviewer): ship as-is
 

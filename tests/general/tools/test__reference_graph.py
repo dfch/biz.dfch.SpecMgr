@@ -118,15 +118,15 @@ class TestCycleRegistry(_SeededRegistryTestCase):
     def test_depth2_marks_the_cycle_and_the_self_loop_red(self):
         rendered = render_reference_graph(build_source_graph("req", _C001, depth=2))
         self.assertIn(
-            f"[REQ-{_C001}] -[#red]-> [REQ-{_C002}] : refers to",
-            rendered,  # 2-cycle, edge 1
+            f"[REQ-{_C001}] -[#red]-> [REQ-{_C002}]",
+            rendered,  # 2-cycle, edge 1 (label-free, the 2026-10-15 correction)
         )
         self.assertIn(
-            f"[REQ-{_C002}] -[#red]-> [REQ-{_C001}] : refers to",
+            f"[REQ-{_C002}] -[#red]-> [REQ-{_C001}]",
             rendered,  # 2-cycle, edge 2
         )
         self.assertIn(
-            f"[REQ-{_C002}] -[#red]-> [REQ-{_C002}] : refers to",
+            f"[REQ-{_C002}] -[#red]-> [REQ-{_C002}]",
             rendered,  # self-loop
         )
         self.assertIn(
@@ -269,9 +269,9 @@ class TestReverseFeatSourceRegistry(_SeededRegistryTestCase):
         # the title is the scoped source-H1 default (the feature_title derivation)
         rendered = self._golden("reverse-feat-source-reverse.puml")
         self.assertTrue(rendered.startswith("@startuml Reverse Feature\n"))
-        self.assertIn(f"[feat-42-reverse-feat] -[#red]-> [REQ-{_R001}] : refers to", rendered)
-        self.assertIn(f"[REQ-{_R001}] -[#red]-> [feat-42-reverse-feat] : refers to", rendered)
-        self.assertIn(f"[DEC-{_B001}] --> [feat-42-reverse-feat] : refers to", rendered)
+        self.assertIn(f"[feat-42-reverse-feat] -[#red]-> [REQ-{_R001}]", rendered)
+        self.assertIn(f"[REQ-{_R001}] -[#red]-> [feat-42-reverse-feat]", rendered)
+        self.assertIn(f"[DEC-{_B001}] --> [feat-42-reverse-feat]", rendered)
         self.assertNotIn("-[#red]-> [DEC-", rendered)  # the dec edge is off-cycle
         self.assertNotIn("feat-43", rendered)  # the negative control never surfaces
         self.assertNotIn(f"[DEC-{_D001}]", rendered)  # dec-d001 references no feat: not a node
@@ -478,8 +478,8 @@ class TestWideRegistry(_SeededRegistryTestCase):
         # and its reference an edge in both modes
         for graph in (build_registry_graph(), build_source_graph("req", _W001, depth=1, reverse=True)):
             rendered = render_reference_graph(graph)
-            self.assertIn('package "ADR"', rendered)
-            self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}] : refers to", rendered)
+            self.assertIn('component "ADR" {', rendered)
+            self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}]", rendered)
 
 
 class TestBuilderErrorContract(_SeededRegistryTestCase):

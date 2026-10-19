@@ -909,18 +909,6 @@ question_7:
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `FutureState`
 
@@ -1748,18 +1736,6 @@ Leaf class (no declared fields) -- captures the text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Gap`
@@ -2592,18 +2568,6 @@ conflated with `Impact` (the consequence of the gap).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `Impact`
 
@@ -3434,18 +3398,6 @@ matters -> target state).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `MoreInformation`
 
@@ -4272,18 +4224,6 @@ matters -> target state).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `Prb`
 
@@ -4956,18 +4896,6 @@ more_information:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection1'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h1 and no nested headings in tokens [3:].
 
 
 ### `Question1`
@@ -5797,18 +5725,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question2`
 
@@ -6636,18 +6552,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Question3`
@@ -7477,18 +7381,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question4`
 
@@ -8316,18 +8208,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Question5`
@@ -9157,18 +9037,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question6`
 
@@ -9997,18 +9865,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question7`
 
@@ -10836,18 +10692,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `References`
@@ -11678,18 +11522,6 @@ see the feature README's Scope).
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Summary`
@@ -12522,16 +12354,4 @@ still unanswered.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 

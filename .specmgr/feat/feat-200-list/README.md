@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-07T07:48:18.241+02:00'
 id: feat-200-list
-status: review
+status: done
 type: feat
-updated: '2026-10-07T17:03:20.962+02:00'
+updated: '2026-10-18T22:32:26.546+02:00'
 version: 1.0.0
 ---
 
@@ -105,7 +105,7 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 
 ### Current Status
 
-**As of 2026-10-07**: All three phases complete — the feature is ready for review.
+**As of 2026-10-18**: Feature complete and closed. The implementation merged into `dev` via PR #203 (squash commit 8840224, 2026-10-08); all five acceptance criteria (ACC-001 through ACC-005) are ticked and were walked with per-test evidence in Phase 120; the post-implementation review findings (G1/D1/D2) were addressed pre-merge; GitHub issue #200 is closed. Frontmatter status moved `review` to `done`.
 
 - Phase 100 (`list_feat` glob): the shared `filter_summaries_by_glob` helper in `general/tools/_listing.py` (with unit tests), the `glob: str | None = None` parameter on `list_feat` (applied to the materialized row list after feat-187's two-stage dirty/clean resolution and before `total`/paging), and `tests/feat/tools/test_list_feat_glob.py` (ACC-001, ACC-004, ACC-005, REQ-004, the empty-string-is-a-pattern decision, and the `glob=None`-unchanged half of ACC-003).
 - Phase 110 (eleven other tools): the same `glob` parameter on `list_req`/`list_uc`/`list_tsk`/`list_qa`/`list_prb`/`list_gol`/`list_rsk`/`list_dec`/`list_sop`/`list_vcr`/`list_sysrs`, each wired to the shared helper between its row build and `total`/paging, one new per-domain fixture test module each (`tests/<d>/tools/test_list_<d>_glob.py`; the `req` module additionally carries the plan's named ACC-002/ACC-004/ACC-005 additions), docstrings updated, `docs/MCP.md`/`docs/api/` regenerated.
@@ -119,6 +119,10 @@ One shared helper. The filter lives in a single function in `general/tools/` (al
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-18T20:30:36.000Z - Status set to done; PR #203 merge and issue #200 closure recorded
+
+PR #203 ("feat(feat-200): add glob id-filter to paged list tools") merged into `dev` on 2026-10-08 (squash commit 8840224); all five acceptance criteria (ACC-001 through ACC-005) are ticked with the Phase-120 per-test evidence; the post-implementation review findings (G1/D1/D2) were addressed pre-merge (see the 2026-10-07T17:03:20.962+02:00 entry). GitHub issue #200 is closed. This close-out moves the frontmatter status from `review` to `done` via `set_status`; no code or plan changes accompany it.
 
 #### 2026-10-07T17:03:20.962+02:00 - Post-implementation review findings addressed (G1/D1/D2); watch item recorded
 

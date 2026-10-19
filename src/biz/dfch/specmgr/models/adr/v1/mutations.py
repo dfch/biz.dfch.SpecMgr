@@ -15,16 +15,17 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Structured edit operations on an :class:`Adr` (plan §4, §5, §8).
+"""Structured edit operations on an :class:`Adr`.
 
-This is the model-layer half of the future MCP tool surface's
-``update_section``/``option_*``/``set_status`` tools (plan §8): it implements
-their semantics against an in-memory :class:`Adr`, deliberately excluding any
-file I/O (reading/writing/finding a document by id) -- that belongs to a
-future ``tools/`` package, not here. Every function here is pure: it takes an
+This is the model-layer half of the ``update_section``/``option_*`` ADR
+tools and the generic ``set_status`` tool (called with ``type="adr"``):
+it implements their semantics against an in-memory :class:`Adr`,
+deliberately excluding any file I/O (reading/writing/finding a document
+by id) -- that belongs to the ``adr/tools/`` package, not here. Every
+function here is pure: it takes an
 :class:`Adr` and returns a *new* one (or, for read-only lookups, plain data),
 never mutating its argument, so the tool layer's own "re-read, re-parse,
-re-render, re-write" cycle around each call (plan §7's "source of truth is
+re-render, re-write" cycle around each call ("source of truth is
 the file on disk") stays simple and race-free.
 
 Two error channels, mirroring :mod:`parser`'s split between structural and
@@ -33,7 +34,7 @@ field-value problems:
 - :class:`AdrSectionError` -- ``update_section`` given a ``key`` that is not
   a whole-section field (e.g. ``"options"``, or a typo), or a deletion
   sentinel (blank string or the literal ``"REMOVE"``, case-insensitive)
-  targeting a *mandatory* section (plan §4).
+  targeting a *mandatory* section.
 - :class:`AdrOptionNotFoundError` -- an ``option_*`` function given a
   ``full_title`` that does not match any current option.
 
@@ -41,7 +42,7 @@ Everything else -- a non-sentinel value that still fails a field's own
 validator (e.g. a blank ``status`` after composing ``set_status``'s
 "superseded by ..." string, though that specific case cannot actually occur)
 -- surfaces as the normal ``pydantic.ValidationError`` from reconstructing
-the affected model, exactly like ``parser.parse_adr`` (plan §7/§8's "one
+the affected model, exactly like ``parser.parse_adr`` ("one
 schema-driven validate_adr check, shared identically between LLM tool calls
 and human edits").
 """
@@ -67,7 +68,7 @@ __all__ = [
 
 #: Whole-section keys ``update_section`` accepts: every :class:`AdrBody`
 #: field except ``options``, which has its own dedicated ``option_*`` API
-#: (plan §5) and is deliberately not reachable through ``update_section``.
+#: and is deliberately not reachable through ``update_section``.
 _SECTION_KEYS = frozenset(AdrBody.model_fields) - {"options"}
 
 
@@ -76,29 +77,29 @@ class AdrSectionError(ValueError):
 
     Raised both for a ``key`` that is not a whole-section field (``options``
     or an unrecognized name) and for a deletion sentinel targeting a
-    mandatory section (plan §4) -- as opposed to ``pydantic.ValidationError``,
+    mandatory section -- as opposed to ``pydantic.ValidationError``,
     raised when a non-sentinel value fails the field's own validator.
     """
 
 
 class AdrOptionNotFoundError(ValueError):
-    """No current option matches the given ``full_title`` (plan §5, §8)."""
+    """No current option matches the given ``full_title``."""
 
 
 def _is_deletion_sentinel(value: str) -> bool:
-    """A blank/whitespace-only string or the literal ``"REMOVE"`` (plan §4)."""
+    """A blank/whitespace-only string or the literal ``"REMOVE"``."""
     stripped = value.strip()
     return stripped == "" or stripped.upper() == "REMOVE"
 
 
 def update_section(adr: Adr, key: str, value: str) -> Adr:
-    """Replace one whole-section :class:`AdrBody` field (plan §4).
+    """Replace one whole-section :class:`AdrBody` field.
 
     ``value`` being a deletion sentinel (blank/whitespace-only, or the
     literal ``"REMOVE"``, case-insensitively) clears the section -- unless
     ``key`` names a mandatory field (:data:`body.MANDATORY_SECTION_FIELDS`),
     in which case this raises :class:`AdrSectionError` and leaves ``adr``
-    untouched, matching plan §4's "errors immediately and does not write".
+    untouched, matching "errors immediately and does not write".
 
     Parameters
     ----------
@@ -129,7 +130,7 @@ def update_section(adr: Adr, key: str, value: str) -> Adr:
 
 
 def set_status(adr: Adr, status: str, superseded_by: str | None = None) -> Adr:
-    """Replace ``frontmatter.status`` (plan §8's narrow convenience wrapper).
+    """Replace ``frontmatter.status`` (a narrow convenience wrapper).
 
     Parameters
     ----------
@@ -155,7 +156,7 @@ def set_status(adr: Adr, status: str, superseded_by: str | None = None) -> Adr:
 
 
 def option_list(adr: Adr) -> list[str]:
-    """Full titles of every current option, in document order (plan §5, §8)."""
+    """Full titles of every current option, in document order."""
     return [option.full_title for option in adr.body.options]
 
 
@@ -167,7 +168,7 @@ def _find_option(adr: Adr, full_title: str) -> AdrOption:
 
 
 def option_read(adr: Adr, full_title: str) -> str:
-    """The current content of the option named ``full_title`` (plan §8).
+    """The current content of the option named ``full_title``.
 
     Raises :class:`AdrOptionNotFoundError` if no option matches.
     """
@@ -175,11 +176,11 @@ def option_read(adr: Adr, full_title: str) -> str:
 
 
 def option_create(adr: Adr, partial_title: str, value: str) -> tuple[Adr, str]:
-    """Append a new option (plan §5, §8).
+    """Append a new option.
 
     ``number`` is assigned as one past the current highest option number
     (``0`` if there are none yet) -- monotonically increasing and never
-    reused, even across deletions, per plan §5.
+    reused, even across deletions.
 
     Parameters
     ----------
@@ -203,7 +204,7 @@ def option_create(adr: Adr, partial_title: str, value: str) -> tuple[Adr, str]:
 
 
 def option_update(adr: Adr, full_title: str, value: str) -> tuple[Adr, str]:
-    """Full-content replace of the option named ``full_title`` (plan §5, §8).
+    """Full-content replace of the option named ``full_title``.
 
     Raises :class:`AdrOptionNotFoundError` if no option matches; ``adr`` is
     left untouched in that case.
@@ -221,10 +222,10 @@ def option_update(adr: Adr, full_title: str, value: str) -> tuple[Adr, str]:
 
 
 def option_delete(adr: Adr, full_title: str) -> tuple[Adr, list[str]]:
-    """Remove the option named ``full_title`` (plan §5, §8).
+    """Remove the option named ``full_title``.
 
     Does not renumber or reorder the remaining options -- deleting one
-    leaves a gap in the numbering (plan §5). Raises
+    leaves a gap in the numbering. Raises
     :class:`AdrOptionNotFoundError` if no option matches; ``adr`` is left
     untouched in that case.
 

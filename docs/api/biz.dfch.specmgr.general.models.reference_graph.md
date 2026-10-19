@@ -22,20 +22,20 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
 - :class:`ReferenceGraph` -- the diagram's title (the scoped source's H1 or
   the registry-wide ``Reference Graph`` default, or a caller override) plus
   the node and edge collections.
-- :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8):
-  the ``@startuml {title}`` line (sanitised, **never truncated**, §2.2/§5),
-  the full 14-entry skinparam colour block (always, in block order, §2.5),
-  the ``left to right direction`` line, the top-level unresolved node lines
-  (sorted by alias, §2.6), one ``package "TYPE"`` … ``end package`` per
-  non-empty domain (in the 13-domain order, nodes sorted by id, §2.7), and
-  the deduped + sorted edge lines (uniform ``: refers to`` label, the red
-   ``-[#red]->`` form on cycle edges only, §2.8/§4). The content sections
-   (the ``@startuml`` line, the skinparam block, the direction line, the
-   top-level unresolved node lines, each non-empty package, and the edge
-   section) are separated by exactly one blank line, an empty section is
-   omitted entirely, ``@enduml`` follows the last non-empty section
-   directly, and the source ends with exactly one trailing newline (§2.1,
-   corrected 2026-10-11).
+- :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8,
+  corrected 2026-10-15): the ``@startuml {title}`` line (sanitised, **never
+  truncated**, §2.2/§5), the full 14-entry skinparam colour block (always,
+  in block order, §2.5), the ``left to right direction`` line, the
+  top-level unresolved node lines (sorted by alias, §2.6), one curly
+  domain group ``component "TYPE" { … }`` per non-empty domain (in the
+  13-domain order, nodes sorted by id, §2.7), and the deduped + sorted
+  label-free edge lines (the red ``-[#red]->`` form on cycle edges only,
+  §2.8/§4). The content sections (the ``@startuml`` line, the skinparam
+  block, the direction line, the top-level unresolved node lines, each
+  non-empty domain group, and the edge section) are separated by exactly
+  one blank line, an empty section is omitted entirely, ``@enduml`` follows
+  the last non-empty section directly, and the source ends with exactly one
+  trailing newline (§2.1, corrected 2026-10-11 and 2026-10-15).
 
 Cycle detection (REQ-003, rulebook §4): an edge lies on a cycle iff it is a
 self-loop or both endpoints belong to the same strongly connected component
@@ -209,21 +209,22 @@ returned untouched.
 
 Render ``graph`` to the frozen PlantUML component-diagram source (rulebook §2).
 
-The deterministic, byte-stable mapping the rulebook freezes: the
-``@startuml {title}`` line (sanitised, never truncated), the full
-14-entry skinparam block, the ``left to right direction`` line, the
-top-level unresolved node lines (sorted by alias, before the first
-package), one ``package "TYPE"`` … ``end package`` per non-empty domain
-(in the 13-domain order, nodes sorted by id), and the deduped + sorted
-edge lines (uniform ``: refers to`` label; the red ``-[#red]->`` form
-exactly for the on-cycle edges of :func:`_on_cycle_edges`, plain
-``-->`` otherwise). The content sections -- the ``@startuml`` line, the
-skinparam block, the direction line, the top-level unresolved node
-lines, each non-empty package, and the edge section -- are separated by
-exactly one blank line; an empty section is omitted entirely (no
-residual blank line); ``@enduml`` follows the last non-empty section
-directly; the source ends with exactly one trailing newline (rulebook
-§2.1, corrected 2026-10-11).
+The deterministic, byte-stable mapping the rulebook freezes (corrected
+2026-10-15): the ``@startuml {title}`` line (sanitised, never
+truncated), the full 14-entry skinparam block, the ``left to right
+direction`` line, the top-level unresolved node lines (sorted by alias,
+before the first domain group), one curly domain group ``component
+"TYPE" { … }`` per non-empty domain (in the 13-domain order, nodes
+sorted by id), and the deduped + sorted label-free edge lines (the red
+``-[#red]->`` form exactly for the on-cycle edges of
+:func:`_on_cycle_edges`, plain ``-->`` otherwise). The content sections
+-- the ``@startuml`` line, the skinparam block, the direction line, the
+top-level unresolved node lines, each non-empty domain group, and the
+edge section -- are separated by exactly one blank line; an empty
+section is omitted entirely (no residual blank line); ``@enduml``
+follows the last non-empty section directly; the source ends with
+exactly one trailing newline (rulebook §2.1, corrected 2026-10-11 and
+2026-10-15).
 
 The input is treated as pure facts: duplicate (type, id) nodes dedupe
 (first occurrence's title wins), edges dedupe, and an edge endpoint

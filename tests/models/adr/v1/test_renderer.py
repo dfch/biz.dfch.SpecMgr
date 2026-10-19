@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for :func:`render_adr` (plan §7/§10 item 2, the render half of the
+"""Tests for :func:`render_adr` (the render half of the
 parse -> validate -> render pipeline).
 """
 
@@ -204,7 +204,7 @@ class TestRenderAdrRoundTrip(unittest.TestCase):
 
     def test_drift_check_against_full_madr_example_fixture(self):
         """render(parse(file)) must reproduce the same structured document for a real fixture
-        (plan §10 item 4) -- not byte-identical to the original file (which carries a
+        -- not byte-identical to the original file (which carries a
         human-authored comment the schema doesn't model), but a stable, idempotent fixed
         point once passed through the pipeline once.
         """
