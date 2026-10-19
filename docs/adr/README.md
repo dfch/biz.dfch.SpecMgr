@@ -82,6 +82,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-10-03
   - Decision-makers: dfch
+- [Preserve caller-visible tool error text across mcp >= 2.1.0 via a call_tool seam](80305c52-102e-4833-a233-3468bef29e11-preserve-caller-visible-tool-error-text-across-mcp-2-1-0-via.md)
+  - Id: 80305c52-102e-4833-a233-3468bef29e11
+  - Status: accepted
+  - Date: 2026-10-19
+  - Decision-makers: OpenCode agent + user decision
 - [Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints](832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md)
   - Id: 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   - Status: accepted

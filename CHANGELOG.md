@@ -66,6 +66,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
   stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
 
+### Changed
+
+- The MCP server singleton (`server.py`) is now a thin
+  `SpecMgrServer(MCPServer)` subclass overriding only the public
+  `call_tool`, which re-raises `UnexpectedToolError.__cause__` (the
+  original handler exception, `from None`): since `mcp` v2.1.0 (upstream
+  #3314) a tool handler's raised exception reached the client wrapped as
+  `UnexpectedToolError("Error executing tool <name>")` with the handler's
+  own message swallowed, while this repo's documented tool contract is
+  that the still-raising usage errors (the `_path_safety` invalid-id
+  `ValueError`s, the whole-body domains' `XNotFoundError`s,
+  `create_feat`'s `FileExistsError`, ...) surface to the caller as that
+  message text. The SDK's own `_handle_call_tool` catch then stringifies
+  the re-raised original into the `is_error=True` result -- the v2.0.0
+  wire shape minus the `Error executing tool <name>: ` prefix, uniform
+  for every registered tool, no per-domain logic. The behavioral guard
+  for future 2.x bumps is the new in-process wire-level regression
+  `tests/test_mcp_error_contract.py` (4 tests over anyio memory streams:
+  malformed id -> original `ValueError` text, well-formed-but-absent id
+  -> the domain's not-found text, healthy call -> unchanged success
+  shape), not the locked version number (ADR 80305c52,
+  feat-221-mcp-220-error-contract, GitHub issue #221).
+- The `specmgr docs` generator now ruff-formats the embedded code blocks
+  of its own generated markdown before writing (the per-module `api/*.md`
+  pages, the `api/README.md` index, and `GENERATED.md`; prose stays
+  byte-identical) -- closing the pre-commit `ruff-format` vs
+  `specmgr-docs` byte-identity loop for any module docstring that embeds
+  ruff-not-clean code. When ruff is unavailable (the `test` extra is not
+  in published `[cli]`/`[mcp]`-only installs) one warning goes to stderr
+  and the content is written verbatim instead, so the command never
+  fails (the `similarity` extra's availability-decided-at-call-time
+  precedent); pinned by `TestDocsRuffFormat` in `tests/commands/
+  test_docs.py` (feat-221-mcp-220-error-contract, GitHub issue #221).
+
+### Security
+
+- The `mcp` extra moved `mcp>=2.0.0` -> `mcp>=2.2.0`; the lock resolves
+  `mcp` 2.3.0 and lockstep `mcp-types` 2.3.0 with no interpreter-marker
+  restriction, so the resolution applies to the full CI-matrix floor
+  including Python 3.11. This resolves Dependabot alert #27 (GHSA-
+  84m7-p3x7-pcfv, CVE-2026-59951, medium, CVSS 7.5 -- unbounded session
+  accumulation in StreamableHTTP stateful mode; this repo is effectively
+  not exposed: `stdio`/`sse` only, and the one `streamable-http` path
+  already passes `stateless_http=True`) (feat-221-mcp-220-error-contract,
+  GitHub issue #221).
+
 ## [0.36.0] - 2026-10-13
 
 ### Added

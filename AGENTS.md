@@ -1387,7 +1387,8 @@ extras onto every consumer of the base library.
 
 ## MCP server (`server.py`)
 
-- Builds the `MCPServer` instance (`mcp` object) and a no-op `_lifespan`,
+- Builds the `SpecMgrServer` instance (`mcp` object) and the `_lifespan`
+  (the unified startup warmup, ADR 3982712a),
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
   `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `tsk`, `uc`, `vcr`) as its last line purely
   for the side effect of
@@ -1395,6 +1396,23 @@ extras onto every consumer of the base library.
   When adding a new domain, add its import to that same last line —
   forgetting it means the new tools/resources/prompts silently never
   register.
+  `SpecMgrServer` is a thin `MCPServer` subclass that exists only to
+  preserve this repo's caller-visible tool error text: since `mcp` v2.1.0
+  (upstream #3314) a tool handler's raised exception reaches the client
+  wrapped as `UnexpectedToolError("Error executing tool <name>")` with the
+  handler's own message swallowed, while this repo's documented tool
+  contract is that the still-raising usage errors (the `_path_safety`
+  invalid-id `ValueError`s, the whole-body domains' `XNotFoundError`s,
+  `create_feat`'s `FileExistsError`, ...) surface to the caller as that
+  message text — so the subclass overrides only the public `call_tool` to
+  re-raise `UnexpectedToolError.__cause__` (the original exception, `from
+  None`), which the SDK's own `_handle_call_tool` catch then stringifies
+  into the `is_error=True` result: the v2.0.0 wire shape minus the
+  `Error executing tool <name>: ` prefix, uniform for every registered
+  tool, no per-domain logic (ADR 80305c52,
+  feat-221-mcp-220-error-contract Phase 100; the behavioral guard for
+  future 2.x bumps is `tests/test_mcp_error_contract.py`, not the locked
+  version number).
 - **`specmgr mcp`** (`commands/mcp.py`) *does* start the server —
   `mcp_server.run(transport="stdio")` by default, or
   `mcp_server.run(transport="sse", host=..., port=...)` via
