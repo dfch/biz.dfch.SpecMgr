@@ -420,7 +420,7 @@ The full runner (`evidence/harness/run_all.sh`) is resumable via
 `evidence/runner-status.tsv`; `evidence/runner.log` carries the
 per-attempt audit trail including the D6 incident.
 
-## Phase 135 re-verification (Task 135.110; attempt of 2026-10-18)
+## Phase 135 re-verification (Task 135.110; executed 2026-10-19)
 
 **Fix reference:** Task 135.100 (Phase 135, the C13 corrective) removed
 exactly the 11 breaking object-node `enum` emissions (req `Level.value`,
@@ -434,39 +434,110 @@ the packaged prb/vcr/req/rsk examples, worktree server
 (`.venv/bin/specmgr mcp`, cwd = seed dir) -- `list_<d>` then NON-raw
 `get_<d>` for all four domains, **every call succeeds** (before the fix all
 four failed `-32602` "Invalid structured content"; prb was the proven one).
-This is the R2 sanity check that the runs would hit the FIXED server.
+This was the R2 sanity check that the runs would hit the FIXED server; the
+runs below postdate the fix and use the identical instructions/seeds/
+protocol.
 
-**BLOCKED before any run -- the pinned model is no longer served (environment,
-not protocol):** the preflight of 2026-10-18 found the pinned endpoint
-(127.0.0.1:8007, the `vllm-sys0-2` provider's baseURL) now serves
-`qwen3.8-27b-bf16-896k` instead of the Phase 130 pin
-`qwen3.8-27b-bf16-896k-mtp-2`; a chat-completions probe with the pinned name
-gets `404 {"error": "The model 'qwen3.8-27b-bf16-896k-mtp-2' does not
-exist."}`, and no other local endpoint (8001 down; 8008 non-MTP-only) serves
-the MTP model (`evidence/preflight-135.txt` carries the full probe output).
-The opencode binary (1.19.3) and the two instruction files (sha256
-`395ba85f...`/`53ddec39...`, byte-identical to the Phase 130 copies per
-`evidence/instruction-hashes.txt`) are unchanged. Per the Phase 135 hard
-rule ("if the model endpoint is down ... STOP and report"), **no formal run
-was launched and none is claimed**: `evidence/runner-status-135.tsv` is
-header-only (zero attempts), no seed UUID was consumed
-(`evidence/phase135-seed-manifest.md`), and there is no per-run table for
-the six runs.
+**History (recorded, superseded below):** the first attempt of 2026-10-18
+was BLOCKED before any run because the Phase 130 pin
+`qwen3.8-27b-bf16-896k-mtp-2` was no longer served by the pinned endpoint
+(`evidence/preflight-135.txt`: the MTP name 404s; the endpoint then served
+`qwen3.8-27b-bf16-896k`; no other local endpoint served the MTP model). Per
+the hard rule, no run was launched that day. The operator resolved it:
+"The model name changed; it is the SAME model on the SAME port (8007 or
+8008), now served as `qwen3.8-27b-bf16-896k`" (the `-mtp-2` suffix was the
+serving label; the weights are unchanged).
 
-**T1b / T3d verdicts:** NOT re-verified (environment-blocked) -- the Phase
-130 miss stands on record (T1b n3: 6 calls + 1 schema fetch; T3d n2: 6 calls
-+ 1 schema fetch), now root-caused to the server defect that Task 135.100
-fixed and wire-reproduction-proven. ACC-005 stays unchecked.
+**Model-name deviation D7 (operator-ruled, 2026-10-19):** the re-runs
+execute `vllm-sys0-2/qwen3.8-27b-bf16-896k` on the SAME endpoint
+(127.0.0.1:8007, the `vllm-sys0-2` provider's baseURL) instead of the
+Phase 130 string `vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2`. Per the
+operator ruling this is the same model (weights unchanged) under a renamed
+serving label -- consistent in kind with the already-recorded
+provider-LABEL deviation D4 (`vllm-sys0-mtp-2/...` -> `vllm-sys0-2/...`,
+same model, same endpoint); here the MODEL-ID label itself changed.
+Impact: none on the targets (call counts / schema fetches / validation
+outcomes are server-surface properties, not model-label properties); the
+digest's own `model` label carries the new string. Preflight B
+(`evidence/preflight-135b.txt`, 2026-10-19T13:34): `/v1/models` lists
+exactly `['qwen3.8-27b-bf16-896k']`; a chat-completions probe with that id
+returns HTTP 200 (the model answers); opencode 1.19.3; the host config's
+`vllm-sys0-2` provider carries exactly this model id with the same limit
+values (917504/131072) the run-dir project config uses. Harness delta for
+the re-launch (the ONLY harness change of this phase, beyond the model-id
+swap): `run_135.sh`'s `MODEL` and its run-dir project-config model id/name
+updated `qwen3.8-27b-bf16-896k-mtp-2` -> `qwen3.8-27b-bf16-896k` (same
+config shape: the worktree `.venv/bin/specmgr mcp` override of the global
+`specmgr` entry PLUS the `vllm-sys0-2` provider registration, per D3), and
+`parse_events.py`'s digest `MODEL` label constant updated the same way
+(the Phase 130 digests are frozen on disk under their own label). The
+runner's own pre-launch sha256 guard verified the two instruction files
+byte-identical to the Phase 130 copies (`395ba85f...`/`53ddec39...` vs
+`evidence/instruction-hashes.txt`) before the first run.
 
-**Re-launch (ready):** `evidence/harness/run_135.sh` -- a minimal delta of
-`run_all.sh` (same project-config shape per D3, same seed/verify/digest/
-mirror logic; CELLS = the two cells only; run ids `<cell>-135-n<k>`; fresh
-/tmp root `/tmp/opencode/feat189-135`; separate `runner-status-135.tsv` /
-`runner-135.log` mirrors so the Phase 130 audit trail stays byte-identical;
-a pre-launch sha256 check refuses to run on any instruction deviation).
-Run it once the MTP endpoint serves `qwen3.8-27b-bf16-896k-mtp-2` again; it
-is resumable via the 135 status file. When it completes, append the
-per-run tables here, verdict T1b (first-try `create_prb`, at most 5 calls,
-0 validation-failure retries, 0 schema fetches in all 3) and T3d (at most 5
-calls, 0 schema fetches, 0 closed-form validation failures in all 3), and
-check ACC-005 iff both hold.
+**Runs:** 6 formal runs (2 cells x n=3), SEQUENTIAL, 600 s timeout,
+retry-once armed but never triggered (all exit 0), fresh seed UUID per
+update run (create cells carry `-`), fresh /tmp root
+`/tmp/opencode/feat189-135` (Phase 130 artifacts untouched), every stream
+mirrored immediately to `evidence/runs/<run-id>.{json,stderr,digest.txt}`,
+final docs to `evidence/final-docs/<run-id>/`. Runner walls from
+`evidence/runner-status-135.tsv`; stream walls from the digests.
+
+### prb-create-noprompt (T1b; baseline 7 calls incl. 1 validation-failure -> retry cycle)
+
+| run | calls | schema t/r | create val-fail | failed | timeouts | wall (runner / stream) | first-try create_prb |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 135-n1 | 4 | 0/0 | 0 | 0 | 0 | 114 s / 99.1 s | YES |
+| 135-n2 | 4 | 0/0 | 0 | 0 | 0 | 37 s / 30.7 s | YES |
+| 135-n3 | 4 | 0/0 | 0 | 0 | 0 | 41 s / 36.1 s | YES |
+
+All 3 = `get_prb_template, get_prb_example, create_prb (completed, first
+try), get_prb (structured, non-raw -- completed)`. The Phase 130 defect
+path (call 4 `get_prb` failing `-32602` + the `get_prb_schema` diagnosis
+fetch + the raw recovery read) did not recur: every run's post-create
+verification read succeeded on the structured path, and no run fetched the
+schema. All 3 documents parse through the worktree server (`list_prb`
+total=1, error_count=0, title "Build server onboarding takes too long"),
+carry the template-conform lead sentence, all seven 5W2H answers, and the
+requested Impact figure (1500 EUR per quarter).
+
+### prb-update-prompt (T3d; baseline 5 calls)
+
+| run | calls | schema t/r | closed-form val-fail | failed | timeouts | wall (runner / stream) | seed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 135-n1 | 4 | 0/0 | 0 | 0 | 0 | 24 s / 17.7 s | 719ea9d8-e841-4ec1-9754-f0014d09373c |
+| 135-n2 | 4 | 0/0 | 0 | 0 | 0 | 24 s / 18.5 s | 1a6f46ca-c20f-44be-9a58-8a75505df4b0 |
+| 135-n3 | 5 | 0/0 | 0 | 0 | 0 | 26 s / 20.6 s | e9be94a5-01db-40b4-9240-317ec1fd1700 |
+
+n1/n2 = `list_prb, get_prb (structured -- completed), get_prb(raw=true,
+numbered=true), update (line-range replace, offset=47 limit=1, completed
+first try)`; n3 adds a final structured `get_prb` verification read (5
+calls = the baseline). The prompt's step-1 STRUCTURED read (the exact call
+that hit `-32602` in all three Phase 130 runs) now succeeds on call 2; no
+raw-fallback diagnosis and no schema fetch in any run. All 3 seed documents
+state 2500 EUR per quarter (1500 gone) with every other line intact (the
+seed-vs-final diff is exactly the Impact line + the server's own
+frontmatter normalization -- `classification: null` + `updated` bump -- the
+same pattern Phase 130's updated finals show); all 3 parse through the
+worktree server (`list_prb` total=1, error_count=0, real title).
+
+**Targets -- verdicts:**
+
+- **T1b -- prb-create-noprompt (first-try `create_prb` success, at most 5
+  calls, 0 validation-failure retries, 0 schema fetches): HOLDS** in all 3
+  runs (4, 4, 4 calls; first-try success 3/3; 0 failed create calls; 0/0
+  schema on any route). Evidence:
+  `evidence/runs/prb-create-noprompt-135-n{1,2,3}.{json,digest.txt}`,
+  `evidence/final-docs/prb-create-noprompt-135-n{1,2,3}/`.
+- **T3d -- prb-update-prompt (at most 5 calls, 0 schema fetches, 0
+  closed-form validation failures): HOLDS** in all 3 runs (4, 4, 5 calls;
+  0/0 schema on any route; every `update` call completed first try, 0
+  failed calls anywhere in the cell). Evidence:
+  `evidence/runs/prb-update-prompt-135-n{1,2,3}.{json,digest.txt}`,
+  `evidence/final-docs/prb-update-prompt-135-n{1,2,3}/`.
+
+With both re-verified targets holding in all n runs -- and the Phase 130
+matrix's other six targets already holding -- every ACC-005 target now
+holds in all n runs of every cell: **ACC-005 is checked** (plan README).
+The two Phase 130 misses are closed: they were the server defect, not
+agent authoring behavior, and the fix + re-verification prove it.

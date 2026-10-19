@@ -35,7 +35,12 @@ import re
 import sys
 from pathlib import Path
 
-MODEL = "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2"
+# The digest's own `model` label. Phase 130 ran the pin
+# vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2 (those digests are frozen on disk
+# under their own label); the Phase 135 re-runs execute the operator-renamed
+# serving label of the SAME model on the SAME endpoint (2026-10-19,
+# preflight-135b.txt) -- the constant carries that label.
+MODEL = "vllm-sys0-2/qwen3.8-27b-bf16-896k"
 
 SCHEMA_TOOL_RE = re.compile(r"^specmgr_get_[a-z0-9]+_schema$")
 CREATE_TOOL_RE = re.compile(r"^specmgr_create_(tsk|prb)$")

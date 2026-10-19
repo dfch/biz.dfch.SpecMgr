@@ -33,19 +33,23 @@
 # cell/k is skipped when already marked complete (primary exit 0, or a retry
 # row exists) -- same contract as run_all.sh.
 #
-# ENVIRONMENT NOTE (2026-10-18, this phase): the pinned model
-# qwen3.8-27b-bf16-896k-mtp-2 was NO LONGER served by the pinned endpoint
-# (127.0.0.1:8007 -- it then served qwen3.8-27b-bf16-896k; the MTP name 404s;
-# no other local endpoint serves it -- evidence/preflight-135.txt), so no run
-# was launched: per the Phase 135 hard rule a down pinned-model endpoint is a
-# STOP-and-report. Re-launch this script once the MTP endpoint is back.
+# ENVIRONMENT NOTE (2026-10-18, this phase): the original Phase 130 pin
+# qwen3.8-27b-bf16-896k-mtp-2 was no longer served by the pinned endpoint
+# (127.0.0.1:8007 -- the MTP name 404ed -- evidence/preflight-135.txt), so no
+# run was launched that day: per the Phase 135 hard rule a down pinned-model
+# endpoint is a STOP-and-report. RESOLVED by the operator (2026-10-19,
+# evidence/preflight-135b.txt): "The model name changed; it is the SAME model
+# on the SAME port (8007 or 8008), now served as qwen3.8-27b-bf16-896k" (the
+# -mtp-2 suffix was the serving label; the weights are unchanged) -- this
+# script's MODEL and its run-dir project-config model id were updated
+# accordingly (2026-10-19, the only harness delta of the re-launch).
 
 set -u
 WT=/home/user/src/biz.dfch.SpecMgr.worktrees/feat-189-reduce-agent-round-trips
 FEAT_EVID=$WT/.specmgr/feat/feat-189-reduce-agent-round-trips/evidence
 ROOT=/tmp/opencode/feat189-135
 OC=/home/user/.opencode/bin/opencode
-MODEL="vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2"
+MODEL="vllm-sys0-2/qwen3.8-27b-bf16-896k"
 PY=$WT/.venv/bin/python
 EVID=$ROOT/evidence
 STATUS=$EVID/runner-status.tsv
@@ -72,9 +76,11 @@ write_project_config() { # $1 = dir
   #    the server NAME `specmgr` so tool calls keep the specmgr_ prefix
   #    parse_events.py keys on.
   # 2. provider.vllm-sys0-2.models -> registers the pinned model id
-  #    qwen3.8-27b-bf16-896k-mtp-2 (opencode 1.19.3 enforces the provider's
-  #    static `models` map strictly -- Deviations D3; the global config's map
-  #    lists only qwen3.8-27b-bf16-896k).
+  #    qwen3.8-27b-bf16-896k (the Phase 130 pin qwen3.8-27b-bf16-896k-mtp-2
+  #    renamed by the operator 2026-10-19 -- same model, same port 8007,
+  #    serving label changed; preflight-135b.txt. opencode 1.19.3 enforces
+  #    the provider's static `models` map strictly -- Deviations D3; the
+  #    global config's map carries exactly this id).
   sed "s|@WT@|$WT|" > "$1/opencode.json" <<'EOF'
 {
   "$schema": "https://opencode.ai/config.json",
@@ -86,8 +92,8 @@ write_project_config() { # $1 = dir
         "baseURL": "http://127.0.0.1:8007/v1"
       },
       "models": {
-        "qwen3.8-27b-bf16-896k-mtp-2": {
-          "name": "qwen3.8-27b-bf16-896k-mtp-2",
+        "qwen3.8-27b-bf16-896k": {
+          "name": "qwen3.8-27b-bf16-896k",
           "limit": {
             "context": 917504,
             "output": 131072
