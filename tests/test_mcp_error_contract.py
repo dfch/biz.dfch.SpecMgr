@@ -140,12 +140,11 @@ class TestMcpErrorContract(unittest.TestCase):
         # out of the test output (see ``_SDK_SERVER_LOGGER``).
         self.enterContext(mock.patch.object(_SDK_SERVER_LOGGER, "level", logging.CRITICAL))
 
-    @staticmethod
     async def _run_server(
-        read_stream: MemoryObjectReceiveStream[Any], write_stream: MemoryObjectSendStream[Any]
+        self, read_stream: MemoryObjectReceiveStream[Any], write_stream: MemoryObjectSendStream[Any]
     ) -> None:
         """Serve the live ``mcp`` singleton over in-memory streams (``run_stdio_async``'s in-process twin)."""
-        sut = mcp
+        sut = self.sut
         init_options = sut._lowlevel_server.create_initialization_options()
         await sut._lowlevel_server.run(read_stream, write_stream, init_options)
 

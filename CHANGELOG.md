@@ -89,15 +89,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shape), not the locked version number (ADR 80305c52,
   feat-221-mcp-220-error-contract, GitHub issue #221).
 - The `specmgr docs` generator now ruff-formats the embedded code blocks
-  of its own generated markdown before writing (the per-module `api/*.md`
-  pages, the `api/README.md` index, and `GENERATED.md`; prose stays
-  byte-identical) -- closing the pre-commit `ruff-format` vs
-  `specmgr-docs` byte-identity loop for any module docstring that embeds
-  ruff-not-clean code. When ruff is unavailable (the `test` extra is not
-  in published `[cli]`/`[mcp]`-only installs) one warning goes to stderr
-  and the content is written verbatim instead, so the command never
-  fails (the `similarity` extra's availability-decided-at-call-time
-  precedent); pinned by `TestDocsRuffFormat` in `tests/commands/
+  of its own generated markdown (the per-module `api/*.md` pages, the
+  `api/README.md` index, and `GENERATED.md`; prose stays byte-identical)
+  as one in-place `ruff format` pass over all the written files, after
+  the writes -- closing the pre-commit `ruff-format` vs `specmgr-docs`
+  byte-identity loop for any module docstring that embeds ruff-not-clean
+  code. When ruff is unavailable (the `test` extra is not in published
+  `[cli]`/`[mcp]`-only installs) one warning goes to stderr and the pass
+  is skipped (the files stay as written), so the command never fails
+  (the `similarity` extra's availability-decided-at-call-time precedent);
+  a non-zero ruff exit likewise degrades to one warning (naming ruff and
+  the exit code) with the command still succeeding and the files left as
+  ruff left them; pinned by `TestDocsRuffFormat` in `tests/commands/
   test_docs.py` (feat-221-mcp-220-error-contract, GitHub issue #221).
 
 ### Security

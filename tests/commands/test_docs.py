@@ -29,12 +29,16 @@ branch is exercised without touching the real ``docs/`` tree).
 deletes pre-seeded flat ``*.md`` orphans while leaving ``README.md``,
 non-``.md`` files, and nested directories untouched, and an untrustworthy run
 (zero pages, a mocked per-module import failure) skips pruning entirely.
-``TestDocsRuffFormat`` covers the feat-221 unblock: the generator passes every
-rendered markdown document through ``ruff format`` (embedded code blocks only)
-before writing, a fixture whose docstring embeds an SDK-style, ruff-not-clean
-``python`` block must come out ruff-clean on disk, two full generations are
-byte-identical, and a missing ``ruff`` binary degrades to one stderr warning
-plus verbatim (unformatted) output -- the command never fails on it.
+``TestDocsRuffFormat`` covers the feat-221 unblock: after the run has written
+every rendered markdown document verbatim, ONE in-place ``ruff format`` call
+covers all the written paths (embedded code blocks only) -- a fixture whose
+docstring embeds an SDK-style, ruff-not-clean ``python`` block must come out
+ruff-clean on disk, two full generations are byte-identical, a missing
+``ruff`` binary degrades to one stderr warning plus the verbatim
+(unformatted) output, and a non-zero ``ruff`` exit degrades to one stderr
+warning (naming ruff and the exit code) with the command still succeeding and
+the written files left on disk as ruff left them -- the command never fails
+on it.
 """
 
 import contextlib
@@ -55,6 +59,7 @@ from biz.dfch.specmgr.commands.docs import (
     _format_signature,
     _generate_api_docs,
     _list_domain_packages,
+    _ruff_format_written_markdown,
     _stable_signature_str,
     docs,
     generate_generated_md,
@@ -115,7 +120,7 @@ class TestGenerateApiDocs(unittest.TestCase):
         """Must write one .md per importable module plus a grouped README index."""
         with tempfile.TemporaryDirectory() as tmp:
             api_dir = Path(tmp) / "api"
-            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            written, pruned, _paths = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
             self.assertGreater(written, 0)
             self.assertEqual(pruned, 0)
@@ -130,7 +135,7 @@ class TestGenerateApiDocs(unittest.TestCase):
         """An unimportable package name must not blow up, and must skip the index."""
         with tempfile.TemporaryDirectory() as tmp:
             api_dir = Path(tmp) / "api"
-            written, pruned = _generate_api_docs(api_dir, "no_such_package_xyz")
+            written, pruned, _paths = _generate_api_docs(api_dir, "no_such_package_xyz")
 
             self.assertEqual(written, 0)
             self.assertEqual(pruned, 0)
@@ -154,7 +159,7 @@ class TestApiDocsPruning(unittest.TestCase):
             api_dir = Path(tmp) / "api"
             stale = self._preseed_stale_page(api_dir)
 
-            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            written, pruned, _paths = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
             self.assertGreater(written, 0)
             self.assertEqual(pruned, 1)
@@ -169,7 +174,7 @@ class TestApiDocsPruning(unittest.TestCase):
             api_dir = Path(tmp) / "api"
             self._preseed_stale_page(api_dir)
 
-            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            written, pruned, _paths = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
             self.assertGreater(written, 0)
             self.assertEqual(pruned, 1)
@@ -187,7 +192,7 @@ class TestApiDocsPruning(unittest.TestCase):
             notes = api_dir / "notes.txt"
             notes.write_text("keep\n", encoding="utf-8")
 
-            written, pruned = _generate_api_docs(api_dir, "no_such_package_xyz")
+            written, pruned, _paths = _generate_api_docs(api_dir, "no_such_package_xyz")
 
             self.assertEqual(written, 0)
             self.assertEqual(pruned, 0)
@@ -209,7 +214,7 @@ class TestApiDocsPruning(unittest.TestCase):
             md_dir = api_dir / "stale.md"  # a directory carrying a .md name
             md_dir.mkdir()
 
-            written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+            written, pruned, _paths = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
             self.assertGreater(written, 0)
             self.assertEqual(pruned, 1)
@@ -222,7 +227,9 @@ class TestApiDocsPruning(unittest.TestCase):
         """One failed module import (mocked) must skip pruning entirely."""
         with tempfile.TemporaryDirectory() as tmp:
             healthy_api_dir = Path(tmp) / "healthy"
-            written_healthy, pruned_healthy = _generate_api_docs(healthy_api_dir, "biz.dfch.specmgr.commands")
+            written_healthy, pruned_healthy, _paths_healthy = _generate_api_docs(
+                healthy_api_dir, "biz.dfch.specmgr.commands"
+            )
             self.assertGreater(written_healthy, 0)
             self.assertEqual(pruned_healthy, 0)
 
@@ -236,7 +243,7 @@ class TestApiDocsPruning(unittest.TestCase):
                 return real_generate(module_name)
 
             with mock.patch.object(docs_module, "_generate_module_markdown", side_effect=failing_generate):
-                written, pruned = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
+                written, pruned, _paths = _generate_api_docs(api_dir, "biz.dfch.specmgr.commands")
 
             self.assertEqual(written, written_healthy - 1)
             self.assertEqual(pruned, 0)
@@ -460,7 +467,7 @@ def _fixture_on_sys_path(tmp_root: Path) -> Iterator[None]:
 
 
 class TestDocsRuffFormat(unittest.TestCase):
-    """feat-221 unblock: the generator ruff-formats its own markdown output before writing."""
+    """feat-221 unblock: the generator ruff-formats its own markdown output -- one in-place call over every written path, after the writes."""
 
     def _fixture_page(self, api_dir: Path) -> Path:
         return api_dir / f"{_FIXTURE_PACKAGE}.{_FIXTURE_MODULE}.md"
@@ -475,10 +482,12 @@ class TestDocsRuffFormat(unittest.TestCase):
             _write_fixture_package(tmp_root)
             api_dir = tmp_root / "api"
             with _fixture_on_sys_path(tmp_root):
-                written, pruned = _generate_api_docs(api_dir, _FIXTURE_PACKAGE, ruff=ruff)
+                written, pruned, paths = _generate_api_docs(api_dir, _FIXTURE_PACKAGE)
+                _ruff_format_written_markdown(ruff, paths)
 
             self.assertEqual(written, 2)
             self.assertEqual(pruned, 0)
+            self.assertEqual(len(paths), 3)  # the two pages + the README index
             page = self._fixture_page(api_dir).read_text(encoding="utf-8")
             # formatted shape: two blank lines between the block's two top-level defs
             self.assertIn('return "a"\n\n\n', page)
@@ -495,7 +504,8 @@ class TestDocsRuffFormat(unittest.TestCase):
             _write_fixture_package(tmp_root)
             api_dir = tmp_root / "api"
             with _fixture_on_sys_path(tmp_root):
-                _generate_api_docs(api_dir, _FIXTURE_PACKAGE, ruff=None)
+                _written, _pruned, paths = _generate_api_docs(api_dir, _FIXTURE_PACKAGE)
+                _ruff_format_written_markdown(None, paths)
 
             page = self._fixture_page(api_dir).read_text(encoding="utf-8")
             self.assertNotIn('return "a"\n\n\n', page)
@@ -535,6 +545,36 @@ class TestDocsRuffFormat(unittest.TestCase):
             self.assertEqual(stderr.count("ruff not found"), 1)
             self.assertTrue((docs_dir / "GENERATED.md").is_file())
             self.assertTrue((docs_dir / "api" / "README.md").is_file())
+
+    def test_ruff_nonzero_exit_warns_once_and_command_succeeds(self):
+        """A non-zero ruff exit must warn once (naming ruff + exit code), still succeed, and leave the written files on disk (as ruff left them)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            docs_dir = Path(tmp) / "docs"
+            stderr_buffer = io.StringIO()
+            failed = subprocess.CompletedProcess(
+                args=["ruff", "format"], returncode=3, stdout="", stderr="ruff: simulated failure"
+            )
+
+            with mock.patch.object(docs_module.subprocess, "run", return_value=failed) as run_mock:
+                with contextlib.redirect_stderr(stderr_buffer):
+                    docs(output=docs_dir)
+            stderr = stderr_buffer.getvalue()
+
+            # exactly one subprocess call, and it is the single in-place `ruff format <paths...>`
+            self.assertEqual(run_mock.call_count, 1)
+            args = run_mock.call_args[0][0]
+            self.assertEqual(args[0].endswith("ruff"), True)
+            self.assertEqual(args[1], "format")
+            self.assertIn(str(docs_dir / "GENERATED.md"), args)
+            self.assertIn(str(docs_dir / "api" / "README.md"), args)
+            self.assertIn(str(docs_dir / "api" / "biz.dfch.specmgr.md"), args)
+
+            self.assertEqual(stderr.count("⚠"), 1)
+            self.assertIn("ruff format exited with code 3", stderr)
+            # the command succeeded and the output files remain on disk (as written)
+            self.assertTrue((docs_dir / "GENERATED.md").is_file())
+            self.assertTrue((docs_dir / "api" / "README.md").is_file())
+            self.assertTrue((docs_dir / "api" / "biz.dfch.specmgr.md").is_file())
 
 
 if __name__ == "__main__":
