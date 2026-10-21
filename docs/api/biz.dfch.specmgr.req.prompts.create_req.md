@@ -5,7 +5,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Requirement (REQ) document using the existing
 ``req/tools/``/``req/resources/`` surface (``list_req``,
-``specmgr://req/template``/``specmgr://req/example``, ``specmgr://req/schema``,
+``specmgr://req/template``/``specmgr://req/example``, ``get_req_schema``,
 ``create_req``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related

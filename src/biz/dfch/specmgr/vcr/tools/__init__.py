@@ -23,7 +23,12 @@ sample verification case record document as raw markdown; ``get_vcr_template``
 returns a document with every field present but populated with short
 placeholder ("blind text") content instead -- both read a packaged,
 build-guaranteed data file rather than anything on the caller's filesystem
-(Task 2.1). ``get_vcr`` reads, parses, and returns a full verification case
+(Task 2.1).
+``get_vcr_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://vcr/schema`` resource).
+``get_vcr`` reads, parses, and returns a full verification case
 record document by id -- the sole id-based read path for VCR (there is no
 ``specmgr://vcr/{id}`` resource, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 ``list_vcr`` returns one page of id/title/status/ref summaries of every
@@ -50,6 +55,7 @@ verification case record tools at once::
 from .create_vcr import create_vcr
 from .get_vcr import get_vcr
 from .get_vcr_example import get_vcr_example
+from .get_vcr_schema import get_vcr_schema
 from .get_vcr_template import get_vcr_template
 from .list_vcr import list_vcr
 from .parse_vcr import parse_vcr
@@ -58,6 +64,7 @@ __all__ = [
     "create_vcr",
     "get_vcr",
     "get_vcr_example",
+    "get_vcr_schema",
     "get_vcr_template",
     "list_vcr",
     "parse_vcr",

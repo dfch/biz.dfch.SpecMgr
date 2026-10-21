@@ -77,7 +77,9 @@ from ...server import mcp
     title="Update a decision",
     description=(
         "Guides the LLM through revising an existing decision by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_dec_schema` tool (the generated JSON Schema); the "
+        "`get_dec_template`/`get_dec_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_dec(id: str, instructions: str | None = None) -> str:

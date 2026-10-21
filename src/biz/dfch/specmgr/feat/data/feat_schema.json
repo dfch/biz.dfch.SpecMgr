@@ -22,6 +22,7 @@
     },
     "AcceptanceCriterionItem": {
       "description": "`- [ ] ACC-NNN: {text}` -- one checklist acceptance-criterion entry under `### Acceptance Criteria`.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `ACC-NNN: ` prefix\nagainst the inherited `description`.\n\nParameters\n----------\ncriterion_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `ACC-NNN: ` prefix further stripped. Raises `AssertionError` if\n    `.description` does not match `ACC-\\d{3}: .+`.",
+      "pattern": "^\\[( |x|X)\\]\\s*(.*)$",
       "properties": {
         "content": {
           "anyOf": [
@@ -202,6 +203,12 @@
         },
         "status": {
           "default": "planning",
+          "enum": [
+            "done",
+            "planning",
+            "progress",
+            "review"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -235,6 +242,7 @@
     },
     "FeatTaskItem": {
       "description": "`- [ ] Task NNN.MMM: {text}` -- one checklist task entry of a `Phase`'s flat item list.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `Task NNN.MMM: `\nprefix against the inherited `description` -- the same layering\n`AcceptanceCriterionItem` above uses for `ACC-NNN: `.\n\nParameters\n----------\ntask_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `Task NNN.MMM: ` prefix further stripped. Raises `AssertionError`\n    if `.description` does not match `Task \\d{3}\\.\\d{3}: .+`.",
+      "pattern": "^\\[( |x|X)\\]\\s*(.*)$",
       "properties": {
         "content": {
           "anyOf": [

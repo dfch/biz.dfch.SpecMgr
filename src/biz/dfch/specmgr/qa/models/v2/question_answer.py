@@ -228,6 +228,14 @@ class QaQuestionAnswer(MarkdownStr):
             "leave gaps) and the increment-by-10 convention is a human authoring guideline only. "
             "Optional."
         ),
+        # feat-189 Phase 120 (C13): the `_QUESTION_NUMBER_PREFIX` rule as a
+        # `pattern` key in the generated JSON Schema -- metadata only
+        # (resolving the module comment's own note that the enforcing
+        # validator was invisible to `model_json_schema()`): the Python-only
+        # `\A` start anchor is rendered as `^` (identical start-anchored
+        # semantics; `\A` is not valid ECMAScript), and
+        # `_validate_question` below remains the sole enforcement point.
+        json_schema_extra={"pattern": r"^\*\*\d\.\d{4}\*\*:\s"},
     )
     answer: QaAnswer | None = Field(
         default=None,

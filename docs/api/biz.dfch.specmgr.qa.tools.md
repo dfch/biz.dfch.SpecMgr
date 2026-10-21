@@ -7,7 +7,11 @@ document model. ``get_qa_example`` returns a complete, valid sample QA
 document as raw markdown; ``get_qa_template`` returns a document with every
 field present but populated with short placeholder ("blind text") content
 instead -- both read a packaged, build-guaranteed data file rather than
-anything on the caller's filesystem. ``get_qa`` reads, parses, and returns a
+anything on the caller's filesystem.
+``get_qa_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://qa/schema`` resource). ``get_qa`` reads, parses, and returns a
 full QA document by id -- the sole id-based read path for QA, mirroring
 REQ's own choice (see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_qa``
 (feat-13-list-paging Task 2.5) returns one page of id/title/status/ref

@@ -38,7 +38,7 @@ TODO: answer pending
 
 ## Functional Suitability
 
-<!-- An optional HTML comment giving context for this Q&A pair, such as when/by whom it was elicited. -->
+<!-- An optional HTML comment giving context for this Q&A pair, such as when/by whom it was elicited. Question prefix rule: every question block quote starts with the bold prefix `**<d>.<NNNN>**: ` -- a single category digit (0 = Elicitation Context, 1-9 = the nine ISO/IEC 25010:2023 characteristics in document order) and a 4-digit zero-padded per-category sequence (e.g. `> **1.0010**: ...`). -->
 
 > **1.0010**: An optional block quote holding the interviewer's question.
 > Categories may stay empty (zero pairs), or hold several pairs one after

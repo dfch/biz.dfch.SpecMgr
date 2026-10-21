@@ -39,7 +39,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from biz.dfch.specmgr.models.md import MarkdownFrontmatter
 from biz.dfch.specmgr.models.md._util import default_if_blank
@@ -89,7 +89,16 @@ class FeatFrontmatter(MarkdownFrontmatter):
     """
 
     type: Literal["feat"] = "feat"  # type: ignore
-    status: str = DEFAULT_FEAT_STATUS
+
+    # feat-189 Phase 120 (C13): the `Field(...)` wrap (the redeclaration
+    # itself predates this feature) attaches `json_schema_extra` so the
+    # generated JSON Schema carries this same closed set as an `enum` key --
+    # schema-level documentation only, in the
+    # `MarkdownFrontmatter.created`/`.updated` `pattern`-metadata precedent:
+    # pydantic-core never enforces it, and `_validate_status` below remains
+    # the sole enforcement point. The default stays this class's own
+    # `"planning"`.
+    status: str = Field(default=DEFAULT_FEAT_STATUS, json_schema_extra={"enum": sorted(_ALLOWED_STATUSES)})
 
     @field_validator("status", mode="before")
     @classmethod

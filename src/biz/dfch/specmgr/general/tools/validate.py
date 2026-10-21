@@ -534,7 +534,9 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "`type`, is a caller-usage error and still raises `ValueError` before any validation "
         "runs. This is the sole "
         "validate entry point for these domains -- the former per-domain `validate_<d>` "
-        "tools are removed; `validate_adr` remains a separate, unchanged, id-based tool."
+        "tools are removed; `validate_adr` remains a separate, unchanged, id-based tool. Each domain's "
+        "structure reference is its own `get_<d>_schema` tool (the generated JSON Schema), with "
+        "`get_<d>_template`/`get_<d>_example` as the authoring starting points."
     ),
 )
 def validate(

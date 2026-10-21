@@ -62,7 +62,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.prompts.update_dec`](biz.dfch.specmgr.dec.prompts.update_dec.md) — ``@mcp.prompt()``: update_dec (Task 4.1).
 - [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.resources.dec_example`](biz.dfch.specmgr.dec.resources.dec_example.md) — Resource: specmgr://dec/example (feat-21 Task 3.4).
-- [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - [`biz.dfch.specmgr.dec.resources.dec_template`](biz.dfch.specmgr.dec.resources.dec_template.md) — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
 - [`biz.dfch.specmgr.dec.tools._cache`](biz.dfch.specmgr.dec.tools._cache.md) — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
@@ -73,6 +72,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec_example`](biz.dfch.specmgr.dec.tools.get_dec_example.md) — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.get_dec_schema`](biz.dfch.specmgr.dec.tools.get_dec_schema.md) — ``@mcp.tool()`` wrapper: get_dec_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
@@ -90,7 +90,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.prompts.update_feat`](biz.dfch.specmgr.feat.prompts.update_feat.md) — ``@mcp.prompt()``: update_feat (Task 4.1).
 - [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.resources.feat_example`](biz.dfch.specmgr.feat.resources.feat_example.md) — Resource: specmgr://feat/example (feat-31 Task 3.5).
-- [`biz.dfch.specmgr.feat.resources.feat_schema`](biz.dfch.specmgr.feat.resources.feat_schema.md) — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - [`biz.dfch.specmgr.feat.resources.feat_template`](biz.dfch.specmgr.feat.resources.feat_template.md) — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.tools`](biz.dfch.specmgr.feat.tools.md) — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
 - [`biz.dfch.specmgr.feat.tools._cache`](biz.dfch.specmgr.feat.tools._cache.md) — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
@@ -102,6 +101,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - [`biz.dfch.specmgr.feat.tools.get_feat`](biz.dfch.specmgr.feat.tools.get_feat.md) — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_example`](biz.dfch.specmgr.feat.tools.get_feat_example.md) — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.get_feat_schema`](biz.dfch.specmgr.feat.tools.get_feat_schema.md) — ``@mcp.tool()`` wrapper: get_feat_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
@@ -170,7 +170,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.prompts.update_gol`](biz.dfch.specmgr.gol.prompts.update_gol.md) — ``@mcp.prompt()``: update_gol (Task 3.15).
 - [`biz.dfch.specmgr.gol.resources`](biz.dfch.specmgr.gol.resources.md) — MCP resource registrations for Goal (GOL) documents (Task 3.11).
 - [`biz.dfch.specmgr.gol.resources.gol_example`](biz.dfch.specmgr.gol.resources.gol_example.md) — Resource: specmgr://gol/example (Task 3.11).
-- [`biz.dfch.specmgr.gol.resources.gol_schema`](biz.dfch.specmgr.gol.resources.gol_schema.md) — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - [`biz.dfch.specmgr.gol.resources.gol_template`](biz.dfch.specmgr.gol.resources.gol_template.md) — Resource: specmgr://gol/template (Task 3.11).
 - [`biz.dfch.specmgr.gol.tools`](biz.dfch.specmgr.gol.tools.md) — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
 - [`biz.dfch.specmgr.gol.tools._cache`](biz.dfch.specmgr.gol.tools._cache.md) — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
@@ -181,6 +180,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - [`biz.dfch.specmgr.gol.tools.get_gol_example`](biz.dfch.specmgr.gol.tools.get_gol_example.md) — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.get_gol_schema`](biz.dfch.specmgr.gol.tools.get_gol_schema.md) — ``@mcp.tool()`` wrapper: get_gol_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
@@ -252,7 +252,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - [`biz.dfch.specmgr.prb.resources`](biz.dfch.specmgr.prb.resources.md) — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_example`](biz.dfch.specmgr.prb.resources.prb_example.md) — Resource: specmgr://prb/example (Task 3.11).
-- [`biz.dfch.specmgr.prb.resources.prb_schema`](biz.dfch.specmgr.prb.resources.prb_schema.md) — Resource: specmgr://prb/schema (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_template`](biz.dfch.specmgr.prb.resources.prb_template.md) — Resource: specmgr://prb/template (Task 3.11).
 - [`biz.dfch.specmgr.prb.tools`](biz.dfch.specmgr.prb.tools.md) — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
 - [`biz.dfch.specmgr.prb.tools._cache`](biz.dfch.specmgr.prb.tools._cache.md) — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
@@ -263,6 +262,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.tools.create_prb`](biz.dfch.specmgr.prb.tools.create_prb.md) — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - [`biz.dfch.specmgr.prb.tools.get_prb`](biz.dfch.specmgr.prb.tools.get_prb.md) — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - [`biz.dfch.specmgr.prb.tools.get_prb_example`](biz.dfch.specmgr.prb.tools.get_prb_example.md) — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- [`biz.dfch.specmgr.prb.tools.get_prb_schema`](biz.dfch.specmgr.prb.tools.get_prb_schema.md) — ``@mcp.tool()`` wrapper: get_prb_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - [`biz.dfch.specmgr.prb.tools.list_prb`](biz.dfch.specmgr.prb.tools.list_prb.md) — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - [`biz.dfch.specmgr.prb.tools.parse_prb`](biz.dfch.specmgr.prb.tools.parse_prb.md) — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
@@ -282,7 +282,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_template`](biz.dfch.specmgr.qa.resources.qa_template.md) — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.tools`](biz.dfch.specmgr.qa.tools.md) — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
 - [`biz.dfch.specmgr.qa.tools._cache`](biz.dfch.specmgr.qa.tools._cache.md) — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
@@ -293,6 +292,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.tools.create_qa`](biz.dfch.specmgr.qa.tools.create_qa.md) — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_example`](biz.dfch.specmgr.qa.tools.get_qa_example.md) — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.get_qa_schema`](biz.dfch.specmgr.qa.tools.get_qa_schema.md) — ``@mcp.tool()`` wrapper: get_qa_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
@@ -302,7 +302,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
 - [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - [`biz.dfch.specmgr.req.resources.req_example`](biz.dfch.specmgr.req.resources.req_example.md) — Resource: specmgr://req/example (Task 3.6).
-- [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
 - [`biz.dfch.specmgr.req.tools._cache`](biz.dfch.specmgr.req.tools._cache.md) — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
@@ -313,6 +312,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
+- [`biz.dfch.specmgr.req.tools.get_req_schema`](biz.dfch.specmgr.req.tools.get_req_schema.md) — ``@mcp.tool()`` wrapper: get_req_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.list_req`](biz.dfch.specmgr.req.tools.list_req.md) — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
@@ -334,7 +334,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.resources`](biz.dfch.specmgr.rsk.resources.md) — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
 - [`biz.dfch.specmgr.rsk.resources.risk_matrix`](biz.dfch.specmgr.rsk.resources.risk_matrix.md) — Resource: specmgr://rsk/risk-matrix (Task 3.15).
 - [`biz.dfch.specmgr.rsk.resources.rsk_example`](biz.dfch.specmgr.rsk.resources.rsk_example.md) — Resource: specmgr://rsk/example (Task 3.11).
-- [`biz.dfch.specmgr.rsk.resources.rsk_schema`](biz.dfch.specmgr.rsk.resources.rsk_schema.md) — Resource: specmgr://rsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.rsk.resources.rsk_template`](biz.dfch.specmgr.rsk.resources.rsk_template.md) — Resource: specmgr://rsk/template (Task 3.11).
 - [`biz.dfch.specmgr.rsk.resources.tara`](biz.dfch.specmgr.rsk.resources.tara.md) — Resource: specmgr://rsk/tara (Task 3.15).
 - [`biz.dfch.specmgr.rsk.tools`](biz.dfch.specmgr.rsk.tools.md) — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
@@ -347,6 +346,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_example`](biz.dfch.specmgr.rsk.tools.get_rsk_example.md) — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- [`biz.dfch.specmgr.rsk.tools.get_rsk_schema`](biz.dfch.specmgr.rsk.tools.get_rsk_schema.md) — ``@mcp.tool()`` wrapper: get_rsk_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
@@ -365,7 +365,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.prompts.update_sop`](biz.dfch.specmgr.sop.prompts.update_sop.md) — ``@mcp.prompt()``: update_sop (Task 4.1).
 - [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.resources.sop_example`](biz.dfch.specmgr.sop.resources.sop_example.md) — Resource: specmgr://sop/example (feat-30 Task 3.7).
-- [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - [`biz.dfch.specmgr.sop.resources.sop_template`](biz.dfch.specmgr.sop.resources.sop_template.md) — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
 - [`biz.dfch.specmgr.sop.tools._cache`](biz.dfch.specmgr.sop.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
@@ -376,6 +375,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.tools.create_sop`](biz.dfch.specmgr.sop.tools.create_sop.md) — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop`](biz.dfch.specmgr.sop.tools.get_sop.md) — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop_example`](biz.dfch.specmgr.sop.tools.get_sop_example.md) — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.get_sop_schema`](biz.dfch.specmgr.sop.tools.get_sop_schema.md) — ``@mcp.tool()`` wrapper: get_sop_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.sop.tools.get_sop_template`](biz.dfch.specmgr.sop.tools.get_sop_template.md) — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.list_sop`](biz.dfch.specmgr.sop.tools.list_sop.md) — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.parse_sop`](biz.dfch.specmgr.sop.tools.parse_sop.md) — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
@@ -393,7 +393,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.prompts.update_sysrs`](biz.dfch.specmgr.sysrs.prompts.update_sysrs.md) — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_example`](biz.dfch.specmgr.sysrs.resources.sysrs_example.md) — Resource: specmgr://sysrs/example (Task 4.5).
-- [`biz.dfch.specmgr.sysrs.resources.sysrs_schema`](biz.dfch.specmgr.sysrs.resources.sysrs_schema.md) — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_template`](biz.dfch.specmgr.sysrs.resources.sysrs_template.md) — Resource: specmgr://sysrs/template (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
 - [`biz.dfch.specmgr.sysrs.tools._cache`](biz.dfch.specmgr.sysrs.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
@@ -404,6 +403,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.tools.create_sysrs`](biz.dfch.specmgr.sysrs.tools.create_sysrs.md) — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs`](biz.dfch.specmgr.sysrs.tools.get_sysrs.md) — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_example`](biz.dfch.specmgr.sysrs.tools.get_sysrs_example.md) — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.get_sysrs_schema`](biz.dfch.specmgr.sysrs.tools.get_sysrs_schema.md) — ``@mcp.tool()`` wrapper: get_sysrs_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_template`](biz.dfch.specmgr.sysrs.tools.get_sysrs_template.md) — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.list_sysrs`](biz.dfch.specmgr.sysrs.tools.list_sysrs.md) — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
@@ -423,7 +423,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.prompts.update_task`](biz.dfch.specmgr.tsk.prompts.update_task.md) — ``@mcp.prompt()``: update_task (Task 3.13).
 - [`biz.dfch.specmgr.tsk.resources`](biz.dfch.specmgr.tsk.resources.md) — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - [`biz.dfch.specmgr.tsk.resources.tsk_example`](biz.dfch.specmgr.tsk.resources.tsk_example.md) — Resource: specmgr://tsk/example (Task 3.11).
-- [`biz.dfch.specmgr.tsk.resources.tsk_schema`](biz.dfch.specmgr.tsk.resources.tsk_schema.md) — Resource: specmgr://tsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.tsk.resources.tsk_template`](biz.dfch.specmgr.tsk.resources.tsk_template.md) — Resource: specmgr://tsk/template (Task 3.11).
 - [`biz.dfch.specmgr.tsk.tools`](biz.dfch.specmgr.tsk.tools.md) — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
 - [`biz.dfch.specmgr.tsk.tools._cache`](biz.dfch.specmgr.tsk.tools._cache.md) — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
@@ -434,6 +433,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools.create_tsk`](biz.dfch.specmgr.tsk.tools.create_tsk.md) — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_example`](biz.dfch.specmgr.tsk.tools.get_tsk_example.md) — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- [`biz.dfch.specmgr.tsk.tools.get_tsk_schema`](biz.dfch.specmgr.tsk.tools.get_tsk_schema.md) — ``@mcp.tool()`` wrapper: get_tsk_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
@@ -472,7 +472,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.resources.uc_plantuml`](biz.dfch.specmgr.uc.resources.uc_plantuml.md) — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
 - [`biz.dfch.specmgr.uc.resources.uc_plantuml_example`](biz.dfch.specmgr.uc.resources.uc_plantuml_example.md) — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.resources.uc_plantuml_template`](biz.dfch.specmgr.uc.resources.uc_plantuml_template.md) — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
-- [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
 - [`biz.dfch.specmgr.uc.tools._cache`](biz.dfch.specmgr.uc.tools._cache.md) — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
@@ -486,6 +485,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_example`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_example.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_template`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_template.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_schema`](biz.dfch.specmgr.uc.tools.get_uc_schema.md) — ``@mcp.tool()`` wrapper: get_uc_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton`](biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton.md) — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - [`biz.dfch.specmgr.uc.tools.get_use_case_package_diagram`](biz.dfch.specmgr.uc.tools.get_use_case_package_diagram.md) — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
@@ -507,7 +507,6 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.prompts.update_vcr`](biz.dfch.specmgr.vcr.prompts.update_vcr.md) — ``@mcp.prompt()``: update_vcr (Task 3.2).
 - [`biz.dfch.specmgr.vcr.resources`](biz.dfch.specmgr.vcr.resources.md) — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
 - [`biz.dfch.specmgr.vcr.resources.vcr_example`](biz.dfch.specmgr.vcr.resources.vcr_example.md) — Resource: specmgr://vcr/example (Task 3.1).
-- [`biz.dfch.specmgr.vcr.resources.vcr_schema`](biz.dfch.specmgr.vcr.resources.vcr_schema.md) — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - [`biz.dfch.specmgr.vcr.resources.vcr_template`](biz.dfch.specmgr.vcr.resources.vcr_template.md) — Resource: specmgr://vcr/template (Task 3.1).
 - [`biz.dfch.specmgr.vcr.tools`](biz.dfch.specmgr.vcr.tools.md) — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
 - [`biz.dfch.specmgr.vcr.tools._cache`](biz.dfch.specmgr.vcr.tools._cache.md) — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
@@ -518,6 +517,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.tools.create_vcr`](biz.dfch.specmgr.vcr.tools.create_vcr.md) — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr`](biz.dfch.specmgr.vcr.tools.get_vcr.md) — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_example`](biz.dfch.specmgr.vcr.tools.get_vcr_example.md) — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_schema`](biz.dfch.specmgr.vcr.tools.get_vcr_schema.md) — ``@mcp.tool()`` wrapper: get_vcr_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.list_vcr`](biz.dfch.specmgr.vcr.tools.list_vcr.md) — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.parse_vcr`](biz.dfch.specmgr.vcr.tools.parse_vcr.md) — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).

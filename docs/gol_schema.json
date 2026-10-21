@@ -178,6 +178,15 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "implemented",
+            "proposed",
+            "rejected",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },

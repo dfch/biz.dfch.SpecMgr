@@ -100,13 +100,13 @@ tool to elicit the mandatory fields first, then each optional field in
 turn, explicitly telling the user they may skip any optional field they
 cannot or do not want to answer yet.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://feat/template` or `specmgr://feat/example` as a
-starting point/style reference, then check `specmgr://feat/schema` (the
-generated JSON Schema) to confirm field names and constraints before
-drafting the body. Do not invent field names or section headings that
-are not present there.
+Call the `get_feat_template` and `get_feat_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_feat_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 

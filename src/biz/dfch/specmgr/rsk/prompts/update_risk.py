@@ -65,7 +65,9 @@ from ...server import mcp
     title="Update a risk",
     description=(
         "Guides the LLM through revising an existing risk by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_rsk_schema` tool (the generated JSON Schema); the "
+        "`get_rsk_template`/`get_rsk_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_risk(id: str, instructions: str | None = None) -> str:

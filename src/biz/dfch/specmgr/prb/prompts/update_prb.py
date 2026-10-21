@@ -86,7 +86,9 @@ from ...server import mcp
         "current state (recovering an old-shape document missing the mandatory lead sentence "
         "via a raw re-read if needed), showing which of the 7 5W2H questions are answered, "
         "eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right "
-        "tool, and validating."
+        "tool, and validating. The structure reference is the `get_prb_schema` tool (the generated "
+        "JSON Schema); the `get_prb_template`/`get_prb_example` tools return the authoring template "
+        "and a complete sample."
     ),
 )
 def update_prb(id: str, instructions: str | None = None) -> str:

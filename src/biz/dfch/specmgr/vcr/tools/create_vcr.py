@@ -61,7 +61,9 @@ from ._write import write_vcr_file
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
         "instead of raising `AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
         "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
-        "chain); nothing is written in that case. Returns the newly created "
+        "chain); nothing is written in that case. The structure reference is the `get_vcr_schema` tool "
+        "(the generated JSON Schema); the `get_vcr_template`/`get_vcr_example` tools return the "
+        "authoring template and a complete sample. Returns the newly created "
         "document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch "
         "the full document afterward."
     ),

@@ -79,7 +79,9 @@ from ...server import mcp
     title="Update a feature",
     description=(
         "Guides the LLM through revising an existing feature by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_feat_schema` tool (the generated JSON Schema); the "
+        "`get_feat_template`/`get_feat_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_feat(id: str, instructions: str | None = None) -> str:

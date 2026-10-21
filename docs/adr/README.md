@@ -9,6 +9,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-04
   - Decision-makers: OpenCode agent + user decision
+- [Convert the 12 per-domain schema resources to get_<d>_schema tools](112b6498-078b-4a59-88b8-8ffb7a5041b3-convert-the-12-per-domain-schema-resources-to-get-d-schema-t.md)
+  - Id: 112b6498-078b-4a59-88b8-8ffb7a5041b3
+  - Status: accepted
+  - Date: 2026-10-17
+  - Decision-makers: dfch
 - [Revise the generic update tool's success return to frontmatter plus an optional before/after snippet](19ff316b-cd11-41a7-a616-ffd84917da51-revise-the-generic-update-tool-s-success-return-to-frontmatt.md)
   - Id: 19ff316b-cd11-41a7-a616-ffd84917da51
   - Status: accepted

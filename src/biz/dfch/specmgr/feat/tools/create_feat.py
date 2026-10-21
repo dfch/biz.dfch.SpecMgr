@@ -74,8 +74,10 @@ from ._write import write_feat_file
         "chain); nothing is written in that case. Content validation runs BEFORE the id-shape "
         "`ValueError` and already-existing-id/folder `FileExistsError` guards, so a compound failure "
         "(invalid content + a malformed or already-existing id) returns the `ValidateResult` and the "
-        "guard never runs in that call; each guard still raises whenever the content is valid. "
-        "Returns the newly created document's frontmatter only (no body); use the corresponding "
+        "guard never runs in that call; each guard still raises whenever the content is valid. The "
+        "structure reference is the `get_feat_schema` tool (the generated JSON Schema); the "
+        "`get_feat_template`/`get_feat_example` tools return the authoring template and a complete "
+        "sample. Returns the newly created document's frontmatter only (no body); use the corresponding "
         "`get_feat` tool to fetch the full document afterward."
     ),
 )

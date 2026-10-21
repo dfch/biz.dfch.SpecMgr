@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Standard Operating Procedure (SOP) document
 using the existing ``sop/tools/``/``sop/resources/`` surface (``list_sop``,
 ``specmgr://sop/template``/``specmgr://sop/example``,
-``specmgr://sop/schema``, ``create_sop``, generic ``validate`` tool) plus the
+``get_sop_schema``, ``create_sop``, generic ``validate`` tool) plus the
 cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 
@@ -74,7 +74,10 @@ from ...server import mcp
     title="Create a standard operating procedure",
     description=(
         "Guides the LLM through checking for an existing similar SOP, gathering the "
-        "required information, and driving create_sop/validate to author a new SOP document."
+        "required information, and driving create_sop/validate to author a new SOP document. The "
+        "structure reference is the `get_sop_schema` tool (the generated JSON Schema); the "
+        "`get_sop_template`/`get_sop_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_sop(topic: str) -> str:

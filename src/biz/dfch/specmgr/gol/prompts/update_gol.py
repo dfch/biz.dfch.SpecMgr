@@ -76,7 +76,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through revising an existing goal by id: reading current "
         "state, showing which sections are present vs. empty, eliciting revisions, "
-        "applying the change with the right tool, and validating."
+        "applying the change with the right tool, and validating. The structure reference is the "
+        "`get_gol_schema` tool (the generated JSON Schema); the `get_gol_template`/`get_gol_example` "
+        "tools return the authoring template and a complete sample."
     ),
 )
 def update_gol(id: str) -> str:

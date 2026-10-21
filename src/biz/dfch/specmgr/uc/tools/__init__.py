@@ -23,7 +23,11 @@ document model (added ahead of Task 3.1's full specification; unchanged).
 markdown (Task 3.1.2); ``get_uc_template`` returns a document with every
 field present but populated with short placeholder ("blind text") content
 instead (Task 3.1.3) -- both read a packaged, build-guaranteed data file
-rather than anything on the caller's filesystem. ``get_uc`` (Task 3.1.5)
+rather than anything on the caller's filesystem.
+``get_uc_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://uc/schema`` resource). ``get_uc`` (Task 3.1.5)
 reads, parses, and returns a full use-case document by id -- the sole
 id-based read path for UC. ``list_uc`` (feat-13-list-paging Task 2.3)
 returns one page of id/title/status/ref summaries of every use case,
@@ -72,6 +76,7 @@ from .get_uc_diagram import get_uc_diagram
 from .get_uc_example import get_uc_example
 from .get_uc_plantuml_example import get_uc_plantuml_example
 from .get_uc_plantuml_template import get_uc_plantuml_template
+from .get_uc_schema import get_uc_schema
 from .get_uc_sequence_skeleton import get_uc_sequence_skeleton
 from .get_uc_template import get_uc_template
 from .get_use_case_package_diagram import get_use_case_package_diagram
@@ -87,6 +92,7 @@ __all__ = [
     "get_uc_example",
     "get_uc_plantuml_example",
     "get_uc_plantuml_template",
+    "get_uc_schema",
     "get_uc_sequence_skeleton",
     "get_uc_template",
     "get_use_case_package_diagram",
