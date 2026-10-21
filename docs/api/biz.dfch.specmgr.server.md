@@ -800,11 +800,18 @@ included); it carries no per-domain logic.
       unchanged from ``super().call_tool``.
 
   Raises:
-      ValueError: The original handler exception (e.g. a
-          ``_path_safety`` invalid-id ``ValueError``), re-raised from
-          the wrapping ``UnexpectedToolError``'s ``__cause__``.
-      LookupError: The original handler exception (e.g. a domain's
-          ``XNotFoundError``), re-raised the same way.
+      The original handler exception, re-raised uniformly from the
+      wrapping ``UnexpectedToolError``'s ``__cause__`` -- whatever its
+      type, special-casing none. The still-raising families this repo
+      documents all surface to the caller as their original message
+      text: the ``_path_safety`` invalid-id ``ValueError``s, the
+      whole-body domains' ``XNotFoundError``s (``LookupError``
+      subclasses), ``create_feat``'s ``FileExistsError``, and the
+      ``parse_<d>`` tools' ``OSError`` family (absent/unreadable
+      paths). ``exc.__cause__`` is total -- the installed mcp SDK wraps
+      every handler crash with ``raise ... from exc`` (verified on
+      2.3.0) -- which is what the ``raising-non-exception`` inline
+      disable on the raise line documents.
 
 - `completion(self)`
   Decorator to register a completion handler.

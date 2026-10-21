@@ -35,10 +35,12 @@ covers all the written paths (embedded code blocks only) -- a fixture whose
 docstring embeds an SDK-style, ruff-not-clean ``python`` block must come out
 ruff-clean on disk, two full generations are byte-identical, a missing
 ``ruff`` binary degrades to one stderr warning plus the verbatim
-(unformatted) output, and a non-zero ``ruff`` exit degrades to one stderr
-warning (naming ruff and the exit code) with the command still succeeding and
-the written files left on disk as ruff left them -- the command never fails
-on it.
+(unformatted) output, a non-zero ``ruff`` exit degrades to one stderr warning
+(naming ruff, the exit code, and the first line of ruff's stderr) with the
+command still succeeding and the written files left on disk as ruff left them,
+and a ruff call that raises ``OSError`` (the resolved binary unrunnable)
+degrades the same way (one warning naming ruff, command success, files
+intact) -- the command never fails on ruff.
 """
 
 import contextlib
@@ -547,7 +549,8 @@ class TestDocsRuffFormat(unittest.TestCase):
             self.assertTrue((docs_dir / "api" / "README.md").is_file())
 
     def test_ruff_nonzero_exit_warns_once_and_command_succeeds(self):
-        """A non-zero ruff exit must warn once (naming ruff + exit code), still succeed, and leave the written files on disk (as ruff left them)."""
+        """A non-zero ruff exit must warn once (naming ruff, the exit code, and the first stderr line),
+        still succeed, and leave the written files on disk (as ruff left them)."""
         with tempfile.TemporaryDirectory() as tmp:
             docs_dir = Path(tmp) / "docs"
             stderr_buffer = io.StringIO()
@@ -571,6 +574,27 @@ class TestDocsRuffFormat(unittest.TestCase):
 
             self.assertEqual(stderr.count("⚠"), 1)
             self.assertIn("ruff format exited with code 3", stderr)
+            self.assertIn("ruff: simulated failure", stderr)
+            # the command succeeded and the output files remain on disk (as written)
+            self.assertTrue((docs_dir / "GENERATED.md").is_file())
+            self.assertTrue((docs_dir / "api" / "README.md").is_file())
+            self.assertTrue((docs_dir / "api" / "biz.dfch.specmgr.md").is_file())
+
+    def test_ruff_unrunnable_warns_once_and_command_succeeds(self):
+        """A ruff call that raises OSError must warn once (naming ruff), still succeed, and leave the written
+        files intact (as written)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            docs_dir = Path(tmp) / "docs"
+            stderr_buffer = io.StringIO()
+
+            with mock.patch.object(docs_module.subprocess, "run", side_effect=PermissionError("ruff: not executable")):
+                with contextlib.redirect_stderr(stderr_buffer):
+                    docs(output=docs_dir)
+            stderr = stderr_buffer.getvalue()
+
+            self.assertIn("ruff format could not be run", stderr)
+            self.assertIn("ruff", stderr)
+            self.assertEqual(stderr.count("⚠"), 1)
             # the command succeeded and the output files remain on disk (as written)
             self.assertTrue((docs_dir / "GENERATED.md").is_file())
             self.assertTrue((docs_dir / "api" / "README.md").is_file())

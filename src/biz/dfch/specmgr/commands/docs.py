@@ -89,20 +89,38 @@ def _ruff_format_written_markdown(ruff: Path | None, paths: list[Path]) -> None:
     reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not installed) or an
     empty path list skips the call entirely (the caller's one "ruff not found" warning
     already fired); a non-zero ruff exit (unexpected for well-formed markdown) degrades
-    to one warning naming ``ruff`` and the exit code -- the command still succeeds and
-    the files remain as ``ruff`` left them (``ruff`` processes each file independently,
-    so successfully-formatted files stay formatted).
+    to one warning naming ``ruff``, the exit code, and the first line of ruff's stderr
+    (a deterministic ``(no stderr)`` fallback when ruff printed nothing) -- the command
+    still succeeds and the files remain as ``ruff`` left them (``ruff`` processes each
+    file independently, so successfully-formatted files stay formatted); and a resolved
+    ruff that cannot be executed (an ``OSError`` from the subprocess call -- e.g. the
+    binary vanished between resolution and invocation, or is not executable) degrades
+    the same way: one warning naming ``ruff``, the command still succeeds, and the
+    files remain as written. The command never fails on ruff.
     """
     if ruff is None or not paths:
         return
-    completed = subprocess.run(
-        [str(ruff), "format", *[str(path) for path in paths]],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        completed = subprocess.run(
+            [str(ruff), "format", *[str(path) for path in paths]],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        typer.echo(
+            "⚠ ruff format could not be run (the resolved ruff binary vanished or is not executable); "
+            "files remain as written.",
+            err=True,
+        )
+        return
     if completed.returncode != 0:
-        typer.echo(f"⚠ ruff format exited with code {completed.returncode}; files remain as ruff left them.", err=True)
+        stderr_lines = [line for line in completed.stderr.splitlines() if line.strip()]
+        first_stderr = stderr_lines[0].strip() if stderr_lines else "(no stderr)"
+        typer.echo(
+            f"⚠ ruff format exited with code {completed.returncode} ({first_stderr}); files remain as ruff left them.",
+            err=True,
+        )
 
 
 # ---------------------------------------------------------------------------

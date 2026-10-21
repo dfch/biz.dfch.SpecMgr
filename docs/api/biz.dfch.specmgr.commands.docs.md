@@ -160,9 +160,14 @@ embedded in ``biz.dfch.specmgr.server.md`` carries an Example block ruff would
 reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not installed) or an
 empty path list skips the call entirely (the caller's one "ruff not found" warning
 already fired); a non-zero ruff exit (unexpected for well-formed markdown) degrades
-to one warning naming ``ruff`` and the exit code -- the command still succeeds and
-the files remain as ``ruff`` left them (``ruff`` processes each file independently,
-so successfully-formatted files stay formatted).
+to one warning naming ``ruff``, the exit code, and the first line of ruff's stderr
+(a deterministic ``(no stderr)`` fallback when ruff printed nothing) -- the command
+still succeeds and the files remain as ``ruff`` left them (``ruff`` processes each
+file independently, so successfully-formatted files stay formatted); and a resolved
+ruff that cannot be executed (an ``OSError`` from the subprocess call -- e.g. the
+binary vanished between resolution and invocation, or is not executable) degrades
+the same way: one warning naming ``ruff``, the command still succeeds, and the
+files remain as written. The command never fails on ruff.
 
 
 ### `_stable_signature_str(func: Any) -> str | None`
