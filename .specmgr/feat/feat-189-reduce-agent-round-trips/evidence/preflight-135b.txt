@@ -1,0 +1,35 @@
+# Phase 135 re-verification preflight B (model blocker resolved by the operator)
+Timestamp: 2026-10-19T13:34:46+02:00
+
+Operator ruling: 'The model name changed; it is the SAME model on the SAME port (8007 or 8008), now served as qwen3.8-27b-bf16-896k' (the -mtp-2 suffix was the serving label; the weights are unchanged).
+
+## /v1/models (127.0.0.1:8007 -- the pinned endpoint, provider vllm-sys0-2)
+['qwen3.8-27b-bf16-896k']
+
+## chat/completions probe, model qwen3.8-27b-bf16-896k (expect 200)
+{"id":"chatcmpl-b39a893d9045fc91","object":"chat.completion","created":1792409686,"model":"qwen3.8-27b-bf16-896k","choices":[{"index":0,"message":{"role":"assistant","content":"\n\nOK","refusal":null,"annotations":null,"audio":null,"function_call":null,"reasoning":"We need to respond to user: \"Reply with the single word OK.\" Need final single word OK. Ensure no extra.\n"},"logprobs":null,"finish_reason":"stop","stop_reason":null,"token_ids":null,"routed_experts":null}],"service_tier":null,"system_fingerprint":"vllm-0.26.0-tp2-c8ab50d3","usage":{"prompt_tokens":59,"total_tokens":89,"completion_tokens":30,"prompt_tokens_details":null},"prompt_logprobs":null,"prompt_token_ids":null,"prompt_text":null,"kv_transfer_params":null,"ec_transfer_params":null,"metrics":null}
+HTTP_STATUS:200
+
+
+## opencode binary
+1.19.3
+
+## Host-config provider vllm-sys0-2 (global config, unchanged) carries exactly this model id:
+Traceback (most recent call last):
+  File "<string>", line 5, in <module>
+    cfg = json.loads(text)
+  File "/home/user/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/home/user/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/.local/share/uv/python/cpython-3.13.13-linux-x86_64-gnu/lib/python3.13/json/decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Invalid control character at: line 2 column 23 (char 24)
+
+## Host-config provider vllm-sys0-2 (corrected check -- the previous one-liner's comment-strip regex mangled the $schema URL; re-run with line-anchored // stripping)
+baseURL: http://127.0.0.1:8007/v1
+models: ['qwen3.8-27b-bf16-896k']
+limit: {'context': 917504, 'output': 131072}

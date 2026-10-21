@@ -512,6 +512,13 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "active",
+            "approved",
+            "draft",
+            "retired",
+            "review"
+          ],
           "title": "Status",
           "type": "string"
         },

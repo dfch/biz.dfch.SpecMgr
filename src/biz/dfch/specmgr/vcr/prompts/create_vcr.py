@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Verification Case Record (VCR) document using
 the existing ``vcr/tools/``/``vcr/resources/`` surface (``list_vcr``,
 ``specmgr://vcr/template``/``specmgr://vcr/example``,
-``specmgr://vcr/schema``, ``specmgr://dtais``, ``create_vcr``,
+``get_vcr_schema``, ``specmgr://dtais``, ``create_vcr``,
 generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
@@ -71,7 +71,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar verification case record, "
         "gathering the required information, and driving create_vcr/validate to author a "
-        "new VCR document."
+        "new VCR document. The structure reference is the `get_vcr_schema` tool (the generated "
+        "JSON Schema); the `get_vcr_template`/`get_vcr_example` tools return the authoring template "
+        "and a complete sample."
     ),
 )
 def create_vcr(topic: str) -> str:

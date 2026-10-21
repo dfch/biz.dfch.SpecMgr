@@ -119,7 +119,14 @@ class Strategy(MarkdownSection2):
     """
 
     value: MarkdownParagraph = Field(
-        description="Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`."
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set already lives in
+        # the description; `_validate_value` below remains the sole
+        # enforcement point.
+        description="Single-line TARA response strategy. One of `transfer`, `accept`, `reduce`, `avoid`.",
     )
 
     @field_validator("value")

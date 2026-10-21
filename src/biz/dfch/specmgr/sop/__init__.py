@@ -32,16 +32,15 @@ straight into the generic ``update``/``set_status`` tools in
 ``general.tools`` from day one, per the convention ``AGENTS.md`` already
 reserves for future domains.
 
-Import this package to register all SOP tools/prompts/resources (6 tools,
-3 resources, 2 prompts) against the shared ``mcp`` application instance at
+Import this package to register all SOP tools/prompts/resources (7 tools,
+2 resources, 2 prompts) against the shared ``mcp`` application instance at
 once::
 
     from biz.dfch.specmgr import sop  # noqa: F401 (side-effects only)
 
 ``tools`` (``create_sop``, ``parse_sop``, ``list_sop``, ``get_sop``,
-``get_sop_example``, ``get_sop_template``), ``resources``
-(``specmgr://sop/schema``,
-``specmgr://sop/example``, ``specmgr://sop/template``), and ``prompts``
+``get_sop_example``, ``get_sop_template``, ``get_sop_schema``), ``resources``
+(``specmgr://sop/example``, ``specmgr://sop/template``), and ``prompts``
 (``create_sop``, ``update_sop``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="sop"``), and status changes go through the
@@ -54,6 +53,11 @@ through the ``get_sop`` tool only (ADR
 ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged
 ``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+
+The former ``specmgr://sop/schema`` resource was converted into the
+``get_sop_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, ADR
+112b6498-078b-4a59-88b8-8ffb7a5041b3).
 
 SOP relies on the cross-cutting ``specmgr://rasci`` resource
 (``general.resources.rasci``, REQ-011) for the generic RASCI

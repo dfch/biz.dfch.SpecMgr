@@ -27,7 +27,7 @@ helper directly, so neither sub-package depends on the other just for this
 one file read. Mirrors ``gol.resources.gol_example`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://dec/schema``'s own precedent.
+``specmgr://dec/template``'s own precedent.
 """
 
 from __future__ import annotations

@@ -69,12 +69,12 @@ performance target, channels, related use cases, the main success
 scenario steps, extensions, sub-variations, open issues, notes, and
 assumptions.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://uc/template` or `specmgr://uc/example` as a starting
-point/style reference, then check `specmgr://uc/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not
-present there.
+## 3. Use the template/example tools as references
+Call the `get_uc_template` and `get_uc_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_uc_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.

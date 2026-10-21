@@ -46,7 +46,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from ....models.md import (
     MarkdownSection1WithComment,
@@ -99,10 +99,17 @@ class UpdateEntryContent(MarkdownStr):
         return self._value
 
 
-@alias(
-    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
-    type=AliasType.REGEX,
-)
+#: The `### {full date+time} ( - | : ) {title}` H3 alias regex (feat-146's
+#: full date+time fragment, the same shape the base frontmatter's own
+#: `_DATE_TIME_PATTERN` enforces for `created`/`updated`), joined by either
+#: `" - "` or `" : "`. Lifted from the `@alias` decorator below into a
+#: module constant so the alias (the parse-time enforcement) and
+#: `UpdateEntry`'s own `json_schema_extra` metadata (feat-189 Phase 120,
+#: C13 -- schema-level documentation only) share one source.
+_UPDATE_ENTRY_ALIAS_PATTERN = r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
+
+
+@alias(value=_UPDATE_ENTRY_ALIAS_PATTERN, type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.
 
@@ -129,6 +136,13 @@ class UpdateEntry(MarkdownSection3):
         ``" - "``/``" : "``). Never stored separately -- derived from the
         retained heading text.
     """
+
+    # feat-189 Phase 120 (C13): the heading shape as a `pattern` key on this
+    # class's own generated JSON Schema entry -- metadata only: the heading
+    # text lives in private `_value` state (invisible to the validation-mode
+    # schema) and is enforced by the `@alias` REGEX above via `match_alias`
+    # at parse time.
+    model_config = ConfigDict(json_schema_extra={"pattern": _UPDATE_ENTRY_ALIAS_PATTERN})
 
     content: UpdateEntryContent = Field(
         description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."

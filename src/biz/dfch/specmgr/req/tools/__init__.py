@@ -22,7 +22,11 @@ document model. ``get_req_example`` returns a complete, valid sample requirement
 document as raw markdown (Task 3.6); ``get_req_template`` returns a document
 with every field present but populated with short placeholder ("blind text")
 content instead (Task 3.7) -- both read a packaged, build-guaranteed data file
-rather than anything on the caller's filesystem. ``get_req`` (feat-7-various-
+rather than anything on the caller's filesystem.
+``get_req_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://req/schema`` resource). ``get_req`` (feat-7-various-
 improvements Task 0.9) reads, parses, and returns a full requirement document
 by id -- the sole id-based read path for REQ, replacing the former
 ``specmgr://req/{id}`` resource (see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -52,6 +56,7 @@ requirement tools at once::
 from .create_req import create_req
 from .get_req import get_req
 from .get_req_example import get_req_example
+from .get_req_schema import get_req_schema
 from .get_req_template import get_req_template
 from .list_req import list_req
 from .parse_req import parse_req
@@ -60,6 +65,7 @@ __all__ = [
     "create_req",
     "get_req",
     "get_req_example",
+    "get_req_schema",
     "get_req_template",
     "list_req",
     "parse_req",

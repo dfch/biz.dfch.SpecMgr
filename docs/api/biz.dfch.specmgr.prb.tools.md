@@ -8,6 +8,10 @@ sample problem statement document as raw markdown; ``get_prb_template``
 returns a document with every field present but populated with short
 placeholder ("blind text") content instead -- both read a packaged,
 build-guaranteed data file rather than anything on the caller's filesystem.
+``get_prb_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://prb/schema`` resource).
 ``get_prb`` reads, parses, and returns a full problem statement document by
 id -- the sole id-based read path for PRB (there is no
 ``specmgr://prb/{id}`` resource). ``list_prb`` returns one page of

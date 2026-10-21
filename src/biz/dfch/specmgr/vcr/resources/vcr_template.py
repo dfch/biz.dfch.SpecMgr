@@ -28,7 +28,7 @@ depends on the other just for this one file read. Mirrors
 ``dec.resources.dec_template`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://vcr/schema``/``specmgr://vcr/example``'s own precedent.
+``specmgr://vcr/template``/``specmgr://vcr/example``'s own precedent.
 """
 
 from __future__ import annotations

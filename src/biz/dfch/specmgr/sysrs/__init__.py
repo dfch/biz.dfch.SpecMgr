@@ -35,14 +35,16 @@ straight into the generic ``update``/``set_status`` tools in
 in ``general.tools`` (``type="sysrs"``), the same convention SOP/VCR
 already use.
 
-``sysrs.models``, ``sysrs.tools`` (6 tools -- ``create_sysrs``,
+``sysrs.models``, ``sysrs.tools`` (7 tools -- ``create_sysrs``,
 ``get_sysrs``, ``get_sysrs_example``, ``get_sysrs_template``,
-``list_sysrs``, ``parse_sysrs``; there is no ``validate_sysrs`` --
+``get_sysrs_schema``, ``list_sysrs``, ``parse_sysrs``; there is no ``validate_sysrs`` --
 disk-free, id-free dry-run content validation goes through the generic
 ``validate`` tool in ``general.tools`` (``type="sysrs"``) instead, as of
-feat-81-83-validation Phase 2), ``sysrs.resources`` (3 resources --
-``specmgr://sysrs/schema``, ``specmgr://sysrs/example``,
-``specmgr://sysrs/template``; no ``/{id}``, no ``/list``), and
+feat-81-83-validation Phase 2), ``sysrs.resources`` (2 resources --
+``specmgr://sysrs/example``,
+``specmgr://sysrs/template``; no ``/{id}``, no ``/list``;
+the former ``specmgr://sysrs/schema`` resource was converted into
+the ``get_sysrs_schema`` tool, feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3), and
 ``sysrs.prompts`` (2 prompts -- ``create_sysrs``, ``update_sysrs``) all
 carry real content. Every cross-reference section
 (``### Goals``, ``## Decisions``, ``## Requirements``'s nine H3s, ...)

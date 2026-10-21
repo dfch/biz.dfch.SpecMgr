@@ -62,7 +62,9 @@ from ...server import mcp
     title="Update a QA document",
     description=(
         "Guides the LLM through revising an existing QA document by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_qa_schema` tool (the generated JSON Schema); the "
+        "`get_qa_template`/`get_qa_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_qa(id: str, instructions: str | None = None) -> str:

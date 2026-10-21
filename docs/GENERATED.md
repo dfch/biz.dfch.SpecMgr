@@ -75,7 +75,6 @@ First-line docstrings from each module, organized by domain:
 - `dec/prompts/update_dec.py` — ``@mcp.prompt()``: update_dec (Task 4.1).
 - `dec/resources/__init__.py` — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
 - `dec/resources/dec_example.py` — Resource: specmgr://dec/example (feat-21 Task 3.4).
-- `dec/resources/dec_schema.py` — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - `dec/resources/dec_template.py` — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - `dec/tools/__init__.py` — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
 - `dec/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
@@ -86,6 +85,7 @@ First-line docstrings from each module, organized by domain:
 - `dec/tools/create_dec.py` — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - `dec/tools/get_dec.py` — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - `dec/tools/get_dec_example.py` — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- `dec/tools/get_dec_schema.py` — ``@mcp.tool()`` wrapper: get_dec_schema (feat-189 Phase 105, Task 105.110).
 - `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - `dec/tools/list_dec.py` — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
@@ -106,7 +106,6 @@ First-line docstrings from each module, organized by domain:
 - `feat/prompts/update_feat.py` — ``@mcp.prompt()``: update_feat (Task 4.1).
 - `feat/resources/__init__.py` — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - `feat/resources/feat_example.py` — Resource: specmgr://feat/example (feat-31 Task 3.5).
-- `feat/resources/feat_schema.py` — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - `feat/resources/feat_template.py` — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - `feat/tools/__init__.py` — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
 - `feat/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
@@ -118,6 +117,7 @@ First-line docstrings from each module, organized by domain:
 - `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - `feat/tools/get_feat_example.py` — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- `feat/tools/get_feat_schema.py` — ``@mcp.tool()`` wrapper: get_feat_schema (feat-189 Phase 105, Task 105.110).
 - `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
@@ -199,7 +199,6 @@ First-line docstrings from each module, organized by domain:
 - `gol/prompts/update_gol.py` — ``@mcp.prompt()``: update_gol (Task 3.15).
 - `gol/resources/__init__.py` — MCP resource registrations for Goal (GOL) documents (Task 3.11).
 - `gol/resources/gol_example.py` — Resource: specmgr://gol/example (Task 3.11).
-- `gol/resources/gol_schema.py` — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - `gol/resources/gol_template.py` — Resource: specmgr://gol/template (Task 3.11).
 - `gol/tools/__init__.py` — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
 - `gol/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
@@ -210,6 +209,7 @@ First-line docstrings from each module, organized by domain:
 - `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - `gol/tools/get_gol_example.py` — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- `gol/tools/get_gol_schema.py` — ``@mcp.tool()`` wrapper: get_gol_schema (feat-189 Phase 105, Task 105.110).
 - `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
@@ -289,7 +289,6 @@ First-line docstrings from each module, organized by domain:
 - `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - `prb/resources/__init__.py` — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - `prb/resources/prb_example.py` — Resource: specmgr://prb/example (Task 3.11).
-- `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
 - `prb/resources/prb_template.py` — Resource: specmgr://prb/template (Task 3.11).
 - `prb/tools/__init__.py` — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
 - `prb/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
@@ -300,6 +299,7 @@ First-line docstrings from each module, organized by domain:
 - `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - `prb/tools/get_prb_example.py` — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- `prb/tools/get_prb_schema.py` — ``@mcp.tool()`` wrapper: get_prb_schema (feat-189 Phase 105, Task 105.110).
 - `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
@@ -322,7 +322,6 @@ First-line docstrings from each module, organized by domain:
 - `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - `qa/resources/qa_template.py` — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - `qa/tools/__init__.py` — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
 - `qa/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
@@ -333,6 +332,7 @@ First-line docstrings from each module, organized by domain:
 - `qa/tools/create_qa.py` — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa_example.py` — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- `qa/tools/get_qa_schema.py` — ``@mcp.tool()`` wrapper: get_qa_schema (feat-189 Phase 105, Task 105.110).
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
@@ -352,7 +352,6 @@ First-line docstrings from each module, organized by domain:
 - `req/prompts/update_req.py` — ``@mcp.prompt()``: update_req (Task 3.19).
 - `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
-- `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
 - `req/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
@@ -363,6 +362,7 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
+- `req/tools/get_req_schema.py` — ``@mcp.tool()`` wrapper: get_req_schema (feat-189 Phase 105, Task 105.110).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
@@ -387,7 +387,6 @@ First-line docstrings from each module, organized by domain:
 - `rsk/resources/__init__.py` — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
 - `rsk/resources/risk_matrix.py` — Resource: specmgr://rsk/risk-matrix (Task 3.15).
 - `rsk/resources/rsk_example.py` — Resource: specmgr://rsk/example (Task 3.11).
-- `rsk/resources/rsk_schema.py` — Resource: specmgr://rsk/schema (Task 3.10).
 - `rsk/resources/rsk_template.py` — Resource: specmgr://rsk/template (Task 3.11).
 - `rsk/resources/tara.py` — Resource: specmgr://rsk/tara (Task 3.15).
 - `rsk/tools/__init__.py` — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
@@ -400,6 +399,7 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - `rsk/tools/get_rsk_example.py` — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- `rsk/tools/get_rsk_schema.py` — ``@mcp.tool()`` wrapper: get_rsk_schema (feat-189 Phase 105, Task 105.110).
 - `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
@@ -420,7 +420,6 @@ First-line docstrings from each module, organized by domain:
 - `sop/prompts/update_sop.py` — ``@mcp.prompt()``: update_sop (Task 4.1).
 - `sop/resources/__init__.py` — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - `sop/resources/sop_example.py` — Resource: specmgr://sop/example (feat-30 Task 3.7).
-- `sop/resources/sop_schema.py` — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - `sop/resources/sop_template.py` — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - `sop/tools/__init__.py` — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
 - `sop/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
@@ -431,6 +430,7 @@ First-line docstrings from each module, organized by domain:
 - `sop/tools/create_sop.py` — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
 - `sop/tools/get_sop.py` — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - `sop/tools/get_sop_example.py` — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- `sop/tools/get_sop_schema.py` — ``@mcp.tool()`` wrapper: get_sop_schema (feat-189 Phase 105, Task 105.110).
 - `sop/tools/get_sop_template.py` — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - `sop/tools/list_sop.py` — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - `sop/tools/parse_sop.py` — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
@@ -451,7 +451,6 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/prompts/update_sysrs.py` — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - `sysrs/resources/sysrs_example.py` — Resource: specmgr://sysrs/example (Task 4.5).
-- `sysrs/resources/sysrs_schema.py` — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - `sysrs/resources/sysrs_template.py` — Resource: specmgr://sysrs/template (Task 4.5).
 - `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
 - `sysrs/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
@@ -462,6 +461,7 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/tools/create_sysrs.py` — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
 - `sysrs/tools/get_sysrs.py` — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
 - `sysrs/tools/get_sysrs_example.py` — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- `sysrs/tools/get_sysrs_schema.py` — ``@mcp.tool()`` wrapper: get_sysrs_schema (feat-189 Phase 105, Task 105.110).
 - `sysrs/tools/get_sysrs_template.py` — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - `sysrs/tools/list_sysrs.py` — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - `sysrs/tools/parse_sysrs.py` — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
@@ -484,7 +484,6 @@ First-line docstrings from each module, organized by domain:
 - `tsk/prompts/update_task.py` — ``@mcp.prompt()``: update_task (Task 3.13).
 - `tsk/resources/__init__.py` — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - `tsk/resources/tsk_example.py` — Resource: specmgr://tsk/example (Task 3.11).
-- `tsk/resources/tsk_schema.py` — Resource: specmgr://tsk/schema (Task 3.10).
 - `tsk/resources/tsk_template.py` — Resource: specmgr://tsk/template (Task 3.11).
 - `tsk/tools/__init__.py` — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
 - `tsk/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
@@ -495,6 +494,7 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/create_tsk.py` — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - `tsk/tools/get_tsk_example.py` — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- `tsk/tools/get_tsk_schema.py` — ``@mcp.tool()`` wrapper: get_tsk_schema (feat-189 Phase 105, Task 105.110).
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
@@ -535,7 +535,6 @@ First-line docstrings from each module, organized by domain:
 - `uc/resources/uc_plantuml.py` — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
 - `uc/resources/uc_plantuml_example.py` — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
 - `uc/resources/uc_plantuml_template.py` — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
-- `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
 - `uc/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
@@ -549,6 +548,7 @@ First-line docstrings from each module, organized by domain:
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
 - `uc/tools/get_uc_plantuml_example.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_plantuml_template.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_schema.py` — ``@mcp.tool()`` wrapper: get_uc_schema (feat-189 Phase 105, Task 105.110).
 - `uc/tools/get_uc_sequence_skeleton.py` — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
 - `uc/tools/get_use_case_package_diagram.py` — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
@@ -573,7 +573,6 @@ First-line docstrings from each module, organized by domain:
 - `vcr/prompts/update_vcr.py` — ``@mcp.prompt()``: update_vcr (Task 3.2).
 - `vcr/resources/__init__.py` — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
 - `vcr/resources/vcr_example.py` — Resource: specmgr://vcr/example (Task 3.1).
-- `vcr/resources/vcr_schema.py` — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - `vcr/resources/vcr_template.py` — Resource: specmgr://vcr/template (Task 3.1).
 - `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
 - `vcr/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
@@ -584,10 +583,11 @@ First-line docstrings from each module, organized by domain:
 - `vcr/tools/create_vcr.py` — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
 - `vcr/tools/get_vcr.py` — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - `vcr/tools/get_vcr_example.py` — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- `vcr/tools/get_vcr_schema.py` — ``@mcp.tool()`` wrapper: get_vcr_schema (feat-189 Phase 105, Task 105.110).
 - `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - `vcr/tools/list_vcr.py` — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - `vcr/tools/parse_vcr.py` — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
 
 ## Test Coverage
 
-**Test files**: 432
+**Test files**: 437

@@ -9,11 +9,11 @@ version: 1.0.0
 
 # Level 1 Heading is the Title of the Task List
 
-<!-- Optional HTML comment giving context for this task list. Number the tasks so that they are easier to track. -->
+<!-- Optional HTML comment giving context for this task list. Keep each task's text exactly as given by the user -- do not reword it, do not add prefixes -- a flat checklist, one item per line. -->
 
-- [ ] Task 1: A flat checklist item. Must have at least one item.
-- [x] Task 2: A completed checklist item, marked with [x] instead of [ ].
-- [ ] Task 3: Another checklist item.
+- [ ] A flat checklist item. Must have at least one item.
+- [x] A completed checklist item, marked with [x] instead of [ ].
+- [ ] Another checklist item.
 
 ## Recent Updates
 

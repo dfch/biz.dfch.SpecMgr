@@ -2,8 +2,7 @@
 
 MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 
-``feat_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://feat/schema``). ``feat_example`` registers the packaged sample
+``feat_example`` registers the packaged sample
 feature document resource (``specmgr://feat/example``). ``feat_template``
 registers the packaged feature template resource (``specmgr://feat/template``)
 -- every section present, populated with short placeholder ("blind text")
@@ -19,3 +18,9 @@ go through the ``get_feat`` tool only (``feat.tools.get_feat``), and no
 ``list_feat`` ``@mcp.tool()`` (``feat.tools.list_feat``) from the start, per
 ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
+The former schema resource (``feat_schema``, ``specmgr://feat/schema``) was
+converted the same way into the ``get_feat_schema`` ``@mcp.tool()``
+(``feat.tools.get_feat_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).

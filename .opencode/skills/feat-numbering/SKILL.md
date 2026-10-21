@@ -24,13 +24,13 @@ removals leave gaps.
 
 ## Fetch the authoritative references
 
-Do not rely on memory -- fetch the packaged FEAT resources before drafting or revising a
-`### Task List`:
+Do not rely on memory -- fetch the packaged FEAT resources and the generated schema
+before drafting or revising a `### Task List`:
 
 - `specmgr://feat/template`: the full document shape, with `Phase 100` holding `Task 100.100`.
 - `specmgr://feat/example`: a realistic two-phase task list, `Phase 100` (`Task 100.100`) and
   `Phase 110` (`Task 110.100`, `Task 110.110`).
-- `specmgr://feat/schema`: the generated JSON Schema carrying the enforced `#### Phase NNN:
+- `get_feat_schema` tool: the generated JSON Schema carrying the enforced `#### Phase NNN:
   {title}` heading and `Task NNN.MMM: ` item shapes.
 
 ## Adding a phase or task

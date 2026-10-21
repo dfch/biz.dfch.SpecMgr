@@ -28,7 +28,7 @@ depends on the other just for this one file read. Mirrors
 ``gol.resources.gol_template`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://dec/schema``/``specmgr://dec/example``'s own precedent.
+``specmgr://dec/template``/``specmgr://dec/example``'s own precedent.
 """
 
 from __future__ import annotations

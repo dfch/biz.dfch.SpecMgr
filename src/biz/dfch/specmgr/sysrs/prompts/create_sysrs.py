@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new System Requirements Specification (SYSRS)
 document using the existing ``sysrs/tools/``/``sysrs/resources/`` surface
 (``list_sysrs``, ``specmgr://sysrs/template``/``specmgr://sysrs/example``,
-``specmgr://sysrs/schema``, ``create_sysrs``, generic ``validate`` tool) plus the
+``get_sysrs_schema``, ``create_sysrs``, generic ``validate`` tool) plus the
 existing cross-cutting ``specmgr://iso25010`` resource (read before grouping
 ``## Requirements`` by its nine canonical characteristic names).
 
@@ -75,7 +75,10 @@ from ...server import mcp
     description=(
         "Guides the LLM through checking for an existing similar system requirements "
         "specification, gathering the required information, and driving "
-        "create_sysrs/validate to author a new SYSRS document."
+        "create_sysrs/validate to author a new SYSRS document. The structure reference is the "
+        "`get_sysrs_schema` tool (the generated JSON Schema); the "
+        "`get_sysrs_template`/`get_sysrs_example` tools return the authoring template and a "
+        "complete sample."
     ),
 )
 def create_sysrs(topic: str) -> str:

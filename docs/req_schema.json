@@ -82,7 +82,7 @@
         },
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
-          "description": "Single-line value giving the requirement's obligation strength (e.g. \"MUST\")."
+          "description": "Single-line value giving the requirement's obligation strength (e.g. \"MUST\"). One of `MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`, `MAY` (RFC 2119)."
         }
       },
       "required": [
@@ -266,6 +266,15 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "implemented",
+            "proposed",
+            "rejected",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },

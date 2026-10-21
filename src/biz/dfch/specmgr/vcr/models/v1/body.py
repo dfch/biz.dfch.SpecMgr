@@ -56,7 +56,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, field_validator, model_validator
+from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
 from ....models.md import (
     MarkdownListItem,
@@ -139,7 +139,16 @@ class Coverage(MarkdownSection2):
     `## Coverage` is the only outcome signal (REQ-002).
     """
 
-    value: MarkdownParagraph = Field(description="Single-line coverage assessment. One of `full`, `partial`, `none`.")
+    value: MarkdownParagraph = Field(
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set already lives in
+        # the description; `_validate_value` below remains the sole
+        # enforcement point.
+        description="Single-line coverage assessment. One of `full`, `partial`, `none`.",
+    )
 
     @field_validator("value")
     @classmethod
@@ -184,8 +193,15 @@ class TestSteps(MarkdownSection4):
 _AC_HEADING_PATTERN = r"AC-(\d{3}) \((Demonstration|Test|Analysis|Inspection|Special)\): .+"
 _AC_HEADING_RE = re.compile(_AC_HEADING_PATTERN)
 
+#: The anchored form of `_AC_HEADING_PATTERN` the `@alias` decorator below
+#: enforces. Lifted into a module constant so the alias (the parse-time
+#: enforcement) and `AcceptanceCriterion`'s own `json_schema_extra` metadata
+#: (feat-189 Phase 120, C13 -- schema-level documentation only) share one
+#: source.
+_AC_ALIAS_PATTERN = rf"^{_AC_HEADING_PATTERN}$"
 
-@alias(value=rf"^{_AC_HEADING_PATTERN}$", type=AliasType.REGEX)
+
+@alias(value=_AC_ALIAS_PATTERN, type=AliasType.REGEX)
 class AcceptanceCriterion(MarkdownSection3):
     """`### AC-NNN (Method): <criterion text>` under `## Acceptance Criteria` -- one verification criterion.
 
@@ -194,7 +210,9 @@ class AcceptanceCriterion(MarkdownSection3):
     constrained by the regex `@alias` above and enforced by `match_alias`
     (`re.fullmatch`) at parse time -- a missing/out-of-range/malformed
     number, an unknown method word, or a title-less heading all fail the
-    parse eagerly (REQ-003). AC numbers need not be contiguous (gaps are
+    parse eagerly (REQ-003). The method word is one of the five DTAIS words:
+    `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special` (the
+    `specmgr://dtais` vocabulary). AC numbers need not be contiguous (gaps are
     allowed, numbers are never renumbered); duplicates are rejected by
     `Vcr`'s own after-validator (the `ValidationError` channel, mirroring
     DEC's `Decision._validate_option_numbers_unique`).
@@ -237,6 +255,28 @@ class AcceptanceCriterion(MarkdownSection3):
         (not lowercased/normalized). Never stored separately -- derived
         from the retained heading text.
     """
+
+    # feat-189 Phase 120 (C13), corrected in Phase 135: the heading
+    # constraint as `json_schema_extra` metadata on this class's own
+    # generated JSON Schema entry -- metadata only: neither the heading text
+    # nor the method word is a schema-surfaced field (the heading lives in
+    # private `_value` state, and `number`/`method` are computed fields,
+    # which the generator's validation-mode `model_json_schema()` omits), so
+    # the key lands on the class's own entry: `pattern` = the full
+    # `AC-NNN (Method): <text>` heading shape (the `@alias` REGEX above,
+    # enforced by `match_alias` at parse time, remains the sole enforcement
+    # point). The Phase 120 `enum` key (the closed DTAIS method-word set)
+    # was removed in Phase 135 -- it sat on this class's object-typed schema
+    # node, and the MCP SDK validates every `structuredContent` payload
+    # against the generated output schema, where an object instance can
+    # never equal a string `enum` member (round-trip-rerun.md, feat-189);
+    # the DTAIS set now lives in the class docstring's own `description` and
+    # in the `pattern`'s own group 2.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "pattern": _AC_ALIAS_PATTERN,
+        }
+    )
 
     description: MarkdownParagraph | None = Field(
         default=None,

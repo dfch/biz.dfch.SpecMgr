@@ -7,7 +7,11 @@ structured document model. ``get_tsk_example`` returns a complete, valid
 sample task list document as raw markdown; ``get_tsk_template`` returns a
 document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
-data file rather than anything on the caller's filesystem. ``get_tsk``
+data file rather than anything on the caller's filesystem.
+``get_tsk_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://tsk/schema`` resource). ``get_tsk``
 reads, parses, and returns a full task list document by id -- the sole
 id-based read path for TSK (there never was a
 ``specmgr://tsk/{id}`` resource to begin with). ``list_tsk``

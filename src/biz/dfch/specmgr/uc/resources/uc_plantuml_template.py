@@ -32,7 +32,7 @@ specmgr document (no frontmatter, not ``validate``-able) -- closer to the
 rulebook §2.6 instead (no template needed for it).
 
 The resource's URI is deliberately unversioned (no ``/v2``), matching
-``specmgr://uc/schema``'s own precedent.
+``specmgr://uc/template``'s own precedent.
 """
 
 from __future__ import annotations

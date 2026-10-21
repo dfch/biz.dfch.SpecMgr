@@ -12,7 +12,7 @@ helper directly (Task 5.3), so neither sub-package depends on the other just
 for this one file read.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://req/schema``'s own precedent -- see
+``specmgr://req/template``'s own precedent -- see
 `.specmgr/feat/feat-6-requirement-artifact/README.md`'s Decisions Made.
 
 ## Functions

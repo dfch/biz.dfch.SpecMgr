@@ -21,7 +21,7 @@ Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Decision (DEC) document using the existing
 ``dec/tools/``/``dec/resources/`` surface (``list_dec``,
 ``specmgr://dec/template``/``specmgr://dec/example``,
-``specmgr://dec/schema``, ``create_dec``, generic ``validate`` tool) plus
+``get_dec_schema``, ``create_dec``, generic ``validate`` tool) plus
 the cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 
@@ -78,7 +78,10 @@ from ...server import mcp
     title="Create a decision",
     description=(
         "Guides the LLM through checking for an existing similar decision, gathering the "
-        "required information, and driving create_dec/validate to author a new DEC document."
+        "required information, and driving create_dec/validate to author a new DEC document. The "
+        "structure reference is the `get_dec_schema` tool (the generated JSON Schema); the "
+        "`get_dec_template`/`get_dec_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_dec(topic: str) -> str:

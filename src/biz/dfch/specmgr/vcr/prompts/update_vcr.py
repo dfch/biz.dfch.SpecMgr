@@ -74,7 +74,10 @@ from ...server import mcp
     title="Update a verification case record",
     description=(
         "Guides the LLM through revising an existing verification case record by id: reading "
-        "current state, applying the requested change with the right tool, and validating."
+        "current state, applying the requested change with the right tool, and validating. The "
+        "structure reference is the `get_vcr_schema` tool (the generated JSON Schema); the "
+        "`get_vcr_template`/`get_vcr_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def update_vcr(id: str, instructions: str | None = None) -> str:

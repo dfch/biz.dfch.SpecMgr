@@ -26,7 +26,7 @@ type or cross-cutting:
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below.
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
-  `list_req`); whole-body and line-range
+  `list_req`, `get_req_schema`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
   (`type="req"`), status changes through the generic `set_status` tool
   (`type="req"`), classification changes through the generic
@@ -34,8 +34,9 @@ type or cross-cutting:
   `delete` tool (`type="req"`), disk-free/id-free dry-run content
   validation through the generic `validate` tool (`type="req"`) — the
   former `validate_req` tool was removed in favor of it
-  (feat-81-83-validation); `req/resources/` (`specmgr://req/schema`,
-  `specmgr://req/example`, `specmgr://req/template`; no `specmgr://req/{id}`
+  (feat-81-83-validation); `req/resources/` (`specmgr://req/example`,
+  `specmgr://req/template`; the former `specmgr://req/schema` resource is the
+  `get_req_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
   listing is the `list_req` tool, ADR
@@ -47,7 +48,7 @@ type or cross-cutting:
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
-  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`), plus the
+  `list_uc`, `get_uc`, `get_uc_example`, `get_uc_template`, `get_uc_schema`), plus the
   read-only diagram surface (feat-185-uc-diagrams Phase 120, thin over the
   Phase 110 `uc/models/v2/renderer.py` + the import-free `plantuml/`
   package): `get_uc_diagram` (per-UC usecase diagram by id) and
@@ -86,7 +87,9 @@ type or cross-cutting:
   `PagedResult` now also carries `error_count` and reports a
   failed-to-parse document inline (with a resolved `path`) rather than
    silently dropping it,
-   feat-81-83-validation Phase 3), plus the static
+   feat-81-83-validation Phase 3); the former
+   `specmgr://uc/schema` resource is the `get_uc_schema` tool (ADR
+   112b6498-078b-4a59-88b8-8ffb7a5041b3), plus the static
    domain-knowledge resource `specmgr://uc/plantuml` — the frozen
    UC → PlantUML mapping and validation rulebook (raw markdown,
    `text/markdown`; feat-185-uc-diagrams Phase 100 — the normative spec
@@ -145,7 +148,7 @@ type or cross-cutting:
    inside the domain package, not `models/uc/`.
 - **`tsk/`** (Task Lists) — same shape again (`create_tsk`,
   `parse_tsk`, `list_tsk`, `get_tsk`, `get_tsk_example`,
-  `get_tsk_template`); whole-body and
+  `get_tsk_template`, `get_tsk_schema`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="tsk"`), status changes through the generic
   `set_status` tool (`type="tsk"`), classification changes through the
@@ -160,8 +163,9 @@ type or cross-cutting:
    it (feat-81-83-validation); plus a distinct
   `implement_task` prompt (reads a task list via `get_tsk`, builds a
   `TodoWrite` list from its items, and uses the `question` tool to resolve
-  ambiguity). Its resources are the usual `specmgr://tsk/schema`/
-  `specmgr://tsk/example`/`specmgr://tsk/template` only — no
+  ambiguity). Its resources are the usual `specmgr://tsk/example`/
+  `specmgr://tsk/template` only (the former `specmgr://tsk/schema` resource is the
+  `get_tsk_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3) — no
   `specmgr://tsk/{id}` and no `specmgr://tsk/list` resource (listing is
   the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
@@ -172,7 +176,7 @@ type or cross-cutting:
 - **`qa/`** (Question and Answer) — same tools/resources/prompts shape as
   `req/`/`tsk/` but for requirements-elicitation Q&A interviews (`create_qa`,
   `parse_qa`, `list_qa`, `get_qa`, `get_qa_example`,
-  `get_qa_template`); whole-body and
+  `get_qa_template`, `get_qa_schema`); whole-body and
   line-range updates go through the generic `update` tool in
   `general/tools/` (`type="qa"`), status changes through the generic
   `set_status` tool (`type="qa"`), classification changes through the
@@ -185,8 +189,10 @@ type or cross-cutting:
    text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
    (raw-only; out-of-range values clamp, never error); `qa/resources/`
-  (`specmgr://qa/schema`, `specmgr://qa/example`,
-  `specmgr://qa/template`; no `specmgr://qa/{id}` — id-based reads are
+  (`specmgr://qa/example`,
+  `specmgr://qa/template`; the former `specmgr://qa/schema` resource is the
+  `get_qa_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://qa/{id}`
+  — id-based reads are
   `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://qa/list` — listing is the `list_qa` tool, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
@@ -222,7 +228,7 @@ type or cross-cutting:
 - **`prb/`** (Problem Statement) — same tools/resources/prompts shape as
   `req/`/`tsk`/`qa` but for Six-Sigma-style problem statements
   (`create_prb`, `parse_prb`, `list_prb`,
-  `get_prb`, `get_prb_example`, `get_prb_template`); whole-body and
+  `get_prb`, `get_prb_example`, `get_prb_template`, `get_prb_schema`); whole-body and
   line-range updates go through the generic
   `update` tool in `general/tools/` (`type="prb"`), status changes through
   the generic `set_status` tool (`type="prb"`), classification changes
@@ -235,8 +241,9 @@ type or cross-cutting:
   dry-run content validation through the generic `validate` tool
   (`type="prb"`) — the former `validate_prb` tool was removed in favor
   of it (feat-81-83-validation); `prb/resources/`
-  (`specmgr://prb/schema`,
-  `specmgr://prb/example`, `specmgr://prb/template`; no
+  (`specmgr://prb/example`, `specmgr://prb/template`; the former
+  `specmgr://prb/schema` resource is the `get_prb_schema` tool, ADR
+  112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
   is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
@@ -268,7 +275,7 @@ type or cross-cutting:
   "what the organization wants to achieve" level that sits above
   individual requirements) (`create_gol`,
   `parse_gol`, `list_gol`, `get_gol`,
-  `get_gol_example`, `get_gol_template`); whole-body and line-range
+  `get_gol_example`, `get_gol_template`, `get_gol_schema`); whole-body and line-range
   updates go through the generic
   `update` tool in `general/tools/` (`type="gol"`), status changes through
   the generic `set_status` tool (`type="gol"`), classification changes
@@ -281,8 +288,9 @@ type or cross-cutting:
    body text as-is (the text `update`'s `offset`/`limit` index into), with
    optional read-style `offset`/`limit` windowing of that raw read
    (raw-only; out-of-range values clamp, never error); `gol/resources/`
-   (`specmgr://gol/schema`,
-  `specmgr://gol/example`, `specmgr://gol/template`; no
+   (`specmgr://gol/example`, `specmgr://gol/template`; the former
+  `specmgr://gol/schema` resource is the `get_gol_schema` tool, ADR
+  112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://gol/{id}` — id-based reads are `get_gol`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` —
   `list_gol` ships as a paged tool from day one, ADR
@@ -320,7 +328,7 @@ type or cross-cutting:
   convention, added by `feat-102-133-rsk-tags-source`, GitHub issue #102),
   and an optional `## More Information` (free-form))
   (`parse_rsk`, `get_rsk`, `list_rsk`, `get_rsk_example`,
-  `get_rsk_template`, `create_rsk`); whole-body and line-range updates
+  `get_rsk_template`, `get_rsk_schema`, `create_rsk`); whole-body and line-range updates
   go through the generic `update` tool in `general/tools/`
   (`type="rsk"`), status changes through the generic `set_status` tool
   (`type="rsk"`), classification changes through the generic
@@ -333,8 +341,10 @@ type or cross-cutting:
    validation through the generic `validate` tool (`type="rsk"`) — the
    former `validate_rsk` tool was removed in favor of it
    (feat-81-83-validation); `rsk/resources/`
-  (`specmgr://rsk/schema`, `specmgr://rsk/example`,
-  `specmgr://rsk/template`, plus two static domain-knowledge resources
+  (`specmgr://rsk/example`,
+  `specmgr://rsk/template`; the former `specmgr://rsk/schema` resource is
+  the `get_rsk_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3, plus two static
+  domain-knowledge resources
   `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
   four words — and `specmgr://rsk/risk-matrix` — the 5x5 scale anchors,
   zone table, and product thresholds; no `specmgr://rsk/{id}` — id-based
@@ -354,7 +364,7 @@ type or cross-cutting:
 - **`dec/`** (Decision) — same tools/resources/prompts shape as
   `req/`/`prb/` but for decisions in general (not architecture-only)
   (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`,
-  `get_dec_template`, `create_dec`); whole-body and line-range updates go through the
+  `get_dec_template`, `get_dec_schema`, `create_dec`); whole-body and line-range updates go through the
   generic `update` tool in `general/tools/` (`type="dec"`), status
   changes through the generic `set_status` tool (`type="dec"`),
   classification changes through the generic `set_classification` tool
@@ -368,8 +378,10 @@ type or cross-cutting:
    validation through the generic `validate` tool (`type="dec"`) — the
    former `validate_dec` tool was removed in favor of it
    (feat-81-83-validation); `dec/resources/`
-  (`specmgr://dec/schema`, `specmgr://dec/example`,
-  `specmgr://dec/template`; no `specmgr://dec/{id}` — id-based reads
+  (`specmgr://dec/example`,
+  `specmgr://dec/template`; the former `specmgr://dec/schema` resource is the
+  `get_dec_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `specmgr://dec/{id}` — id-based reads
   are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://dec/list` — `list_dec` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
@@ -414,7 +426,7 @@ type or cross-cutting:
   shape as `dec/` but for structured, step-by-step operational documents
   with a RASCI-style responsibility assignment and a closed
   approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
-  `get_sop`, `get_sop_example`, `get_sop_template`); `sop` is the **first
+  `get_sop`, `get_sop_example`, `get_sop_template`, `get_sop_schema`); `sop` is the **first
   domain built dispatch-only from day
   one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
   `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, so
@@ -433,8 +445,10 @@ type or cross-cutting:
    validation through the generic `validate` tool (`type="sop"`) — the
    former `validate_sop` tool was removed in favor of it
    (feat-81-83-validation); `sop/resources/`
-  (`specmgr://sop/schema`, `specmgr://sop/example`,
-  `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
+  (`specmgr://sop/example`,
+  `specmgr://sop/template`; the former `specmgr://sop/schema` resource is the
+  `get_sop_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `specmgr://sop/{id}` — id-based reads
   are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sop/list` — `list_sop` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
@@ -468,8 +482,8 @@ type or cross-cutting:
   `general/tools/_doc_paths.py` every other whole-body domain uses;
   `SPECMGR_FEAT_DIR` overrides the base directory (mandatory-in-spirit
   test-isolation env var, same as every other domain's own equivalent).
-   All 7 tools (`create_feat`, `set_feat_id`, `parse_feat`, `list_feat`,
-   `get_feat`, `get_feat_example`, `get_feat_template`);
+   All 8 tools (`create_feat`, `set_feat_id`, `parse_feat`, `list_feat`,
+   `get_feat`, `get_feat_example`, `get_feat_template`, `get_feat_schema`);
    `create_feat` accepts an optional, caller-chosen `id`
   (a full `feat-NNN-slug`, validated against that shape) and, when `id`
   is omitted, now defaults to `feat-0-<slug-from-title>` — not an
@@ -497,8 +511,10 @@ type or cross-cutting:
   disk-free/id-free dry-run content validation through the generic
   `validate` tool (`type="feat"`) — the former `validate_feat` tool was
   removed in favor of it (feat-81-83-validation);
-  `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
-  `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
+  `feat/resources/` (`specmgr://feat/example`,
+  `specmgr://feat/template`; the former `specmgr://feat/schema` resource is the
+  `get_feat_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `specmgr://feat/{id}` — id-based reads
   are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://feat/list` — `list_feat` ships as a paged tool from day
   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
@@ -584,7 +600,7 @@ type or cross-cutting:
   `#### Test Steps` numbered procedure; a `model_validator` rejects
   duplicate `AC-NNN` numbers), plus optional `## More Information`/
    `## Updates` (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`,
-   `get_vcr_example`, `get_vcr_template`); whole-body and line-range updates go through the
+   `get_vcr_example`, `get_vcr_template`, `get_vcr_schema`); whole-body and line-range updates go through the
    generic `update` tool in `general/tools/` (`type="vcr"`), status
    changes through the generic `set_status` tool (`type="vcr"`),
    classification changes through the generic `set_classification` tool
@@ -597,8 +613,9 @@ type or cross-cutting:
     error); disk-free/id-free dry-run content validation through the
     generic `validate` tool (`type="vcr"`) — the former `validate_vcr`
     tool was removed in favor of it (feat-81-83-validation);
-    `vcr/resources/` (`specmgr://vcr/schema`,
-  `specmgr://vcr/example`, `specmgr://vcr/template`; no
+    `vcr/resources/` (`specmgr://vcr/example`,
+  `specmgr://vcr/template`; the former `specmgr://vcr/schema` resource is the
+  `get_vcr_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://vcr/{id}` — id-based reads are `get_vcr`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://vcr/list` —
   `list_vcr` ships as a paged tool from day one, ADR
@@ -635,14 +652,16 @@ type or cross-cutting:
    (`type="sysrs"`), and disk-free/id-free dry-run content validation
    through the generic `validate` tool (`type="sysrs"`) — the former
    `validate_sysrs` tool was removed in favor of it
-   (feat-81-83-validation). 6 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`,
-   `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`);
+   (feat-81-83-validation). 7 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`,
+   `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`, `get_sysrs_schema`);
    the `get_sysrs` tool takes `raw: bool = False` — `raw=True` returns the
   frontmatter-stripped body text as-is (the text `update`'s `offset`/`limit`
   index into), with optional read-style `offset`/`limit` windowing of that
-  raw read (raw-only; out-of-range values clamp, never error). 3 resources
-  in `sysrs/resources/` (`specmgr://sysrs/schema`, `specmgr://sysrs/example`,
-  `specmgr://sysrs/template`; no `specmgr://sysrs/{id}` — id-based reads are
+  raw read (raw-only; out-of-range values clamp, never error). 2 resources
+  in `sysrs/resources/` (`specmgr://sysrs/example`,
+  `specmgr://sysrs/template`; the former `specmgr://sysrs/schema` resource is
+  the `get_sysrs_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `specmgr://sysrs/{id}` — id-based reads are
   `get_sysrs`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sysrs/list` — `list_sysrs` ships as a paged tool from day one,
   ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also

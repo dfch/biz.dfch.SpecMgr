@@ -2,8 +2,7 @@
 
 MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 
-``req_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://req/schema``). ``req_example`` registers the packaged sample
+``req_example`` registers the packaged sample
 requirement document resource (``specmgr://req/example``). ``req_template``
 registers the packaged requirement template resource (``specmgr://req/template``)
 -- every field present, populated with short placeholder ("blind text")
@@ -22,3 +21,9 @@ a tool (get_req), not a resource"). The former listing resource
 by the ``list_req`` ``@mcp.tool()`` (``req.tools.list_req``), so that paging
 parameters (``max_results``/``offset``) could be accepted -- see
 ``.specmgr/feat/feat-13-list-paging/README.md``.
+The former schema resource (``req_schema``, ``specmgr://req/schema``) was
+converted the same way into the ``get_req_schema`` ``@mcp.tool()``
+(``req.tools.get_req_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).

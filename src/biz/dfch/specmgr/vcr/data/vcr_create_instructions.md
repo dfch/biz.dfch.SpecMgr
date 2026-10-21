@@ -68,15 +68,15 @@ explicitly telling the user they may skip any optional section they
 cannot or do not want to answer yet -- a freshly created verification
 case record may have zero optional sections.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://vcr/template` or `specmgr://vcr/example` as a
-starting point/style reference, then check `specmgr://vcr/schema` (the
-generated JSON Schema) to confirm field names and constraints before
-drafting the body. Fetch `specmgr://dtais` if you or the user are
-unsure which DTAIS method word applies to a given criterion. Do not
-invent field names, section headings, or method words that are not
-present there.
+Call the `get_vcr_template` and `get_vcr_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names, section headings, or method words that are not present there.
+Call the `get_vcr_schema` tool (the generated JSON Schema) only when you
+are structurally uncertain or are resolving a validation error. Fetch
+`specmgr://dtais` if you or the user are unsure which DTAIS method
+word applies to a given criterion.
 
 ## 4. Tool call sequence
 

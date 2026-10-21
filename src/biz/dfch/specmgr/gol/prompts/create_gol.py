@@ -20,7 +20,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Goal (GOL) document using the existing
 ``gol/tools/``/``gol/resources/`` surface (``list_gol``,
-``specmgr://gol/template``/``specmgr://gol/example``, ``specmgr://gol/schema``,
+``specmgr://gol/template``/``specmgr://gol/example``, ``get_gol_schema``,
 ``create_gol``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
@@ -66,7 +66,10 @@ from ...server import mcp
     title="Create a goal",
     description=(
         "Guides the LLM through checking for an existing similar goal, gathering the "
-        "required information, and driving create_gol/validate to author a new GOL document."
+        "required information, and driving create_gol/validate to author a new GOL document. The "
+        "structure reference is the `get_gol_schema` tool (the generated JSON Schema); the "
+        "`get_gol_template`/`get_gol_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_gol(topic: str) -> str:
