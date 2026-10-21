@@ -35,8 +35,9 @@ drift, which is what a CI step relies on directly.
 
 The emitted dialect is Pydantic v2's native JSON Schema 2020-12 (``$defs``,
 not ``definitions``) -- see `feat-6-requirement-artifact`'s README
-"Decisions Made" for why this deliberately diverges from
-``uc_schema.json``'s hand-authored draft-07.
+"Decisions Made" for the rationale. Every registered document type
+is generated through this command; no registered schema is
+hand-authored.
 """
 
 import json
