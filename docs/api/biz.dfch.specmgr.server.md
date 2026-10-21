@@ -4,6 +4,22 @@ MCP server for ``biz-dfch-specmgr``.
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
+The server singleton is a ``SpecMgrServer`` (defined below) -- a thin
+``mcp.server.MCPServer`` subclass, not a plain ``MCPServer``: since ``mcp``
+v2.1.0 (upstream #3314) a tool handler's raised exception reaches the client
+wrapped as ``UnexpectedToolError("Error executing tool <name>")`` with the
+handler's own message swallowed, and this repo's documented tool contract is
+that the still-raising usage errors (the ``_path_safety`` invalid-id
+``ValueError``s, the whole-body domains' ``XNotFoundError``s,
+``create_feat``'s ``FileExistsError``, ...) surface to the caller as that
+message text. ``SpecMgrServer`` overrides only the public ``call_tool`` to
+re-raise ``UnexpectedToolError.__cause__`` (the original exception,
+``from None`` -- no doubled exception chain in the server log), which the
+SDK's own ``_handle_call_tool`` catch then stringifies into the
+``is_error=True`` result it returns -- the v2.0.0 wire shape minus the
+``Error executing tool <name>: `` prefix, uniform for every registered tool,
+no per-domain logic (feat-221-mcp-220-error-contract, Phase 100, REQ-002).
+
 Registers the following resources and tools so far:
 
 Resources
@@ -677,6 +693,356 @@ decorators actually run. ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``r
 ``feat``, ``vcr``, and ``sysrs``
 each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
 registers all three.
+
+## Classes
+
+### `SpecMgrServer`
+
+``MCPServer`` preserving this repo's caller-visible tool error text.
+
+Since ``mcp`` v2.1.0 (upstream #3314), a tool handler's raised exception
+reaches the client wrapped as ``UnexpectedToolError("Error executing tool
+<name>")`` -- the handler's own message is swallowed (it survives only in
+``__cause__`` and the server log). This repo's documented tool contract is
+that the still-raising usage errors (the ``_path_safety`` invalid-id
+``ValueError``s, the whole-body domains' ``XNotFoundError``s,
+``create_feat``'s ``FileExistsError``, ...) surface to the caller as that
+message text, so this subclass overrides only the public ``call_tool`` to
+re-raise ``UnexpectedToolError.__cause__`` -- the original exception, which
+the SDK always sets via ``raise ... from exc`` -- ``from None`` (no doubled
+exception chain in the server log). The SDK's own ``_handle_call_tool``
+catch then stringifies that original exception into the ``is_error=True``
+``CallToolResult`` it returns: the v2.0.0 wire shape minus the
+``Error executing tool <name>: `` prefix. The override is uniform for
+every tool registered on this server (the ``adr`` domain's tools
+included); it carries no per-domain logic.
+(feat-221-mcp-220-error-contract, Phase 100, REQ-002.)
+
+**Methods:**
+
+- `add_prompt(self, prompt: 'Prompt') -> 'None'`
+  Add a prompt to the server.
+
+  Args:
+      prompt: A Prompt instance to add
+
+- `add_resource(self, resource: 'Resource') -> 'None'`
+  Add a resource to the server.
+
+  Args:
+      resource: A Resource instance to add
+
+- `add_tool(self, fn: 'Callable[..., Any]', name: 'str | None' = None, title: 'str | None' = None, description: 'str | None' = None, annotations: 'ToolAnnotations | None' = None, icons: 'list[Icon] | None' = None, meta: 'dict[str, Any] | None' = None, structured_output: 'bool | None' = None) -> 'None'`
+  Add a tool to the server.
+
+  The tool function can optionally request a Context object by adding a parameter
+  with the Context type annotation. See the @tool decorator for examples.
+
+  Args:
+      fn: The function to register as a tool
+      name: Optional name for the tool (defaults to function name)
+      title: Optional human-readable title for the tool
+      description: Optional description of what the tool does
+      annotations: Optional ToolAnnotations providing additional tool information
+      icons: Optional list of icons for the tool
+      meta: Optional metadata dictionary for the tool
+      structured_output: Controls whether the tool's output is structured or unstructured
+          - If None, auto-detects based on the function's return type annotation
+          - If True, creates a structured tool (return type annotation permitting)
+          - If False, unconditionally creates an unstructured tool
+
+- `call_tool(self, name: 'str', arguments: 'dict[str, Any]', context: 'Context[Any, Any] | None' = None) -> 'CallToolResult | InputRequiredResult'`
+  Call a registered tool, re-raising the handler's original exception.
+
+  Args:
+      name: The registered tool name.
+      arguments: The tool arguments (already validated by the SDK).
+      context: The request context; the SDK constructs one when omitted.
+
+  Returns:
+      The tool's ``CallToolResult`` (or ``InputRequiredResult``),
+      unchanged from ``super().call_tool``.
+
+  Raises:
+      The original handler exception, re-raised uniformly from the
+      wrapping ``UnexpectedToolError``'s ``__cause__`` -- whatever its
+      type, special-casing none. The still-raising families this repo
+      documents all surface to the caller as their original message
+      text: the ``_path_safety`` invalid-id ``ValueError``s, the
+      whole-body domains' ``XNotFoundError``s (``LookupError``
+      subclasses), ``create_feat``'s ``FileExistsError``, and the
+      ``parse_<d>`` tools' ``OSError`` family (absent/unreadable
+      paths). ``exc.__cause__`` is total -- the installed mcp SDK wraps
+      every handler crash with ``raise ... from exc`` (verified on
+      2.3.0) -- which is what the ``raising-non-exception`` inline
+      disable on the raise line documents.
+
+- `completion(self)`
+  Decorator to register a completion handler.
+
+  The completion handler receives:
+  - ref: PromptReference or ResourceTemplateReference
+  - argument: CompletionArgument with name and partial value
+  - context: Optional CompletionContext with previously resolved arguments
+
+  Example:
+      ```python
+      @mcp.completion()
+      async def handle_completion(ref, argument, context):
+          if isinstance(ref, ResourceTemplateReference):
+              # Return completions based on ref, argument, and context
+              return Completion(values=["option1", "option2"])
+          return None
+      ```
+
+- `custom_route(self, path: 'str', methods: 'list[str]', name: 'str | None' = None, include_in_schema: 'bool' = True)`
+  Decorator to register a custom HTTP route on the MCP server.
+
+  Allows adding arbitrary HTTP endpoints outside the standard MCP protocol,
+  which can be useful for OAuth callbacks, health checks, or admin APIs.
+  The handler function must be an async function that accepts a Starlette
+  Request and returns a Response.
+
+  Routes using this decorator will not require authorization. It is intended
+  for uses that are either a part of authorization flows or intended to be
+  public such as health check endpoints.
+
+  Args:
+      path: URL path for the route (e.g., "/oauth/callback")
+      methods: List of HTTP methods to support (e.g., ["GET", "POST"])
+      name: Optional name for the route (to reference this route with
+            Starlette's reverse URL lookup feature)
+      include_in_schema: Whether to include in OpenAPI schema, defaults to True
+
+  Example:
+      ```python
+      @server.custom_route("/health", methods=["GET"])
+      async def health_check(request: Request) -> Response:
+          return JSONResponse({"status": "ok"})
+      ```
+
+- `get_prompt(self, name: 'str', arguments: 'dict[str, Any] | None' = None, context: 'Context[LifespanResultT, Any] | None' = None) -> 'GetPromptResult | InputRequiredResult'`
+  Get a prompt by name with arguments.
+
+  An `InputRequiredResult` returned by the prompt function is passed
+  through unchanged (the 2026-07-28 multi-round-trip flow); the retry's
+  answers arrive on `ctx.input_responses`, with `ctx.request_state`
+  carrying the echoed opaque state.
+
+- `list_prompts(self) -> 'list[MCPPrompt]'`
+  List all available prompts.
+
+- `list_resource_templates(self) -> 'list[MCPResourceTemplate]'`
+
+- `list_resources(self) -> 'list[MCPResource]'`
+  List all available resources.
+
+- `list_tools(self) -> 'list[MCPTool]'`
+  List all available tools.
+
+- `prompt(self, name: 'str | None' = None, title: 'str | None' = None, description: 'str | None' = None, icons: 'list[Icon] | None' = None) -> 'Callable[[_CallableT], _CallableT]'`
+  Decorator to register a prompt.
+
+          The function returns the prompt messages (a string, content block, `Image`/`Audio`,
+          `Message`, dict, or a sequence of these), or an `InputRequiredResult` to request
+          client input first (the 2026-07-28 multi-round-trip flow — read
+          `ctx.input_responses` on the retry).
+
+          Args:
+              name: Optional name for the prompt (defaults to function name)
+              title: Optional human-readable title for the prompt
+              description: Optional description of what the prompt does
+              icons: Optional list of icons for the prompt
+
+          Example:
+              ```python
+              @server.prompt()
+              def analyze_table(table_name: str) -> list[Message]:
+                  schema = read_table_schema(table_name)
+                  return [
+                      {
+                          "role": "user",
+                          "content": f"Analyze this schema:
+  {schema}"
+                      }
+                  ]
+
+              @server.prompt()
+              async def analyze_file(path: str) -> list[Message]:
+                  content = await read_file(path)
+                  return [
+                      {
+                          "role": "user",
+                          "content": {
+                              "type": "resource",
+                              "resource": {
+                                  "uri": f"file://{path}",
+                                  "text": content
+                              }
+                          }
+                      }
+                  ]
+              ```
+
+
+- `read_resource(self, uri: 'AnyUrl | str', context: 'Context[LifespanResultT, Any] | None' = None) -> 'Iterable[ReadResourceContents] | InputRequiredResult'`
+  Read a resource by URI.
+
+  An `InputRequiredResult` returned by a resource template function is
+  passed through unchanged (the 2026-07-28 multi-round-trip flow); the
+  retry's answers arrive on `ctx.input_responses`, with
+  `ctx.request_state` carrying the echoed opaque state.
+
+  Raises:
+      ResourceNotFoundError: If no resource or template matches the URI.
+      ResourceError: If the resource or template function raises `ResourceError`.
+      UnexpectedResourceError: If reading the resource (or creating it from a
+          template) raises anything other than `ResourceError` or `MCPError`.
+          `__cause__` is the original exception.
+      MCPError: Raised by the resource or template function; passed through unchanged.
+
+- `remove_prompt(self, name: 'str') -> 'None'`
+  Remove a prompt from the server by name.
+
+  Args:
+      name: The name of the prompt to remove
+
+  Raises:
+      ValueError: If the prompt does not exist
+
+- `remove_tool(self, name: 'str') -> 'None'`
+  Remove a tool from the server by name.
+
+  Args:
+      name: The name of the tool to remove
+
+  Raises:
+      ToolError: If the tool does not exist
+
+- `resource(self, uri: 'str', *, name: 'str | None' = None, title: 'str | None' = None, description: 'str | None' = None, mime_type: 'str | None' = None, icons: 'list[Icon] | None' = None, annotations: 'Annotations | None' = None, meta: 'dict[str, Any] | None' = None, security: 'ResourceSecurity | None' = None) -> 'Callable[[_CallableT], _CallableT]'`
+  Decorator to register a function as a resource.
+
+  The function will be called when the resource is read to generate its content.
+  The function can return:
+  - str for text content
+  - bytes for binary content
+  - an InputRequiredResult (template resources only; passed through
+    unchanged for the 2026-07-28 multi-round-trip flow — read
+    `ctx.input_responses` on the retry)
+  - other types will be converted to JSON
+
+  If the URI contains parameters (e.g. "resource://{param}"), it is
+  registered as a template resource. Otherwise it is registered as a
+  static resource; function parameters on a static URI raise an error.
+
+  Args:
+      uri: URI for the resource (e.g. "resource://my-resource" or "resource://{param}")
+      name: Optional name for the resource
+      title: Optional human-readable title for the resource
+      description: Optional description of the resource
+      mime_type: Optional MIME type for the resource
+      icons: Optional list of icons for the resource
+      annotations: Optional annotations for the resource
+      meta: Optional metadata dictionary for the resource
+      security: Path-safety policy for extracted template parameters.
+          Defaults to the server's ``resource_security`` setting.
+          Only applies to template resources.
+
+  Example:
+      ```python
+      @server.resource("resource://my-resource")
+      def get_data() -> str:
+          return "Hello, world!"
+
+
+      @server.resource("resource://my-resource")
+      async def get_data() -> str:
+          data = await fetch_data()
+          return f"Hello, world! {data}"
+
+
+      @server.resource("resource://{city}/weather")
+      def get_weather(city: str) -> str:
+          return f"Weather for {city}"
+
+
+      @server.resource("resource://{city}/weather")
+      async def get_weather(city: str) -> str:
+          data = await fetch_weather(city)
+          return f"Weather for {city}: {data}"
+      ```
+
+  Raises:
+      InvalidUriTemplate: If ``uri`` is not a valid RFC 6570 template.
+      ValueError: If URI template parameters don't match the
+          function's parameters, or if a parameter bound to a
+          ``{?...}``/``{&...}`` query variable has no default
+          (the client may omit it).
+      TypeError: If the decorator is applied without being called
+          (``@resource`` instead of ``@resource("uri")``).
+
+- `run(self, transport: "Literal['stdio', 'sse', 'streamable-http']" = 'stdio', **kwargs: 'Any') -> 'None'`
+  Run the MCP server. Note this is a synchronous function.
+
+  Args:
+      transport: Transport protocol to use ("stdio", "sse", or "streamable-http")
+      **kwargs: Transport-specific options (see overloads for details)
+
+- `run_sse_async(self, *, host: 'str' = '127.0.0.1', port: 'int' = 8000, sse_path: 'str' = '/sse', message_path: 'str' = '/messages/', max_request_body_size: 'int' = 4194304, transport_security: 'TransportSecuritySettings | None' = None) -> 'None'`
+  Run the server using SSE transport.
+
+- `run_stdio_async(self) -> 'None'`
+  Run the server using stdio transport.
+
+- `run_streamable_http_async(self, *, host: 'str' = '127.0.0.1', port: 'int' = 8000, streamable_http_path: 'str' = '/mcp', json_response: 'bool' = False, stateless_http: 'bool' = False, event_store: 'EventStore | None' = None, retry_interval: 'int | None' = None, max_request_body_size: 'int' = 4194304, session_idle_timeout: 'float | None' = 1800, max_sessions: 'int | None' = 10000, transport_security: 'TransportSecuritySettings | None' = None) -> 'None'`
+  Run the server using StreamableHTTP transport.
+
+- `sse_app(self, *, sse_path: 'str' = '/sse', message_path: 'str' = '/messages/', max_request_body_size: 'int' = 4194304, transport_security: 'TransportSecuritySettings | None' = None, host: 'str' = '127.0.0.1') -> 'Starlette'`
+  Return an instance of the SSE server app.
+
+- `streamable_http_app(self, *, streamable_http_path: 'str' = '/mcp', json_response: 'bool' = False, stateless_http: 'bool' = False, event_store: 'EventStore | None' = None, retry_interval: 'int | None' = None, max_request_body_size: 'int' = 4194304, session_idle_timeout: 'float | None' = 1800, max_sessions: 'int | None' = 10000, transport_security: 'TransportSecuritySettings | None' = None, host: 'str' = '127.0.0.1') -> 'Starlette'`
+  Return an instance of the StreamableHTTP server app.
+
+- `tool(self, name: 'str | None' = None, title: 'str | None' = None, description: 'str | None' = None, annotations: 'ToolAnnotations | None' = None, icons: 'list[Icon] | None' = None, meta: 'dict[str, Any] | None' = None, structured_output: 'bool | None' = None) -> 'Callable[[_CallableT], _CallableT]'`
+  Decorator to register a tool.
+
+  Tools can optionally request a Context object by adding a parameter with the
+  Context type annotation. The context provides access to MCP capabilities like
+  logging, progress reporting, and resource access.
+
+  Args:
+      name: Optional name for the tool (defaults to function name)
+      title: Optional human-readable title for the tool
+      description: Optional description of what the tool does
+      annotations: Optional ToolAnnotations providing additional tool information
+      icons: Optional list of icons for the tool
+      meta: Optional metadata dictionary for the tool
+      structured_output: Controls whether the tool's output is structured or unstructured
+          - If None, auto-detects based on the function's return type annotation
+          - If True, creates a structured tool (return type annotation permitting)
+          - If False, unconditionally creates an unstructured tool
+
+  Example:
+      ```python
+      @server.tool()
+      def my_tool(x: int) -> str:
+          return str(x)
+      ```
+
+      ```python
+      @server.tool()
+      async def tool_with_context(x: int, ctx: Context) -> str:
+          await ctx.info(f"Processing {x}")
+          return str(x)
+      ```
+
+      ```python
+      @server.tool()
+      async def async_tool(x: int, context: Context) -> str:
+          await context.report_progress(50, 100)
+          return str(x)
+      ```
+
 
 ## Functions
 

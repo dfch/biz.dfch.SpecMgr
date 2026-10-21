@@ -19,6 +19,22 @@
 
 Requires the ``mcp`` extra (``pip install biz-dfch-specmgr[mcp]``).
 
+The server singleton is a ``SpecMgrServer`` (defined below) -- a thin
+``mcp.server.MCPServer`` subclass, not a plain ``MCPServer``: since ``mcp``
+v2.1.0 (upstream #3314) a tool handler's raised exception reaches the client
+wrapped as ``UnexpectedToolError("Error executing tool <name>")`` with the
+handler's own message swallowed, and this repo's documented tool contract is
+that the still-raising usage errors (the ``_path_safety`` invalid-id
+``ValueError``s, the whole-body domains' ``XNotFoundError``s,
+``create_feat``'s ``FileExistsError``, ...) surface to the caller as that
+message text. ``SpecMgrServer`` overrides only the public ``call_tool`` to
+re-raise ``UnexpectedToolError.__cause__`` (the original exception,
+``from None`` -- no doubled exception chain in the server log), which the
+SDK's own ``_handle_call_tool`` catch then stringifies into the
+``is_error=True`` result it returns -- the v2.0.0 wire shape minus the
+``Error executing tool <name>: `` prefix, uniform for every registered tool,
+no per-domain logic (feat-221-mcp-220-error-contract, Phase 100, REQ-002).
+
 Registers the following resources and tools so far:
 
 Resources
@@ -698,8 +714,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from mcp.server import MCPServer
+from mcp.server.mcpserver.context import Context
+from mcp.server.mcpserver.exceptions import UnexpectedToolError
+from mcp.types import CallToolResult, InputRequiredResult
 
 
 @asynccontextmanager
@@ -755,7 +775,67 @@ async def _lifespan(_server: MCPServer) -> AsyncGenerator[None, None]:
     yield
 
 
-mcp = MCPServer(
+class SpecMgrServer(MCPServer):
+    """``MCPServer`` preserving this repo's caller-visible tool error text.
+
+    Since ``mcp`` v2.1.0 (upstream #3314), a tool handler's raised exception
+    reaches the client wrapped as ``UnexpectedToolError("Error executing tool
+    <name>")`` -- the handler's own message is swallowed (it survives only in
+    ``__cause__`` and the server log). This repo's documented tool contract is
+    that the still-raising usage errors (the ``_path_safety`` invalid-id
+    ``ValueError``s, the whole-body domains' ``XNotFoundError``s,
+    ``create_feat``'s ``FileExistsError``, ...) surface to the caller as that
+    message text, so this subclass overrides only the public ``call_tool`` to
+    re-raise ``UnexpectedToolError.__cause__`` -- the original exception, which
+    the SDK always sets via ``raise ... from exc`` -- ``from None`` (no doubled
+    exception chain in the server log). The SDK's own ``_handle_call_tool``
+    catch then stringifies that original exception into the ``is_error=True``
+    ``CallToolResult`` it returns: the v2.0.0 wire shape minus the
+    ``Error executing tool <name>: `` prefix. The override is uniform for
+    every tool registered on this server (the ``adr`` domain's tools
+    included); it carries no per-domain logic.
+    (feat-221-mcp-220-error-contract, Phase 100, REQ-002.)
+    """
+
+    async def call_tool(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        context: Context[Any, Any] | None = None,
+    ) -> CallToolResult | InputRequiredResult:
+        """Call a registered tool, re-raising the handler's original exception.
+
+        Args:
+            name: The registered tool name.
+            arguments: The tool arguments (already validated by the SDK).
+            context: The request context; the SDK constructs one when omitted.
+
+        Returns:
+            The tool's ``CallToolResult`` (or ``InputRequiredResult``),
+            unchanged from ``super().call_tool``.
+
+        Raises:
+            The original handler exception, re-raised uniformly from the
+            wrapping ``UnexpectedToolError``'s ``__cause__`` -- whatever its
+            type, special-casing none. The still-raising families this repo
+            documents all surface to the caller as their original message
+            text: the ``_path_safety`` invalid-id ``ValueError``s, the
+            whole-body domains' ``XNotFoundError``s (``LookupError``
+            subclasses), ``create_feat``'s ``FileExistsError``, and the
+            ``parse_<d>`` tools' ``OSError`` family (absent/unreadable
+            paths). ``exc.__cause__`` is total -- the installed mcp SDK wraps
+            every handler crash with ``raise ... from exc`` (verified on
+            2.3.0) -- which is what the ``raising-non-exception`` inline
+            disable on the raise line documents.
+        """
+        try:
+            result = await super().call_tool(name, arguments, context)
+            return result
+        except UnexpectedToolError as exc:
+            raise exc.__cause__ from None  # pylint: disable=raising-non-exception  # __cause__ total, see docstring
+
+
+mcp = SpecMgrServer(
     name="specmgr",
     instructions="An artifact manager for system specifications.",
     lifespan=_lifespan,
