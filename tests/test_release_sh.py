@@ -29,6 +29,11 @@ a per-call sequence (a flip counter in the `run_<id>_flip`/`run_<id>_views`
 style) and its `pr close` branch fails with a recorded message/exit code
 when one is seeded.
 
+The release-notes stage additionally pins the 2026-10-22 revert of the
+release-name behaviour (SOP 98537416 Updates): the stage PATCHes the
+notes only (no `name=` field), treats a matching stored body as done
+regardless of the stored name, and rejects a second positional.
+
 `release.sh` is a bash file; each test sources its functions in a
 throwaway `bash -c` process (the file's `BASH_SOURCE` dispatch guard keeps
 a source from running `main`) and intercepts every `gh` call with a fake
@@ -109,6 +114,18 @@ case "$cmd" in
     esac
     ;;
   api)
+    case " $* " in
+      *" --method PATCH "*)
+        exit 0
+        ;;
+    esac
+    case "$*" in
+      *releases/tags/*)
+        [ -f "$S/release.json" ] || { echo "shim: missing fixture release.json" >&2; exit 3; }
+        cat "$S/release.json"
+        exit 0
+        ;;
+    esac
     pull=""
     for a in "$@"; do
       case "$a" in
@@ -125,6 +142,9 @@ case "$cmd" in
       if [ "$views" -le "$flip" ]; then f="$S/pull_${n}_stale"; else f="$S/pull_${n}_final"; fi
       if [ -f "$f" ]; then cat "$f"; else echo "open"; fi
     elif [ -f "$S/pull_${n}_state" ]; then cat "$S/pull_${n}_state"; else echo "open"; fi
+    ;;
+  auth)
+    exit 0
     ;;
   *)
     echo "shim: unsupported gh command: $cmd" >&2; exit 3
@@ -452,3 +472,87 @@ class ReleaseShGateTestCase(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("full resolved version.", result.stdout)
+
+
+class ReleaseShReleaseNotesTestCase(ReleaseShGateTestCase):
+    """Tests for `release.sh`'s release-notes stage (the 2026-10-22 revert of
+    the release-name behaviour: the notes are PATCHed only, the release name
+    is never sent or compared)."""
+
+    def _notes_repo(self, body: str, name: str = "v0.9.9") -> Path:
+        """A fixture repo whose CHANGELOG.md carries a dated 0.9.9 section;
+        seed the fake release with `body`/`name` and two assets."""
+        repo, _ = self.make_repo()
+        (repo / "CHANGELOG.md").write_text(
+            "# Changelog\n"
+            "\n"
+            "## [Unreleased]\n"
+            "\n"
+            "### Added\n"
+            "\n"
+            "- a later change\n"
+            "\n"
+            "## [0.9.9] - 2026-01-01\n"
+            "\n"
+            "### Added\n"
+            "\n"
+            "- a change\n"
+        )
+        _git(["add", "."], repo)
+        _git(["-c", "user.email=test@test", "-c", "user.name=test", "commit", "-m", "c2"], repo)
+        self.write_state(
+            "release.json",
+            json.dumps(
+                {
+                    "id": 123,
+                    "html_url": "https://example.com/release",
+                    "name": name,
+                    "body": body,
+                    "assets": [{"name": "pkg.tar.gz"}, {"name": "pkg.whl"}],
+                }
+            ),
+        )
+        return repo
+
+    def _patch_calls(self) -> list[str]:
+        """The logged `gh api --method PATCH` calls (empty when none happened)."""
+        if not (self.state / "gh_calls.log").exists():
+            return []
+        return [line for line in (self.state / "gh_calls.log").read_text().splitlines() if "--method PATCH" in line]
+
+    def test_release_notes_patches_body_only(self) -> None:
+        """A not-yet-set body triggers exactly one PATCH carrying `body=@` and
+        never a `name=` field."""
+        repo = self._notes_repo(body="")
+        result = self.run_release("stage_release_notes 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("release v0.9.9 complete", result.stdout)
+        calls = self._patch_calls()
+        self.assertEqual(len(calls), 1)
+        self.assertIn("body=@", calls[0])
+        self.assertNotIn("name=", calls[0])
+
+    def test_release_notes_already_set_ignores_stored_name(self) -> None:
+        """A matching stored body means "already set" even when the stored name
+        is a decorated `vX.Y.Z - <text>` headline — the name is not part of the
+        stage's contract (revert 2026-10-22)."""
+        repo = self._notes_repo(body="### Added\n\n- a change", name="v0.9.9 - a headline")
+        result = self.run_release("stage_release_notes 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("already set — nothing to do", result.stdout)
+        self.assertEqual(self._patch_calls(), [])
+
+    def test_release_notes_rejects_second_positional(self) -> None:
+        """A name-text positional is no longer accepted: the generic
+        second-argument guard dies before any file access."""
+        result = subprocess.run(
+            ["bash", str(RELEASE_SH), "release-notes", "0.9.9", "some text"],
+            capture_output=True,
+            text=True,
+            env=_clean_git_env(),
+        )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("unexpected argument 'some text'", result.stderr)

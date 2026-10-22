@@ -1,9 +1,10 @@
 ---
+classification: null
 created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-16 07:14:44.000Z'
+updated: '2026-10-22T18:57:43.004+02:00'
 version: 1.0.0
 ---
 
@@ -28,8 +29,8 @@ curating the `CHANGELOG.md` `[Unreleased]` section; bumping the version in
 to `dev`; merging `dev` into `main` through a fast-forward-only pull
 request; creating and pushing the `vX.Y.Z` tag on `main`; waiting for the
 four publication jobs of `.github/workflows/publish.yml`; and setting the
-GitHub Release name and notes (the name is derived from the dated
-changelog section; see Step 9).
+GitHub Release notes (the release name stays the bare version string
+`vX.Y.Z` that the Step 8 publication workflow sets; see Step 9).
 
 It does not cover: deciding whether the changes warrant a patch, minor, or
 major version (a maintainer decision made before this SOP is invoked); the
@@ -62,14 +63,13 @@ point.
 - **Release commit**: the single commit on `dev` touching exactly three
   files — `pyproject.toml`, `uv.lock`, `CHANGELOG.md` — with the message
   `chore(release): bump version to vX.Y.Z`.
-- **Release name**: the title of the GitHub Release, of the form
-  `vX.Y.Z - <text>`: the release's version (always matching the tag),
-  a space-dash-space, and a concise title-case headline (a few words)
-  naming the dated changelog section's most significant user-visible
-  change, derived from the section's content. When a section has no
-  single dominant change, the text is a short compound of its two main
-  changes. The `release-notes` stage composes the version prefix; the
-  agent supplies the text (Step 9).
+- **Release name**: the title of the GitHub Release — the bare version
+  string `vX.Y.Z`, matching the tag, set by the publication workflow's
+  "Make GitHub Release" job (Step 8) and never modified by the
+  procedure. Releases v0.16.0–v0.37.0 carry a changelog-derived
+  headline of the form `vX.Y.Z - <text>` instead; that behaviour was
+  introduced 2026-09-01 and reverted 2026-10-22 (see Updates), and the
+  revert applies only to newer releases.
 - **Fast-forward invariant**: `main` is always an ancestor of `dev`, i.e.
   `main` carries no unique commits. The invariant is what makes the
   `dev` → `main` merge possible in fast-forward-only form, and it must
@@ -308,8 +308,8 @@ publication run triggered by the tag — the workflow *file* is
 "Publish to PyPI", and the script locates the run by that name plus the
 tag's commit SHA, since `gh run list --workflow` filters by name —
 *Publish to TestPyPI* → *Publish to PyPI* → *Make GitHub Release*
-(creates the release with the bare version as its name — Step 9
-replaces it — and attaches the sdist and wheel) → *Publish to MCP
+(creates the release with the bare version as its name — the name the
+procedure keeps — and attaches the sdist and wheel) → *Publish to MCP
 Registry* (updates `server.json`'s version and publishes via OIDC) —
 polling every 30 s until all four jobs complete.
 
@@ -320,25 +320,21 @@ Any failed job stops the release: report the run URL, diagnose from its
 logs, and escalate to the maintainer. The tag already exists, so the
 remedy is never re-tagging — it is a fix plus a new, higher version.
 
-### Step 9: Verify the publication and finalize the release name and notes
+### Step 9: Verify the publication and finalize the release notes
 
-**Automated:** first, the agent (not the script) derives the release
-name *text* from the new dated changelog section's content, per the
-`Release name` definition: a concise title-case headline naming the
-section's most significant user-visible change. Then
-`scripts/release.sh release-notes <X.Y.Z> <text>` verifies the GitHub
-Release exists with both artifacts (sdist and wheel), sets the release
-name — composed by the stage as `v<X.Y.Z> - <text>` — and the release
-notes to the section's content (through `gh api` — this environment's
-`gh` has no `gh release edit`), and prints the final summary: version,
-tag, GitHub Release URL, PyPI and TestPyPI project URLs, and the MCP
-Registry listing.
+**Automated:** `scripts/release.sh release-notes <X.Y.Z>` verifies the
+GitHub Release exists with both artifacts (sdist and wheel) and sets
+the release notes to the section's content (through `gh api` — this
+environment's `gh` has no `gh release edit`); the release name is left
+as the bare version string set by the Step 8 workflow (the
+`v<X.Y.Z> - <text>` name-text derivation that used to live here was
+reverted 2026-10-22, see Updates). The stage prints the final summary:
+version, tag, GitHub Release URL, PyPI and TestPyPI project URLs, and
+the MCP Registry listing.
 
-**Manual fallback:** derive the release name text from the dated
-changelog section's content as above; open the GitHub Release, confirm
-both assets are attached, set its title to `vX.Y.Z - <text>` (version
-matching the tag, space-dash-space, text), and paste the new changelog
-section into the release body.
+**Manual fallback:** open the GitHub Release, confirm both assets are
+attached, and paste the new changelog section into the release body —
+leaving its title as the bare version string `vX.Y.Z`.
 
 The release is complete when all four publication targets are reachable
 and the maintainer is informed.
@@ -383,6 +379,28 @@ directly against the local checkout.
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-10-22 18:56:02.000+02:00 - Release name behaviour reverted: releases carry the bare version again
+
+The maintainer decided that a new release carries only the version
+number as its GitHub Release title (e.g. `v0.38.0`), reverting the
+`vX.Y.Z - <text>` name-text behaviour introduced 2026-09-01 (the two
+Updates entries dated that day). Surfaces changed: the
+`release-notes` stage of `scripts/release.sh` no longer takes a
+name-text positional (a second positional is now rejected like any
+other stage argument), no longer composes or sends a release name (it
+PATCHes the notes only), and its idempotency check compares the stored
+body alone, ignoring the stored name; the `/release` command no longer
+derives or passes name text (and no longer lists a release name in its
+success summary); and this SOP's Scope, `Release name` definition,
+Step 8, and Step 9 were updated accordingly — Step 9 no longer has an
+agent-judgment part. The release name is whatever the publication
+workflow's "Make GitHub Release" job sets — the bare version string
+via `gh release create --title "${VERSION}"` — and the procedure never
+modifies it. Existing releases (v0.16.0–v0.37.0) keep their names; the
+revert applies only to newer releases. `tests/test_release_sh.py`
+pins the body-only PATCH, the name-blind "already set" check, and the
+2nd-positional rejection.
 
 ### 2026-10-15 14:29:18.000+02:00 - v0.36.0 released under this SOP; the pr-merge already-merged close race recurred (issue #213) and close_pr_if_open was hardened
 
