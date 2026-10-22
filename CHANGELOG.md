@@ -7,8 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-10-22
+
+### Added
+
+- The 12 `get_<d>_schema` MCP tools (one per whole-body domain: req/uc/tsk/
+  qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs), replacing the former 12
+  `specmgr://<domain>/schema` resources: each returns the domain's generated
+  JSON schema with a usage-oriented description (the parsed-JSON view,
+  pointing at the one-hop `get_<d>_template`/`get_<d>_example` tools), so an
+  agent no longer has to know to read a resource to discover a domain's
+  structure; the deliberate absence of a `specmgr://adr/schema` counterpart
+  is documented in the `create_adr` tool description (the tool's own typed
+  input parameters are the ADR structure reference) (ADR 112b6498,
+  feat-189-reduce-agent-round-trips, GitHub issue #189).
+- An env-gated golden parser sweep (every reference-graph golden through
+  `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
+  node-title render proof) and a new `plantuml-parser` CI job (pinned Python
+  3.13.13) that downloads the pinned PlantUML 1.2026.8 release jar (pinned
+  URL + SHA-256, hash-verified before use) and runs the full suite with
+  `pytest -n auto -rs` — the env-gated real-parser tests (incl. the
+  reference-graph subset gate and the golden sweep) now execute and pass on
+  the commit path instead of skipping (feat-214-rel-invalid-diag, GitHub
+  issue #214).
+- The `specmgr-refs` skill's diagram workflow now requests `reverse` for
+  every SCOPED diagram (MCP `reverse=True` / CLI `--reverse`) and states the
+  O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
+  stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
+
 ### Changed
 
+- The markdown artifacts a create agent fetches in one hop now carry the
+  closed-form guidance the agents previously failed on: the prb template and
+  example both state the mandatory lead-sentence bracketed frame verbatim,
+  the tsk template no longer induces task-text rewrites, and the req/rsk/qa
+  templates name their closed sets in template comments as does the vcr
+  coverage set; all 12 create and 12 update instruction files now reference
+  the one-hop `get_<d>_template`/`get_<d>_example` tools and make the schema
+  fetch conditional (on whole-body or structural changes for updates), and
+  the agent-facing metadata (the 12 `create_<d>` tool descriptions, the
+  generic `update` and `validate` tool descriptions, and the 24 create/
+  update prompt descriptions) names the structure reference without
+  prescribing a fetch -- a fresh-agent re-run of the feat-128 methodology
+  met all three round-trip targets (T1 create-without-prompt first-try
+  success at <=5 calls, T2 create-with-prompt <=7 calls with no timeouts,
+  T3 update at or below the baseline call count) with zero schema fetches
+  (feat-189-reduce-agent-round-trips, GitHub issue #189).
+- The 12 generated domain schemas now carry the closed sets as
+  machine-readable `json_schema_extra` metadata (enum/pattern) with zero
+  change to parse/validation behavior; the metadata is wire-inert by
+  construction -- no `enum` on object-typed schema nodes, because the MCP
+  SDK validates every tool's `structuredContent` against the generated
+  schema and an object instance can never satisfy a string `enum` -- and the
+  11 object-node enums an earlier phase emitted were removed with the
+  closed-set facts retained in the field/class descriptions, pinned by the
+  new 12-domain output-schema satisfiability test
+  (feat-189-reduce-agent-round-trips, GitHub issue #189).
 - Removed the inert (fully commented-out, no-op)
   `validate_heading_structure`/`validate_headings` Pydantic
   `model_validator`s from `models/md`'s `MarkdownSection`/
@@ -21,6 +75,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `MarkdownSection.get_extent`'s stop condition plus
   `MarkdownStr.from_text`'s trailing-completeness check
   (feat-129-remove-inert-heading-validators, GitHub issue #129).
+- The MCP server singleton (`server.py`) is now a thin
+  `SpecMgrServer(MCPServer)` subclass overriding only the public
+  `call_tool`, which re-raises `UnexpectedToolError.__cause__` (the
+  original handler exception, `from None`): since `mcp` v2.1.0 (upstream
+  #3314) a tool handler's raised exception reached the client wrapped as
+  `UnexpectedToolError("Error executing tool <name>")` with the handler's
+  own message swallowed, while this repo's documented tool contract is
+  that the still-raising usage errors (the `_path_safety` invalid-id
+  `ValueError`s, the whole-body domains' `XNotFoundError`s,
+  `create_feat`'s `FileExistsError`, ...) surface to the caller as that
+  message text. The SDK's own `_handle_call_tool` catch then stringifies
+  the re-raised original into the `is_error=True` result -- the v2.0.0
+  wire shape minus the `Error executing tool <name>: ` prefix, uniform
+  for every registered tool, no per-domain logic. The behavioral guard
+  for future 2.x bumps is the new in-process wire-level regression
+  `tests/test_mcp_error_contract.py` (4 tests over anyio memory streams:
+  malformed id -> original `ValueError` text, well-formed-but-absent id
+  -> the domain's not-found text, healthy call -> unchanged success
+  shape), not the locked version number (ADR 80305c52,
+  feat-221-mcp-220-error-contract, GitHub issue #221).
+- The `specmgr docs` generator now ruff-formats the embedded code blocks
+  of its own generated markdown (the per-module `api/*.md` pages, the
+  `api/README.md` index, and `GENERATED.md`; prose stays byte-identical)
+  as one in-place `ruff format` pass over all the written files, after
+  the writes -- closing the pre-commit `ruff-format` vs `specmgr-docs`
+  byte-identity loop for any module docstring that embeds ruff-not-clean
+  code. When ruff is unavailable (the `test` extra is not in published
+  `[cli]`/`[mcp]`-only installs) one warning goes to stderr and the pass
+  is skipped (the files stay as written), so the command never fails
+  (the `similarity` extra's availability-decided-at-call-time precedent);
+  a non-zero ruff exit likewise degrades to one warning (naming ruff and
+  the exit code) with the command still succeeding and the files left as
+  ruff left them; pinned by `TestDocsRuffFormat` in `tests/commands/
+  test_docs.py` (feat-221-mcp-220-error-contract, GitHub issue #221).
+
+### Removed
+
+- The 12 `specmgr://<domain>/schema` MCP resources (req/uc/tsk/qa/prb/
+  gol/rsk/dec/sop/feat/vcr/sysrs), superseded by the `get_<d>_schema`
+  tools (see Added) (ADR 112b6498, feat-189-reduce-agent-round-trips,
+  GitHub issue #189).
 
 ### Fixed
 
@@ -64,59 +159,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   site), each variant naming the curly-brace group form; `package`
   fragments holding sequence content (the UC subset) are unaffected
   (feat-214-rel-invalid-diag, GitHub issue #214).
-
-### Added
-
-- An env-gated golden parser sweep (every reference-graph golden through
-  `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
-  node-title render proof) and a new `plantuml-parser` CI job (pinned Python
-  3.13.13) that downloads the pinned PlantUML 1.2026.8 release jar (pinned
-  URL + SHA-256, hash-verified before use) and runs the full suite with
-  `pytest -n auto -rs` — the env-gated real-parser tests (incl. the
-  reference-graph subset gate and the golden sweep) now execute and pass on
-  the commit path instead of skipping (feat-214-rel-invalid-diag, GitHub
-  issue #214).
-- The `specmgr-refs` skill's diagram workflow now requests `reverse` for
-  every SCOPED diagram (MCP `reverse=True` / CLI `--reverse`) and states the
-  O(registry-size) 13-domain scan cost; the builder/tool/CLI API defaults
-  stay `reverse=False` (feat-214-rel-invalid-diag, GitHub issue #214).
-
-### Changed
-
-- The MCP server singleton (`server.py`) is now a thin
-  `SpecMgrServer(MCPServer)` subclass overriding only the public
-  `call_tool`, which re-raises `UnexpectedToolError.__cause__` (the
-  original handler exception, `from None`): since `mcp` v2.1.0 (upstream
-  #3314) a tool handler's raised exception reached the client wrapped as
-  `UnexpectedToolError("Error executing tool <name>")` with the handler's
-  own message swallowed, while this repo's documented tool contract is
-  that the still-raising usage errors (the `_path_safety` invalid-id
-  `ValueError`s, the whole-body domains' `XNotFoundError`s,
-  `create_feat`'s `FileExistsError`, ...) surface to the caller as that
-  message text. The SDK's own `_handle_call_tool` catch then stringifies
-  the re-raised original into the `is_error=True` result -- the v2.0.0
-  wire shape minus the `Error executing tool <name>: ` prefix, uniform
-  for every registered tool, no per-domain logic. The behavioral guard
-  for future 2.x bumps is the new in-process wire-level regression
-  `tests/test_mcp_error_contract.py` (4 tests over anyio memory streams:
-  malformed id -> original `ValueError` text, well-formed-but-absent id
-  -> the domain's not-found text, healthy call -> unchanged success
-  shape), not the locked version number (ADR 80305c52,
-  feat-221-mcp-220-error-contract, GitHub issue #221).
-- The `specmgr docs` generator now ruff-formats the embedded code blocks
-  of its own generated markdown (the per-module `api/*.md` pages, the
-  `api/README.md` index, and `GENERATED.md`; prose stays byte-identical)
-  as one in-place `ruff format` pass over all the written files, after
-  the writes -- closing the pre-commit `ruff-format` vs `specmgr-docs`
-  byte-identity loop for any module docstring that embeds ruff-not-clean
-  code. When ruff is unavailable (the `test` extra is not in published
-  `[cli]`/`[mcp]`-only installs) one warning goes to stderr and the pass
-  is skipped (the files stay as written), so the command never fails
-  (the `similarity` extra's availability-decided-at-call-time precedent);
-  a non-zero ruff exit likewise degrades to one warning (naming ruff and
-  the exit code) with the command still succeeding and the files left as
-  ruff left them; pinned by `TestDocsRuffFormat` in `tests/commands/
-  test_docs.py` (feat-221-mcp-220-error-contract, GitHub issue #221).
 
 ### Security
 
