@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-17T08:55:17.578+02:00'
 id: feat-129-remove-inert-heading-validators
-status: review
+status: done
 type: feat
-updated: '2026-10-19T07:16:34.047+02:00'
+updated: '2026-10-23T09:38:50.863+02:00'
 version: 1.0.0
 ---
 
@@ -123,11 +123,15 @@ This feature intentionally has no `Depends On`/`Blocks` relationships beyond the
 
 ### Current Status
 
-**As of 2026-10-18**: Implementation complete -- all phases (100/105/110/120/130/135/140) closed, and all acceptance criteria verified with concrete evidence in the 2026-10-18T21:17 Phase 140 entry: the full suite passed (4668 passed, 17 skipped -- identical counts to every prior phase's baseline, no regressions, ACC-008), the 12-domain packaged-example round-trip spot-check (Task 140.110, REQ-009) PASSed 7 domains with the 5 failing domains (req/uc/dec/sop/vcr) proven pre-existing via byte-identical behavior at the pre-implementation base `3b746d4`, and every ACC grep/lint gate was clean (zero residual `validate_heading*`/`validate_and_convert_text`/`model_validator_after` matches in `src/`/`tests/`/`whitelist.py`/`docs/api/`, ruff format/check + vulture all green, CHANGELOG `[Unreleased]` entry in place, ADR v1.6.0 revision line present). The post-implementation review findings G-1/D-1/D-2/I-1 were applied and D-3/I-2 deferred (see the 2026-10-18T22:49 Updates entry). The second review round (2026-10-19T07:14) was a clean pass -- zero errors/gaps/discrepancies, no new changes required, PR #220 CI-green. Awaiting review.
+**As of 2026-10-23**: Implementation complete -- all phases (100/105/110/120/130/135/140) closed, and all acceptance criteria verified with concrete evidence in the 2026-10-18T21:17 Phase 140 entry: the full suite passed (4668 passed, 17 skipped -- identical counts to every prior phase's baseline, no regressions, ACC-008), the 12-domain packaged-example round-trip spot-check (Task 140.110, REQ-009) PASSed 7 domains with the 5 failing domains (req/uc/dec/sop/vcr) proven pre-existing via byte-identical behavior at the pre-implementation base `3b746d4`, and every ACC grep/lint gate was clean (zero residual `validate_heading*`/`validate_and_convert_text`/`model_validator_after` matches in `src/`/`tests/`/`whitelist.py`/`docs/api/`, ruff format/check + vulture all green, CHANGELOG `[Unreleased]` entry in place, ADR v1.6.0 revision line present). The post-implementation review findings G-1/D-1/D-2/I-1 were applied and D-3/I-2 deferred (see the 2026-10-18T22:49 Updates entry). The second review round (2026-10-19T07:14) was a clean pass -- zero errors/gaps/discrepancies, no new changes required, PR #220 CI-green, and merged into dev on 2026-10-19 (squash commit daa0e02); GitHub issue #129 was closed by the merge. The frontmatter status is now done (set 2026-10-23, this entry). Nothing pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-23T09:38:50.863+02:00 - Finalization: status set to done
+
+PR #220 (branch `feat-129-remove-inert-heading-validators` against `dev`) merged 2026-10-19T07:29:18+02:00 (squash commit daa0e02 `feat-129: Remove the inert validate_heading_structure/validate_headings heading validators (models/md) (#129) (#220)`); GitHub issue #129 was closed by the merge at 2026-10-19T05:29:20Z. All implementation phases (100/105/110/120/130/135/140) are complete, ACC-001 through ACC-011 are ticked, and the two feat-reviewer rounds landed clean (the 2026-10-19T07:14 second round: zero errors/gaps/discrepancies, no new changes required). Quality gate green at merge: full suite 4668 passed / 17 skipped, `ruff format --check` / `ruff check` / `vulture` clean, the CHANGELOG `[Unreleased]` entry and the ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.6.0 dated revision in place. The frontmatter `status` is set from `review` to `done` in this entry. Nothing pending.
 
 #### 2026-10-19T07:14:00.000+02:00 - Second post-implementation review round (feat-reviewer): clean pass, no new changes required
 
