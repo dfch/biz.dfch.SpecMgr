@@ -4,7 +4,7 @@ created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
 status: planning
 type: feat
-updated: '2026-10-24T12:56:48.000+02:00'
+updated: '2026-10-24T13:08:55.000+02:00'
 version: 1.0.0
 ---
 
@@ -54,9 +54,9 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 #### Phase 100: certifi bump (standalone PR)
 
-- [ ] Task 100.100: Run `uv lock --upgrade-package certifi` and confirm the lock lands on a certifi release ≥ 2026.10.19 (snapshot latest: 2026.10.23) with nothing else moved.
-- [ ] Task 100.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, and `uv run --frozen pytest -n auto --cov=src --cov-report=`.
-- [ ] Task 100.120: The orchestrator commits `chore(deps): bump certifi` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that alert 29's closure is expected on merge + Dependabot re-scan (Dependabot re-scans on its own schedule after a branch update).
+- [x] Task 100.100: Run `uv lock --upgrade-package certifi` and confirm the lock lands on a certifi release ≥ 2026.10.19 (snapshot latest: 2026.10.23) with nothing else moved.
+- [x] Task 100.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, and `uv run --frozen pytest -n auto --cov=src --cov-report=`.
+- [x] Task 100.120: The orchestrator commits `chore(deps): bump certifi` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that alert 29's closure is expected on merge + Dependabot re-scan (Dependabot re-scans on its own schedule after a branch update).
 
 #### Phase 105: virtualenv / filelock / opentelemetry-api bump (lock-only)
 
@@ -79,7 +79,7 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 ### Current Status
 
-**As of 2026-10-24**: In progress (plan amended for the 06:04Z re-scan cohort — 62 open alerts). Phases 100 and 105 are ready to execute; Phase 110 remains blocked on qdrant/fastembed#830 (re-verified open/unmerged 2026-10-24); Phase 120 follows.
+**As of 2026-10-24**: Phase 100 (certifi) complete — lock resolved certifi 2026.10.23, full gate green (uv sync --frozen --all-extras, ruff format/check, full default pytest suite). Orchestrator commit `chore(deps): bump certifi` follows (uv.lock + this README); alert 29's closure is expected on merge + Dependabot re-scan. Phase 105 is next; Phase 110 remains blocked on qdrant/fastembed#830 (open/unmerged as of 2026-10-24); Phase 120 follows.
 
 ### Blockers
 
@@ -89,6 +89,10 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T11:08:55.000Z - Phase 100 complete: certifi 2026.7.22 → 2026.10.23 (lock-only)
+
+Phase 100 executed. Task 100.100: `uv lock --upgrade-package certifi` landed certifi at 2026.10.23 (≥ 2026.10.19 per REQ-001; exactly the snapshot's latest release), and the lock diff is confined to the certifi `[[package]]` entry — version + sdist/wheel metadata (`git diff --stat uv.lock`: `uv.lock | 6 +++---`, 1 file changed, 3 insertions(+), 3 deletions(-); no other package moved). Task 100.110: full gate green — `uv sync --frozen --all-extras` exit 0 ("Checked 110 packages", certifi 2026.10.23 installed), `uv run --frozen ruff format --check` exit 0 ("2113 files already formatted"), `uv run --frozen ruff check` exit 0 ("All checks passed!"), `uv run --frozen pytest -n auto --cov=src --cov-report=` exit 0 ("4759 passed, 18 skipped in 48.87s"). Per the workflow override (Decisions Made, 2026-10-24T10:56:48.000Z), the orchestrator commits this phase as `chore(deps): bump certifi` (uv.lock + this README, one local Conventional Commit, no push); alert 29 (certifi, GHSA-6q48-6c7w-9gw2) is expected to close on merge + Dependabot re-scan.
 
 #### 2026-10-24T10:56:48.000Z - Plan amended: scope expansion for the 06:04Z re-scan cohort (user-approved)
 
