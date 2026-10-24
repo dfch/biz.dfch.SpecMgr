@@ -829,3 +829,382 @@ class ReleaseShCloseoutGateTestCase(ReleaseShGateTestCase):
         self.assertIn("feat-15-first-release", result.stderr)
         self.assertIn("PR #66", result.stderr)
         self.assertIn(shas["in_window"], result.stderr)
+
+
+class ReleaseShBranchCleanupTestCase(ReleaseShCloseoutGateTestCase):
+    """Tests for `release.sh`'s previous-release branch cleanup in
+    `stage_precheck` (feat-233 Phase 110): full `stage_precheck 0.9.9`
+    runs over the closeout gate's fixture repo (the gate stays quiet via
+    feats=[]), with feat-*/fix/* branches created after the repo build
+    (`git branch <n> <sha>`, `git push origin <sha>:refs/heads/<n>`,
+    `git worktree add` — never switching off dev) and merged-PR fixtures
+    proving each branch's delivery."""
+
+    def make_stale_commit(self, repo: Path, shas: dict[str, str]) -> str:
+        """A side commit D on top of A (the previous-release commit) that is
+        NOT an ancestor of dev head C — built with `commit-tree` so dev stays
+        checked out. D stands in for the squash-merge head rewrite: a branch
+        at D is not merged into dev, so `git branch -d` refuses it and the
+        cleanup's `-D` fallback must perform the deletion."""
+        tree_a = _git(["rev-parse", f"{shas['previous']}^{{tree}}"], repo)
+        return _git(
+            [
+                "-c",
+                "user.email=test@test",
+                "-c",
+                "user.name=test",
+                "commit-tree",
+                tree_a,
+                "-p",
+                shas["previous"],
+                "-m",
+                "c4-stale",
+            ],
+            repo,
+        )
+
+    def make_stale_branch(self, repo: Path, shas: dict[str, str], name: str = "feat-stale") -> str:
+        """A local branch `name` at a fresh stale commit D; returns D's sha."""
+        sha_d = self.make_stale_commit(repo, shas)
+        _git(["branch", name, sha_d], repo)
+        return sha_d
+
+    def push_branch(self, repo: Path, sha: str, name: str) -> None:
+        """Publish branch ref `name` at `sha` on the bare origin without checking it out."""
+        _git(["push", "origin", f"{sha}:refs/heads/{name}"], repo)
+
+    def assert_local_ref_gone(self, repo: Path, name: str) -> None:
+        """`refs/heads/<name>` must no longer resolve locally."""
+        result = subprocess.run(
+            ["git", "rev-parse", "--verify", f"refs/heads/{name}"],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            env=_clean_git_env(),
+        )
+        assert result.returncode != 0, result.stdout
+
+    def assert_local_ref_present(self, repo: Path, name: str) -> str:
+        """`refs/heads/<name>` must still resolve locally; returns its sha."""
+        return _git(["rev-parse", "--verify", f"refs/heads/{name}"], repo)
+
+    def remote_ref(self, repo: Path, name: str) -> str:
+        """The origin-side sha of branch `name` ('' when the ref does not exist)."""
+        out = _git(["ls-remote", "origin", f"refs/heads/{name}"], repo)
+        return out.splitlines()[0].split()[0] if out else ""
+
+    def proof_suffix(self, pr: int, sha: str) -> str:
+        """The `proven stale by PR #<pr>, delivery <sha12> ≤ v0.9.8` report suffix."""
+        return f"proven stale by PR #{pr}, delivery {sha[:12]} ≤ v0.9.8"
+
+    def cleanup_lines(self, result: subprocess.CompletedProcess[str], name: str) -> list[str]:
+        """The cleanup report lines naming branch `name` (`release: ` prefix stripped)."""
+        return [
+            line.removeprefix("release: ") for line in result.stdout.splitlines() if f"branch cleanup: {name}" in line
+        ]
+
+    def test_precheck_cleanup_deletes_stale_both_sides(self) -> None:
+        """ACC-004: a local and origin feat-* branch (matching tips) whose
+        delivery commit is an ancestor of vPrev is deleted on both sides:
+        the local side via the -D fallback (git branch -d refuses the
+        squash-merged head) and the origin side via git push origin
+        --delete, both lines proven by the merged PR."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: feat-stale: deleted local ref (git branch -D — -d refused the squash-merged head; {self.proof_suffix(42, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn(
+            f"branch cleanup: feat-stale: deleted origin ref (git push origin --delete; {self.proof_suffix(42, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn("branch cleanup: 1 branch(es) deleted, 0 kept/skipped", result.stdout)
+        self.assert_local_ref_gone(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), "")
+
+    def test_precheck_cleanup_deletes_stale_local_only(self) -> None:
+        """REQ-004: a stale branch present ONLY locally is deleted on the
+        local side alone, reported one-side, and the origin ref (never
+        there) stays absent."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale-local", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        self.make_stale_branch(repo, shas, name="feat-stale-local")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: feat-stale-local: deleted local ref (local side only; git branch -D — -d refused the "
+            f"squash-merged head; {self.proof_suffix(42, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertNotIn("deleted origin ref", result.stdout)
+        self.assertIn("branch cleanup: 1 branch(es) deleted, 0 kept/skipped", result.stdout)
+        self.assert_local_ref_gone(repo, "feat-stale-local")
+        self.assertEqual(self.remote_ref(repo, "feat-stale-local"), "")
+
+    def test_precheck_cleanup_deletes_stale_origin_only(self) -> None:
+        """REQ-004: a stale branch present ONLY on origin is deleted there
+        alone (git push origin --delete), reported one-side, and no local
+        ref is created or removed."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(43, "feat-stale-origin", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_commit(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale-origin")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: feat-stale-origin: deleted origin ref (origin side only; git push origin --delete; "
+            f"{self.proof_suffix(43, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertNotIn("deleted local ref", result.stdout)
+        self.assertIn("branch cleanup: 1 branch(es) deleted, 0 kept/skipped", result.stdout)
+        self.assert_local_ref_gone(repo, "feat-stale-origin")
+        self.assertEqual(self.remote_ref(repo, "feat-stale-origin"), "")
+
+    def test_precheck_cleanup_guard_a_worktree_checked_out(self) -> None:
+        """ACC-005 (guard a): a worktree-checked-out branch is skipped with
+        exactly one guard-a line even though it ALSO carries a stale merged
+        PR (first-guard-wins: guard a beats the would-be deletion)."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+        _git(["worktree", "add", str(self.tmp / "wt-feat-stale"), "feat-stale"], repo)
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.cleanup_lines(result, "feat-stale"),
+            ["branch cleanup: feat-stale: skipped (guard a: checked out in a worktree)"],
+        )
+        self.assert_local_ref_present(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), sha_d)
+
+    def test_precheck_cleanup_guard_b_no_merged_pr(self) -> None:
+        """ACC-005 (guard b): a stale-looking branch with NO merged PR for
+        its head ref is kept (in-flight/abandoned, manual decision) with
+        exactly one guard-b line; both refs stay intact."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed()
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.cleanup_lines(result, "feat-stale"),
+            ["branch cleanup: feat-stale: kept (guard b: no merged PR for head ref feat-stale)"],
+        )
+        self.assert_local_ref_present(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), sha_d)
+
+    def test_precheck_cleanup_guard_c_in_window_delivery(self) -> None:
+        """ACC-005 (guard c): a branch whose delivery is inside vPrev..HEAD
+        (this release) is kept with exactly one guard-c line; it becomes
+        deletable at the NEXT release's precheck."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(44, "feat-in-window", "2026-10-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+        _git(["branch", "feat-in-window", shas["in_window"]], repo)
+        self.push_branch(repo, shas["in_window"], "feat-in-window")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.cleanup_lines(result, "feat-in-window"),
+            [
+                f"branch cleanup: feat-in-window: kept (guard c: delivery {shas['in_window'][:12]} is inside the "
+                "current release window v0.9.8..HEAD)"
+            ],
+        )
+        self.assert_local_ref_present(repo, "feat-in-window")
+        self.assertEqual(self.remote_ref(repo, "feat-in-window"), shas["in_window"])
+
+    def test_precheck_cleanup_guard_d_tips_differ(self) -> None:
+        """ACC-005 (guard d): a branch present on both sides with local tip
+        != origin tip is skipped on both sides (manual decision) with
+        exactly one guard-d line, even though its PR delivery is stale."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(45, "feat-tips", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        tree_a = _git(["rev-parse", f"{shas['previous']}^{{tree}}"], repo)
+        sha_d1 = _git(
+            [
+                "-c",
+                "user.email=test@test",
+                "-c",
+                "user.name=test",
+                "commit-tree",
+                tree_a,
+                "-p",
+                shas["previous"],
+                "-m",
+                "c4-local",
+            ],
+            repo,
+        )
+        sha_d2 = _git(
+            [
+                "-c",
+                "user.email=test@test",
+                "-c",
+                "user.name=test",
+                "commit-tree",
+                tree_a,
+                "-p",
+                shas["previous"],
+                "-m",
+                "c4-origin",
+            ],
+            repo,
+        )
+        _git(["branch", "feat-tips", sha_d1], repo)
+        self.push_branch(repo, sha_d2, "feat-tips")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.cleanup_lines(result, "feat-tips"),
+            [
+                f"branch cleanup: feat-tips: skipped (guard d: local tip {sha_d1[:12]} != origin tip {sha_d2[:12]} — manual decision)"
+            ],
+        )
+        self.assertEqual(self.assert_local_ref_present(repo, "feat-tips"), sha_d1)
+        self.assertEqual(self.remote_ref(repo, "feat-tips"), sha_d2)
+
+    def test_precheck_cleanup_fail_safe_unresolvable_delivery(self) -> None:
+        """Extra fail-safe: a delivery sha that is an ancestor of NEITHER
+        vPrev nor HEAD (unresolvable locally) is kept with a report line
+        naming the unresolvable sha and the need for manual adjudication —
+        never deleted on an unproven ancestry."""
+        repo, shas = self.make_release_repo([])
+        sha_d = self.make_stale_commit(repo, shas)
+        self.write_pulls_closed(self.pr_fixture(47, "feat-orphan", "2026-09-01T00:00:00Z", sha_d))
+        self.write_green_ci(shas["head"])
+        _git(["branch", "feat-orphan", sha_d], repo)
+        self.push_branch(repo, sha_d, "feat-orphan")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.cleanup_lines(result, "feat-orphan"),
+            [
+                f"branch cleanup: feat-orphan: kept (fail-safe: delivery {sha_d[:12]} is an ancestor of neither "
+                "v0.9.8 nor HEAD — manual adjudication needed)"
+            ],
+        )
+        self.assert_local_ref_present(repo, "feat-orphan")
+        self.assertEqual(self.remote_ref(repo, "feat-orphan"), sha_d)
+
+    def test_precheck_cleanup_dry_run_mutates_nothing(self) -> None:
+        """ACC-006: DRY_RUN=1 prints the would-delete table for a stale
+        matching-tip branch and mutates no ref (both sides stay intact,
+        the summary counts the would-be deletion)."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+
+        result = self.run_release("DRY_RUN=1; stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: feat-stale: would delete local ref ({self.proof_suffix(42, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn(
+            f"branch cleanup: feat-stale: would delete origin ref ({self.proof_suffix(42, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn("branch cleanup: [dry-run] 1 branch(es) would be deleted, 0 kept/skipped", result.stdout)
+        self.assertNotIn("deleted local ref", result.stdout)
+        self.assertNotIn("deleted origin ref", result.stdout)
+        self.assert_local_ref_present(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), sha_d)
+
+    def test_precheck_gate_failure_precedes_cleanup_mutation(self) -> None:
+        """ACC-006: a closeout-gate violation dies the precheck BEFORE the
+        cleanup runs — the stale branch (matching tips, stale PR) survives
+        intact on both sides and no cleanup report line is printed."""
+        repo, shas = self.make_release_repo([("feat-7-closeout-gate", "review")])
+        self.write_pulls_closed(
+            self.pr_fixture(42, "feat-stale", "2026-09-01T00:00:00Z", shas["previous"]),
+            self.pr_fixture(46, "feat-7-closeout-gate", "2026-10-01T00:00:00Z", shas["in_window"]),
+        )
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat closeout gate failed", result.stderr)
+        self.assertIn("feat-7-closeout-gate", result.stderr)
+        self.assertNotIn("branch cleanup:", result.stdout)
+        self.assertNotIn("deleted", result.stdout)
+        self.assertNotIn("would delete", result.stdout)
+        self.assert_local_ref_present(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), sha_d)
+
+    def test_precheck_cleanup_second_run_reports_nothing_to_delete(self) -> None:
+        """ACC-007: re-running the full precheck over the SAME repo after a
+        successful cleanup reports nothing to delete (idempotent)."""
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas)
+        self.push_branch(repo, sha_d, "feat-stale")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("deleted local ref", result.stdout)
+        self.assertIn("deleted origin ref", result.stdout)
+
+        second = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertIn("branch cleanup: no stale feat-*/fix/* branches (nothing to delete)", second.stdout)
+        self.assertNotIn("deleted local ref", second.stdout)
+        self.assertNotIn("deleted origin ref", second.stdout)
+
+    def test_precheck_cleanup_no_previous_tag_skips(self) -> None:
+        """REQ-004: with no previous release tag there is no "previous
+        release or older" — a single skip note, no loop, no mutation (the
+        gate's own no-tag window-is-HEAD note is printed alongside)."""
+        repo, shas = self.make_release_repo([], tag_prev=False)
+        self.write_pulls_closed(self.pr_fixture(42, "feat-stale", "2026-08-01T00:00:00Z", shas["main"]))
+        self.write_green_ci(shas["head"])
+        _git(["branch", "feat-stale", shas["main"]], repo)
+        self.push_branch(repo, shas["main"], "feat-stale")
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("no release tag reachable from HEAD", result.stdout)
+        self.assertIn("branch cleanup: no previous release tag — nothing to clean up", result.stdout)
+        self.assertNotIn("deleted", result.stdout)
+        self.assertNotIn("would delete", result.stdout)
+        self.assert_local_ref_present(repo, "feat-stale")
+        self.assertEqual(self.remote_ref(repo, "feat-stale"), shas["main"])

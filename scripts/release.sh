@@ -494,6 +494,46 @@ closed_pr_scan() {
   cat "$cache"
 }
 
+# --- previous-release branch cleanup helpers (feat-233, SOP step 2 sub-item) --
+
+# Print the branch names the previous-release cleanup considers, one per
+# line, sorted and de-duplicated: the union of EVERY local branch name
+# (git branch) and the origin branch names matching refs/heads/feat-* or
+# refs/heads/fix/* (git ls-remote, the refs/heads/ prefix stripped),
+# excluding dev and main (the release branches are never cleanup targets).
+# Pure stdout contract: the caller captures the list via command
+# substitution. A failed ls-remote dies (fail-fast: the remote side cannot
+# be verified, so no cleanup may run) rather than silently degrading to
+# the local branch set.
+cleanup_candidates() {
+  local remote
+  remote=$(git ls-remote --heads origin) || die "branch cleanup: cannot list origin branches (git ls-remote --heads origin failed)"
+  {
+    git branch --format='%(refname:short)'
+    awk '$2 ~ /^refs\/heads\/(feat-|fix\/)/ { print substr($2, 12) }' <<<"$remote"
+  } | sort -u | grep -v -x -e dev -e main || true
+}
+
+# Print the branch names checked out in ANY worktree (git worktree list
+# --porcelain, all worktrees including the main one; a worktree on a
+# detached HEAD carries no `branch` line and contributes nothing), one per
+# line. Pure stdout contract: the caller captures the list via command
+# substitution.
+worktree_branches() {
+  git worktree list --porcelain | awk '$1 == "branch" { print substr($2, 12) }'
+}
+
+# Print the newest merged PR delivered from the branch named $1 — a thin
+# wrapper over merged_delivery keyed on the branch name. Exact head-ref
+# lookup only: the REQ-011 issue-number-prefix fallback is a gate-only
+# concern of feat FOLDER ids and deliberately does not apply to branch
+# names here (a branch is stale iff its own head ref has a merged PR).
+# Same 3-column line as merged_delivery (number<TAB>merged_at<TAB>
+# merge_commit_sha), or nothing when the branch has no merged PR.
+branch_delivery() {
+  merged_delivery "$1"
+}
+
 # --- stages ------------------------------------------------------------------
 
 stage_resolve() {
@@ -613,6 +653,114 @@ stage_precheck() {
 $violations  remediation: close out the named feat(s) to status: done on dev (or repair the frontmatter), commit, then re-run: scripts/release.sh precheck v$v"
   fi
   info "closeout gate: no feat shipped in this window is left unclosed"
+
+  # --- previous-release branch cleanup (feat-233, SOP step 2 sub-item) ---
+  # A feat-*/fix/* branch (local and/or on origin) whose newest merged-PR
+  # delivery (branch_delivery — exact head-ref lookup, no REQ-011 prefix
+  # fallback) is an ancestor of vPrev is stale (shipped in the previous
+  # release or older) and is deleted on every side that exists, local
+  # first: the local ref via git branch -d (a refusal is the expected
+  # squash-merge case, so -D follows, justified by the delivery proof) and
+  # the origin ref via git push origin --delete. Guards (a)-(d) are
+  # evaluated per candidate in that order and the FIRST one that fires
+  # wins, emitting exactly one report line: (a) checked out in a worktree,
+  # (b) no merged PR for the head ref, (c) delivery inside vPrev..HEAD
+  # (this release — deletable at the NEXT precheck), (d) local and origin
+  # tips differ. A delivery that is an ancestor of neither vPrev nor HEAD
+  # is unresolvable locally and is kept with a fail-safe line (manual
+  # adjudication needed). With no vPrev there is no "previous release or
+  # older": one skip note, no loop, no mutation. DRY_RUN prints the same
+  # table with would-delete lines and mutates nothing; the gate above dies
+  # on a violation, so a failing precheck never reaches this code.
+  local candidates name wt_lines cdel cnum csha local_tip remote_tip side_note mech
+  local deleted_count=0 kept_count=0
+  if [ -z "$vprev" ]; then
+    info "branch cleanup: no previous release tag — nothing to clean up"
+  else
+    candidates=$(cleanup_candidates)
+    if [ -z "$candidates" ]; then
+      info "branch cleanup: no stale feat-*/fix/* branches (nothing to delete)"
+    else
+      wt_lines=$(worktree_branches)
+      for name in $candidates; do
+        if grep -Fqx "$name" <<<"$wt_lines"; then
+          info "branch cleanup: $name: skipped (guard a: checked out in a worktree)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        cdel=$(branch_delivery "$name")
+        if [ -z "$cdel" ]; then
+          info "branch cleanup: $name: kept (guard b: no merged PR for head ref $name)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        cnum=$(cut -f1 <<<"$cdel")
+        csha=$(cut -f3 <<<"$cdel")
+        if ! git merge-base --is-ancestor "$csha" HEAD 2>/dev/null; then
+          info "branch cleanup: $name: kept (fail-safe: delivery ${csha:0:12} is an ancestor of neither $vprev nor HEAD — manual adjudication needed)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        if ! git merge-base --is-ancestor "$csha" "$vprev" 2>/dev/null; then
+          info "branch cleanup: $name: kept (guard c: delivery ${csha:0:12} is inside the current release window $vprev..HEAD)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        local_tip=""
+        if git rev-parse --verify --quiet "refs/heads/$name" >/dev/null; then
+          local_tip=$(git rev-parse --verify "refs/heads/$name")
+        fi
+        remote_tip=$(git ls-remote origin "refs/heads/$name" | awk 'NR == 1 { print $1 }')
+        if [ -n "$local_tip" ] && [ -n "$remote_tip" ] && [ "$local_tip" != "$remote_tip" ]; then
+          info "branch cleanup: $name: skipped (guard d: local tip ${local_tip:0:12} != origin tip ${remote_tip:0:12} — manual decision)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        if [ -z "$local_tip" ] && [ -z "$remote_tip" ]; then
+          # Unreachable (the name came from the candidate union) — kept,
+          # never deleted, on the defensive side.
+          info "branch cleanup: $name: kept (neither side resolvable — manual decision)"
+          kept_count=$((kept_count + 1))
+          continue
+        fi
+        # One-side marker: only a branch present on a single side is
+        # annotated with that side (both sides present -> no marker).
+        side_note=""
+        if [ -n "$local_tip" ] && [ -z "$remote_tip" ]; then
+          side_note="local side only; "
+        elif [ -z "$local_tip" ] && [ -n "$remote_tip" ]; then
+          side_note="origin side only; "
+        fi
+        if [ -n "$local_tip" ]; then
+          if [ "$DRY_RUN" -eq 1 ]; then
+            info "branch cleanup: $name: would delete local ref (${side_note}proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
+          else
+            if git branch -d "$name" 2>/dev/null; then
+              mech="git branch -d"
+            else
+              git branch -D "$name" || die "branch cleanup: git branch -D $name failed (git branch -d refused as well) — delete the local ref manually, then re-run: scripts/release.sh precheck v$v"
+              mech="git branch -D — -d refused the squash-merged head"
+            fi
+            info "branch cleanup: $name: deleted local ref ($side_note$mech; proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
+          fi
+        fi
+        if [ -n "$remote_tip" ]; then
+          if [ "$DRY_RUN" -eq 1 ]; then
+            info "branch cleanup: $name: would delete origin ref (${side_note}proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
+          else
+            git push origin --delete "$name" >/dev/null || die "branch cleanup: git push origin --delete $name failed (the local ref was already deleted) — delete the origin ref manually, then re-run: scripts/release.sh precheck v$v"
+            info "branch cleanup: $name: deleted origin ref (${side_note}git push origin --delete; proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
+          fi
+        fi
+        deleted_count=$((deleted_count + 1))
+      done
+      if [ "$DRY_RUN" -eq 1 ]; then
+        info "branch cleanup: [dry-run] $deleted_count branch(es) would be deleted, $kept_count kept/skipped"
+      else
+        info "branch cleanup: $deleted_count branch(es) deleted, $kept_count kept/skipped"
+      fi
+    fi
+  fi
 
   info "precheck: all checks passed for v$v"
 }
