@@ -4,7 +4,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-22T18:57:43.004+02:00'
+updated: '2026-10-24T17:58:14.528+02:00'
 version: 1.0.0
 ---
 
@@ -90,6 +90,20 @@ point.
   of `CHANGELOG.md` that accumulates notable changes between releases.
 - **Merge gate**: the maintainer's explicit go-ahead to merge the release
   pull request, given after the agent presents it (Step 6).
+- **Delivery commit**: the `merge_commit_sha` of the newest merged PR
+  under a branch's or feat folder's lookup — the real `dev`-side commit
+  for both squash- and merge-PRs (a squash merge rewrites the branch
+  head, so head-SHA ancestry is the wrong test). The Step 2 closeout
+  gate and branch cleanup key their window and staleness tests on it.
+- **Stale branch**: a `feat-*`/`fix/*` branch (local and/or on
+  `origin`) whose delivery commit is an ancestor of the latest release
+  tag (`vPrev`) — it shipped in the previous release or older, hence it
+  is deletable at the current release's precheck (Step 2, sub-item (h)).
+- **Issue-number prefix**: the `feat-<NNN>-` prefix of a feat folder's
+  id, where `NNN` is the GitHub issue number (unique per folder). The
+  closeout gate's fallback lookup key for work merged from a renamed
+  branch (Step 2, sub-item (g)); `feat-0-*` folders carry no issue
+  number and stay exact-match only.
 
 ## Roles and Responsibilities
 
@@ -179,6 +193,19 @@ gate (Step 6), and adjudicate any exception.
   `gh run view` output, and reads and updates the GitHub Release through
   `gh api`. Upgrading `gh` is optional; if you do, keep the stages' gates
   identical when modernizing these call sites.
+- **The branch cleanup is the only mutating precheck sub-item.** Step 2's
+  sub-item (h) deletes refs — local and `origin` — unlike every other
+  precheck, which is read-only. That is safe because every deletion is
+  proven by a merged PR for the branch's head ref whose delivery commit
+  is an ancestor of `vPrev` (the branch shipped), and the four guards
+  exclude live work (checked out in a worktree), in-flight or abandoned
+  branches (no merged PR), current-release branches (delivery inside
+  `vPrev..HEAD`), and ambiguous tip pairs (local tip ≠ `origin` tip);
+  the `-D` fallback for the local ref is justified by that same proof.
+  The closeout gate runs before the cleanup, so a gate failure mutates
+  no ref; `--dry-run` makes the cleanup report-only; and a failed
+  deletion stops the precheck with an actionable manual step — the
+  idempotent re-run resumes from the remaining side.
 
 ## Procedure
 
@@ -207,14 +234,48 @@ invariant); (c) the latest CI run on `dev` is green (waiting for an
 in-flight run, polling every 30 s); (d) the tag `vX.Y.Z` exists neither
 locally nor on `origin`; (e) `uv lock --check` passes, i.e. `uv.lock` is
 in sync with `pyproject.toml` before the bump; (f) the `uv` and `gh` CLIs
-are present and `gh` is authenticated. Any failure stops the release with
-a diagnostic.
+are present and `gh` is authenticated; (g) the feat closeout gate — every
+`.specmgr/feat/feat-*/` folder whose implementation merged into the
+current release window (`vPrev..HEAD`, `vPrev` the latest release tag
+reachable from `dev` via `git describe --tags --abbrev=0`; with no tag at
+all the window is `HEAD`) must be closed out to `status: done`, where
+"merged" is the newest merged PR under the folder id (its exact head ref,
+extended by the issue-number prefix `feat-<NNN>-` for work merged from a
+renamed branch) whose delivery commit is an ancestor of `HEAD` but not of
+`vPrev`; a violation fails the precheck with one actionable line per
+offending feat plus the remediation pointer, and a missing or unparseable
+`status:` line is a violation in its own right — the gate blocks, never
+skips; feats with no merged PR (plan-only or in-flight) and deliveries
+inside `vPrev` are never gated; (h) the previous-release branch cleanup —
+the local and `origin` `feat-*`/`fix/*` branches whose delivery commit is
+an ancestor of `vPrev` (stale) are deleted on every side that exists,
+each side independently: the local ref via `git branch -d` (a refusal is
+the expected squash-merge case, so `-D` follows, justified by the
+merged-PR proof) and the `origin` ref via `git push origin --delete`, a
+one-side branch being deleted and reported on its side alone; the
+cleanup's four guards — (a) the branch is checked out in a worktree,
+(b) it has no merged PR, (c) its delivery is inside `vPrev..HEAD`
+(current release — it becomes deletable at the next precheck), (d) its
+local and `origin` tips differ — are evaluated per branch in that order
+and the first guard that fires wins, emitting exactly one report line
+naming the branch and that guard (a delivery that is an ancestor of
+neither `vPrev` nor `HEAD` is kept with a fail-safe line); under
+`--dry-run` the cleanup is report-only (the would-delete/would-keep
+table, no ref is deleted), and with no prior tag it deletes nothing and
+reports the skip. The gate runs before the cleanup, so a gate failure
+stops the precheck with zero ref mutations. Any failure stops the release
+with a diagnostic.
 
 **Manual fallback:** run the checks individually: `git status`;
 `git fetch && git merge-base --is-ancestor origin/main origin/dev`;
 `gh run list --limit 30 --json databaseId,headSha,headBranch,event,name,status,conclusion --jq '[.[] | select(.headBranch == "dev" and .name == "Lint and Test" and .event == "push")] | .[0]'` (this `gh` version has no `--branch` flag; the name/event filters keep dependabot "Graph Update" runs and pull_request runs out of the gate — SOP Updates 2026-10-06); `git tag -l vX.Y.Z` and
 `git ls-remote --tags origin vX.Y.Z`; `uv lock --check`;
-`gh auth status`.
+`gh auth status`; for (g), verify that every feat folder shipped in the
+window (`vPrev..HEAD`, or `HEAD` with no prior tag) is closed out to
+`status: done` in its `.specmgr/feat/<id>/README.md` frontmatter — or
+simply run the `precheck` stage, which enforces it; for (h), delete the
+stale `feat-*`/`fix/*` branches per the same four guards — or run the
+`precheck` stage, which does so with the merged-PR proof.
 
 ### Step 3: Curate the changelog
 
@@ -379,6 +440,49 @@ directly against the local checkout.
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-10-24 17:56:57.000+02:00 - Precheck gains a feat closeout gate and previous-release branch cleanup (feat-233, issue #233)
+
+The 2026-10-23 manual cleanup — stale `feat-*`/`fix/*` branches deleted
+by hand and the feat-129/feat-214 plans closed out by hand (commits
+`b5cd89c`/`4a33271`) — exposed two gaps the release flow did not enforce.
+This change folds both into `scripts/release.sh precheck` (Step 2) as two
+new sub-items, in run order:
+
+- **Sub-item (g), the feat closeout gate.** Every `.specmgr/feat/feat-*/`
+  folder whose implementation merged into the current release window
+  (`vPrev..HEAD`, `vPrev` the latest release tag; with no prior tag the
+  window is `HEAD`) must be closed out to `status: done`. "Merged" is the
+  newest merged PR under the folder id (its exact head ref, extended by
+  the issue-number prefix `feat-<NNN>-` for work merged from a renamed
+  branch) whose delivery commit is an ancestor of `HEAD` but not of
+  `vPrev`. Any violation fails the precheck with one actionable line per
+  offending feat plus the remediation pointer; a missing or unparseable
+  `status:` line is a violation in its own right (the gate blocks, never
+  skips); feats with no merged PR (plan-only or in-flight) and deliveries
+  inside `vPrev` are never gated.
+- **Sub-item (h), the previous-release branch cleanup.** The local and
+  `origin` `feat-*`/`fix/*` branches whose delivery commit is an ancestor
+  of `vPrev` (stale) are deleted on every side that exists, each side
+  independently (the local ref via `git branch -d` with the `-D` fallback
+  justified by the merged-PR proof, the `origin` ref via `git push origin
+  --delete`; a one-side branch is deleted and reported on its side
+  alone), guarded by the four hazards — (a) worktree-checked-out, (b) no
+  merged PR, (c) in-window delivery, (d) local≠`origin` tips — evaluated
+  in order — the first guard that fires wins, emitting exactly one
+  report
+  line. Under `--dry-run` the cleanup is report-only (the
+  would-delete/would-keep table, no ref is deleted); with no prior tag it
+  deletes nothing and reports the skip.
+
+The gate runs before the cleanup, so a gate failure stops the precheck
+with zero ref mutations. Definitions gains *delivery commit*, *stale
+branch*, and *issue-number prefix*; Safety and Precautions records that
+the branch cleanup is the only mutating precheck sub-item and why the
+merged-PR proof plus the four guards make that safe; Step 2's manual
+fallback names how both sub-items reduce by hand. The script's
+header/usage comment, the `/release` command, and the README "Make a
+Release" section are synced to the same behaviour (feat-233).
 
 ### 2026-10-22 18:56:02.000+02:00 - Release name behaviour reverted: releases carry the bare version again
 

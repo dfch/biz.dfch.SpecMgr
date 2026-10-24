@@ -4,7 +4,7 @@ created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
 status: progress
 type: feat
-updated: '2026-10-24T17:25:09.924+02:00'
+updated: '2026-10-24T18:09:46.600+02:00'
 version: 1.0.0
 ---
 
@@ -127,9 +127,9 @@ four hazard classes met in the manual pass.
 
 #### Phase 120: Documentation sync (SOP, script header, `/release`, README)
 
-- [ ] Task 120.100: Update `scripts/release.sh`'s header/usage comment so the `precheck` line names the two new sub-items (feat closeout gate, previous-release branch cleanup) and the `--dry-run` note covers the cleanup's report-only mode.
-- [ ] Task 120.110: Update SOP 98537416: step 2 gains the two sub-items in their run order (the gate sub-item recording the no-prior-tag window = `HEAD` and the unparseable-`status` fail-safe; the cleanup sub-item recording one-side deletion and first-guard-wins reporting), `Definitions` gains *delivery commit*, *stale branch*, and *issue-number prefix*, `Safety and Precautions` gains an entry recording that the cleanup is the only mutating precheck sub-item and why the merged-PR proof + four guards make that safe, and a dated `Updates` entry describes the change; confirm `parse_sop` stays green.
-- [ ] Task 120.120: Sync `.opencode/command/release.md` and the README "Make a Release" section to describe the two sub-items and the closeout-remediation loop (gate fails → close out the named feats to `done` on `dev` → commit → re-run `precheck`).
+- [x] Task 120.100: Update `scripts/release.sh`'s header/usage comment so the `precheck` line names the two new sub-items (feat closeout gate, previous-release branch cleanup) and the `--dry-run` note covers the cleanup's report-only mode.
+- [x] Task 120.110: Update SOP 98537416: step 2 gains the two sub-items in their run order (the gate sub-item recording the no-prior-tag window = `HEAD` and the unparseable-`status` fail-safe; the cleanup sub-item recording one-side deletion and first-guard-wins reporting), `Definitions` gains *delivery commit*, *stale branch*, and *issue-number prefix*, `Safety and Precautions` gains an entry recording that the cleanup is the only mutating precheck sub-item and why the merged-PR proof + four guards make that safe, and a dated `Updates` entry describes the change; confirm `parse_sop` stays green.
+- [x] Task 120.120: Sync `.opencode/command/release.md` and the README "Make a Release" section to describe the two sub-items and the closeout-remediation loop (gate fails → close out the named feats to `done` on `dev` → commit → re-run `precheck`).
 
 #### Phase 130: Verification and closeout
 
@@ -141,24 +141,74 @@ four hazard classes met in the manual pass.
 ### Current Status
 
 **As of 2026-10-24**: In progress — Phases 100 (the closeout gate in
-`stage_precheck`) and 110 (the previous-release branch cleanup) are complete.
-`scripts/release.sh` carries the gate helpers (`latest_tag`, `feat_folders`,
-`feat_status`, `merged_delivery`, the one-shot `closed_pr_scan` with its PID-keyed
-per-run cache) and the cleanup helpers (`cleanup_candidates`, `worktree_branches`,
-`branch_delivery`), with the gate wired after the six existing precheck checks and
-the cleanup loop wired after the gate; `tests/test_release_sh.py`'s fake `gh`
-answers the merged-PR search endpoints, `ReleaseShCloseoutGateTestCase` runs the
-FULL `stage_precheck` for ACC-001/002/003/011 plus the frontmatter-defect and
-no-prior-tag cases, and the new `ReleaseShBranchCleanupTestCase` covers
-ACC-004/005/006/007 — 89/89 in `tests/test_release_sh.py`, full suite 4817 passed /
-18 skipped, ruff/vulture/`bash -n` clean. The design decisions both phases pinned
-are recorded in Decisions Made. Next: Phase 120 (documentation sync — script
-header, SOP, `/release` command, README); `review` stays reserved, per Task
-130.110, for a finished implementation awaiting closeout.
+`stage_precheck`), 110 (the previous-release branch cleanup), and 120 (the
+documentation sync) are complete. `scripts/release.sh` carries the gate helpers
+(`latest_tag`, `feat_folders`, `feat_status`, `merged_delivery`, the one-shot
+`closed_pr_scan` with its PID-keyed per-run cache) and the cleanup helpers
+(`cleanup_candidates`, `worktree_branches`, `branch_delivery`), with the gate
+wired after the six existing precheck checks and the cleanup loop wired after
+the gate; `tests/test_release_sh.py`'s fake `gh` answers the merged-PR search
+endpoints, `ReleaseShCloseoutGateTestCase` runs the FULL `stage_precheck` for
+ACC-001/002/003/011 plus the frontmatter-defect and no-prior-tag cases, and
+`ReleaseShBranchCleanupTestCase` covers ACC-004/005/006/007 — 89/89 in
+`tests/test_release_sh.py`, full suite 4817 passed / 18 skipped, ruff/vulture/
+`bash -n` clean. Phase 120 synced the behaviour into the docs: SOP 98537416
+(step 2 sub-items (g)/(h) in run order plus the extended manual fallback, the
+`delivery commit`/`stale branch`/`issue-number prefix` definitions, the safety
+entry, the dated Updates entry — `parse_sop` green), the script's header/usage
+comment (the `precheck` line names both sub-items, a new `--dry-run` note covers
+the cleanup's report-only mode, and `usage()`'s sed range was recomputed to
+`2,43p`), the `/release` command (step 3 names both sub-items and the
+closeout-remediation loop), and the README "Make a Release" section (the
+usage-block comment plus the note after it). The design decisions the three
+phases pinned are recorded in Decisions Made. Next: Phase 130 (verification and
+closeout); `review` stays reserved, per Task 130.110, for a finished
+implementation awaiting closeout.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T18:08:43.525+02:00 - Phase 120 complete
+
+Implemented the documentation sync (Tasks 120.100/120.110/120.120) — no code
+behaviour change: the only `scripts/release.sh` diff is the header/usage
+comment (the `precheck` line now names the feat closeout gate and the
+previous-release branch cleanup, and a new `--dry-run` note covers the
+cleanup's report-only mode) plus `usage()`'s sed range recomputed from `2,34p`
+to `2,43p` (the inserted comment lines shifted the `# full resolved version.`
+line down; `test_help_prints_full_usage` pins the complete output). SOP
+98537416, edited through the generic `edit` tool (each pass re-parsed the
+document and bumped `updated`): step 2's *Automated* paragraph gains sub-items
+(g) and (h) in run order — the gate (the window `vPrev..HEAD`, the
+no-prior-tag window `HEAD`, the newest-merged-PR delivery via the exact head
+ref plus the `feat-<NNN>-` prefix fallback, one actionable line per offending
+feat plus the remediation pointer, the missing/unparseable-`status` fail-safe,
+the never-gated classes) and the cleanup (the per-side independent deletions,
+`git branch -d` → the `-D` fallback justified by the merged-PR proof, `git push
+origin --delete`, the one-side reporting, the four guards first-fires-wins with
+exactly one report line, the unresolvable-delivery fail-safe keep, `--dry-run`
+report-only, the no-prior-tag skip, and the gate-first zero-ref-mutation
+property) — and its *Manual fallback* paragraph names how both sub-items reduce
+by hand; Definitions gains *delivery commit*, *stale branch*, and *issue-number
+prefix*; Safety and Precautions records that the branch cleanup is the only
+mutating precheck sub-item and why the merged-PR proof plus the four guards
+make that safe; a dated Updates entry (2026-10-24 17:56:57) describes the
+change, citing the 2026-10-23 manual cleanup (the stale branches deleted by
+hand, the feat-129/feat-214 closeouts, commits `b5cd89c`/`4a33271`) as the gap
+it closes; `parse_sop` green. `.opencode/command/release.md` step 3 names both
+sub-items and the closeout-remediation loop (gate fails → close out the named
+feats to `done` on `dev` — frontmatter edit plus a finalization entry recording
+the PR merge — commit → re-run `precheck`; the cleanup runs only after the gate
+passes, so a gate failure mutates no branch; `--dry-run` = the
+would-delete/would-keep table). The README "Make a Release" usage-block comment
+on the `precheck` line names both sub-items (block alignment preserved) and a
+note directly after the block describes the gate, the remediation loop, and the
+cleanup's merged-PR proof + four guards + `--dry-run` report-only mode.
+Phase-end gate: `bash -n` clean, `help` rc 2 with the full usage (final `full
+resolved version.` line), `ruff format --check` / `ruff check` / `vulture`
+clean, `pytest tests/test_release_sh.py -n auto` 89/89, full suite 4817 passed
+/ 18 skipped, `parse_sop` green.
 
 #### 2026-10-24T17:20:28.288+02:00 - Phase 110 complete
 
@@ -261,6 +311,36 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T18:09:18.574+02:00 - Phase 120 documentation sync: usage() sed-range recomputation, SOP sub-item shape, note placement
+
+Four points fixed while syncing the docs (all verified by the phase-end gate).
+(1) **`usage()` sed range**: the header insertions (the 6-line `precheck` entry
+replacing the 1-line one, and the 4-line `--dry-run` note block) shift the
+usage block's final line (`# full resolved version.`) from line 34 to line 43,
+so `usage()`'s `sed -n '2,34p'` became `sed -n '2,43p'` — the range still ends
+at the last usage line and excludes the "Written against the old `gh`"
+paragraph (which begins two lines below); that range adjustment is the ONLY
+non-comment change in `scripts/release.sh`, and `test_help_prints_full_usage`
+(rc 2 + `full resolved version.` in stdout) pins it. (2) **SOP sub-item
+shape**: step 2's two sub-items continue the existing (a)–(f) enumeration as
+(g) and (h), so the SOP's "verifies, in order" list stays the single normative
+description of the precheck's run order; the cleanup's four guards are scoped
+as "the cleanup's four guards — (a)…(d)" to avoid colliding with the step's
+own (a)–(f) check letters, and the unresolvable-delivery fail-safe keep (a
+Phase 110 implementation decision) is recorded in (h) as well. (3) **SOP
+manual-fallback wording**: both sub-items reduce by hand as verification
+(enumerate the shipped feat folders, confirm each is `done`) and deletion
+(stale branches per the same four guards), each with the "or simply run the
+`precheck` stage, which …" escape the SOP's script-as-projection convention
+sanctions — no new procedure step is invented. (4) **README/command note
+placement**: the README keeps the single-line usage-block comment (block
+alignment preserved, the `#` column unchanged) and carries the prose in a note
+directly after the block; the `/release` command keeps its
+one-paragraph-per-step shape, folding the closeout-remediation loop into step 3
+as the named exception to "any failure: report and stop" (a gate failure is
+remediated per the gate's own printed pointer — close out, commit, re-run —
+rather than triaged like any other failure).
 
 #### 2026-10-24T17:20:28.288+02:00 - Phase 110 implementation: candidate discovery, exact-lookup delivery, fail-safe keeps, deletion mechanics
 

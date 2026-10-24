@@ -10,7 +10,12 @@
 #
 # Stages (mirror the SOP's 9 procedure steps; every stage is idempotent):
 #   resolve       compute and print the target version (no mutation)
-#   precheck      fail-fast pre-release checks (SOP step 2)
+#   precheck      fail-fast pre-release checks (SOP step 2), ending with
+#                 the feat closeout gate (every feat shipped in the
+#                 current release window must be closed out to status:
+#                 done) and the previous-release branch cleanup (stale
+#                 local/origin feat-*/fix/* branches, each deletion
+#                 proven by a merged PR)
 #   bump          pyproject.toml + uv.lock version bump (SOP step 4)
 #   changelog     move [Unreleased] into a dated section (SOP step 5a)
 #   commit-push   commit the 3 release files, push dev, wait for CI (SOP step 5b)
@@ -29,6 +34,10 @@
 #                 pr-create + [TTY merge gate] + pr-merge + tag-push +
 #                 publish-wait + release-notes (no agent curation: the
 #                 [Unreleased] section must already be curated)
+#
+# --dry-run makes the mutating stages report-only; for `precheck` the
+# previous-release branch cleanup then prints its would-delete/would-keep
+# table without deleting any ref.
 #
 # Only `resolve` and `all` accept bump keywords; all other stages take the
 # full resolved version.
@@ -79,7 +88,7 @@ die() { printf 'release: ERROR: %s\n' "$*" >&2; exit 1; }
 is_tty() { [ -t 0 ]; }
 
 usage() {
-  sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,43p' "$0" | sed 's/^# \{0,1\}//'
   exit 2
 }
 

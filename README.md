@@ -707,7 +707,7 @@ a manual fallback command for every step):
 
 ```bash
 scripts/release.sh resolve minor         # print the target version (e.g. 0.15.0); no mutation
-scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks
+scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks, incl. the feat closeout gate and the previous-release branch cleanup
 scripts/release.sh bump 0.15.0           # pyproject.toml + uv.lock
 scripts/release.sh changelog 0.15.0      # [Unreleased] -> dated section
 scripts/release.sh commit-push 0.15.0    # 3-file release commit, push dev, wait for CI
@@ -719,6 +719,18 @@ scripts/release.sh release-notes 0.15.0  # verify the release + set the GH relea
 scripts/release.sh status 0.15.0         # where does this release stand?
 scripts/release.sh all 0.15.0            # the whole chain, TTY only (interactive merge gate)
 ```
+
+`precheck` ends with two sub-items added by feat-233 (issue #233): the
+**feat closeout gate** — every `.specmgr/feat/feat-*/` folder shipped in
+the current release window (since the last tag) must be closed out to
+`status: done` in its README frontmatter, and a violation fails the
+precheck with one actionable line per offending feat (remediation: close
+out the named feats to `done` on `dev`, commit, re-run `precheck`); and
+the **previous-release branch cleanup** — stale `feat-*`/`fix/*` branches
+from the previous release or older are deleted on the local and `origin`
+side, each deletion proven by the branch's merged PR and guarded by four
+hazard checks (`--dry-run` makes this sub-item report-only: the
+would-delete/would-keep table, no ref is deleted).
 
 Changelog *curation* (SOP step 3) is an agent or manual step: the
 `changelog` stage only moves the already-curated `[Unreleased]` section
