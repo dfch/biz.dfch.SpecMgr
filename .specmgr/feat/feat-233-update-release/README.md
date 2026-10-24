@@ -4,7 +4,7 @@ created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
 status: planning
 type: feat
-updated: '2026-10-24T11:39:24.997+02:00'
+updated: '2026-10-24T14:09:57.499+02:00'
 version: 1.0.0
 ---
 
@@ -24,8 +24,9 @@ flow, neither of which the staged `scripts/release.sh` machinery currently enfor
 2. **Stale feature branches accumulate.** ~30 local branches and 25+ remote branches from
    previous releases had to be deleted manually, each requiring a per-branch attribution of
    *which release its work shipped in* (tip-ancestor check or squash-commit lookup) plus
-   safety gates (four pre-squash-convention branches, two local≠origin pairs, and the
-   worktree-checked-out feat-139 branch).
+   safety gates for the four hazard classes the pass met — the same classes the cleanup's
+   guards (a)–(d) protect: a worktree-checked-out branch, a branch with no merged PR,
+   an in-window (current-release) branch, and a local≠origin tip pair.
 
 This feature bakes both rules into `scripts/release.sh precheck` (SOP 98537416 step 2) so
 that every future release stops — before the version increment is written — until (Rule 1)
@@ -36,29 +37,31 @@ four hazard classes met in the manual pass.
 
 ### Requirements
 
-- REQ-001: `stage_precheck` gains a **feat closeout gate** that runs *before* `stage_bump` writes the version increment: for every `.specmgr/feat/feat-*/` folder whose frontmatter `status` is not `done`, determine whether the feature's implementation merged into the current release window (`vPrev..HEAD`, `vPrev` = the latest tag reachable from `dev` via `git describe --tags --abbrev=0`); if it did, the gate fails the precheck, with "merged" determined as the newest merged PR (head ref = the feat id, read from GitHub REST `pulls?state=closed&head=<owner>/<feat-id>` filtered on `merged_at != null`) whose `merge_commit_sha` (valid for both squash and merge PRs) is an ancestor of `HEAD` but not of `vPrev`, and any violation failing the precheck with an actionable line per offending feat (feat id, current status, PR number, delivery sha).
-- REQ-002: A feat with **no** merged PR for its head ref is *never* gated by the closeout gate — plan-only feats (a freshly-added plan with no implementation PR yet) and in-flight/abandoned feats pass the gate regardless of their `status`.
+- REQ-001: `stage_precheck` gains a **feat closeout gate** that runs *before* `stage_bump` writes the version increment: for every `.specmgr/feat/feat-*/` folder whose frontmatter `status` is not `done`, determine whether the feature's implementation merged into the current release window (`vPrev..HEAD`, `vPrev` = the latest tag reachable from `dev` via `git describe --tags --abbrev=0`; when no tag exists at all the window is `HEAD`, so the first release gates every non-`done` feat that has any merged PR); if it did, the gate fails the precheck, with "merged" determined as the newest merged PR (head ref = the feat id, read from GitHub REST `pulls?state=closed&head=<owner>/<feat-id>` filtered on `merged_at != null`, extended by the REQ-011 issue-number-prefix fallback) whose `merge_commit_sha` (valid for both squash and merge PRs) is an ancestor of `HEAD` but not of `vPrev`, and any violation failing the precheck with an actionable line per offending feat (feat id, current status, PR number, delivery sha). A folder whose frontmatter `status` line is missing or unparseable is a violation in its own right — the gate cannot prove the feat is `done` — with an actionable line naming the defect (repair the frontmatter, or close out to `done`, then re-run `precheck`); the fail-safe is to block the release, never to skip the folder.
+- REQ-002: A feat with **no** merged PR under its lookup (the exact head ref, or the REQ-011 issue-number-prefix fallback) is *never* gated by the closeout gate — plan-only feats (a freshly-added plan with no implementation PR yet) and in-flight/abandoned feats pass the gate regardless of their `status`.
 - REQ-003: A feat whose newest merged-PR delivery commit is **not** inside `vPrev..HEAD` (i.e. it shipped in an earlier release) is not gated by the closeout gate — the gate covers only the feature set of the release being cut.
-- REQ-004: `stage_precheck` gains a **previous-release branch cleanup** that runs *after* the closeout gate: it deletes local and `origin/` `feat-*`/`fix/*` branches whose newest merged-PR delivery commit is an ancestor of `vPrev` (stale from the previous release or older), deleting the local ref with `git branch -d` (falling back to `-D`, justified by the merged-PR proof) and the remote ref with `git push origin --delete <name>`.
-- REQ-005: The cleanup applies four guards, each emitting a report line instead of a deletion: (a) the branch is checked out in any worktree (from `git worktree list --porcelain`) → skip; (b) the branch has no merged PR for its head ref → keep (in-flight/abandoned, manual decision); (c) the branch's delivery commit is inside `vPrev..HEAD` → keep (current release — it becomes deletable at the *next* release's precheck); (d) the branch name exists on both the local and `origin/` side with local tip ≠ remote tip → skip both sides (manual decision).
-- REQ-006: The existing global `--dry-run` flag (`DRY_RUN=1`) makes the cleanup report-only: it prints the full would-delete/would-keep table and mutates no ref, and a closeout-gate failure stops the precheck before any cleanup mutation runs (sub-item ordering: existing checks (a)–(f) → closeout gate → branch cleanup).
+- REQ-004: `stage_precheck` gains a **previous-release branch cleanup** that runs *after* the closeout gate: it deletes local and `origin/` `feat-*`/`fix/*` branches whose newest merged-PR delivery commit is an ancestor of `vPrev` (stale from the previous release or older), deleting the local ref with `git branch -d` (falling back to `-D`, justified by the merged-PR proof) and the remote ref with `git push origin --delete <name>`; each side is deleted and reported independently, so a branch present only locally or only on `origin/` is deleted on the side that exists and reported as one-side. When no tag exists at all there is no "previous release or older," so the cleanup deletes nothing and reports the skip alongside the gate's no-prior-tag note.
+- REQ-005: The cleanup applies four guards, each emitting a report line instead of a deletion: (a) the branch is checked out in any worktree (from `git worktree list --porcelain`) → skip; (b) the branch has no merged PR for its head ref → keep (in-flight/abandoned, manual decision); (c) the branch's delivery commit is inside `vPrev..HEAD` → keep (current release — it becomes deletable at the *next* release's precheck); (d) the branch name exists on both the local and `origin/` side with local tip ≠ remote tip → skip both sides (manual decision). Guards are evaluated per branch in the order (a)→(d) and the first guard that fires wins, emitting exactly one report line naming the branch and that guard, even when several guards could apply.
+- REQ-006: The existing global `--dry-run` flag (`DRY_RUN=1`) makes the cleanup report-only: it prints the full would-delete/would-keep table and mutates no ref, and a closeout-gate failure stops the precheck before any cleanup mutation runs (sub-item ordering: the six existing checks (a)–(f) documented in SOP 98537416 step 2 → closeout gate → branch cleanup).
 - REQ-007: Both new sub-items are idempotent: re-running `precheck` after a successful cleanup reports nothing to delete, and re-running after the closeout gate's remediation (the feat docs committed to `done`) passes.
-- REQ-008: The SOP (98537416) is updated to remain the normative document: step 2 gains the two sub-items, `Definitions` gains *delivery commit* and *stale branch*, `Safety and Precautions` records that branch cleanup is the only mutating precheck sub-item (and why that is safe), and a dated `Updates` entry describes the change.
+- REQ-008: The SOP (98537416) is updated to remain the normative document: step 2 gains the two sub-items, `Definitions` gains *delivery commit*, *stale branch*, and *issue-number prefix*, `Safety and Precautions` records that branch cleanup is the only mutating precheck sub-item (and why that is safe), and a dated `Updates` entry describes the change.
 - REQ-009: The `scripts/release.sh` header/usage comment, the `/release` OpenCode command (`.opencode/command/release.md`), and the README "Make a Release" section are synced to describe the two new precheck sub-items and the closeout-remediation loop.
-- REQ-010: `tests/test_release_sh.py` (the existing fake-`gh`-shim unittest suite that sources the script's helpers) gains coverage for the closeout gate (review-status feat with an in-window merged PR ⇒ precheck dies with the actionable line; the same feat at `done` ⇒ passes; a plan-only feat with no merged PR ⇒ passes; a feat delivered in an earlier release ⇒ passes) and for the cleanup (matching-tip branch delivered ≤ vPrev ⇒ local+origin deleted; in-window delivery ⇒ kept; no merged PR ⇒ kept; worktree-checked-out ⇒ skipped; local≠origin ⇒ both skipped; `--dry-run` ⇒ no mutation; gate failure ⇒ no cleanup mutation; re-run ⇒ no-op).
+- REQ-010: `tests/test_release_sh.py` (the existing fake-`gh`-shim unittest suite that sources the script's helpers; its fake `gh` is extended in Task 100.115 to answer the merged-PR search call) gains coverage for the closeout gate (review-status feat with an in-window merged PR ⇒ precheck dies with the actionable line; the same feat at `done` ⇒ passes; a plan-only feat with no merged PR ⇒ passes; a feat delivered in an earlier release ⇒ passes; a feat folder with a missing or unparseable `status` line ⇒ precheck dies with the frontmatter-defect line; a feat whose work merged only under a differently-named `feat-<NNN>-*` branch ⇒ found by the prefix fallback and gated; no prior tag ⇒ every delivery counts as in-window) and for the cleanup (matching-tip branch delivered ≤ vPrev ⇒ local+origin deleted, the local side via the `-D` fallback when `-d` refuses the squash-merged head; local-only or remote-only branch ⇒ deleted on the side that exists, reported one-side; in-window delivery ⇒ kept; no merged PR ⇒ kept; worktree-checked-out ⇒ skipped; local≠origin ⇒ both skipped; `--dry-run` ⇒ no mutation; gate failure ⇒ no cleanup mutation; re-run ⇒ no-op).
+- REQ-011: A feat folder whose implementation merged under a branch name different from the folder id is still found by the gate: when the exact head-ref lookup (REQ-001) returns no merged PR, the gate falls back to merged PRs whose head ref starts with the folder's `feat-<NNN>-` issue-number prefix (the closed-PR page scan is fetched once per precheck run and reused across folders; `feat-0-*` folders have no issue number and stay exact-match only), and the newest by `merged_at` across the exact and fallback matches is the delivery, to which REQ-002 and REQ-003 apply. Motivating instance: folder `feat-134-related-artifact-similarity`, whose work merged from both `feat-134-related-artifact-similarity` (PR #137) and the renamed branch `feat-134-similarity-requires-mcp` (PR #168).
 
 ### Acceptance Criteria
 
 - [ ] ACC-001: With a fixture repo carrying a feat folder at `status: review` whose head ref has a merged PR with `merge_commit_sha` inside `vPrev..HEAD`, `stage_precheck` exits non-zero and its output names the feat, its status, the PR number, and the delivery sha (REQ-001).
 - [ ] ACC-002: The same fixture with the feat at `status: done`, and a fixture with a plan-only feat (no merged PR for its head ref) at any status, both pass the closeout gate (REQ-001, REQ-002).
 - [ ] ACC-003: A feat whose newest merged-PR delivery commit is an ancestor of `vPrev` passes the closeout gate even at `status: review` (REQ-003).
-- [ ] ACC-004: With a local and `origin/` `feat-*` branch (matching tips) whose delivery commit is an ancestor of `vPrev`, the cleanup deletes both refs, the local deletion using `-d` and the remote using `git push origin --delete` (REQ-004).
+- [ ] ACC-004: With a local and `origin/` `feat-*` branch (matching tips) whose delivery commit is an ancestor of `vPrev`, the cleanup deletes both refs: the local deletion attempts `git branch -d` and succeeds via the `-D` fallback when `-d` refuses because the squash-merged head is not an ancestor of the current branch, and the remote deletion uses `git push origin --delete` (REQ-004).
 - [ ] ACC-005: Each of the four guard classes (worktree-checked-out; no merged PR; in-window delivery; local≠origin tips) produces a keep/skip report line and leaves the ref(s) intact (REQ-005).
 - [ ] ACC-006: `precheck ... --dry-run` prints the full would-delete/would-keep table and leaves every ref intact, and a precheck that fails the closeout gate mutates no ref (REQ-006).
 - [ ] ACC-007: Re-running `precheck` after a successful cleanup reports nothing to delete, and after the closeout remediation passes (REQ-007).
 - [ ] ACC-008: The SOP's step 2, Definitions, Safety and Precautions, and a dated Updates entry describe both sub-items, and the SOP remains parseable (`parse_sop` green) (REQ-008).
 - [ ] ACC-009: The `scripts/release.sh` header/usage, `/release` command, and README "Make a Release" section all describe the two new sub-items and the closeout-remediation loop (REQ-009).
 - [ ] ACC-010: `tests/test_release_sh.py` gains the gate and cleanup cases listed in REQ-010 and the full suite (`uv run --frozen pytest -n auto`) passes, with `ruff format --check`, `ruff check`, and `vulture` staying clean (REQ-010).
+- [ ] ACC-011: A feat folder at `status: review` whose work merged only under a differently-named `feat-<NNN>-*` branch (no merged PR for the exact head ref) is still gated via the issue-number-prefix fallback (REQ-011).
 
 ### Scope
 
@@ -81,7 +84,7 @@ four hazard classes met in the manual pass.
 
 #### Depends On
 
-- The existing `tests/test_release_sh.py` fake-`gh`-shim harness and the script's `BASH_SOURCE` dispatch guard (both landed with feat-213-release) — the new tests extend that harness rather than introducing a new one.
+- The existing `tests/test_release_sh.py` fake-`gh`-shim harness and the script's `BASH_SOURCE` dispatch guard (both landed with feat-213-release) — the new tests extend that harness rather than introducing a new one. The extension is scoped work (Task 100.115): the harness's fake `gh` was built to simulate closing a PR and reading its state, not to answer the `pulls?state=closed&head=...` search call (and the REQ-011 page scan) the gate and cleanup lookups issue, so the shim must learn those endpoints before the gate's and cleanup's test cases can run.
 
 #### Blocks
 
@@ -95,7 +98,9 @@ four hazard classes met in the manual pass.
 
 **GitHub REST, not GraphQL.** The script is written against this environment's `gh` 2.4.0, whose GraphQL call sites (`gh pr view --json`, `gh run view --json jobs`) are known-broken (SOP Safety and Precautions). The merged-PR lookup therefore uses `gh api "repos/dfch/biz.dfch.SpecMgr/pulls?state=closed&head=dfch/<feat-id>"` filtered with `jq` for `merged_at != null`, taking the newest by `merged_at` — the same REST precedent the script already uses for `close_pr_if_open` and the release notes.
 
-**The four cleanup guards, and where each came from.** (a) Worktree-checked-out: a branch checked out in a worktree cannot be deleted and represents live work (the manual pass's feat-139). (b) No merged PR: in-flight or abandoned work the maintainer may still want (the manual pass's `feat-46-remove-adr`, `feat-63-refine`, `feat-134-similarity-requires-mcp`). (c) In-window delivery: the current release's branches stay one cycle (the manual pass kept every v0.37.0 branch). (d) Local≠origin tips: the two sides may carry different content, so neither is provably stale (the manual pass's feat-134/feat-144 pairs). Each guard is a keep/skip with a report line, never a silent skip.
+**The issue-number-prefix fallback (REQ-011).** The gate's primary lookup keys on head ref = the folder id, which assumes the implementation branch was named after the folder. The assumption has broken in this repo: folder `feat-134-related-artifact-similarity` shipped from two branches — `feat-134-related-artifact-similarity` (PR #137, merged 2026-09-29) and the renamed `feat-134-similarity-requires-mcp` (PR #168, same day) — and a folder whose only merged PR came from a differently-named branch would otherwise look plan-only and slip past the gate (REQ-002), the exact false negative the gate exists to prevent. The fallback matches merged PRs by the folder's `feat-<NNN>-` prefix (issue numbers are unique per folder; `feat-0-*` has none), fetched in one page scan of closed PRs per precheck run so the cost is constant rather than per-folder, and takes the newest by `merged_at` across exact and fallback matches.
+
+**The four cleanup guards, and where each came from.** (a) Worktree-checked-out: a branch checked out in a worktree cannot be deleted and represents live work (the manual pass's feat-139, still checked out in its worktree as of 2026-10-24). (b) No merged PR: in-flight or abandoned work the maintainer may still want (the manual pass's remote-only branches `feat-46-remove-adr` and `feat-63-refine` — no feature folder on disk and no merged PR for either head ref, both still on `origin` as of 2026-10-24). (c) In-window delivery: the current release's branches stay one cycle (the manual pass kept every v0.37.0 branch). (d) Local≠origin tips: the two sides may carry different content, so neither is provably stale (the manual pass's feat-134/feat-144 pairs; both branches since deleted, their merged PRs #137 and #147 on record). Guards are evaluated per branch in the order (a)→(d) and the first guard that fires wins, emitting exactly one report line naming the branch and that guard — feat-139 is both worktree-checked-out and no-merged-PR, and it reports under (a) only. Each guard is a keep/skip with a report line, never a silent skip.
 
 **Gate ordering is a safety property.** The closeout gate runs before the cleanup so a gate failure stops the precheck with zero ref mutations (REQ-006/ACC-006). This is pinned by a dedicated test, not just by code order.
 
@@ -109,20 +114,21 @@ four hazard classes met in the manual pass.
 
 #### Phase 100: Closeout gate in `stage_precheck`
 
-- [ ] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merge_commit_sha` or nothing).
-- [ ] Task 100.110: Wire the gate into `stage_precheck` after the existing checks (a)–(f): for each feat folder whose `status` is not `done`, look up its merged delivery; if found and the delivery SHA is an ancestor of `HEAD` but not of `vPrev`, record it as a violation; after the loop, if there are violations, `die` with one actionable line per offending feat (id, status, PR number, sha) plus the remediation pointer (close out to `done` on `dev`, then re-run `precheck`).
-- [ ] Task 100.120: Add the gate's `tests/test_release_sh.py` cases (ACC-001, ACC-002, ACC-003): review-status feat with an in-window merged PR ⇒ precheck dies naming the feat; the same feat at `done` ⇒ passes; plan-only feat (no merged PR) ⇒ passes; feat delivered in an earlier release ⇒ passes.
+- [ ] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists — the gate then treats the window as `HEAD`), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line; a missing or unparseable value is a distinct sentinel the gate turns into its own violation line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merge_commit_sha` or nothing).
+- [ ] Task 100.110: Wire the gate into `stage_precheck` after the six existing checks (a)–(f) documented in SOP 98537416 step 2: for each feat folder whose `status` is not `done` (a missing or unparseable `status` line is a violation on its own, reported before any PR lookup), look up its merged delivery (exact head ref first, then the REQ-011 `feat-<NNN>-` prefix fallback); if found and the delivery SHA is an ancestor of `HEAD` but not of `vPrev` (with `vPrev` absent, every delivery counts), record it as a violation; after the loop, if there are violations, `die` with one actionable line per offending feat (id, status or frontmatter defect, PR number, sha) plus the remediation pointer (close out to `done` on `dev`, or repair the frontmatter, then re-run `precheck`).
+- [ ] Task 100.115: Extend the fake `gh` shim in `tests/test_release_sh.py` to answer the merged-PR search call `pulls?state=closed&head=<owner>/<ref>` (and, once the REQ-011 fallback lands, the one-shot page scan of closed PRs): the shim's configured PR fixtures carry `number`, `head.ref`, `merged_at`, and `merge_commit_sha`, so the gate and cleanup tests can assert per-branch merged and unmerged delivery.
+- [ ] Task 100.120: Add the gate's `tests/test_release_sh.py` cases (ACC-001, ACC-002, ACC-003, ACC-011): review-status feat with an in-window merged PR ⇒ precheck dies naming the feat; the same feat at `done` ⇒ passes; plan-only feat (no merged PR) ⇒ passes; feat delivered in an earlier release ⇒ passes; feat folder with a missing or unparseable `status` ⇒ precheck dies with the frontmatter-defect line; feat merged only under a renamed `feat-<NNN>-*` branch ⇒ gated via the prefix fallback; no prior tag ⇒ the window is `HEAD` (an in-window review-status feat ⇒ dies).
 
 #### Phase 110: Previous-release branch cleanup in `stage_precheck`
 
 - [ ] Task 110.100: Add the cleanup helpers: `cleanup_candidates()` (local + `origin/` `feat-*`/`fix/*` branch names, excluding `dev`/`main`), `worktree_branches()` (from `git worktree list --porcelain`), and `branch_delivery(<name>)` (the same `merged_delivery` lookup keyed on the branch's head ref).
-- [ ] Task 110.110: Implement the cleanup loop in `stage_precheck` after the gate: for each candidate name, apply guards (a) worktree-checked-out → skip, (b) no merged delivery → keep, (c) delivery inside `vPrev..HEAD` → keep, (d) local and origin tips differ → skip both; otherwise delete the local ref (`git branch -d`, `-D` fallback) and the `origin/` ref (`git push origin --delete <name>`); under `DRY_RUN=1` print the would-delete/would-keep table and mutate nothing. Every keep/skip emits a report line naming the branch and the guard that fired.
-- [ ] Task 110.120: Add the cleanup's `tests/test_release_sh.py` cases (ACC-004, ACC-005, ACC-006, ACC-007): matching-tip branch delivered ≤ vPrev ⇒ both refs deleted; each of the four guards ⇒ ref(s) intact with a report line; `--dry-run` ⇒ table printed, no mutation; gate failure ⇒ no cleanup mutation; re-run after cleanup ⇒ nothing to delete.
+- [ ] Task 110.110: Implement the cleanup loop in `stage_precheck` after the gate: for each candidate name, apply the guards in order — (a) worktree-checked-out → skip, (b) no merged delivery → keep, (c) delivery inside `vPrev..HEAD` → keep, (d) the branch exists on both sides with local tip ≠ origin tip → skip both — the first guard that fires wins and emits exactly one report line; otherwise delete each side that exists (the local ref via `git branch -d` with the `-D` fallback, the `origin/` ref via `git push origin --delete <name>`; a one-side branch deletes and reports on its side alone); under `DRY_RUN=1` print the would-delete/would-keep table and mutate nothing. Every keep/skip/delete emits a report line naming the branch, the guard that fired (if any), and the side(s) affected.
+- [ ] Task 110.120: Add the cleanup's `tests/test_release_sh.py` cases (ACC-004, ACC-005, ACC-006, ACC-007): matching-tip branch delivered ≤ vPrev ⇒ both refs deleted, the local side via the `-D` fallback when `-d` refuses the squash-merged head; local-only or remote-only branch ⇒ deleted on the side that exists with a one-side report line; each of the four guards ⇒ ref(s) intact with exactly one report line naming the guard that fired; `--dry-run` ⇒ table printed, no mutation; gate failure ⇒ no cleanup mutation; re-run after cleanup ⇒ nothing to delete.
 
 #### Phase 120: Documentation sync (SOP, script header, `/release`, README)
 
 - [ ] Task 120.100: Update `scripts/release.sh`'s header/usage comment so the `precheck` line names the two new sub-items (feat closeout gate, previous-release branch cleanup) and the `--dry-run` note covers the cleanup's report-only mode.
-- [ ] Task 120.110: Update SOP 98537416: step 2 gains the two sub-items in their run order, `Definitions` gains *delivery commit* and *stale branch*, `Safety and Precautions` gains an entry recording that the cleanup is the only mutating precheck sub-item and why the merged-PR proof + four guards make that safe, and a dated `Updates` entry describes the change; confirm `parse_sop` stays green.
+- [ ] Task 120.110: Update SOP 98537416: step 2 gains the two sub-items in their run order (the gate sub-item recording the no-prior-tag window = `HEAD` and the unparseable-`status` fail-safe; the cleanup sub-item recording one-side deletion and first-guard-wins reporting), `Definitions` gains *delivery commit*, *stale branch*, and *issue-number prefix*, `Safety and Precautions` gains an entry recording that the cleanup is the only mutating precheck sub-item and why the merged-PR proof + four guards make that safe, and a dated `Updates` entry describes the change; confirm `parse_sop` stays green.
 - [ ] Task 120.120: Sync `.opencode/command/release.md` and the README "Make a Release" section to describe the two sub-items and the closeout-remediation loop (gate fails → close out the named feats to `done` on `dev` → commit → re-run `precheck`).
 
 #### Phase 130: Verification and closeout
@@ -140,11 +146,28 @@ remote branches, and the feat-129/feat-214 closeouts is the motivating evidence)
 maintainer's two placement decisions are recorded in Design Notes: the closeout gate runs
 in `precheck` (it must hold before `stage_bump` writes the version increment), and the
 branch cleanup also runs in `precheck` (where the latest tag unambiguously names the
-previous release). Nothing implemented yet; the plan is ready for review.
+previous release). Nothing implemented yet; the plan is complete. The frontmatter stays at
+`status: planning` until implementation starts — `review` is reserved, per Task 130.110,
+for a finished implementation awaiting closeout.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T14:09:57.499+02:00 - Plan refined
+
+Applied a refinement pass (findings G1–G4, D1–D4, I1–I4): specified the no-prior-tag
+first-release behavior for gate (window = `HEAD`) and cleanup (no deletion, reported
+skip) (G1), the missing/unparseable-`status` fail-safe (G2), an explicit fake-`gh`-shim
+extension task (G3, Task 100.115), and the issue-number-prefix fallback for feats merged
+under a renamed branch (G4, REQ-011/ACC-011 — verified against PR #137 and PR #168, both
+merged from branches of folder `feat-134-related-artifact-similarity`); corrected ACC-004
+to the `-d` attempt → `-D` fallback the squash-merge strategy requires (D1), aligned the
+Overview's hazard enumeration with guards (a)–(d) (D2), and replaced the guard-(b)
+examples with the verified no-merged-PR, no-folder remote-only branches `feat-46-remove-adr`
+and `feat-63-refine` (D3, D4); made the six SOP checks (a)–(f) explicit (I1), clarified the
+`planning` vs. `review` status semantics (I2), one-side deletion (I3), and first-guard-wins
+reporting (I4).
 
 #### 2026-10-24T11:39:24.997+02:00 - Created
 
@@ -157,6 +180,20 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T14:09:57.499+02:00 - Refinement choices: fail-safe gating, prefix fallback, first-guard-wins
+
+Three design points fixed by the refinement pass. (1) A feat folder whose `status` line is
+missing or unparseable blocks the release rather than being skipped — the gate's job is to
+prove every shipped feat is closed out, and an unreadable frontmatter is not proof.
+(2) The gate's PR lookup falls back to the folder's `feat-<NNN>-` issue-number prefix when
+the exact head ref has no merged PR, because this repo has shipped work from renamed
+branches (feat-134: PR #137 from the folder-named branch, PR #168 from
+`feat-134-similarity-requires-mcp`), and a silent miss is the failure the gate exists to
+prevent; `feat-0-*` folders have no issue number and stay exact-match only. (3) The
+cleanup evaluates guards (a)→(d) in order and the first guard that fires wins, so a branch
+matching several guards (e.g. feat-139: worktree-checked-out and no-merged-PR) reports
+exactly one line naming the decisive guard.
 
 #### 2026-10-24T11:39:24.997+02:00 - Both rules fold into `precheck`; no new stage or SOP step
 
