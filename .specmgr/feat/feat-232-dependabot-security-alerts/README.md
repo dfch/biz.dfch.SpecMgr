@@ -4,7 +4,7 @@ created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
 status: planning
 type: feat
-updated: '2026-10-24T13:58:58.000+02:00'
+updated: '2026-10-24T14:08:44.000+02:00'
 version: 1.0.0
 ---
 
@@ -66,7 +66,7 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 #### Phase 110: pillow 13 via fastembed (blocked on upstream)
 
-- [ ] Task 110.100: Track qdrant/fastembed#830 (the `chore(deps): allow pillow 13` PR); optionally comment on qdrant/fastembed#829 (the upstream `[Feature]: Support pillow 13` issue) pointing at the 9 open advisories on 12.3.0.
+- [x] Task 110.100: Track qdrant/fastembed#830 (the `chore(deps): allow pillow 13` PR); optionally comment on qdrant/fastembed#829 (the upstream `[Feature]: Support pillow 13` issue) pointing at the 9 open advisories on 12.3.0.
 - [ ] Task 110.110: On release, run `uv lock --upgrade-package fastembed --upgrade-package pillow` and confirm pillow resolves ≥ 13.0.0.
 - [ ] Task 110.120: Verify with the default suite plus `uv run --frozen pytest -m embedding_model`; the orchestrator commits `chore(deps): bump fastembed + pillow` (one local Conventional Commit; no push/merge — see the workflow override in Decisions Made) and records in Progress the expected closure of the 41 pillow alerts on merge + Dependabot re-scan.
 
@@ -79,16 +79,20 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 ### Current Status
 
-**As of 2026-10-24**: Phases 100 (certifi) and 105 (virtualenv/filelock/opentelemetry-api) complete — lock resolved virtualenv 21.14.13, filelock 4.2.4, opentelemetry-api 1.45.1 (plus the documented, resolver-forced packaging 26.3 move), with certifi 2026.10.23 from Phase 100; full gate green including the opt-in `pytest -m embedding_model` real-backend test. Orchestrator commit `chore(deps): bump virtualenv, filelock, opentelemetry-api` follows (uv.lock + this README); the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan. Phase 110 (pillow) remains blocked on qdrant/fastembed#830 (open/unmerged as of 2026-10-24); Phase 120 follows.
+**As of 2026-10-24**: Phases 100 (certifi) and 105 (virtualenv/filelock/opentelemetry-api) complete. Phase 110 (pillow) tracked and remains BLOCKED on upstream — qdrant/fastembed#830 open/unmerged (re-verified 2026-10-24T12:08:44.000Z), and the latest fastembed release 0.9.0 still caps pillow <13.0; pillow stays at 12.3.0 under the recorded risk acceptance (Decisions Made, 2026-10-24T06:21:00.912Z — the stall contingency is not triggered: #830 is open, not closed-unmerged). Tasks 110.110/110.120 are conditional on the unblocking release and remain open. Phase 120 (final verification) is next.
 
 ### Blockers
 
-- qdrant/fastembed#830 (`chore(deps): allow pillow 13`, the cap raise to `<14.0`) is open/unmerged — blocks Phase 110 (REQ-002, ACC-002) only; Phase 100 proceeds independently.
+- qdrant/fastembed#830 (`chore(deps): allow pillow 13`, the cap raise to `<14.0`) is open/unmerged — blocks Phase 110 (REQ-002, ACC-002) only; Phase 100 proceeds independently. (re-verified 2026-10-24T12:08:44.000Z: still open/unmerged; latest fastembed release 0.9.0 still caps pillow <13.0)
 - Contingency if #830 closes unmerged or goes stale: revisit the risk acceptance (Decisions Made) — propose the cap-raise patch to upstream ourselves, or formally re-record the continued exposure with a dated review. Phase 110 must not become a silent, indefinite parking lot.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T12:08:44.000Z - Phase 110 tracking: qdrant/fastembed#830 still open/unmerged — pillow 13 bump remains blocked
+
+Task 110.100 re-verification (read-only; no upstream posting). qdrant/fastembed#830 (`chore(deps): allow pillow 13`, the cap raise to `<14.0`) is still open/unmerged: state `open`, merged `false` (merged_at `null`), updated_at 2026-10-20T15:52:26Z, head sha `9f04c8ca33b96800799364c1941a47a6d69fe4d6`. The latest fastembed release is v0.9.0 (published 2026-10-07T16:39:40Z; newest of the five most recent releases v0.9.0 / v0.8.1 / v0.8.0 / v0.7.4 / v0.7.2), and its PyPI `Requires-Dist` still caps pillow below 13 on every Python-version marker: `pillow<13.0,>=10.3.0` (Python 3.10–3.12), `pillow<13.0,>=11.0.0` (Python 3.13), `pillow<13.0,>=12.0.0` (Python >= 3.14). This worktree's lock is unchanged by Phases 100/105: fastembed 0.8.0, pillow 12.3.0. Task 110.110's condition ("On release") is therefore unmet, so Tasks 110.110 and 110.120 remain open and the 41 pillow alerts stay under the recorded risk acceptance (Decisions Made, 2026-10-24T06:21:00.912Z — the stall contingency is not triggered: #830 is open, not closed-unmerged). No comment was posted on qdrant/fastembed#829 per the workflow override clause (c) (Decisions Made, 2026-10-24T10:56:48.000Z).
 
 #### 2026-10-24T11:58:58.000Z - Phase 105 complete: virtualenv 21.7.13 → 21.14.13, filelock 3.32.2 → 4.2.4, opentelemetry-api 1.44.0 → 1.45.1 (lock-only, plus documented packaging move)
 
