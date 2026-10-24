@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
-status: planning
+status: review
 type: feat
-updated: '2026-10-24T14:18:11.000+02:00'
+updated: '2026-10-24T14:24:27.356+02:00'
 version: 1.0.0
 ---
 
