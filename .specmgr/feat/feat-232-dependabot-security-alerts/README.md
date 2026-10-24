@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
-status: review
+status: done
 type: feat
-updated: '2026-10-24T16:36:51.000+02:00'
+updated: '2026-10-24T20:57:29.974+02:00'
 version: 1.0.0
 ---
 
@@ -74,13 +74,13 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 - [x] Task 120.100: Run the open-alerts API query (Dependabot re-scans on its own schedule after a branch update — allow for that before treating a still-open alert as a failed bump), confirm all alerts have closed or note which re-scan is pending, and record the final state in Progress.
 - [x] Task 120.110: Confirm which branch(es) Dependabot monitors; alert 28 needs no repo change from this feature (the #226 fix is on dev) and closes once the monitored branch carries it, else record the promotion dependency in Progress.
-- [ ] Task 120.130: After PR #234 merges to `dev`, re-run the open-alerts query (`gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100`) once Dependabot has re-scanned, confirm the 21 non-pillow alerts (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api, 1 stale uv #28) report as resolved, and record the final state in Progress — the 41 pillow alerts are expected to remain open until the carved-out work of GitHub issue #235 lands. The orchestrator commits the close-out and sets the feature `status: done`.
+- [x] Task 120.130: After PR #234 merges to `dev`, re-run the open-alerts query (`gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100`) once Dependabot has re-scanned, confirm the 21 non-pillow alerts (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api, 1 stale uv #28) report as resolved, and record the final state in Progress — the 41 pillow alerts are expected to remain open until the carved-out work of GitHub issue #235 lands. The orchestrator commits the close-out and sets the feature `status: done`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-24**: Final verification (Phase 120) complete — all executable phases done. Alert disposition of the 62-alert 2026-10-24 population: 20 fixed on this branch (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api) awaiting merge to `dev` + Dependabot re-scan; 41 pillow blocked on qdrant/fastembed#830 (open/unmerged; latest fastembed 0.9.0 still caps pillow <13.0) under the recorded risk acceptance; 1 stale uv alert (#28) — `dev` already carries 0.13.4 via #226, monitored branch confirmed as `dev`, closure pending re-scan, no repo change needed. ACC-001 and ACC-004 met. The pillow cohort (41 alerts; REQ-002/ACC-002, Phase 110) is carved out to GitHub issue #235 per user decision — this feature no longer waits on the upstream fastembed release. Re-scoped ACC-003 (the 21 non-pillow alerts) awaits the merge of PR #234 + Dependabot re-scan, verified by close-out Task 120.130. No open task of this feature is blocked on an external repo.
+**As of 2026-10-24 (close-out)**: Feature complete — every in-repo closure condition is met. PR #234 was squash-merged to `dev` (commit `8494980`, 2026-10-24T18:43:35Z); the subsequent Dependabot re-scan (confirmed 2026-10-24T18:50:04Z) reports 41 open alerts, pillow only (29× "Pillow" + 12× "pillow", all locked 12.3.0) — the 21 non-pillow alerts of the 2026-10-24 snapshot (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api, 1 stale uv #28) are all in state `fixed` (full-alerts state breakdown at confirmation: 48 fixed / 41 open of 89, zero dismissed). ACC-001, ACC-003 (re-scoped), and ACC-004 met; ACC-002 carved out to GitHub issue #235 under the recorded risk acceptance. Status set to `done` by the orchestrator via `set_status` following this entry; parent issue #232 closed with a hand-off comment to #235.
 
 ### Blockers
 
@@ -90,6 +90,10 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T18:54:59.000Z - Close-out: PR #234 merged (squash 8494980), re-scan confirms 21/21 non-pillow alerts fixed, status done
+
+Task 120.130 executed by the orchestrator. PR #234 was squash-merged to `dev` after CI went fully green on head bdf1b56 (all 8 checks success: build 3.11/3.12/3.13, CodeQL, plantuml-parser, Analyze python/java-kotlin/actions) — merge commit `8494980` "chore(deps): bump certifi, virtualenv, filelock, opentelemetry-api (feat-232) (#234)", mergedAt 2026-10-24T18:43:35Z. The Dependabot re-scan that followed (open-alerts query re-run at 2026-10-24T18:50:04Z with `&per_page=100`) returned 41 open alerts — pillow only (29× "Pillow" + 12× "pillow", exactly the carved-out population of GitHub issue #235) — i.e. all 21 non-pillow alerts of the 2026-10-24 snapshot (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api, 1 stale uv #28) report as resolved; the no-state-filter breakdown at the same moment: 89 alerts total, 48 fixed / 41 open, zero dismissed. ACC-003 (re-scoped) is therefore met; ACC-001/ACC-004 were met at their phase gates; ACC-002 remains open by design under issue #235 (risk acceptance per Decisions Made 2026-10-24T06:21:00.912Z). Close-out per house pattern (cf. feat-214's 4a33271 and feat-129's b5cd89c, both committed directly to `dev` after their PR merges): this entry is committed to `dev`; the orchestrator sets `status: done` via the generic `set_status` tool and closes parent issue #232 with a hand-off comment to #235.
 
 #### 2026-10-24T14:36:51.000Z - Refiner round 3: plan corrections applied; pillow cohort carved out to issue #235 (user decision)
 
