@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
-status: progress
+status: review
 type: feat
-updated: '2026-10-24T18:09:46.600+02:00'
+updated: '2026-10-24T18:31:46.414+02:00'
 version: 1.0.0
 ---
 
@@ -51,17 +51,17 @@ four hazard classes met in the manual pass.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: With a fixture repo carrying a feat folder at `status: review` whose head ref has a merged PR with `merge_commit_sha` inside `vPrev..HEAD`, `stage_precheck` exits non-zero and its output names the feat, its status, the PR number, and the delivery sha (REQ-001).
-- [ ] ACC-002: The same fixture with the feat at `status: done`, and a fixture with a plan-only feat (no merged PR for its head ref) at any status, both pass the closeout gate (REQ-001, REQ-002).
-- [ ] ACC-003: A feat whose newest merged-PR delivery commit is an ancestor of `vPrev` passes the closeout gate even at `status: review` (REQ-003).
-- [ ] ACC-004: With a local and `origin/` `feat-*` branch (matching tips) whose delivery commit is an ancestor of `vPrev`, the cleanup deletes both refs: the local deletion attempts `git branch -d` and succeeds via the `-D` fallback when `-d` refuses because the squash-merged head is not an ancestor of the current branch, and the remote deletion uses `git push origin --delete` (REQ-004).
-- [ ] ACC-005: Each of the four guard classes (worktree-checked-out; no merged PR; in-window delivery; local≠origin tips) produces a keep/skip report line and leaves the ref(s) intact (REQ-005).
-- [ ] ACC-006: `precheck ... --dry-run` prints the full would-delete/would-keep table and leaves every ref intact, and a precheck that fails the closeout gate mutates no ref (REQ-006).
-- [ ] ACC-007: Re-running `precheck` after a successful cleanup reports nothing to delete, and after the closeout remediation passes (REQ-007).
-- [ ] ACC-008: The SOP's step 2, Definitions, Safety and Precautions, and a dated Updates entry describe both sub-items, and the SOP remains parseable (`parse_sop` green) (REQ-008).
-- [ ] ACC-009: The `scripts/release.sh` header/usage, `/release` command, and README "Make a Release" section all describe the two new sub-items and the closeout-remediation loop (REQ-009).
-- [ ] ACC-010: `tests/test_release_sh.py` gains the gate and cleanup cases listed in REQ-010 and the full suite (`uv run --frozen pytest -n auto`) passes, with `ruff format --check`, `ruff check`, and `vulture` staying clean (REQ-010).
-- [ ] ACC-011: A feat folder at `status: review` whose work merged only under a differently-named `feat-<NNN>-*` branch (no merged PR for the exact head ref) is still gated via the issue-number-prefix fallback (REQ-011).
+- [x] ACC-001: With a fixture repo carrying a feat folder at `status: review` whose head ref has a merged PR with `merge_commit_sha` inside `vPrev..HEAD`, `stage_precheck` exits non-zero and its output names the feat, its status, the PR number, and the delivery sha (REQ-001).
+- [x] ACC-002: The same fixture with the feat at `status: done`, and a fixture with a plan-only feat (no merged PR for its head ref) at any status, both pass the closeout gate (REQ-001, REQ-002).
+- [x] ACC-003: A feat whose newest merged-PR delivery commit is an ancestor of `vPrev` passes the closeout gate even at `status: review` (REQ-003).
+- [x] ACC-004: With a local and `origin/` `feat-*` branch (matching tips) whose delivery commit is an ancestor of `vPrev`, the cleanup deletes both refs: the local deletion attempts `git branch -d` and succeeds via the `-D` fallback when `-d` refuses because the squash-merged head is not an ancestor of the current branch, and the remote deletion uses `git push origin --delete` (REQ-004).
+- [x] ACC-005: Each of the four guard classes (worktree-checked-out; no merged PR; in-window delivery; local≠origin tips) produces a keep/skip report line and leaves the ref(s) intact (REQ-005).
+- [x] ACC-006: `precheck ... --dry-run` prints the full would-delete/would-keep table and leaves every ref intact, and a precheck that fails the closeout gate mutates no ref (REQ-006).
+- [x] ACC-007: Re-running `precheck` after a successful cleanup reports nothing to delete, and after the closeout remediation passes (REQ-007).
+- [x] ACC-008: The SOP's step 2, Definitions, Safety and Precautions, and a dated Updates entry describe both sub-items, and the SOP remains parseable (`parse_sop` green) (REQ-008).
+- [x] ACC-009: The `scripts/release.sh` header/usage, `/release` command, and README "Make a Release" section all describe the two new sub-items and the closeout-remediation loop (REQ-009).
+- [x] ACC-010: `tests/test_release_sh.py` gains the gate and cleanup cases listed in REQ-010 and the full suite (`uv run --frozen pytest -n auto`) passes, with `ruff format --check`, `ruff check`, and `vulture` staying clean (REQ-010).
+- [x] ACC-011: A feat folder at `status: review` whose work merged only under a differently-named `feat-<NNN>-*` branch (no merged PR for the exact head ref) is still gated via the issue-number-prefix fallback (REQ-011).
 
 ### Scope
 
@@ -133,41 +133,70 @@ four hazard classes met in the manual pass.
 
 #### Phase 130: Verification and closeout
 
-- [ ] Task 130.100: Run the full quality gate — `uv run --frozen pytest -n auto` (the `test_release_sh.py` cases green), `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` — and confirm ACC-001 through ACC-010 are each evidenced by a named test or a named doc surface.
-- [ ] Task 130.110: Close out — tick the verified acceptance criteria, set the plan status to `review`, and add the `CHANGELOG.md` `[Unreleased]` entry describing the two new precheck sub-items.
+- [x] Task 130.100: Run the full quality gate — `uv run --frozen pytest -n auto` (the `test_release_sh.py` cases green), `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` — and confirm ACC-001 through ACC-010 are each evidenced by a named test or a named doc surface.
+- [x] Task 130.110: Close out — tick the verified acceptance criteria, set the plan status to `review`, and add the `CHANGELOG.md` `[Unreleased]` entry describing the two new precheck sub-items.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-24**: In progress — Phases 100 (the closeout gate in
-`stage_precheck`), 110 (the previous-release branch cleanup), and 120 (the
-documentation sync) are complete. `scripts/release.sh` carries the gate helpers
-(`latest_tag`, `feat_folders`, `feat_status`, `merged_delivery`, the one-shot
-`closed_pr_scan` with its PID-keyed per-run cache) and the cleanup helpers
-(`cleanup_candidates`, `worktree_branches`, `branch_delivery`), with the gate
-wired after the six existing precheck checks and the cleanup loop wired after
-the gate; `tests/test_release_sh.py`'s fake `gh` answers the merged-PR search
-endpoints, `ReleaseShCloseoutGateTestCase` runs the FULL `stage_precheck` for
-ACC-001/002/003/011 plus the frontmatter-defect and no-prior-tag cases, and
-`ReleaseShBranchCleanupTestCase` covers ACC-004/005/006/007 — 89/89 in
-`tests/test_release_sh.py`, full suite 4817 passed / 18 skipped, ruff/vulture/
-`bash -n` clean. Phase 120 synced the behaviour into the docs: SOP 98537416
-(step 2 sub-items (g)/(h) in run order plus the extended manual fallback, the
-`delivery commit`/`stale branch`/`issue-number prefix` definitions, the safety
-entry, the dated Updates entry — `parse_sop` green), the script's header/usage
-comment (the `precheck` line names both sub-items, a new `--dry-run` note covers
-the cleanup's report-only mode, and `usage()`'s sed range was recomputed to
-`2,43p`), the `/release` command (step 3 names both sub-items and the
-closeout-remediation loop), and the README "Make a Release" section (the
-usage-block comment plus the note after it). The design decisions the three
-phases pinned are recorded in Decisions Made. Next: Phase 130 (verification and
-closeout); `review` stays reserved, per Task 130.110, for a finished
-implementation awaiting closeout.
+**As of 2026-10-24**: All four phases complete — Phase 100 (the closeout gate
+in `stage_precheck`), 110 (the previous-release branch cleanup), 120 (the
+documentation sync), and 130 (verification and closeout). The full quality
+gate is green: `uv run --frozen pytest -n auto` 4817 passed / 18 skipped,
+`uv run --frozen ruff format --check` (2114 files already formatted), `uv run
+--frozen ruff check`, and `uv run --frozen vulture src/ whitelist.py
+--min-confidence 60` all clean; `tests/test_release_sh.py` alone runs 89/89,
+and every acceptance criterion ACC-001…ACC-011 is evidenced by a named test
+or a named doc surface (the evidence table in the Phase 130 Updates entry
+below; the Task 130.100 text's "ACC-001 through ACC-010" is a wording gap
+against the plan's 11 criteria — see Decisions Made). The `CHANGELOG.md`
+`[Unreleased]` entry describing the two new precheck sub-items is in place,
+and the plan status is now `review` — a finished implementation awaiting the
+final closeout (status → `done` + finalization entry) that the feature's own
+gate will then enforce at the next release's precheck.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T18:26:40.571+02:00 - Phase 130 complete
+
+Ran the full quality gate and closed out the feature (Tasks 130.100/
+130.110). Gate evidence: `uv run --frozen pytest -n auto` — 4817 passed /
+18 skipped; `uv run --frozen ruff format --check` — 2114 files already
+formatted; `uv run --frozen ruff check` — all checks passed; `uv run
+--frozen vulture src/ whitelist.py --min-confidence 60` — clean.
+`tests/test_release_sh.py` alone: 89/89, including the 9 closeout-gate
+cases (`test_precheck_gate_*`) in `ReleaseShCloseoutGateTestCase` and the
+12 branch-cleanup cases (`test_precheck_cleanup_*`) in
+`ReleaseShBranchCleanupTestCase` (plus the pre-existing harness cases
+inherited from `ReleaseShGateTestCase`). Every acceptance criterion is
+evidenced by a named test or a named doc surface — the Task 130.100 text
+says "ACC-001 through ACC-010", but the plan carries 11 criteria (ACC-011
+was added by the refinement pass with REQ-011 and the task text was not
+updated), so all 11 are verified (see Decisions Made):
+
+| ACC | Evidence | Verified |
+| --- | --- | --- |
+| ACC-001 | `tests/test_release_sh.py::ReleaseShCloseoutGateTestCase::test_precheck_gate_dies_for_review_feat_shipped_in_window` | yes |
+| ACC-002 | `ReleaseShCloseoutGateTestCase::test_precheck_gate_passes_for_done_feat` + `..._passes_for_plan_only_feat` | yes |
+| ACC-003 | `ReleaseShCloseoutGateTestCase::test_precheck_gate_passes_for_feat_delivered_before_prev_tag` | yes |
+| ACC-004 | `ReleaseShBranchCleanupTestCase::test_precheck_cleanup_deletes_stale_both_sides` | yes |
+| ACC-005 | `ReleaseShBranchCleanupTestCase::test_precheck_cleanup_guard_a_worktree_checked_out` / `..._guard_b_no_merged_pr` / `..._guard_c_in_window_delivery` / `..._guard_d_tips_differ` | yes |
+| ACC-006 | `ReleaseShBranchCleanupTestCase::test_precheck_cleanup_dry_run_mutates_nothing` + `test_precheck_gate_failure_precedes_cleanup_mutation` | yes |
+| ACC-007 | `ReleaseShBranchCleanupTestCase::test_precheck_cleanup_second_run_reports_nothing_to_delete` | yes |
+| ACC-008 | SOP 98537416 step 2 sub-items (g)/(h), Definitions (*delivery commit*, *stale branch*, *issue-number prefix*), the Safety-and-Precautions entry, the dated 2026-10-24 17:56:57 Updates entry — `parse_sop` green | yes |
+| ACC-009 | `bash scripts/release.sh help` (the `precheck` usage line + the `--dry-run` note), `.opencode/command/release.md` step 3, the README "Make a Release" note after the usage block | yes |
+| ACC-010 | the gate + cleanup test cases above (89/89 in `tests/test_release_sh.py`) + the full-suite/lint gate evidence above | yes |
+| ACC-011 | `ReleaseShCloseoutGateTestCase::test_precheck_gate_prefix_fallback_gates_renamed_branch` | yes |
+
+Bookkeeping: all 11 acceptance criteria ticked, Tasks 130.100/130.110
+ticked, the plan status set to `review` via the specmgr `set_status` tool,
+and the `CHANGELOG.md` `[Unreleased]` `### Changed` entry added describing
+the two new precheck sub-items, the synced doc surfaces, and the
+`tests/test_release_sh.py` coverage (the wording-discrepancy and the
+changelog-category choice are recorded in Decisions Made).
 
 #### 2026-10-24T18:08:43.525+02:00 - Phase 120 complete
 
@@ -311,6 +340,24 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T18:26:40.571+02:00 - Phase 130 closeout: ACC-001..010-vs-11 wording discrepancy, `### Changed` changelog category
+
+Two points settled during closeout (Tasks 130.100/130.110). (1) **ACC
+count discrepancy**: Task 130.100's text says "confirm ACC-001 through
+ACC-010 are each evidenced," but the plan's Acceptance Criteria section
+carries 11 criteria — ACC-011 (the REQ-011 issue-number-prefix fallback)
+was added by the 2026-10-24 refinement pass (finding G4) without the task
+text being updated. All 11 were evidenced (the evidence table in the
+Phase 130 Updates entry); the task text is read as "every acceptance
+criterion in the plan," not as a ceiling of 10, so the phase closes on
+the full criterion set and no plan-text correction was required.
+(2) **Changelog category**: the `CHANGELOG.md` `[Unreleased]` entry goes
+under a new `### Changed` heading (the section was empty) — the two new
+sub-items change the behaviour of the pre-existing `precheck` stage rather
+than adding a new user-facing surface (no new stage, command, tool, or
+resource), which is what Keep a Changelog's `Changed` category covers;
+`Added` would overstate it.
 
 #### 2026-10-24T18:09:18.574+02:00 - Phase 120 documentation sync: usage() sed-range recomputation, SOP sub-item shape, note placement
 
