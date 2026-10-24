@@ -21,7 +21,7 @@ Follow these steps in order:
    - `bash scripts/release.sh publish-wait <version>`
    - `bash scripts/release.sh release-notes <version>`
 
-**Dry-run mode** (when I gave `--dry-run`): run only `resolve`, `precheck`, `bump --dry-run`, and `changelog --dry-run` (plus the changelog curation in step 4 if useful), then stop and show me what the remaining stages would do. Never commit, push, open a PR, tag, or publish.
+**Dry-run mode** (when I gave `--dry-run`): run only `resolve`, `precheck --dry-run`, `bump --dry-run`, and `changelog --dry-run` (plus the changelog curation in step 4 if useful), then stop and show me what the remaining stages would do. Never commit, push, open a PR, tag, or publish.
 
 **On any non-zero exit:** stop immediately. Run `bash scripts/release.sh status <version>` to locate the failed stage, fetch the relevant CI log if a run failed (`gh run view <id> --log-failed`), and report the diagnosis with the run/PR URLs verbatim. Wait for my direction. Never auto-retry, never skip a failed stage, never perform release steps outside the script, and never merge a red PR.
 

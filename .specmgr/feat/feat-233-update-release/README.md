@@ -4,7 +4,7 @@ created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
 status: review
 type: feat
-updated: '2026-10-24T18:31:46.414+02:00'
+updated: '2026-10-24T21:18:25.996+02:00'
 version: 1.0.0
 ---
 
@@ -136,29 +136,106 @@ four hazard classes met in the manual pass.
 - [x] Task 130.100: Run the full quality gate — `uv run --frozen pytest -n auto` (the `test_release_sh.py` cases green), `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py --min-confidence 60` — and confirm ACC-001 through ACC-010 are each evidenced by a named test or a named doc surface.
 - [x] Task 130.110: Close out — tick the verified acceptance criteria, set the plan status to `review`, and add the `CHANGELOG.md` `[Unreleased]` entry describing the two new precheck sub-items.
 
+#### Phase 140: Review remediation (PR #236 post-implementation review)
+
+- [x] Task 140.100: Fix the reviewed code findings in scripts/release.sh — E1/I1 (reuse the one-shot origin listing for per-candidate tips), G1 (explicit gate line for an unresolvable delivery), I4 (feat_status tolerates quoted/trailing-comment values), I6 (side-aware push-delete failure message).
+- [x] Task 140.110: Fix the reviewed test findings in tests/test_release_sh.py — the G1 gate case, the I4 quoted-status case, I5 (adversarial head-filter pin in the plan-only test), I9 (module docstring).
+- [x] Task 140.120: Fix the reviewed doc findings — D1 (/release dry-run paragraph), G2 (SOP: record the one-page fallback bound), D3 (SOP: 'latest tag' wording), I8 (split the CHANGELOG bullet into two).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-24**: All four phases complete — Phase 100 (the closeout gate
-in `stage_precheck`), 110 (the previous-release branch cleanup), 120 (the
-documentation sync), and 130 (verification and closeout). The full quality
-gate is green: `uv run --frozen pytest -n auto` 4817 passed / 18 skipped,
-`uv run --frozen ruff format --check` (2114 files already formatted), `uv run
---frozen ruff check`, and `uv run --frozen vulture src/ whitelist.py
---min-confidence 60` all clean; `tests/test_release_sh.py` alone runs 89/89,
-and every acceptance criterion ACC-001…ACC-011 is evidenced by a named test
-or a named doc surface (the evidence table in the Phase 130 Updates entry
-below; the Task 130.100 text's "ACC-001 through ACC-010" is a wording gap
-against the plan's 11 criteria — see Decisions Made). The `CHANGELOG.md`
-`[Unreleased]` entry describing the two new precheck sub-items is in place,
-and the plan status is now `review` — a finished implementation awaiting the
-final closeout (status → `done` + finalization entry) that the feature's own
-gate will then enforce at the next release's precheck.
+**As of 2026-10-24**: All five phases complete — Phase 100 (the closeout
+gate in `stage_precheck`), 110 (the previous-release branch cleanup), 120
+(the documentation sync), 130 (verification and closeout), and 140 (review
+remediation of the PR #236 post-implementation findings: E1/I1 the
+per-run origin-branches cache, G1 the explicit not-gated line for an
+unresolvable delivery, I4 the quoted/trailing-comment `status:` tolerance,
+I6 the side-aware push-delete failure message, D1 the `/release` dry-run
+token, G2 the SOP one-page fallback bound, D3 the SOP "latest tag" wording,
+I5 the adversarial head-filter pin, I8 the split CHANGELOG bullet, and I9
+the module docstring). Three findings are deferred with rationale (I2 the
+`-D` fallback's tip-drift conflation, I3 the swallowed `gh api` failures,
+I7 the repeated earlier-release info line — see Decisions Made). The full
+quality gate is green (the Phase 140 Updates entry below carries the
+evidence): `uv run --frozen pytest -n auto` 4823 passed / 18 skipped,
+`ruff format --check`, `ruff check`, and `vulture src/ whitelist.py
+--min-confidence 60` all clean, and `tests/test_release_sh.py` alone runs
+95/95; every acceptance criterion ACC-001…ACC-011 is evidenced by a named
+test or a named doc surface (the evidence table in the Phase 130 Updates
+entry below; the Task 130.100 text's "ACC-001 through ACC-010" is a wording
+gap against the plan's 11 criteria — see Decisions Made), and the
+`CHANGELOG.md` `[Unreleased]` entry (two bullets, one per sub-item) is in
+place. The plan status stays `review` — a finished implementation awaiting
+the final closeout (status → `done` + finalization entry) that the
+feature's own gate will then enforce at the next release's precheck.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T21:11:46.739+02:00 - Phase 140 complete (review remediation)
+
+Implemented the PR #236 post-implementation review remediation (Tasks
+140.100/140.110/140.120) — no plan or design change, the five reviewed code
+fixes plus their tests and doc sync. `scripts/release.sh`: **E1/I1** — the
+cleanup's per-candidate `git ls-remote` re-fetch is replaced by the script's
+PID-keyed per-run cache idiom (new `origin_branches_cache_path` /
+`origin_branches` / `origin_branch_tip`; the one-shot `git ls-remote --heads
+origin` is fetched once where `cleanup_candidates` previously did, a failed
+fetch still `die`s with the existing message, `cleanup_candidates` filters
+the cache, and the same two `stage_precheck` rm/trap lines now cover both
+per-run caches), removing E1's surface (a transient per-candidate network
+failure can no longer exit the precheck with only git's raw stderr);
+**G1** — the gate's outer ancestry test's empty else now prints an explicit
+not-gated info line naming the feat, the PR number, and the short sha
+("not an ancestor of HEAD" plus "nor of `$vprev`" only when a prior tag
+exists, and the manual-verify pointer), mirroring the cleanup's fail-safe
+keep and not a violation; **I4** — `feat_status`'s awk now strips a trailing
+YAML comment (whitespace before `#`) and one pair of surrounding matching
+single/double quotes before the closed-set check, so `status: 'done'` and
+`status: planning # note` are no longer false-positive defects; **I6** — the
+`git push origin --delete` failure `die` is side-aware ("the local ref was
+already deleted" only when a local side existed, otherwise "the branch was
+origin-side only (no local ref)"). `tests/test_release_sh.py`: the **G1**
+gate case in `ReleaseShCloseoutGateTestCase`
+(`test_precheck_gate_unresolvable_delivery_not_gated` — a commit-tree side
+commit that is an ancestor of neither vPrev nor HEAD, full precheck rc 0,
+the explicit line on stdout, no gate violation), the **I4** cases
+(`test_precheck_gate_tolerates_quoted_and_commented_status` — a `'done'`
+feat and a trailing-comment `planning # note` feat both pass, the in-window
+merged PR on the first's head ref included;
+`test_precheck_gate_tolerates_quoted_review_status` — a quoted `'review'` is
+gated with the ordinary violation line, never the defect line), **I5** — the
+plan-only test now seeds one extra unrelated in-window merged PR
+(`feat-99-unrelated`) the exact head-ref lookup must exclude (a regression
+to the broken whole-page-return shape would gate the plan-only feat and fail
+it), and **I9** — the module docstring records the full-`stage_precheck`
+coverage since feat-233, naming both test classes. Docs: **D1** — the
+`/release` command's dry-run paragraph now says `precheck --dry-run` (the
+cleanup is report-only under `--dry-run`, so the "never push" promise holds
+again); **G2 + D3** — SOP 98537416 step 2 (g) records the fallback's bound
+(a single `per_page=100` page of the most recently closed PRs, fetched once
+per precheck run, constant cost — a renamed-branch delivery merged beyond
+that page is outside the fallback's reach) and drops the over-promising
+"release" from the `vPrev` definition (now "the latest tag reachable from
+`dev` (`git describe --tags --abbrev=0`)") and the *Stale branch* definition
+("an ancestor of the latest tag (`vPrev`)"); **I8** — the single ~35-line
+CHANGELOG bullet is split into two self-contained bullets under the same
+`### Changed` (one for the closeout gate, one for the branch cleanup — same
+behaviour facts, the one-page fallback bound included, no internal
+test-class names, each ending with the feat/issue reference). Gate evidence:
+`uv run --frozen pytest -n auto --cov=src --cov-report=` 4823 passed / 18
+skipped; `uv run --frozen pytest tests/test_release_sh.py -n auto -q` 95
+passed (the 89 pre-existing runs plus the 3 new gate cases, which the
+cleanup class inherits — +6 runs); `uv run --frozen ruff format --check`
+(2114 files already formatted); `uv run --frozen ruff check` (all checks
+passed); `uv run --frozen vulture src/ whitelist.py --min-confidence 60`
+clean; `bash -n scripts/release.sh` clean; `bash scripts/release.sh help`
+rc 2 with the complete usage (final `full resolved version.` line); specmgr
+`parse_sop` green; specmgr `get_feat` green. Deferred without change: I2,
+I3, I7 (rationale in Decisions Made).
 
 #### 2026-10-24T18:26:40.571+02:00 - Phase 130 complete
 
@@ -340,6 +417,55 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T21:11:46.739+02:00 - Phase 140 review remediation: the origin-listing cache reuse, the explicit-not-gated gate line, the `status:` YAML-tolerance scope, and the deferred findings
+
+Four points settled during the PR #236 post-implementation review
+remediation (Tasks 140.100/140.110). (1) **I1 cache reuse (removes the
+E1 surface)**: the per-candidate `git ls-remote origin refs/heads/<name>`
+tip lookup is replaced by the once-per-run `git ls-remote --heads origin`
+listing cached in a PID-keyed file (the `closed_pr_scan` idiom:
+`origin_branches_cache_path` + `origin_branches` + `origin_branch_tip`,
+the same two `stage_precheck` rm/trap lines covering both caches). One
+origin round-trip per precheck run instead of one per candidate, and the
+E1 failure surface disappears with the second call — the only remaining
+fetch is the one that still `die`s with the existing message, so a
+transient network failure can no longer exit the precheck with only git's
+raw stderr under `set -euo pipefail`. The listing is valid for the whole
+run: the only ref deletions mid-run are the loop's own, and each candidate
+is processed once (never re-queried after its own deletion). (2) **G1
+explicit-not-gated, not a violation**: the plan's gate condition is the
+ancestry test (a delivery inside `vPrev..HEAD`), so a delivery that is an
+ancestor of neither `HEAD` nor `vPrev` cannot be inside the window —
+gating it would contradict the plan. The empty else therefore prints an
+explicit not-gated info line naming the feat id, the PR number, and the
+short sha ("not an ancestor of `HEAD`", plus "nor of `$vprev`" only when a
+prior tag exists, since with no prior tag the window is `HEAD` alone) and
+the manual-verify pointer — the cleanup-symmetric counterpart of the
+cleanup's own fail-safe keep for the same situation. (3) **I4
+YAML-tolerance scope**: `feat_status` normalizes exactly what well-formed
+YAML frontmatter emits for a scalar status — a trailing comment (YAML
+requires whitespace before the `#`) and ONE pair of surrounding matching
+single or double quotes (via a `-v`-passed quote character, so the awk
+program stays inside its bash single quotes) — nothing more (no escape
+handling, no nested/mixed quotes, no flow collections); the existing
+closed-set `case` still decides, and every other defect condition (missing
+README or line, empty value, out-of-set value) is unchanged. (4) **The
+DEFERRED findings, with rationale** — left untouched in this phase:
+**I2** — the `-D` fallback's conflation of "squash-merged head" with "tip
+drifted after the merged-PR proof" is the plan-accepted codification of the
+2026-10-23 manual pass (the merged-PR proof justifies the `-D` by design,
+Design Notes + Decisions item (4) of the Phase 110 entry); the mitigation
+(comparing the PR's recorded head sha against the branch tip before `-D`)
+changes what the proof establishes and is a design change for a follow-up.
+**I3** — the swallowed `gh api` delivery-lookup failures (read as "no
+merged PR found", REQ-002 semantics) were adjudicated in the Phase 100
+Decisions-Made item (5) with the outage already failing the CI-green check
+upstream; adding a warning channel for them is a design change, not a
+review fix. **I7** — the repeated `shipped in an earlier release` info line
+(one per earlier-release feat) is kept as signal: it is the affirmative
+evidence that the gate examined each delivery and deliberately did not
+gate it, and collapsing it would lose per-feat visibility.
 
 #### 2026-10-24T18:26:40.571+02:00 - Phase 130 closeout: ACC-001..010-vs-11 wording discrepancy, `### Changed` changelog category
 

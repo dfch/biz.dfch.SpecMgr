@@ -431,19 +431,31 @@ feat_folders() {
 # Print the frontmatter `status:` value of `.specmgr/feat/<id>/README.md`
 # (the first frontmatter block only). Prints FEAT_STATUS_UNPARSEABLE when
 # the README is missing, the `status:` line is absent or empty, or the
-# value is outside the closed set planning/progress/review/done.
+# value is outside the closed set planning/progress/review/done. Before
+# the closed-set check the value is normalized the way YAML would read
+# it: a trailing comment (YAML requires whitespace before the `#`) is
+# stripped, and ONE pair of surrounding matching single or double quotes
+# is removed — `status: 'review'` and `status: planning # note` are the
+# same values as the bare forms, not defects.
 feat_status() {
   local id="$1" file value
   file=".specmgr/feat/$id/README.md"
   [ -f "$file" ] || { printf '%s' "$FEAT_STATUS_UNPARSEABLE"; return 0; }
   value=$(
-    awk '
+    awk -v sq="'" '
       NR == 1 && $0 != "---" { exit }
       NR == 1 { next }
       /^---/ { exit }
       /^status:[ \t]*/ {
         sub(/^status:[ \t]*/, "")
         sub(/[ \t]+$/, "")
+        sub(/[ \t]#.*$/, "")
+        sub(/[ \t]+$/, "")
+        if (length($0) >= 2 && substr($0, 1, 1) == sq && substr($0, length($0), 1) == sq) {
+          $0 = substr($0, 2, length($0) - 2)
+        } else if (length($0) >= 2 && substr($0, 1, 1) == "\"" && substr($0, length($0), 1) == "\"") {
+          $0 = substr($0, 2, length($0) - 2)
+        }
         print
         exit
       }
@@ -505,18 +517,56 @@ closed_pr_scan() {
 
 # --- previous-release branch cleanup helpers (feat-233, SOP step 2 sub-item) --
 
+# Per-run cache path of origin_branches' one-shot listing fetch. PID-keyed
+# (the closed_pr_scan_cache_path idiom) so that every call — which runs in
+# a pipeline/command-substitution subshell ($$ is inherited) — re-derives
+# the same file path. The precheck stage removes a stale file at run start
+# and traps the removal on EXIT.
+origin_branches_cache_path() {
+  printf '%s/release-origin-branches-%s' "${TMPDIR:-/tmp}" "$$"
+}
+
+# Print origin's full branch listing (`git ls-remote --heads origin` raw
+# output: sha<TAB>refs/heads/<name>, ALL branches, unfiltered), fetched at
+# most once per run: the first call writes the cache file of
+# origin_branches_cache_path, later calls — including from sibling
+# subshells of the same run — cat it. The listing is valid for the whole
+# run: the only ref deletions mid-run are the cleanup loop's own, and each
+# candidate is processed once (a candidate is never re-queried after its
+# own deletion). A failed fetch dies (fail-fast: the remote side cannot be
+# verified, so no cleanup may run) rather than silently degrading.
+origin_branches() {
+  local cache
+  cache=$(origin_branches_cache_path)
+  if [ ! -e "$cache" ]; then
+    git ls-remote --heads origin >"$cache" || die "branch cleanup: cannot list origin branches (git ls-remote --heads origin failed)"
+  fi
+  cat "$cache"
+}
+
+# Print the origin tip sha of refs/heads/<name> from the once-per-run
+# listing (origin_branches), or nothing when the name is absent from the
+# cache (an empty result means "no origin side"). Pure stdout contract:
+# the caller captures the sha via command substitution. Replaces the
+# per-candidate `git ls-remote` re-fetch — under set -euo pipefail a
+# transient failure of that second network call exited the precheck with
+# only git's raw stderr (no die diagnostic).
+origin_branch_tip() {
+  origin_branches | awk -v ref="refs/heads/$1" '$2 == ref { print $1 }'
+}
+
 # Print the branch names the previous-release cleanup considers, one per
 # line, sorted and de-duplicated: the union of EVERY local branch name
 # (git branch) and the origin branch names matching refs/heads/feat-* or
-# refs/heads/fix/* (git ls-remote, the refs/heads/ prefix stripped),
-# excluding dev and main (the release branches are never cleanup targets).
-# Pure stdout contract: the caller captures the list via command
-# substitution. A failed ls-remote dies (fail-fast: the remote side cannot
-# be verified, so no cleanup may run) rather than silently degrading to
-# the local branch set.
+# refs/heads/fix/* (the once-per-run origin_branches listing, the
+# refs/heads/ prefix stripped), excluding dev and main (the release
+# branches are never cleanup targets). Pure stdout contract: the caller
+# captures the list via command substitution. A failed origin fetch dies
+# (fail-fast: the remote side cannot be verified, so no cleanup may run)
+# rather than silently degrading to the local branch set.
 cleanup_candidates() {
   local remote
-  remote=$(git ls-remote --heads origin) || die "branch cleanup: cannot list origin branches (git ls-remote --heads origin failed)"
+  remote=$(origin_branches)
   {
     git branch --format='%(refname:short)'
     awk '$2 ~ /^refs\/heads\/(feat-|fix\/)/ { print substr($2, 12) }' <<<"$remote"
@@ -611,10 +661,10 @@ stage_precheck() {
   if [ -z "$vprev" ]; then
     info "no release tag reachable from HEAD — the release window is HEAD (first release)"
   fi
-  # Drop a stale closed-PR scan cache (PID reuse after a crashed run) and
-  # trap its removal at the end of this process.
-  rm -f "$(closed_pr_scan_cache_path)"
-  trap 'rm -f "$(closed_pr_scan_cache_path)"' EXIT
+  # Drop the stale per-run caches (PID reuse after a crashed run) and
+  # trap their removal at the end of this process.
+  rm -f "$(closed_pr_scan_cache_path)" "$(origin_branches_cache_path)"
+  trap 'rm -f "$(closed_pr_scan_cache_path)" "$(origin_branches_cache_path)"' EXIT
   violations=""
   for id in $(feat_folders); do
     status=$(feat_status "$id")
@@ -654,6 +704,18 @@ stage_precheck() {
         else
           violations="${violations}  - $id: status is '$status' but the feature shipped in the current release window (PR #$num, delivery $sha) — close out the feat to done on dev and commit"$'\n'
         fi
+      else
+        # Explicit not-gated line for an unresolvable delivery (mirror of
+        # the cleanup's fail-safe keep): a delivery that is an ancestor of
+        # neither HEAD nor vPrev is outside the release window — the gate's
+        # condition is the ancestry test, so this is not a violation — but
+        # it must not pass silently. "nor of $vprev" only when a prior tag
+        # exists (with no prior tag the window is HEAD alone).
+        if [ -n "$vprev" ]; then
+          info "closeout gate: $id (PR #$num, delivery ${sha:0:12}) is outside the release window (not an ancestor of HEAD, nor of $vprev) — not gated; verify the PR's merge target manually"
+        else
+          info "closeout gate: $id (PR #$num, delivery ${sha:0:12}) is outside the release window (not an ancestor of HEAD) — not gated; verify the PR's merge target manually"
+        fi
       fi
     fi
   done
@@ -681,7 +743,7 @@ $violations  remediation: close out the named feat(s) to status: done on dev (or
   # older": one skip note, no loop, no mutation. DRY_RUN prints the same
   # table with would-delete lines and mutates nothing; the gate above dies
   # on a violation, so a failing precheck never reaches this code.
-  local candidates name wt_lines cdel cnum csha local_tip remote_tip side_note mech
+  local candidates name wt_lines cdel cnum csha local_tip remote_tip side_note mech del_note
   local deleted_count=0 kept_count=0
   if [ -z "$vprev" ]; then
     info "branch cleanup: no previous release tag — nothing to clean up"
@@ -719,7 +781,7 @@ $violations  remediation: close out the named feat(s) to status: done on dev (or
         if git rev-parse --verify --quiet "refs/heads/$name" >/dev/null; then
           local_tip=$(git rev-parse --verify "refs/heads/$name")
         fi
-        remote_tip=$(git ls-remote origin "refs/heads/$name" | awk 'NR == 1 { print $1 }')
+        remote_tip=$(origin_branch_tip "$name")
         if [ -n "$local_tip" ] && [ -n "$remote_tip" ] && [ "$local_tip" != "$remote_tip" ]; then
           info "branch cleanup: $name: skipped (guard d: local tip ${local_tip:0:12} != origin tip ${remote_tip:0:12} — manual decision)"
           kept_count=$((kept_count + 1))
@@ -757,7 +819,12 @@ $violations  remediation: close out the named feat(s) to status: done on dev (or
           if [ "$DRY_RUN" -eq 1 ]; then
             info "branch cleanup: $name: would delete origin ref (${side_note}proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
           else
-            git push origin --delete "$name" >/dev/null || die "branch cleanup: git push origin --delete $name failed (the local ref was already deleted) — delete the origin ref manually, then re-run: scripts/release.sh precheck v$v"
+            if [ -n "$local_tip" ]; then
+              del_note="the local ref was already deleted"
+            else
+              del_note="the branch was origin-side only (no local ref)"
+            fi
+            git push origin --delete "$name" >/dev/null || die "branch cleanup: git push origin --delete $name failed ($del_note) — delete the origin ref manually, then re-run: scripts/release.sh precheck v$v"
             info "branch cleanup: $name: deleted origin ref (${side_note}git push origin --delete; proven stale by PR #$cnum, delivery ${csha:0:12} ≤ $vprev)"
           fi
         fi

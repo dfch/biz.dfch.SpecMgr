@@ -4,7 +4,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-24T17:58:14.528+02:00'
+updated: '2026-10-24T21:07:18.241+02:00'
 version: 1.0.0
 ---
 
@@ -96,8 +96,8 @@ point.
   head, so head-SHA ancestry is the wrong test). The Step 2 closeout
   gate and branch cleanup key their window and staleness tests on it.
 - **Stale branch**: a `feat-*`/`fix/*` branch (local and/or on
-  `origin`) whose delivery commit is an ancestor of the latest release
-  tag (`vPrev`) — it shipped in the previous release or older, hence it
+  `origin`) whose delivery commit is an ancestor of the latest tag
+  (`vPrev`) — it shipped in the previous release or older, hence it
   is deletable at the current release's precheck (Step 2, sub-item (h)).
 - **Issue-number prefix**: the `feat-<NNN>-` prefix of a feat folder's
   id, where `NNN` is the GitHub issue number (unique per folder). The
@@ -236,13 +236,16 @@ locally nor on `origin`; (e) `uv lock --check` passes, i.e. `uv.lock` is
 in sync with `pyproject.toml` before the bump; (f) the `uv` and `gh` CLIs
 are present and `gh` is authenticated; (g) the feat closeout gate — every
 `.specmgr/feat/feat-*/` folder whose implementation merged into the
-current release window (`vPrev..HEAD`, `vPrev` the latest release tag
-reachable from `dev` via `git describe --tags --abbrev=0`; with no tag at
-all the window is `HEAD`) must be closed out to `status: done`, where
-"merged" is the newest merged PR under the folder id (its exact head ref,
-extended by the issue-number prefix `feat-<NNN>-` for work merged from a
-renamed branch) whose delivery commit is an ancestor of `HEAD` but not of
-`vPrev`; a violation fails the precheck with one actionable line per
+current release window (`vPrev..HEAD`, `vPrev` the latest tag reachable
+from `dev` (`git describe --tags --abbrev=0`); with no tag at all the
+window is `HEAD`) must be closed out to `status: done`, where "merged" is
+the newest merged PR under the folder id (its exact head ref, extended by
+the issue-number prefix `feat-<NNN>-` for work merged from a renamed
+branch — the fallback is a single `per_page=100` page of the most recently
+closed PRs, fetched once per precheck run (constant cost), so a
+renamed-branch delivery merged beyond that page is outside the fallback's
+reach) whose delivery commit is an ancestor of `HEAD` but not of `vPrev`;
+a violation fails the precheck with one actionable line per
 offending feat plus the remediation pointer, and a missing or unparseable
 `status:` line is a violation in its own right — the gate blocks, never
 skips; feats with no merged PR (plan-only or in-flight) and deliveries

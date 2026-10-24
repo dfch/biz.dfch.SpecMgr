@@ -38,7 +38,10 @@ regardless of the stored name, and rejects a second positional.
 throwaway `bash -c` process (the file's `BASH_SOURCE` dispatch guard keeps
 a source from running `main`) and intercepts every `gh` call with a fake
 `gh` shim that answers from JSON fixtures in a per-test state directory.
-No network access is needed.
+No network access is needed. Since feat-233 (issue #233), the suite also
+runs the FULL `stage_precheck` over fixture repos for the two new step-2
+sub-items — the feat closeout gate (`ReleaseShCloseoutGateTestCase`) and
+the previous-release branch cleanup (`ReleaseShBranchCleanupTestCase`).
 """
 
 import json
@@ -705,10 +708,17 @@ class ReleaseShCloseoutGateTestCase(ReleaseShGateTestCase):
         self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
 
     def test_precheck_gate_passes_for_plan_only_feat(self) -> None:
-        """ACC-002: a plan-only feat (no merged PR for its head ref, and
-        none in the page scan) passes at any non-done status (REQ-002)."""
+        """ACC-002 (I5, review finding): a plan-only feat (no merged PR for
+        its head ref) passes at any non-done status (REQ-002) even when the
+        closed-PR page carries an UNRELATED in-window merged PR on a
+        different head ref — the plan-only feat must not be gated on it.
+        This also pins the shim's emulated server-side `head` filter: a
+        regression of the exact lookup to the broken whole-page-return
+        shape would find the unrelated delivery and gate the feat."""
         repo, shas = self.make_release_repo([("feat-8-plan-only", "progress")])
-        self.write_pulls_closed()
+        self.write_pulls_closed(
+            self.pr_fixture(99, "feat-99-unrelated", "2026-10-02T00:00:00Z", shas["in_window"]),
+        )
         self.write_green_ci(shas["head"])
 
         result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
@@ -829,6 +839,89 @@ class ReleaseShCloseoutGateTestCase(ReleaseShGateTestCase):
         self.assertIn("feat-15-first-release", result.stderr)
         self.assertIn("PR #66", result.stderr)
         self.assertIn(shas["in_window"], result.stderr)
+
+    def test_precheck_gate_unresolvable_delivery_not_gated(self) -> None:
+        """G1 (review finding): a review-status feat whose merged delivery
+        sha is an ancestor of NEITHER vPrev nor HEAD (a commit-tree side
+        commit on the previous-release commit, the cleanup fail-safe
+        test's shape) is not a gate violation — the full precheck passes
+        (rc 0) with an explicit not-gated info line naming the feat, the
+        PR number, and the short sha (the outer ancestry test's empty
+        else no longer passes in silence; "nor of v0.9.8" is stated
+        because a prior tag exists)."""
+        repo, shas = self.make_release_repo([("feat-16-orphan", "review")])
+        tree_a = _git(["rev-parse", f"{shas['previous']}^{{tree}}"], repo)
+        sha_d = _git(
+            [
+                "-c",
+                "user.email=test@test",
+                "-c",
+                "user.name=test",
+                "commit-tree",
+                tree_a,
+                "-p",
+                shas["previous"],
+                "-m",
+                "c4-orphan",
+            ],
+            repo,
+        )
+        self.write_pulls_closed(self.pr_fixture(61, "feat-16-orphan", "2026-09-01T00:00:00Z", sha_d))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
+        expected = (
+            f"closeout gate: feat-16-orphan (PR #61, delivery {sha_d[:12]}) is outside the release window"
+            " (not an ancestor of HEAD, nor of v0.9.8) — not gated; verify the PR's merge target manually"
+        )
+        self.assertIn(expected, result.stdout)
+        self.assertNotIn("feat closeout gate failed", result.stderr)
+
+    def test_precheck_gate_tolerates_quoted_and_commented_status(self) -> None:
+        """I4 (review finding): a well-formed YAML quoted status
+        (`status: 'done'`) and a status with a trailing comment
+        (`status: planning # note`) are the same values as the bare
+        forms — both feat folders pass the full precheck (rc 0) with an
+        in-window merged PR on the first folder's head ref; under the
+        old awk, each was a false-positive frontmatter-defect die."""
+        repo, shas = self.make_release_repo(
+            [
+                ("feat-17-quoted", "'done'"),
+                ("feat-18-commented", "planning # note"),
+            ]
+        )
+        self.write_pulls_closed(
+            self.pr_fixture(42, "feat-17-quoted", "2026-10-01T00:00:00Z", shas["in_window"]),
+        )
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
+        self.assertNotIn("missing or unparseable", result.stderr)
+
+    def test_precheck_gate_tolerates_quoted_review_status(self) -> None:
+        """I4 (review finding, symmetric case): a quoted `status:
+        'review'` is parsed as `review` (not a frontmatter defect) — the
+        in-window merged PR gates the feat with the ordinary violation
+        line, never the defect line."""
+        repo, shas = self.make_release_repo([("feat-19-quoted-review", "'review'")])
+        self.write_pulls_closed(
+            self.pr_fixture(42, "feat-19-quoted-review", "2026-10-01T00:00:00Z", shas["in_window"]),
+        )
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("status is 'review'", result.stderr)
+        self.assertIn("PR #42", result.stderr)
+        self.assertIn(shas["in_window"], result.stderr)
+        self.assertNotIn("missing or unparseable", result.stderr)
 
 
 class ReleaseShBranchCleanupTestCase(ReleaseShCloseoutGateTestCase):
