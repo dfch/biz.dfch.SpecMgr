@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
-status: planning
+status: progress
 type: feat
-updated: '2026-10-24T14:09:57.499+02:00'
+updated: '2026-10-24T15:43:53.551+02:00'
 version: 1.0.0
 ---
 
@@ -114,10 +114,10 @@ four hazard classes met in the manual pass.
 
 #### Phase 100: Closeout gate in `stage_precheck`
 
-- [ ] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists — the gate then treats the window as `HEAD`), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line; a missing or unparseable value is a distinct sentinel the gate turns into its own violation line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merge_commit_sha` or nothing).
-- [ ] Task 100.110: Wire the gate into `stage_precheck` after the six existing checks (a)–(f) documented in SOP 98537416 step 2: for each feat folder whose `status` is not `done` (a missing or unparseable `status` line is a violation on its own, reported before any PR lookup), look up its merged delivery (exact head ref first, then the REQ-011 `feat-<NNN>-` prefix fallback); if found and the delivery SHA is an ancestor of `HEAD` but not of `vPrev` (with `vPrev` absent, every delivery counts), record it as a violation; after the loop, if there are violations, `die` with one actionable line per offending feat (id, status or frontmatter defect, PR number, sha) plus the remediation pointer (close out to `done` on `dev`, or repair the frontmatter, then re-run `precheck`).
-- [ ] Task 100.115: Extend the fake `gh` shim in `tests/test_release_sh.py` to answer the merged-PR search call `pulls?state=closed&head=<owner>/<ref>` (and, once the REQ-011 fallback lands, the one-shot page scan of closed PRs): the shim's configured PR fixtures carry `number`, `head.ref`, `merged_at`, and `merge_commit_sha`, so the gate and cleanup tests can assert per-branch merged and unmerged delivery.
-- [ ] Task 100.120: Add the gate's `tests/test_release_sh.py` cases (ACC-001, ACC-002, ACC-003, ACC-011): review-status feat with an in-window merged PR ⇒ precheck dies naming the feat; the same feat at `done` ⇒ passes; plan-only feat (no merged PR) ⇒ passes; feat delivered in an earlier release ⇒ passes; feat folder with a missing or unparseable `status` ⇒ precheck dies with the frontmatter-defect line; feat merged only under a renamed `feat-<NNN>-*` branch ⇒ gated via the prefix fallback; no prior tag ⇒ the window is `HEAD` (an in-window review-status feat ⇒ dies).
+- [x] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists — the gate then treats the window as `HEAD`), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line; a missing or unparseable value is a distinct sentinel the gate turns into its own violation line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merge_commit_sha` or nothing).
+- [x] Task 100.110: Wire the gate into `stage_precheck` after the six existing checks (a)–(f) documented in SOP 98537416 step 2: for each feat folder whose `status` is not `done` (a missing or unparseable `status` line is a violation on its own, reported before any PR lookup), look up its merged delivery (exact head ref first, then the REQ-011 `feat-<NNN>-` prefix fallback); if found and the delivery SHA is an ancestor of `HEAD` but not of `vPrev` (with `vPrev` absent, every delivery counts), record it as a violation; after the loop, if there are violations, `die` with one actionable line per offending feat (id, status or frontmatter defect, PR number, sha) plus the remediation pointer (close out to `done` on `dev`, or repair the frontmatter, then re-run `precheck`).
+- [x] Task 100.115: Extend the fake `gh` shim in `tests/test_release_sh.py` to answer the merged-PR search call `pulls?state=closed&head=<owner>/<ref>` (and, once the REQ-011 fallback lands, the one-shot page scan of closed PRs): the shim's configured PR fixtures carry `number`, `head.ref`, `merged_at`, and `merge_commit_sha`, so the gate and cleanup tests can assert per-branch merged and unmerged delivery.
+- [x] Task 100.120: Add the gate's `tests/test_release_sh.py` cases (ACC-001, ACC-002, ACC-003, ACC-011): review-status feat with an in-window merged PR ⇒ precheck dies naming the feat; the same feat at `done` ⇒ passes; plan-only feat (no merged PR) ⇒ passes; feat delivered in an earlier release ⇒ passes; feat folder with a missing or unparseable `status` ⇒ precheck dies with the frontmatter-defect line; feat merged only under a renamed `feat-<NNN>-*` branch ⇒ gated via the prefix fallback; no prior tag ⇒ the window is `HEAD` (an in-window review-status feat ⇒ dies).
 
 #### Phase 110: Previous-release branch cleanup in `stage_precheck`
 
@@ -140,19 +140,57 @@ four hazard classes met in the manual pass.
 
 ### Current Status
 
-**As of 2026-10-24**: Planned. The design was settled in a planning session against the
-live repo state (the 2026-10-23 manual cleanup of ~30 stale local branches, 25+ stale
-remote branches, and the feat-129/feat-214 closeouts is the motivating evidence). The
-maintainer's two placement decisions are recorded in Design Notes: the closeout gate runs
-in `precheck` (it must hold before `stage_bump` writes the version increment), and the
-branch cleanup also runs in `precheck` (where the latest tag unambiguously names the
-previous release). Nothing implemented yet; the plan is complete. The frontmatter stays at
-`status: planning` until implementation starts — `review` is reserved, per Task 130.110,
-for a finished implementation awaiting closeout.
+**As of 2026-10-24**: In progress — Phase 100 (the closeout gate in `stage_precheck`)
+is complete. `scripts/release.sh` carries the gate helpers (`latest_tag`,
+`feat_folders`, `feat_status`, `merged_delivery`, the one-shot `closed_pr_scan` with
+its PID-keyed per-run cache) and the gate wired after the six existing precheck
+checks; `tests/test_release_sh.py`'s fake `gh` answers the merged-PR search endpoints
+and the new `ReleaseShCloseoutGateTestCase` runs the FULL `stage_precheck` for
+ACC-001/002/003/011 plus the frontmatter-defect and no-prior-tag cases — 54/54 in
+`tests/test_release_sh.py`, full suite 4782 passed / 18 skipped, ruff/vulture/
+`bash -n` clean. The design decisions the implementation pinned (the `head` filter's
+colon URL shape, the 3-column delivery line, the subshell-safe scan cache) are
+recorded in Decisions Made. Next: Phase 110 (previous-release branch cleanup in
+`stage_precheck`); `review` stays reserved, per Task 130.110, for a finished
+implementation awaiting closeout.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T15:41:54.052+02:00 - Phase 100 complete
+
+Implemented the feat closeout gate in `stage_precheck` (Tasks 100.100/100.110/
+100.115/100.120). `scripts/release.sh` gains the gate helpers — `latest_tag`
+(`git describe --tags --abbrev=0`, empty when no tag is reachable; the caller
+emits the window-is-`HEAD` info note), `feat_folders` (the `.specmgr/feat/
+feat-*/` ids, sorted), `feat_status` (the frontmatter `status:` value, the
+`FEAT_STATUS_UNPARSEABLE` sentinel for a missing/empty/out-of-set line),
+`merged_delivery` (the exact head-ref search, newest by `merged_at`, printing
+`number<TAB>merged_at<TAB>merge_commit_sha`), and `closed_pr_scan` (the one-shot
+`per_page=100` page scan for the REQ-011 prefix fallback, parsed lines cached in
+a PID-keyed per-run file) — and the gate itself, wired after the six existing
+precheck checks: every non-`done` feat folder whose newest merged delivery (exact
+match and fallback combined) is an ancestor of `HEAD` but not of `vPrev` (every
+delivery when `vPrev` is absent) dies the precheck with one actionable line per
+offending feat (id, status or frontmatter defect, PR number, full delivery sha)
+plus the remediation pointer; a missing/unparseable `status:` line is a
+violation on its own, reported before any PR lookup. `tests/test_release_sh.py`'s
+fake `gh` now answers both search endpoints from a `pulls_closed.json` fixture
+(PR objects carry `number`, `head.ref`, `merged_at`, `merge_commit_sha`), and the
+new `ReleaseShCloseoutGateTestCase` (with a `main` branch + `v0.9.8` tag +
+in-window commits, a green `lint_test_run` fixture, and a fake `uv` shim) runs
+the full `stage_precheck 0.9.9`: ACC-001 (review feat with an in-window merged
+PR dies, naming feat/status/PR/sha), ACC-002 (`done` passes; plan-only passes),
+ACC-003 (delivery an ancestor of `vPrev` passes at `review`), ACC-011 (merged
+only under a renamed `feat-<NNN>-*` branch is gated via the prefix fallback, the
+page scan fetched exactly once per run), the newest-by-`merged_at`-across-exact-
+and-fallback delivery choice (PR #168 wins over #137), the missing- and
+out-of-set-`status` defect cases (no PR lookup for the offending folder), and
+the no-prior-tag window-is-`HEAD` case. Phase-end gate: `ruff format --check` /
+`ruff check` / `vulture` clean, `bash -n scripts/release.sh` clean,
+`pytest tests/test_release_sh.py -n auto` 54/54, full suite 4782 passed /
+18 skipped.
 
 #### 2026-10-24T14:09:57.499+02:00 - Plan refined
 
@@ -180,6 +218,55 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T15:41:54.052+02:00 - Phase 100 implementation: URL shape, delivery columns, subshell-safe scan cache
+
+Seven points fixed while implementing the gate (all verified in code; the
+URL-shape point was verified live against GitHub on 2026-10-24). (1) **Exact
+lookup URL**: `gh api repos/{owner}/{repo}/pulls?state=closed&head={owner}:<ref>&
+per_page=100` — the documented `user:ref` COLON form. The plan's sketch
+`head=<owner>/<feat-id>` (slash) was tested live and is silently ignored by the
+API (it returns every closed PR, which would gate every feat on the repo's
+newest merged PR); a bogus-owner colon control returned 0 hits while the
+placeholder returned the one hit, proving gh 2.4.0+dfsg1 expands `{owner}`
+inside the query string — so no per-run owner/repo resolution is needed.
+(2) **Delivery line shape**: `number<TAB>merged_at<TAB>merge_commit_sha` (the
+3-column form supersedes Task 100.100's two-field sketch wherever it conflicts):
+the gate needs `merged_at` from the exact match too, to pick the newest delivery
+across the exact and the REQ-011 fallback matches; the page scan emits the same
+three columns plus `head.ref` as a fourth, and the gate compares `merged_at`
+lexicographically (ISO-8601 Zulu) across both. (3) **Page scan**: exactly one
+`gh api` call of `repos/{owner}/{repo}/pulls?state=closed&per_page=100` (the
+API's max page size) per precheck run, parsed lines cached in a PID-keyed file
+(`${TMPDIR:-/tmp}/release-closed-pr-scan-<pid>`). The PID keying is mandatory
+because `closed_pr_scan` is always invoked from a pipeline/command-substitution
+subshell, where variable assignments and traps never propagate to the parent;
+`$$` IS inherited, so every subshell re-derives the same path and finds the
+already-fetched file on disk. The precheck removes a stale file (PID reuse after
+a crash) at run start and traps the removal on EXIT. (4) **Unparseable
+`status`**: the frontmatter `status:` line of a feat README is a defect iff the
+README is missing, the line is missing or present-but-empty, or the value is
+outside the closed set {planning, progress, review, done}; `planning`/
+`progress`/`review` are parseable and take the normal PR-lookup path, `done`
+is exempt, and the defect is reported before any PR lookup for that folder.
+(5) **`gh api` failures in the delivery lookup are swallowed** (`|| true`) and
+read as "no merged PR found" (REQ-002 semantics), consistent with the script's
+`gh api` tolerance in `close_pr_if_open` and `stage_status`; a full GitHub
+outage already fails precheck's CI-green check upstream. (6) **Full-stage test
+strategy**: the ACC wording runs the full `stage_precheck`, so the harness
+gained `make_release_repo` (adds the `main` branch the existing `make_repo`
+lacks, a `v0.9.8` tag at the first commit, an in-window second commit, and feat
+folders with minimal frontmatter committed at the head), a fake `uv` shim
+answering `uv lock --check` with rc 0, the green `lint_test_run` fixture at
+dev's head, and target `0.9.9` (no tag); delivery SHAs are REAL fixture commits
+so the `git merge-base --is-ancestor` tests exercise genuine ancestry, and the
+no-prior-tag case uses the same fixture without the tag. (7) **Gate report
+format**: one line per offending feat naming the id, the current status (or the
+frontmatter defect), the PR number, and the FULL delivery sha, plus a trailing
+remediation pointer (close out to `done` on `dev` or repair the frontmatter,
+commit, re-run `scripts/release.sh precheck v<v>`); `die` receives the
+multi-line message as a single argument and the tests assert `result.stderr`
+substrings plus exit code 1.
 
 #### 2026-10-24T14:09:57.499+02:00 - Refinement choices: fail-safe gating, prefix fallback, first-guard-wins
 

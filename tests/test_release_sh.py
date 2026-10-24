@@ -126,6 +126,32 @@ case "$cmd" in
         exit 0
         ;;
     esac
+    # Merged-PR search (feat-233 closeout gate): the exact head-ref lookup
+    # pulls?state=closed&head={owner}:<ref>&per_page=100 and the one-shot
+    # REQ-011 page scan pulls?state=closed&per_page=100. Both answer from
+    # the pulls_closed.json fixture, whose PRs carry number, head.ref,
+    # merged_at, and merge_commit_sha; the exact lookup emulates the
+    # server-side head filter (the documented user:ref colon form).
+    search=""
+    for a in "$@"; do
+      case "$a" in
+        *pulls?state=closed*) search="$a" ;;
+      esac
+    done
+    if [ -n "$search" ]; then
+      [ -f "$S/pulls_closed.json" ] || { echo "shim: missing fixture pulls_closed.json" >&2; exit 3; }
+      case "$search" in
+        *"head={owner}:"*)
+          ref="${search#*"head={owner}:"}"
+          ref="${ref%%&*}"
+          jq --arg ref "$ref" '[.[] | select(.head.ref == $ref)]' "$S/pulls_closed.json"
+          ;;
+        *)
+          cat "$S/pulls_closed.json"
+          ;;
+      esac
+      exit 0
+    fi
     pull=""
     for a in "$@"; do
       case "$a" in
@@ -556,3 +582,250 @@ class ReleaseShReleaseNotesTestCase(ReleaseShGateTestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertIn("unexpected argument 'some text'", result.stderr)
+
+
+class ReleaseShCloseoutGateTestCase(ReleaseShGateTestCase):
+    """Tests for `release.sh`'s feat closeout gate in `stage_precheck`
+    (feat-233): full `precheck` runs over a fixture repo that passes the
+    six existing checks (a `main` branch for the fetch + fast-forward
+    invariant, a previous-release tag, in-window commits, the green CI-run
+    fixture, and a fake `uv` answering `uv lock --check`), with feat
+    folders under `.specmgr/feat/` and merged-PR fixtures for the fake
+    `gh`'s search endpoints."""
+
+    def setUp(self):
+        """Add the fake `uv` shim (answers `uv lock --check` with rc 0)."""
+        super().setUp()
+        uv = self.shim_dir / "uv"
+        uv.write_text("#!/usr/bin/env bash\nexit 0\n")
+        os.chmod(uv, 0o755)
+
+    def make_release_repo(
+        self, feats: list[tuple[str, str | None]], tag_prev: bool = True
+    ) -> tuple[Path, dict[str, str]]:
+        """A fixture repo that passes the six existing precheck checks.
+
+        Layout (dev == origin/dev at C; main at A; tag v0.9.8 at A when
+        `tag_prev`):
+
+            A (c1) --branch main, --tag v0.9.8 (optional)
+            |
+            B (c2)
+            |
+            C (c3)  <- dev == origin/dev, carries the feat folders
+
+        `feats` is a list of (folder id, frontmatter status) pairs; a
+        `None` status omits the `status:` line. Returns (repo, shas) with
+        shas = {"head": C, "in_window": B, "previous": A or "", "main": A}.
+        """
+        bare = self.tmp / "origin.git"
+        repo = self.tmp / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "--bare", str(bare)], check=True, capture_output=True, env=_clean_git_env())
+        _git(["init"], repo)
+        _git(["checkout", "-B", "dev"], repo)
+        (repo / "file.txt").write_text("a\n")
+        _git(["add", "."], repo)
+        _git(["-c", "user.email=test@test", "-c", "user.name=test", "commit", "-m", "c1"], repo)
+        sha_a = _git(["rev-parse", "HEAD"], repo)
+        if tag_prev:
+            _git(["tag", "v0.9.8"], repo)
+        _git(["branch", "main", sha_a], repo)
+        (repo / "file.txt").write_text("b\n")
+        _git(["add", "."], repo)
+        _git(["-c", "user.email=test@test", "-c", "user.name=test", "commit", "-m", "c2"], repo)
+        sha_b = _git(["rev-parse", "HEAD"], repo)
+        (repo / "file.txt").write_text("c\n")
+        for feat_id, status in feats:
+            folder = repo / ".specmgr" / "feat" / feat_id
+            folder.mkdir(parents=True)
+            fm = f"id: {feat_id}\n"
+            if status is not None:
+                fm += f"status: {status}\n"
+            fm += "version: 1.0.0\n"
+            fm += "created: '2026-01-01T00:00:00.000+02:00'\n"
+            fm += "updated: '2026-01-01T00:00:00.000+02:00'\n"
+            (folder / "README.md").write_text(f"---\n{fm}---\n\n# Feature: {feat_id}\n")
+        _git(["add", "."], repo)
+        _git(["-c", "user.email=test@test", "-c", "user.name=test", "commit", "-m", "c3"], repo)
+        sha_c = _git(["rev-parse", "HEAD"], repo)
+        _git(["remote", "add", "origin", str(bare)], repo)
+        _git(["push", "origin", "dev"], repo)
+        _git(["push", "origin", "main"], repo)
+        return repo, {"head": sha_c, "in_window": sha_b, "previous": sha_a if tag_prev else "", "main": sha_a}
+
+    def pr_fixture(self, number: int, head_ref: str, merged_at: str, merge_sha: str) -> dict[str, object]:
+        """One closed-PR fixture object (number/head.ref/merged_at/merge_commit_sha)."""
+        return {
+            "number": number,
+            "head": {"ref": head_ref, "label": f"dfch:{head_ref}"},
+            "state": "closed",
+            "merged_at": merged_at,
+            "merge_commit_sha": merge_sha,
+        }
+
+    def write_pulls_closed(self, *prs: dict[str, object]) -> None:
+        """Seed the fake `gh`'s pulls_closed.json fixture (the search endpoints)."""
+        self.write_state("pulls_closed.json", json.dumps(list(prs)))
+
+    def write_green_ci(self, head_sha: str) -> None:
+        """A completed green 'Lint and Test' push run at dev's head SHA."""
+        run = self.lint_test_run(head_sha, status="completed", conclusion="success")
+        self.write_state("run_list.json", json.dumps([run]))
+
+    def test_precheck_gate_dies_for_review_feat_shipped_in_window(self) -> None:
+        """ACC-001: a review-status feat whose merged PR's delivery SHA is
+        inside vPrev..HEAD fails the full precheck, naming the feat, its
+        status, the PR number, and the delivery sha."""
+        repo, shas = self.make_release_repo([("feat-7-closeout-gate", "review")])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-7-closeout-gate", "2026-10-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat closeout gate failed", result.stderr)
+        self.assertIn("feat-7-closeout-gate", result.stderr)
+        self.assertIn("status is 'review'", result.stderr)
+        self.assertIn("PR #42", result.stderr)
+        self.assertIn(shas["in_window"], result.stderr)
+        self.assertIn("re-run: scripts/release.sh precheck v0.9.9", result.stderr)
+        self.assertNotIn("all checks passed", result.stdout)
+
+    def test_precheck_gate_passes_for_done_feat(self) -> None:
+        """ACC-002: the same in-window delivery at status: done passes the
+        gate and the full precheck."""
+        repo, shas = self.make_release_repo([("feat-7-closeout-gate", "done")])
+        self.write_pulls_closed(self.pr_fixture(42, "feat-7-closeout-gate", "2026-10-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
+
+    def test_precheck_gate_passes_for_plan_only_feat(self) -> None:
+        """ACC-002: a plan-only feat (no merged PR for its head ref, and
+        none in the page scan) passes at any non-done status (REQ-002)."""
+        repo, shas = self.make_release_repo([("feat-8-plan-only", "progress")])
+        self.write_pulls_closed()
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
+
+    def test_precheck_gate_passes_for_feat_delivered_before_prev_tag(self) -> None:
+        """ACC-003: a review-status feat whose delivery SHA is an ancestor
+        of vPrev (shipped in an earlier release) passes the gate (REQ-003)."""
+        repo, shas = self.make_release_repo([("feat-9-earlier-release", "review")])
+        self.write_pulls_closed(self.pr_fixture(55, "feat-9-earlier-release", "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("precheck: all checks passed for v0.9.9", result.stdout)
+        self.assertIn("shipped in an earlier release", result.stdout)
+
+    def test_precheck_gate_dies_for_missing_status(self) -> None:
+        """A feat folder whose frontmatter has no `status:` line is a
+        violation in its own right — reported before any PR lookup
+        (fail-safe: block, never skip; an in-window merged PR exists for
+        the ref and must not be looked up or reported)."""
+        repo, shas = self.make_release_repo([("feat-10-broken", None)])
+        self.write_pulls_closed(self.pr_fixture(77, "feat-10-broken", "2026-10-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        gh_calls = (self.state / "gh_calls.log").read_text()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat-10-broken", result.stderr)
+        self.assertIn("frontmatter 'status:' is missing or unparseable", result.stderr)
+        self.assertNotIn("PR #77", result.stderr)
+        self.assertNotIn("head={owner}:feat-10-broken", gh_calls)
+
+    def test_precheck_gate_dies_for_out_of_set_status(self) -> None:
+        """A `status:` value outside the closed set (planning/progress/
+        review/done) is the same frontmatter-defect violation."""
+        repo, shas = self.make_release_repo([("feat-11-broken", "wip")])
+        self.write_pulls_closed(self.pr_fixture(78, "feat-11-broken", "2026-10-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        gh_calls = (self.state / "gh_calls.log").read_text()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat-11-broken", result.stderr)
+        self.assertIn("frontmatter 'status:' is missing or unparseable", result.stderr)
+        self.assertNotIn("PR #78", result.stderr)
+        self.assertNotIn("head={owner}:feat-11-broken", gh_calls)
+
+    def test_precheck_gate_prefix_fallback_gates_renamed_branch(self) -> None:
+        """ACC-011: a review-status feat whose work merged ONLY under a
+        renamed feat-<NNN>-* branch (no merged PR for the exact head ref)
+        is still gated via the issue-number-prefix fallback; the one-shot
+        page scan is fetched exactly once per run even though two feat
+        folders use the fallback, and a second feat with no merged
+        delivery stays ungated (REQ-002)."""
+        repo, shas = self.make_release_repo(
+            [
+                ("feat-134-similarity-rename", "review"),
+                ("feat-144-ref-artifact", "review"),
+            ]
+        )
+        self.write_pulls_closed(
+            self.pr_fixture(168, "feat-134-similarity-requires-mcp", "2026-09-29T11:47:00Z", shas["in_window"]),
+        )
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        gh_calls = (self.state / "gh_calls.log").read_text()
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat-134-similarity-rename", result.stderr)
+        self.assertIn("PR #168", result.stderr)
+        self.assertIn(shas["in_window"], result.stderr)
+        self.assertNotIn("feat-144-ref-artifact", result.stderr)
+        self.assertIn("head={owner}:feat-134-similarity-rename", gh_calls)
+        self.assertIn("head={owner}:feat-144-ref-artifact", gh_calls)
+        scan_calls = [line for line in gh_calls.splitlines() if "pulls?state=closed&per_page=100" in line]
+        self.assertEqual(len(scan_calls), 1)
+
+    def test_precheck_gate_newest_delivery_wins_across_exact_and_fallback(self) -> None:
+        """The delivery is the newest by merged_at ACROSS the exact head-ref
+        match and the prefix fallback (design decision: a folder that
+        shipped from both a folder-named branch (PR #137) and a renamed
+        feat-<NNN>-* branch (PR #168) is gated on #168, not #137)."""
+        repo, shas = self.make_release_repo([("feat-134-related-artifact-similarity", "review")])
+        self.write_pulls_closed(
+            self.pr_fixture(137, "feat-134-related-artifact-similarity", "2026-09-29T08:47:07Z", shas["in_window"]),
+            self.pr_fixture(168, "feat-134-similarity-requires-mcp", "2026-09-29T11:47:00Z", shas["head"]),
+        )
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("feat-134-related-artifact-similarity", result.stderr)
+        self.assertIn("PR #168", result.stderr)
+        self.assertIn(shas["head"], result.stderr)
+        self.assertNotIn("PR #137", result.stderr)
+
+    def test_precheck_gate_no_prior_tag_window_is_head(self) -> None:
+        """With no prior release tag the window is HEAD: a review-status
+        feat with a merged delivery counts as in-window and the precheck
+        dies (the first-release case, with the no-tag info note)."""
+        repo, shas = self.make_release_repo([("feat-15-first-release", "review")], tag_prev=False)
+        self.write_pulls_closed(self.pr_fixture(66, "feat-15-first-release", "2026-08-01T00:00:00Z", shas["in_window"]))
+        self.write_green_ci(shas["head"])
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn("no release tag reachable from HEAD", result.stdout)
+        self.assertIn("feat-15-first-release", result.stderr)
+        self.assertIn("PR #66", result.stderr)
+        self.assertIn(shas["in_window"], result.stderr)

@@ -375,6 +375,125 @@ confirm_or_die() {
   fi
 }
 
+# --- feat closeout gate helpers (feat-233, SOP step 2 sub-item) --------------
+
+# Sentinel returned by feat_status for a frontmatter `status:` value that is
+# missing, empty, or outside the closed set planning/progress/review/done.
+# The gate turns the sentinel into its own violation line (the fail-safe:
+# block the release, never skip the folder).
+FEAT_STATUS_UNPARSEABLE="__unparseable__"
+
+# Per-run cache path of closed_pr_scan's one-shot page fetch. PID-keyed so
+# that every call — which necessarily runs in a pipeline/command
+# substitution subshell (whose variable assignments never propagate back
+# to the parent shell) — re-derives the SAME file path ($$ is inherited by
+# subshells) and finds the already-fetched cache on disk. The precheck
+# stage removes a stale file at run start and traps the removal on EXIT.
+closed_pr_scan_cache_path() {
+  printf '%s/release-closed-pr-scan-%s' "${TMPDIR:-/tmp}" "$$"
+}
+
+# Print the latest release tag reachable from HEAD
+# (`git describe --tags --abbrev=0`), or nothing when no tag is reachable
+# (the first release). Pure stdout contract: the caller captures the tag
+# via command substitution and must emit its own info note when the
+# result is empty (the release window is then HEAD — the gate counts every
+# merged delivery as in-window; the cleanup has no "previous release or
+# older" to delete). An info() call INSIDE this function would be
+# captured by the substitution and pollute the tag value.
+latest_tag() {
+  local tag
+  tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
+  printf '%s' "$tag"
+}
+
+# Print the ids of every `.specmgr/feat/feat-*/` folder (one per line,
+# sorted), or nothing when the directory is absent.
+feat_folders() {
+  local d
+  [ -d .specmgr/feat ] || return 0
+  for d in .specmgr/feat/feat-*/; do
+    [ -d "$d" ] || continue
+    d="${d%/}"
+    printf '%s\n' "${d##*/}"
+  done | sort
+}
+
+# Print the frontmatter `status:` value of `.specmgr/feat/<id>/README.md`
+# (the first frontmatter block only). Prints FEAT_STATUS_UNPARSEABLE when
+# the README is missing, the `status:` line is absent or empty, or the
+# value is outside the closed set planning/progress/review/done.
+feat_status() {
+  local id="$1" file value
+  file=".specmgr/feat/$id/README.md"
+  [ -f "$file" ] || { printf '%s' "$FEAT_STATUS_UNPARSEABLE"; return 0; }
+  value=$(
+    awk '
+      NR == 1 && $0 != "---" { exit }
+      NR == 1 { next }
+      /^---/ { exit }
+      /^status:[ \t]*/ {
+        sub(/^status:[ \t]*/, "")
+        sub(/[ \t]+$/, "")
+        print
+        exit
+      }
+    ' "$file"
+  )
+  case "$value" in
+    planning | progress | review | done) printf '%s' "$value" ;;
+    *) printf '%s' "$FEAT_STATUS_UNPARSEABLE" ;;
+  esac
+}
+
+# Print the newest merged PR whose head ref is exactly $1 (a same-repo
+# branch name), one line: number<TAB>merged_at<TAB>merge_commit_sha — or
+# nothing when the ref has no merged PR (REQ-002: such a feat is never
+# gated). The `head` filter uses the documented user:ref COLON form and
+# the {owner} placeholder is expanded by gh inside the query string —
+# both verified live 2026-10-24 against gh 2.4.0+dfsg1 (the slash form
+# is silently ignored by the API and returns every closed PR, which would
+# gate every feat on the repo's newest merged PR). A gh failure is
+# swallowed (|| true) and read as "no merged PR": a full GitHub outage
+# already fails the precheck's CI-green check upstream.
+merged_delivery() {
+  local ref="$1" page
+  page=$(gh api "repos/{owner}/{repo}/pulls?state=closed&head={owner}:$ref&per_page=100" 2>/dev/null || true)
+  if [ -n "$page" ]; then
+    jq -r '
+      [.[] | select(.merged_at != null)]
+      | sort_by(.merged_at) | reverse | .[0] // empty
+      | [.number, .merged_at, .merge_commit_sha] | @tsv
+    ' <<<"$page" 2>/dev/null || true
+  fi
+}
+
+# Print every merged PR among the 100 most recently closed PRs of the
+# repo (the REQ-011 issue-number-prefix fallback source), one line each:
+# number<TAB>merged_at<TAB>merge_commit_sha<TAB>head.ref. The page is
+# fetched at most once per run: the first call issues the single gh api
+# page scan (per_page=100, the API's max page size) and caches the parsed
+# lines in the PID-keyed file of closed_pr_scan_cache_path (removed by
+# the precheck stage's EXIT trap); later calls — including from sibling
+# subshells of the same run — cat that cache, so the cost is constant,
+# not per-folder.
+closed_pr_scan() {
+  local cache page
+  cache=$(closed_pr_scan_cache_path)
+  if [ ! -e "$cache" ]; then
+    : >"$cache"
+    page=$(gh api "repos/{owner}/{repo}/pulls?state=closed&per_page=100" 2>/dev/null || true)
+    if [ -n "$page" ]; then
+      jq -r '
+        [.[] | select(.merged_at != null)]
+        | .[]
+        | [.number, .merged_at, .merge_commit_sha, .head.ref] | @tsv
+      ' <<<"$page" 2>/dev/null >"$cache" || true
+    fi
+  fi
+  cat "$cache"
+}
+
 # --- stages ------------------------------------------------------------------
 
 stage_resolve() {
@@ -430,6 +549,70 @@ stage_precheck() {
 
   uv lock --check >/dev/null 2>&1 || die "uv.lock is out of sync with pyproject.toml — run 'uv lock' and commit the result before releasing"
   info "uv.lock is in sync"
+
+  # --- feat closeout gate (feat-233, SOP step 2 sub-item) ---
+  # Every feat folder whose implementation merged into this release window
+  # (vPrev..HEAD, or HEAD when no tag is reachable) must already be closed
+  # out to status: done. A missing/unparseable status line is a violation
+  # in its own right (reported before any PR lookup); a feat with no
+  # merged delivery is never gated (REQ-002); a delivery that is an
+  # ancestor of vPrev shipped in an earlier release (REQ-003).
+  local vprev id delivery delivery_at exact fb fb_at prefix num sha violations
+  vprev=$(latest_tag)
+  if [ -z "$vprev" ]; then
+    info "no release tag reachable from HEAD — the release window is HEAD (first release)"
+  fi
+  # Drop a stale closed-PR scan cache (PID reuse after a crashed run) and
+  # trap its removal at the end of this process.
+  rm -f "$(closed_pr_scan_cache_path)"
+  trap 'rm -f "$(closed_pr_scan_cache_path)"' EXIT
+  violations=""
+  for id in $(feat_folders); do
+    status=$(feat_status "$id")
+    if [ "$status" = "$FEAT_STATUS_UNPARSEABLE" ]; then
+      violations="${violations}  - $id: frontmatter 'status:' is missing or unparseable (must be one of planning/progress/review/done) — repair the frontmatter, or close out to done"$'\n'
+      continue
+    fi
+    if [ "$status" = "done" ]; then
+      continue
+    fi
+    delivery=""
+    delivery_at=""
+    exact=$(merged_delivery "$id")
+    if [ -n "$exact" ]; then
+      delivery="$exact"
+      delivery_at=$(cut -f2 <<<"$exact")
+    fi
+    if [[ "$id" =~ ^feat-([1-9][0-9]*)- ]]; then
+      # REQ-011 fallback: the newest merged PR whose head ref starts with
+      # the folder's feat-<NNN>- prefix (the one-shot page scan, fetched
+      # once per run). feat-0-* has no issue number: exact match only.
+      prefix="feat-${BASH_REMATCH[1]}-"
+      fb=$(closed_pr_scan | awk -F'\t' -v p="$prefix" 'index($4, p) == 1' | sort -t$'\t' -k2,2 | tail -1)
+      if [ -n "$fb" ]; then
+        fb_at=$(cut -f2 <<<"$fb")
+        if [ -z "$delivery" ] || [[ "$fb_at" > "$delivery_at" ]]; then
+          delivery="${fb%$'\t'*}"
+        fi
+      fi
+    fi
+    if [ -n "$delivery" ]; then
+      num=$(cut -f1 <<<"$delivery")
+      sha=$(cut -f3 <<<"$delivery")
+      if git merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then
+        if [ -n "$vprev" ] && git merge-base --is-ancestor "$sha" "$vprev" 2>/dev/null; then
+          info "closeout gate: $id shipped in an earlier release (delivery ${sha:0:12} is an ancestor of $vprev) — not gated"
+        else
+          violations="${violations}  - $id: status is '$status' but the feature shipped in the current release window (PR #$num, delivery $sha) — close out the feat to done on dev and commit"$'\n'
+        fi
+      fi
+    fi
+  done
+  if [ -n "$violations" ]; then
+    die "feat closeout gate failed (every feat shipped in the current release window must be closed out to status: done):
+$violations  remediation: close out the named feat(s) to status: done on dev (or repair the frontmatter), commit, then re-run: scripts/release.sh precheck v$v"
+  fi
+  info "closeout gate: no feat shipped in this window is left unclosed"
 
   info "precheck: all checks passed for v$v"
 }
