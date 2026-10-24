@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `scripts/release.sh precheck` (SOP 98537416, step 2) now ends with the
+  feat closeout gate (sub-item (g), after the six standing checks
+  (a)–(f)): every `.specmgr/feat/feat-*/` folder shipped in the current
+  release window (`vPrev..HEAD`, `vPrev` the latest tag reachable from
+  `dev`; with no prior tag the window is `HEAD`) must be closed out to
+  `status: done` in its README frontmatter. "Merged" is the newest merged
+  PR under the folder id (its exact head ref, extended by the folder's
+  `feat-<NNN>-` issue-number prefix for work merged from a renamed branch
+  — the fallback is a single `per_page=100` page of the most recently
+  closed PRs, fetched once per run, so a renamed-branch delivery merged
+  beyond that page is outside the fallback's reach). A violation fails
+  the precheck with one actionable line per offending feat (feat id,
+  current status, PR number, delivery sha) plus the remediation pointer
+  (close out to `done` on `dev`, commit, re-run `precheck`); a missing or
+  unparseable `status:` line is a violation in its own right — the gate
+  blocks, never skips — and feats with no merged PR (plan-only or
+  in-flight) and deliveries inside `vPrev` are never gated
+  (feat-233-update-release, GitHub issue #233).
+- `scripts/release.sh precheck` (SOP 98537416, step 2) now ends with the
+  previous-release branch cleanup (sub-item (h), after the closeout
+  gate): the stale local and `origin` `feat-*`/`fix/*` branches whose
+  delivery commit (the newest merged PR's `merge_commit_sha` for the
+  branch's head ref) is an ancestor of `vPrev` are deleted on every side
+  that exists, each side independently (the local ref via `git branch -d`
+  with the `-D` fallback justified by the merged-PR proof, the `origin`
+  ref via `git push origin --delete`), guarded by the four hazard checks
+  (worktree-checked-out, no merged PR, in-window delivery, local≠origin
+  tips — the first guard to fire wins, emitting exactly one report
+  line). `--dry-run` makes the cleanup report-only (the
+  would-delete/would-keep table, no ref is deleted), and with no prior
+  tag nothing is deleted; the gate runs before the cleanup, so a gate
+  failure stops the precheck with zero ref mutations, and both sub-items
+  are idempotent — a re-run after the gate's remediation passes and after
+  a successful cleanup reports nothing to delete. The synced doc surfaces
+  (the SOP's step 2 sub-items (g)/(h), its new *delivery commit* / *stale
+  branch* / *issue-number prefix* definitions, the Safety-and-Precautions
+  entry recording the cleanup as the only mutating precheck sub-item, its
+  dated Updates entry, the script's header/usage comment, the `/release`
+  command's step 3, and the README "Make a Release" note) and
+  `tests/test_release_sh.py`'s new full-`precheck` gate and cleanup
+  coverage close the gap the 2026-10-23 manual cleanup surfaced — feats
+  shipping with their plans still at `status: review` and ~30 stale
+  feature branches accumulating per release (feat-233-update-release,
+  GitHub issue #233).
+
 ## [0.37.0] - 2026-10-22
 
 ### Added
