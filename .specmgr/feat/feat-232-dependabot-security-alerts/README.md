@@ -4,7 +4,7 @@ created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
 status: review
 type: feat
-updated: '2026-10-24T15:30:52.000+02:00'
+updated: '2026-10-24T16:36:51.000+02:00'
 version: 1.0.0
 ---
 
@@ -14,20 +14,20 @@ version: 1.0.0
 
 ### Overview
 
-Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-24 amendment: 41× Pillow, 15× virtualenv, 3× filelock, 1× certifi, 1× opentelemetry-api, 1× stale uv). The original plan captured the 11-alert pre-rescan snapshot (the 2026-10-21 cohort); this morning's 06:04Z Dependabot re-scan added 51 more alerts — 32 additional Pillow (a wave of newly published Pillow advisories), 15 virtualenv, 3 filelock, 1 opentelemetry-api. The pillow cohort stays blocked on qdrant/fastembed#830 (REQ-002); the new non-pillow cohort is lock-only fixable and is added as REQ-004 / Phase 105 (user-approved scope expansion, 2026-10-24).
+Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-24 amendment: 41× Pillow, 15× virtualenv, 3× filelock, 1× certifi, 1× opentelemetry-api, 1× stale uv). The original plan captured the 11-alert pre-rescan snapshot (the 2026-10-21 cohort); this morning's 06:04Z Dependabot re-scan added 51 more alerts — 32 additional Pillow (a wave of newly published Pillow advisories), 15 virtualenv, 3 filelock, 1 opentelemetry-api. The pillow cohort stays blocked on qdrant/fastembed#830 (REQ-002 — carved out to GitHub issue #235 by user decision 2026-10-24; no longer part of this feature's completion gate); the new non-pillow cohort is lock-only fixable and is added as REQ-004 / Phase 105 (user-approved scope expansion, 2026-10-24).
 
 ### Requirements
 
-- REQ-001: The certifi lock entry moves from 2026.7.22 to a release ≥ 2026.10.19 (latest 2026.10.23) in a standalone, lock-only PR.
-- REQ-002: The pillow lock entry moves from 12.3.0 to 13.0.0 or later once a fastembed release lifts the `pillow<13.0` cap (upstream PR #830 targets `<14.0`), verified with the full default test suite plus the opt-in `embedding_model` similarity test.
-- REQ-003: Every alert in the 2026-10-24 snapshot (62 open) reports as resolved once its fix reaches the monitored branch (`dev`) and Dependabot re-scans: the 41-alert pillow cohort via REQ-002, certifi via REQ-001, virtualenv/filelock/opentelemetry-api via REQ-004, and the stale uv alert (28) with no repo change — `dev` already carries 0.13.4 via merged PR #226.
+- REQ-001: The certifi lock entry moves from 2026.7.22 to a release ≥ 2026.10.19 (latest 2026.10.23) in a lock-only change — delivered via this feature's single wrap-up PR per the workflow override (Decisions Made, 2026-10-24T10:56:48.000Z), which supersedes the originally recorded standalone-PR vehicle.
+- REQ-002: The pillow lock entry moves from 12.3.0 to 13.0.0 or later once a fastembed release lifts the `pillow<13.0` cap (upstream PR #830 targets `<14.0`), verified with the full default test suite plus the opt-in `embedding_model` similarity test. — **Carved out** to GitHub issue #235 (user decision 2026-10-24: this feature does not wait on upstream releases from other repos); retained here for the record, no longer a completion gate of this feature.
+- REQ-003: Every non-pillow alert in the 2026-10-24 snapshot (21 of the 62 open: 20 fixed on this branch + the stale uv alert) reports as resolved once its fix reaches the monitored branch (`dev`) and Dependabot re-scans: certifi via REQ-001, virtualenv/filelock/opentelemetry-api via REQ-004, and the stale uv alert (28) with no repo change — `dev` already carries 0.13.4 via merged PR #226. (The 41-alert pillow cohort is carved out to GitHub issue #235 and no longer bounds this requirement.)
 - REQ-004: The transitive lock entries virtualenv (21.7.13 → ≥ 21.14.9), filelock (3.32.2 → ≥ 4.2.1), and opentelemetry-api (1.44.0 → ≥ 1.45.1) move in a single lock-only `uv lock --upgrade-package` change, verified with the full default test suite plus the opt-in `embedding_model` similarity test (filelock sits on the fastembed → huggingface-hub model-cache path).
 
 ### Acceptance Criteria
 
 - [x] ACC-001: `uv.lock` resolves certifi ≥ 2026.10.19 and `uv sync --frozen --all-extras`, ruff format/check, and the full default pytest suite all pass.
-- [ ] ACC-002: `uv.lock` resolves pillow ≥ 13.0.0 together with the unblocking fastembed release, and the default suite plus `pytest -m embedding_model` passes.
-- [ ] ACC-003: `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open` returns no alerts. (ultimate bar; not satisfiable within this session while the pillow cohort is blocked on qdrant/fastembed#830 — the Phase 120 recorded state is the interim evidence)
+- [ ] ACC-002: `uv.lock` resolves pillow ≥ 13.0.0 together with the unblocking fastembed release, and the default suite plus `pytest -m embedding_model` passes. — **Carved out** to GitHub issue #235 (user decision 2026-10-24); not a completion gate of this feature.
+- [ ] ACC-003: `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` reports no open non-pillow alert from the 2026-10-24 snapshot (the 21 of REQ-003) after PR #234 merges to `dev` and Dependabot re-scans — verified by close-out Task 120.130. (The 41 pillow alerts remain open by design until the carved-out work of GitHub issue #235 lands; the Phase 120 recorded state is the interim evidence.)
 - [x] ACC-004: `uv.lock` resolves virtualenv ≥ 21.14.9, filelock ≥ 4.2.1, and opentelemetry-api ≥ 1.45.1, and `uv sync --frozen --all-extras`, ruff format/check, and the full default pytest suite plus `pytest -m embedding_model` all pass.
 
 ### Scope
@@ -48,11 +48,11 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 #### Depends On
 
-- qdrant/fastembed PR #830 merged and released (for REQ-002 only; REQ-001 is independent).
+- None in-repo. (The external qdrant/fastembed#830 dependency followed the carved-out pillow work into GitHub issue #235 — see the Decisions Made entry for the 2026-10-24 carve-out.)
 
 ### Task List
 
-#### Phase 100: certifi bump (standalone PR)
+#### Phase 100: certifi bump (lock-only)
 
 - [x] Task 100.100: Run `uv lock --upgrade-package certifi` and confirm the lock lands on a certifi release ≥ 2026.10.19 (snapshot latest: 2026.10.23) with nothing else moved.
 - [x] Task 100.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, and `uv run --frozen pytest -n auto --cov=src --cov-report=`.
@@ -64,7 +64,7 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 - [x] Task 105.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model` (filelock 3 → 4 is a major bump on the fastembed → huggingface-hub model-cache path; the real-backend test is the direct exercise of it).
 - [x] Task 105.120: The orchestrator commits `chore(deps): bump virtualenv, filelock, opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan.
 
-#### Phase 110: pillow 13 via fastembed (blocked on upstream)
+#### Phase 110: pillow 13 via fastembed (carved out to issue #235 — external trigger)
 
 - [x] Task 110.100: Track qdrant/fastembed#830 (the `chore(deps): allow pillow 13` PR); optionally comment on qdrant/fastembed#829 (the upstream `[Feature]: Support pillow 13` issue) pointing at the 41 open advisories on 12.3.0 — the optional comment was waived per the workflow override clause (c).
 - [ ] Task 110.110: On release, run `uv lock --upgrade-package fastembed --upgrade-package pillow` and confirm pillow resolves ≥ 13.0.0.
@@ -74,21 +74,26 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 - [x] Task 120.100: Run the open-alerts API query (Dependabot re-scans on its own schedule after a branch update — allow for that before treating a still-open alert as a failed bump), confirm all alerts have closed or note which re-scan is pending, and record the final state in Progress.
 - [x] Task 120.110: Confirm which branch(es) Dependabot monitors; alert 28 needs no repo change from this feature (the #226 fix is on dev) and closes once the monitored branch carries it, else record the promotion dependency in Progress.
+- [ ] Task 120.130: After PR #234 merges to `dev`, re-run the open-alerts query (`gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100`) once Dependabot has re-scanned, confirm the 21 non-pillow alerts (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api, 1 stale uv #28) report as resolved, and record the final state in Progress — the 41 pillow alerts are expected to remain open until the carved-out work of GitHub issue #235 lands. The orchestrator commits the close-out and sets the feature `status: done`.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-24**: Final verification (Phase 120) complete — all executable phases done. Alert disposition of the 62-alert 2026-10-24 population: 20 fixed on this branch (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api) awaiting merge to `dev` + Dependabot re-scan; 41 pillow blocked on qdrant/fastembed#830 (open/unmerged; latest fastembed 0.9.0 still caps pillow <13.0) under the recorded risk acceptance; 1 stale uv alert (#28) — `dev` already carries 0.13.4 via #226, monitored branch confirmed as `dev`, closure pending re-scan, no repo change needed. ACC-001 and ACC-004 met; ACC-002/ACC-003 remain open pending the upstream release and the merge + re-scan.
+**As of 2026-10-24**: Final verification (Phase 120) complete — all executable phases done. Alert disposition of the 62-alert 2026-10-24 population: 20 fixed on this branch (1 certifi #29, 15 virtualenv, 3 filelock, 1 opentelemetry-api) awaiting merge to `dev` + Dependabot re-scan; 41 pillow blocked on qdrant/fastembed#830 (open/unmerged; latest fastembed 0.9.0 still caps pillow <13.0) under the recorded risk acceptance; 1 stale uv alert (#28) — `dev` already carries 0.13.4 via #226, monitored branch confirmed as `dev`, closure pending re-scan, no repo change needed. ACC-001 and ACC-004 met. The pillow cohort (41 alerts; REQ-002/ACC-002, Phase 110) is carved out to GitHub issue #235 per user decision — this feature no longer waits on the upstream fastembed release. Re-scoped ACC-003 (the 21 non-pillow alerts) awaits the merge of PR #234 + Dependabot re-scan, verified by close-out Task 120.130. No open task of this feature is blocked on an external repo.
 
 ### Blockers
 
-- qdrant/fastembed#830 (`chore(deps): allow pillow 13`, the cap raise to `<14.0`) is open/unmerged — blocks Phase 110 (REQ-002, ACC-002) only; Phase 100 proceeds independently. (re-verified 2026-10-24T12:08:44.000Z: still open/unmerged; latest fastembed release 0.9.0 still caps pillow <13.0)
-- Contingency if #830 closes unmerged or goes stale: revisit the risk acceptance (Decisions Made) — propose the cap-raise patch to upstream ourselves, or formally re-record the continued exposure with a dated review. Phase 110 must not become a silent, indefinite parking lot.
+- qdrant/fastembed#830 (`chore(deps): allow pillow 13`, the cap raise to `<14.0`) is open/unmerged — blocks the carved-out pillow work (GitHub issue #235; former Phase 110, REQ-002, ACC-002). Phases 100/105/120 of this feature are complete; the only remaining open task (120.130) awaits the merge of PR #234, not upstream. (re-verified 2026-10-24T12:08:44.000Z: still open/unmerged; latest fastembed release 0.9.0 still caps pillow <13.0)
+- Contingency if #830 closes unmerged or goes stale: revisit the risk acceptance (Decisions Made) — propose the cap-raise patch to upstream ourselves, or formally re-record the continued exposure with a dated review. The carved-out pillow work (issue #235) must not become a silent, indefinite parking lot.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T14:36:51.000Z - Refiner round 3: plan corrections applied; pillow cohort carved out to issue #235 (user decision)
+
+Third refinement pass (feat-refiner) over the plan: no Errors; the stale texts it flagged are corrected in place — the superseded standalone-PR vehicle reworded in REQ-001 and the Phase 100 heading (the workflow override of 2026-10-24T10:56:48.000Z governs delivery), the alert-28 bullet's stale "(branch to be confirmed in Phase 120)" replaced by the confirmed monitored branch `dev` (Phase 120, Task 120.110), the snapshot header's provenance made exact for alert 28 (its vulnerable version 0.12.1 is the alert's own record; `dev` already carries the 0.13.4 fix via #226), PR #234 added to Related PRs / Commits, the stale Blockers clause "Phase 100 proceeds independently" reworded, the risk-accept entry's pre-rescan count ("9 Pillow advisories") annotated with the post-rescan count (41), and ACC-003's verification command given the `&per_page=100` every recorded run used. The gap it flagged (no closure path while ACC-002/ACC-003 were open) is resolved by user decision: this repo does not wait on upstream commits from other repos — the pillow cohort (REQ-002/ACC-002, open Tasks 110.110/110.120, the external qdrant/fastembed#830 dependency, the stall contingency) is carved out to GitHub issue #235 for a future feat-235-* feature, REQ-003/ACC-003 are re-scoped to the 21 non-pillow alerts, and close-out Task 120.130 now owns the post-merge re-scan verification. The feature reaches `status: done` when PR #234 merges to `dev` and Task 120.130 confirms the 21 closures; no external-repo event remains on this feature's critical path. (Round-3 finding IDs D1–D3/G1–G2/I1–I3 refer to this report's numbering — distinct from the post-review D1–D5 entry below.)
 
 #### 2026-10-24T13:30:52.000Z - Post-implementation review corrections (feat-reviewer pass on PR #234)
 
@@ -140,6 +145,10 @@ Feat created for GitHub issue #232 (dependabot: security alerts): 11 open alerts
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-10-24T14:36:51.000Z - Pillow cohort carve-out: follow-up work handed to GitHub issue #235 (user decision)
+
+User decision (2026-10-24, after refiner round 3's closure-path finding): this repo does not wait on upstream commits from other repos. Consequences, applied to the plan: (a) REQ-002, ACC-002, open Tasks 110.110/110.120, the external qdrant/fastembed#830 dependency, and the stall contingency leave this feature's completion gate and move to GitHub issue #235 ("Bump fastembed + pillow ≥ 13.0.0 once upstream pillow cap is lifted"), from which a future feat-235-* feature will be created once a cap-lifting fastembed release lands; (b) REQ-003/ACC-003 re-scope to the 21 non-pillow alerts of the 2026-10-24 snapshot; (c) close-out Task 120.130 is added, owning the post-merge re-scan verification of those 21; (d) this feature's `done` condition is now fully in-repo: PR #234 merged to `dev` + Task 120.130 confirmed + this record. REQ-002/ACC-002/Phase 110 remain in this document annotated (not deleted) to preserve the record; the risk acceptance of Decisions Made 2026-10-24T06:21:00.912Z continues to bound the interim exposure and is referenced from issue #235.
+
 #### 2026-10-24T11:51:54.000Z - Phase 105 documented exception: resolver-forced packaging 26.2 → 26.3 (user-approved, Option 1)
 
 Running Task 105.100's command resolves virtualenv/filelock/opentelemetry-api to the compliant versions but forces `packaging` 26.2 → 26.3 (a new `virtualenv → packaging` edge): every virtualenv in REQ-004's compliant range declares `packaging>=26.3` (verified against PyPI 2026-10-24 for 21.14.9 — the floor — and 21.14.13 — the latest —; the lock carried 26.2), so REQ-004 is unsatisfiable without the move. packaging 26.3 is the latest release, is not part of the 62-alert population, adds no new exposure, and the full 120-package graph resolved with zero conflicts (build/onnxruntime/pytest/twine — the packaging dependents — all accept 26.3). User decision (Option 1): accept the forced move as a documented exception to Task 105.100's "nothing else moved" invariant; the lock diff must still be confined to the four entries filelock, opentelemetry-api, packaging, virtualenv (plus the new edge). Option 2 (de-scope virtualenv, leaving the 15 virtualenv alerts — 7 high — open) was rejected.
@@ -150,19 +159,20 @@ Running Task 105.100's command resolves virtualenv/filelock/opentelemetry-api to
 
 #### 2026-10-24T06:21:00.912Z - Risk-accept pillow 12.3.0 while waiting on fastembed
 
-Zero PIL imports in `src/`/`tests/` (verified 2026-10-24, re-verified 2026-10-24 post-review: the anchored import-form grep `grep -rniE '^[[:space:]]*(import|from)[[:space:]]+(pil|pillow)([[:space:].]|$)' src/ tests/` matches nothing — the originally cited bare-substring pattern was non-reproducible and is corrected here; see the post-review corrections entry in Updates) and fastembed is used strictly as `TextEmbedding` (the only construction site: `src/biz/dfch/specmgr/general/tools/_embedding.py:582`; post-review correction 2026-10-24: the earlier record claimed the locked fastembed 0.8.0 carries no `PIL`/`pillow` import in its Python source — that was wrong, its image/multimodal modules do `from PIL import Image` and `fastembed/__init__.py` imports `fastembed.image`, so `import fastembed` transitively loads PIL modules; the no-exposure conclusion is unaffected because only `TextEmbedding` is constructed and no image-parsing path is ever invoked in this codebase), so the 9 Pillow advisories (all in image-parsing paths: JPEG/TIFF/GIF/PDF/EPS) carry no practical exposure in this codebase. Forcing pillow 13 via a uv override is rejected (it would violate fastembed's declared constraint). Waiting on the upstream cap raise has precedent: fastembed#606 cut 0.7.5 to unblock pillow 12.x under CVE pressure. The acceptance is bounded: it holds until the pillow 13 bump lands (REQ-002) and is revisited immediately if (a) fastembed's text-embedding path starts exercising image parsing, (b) this repo gains a direct PIL/pillow import, or (c) qdrant/fastembed#830 closes unmerged or goes stale (see the Blockers contingency).
+Zero PIL imports in `src/`/`tests/` (verified 2026-10-24, re-verified 2026-10-24 post-review: the anchored import-form grep `grep -rniE '^[[:space:]]*(import|from)[[:space:]]+(pil|pillow)([[:space:].]|$)' src/ tests/` matches nothing — the originally cited bare-substring pattern was non-reproducible and is corrected here; see the post-review corrections entry in Updates) and fastembed is used strictly as `TextEmbedding` (the only construction site: `src/biz/dfch/specmgr/general/tools/_embedding.py:582`; post-review correction 2026-10-24: the earlier record claimed the locked fastembed 0.8.0 carries no `PIL`/`pillow` import in its Python source — that was wrong, its image/multimodal modules do `from PIL import Image` and `fastembed/__init__.py` imports `fastembed.image`, so `import fastembed` transitively loads PIL modules; the no-exposure conclusion is unaffected because only `TextEmbedding` is constructed and no image-parsing path is ever invoked in this codebase), so the 9 Pillow advisories recorded at the time (41 after the 2026-10-24T06:04Z re-scan — see the scope-expansion entry above and GitHub issue #235; all in image-parsing paths: JPEG/TIFF/GIF/PDF/EPS) carry no practical exposure in this codebase. Forcing pillow 13 via a uv override is rejected (it would violate fastembed's declared constraint). Waiting on the upstream cap raise has precedent: fastembed#606 cut 0.7.5 to unblock pillow 12.x under CVE pressure. The acceptance is bounded: it holds until the pillow 13 bump lands (REQ-002) and is revisited immediately if (a) fastembed's text-embedding path starts exercising image parsing, (b) this repo gains a direct PIL/pillow import, or (c) qdrant/fastembed#830 closes unmerged or goes stale (see the Blockers contingency).
 
 ### Related PRs / Commits
 
-- dev already carries the uv fix (PR #226, commit `b65d8c3`); dashboard alert 28 closes once the Dependabot-monitored branch carries it (the monitored branch is confirmed in Phase 120, Task 120.110).
+- dev already carries the uv fix (PR #226, commit `b65d8c3`); dashboard alert 28 closes once the Dependabot-monitored branch carries it (monitored branch confirmed as `dev` in Phase 120, Task 120.110).
+- This feature's wrap-up PR: #234 (`feat-232-dependabot-security-alerts` → `dev`, 8 commits, opened 2026-10-24) — merge pending (no merge within the feature per the workflow override); close-out verification follows as Task 120.130. Carved-out pillow follow-up: issue #235.
 
 ### More Information
 
-Open-alert snapshot as of 2026-10-24 (via `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open`; locked versions from **dev**'s `uv.lock` — alert 28's vulnerable version is the monitored branch's, per the alert itself):
+Open-alert snapshot as of 2026-10-24 (via `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open`; locked versions from **dev**'s `uv.lock`, except alert 28 whose vulnerable version 0.12.1 is the alert's own record — `dev` already carries the 0.13.4 fix via #226 and the alert's record predates it):
 
 Note (2026-10-24 amendment): the 11-alert list below is the pre-rescan 2026-10-21 cohort (alerts 28–38). The 06:04Z re-scan added 51 more (62 open total): 32 additional pillow alerts (alerts 43–59 and the pillow-numbered alerts 60–79 — all first-patched 13.0.0), 15 virtualenv (alerts 39–42, 62–64, 77, 81–87), 3 filelock (alerts 80, 88, 89), 1 opentelemetry-api (alert 75). Fixed versions and dependents' constraints are in the Updates entry and REQ-004.
 
-- **28 — uv** (direct, `dev` extra): the alert reports the monitored branch locked at `0.12.1` (vulnerable); dev already carries the fix — 0.13.4 via #226 (GHSA-hq85-5cpj-mr62, critical — emSign CA compromise in uv's vendored webpki bundle; the advisory names first-patched 0.13.4 — exactly the remediation #226 chose). Closes once the Dependabot-monitored branch carries 0.13.4 (branch to be confirmed in Phase 120).
+- **28 — uv** (direct, `dev` extra): the alert reports the monitored branch locked at `0.12.1` (vulnerable); dev already carries the fix — 0.13.4 via #226 (GHSA-hq85-5cpj-mr62, critical — emSign CA compromise in uv's vendored webpki bundle; the advisory names first-patched 0.13.4 — exactly the remediation #226 chose). Closes once the Dependabot-monitored branch carries 0.13.4 (monitored branch confirmed as `dev` in Phase 120, Task 120.110).
 - **29 — certifi** (transitive: httpx/requests/httpcore): locked 2026.7.22, fixed in 2026.10.19, latest 2026.10.23 (GHSA-6q48-6c7w-9gw2, critical — emSign root CA with compromised intermediate keys). No pin blocks the bump — Phase 100.
 - **30–38 — pillow** (transitive: fastembed): locked 12.3.0, all nine fixed in 13.0.0 (1×critical GHSA-8g5g-8vmr-9782, 6×high, 2×medium — all image-parsing paths: JPEG/TIFF/GIF/PDF/EPS). Blocked by fastembed's `pillow<13.0` cap.
 
