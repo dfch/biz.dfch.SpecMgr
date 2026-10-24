@@ -4,7 +4,7 @@ created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
 status: planning
 type: feat
-updated: '2026-10-24T13:51:54.000+02:00'
+updated: '2026-10-24T13:58:58.000+02:00'
 version: 1.0.0
 ---
 
@@ -60,9 +60,9 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 #### Phase 105: virtualenv / filelock / opentelemetry-api bump (lock-only)
 
-- [ ] Task 105.100: Run `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` and confirm the lock lands on virtualenv ≥ 21.14.9, filelock ≥ 4.2.1, opentelemetry-api ≥ 1.45.1 with nothing else moved — except the documented, resolver-forced `packaging` 26.2 → 26.3 move (a new `virtualenv → packaging` edge), required by every virtualenv ≥ 21.14.9's `packaging>=26.3` declaration (user-approved exception, see Decisions Made) (Phase 100's certifi bump is the only prior diff).
-- [ ] Task 105.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model` (filelock 3 → 4 is a major bump on the fastembed → huggingface-hub model-cache path; the real-backend test is the direct exercise of it).
-- [ ] Task 105.120: The orchestrator commits `chore(deps): bump virtualenv, filelock, opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan.
+- [x] Task 105.100: Run `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` and confirm the lock lands on virtualenv ≥ 21.14.9, filelock ≥ 4.2.1, opentelemetry-api ≥ 1.45.1 with nothing else moved — except the documented, resolver-forced `packaging` 26.2 → 26.3 move (a new `virtualenv → packaging` edge), required by every virtualenv ≥ 21.14.9's `packaging>=26.3` declaration (user-approved exception, see Decisions Made) (Phase 100's certifi bump is the only prior diff).
+- [x] Task 105.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model` (filelock 3 → 4 is a major bump on the fastembed → huggingface-hub model-cache path; the real-backend test is the direct exercise of it).
+- [x] Task 105.120: The orchestrator commits `chore(deps): bump virtualenv, filelock, opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan.
 
 #### Phase 110: pillow 13 via fastembed (blocked on upstream)
 
@@ -79,7 +79,7 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 ### Current Status
 
-**As of 2026-10-24**: Phase 100 (certifi) complete — lock resolved certifi 2026.10.23, full gate green (uv sync --frozen --all-extras, ruff format/check, full default pytest suite). Orchestrator commit `chore(deps): bump certifi` follows (uv.lock + this README); alert 29's closure is expected on merge + Dependabot re-scan. Phase 105 is next; Phase 110 remains blocked on qdrant/fastembed#830 (open/unmerged as of 2026-10-24); Phase 120 follows.
+**As of 2026-10-24**: Phases 100 (certifi) and 105 (virtualenv/filelock/opentelemetry-api) complete — lock resolved virtualenv 21.14.13, filelock 4.2.4, opentelemetry-api 1.45.1 (plus the documented, resolver-forced packaging 26.3 move), with certifi 2026.10.23 from Phase 100; full gate green including the opt-in `pytest -m embedding_model` real-backend test. Orchestrator commit `chore(deps): bump virtualenv, filelock, opentelemetry-api` follows (uv.lock + this README); the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan. Phase 110 (pillow) remains blocked on qdrant/fastembed#830 (open/unmerged as of 2026-10-24); Phase 120 follows.
 
 ### Blockers
 
@@ -89,6 +89,10 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T11:58:58.000Z - Phase 105 complete: virtualenv 21.7.13 → 21.14.13, filelock 3.32.2 → 4.2.4, opentelemetry-api 1.44.0 → 1.45.1 (lock-only, plus documented packaging move)
+
+Phase 105 re-run (after the user-approved plan amendment) executed under the corrected invariant. Task 105.100: `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` (exit 0, "Resolved 120 packages") landed virtualenv 21.7.13 → 21.14.13 (≥ 21.14.9), filelock 3.32.2 → 4.2.4 (≥ 4.2.1), opentelemetry-api 1.44.0 → 1.45.1 (≥ 1.45.1), plus the documented, resolver-forced packaging 26.2 → 26.3 move (the user-approved exception recorded in Decisions Made, 2026-10-24T11:51:54.000Z — every virtualenv ≥ 21.14.9 declares `packaging>=26.3`), expressed as the new `virtualenv → packaging` dependency edge; the lock diff is confined to exactly those four `[[package]]` entries (`git diff --stat uv.lock`: `uv.lock | 25 +++++++++++++------------`, 1 file changed, 13 insertions(+), 12 deletions(-); no other package entry, no new `[[package]]` entry, no manifest-section change — Phase 100's certifi bump is the only prior diff). Task 105.110: full gate green — `uv sync --frozen --all-extras` exit 0 (installed the four new versions; re-run "Checked 110 packages in 0.90ms"), `uv run --frozen ruff format --check` exit 0 ("2113 files already formatted"), `uv run --frozen ruff check` exit 0 ("All checks passed!"), `uv run --frozen pytest -n auto --cov=src --cov-report=` exit 0 ("4759 passed, 18 skipped in 50.13s" — identical counts to Phase 100), `uv run --frozen pytest -m embedding_model` exit 0 ("3 passed, 4777 deselected in 5.91s") — the real fastembed `TextEmbedding` backend loaded the `Qdrant/bge-small-en-v1.5` ONNX model already present in the local cache (default `<tempdir>/fastembed_cache`, populated 2026-10-20), so no model download happened on this run; filelock 4.2.4 (huggingface-hub's model-cache dependency) exercised cleanly. Per the workflow override (Decisions Made, 2026-10-24T10:56:48.000Z), the orchestrator commits the phase as `chore(deps): bump virtualenv, filelock, opentelemetry-api` (uv.lock + this README, one local Conventional Commit, no push), and the 19 affected alerts (15 virtualenv — alerts 39–42, 62–64, 77, 81–87; 3 filelock — alerts 80, 88, 89; 1 opentelemetry-api — alert 75) are expected to close on merge + Dependabot re-scan.
 
 #### 2026-10-24T11:51:54.000Z - Plan amendment: Phase 105 documented exception (packaging 26.2 → 26.3, user-approved)
 
