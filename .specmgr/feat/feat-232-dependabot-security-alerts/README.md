@@ -4,7 +4,7 @@ created: '2026-10-24T08:21:00.912+02:00'
 id: feat-232-dependabot-security-alerts
 status: planning
 type: feat
-updated: '2026-10-24T13:08:55.000+02:00'
+updated: '2026-10-24T13:51:54.000+02:00'
 version: 1.0.0
 ---
 
@@ -60,7 +60,7 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 #### Phase 105: virtualenv / filelock / opentelemetry-api bump (lock-only)
 
-- [ ] Task 105.100: Run `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` and confirm the lock lands on virtualenv ≥ 21.14.9, filelock ≥ 4.2.1, opentelemetry-api ≥ 1.45.1 with nothing else moved (Phase 100's certifi bump is the only prior diff).
+- [ ] Task 105.100: Run `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` and confirm the lock lands on virtualenv ≥ 21.14.9, filelock ≥ 4.2.1, opentelemetry-api ≥ 1.45.1 with nothing else moved — except the documented, resolver-forced `packaging` 26.2 → 26.3 move (a new `virtualenv → packaging` edge), required by every virtualenv ≥ 21.14.9's `packaging>=26.3` declaration (user-approved exception, see Decisions Made) (Phase 100's certifi bump is the only prior diff).
 - [ ] Task 105.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check` + `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model` (filelock 3 → 4 is a major bump on the fastembed → huggingface-hub model-cache path; the real-backend test is the direct exercise of it).
 - [ ] Task 105.120: The orchestrator commits `chore(deps): bump virtualenv, filelock, opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow override in Decisions Made) and records in Progress that the 19 affected alerts (15 virtualenv, 3 filelock, 1 opentelemetry-api) are expected to close on merge + Dependabot re-scan.
 
@@ -90,6 +90,10 @@ Resolve the open Dependabot security alerts on `uv.lock` (62 as of the 2026-10-2
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-10-24T11:51:54.000Z - Plan amendment: Phase 105 documented exception (packaging 26.2 → 26.3, user-approved)
+
+Phase 105's first run hit the plan's STOP condition: `uv lock --upgrade-package virtualenv --upgrade-package filelock --upgrade-package opentelemetry-api` landed all three targets compliant (virtualenv 21.14.13, filelock 4.2.4, opentelemetry-api 1.45.1) but also forced `packaging` 26.2 → 26.3 (a new `virtualenv → packaging` edge — every virtualenv ≥ 21.14.9 declares `packaging>=26.3`; the lock carried 26.2). The subagent applied the STOP condition, reverted the lock, and ran no gate (worktree stayed clean). User decision (Option 1, see Decisions Made): accept the forced move as a documented exception; Task 105.100's wording is amended accordingly and Phase 105 re-runs under the corrected invariant (lock diff confined to the four entries filelock, opentelemetry-api, packaging, virtualenv plus the new edge; full gate including `pytest -m embedding_model`).
+
 #### 2026-10-24T11:08:55.000Z - Phase 100 complete: certifi 2026.7.22 → 2026.10.23 (lock-only)
 
 Phase 100 executed. Task 100.100: `uv lock --upgrade-package certifi` landed certifi at 2026.10.23 (≥ 2026.10.19 per REQ-001; exactly the snapshot's latest release), and the lock diff is confined to the certifi `[[package]]` entry — version + sdist/wheel metadata (`git diff --stat uv.lock`: `uv.lock | 6 +++---`, 1 file changed, 3 insertions(+), 3 deletions(-); no other package moved). Task 100.110: full gate green — `uv sync --frozen --all-extras` exit 0 ("Checked 110 packages", certifi 2026.10.23 installed), `uv run --frozen ruff format --check` exit 0 ("2113 files already formatted"), `uv run --frozen ruff check` exit 0 ("All checks passed!"), `uv run --frozen pytest -n auto --cov=src --cov-report=` exit 0 ("4759 passed, 18 skipped in 48.87s"). Per the workflow override (Decisions Made, 2026-10-24T10:56:48.000Z), the orchestrator commits this phase as `chore(deps): bump certifi` (uv.lock + this README, one local Conventional Commit, no push); alert 29 (certifi, GHSA-6q48-6c7w-9gw2) is expected to close on merge + Dependabot re-scan.
@@ -117,6 +121,10 @@ Feat created for GitHub issue #232 (dependabot: security alerts): 11 open alerts
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T11:51:54.000Z - Phase 105 documented exception: resolver-forced packaging 26.2 → 26.3 (user-approved, Option 1)
+
+Running Task 105.100's command resolves virtualenv/filelock/opentelemetry-api to the compliant versions but forces `packaging` 26.2 → 26.3 (a new `virtualenv → packaging` edge): every virtualenv in REQ-004's compliant range declares `packaging>=26.3` (verified against PyPI 2026-10-24 for 21.14.9 — the floor — and 21.14.13 — the latest —; the lock carried 26.2), so REQ-004 is unsatisfiable without the move. packaging 26.3 is the latest release, is not part of the 62-alert population, adds no new exposure, and the full 120-package graph resolved with zero conflicts (build/onnxruntime/pytest/twine — the packaging dependents — all accept 26.3). User decision (Option 1): accept the forced move as a documented exception to Task 105.100's "nothing else moved" invariant; the lock diff must still be confined to the four entries filelock, opentelemetry-api, packaging, virtualenv (plus the new edge). Option 2 (de-scope virtualenv, leaving the 15 virtualenv alerts — 7 high — open) was rejected.
 
 #### 2026-10-24T10:56:48.000Z - Scope expansion + workflow override (user decision)
 
