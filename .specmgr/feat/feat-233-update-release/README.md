@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
-status: review
+status: done
 type: feat
-updated: '2026-10-24T23:29:29.223+02:00'
+updated: '2026-10-25T08:40:44.097+02:00'
 version: 1.0.0
 ---
 
@@ -153,7 +153,7 @@ four hazard classes met in the manual pass.
 
 ### Current Status
 
-**As of 2026-10-24**: All six phases complete — Phase 100 (the closeout
+**As of 2026-10-25**: All six phases complete — Phase 100 (the closeout
 gate in `stage_precheck`), 110 (the previous-release branch cleanup), 120
 (the documentation sync), 130 (verification and closeout), 140 (review
 remediation of the PR #236 post-implementation findings), and 150
@@ -179,14 +179,34 @@ test or a named doc surface (the evidence table in the Phase 130 Updates
 entry below; the Task 130.100 text's "ACC-001 through ACC-010" is a wording
 gap against the plan's 11 criteria — see Decisions Made), and the
 `CHANGELOG.md` `[Unreleased]` entry (two bullets, one per sub-item) is in
-place. The plan status stays `review` — the final closeout (status →
-`done` + finalization entry) happens only after the PR merges into
-`dev`, and this feature's own gate will then enforce exactly that at the
-next release's precheck.
+place. PR #236 merged into dev on 2026-10-25 (merge commit `1f3bbee`
+"Merge pull request #236 from dfch/feat-233-update-release"); GitHub issue
+#233 closed following the merge; the frontmatter status is now `done`
+(set 2026-10-25, this entry). Nothing pending.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-25T08:40:44.097+02:00 - Finalization: status set to done
+
+PR #236 (branch `feat-233-update-release` against `dev`, title "feat-233:
+update the release precheck — feat closeout gate and previous-release
+branch cleanup") merged 2026-10-25T08:32:32+02:00 (merge commit `1f3bbee`
+"Merge pull request #236 from dfch/feat-233-update-release"); GitHub issue
+#233 was closed following the merge at 2026-10-25T08:33:32+02:00, by an
+explicit close with a comment recording the PR #236 merge (the PR body
+carried no closing keyword). All six implementation phases
+(100/110/120/130/140/150) are complete, ACC-001 through ACC-011 are
+ticked, and the two post-implementation review rounds landed clean (the
+Phase 140 remediation round and the Phase 150 independent `feat-reviewer`
+round — verdict: no errors). Quality gate green at merge (final branch
+commit `6ab3faa`): `uv run --frozen pytest -n auto` 4825 passed / 18
+skipped, `tests/test_release_sh.py` 97/97, `ruff format --check` /
+`ruff check` / `vulture src/ whitelist.py --min-confidence 60` clean, CI
+on PR #236 green (build 3.11/3.12/3.13 + plantuml-parser + analysis
+jobs). The frontmatter `status` is set from `review` to `done` in this
+entry. Nothing pending.
 
 #### 2026-10-24T23:29:29.223+02:00 - Phase 150 complete (independent review closeout)
 
