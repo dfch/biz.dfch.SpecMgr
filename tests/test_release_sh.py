@@ -1301,3 +1301,66 @@ class ReleaseShBranchCleanupTestCase(ReleaseShCloseoutGateTestCase):
         self.assertNotIn("would delete", result.stdout)
         self.assert_local_ref_present(repo, "feat-stale")
         self.assertEqual(self.remote_ref(repo, "feat-stale"), shas["main"])
+
+    def test_precheck_cleanup_deletes_stale_fix_slash_branch(self) -> None:
+        """G1 (review finding): the fix/* branch class is exercised — a
+        stale fix/<name> branch on BOTH the local and the origin side
+        (matching tips, the existing commit-tree squash-stand-in shape,
+        delivery an ancestor of vPrev) is deleted on both sides, the
+        slash-containing name carried through the candidate union, the
+        local git branch -d/-D mechanic, and the origin git push origin
+        --delete, both report lines naming that name and proven by the
+        merged PR."""
+        name = "fix/233-release-precheck"
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(48, name, "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        sha_d = self.make_stale_branch(repo, shas, name=name)
+        self.push_branch(repo, sha_d, name)
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: {name}: deleted local ref (git branch -D — -d refused the squash-merged head; "
+            f"{self.proof_suffix(48, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn(
+            f"branch cleanup: {name}: deleted origin ref (git push origin --delete; {self.proof_suffix(48, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn("branch cleanup: 1 branch(es) deleted, 0 kept/skipped", result.stdout)
+        self.assert_local_ref_gone(repo, name)
+        self.assertEqual(self.remote_ref(repo, name), "")
+
+    def test_precheck_cleanup_deletes_stale_clean_merge_plain_d(self) -> None:
+        """G2 (review finding): the local-delete clean-merge SUCCESS path is
+        pinned — a branch whose tip IS a genuine ancestor of dev (the
+        v0.9.8-tagged first fixture commit, with a merged-PR delivery equal
+        to it, hence an ancestor of vPrev and stale) is deleted locally via
+        PLAIN git branch -d (the report line carries the plain -d mechanic,
+        not the -D-refusal wording) and on origin via git push origin
+        --delete."""
+        name = "feat-clean-merge"
+        repo, shas = self.make_release_repo([])
+        self.write_pulls_closed(self.pr_fixture(49, name, "2026-09-01T00:00:00Z", shas["previous"]))
+        self.write_green_ci(shas["head"])
+        _git(["branch", name, shas["previous"]], repo)
+        self.push_branch(repo, shas["previous"], name)
+
+        result = self.run_release("stage_precheck 0.9.9", git_repo=repo)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            f"branch cleanup: {name}: deleted local ref (git branch -d; {self.proof_suffix(49, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertNotIn("-d refused the squash-merged head", result.stdout)
+        self.assertIn(
+            f"branch cleanup: {name}: deleted origin ref (git push origin --delete; {self.proof_suffix(49, shas['previous'])})",
+            result.stdout,
+        )
+        self.assertIn("branch cleanup: 1 branch(es) deleted, 0 kept/skipped", result.stdout)
+        self.assert_local_ref_gone(repo, name)
+        self.assertEqual(self.remote_ref(repo, name), "")

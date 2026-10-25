@@ -4,7 +4,7 @@ created: '2026-10-24T11:39:24.997+02:00'
 id: feat-233-update-release
 status: review
 type: feat
-updated: '2026-10-24T21:18:25.996+02:00'
+updated: '2026-10-24T23:29:29.223+02:00'
 version: 1.0.0
 ---
 
@@ -37,7 +37,7 @@ four hazard classes met in the manual pass.
 
 ### Requirements
 
-- REQ-001: `stage_precheck` gains a **feat closeout gate** that runs *before* `stage_bump` writes the version increment: for every `.specmgr/feat/feat-*/` folder whose frontmatter `status` is not `done`, determine whether the feature's implementation merged into the current release window (`vPrev..HEAD`, `vPrev` = the latest tag reachable from `dev` via `git describe --tags --abbrev=0`; when no tag exists at all the window is `HEAD`, so the first release gates every non-`done` feat that has any merged PR); if it did, the gate fails the precheck, with "merged" determined as the newest merged PR (head ref = the feat id, read from GitHub REST `pulls?state=closed&head=<owner>/<feat-id>` filtered on `merged_at != null`, extended by the REQ-011 issue-number-prefix fallback) whose `merge_commit_sha` (valid for both squash and merge PRs) is an ancestor of `HEAD` but not of `vPrev`, and any violation failing the precheck with an actionable line per offending feat (feat id, current status, PR number, delivery sha). A folder whose frontmatter `status` line is missing or unparseable is a violation in its own right — the gate cannot prove the feat is `done` — with an actionable line naming the defect (repair the frontmatter, or close out to `done`, then re-run `precheck`); the fail-safe is to block the release, never to skip the folder.
+- REQ-001: `stage_precheck` gains a **feat closeout gate** that runs *before* `stage_bump` writes the version increment: for every `.specmgr/feat/feat-*/` folder whose frontmatter `status` is not `done`, determine whether the feature's implementation merged into the current release window (`vPrev..HEAD`, `vPrev` = the latest tag reachable from `dev` via `git describe --tags --abbrev=0`; when no tag exists at all the window is `HEAD`, so the first release gates every non-`done` feat that has any merged PR); if it did, the gate fails the precheck, with "merged" determined as the newest merged PR (head ref = the feat id, read from GitHub REST `repos/{owner}/{repo}/pulls?state=closed&head={owner}:<ref>&per_page=100` filtered on `merged_at != null`, extended by the REQ-011 issue-number-prefix fallback) whose `merge_commit_sha` (valid for both squash and merge PRs) is an ancestor of `HEAD` but not of `vPrev`, and any violation failing the precheck with an actionable line per offending feat (feat id, current status, PR number, delivery sha). A folder whose frontmatter `status` line is missing or unparseable is a violation in its own right — the gate cannot prove the feat is `done` — with an actionable line naming the defect (repair the frontmatter, or close out to `done`, then re-run `precheck`); the fail-safe is to block the release, never to skip the folder.
 - REQ-002: A feat with **no** merged PR under its lookup (the exact head ref, or the REQ-011 issue-number-prefix fallback) is *never* gated by the closeout gate — plan-only feats (a freshly-added plan with no implementation PR yet) and in-flight/abandoned feats pass the gate regardless of their `status`.
 - REQ-003: A feat whose newest merged-PR delivery commit is **not** inside `vPrev..HEAD` (i.e. it shipped in an earlier release) is not gated by the closeout gate — the gate covers only the feature set of the release being cut.
 - REQ-004: `stage_precheck` gains a **previous-release branch cleanup** that runs *after* the closeout gate: it deletes local and `origin/` `feat-*`/`fix/*` branches whose newest merged-PR delivery commit is an ancestor of `vPrev` (stale from the previous release or older), deleting the local ref with `git branch -d` (falling back to `-D`, justified by the merged-PR proof) and the remote ref with `git push origin --delete <name>`; each side is deleted and reported independently, so a branch present only locally or only on `origin/` is deleted on the side that exists and reported as one-side. When no tag exists at all there is no "previous release or older," so the cleanup deletes nothing and reports the skip alongside the gate's no-prior-tag note.
@@ -96,7 +96,7 @@ four hazard classes met in the manual pass.
 
 **Delivery commit via `merge_commit_sha`, not the head SHA.** A squash-merged feat branch leaves *no* head-SHA ancestor on `dev` (the head commits are rewritten), so `git merge-base --is-ancestor <head> dev` is the wrong staleness test for the majority of this repo's features. GitHub's `merge_commit_sha` is the real `dev`-side commit for both squash and merge PRs, so "stale" and "shipped-in-window" reduce to two ancestry tests against that one SHA: ancestor of `vPrev` (stale, delete) vs. ancestor of `HEAD` but not of `vPrev` (current release, keep).
 
-**GitHub REST, not GraphQL.** The script is written against this environment's `gh` 2.4.0, whose GraphQL call sites (`gh pr view --json`, `gh run view --json jobs`) are known-broken (SOP Safety and Precautions). The merged-PR lookup therefore uses `gh api "repos/dfch/biz.dfch.SpecMgr/pulls?state=closed&head=dfch/<feat-id>"` filtered with `jq` for `merged_at != null`, taking the newest by `merged_at` — the same REST precedent the script already uses for `close_pr_if_open` and the release notes.
+**GitHub REST, not GraphQL.** The script is written against this environment's `gh` 2.4.0, whose GraphQL call sites (`gh pr view --json`, `gh run view --json jobs`) are known-broken (SOP Safety and Precautions). The merged-PR lookup therefore uses `gh api "repos/{owner}/{repo}/pulls?state=closed&head={owner}:<ref>&per_page=100"` filtered with `jq` for `merged_at != null`, taking the newest by `merged_at` — the same REST precedent the script already uses for `close_pr_if_open` and the release notes.
 
 **The issue-number-prefix fallback (REQ-011).** The gate's primary lookup keys on head ref = the folder id, which assumes the implementation branch was named after the folder. The assumption has broken in this repo: folder `feat-134-related-artifact-similarity` shipped from two branches — `feat-134-related-artifact-similarity` (PR #137, merged 2026-09-29) and the renamed `feat-134-similarity-requires-mcp` (PR #168, same day) — and a folder whose only merged PR came from a differently-named branch would otherwise look plan-only and slip past the gate (REQ-002), the exact false negative the gate exists to prevent. The fallback matches merged PRs by the folder's `feat-<NNN>-` prefix (issue numbers are unique per folder; `feat-0-*` has none), fetched in one page scan of closed PRs per precheck run so the cost is constant rather than per-folder, and takes the newest by `merged_at` across exact and fallback matches.
 
@@ -114,9 +114,9 @@ four hazard classes met in the manual pass.
 
 #### Phase 100: Closeout gate in `stage_precheck`
 
-- [x] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists — the gate then treats the window as `HEAD`), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line; a missing or unparseable value is a distinct sentinel the gate turns into its own violation line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merge_commit_sha` or nothing).
+- [x] Task 100.100: Add the helper functions the gate needs: `latest_tag()` (`git describe --tags --abbrev=0`, empty + info note when no tag exists — the gate then treats the window as `HEAD`), `feat_folders()` (list `.specmgr/feat/feat-*/` ids), `feat_status(<id>)` (read the frontmatter `status:` line; a missing or unparseable value is a distinct sentinel the gate turns into its own violation line), and `merged_delivery(<head-ref>)` (`gh api pulls?state=closed&head=...` + `jq` filter for `merged_at != null`, newest by `merged_at`, printing `number<TAB>merged_at<TAB>merge_commit_sha` or nothing).
 - [x] Task 100.110: Wire the gate into `stage_precheck` after the six existing checks (a)–(f) documented in SOP 98537416 step 2: for each feat folder whose `status` is not `done` (a missing or unparseable `status` line is a violation on its own, reported before any PR lookup), look up its merged delivery (exact head ref first, then the REQ-011 `feat-<NNN>-` prefix fallback); if found and the delivery SHA is an ancestor of `HEAD` but not of `vPrev` (with `vPrev` absent, every delivery counts), record it as a violation; after the loop, if there are violations, `die` with one actionable line per offending feat (id, status or frontmatter defect, PR number, sha) plus the remediation pointer (close out to `done` on `dev`, or repair the frontmatter, then re-run `precheck`).
-- [x] Task 100.115: Extend the fake `gh` shim in `tests/test_release_sh.py` to answer the merged-PR search call `pulls?state=closed&head=<owner>/<ref>` (and, once the REQ-011 fallback lands, the one-shot page scan of closed PRs): the shim's configured PR fixtures carry `number`, `head.ref`, `merged_at`, and `merge_commit_sha`, so the gate and cleanup tests can assert per-branch merged and unmerged delivery.
+- [x] Task 100.115: Extend the fake `gh` shim in `tests/test_release_sh.py` to answer the merged-PR search call `repos/{owner}/{repo}/pulls?state=closed&head={owner}:<ref>&per_page=100` (and, once the REQ-011 fallback lands, the one-shot page scan of closed PRs): the shim's configured PR fixtures carry `number`, `head.ref`, `merged_at`, and `merge_commit_sha`, so the gate and cleanup tests can assert per-branch merged and unmerged delivery.
 - [x] Task 100.120: Add the gate's `tests/test_release_sh.py` cases (ACC-001, ACC-002, ACC-003, ACC-011): review-status feat with an in-window merged PR ⇒ precheck dies naming the feat; the same feat at `done` ⇒ passes; plan-only feat (no merged PR) ⇒ passes; feat delivered in an earlier release ⇒ passes; feat folder with a missing or unparseable `status` ⇒ precheck dies with the frontmatter-defect line; feat merged only under a renamed `feat-<NNN>-*` branch ⇒ gated via the prefix fallback; no prior tag ⇒ the window is `HEAD` (an in-window review-status feat ⇒ dies).
 
 #### Phase 110: Previous-release branch cleanup in `stage_precheck`
@@ -142,38 +142,106 @@ four hazard classes met in the manual pass.
 - [x] Task 140.110: Fix the reviewed test findings in tests/test_release_sh.py — the G1 gate case, the I4 quoted-status case, I5 (adversarial head-filter pin in the plan-only test), I9 (module docstring).
 - [x] Task 140.120: Fix the reviewed doc findings — D1 (/release dry-run paragraph), G2 (SOP: record the one-page fallback bound), D3 (SOP: 'latest tag' wording), I8 (split the CHANGELOG bullet into two).
 
+#### Phase 150: Independent review closeout (plan-text corrections, test gaps, deferrals)
+
+- [x] Task 150.100: Fix the reviewed plan-text findings — D1 (the slash-form head filter `head=<owner>/<feat-id>` and the hard-coded `repos/dfch/biz.dfch.SpecMgr` in REQ-001, the Design Notes "GitHub REST, not GraphQL" bullet, and Task 100.115's text → the implemented colon form `head={owner}:<ref>` with the `{owner}/{repo}` placeholder, matching the Phase 100 Decisions entry (1)) and D2 (Task 100.100's `merged_delivery` print shape, the two-field sketch → the implemented three-column form `number<TAB>merged_at<TAB>merge_commit_sha`, matching the Phase 100 Decisions entry (2)).
+- [x] Task 150.110: Cover the `fix/*` branch class in `tests/test_release_sh.py` — a stale `fix/<name>` branch on both the local and the `origin/` side (matching tips, delivery an ancestor of `vPrev`, the existing `commit-tree` fixture shape) is deleted on both sides with the report lines naming the slash-containing branch (G1).
+- [x] Task 150.120: Pin the local-delete clean-merge success path — a branch whose tip is a genuine ancestor of dev (the `v0.9.8`-tagged fixture commit) with a merged-PR delivery equal to it is deleted locally via plain `git branch -d` (the report line carries the plain `-d` mechanic, not the `-D`-refusal wording) and on origin via `git push origin --delete` (G2).
+- [x] Task 150.130: Record the independent review in Progress — a Decisions-Made entry covering the D1/D2 plan-text corrections, the G1/G2 test additions, and the I1/I2 deferrals with their rationale; a dated Recent Updates entry for Phase 150 completion carrying the phase-end gate evidence; the Current Status paragraph updated (all six phases complete; the plan status stays `review` — the final closeout to `done` is post-merge and is enforced by this feature's own gate at the next release's precheck).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-24**: All five phases complete — Phase 100 (the closeout
+**As of 2026-10-24**: All six phases complete — Phase 100 (the closeout
 gate in `stage_precheck`), 110 (the previous-release branch cleanup), 120
-(the documentation sync), 130 (verification and closeout), and 140 (review
-remediation of the PR #236 post-implementation findings: E1/I1 the
-per-run origin-branches cache, G1 the explicit not-gated line for an
-unresolvable delivery, I4 the quoted/trailing-comment `status:` tolerance,
-I6 the side-aware push-delete failure message, D1 the `/release` dry-run
-token, G2 the SOP one-page fallback bound, D3 the SOP "latest tag" wording,
-I5 the adversarial head-filter pin, I8 the split CHANGELOG bullet, and I9
-the module docstring). Three findings are deferred with rationale (I2 the
-`-D` fallback's tip-drift conflation, I3 the swallowed `gh api` failures,
-I7 the repeated earlier-release info line — see Decisions Made). The full
-quality gate is green (the Phase 140 Updates entry below carries the
-evidence): `uv run --frozen pytest -n auto` 4823 passed / 18 skipped,
+(the documentation sync), 130 (verification and closeout), 140 (review
+remediation of the PR #236 post-implementation findings), and 150
+(independent review closeout). An independent post-implementation review
+verdict: **no errors** — every requirement REQ-001…REQ-011 implemented,
+all 11 acceptance criteria re-verified, and the full quality gate
+independently re-run and green; its actionable findings are all
+dispositioned in Phase 150 (plan text and tests only, no
+`scripts/release.sh` behaviour change): D1/D2 corrected the three
+stale slash-form head-filter occurrences and Task 100.100's two-field
+delivery sketch to the implemented colon-form `head={owner}:<ref>`
+lookup and three-column `merged_delivery` line, G1 added the
+`fix/*` branch-class cleanup test, and G2 pinned the local-delete
+clean-merge plain-`git branch -d` success path; I1 (the PID-keyed
+per-run cache files) and I2 (the unpatterned `latest_tag`) are deferred
+with rationale (see Decisions Made). The full quality gate is green
+(the Phase 150 Updates entry below carries the refreshed evidence):
+`uv run --frozen pytest -n auto` 4825 passed / 18 skipped,
 `ruff format --check`, `ruff check`, and `vulture src/ whitelist.py
 --min-confidence 60` all clean, and `tests/test_release_sh.py` alone runs
-95/95; every acceptance criterion ACC-001…ACC-011 is evidenced by a named
+97/97; every acceptance criterion ACC-001…ACC-011 is evidenced by a named
 test or a named doc surface (the evidence table in the Phase 130 Updates
 entry below; the Task 130.100 text's "ACC-001 through ACC-010" is a wording
 gap against the plan's 11 criteria — see Decisions Made), and the
 `CHANGELOG.md` `[Unreleased]` entry (two bullets, one per sub-item) is in
-place. The plan status stays `review` — a finished implementation awaiting
-the final closeout (status → `done` + finalization entry) that the
-feature's own gate will then enforce at the next release's precheck.
+place. The plan status stays `review` — the final closeout (status →
+`done` + finalization entry) happens only after the PR merges into
+`dev`, and this feature's own gate will then enforce exactly that at the
+next release's precheck.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T23:29:29.223+02:00 - Phase 150 complete (independent review closeout)
+
+Implemented the independent post-implementation review closeout (Tasks
+150.100/150.110/150.120/150.130). The independent `feat-reviewer` pass
+over `dev..HEAD` returned the verdict **no errors** — every requirement
+REQ-001…REQ-011 implemented, all 11 acceptance criteria re-verified, and
+the full quality gate independently re-run and green — with two stale
+plan-text findings (D1, D2), two test gaps (G1, G2), and two hardening
+notes (I1, I2) this phase disposes of; plan text and tests only, no
+`scripts/release.sh` behaviour change. **D1**: the three stale slash-form
+occurrences of the merged-PR head filter — REQ-001's
+`pulls?state=closed&head=<owner>/<feat-id>`, the Design Notes "GitHub
+REST, not GraphQL" bullet's hard-coded `gh api
+"repos/dfch/biz.dfch.SpecMgr/pulls?state=closed&head=dfch/<feat-id>"`,
+and Task 100.115's `pulls?state=closed&head=<owner>/<ref>` — are
+corrected to the implemented documented `user:ref` COLON form with the
+`{owner}/{repo}` placeholder
+(`repos/{owner}/{repo}/pulls?state=closed&head={owner}:<ref>&per_page=100`),
+matching the Phase 100 Decisions entry (1) adjudication (the slash form
+was tested live and is silently ignored by the API); the elided `head=...`
+fragments on the Depends-On and Task 100.100 lines assert no form and are
+left alone. **D2**: Task 100.100's two-field `merged_delivery` print
+shape (`number<TAB>merge_commit_sha`) is corrected to the implemented
+three-column form (`number<TAB>merged_at<TAB>merge_commit_sha`), matching
+the Phase 100 Decisions entry (2); the rest of the task line is untouched.
+**G1**: `ReleaseShBranchCleanupTestCase` gains
+`test_precheck_cleanup_deletes_stale_fix_slash_branch` — the `fix/*`
+branch class is now exercised: a stale `fix/233-release-precheck` branch
+on BOTH the local and the `origin/` side (matching tips, the existing
+`commit-tree` squash-stand-in shape, the merged-PR delivery an ancestor of
+`vPrev`) is deleted on both sides, the slash-containing name carried
+through the remote-candidate filter and the local candidate union, the
+local `git branch -d`→`-D` mechanic, and `git push origin --delete`, with
+both report lines naming that name and proven by the merged PR. **G2**:
+the class also gains
+`test_precheck_cleanup_deletes_stale_clean_merge_plain_d` — the
+local-delete clean-merge SUCCESS path is pinned: a branch whose tip IS a
+genuine ancestor of dev (the `v0.9.8`-tagged first fixture commit, with a
+merged-PR delivery equal to it, hence stale) is deleted locally via PLAIN
+`git branch -d` (the report line carries the plain `-d` mechanic, and the
+`-D`-refusal wording is asserted absent) and on origin via `git push
+origin --delete`. **I1/I2**: deferred with rationale (recorded in the
+Decisions entry below). The new Phase 150 section (Tasks 150.100–150.130)
+is added to the Task List with all four tasks ticked. Gate evidence:
+`uv run --frozen pytest tests/test_release_sh.py -n auto -q` 97 passed
+(the 95 pre-existing runs plus the 2 new cleanup cases); `uv run
+--frozen pytest -n auto -q` 4825 passed / 18 skipped; `uv run --frozen
+ruff format --check` (2114 files already formatted); `uv run --frozen
+ruff check` (all checks passed); `uv run --frozen vulture src/
+whitelist.py --min-confidence 60` clean; `bash -n scripts/release.sh`
+clean; `bash scripts/release.sh help` rc 2 with the complete usage (final
+`full resolved version.` line); specmgr `parse_sop` green (the SOP is
+unchanged this phase); specmgr `get_feat` green (the plan parses with the
+new phase). The plan status stays `review`.
 
 #### 2026-10-24T21:11:46.739+02:00 - Phase 140 complete (review remediation)
 
@@ -417,6 +485,72 @@ and the feat-129/feat-214 closeout commits `b5cd89c`/`4a33271`) and a read of
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-24T23:29:29.223+02:00 - Phase 150 independent review closeout: the colon-form URL plan text, the three-column delivery shape, the `fix/*` and clean-merge test pins, and the two deferred hardening notes
+
+Five points settled by the independent post-implementation review
+closeout (Tasks 150.100/150.110/150.120; the review verdict itself — no
+errors, REQ-001…REQ-011 all implemented, all 11 ACCs re-verified, the
+gate independently re-run green — is recorded in the Recent Updates
+entry). (1) **D1 plan-text URL corrections**: the three stale slash-form
+occurrences (REQ-001, the Design Notes "GitHub REST, not GraphQL" bullet
+with its hard-coded repo name, and Task 100.115's text) are corrected to
+the implemented documented `user:ref` COLON form with the `{owner}/{repo}`
+placeholder — `repos/{owner}/{repo}/pulls?state=closed&head={owner}:
+<ref>&per_page=100` — matching the Phase 100 Decisions entry (1)
+adjudication (the slash form was tested live and is silently ignored by
+the API, returning every closed PR); only the stale fragments are
+rewritten — the elided `head=...` forms on the Depends-On and
+Task 100.100 lines assert no form and are left alone, and no
+phase/task is renumbered. (2) **D2 delivery line shape**: Task 100.100's
+two-field sketch is corrected to the implemented three-column form
+(`number<TAB>merged_at<TAB>merge_commit_sha`), matching the Phase 100
+Decisions entry (2) ("the 3-column form supersedes Task 100.100's
+two-field sketch wherever it conflicts"); the single clause is rewritten,
+the rest of the task line untouched. (3) **G1 the `fix/*` class pin**:
+every pre-existing cleanup fixture created only `feat-*` branches, so the
+`fix/` arm of the remote-candidate filter, the local candidate union, and
+the deletion of a slash-containing branch name had never run; the new
+`test_precheck_cleanup_deletes_stale_fix_slash_branch` closes that gap
+with a stale `fix/233-release-precheck` on both sides (matching tips, the
+`commit-tree` squash-stand-in shape, delivery an ancestor of `vPrev`),
+asserting both refs deleted and both report lines naming the
+slash-containing branch — the test passes against the unchanged script,
+confirming the `fix/` arm works as documented. (4) **G2 the clean-merge
+plain-`-d` pin**: every deletion fixture used a `commit-tree` side commit
+that is NOT an ancestor of dev, so `git branch -d` refused in all of them
+and only the `-D`-fallback mechanic string was ever asserted; the new
+`test_precheck_cleanup_deletes_stale_clean_merge_plain_d` uses a branch
+whose tip IS a genuine ancestor of dev (the `v0.9.8`-tagged first
+fixture commit, merged-PR delivery equal to it), asserting the local
+deletion succeeds via plain `git branch -d` (the report line carries the
+plain `-d` mechanic, the `-D`-refusal wording asserted absent) and the
+origin side via `git push origin --delete` — pinning Phase 110
+Decisions entry (4)'s "plain `git branch -d` on the rare clean-merge
+success" half, which was previously unpinned. (5) **The DEFERRED
+hardening notes, with rationale** — left untouched in this phase:
+**I1** — the two per-run cache files live in world-writable
+`${TMPDIR:-/tmp}` keyed by PID only, and a pre-existing file is trusted
+(`[ ! -e "$cache" ]` skips the fetch): a planted closed-PR-scan cache
+could suppress the REQ-011 fallback (an unclosed feat merged only under a
+renamed branch would pass the gate — the exact false negative the gate
+exists to prevent), while a planted origin-branches listing can at worst
+cause deletion misses (each deletion still requires the live `gh api`
+merged-PR proof plus both ancestry tests, so no wrongful deletion is
+possible). Deferred because the PID-keyed file idiom is load-bearing —
+the scan runs in pipeline/command-substitution subshells where only `$$`
+(not variables or traps) propagates (Phase 100 Decisions entry (3)) — so
+a `mktemp -d` (0700)/O_EXCL redesign is a design change beyond this
+phase's scope; the deletion-side exposure is bounded by the live proof,
+and the gate-side exposure is theoretical (requires a local actor able to
+plant a file at exactly this run's PID path before the fetch). **I2** —
+`latest_tag` runs `git describe --tags --abbrev=0` with no name pattern,
+so any ad-hoc non-`v*` tag later placed in dev's history would silently
+become `vPrev` (wrong gate window, wrong cleanup staleness boundary).
+Deferred because all 41 current tags are `v*`-shaped and the SOP defines
+`vPrev` identically (no script/SOP drift today); adding a `v*` pattern is
+a behaviour change to the normative `vPrev` definition (SOP step 2 +
+Definitions would need syncing) and is a follow-up candidate.
 
 #### 2026-10-24T21:11:46.739+02:00 - Phase 140 review remediation: the origin-listing cache reuse, the explicit-not-gated gate line, the `status:` YAML-tolerance scope, and the deferred findings
 
