@@ -4,7 +4,7 @@ created: '2026-10-28T09:42:29.469+01:00'
 id: feat-229-txt
 status: planning
 type: feat
-updated: '2026-10-28T09:42:29.469+01:00'
+updated: '2026-10-28T13:13:14.161+01:00'
 version: 1.0.0
 ---
 
@@ -61,9 +61,9 @@ The domain follows the domain-first hierarchy and is dispatch-only from day one 
 - [ ] ACC-004: Verifies REQ-007 -- `test__domains.py`, `test_update.py`, `test_edit.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py` and `test_validate.py` (and their sibling similarity/`list_references` tests) include `txt` cases, and no per-domain `*_txt` mutation tool exists.
 - [ ] ACC-005: Verifies REQ-008 -- `tests/txt/` covers every tool, both resources and both prompts, including the `get_txt(raw=True, numbered=True)` windowing and the `ParseFailureResult` channel for a broken document.
 - [ ] ACC-006: Verifies REQ-009 -- `test__references.py` and `test_list_references.py` cover `TXT <uuid>` extraction, a `_load_txt` resolution (found and not-found rows), and a `txt` source document listing a free-floating `REQ <uuid>`; the import-time `_SOURCE_LOADERS`/`ALL_DOMAINS` assert holds.
-- [ ] ACC-007: Verifies REQ-010 -- the palette tuple, the rulebook (`general_reference_graph.md`) with its dated amendment note, `test_reference_graph.py`/`test__reference_graph.py`/`test_reference_graph_subset.py`, the golden fixtures and `plantuml/` structure expectations all agree on 15 entries with `("TXT", "LightGrey")`, and a diagram containing a TXT node passes `validate_plantuml`.
+- [ ] ACC-007: Verifies REQ-010 -- the palette tuple, the rulebook (`general_reference_graph.md`) with its dated amendment note, `test_reference_graph.py`/`test__reference_graph.py`/`test_reference_graph_subset.py`/`test_get_reference_diagram.py` and the golden fixtures all agree on 15 entries with `("TXT", "LightGrey")` (the 15-entry agreement is confined to these artifacts -- the `plantuml/` structure checker and the UC rulebook carry no palette expectations), and a diagram containing a TXT node passes `validate_plantuml`.
 - [ ] ACC-008: Verifies REQ-011 -- no `txt`-specific error-message wrapping exists beyond the shared `wrap_tool_errors` context, and the packaged `txt_template.md`/`txt_example.md` parse and validate green through `validate(type="txt", full=True)`.
-- [ ] ACC-009: Verifies REQ-012 -- `specmgr schema`, `specmgr docs`, `specmgr mcp-docs` and the config-golden test show no drift, `tests/test_envregistry_*`, `tests/test_schema_surface_registration.py` and `tests/test_agent_facing_wording.py` pass, and `server.py`'s docstring lists every new tool/resource/prompt.
+- [ ] ACC-009: Verifies REQ-012 -- `specmgr schema`, `specmgr docs`, `specmgr mcp-docs` and the config-golden test show no drift, `tests/test_envregistry_*`, `tests/test_schema_surface_registration.py`, `tests/test_agent_facing_wording.py` and `tests/opencode/test_skill_specmgr_refs.py` pass, and `server.py`'s docstring lists every new tool/resource/prompt.
 - [ ] ACC-010: The full test suite passes after every phase below, not just at the end.
 - [ ] ACC-011: `ruff format --check`, `ruff check` and `vulture` all pass against the final state.
 
@@ -134,15 +134,15 @@ The first top-level `## Updates` is the boundary by construction. A duplicate or
 
 #### Directory and id
 
-Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md`, using the shared `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` (no dedicated `SPECMGR_TXT_DIR` variable is introduced unless the `vcr`/`sysrs` precedent turns out to have one, in which case follow that precedent exactly). ids are server-generated UUIDs.
+Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md`, using the shared `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` (verified: `vcr`/`sysrs` delegate to the shared `doc_base_dir` -- `SPECMGR_DOCS_DIR` only, no per-domain variable -- so no `SPECMGR_TXT_DIR` is introduced and no `_envregistry` entry is added; the `tests/test_envregistry_*` variable count stays green). ids are server-generated UUIDs.
 
 #### Palette
 
-`TXT` is `LightGrey` (a PlantUML-recognised colour name, not used by any of the existing 14 entries: LightYellow, LightBlue, Pink, Honeydew, LemonChiffon, LightCoral, Lavender, Orange, LightGreen, PowderBlue, PaleTurquoise, Khaki, Thistle, DarkRed). The colour is fixed here so implementation never stops to confirm it.
+`TXT` is `LightGrey` (a PlantUML-recognised colour name, not used by any of the existing 14 entries: LightYellow, LightBlue, Pink, Honeydew, LemonChiffon, LightCoral, Lavender, Orange, LightGreen, PowderBlue, PaleTurquoise, Khaki, Thistle, DarkRed). The colour is fixed here so implementation never stops to confirm it. Verified 2026-10-28 by rendering the frozen 15-entry palette probe (the renderer's own structure: skinparam block, domain groups, bracketed aliases, one edge) through the running `plantuml-cli` docker container (plantuml 1.2026.8): the `TXT` node renders `fill="#D3D3D3"` (canonical lightgray) and the `Thistle` control node renders `fill="#D8BFD8"`, no warnings.
 
 #### Cross-cutting touchpoints (from a grep for `sysrs`/`vcr` outside the domain package)
 
-`general/tools/`: `_domains.py`, `_references.py`, `list_references.py`, `_path_safety.py`, `_listing.py`, `_doc_paths.py`, `_similarity_corpus.py`, `update.py`, `edit.py`, `set_status.py`, `set_classification.py`, `delete.py`, `validate.py`, `find_related.py`, `find_similar_text.py`, `get_reference_diagram.py`, `_reference_graph.py`; `general/models/`: `reference_graph.py`, `reference.py`, `similarity_hit.py`, `update_result.py`, `parse_failure_result.py`; `general/data/general_reference_graph.md`, `general_repair_instructions.md`; `general/prompts/repair.py`; `general/resources/config.py`, `models/config_info.py`; `commands/schema.py`, `commands/diagram.py`; `models/md/` docstrings that enumerate domains; `server.py`; `pyproject.toml`; `server.json`; `.pre-commit-config.yaml`; `.github/workflows/ci.yml`; `README.md`; `AGENTS.md`; `CHANGELOG.md`; `.specmgr/conventions.md`; `.opencode/skill/repair/SKILL.md`, `.opencode/agent/ref-finder.md`, `.opencode/agent/doc-repairer.md`, `.opencode/command/refs.md`, `.opencode/command/repair.md`. The task list below groups them; before editing, re-run the grep to catch drift since this plan was written.
+`general/tools/`: `__init__.py` (module docstring hand-lists the 12-domain `type` vocabulary several times plus the "all 13 domains" line for `get_reference_diagram_all`), `_domains.py`, `_references.py`, `list_references.py`, `_path_safety.py`, `_listing.py`, `_doc_paths.py`, `_similarity_corpus.py`, `update.py`, `edit.py`, `set_status.py`, `set_classification.py`, `delete.py`, `validate.py`, `find_related.py`, `find_similar_text.py`, `get_reference_diagram.py`, `get_reference_diagram_all.py` (docstring's "13 domains" claim), `_reference_graph.py`; `general/models/`: `reference_graph.py`, `reference.py`, `similarity_hit.py`, `update_result.py`, `parse_failure_result.py`; `general/data/general_reference_graph.md`, `general_repair_instructions.md`; `general/prompts/repair.py`; `general/resources/config.py`, `models/config_info.py`; `commands/schema.py`, `commands/diagram.py`; `models/md/` docstrings that enumerate domains; `server.py`; `pyproject.toml`; `server.json`; `.pre-commit-config.yaml`; `.github/workflows/ci.yml`; `whitelist.py` (vulture; the vcr/sysrs precedent entries for (de)serialization-only domain-model fields); `README.md`; `AGENTS.md`; `CHANGELOG.md`; `.specmgr/conventions.md`; `.opencode/skill/repair/SKILL.md`, `.opencode/skills/specmgr-refs/SKILL.md` (its "12 whole-body domains" enumerations, the hand-listed 12-domain list and the "13 vs 12" reconciliation note all shift once `txt` joins), `.opencode/agent/ref-finder.md`, `.opencode/agent/doc-repairer.md`, `.opencode/command/refs.md`, `.opencode/command/repair.md`, `tests/opencode/test_skill_specmgr_refs.py` (pins those skill strings). The task list below groups them; before editing, re-run the grep to catch drift since this plan was written.
 
 ### Related Decisions
 
@@ -161,7 +161,7 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 - [ ] Task 100.130: Implement `UpdateEntryContent`, `UpdateEntry`, `Updates` (copied from `vcr`, shared `validate_newest_first`)
 - [ ] Task 100.140: Implement the root `Txt(MarkdownSection1)` (plain root, mandatory `body` and `updates`), `TxtDocument`, `parse_txt`/`render` and the `TxtSummary`
 - [ ] Task 100.150: Write the parser test matrix from ACC-001 to ACC-003 (the 9 structural cases, the entry cases, frontmatter, round-trip, `model_dump`)
-- [ ] Task 100.160: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`
+- [ ] Task 100.160: Phase-end gate: `ruff format --check`, `ruff check`, `vulture` (extend `whitelist.py` with the `txt` entries following the vcr/sysrs precedent -- the root `body`/`updates` fields and `UpdateEntry`'s computed `timestamp`/`title`), full `pytest`
 
 #### Phase 110: Tools
 
@@ -183,32 +183,32 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 
 #### Phase 130: Generic tool registration
 
-- [ ] Task 130.100: Append `txt` to `WHOLE_BODY_DOMAINS` and add its `WholeBodyDomain` adapter in `general/tools/_domains.py`
-- [ ] Task 130.110: Add the `txt` adapter to each of `update`, `edit`, `set_status`, `set_classification`, `delete`, `validate`
-- [ ] Task 130.120: Wire `txt` into `_path_safety`, `_listing`, `_doc_paths` (docstrings/messages), the similarity corpus, `find_related`/`find_similar_text`, and write-path cache warming
-- [ ] Task 130.130: Extend the generic-tool tests (`test__domains.py`, `test_update.py`, `test_edit.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py`, `test_validate.py`, `test_doc_cache_write_wiring.py`, similarity tests) with `txt` cases
+- [ ] Task 130.100: Append `txt` to `WHOLE_BODY_DOMAINS` and add its `WholeBodyDomain` adapter in `general/tools/_domains.py` (update `_domains.py`'s own module docstring -- the "12-domain tuple" wording and the hand-listed names -- in the same edit; this grows `ALL_DOMAINS`, so every import-time domain-set assert table must land in this phase -- see 130.110 to 130.130)
+- [ ] Task 130.110: Add the `txt` adapter to each of `update`, `edit`, `set_status` (both `_ADAPTERS` and `_ALLOWED_STATUSES_BY_TYPE` -- the latter has its own import-time assert against `ALL_DOMAINS` and needs `txt`'s `draft`/`progress`/`done` -- plus the `TxtFrontmatter` member of the `_SetStatusFrontmatter` return union), `set_classification`, `delete`, `validate`
+- [ ] Task 130.120: Wire `txt` into `_path_safety`, `_listing`, `_doc_paths` (docstrings/messages), the similarity corpus, `find_related`/`find_similar_text`, and write-path cache warming; add the `txt` source-loader entries to `list_references.py::_SOURCE_LOADERS` and to `_reference_graph.py::_SOURCE_LOADERS`/`_SCAN_READERS` (all three tables carry import-time asserts against `ALL_DOMAINS`, so they must land with the domain-set growth, not in Phases 140/150; they need only the Phase 110 `txt_base_dir`/`load_txt_by_id`/`read_txt` artifacts)
+- [ ] Task 130.130: Extend the generic-tool tests (`test__domains.py`, `test_update.py`, `test_edit.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py`, `test_validate.py`, `test_doc_cache_write_wiring.py`, similarity tests) with `txt` cases, plus the `txt` entry in `tests/test_mcp_output_schema_satisfiability.py::_GET_TOOLS` (its import-time assert against `WHOLE_BODY_DOMAINS` must hold for this phase's full-`pytest` gate to pass)
 - [ ] Task 130.140: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`
 
 #### Phase 140: Reference type
 
 - [ ] Task 140.100: Add `"txt"` to `_UUID_REFERENCE_TYPES`, implement `_load_txt` and its `_TARGET_RESOLVERS` entry in `general/tools/_references.py`, and update the module docstring's tag-vocabulary text
-- [ ] Task 140.110: Add the `txt` source loader to `list_references.py` (satisfies the import-time `_SOURCE_LOADERS`/`ALL_DOMAINS` assert) and update `ReferenceRow`/related docstrings
+- [ ] Task 140.110: Update `ReferenceRow`/related docstrings in `list_references.py` (the `txt` source-loader entry already landed in Task 130.120 with the domain-set growth)
 - [ ] Task 140.120: Update `test__references.py`, `test_list_references.py` and any drift test pinning the tag list; add a `txt` source document test with a free-floating `REQ <uuid>`
 - [ ] Task 140.130: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`
 
 #### Phase 150: Reference-graph palette
 
-- [ ] Task 150.100: Add `("TXT", "LightGrey")` to `_PALETTE` (after `SYSRS`, before `UNRESOLVED`) and `txt` to the graph domain tuple in `general/models/reference_graph.py`, and wire `get_reference_diagram`/`_reference_graph.py`/`commands/diagram.py`
-- [ ] Task 150.110: Amend `general/data/general_reference_graph.md` (palette table, entry count 14 to 15, dated amendment note) and keep the `specmgr://uc/plantuml` structure-checker expectations consistent
-- [ ] Task 150.120: Update `test_reference_graph.py`, `test__reference_graph.py`, `test_reference_graph_subset.py` and the golden fixtures; add a diagram test containing a TXT node validated by `validate_plantuml`
+- [ ] Task 150.100: Add `("TXT", "LightGrey")` to `_PALETTE` (after `SYSRS`, before `UNRESOLVED`) and `txt` to the graph domain tuple in `general/models/reference_graph.py`, and wire `get_reference_diagram` (docstring) and `commands/diagram.py` (the `_reference_graph.py` source-loader/scan-reader entries already landed in Task 130.120)
+- [ ] Task 150.110: Amend `general/data/general_reference_graph.md` (palette table, entry count 14 to 15, dated amendment note); the 15-entry agreement is confined to `general/models/reference_graph.py`, this rulebook, the general tests and the golden fixtures (the `plantuml/` structure checker and the `specmgr://uc/plantuml` rulebook carry no palette expectations -- nothing to keep consistent there)
+- [ ] Task 150.120: Update `test_reference_graph.py`, `test__reference_graph.py`, `test_reference_graph_subset.py`, `test_get_reference_diagram.py` (its `ALL_DOMAINS`-enum test, the "13-domain" docstrings and the source-type loop all go stale once `txt` joins `ALL_DOMAINS`) and the golden fixtures; add a diagram test containing a TXT node validated by `validate_plantuml`
 - [ ] Task 150.130: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`
 
 #### Phase 160: Server and build registration
 
-- [ ] Task 160.100: Register the `txt` package in `server.py` (last-line import, module docstring listing of every new tool/resource/prompt)
+- [ ] Task 160.100: Register the `txt` package in `server.py` (last-line import, module docstring listing of every new tool/resource/prompt); update `general/tools/__init__.py`'s module docstring (its hand-listed 12-domain `type`-vocabulary lines and the "all 13 domains" line) and `get_reference_diagram_all.py`'s docstring (its "13 domains" claim)
 - [ ] Task 160.110: Add `txt` to the `specmgr://config` resource and `models/config_info.py`, and refresh the config golden under `tests/fixtures/config-golden/`
 - [ ] Task 160.120: Add `generate_txt_schema` and the `"txt"` entry to `commands/schema.py`; generate `docs/txt_schema.json` and `txt/data/txt_schema.json`
-- [ ] Task 160.130: Add `biz.dfch.specmgr.txt` package data to `pyproject.toml`, the `txt/models/v1` path to every `.pre-commit-config.yaml` `files:` regex plus the two `specmgr-schema-txt` hooks, and the matching CI steps in `.github/workflows/ci.yml`
+- [ ] Task 160.130: Add `biz.dfch.specmgr.txt` package data to `pyproject.toml`, widen the shared `files:` regex to include `txt/models/v1` in every existing occurrence (13: the shared `specmgr-schema` hook plus the 12 per-domain `-package` hooks -- verify the count before and after, the feat-31 precedent) and add one new `specmgr-schema-txt-package` hook (the 14th occurrence of the widened regex, mirroring `specmgr-schema-sysrs-package`, placed last per the insertion-order convention), and the matching CI steps in `.github/workflows/ci.yml`
 - [ ] Task 160.140: Update domain lists in `server.json` and `_doc_paths.py` env-var descriptions (keep `tests/test_envregistry_*` green)
 - [ ] Task 160.150: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`
 
@@ -216,7 +216,7 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 
 - [ ] Task 170.100: Add the `txt` bullet to `AGENTS.md` (domain list, generic-tool `type` enumerations, reference-tag vocabulary, palette count) and update `.specmgr/conventions.md` if it enumerates domains
 - [ ] Task 170.110: Update `README.md` (domain list, Environment Variables section if affected) and add a `CHANGELOG.md` `[Unreleased]` entry
-- [ ] Task 170.120: Update the agent/skill/command text that enumerates domains (`repair` skill and `doc-repairer`/`ref-finder` agents, `/refs` and `/repair` commands, `general_repair_instructions.md`, `general/prompts/repair.py`)
+- [ ] Task 170.120: Update the agent/skill/command text that enumerates domains (`repair` skill and `doc-repairer`/`ref-finder` agents, the `specmgr-refs` skill -- its "12 whole-body domains" enumerations, the hand-listed 12-domain list and the "13 vs 12" reconciliation note go to 13/14 -- and its pin test `tests/opencode/test_skill_specmgr_refs.py`, `/refs` and `/repair` commands, `general_repair_instructions.md`, `general/prompts/repair.py`)
 - [ ] Task 170.130: Regenerate `docs/api/`, `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); confirm `tests/test_schema_surface_registration.py` and `tests/test_agent_facing_wording.py` pass
 - [ ] Task 170.140: Final gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`, `specmgr docs`/`schema`/`mcp-docs` drift checks, and set this feature's status to `review`
 
@@ -233,6 +233,10 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-28 13:30:00.000Z - Plan refined (feat-refiner pass, all findings applied)
+
+The feat-refiner refinement pass found and this edit fixes: E1 -- the import-time domain-set asserts now land atomically in Phase 130 (the `list_references`/`_reference_graph` source-loader entries moved from Tasks 140.110/150.100 into 130.120, the `_GET_TOOLS` test entry into 130.130, and 140.110/150.100 re-scoped); G1-G4 -- the `specmgr-refs` skill + its pin test, `whitelist.py`, `test_get_reference_diagram.py` and the `general/tools/__init__.py`/`get_reference_diagram_all.py` docstrings added to the touchpoints and the owning tasks; D1 -- Task 160.130 reworded to the repo's real hook shape (the shared `files:` regex widened across the 13 existing occurrences + one new `specmgr-schema-txt-package` hook, not "the two `specmgr-schema-txt` hooks"); D2 -- the phantom `plantuml/`/UC-rulebook palette pin dropped from ACC-007 and Task 150.110; I1-I4 -- `set_status`'s second table + return-union member named, the env-var design note stated as a verified fact, the `LightGrey` colour pre-verified (see Palette note) and `_domains.py`'s own module docstring folded into Task 130.100. No task numbers added or renumbered.
 
 #### 2026-10-28 12:00:00.000Z - Created
 
