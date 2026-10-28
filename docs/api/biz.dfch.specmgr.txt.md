@@ -38,11 +38,11 @@ ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://txt/list`` resource -- ``list_txt`` ships as a paged
 ``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
-Phase 110 state: the ``models`` sub-package (Phase 100) and the ``tools``
-sub-package (Phase 110) are implemented; the ``resources`` (``specmgr://
-txt/example``, ``specmgr://txt/template``) and ``prompts``
-(``create_txt``/``update_txt``) sub-packages are still empty placeholders
-for Phase 120. As with the ``qa``/``vcr`` precedent, importing this package
-registers whatever the sub-packages currently expose; the ``server.py``
+Phase 120 state: the ``models`` sub-package (Phase 100), the ``tools``
+sub-package (Phase 110), the ``resources`` sub-package (``specmgr://
+txt/example``, ``specmgr://txt/template``; Phase 120), and the ``prompts``
+sub-package (``create_txt``/``update_txt``; Phase 120) are implemented. As
+with the ``qa``/``vcr`` precedent, importing this package registers
+whatever the sub-packages currently expose; the ``server.py``
 bottom-of-file import that makes the server itself load the package lands
 with Phase 160.

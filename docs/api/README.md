@@ -446,8 +446,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.txt.models.v1.frontmatter`](biz.dfch.specmgr.txt.models.v1.frontmatter.md) — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.txt.models.v1.parser`](biz.dfch.specmgr.txt.models.v1.parser.md) — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
 - [`biz.dfch.specmgr.txt.models.v1.summary`](biz.dfch.specmgr.txt.models.v1.summary.md) — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
-- [`biz.dfch.specmgr.txt.prompts`](biz.dfch.specmgr.txt.prompts.md) — No documentation available.
-- [`biz.dfch.specmgr.txt.resources`](biz.dfch.specmgr.txt.resources.md) — No documentation available.
+- [`biz.dfch.specmgr.txt.prompts`](biz.dfch.specmgr.txt.prompts.md) — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.create_txt`](biz.dfch.specmgr.txt.prompts.create_txt.md) — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.update_txt`](biz.dfch.specmgr.txt.prompts.update_txt.md) — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources`](biz.dfch.specmgr.txt.resources.md) — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_example`](biz.dfch.specmgr.txt.resources.txt_example.md) — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_template`](biz.dfch.specmgr.txt.resources.txt_template.md) — Resource: specmgr://txt/template (feat-229-txt Phase 120).
 - [`biz.dfch.specmgr.txt.tools`](biz.dfch.specmgr.txt.tools.md) — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
 - [`biz.dfch.specmgr.txt.tools._cache`](biz.dfch.specmgr.txt.tools._cache.md) — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
 - [`biz.dfch.specmgr.txt.tools._io`](biz.dfch.specmgr.txt.tools._io.md) — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).

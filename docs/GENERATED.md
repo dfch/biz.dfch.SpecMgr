@@ -510,6 +510,12 @@ First-line docstrings from each module, organized by domain:
 - `txt/models/v1/frontmatter.py` — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `txt/models/v1/parser.py` — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
 - `txt/models/v1/summary.py` — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- `txt/prompts/__init__.py` — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/prompts/create_txt.py` — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- `txt/prompts/update_txt.py` — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- `txt/resources/__init__.py` — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/resources/txt_example.py` — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- `txt/resources/txt_template.py` — Resource: specmgr://txt/template (feat-229-txt Phase 120).
 - `txt/tools/__init__.py` — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
 - `txt/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
 - `txt/tools/_io.py` — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
@@ -615,4 +621,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 453
+**Test files**: 457
