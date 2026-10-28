@@ -1,0 +1,109 @@
+# `biz.dfch.specmgr.txt.tools.get_txt`
+
+``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+
+Mirrors ``vcr.tools.get_vcr`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
+routes through a content-hash-validated, per-domain in-memory cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
+when a file's content hash is unchanged since its last read, so a stale
+entry is structurally impossible.
+
+This tool is the sole id-based read path for TXT: there is no
+``specmgr://txt/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+same reasoning as VCR's own ``get_vcr`` tool).
+
+**Path-safety guard (the same ``general.tools._path_safety`` guard as
+VCR).** ``txt`` is not yet a member of ``general.tools._domains``'
+``WHOLE_BODY_DOMAINS`` (the domain registration lands in this feature's
+Phase 130), so the ``validate_id("txt", ...)`` dispatcher would reject
+every id with its own unknown-type error until then. This tool therefore
+applies the two primitive guards ``validate_id`` composes for every
+UUID-shaped domain -- :func:`~biz.dfch.specmgr.general.tools._path_safety.
+assert_no_traversal` plus :func:`~biz.dfch.specmgr.general.tools._path_safety.
+assert_uuid`, in that order, both raised before any filesystem access --
+which is byte-for-byte the same id-validation behaviour VCR's
+``validate_id("vcr", ...)`` call gives for every id value.
+
+``raw=True`` returns the frontmatter-stripped body text verbatim instead of
+the parsed document -- produced by the same
+:func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
+generic ``update`` tool's range splice uses, so the line numbers a client
+counts in a raw read index byte-for-byte into the text the server splices
+against. With optional read-style ``offset``/``limit`` coordinates
+(feat-28-get-update, Phase 2), the same raw read instead returns the window
+of that text, served by the shared
+:func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
+
+## Functions
+
+### `get_txt(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None, numbered: 'bool' = False) -> 'TxtDocument | str | ParseFailureResult'`
+
+Read and return the free-form text document identified by ``id``.
+
+Parameters
+----------
+id:
+    The document's specmgr-assigned identifier.
+raw:
+    With ``False`` (the default), return the parsed document, exactly
+    as before. With ``True``, return the frontmatter-stripped body
+    text verbatim as a plain string -- the same text whose 1-based
+    lines the generic ``update`` tool's ``offset``/``limit``
+    coordinates address (shared body-extraction helper with the
+    splice) -- optionally windowed by ``offset``/``limit`` (see below).
+offset:
+    With ``raw=True`` only: the 1-based first body line of the window
+    to return (default 1; values below 1 floor to 1, values past the
+    last body line return the empty string).
+limit:
+    With ``raw=True`` only: the number of body lines the window spans
+    (default through the end of the body; capped at the remaining
+    lines, a negative value returns the empty string).
+numbered:
+    With ``raw=True`` only: when ``True``, prefix every returned body
+    line with its 1-based absolute body-line number in the ``"<n>: "``
+    form (plain decimal, no padding) -- under ``offset``/``limit``
+    windowing the numbers start at the clamped ``offset`` and never
+    restart at 1, so a number seen in the output can be fed straight
+    back into the generic ``update`` tool's ``offset``. Numbered
+    output must never be fed back verbatim as ``content`` for
+    ``update`` or ``create_txt`` -- strip the ``"<n>: "`` prefix from
+    each line first (it is likewise never a valid ``edit`` ``old_str``).
+    Combining it with ``raw=False`` raises ``ValueError`` (see
+    ``Raises``).
+
+Returns
+-------
+TxtDocument | str | ParseFailureResult
+    With ``raw=False``: the current on-disk document, freshly re-read
+    and re-parsed. With ``raw=True``: the body text (or its
+    ``offset``/``limit`` window) as a plain string. With
+    ``numbered=True``, every returned line is additionally prefixed
+    with its ``"<n>: "`` 1-based absolute body-line number. When the
+    document
+    exists but fails to parse, a
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) is returned instead of raising --
+    ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
+    the same file (identical field path and cause, including the trailing pydantic
+    documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+    ``raw=True`` never returns a broken document's raw text.
+    Raises :class:`._paths.TxtNotFoundError` if no free-form text
+    document has this id.
+
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not a well-formed id for this domain
+    (raised before any filesystem access), or ``offset``/``limit`` coordinates
+    are given with ``raw=False`` (a parsed document requires the whole body),
+    or ``numbered=True`` is given with ``raw=False`` (numbering is a
+    ``raw=True``-only feature) -- both read-argument misuses raised before
+    any file access.
+

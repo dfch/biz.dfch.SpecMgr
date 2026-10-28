@@ -18,11 +18,31 @@ per-domain ``update_txt``/``set_status_txt``/``validate_txt``/``delete_txt``
 tools, no renderer -- writes persist the caller's raw validated body
 byte-for-byte.
 
-Phase 100 state: the ``models`` sub-package is implemented (see
-``txt/models``); the ``tools``/``resources``/``prompts``/``data``
-sub-packages are empty placeholders for the later phases. This module is a
-docstring-only placeholder with no imports of its own (the ``qa``
-first-phase precedent, feat-12): importing it must never force the
-``mcp`` extra onto a base-library consumer, and the ``@mcp.tool()``/
-``@mcp.resource()``/``@mcp.prompt()`` registrations come with the later
-phases' own sub-package ``__init__`` files.
+Import this package to register all free-form text tools against the shared
+``mcp`` application instance at once::
+
+    from biz.dfch.specmgr import txt  # noqa: F401 (side-effects only)
+
+``tools`` (``create_txt``, ``parse_txt``, ``list_txt``, ``get_txt``
+(``raw``/``offset``/``limit``/``numbered``), ``get_txt_example``,
+``get_txt_template``, ``get_txt_schema``) are implemented; whole-body and
+line-range updates of an existing document go through the generic ``update``
+tool in ``general.tools`` (``type="txt"``), status changes through the
+generic ``set_status`` tool in ``general.tools`` (``type="txt"``), and
+disk-free, id-free dry-run content validation through the generic
+``validate`` tool in ``general.tools`` (``type="txt"``) -- the
+generic-tool registration of those dispatches lands with this feature's
+Phase 130. Like VCR, TXT has no ``specmgr://txt/{id}`` resource --
+id-based reads go through the ``get_txt`` tool only (ADR
+ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
+``specmgr://txt/list`` resource -- ``list_txt`` ships as a paged
+``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+
+Phase 110 state: the ``models`` sub-package (Phase 100) and the ``tools``
+sub-package (Phase 110) are implemented; the ``resources`` (``specmgr://
+txt/example``, ``specmgr://txt/template``) and ``prompts``
+(``create_txt``/``update_txt``) sub-packages are still empty placeholders
+for Phase 120. As with the ``qa``/``vcr`` precedent, importing this package
+registers whatever the sub-packages currently expose; the ``server.py``
+bottom-of-file import that makes the server itself load the package lands
+with Phase 160.

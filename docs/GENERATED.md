@@ -510,6 +510,19 @@ First-line docstrings from each module, organized by domain:
 - `txt/models/v1/frontmatter.py` — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `txt/models/v1/parser.py` — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
 - `txt/models/v1/summary.py` — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- `txt/tools/__init__.py` — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
+- `txt/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
+- `txt/tools/_io.py` — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
+- `txt/tools/_lock.py` — Per-document in-process lock guarding free-form text mutations.
+- `txt/tools/_paths.py` — Free-form text (TXT) base directory resolution and id -> path lookup (feat-229-txt Phase 110).
+- `txt/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_txt`` and
+- `txt/tools/create_txt.py` — ``@mcp.tool()`` wrapper: create_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt.py` — ``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt_example.py` — ``@mcp.tool()`` wrapper: get_txt_example (feat-229-txt Phase 110).
+- `txt/tools/get_txt_schema.py` — ``@mcp.tool()`` wrapper: get_txt_schema (feat-229-txt Phase 110).
+- `txt/tools/get_txt_template.py` — ``@mcp.tool()`` wrapper: get_txt_template (feat-229-txt Phase 110).
+- `txt/tools/list_txt.py` — ``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
+- `txt/tools/parse_txt.py` — ``@mcp.tool()`` wrapper: parse_txt (feat-229-txt Phase 110).
 
 **uc/**
 
@@ -602,4 +615,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 440
+**Test files**: 453
