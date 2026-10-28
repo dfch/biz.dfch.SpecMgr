@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-28T09:42:29.469+01:00'
 id: feat-229-txt
-status: planning
+status: progress
 type: feat
-updated: '2026-10-28T13:13:14.161+01:00'
+updated: '2026-10-28T15:36:57.039+01:00'
 version: 1.0.0
 ---
 
@@ -55,9 +55,9 @@ The domain follows the domain-first hierarchy and is dispatch-only from day one 
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001, REQ-002, REQ-003 -- a parser test matrix over `tests/txt/models/v1/` covers: text-only body, body with free H2/H3 and lists, fenced `## Updates` inside the body (accepted), empty body (rejected), whitespace-only body (rejected), comment-only body (accepted), missing `## Updates` (rejected), duplicate `## Updates` (rejected), H2 after `## Updates` (rejected).
-- [ ] ACC-002: Verifies REQ-004 -- tests cover entry heading shape (both `-` and `:` separators, `T` and space date separators, `Z` and offset timezones), out-of-order entries rejected, equal timestamps accepted, zero entries rejected, empty entry content rejected, and the computed `timestamp`/`title` fields.
-- [ ] ACC-003: Verifies REQ-005, REQ-006 -- `TxtFrontmatter` accepts exactly `draft`/`progress`/`done` and rejects other statuses; a parsed document's `model_dump()` surfaces the body text and a full-document round-trip is byte-stable.
+- [x] ACC-001: Verifies REQ-001, REQ-002, REQ-003 -- a parser test matrix over `tests/txt/models/v1/` covers: text-only body, body with free H2/H3 and lists, fenced `## Updates` inside the body (accepted), empty body (rejected), whitespace-only body (rejected), comment-only body (accepted), missing `## Updates` (rejected), duplicate `## Updates` (rejected), H2 after `## Updates` (rejected).
+- [x] ACC-002: Verifies REQ-004 -- tests cover entry heading shape (both `-` and `:` separators, `T` and space date separators, `Z` and offset timezones), out-of-order entries rejected, equal timestamps accepted, zero entries rejected, empty entry content rejected, and the computed `timestamp`/`title` fields.
+- [x] ACC-003: Verifies REQ-005, REQ-006 -- `TxtFrontmatter` accepts exactly `draft`/`progress`/`done` and rejects other statuses; a parsed document's `model_dump()` surfaces the body text and a full-document round-trip is byte-stable.
 - [ ] ACC-004: Verifies REQ-007 -- `test__domains.py`, `test_update.py`, `test_edit.py`, `test_set_status.py`, `test_set_classification.py`, `test_delete.py` and `test_validate.py` (and their sibling similarity/`list_references` tests) include `txt` cases, and no per-domain `*_txt` mutation tool exists.
 - [ ] ACC-005: Verifies REQ-008 -- `tests/txt/` covers every tool, both resources and both prompts, including the `get_txt(raw=True, numbered=True)` windowing and the `ParseFailureResult` channel for a broken document.
 - [ ] ACC-006: Verifies REQ-009 -- `test__references.py` and `test_list_references.py` cover `TXT <uuid>` extraction, a `_load_txt` resolution (found and not-found rows), and a `txt` source document listing a free-floating `REQ <uuid>`; the import-time `_SOURCE_LOADERS`/`ALL_DOMAINS` assert holds.
@@ -155,13 +155,13 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 
 #### Phase 100: Models and parser
 
-- [ ] Task 100.100: Create the `txt/` package skeleton (`__init__.py`, `models/v1/`, `tools/`, `resources/`, `prompts/`, `data/`) and `tests/txt/` mirroring `vcr/`
-- [ ] Task 100.110: Implement `TxtFrontmatter` (`type: txt`, status `draft`/`progress`/`done`, standard fields, optional `classification`)
-- [ ] Task 100.120: Implement `TxtBody` with the boundary `get_extent` and the `text` computed field
-- [ ] Task 100.130: Implement `UpdateEntryContent`, `UpdateEntry`, `Updates` (copied from `vcr`, shared `validate_newest_first`)
-- [ ] Task 100.140: Implement the root `Txt(MarkdownSection1)` (plain root, mandatory `body` and `updates`), `TxtDocument`, `parse_txt`/`render` and the `TxtSummary`
-- [ ] Task 100.150: Write the parser test matrix from ACC-001 to ACC-003 (the 9 structural cases, the entry cases, frontmatter, round-trip, `model_dump`)
-- [ ] Task 100.160: Phase-end gate: `ruff format --check`, `ruff check`, `vulture` (extend `whitelist.py` with the `txt` entries following the vcr/sysrs precedent -- the root `body`/`updates` fields and `UpdateEntry`'s computed `timestamp`/`title`), full `pytest`
+- [x] Task 100.100: Create the `txt/` package skeleton (`__init__.py`, `models/v1/`, `tools/`, `resources/`, `prompts/`, `data/`) and `tests/txt/` mirroring `vcr/`
+- [x] Task 100.110: Implement `TxtFrontmatter` (`type: txt`, status `draft`/`progress`/`done`, standard fields, optional `classification`)
+- [x] Task 100.120: Implement `TxtBody` with the boundary `get_extent` and the `text` computed field
+- [x] Task 100.130: Implement `UpdateEntryContent`, `UpdateEntry`, `Updates` (copied from `vcr`, shared `validate_newest_first`)
+- [x] Task 100.140: Implement the root `Txt(MarkdownSection1)` (plain root, mandatory `body` and `updates`), `TxtDocument`, `parse_txt`/`render` and the `TxtSummary`
+- [x] Task 100.150: Write the parser test matrix from ACC-001 to ACC-003 (the 9 structural cases, the entry cases, frontmatter, round-trip, `model_dump`)
+- [x] Task 100.160: Phase-end gate: `ruff format --check`, `ruff check`, `vulture` (extend `whitelist.py` with the `txt` entries following the vcr/sysrs precedent -- the root `body`/`updates` fields and `UpdateEntry`'s computed `timestamp`/`title`), full `pytest`
 
 #### Phase 110: Tools
 
@@ -224,7 +224,7 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 
 ### Current Status
 
-**As of 2026-10-28**: Planning complete, nothing implemented. The structure was validated by an in-memory spike against the real `models/md` engine (see Design Notes); all decisions are recorded below and in the comment on issue #229. Next step: Phase 100.
+**As of 2026-10-28**: Phase 100 (Models and parser) complete -- the `txt/` package skeleton and the full `txt/models/v1/` schema (frontmatter, body with the boundary `get_extent`, `UpdateEntry`/`Updates`, document, parser, summary) are implemented, with 77 new tests (40 subtests) reproducing every row of the Design-Notes spike (ACC-001..ACC-003); the phase-end gate (ruff format/check, vulture with the new `txt` whitelist block, full `pytest`: 4902 passed, 18 skipped) is green. Next step: Phase 110 (Tools).
 
 ### Blockers
 
@@ -233,6 +233,10 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-28 14:18:58.000Z - Phase 100 complete (models and parser, ACC-001..ACC-003)
+
+Implemented Tasks 100.100-100.160. (1) Skeleton: `src/biz/dfch/specmgr/txt/` with `__init__.py` (docstring-only placeholder, no imports -- the `qa` first-phase precedent, so importing the package never forces the `mcp` extra), `models/` (`__init__.py` + `v1/`), and empty `tools/`/`resources/`/`prompts/`/`data/` sub-packages (license-header-only `__init__.py`s; `data/` is on disk but untracked by git until Phase 120's first data file lands) plus `tests/txt/` (`__init__.py`s mirroring `tests/vcr/`). (2) Models in `txt/models/v1/` mirroring `vcr` file-for-file: `frontmatter.py` (`TxtFrontmatter`, `type: txt`, closed three-value status `draft`/`progress`/`done` + the feat-189 C13 `json_schema_extra` `enum`), `body.py` (`TxtBody(MarkdownStr)` with the plan's verbatim boundary `get_extent` -- first top-level H2 whose text is `Updates` -- and the `text` computed field per the `UpdateEntryContent`/`IntroductionBody` idiom; `UpdateEntryContent`/`UpdateEntry`/`Updates` copied from `vcr`'s own classes, same entry heading regex, same computed `timestamp`/`title`, `Updates._validate_newest_first` delegating to the shared `models.md._ordering.validate_newest_first`; root `Txt(MarkdownSection1)` plain -- not `WithComment` -- with mandatory `body` then `updates`, `@alias(value=".+", type=AliasType.REGEX)`), `document.py` (`TxtDocument`), `parser.py` (model-level `parse_txt` + `_stringify_metadata`, `domain="txt"`; render is the engine's own `MarkdownStr.__str__` re-emission, as in every other whole-body domain -- `vcr/models/v1/parser.py` carries no `render` function of its own, per the plan's disambiguation), `summary.py` (`TxtSummary`, field-for-field `DocSummary` subclass like `VcrSummary`), `_util.py` (`SCHEMA_COMMENT_VERSION`). No engine change; no `txt` import anywhere outside `txt/` itself and its tests; no custom error wrapping (REQ-011). (3) Tests in `tests/txt/models/v1/`: `test_body.py` (44 tests/22 subtests -- the nine ACC-001 spike rows S1..S9 each a dedicated test, plus a block-quote-nested `## Updates` row pinning the `tok.level == 0` half of the boundary, the ACC-002 entry matrix, `model_dump` surfacing, and the full reference-body round-trip), `test_frontmatter.py` (14/18 subtests -- ACC-003: exactly `draft`/`progress`/`done` accepted, vcr-only/dec-only/feat-only statuses rejected), `test_parser.py` (19 tests -- ACC-003 document round-trips: `str(document.body)` byte-equal to the normalized body and parse->render->re-parse byte-stability, `model_dump` surfacing the body text, value + structural violations at document level). Every spike row reproduces: the implementation was validated against the real engine before the files were written, and the tests assert the engine's own default messages (REQ-011). (4) Gate: `ruff format --check` (2135 files formatted), `ruff check` (clean), `vulture src/ whitelist.py --min-confidence 60` (clean -- `whitelist.py` gained a `txt (feat-229 Phase 1)` block; see the new Decisions Made entry on which of the four plan-named fields get new name lines), full `pytest -n auto --cov=src --cov-report=`: **4902 passed, 18 skipped** (the 18 skips pre-existing). Files: `src/biz/dfch/specmgr/txt/{__init__.py,models/__init__.py,models/v1/{__init__,_util,frontmatter,body,document,parser,summary}.py,tools/__init__.py,resources/__init__.py,prompts/__init__.py}`, `tests/txt/{__init__.py,models/__init__.py,models/v1/{__init__,test_body,test_frontmatter,test_parser}.py}`, `whitelist.py`.
 
 #### 2026-10-28 13:30:00.000Z - Plan refined (feat-refiner pass, all findings applied)
 
@@ -245,6 +249,10 @@ Plan drafted from the name/structure discussion and the parser spike. Reuses the
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-28 14:18:58.000Z - whitelist.py: new name lines only for `body`/`title` of the four plan-named txt fields
+
+Task 100.160 names four fields for the `txt` whitelist block (root `body`/`updates`, `UpdateEntry`'s computed `timestamp`/`title`). Verified against vulture before adding anything: with the whitelist removed entirely, none of the four names is flagged in `src/` -- `updates` and `timestamp` are already listed once (lines from the shared block and the `sop` block), and `body`/`title` are incidentally marked used by unrelated references (the `body` local in every domain parser's `parse_<d>`, the `title=` MCP tool-decorator kwargs -- the same mechanism the file's own `config`/`base_dir` note documents). Re-listing `updates`/`timestamp` would violate the file's "each name is listed once" convention, so the new `txt (feat-229 Phase 1)` block adds `body` and `title` only, with a comment pinning all four fields' (de)serialization-only nature; vulture stays green with or without the two new lines (checked both ways).
 
 #### 2026-10-28 12:00:00.000Z - Palette colour LightGrey for TXT
 

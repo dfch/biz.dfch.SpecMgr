@@ -247,6 +247,18 @@ packaging_handling_shipping_and_transportation
 verification
 appendix
 definitions_and_acronyms
+# txt (feat-229 Phase 1): the `Txt` root's own `body`/`updates` fields and
+# `UpdateEntry`'s computed `timestamp`/`title` are read only via
+# (de)serialization; nothing in `src/` accesses the txt model's fields as
+# plain attributes yet (the `txt` tools come in Phase 110). `updates` and
+# `timestamp` need no entry here -- they are already listed once above (this
+# file lists each name once, not per domain); `body` and `title` are listed
+# here -- they are incidentally marked used by unrelated src references today
+# (the `body` local in every domain parser's own `parse_<d>`, the `title=`
+# kwargs of the MCP tool decorators), but the entries pin the txt model
+# fields themselves regardless of that incidental usage.
+body
+title
 
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
