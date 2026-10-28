@@ -277,3 +277,5 @@ The open point in #229 (narrow review/audit scope versus general catch-all) is r
 ### More Information
 
 Closest precedents: `.specmgr/feat/feat-33-vcr/README.md` (domain shape, `Updates`), `.specmgr/feat/feat-30-sop/README.md` (from-scratch dispatch-only domain), `.specmgr/feat/feat-114-qa-introduction-any-markdown/README.md` and `.specmgr/feat/feat-180-updates/README.md` (opaque any-markdown leaves), `.specmgr/feat/feat-207-reference-graph/README.md` (palette and rulebook amendments).
+
+tbd
