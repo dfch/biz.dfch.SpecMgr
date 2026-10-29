@@ -1104,9 +1104,19 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or the generic `validate` tool, for the other
-  whole-body domains) tool runs over the repo's
-  own documents yet via pre-commit or CI. (ADR
+- The former gap — no validate-equivalent check over the repo's
+  own documents via pre-commit or CI — is closed at change scope:
+  the `specmgr lint` pre-commit hook (feat-218) lints every staged
+  in-tree spec artifact, and the CI pull-request step lints every
+  artifact changed against the base branch, both via the model-level
+  full parse (never the `list_<d>` listing path, whose `list_feat`
+  dirty stage is precisely the masking that hid the feat-214 defect).
+  What remains not yet done is the scheduled (nightly) full-corpus
+  sweep — the full sweep is CLI-only today (`specmgr lint --type T` /
+  `--all`), available for an on-demand or future nightly run; the
+  follow-up issue for that nightly workflow owns the accepted
+  limitation that a schema or parser change can break untouched
+  documents without failing any change-scoped gate. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
@@ -1417,6 +1427,41 @@ extras onto every consumer of the base library.
   printed) of a file's or stdin's (`-`) diagram source; fully offline.
   Exit codes: **0** printed, **2** usage error (missing/unreadable file,
   empty input).
+- `specmgr lint [paths]... [--type T [--dir D]] [--all]
+  [--skip-unrecognized]` (feat-218, `commands/lint.py`): the in-tree spec
+  artifact parseability gate — runs the document's own domain's model-level
+  FULL parse over each document (never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  is precisely the masking that hid the feat-214 defect) and reports every
+  unparseable document (path + parse error), each followed by its per-type
+  repair pointer (whole-body domains `/repair {type} {id}`, the id derived
+  from the path — the folder name for feat, the file-name UUID for the
+  others — falling back to `/repair {type}`; ADR, which the repair flow
+  does not cover, a fix-manually line), plus one summary
+  (`linted`/`failed`/`skipped`/`excluded`). Three scopes, so the cost
+  scales with the size of a change and never with the size of the corpus:
+  path mode (the type is inferred from the path layout alone — the
+  containing directory named after a type, or the `feat/{id}/README.md`
+  shape — with the `--type` override and `--skip-unrecognized`; used by
+  the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
+  by the CI pull-request step over the artifacts changed against the base
+  branch), and the `--type T` sweep (from `--dir` if given, else the
+  domain's registered base directory) and the `--all` sweep — both
+  CLI-only, never on the commit path or in the test suite. The generated
+  `docs/adr/README.md` table of contents is unconditionally excluded
+  (resolved type `adr` + base name `README.md`, in whichever directory;
+  `feat/{id}/README.md` is never excluded). Exit codes: **0** every
+  document parsed (incl. a run where every path was skipped or excluded),
+  **1** at least one document failed to parse or the `mcp` extra is
+  missing (required, like `specmgr diagram`; the decoupling is tracked as
+  issue #238), **2** usage-or-resolution error (no paths and no sweep
+  flag, an unreadable or missing path, an unrecognized layout without
+  `--skip-unrecognized`, `--dir` without `--type`, paths combined with
+  `--all`, an unknown `--type`, `--all` finding zero documents). Accepted
+  limitation: because the gate is change-scoped, a schema or parser change
+  can break untouched documents without failing any gate — the full sweep
+  (manual, or the follow-up nightly workflow whose issue owns the
+  limitation) finds them.
 
 ## MCP server (`server.py`)
 
