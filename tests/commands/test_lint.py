@@ -117,6 +117,19 @@ _LINT_CMD = "specmgr " + "lint"
 _SWEEP_FLAGS = ("--" + "all", "--" + "type")
 
 
+def _line_carries_sweep_flag(line: str) -> bool:
+    """True when a sweep flag occurs on ``line`` as a STANDALONE flag token.
+
+    Word-boundary match, not substring (Phase 130 fix): the CI step's
+    mandated invocation line carries ``--all-extras`` (mandatory for the
+    mcp extra) directly next to the command name, and a substring scan
+    would flag it as a sweep invocation -- the false positive this pin
+    exists for. A standalone ``--all`` or ``--type`` (not followed by
+    ``-`` or a word character) still counts.
+    """
+    return any(re.search(flag + r"(?![\w-])", line) for flag in _SWEEP_FLAGS)
+
+
 def _healthy_whole_body_text(doc_type: str) -> str:
     """One healthy document of the whole-body domain ``doc_type``.
 
@@ -847,9 +860,12 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
     """Task 110.140 / ACC-014 / REQ-011: the full-corpus sweep is never part of the commit path,
     the CI pull-request step, or the test suite -- no invocation of the command carries a sweep
     flag on the same command line in ``.pre-commit-config.yaml``,
-    ``.github/workflows/ci.yml``, or any file under ``tests/``. The command name and the flags
-    are built from parts (see :data:`_LINT_CMD`/:data:`_SWEEP_FLAGS`), so this file's own source
-    cannot trip the scan it implements."""
+    ``.github/workflows/ci.yml``, or any file under ``tests/``. A sweep flag counts only as a
+    standalone flag token (:func:`_line_carries_sweep_flag`, word-boundary match), so the CI
+    step's own mandated line (``--all-extras`` adjacent to the command name, mandatory for the
+    mcp extra) is no false positive (Phase 130). The command name and the flags are built from
+    parts (see :data:`_LINT_CMD`/:data:`_SWEEP_FLAGS`), so this file's own source cannot trip
+    the scan it implements."""
 
     def test_no_sweep_invocation_in_hook_ci_or_tests(self):
         targets: list[Path] = [
@@ -871,15 +887,28 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
             for line_number, line in enumerate(text.splitlines(), start=1):
                 if _LINT_CMD not in line:
                     continue
-                for flag in _SWEEP_FLAGS:
-                    if flag in line:
-                        violations.append(f"{target.relative_to(_REPO_ROOT)}:{line_number}: {line.strip()}")
+                if _line_carries_sweep_flag(line):
+                    violations.append(f"{target.relative_to(_REPO_ROOT)}:{line_number}: {line.strip()}")
 
         self.assertEqual(
             violations,
             [],
             "a sweep invocation of the lint command on the commit path (REQ-011):\n" + "\n".join(violations),
         )
+
+    def test_sweep_flag_matcher_is_word_boundary_not_substring(self):
+        """The Phase 130 regression pin for the word-boundary fix: the
+        command name adjacent to ``--all-extras`` (the CI step's mandated
+        line shape, the extra mandatory for the registry import chain) is
+        NOT a sweep invocation, while a genuine standalone ``--all`` or
+        ``--type`` on the command line still is."""
+        self.assertFalse(
+            _line_carries_sweep_flag(
+                "uv run --frozen --all-extras --python 3.13.13 " + _LINT_CMD + " --skip-unrecognized"
+            )
+        )
+        self.assertTrue(_line_carries_sweep_flag(_LINT_CMD + " --all"))
+        self.assertTrue(_line_carries_sweep_flag(_LINT_CMD + " --type feat"))
 
 
 if __name__ == "__main__":

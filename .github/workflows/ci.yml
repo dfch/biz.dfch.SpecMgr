@@ -249,6 +249,47 @@ jobs:
           exit 1
         }
 
+    - name: Lint the in-tree spec artifacts changed in the pull request (feat-218)
+      # The feat-218 parseability gate, CI half: full-parse (never the
+      # frontmatter+H1 listing stage) every in-tree spec artifact the pull
+      # request changed against its base branch -- the feature README.md
+      # files under .specmgr/feat/ and the documents under docs/{type}/,
+      # selected with the same anchored pattern the specmgr-lint pre-commit
+      # hook uses (a drift test pins the identity of the two). A document
+      # that fails to parse fails the step: the command's own report names
+      # the file, carries the parse error and the per-type repair pointer
+      # (REQ-001/REQ-008), so no extra ::error:: echo is needed.
+      #
+      # pull_request events only: a push to main/dev carries no base ref to
+      # diff against, and the commit path is already covered locally by the
+      # hook. Pinned to Python 3.13 like the docs drift steps above (same
+      # `--python 3.13.13` interpreter pin as their invocations).
+      #
+      # `--all-extras` is mandatory: the command's registry import chain
+      # forces the mcp extra. The base ref arrives through the BASE_REF env
+      # variable (the step's only expression, kept out of the script body),
+      # and a targeted `git fetch` deepens the shallow PR checkout (the
+      # default actions/checkout is fetch-depth 1) so the branch point of
+      # HEAD and the base branch is computable via `git merge-base`. The
+      # changed files are NUL-delimited end to end (git diff -z, grep -z,
+      # xargs -0); when none of them is an in-tree artifact the filtered
+      # list is empty and xargs -r runs nothing -- the step skips cleanly.
+      if: matrix.python-version == '3.13' && github.event_name == 'pull_request'
+      env:
+        BASE_REF: ${{ github.base_ref }}
+      run: |
+        artifact_pattern='^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$'
+        git fetch origin "$BASE_REF"
+        merge_base=$(git merge-base HEAD FETCH_HEAD)
+        # grep exits 1 when the filtered list is empty (the pull request
+        # changed no in-tree spec artifact): that is the clean-skip case,
+        # not an error -- tolerate exactly 1, let >= 2 (a grep malfunction)
+        # fail the step. The runner's default shell is `bash -eo pipefail`,
+        # so the unhandled no-match would fail the pipeline on its own.
+        git diff --name-only -z --diff-filter=ACMR "$merge_base" HEAD \
+          | { grep -zE "$artifact_pattern" || [ "$?" -le 1 ]; } \
+          | xargs -0 -r uv run --frozen --all-extras --python 3.13.13 specmgr lint --skip-unrecognized
+
   plantuml-parser:
     env:
       # Opt-in to Node 24 to avoid Node 20 deprecation warnings (effective June 2026).
