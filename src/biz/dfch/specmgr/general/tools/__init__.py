@@ -21,30 +21,30 @@
 blocks (for ADR/UC files) and formats only the body markdown. ``update`` --
 the generic, cross-domain whole-body or line-range replace for the
 whole-body document types (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; optional read-style body-line
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; optional read-style body-line
 ``offset``/``limit`` coordinates -- ``offset`` = 1-based first line,
 ``limit`` = number of lines, omitted = through end of body, ``0`` = pure
 insert, ``offset = N+1`` = the virtual end-of-body append position -- strict
 validation, splice-then-validate-whole). ``set_status`` -- the generic,
 cross-domain status change for all document types (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr; ``superseded_by`` is
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/adr; ``superseded_by`` is
 ``adr``-only, composing the status as ``"superseded by {superseded_by}"``).
 ``set_classification`` -- the generic, cross-domain change of the free-text
 ``classification`` frontmatter field for the whole-body document
-types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs;
+types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt;
 ``adr`` is not supported), bumping ``updated`` and leaving the body and
 every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent.
 ``delete`` -- the
 generic, cross-domain hard-delete for the whole-body document types
-(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr`` is
+(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; ``adr`` is
 not supported), resolving the document by ``id``, taking the domain's own
 per-id lock, and removing it from disk (the single ``*.md`` file for the
 flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
 returning the deleted path as a string. ``edit`` -- the generic,
 cross-domain surgical, exact-match string replacement of an existing
 document's frontmatter-stripped body for the whole-body document types
-(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr``
+(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; ``adr``
 is not supported -- an explicit pre-dispatch ``ValueError``, a deliberate
 divergence from ``update``'s inherited ``KeyError``): ``old_str`` must
 match the on-disk body byte-exactly (no line-ending normalization, no
@@ -56,7 +56,7 @@ deletion, legal iff stage 2 validates) (feat-159-edit, GitHub issue #159).
 ``validate`` -- the generic,
 cross-domain, disk-free/id-free dry-run content validator for the
 whole-body document types (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ``adr`` is not supported,
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; ``adr`` is not supported,
 ``validate_adr`` remains its own standalone tool); unlike every other
 generic tool here, it never raises for a content-validation failure --
 it always returns ``{valid: bool, errors: list[{message: str}]}``, only
@@ -79,7 +79,7 @@ embedding feature is unavailable (``SPECMGR_SIMILARITY_DISABLED`` present
 or the backend/model failed to load) -- the tools always register,
 availability is decided at call time (REQ-003). ``list_references`` -- the
 generic, cross-domain cross-reference listing tool (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): scans the source
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/adr): scans the source
 document's frontmatter-stripped body for ``<TYPE> <id>`` references (the
 shared reference-tag vocabulary in ``general.tools._references`` --
 the UUID tags with a canonical uuid id, plus ``feat`` carrying the
@@ -92,7 +92,7 @@ references that could not be resolved -- the shared ``list_*`` paging
 mechanism, ADR ec9f5262; feat-144-ref-artifact, the ``feat`` tag added
 by feat-177-list-ref-feat). ``get_reference_diagram`` -- the
 read-only, id-based reference-diagram tool (``type`` is one of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/adr): renders one source
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/adr): renders one source
 document's reference neighbourhood as the deterministic PlantUML component
 diagram of the frozen ``specmgr://reference-graph`` rulebook (one node per
 artifact, a stereotype + colour per type, per-domain curly-brace component
@@ -105,7 +105,7 @@ and an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` (feat-207-reference-graph, Phase 120).
 ``get_reference_diagram_all`` -- the read-only, registry-wide
 reference-diagram tool: the same deterministic PlantUML component diagram
-over every parseable document of all 13 domains (broken documents are
+over every parseable document of all 14 domains (broken documents are
 skipped -- the render never fails for content), with the
 ``include_feat`` switch and an optional ``title`` override
 (feat-207-reference-graph, Phase 120).

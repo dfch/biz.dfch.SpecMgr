@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # pylint: disable=duplicate-code  # the title-override + label-limit + render tail mirrors get_reference_diagram
-# (one module per tool; update.py's twelve near-identical per-domain adapters are the house precedent)
+# (one module per tool; update.py's thirteen near-identical per-domain adapters are the house precedent)
 
 """``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
 
@@ -24,7 +24,7 @@ Read-only, registry-wide diagram tool: the deterministic PlantUML component
 diagram of the whole reference registry (rulebook
 ``specmgr://reference-graph`` / ``general/data/general_reference_graph.md``
 §2–§5, the registry-wide construction of §3.3): one node per parseable
-document across all 13 domains (broken documents are skipped -- the render
+document across all 14 domains (broken documents are skipped -- the render
 never fails for content, the ``get_use_case_package_diagram`` precedent),
 one label-free edge per unique extracted reference (``{src} --> {dst}`` --
 the referenced item carries the incoming arrow), every edge lying on a
@@ -66,7 +66,7 @@ __all__ = ["get_reference_diagram_all"]
     description=(
         "Render and return the deterministic PlantUML component diagram of the whole reference "
         "registry (the frozen rulebook specmgr://reference-graph §2–§5, the registry-wide "
-        "construction of §3.3): one node per parseable document across all 13 domains (broken "
+        "construction of §3.3): one node per parseable document across all 14 domains (broken "
         "documents are skipped -- the render never fails for content), one label-free edge per "
         "unique reference (`{src} --> {dst}`, the referenced item carries the incoming arrow), "
         "every edge lying on a cycle (SCC-based) drawn with the red label-free `-[#red]->` "
@@ -82,7 +82,7 @@ __all__ = ["get_reference_diagram_all"]
 def get_reference_diagram_all(include_feat: bool = True, title: str | None = None) -> str:
     """Render and return the PlantUML reference diagram of the whole registry.
 
-    The registry-wide construction (rulebook §3.3): the same full 13-domain
+    The registry-wide construction (rulebook §3.3): the same full 14-domain
     scan the scoped tool's ``reverse`` pass uses -- every successfully
     parsed document is a node (its H1 as the label), every extracted
     reference an edge, and a target not present as a scanned document gets
