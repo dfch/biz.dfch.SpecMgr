@@ -12,8 +12,9 @@ description: >-
   3982712a-a46b-4b2b-809f-9c6925a49b44)) -- whether
   surfaced by
   an explicit `/repair` request or organically while you are working with
-  specmgr documents mid-task. Whole-body domains only (req/uc/tsk/qa/prb/
-  gol/rsk/dec/sop/feat/vcr/sysrs); ADR is out of scope.
+  specmgr documents mid-task. Whole-body domains only
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt); ADR is out of
+  scope.
 ---
 
 # Repair

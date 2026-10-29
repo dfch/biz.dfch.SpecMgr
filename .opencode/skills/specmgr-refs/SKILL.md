@@ -86,8 +86,8 @@ dedup, traversal, and aggregation.
 
 Use for "do all cross-references across the registry resolve on disk?".
 
-1. **Iterate the 12 whole-body domains in canonical order:**
-   req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs. The `adr` exclusion is
+1. **Iterate the 13 whole-body domains in canonical order:**
+   req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt. The `adr` exclusion is
    deliberate and must not be "fixed": `list_references`'s source enum
    accepts `adr` and ADR documents can carry outbound references, but `adr`
    is slated for removal (GitHub issue #46) and this workflow targets the
@@ -117,13 +117,13 @@ Use for "which documents reference REQ `<uuid>`?" -- any target `<type>
 1. **Parse the target** `<type> <id>` pair.
 2. **State the cost before running:** this is an O(registry-size) scan --
    every candidate document's body must be read, because the
-   `list_references` extractor regex-scans every body for the 11-tag
-   reference vocabulary (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT;
+   `list_references` extractor regex-scans every body for the 12-tag
+   reference vocabulary (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT;
    case-insensitive tag, space/tab/dash separator, anywhere in a line). No
    domain can be pre-filtered by the target's type and no document can be
    skipped; do not "optimize" the scan by dropping domains.
-3. **Scan:** for each of the 12 whole-body domains (req/uc/tsk/qa/prb/gol/
-   rsk/dec/sop/feat/vcr/sysrs -- the same deliberate `adr` exclusion as the
+3. **Scan:** for each of the 13 whole-body domains (req/uc/tsk/qa/prb/gol/
+   rsk/dec/sop/feat/vcr/sysrs/txt -- the same deliberate `adr` exclusion as the
    batch workflow), page `list_<d>` to completion and, for every scannable
    document (null-id `<failed to parse>` rows are counted as
    `parse_failures`, not scanned), call `list_references(<domain>, id)` and
@@ -152,7 +152,7 @@ multi-hop graph workflow above and must not be stolen by this one (and
 vice versa).
 
 1. **Read the rulebook first**: `specmgr://reference-graph` — the frozen
-   emission layout (the 14-entry palette, the bracketed aliases, the label
+   emission layout (the 15-entry palette, the bracketed aliases, the label
    truncation), the construction semantics, and the pointer at the UC
    rulebook §3–§6 for the validation chain reused as-is. Where anything
    below and the rulebook differ, the rulebook wins.
@@ -196,7 +196,7 @@ vice versa).
      arrow; every off-cycle edge renders plain `-->`.
    - **The reverse mandate's cost (scoped diagrams only):** the
      `reverse`/`--reverse` the workflow always requests makes the scoped
-     build run the FULL 13-DOMAIN SCAN for the direct incoming
+     build run the FULL 14-DOMAIN SCAN for the direct incoming
      references — O(registry size), the same cost the reverse workflow
      above states before running; state it in the report whenever you
      produced a scoped diagram. The registry-wide surface pays no such
@@ -206,9 +206,9 @@ vice versa).
      every edge touching a dropped node — a feat target never surfaces as
      a node in any mode.
    - **Domain-count reconciliation (do not "fix" either):** the diagram
-     surface spans 13 domains — `adr` INCLUDED (a scoped `type` accepts
+     surface spans 14 domains — `adr` INCLUDED (a scoped `type` accepts
      `adr`; an ADR document referencing a REQ is a real edge) — while the
-     text workflows above (graph, batch, reverse) stay 12 whole-body
+     text workflows above (graph, batch, reverse) stay 13 whole-body
      domains with their deliberate `adr` exclusion (`adr` is slated for
      removal, GitHub issue #46, ADR
      bfd76370-b59b-4d65-b550-a969f6c93c9d). The two surfaces intentionally

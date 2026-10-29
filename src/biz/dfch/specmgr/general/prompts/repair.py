@@ -132,8 +132,8 @@ def repair(type: str, id: str | None = None) -> str:
     type:
         The document domain to repair: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs`` (matched case-insensitively). ``"adr"`` is
-        explicitly rejected with an actionable error (ADR is not a
+        ``vcr``, ``sysrs``, ``txt`` (matched case-insensitively). ``"adr"``
+        is explicitly rejected with an actionable error (ADR is not a
         whole-body domain and has no generic dry-run ``validate`` tooling);
         so is any other unknown value.
     id:

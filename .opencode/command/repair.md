@@ -1,12 +1,13 @@
 ---
-description: Repair a specmgr document that fails to parse -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; ADR is out of scope), optional $2 is the document id.
+description: Repair a specmgr document that fails to parse -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; ADR is out of scope), optional $2 is the document id.
 agent: doc-repairer
 ---
 
 Repair a failing specmgr document. My input:
 
 - `$1` (required): the document's domain -- one of the whole-body domains
-  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`.
+  `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/
+  `txt`.
   ADR is out of scope: `validate_adr` re-reads the ADR from disk by id and
   the repair loop is not defined for it.
 - `$2` (optional): the failing document's id (a lowercase-hex uuid, or a

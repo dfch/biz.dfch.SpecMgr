@@ -67,7 +67,7 @@ status-change entry point for every domain.
 
 No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
 adapter compares the requested target status against the document's
-current on-disk status -- for the 12 whole-body domains, plainly
+current on-disk status -- for the 13 whole-body domains, plainly
 ``existing.frontmatter.status == status``; for ``adr``, against the same
 composed target (``status`` or ``f"superseded by {superseded_by}"``)
 ``models.adr.v1.mutations.set_status`` would compute -- immediately after
@@ -103,7 +103,7 @@ An existing-but-broken document (feat-170-update-edit-parse-failure,
 GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
 the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
-fails to parse, each of the 12 whole-body adapters now returns the
+fails to parse, each of the 13 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 (``error``/``path``/``id``) instead of raising the domain's own
 ``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure

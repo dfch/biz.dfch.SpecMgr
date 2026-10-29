@@ -59,7 +59,7 @@ computed once in the shared public dispatcher via
 omitted ``limit``). The adapters themselves return an internal
 :class:`_UpdateOutcome` (the new frontmatter plus, in range mode, the
 pre-splice body, the post-splice body, and the ``offset``/``limit``
-coordinates they used) so the dispatcher -- not any of the 12 adapters --
+coordinates they used) so the dispatcher -- not any of the 13 adapters --
 assembles the ``UpdateResult``.
 
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
@@ -1466,7 +1466,7 @@ def update(
         UUID-shaped domain set, so ``type="adr"`` with a well-formed
         UUID ``id`` passes ``validate_id`` and reaches the lookup, which
         has no ``adr`` entry. Nothing is written. Unreachable through the
-        MCP server, whose ``type`` enum carries the 12 whole-body domains
+        MCP server, whose ``type`` enum carries the 13 whole-body domains
         only; a direct-Python-caller outcome.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /

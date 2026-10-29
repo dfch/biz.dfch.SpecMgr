@@ -59,6 +59,7 @@ structured, validated read/write/list/status tools (see
 | SOP — Standard Operating Procedure | Step-by-step operational procedure with RASCI responsibility assignment and approval lifecycle |
 | FEAT — Feature | Development work-unit plan/progress tracking (`.specmgr/feat/<id>/README.md`) |
 | SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC-ADR/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+| TXT — Free-Form Text | Generic, minimally structured catch-all for unstructured markdown that does not warrant a dedicated domain (ad hoc notes, meeting minutes, review/audit write-ups, scratch analysis); free body (any markdown, incl. H2..H6) plus a mandatory newest-first `## Updates` log |
 
 A typical spec effort starts with a **QA** elicitation interview, which
 surfaces **GOL**s (goals) and **PRB**s (problems). Those inform **REQ**s
@@ -67,7 +68,9 @@ and **UC**s, which get risk-assessed (**RSK**) and backed by
 acceptance criteria), and tracked via **TSK** task lists. A **SYSRS**
 ties all of it together into one ISO/IEC/IEEE 29148-structured
 specification. **SOP** and **FEAT** support the process itself rather
-than sitting in this chain.
+than sitting in this chain, and **TXT** is the free-form catch-all that
+likewise sits outside it (any markdown that does not warrant a dedicated
+artifact type).
 
 ```
 QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (aggregates all)
@@ -164,7 +167,7 @@ Specmgr can render the deterministic cross-reference network between its
 artifacts (the `<TYPE> <id>` tag vocabulary behind the `list_references`
 tool) as a PlantUML component diagram — one node per artifact (label = the
 document title, truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` limit, default
-`40`), a stereotype + colour per artifact type (a frozen 14-entry palette),
+`40`), a stereotype + colour per artifact type (a frozen 15-entry palette),
 nodes grouped into per-domain curly `component "TYPE" { … }` domain groups,
 one label-free edge per unique reference (`{src} --> {dst}`), every edge
 that lies on a cycle (self-loops and same-SCC ≥ 2) drawn with a red
@@ -179,7 +182,7 @@ neighbourhood (the forward walk to `depth`, 1..5; `reverse=True` adds the
 direct incoming references, additive and direct-only);
 `get_reference_diagram_all(include_feat=True, title=None)` renders the
 registry-wide graph. Both return the PlantUML source directly (no file
-writes); the scoped tool accepts all 13 domains (`adr` included) and returns
+writes); the scoped tool accepts all 14 domains (`adr` included) and returns
 the non-raising `ParseFailureResult` for an existing-but-broken source; the
 registry-wide tool never raises for content.
 

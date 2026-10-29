@@ -1,7 +1,7 @@
 # Reference Graph Diagram Rulebook
 
 The frozen mapping and validation spec for rendering specmgr's deterministic
-cross-references (the 11-tag `<TYPE> <id>` reference vocabulary behind the
+cross-references (the 12-tag `<TYPE> <id>` reference vocabulary behind the
 `list_references` tool, `general/tools/_references.py`) as a PlantUML component
 diagram. This file is the content source of the `specmgr://reference-graph`
 MCP resource and the single normative reference the pure renderer
@@ -13,6 +13,15 @@ MCP resource and the single normative reference the pure renderer
 **Status: frozen.** A change to any rule below is a spec change — revise this
 file and the feature plan, and (where it reverses a frozen decision) the ADR.
 Never reinterpret a rule locally in a renderer, builder, checker, or CLI.
+
+**§1 amended 2026-10-29 (feat-229-txt Phase 170, REQ-009):** the opening
+line's tag count moves from 11 to 12 — `TXT` joined the reference-tag
+vocabulary in feat-229-txt Phase 140 (`general/tools/_references.py`: the
+11 UUID tags GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT plus FEAT), and
+the Phase 150 §2.5 amendment moved every other entry-count mention in this
+rulebook but missed this one (flagged as a residual in the feature plan's
+2026-10-29 Phase 160 entry; no test pinned it). No rule changes — the count
+now agrees with the module's own constants.
 
 ## 1. Overview
 
