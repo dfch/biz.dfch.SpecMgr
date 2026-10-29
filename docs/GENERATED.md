@@ -49,6 +49,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- `commands/lint.py` — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.

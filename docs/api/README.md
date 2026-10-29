@@ -39,6 +39,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - [`biz.dfch.specmgr.commands.diagram`](biz.dfch.specmgr.commands.diagram.md) — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- [`biz.dfch.specmgr.commands.lint`](biz.dfch.specmgr.commands.lint.md) — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - [`biz.dfch.specmgr.commands.mdformat`](biz.dfch.specmgr.commands.mdformat.md) — ``mdformat`` -- format a markdown file the same way the MCP server does.
