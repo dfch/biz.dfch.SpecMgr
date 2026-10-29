@@ -4,7 +4,7 @@ created: '2026-10-26T07:16:20.020+01:00'
 id: feat-218-in-tree-spec-artifact-parseability-gate
 status: planning
 type: feat
-updated: '2026-10-26T07:58:00.000Z'
+updated: '2026-10-29T07:25:35.140+01:00'
 version: 1.0.0
 ---
 
@@ -26,7 +26,7 @@ This feature closes that defect class for every specmgr artifact type with a new
 
 - REQ-003: The gate must do full parses; it must not be a list-based or frontmatter+H1-only check, because that is precisely the masking mechanism (the dirty stage) that hid the feat-214 defect.
 
-- REQ-004: The command accepts explicit file paths (the hook and CI mode), `--type T` with no paths (sweep every document of that type), and `--all` (sweep every type). Paths given on the command line are linted regardless of any environment variable.
+- REQ-004: The command accepts explicit file paths (the hook and CI mode), `--type T` with no paths (sweep every document of that type), and `--all` (sweep every type). Paths given on the command line are linted regardless of any environment variable. Paths and a sweep flag are alternative modes: combining explicit paths with `--all` is a usage error.
 
 - REQ-005: For each path, the document type is inferred from the path layout alone (the containing directory is named after the type, as in `docs/req/x.md`, or the path has the shape `feat/{id}/README.md`), independent of every SPECMGR_*_DIR variable; an explicit `--type` overrides inference. A path whose layout matches no type is a usage error, unless `--skip-unrecognized` is given, in which case it is skipped and counted.
 
@@ -34,7 +34,7 @@ This feature closes that defect class for every specmgr artifact type with a new
 
 - REQ-007: `docs/adr/README.md` is the generated ADR table of contents, not an ADR; the sweep and the path mode both exclude it (the ADR enumeration helper does not).
 
-- REQ-008: Exit codes follow the plantuml-check family: 0 every document parsed, 1 at least one document failed to parse (or the mcp extra is missing, as for the diagram command), 2 usage or resolution error (no paths and no sweep flag, an unreadable or missing path, an unrecognized layout without `--skip-unrecognized`, `--dir` without `--type`, or `--all` that finds zero documents in total, a probable misconfiguration). The failure report ends with a pointer to the repair flow (`/repair {type} {id}`).
+- REQ-008: Exit codes follow the plantuml-check family: 0 every document parsed, 1 at least one document failed to parse (or the mcp extra is missing, as for the diagram command), 2 usage or resolution error (no paths and no sweep flag, an unreadable or missing path, an unrecognized layout without `--skip-unrecognized`, `--dir` without `--type`, explicit paths combined with `--all`, or `--all` that finds zero documents in total, a probable misconfiguration). In contrast, `--type T` against an empty or missing base directory exits 0 with a 0-document summary: a registered-but-empty domain is not a misconfiguration, unlike `--all` finding zero documents in total. The failure report ends with a pointer to the repair flow (`/repair {type} {id}`).
 
 - REQ-009: A new local pre-commit hook in .pre-commit-config.yaml runs `specmgr lint --skip-unrecognized` over every staged file matching the in-tree artifact locations (pass_filenames true), placed ahead of the broad pytest hook, and the specmgr-coverage-badge hook still follows pytest directly.
 
@@ -54,7 +54,7 @@ This feature closes that defect class for every specmgr artifact type with a new
 
 - [ ] ACC-004: With SPECMGR_FEAT_DIR and SPECMGR_DOCS_DIR pointed at empty temporary directories, `specmgr lint <in-tree path>` still lints that path, while `specmgr lint --type feat` sweeps the empty directory (proof that paths are env-independent and sweeps honor the variables); `--dir` overrides the variable.
 
-- [ ] ACC-005: `specmgr lint docs/adr/README.md --skip-unrecognized` does not treat the ADR table of contents as an ADR, and an unrecognized path without `--skip-unrecognized` exits 2.
+- [ ] ACC-005: `specmgr lint docs/adr/README.md` (without `--skip-unrecognized`) exits 0, reporting the generated ADR table of contents as excluded rather than as an unrecognized-layout usage error; the exclusion is unconditional (it applies in sweep mode, `--all` and `--type adr`, with or without the flag, and the file is never parsed or counted as a failure); an unrecognized path without `--skip-unrecognized` still exits 2.
 
 - [ ] ACC-006: In a clean local repo, committing a change to any in-tree artifact (a feature README.md or a document under docs/{type}/) triggers the hook, which lints only the staged artifacts and blocks the commit when any of them fails to parse; a commit touching no artifact is unaffected by the new hook.
 
@@ -63,6 +63,10 @@ This feature closes that defect class for every specmgr artifact type with a new
 - [ ] ACC-008: The `--type` choices equal ALL_DOMAINS (a pinning test fails if the command hand-lists a type), and a test pins that the hook's file pattern covers every type in ALL_DOMAINS.
 
 - [ ] ACC-009: The new tests and every drift check (docs/, docs/GENERATED.md, ruff, vulture) are green on Python 3.11, 3.12 and 3.13.
+
+- [ ] ACC-010: `specmgr lint --type uc` (a registered domain with no in-tree documents; its base directory does not exist) exits 0 with a 0-document summary.
+
+- [ ] ACC-011: Each of the remaining REQ-008 exit-2 usage errors (no paths and no sweep flag, an unreadable or missing path, `--dir` without `--type`, explicit paths combined with `--all`, and `--all` finding zero documents in total) exits 2 with a usage message; the unrecognized-layout case is pinned by ACC-005.
 
 ### Scope
 
@@ -94,7 +98,7 @@ This feature closes that defect class for every specmgr artifact type with a new
 
 - Pushes to dev or main: the pull-request step is pull_request-only; local enforcement is the hook.
 
-- Repairing any currently unparseable in-tree document (the corpus is green today; the repair goes through the existing repair flow).
+- Repairing any currently unparseable in-tree document (the corpus is verified green as of the 2026-10-29 sweep: the one unparseable file, the issue #86 sysrs appendix, is generated documentation and was moved out of docs/sysrs/ before implementation, see More Information; any future repair goes through the existing repair flow).
 
 - Changes to the list_feat dirty/clean two-stage design, to any document schema, or to any parse_{d} function.
 
@@ -112,7 +116,7 @@ This feature closes that defect class for every specmgr artifact type with a new
 
 Why full parses, never listing: list_feat's request path resolves each folder from a frontmatter+H1-only dirty-stage parse by design (ADR 3982712a), so a listing-based check would reproduce exactly the masking that hid the feat-214 defect for three commits. The command must call each domain's parser on the file's full text.
 
-Why change-scoped, not corpus-scoped: a serial model-level parse of the 89 feature READMEs measured about 124 s (roughly 1.4 s per document, the largest 6 s) on a 120-core machine, and the corpus only grows. A gate whose cost scales with the corpus is unusable on a commit path, and unworkable for a large project with thousands of documents. The hook (staged files) and the CI step (files changed against the base) cost in proportion to the change; the full sweep is an explicit CLI action. The earlier plan for this feature (a pytest sweep plus a hook running the whole sweep, believed to take seconds) was dropped for this reason.
+Why change-scoped, not corpus-scoped: a serial model-level parse of the then-89 feature READMEs measured about 124 s (roughly 1.4 s per document, the largest 6 s) on a 120-core machine, and the corpus only grows. A gate whose cost scales with the corpus is unusable on a commit path, and unworkable for a large project with thousands of documents. The hook (staged files) and the CI step (files changed against the base) cost in proportion to the change; the full sweep is an explicit CLI action. The earlier plan for this feature (a pytest sweep plus a hook running the whole sweep, believed to take seconds) was dropped for this reason.
 
 Accepted limitation: because the gate checks only touched documents, a schema or parser change under src/ can leave untouched documents unparseable without failing any gate. This is accepted: breaking schema changes are kept to a minimum, and `specmgr lint --all` (manually or nightly later) finds any that slip through.
 
@@ -148,29 +152,29 @@ The CI step: pull_request events only, in the existing build job, on Python 3.13
 
 - [ ] Task 100.110: Implement commands/lint.py and register it in cli.py: arguments PATHS, options `--type` (choices derived from ALL_DOMAINS), `--all`, `--dir`, `--skip-unrecognized`; model-level parse per document with a per-domain adapter (whole-body domains via the registry's parse_text, ADR via parse_adr with AdrParseError also caught); catch AssertionError, ValidationError, YAMLError, AdrParseError and decode errors per file; read UTF-8.
 
-- [ ] Task 100.120: Implement path-layout type inference (containing directory in ALL_DOMAINS, or feat/{id}/README.md), the `--type` override, the unrecognized-path handling, the docs/adr/README.md exclusion, and the sweep mode with env-var and `--dir` directory resolution.
+- [ ] Task 100.120: Implement path-layout type inference (containing directory in ALL_DOMAINS, or feat/{id}/README.md), the `--type` override, the unrecognized-path handling, the docs/adr/README.md exclusion (unconditional, REQ-007), the paths-plus-`--all` usage-error guard, and the sweep mode with env-var and `--dir` directory resolution.
 
-- [ ] Task 100.130: Implement reporting and exit codes: every failing (path, error) pair, a summary count (linted, failed, skipped), the repair pointer, exit 0/1/2 per REQ-008, and the zero-documents guard for `--all`.
+- [ ] Task 100.130: Implement reporting and exit codes: every failing (path, error) pair, a summary count (linted, failed, skipped), the repair pointer, exit 0/1/2 per REQ-008, the zero-documents guard for `--all` (exit 2), and the empty-domain `--type` behavior (exit 0 with a 0-document summary).
 
 #### Phase 110: Tests
 
-- [ ] Task 110.100: Unit tests for inference, `--type` override, `--skip-unrecognized`, the ADR README exclusion and usage errors (exit 2), using temporary directories only.
+- [ ] Task 110.100: Unit tests for inference, `--type` override, `--skip-unrecognized`, the ADR README exclusion (unconditional: with and without the flag, in path and sweep mode) and usage errors (exit 2, incl. explicit paths combined with `--all`), using temporary directories only.
 
 - [ ] Task 110.110: Negative pins: the feat-214-shape fixture (a valid document with a dated-bullet Decisions Made section, built from the packaged feat template) asserting the file name and a recognizable error fragment; an ADR error case; one other whole-body domain; a healthy document of every type exits 0.
 
-- [ ] Task 110.120: Environment tests: with SPECMGR_FEAT_DIR and SPECMGR_DOCS_DIR patched to empty temporary directories, path mode is unaffected, sweep mode honors the variables, and `--dir` overrides; `--all` with zero documents exits 2.
+- [ ] Task 110.120: Environment tests: with SPECMGR_FEAT_DIR and SPECMGR_DOCS_DIR patched to empty temporary directories, path mode is unaffected, sweep mode honors the variables, and `--dir` overrides; `--all` with zero documents exits 2; `--type uc` (a registered domain with no in-tree documents) exits 0 with a 0-document summary.
 
 - [ ] Task 110.130: Drift pins: `--type` choices equal ALL_DOMAINS and the command does not hand-list types; the hook's file pattern covers every ALL_DOMAINS type.
 
 #### Phase 120: Pre-commit Hook
 
-- [ ] Task 120.100: Add the specmgr-lint local hook to .pre-commit-config.yaml (pass_filenames true, in-tree artifact file pattern, entry `uv run --frozen specmgr lint --skip-unrecognized`, placed ahead of pytest with specmgr-coverage-badge still directly after pytest) and document it in AGENTS.md's pre-commit paragraph, including the working-tree-versus-index note.
+- [ ] Task 120.100: Add the specmgr-lint local hook to .pre-commit-config.yaml (pass_filenames true, the first such hook in the config since every existing local hook uses pass_filenames false, an in-tree artifact file pattern following the repo's anchored-regex files: convention e.g. `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/.+\.md)$`, entry `uv run --frozen specmgr lint --skip-unrecognized`, placed ahead of pytest with specmgr-coverage-badge still directly after pytest) and document it in AGENTS.md's pre-commit paragraph, including the working-tree-versus-index note.
 
 - [ ] Task 120.110: Local walkthrough: (a) a healthy artifact change commits with the hook linting only the staged files; (b) a feat-214-shape defect introduced in a scratch feature README blocks the commit with the file and error reported; (c) revert; (d) a commit touching no artifact does not trigger the hook. Record the outcome under Updates.
 
 #### Phase 130: CI Step
 
-- [ ] Task 130.100: Add the pull_request-only changed-artifacts step to the build job in .github/workflows/ci.yml (Python 3.13 only; base ref fetched; git diff --name-only --diff-filter=ACMR against the merge base; filter to .md under .specmgr/ and docs/; skip cleanly when none), following the workflow's existing pinned-action conventions.
+- [ ] Task 130.100: Add the pull_request-only changed-artifacts step to the build job in .github/workflows/ci.yml (Python 3.13 only, under the same `if: matrix.python-version == '3.13'` guard as the docs drift steps, invoking `uv run --frozen --all-extras --python 3.13.13 specmgr lint --skip-unrecognized <changed files>`, where `--all-extras` is mandatory because the registry import chain forces the mcp extra; base ref fetched; git diff --name-only --diff-filter=ACMR against the merge base; filter to .md under .specmgr/ and docs/; skip cleanly when none), following the workflow's existing pinned-action conventions.
 
 - [ ] Task 130.110: Verify on the feature's own pull request: the step lints exactly the changed artifacts (ACC-007), and a scratch PR commit with a broken artifact fails it, then is reverted.
 
@@ -184,21 +188,25 @@ The CI step: pull_request events only, in the existing build job, on Python 3.13
 
 - [ ] Task 150.100: Run `specmgr lint --all` over the in-tree corpus (exit 0, including this feature's own README.md) and record the result, its duration and the document count under Updates; run the full local quality gate (ruff, vulture, pytest, drift checks).
 
-- [ ] Task 150.110: Confirm ACC-001 through ACC-009, mark all tasks done, update Current Status, and set the status to done.
+- [ ] Task 150.110: Confirm ACC-001 through ACC-011, mark all tasks done, update Current Status, and set the status to done.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-10-26**: Plan revised after refinement. The original design (a pytest full-corpus sweep plus a full-sweep hook) was replaced by a change-scoped gate built on a new `specmgr lint` command for every artifact type, because a measured full sweep took about 124 s. The new design is recorded under Decisions Made; the registry-relocation follow-up is issue #238. Implementation not started.
+**As of 2026-10-29**: Plan amended after a second refinement pass. The in-tree corpus was verified by a full-parse sweep over all 13 types (161 documents, 0 failures) after moving the one unparseable file, the issue #86 sysrs appendix, from docs/sysrs/ to docs/appendix/ (generated documentation, not a sysrs artifact). CLI edge-case semantics were pinned (empty-domain `--type` exits 0 with a 0-document summary, explicit paths combined with `--all` exit 2, the docs/adr/README.md exclusion is unconditional), ACC-010/ACC-011 were added, and the hook and CI tasks now carry the first-`pass_filenames: true` note and the explicit CI invocation form. Implementation not started.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-10-29T06:21:00.000Z - Plan amended after second refinement (corpus verified, edge cases pinned)
+
+A second refinement pass (2026-10-28) ran a full-parse sweep over the in-tree corpus and found the plan's "corpus is green today" premise wrong: exactly one document failed, the issue #86 sysrs appendix (docs/sysrs/sysrs-8d752304-...-appendix.md, added in bca1a87), a manually generated verbatim concatenation of 24 referenced artifacts with no frontmatter of its own. Repairing it to be parseable was rejected as infeasible by design (after its single raw-HTML token, the sysrs parser rejects its H1, which is not the required "System Requirements Specification: ..." heading). It was classified as generated documentation, not a sysrs artifact (the same precedent as docs/api/, docs/GENERATED.md and docs/adr/README.md), and moved to docs/appendix/ on 2026-10-29; the post-move sweep over all 13 types is green (161 documents, 0 failures, 158.4 s serial) and list_sysrs reports zero failed rows. Semantics pinned: `--type T` on an empty or missing base directory exits 0 with a 0-document summary (a registered-but-empty domain is not a misconfiguration, in contrast to `--all` finding zero documents in total), explicit paths combined with `--all` are a usage error (exit 2), and the docs/adr/README.md exclusion is unconditional in path and sweep mode (ACC-005 rewritten). ACC-010 (the empty-domain `--type` case) and ACC-011 (the remaining exit-2 cases) were added. Task 120.100 now notes that the hook is the first pass_filenames: true hook in .pre-commit-config.yaml and that its files: pattern follows the anchored-regex convention; Task 130.100 now states the CI invocation explicitly (the `if: matrix.python-version == '3.13'` guard and `uv run --frozen --all-extras --python 3.13.13 specmgr lint ...`, where `--all-extras` is mandatory because the registry import chain forces the mcp extra). The 89-document counts in Design Notes and the 07:58 Updates entry were corrected to mark them as the at-refinement-time measurement.
+
 #### 2026-10-26T07:58:00.000Z - Plan revised after refinement
 
-A refinement pass found the plan's "parses in seconds" claim wrong by about 20x (a serial full parse of 89 feature READMEs took about 124 s), plus gaps in the hook scope, the docs drift, the fixture design and the exception handling. The plan was redesigned: a new `specmgr lint` command for every artifact type; the pre-commit hook lints staged artifacts; a pull-request CI step lints changed artifacts; full-corpus sweeps only via the CLI (by type or all). Corpus counts were removed, the docs/GENERATED.md drift item, the ADR README exclusion and the feat-214 reference tag were added. Follow-up issue #238 was created for the mcp-extra decoupling.
+A refinement pass found the plan's "parses in seconds" claim wrong by about 20x (a serial full parse of 89 feature READMEs took about 124 s), plus gaps in the hook scope, the docs drift, the fixture design and the exception handling. The plan was redesigned: a new `specmgr lint` command for every artifact type; the pre-commit hook lints staged artifacts; a pull-request CI step lints changed artifacts; full-corpus sweeps only via the CLI (by type or all). Drift-prone corpus counts were removed (the one-time cost measurement, then-89 documents at about 124 s, is retained and marked as at-refinement-time), the docs/GENERATED.md drift item, the ADR README exclusion and the feat-214 reference tag were added. Follow-up issue #238 was created for the mcp-extra decoupling.
 
 #### 2026-10-26T05:42:45.913Z - Created
 
@@ -207,6 +215,10 @@ Feature plan drafted from issue #218: a full-parseability gate over the repo's o
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-29T06:21:00.000Z - Appendix classification and CLI edge-case semantics (second refinement)
+
+Decisions made while amending the plan after the second refinement pass: (1) The issue #86 sysrs appendix (docs/sysrs/sysrs-8d752304-...-appendix.md, commit bca1a87) is generated documentation, not a sysrs artifact: it is a manual verbatim concatenation of 24 referenced artifacts with no frontmatter of its own, and it cannot satisfy the sysrs schema (its H1 is not the required "System Requirements Specification: ..." heading, independent of the single raw-HTML token it also carried). Repairing it in place was rejected as infeasible by design; moving it to docs/appendix/ (out of the scanned sysrs base directory) was chosen over a lint-command exclusion, because the move keeps the invariant that every file in a domain directory is a parseable document true for list_sysrs, the reference-graph builders and similarity search alike, with no permanent special case in the gate. (2) `--type T` against an empty or missing base directory exits 0 with a 0-document summary: a registered-but-empty domain is not a misconfiguration, in contrast to `--all` finding zero documents in total (exit 2, unchanged). (3) Explicit paths and a sweep flag are alternative modes; combining paths with `--all` is a usage error (exit 2). `--type` remains legal with paths, where it overrides inference (REQ-005). (4) The docs/adr/README.md exclusion (REQ-007) is unconditional, in path mode and sweep mode, with or without `--skip-unrecognized`; the file is reported as excluded, never parsed or failed (ACC-005 rewritten to pin exactly that).
 
 #### 2026-10-26T07:58:00.000Z - Change-scoped gate via a new lint command (supersedes the earlier planning decisions)
 
@@ -228,4 +240,4 @@ Four planning decisions made while drafting this feature: (1) Corpus = feature p
 
 ### More Information
 
-How the defect hid (three symptoms, all observed on feat-214's plan): (1) list_feat reported the document healthy throughout, because its request path resolves each folder from a frontmatter+H1-only dirty-stage parse, exactly the masking the dirty/clean two-stage design documents (ADR 3982712a); (2) the reference-graph builders' full-parse scan legs silently skipped the document (rulebook §3.4), dropping feat-214 from every live diagram, a symptom noticed only during the Phase 130 CLI walkthrough; (3) CI runs the test suite, but no test or step runs a full parse over the repo's own in-tree documents. Cost: a serial full parse of the feature corpus measured about 124 s for 89 documents at refinement time, which is why the gate is change-scoped and the full sweep is CLI-only. Note: .specmgr/conventions.md and the .specmgr/conventions/ directory are hand-authored documentation, not specmgr-managed artifacts; they are outside the lint layouts by construction. Likewise docs/api/ and docs/GENERATED.md are generated documentation, not artifacts, and docs/adr/README.md is the generated ADR table of contents. Sibling-class framing: feat-214 fixed a gate that existed but was env-gated and unconfigured on the commit path (the PlantUML real-parser); this feature fixes the case where the gate does not exist at all.
+How the defect hid (three symptoms, all observed on feat-214's plan): (1) list_feat reported the document healthy throughout, because its request path resolves each folder from a frontmatter+H1-only dirty-stage parse, exactly the masking the dirty/clean two-stage design documents (ADR 3982712a); (2) the reference-graph builders' full-parse scan legs silently skipped the document (rulebook §3.4), dropping feat-214 from every live diagram, a symptom noticed only during the Phase 130 CLI walkthrough; (3) CI runs the test suite, but no test or step runs a full parse over the repo's own in-tree documents. Cost: a serial full parse of the feature corpus measured about 124 s for 89 documents at refinement time, which is why the gate is change-scoped and the full sweep is CLI-only. Note: .specmgr/conventions.md and the .specmgr/conventions/ directory are hand-authored documentation, not specmgr-managed artifacts; they are outside the lint layouts by construction. Likewise docs/api/ and docs/GENERATED.md are generated documentation, not artifacts, docs/adr/README.md is the generated ADR table of contents, and the issue #86 sysrs appendix (moved to docs/appendix/ on 2026-10-29, see the Decisions Made entry of the same date) is a manually generated verbatim concatenation of 24 referenced artifacts, not a sysrs document. Corpus verification baseline: a full-parse sweep over all 13 types (2026-10-29, after the move) found 161 documents and 0 failures (158.4 s serial); the one-time cost measurement of about 124 s for the then-89 feature READMEs (Design Notes) remains the basis for the change-scoped design. Sibling-class framing: feat-214 fixed a gate that existed but was env-gated and unconfigured on the commit path (the PlantUML real-parser); this feature fixes the case where the gate does not exist at all.
