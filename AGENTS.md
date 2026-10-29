@@ -1328,7 +1328,21 @@ full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
 `pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
 last, before every commit, so a broken test or drift in
 `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
-instead of failing later in CI. The `pytest` hook is deliberately ordered
+instead of failing later in CI. The local `specmgr lint` hook (feat-218)
+lints the staged in-tree spec artifacts (the feature README.md files under
+`.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
+anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`)
+with the `specmgr lint` full-parse gate, and is placed ahead of the `pytest`
+hook. It is the config's first `pass_filenames: true` hook (every other
+local hook takes no file list) and runs with `require_serial: true`, so the
+staged files are linted by one process with one ordered summary (a staged
+list longer than the OS argument-length limit is still split into sequential
+invocations, each with its own summary). It parses the working-tree file
+contents, not the git index: a partially staged file is checked as it exists
+on disk (accepted and documented). A commit that stages only files the
+pattern matches but the command skips or excludes (e.g. `docs/appendix/*.md`,
+`docs/adr/README.md`) passes with a 0-linted summary.
+The `pytest` hook is deliberately ordered
 last (not right after `vulture`) so every faster check fails fast first;
 running the suite in parallel also cut its own wall time from 9-11 minutes
 (serial `coverage run -m unittest discover`) to roughly a minute measured on

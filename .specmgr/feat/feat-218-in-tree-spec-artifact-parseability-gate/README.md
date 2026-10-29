@@ -4,7 +4,7 @@ created: '2026-10-26T07:16:20.020+01:00'
 id: feat-218-in-tree-spec-artifact-parseability-gate
 status: planning
 type: feat
-updated: '2026-10-29T17:21:21.875+01:00'
+updated: '2026-10-29T22:40:07.879+01:00'
 version: 1.0.0
 ---
 
@@ -186,9 +186,9 @@ The CI step: pull_request events only, in the existing build job, guarded by `ma
 
 #### Phase 120: Pre-commit Hook
 
-- [ ] Task 120.100: Add the specmgr-lint local hook to .pre-commit-config.yaml (pass_filenames true, the first such hook in the config since every existing local hook uses pass_filenames false, `require_serial: true` so the staged files are linted by one process with one ordered summary instead of parallel batches with interleaved summaries (a staged list longer than the OS argument-length limit is still split into sequential invocations, each with its own summary), an in-tree artifact file pattern following the repo's anchored-regex files: convention, exactly `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`, entry `uv run --frozen specmgr lint --skip-unrecognized`, placed ahead of pytest with specmgr-coverage-badge still directly after pytest) and document it in AGENTS.md's pre-commit paragraph, including the working-tree-versus-index note. A commit that stages only files this pattern matches but the command skips or excludes (e.g. docs/appendix/\*.md, docs/adr/README.md) must pass (exit 0, 0-linted summary).
+- [x] Task 120.100: Add the specmgr-lint local hook to .pre-commit-config.yaml (pass_filenames true, the first such hook in the config since every existing local hook uses pass_filenames false, `require_serial: true` so the staged files are linted by one process with one ordered summary instead of parallel batches with interleaved summaries (a staged list longer than the OS argument-length limit is still split into sequential invocations, each with its own summary), an in-tree artifact file pattern following the repo's anchored-regex files: convention, exactly `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`, entry `uv run --frozen specmgr lint --skip-unrecognized`, placed ahead of pytest with specmgr-coverage-badge still directly after pytest) and document it in AGENTS.md's pre-commit paragraph, including the working-tree-versus-index note. A commit that stages only files this pattern matches but the command skips or excludes (e.g. docs/appendix/\*.md, docs/adr/README.md) must pass (exit 0, 0-linted summary).
 
-- [ ] Task 120.110: Local walkthrough: (a) a healthy artifact change commits with the hook linting only the staged files; (b) a feat-214-shape defect introduced in a scratch feature README blocks the commit with the file and error reported; (c) revert; (d) a commit touching no artifact does not trigger the hook; (e) a commit touching only docs/appendix/\*.md or docs/adr/README.md passes. Record the outcome under Updates.
+- [x] Task 120.110: Local walkthrough: (a) a healthy artifact change commits with the hook linting only the staged files; (b) a feat-214-shape defect introduced in a scratch feature README blocks the commit with the file and error reported; (c) revert; (d) a commit touching no artifact does not trigger the hook; (e) a commit touching only docs/appendix/\*.md or docs/adr/README.md passes. Record the outcome under Updates.
 
 #### Phase 130: CI Step
 
@@ -214,11 +214,162 @@ The CI step: pull_request events only, in the existing build job, guarded by `ma
 
 ### Current Status
 
-**As of 2026-10-29**: Phases 100 and 110 complete — Phase 100 implemented the `specmgr lint` command itself plus its registration artifacts, Phase 110 its test suite (one module, `tests/commands/test_lint.py`: 46 tests + 43 subtests, every fixture in a per-test `tempfile` directory — the in-tree corpus is never mutated; see the 2026-10-29T10:00:00.000Z and 2026-10-29T16:21:21.875Z Updates and Decisions Made entries); implementation in progress, Phases 120 through 150 open. The command lints explicit paths (type inferred from the path layout alone, `--type` override, `--skip-unrecognized`), sweeps by type or all (registered base-dir resolvers, `--dir` override, the unconditional ADR README exclusion), runs only model-level full parses, and reports every failure with its per-type repair pointer and the REQ-008 exit 0/1/2 contract. Its module level is import-safe without the mcp extra (Task 100.100's finding: the CLI as it stands already requires the extra to import at all — pre-existing, issue #238 territory), and its registry-backed names load lazily inside the command body behind the exit-1 missing-extra guard. The in-tree corpus is verified by the command's own sweep: `specmgr lint --all` exits 0 with 161 documents linted, 0 failures, 1 excluded (the generated docs/adr/README.md).
+**As of 2026-10-29**: Phases 100, 110 and 120 complete — Phase 100 implemented the `specmgr lint` command itself plus its registration artifacts, Phase 110 its test suite (one module, `tests/commands/test_lint.py`: 46 tests + 43 subtests, every fixture in a per-test `tempfile` directory — the in-tree corpus is never mutated; see the 2026-10-29T10:00:00.000Z and 2026-10-29T16:21:21.875Z Updates and Decisions Made entries), Phase 120 the `specmgr-lint` pre-commit hook (the config's first `pass_filenames: true` hook, `require_serial`, the canonical anchored in-tree artifact file pattern, ahead of `pytest`) plus its AGENTS.md documentation and the five-case local walkthrough (healthy, defective, non-artifact and skipped-only commits, each immediately undone; see the 2026-10-29T21:40:07.879Z Updates and Decisions Made entries); implementation in progress, Phases 130 through 150 open. The command lints explicit paths (type inferred from the path layout alone, `--type` override, `--skip-unrecognized`), sweeps by type or all (registered base-dir resolvers, `--dir` override, the unconditional ADR README exclusion), runs only model-level full parses, and reports every failure with its per-type repair pointer and the REQ-008 exit 0/1/2 contract. Its module level is import-safe without the mcp extra (Task 100.100's finding: the CLI as it stands already requires the extra to import at all — pre-existing, issue #238 territory), and its registry-backed names load lazily inside the command body behind the exit-1 missing-extra guard. The in-tree corpus is verified by the command's own sweep: `specmgr lint --all` exits 0 with 161 documents linted, 0 failures, 1 excluded (the generated docs/adr/README.md).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-29T21:40:07.879Z - Phase 120 complete (specmgr-lint pre-commit hook; five-case local walkthrough, all commits undone)
+
+Phase 120 added the `specmgr-lint` local hook to `.pre-commit-config.yaml` (Task 120.100) and documented it in AGENTS.md's pre-commit paragraph, including the working-tree-versus-index note. The hook: entry `uv run --frozen specmgr lint --skip-unrecognized`, `pass_filenames: true` (the first hook in the config that passes a file list — every existing local hook uses `pass_filenames: false`), `require_serial: true` (one process, one ordered summary per invocation; a staged list longer than the OS argument-length limit is still split into sequential invocations, each with its own summary), the canonical anchored file pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$` (unquoted, house style), placed immediately ahead of the `pytest` hook with `specmgr-coverage-badge` still directly after `pytest`. With the hook present, the previously conditional pattern-identity assertion in `TestLintHookPattern` became a hard pin (the test extracts the hook's `files:` value and requires it to equal the canonical constant), and `pre-commit validate-config` passes.
+
+Task 120.110 was executed as five real commits against scratch files, each immediately undone per the protocol; the tree ended at the pre-walkthrough commit 23e2713 with `git status --short` showing only the two Phase 120 files. One deviation from the assumed protocol, with the mechanics that forced it, is recorded in the Decisions Made entry of the same instant: pre-commit 4.6.1 refuses to run the hook set while `.pre-commit-config.yaml` carries an unstaged working-tree change (its `_has_unstaged_config` check is a `git diff --quiet` of the config against the index), so the planned "config sits unstaged" setup was infeasible; the config was staged for each walkthrough commit (and therefore rode along in each scratch commit), and after each `git reset --hard HEAD~1` the two Phase 120 files were restored byte-identical from a pre-walkthrough backup (md5-verified after every reset).
+
+Case (a) — healthy artifact: `.specmgr/feat/feat-999-hook-walkthrough/README.md` was created as a byte-exact copy of the packaged feat template (it parses), staged together with the config, and committed as `git commit -m "walkthrough: healthy artifact (scratch)"`. The hook ran over exactly the staged artifact, and `ruff format` (which also selects markdown) ran over it first and passed:
+
+```text
+[WARNING] Unstaged files detected.
+[INFO] Stashing unstaged files to /home/user/.cache/pre-commit/patch1793309686-1772617.
+ruff format..............................................................Passed
+ruff check...........................................(no files to check)Skipped
+vulture..............................................(no files to check)Skipped
+specmgr docs.........................................(no files to check)Skipped
+specmgr mcp-docs.....................................(no files to check)Skipped
+specmgr adr-toc......................................(no files to check)Skipped
+specmgr schema.......................................(no files to check)Skipped
+specmgr schema (req package copy)....................(no files to check)Skipped
+specmgr schema (uc package copy).....................(no files to check)Skipped
+specmgr schema (tsk package copy)....................(no files to check)Skipped
+specmgr schema (rsk package copy)....................(no files to check)Skipped
+specmgr schema (qa package copy).....................(no files to check)Skipped
+specmgr schema (prb package copy)....................(no files to check)Skipped
+specmgr schema (gol package copy)....................(no files to check)Skipped
+specmgr schema (dec package copy)....................(no files to check)Skipped
+specmgr schema (sop package copy)....................(no files to check)Skipped
+specmgr schema (feat package copy)...................(no files to check)Skipped
+specmgr schema (vcr package copy)....................(no files to check)Skipped
+specmgr schema (sysrs package copy)..................(no files to check)Skipped
+specmgr lint.............................................................Passed
+pytest...............................................(no files to check)Skipped
+specmgr coverage-badge (CI source-less condition)....(no files to check)Skipped
+[INFO] Restored changes from /home/user/.cache/pre-commit/patch1793309686-1772617.
+[feat-218-in-tree-spec-artifact-parseability-gate f85dee6] walkthrough: healthy artifact (scratch)
+ 2 files changed, 117 insertions(+)
+ create mode 100644 .specmgr/feat/feat-999-hook-walkthrough/README.md
+```
+
+Commit f85dee6 was created (2 files changed: the +25-line hook addition plus the 92-line scratch README), then undone with `git reset --hard HEAD~1` plus the backup restore; the scratch folder was gone and the tree clean at 23e2713. pre-commit swallows a passing hook's stdout, so the hook's own summary line comes from a verbatim re-run of its identical entry command over the same file: `summary: linted=1 failed=0 skipped=0 excluded=0` (exit 0).
+
+Case (b) — feat-214-shape defect: the scratch folder was recreated with the same healthy text and its one Decisions Made H4 date entry changed to a dated bullet line (`#### 2025-06-14 19:22:53.667Z - Placeholder decision` replaced by `- 2025-06-14 19:22:53.667Z - Placeholder decision`), staged, and committed as `git commit -m "walkthrough: defective artifact (scratch)"`. The commit was blocked — `specmgr lint` failed with the file named, the parse error and the repair pointer, and no commit was created (`git log --oneline -1` still 23e2713, exit 1):
+
+```text
+[WARNING] Unstaged files detected.
+[INFO] Stashing unstaged files to /home/user/.cache/pre-commit/patch1793309770-1774577.
+ruff format..............................................................Passed
+ruff check...........................................(no files to check)Skipped
+vulture..............................................(no files to check)Skipped
+specmgr docs.........................................(no files to check)Skipped
+specmgr mcp-docs.....................................(no files to check)Skipped
+specmgr adr-toc......................................(no files to check)Skipped
+specmgr schema.......................................(no files to check)Skipped
+specmgr schema (req package copy)....................(no files to check)Skipped
+specmgr schema (uc package copy).....................(no files to check)Skipped
+specmgr schema (tsk package copy)....................(no files to check)Skipped
+specmgr schema (rsk package copy)....................(no files to check)Skipped
+specmgr schema (qa package copy).....................(no files to check)Skipped
+specmgr schema (prb package copy)....................(no files to check)Skipped
+specmgr schema (gol package copy)....................(no files to check)Skipped
+specmgr schema (dec package copy)....................(no files to check)Skipped
+specmgr schema (sop package copy)....................(no files to check)Skipped
+specmgr schema (feat package copy)...................(no files to check)Skipped
+specmgr schema (vcr package copy)....................(no files to check)Skipped
+specmgr schema (sysrs package copy)..................(no files to check)Skipped
+specmgr lint.............................................................Failed
+- hook id: specmgr-lint
+- exit code: 1
+
+✗ .specmgr/feat/feat-999-hook-walkthrough/README.md (feat): Feature > Progress > DecisionsMade > DecisionEntry: expected list[DecisionEntry] (heading matching regex '^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$'), found no match; remaining text starts at line 69 of the normalized body (3 line(s)) and begins with:
+- 2025-06-14 19:22:53.667Z - Placeholder decision
+
+A short lead paragraph describing the decision and its rationale.
+  repair via: /repair feat feat-999-hook-walkthrough
+summary: linted=1 failed=1 skipped=0 excluded=0
+
+pytest...............................................(no files to check)Skipped
+specmgr coverage-badge (CI source-less condition)....(no files to check)Skipped
+[INFO] Restored changes from /home/user/.cache/pre-commit/patch1793309770-1774577.
+```
+
+Case (c) — revert: the blocked case never committed, so the revert is the cleanup itself: `git reset` (unstage the config and the defective README) plus `rm -rf .specmgr/feat/feat-999-hook-walkthrough`; afterwards `git status --short` showed only ` M .pre-commit-config.yaml`, ` M AGENTS.md` and the two scratch files of the later cases, and `git log --oneline -1` was still 23e2713.
+
+Case (d) — non-artifact file: `scratch-root-file.txt` was created at the repo root, staged together with the config, and committed as `git commit -m "walkthrough: non-artifact file (scratch)"`. No hook matched the staged set at all — the new `specmgr lint` hook included, which reported `(no files to check)Skipped` like every other hook — and the commit passed (77c3b68, then undone with `git reset --hard HEAD~1` plus the backup restore; the scratch file was gone):
+
+```text
+[WARNING] Unstaged files detected.
+[INFO] Stashing unstaged files to /home/user/.cache/pre-commit/patch1793309812-1775713.
+ruff format..........................................(no files to check)Skipped
+ruff check...........................................(no files to check)Skipped
+vulture..............................................(no files to check)Skipped
+specmgr docs.........................................(no files to check)Skipped
+specmgr mcp-docs.....................................(no files to check)Skipped
+specmgr adr-toc......................................(no files to check)Skipped
+specmgr schema.......................................(no files to check)Skipped
+specmgr schema (req package copy)....................(no files to check)Skipped
+specmgr schema (uc package copy).....................(no files to check)Skipped
+specmgr schema (tsk package copy)....................(no files to check)Skipped
+specmgr schema (rsk package copy)....................(no files to check)Skipped
+specmgr schema (qa package copy).....................(no files to check)Skipped
+specmgr schema (prb package copy)....................(no files to check)Skipped
+specmgr schema (gol package copy)....................(no files to check)Skipped
+specmgr schema (dec package copy)....................(no files to check)Skipped
+specmgr schema (sop package copy)....................(no files to check)Skipped
+specmgr schema (feat package copy)...................(no files to check)Skipped
+specmgr schema (vcr package copy)....................(no files to check)Skipped
+specmgr schema (sysrs package copy)..................(no files to check)Skipped
+specmgr lint.........................................(no files to check)Skipped
+pytest...............................................(no files to check)Skipped
+specmgr coverage-badge (CI source-less condition)....(no files to check)Skipped
+[INFO] Restored changes from /home/user/.cache/pre-commit/patch1793309812-1775713.
+[feat-218-in-tree-spec-artifact-parseability-gate 77c3b68] walkthrough: non-artifact file (scratch)
+ 2 files changed, 26 insertions(+)
+ create mode 100644 scratch-root-file.txt
+```
+
+Case (e) — matched-but-skipped artifact only: `docs/appendix/hook-walkthrough.md` was created (a new file — staging the unmodified `docs/adr/README.md` would be a no-op for pre-commit, and modifying the generated ADR table of contents risks the `specmgr adr-toc` drift hook; the plan's "or" alternative, see the Decisions Made entry), staged together with the config, and committed as `git commit -m "walkthrough: skipped-only artifact (scratch)"`. The hook ran, the command skipped the file as an unrecognized layout and exited 0 with the 0-linted summary, and the commit passed (31437d0, then undone the same way):
+
+```text
+[WARNING] Unstaged files detected.
+[INFO] Stashing unstaged files to /home/user/.cache/pre-commit/patch1793309833-1776230.
+ruff format..............................................................Passed
+ruff check...........................................(no files to check)Skipped
+vulture..............................................(no files to check)Skipped
+specmgr docs.........................................(no files to check)Skipped
+specmgr mcp-docs.....................................(no files to check)Skipped
+specmgr adr-toc......................................(no files to check)Skipped
+specmgr schema.......................................(no files to check)Skipped
+specmgr schema (req package copy)....................(no files to check)Skipped
+specmgr schema (uc package copy).....................(no files to check)Skipped
+specmgr schema (tsk package copy)....................(no files to check)Skipped
+specmgr schema (rsk package copy)....................(no files to check)Skipped
+specmgr schema (qa package copy).....................(no files to check)Skipped
+specmgr schema (prb package copy)....................(no files to check)Skipped
+specmgr schema (gol package copy)....................(no files to check)Skipped
+specmgr schema (dec package copy)....................(no files to check)Skipped
+specmgr schema (sop package copy)....................(no files to check)Skipped
+specmgr schema (feat package copy)...................(no files to check)Skipped
+specmgr schema (vcr package copy)....................(no files to check)Skipped
+specmgr schema (sysrs package copy)..................(no files to check)Skipped
+specmgr lint.............................................................Passed
+pytest...............................................(no files to check)Skipped
+specmgr coverage-badge (CI source-less condition)....(no files to check)Skipped
+[INFO] Restored changes from /home/user/.cache/pre-commit/patch1793309833-1776230.
+[feat-218-in-tree-spec-artifact-parseability-gate 31437d0] walkthrough: skipped-only artifact (scratch)
+ 2 files changed, 28 insertions(+)
+ create mode 100644 docs/appendix/hook-walkthrough.md
+```
+
+Again the hook's own summary line is from the verbatim re-run of its identical entry command over the same file: `summary: linted=0 failed=0 skipped=1 excluded=0` (exit 0). After the final undo, `git status --short` showed exactly ` M .pre-commit-config.yaml` and ` M AGENTS.md`, `git log --oneline -1` was 23e2713 (the pre-walkthrough commit), and no scratch file remained anywhere in the tree.
 
 #### 2026-10-29T16:21:21.875Z - Phase 110 complete (lint command test suite: one module, 46 tests + 43 subtests)
 
@@ -247,6 +398,10 @@ Feature plan drafted from issue #218: a full-parseability gate over the repo's o
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-29T21:40:07.879Z - Phase 120: walkthrough mechanics — pre-commit's unstaged-config refusal, config-in-scratch-commits, and case (e) via docs/appendix
+
+Decisions made while executing the Phase 120 walkthrough, beyond the plan and the orchestrator rulings, scoped to the walkthrough's mechanics: (1) pre-commit 4.6.1 refuses to run the hook set while `.pre-commit-config.yaml` carries an unstaged working-tree change (its `_has_unstaged_config` check is a `git diff --quiet` of the config against the index; observed as `[ERROR] Your pre-commit configuration is unstaged.`), so the assumed protocol of leaving the Phase 120 files unstaged during the walkthrough was infeasible; the config was staged for each walkthrough commit and therefore rode along in each scratch commit (the recorded commits show `2 files changed`), and after each `git reset --hard HEAD~1` the two Phase 120 files were restored byte-identical from a pre-walkthrough backup (md5-verified after every reset) so the tree ended at exactly the pre-walkthrough commit with only the unstaged Phase 120 changes. (2) `git commit -- <pathspec>` was tried and rejected as a way to keep the config out of the scratch commit: git hands the pre-commit hook a temporary `GIT_INDEX_FILE` built from HEAD plus the pathspec, in which the out-of-pathspec config appears unstaged, so the refusal fired twice although the config was staged in the real index (verified: with the config staged, `git diff --quiet .pre-commit-config.yaml` returned 0, yet the pathspec commit still failed the hook's check); plain commits were used instead, and the config's addition is an intentional part of the recorded scratch commits. (3) Case (e) was run with a fresh `docs/appendix/hook-walkthrough.md` (the plan's "or" alternative): staging the unmodified `docs/adr/README.md` would be a no-op for pre-commit (an unmodified file is not in the staged set, so the hook would not run at all), and modifying the generated ADR table of contents risks the `specmgr adr-toc` drift hook, while the appendix file alone fully covers the "matched but skipped by the command, exit 0, 0-linted summary" property (`summary: linted=0 failed=0 skipped=1 excluded=0`).
 
 #### 2026-10-29T16:21:21.875Z - Phase 110: the REQ-011 scan excludes bytecode caches; the missing-extra guard is pinned in a fresh interpreter
 
