@@ -12,7 +12,7 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
 (``specmgr://reference_graph`` / ``general/data/general_reference_graph.md`` §2):
 
 - :class:`GraphNode` -- one artifact: its lowercase domain ``type``, its
-  verbatim ``id`` (canonical lowercase-hex uuid for the 12 UUID domains, the
+  verbatim ``id`` (canonical lowercase-hex uuid for the 13 UUID domains, the
   full ``feat-NNN-slug`` or the bare ``feat-NNN`` for ``feat``), and its
   resolved title (the document's H1 as the builders derive it) or ``None``
   for a reference that could not be resolved on disk (the unresolved node
@@ -24,11 +24,11 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
   the node and edge collections.
 - :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8,
   corrected 2026-10-15): the ``@startuml {title}`` line (sanitised, **never
-  truncated**, §2.2/§5), the full 14-entry skinparam colour block (always,
+  truncated**, §2.2/§5), the full 15-entry skinparam colour block (always,
   in block order, §2.5), the ``left to right direction`` line, the
   top-level unresolved node lines (sorted by alias, §2.6), one curly
   domain group ``component "TYPE" { … }`` per non-empty domain (in the
-  13-domain order, nodes sorted by id, §2.7), and the deduped + sorted
+  14-domain order, nodes sorted by id, §2.7), and the deduped + sorted
   label-free edge lines (the red ``-[#red]->`` form on cycle edges only,
   §2.8/§4). The content sections (the ``@startuml`` line, the skinparam
   block, the direction line, the top-level unresolved node lines, each
@@ -87,13 +87,13 @@ One artifact of the reference graph (a pure fact, rulebook §1).
 Parameters
 ----------
 type:
-    The artifact's lowercase domain name (one of the 13
+    The artifact's lowercase domain name (one of the 14
     ``general.tools._domains.ALL_DOMAINS`` names for builder-produced
     graphs; the renderer accepts any string, placing a node whose type
-    is outside the 13-domain order top-level, like unresolved nodes).
+    is outside the 14-domain order top-level, like unresolved nodes).
 id:
     The artifact's verbatim id: the canonical lowercase-hex uuid for the
-    12 UUID domains, the full ``feat-NNN-slug`` id or the bare
+    13 UUID domains, the full ``feat-NNN-slug`` id or the bare
     ``feat-NNN`` number for ``feat`` (the two spellings of one feature
     are two distinct nodes -- rulebook §3.7's inherited caveat).
 title:
@@ -179,7 +179,7 @@ every component label).
 
 ### `_skinparam_block() -> 'str'`
 
-The frozen 14-entry skinparam colour block (rulebook §2.5) -- always emitted in full, in block order.
+The frozen 15-entry skinparam colour block (rulebook §2.5) -- always emitted in full, in block order.
 
 
 ### `_tarjan_scc_sizes(node_keys: 'list[tuple[str, str]]', successors: 'dict[tuple[str, str], list[tuple[str, str]]]') -> 'dict[tuple[str, str], tuple[int, int]]'`
@@ -211,10 +211,10 @@ Render ``graph`` to the frozen PlantUML component-diagram source (rulebook §2).
 
 The deterministic, byte-stable mapping the rulebook freezes (corrected
 2026-10-15): the ``@startuml {title}`` line (sanitised, never
-truncated), the full 14-entry skinparam block, the ``left to right
+truncated), the full 15-entry skinparam block, the ``left to right
 direction`` line, the top-level unresolved node lines (sorted by alias,
 before the first domain group), one curly domain group ``component
-"TYPE" { … }`` per non-empty domain (in the 13-domain order, nodes
+"TYPE" { … }`` per non-empty domain (in the 14-domain order, nodes
 sorted by id), and the deduped + sorted label-free edge lines (the red
 ``-[#red]->`` form exactly for the on-cycle edges of
 :func:`_on_cycle_edges`, plain ``-->`` otherwise). The content sections

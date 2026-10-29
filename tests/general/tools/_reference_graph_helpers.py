@@ -85,6 +85,7 @@ def _reset_caches() -> None:
     from biz.dfch.specmgr.sop.tools._cache import reset_sop_cache
     from biz.dfch.specmgr.sysrs.tools._cache import reset_sysrs_cache
     from biz.dfch.specmgr.tsk.tools._cache import reset_tsk_cache
+    from biz.dfch.specmgr.txt.tools._cache import reset_txt_cache
     from biz.dfch.specmgr.uc.tools._cache import reset_uc_cache
     from biz.dfch.specmgr.vcr.tools._cache import reset_vcr_cache
 
@@ -102,6 +103,7 @@ def _reset_caches() -> None:
         reset_feat_dirty_cache,
         reset_vcr_cache,
         reset_sysrs_cache,
+        reset_txt_cache,
     ):
         reset()
 

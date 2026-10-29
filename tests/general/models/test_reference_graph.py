@@ -45,6 +45,7 @@ from biz.dfch.specmgr.general.models.reference_graph import (
     GraphNode,
     ReferenceGraph,
     _DOMAIN_ORDER,
+    _PALETTE,
     _alias,
     _on_cycle_edges,
     _sanitize,
@@ -208,6 +209,20 @@ class TestAliasAndConstants(unittest.TestCase):
         from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS
 
         self.assertEqual(_DOMAIN_ORDER, ALL_DOMAINS)
+
+    def test_palette_is_the_frozen_15_entries_in_block_order(self):
+        # the frozen 15-entry palette (rulebook §2.5): the 14 domain
+        # stereotypes in the group order, then UNRESOLVED last -- the TXT
+        # entry (LightGrey) was added by feat-229-txt Phase 150 after
+        # SYSRS, before UNRESOLVED (position 13, 0-based)
+        self.assertEqual(len(_PALETTE), 15)
+        self.assertEqual(_PALETTE[12], ("SYSRS", "Thistle"))
+        self.assertEqual(_PALETTE[13], ("TXT", "LightGrey"))
+        self.assertEqual(_PALETTE[14], ("UNRESOLVED", "DarkRed"))
+        self.assertEqual(
+            [stereotype for stereotype, _colour in _PALETTE],
+            [domain.upper() for domain in _DOMAIN_ORDER] + ["UNRESOLVED"],
+        )
 
     def test_default_max_label_is_forty(self):
         self.assertEqual(DEFAULT_MAX_LABEL, 40)
