@@ -45,6 +45,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-08-27
   - Decision-makers: OpenCode agent + user decision
+- [Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary](38efdb66-8025-45c5-bbe8-45b25fc7a772-multi-language-artifact-variants-directory-layout-heading-ma.md)
+  - Id: 38efdb66-8025-45c5-bbe8-45b25fc7a772
+  - Status: accepted
+  - Date: 2026-10-29
+  - Decision-makers: OpenCode agent + user decision
 - [Two-Stage Dirty/Clean DocCache Staging and a Unified Startup Warmup Thread to Fix list_feat's Cold-Scan Timeout (#187)](3982712a-a46b-4b2b-809f-9c6925a49b44-two-stage-dirty-clean-doccache-staging-and-a-unified-startup.md)
   - Id: 3982712a-a46b-4b2b-809f-9c6925a49b44
   - Status: accepted

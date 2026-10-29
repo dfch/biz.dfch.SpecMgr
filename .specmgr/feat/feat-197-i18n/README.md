@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
-status: planning
+status: progress
 type: feat
-updated: '2026-10-29T17:19:35.176+01:00'
+updated: '2026-10-29T21:06:25.512+01:00'
 version: 1.0.0
 ---
 
@@ -137,23 +137,23 @@ Open design questions to resolve during Phase 100 below:
 
 ### Related Decisions
 
-- None yet; an ADR is planned as part of Task 100.130 once the directory-layout and heading-mapping-table design is settled (see Phase 100).
+- ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772 ("Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary"): captures the Phase 100 design -- the `docs/{type}/{language}/` subfolder convention with the EN source's exact basename as the single filename authority, the per-language JSON heading-mapping table (format, storage, closed domain, and the pre-parse resolution algorithm), the ISO 639-1-shaped language vocabulary and its `_path_safety` validation, the single-language-per-call `list_<d>` semantics, and the confirmed design facts (non-recursive scan keeps REQ-013 true by layout, `DocCache` Path keying needs no change, `feat`/`adr` unchanged, the `prb` `problem_statement` English exemption).
 
 ### Task List
 
 #### Phase 100: Design -- Directory Layout, Heading-Mapping Table, Language Vocabulary
 
-- [ ] Task 100.100: Finalize the on-disk filename/path convention for a language variant (`./docs/{type}/{language}/{id}.md`) and confirm it against the eleven i18n-eligible domains' existing path-resolution code (`general/tools/_doc_paths.py`); explicitly confirm and record that `feat/tools/_paths.py` and `feat/tools/_cache.py` need no change, since `feat` is permanently out of scope for this feature (REQ-002).
+- [x] Task 100.100: Finalize the on-disk filename/path convention for a language variant (`./docs/{type}/{language}/{id}.md`) and confirm it against the eleven i18n-eligible domains' existing path-resolution code (`general/tools/_doc_paths.py`); explicitly confirm and record that `feat/tools/_paths.py` and `feat/tools/_cache.py` need no change, since `feat` is permanently out of scope for this feature (REQ-002).
 
-- [ ] Task 100.110: Design the per-language heading-mapping table format and storage location, and how a parser resolves a translated heading back to its canonical schema key; explicitly confirm that closed-vocabulary/schema-constant tokens embedded in or alongside headings (REQ-010, e.g. VCR's `(Method)` suffix, RSK's `Probability`/`Impact`/`{1..5}` tokens) are excluded from translation and the mapping table only ever maps heading *text*, never those tokens.
+- [x] Task 100.110: Design the per-language heading-mapping table format and storage location, and how a parser resolves a translated heading back to its canonical schema key; explicitly confirm that closed-vocabulary/schema-constant tokens embedded in or alongside headings (REQ-010, e.g. VCR's `(Method)` suffix, RSK's `Probability`/`Impact`/`{1..5}` tokens) are excluded from translation and the mapping table only ever maps heading *text*, never those tokens.
 
-- [ ] Task 100.120: Decide the language-code vocabulary (e.g. ISO 639-1) and where it is validated.
+- [x] Task 100.120: Decide the language-code vocabulary (e.g. ISO 639-1) and where it is validated.
 
-- [ ] Task 100.130: Write an ADR capturing the directory-layout and heading-mapping-table design decisions.
+- [x] Task 100.130: Write an ADR capturing the directory-layout and heading-mapping-table design decisions.
 
-- [ ] Task 100.140: Record `dec` as the pilot domain for Phases 110-130 and ACC-005/ACC-006/ACC-007 (decision already made; see Design Notes).
+- [x] Task 100.140: Record `dec` as the pilot domain for Phases 110-130 and ACC-005/ACC-006/ACC-007 (decision already made; see Design Notes).
 
-- [ ] Task 100.150: For each i18n-eligible domain, identify every regex/`fullmatch()`-pattern-locked English prose field (e.g. PRB's `problem_statement` lead paragraph) and document its resolution per REQ-010: either a per-language template variant the validator accepts, or an explicit exemption keeping the field in English in every language.
+- [x] Task 100.150: For each i18n-eligible domain, identify every regex/`fullmatch()`-pattern-locked English prose field (e.g. PRB's `problem_statement` lead paragraph) and document its resolution per REQ-010: either a per-language template variant the validator accepts, or an explicit exemption keeping the field in English in every language.
 
 #### Phase 110: Path Resolution & Read-Side Plumbing (Pilot Domain: `dec`)
 
@@ -209,11 +209,21 @@ Open design questions to resolve during Phase 100 below:
 
 ### Current Status
 
-**As of 2026-10-29**: Feature drafted from GitHub issue #197; design not yet started.
+**As of 2026-10-29**: Phase 100 (design) complete -- the directory-layout, heading-mapping-table, and language-vocabulary design is settled in ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772 ("Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary"), `dec` is confirmed as the pilot domain for Phases 110-130/ACC-005/006/007 (Task 100.140), and Phase 110 (path resolution & read-side plumbing for `dec`) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-29T21:06:25.512+01:00 - Phase 100 (design) complete: layout, mapping table, and language vocabulary settled in ADR 38efdb66
+
+- **Filename/basename rule (Task 100.100):** a language variant lives at `docs/{type}/{language}/<type>-<uuid>-<slug>.md` under the EN source's *exact* basename -- the slug always derives from the EN title (`slugify(EN title)`), never from a variant's translated title; a non-default-language `create_<d>` therefore requires the EN source (same `id`) to exist on disk first, while the other write tools only id-scan the language subfolder (no basename re-derivation); `find_parse_failure`'s stem matching (`-{id}-` in the stem / `{id}-` prefix) works unchanged for every language. Confirmed, recorded in the ADR: `feat/tools/_paths.py` and `feat/tools/_cache.py` need **no** change (REQ-002 -- `feat`'s folder-per-document addressing is unreachable by the `{language}` convention), and only `.md` files participate in the convention (non-`.md` siblings, e.g. the `.pdf` files next to the `.md` under `docs/sysrs`, are untouched).
+- **Heading-mapping table (Task 100.110):** one flat JSON object per language mapping `<translated heading text> -> <canonical English heading text>`, stored in shared cross-domain package data at `general/data/headings/<language>.json` (not per-domain -- shared headings like `## More Information`, `## Tags`, `## Source`, `## Updates`, the RASCI H3s, and the cross-reference H3s recur across 4+ domains). The table's domain is closed and machine-derivable: exactly the fixed-text heading aliases (LITERAL / SPACE_SEPARATED / REGEX-without-free-text-group) of the i18n-eligible domains; data-carrying regex headings (`Option {N}:`, `Step {N}:`, `AC-{NNN} ({Method})`, `Extension {N}.`, timestamp-led update entries, RSK's `Probability {1..5}`/`Impact {1..5}`) hold no entry -- their schema-constant tokens are never translated (REQ-010) and stay canonical in the variant file itself, while their free-text data (option/step/criterion/update titles) matches the alias's own `.+` group in any language. Resolution algorithm: a fence-aware, line-based heading-normalization pre-pass at each domain's parse boundary (`normalized = table.get(heading_text, heading_text)` per heading line, outside fenced code blocks) before the *unchanged* `models/md` engine runs; the parsed model holds canonical heading text (ACC-011), the on-disk file keeps its translation (`raw=True` reads return it verbatim); the loader rejects duplicate values (two canonical headings must not translate to the same string); a Phase 150 drift test pins each table against the model-derived closed set; a language with no table file is shape-valid but unusable (actionable error at parse/write time).
+- **Language vocabulary (Task 100.120):** ISO 639-1-shaped lowercase two-letter codes (`^[a-z]{2}$`), validated by a new guard in `general/tools/_path_safety.py` (alongside `validate_id`) before any filesystem access -- REQ-008/ACC-013, the same path-injection/confinement discipline as `id`; the set is OPEN at the guard level (any shape-valid code passes) and closed at the table level (codes without a table are rejected at parse/write time), so adding a language means adding one JSON file, no code or guard change; every `language` parameter defaults to `"en"`, and explicit `"en"` is allowed, resolving to the flat `docs/{type}/` directory (EN is the only language without a subfolder).
+- **`list_<d>` semantics:** single language per call -- omitted / `"en"` = today's exact behavior (scans the flat directory), `language="xx"` = lists only the existing `xx` variants (ACC-007); deliberately NO "all languages" mode (`DocSummary` rows carry no language column and would repeat ids; per-artifact language discovery is REQ-012's dedicated tool, Phase 140, ACC-008).
+- **Task 100.150 inventory:** exactly **one** regex-locked English prose field across all i18n-eligible domains -- `prb`'s mandatory `problem_statement` lead paragraph (`prb/models/v1/body.py`, `_PROBLEM_STATEMENT_PATTERN`) -- resolved as **(b) explicit exemption**: it stays in canonical English in every language variant (the translation workflow must not touch it; drift detection must ignore it); every other domain: none found (all other regex-locked tokens are closed vocabulary, cross-reference structure, heading text, language-neutral data, or UC-diagram-renderer-only). See the Decisions Made table below.
+- **Confirmed design facts (ADR items 8-10):** `general/tools/_doc_paths.py`'s `iter_doc_paths` non-recursive `*.md` glob never descends into `{language}` subfolders, so every EN-only consumer (each domain's `list_<d>`/`find_doc_path_by_id`, plus `list_references`, `find_related`/`find_similar_text`, `get_reference_diagram(_all)`) preserves REQ-013 "for free" by directory layout -- to be pinned by a Phase 150 regression test (Task 100.100/150.100); `DocCache` keys entries by the resolved `Path` (never bare `id`), so two languages of the same id already get independent non-colliding entries with **no** `DocCache` code change (Tasks 120.110/125.120 are confirmation/test tasks); `adr` stays unchanged (REQ-009/ACC-015).
+- **ADR written (Task 100.130):** 38efdb66-8025-45c5-bbe8-45b25fc7a772, "Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary" (`docs/adr/38efdb66-8025-45c5-bbe8-45b25fc7a772-multi-language-artifact-variants-directory-layout-heading-ma.md`, created via the `create_adr` MCP tool per ADR 898bfcd0, `specmgr adr-toc` regenerated).
 
 #### 2026-10-29T13:00:00.000+01:00 - Second refinement pass: E/G/D/I findings applied
 
@@ -256,6 +266,32 @@ explicit path-safety/`edit`-tool/REQ-003-end-to-end tasks.
 #### 2026-10-29 11:14:24.992+01:00 - Created
 
 Feature drafted from GitHub issue #197 ("I18n: multi-language support of the same artifact"). Directory layout `./docs/{type}/{language}/` locked in (EN unchanged at `./docs/{type}/`); shared-uuid/shared-schema model confirmed; ADR excluded from scope; translation, drift-detection (structural + staleness), and language-listing all confirmed in scope for this feature, with both read- and write-side `language` parameter support.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-29T21:00:00.000+01:00 - Task 100.150 resolutions: regex-locked English prose inventory (one field found, resolved (b))
+
+Systematic search of the i18n-eligible domains' models and tools (`field_validator`/`model_validator`, `re.fullmatch`/`re.match` against field content -- closed-vocabulary tokens and heading structure excluded, which are REQ-010's own territory) found exactly one regex-locked English prose field. Resolutions per the plan: (a) = a per-language template variant the validator also accepts; (b) = an explicit exemption keeping the field in English in every language. (Phase 100 documents the resolutions only; Task 125.120 applies the `prb` one during implementation.)
+
+| domain | locked field | resolution | rationale |
+| --- | --- | --- | --- |
+| req | none found | -- | `Level` value is the RFC-2119 closed set and `Priority` is a number 0-99 -- closed vocabulary / language-neutral (REQ-010), not prose |
+| uc | none found | -- | body fields are free prose; the `return|continue to step N` / `subordinate|superordinate|extension:` patterns live in the diagram renderer only and run on EN content only (REQ-013) |
+| tsk | none found | -- | the `[ ]`/`[x]` checkbox markers are language-neutral; task descriptions are free text |
+| qa | none found | -- | the `**<d>.<NNNN>**: ` question-number prefix is digits/punctuation (language-neutral); question and answer prose is free |
+| prb | `problem_statement` lead paragraph (`_PROBLEM_STATEMENT_PATTERN`, `fullmatch` in a `field_validator`) | (b) exemption | (a) would thread the file's language into the Pydantic validator layer (the model does not know it today) plus a new pattern and error message per language, indefinitely, for a single sentence whose enforced joiners are schema-constant in nature (REQ-010); the whole sentence stays canonical English in every language -- the translation workflow must not touch it, drift detection must ignore it |
+| gol | none found | -- | `Priority` is a number 0-99 -- language-neutral (REQ-010) |
+| rsk | none found | -- | the `Strategy` value is the TARA closed 4-word set; the `Probability`/`Impact` heading values are schema-constant tokens (REQ-010) |
+| dec | none found | -- | the `Option {N}:` / timestamp-led `UpdateEntry` heading tokens are schema-constant (REQ-010); all body prose is free |
+| sop | none found | -- | the `Step {N}:` / timestamp-led `UpdateEntry` heading tokens are schema-constant (REQ-010); the approval/effectivity lifecycle `status` set is closed frontmatter vocabulary (REQ-010) |
+| vcr | none found | -- | `Verifies` is the `<REQ|UC> <uuid>: <title>` cross-reference structure (the title is free data); `Coverage` and the DTAIS method words are closed vocabulary (REQ-010) |
+| sysrs | none found | -- | every locked pattern is the `<TAG> <uuid>: <title>` cross-reference structure (the title is free data) |
+
+#### 2026-10-29T20:55:00.000+01:00 - Task 100.140: `dec` is the pilot domain for Phases 110-130 and ACC-005/ACC-006/ACC-007
+
+Recorded per the plan's Design Notes (decision already made there): `dec` is the pilot for the implementation phases because it is dispatch-only (no per-domain `update_dec`/`set_status_dec`/`validate_dec` tools to special-case -- the generic `update`/`edit`/`set_status`/`set_classification`/`delete` tools already cover it), has a simple `models/md`-based body, and a small heading set. Phases 110-130 and ACC-005/ACC-006/ACC-007 are exercised against `dec` first; the remaining ten i18n-eligible domains roll out in Phase 125.
 
 ### Related PRs / Commits
 
