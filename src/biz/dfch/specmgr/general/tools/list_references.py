@@ -23,7 +23,8 @@ The generic, cross-domain cross-reference listing tool (ADR 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
 every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
-``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``) plus ``adr`` -- reads
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``) plus ``adr`` --
+reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
 the source, since extraction needs the literal markdown), extracts every
@@ -166,7 +167,7 @@ def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
         f"document's domain (one of {', '.join(ALL_DOMAINS)}) and `id` the source's own "
         "identifier. The tool scans the source's frontmatter-stripped body for reference tags "
         "(the shared reference-tag vocabulary in general.tools._references: the UUID tags "
-        "GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS, each carrying a canonical uuid id, plus FEAT, "
+        "GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT, each carrying a canonical uuid id, plus FEAT, "
         "carrying the full feat-NNN-slug id or the bare feat-NNN number; case-insensitive tag, "
         "space/tab/dash separator, anywhere in a line), dedupes repeated occurrences "
         "(first-occurrence order preserved), and resolves each "
@@ -191,9 +192,9 @@ def list_references(
 
     The source is identified by ``type`` (every whole-body domain
     ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``, plus ``adr``) and its own ``id``, and is
-    validated via ``_path_safety.validate_id`` before any filesystem
-    access (ACC-005). The source is then read as raw, frontmatter-stripped
+    ``feat``/``vcr``/``sysrs``/``txt``, plus ``adr``) and its own
+    ``id``, and is validated via ``_path_safety.validate_id`` before any
+    filesystem access (ACC-005). The source is then read as raw, frontmatter-stripped
     body text (``_splice.body_text`` -- the doc-cache does not apply to it,
     since extraction needs the literal markdown), and every ``<TYPE> <id>``
     cross-reference in that text is extracted
@@ -230,7 +231,7 @@ def list_references(
     type:
         The source document's type / domain: one of ``adr``, ``req``,
         ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
-        ``sop``, ``feat``, ``vcr``, ``sysrs``.
+        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
     id:
         The source document's specmgr-assigned identifier (the
         ``feat-NNN-slug`` folder name for ``feat``).
@@ -262,7 +263,7 @@ def list_references(
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
     FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-    AdrNotFoundError
+    TxtNotFoundError / AdrNotFoundError
         No document of the dispatched source ``type`` has this ``id`` --
         the source domain's own not-found error, propagated unchanged from
         the source domain's own ``load_by_id`` (identical to ``get_<d>``)

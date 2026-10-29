@@ -46,7 +46,9 @@ generic ``list_references`` tool (``general.tools.list_references``):
 
 The reference *tag* vocabulary consists of the tags the SYSRS/VCR
 structured patterns validate as reference targets, plus ``sysrs`` (the
-aggregator document type may reference in free-form prose), plus ``feat``
+aggregator document type may reference in free-form prose), plus ``txt``
+(feat-229-txt -- the free-form catch-all document type, a reference
+target only in free-form prose, like ``sysrs``), plus ``feat``
 (feat-177-list-ref-feat -- the one tag whose id is not a UUID: a FEAT
 reference carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number, and :func:`_load_feat` resolves it by its own folder lookup). It
@@ -144,6 +146,18 @@ Same as :func:`_load_gol`, for the ``rsk`` domain.
 Resolve one ``sysrs`` reference to ``(title, path)``.
 
 Same as :func:`_load_gol`, for the ``sysrs`` domain.
+
+
+### `_load_txt(ref_id: 'str') -> 'tuple[str, Path]'`
+
+Resolve one ``txt`` reference to ``(title, path)`` (feat-229-txt Phase 140).
+
+Same as :func:`_load_gol`, for the ``txt`` domain: the free-form
+catch-all document type reads through its own cache-backed
+``load_by_id`` like every other flat target domain, and ``title`` is
+the referenced document's own ``# {title}`` H1 (``doc.body.text``).
+``TxtNotFoundError`` propagates unchanged (caught by
+:func:`resolve_reference`).
 
 
 ### `_load_uc(ref_id: 'str') -> 'tuple[str, Path]'`

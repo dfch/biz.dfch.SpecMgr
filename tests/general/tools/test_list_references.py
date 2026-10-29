@@ -29,8 +29,10 @@ path-safety guards (ACC-005), the source-missing raise (ACC-006), the
 ``feat-NNN-slug``-id ``feat`` source and a UUID-id ``adr`` source), the
 FEAT target (feat-177-list-ref-feat, issue #177: a QA source referencing a
 feature by its full ``feat-NNN-slug`` id, its bare ``feat-NNN`` number, or
-both spellings in one body), and a live-``mcp`` registration smoke test
-(mirroring ``test_delete.py``'s).
+both spellings in one body), the ``txt`` source (feat-229-txt REQ-009: a
+``txt`` document whose opaque body carries free-floating reference
+tokens), and a live-``mcp`` registration smoke test (mirroring
+``test_delete.py``'s).
 """
 
 from __future__ import annotations
@@ -70,6 +72,8 @@ from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 
@@ -202,6 +206,65 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
 )
 
 _RSK_TITLE = "Sample Risk"
+
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Free-Form Text
+
+    Some free-form prose about the sample.
+
+    ## Updates
+
+    ### 2026-08-30 16:47:59.981Z - Initial entry
+
+    Content.
+    """
+)
+
+_TXT_TITLE = "Sample Free-Form Text"
+
+
+def _txt_body_with_free_floating_req(req_id: str) -> str:
+    """A valid txt body whose opaque free-form markdown carries a free-floating ``REQ <uuid>``
+    reference (feat-229-txt REQ-009: a txt source listing a free-floating reference, picked up by
+    the shared regex scan)."""
+    result = textwrap.dedent(
+        f"""\
+        # Review Notes
+
+        Free-form notes from the review session.
+
+        REQ {req_id}: A requirement this note refers to.
+
+        ## Updates
+
+        ### 2026-08-30 16:47:59.981Z - Initial entry
+
+        Content.
+        """
+    )
+    return result
+
+
+def _txt_body_with_txt_reference(txt_id: str) -> str:
+    """A valid txt body whose opaque free-form markdown carries a free-floating ``TXT <uuid>``
+    reference (feat-229-txt REQ-009: a txt as a reference target, resolved by ``_load_txt``)."""
+    result = textwrap.dedent(
+        f"""\
+        # Review Notes
+
+        Free-form notes from the review session.
+
+        TXT {txt_id}: Another free-form text document.
+
+        ## Updates
+
+        ### 2026-08-30 16:47:59.981Z - Initial entry
+
+        Content.
+        """
+    )
+    return result
 
 
 def _sysrs_body(gol_id: str, rsk_id: str, req_id: str) -> str:
@@ -664,7 +727,7 @@ class TestListReferencesPathSafety(unittest.TestCase):
     def test_wrong_format_source_ids_raise_value_error_for_uuid_domains(self) -> None:
         """A feat-NNN-slug (and every pinned traversal shape, and the empty string) must raise
         ValueError for every UUID source domain."""
-        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr"):
+        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt", "adr"):
             for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID, ""):
                 with self.subTest(doc_type=doc_type, bad_id=bad_id):
                     with self.assertRaises(ValueError):
@@ -696,6 +759,7 @@ class TestListReferencesSourceMissing(TempListReferencesDirTestCase):
             ("dec", _MISSING_UUID, DecNotFoundError),
             ("sop", _MISSING_UUID, SopNotFoundError),
             ("vcr", _MISSING_UUID, VcrNotFoundError),
+            ("txt", _MISSING_UUID, TxtNotFoundError),
             ("feat", _MISSING_FEAT_ID, FeatNotFoundError),
             ("adr", _MISSING_UUID, AdrNotFoundError),
         ]
@@ -844,6 +908,56 @@ class TestListReferencesSourceDomainSpread(TempListReferencesDirTestCase):
         path = Path(row.path)
         self.assertTrue(path.is_absolute())
         self.assertTrue(path.exists())
+
+
+class TestListReferencesTxtSource(TempListReferencesDirTestCase):
+    """feat-229-txt REQ-009: a ``txt`` source document's opaque body is free-form markdown, so its
+    references are free-floating ``<TAG> <uuid>`` tokens picked up by the shared regex scan -- a
+    free-floating ``REQ <uuid>`` and a ``TXT <uuid>`` target both resolve through the tool."""
+
+    def test_a_txt_source_with_a_free_floating_req_reference_returns_a_resolved_row(self) -> None:
+        """REQ-009's second half: a txt source whose body carries only a free-floating
+        ``REQ <uuid>`` returns that reference as one resolved row (the requirement's H1 and its
+        on-disk path), not total: 0."""
+        created_req = create_req(_REQ_MINIMAL_BODY)
+
+        created_txt = create_txt(_txt_body_with_free_floating_req(created_req.id))
+
+        result: PagedResult[ReferenceRow] = list_references(type="txt", id=created_txt.id)
+
+        self.assertEqual(result.total, 1)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(len(result.results), 1)
+
+        row = result.results[0]
+        self.assertEqual((row.type, row.id), ("req", created_req.id))
+        self.assertEqual(row.title, _REQ_TITLE)
+        self.assertIsNone(row.error)
+        self.assertEqual(Path(row.path), self._flat_path("req").resolve())
+
+    def test_a_txt_source_with_a_txt_target_reference_returns_a_resolved_row(self) -> None:
+        """REQ-009's first half: a txt source referencing another txt document by
+        ``TXT <uuid>`` returns that reference as a resolved row (the target's H1 and its on-disk
+        path), via the new ``_load_txt`` target resolver."""
+        created_target = create_txt(_TXT_MINIMAL_BODY)
+
+        created_txt = create_txt(_txt_body_with_txt_reference(created_target.id))
+
+        result = list_references(type="txt", id=created_txt.id)
+
+        self.assertEqual(result.total, 1)
+        self.assertFalse(result.truncated)
+        self.assertEqual(result.error_count, 0)
+        self.assertEqual(len(result.results), 1)
+
+        row = result.results[0]
+        self.assertEqual((row.type, row.id), ("txt", created_target.id))
+        self.assertEqual(row.title, _TXT_TITLE)
+        self.assertIsNone(row.error)
+        # Two txt documents share the temp base dir: the target is the file named after its own id.
+        target_path = next(path for path in (self.docs_root / "txt").glob("*.md") if created_target.id in path.name)
+        self.assertEqual(Path(row.path), target_path.resolve())
 
 
 class TestListReferencesFeatTarget(TempListReferencesDirTestCase):
