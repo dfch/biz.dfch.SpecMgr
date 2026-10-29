@@ -373,7 +373,7 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   returned body line with its 1-based absolute body-line number in the
   ``"<n>: "`` form -- a windowed numbered read numbers from the clamped offset and
   never restarts, so a number seen can be fed straight back into the generic
-  ``update`` tool's   ``offset``)), ``list_sysrs``, ``get_sysrs_example``,
+  ``update`` tool's ``offset``)), ``list_sysrs``, ``get_sysrs_example``,
   ``get_sysrs_schema``, ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
   aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
   ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section

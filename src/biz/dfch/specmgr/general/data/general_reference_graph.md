@@ -215,8 +215,7 @@ byte layout).
 
 One `component "{TYPE}" { … }` curly domain group per NON-EMPTY domain (a
 domain with no node emits no group), in `ALL_DOMAINS` order (adr, req, uc,
-tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt); the group title is
-the
+tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt); the group title is the
 UPPERCASE type tag. The group is a `component` declaration line ending with
 `{`, closed by the `}` line. Nodes are sorted by id (the verbatim id string,
 lexicographic) inside a group.

@@ -5,7 +5,7 @@
 The generic, cross-domain, type-dispatched dry-run validation tool for the
 whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_validate_<d>``), each a
 verbatim port of the deleted ``validate_<d>`` tool's body: ``has_frontmatter``
 detection via ``bool(frontmatter.loads(content).metadata)``, then either
@@ -218,7 +218,7 @@ Validate ``content`` as markdown of the given document ``type``, without reading
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same ``has_frontmatter`` detection, same
 ``full=True``/``full=False`` body-only-vs-complete-document semantics,
 same ``wrap_tool_errors`` message enrichment as every retired
@@ -257,7 +257,7 @@ Parameters
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 content:
     The markdown to validate.
 full:

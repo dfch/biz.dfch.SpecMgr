@@ -4,7 +4,7 @@
 
 The generic, cross-domain hard-delete tool for the whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -192,7 +192,7 @@ Permanently delete an existing document from disk, across the whole-body domains
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``sop``/``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same id resolution via the domain's ``load_by_id``,
 same per-id domain lock around the whole resolve-then-delete sequence,
 same domain not-found error). Every flat domain (every whole-body domain
@@ -220,7 +220,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 
 Returns
 -------

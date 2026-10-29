@@ -4,7 +4,7 @@
 
 The generic, cross-domain classification-change tool for the
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``).
 Unlike ``set_status`` (``general/tools/set_status.py``), which also
 dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
 separate ``AdrFrontmatter`` model
@@ -224,7 +224,7 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 Replace the ``classification`` frontmatter field of an existing document.
 
 Cross-domain generic for the whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
 dispatches on ``type`` to the domain's own adapter (same lock, same id
 resolution, same body handling, same domain not-found error). ``adr``
 is deliberately excluded (its separate ``AdrFrontmatter`` model is out
@@ -265,7 +265,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 classification:
     The new classification value. Fully free-text; a blank or
     whitespace-only value clears the field back to ``None``/absent.

@@ -5,7 +5,7 @@
 The generic, cross-domain, surgical exact-match string-replacement tool for
 the frontmatter-stripped body of the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_edit_<d>``), each mirroring
 the generic ``update`` tool's own adapter shape (same domain lock, same
 ``load_by_id``, same frontmatter carry-over with only ``updated`` bumped,
@@ -334,7 +334,7 @@ Surgically replace a byte-exact occurrence of ``old_str`` in an existing documen
 
 Cross-domain generic for the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same lock, same id resolution, same frontmatter
 carry-over, same verbatim persistence, same domain not-found error).
 The signature and the stage-1 runtime error strings mirror the
@@ -401,7 +401,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 old_str:
     The exact text to find in the current frontmatter-stripped on-disk
     body (byte-exact, including whitespace, indentation, and line
