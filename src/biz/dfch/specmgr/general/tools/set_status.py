@@ -227,6 +227,13 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import TxtFrontmatter
+from ...txt.models.v1.frontmatter import _ALLOWED_STATUSES as _TXT_ALLOWED_STATUSES
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from ...uc.tools._io import load_by_id as load_uc_by_id
@@ -262,6 +269,7 @@ _SetStatusFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
     | Adr
     | ParseFailureResult
 )
@@ -284,6 +292,7 @@ _ALLOWED_STATUSES_BY_TYPE: dict[str, frozenset[str]] = {
     "feat": _FEAT_ALLOWED_STATUSES,
     "vcr": _VCR_ALLOWED_STATUSES,
     "sysrs": _SYSRS_ALLOWED_STATUSES,
+    "txt": _TXT_ALLOWED_STATUSES,
     ADR: _ADR_FIXED_STATUSES,
 }
 
@@ -795,6 +804,45 @@ def _set_status_sysrs(id_: str, status: str, superseded_by: str | None) -> Sysrs
     return new_frontmatter
 
 
+def _set_status_txt(id_: str, status: str, superseded_by: str | None) -> TxtFrontmatter | ParseFailureResult:
+    """Replace the status of the free-form text document identified by ``id_``.
+
+    Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
+    ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_status_req` for
+    the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
+    never be given.
+    """
+    assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
+
+    base_dir = txt_base_dir()
+    with txt_lock(id_):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["status"] = status
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="txt", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, raw_body)
+        read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return new_frontmatter
+
+
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     """Replace the status of the ADR identified by ``id_``.
 
@@ -832,6 +880,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     "feat": _set_status_feat,
     "vcr": _set_status_vcr,
     "sysrs": _set_status_sysrs,
+    "txt": _set_status_txt,
     ADR: _set_status_adr,
 }
 

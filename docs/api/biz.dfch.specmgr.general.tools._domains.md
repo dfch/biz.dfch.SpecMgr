@@ -22,10 +22,11 @@ this package (``update``'s/``set_status``'s/``set_classification``'s/
 the two new similarity tools (Phase 3) would have been the sixth and
 seventh copies.
 
-- :data:`WHOLE_BODY_DOMAINS` -- the 12-domain tuple itself: the only
+- :data:`WHOLE_BODY_DOMAINS` -- the 13-domain tuple itself: the only
   hand-listed tuple in the module, the whole-body document types in the
   canonical order ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``,
-  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``. Every other
+  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
+  Every other
   name-set constant is derived from it, never hand-listed a second
   time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
   without ``feat``, :data:`UUID_DOMAINS` is those plus ``adr``, and

@@ -25,7 +25,16 @@ resources to get_<d>_schema tools"):
   more (neither as a static resource nor as a URI template);
 - the surface totals moved from 103 tools / 49 resources to 115 tools /
   37 resources (36 static + the ``specmgr://adr/{id}`` URI template), as
-  measured against the worktree surface at the ADR's writing time.
+  measured against the worktree surface at the ADR's writing time;
+- feat-229-txt Phase 130 (generic-tool registration) grew the live
+  surface by the 7 ``txt`` tools (115 + 7 = 122) and the 2 ``txt``
+  resources (37 + 2 = 39) **at the ``general.tools._domains`` import
+  edge** -- importing ``txt.tools._io``/``txt.tools._paths`` runs
+  ``txt/__init__.py``'s vcr-precedent ``from . import prompts, resources,
+  tools`` line, so every test process that imports
+  ``biz.dfch.specmgr.server`` registers the whole ``txt`` decorator
+  surface on the live ``mcp`` singleton ahead of Phase 160's own
+  ``server.py`` bottom-line import (which is then a no-op re-import).
 """
 
 from __future__ import annotations
@@ -61,17 +70,23 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         for domain in WHOLE_BODY_DOMAINS:
             self.assertNotIn(f"specmgr://{domain}/schema", uris)
 
-    def test_tool_total_is_115(self) -> None:
-        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115."""
+    def test_tool_total_is_122(self) -> None:
+        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115, + 7 txt tools
+        (feat-229 Phase 130 import edge: ``general.tools._domains``'s module-level
+        ``txt.tools._io``/``txt.tools._paths`` imports run ``txt/__init__.py``'s
+        ``from . import prompts, resources, tools`` line, registering all 7 on the live
+        singleton ahead of Phase 160's ``server.py`` line) = 122."""
         result = len(self._tools)
 
-        self.assertEqual(result, 115)
+        self.assertEqual(result, 122)
 
-    def test_resource_total_is_37(self) -> None:
-        """49 resources (12 schema + 36 static + 1 template) - 12 = 37."""
+    def test_resource_total_is_39(self) -> None:
+        """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 2 txt resources
+        (``specmgr://txt/example``/``specmgr://txt/template``, the same Phase 130 import
+        edge -- ``txt/__init__.py`` pulls ``txt.resources`` in with ``txt.tools``) = 39."""
         result = len(self._resources) + len(self._templates)
 
-        self.assertEqual(result, 37)
+        self.assertEqual(result, 39)
 
 
 if __name__ == "__main__":

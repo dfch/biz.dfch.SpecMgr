@@ -88,6 +88,9 @@ from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sysrs.tools._io import load_by_id as load_sysrs_by_id
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.txt.tools._io import load_by_id as load_txt_by_id
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
 from biz.dfch.specmgr.tsk.tools._io import load_by_id as load_tsk_by_id
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
@@ -458,6 +461,23 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -582,6 +602,15 @@ _CASES: list[_Case] = [
         base_dir=sysrs_base_dir,
         not_found_error=SysrsNotFoundError,
         minimal_body=_SYSRS_MINIMAL_BODY,
+        wrong_format_id=_FEAT_SLUG_ID,
+    ),
+    _Case(
+        doc_type="txt",
+        create=create_txt,
+        load_by_id=load_txt_by_id,
+        base_dir=txt_base_dir,
+        not_found_error=TxtNotFoundError,
+        minimal_body=_TXT_MINIMAL_BODY,
         wrong_format_id=_FEAT_SLUG_ID,
     ),
 ]

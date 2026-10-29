@@ -191,6 +191,17 @@ See :func:`_set_classification_req` for the full semantics (same
 ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
 
 
+### `_set_classification_txt(id_: 'str', classification: 'str') -> 'TxtFrontmatter | ParseFailureResult'`
+
+Replace the classification of the free-form text document identified by ``id_``.
+
+Mirrors :func:`_set_classification_sysrs`'s shape (same ``txt_lock``,
+``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_classification_req`
+for the full semantics.
+
+
 ### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the classification of the use case identified by ``id_``.

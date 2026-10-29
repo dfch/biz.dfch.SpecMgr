@@ -124,6 +124,9 @@ from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._cache import read_tsk
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._paths import tsk_base_dir
+from ...txt.tools._cache import read_txt
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._cache import read_uc
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
@@ -156,7 +159,7 @@ _REGISTRY_TITLE = "Reference Graph"
 #: here over ``ALL_DOMAINS``): the source document is resolved through the
 #: source domain's own id resolution (the domain's own ``XNotFoundError``
 #: propagates unchanged), and every scanned document is read through the
-#: domain's own read path below (cache-aware for the 12 whole-body domains,
+#: domain's own read path below (cache-aware for the 13 whole-body domains,
 #: never-cached for ``adr``).
 _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple[Path, BaseModel]]]] = {
     "req": (req_base_dir, load_req_by_id),
@@ -171,6 +174,7 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "feat": (feat_base_dir, load_feat_by_id),
     "vcr": (vcr_base_dir, load_vcr_by_id),
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
+    "txt": (txt_base_dir, load_txt_by_id),
     "adr": (adr_base_dir, load_adr_by_id),
 }
 
@@ -181,7 +185,7 @@ assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
 )
 
 #: Per source-domain read leg (rulebook §3's "the per-domain cache-aware
-#: reads; the never-cached adr leg"): the 12 whole-body domains read through
+#: reads; the never-cached adr leg"): the 13 whole-body domains read through
 #: their own content-hash-validated ``read_<d>`` cache singleton
 #: (feat-107-doc-cache; ``feat``'s CLEAN, full-parse stage), and ``adr``
 #: through its own plain ``read_adr`` (permanently DocCache-excluded, ADR
@@ -200,6 +204,7 @@ _SCAN_READERS: dict[str, Callable[[Path], Any]] = {
     "feat": read_feat,
     "vcr": read_vcr,
     "sysrs": read_sysrs,
+    "txt": read_txt,
     "adr": read_adr,
 }
 

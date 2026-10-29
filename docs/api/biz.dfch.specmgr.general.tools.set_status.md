@@ -274,6 +274,18 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
 
+### `_set_status_txt(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TxtFrontmatter | ParseFailureResult'`
+
+Replace the status of the free-form text document identified by ``id_``.
+
+Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
+``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_status_req` for
+the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
+never be given.
+
+
 ### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the status of the use case identified by ``id_``.

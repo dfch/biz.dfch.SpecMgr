@@ -126,7 +126,8 @@ Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
 reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
 each have their own dedicated env var; every other domain (``req``,
 ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``vcr``, ``sysrs``) shares the one root ``SPECMGR_DOCS_DIR`` env var,
+``vcr``, ``sysrs``, ``txt``) shares the one root ``SPECMGR_DOCS_DIR``
+env var,
 so their ``env_var``/``env_var_set`` fields are identical by design, not
 a bug.
 

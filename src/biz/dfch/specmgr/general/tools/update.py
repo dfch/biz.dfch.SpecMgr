@@ -204,6 +204,12 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import Txt, TxtFrontmatter
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter, UseCase
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -1143,6 +1149,76 @@ def _update_sysrs(
     return _UpdateOutcome(frontmatter=new_frontmatter)
 
 
+def _update_txt(
+    id_: str, content: str, offset: int | None, limit: int | None
+) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
+    """Replace the body of the free-form text document identified by ``id_`` (whole-body or line-range mode).
+
+    Mirrors :func:`_update_sysrs`'s shape (same ``txt_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+    ``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
+    36905d5b, so this adapter was written directly in this shape), plus the
+    REQ-002 range branch (see :func:`_update_req`).
+    """
+    if offset is not None:
+        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
+
+        base_dir = txt_base_dir()
+        with txt_lock(id_):
+            try:
+                path, existing = load_txt_by_id(base_dir, id_)
+            except TxtNotFoundError:
+                parse_failure = find_parse_failure(base_dir, id_, read_txt)
+                if parse_failure is None:
+                    raise
+                failure_path, failure_error = parse_failure
+                assert_within(base_dir, failure_path)
+                return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+            assert_within(base_dir, path)
+            pre = body_text(path)
+            spliced = splice_body(pre, offset, limit, content)
+            try:
+                with wrap_tool_errors(domain="txt", tool="update", channel=BODY_CHANNEL):
+                    Txt.from_text(format_text(spliced))
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+            now = now_timestamp()
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = TxtFrontmatter(**fm_data)
+            write_txt_file(path, new_frontmatter, spliced)
+            read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+        return _UpdateOutcome(frontmatter=new_frontmatter, pre_body=pre, post_body=spliced, offset=offset, limit=limit)
+
+    try:
+        with wrap_tool_errors(domain="txt", tool="update", channel=BODY_CHANNEL):
+            Txt.from_text(format_text(content))
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+
+    base_dir = txt_base_dir()
+    with txt_lock(id_):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, content)
+        read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return _UpdateOutcome(frontmatter=new_frontmatter)
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[
     str,
@@ -1160,6 +1236,7 @@ _ADAPTERS: dict[
     "feat": _update_feat,
     "vcr": _update_vcr,
     "sysrs": _update_sysrs,
+    "txt": _update_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (

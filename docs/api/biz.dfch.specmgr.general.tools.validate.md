@@ -188,6 +188,16 @@ Validate ``content`` as task list markdown -- verbatim port of the retired ``val
 See :func:`_validate_req` for the shared semantics.
 
 
+### `_validate_txt(content: 'str', full: 'bool') -> 'None'`
+
+Validate ``content`` as free-form text markdown.
+
+Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
+label, ``parse_txt`` for the full document, ``Txt.from_text`` for the
+body-only shape; ``txt`` is dispatch-only from day one per ADR
+36905d5b) -- see :func:`_validate_req` for the shared semantics.
+
+
 ### `_validate_uc(content: 'str', full: 'bool') -> 'None'`
 
 Validate ``content`` as use case markdown -- verbatim port of the retired ``validate_uc``.

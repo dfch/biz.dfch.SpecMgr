@@ -90,7 +90,7 @@ __all__ = ["find_related"]
         "Find the documents most semantically related to an existing document, given its `type`/`id`, "
         "ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the "
         "`similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, "
-        "gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with "
+        "gol, rsk, dec, sop, feat, vcr, sysrs, txt; `adr` is excluded structurally) -- restrict with "
         "`target_types`; the source document itself is excluded from the results. Returns up to "
         "`top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, "
         "sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower "
@@ -115,7 +115,7 @@ def find_related(
     path-safety guards included), embeds it through the
     content-hash-validated embedding cache, and ranks every candidate
     document across the target whole-body domains (all of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs by default --
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt by default --
     ``adr`` is structurally excluded, issue #46 -- or the
     caller-supplied ``target_types`` subset) against the source's own
     vector by cosine similarity (dot product on L2-normalized vectors),
@@ -139,7 +139,7 @@ def find_related(
     type:
         The source document's type / domain: one of ``req``, ``uc``,
         ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-        ``feat``, ``vcr``, ``sysrs`` (``adr`` is rejected).
+        ``feat``, ``vcr``, ``sysrs``, ``txt`` (``adr`` is rejected).
     id:
         The source document's specmgr-assigned identifier: a canonical
         lowercase-hex UUID for every domain other than ``feat``, a
@@ -147,7 +147,7 @@ def find_related(
     target_types:
         The domains to search (each one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``), in the order to enumerate them in;
+        ``vcr``, ``sysrs``, ``txt``), in the order to enumerate them in;
         ``None`` (the default) means every whole-body domain.
     top_k:
         The maximum number of hits to return (1..100, default 10).
@@ -180,7 +180,8 @@ def find_related(
         (REQ-009/ACC-015); nothing is read or embedded.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    SopNotFoundError / FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError
+    SopNotFoundError / FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
+    TxtNotFoundError
         No document of ``type`` has this ``id`` -- the domain's own
         not-found error, propagated unchanged from the registry's
         ``load_by_id`` (REQ-009/ACC-015; an unparseable source is

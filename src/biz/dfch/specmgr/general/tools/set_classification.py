@@ -177,6 +177,12 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import TxtFrontmatter
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -211,6 +217,7 @@ _SetClassificationFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
     | ParseFailureResult
 )
 
@@ -607,6 +614,40 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
     return new_frontmatter
 
 
+def _set_classification_txt(id_: str, classification: str) -> TxtFrontmatter | ParseFailureResult:
+    """Replace the classification of the free-form text document identified by ``id_``.
+
+    Mirrors :func:`_set_classification_sysrs`'s shape (same ``txt_lock``,
+    ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_classification_req`
+    for the full semantics.
+    """
+    base_dir = txt_base_dir()
+    with txt_lock(id_):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["classification"] = classification
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="txt", tool="set_classification", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, raw_body)
+        read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return new_frontmatter
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "req": _set_classification_req,
@@ -621,6 +662,7 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "feat": _set_classification_feat,
     "vcr": _set_classification_vcr,
     "sysrs": _set_classification_sysrs,
+    "txt": _set_classification_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (

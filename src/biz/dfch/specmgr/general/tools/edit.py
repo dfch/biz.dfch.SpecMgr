@@ -232,6 +232,12 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import Txt, TxtFrontmatter
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter, UseCase
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -268,6 +274,7 @@ _EditFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
     | ParseFailureResult
     | ValidateResult
 )
@@ -797,6 +804,43 @@ def _edit_sysrs(
     return new_frontmatter
 
 
+def _edit_txt(
+    id_: str, old_str: str, new_str: str, replace_all: bool
+) -> TxtFrontmatter | ParseFailureResult | ValidateResult:
+    """Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
+
+    Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+    ``TxtNotFoundError``).
+    """
+    base_dir = txt_base_dir()
+    with txt_lock(id_):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
+        try:
+            with wrap_tool_errors(domain="txt", tool="edit", channel=BODY_CHANNEL):
+                Txt.from_text(format_text(edited))
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, edited)
+        read_txt(path)  # warm the cache (feat-107-doc-cache, REQ-006)
+    return new_frontmatter
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, str, bool], _EditFrontmatter]] = {
     "req": _edit_req,
@@ -811,6 +855,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str, bool], _EditFrontmatter]] = {
     "feat": _edit_feat,
     "vcr": _edit_vcr,
     "sysrs": _edit_sysrs,
+    "txt": _edit_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (

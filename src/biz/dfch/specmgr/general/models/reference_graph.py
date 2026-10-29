@@ -96,10 +96,12 @@ DEFAULT_MAX_LABEL = 40
 #: registry-unique); every other domain takes the ``[TYPE-{id}]`` form.
 _FEAT = "feat"
 
-#: The frozen 13-domain group order (rulebook §2.7 -- ``ALL_DOMAINS``):
-#: the one constant this pure module may not import from
-#: ``general.tools._domains`` (the import-free bar); the drift is pinned by
-#: ``tests/general/models/test_reference_graph.py``.
+#: The frozen 14-domain group order (rulebook §2.7 -- ``ALL_DOMAINS``;
+#: the rulebook's own palette amendment and entry-count text follow in
+#: feat-229-txt Phase 150, this tuple tracks the shared source from the
+#: moment ``txt`` joins it): the one constant this pure module may not
+#: import from ``general.tools._domains`` (the import-free bar); the drift
+#: is pinned by ``tests/general/models/test_reference_graph.py``.
 _DOMAIN_ORDER: tuple[str, ...] = (
     "adr",
     "req",
@@ -114,6 +116,7 @@ _DOMAIN_ORDER: tuple[str, ...] = (
     "feat",
     "vcr",
     "sysrs",
+    "txt",
 )
 
 #: The frozen 14-entry palette (rulebook §2.5), in the skinparam block's own

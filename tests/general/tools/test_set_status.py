@@ -111,6 +111,11 @@ from biz.dfch.specmgr.tsk.models.v1.frontmatter import _ALLOWED_STATUSES as _TSK
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument, TxtFrontmatter
+from biz.dfch.specmgr.txt.models.v1.frontmatter import _ALLOWED_STATUSES as _TXT_ALLOWED_STATUSES
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
@@ -428,6 +433,23 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -573,6 +595,17 @@ _CASES: list[_Case] = [
         invalid_status="accepted",
         allowed_statuses=_SYSRS_ALLOWED_STATUSES,
     ),
+    _Case(
+        doc_type="txt",
+        create=create_txt,
+        not_found_error=TxtNotFoundError,
+        frontmatter_type=TxtFrontmatter,
+        document_type=TxtDocument,
+        minimal_body=_TXT_MINIMAL_BODY,
+        valid_status="progress",
+        invalid_status="accepted",
+        allowed_statuses=_TXT_ALLOWED_STATUSES,
+    ),
 ]
 
 #: A well-formed canonical UUID (feat-38-39-41-43-44 Phase 4 added "adr" to ``_path_safety``'s
@@ -636,6 +669,7 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     _ParseFailureCase(
         "sysrs", create_sysrs, SysrsNotFoundError, sysrs_base_dir, list_sysrs, _SYSRS_MINIMAL_BODY, "review"
     ),
+    _ParseFailureCase("txt", create_txt, TxtNotFoundError, txt_base_dir, list_txt, _TXT_MINIMAL_BODY, "progress"),
 ]
 _ADR_SEED_BODY = AdrBody(
     title="A title",
@@ -1031,6 +1065,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
     _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, "active", _FEAT_SLUG_ID),
     _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, "progress", _FEAT_SLUG_ID),
     _InjectionCase("sysrs", create_sysrs, sysrs_base_dir, _SYSRS_MINIMAL_BODY, "review", _FEAT_SLUG_ID),
+    _InjectionCase("txt", create_txt, txt_base_dir, _TXT_MINIMAL_BODY, "progress", _FEAT_SLUG_ID),
     _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, "progress", _MISSING_UUID),
 ]
 

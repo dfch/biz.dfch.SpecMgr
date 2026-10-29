@@ -300,6 +300,17 @@ that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
 
+### `_update_txt(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+Replace the body of the free-form text document identified by ``id_`` (whole-body or line-range mode).
+
+Mirrors :func:`_update_sysrs`'s shape (same ``txt_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
+36905d5b, so this adapter was written directly in this shape), plus the
+REQ-002 range branch (see :func:`_update_req`).
+
+
 ### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).

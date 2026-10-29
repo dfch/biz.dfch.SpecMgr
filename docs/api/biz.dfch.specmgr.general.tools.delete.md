@@ -165,6 +165,13 @@ Hard-delete the task list ``id_`` from disk (REQ-001/004/005/006).
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 
+### `_delete_txt(id_: 'str') -> 'str'`
+
+Hard-delete the free-form text document ``id_`` from disk (REQ-001/004/005/006).
+
+Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+
 ### `_delete_uc(id_: 'str') -> 'str'`
 
 Hard-delete the use case ``id_`` from disk (REQ-001/004/005/006).

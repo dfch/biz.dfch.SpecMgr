@@ -93,6 +93,8 @@ from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._paths import tsk_base_dir
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
@@ -125,6 +127,7 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "feat": (feat_base_dir, load_feat_by_id),
     "vcr": (vcr_base_dir, load_vcr_by_id),
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
+    "txt": (txt_base_dir, load_txt_by_id),
     "adr": (adr_base_dir, load_adr_by_id),
 }
 

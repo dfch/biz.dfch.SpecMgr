@@ -15,16 +15,14 @@ This tool is the sole id-based read path for TXT: there is no
 same reasoning as VCR's own ``get_vcr`` tool).
 
 **Path-safety guard (the same ``general.tools._path_safety`` guard as
-VCR).** ``txt`` is not yet a member of ``general.tools._domains``'
-``WHOLE_BODY_DOMAINS`` (the domain registration lands in this feature's
-Phase 130), so the ``validate_id("txt", ...)`` dispatcher would reject
-every id with its own unknown-type error until then. This tool therefore
-applies the two primitive guards ``validate_id`` composes for every
-UUID-shaped domain -- :func:`~biz.dfch.specmgr.general.tools._path_safety.
-assert_no_traversal` plus :func:`~biz.dfch.specmgr.general.tools._path_safety.
-assert_uuid`, in that order, both raised before any filesystem access --
-which is byte-for-byte the same id-validation behaviour VCR's
-``validate_id("vcr", ...)`` call gives for every id value.
+VCR).** This tool validates ``id`` via the shared
+``general.tools._path_safety.validate_id("txt", ...)`` dispatcher call,
+mirroring ``vcr.tools.get_vcr``'s own ``validate_id("vcr", ...)`` call:
+for every UUID-shaped domain (``txt`` among them, since the Phase 130
+``general.tools._domains`` registration) that composes exactly
+:func:`~biz.dfch.specmgr.general.tools._path_safety.assert_no_traversal`
+plus :func:`~biz.dfch.specmgr.general.tools._path_safety.assert_uuid`, in
+that order, both raised before any filesystem access.
 
 ``raw=True`` returns the frontmatter-stripped body text verbatim instead of
 the parsed document -- produced by the same

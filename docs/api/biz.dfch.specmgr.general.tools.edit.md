@@ -251,6 +251,15 @@ frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
 
+### `_edit_txt(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'TxtFrontmatter | ParseFailureResult | ValidateResult'`
+
+Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
+
+Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+``TxtNotFoundError``).
+
+
 ### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.

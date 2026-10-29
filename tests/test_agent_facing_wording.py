@@ -63,10 +63,10 @@ from biz.dfch.specmgr.tsk.models.v1 import parse_tsk
 from biz.dfch.specmgr.vcr.models.v1 import parse_vcr
 
 # ---------------------------------------------------------------------------
-# G1 -- the 12 update instruction files' context-sensitive schema step
+# G1 -- the 13 update instruction files' context-sensitive schema step
 # ---------------------------------------------------------------------------
 
-#: The context-sensitive schema step's heading -- identical in all 12 files.
+#: The context-sensitive schema step's heading -- identical in all 13 files.
 _UPDATE_SCHEMA_STEP_HEADING = "Check the schema only for structural changes, and validate before writing if useful"
 
 #: The step's first sentence core, per domain: it names the
@@ -75,22 +75,29 @@ _UPDATE_SCHEMA_TOOL_CONDITION = (
     "Call the `get_{d}_schema` tool (the generated JSON Schema) only for a whole-body rewrite or a structural change"
 )
 
-#: The local-splice skip semantics' common core, per domain (vcr's variant
-#: reads "Skip the schema fetch for a local splice ..." instead of "Skip the
-#: fetch for a local splice ..." -- the pinned core is the shared part).
-_UPDATE_LOCAL_SPLICE_SKIP = "local splice (a line-range replace), where the raw body is already in context"
+#: The local-splice skip semantics' common core, per domain. Two wording
+#: variants exist across the 13 files: vcr and txt read "Skip the schema
+#: fetch for a local splice (a line-range replace ...)" instead of the
+#: other 11 files' "Skip the fetch for a local splice (a line-range
+#: replace) ...", and txt's splice parenthetical additionally names the
+#: ``edit`` tool ("(a line-range replace or an `edit`)") -- the pinned
+#: cores below are the shared part (feat-229-txt Phase 130).
+_UPDATE_LOCAL_SPLICE_SKIP = "local splice (a line-range replace"
+_UPDATE_RAW_BODY_IN_CONTEXT = "where the raw body is already in context"
 
-#: Why the skip is safe -- the generic ``update`` tool still validates the
-#: spliced result as a whole document before writing.
-_UPDATE_SKIP_IS_SAFE = (
-    "`update` still validates the spliced result as a whole document before writing anything, so the skip is safe"
-)
+#: Why the skip is safe -- the generic write tool(s) still validate the
+#: spliced/edited result as a whole document before writing. 12 files read
+#: "`update` still validates the spliced result as a whole document ...";
+#: txt reads "`update` and `edit` both validate the result as a whole
+#: document ..." (feat-229-txt Phase 130) -- the pinned core is the shared
+#: part.
+_UPDATE_SKIP_IS_SAFE = "whole document before writing anything, so the skip is safe"
 
 
 def _normalized_update_instructions(domain: str) -> str:
     """The packaged ``<d>_update_instructions.md`` text, whitespace-normalized.
 
-    The 12 files soft-wrap at different columns per domain, so every phrase
+    The 13 files soft-wrap at different columns per domain, so every phrase
     pin is matched against single-spaced text.
     """
     result = re.sub(r"\s+", " ", read_packaged_text(domain, "update_instructions"))
@@ -101,8 +108,8 @@ def _normalized_update_instructions(domain: str) -> str:
 # G2 -- the tool/prompt description clauses (live ``mcp`` metadata)
 # ---------------------------------------------------------------------------
 
-#: The per-domain structure-reference clause -- the 12 ``create_<d>`` tool
-#: descriptions and the 24 create/update prompt descriptions all carry it,
+#: The per-domain structure-reference clause -- the 13 ``create_<d>`` tool
+#: descriptions and the 26 create/update prompt descriptions all carry it,
 #: with the domain prefix swapped.
 _CREATE_STRUCTURE_REFERENCE = (
     "The structure reference is the `get_{d}_schema` tool (the generated JSON Schema); the "
@@ -110,7 +117,7 @@ _CREATE_STRUCTURE_REFERENCE = (
 )
 
 #: The generic structure-reference clause -- the ``update`` and ``validate``
-#: tool descriptions (one clause covering all 12 domains).
+#: tool descriptions (one clause covering all 13 domains).
 _GENERIC_STRUCTURE_REFERENCE = (
     "Each domain's structure reference is its own `get_<d>_schema` tool (the generated JSON Schema), "
     "with `get_<d>_template`/`get_<d>_example` as the authoring starting points."
@@ -149,7 +156,7 @@ _PRB_LEAD_SENTENCE_FRAME = "[Current state] is causing [specific issue], for [st
 
 
 class TestUpdateInstructionSchemaStep(unittest.TestCase):
-    """G1: the 12 update instruction files' context-sensitive schema step."""
+    """G1: the 13 update instruction files' context-sensitive schema step."""
 
     def test_step_heading(self) -> None:
         """Every update instruction file carries the context-sensitive step heading."""
@@ -169,17 +176,18 @@ class TestUpdateInstructionSchemaStep(unittest.TestCase):
 
     def test_step_carries_local_splice_skip_semantics(self) -> None:
         """The step skips the schema fetch for a local splice (the raw body is
-        already in context) and states why the skip is safe (``update`` still
-        validates the spliced result as a whole document)."""
+        already in context) and states why the skip is safe (the generic
+        write tool(s) still validate the result as a whole document)."""
         for domain in WHOLE_BODY_DOMAINS:
             text = _normalized_update_instructions(domain)
             with self.subTest(domain=domain):
                 self.assertIn(_UPDATE_LOCAL_SPLICE_SKIP, text)
+                self.assertIn(_UPDATE_RAW_BODY_IN_CONTEXT, text)
                 self.assertIn(_UPDATE_SKIP_IS_SAFE, text)
 
 
 class TestStructureReferenceDescriptionClauses(unittest.TestCase):
-    """G2: the 38 structure-reference clauses + the ``create_adr`` exclusion,
+    """G2: the 41 structure-reference clauses + the ``create_adr`` exclusion,
     pinned against the live ``mcp`` tool/prompt metadata."""
 
     @classmethod
@@ -190,7 +198,7 @@ class TestStructureReferenceDescriptionClauses(unittest.TestCase):
         cls._prompts = {prompt.name: prompt for prompt in prompts}
 
     def test_create_tool_descriptions_carry_per_domain_clause(self) -> None:
-        """Each of the 12 ``create_<d>`` tool descriptions carries the per-domain
+        """Each of the 13 ``create_<d>`` tool descriptions carries the per-domain
         structure-reference clause."""
         for domain in WHOLE_BODY_DOMAINS:
             with self.subTest(domain=domain):
@@ -204,7 +212,7 @@ class TestStructureReferenceDescriptionClauses(unittest.TestCase):
                 self.assertIn(_GENERIC_STRUCTURE_REFERENCE, self._tools[name].description)
 
     def test_prompt_descriptions_carry_per_domain_clause(self) -> None:
-        """Each of the 24 create/update prompt descriptions carries the
+        """Each of the 26 create/update prompt descriptions carries the
         per-domain structure-reference clause (rsk: ``create_risk``/
         ``update_risk``, tsk: ``create_task``/``update_task``)."""
         for domain in WHOLE_BODY_DOMAINS:

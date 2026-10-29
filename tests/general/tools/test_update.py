@@ -99,6 +99,10 @@ from biz.dfch.specmgr.tsk.models.v1 import TskDocument, TskFrontmatter
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
 from biz.dfch.specmgr.tsk.tools.list_tsk import list_tsk
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument, TxtFrontmatter
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError, uc_base_dir
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
@@ -660,6 +664,39 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
 
 _SYSRS_UPDATED_BODY = _SYSRS_MINIMAL_BODY.replace("Onboarding only.", "Onboarding and renewals.")
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
+_TXT_UPDATED_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body, revised.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-07-01 10:00:00.000Z - Revised note
+
+    The revised note content.
+    """
+)
+
 #: A minimal, valid feat body (ACC-008's injection coverage: feat is the one whole-body domain
 #: whose id shape differs from every other domain here, mirroring ``test_delete.py``'s own fixture).
 _FEAT_MINIMAL_BODY = textwrap.dedent(
@@ -764,6 +801,7 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     _ParseFailureCase("sop", create_sop, SopNotFoundError, list_sop, _SOP_MINIMAL_BODY, _SOP_UPDATED_BODY),
     _ParseFailureCase("vcr", create_vcr, VcrNotFoundError, list_vcr, _VCR_MINIMAL_BODY, _VCR_UPDATED_BODY),
     _ParseFailureCase("sysrs", create_sysrs, SysrsNotFoundError, list_sysrs, _SYSRS_MINIMAL_BODY, _SYSRS_UPDATED_BODY),
+    _ParseFailureCase("txt", create_txt, TxtNotFoundError, list_txt, _TXT_MINIMAL_BODY, _TXT_UPDATED_BODY),
 ]
 
 
@@ -1075,6 +1113,36 @@ _CASES: list[_Case] = [
         insert_marker="## System Scope",
         insert_line="Additional purpose detail.",
         size_change_second_line="The scope statement was refined in review.",
+    ),
+    _Case(
+        doc_type="txt",
+        create=create_txt,
+        not_found_error=TxtNotFoundError,
+        frontmatter_type=TxtFrontmatter,
+        document_type=TxtDocument,
+        minimal_body=_TXT_MINIMAL_BODY,
+        updated_body=_TXT_UPDATED_BODY,
+        middle_marker="Free-form notes body with a single paragraph.",
+        middle_replacement="Free-form notes body, revised in place.",
+        append_fragment="\nAdditional entry detail.\n",
+        eof_marker="## Updates",
+        eof_fragment=(
+            "## Updates\n"
+            "\n"
+            "<!-- Newest entry first -- prepend new entries directly below this comment. -->\n"
+            "\n"
+            "### 2026-08-01 10:00:00.000Z - Replaced note\n"
+            "\n"
+            "The replaced note content.\n"
+        ),
+        deletable_suffix="\n### 2026-01-01 10:00:00.000Z - Older note\n\nThe older note content.\n",
+        field_error_marker="## Updates",
+        field_error_fragment="\n### 2026-12-01 10:00:00.000Z - Newer note\n\nThe newer note content.\n",
+        field_error_is_append=True,
+        field_error_is_validation=True,
+        insert_marker="## Updates",
+        insert_line="Inserted body detail.",
+        size_change_second_line="The body paragraph was expanded in review.",
     ),
 ]
 
@@ -1635,6 +1703,7 @@ _INJECTION_CASES: list[_InjectionCase] = [
     _InjectionCase("sop", create_sop, sop_base_dir, _SOP_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("vcr", create_vcr, vcr_base_dir, _VCR_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("sysrs", create_sysrs, sysrs_base_dir, _SYSRS_MINIMAL_BODY, _FEAT_SLUG_ID),
+    _InjectionCase("txt", create_txt, txt_base_dir, _TXT_MINIMAL_BODY, _FEAT_SLUG_ID),
     _InjectionCase("feat", create_feat, feat_base_dir, _FEAT_MINIMAL_BODY, _MISSING_UUID),
 ]
 

@@ -61,7 +61,7 @@ Resolves the source document (the registry's own ``load_by_id``,
 path-safety guards included), embeds it through the
 content-hash-validated embedding cache, and ranks every candidate
 document across the target whole-body domains (all of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs by default --
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt by default --
 ``adr`` is structurally excluded, issue #46 -- or the
 caller-supplied ``target_types`` subset) against the source's own
 vector by cosine similarity (dot product on L2-normalized vectors),
@@ -85,7 +85,7 @@ Parameters
 type:
     The source document's type / domain: one of ``req``, ``uc``,
     ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``feat``, ``vcr``, ``sysrs`` (``adr`` is rejected).
+    ``feat``, ``vcr``, ``sysrs``, ``txt`` (``adr`` is rejected).
 id:
     The source document's specmgr-assigned identifier: a canonical
     lowercase-hex UUID for every domain other than ``feat``, a
@@ -93,7 +93,7 @@ id:
 target_types:
     The domains to search (each one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``), in the order to enumerate them in;
+    ``vcr``, ``sysrs``, ``txt``), in the order to enumerate them in;
     ``None`` (the default) means every whole-body domain.
 top_k:
     The maximum number of hits to return (1..100, default 10).
@@ -126,7 +126,8 @@ ValueError
     (REQ-009/ACC-015); nothing is read or embedded.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-SopNotFoundError / FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError
+SopNotFoundError / FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
+TxtNotFoundError
     No document of ``type`` has this ``id`` -- the domain's own
     not-found error, propagated unchanged from the registry's
     ``load_by_id`` (REQ-009/ACC-015; an unparseable source is

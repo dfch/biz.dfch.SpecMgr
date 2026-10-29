@@ -111,6 +111,10 @@ from ...tsk.tools._cache import invalidate_tsk_cache
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock
 from ...tsk.tools._paths import tsk_base_dir
+from ...txt.tools._cache import invalidate_txt_cache
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._lock import txt_lock
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._cache import invalidate_uc_cache
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock
@@ -377,6 +381,24 @@ def _delete_sysrs(id_: str) -> str:
     return str(path)  # REQ-001
 
 
+def _delete_txt(id_: str) -> str:
+    """Hard-delete the free-form text document ``id_`` from disk (REQ-001/004/005/006).
+
+    Same resolve/lock/safety semantics as :func:`_delete_req`.
+    """
+    base_dir = txt_base_dir()
+    with txt_lock(id_):  # REQ-004
+        path, _existing = load_txt_by_id(base_dir, id_)  # resolves + TxtNotFoundError
+        assert_within(base_dir, path)  # REQ-003 defense-in-depth
+        try:
+            path.unlink()  # REQ-006
+        except OSError as ex:
+            raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_txt_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("txt", path)  # feat-134 Phase 3, Task 3.6, REQ-008
+    return str(path)  # REQ-001
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str], str]] = {
     "req": _delete_req,
@@ -391,6 +413,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     "feat": _delete_feat,
     "vcr": _delete_vcr,
     "sysrs": _delete_sysrs,
+    "txt": _delete_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (

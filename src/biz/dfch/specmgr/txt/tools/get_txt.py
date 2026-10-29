@@ -32,16 +32,14 @@ This tool is the sole id-based read path for TXT: there is no
 same reasoning as VCR's own ``get_vcr`` tool).
 
 **Path-safety guard (the same ``general.tools._path_safety`` guard as
-VCR).** ``txt`` is not yet a member of ``general.tools._domains``'
-``WHOLE_BODY_DOMAINS`` (the domain registration lands in this feature's
-Phase 130), so the ``validate_id("txt", ...)`` dispatcher would reject
-every id with its own unknown-type error until then. This tool therefore
-applies the two primitive guards ``validate_id`` composes for every
-UUID-shaped domain -- :func:`~biz.dfch.specmgr.general.tools._path_safety.
-assert_no_traversal` plus :func:`~biz.dfch.specmgr.general.tools._path_safety.
-assert_uuid`, in that order, both raised before any filesystem access --
-which is byte-for-byte the same id-validation behaviour VCR's
-``validate_id("vcr", ...)`` call gives for every id value.
+VCR).** This tool validates ``id`` via the shared
+``general.tools._path_safety.validate_id("txt", ...)`` dispatcher call,
+mirroring ``vcr.tools.get_vcr``'s own ``validate_id("vcr", ...)`` call:
+for every UUID-shaped domain (``txt`` among them, since the Phase 130
+``general.tools._domains`` registration) that composes exactly
+:func:`~biz.dfch.specmgr.general.tools._path_safety.assert_no_traversal`
+plus :func:`~biz.dfch.specmgr.general.tools._path_safety.assert_uuid`, in
+that order, both raised before any filesystem access.
 
 ``raw=True`` returns the frontmatter-stripped body text verbatim instead of
 the parsed document -- produced by the same
@@ -62,7 +60,7 @@ from __future__ import annotations
 
 from ...general.models import ParseFailureResult
 from ...general.tools._doc_paths import find_parse_failure
-from ...general.tools._path_safety import assert_no_traversal, assert_uuid, assert_within
+from ...general.tools._path_safety import assert_within, validate_id
 from ...general.tools._splice import body_text, validate_read_args, window_body
 from ...server import mcp
 from ..models.v1 import TxtDocument
@@ -164,14 +162,11 @@ def get_txt(
         ``raw=True``-only feature) -- both read-argument misuses raised before
         any file access.
     """
-    # The same id-validation VCR's validate_id("vcr", ...) call composes for
-    # a UUID-shaped domain (assert_no_traversal + assert_uuid, in that
-    # order) -- applied here as the two primitives directly because
-    # "txt" only joins the validate_id dispatch table (via
-    # general.tools._domains) with this feature's Phase 130 registration.
-    # See this module's docstring for the full rationale.
-    assert_no_traversal(id)
-    assert_uuid(id)
+    # The shared dispatcher call, mirroring get_vcr's own validate_id("vcr", ...)
+    # (assert_no_traversal + assert_uuid, in that order, for every
+    # UUID-shaped domain -- see this module's docstring for the full
+    # rationale).
+    validate_id("txt", id)
     validate_read_args(raw, offset, limit, numbered)
 
     base_dir = txt_base_dir()
