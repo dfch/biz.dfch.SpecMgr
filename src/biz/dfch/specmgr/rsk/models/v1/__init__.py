@@ -66,7 +66,7 @@ from .body import (
 )
 from .document import RskDocument
 from .frontmatter import RskFrontmatter
-from .parser import parse_rsk
+from .parser import parse_rsk, parse_rsk_body
 from .risk_matrix import (
     ProductThresholds,
     ReadingTogether,
@@ -130,5 +130,6 @@ __all__ = [
     "level_from_product",
     "parse_risk_matrix",
     "parse_rsk",
+    "parse_rsk_body",
     "parse_tara",
 ]

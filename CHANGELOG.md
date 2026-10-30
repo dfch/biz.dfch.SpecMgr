@@ -43,6 +43,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gate — the full sweep, manual or the follow-up nightly workflow, finds
   them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
   #218).
+- Multi-language variants of the same artifact (feat-197-i18n, GitHub issue
+  #197, ADR 38efdb66): for the eleven domains `req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`, an artifact can exist in several
+  languages. English keeps `docs/<type>/`; every other language is a
+  `docs/<type>/<language>/` subfolder (`<language>` a lowercase two-letter
+  code) holding the variant under the English source's exact file name, with
+  the same `id` and the identical frontmatter and body schema (the language
+  lives in the file location only). `get_<d>`/`list_<d>`/`create_<d>` and the
+  generic `update`/`edit`/`set_status`/`set_classification`/`delete` tools
+  take an optional `language` (default `"en"`; omitting it is byte-identical
+  to the behavior before); `create_<d>` also takes the English source's
+  shared `id` for a non-default language. A caller-supplied `language` is
+  validated (`^[a-z]{2}$`) before any filesystem access. A per-language
+  heading-mapping table (`general/data/headings/<language>.json`, `de`
+  shipped) maps translated headings back to the canonical English headings at
+  the parse boundary, so a variant validates against the exact same schema;
+  closed-vocabulary values and schema-constant tokens are never translated,
+  and `prb`'s `problem_statement` stays English. A new language is added by
+  adding one JSON file, checked by a drift test against the document models.
+  `feat` and `adr` are permanently English-only (no `language` parameter on
+  any of their tools, resources or prompts).
+- The read-only tools `list_languages(type, id)` and
+  `check_translation_drift(type, id, language, source_language="en")`
+  (structural drift: missing/extra/reordered sections; staleness: the source
+  is newer than the translation), the `translate_artifact` prompt, the
+  `specmgr://i18n` resource and the `specmgr://i18n/headings/{language}`
+  resource template, plus the OpenCode `translate-artifact` and
+  `translation-status` skills and the `/translate` and `/translation-status`
+  commands.
+- `find_related`, `find_similar_text`, `list_references` and
+  `get_reference_diagram(_all)` stay English-only: a language variant is never
+  indexed, listed or resolved, and every hit or resolved reference is the
+  English document's path (pinned by regression tests, including a
+  non-recursive-scan guard).
 
 ### Changed
 

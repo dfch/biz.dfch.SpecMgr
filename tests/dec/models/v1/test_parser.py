@@ -33,7 +33,7 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecDocument
-from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
+from biz.dfch.specmgr.dec.models.v1.parser import parse_dec, parse_dec_body
 from biz.dfch.specmgr.models.md._markdown import format_text
 
 from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE
@@ -776,6 +776,45 @@ class TestUnquotedTimestampNormalization(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             parse_dec(text.replace("created: 2026-08-26T00:00:00.000Z", "created: 2026-08-26"))
+
+
+class TestParseDecBody(unittest.TestCase):
+    """:func:`parse_dec_body` -- the body-only, language-aware validation entry point the write side shares
+    (feat-197-i18n Phase 120)."""
+
+    _EN_BODY = _MINIMAL_DOC.split("---\n", 2)[2]
+    _DE_BODY = (
+        _EN_BODY.replace("## Context and Problem Statement", "## Kontext und Problembeschreibung")
+        .replace("## Decision Outcome", "## Entscheidungsergebnis")
+        .replace("## Roles and Responsibilities", "## Rollen und Verantwortlichkeiten")
+        .replace("### Accountable", "### Endverantwortlich")
+        .replace("### Responsible", "### Durchf\u00fchrend")
+        .replace("## Source", "## Quelle")
+    )
+
+    def test_default_language_is_identical_to_the_pre_i18n_body_parse(self):
+        """With language omitted/None/'en' the result equals ``Decision.from_text(format_text(content))``."""
+        from biz.dfch.specmgr.dec.models.v1 import Decision
+
+        expected = Decision.from_text(format_text(self._EN_BODY))
+        for kwargs in ({}, {"language": None}, {"language": "en"}):
+            with self.subTest(kwargs=kwargs):
+                self.assertEqual(parse_dec_body(self._EN_BODY, **kwargs), expected)
+
+    def test_german_headings_parse_to_the_canonical_model_through_the_table(self):
+        """A DE body parses (via the de table) to the same canonical model as its EN counterpart."""
+        self.assertEqual(parse_dec_body(self._DE_BODY, language="de"), parse_dec_body(self._EN_BODY))
+
+    def test_german_headings_fail_without_the_table(self):
+        """The same DE body is an engine AssertionError for the default language (no table applied)."""
+        with self.assertRaises(AssertionError):
+            parse_dec_body(self._DE_BODY)
+
+    def test_tableless_language_is_a_value_error(self):
+        """A shape-valid language without a packaged table raises the loader's actionable ValueError."""
+        with self.assertRaises(ValueError) as ctx:
+            parse_dec_body(self._EN_BODY, language="fr")
+        self.assertIn("no heading-mapping table", str(ctx.exception))
 
 
 if __name__ == "__main__":

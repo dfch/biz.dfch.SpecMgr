@@ -93,12 +93,20 @@ enriched (field path + line reference + fix hint) shape.
 
 ## Functions
 
-### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecFrontmatter | ParseFailureResult'`
+### `_set_classification_dec(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the classification of the decision identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+written -- the EN document (bytes, ``updated``, cache entry) stays
+untouched.
 
 
 ### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatFrontmatter | ParseFailureResult'`
@@ -114,31 +122,52 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_classification_gol(id_: 'str', classification: 'str') -> 'GolFrontmatter | ParseFailureResult'`
+### `_set_classification_gol(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult'`
 
 Replace the classification of the goal identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_prb(id_: 'str', classification: 'str') -> 'PrbFrontmatter | ParseFailureResult'`
+
+### `_set_classification_prb(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult'`
 
 Replace the classification of the problem statement identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_qa(id_: 'str', classification: 'str') -> 'QaFrontmatter | ParseFailureResult'`
+
+### `_set_classification_qa(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult'`
 
 Replace the classification of the QA document identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_req(id_: 'str', classification: 'str') -> 'ReqFrontmatter | ParseFailureResult'`
+
+### `_set_classification_req(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult'`
 
 Replace the classification of the requirement identified by ``id_``.
 
@@ -152,16 +181,30 @@ docstring): a target ``id`` whose only matching on-disk file fails to
 parse yields the non-raising ``ParseFailureResult`` instead of
 ``ReqNotFoundError`` (a truly-absent id still raises).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_rsk(id_: 'str', classification: 'str') -> 'RskFrontmatter | ParseFailureResult'`
+
+### `_set_classification_rsk(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult'`
 
 Replace the classification of the risk identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_sop(id_: 'str', classification: 'str') -> 'SopFrontmatter | ParseFailureResult'`
+
+### `_set_classification_sop(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the classification of the SOP identified by ``id_``.
 
@@ -171,8 +214,15 @@ Verbatim-shape port of :func:`_set_classification_dec` (same
 36905d5b, so this adapter was written directly in this shape) -- see
 :func:`_set_classification_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_sysrs(id_: 'str', classification: 'str') -> 'SysrsFrontmatter | ParseFailureResult'`
+
+### `_set_classification_sysrs(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult'`
 
 Replace the classification of the System Requirements Specification identified by ``id_``.
 
@@ -182,24 +232,45 @@ is dispatch-only from day one per ADR 36905d5b, so this adapter was
 written directly in this shape) -- see :func:`_set_classification_req`
 for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is written
+-- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
-### `_set_classification_tsk(id_: 'str', classification: 'str') -> 'TskFrontmatter | ParseFailureResult'`
+
+### `_set_classification_tsk(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult'`
 
 Replace the classification of the task list identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_uc(id_: 'str', classification: 'str') -> 'UcFrontmatter | ParseFailureResult'`
+
+### `_set_classification_uc(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the classification of the use case identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `_set_classification_vcr(id_: 'str', classification: 'str') -> 'VcrFrontmatter | ParseFailureResult'`
+
+### `_set_classification_vcr(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult'`
 
 Replace the classification of the verification case record identified by ``id_``.
 
@@ -207,8 +278,15 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
 :func:`_set_classification_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written --
+the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+call.
 
-### `set_classification(id: 'str', type: 'WholeBodyType', classification: 'str') -> '_SetClassificationFrontmatter'`
+
+### `set_classification(id: 'str', type: 'WholeBodyType', classification: 'str', language: 'str' = 'en') -> '_SetClassificationFrontmatter'`
 
 Replace the ``classification`` frontmatter field of an existing document.
 
@@ -258,6 +336,19 @@ type:
 classification:
     The new classification value. Fully free-text; a blank or
     whitespace-only value clears the field back to ``None``/absent.
+language:
+    The language variant to act on (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+    it) acts on the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) acts on that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived); only that one file is touched: the EN
+    document's bytes, ``updated`` timestamp, and cache entry stay
+    untouched. Shape-guarded before any filesystem access (like
+    ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
 Returns
 -------
@@ -283,7 +374,11 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format, or ``type`` is an unknown document type
-    (raised before any filesystem access; nothing is written).
+    (raised before any filesystem access; nothing is written). Also
+    raised, before any filesystem access, for a malformed ``language``
+    (not an ISO 639-1-shaped lowercase two-letter code), a non-default
+    ``language`` with ``type`` ``feat`` (always English), or a non-default
+    ``language`` without a packaged heading-mapping table.
 KeyError
     ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
     ``_path_safety``'s UUID-shaped domain set, so ``validate_id``

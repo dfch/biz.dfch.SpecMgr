@@ -136,6 +136,33 @@ Also backs feat-207-reference-graph (Phase 110, REQ-001/REQ-003):
   a plain EAGER import is safe here -- no PEP 562 laziness needed, unlike
   the ``update_result`` names.
 
+Also backs feat-197-i18n's (Phase 110) per-language section-heading mapping
+tables (ADR 38efdb66 items 3/4/5):
+
+- :func:`load_heading_table`/
+  :func:`resolve_heading_table` -- the lazy, once-per-process loader of a
+  language's flat ``<translated heading text> -> <canonical English heading
+  text>`` table from the packaged ``general/data/headings/<language>.json``
+  file (values must be pairwise distinct; a shape-valid language without a
+  table file is unusable and raises an actionable ``ValueError``), with
+  :func:`resolve_heading_table` as the omitted/EN-aware entry point the
+  parse boundaries use (EN needs no table -- it is the canonical form
+  itself); :func:`normalize_heading_lines` -- the fence-aware, line-based
+  heading-normalization pre-pass that rewrites every table-mapped heading
+  line to its canonical text before the unchanged ``models/md`` engine
+  runs; :func:`heading_table_path` -- the single seam every caller (and
+  test) goes through for the table file's location.
+
+Also backs feat-197-i18n's (Phase 140) two read-only translation tools:
+
+- :class:`LanguageListResult`/:class:`LanguageEntry` -- the ``list_languages`` tool's result (REQ-012, ACC-008): the
+  language codes one artifact exists in (``"en"`` first when the EN source exists) with one entry per language
+  (resolved path, ``parseable`` flag, parse ``error`` for a variant that exists but fails to parse).
+- :class:`TranslationDriftResult`/:class:`DriftFinding` -- the ``check_translation_drift`` tool's non-raising result
+  (REQ-014, ACC-009): structural findings (``missing``/``extra``/``reordered``/``unparseable``) and the staleness
+  verdict of one run; ``translation_drift`` also holds the pure, I/O-free core of the drift check
+  (:func:`heading_skeleton`, :func:`compare_skeletons`, :func:`check_staleness`).
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult

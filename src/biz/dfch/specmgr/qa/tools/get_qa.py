@@ -46,13 +46,34 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 (feat-153-off-by-n, Phase 3), each returned body line is additionally
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/qa/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/qa/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_qa(language=...)``'s failed row for the same
+file (ADR 9080b37c).
 """
 
 from __future__ import annotations
 
 from ...general.models import ParseFailureResult
+from ...general.models.heading_table import resolve_heading_table
 from ...general.tools._doc_paths import find_parse_failure
-from ...general.tools._path_safety import assert_within, validate_id
+from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, assert_within, validate_id
 from ...general.tools._splice import body_text, validate_read_args, window_body
 from ...server import mcp
 from ..models.v2 import QaDocument
@@ -86,10 +107,26 @@ from ._paths import QaNotFoundError, qa_base_dir
         "`ParseFailureResult` described above, never numbered text. Numbered output must never be fed back "
         'verbatim into `content` for `update` or `create_qa` -- strip the `"<n>: "` prefix from each '
         "line first (it is likewise never a valid `edit` `old_str`)."
+        " The optional `language` parameter (default 'en') selects the language variant to read: "
+        "omitted/'en' = the flat docs/qa/ document, exactly the default behavior; any other "
+        "ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/qa/{language}/ (the EN source's exact basename). The language is shape-validated "
+        "before any file access (a path-injection-shaped payload is a ValueError, like an invalid "
+        "id), and a shape-valid language without a packaged heading-mapping table is rejected "
+        "up front with an actionable ValueError, also before any file access. A raw=True read of "
+        "a variant returns the variant's on-disk body verbatim (translation preserved); a "
+        "raw=False read parses it through the variant's heading table, so the structured model "
+        "holds canonical heading text. The `ParseFailureResult` `error` of a broken variant is "
+        "byte-identical to list_qa(language=...)'s failed row for the same file."
     ),
 )
-def get_qa(
-    id: str, raw: bool = False, offset: int | None = None, limit: int | None = None, numbered: bool = False
+def get_qa(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    id: str,
+    raw: bool = False,
+    offset: int | None = None,
+    limit: int | None = None,
+    numbered: bool = False,
+    language: str = DEFAULT_LANGUAGE,
 ) -> QaDocument | str | ParseFailureResult:
     """Read and return the Question and Answer (QA) document identified by ``id``.
 
@@ -124,6 +161,19 @@ def get_qa(
         each line first (it is likewise never a valid ``edit`` ``old_str``).
         Combining it with ``raw=False`` raises ``ValueError`` (see
         ``Raises``).
+    language:
+        The language variant to read (feat-197-i18n Phase 125, ADR
+        38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
+        reads the flat ``docs/qa/`` document -- today's exact behavior;
+        any other ISO 639-1-shaped lowercase two-letter code (e.g.
+        ``"de"``) reads the variant at ``docs/qa/{language}/`` under the
+        EN source's exact basename. Shape-guarded before any filesystem
+        access (like ``id``); a shape-valid code without a packaged
+        heading-mapping table is rejected up front with the table
+        loader's actionable error, also before any filesystem access. For
+        a variant, ``raw=True`` returns its on-disk body verbatim and
+        ``raw=False`` parses through its heading table (canonical heading
+        text in the model).
 
     Returns
     -------
@@ -146,6 +196,9 @@ def get_qa(
     Raises
     ------
     ValueError
+        ``language`` is not an ISO 639-1-shaped lowercase two-letter code, or a
+        non-default ``language`` has no packaged heading-mapping table (both raised
+        before any filesystem access, the same guard discipline as ``id``);
         ``id`` is a path-injection attempt or not a well-formed id for this domain
         (raised before any filesystem access), or ``offset``/``limit`` coordinates
         are given with ``raw=False`` (a parsed document requires the whole body),
@@ -154,9 +207,12 @@ def get_qa(
         any file access.
     """
     validate_id("qa", id)
+    assert_language(language)
     validate_read_args(raw, offset, limit, numbered)
+    if language != DEFAULT_LANGUAGE:
+        resolve_heading_table(language)
 
-    base_dir = qa_base_dir()
+    base_dir = qa_base_dir(language)
     try:
         path, doc = load_by_id(base_dir, id)
     except QaNotFoundError:

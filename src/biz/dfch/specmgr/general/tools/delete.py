@@ -72,7 +72,7 @@ from collections.abc import Callable
 
 from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._cache import invalidate_feat_cache, invalidate_feat_dirty_cache
 from ...feat.tools._io import load_by_id as load_feat_by_id
@@ -80,48 +80,49 @@ from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import feat_base_dir
 from ...gol.tools._cache import invalidate_gol_cache
 from ...gol.tools._io import load_by_id as load_gol_by_id
-from ...gol.tools._lock import gol_lock
+from ...gol.tools._lock import gol_lock, gol_lock_key
 from ...gol.tools._paths import gol_base_dir
 from ...prb.tools._cache import invalidate_prb_cache
 from ...prb.tools._io import load_by_id as load_prb_by_id
-from ...prb.tools._lock import prb_lock
+from ...prb.tools._lock import prb_lock, prb_lock_key
 from ...prb.tools._paths import prb_base_dir
 from ...qa.tools._cache import invalidate_qa_cache
 from ...qa.tools._io import load_by_id as load_qa_by_id
-from ...qa.tools._lock import qa_lock
+from ...qa.tools._lock import qa_lock, qa_lock_key
 from ...qa.tools._paths import qa_base_dir
 from ...req.tools._cache import invalidate_req_cache
 from ...req.tools._io import load_by_id as load_req_by_id
-from ...req.tools._lock import req_lock
+from ...req.tools._lock import req_lock, req_lock_key
 from ...req.tools._paths import req_base_dir
 from ...rsk.tools._cache import invalidate_rsk_cache
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
-from ...rsk.tools._lock import rsk_lock
+from ...rsk.tools._lock import rsk_lock, rsk_lock_key
 from ...rsk.tools._paths import rsk_base_dir
 from ...server import mcp
 from ...sop.tools._cache import invalidate_sop_cache
 from ...sop.tools._io import load_by_id as load_sop_by_id
-from ...sop.tools._lock import sop_lock
+from ...sop.tools._lock import sop_lock, sop_lock_key
 from ...sop.tools._paths import sop_base_dir
 from ...sysrs.tools._cache import invalidate_sysrs_cache
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
-from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._lock import sysrs_lock, sysrs_lock_key
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._cache import invalidate_tsk_cache
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
-from ...tsk.tools._lock import tsk_lock
+from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import tsk_base_dir
 from ...uc.tools._cache import invalidate_uc_cache
 from ...uc.tools._io import load_by_id as load_uc_by_id
-from ...uc.tools._lock import uc_lock
+from ...uc.tools._lock import uc_lock, uc_lock_key
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._cache import invalidate_vcr_cache
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
-from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._lock import vcr_lock, vcr_lock_key
 from ...vcr.tools._paths import vcr_base_dir
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._embedding_cache import invalidate_embedding_cache
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 
 __all__ = ["delete"]
 
@@ -135,7 +136,7 @@ class DeleteError(OSError):
     """
 
 
-def _delete_req(id_: str) -> str:
+def _delete_req(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the requirement ``id_`` from disk (REQ-001/004/005/006).
 
     Resolves the document via the domain's own ``load_req_by_id`` (the
@@ -152,9 +153,16 @@ def _delete_req(id_: str) -> str:
     embedding-cache entry for ``(req, path)`` is invalidated in the same
     spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
     stale vector is never served.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+    variant's own (``req_lock(req_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = req_base_dir()
-    with req_lock(id_):  # REQ-004
+    base_dir = req_base_dir(language)
+    with req_lock(req_lock_key(id_, language)):  # REQ-004
         path, _existing = load_req_by_id(base_dir, id_)  # resolves + ReqNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -166,13 +174,20 @@ def _delete_req(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_uc(id_: str) -> str:
+def _delete_uc(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the use case ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+    variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = uc_base_dir()
-    with uc_lock(id_):  # REQ-004
+    base_dir = uc_base_dir(language)
+    with uc_lock(uc_lock_key(id_, language)):  # REQ-004
         path, _existing = load_uc_by_id(base_dir, id_)  # resolves + UcNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -184,13 +199,20 @@ def _delete_uc(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_tsk(id_: str) -> str:
+def _delete_tsk(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the task list ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+    variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = tsk_base_dir()
-    with tsk_lock(id_):  # REQ-004
+    base_dir = tsk_base_dir(language)
+    with tsk_lock(tsk_lock_key(id_, language)):  # REQ-004
         path, _existing = load_tsk_by_id(base_dir, id_)  # resolves + TskNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -202,13 +224,20 @@ def _delete_tsk(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_qa(id_: str) -> str:
+def _delete_qa(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the QA document ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+    variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = qa_base_dir()
-    with qa_lock(id_):  # REQ-004
+    base_dir = qa_base_dir(language)
+    with qa_lock(qa_lock_key(id_, language)):  # REQ-004
         path, _existing = load_qa_by_id(base_dir, id_)  # resolves + QaNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -220,13 +249,20 @@ def _delete_qa(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_prb(id_: str) -> str:
+def _delete_prb(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the problem statement ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+    variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = prb_base_dir()
-    with prb_lock(id_):  # REQ-004
+    base_dir = prb_base_dir(language)
+    with prb_lock(prb_lock_key(id_, language)):  # REQ-004
         path, _existing = load_prb_by_id(base_dir, id_)  # resolves + PrbNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -238,13 +274,20 @@ def _delete_prb(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_gol(id_: str) -> str:
+def _delete_gol(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the goal ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+    variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = gol_base_dir()
-    with gol_lock(id_):  # REQ-004
+    base_dir = gol_base_dir(language)
+    with gol_lock(gol_lock_key(id_, language)):  # REQ-004
         path, _existing = load_gol_by_id(base_dir, id_)  # resolves + GolNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -256,13 +299,20 @@ def _delete_gol(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_rsk(id_: str) -> str:
+def _delete_rsk(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the risk ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+    variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = rsk_base_dir()
-    with rsk_lock(id_):  # REQ-004
+    base_dir = rsk_base_dir(language)
+    with rsk_lock(rsk_lock_key(id_, language)):  # REQ-004
         path, _existing = load_rsk_by_id(base_dir, id_)  # resolves + RskNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -274,13 +324,22 @@ def _delete_rsk(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_dec(id_: str) -> str:
+def _delete_dec(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the decision ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/9).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one variant
+    file is unlinked -- only that file's own path-keyed cache entries (the
+    document cache and the embedding cache) are invalidated, so the EN
+    document (file, cache entry) is untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):  # REQ-004
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):  # REQ-004
         path, _existing = load_dec_by_id(base_dir, id_)  # resolves + DecNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -292,10 +351,18 @@ def _delete_dec(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_sop(id_: str) -> str:
-    """Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics."""
-    base_dir = sop_base_dir()
-    with sop_lock(id_):  # REQ-004
+def _delete_sop(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
+    """Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+    variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+    """
+    base_dir = sop_base_dir(language)
+    with sop_lock(sop_lock_key(id_, language)):  # REQ-004
         path, _existing = load_sop_by_id(base_dir, id_)  # resolves + SopNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -341,13 +408,20 @@ def _delete_feat(id_: str) -> str:
     return str(folder)  # REQ-001
 
 
-def _delete_vcr(id_: str) -> str:
+def _delete_vcr(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+    variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = vcr_base_dir()
-    with vcr_lock(id_):  # REQ-004
+    base_dir = vcr_base_dir(language)
+    with vcr_lock(vcr_lock_key(id_, language)):  # REQ-004
         path, _existing = load_vcr_by_id(base_dir, id_)  # resolves + VcrNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -359,13 +433,20 @@ def _delete_vcr(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_sysrs(id_: str) -> str:
+def _delete_sysrs(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the System Requirements Specification ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+    variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
-    base_dir = sysrs_base_dir()
-    with sysrs_lock(id_):  # REQ-004
+    base_dir = sysrs_base_dir(language)
+    with sysrs_lock(sysrs_lock_key(id_, language)):  # REQ-004
         path, _existing = load_sysrs_by_id(base_dir, id_)  # resolves + SysrsNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -398,6 +479,29 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "remove the domain in both places (feat-125-domain-lists, REQ-006)"
 )
 
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phases 120/125: every whole-body
+#: domain except ``feat``). Called with the language as the last positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str], str]] = {
+    "req": _delete_req,
+    "uc": _delete_uc,
+    "tsk": _delete_tsk,
+    "qa": _delete_qa,
+    "prb": _delete_prb,
+    "gol": _delete_gol,
+    "rsk": _delete_rsk,
+    "dec": _delete_dec,
+    "sop": _delete_sop,
+    "vcr": _delete_vcr,
+    "sysrs": _delete_sysrs,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
+
 
 @mcp.tool(
     name="delete",
@@ -412,12 +516,21 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "An invalid `id` (path-injection attempt or wrong format) is a `ValueError` "
         "raised before any file access; a missing document is the domain's own "
         "`XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole "
-        "delete entry point -- the former per-domain `delete_<d>` tools are removed."
+        "delete entry point -- the former per-domain `delete_<d>` tools are removed. "
+        "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
+        "delete: omitted/'en' = the flat default-language document, exactly the default behavior; a "
+        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/<type>/{language}/ (found by id-scan of that subdirectory), deleting that variant file ONLY "
+        "-- the EN file stays untouched. "
+        "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
+        "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
+        "one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
 def delete(
     id: str,
     type: WholeBodyType,
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Permanently delete an existing document from disk, across the whole-body domains.
 
@@ -452,6 +565,19 @@ def delete(
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
         ``vcr``, ``sysrs``.
+    language:
+        The language variant to delete (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) deletes the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) deletes that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one variant file is removed (and
+        only its own cache entries invalidated): the EN document stays
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` is always English: a non-default language for it raises a
+        ``ValueError``).
 
     Returns
     -------
@@ -464,7 +590,10 @@ def delete(
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format (raised before any filesystem access; nothing
-        is deleted).
+        is deleted). Also raised, before any filesystem access, for a
+        malformed ``language`` (not an ISO 639-1-shaped lowercase
+        two-letter code), a non-default ``language`` with ``type`` ``feat`` (always English), or a non-
+        default ``language`` without a packaged heading-mapping table.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError /
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
@@ -479,5 +608,11 @@ def delete(
     """
     # REQ-003: validate before any filesystem access (injection prevention).
     validate_id(type, id)
-    result = _ADAPTERS[type](id)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
+
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, language)
     return result

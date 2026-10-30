@@ -42,7 +42,7 @@ fact about what exists on disk.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 
 from ...general.tools._doc_paths import (
@@ -51,6 +51,7 @@ from ...general.tools._doc_paths import (
     ensure_doc_base_dir,
     find_doc_path_by_id,
     iter_doc_paths,
+    iter_doc_paths_all_languages,
 )
 from ..models.v2 import UcDocument
 from ._cache import read_uc, reconcile_uc_cache
@@ -79,47 +80,78 @@ class UcNotFoundError(LookupError):
     """
 
 
-def uc_base_dir() -> Path:
+def uc_base_dir(language: str | None = None) -> Path:
     """Return the configured use-case base directory, without creating it.
 
     Thin wrapper over ``general.tools._doc_paths.doc_base_dir(UC_TYPE_NAME)``
     -- see that function's own docstring for the env var/default it reads.
+
+    The optional ``language`` (feat-197-i18n Phase 125) selects the flat-vs-subdirectory
+    resolution: ``None``/omitted or ``"en"`` = the flat ``docs/uc/`` directory exactly
+    as before; any other shape-validated code = its ``docs/uc/{language}/``
+    subdirectory.
+
+    Parameters
+    ----------
+    language:
+        The document language to resolve -- see
+        :func:`general.tools._doc_paths.doc_base_dir`.
 
     Returns
     -------
     Path
         The resolved use-case base directory.
     """
-    result = doc_base_dir(UC_TYPE_NAME)
+    result = doc_base_dir(UC_TYPE_NAME, language)
     return result
 
 
-def ensure_uc_base_dir() -> Path:
+def ensure_uc_base_dir(language: str | None = None) -> Path:
     """Return the configured use-case base directory, creating it if missing.
 
     Only ``create_uc`` should call this -- every other tool/resource uses
     the read-only :func:`uc_base_dir` instead.
+
+    The optional ``language`` parameter selects the same flat-vs-subdirectory resolution as
+    :func:`uc_base_dir` (feat-197-i18n Phase 125) before the directory is created.
+
+    Parameters
+    ----------
+    language:
+        The document language to resolve -- see
+        :func:`general.tools._doc_paths.ensure_doc_base_dir`.
 
     Returns
     -------
     Path
         The resolved, now-guaranteed-to-exist use-case base directory.
     """
-    result = ensure_doc_base_dir(UC_TYPE_NAME)
+    result = ensure_doc_base_dir(UC_TYPE_NAME, language)
     return result
 
 
-def iter_uc_paths() -> Iterator[Path]:
+def iter_uc_paths(language: str | None = None) -> Iterator[Path]:
     """Yield every use-case ``*.md`` file under :func:`uc_base_dir`, sorted by name.
 
     Yields nothing (rather than raising) if the base directory does not exist.
+
+    The optional ``language`` (feat-197-i18n Phase 125) selects the scanned directory:
+    ``None``/omitted or ``"en"`` = the flat ``docs/uc/`` directory (exactly today's
+    listing); any other shape-validated code = its ``docs/uc/{language}/``
+    subdirectory (non-recursive; never descends further).
+
+    Parameters
+    ----------
+    language:
+        The document language whose directory to scan -- see
+        :func:`uc_base_dir`.
 
     Returns
     -------
     Iterator[Path]
         An iterator over the matching, sorted paths.
     """
-    result = iter_doc_paths(uc_base_dir())
+    result = iter_doc_paths(uc_base_dir(language))
     return result
 
 
@@ -127,6 +159,26 @@ def _get_uc_id(doc: UcDocument) -> str | None:
     """Extract the id from a parsed :class:`UcDocument` (``find_doc_path_by_id``'s ``get_id_fn``)."""
     result = doc.frontmatter.id
     return result
+
+
+def _reconcile_uc_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=unused-argument
+    """Reconcile the ``uc`` cache against the domain-wide live listing (the ``find_uc_path`` ``reconcile_fn``).
+
+    The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
+    per-file work, with the scanned directory's own materialized path
+    listing. With the ``{language}`` subfolder layout (feat-197-i18n
+    Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+    longer covers the whole domain -- reconciling against ``scan_paths``
+    alone would evict every other language's cached entries -- so this
+    wrapper instead hands :func:`~._cache.reconcile_uc_cache` the
+    domain-wide union (the flat EN files plus every file in every
+    shape-valid ``{language}`` subdirectory,
+    ``general.tools._doc_paths.iter_doc_paths_all_languages``).
+    ``scan_paths`` is intentionally unused: the union is a superset of it.
+    With no language subdirectory present the union is the scanned listing
+    itself (the pre-i18n behavior, byte-identical).
+    """
+    reconcile_uc_cache(list(iter_doc_paths_all_languages(uc_base_dir())))
 
 
 def find_uc_path(base_dir: Path, id_: str) -> Path:
@@ -142,13 +194,16 @@ def find_uc_path(base_dir: Path, id_: str) -> Path:
     Mirrors ``req.tools._paths.find_req_path``'s own skip-on-parse-failure
     rule. Before scanning, the cache is reconciled
     against the freshly materialized live path listing
-    (:func:`~._cache.reconcile_uc_cache`), dropping any cached entry for a
+    (:func:`~._cache.reconcile_uc_cache`, against the domain-wide live listing of every language
+    -- a scan of one language must not evict the other languages' entries, feat-197-i18n
+    Phase 125), dropping any cached entry for a
     file deleted outside specmgr's own tooling (REQ-005).
 
     Parameters
     ----------
     base_dir:
-        The directory to scan for ``*.md`` files.
+        The directory to scan for ``*.md`` files (the flat EN directory,
+        or one ``{language}`` subdirectory).
     id_:
         The id to look up.
 
@@ -167,7 +222,7 @@ def find_uc_path(base_dir: Path, id_: str) -> Path:
     assert id_.strip()
 
     try:
-        result = find_doc_path_by_id(base_dir, id_, read_uc, _get_uc_id, reconcile_fn=reconcile_uc_cache)
+        result = find_doc_path_by_id(base_dir, id_, read_uc, _get_uc_id, reconcile_fn=_reconcile_uc_scan)
     except DocNotFoundError as ex:
         raise UcNotFoundError(
             f"no use case found with id {id_!r}. The id must be the bare document UUID, without a domain "

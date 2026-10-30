@@ -60,9 +60,11 @@ implements (Phase 4, mechanically repeating Phase 3's ``req`` template).
 from __future__ import annotations
 
 from collections.abc import Iterable
+from functools import partial
 from pathlib import Path
 
 from ...general.tools._doc_cache import DocCache
+from ...general.tools._doc_paths import language_for_doc_path
 from ..models.v1 import GolDocument, parse_gol
 
 __all__ = ["invalidate_gol_cache", "read_gol", "reconcile_gol_cache", "reset_gol_cache"]
@@ -72,17 +74,22 @@ __all__ = ["invalidate_gol_cache", "read_gol", "reconcile_gol_cache", "reset_gol
 _cache: DocCache[GolDocument] = DocCache()
 
 
-def _parse(text: str) -> GolDocument:
+def _parse(text: str, *, language: str | None = None) -> GolDocument:
     """Parse ``text`` into a :class:`GolDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
     Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
     already read (and hashed) for this same call -- this function must not
     re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
     hash/parse TOCTOU race the previous two-independent-reads shape had).
+    The optional ``language`` (feat-197-i18n Phase 125) is the effective
+    language of the file being parsed -- ``None``/omitted or ``"en"`` runs
+    the canonical EN parse, any other value applies that language's
+    heading-mapping table at ``parse_gol``'s own pre-pass.
     """
     assert isinstance(text, str), type(text)
+    assert language is None or isinstance(language, str), type(language)
 
-    result = parse_gol(text)
+    result = parse_gol(text, language=language)
     return result
 
 
@@ -95,6 +102,19 @@ def read_gol(path: Path) -> GolDocument:
     re-raised cached failure) is returned without re-invoking
     :func:`~biz.dfch.specmgr.gol.models.v1.parse_gol`.
 
+    **Language-aware (feat-197-i18n Phase 125).** The effective language is
+    derived from the file's own position relative to the goal base
+    directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
+    directly in the flat ``docs/gol/`` directory parses canonical/EN, a file
+    directly in ``docs/gol/{language}/`` parses in that language, anything
+    else canonical), never from a caller argument: the location *is* the
+    language encoding (ADR 38efdb66 item 1), so every consumer of this
+    reader (``find_gol_path``'s scan, ``list_gol``'s rows, ``load_by_id``'s
+    second read, the generic tools' own gol adapters) parses a variant file
+    with its table without any signature change, and the ``DocCache``'s
+    path-keyed entries keep EN and every language of one id independent
+    (ADR item 9 -- no cache code change).
+
     Parameters
     ----------
     path:
@@ -105,7 +125,14 @@ def read_gol(path: Path) -> GolDocument:
     GolDocument
         The cached or freshly-parsed, validated document.
     """
-    result = _cache.read(path, _parse)
+    # Deferred past module import: ``_paths`` imports this module's own
+    # ``read_gol``/``reconcile_gol_cache`` at module level (the
+    # ``_io.py -> _paths.py -> _io.py`` cycle the module docstring describes),
+    # so a module-level import back into it would be a circular import.
+    from ._paths import gol_base_dir  # pylint: disable=import-outside-toplevel
+
+    language = language_for_doc_path(gol_base_dir(), path)
+    result = _cache.read(path, partial(_parse, language=language))
     return result
 
 

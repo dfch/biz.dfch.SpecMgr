@@ -14,6 +14,20 @@ structured-result workaround chain); only the file-access errors raised
 by ``Path.read_text()`` for a truly-absent or unreadable path still
 surface as MCP tool errors to the caller.
 
+**Path-derived language (feat-197-i18n Phase 125, ADR 38efdb66 item 5).**
+A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
+parameter: it derives the effective language from the file's own position
+relative to the verification case record base directory
+(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
+the flat ``docs/vcr/`` directory parses canonical (no heading-mapping
+table), a file directly in a shape-validated ``docs/vcr/{language}/``
+subdirectory parses with that language's table, and any other location
+(outside the base, a non-shape-validated subdirectory, a deeper nesting)
+parses canonical. A derived language without a table file therefore fails
+with the table loader's actionable ``ValueError`` (propagated, like every
+other caller-usage error -- the non-raising ``ValidateResult`` channel
+covers content-validation failures only).
+
 ## Functions
 
 ### `parse_vcr(path: 'str') -> 'VcrDocument | ValidateResult'`
@@ -48,6 +62,12 @@ path:
     The filesystem path to the ``.md`` file to parse (absolute or
     relative to the current working directory).
 
+    The file's language is derived from this path's position relative to the
+    verification case record base directory (feat-197-i18n Phase 125, ADR 38efdb66 item 5):
+    flat ``docs/vcr/`` = canonical (no table), a direct shape-validated
+    ``docs/vcr/{language}/`` subdirectory = that language's table, any
+    other location = canonical.
+
 Returns
 -------
 VcrDocument | ValidateResult
@@ -71,4 +91,8 @@ FileNotFoundError / PermissionError / OSError
     so a truly-absent or unreadable path still surfaces the ``OSError``-
     family error to the caller unchanged (the documented file-access
     contract, feat-204-create-error REQ-002).
+ValueError
+    The path sits in a direct ``{language}`` subdirectory whose language
+    has no packaged heading-mapping table (the table loader's actionable
+    error, feat-197-i18n Phase 125).
 

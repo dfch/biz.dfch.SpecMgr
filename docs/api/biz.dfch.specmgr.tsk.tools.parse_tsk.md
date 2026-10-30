@@ -19,6 +19,20 @@ subsequent task by one) after REQ-004 was found to list ``parse_tsk`` among
 the nine required MCP tools while Phase 2 only ever built the model-layer
 free function of the same name -- see the feature README's Decisions Made.
 
+**Path-derived language (feat-197-i18n Phase 125, ADR 38efdb66 item 5).**
+A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
+parameter: it derives the effective language from the file's own position
+relative to the task list base directory
+(``general.tools._doc_paths.language_for_doc_path``) -- a file directly in
+the flat ``docs/tsk/`` directory parses canonical (no heading-mapping
+table), a file directly in a shape-validated ``docs/tsk/{language}/``
+subdirectory parses with that language's table, and any other location
+(outside the base, a non-shape-validated subdirectory, a deeper nesting)
+parses canonical. A derived language without a table file therefore fails
+with the table loader's actionable ``ValueError`` (propagated, like every
+other caller-usage error -- the non-raising ``ValidateResult`` channel
+covers content-validation failures only).
+
 ## Functions
 
 ### `parse_tsk(path: 'str') -> 'TskDocument | ValidateResult'`
@@ -54,6 +68,12 @@ path:
     The filesystem path to the ``.md`` file to parse (absolute or
     relative to the current working directory).
 
+    The file's language is derived from this path's position relative to the
+    task list base directory (feat-197-i18n Phase 125, ADR 38efdb66 item 5):
+    flat ``docs/tsk/`` = canonical (no table), a direct shape-validated
+    ``docs/tsk/{language}/`` subdirectory = that language's table, any
+    other location = canonical.
+
 Returns
 -------
 TskDocument | ValidateResult
@@ -77,4 +97,8 @@ FileNotFoundError / PermissionError / OSError
     so a truly-absent or unreadable path still surfaces the ``OSError``-
     family error to the caller unchanged (the documented file-access
     contract, feat-204-create-error REQ-002).
+ValueError
+    The path sits in a direct ``{language}`` subdirectory whose language
+    has no packaged heading-mapping table (the table loader's actionable
+    error, feat-197-i18n Phase 125).
 

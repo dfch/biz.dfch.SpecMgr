@@ -169,10 +169,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal
 
-from ...dec.models.v1 import DecFrontmatter, Decision
+from ...dec.models.v1 import DecFrontmatter, parse_dec_body
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter, Feature
@@ -181,73 +181,74 @@ from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
-from ...gol.models.v1 import GolFrontmatter, Goal
+from ...gol.models.v1 import GolFrontmatter, parse_gol_body
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
-from ...gol.tools._lock import gol_lock
+from ...gol.tools._lock import gol_lock, gol_lock_key
 from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
 from ...models.md._markdown import format_text, snippet
-from ...prb.models.v1 import Prb, PrbFrontmatter
+from ...prb.models.v1 import PrbFrontmatter, parse_prb_body
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
-from ...prb.tools._lock import prb_lock
+from ...prb.tools._lock import prb_lock, prb_lock_key
 from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
-from ...qa.models.v2 import Qa, QaFrontmatter
+from ...qa.models.v2 import QaFrontmatter, parse_qa_body
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
-from ...qa.tools._lock import qa_lock
+from ...qa.tools._lock import qa_lock, qa_lock_key
 from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
-from ...req.models.v1 import ReqFrontmatter, Requirement
+from ...req.models.v1 import ReqFrontmatter, parse_req_body
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
-from ...req.tools._lock import req_lock
+from ...req.tools._lock import req_lock, req_lock_key
 from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
-from ...rsk.models.v1 import Risk, RskFrontmatter
+from ...rsk.models.v1 import RskFrontmatter, parse_rsk_body
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
-from ...rsk.tools._lock import rsk_lock
+from ...rsk.tools._lock import rsk_lock, rsk_lock_key
 from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
-from ...sop.models.v1 import Sop, SopFrontmatter
+from ...sop.models.v1 import SopFrontmatter, parse_sop_body
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
-from ...sop.tools._lock import sop_lock
+from ...sop.tools._lock import sop_lock, sop_lock_key
 from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
-from ...sysrs.models.v1 import Sysrs, SysrsFrontmatter
+from ...sysrs.models.v1 import SysrsFrontmatter, parse_sysrs_body
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
-from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._lock import sysrs_lock, sysrs_lock_key
 from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
-from ...tsk.models.v1 import Task, TskFrontmatter
+from ...tsk.models.v1 import TskFrontmatter, parse_tsk_body
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
-from ...tsk.tools._lock import tsk_lock
+from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
-from ...uc.models.v2 import UcFrontmatter, UseCase
+from ...uc.models.v2 import UcFrontmatter, parse_uc_body
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
-from ...uc.tools._lock import uc_lock
+from ...uc.tools._lock import uc_lock, uc_lock_key
 from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
-from ...vcr.models.v1 import Vcr, VcrFrontmatter
+from ...vcr.models.v1 import VcrFrontmatter, parse_vcr_body
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
-from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._lock import vcr_lock, vcr_lock_key
 from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
 from ..models import ParseFailureResult, ValidateResult, ValidationErrorEntry
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._splice import body_text
 from ._timestamps import now_timestamp
 from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -341,7 +342,7 @@ def _match_and_replace(body: str, old_str: str, new_str: str, replace_all: bool)
 
 
 def _edit_req(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> ReqFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the requirement identified by ``id_``.
 
@@ -359,9 +360,18 @@ def _edit_req(
     stage-2 content-validation failure of the edited body yields the
     non-raising ``ValidateResult(valid=False, ...)`` instead of
     ``AssertionError``/``pydantic.ValidationError``.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+    variant's own (``req_lock(req_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.req.models.v1.parse_req_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = req_base_dir()
-    with req_lock(id_):
+    base_dir = req_base_dir(language)
+    with req_lock(req_lock_key(id_, language)):
         try:
             path, existing = load_req_by_id(base_dir, id_)
         except ReqNotFoundError:
@@ -375,7 +385,7 @@ def _edit_req(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="req", tool="edit", channel=BODY_CHANNEL):
-                Requirement.from_text(format_text(edited))
+                parse_req_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -389,16 +399,25 @@ def _edit_req(
 
 
 def _edit_uc(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> UcFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
     ``UcNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+    variant's own (``uc_lock(uc_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.uc.models.v2.parse_uc_body`), and only that one file is
+    written -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
     """
-    base_dir = uc_base_dir()
-    with uc_lock(id_):
+    base_dir = uc_base_dir(language)
+    with uc_lock(uc_lock_key(id_, language)):
         try:
             path, existing = load_uc_by_id(base_dir, id_)
         except UcNotFoundError:
@@ -412,7 +431,7 @@ def _edit_uc(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="uc", tool="edit", channel=BODY_CHANNEL):
-                UseCase.from_text(format_text(edited))
+                parse_uc_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -426,16 +445,25 @@ def _edit_uc(
 
 
 def _edit_tsk(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> TskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the task list identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
     ``TskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+    variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.tsk.models.v1.parse_tsk_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = tsk_base_dir()
-    with tsk_lock(id_):
+    base_dir = tsk_base_dir(language)
+    with tsk_lock(tsk_lock_key(id_, language)):
         try:
             path, existing = load_tsk_by_id(base_dir, id_)
         except TskNotFoundError:
@@ -449,7 +477,7 @@ def _edit_tsk(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="tsk", tool="edit", channel=BODY_CHANNEL):
-                Task.from_text(format_text(edited))
+                parse_tsk_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -463,16 +491,25 @@ def _edit_tsk(
 
 
 def _edit_qa(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> QaFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the QA document identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
     ``QaNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+    variant's own (``qa_lock(qa_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa_body`), and only that one file is
+    written -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
     """
-    base_dir = qa_base_dir()
-    with qa_lock(id_):
+    base_dir = qa_base_dir(language)
+    with qa_lock(qa_lock_key(id_, language)):
         try:
             path, existing = load_qa_by_id(base_dir, id_)
         except QaNotFoundError:
@@ -486,7 +523,7 @@ def _edit_qa(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="qa", tool="edit", channel=BODY_CHANNEL):
-                Qa.from_text(format_text(edited))
+                parse_qa_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -500,16 +537,25 @@ def _edit_qa(
 
 
 def _edit_prb(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> PrbFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the problem statement identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
     ``PrbNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+    variant's own (``prb_lock(prb_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = prb_base_dir()
-    with prb_lock(id_):
+    base_dir = prb_base_dir(language)
+    with prb_lock(prb_lock_key(id_, language)):
         try:
             path, existing = load_prb_by_id(base_dir, id_)
         except PrbNotFoundError:
@@ -523,7 +569,7 @@ def _edit_prb(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="prb", tool="edit", channel=BODY_CHANNEL):
-                Prb.from_text(format_text(edited))
+                parse_prb_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -537,16 +583,25 @@ def _edit_prb(
 
 
 def _edit_gol(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> GolFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the goal identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
     ``GolNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+    variant's own (``gol_lock(gol_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.gol.models.v1.parse_gol_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = gol_base_dir()
-    with gol_lock(id_):
+    base_dir = gol_base_dir(language)
+    with gol_lock(gol_lock_key(id_, language)):
         try:
             path, existing = load_gol_by_id(base_dir, id_)
         except GolNotFoundError:
@@ -560,7 +615,7 @@ def _edit_gol(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="gol", tool="edit", channel=BODY_CHANNEL):
-                Goal.from_text(format_text(edited))
+                parse_gol_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -574,16 +629,25 @@ def _edit_gol(
 
 
 def _edit_rsk(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> RskFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the risk identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
     ``RskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+    variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = rsk_base_dir()
-    with rsk_lock(id_):
+    base_dir = rsk_base_dir(language)
+    with rsk_lock(rsk_lock_key(id_, language)):
         try:
             path, existing = load_rsk_by_id(base_dir, id_)
         except RskNotFoundError:
@@ -597,7 +661,7 @@ def _edit_rsk(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="rsk", tool="edit", channel=BODY_CHANNEL):
-                Risk.from_text(format_text(edited))
+                parse_rsk_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -611,16 +675,26 @@ def _edit_rsk(
 
 
 def _edit_dec(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> DecFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
     ``DecNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), the stage-1 match runs
+    against that variant's on-disk body, the stage-2 validation of the
+    edited body goes through the variant's heading table
+    (:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and only that
+    one file is written -- the EN document stays untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
         try:
             path, existing = load_dec_by_id(base_dir, id_)
         except DecNotFoundError:
@@ -634,7 +708,7 @@ def _edit_dec(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
-                Decision.from_text(format_text(edited))
+                parse_dec_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -687,16 +761,25 @@ def _edit_feat(
 
 
 def _edit_sop(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> SopFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the SOP identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
     ``SopNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+    variant's own (``sop_lock(sop_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = sop_base_dir()
-    with sop_lock(id_):
+    base_dir = sop_base_dir(language)
+    with sop_lock(sop_lock_key(id_, language)):
         try:
             path, existing = load_sop_by_id(base_dir, id_)
         except SopNotFoundError:
@@ -710,7 +793,7 @@ def _edit_sop(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="sop", tool="edit", channel=BODY_CHANNEL):
-                Sop.from_text(format_text(edited))
+                parse_sop_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -724,16 +807,25 @@ def _edit_sop(
 
 
 def _edit_vcr(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> VcrFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the verification case record identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
     ``VcrNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+    variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the stage-1 match runs against that
+    variant's on-disk body, the stage-2 validation of the edited body goes through the variant's
+    heading table (:func:`~biz.dfch.specmgr.vcr.models.v1.parse_vcr_body`), and only that one file
+    is written -- the EN document (bytes, ``updated``, cache entry) is never touched by a
+    non-default ``language`` call.
     """
-    base_dir = vcr_base_dir()
-    with vcr_lock(id_):
+    base_dir = vcr_base_dir(language)
+    with vcr_lock(vcr_lock_key(id_, language)):
         try:
             path, existing = load_vcr_by_id(base_dir, id_)
         except VcrNotFoundError:
@@ -747,7 +839,7 @@ def _edit_vcr(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="vcr", tool="edit", channel=BODY_CHANNEL):
-                Vcr.from_text(format_text(edited))
+                parse_vcr_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -761,16 +853,25 @@ def _edit_vcr(
 
 
 def _edit_sysrs(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> SysrsFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the System Requirements Specification for ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped,
     ``write_sysrs_file``, ``SysrsNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+    variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the stage-1 match runs against
+    that variant's on-disk body, the stage-2 validation of the edited body goes through the
+    variant's heading table (:func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs_body`), and only
+    that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+    by a non-default ``language`` call.
     """
-    base_dir = sysrs_base_dir()
-    with sysrs_lock(id_):
+    base_dir = sysrs_base_dir(language)
+    with sysrs_lock(sysrs_lock_key(id_, language)):
         try:
             path, existing = load_sysrs_by_id(base_dir, id_)
         except SysrsNotFoundError:
@@ -784,7 +885,7 @@ def _edit_sysrs(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="sysrs", tool="edit", channel=BODY_CHANNEL):
-                Sysrs.from_text(format_text(edited))
+                parse_sysrs_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -816,6 +917,29 @@ _ADAPTERS: dict[str, Callable[[str, str, str, bool], _EditFrontmatter]] = {
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
     "remove the domain in both places (feat-159-edit, GitHub issue #159)"
+)
+
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phases 120/125: every whole-body
+#: domain except ``feat``). Called with the language as a 5th positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str, bool, str], _EditFrontmatter]] = {
+    "req": _edit_req,
+    "uc": _edit_uc,
+    "tsk": _edit_tsk,
+    "qa": _edit_qa,
+    "prb": _edit_prb,
+    "gol": _edit_gol,
+    "rsk": _edit_rsk,
+    "dec": _edit_dec,
+    "sop": _edit_sop,
+    "vcr": _edit_vcr,
+    "sysrs": _edit_sysrs,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
 )
 
 
@@ -851,15 +975,25 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "input, empty `old_str`) still raise. An invalid `id` (path-injection attempt or wrong format "
         "for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter "
         "only (no body; `updated` bumped) on success; use the corresponding `get_<d>` tool to fetch "
-        "the full document afterward."
+        "the full document afterward. The optional `language` parameter (default 'en', feat-197-i18n) "
+        "selects the language variant to edit: omitted/'en' = the flat default-language document, "
+        "exactly the default behavior; a non-default ISO 639-1-shaped lowercase two-letter code "
+        "(e.g. 'de') = that language's variant at docs/<type>/{language}/ (found by id-scan of that "
+        "subdirectory), matched against and written to that file ONLY -- the EN file's content and "
+        "`updated` timestamp stay untouched -- with the stage-2 validation going through that "
+        "language's heading-mapping table. "
+        "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
+        "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
+        "one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
-def edit(
+def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     id: str,
     type: Literal[*WHOLE_BODY_DOMAINS],
     old_str: str,
     new_str: str,
     replace_all: bool = False,
+    language: str = DEFAULT_LANGUAGE,
 ) -> _EditFrontmatter:
     """Surgically replace a byte-exact occurrence of ``old_str`` in an existing document's body.
 
@@ -945,6 +1079,20 @@ def edit(
         ``False`` (default): ``old_str`` must match exactly once (multiple
         matches are an error). ``True``: every exact occurrence is
         rewritten.
+    language:
+        The language variant to edit (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+        it) edits the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) edits that language's variant, located by id-scan
+        of ``docs/<type>/{language}/``: ``old_str`` is matched against that
+        variant's own on-disk body, the edited body is validated through
+        that language's heading-mapping table, and only that one file is
+        written -- the EN document's bytes, ``updated`` timestamp, and
+        cache entry stay untouched. Shape-guarded before any filesystem
+        access (like ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` is always English: a non-default language for it raises a
+        ``ValueError``).
 
     Returns
     -------
@@ -988,7 +1136,10 @@ def edit(
         lock after the on-disk body is read). All four guard/stage-1
         ``ValueError``s carry the OC message verbatim with no
         ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
-        is written in any of these cases.
+        is written in any of these cases. Also raised, before any filesystem
+        access, for a malformed ``language`` (not an ISO 639-1-shaped
+        lowercase two-letter code), a non-default ``language`` with ``type`` ``feat`` (always English), or a non-
+        default ``language`` without a packaged heading-mapping table.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
@@ -1010,6 +1161,8 @@ def edit(
         raise ValueError(
             f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} ('adr' is not supported)"
         )
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
     # REQ-008: the identical-input and empty-`old_str` guards fire before any filesystem access.
     if old_str == new_str:
         raise ValueError("No changes to apply: oldString and newString are identical.")
@@ -1020,6 +1173,8 @@ def edit(
             "or use update for an intentional full-file replacement."
         )
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, old_str, new_str, replace_all)
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, old_str, new_str, replace_all)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, old_str, new_str, replace_all, language)
     return result

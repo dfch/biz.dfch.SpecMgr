@@ -43,7 +43,7 @@ implements (Phase 4, mechanically repeating Phase 3's ``req`` template).
 
 ## Functions
 
-### `_parse(text: 'str') -> 'RskDocument'`
+### `_parse(text: 'str', *, language: 'str | None' = None) -> 'RskDocument'`
 
 Parse ``text`` into a :class:`RskDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
@@ -51,6 +51,10 @@ Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCac
 already read (and hashed) for this same call -- this function must not
 re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
 hash/parse TOCTOU race the previous two-independent-reads shape had).
+The optional ``language`` (feat-197-i18n Phase 125) is the effective
+language of the file being parsed -- ``None``/omitted or ``"en"`` runs
+the canonical EN parse, any other value applies that language's
+heading-mapping table at ``parse_rsk``'s own pre-pass.
 
 
 ### `invalidate_rsk_cache(path: 'Path') -> 'None'`
@@ -76,6 +80,19 @@ matches the hash recorded at the last read of ``path`` (ADR
 bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
 re-raised cached failure) is returned without re-invoking
 :func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk`.
+
+**Language-aware (feat-197-i18n Phase 125).** The effective language is
+derived from the file's own position relative to the risk base
+directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
+directly in the flat ``docs/rsk/`` directory parses canonical/EN, a file
+directly in ``docs/rsk/{language}/`` parses in that language, anything
+else canonical), never from a caller argument: the location *is* the
+language encoding (ADR 38efdb66 item 1), so every consumer of this
+reader (``find_rsk_path``'s scan, ``list_rsk``'s rows, ``load_by_id``'s
+second read, the generic tools' own rsk adapters) parses a variant file
+with its table without any signature change, and the ``DocCache``'s
+path-keyed entries keep EN and every language of one id independent
+(ADR item 9 -- no cache code change).
 
 Parameters
 ----------

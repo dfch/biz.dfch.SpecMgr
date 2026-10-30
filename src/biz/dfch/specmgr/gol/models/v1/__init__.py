@@ -41,7 +41,7 @@ from .body import (
 )
 from .document import GolDocument
 from .frontmatter import GolFrontmatter
-from .parser import parse_gol
+from .parser import parse_gol, parse_gol_body
 from .summary import GolSummary
 
 __all__ = [
@@ -62,4 +62,5 @@ __all__ = [
     "Source",
     "Tags",
     "parse_gol",
+    "parse_gol_body",
 ]

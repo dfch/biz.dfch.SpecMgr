@@ -118,7 +118,7 @@ import frontmatter
 from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
@@ -130,69 +130,70 @@ from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
-from ...gol.tools._lock import gol_lock
+from ...gol.tools._lock import gol_lock, gol_lock_key
 from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
-from ...prb.tools._lock import prb_lock
+from ...prb.tools._lock import prb_lock, prb_lock_key
 from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
-from ...qa.tools._lock import qa_lock
+from ...qa.tools._lock import qa_lock, qa_lock_key
 from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
-from ...req.tools._lock import req_lock
+from ...req.tools._lock import req_lock, req_lock_key
 from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
-from ...rsk.tools._lock import rsk_lock
+from ...rsk.tools._lock import rsk_lock, rsk_lock_key
 from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
-from ...sop.tools._lock import sop_lock
+from ...sop.tools._lock import sop_lock, sop_lock_key
 from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
-from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._lock import sysrs_lock, sysrs_lock_key
 from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
-from ...tsk.tools._lock import tsk_lock
+from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
-from ...uc.tools._lock import uc_lock
+from ...uc.tools._lock import uc_lock, uc_lock_key
 from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
-from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._lock import vcr_lock, vcr_lock_key
 from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
 from ..models import ParseFailureResult
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._timestamps import now_timestamp
 
 __all__ = ["set_classification"]
@@ -215,7 +216,9 @@ _SetClassificationFrontmatter = (
 )
 
 
-def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter | ParseFailureResult:
+def _set_classification_req(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> ReqFrontmatter | ParseFailureResult:
     """Replace the classification of the requirement identified by ``id_``.
 
     Shaped exactly like :func:`~.set_status._set_status_req` (same
@@ -227,9 +230,16 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter | P
     docstring): a target ``id`` whose only matching on-disk file fails to
     parse yields the non-raising ``ParseFailureResult`` instead of
     ``ReqNotFoundError`` (a truly-absent id still raises).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+    variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = req_base_dir()
-    with req_lock(id_):
+    base_dir = req_base_dir(language)
+    with req_lock(req_lock_key(id_, language)):
         try:
             path, existing = load_req_by_id(base_dir, id_)
         except ReqNotFoundError:
@@ -253,14 +263,23 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter | ParseFailureResult:
+def _set_classification_uc(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> UcFrontmatter | ParseFailureResult:
     """Replace the classification of the use case identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+    variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = uc_base_dir()
-    with uc_lock(id_):
+    base_dir = uc_base_dir(language)
+    with uc_lock(uc_lock_key(id_, language)):
         try:
             path, existing = load_uc_by_id(base_dir, id_)
         except UcNotFoundError:
@@ -284,14 +303,23 @@ def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter | Par
     return new_frontmatter
 
 
-def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter | ParseFailureResult:
+def _set_classification_tsk(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> TskFrontmatter | ParseFailureResult:
     """Replace the classification of the task list identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+    variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = tsk_base_dir()
-    with tsk_lock(id_):
+    base_dir = tsk_base_dir(language)
+    with tsk_lock(tsk_lock_key(id_, language)):
         try:
             path, existing = load_tsk_by_id(base_dir, id_)
         except TskNotFoundError:
@@ -315,14 +343,23 @@ def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter | ParseFailureResult:
+def _set_classification_qa(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> QaFrontmatter | ParseFailureResult:
     """Replace the classification of the QA document identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+    variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = qa_base_dir()
-    with qa_lock(id_):
+    base_dir = qa_base_dir(language)
+    with qa_lock(qa_lock_key(id_, language)):
         try:
             path, existing = load_qa_by_id(base_dir, id_)
         except QaNotFoundError:
@@ -346,14 +383,23 @@ def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter | Par
     return new_frontmatter
 
 
-def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter | ParseFailureResult:
+def _set_classification_prb(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> PrbFrontmatter | ParseFailureResult:
     """Replace the classification of the problem statement identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+    variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = prb_base_dir()
-    with prb_lock(id_):
+    base_dir = prb_base_dir(language)
+    with prb_lock(prb_lock_key(id_, language)):
         try:
             path, existing = load_prb_by_id(base_dir, id_)
         except PrbNotFoundError:
@@ -377,14 +423,23 @@ def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter | ParseFailureResult:
+def _set_classification_gol(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> GolFrontmatter | ParseFailureResult:
     """Replace the classification of the goal identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+    variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = gol_base_dir()
-    with gol_lock(id_):
+    base_dir = gol_base_dir(language)
+    with gol_lock(gol_lock_key(id_, language)):
         try:
             path, existing = load_gol_by_id(base_dir, id_)
         except GolNotFoundError:
@@ -408,14 +463,23 @@ def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter | ParseFailureResult:
+def _set_classification_rsk(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> RskFrontmatter | ParseFailureResult:
     """Replace the classification of the risk identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+    variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = rsk_base_dir()
-    with rsk_lock(id_):
+    base_dir = rsk_base_dir(language)
+    with rsk_lock(rsk_lock_key(id_, language)):
         try:
             path, existing = load_rsk_by_id(base_dir, id_)
         except RskNotFoundError:
@@ -439,14 +503,24 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter | ParseFailureResult:
+def _set_classification_dec(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> DecFrontmatter | ParseFailureResult:
     """Replace the classification of the decision identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+    written -- the EN document (bytes, ``updated``, cache entry) stays
+    untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
         try:
             path, existing = load_dec_by_id(base_dir, id_)
         except DecNotFoundError:
@@ -507,7 +581,9 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter |
     return new_frontmatter
 
 
-def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter | ParseFailureResult:
+def _set_classification_sop(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> SopFrontmatter | ParseFailureResult:
     """Replace the classification of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_classification_dec` (same
@@ -515,9 +591,16 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter | P
     ``sop`` is the first domain built dispatch-only from day one per ADR
     36905d5b, so this adapter was written directly in this shape) -- see
     :func:`_set_classification_req` for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+    variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = sop_base_dir()
-    with sop_lock(id_):
+    base_dir = sop_base_dir(language)
+    with sop_lock(sop_lock_key(id_, language)):
         try:
             path, existing = load_sop_by_id(base_dir, id_)
         except SopNotFoundError:
@@ -541,15 +624,24 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter | ParseFailureResult:
+def _set_classification_vcr(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> VcrFrontmatter | ParseFailureResult:
     """Replace the classification of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
     ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
     :func:`_set_classification_req` for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+    variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = vcr_base_dir()
-    with vcr_lock(id_):
+    base_dir = vcr_base_dir(language)
+    with vcr_lock(vcr_lock_key(id_, language)):
         try:
             path, existing = load_vcr_by_id(base_dir, id_)
         except VcrNotFoundError:
@@ -573,7 +665,9 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter | ParseFailureResult:
+def _set_classification_sysrs(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> SysrsFrontmatter | ParseFailureResult:
     """Replace the classification of the System Requirements Specification identified by ``id_``.
 
     Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
@@ -581,9 +675,16 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
     is dispatch-only from day one per ADR 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_classification_req`
     for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+    variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is written
+    -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
     """
-    base_dir = sysrs_base_dir()
-    with sysrs_lock(id_):
+    base_dir = sysrs_base_dir(language)
+    with sysrs_lock(sysrs_lock_key(id_, language)):
         try:
             path, existing = load_sysrs_by_id(base_dir, id_)
         except SysrsNotFoundError:
@@ -628,6 +729,29 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "remove the domain in both places (feat-125-domain-lists, REQ-006)"
 )
 
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phases 120/125: every whole-body
+#: domain except ``feat``). Called with the language as the last positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str], _SetClassificationFrontmatter]] = {
+    "req": _set_classification_req,
+    "uc": _set_classification_uc,
+    "tsk": _set_classification_tsk,
+    "qa": _set_classification_qa,
+    "prb": _set_classification_prb,
+    "gol": _set_classification_gol,
+    "rsk": _set_classification_rsk,
+    "dec": _set_classification_dec,
+    "sop": _set_classification_sop,
+    "vcr": _set_classification_vcr,
+    "sysrs": _set_classification_sysrs,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
+
 
 @mcp.tool(
     name="set_classification",
@@ -650,13 +774,22 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         'raised before any file access; `type="adr"` passes the id validation (a well-formed '
         "UUID id) and raises the plain `KeyError` inherited from the dispatch-table lookup "
         "instead. Returns the updated frontmatter only (no body) on success; use the "
-        "corresponding `get_<d>` tool to fetch the full document afterward."
+        "corresponding `get_<d>` tool to fetch the full document afterward. "
+        "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
+        "act on: omitted/'en' = the flat default-language document, exactly the default behavior; a "
+        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/<type>/{language}/ (found by id-scan of that subdirectory), acting on that file ONLY -- the "
+        "EN file's content and `updated` timestamp stay untouched. "
+        "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
+        "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
+        "one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
 def set_classification(
     id: str,
     type: WholeBodyType,
     classification: str,
+    language: str = DEFAULT_LANGUAGE,
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.
 
@@ -706,6 +839,19 @@ def set_classification(
     classification:
         The new classification value. Fully free-text; a blank or
         whitespace-only value clears the field back to ``None``/absent.
+    language:
+        The language variant to act on (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) acts on the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) acts on that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one file is touched: the EN
+        document's bytes, ``updated`` timestamp, and cache entry stay
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` is always English: a non-default language for it raises a
+        ``ValueError``).
 
     Returns
     -------
@@ -731,7 +877,11 @@ def set_classification(
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format, or ``type`` is an unknown document type
-        (raised before any filesystem access; nothing is written).
+        (raised before any filesystem access; nothing is written). Also
+        raised, before any filesystem access, for a malformed ``language``
+        (not an ISO 639-1-shaped lowercase two-letter code), a non-default
+        ``language`` with ``type`` ``feat`` (always English), or a non-default
+        ``language`` without a packaged heading-mapping table.
     KeyError
         ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
         ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
@@ -751,7 +901,11 @@ def set_classification(
     # (`type="adr"` passes -- its id is a UUID -- and raises the plain `KeyError` inherited
     # from the dispatch-table lookup below).
     validate_id(type, id)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, classification)
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, classification)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, classification, language)
     return result
