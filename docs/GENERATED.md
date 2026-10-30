@@ -144,10 +144,12 @@ First-line docstrings from each module, organized by domain:
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/prompts/repair.py` — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
+- `general/prompts/translate_artifact.py` — ``@mcp.prompt()``: translate_artifact (feat-197-i18n, Phase 130, REQ-011).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- `general/resources/i18n.py` — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/reference_graph.py` — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
@@ -592,4 +594,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 442
+**Test files**: 446

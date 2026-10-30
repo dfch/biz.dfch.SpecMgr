@@ -125,10 +125,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - [`biz.dfch.specmgr.general.prompts.repair`](biz.dfch.specmgr.general.prompts.repair.md) — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
+- [`biz.dfch.specmgr.general.prompts.translate_artifact`](biz.dfch.specmgr.general.prompts.translate_artifact.md) — ``@mcp.prompt()``: translate_artifact (feat-197-i18n, Phase 130, REQ-011).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- [`biz.dfch.specmgr.general.resources.i18n`](biz.dfch.specmgr.general.resources.i18n.md) — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.reference_graph`](biz.dfch.specmgr.general.resources.reference_graph.md) — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).

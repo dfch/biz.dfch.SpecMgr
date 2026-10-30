@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-36 resource(s), 1 resource template(s), 115 tool(s), 33 prompt(s).
+37 resource(s), 2 resource template(s), 115 tool(s), 34 prompt(s).
 
 ## Table of Contents
 
@@ -25,6 +25,7 @@ do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 | [`specmgr://feat/template`](#resource-feat_template) | A FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature. |
 | [`specmgr://gol/example`](#resource-gol_example) | A complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`specmgr://gol/template`](#resource-gol_template) | A GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal. |
+| [`specmgr://i18n`](#resource-i18n) | How language variants of the same artifact are stored and translated: the docs/{type}/{language}/ layout and the EN-slug basename rule, the language vocabulary and per-language heading tables, the tool surface honoring `language`, the exact never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb problem_statement exemption), how to translate headings, the create-versus-update decision, and the guard/error semantics (feat and adr are always English) -- raw markdown domain-knowledge guidance. |
 | [`specmgr://iso25010`](#resource-iso25010) | The nine main characteristics (and their sub-characteristics) of the ISO/IEC 25010:2023 system/software product quality model, each with a description. |
 | [`specmgr://prb/example`](#resource-prb_example) | A complete, valid sample problem statement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`specmgr://prb/template`](#resource-prb_template) | A PRB document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new problem statement. |
@@ -115,6 +116,13 @@ A complete, valid sample goal document as raw markdown -- frontmatter and body -
 - **MIME type:** `text/markdown`
 
 A GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal.
+
+### Resource: i18n
+
+- **URI:** `specmgr://i18n`
+- **MIME type:** `text/markdown`
+
+How language variants of the same artifact are stored and translated: the docs/{type}/{language}/ layout and the EN-slug basename rule, the language vocabulary and per-language heading tables, the tool surface honoring `language`, the exact never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb problem_statement exemption), how to translate headings, the create-versus-update decision, and the guard/error semantics (feat and adr are always English) -- raw markdown domain-knowledge guidance.
 
 ### Resource: iso25010
 
@@ -310,6 +318,7 @@ Installed version number of the biz-dfch-specmgr package that backs this MCP ser
 | Name | Description |
 | --- | --- |
 | [`specmgr://adr/{id}`](#resource-template-adr_get) | Full ADR document (frontmatter and body) for the given id, as structured JSON -- a resource-based, read-only counterpart of the get_adr tool for plain context retrieval without a tool round-trip. |
+| [`specmgr://i18n/headings/{language}`](#resource-template-i18n_headings) | The heading-mapping table of one language as JSON: a flat object mapping each translated heading text to its canonical English heading text (the table the parsers apply to a language variant and the translate_artifact flow translates headings with). Read-only; `en` is canonical and has no table, and a language without a packaged table is an error. |
 
 ### Resource Template: adr_get
 
@@ -317,6 +326,13 @@ Installed version number of the biz-dfch-specmgr package that backs this MCP ser
 - **MIME type:** `application/json`
 
 Full ADR document (frontmatter and body) for the given id, as structured JSON -- a resource-based, read-only counterpart of the get_adr tool for plain context retrieval without a tool round-trip.
+
+### Resource Template: i18n_headings
+
+- **URI template:** `specmgr://i18n/headings/{language}`
+- **MIME type:** `application/json`
+
+The heading-mapping table of one language as JSON: a flat object mapping each translated heading text to its canonical English heading text (the table the parsers apply to a language variant and the translate_artifact flow translates headings with). Read-only; `en` is canonical and has no table, and a language without a packaged table is an error.
 
 ## Tools
 
@@ -1625,6 +1641,7 @@ Validate PlantUML diagram text through the strict validation chain (the frozen r
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
 | [`repair`](#prompt-repair) | Guides the LLM through repairing a whole-body specmgr document that currently fails to parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- the error text byte-identical to list_<d>()'s failed row for the same file; every whole-body domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for feat only, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44: list_feat's own row may transiently differ until its background warmup or an on-demand get_feat read has fully parsed that file) when an id is given, or list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the host's own file-read tool, fix only what the error addresses while preserving the frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop validate(type, content, full=True) until green, write the repaired text back to the same path with the host's own file-write tool (never via the generic update (or edit) tool, which is structurally unable to repair a document that fails to parse), then confirm the repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only on a host without file read/write tools. ADR is out of scope. |
+| [`translate_artifact`](#prompt-translate_artifact) | Guides the LLM through producing (or updating) a target-language variant of a whole-body specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs; feat and adr are always English and out of scope): read the specmgr://i18n resource first, read the source via get_<d>(id, raw=True, language=...) (a ParseFailureResult stops the flow), decide create (create_<d>(content, language, id)) versus update (the generic update/edit with language), translate only free-form prose and fixed-text heading text via the language's heading table -- never the closed-vocabulary/schema-constant tokens (RSK Strategy/Probability/Impact, VCR Coverage/AC method words, REQ Level/Priority, Option/Step/Extension tokens, cross-reference tags, timestamps, ...) nor PRB's problem_statement -- retry the write a bounded number of times on a non-raising ValidateResult (the validate tool cannot dry-run a translation), verify with get_<d>(id, language=...), and report. A language without a heading table stops the flow. Never commits, never writes English, never changes the frontmatter id/status. |
 | [`update_adr`](#prompt-update_adr) | Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating. |
 | [`update_adr_test`](#prompt-update_adr_test) | Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps. |
 | [`update_dec`](#prompt-update_dec) | Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating. The structure reference is the `get_dec_schema` tool (the generated JSON Schema); the `get_dec_template`/`get_dec_example` tools return the authoring template and a complete sample. |
@@ -1801,6 +1818,17 @@ Guides the LLM through repairing a whole-body specmgr document that currently fa
 | --- | --- | --- |
 | `type` | Yes |  |
 | `id` | No |  |
+
+### Prompt: translate_artifact
+
+Guides the LLM through producing (or updating) a target-language variant of a whole-body specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs; feat and adr are always English and out of scope): read the specmgr://i18n resource first, read the source via get_<d>(id, raw=True, language=...) (a ParseFailureResult stops the flow), decide create (create_<d>(content, language, id)) versus update (the generic update/edit with language), translate only free-form prose and fixed-text heading text via the language's heading table -- never the closed-vocabulary/schema-constant tokens (RSK Strategy/Probability/Impact, VCR Coverage/AC method words, REQ Level/Priority, Option/Step/Extension tokens, cross-reference tags, timestamps, ...) nor PRB's problem_statement -- retry the write a bounded number of times on a non-raising ValidateResult (the validate tool cannot dry-run a translation), verify with get_<d>(id, language=...), and report. A language without a heading table stops the flow. Never commits, never writes English, never changes the frontmatter id/status.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `type` | Yes |  |
+| `id` | Yes |  |
+| `language` | Yes |  |
+| `source_language` | No |  |
 
 ### Prompt: update_adr
 

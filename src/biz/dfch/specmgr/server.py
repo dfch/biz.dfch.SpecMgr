@@ -133,6 +133,23 @@ specmgr://reference-graph -- The frozen reference-graph rulebook: the determinis
                              the CLI file layout) plus the pointer at the UC rulebook
                              §3–§6 for the validation chain reused as-is -- raw markdown
                              domain-knowledge guidance (feat-207-reference-graph Phase 100).
+specmgr://i18n --       How language variants of the same artifact are stored and
+                        translated (feat-197-i18n Phase 130): the ``docs/{type}/{language}/``
+                        layout and the EN-slug basename rule, the language vocabulary and
+                        per-language heading tables, the tool surface honoring ``language``,
+                        the exact never-translate list per domain (closed-vocabulary and
+                        schema-constant tokens, the ``prb`` ``problem_statement``
+                        exemption), how to translate headings, the create-versus-update
+                        decision, and the guard/error semantics (``feat``/``adr`` are always
+                        English) -- raw markdown domain-knowledge guidance.
+specmgr://i18n/headings/{language} -- (resource template, feat-197-i18n Phase 130) A
+                        language's heading-mapping table as JSON text (``application/json``):
+                        a flat object mapping each translated heading text to its canonical
+                        English heading text, obtained via the heading-table loader (same
+                        validation as every parse). ``language`` is shape-guarded first;
+                        ``en`` (canonical, no table) and a language without a packaged table
+                        are an actionable ``ValueError``. Read-only; lets the
+                        ``translate_artifact`` flow read the table without a host file tool.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
                         rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
@@ -738,7 +755,27 @@ structurally unable to repair a document that fails to parse), and a
 post-write ``get_<d>``/``list_<d>`` confirmation against the file as it now
 exists on disk (success: the parsed document, not an ``error``-carrying
 result); degrades to diagnose-only on a host without file tools
-(feat-150-mcp-lifecycle-commands, Phase 1).
+(feat-150-mcp-lifecycle-commands, Phase 1); ``translate_artifact`` -- guides
+producing or updating a target-language variant of a whole-body document
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/
+``sysrs``; ``feat`` and ``adr`` are always English and rejected) from its
+source-language content (arguments ``type``, ``id``, ``language``, optional
+``source_language`` default ``"en"``): read the ``specmgr://i18n`` resource
+first (and the heading table via ``specmgr://i18n/headings/{language}``), read the
+source via ``get_<d>(id, raw=True, language=...)`` (a
+``ParseFailureResult`` stops the flow), probe the target variant to decide
+``create_<d>(content, language, id)`` versus the generic ``update``/``edit`` with
+``language``, translate only free-form prose and fixed-text heading text (through
+the language's heading table) -- never the closed-vocabulary/schema-constant
+tokens (REQ-010) nor ``prb``'s ``problem_statement`` -- retry the write a bounded
+number of times on the non-raising ``ValidateResult`` (the generic ``validate``
+tool is canonical-only and cannot dry-run a translation), verify with
+``get_<d>(id, language=...)`` against the file on disk, and report; it never
+commits, never writes English, and a language without a heading table stops the
+flow. There is no MCP tool that translates and no dedicated subagent: the
+OpenCode host surface is the ``translate-artifact`` skill
+(``.opencode/skill/translate-artifact/SKILL.md``) and the ``/translate`` command
+(``.opencode/command/translate.md``) (feat-197-i18n, Phase 130).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
@@ -748,7 +785,7 @@ domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``
-resources, the ``mdformat`` tool, or the ``compact_history``/``repair``
+resources, the ``mdformat`` tool, or the ``compact_history``/``repair``/``translate_artifact``
 prompts) stay under the top-level
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by

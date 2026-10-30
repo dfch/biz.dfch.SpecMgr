@@ -67,11 +67,12 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
 
         self.assertEqual(result, 115)
 
-    def test_resource_total_is_37(self) -> None:
-        """49 resources (12 schema + 36 static + 1 template) - 12 = 37."""
+    def test_resource_total_is_39(self) -> None:
+        """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 1 for ``specmgr://i18n`` and + 1 for the
+        ``specmgr://i18n/headings/{language}`` template (feat-197-i18n Phase 130) = 39."""
         result = len(self._resources) + len(self._templates)
 
-        self.assertEqual(result, 37)
+        self.assertEqual(result, 39)
 
 
 if __name__ == "__main__":

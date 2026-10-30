@@ -35,7 +35,15 @@ resolved absolute base directory
 and env-var-set flag for every document domain, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the
 server's host; it never discloses the value of any environment variable,
-only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific
+only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). ``i18n`` registers
+the multi-language artifact-variant guidance resource (``specmgr://i18n``,
+feat-197-i18n Phase 130) -- the directory layout/basename rule, the language
+vocabulary and heading tables, the per-domain never-translate list (REQ-010),
+and the create-versus-update and guard semantics the ``translate_artifact``
+prompt reads first (its sibling resource template
+``specmgr://i18n/headings/{language}`` serves a language's heading-mapping
+table as JSON, so the flow needs no host file tool); cross-cutting like
+``dtais``/``rasci``, since it spans the eleven i18n-eligible domains. Domain-specific
 resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::
