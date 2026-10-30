@@ -24,7 +24,10 @@ type or cross-cutting:
   `create_adr_test`/`update_adr_test` A/B variants (see
   ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
-  `adr/models/`) — see the "models location" note below.
+  `adr/models/`) — see the "models location" note below. ADR is
+  **permanently single-language**: no `adr` tool/resource/prompt has a
+  `language` parameter (feat-197-i18n, REQ-009/ACC-015 — see the
+  `feat-197-i18n` paragraph below).
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
   `list_req`, `get_req_schema`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
@@ -583,7 +586,14 @@ type or cross-cutting:
    pre-existing `SPECMGR_SIMILARITY_DISABLED` still gates the similarity
    phase only); when both flags are set, no thread starts at all (reported
    by `specmgr://config`'s own `feat_warmup_disabled` field, mirroring
-   `SimilarityConfig.disabled`'s own precedent).
+   `SimilarityConfig.disabled`'s own precedent). `feat` is **permanently
+   single-language (EN only)** (feat-197-i18n, REQ-002/ACC-002): its
+   folder-per-document addressing does not fit the `docs/{type}/{language}/`
+   convention, so no `feat` tool/resource/prompt has a `language`
+   parameter, no language path is ever created or read under
+   `SPECMGR_FEAT_DIR`, and `feat/tools/_paths.py`/`_cache.py` are unchanged
+   (see the `feat-197-i18n` paragraph below; the generic `language`-aware
+   tools reject `type="feat"` with the permanent wording).
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -1022,6 +1032,17 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
+   The `general/` package also owns the i18n machinery of the eleven
+   language-aware domains (feat-197-i18n, ADR 38efdb66; the full
+   description is the `feat-197-i18n` paragraph below): the optional
+   `language: str = "en"` parameter of `update`/`edit`/`set_status`/
+   `set_classification`/`delete` (validated by `_path_safety.assert_language`
+   and `_language_guard`, dispatched through each tool's
+   `_LANGUAGE_ADAPTERS`; `feat`/`adr` are permanently rejected with the
+   "always English" wording), `list_languages` and
+   `check_translation_drift` (read-only), the `translate_artifact` prompt,
+   `specmgr://i18n` and `specmgr://i18n/headings/{language}`, and the
+   `heading_table` loader over `general/data/headings/<language>.json`.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
@@ -1207,6 +1228,107 @@ frontmatter phase, the `feat` full-parse phase, and then the unchanged
 itself (its own availability-probe-first/crash-containment/never-raising
 body, and the demand path it shares the cache with) is otherwise
 unchanged; only the startup orchestration moved.
+
+`feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
+added first-class **multi-language variants of the same artifact** for the
+**eleven** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
+`rsk`/`dec`/`sop`/`vcr`/`sysrs` (`general/tools/_language_guard.
+LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
+the default and keeps its exact, unchanged location; every other language is
+a `docs/{type}/{language}/` subfolder holding the variant under the EN
+source's **exact basename** (the slug always derives from the EN title, never
+a translated one), with the **same `id`** and the identical frontmatter/body
+schema — the language lives in the file's location only, there is no
+`language` frontmatter field. **`feat` and `adr` are permanently excluded**
+(REQ-002/REQ-009, ACC-002/ACC-015): no `feat`/`adr` tool, resource or prompt
+has a `language` parameter, no `{language}` path convention reaches `feat`'s
+folder-per-document addressing or `adr`'s directory, and a `language` that
+reaches a generic tool with `type="feat"`/`"adr"` is rejected with the
+permanent "`feat` documents are always English" wording
+(`_language_guard.guard_language`/`assert_language_aware_type`). The surface:
+
+- **`language: str = "en"`** — an optional last parameter of `get_<d>`/
+  `list_<d>` (single language per call, deliberately no "all languages"
+  mode; `list_<d>(language="de")` lists only the `de` variants), of
+  `create_<d>` (which gains an `id` parameter too: a non-default language
+  *requires* the EN source's shared `id` — the EN source must exist, the
+  variant is never overwritten, it starts as a fresh `draft`/`open`
+  document — and an `id` is *forbidden* for EN, so EN create is
+  byte-identical), and of the five generic tools `update`/`edit`/
+  `set_status`/`set_classification`/`delete` (the two-table dispatch keeps
+  the EN path literally untouched: `_ADAPTERS` for the default language,
+  `_LANGUAGE_ADAPTERS` for a variant, an import-time assert pinning it to
+  `LANGUAGE_AWARE_DOMAINS`). Omitted or `"en"` is byte-identical to the
+  pre-i18n behavior; `validate` and `parse_<d>` gained no parameter
+  (`validate` stays canonical/EN-only, `parse_<d>` derives the language from
+  the file's position under the base directory).
+- **Path safety (REQ-008, ACC-013)** — `general/tools/_path_safety.
+  assert_language` fullmatches `^[a-z]{2}$` before any filesystem access, in
+  the same position as `id`; the set is open at the guard and closed by the
+  heading tables (a shape-valid code without a table fails at parse/write
+  time with an actionable error). `_doc_paths.doc_base_dir`/
+  `ensure_doc_base_dir` take the language; `language_for_doc_path`,
+  `iter_doc_paths_all_languages` and `iter_language_dirs` are the other
+  language-aware path primitives, per-domain `<d>_lock_key(id, language)`
+  gives each language its own lock, and `DocCache` needed no change (its
+  entries are keyed by the resolved `Path`, so languages of one id never
+  collide).
+- **Heading-mapping table (REQ-004/005)** — one flat JSON object per language
+  (`<translated heading> -> <canonical English heading>`) in
+  `general/data/headings/<language>.json` (packaged data, `pyproject.toml`
+  glob `data/headings/*.json`), loaded lazily by `general/models/
+  heading_table.py` (`load_heading_table`, `resolve_heading_table`; rejects
+  non-pairwise-distinct values and a missing file). A fence-aware
+  `normalize_heading_lines` pre-pass at each domain's `parse_<d>` boundary
+  rewrites translated headings to canonical English before the unchanged
+  `models/md` engine runs, so the parsed model is the canonical document
+  (ACC-011) while the file keeps its translation. The table's domain is
+  closed and model-derived (fixed-text heading aliases only); data-carrying
+  headings and every closed-vocabulary/schema-constant token (REQ-010:
+  `status`/`classification`, RSK `Strategy`/`Probability`/`Impact`, VCR
+  `Coverage`/`AC-NNN (Method)`, `Option N:`/`Step N:`/`Extension N.`, SOP
+  lifecycle, `[ ]`/`[x]`, cross-reference tags, `sysrs`' H1 prefix) are never
+  translated, and `prb`'s `problem_statement` is an explicit English
+  exemption. **To add a language, add `general/data/headings/<language>.json`
+  — no code or guard change** — covering exactly the model-derived heading
+  set; `tests/general/models/test_heading_table_drift.py` runs on every
+  shipped table and names what is missing or surplus.
+- **Tools** (`general/tools/`, read-only, deterministic, no LLM):
+  `list_languages(type, id)` (REQ-012: the languages an artifact exists in,
+  `en` first when the EN source exists, a broken variant listed with
+  `parseable=False` rather than dropped) and `check_translation_drift(type,
+  id, language, source_language="en")` (REQ-014: one non-raising
+  `TranslationDriftResult` with structural drift — `missing`/`extra`/
+  `reordered`/`unparseable` findings over a fence-aware heading skeleton of
+  the raw bodies — *and* staleness — the source `updated` strictly newer than
+  the variant's); both share `_language_variants.py`/the pure core
+  `general/models/translation_drift.py` and reject `feat`/`adr`.
+- **Translation workflow (REQ-011)** — the MCP prompt `translate_artifact`
+  (`general/prompts/`, args `type`/`id`/`language`/optional `source_language`;
+  narration in `general/data/general_translate_artifact_instructions.md`), the
+  static resource `specmgr://i18n` (layout, vocabulary, the per-domain
+  never-translate list, `general/data/general_i18n.md`) and the resource
+  template `specmgr://i18n/headings/{language}` (a language's table as JSON);
+  no tool translates — translating is LLM judgment work around the
+  deterministic tools above. OpenCode surfaces: the `translate-artifact` skill
+  and `/translate <type> <id> <language> [source_language]`, the
+  `translation-status` skill and `/translation-status <type> <id> [language]`
+  (`.opencode/skill/`, `.opencode/command/`).
+- **EN-only consumers (REQ-013, ACC-014)** — `find_related`/
+  `find_similar_text`/`list_references`/`get_reference_diagram(_all)` gained
+  nothing and never see a variant: `iter_doc_paths` is a non-recursive
+  `*.md` glob that does not descend into `{language}` subfolders, so every
+  hit and every resolved reference is the EN path by directory layout alone.
+  Never switch it to a recursive glob —
+  `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
+
+The tests: `tests/general/tools/test_i18n_all_domains.py` (all eleven domains),
+`tests/dec/tools/test_i18n_*.py` (the `dec` pilot, deep),
+`test_i18n_feat_adr_exclusion.py` (the registered-surface regression for
+ACC-002/ACC-015), `test_i18n_en_only_consumers.py`, `test_i18n_closed_
+vocabulary.py`, `test_language_guard.py`, `test_list_languages.py`,
+`test_check_translation_drift.py`, and the heading-table/drift tests under
+`tests/general/models/`.
 
 Don't assume any domain package exists beyond the
 per-domain bullets in the Status section above (each with its respective

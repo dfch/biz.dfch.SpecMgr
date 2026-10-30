@@ -97,7 +97,8 @@ Produce the full target body text.
 **Translate:**
 - free-form prose (paragraphs, list-item prose, block-quote questions and
   their answers, update-entry titles and bodies, option, step, extension,
-  and criterion names), the H1 title, and the prose inside HTML comments
+  and criterion names), the H1 title (`sysrs`: only the part after its fixed
+  prefix, see below), and the prose inside HTML comments
   (keep the `<!--` and `-->` delimiters);
 - the heading text of fixed-text headings, **only** with the table's text
   for that canonical heading (section 5).
@@ -129,6 +130,8 @@ these from the source exactly:
   because [underlying cause].`) stays canonical English in every language
   (ADR 38efdb66 item 11): copy it byte for byte; its translation would be
   rejected by the schema;
+- `sysrs`: the H1 prefix `System Requirements Specification: ` (translate
+  only the title after it) and the type-tagged cross-reference bullets;
 - every domain: cross-reference lines `<TAG> <uuid>: <title>` (the tag, the
   uuid, and the title text; only the paraphrase paragraph under a
   reference is translated), update-entry heading timestamps and their

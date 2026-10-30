@@ -97,7 +97,8 @@ first).
 
 **Translate:** free-form prose (paragraphs, list-item prose, block-quote
 questions and their answers, update-entry titles and bodies, option, step,
-extension and criterion names), the H1 title, the prose inside HTML comments
+extension and criterion names), the H1 title (`sysrs`: only the part after its
+fixed prefix, see section 5.2), the prose inside HTML comments
 (keep the `<!--`/`-->` delimiters), and the heading text of fixed-text
 headings (only through the table, section 6).
 
@@ -144,7 +145,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 | `dec` | the `### Option <N>: <name>` heading token (`Option`, the number, the colon; the name is prose); the update-entry heading timestamp; the cross-reference tags | `## Tags` bullets |
 | `sop` | the `### Step <N>: <name>` heading token (`Step`, the number, the colon; the name is prose); the update-entry heading timestamp; the cross-reference tags | the lifecycle words (approval/effectivity) live in the frontmatter `status` and are never translated |
 | `vcr` | `## Coverage` word: `full`, `partial`, `none`; the `### AC-<NNN> (<Method>): <text>` heading token (`AC-`, the 3-digit number, and the DTAIS method word `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special`, see `specmgr://dtais`; the text after the colon is prose); the `## Verifies` line `REQ|UC <uuid>: <title>`; the update-entry heading timestamp | |
-| `sysrs` | the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC` or `ADR`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
+| `sysrs` | the H1 prefix `System Requirements Specification: ` (only the title after it is prose and is translated); the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC` or `ADR`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
 
 The fixed-text headings of every domain (for example `## More Information`,
 `## Tags`, `## Source`, the RASCI headings `### Accountable`/`### Responsible`/
@@ -166,7 +167,9 @@ freely.
    translate only the free-text part (the option, step, criterion, extension,
    or update title).
 4. Never reorder, add, or drop a heading. Never change a heading's level.
-5. The H1 title is free-form: translate it. The file name does not change.
+5. The H1 title is free-form: translate it, except for `sysrs`, whose H1 must keep
+   the prefix `System Requirements Specification: ` (translate only the title after
+   it). The file name does not change.
 
 ## 7. Create versus update
 

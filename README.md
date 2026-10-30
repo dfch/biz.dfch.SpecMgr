@@ -31,6 +31,7 @@ them as "extras" (see [Installation](#installation)).
 - [MCP Server](#mcp-server)
 - [Usage](#usage)
 - [Referencing Artifacts](#referencing-artifacts)
+- [Multi-Language Artifacts](#multi-language-artifacts)
 - [Development](#development)
 - [Testing](#testing)
 - [Make a Release](#make-a-release)
@@ -570,6 +571,65 @@ reference-retrieval phrasings, routes single-document requests to the
 `list_references` tool, the `ref-finder` subagent, or the `/refs`
 command, and codifies the graph, batch, and reverse workflows that
 `/refs` and `ref-finder` do not cover.
+
+## Multi-Language Artifacts
+
+The same artifact can exist in several languages. English is the default
+and keeps its location (`docs/<type>/`); every other language is a
+`docs/<type>/<language>/` subfolder (`<language>` is a lowercase
+two-letter code such as `de`) that holds the variant under the **exact
+same file name** as its English source, with the **same `id`** and the
+identical frontmatter and body structure. The language lives in the
+file's location only — there is no `language` frontmatter field. It
+applies to the eleven domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
+`rsk`, `dec`, `sop`, `vcr` and `sysrs`.
+
+**`feat` and `adr` are always English**, permanently: no `feat` or `adr`
+tool, resource or prompt takes a `language`, and the generic tools reject
+those two types if one is passed.
+
+- **Reading and writing.** `get_<d>`, `list_<d>` and `create_<d>`, and
+  the generic `update`, `edit`, `set_status`, `set_classification` and
+  `delete` tools take an optional `language` (default `"en"`; leaving it
+  out behaves exactly as before). `list_<d>(language="de")` lists only
+  the German variants. A variant is created from an existing English
+  document: `create_<d>(content, language="de", id=<id of the EN source>)`.
+  `validate` stays English-only.
+- **Headings.** A translated heading is mapped back to its canonical
+  English heading through a per-language table, so a variant is checked
+  against the exact same schema as the English document. The file keeps
+  its translation. Closed-vocabulary values (`status`, `classification`,
+  RSK `Strategy`/`Probability`/`Impact`, VCR `Coverage` and `AC-NNN
+  (Method)`, `Option N:`/`Step N:` tokens, `[ ]`/`[x]`, cross-reference
+  tags, SOP lifecycle values) are never translated, and neither is the
+  PRB `problem_statement` sentence.
+- **Translating.** The MCP prompt `translate_artifact` (`type`, `id`,
+  `language`, optional `source_language`) drives the translation; the
+  resources `specmgr://i18n` and `specmgr://i18n/headings/{language}`
+  document the rules and return a language's heading table. In
+  [opencode](https://opencode.ai): the `translate-artifact` skill and
+  `/translate <type> <id> <language> [source_language]`. No tool
+  translates by itself — the model does the translating around the
+  deterministic tools.
+- **Status and drift.** `list_languages(type, id)` reports the languages
+  an artifact exists in. `check_translation_drift(type, id, language)`
+  reports structural drift (missing, extra or reordered sections) and
+  staleness (the English source is newer than the translation). In
+  opencode: the `translation-status` skill and
+  `/translation-status <type> <id> [language]`.
+- **English-only search and references.** `find_related`,
+  `find_similar_text`, `list_references` and `get_reference_diagram(_all)`
+  never see a language variant: a hit or a resolved reference is always
+  the English document.
+- **Adding a language.** Add one file,
+  `src/biz/dfch/specmgr/general/data/headings/<language>.json` — a flat
+  JSON object `{"<translated heading>": "<canonical English heading>"}`
+  that covers exactly the fixed-text headings of the document models, with
+  distinct values. No code change is needed. The drift test
+  `tests/general/models/test_heading_table_drift.py` checks every shipped
+  table and names each missing or surplus heading. Without a table file a
+  language code is rejected when a document of that language is read or
+  written.
 
 ## Development
 
