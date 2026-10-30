@@ -1104,9 +1104,19 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or the generic `validate` tool, for the other
-  whole-body domains) tool runs over the repo's
-  own documents yet via pre-commit or CI. (ADR
+- The former gap — no validate-equivalent check over the repo's
+  own documents via pre-commit or CI — is closed at change scope:
+  the `specmgr lint` pre-commit hook (feat-218) lints every staged
+  in-tree spec artifact, and the CI pull-request step lints every
+  artifact changed against the base branch, both via the model-level
+  full parse (never the `list_<d>` listing path, whose `list_feat`
+  dirty stage is precisely the masking that hid the feat-214 defect).
+  What remains not yet done is the scheduled (nightly) full-corpus
+  sweep — the full sweep is CLI-only today (`specmgr lint --type T` /
+  `--all`), available for an on-demand or future nightly run; the
+  follow-up issue for that nightly workflow owns the accepted
+  limitation that a schema or parser change can break untouched
+  documents without failing any change-scoped gate. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
@@ -1328,7 +1338,21 @@ full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
 `pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
 last, before every commit, so a broken test or drift in
 `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
-instead of failing later in CI. The `pytest` hook is deliberately ordered
+instead of failing later in CI. The local `specmgr lint` hook (feat-218)
+lints the staged in-tree spec artifacts (the feature README.md files under
+`.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
+anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`)
+with the `specmgr lint` full-parse gate, and is placed ahead of the `pytest`
+hook. It is the config's first `pass_filenames: true` hook (every other
+local hook takes no file list) and runs with `require_serial: true`, so the
+staged files are linted by one process with one ordered summary (a staged
+list longer than the OS argument-length limit is still split into sequential
+invocations, each with its own summary). It parses the working-tree file
+contents, not the git index: a partially staged file is checked as it exists
+on disk (accepted and documented). A commit that stages only files the
+pattern matches but the command skips or excludes (e.g. `docs/appendix/*.md`,
+`docs/adr/README.md`) passes with a 0-linted summary.
+The `pytest` hook is deliberately ordered
 last (not right after `vulture`) so every faster check fails fast first;
 running the suite in parallel also cut its own wall time from 9-11 minutes
 (serial `coverage run -m unittest discover`) to roughly a minute measured on
@@ -1403,6 +1427,42 @@ extras onto every consumer of the base library.
   printed) of a file's or stdin's (`-`) diagram source; fully offline.
   Exit codes: **0** printed, **2** usage error (missing/unreadable file,
   empty input).
+- `specmgr lint [paths]... [--type T [--dir D]] [--all]
+  [--skip-unrecognized]` (feat-218, `commands/lint.py`): the in-tree spec
+  artifact parseability gate — runs the document's own domain's model-level
+  FULL parse over each document (never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  is precisely the masking that hid the feat-214 defect) and reports every
+  unparseable document (path + parse error), each followed by its per-type
+  repair pointer (whole-body domains `/repair {type} {id}`, the id derived
+  from the path — the folder name for feat, the file-name UUID for the
+  others — falling back to `/repair {type}`; ADR, which the repair flow
+  does not cover, a fix-manually line), plus one summary
+  (`linted`/`failed`/`skipped`/`excluded`). Three scopes, so the cost
+  scales with the size of a change and never with the size of the corpus:
+  path mode (the type is inferred from the path layout alone — the
+  containing directory named after a type, or the `feat/{id}/README.md`
+  shape — with the `--type` override and `--skip-unrecognized`; used by
+  the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
+  by the CI pull-request step over the artifacts changed against the base
+  branch), and the `--type T` sweep (from `--dir` if given, else the
+  domain's registered base directory) and the `--all` sweep — both
+  CLI-only, never on the commit path or in the test suite. The generated
+  `docs/adr/README.md` table of contents is unconditionally excluded
+  (resolved type `adr` + base name `README.md`, in whichever directory;
+  `feat/{id}/README.md` is never excluded). Exit codes: **0** every
+  document parsed (incl. a run where every path was skipped or excluded),
+  **1** at least one document failed to parse or the `mcp` extra is
+  missing (required, like `specmgr diagram`; the decoupling is tracked as
+  issue #238), **2** usage-or-resolution error (no paths and no sweep
+  flag, an unreadable or missing path, an unrecognized layout without
+  `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
+  paths, paths combined with `--all`, an unknown `--type`, `--all`
+  discovering nothing at all -- no document and no excluded one). Accepted
+  limitation: because the gate is change-scoped, a schema or parser change
+  can break untouched documents without failing any gate — the full sweep
+  (manual, or the follow-up nightly workflow whose issue owns the
+  limitation) finds them.
 
 ## MCP server (`server.py`)
 

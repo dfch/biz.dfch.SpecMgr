@@ -282,6 +282,31 @@ repos:
         pass_filenames: false
         files: ^src/biz/dfch/specmgr/(dec/models/v1|feat/models/v1|gol/models/v1|prb/models/v1|qa/models/v2|req/models/v1|rsk/models/v1|sop/models/v1|sysrs/models/v1|tsk/models/v1|uc/models/v2|vcr/models/v1|models/md)/.*\.py$
 
+      - id: specmgr-lint
+        name: specmgr lint
+        description: >-
+          Lint the staged in-tree spec artifacts (the feature README.md
+          files under .specmgr/feat/ and the documents under
+          docs/{type}/) with the `specmgr lint` full-parse gate
+          (feat-218): every staged file is checked against its domain's
+          own model-level parser, and a document that fails to parse
+          blocks the commit with the file, the parse error and the
+          per-type repair pointer. `require_serial` runs the staged
+          files through one process with one ordered summary instead of
+          parallel batches with interleaved summaries (a staged list
+          longer than the OS argument-length limit is still split into
+          sequential invocations, each with its own summary). The hook
+          parses working-tree file contents, not the git index: a
+          partially staged file is checked as it exists on disk
+          (accepted and documented). Files the pattern matches but the
+          command skips or excludes (e.g. docs/appendix/*.md,
+          docs/adr/README.md) pass with a 0-linted summary.
+        entry: uv run --frozen --all-extras specmgr lint --skip-unrecognized
+        language: system
+        pass_filenames: true
+        require_serial: true
+        files: ^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$
+
       - id: pytest
         name: pytest
         description: >-
