@@ -124,6 +124,12 @@ class TxtBody(MarkdownStr):
         everything remaining), so the mandatory `updates` field declared
         after `body` fails with the engine's own error (REQ-011).
 
+        One cost note: the boundary check re-tokenizes the entire body text
+        via `parse(text)` on every parse, in addition to the engine's own
+        tokenization of the same text -- an O(body-size) cost paid twice per
+        parse, inherent to this override. If a "large txt body is slow"
+        report ever surfaces, this is the cause to investigate first.
+
         Args:
             text: Markdown source, pre-formatted with `mdformat`.
 

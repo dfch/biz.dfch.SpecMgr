@@ -27,9 +27,10 @@ module drives the actual tool functions in a single realistic sequence --
 real temporary docs directory.
 
 The generic ``update``/``set_status``/``validate``/``delete`` tools are
-**not** part of this sequence: ``txt`` joins their dispatch tables with the
-Phase 130 generic-tool registration, so exercising them here would only hit
-the unknown-type ``ValueError``.
+**not** part of this sequence: ``txt`` is a registered dispatch type for
+all of them, and each carries its own ``txt`` cases in the generic tools'
+own test suites under ``tests/general/tools/`` (``test_update.py``,
+``test_set_status.py``, ``test_validate.py``, and ``test_delete.py``).
 
 Isolation follows the exact same pattern as ``test_create_txt.py``'s
 ``TempTxtDirTestCase``: a fresh ``tempfile.TemporaryDirectory()`` is pointed

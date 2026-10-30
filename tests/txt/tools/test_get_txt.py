@@ -18,11 +18,9 @@
 """Tests for the ``get_txt`` ``@mcp.tool()`` wrapper (feat-229-txt Phase 110).
 
 The two "raw-read coordinates index into the splice target" tests of
-``tests/vcr/tools/test_get_vcr.py`` are adapted: the generic ``update`` tool
-does not know ``type="txt"`` yet (the Phase 130 generic-tool registration
-lands after this phase), so they pin the same raw/splice invariant
-directly against the shared ``body_text``/``window_body`` helpers the
-generic ``update`` tool's range splice uses.
+``tests/vcr/tools/test_get_vcr.py`` are adapted: they pin the same raw/splice
+invariant directly against the shared ``body_text``/``window_body`` helpers
+the generic ``update`` tool's range splice uses.
 """
 
 from __future__ import annotations
@@ -108,8 +106,7 @@ class TestGetTxt(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_raw_line_coordinates_index_into_the_shared_body_text(self) -> None:
         """The line numbers from a raw read must index byte-for-byte into the shared body_text --
-        the same text the generic ``update`` tool's range splice targets once ``txt`` is
-        registered (Phase 130)."""
+        the same text the generic ``update`` tool's range splice targets for ``type="txt"``."""
         created = create_txt(_MINIMAL_BODY)
         lines = get_txt(created.id, raw=True).splitlines()
         k = lines.index("Some free-form prose about what was reviewed.") + 1
@@ -230,8 +227,7 @@ class TestGetTxt(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_windowed_raw_read_coordinates_index_into_the_shared_body_text(self) -> None:
         """The coordinates of a windowed raw read must select exactly those lines of the shared
-        body_text (the generic ``update`` tool's splice target once ``txt`` is registered,
-        Phase 130)."""
+        body_text (the generic ``update`` tool's splice target for ``type="txt"``)."""
         created = create_txt(_MINIMAL_BODY)
         doc_id = created.id
         lines = get_txt(doc_id, raw=True).splitlines()

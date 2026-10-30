@@ -110,8 +110,7 @@ def invalidate_txt_cache(path: Path) -> None:
     """Drop ``path``'s cached entry, if present.
 
     Called by the generic ``delete`` tool's ``txt`` adapter immediately
-    after a successful ``unlink()`` (the adapter lands with the domain's
-    Phase 130 generic-tool registration), so a deleted document's
+    after a successful ``unlink()``, so a deleted document's
     stale cache entry is never served.
 
     Parameters

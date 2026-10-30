@@ -44,10 +44,9 @@ generic ``set_status`` tool in ``general.tools`` (``type="txt"``), also
 bumping ``updated``, leaving the body untouched. Deletion of ``txt``
 documents goes through the generic ``delete`` tool in ``general.tools``
 (``type="txt"``). Disk-free, id-free dry-run content validation goes
-through the generic ``validate`` tool in ``general.tools`` (``type="txt"``)
--- the generic-tool registration of those dispatches lands with this
-feature's Phase 130; there is no per-domain mutation tool of this domain's
-own (dispatch-only from day one, ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+through the generic ``validate`` tool in ``general.tools`` (``type="txt"``);
+there is no per-domain mutation tool of this domain's own (dispatch-only
+from day one, ADR 36905d5b-8057-4294-8665-c7eed5534db0).
 Import this package to register all free-form text tools at once::
 
     from biz.dfch.specmgr.txt import tools  # noqa: F401 (side-effects only)

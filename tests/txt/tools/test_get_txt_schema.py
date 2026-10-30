@@ -22,10 +22,10 @@ The packaged ``txt_schema.json`` was generated (not hand-written) from
 ``commands/schema.py`` uses for every other domain (``json.dumps(schema_dict,
 indent=2, sort_keys=True) + "\\n"`` plus the ``$schema``/``$comment``
 injections). ``test_output_matches_regenerated_schema`` pins that byte
-identity here, so Phase 120's re-verification and Phase 160's own
-``generate_txt_schema`` CLI entry can rely on it; the ``docs/txt_schema.json``
-half of the two-copy pair (and the pre-commit hook/CI step keeping the two
-in sync) lands with Phase 160.
+identity here, which the ``commands/schema.py`` ``generate_txt_schema`` CLI
+entry (feat-229-txt Phase 160) and the pre-commit
+``specmgr-schema-txt-package`` hook/CI step keeping the packaged copy in
+sync with ``docs/txt_schema.json`` rely on.
 """
 
 from __future__ import annotations

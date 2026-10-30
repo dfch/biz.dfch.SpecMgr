@@ -7,9 +7,7 @@ that module's own docstring for the full rationale (the read-modify-write
 race a mutating tool's ``load_by_id`` -> mutate -> write sequence is exposed
 to when an MCP host dispatches two overlapping calls against the same id).
 The generic ``update`` and ``set_status`` tools in ``general.tools``
-(``type="txt"``) wrap their whole sequence in ``with txt_lock(id):`` (their
-own ``txt`` adapters land with the domain's Phase 130 generic-tool
-registration).
+(``type="txt"``) wrap their whole sequence in ``with txt_lock(id):``.
 
 Not generalized into ``general.tools`` alongside ``_doc_paths.py`` -- the id
 -> path lookup plumbing was generalized because it was already shared,

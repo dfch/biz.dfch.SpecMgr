@@ -16,11 +16,11 @@ are global across the whole MCP server.
 
 Return the packaged TXT template's full markdown text, verbatim.
 
-The template file is shipped as package data, so its presence is a
-build-time guarantee, not something that can be missing at runtime in a
-correctly installed package (the ``pyproject.toml`` package-data
-declaration lands with the domain's Phase 160 build registration).
-Reads the file fresh on every call (no in-memory cache). A missing or
+The template file is shipped as package data (declared in ``pyproject.toml``'s
+``[tool.setuptools.package-data]``), so its presence is a build-time
+guarantee, not something that can be missing at runtime in a correctly
+installed package. Reads the file fresh on every call (no in-memory
+cache). A missing or
 corrupted packaged file is not caught or wrapped here -- it propagates
 as a hard :class:`FileNotFoundError`, the same let-it-raise convention
 every other tool/resource in this codebase follows.
