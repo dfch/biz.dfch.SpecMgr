@@ -431,6 +431,19 @@ class TestLintUsageErrors(_LintTestBase):
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("--dir is only valid together with --type", result.output)
 
+    def test_dir_combined_with_paths_and_type_exits_2(self):
+        """Phase 170 (G1): ``--dir`` is valid in sweep mode only (``--type`` WITHOUT explicit
+        paths); combined with explicit paths and ``--type`` it was silently ignored before --
+        now a usage error, and no file is linted."""
+        path = self._write("req/broken.md", _broken_req_text())
+
+        result = self._invoke(str(path), "--type", "req", "--dir", str(self.tmp))
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("--dir cannot be combined with explicit paths", result.output)
+        self.assertNotIn("summary:", result.output)
+        self.assertNotIn(str(path), result.stdout)
+
     def test_missing_path_exits_2(self):
         result = self._invoke(str(self.tmp / "req" / "nope.md"))
 
@@ -546,6 +559,21 @@ class TestLintMultiFailureReporting(_LintTestBase):
         self.assertIn("Requirement > Characteristics", result.stdout)
         self.assertIn("repair via: /repair feat feat-multi-failure", result.stdout)
         self.assertIn("\n  repair via: /repair req\n", result.stdout)
+        self.assertIn("summary: linted=2 failed=2 skipped=0 excluded=0", result.stdout)
+
+    def test_report_order_is_decode_failures_first_then_parse_failures(self):
+        """Phase 170 (I2, accepted): decode failures (path mode) print before parse failures in
+        encounter order, regardless of the command-line argument order."""
+        parse_path = self._write("req/broken-req.md", _broken_req_text())
+        decode_path = self.tmp / "req" / "bad-encoding.md"
+        decode_path.write_bytes(b"\xff\xfe this is not valid utf-8 \x00\x01")
+
+        result = self._invoke(str(parse_path), str(decode_path))
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(str(parse_path), result.stdout)
+        self.assertIn(str(decode_path), result.stdout)
+        self.assertLess(result.stdout.index(str(decode_path)), result.stdout.index(str(parse_path)))
         self.assertIn("summary: linted=2 failed=2 skipped=0 excluded=0", result.stdout)
 
 
@@ -698,6 +726,22 @@ class TestLintEnvVars(_LintTestBase):
 
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("zero documents", result.output)
+
+    def test_all_with_only_the_excluded_adr_readme_exits_0(self):
+        """Phase 170 (G2): the zero-documents guard fires only when NOTHING was discovered; an
+        ADR dir holding only the always-excluded README.md was discovered, so the run exits 0
+        with ``excluded=1``."""
+        adr_dir = self.tmp / "only-adr"
+        adr_dir.mkdir()
+        (adr_dir / "README.md").write_text("generated table of contents", encoding="utf-8")
+        env = self._empty_env()
+        env[ADR_DIR_ENV_VAR] = str(adr_dir)
+
+        with mock.patch.dict(os.environ, env):
+            result = self._invoke("--all")
+
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=1", result.stdout)
 
     def test_type_uc_with_no_documents_exits_0(self):
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self.tmp / "empty-docs")}):

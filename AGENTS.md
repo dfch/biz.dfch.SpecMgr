@@ -1456,8 +1456,9 @@ extras onto every consumer of the base library.
   missing (required, like `specmgr diagram`; the decoupling is tracked as
   issue #238), **2** usage-or-resolution error (no paths and no sweep
   flag, an unreadable or missing path, an unrecognized layout without
-  `--skip-unrecognized`, `--dir` without `--type`, paths combined with
-  `--all`, an unknown `--type`, `--all` finding zero documents). Accepted
+  `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
+  paths, paths combined with `--all`, an unknown `--type`, `--all`
+  discovering nothing at all -- no document and no excluded one). Accepted
   limitation: because the gate is change-scoped, a schema or parser change
   can break untouched documents without failing any gate — the full sweep
   (manual, or the follow-up nightly workflow whose issue owns the

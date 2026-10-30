@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The new `specmgr lint` command (the in-tree spec artifact parseability
+  gate): runs the model-level FULL parse of each document's own domain
+  over the repo's own in-tree spec artifacts (the feature README.md files
+  under `.specmgr/feat/` and the documents under `docs/{type}/`) and
+  reports every unparseable document (file path + parse error), not just
+  the first — full parses only, never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  is precisely the masking that hid the feat-214 defect for three
+  consecutive commits. Three scopes, so the cost scales with the size of
+  a change and never with the size of the corpus: explicit paths with the
+  type inferred from the path layout alone (`--type` overrides inference,
+  `--skip-unrecognized` skips unknown layouts) — the `specmgr-lint`
+  pre-commit hook lints every staged in-tree artifact and the new
+  pull_request-only CI step lints every artifact changed against the base
+  branch (pinned to Python 3.13 like the docs drift steps, a clean skip
+  on an empty filtered list, the identical anchored file pattern in both)
+  — and the `--type T` / `--all` full-corpus sweeps, CLI-only (never on
+  the commit path or in the test suite), usable on demand or in a later
+  nightly job. The generated `docs/adr/README.md` table of contents is
+  unconditionally excluded (resolved type `adr` + base name `README.md`,
+  in whichever directory; `feat/{id}/README.md` is never excluded); each
+  failure report ends with a per-type repair pointer (`/repair {type}
+  {id}` for the whole-body domains, the id derived from the path, falling
+  back to `/repair {type}`; ADR — which the repair flow does not cover —
+  a fix-manually line); exit codes follow the plantuml-check family:
+  **0** every document parsed (incl. a run where every path was skipped
+  or excluded), **1** at least one document failed to parse or the `mcp`
+  extra is missing (required, like `specmgr diagram`; the decoupling is
+  tracked as issue #238), **2** a usage-or-resolution error. Accepted
+  limitation (the gate is change-scoped by design): a schema or parser
+  change can break untouched documents without failing the change-scoped
+  gate — the full sweep, manual or the follow-up nightly workflow, finds
+  them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
+  #218).
+
 ### Changed
 
 - `scripts/release.sh precheck` (SOP 98537416, step 2) now ends with the
@@ -53,40 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shipping with their plans still at `status: review` and ~30 stale
   feature branches accumulating per release (feat-233-update-release,
   GitHub issue #233).
-- The new `specmgr lint` command (the in-tree spec artifact parseability
-  gate): runs the model-level FULL parse of each document's own domain
-  over the repo's own in-tree spec artifacts (the feature README.md files
-  under `.specmgr/feat/` and the documents under `docs/{type}/`) and
-  reports every unparseable document (file path + parse error), not just
-  the first — full parses only, never the `list_<d>`/`DocCache` listing
-  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
-  is precisely the masking that hid the feat-214 defect for three
-  consecutive commits. Three scopes, so the cost scales with the size of
-  a change and never with the size of the corpus: explicit paths with the
-  type inferred from the path layout alone (`--type` overrides inference,
-  `--skip-unrecognized` skips unknown layouts) — the `specmgr-lint`
-  pre-commit hook lints every staged in-tree artifact and the new
-  pull_request-only CI step lints every artifact changed against the base
-  branch (pinned to Python 3.13 like the docs drift steps, a clean skip
-  on an empty filtered list, the identical anchored file pattern in both)
-  — and the `--type T` / `--all` full-corpus sweeps, CLI-only (never on
-  the commit path or in the test suite), usable on demand or in a later
-  nightly job. The generated `docs/adr/README.md` table of contents is
-  unconditionally excluded (resolved type `adr` + base name `README.md`,
-  in whichever directory; `feat/{id}/README.md` is never excluded); each
-  failure report ends with a per-type repair pointer (`/repair {type}
-  {id}` for the whole-body domains, the id derived from the path, falling
-  back to `/repair {type}`; ADR — which the repair flow does not cover —
-  a fix-manually line); exit codes follow the plantuml-check family:
-  **0** every document parsed (incl. a run where every path was skipped
-  or excluded), **1** at least one document failed to parse or the `mcp`
-  extra is missing (required, like `specmgr diagram`; the decoupling is
-  tracked as issue #238), **2** a usage-or-resolution error. Accepted
-  limitation (the gate is change-scoped by design): a schema or parser
-  change can break untouched documents without failing the change-scoped
-  gate — the full sweep, manual or the follow-up nightly workflow, finds
-  them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
-  #218).
 
 ## [0.37.0] - 2026-10-22
 

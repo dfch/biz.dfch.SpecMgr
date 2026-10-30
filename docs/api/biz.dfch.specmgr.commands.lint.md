@@ -32,13 +32,14 @@ the size of the corpus (REQ-004):
   and counted.
 * **Type sweep** -- ``--type T`` with no paths sweeps every document of
   that type from its base directory: the explicit ``--dir`` argument
-  (valid with ``--type`` ONLY) if given, otherwise the domain's
+  (valid with ``--type`` ONLY, and without explicit paths) if given, otherwise the domain's
   registered base-dir resolver (REQ-006). ``--type T`` against an empty
   or missing base directory exits 0 with a 0-document summary: a
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type. Explicit
-  paths combined with ``--all`` is a usage error; ``--all`` that finds
-  zero documents in total is a probable misconfiguration (exit 2).
+  paths combined with ``--all`` is a usage error; ``--all`` that
+  discovers nothing at all (no document and no excluded document, e.g.
+  the ADR README) is a probable misconfiguration (exit 2).
 
 The ADR README exclusion (REQ-007) is unconditional, in path mode and
 sweep mode, with or without ``--skip-unrecognized``: a file is excluded
@@ -77,9 +78,10 @@ Exit codes (pinned, REQ-008 -- the plantuml-check family):
   is missing.
 * ``2`` -- usage or resolution error: no paths and no sweep flag; an
   unreadable or missing path; an unrecognized layout without
-  ``--skip-unrecognized``; ``--dir`` without ``--type``; explicit paths
-  combined with ``--all``; an unknown ``--type``; ``--all`` that finds
-  zero documents in total.
+  ``--skip-unrecognized``; ``--dir`` without ``--type``; ``--dir``
+  combined with explicit paths; explicit paths combined with ``--all``;
+  an unknown ``--type``; ``--all`` that discovers nothing at all (no
+  document and no excluded document).
 
 Report: every failing ``(path, error)`` pair is printed (the error is
 the caught exception's own text, verbatim), each followed by its
@@ -340,7 +342,7 @@ Returns:
     The pointer line (indented to follow its failure line).
 
 
-### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides); unrecognized layouts are a usage error unless --skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. Without paths: sweeps every document of that type (from --dir if given, else the domain\'s registered base directory).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type. Cannot be combined with explicit paths; exits 2 when zero documents are found in total (a probable misconfiguration).')]" = False, dir: 'Annotated[Path | None, typer.Option(\'--dir\', help="The base directory to sweep instead of the domain\'s registered one (valid with --type only).")]' = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
+### `lint(paths: 'Annotated[list[str] | None, typer.Argument(help="Document paths to lint (path mode). Each path\'s type is inferred from its layout unless --type is given (which overrides); unrecognized layouts are a usage error unless --skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable.")]' = None, type: 'Annotated[str | None, typer.Option(\'--type\', help="The document type (one of the registered domains -- a plain value validated at run time, not a fixed choice list). With paths: overrides the per-path layout inference. Without paths: sweeps every document of that type (from --dir if given, else the domain\'s registered base directory).")]' = None, all: "Annotated[bool, typer.Option('--all', help='Sweep every registered document type. Cannot be combined with explicit paths; exits 2 when nothing at all is discovered (a probable misconfiguration).')]" = False, dir: 'Annotated[Path | None, typer.Option(\'--dir\', help="The base directory to sweep instead of the domain\'s registered one (valid only with --type and without explicit paths: it applies to the --type sweep only).")]' = None, skip_unrecognized: "Annotated[bool, typer.Option('--skip-unrecognized', help='Skip (and count in the summary) paths whose layout matches no type, instead of a usage error.')]" = False) -> 'None'`
 
 Lint specmgr artifacts: the model-level full parse, every failure reported.
 

@@ -47,13 +47,14 @@ the size of the corpus (REQ-004):
   and counted.
 * **Type sweep** -- ``--type T`` with no paths sweeps every document of
   that type from its base directory: the explicit ``--dir`` argument
-  (valid with ``--type`` ONLY) if given, otherwise the domain's
+  (valid with ``--type`` ONLY, and without explicit paths) if given, otherwise the domain's
   registered base-dir resolver (REQ-006). ``--type T`` against an empty
   or missing base directory exits 0 with a 0-document summary: a
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type. Explicit
-  paths combined with ``--all`` is a usage error; ``--all`` that finds
-  zero documents in total is a probable misconfiguration (exit 2).
+  paths combined with ``--all`` is a usage error; ``--all`` that
+  discovers nothing at all (no document and no excluded document, e.g.
+  the ADR README) is a probable misconfiguration (exit 2).
 
 The ADR README exclusion (REQ-007) is unconditional, in path mode and
 sweep mode, with or without ``--skip-unrecognized``: a file is excluded
@@ -92,9 +93,10 @@ Exit codes (pinned, REQ-008 -- the plantuml-check family):
   is missing.
 * ``2`` -- usage or resolution error: no paths and no sweep flag; an
   unreadable or missing path; an unrecognized layout without
-  ``--skip-unrecognized``; ``--dir`` without ``--type``; explicit paths
-  combined with ``--all``; an unknown ``--type``; ``--all`` that finds
-  zero documents in total.
+  ``--skip-unrecognized``; ``--dir`` without ``--type``; ``--dir``
+  combined with explicit paths; explicit paths combined with ``--all``;
+  an unknown ``--type``; ``--all`` that discovers nothing at all (no
+  document and no excluded document).
 
 Report: every failing ``(path, error)`` pair is printed (the error is
 the caught exception's own text, verbatim), each followed by its
@@ -508,7 +510,7 @@ def lint(
             "--skip-unrecognized is given. Linted regardless of any SPECMGR_*_DIR variable."
         ),
     ] = None,
-    type: Annotated[
+    type: Annotated[  # pylint: disable=redefined-builtin  # type intentionally shadows the builtin: public CLI API
         str | None,
         typer.Option(
             "--type",
@@ -517,21 +519,23 @@ def lint(
             "Without paths: sweeps every document of that type (from --dir if given, else the domain's "
             "registered base directory).",
         ),
-    ] = None,  # pylint: disable=redefined-builtin  # type intentionally shadows the builtin: public CLI API
-    all: Annotated[
+    ] = None,
+    all: Annotated[  # pylint: disable=redefined-builtin  # all intentionally shadows the builtin: public CLI API
         bool,
         typer.Option(
             "--all",
             help="Sweep every registered document type. Cannot be combined with explicit paths; "
-            "exits 2 when zero documents are found in total (a probable misconfiguration).",
+            "exits 2 when nothing at all is discovered (a probable misconfiguration).",
         ),
-    ] = False,  # pylint: disable=redefined-builtin  # all intentionally shadows the builtin: public CLI API
-    dir: Annotated[
+    ] = False,
+    dir: Annotated[  # pylint: disable=redefined-builtin  # dir intentionally shadows the builtin: public CLI API
         Path | None,
         typer.Option(
-            "--dir", help="The base directory to sweep instead of the domain's registered one (valid with --type only)."
+            "--dir",
+            help="The base directory to sweep instead of the domain's registered one (valid only with --type and "
+            "without explicit paths: it applies to the --type sweep only).",
         ),
-    ] = None,  # pylint: disable=redefined-builtin  # dir intentionally shadows the builtin: public CLI API
+    ] = None,
     skip_unrecognized: Annotated[
         bool,
         typer.Option(
@@ -567,6 +571,8 @@ def lint(
         shape_errors.append("--type and --all are both sweep flags and cannot be combined")
     if dir is not None and type is None:
         shape_errors.append("--dir is only valid together with --type")
+    if dir is not None and paths:
+        shape_errors.append("--dir cannot be combined with explicit paths (it applies to the --type sweep only)")
     if not paths and type is None and not all:
         shape_errors.append("give one or more document paths, or --type T, or --all")
     if shape_errors:
@@ -642,8 +648,11 @@ def lint(
             items.append(_WorkItem(path, doc_type, None))
 
     # The --all zero-documents guard (a probable misconfiguration; a
-    # single empty/missing --type base directory is NOT one).
-    if all and not items:
+    # single empty/missing --type base directory is NOT one). It fires
+    # only when NOTHING was discovered: an excluded document (the ADR
+    # README) was discovered, so a corpus holding only that is not a
+    # misconfiguration -- the run reports excluded=1 and exits 0.
+    if all and not items and not excluded:
         _fail_usage(["--all found zero documents in total (check the SPECMGR_*_DIR configuration)"])
 
     # Parse every work item (full model-level parse, REQ-003); per-file
@@ -672,6 +681,7 @@ def lint(
 
     # Report: every failing (path, error) pair with its per-type repair
     # pointer, then the one summary per invocation.
+    # Order: decode failures first (path mode), then parse failures in encounter order.
     failures = pre_failures + parse_failures
     for failure in failures:
         typer.echo(f"✗ {failure.path} ({failure.doc_type}): {failure.error}")
