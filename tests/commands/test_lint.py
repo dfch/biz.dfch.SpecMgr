@@ -130,6 +130,34 @@ def _line_carries_sweep_flag(line: str) -> bool:
     return any(re.search(flag + r"(?![\w-])", line) for flag in _SWEEP_FLAGS)
 
 
+def _logical_lines(text: str) -> list[tuple[int, str]]:
+    """The physical lines of ``text`` folded at shell-style continuations.
+
+    A physical line whose last character is a backslash is joined with the
+    next physical line (the backslash is dropped, a single space inserted),
+    so an invocation split across lines by trailing-backslash continuations
+    is scanned as the single logical line the shell executes it as (Phase
+    160, I4: before the fold, a continuation-split invocation -- the command
+    on line N ending in a backslash, a sweep flag on line N+1 -- escaped the
+    per-physical-line command-name-plus-flag check). Each logical line
+    reports the 1-based number of the FIRST physical line it starts on, so a
+    violation's file:line points at the line a reader sees the invocation
+    begin on.
+    """
+    lines = text.splitlines()
+    result: list[tuple[int, str]] = []
+    index = 0
+    while index < len(lines):
+        start = index
+        logical = lines[index]
+        while logical.endswith("\\") and index + 1 < len(lines):
+            logical = logical[:-1] + " " + lines[index + 1]
+            index += 1
+        result.append((start + 1, logical))
+        index += 1
+    return result
+
+
 def _healthy_whole_body_text(doc_type: str) -> str:
     """One healthy document of the whole-body domain ``doc_type``.
 
@@ -393,6 +421,16 @@ class TestLintUsageErrors(_LintTestBase):
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("--dir is only valid together with --type", result.output)
 
+    def test_dir_combined_with_all_flag_exits_2(self):
+        """Phase 160 (G3): ``--dir`` combined with ``--all`` is the same shape error as
+        ``--dir`` alone (the guard is on ``dir is not None and type is None`` -- ``--all``
+        is a sweep flag, not a type), so it exits 2 with the ``--dir is only valid
+        together with --type`` message."""
+        result = self._invoke("--dir", str(self.tmp), "--all")
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("--dir is only valid together with --type", result.output)
+
     def test_missing_path_exits_2(self):
         result = self._invoke(str(self.tmp / "req" / "nope.md"))
 
@@ -487,6 +525,30 @@ class TestLintWholeBodyFailure(_LintTestBase):
         self.assertIn("\n  repair via: /repair req\n", result.stdout)
 
 
+class TestLintMultiFailureReporting(_LintTestBase):
+    """Phase 160 (G1) / REQ-001: EVERY unparseable document is reported, not just the first.
+    One invocation over two broken fixtures (a feat-214-shape feature README and a
+    body-level broken ``req``) names BOTH files with both their errors and both repair
+    pointers, and the summary counts ``failed=2`` -- a regression that stopped reporting
+    after the first failure would fail this pin while passing every single-failure test
+    in the module (whose summaries all carry ``failed`` of 0 or 1)."""
+
+    def test_two_broken_documents_in_one_run_are_both_reported(self):
+        feat_path = self._write("feat/feat-multi-failure/README.md", _feat214_shaped_text())
+        req_path = self._write("req/broken-req.md", _broken_req_text())
+
+        result = self._invoke(str(feat_path), str(req_path))
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(str(feat_path), result.stdout)
+        self.assertIn(str(req_path), result.stdout)
+        self.assertIn("DecisionsMade", result.stdout)
+        self.assertIn("Requirement > Characteristics", result.stdout)
+        self.assertIn("repair via: /repair feat feat-multi-failure", result.stdout)
+        self.assertIn("\n  repair via: /repair req\n", result.stdout)
+        self.assertIn("summary: linted=2 failed=2 skipped=0 excluded=0", result.stdout)
+
+
 class TestLintHealthyFixtures(_LintTestBase):
     """Task 110.110 / ACC-002: the healthy fixtures -- every whole-body domain's packaged
     ``get_<d>_example`` data (each first verified to parse with its own model-level parser, and
@@ -522,8 +584,11 @@ class TestLintReadFailures(_LintTestBase):
     """Task 110.110 (negative pins, REQ-008): a user-named path that exists but fails to decode
     is a per-file parse FAILURE (exit 1, counted in ``linted`` -- Phase 100's decision (3)), a
     sweep-enumerated file that fails to read is a per-file parse failure too (exit 1, in contrast
-    to the user-named unreadable path's exit 2), and a feat-typed document whose path is not the
-    ``feat/<id>/README.md`` folder shape gets the id-less ``/repair feat`` fallback pointer."""
+    to the user-named unreadable path's exit 2) -- with the two sweep read-failure channels
+    split (Phase 160, I3): an ``OSError`` prints ``unreadable: ...`` and a
+    ``UnicodeDecodeError`` prints ``not valid utf-8: ...``, the same text path mode uses, and a
+    feat-typed document whose path is not the ``feat/<id>/README.md`` folder shape gets the
+    id-less ``/repair feat`` fallback pointer."""
 
     def test_decode_failure_is_a_lint_failure_counted_as_linted(self):
         path = self.tmp / "req" / "bad-encoding.md"
@@ -552,6 +617,24 @@ class TestLintReadFailures(_LintTestBase):
         self.assertEqual(result.exit_code, 1, result.output)
         self.assertIn(str(file_path), result.stdout)
         self.assertIn("unreadable:", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
+
+    def test_sweep_enumerated_invalid_utf8_file_is_a_lint_failure(self):
+        """Phase 160 (I3): the same decode failure in SWEEP mode prints the same
+        ``not valid utf-8`` text path mode does (before the split, sweep printed
+        ``unreadable: ...`` for a ``UnicodeDecodeError`` -- asymmetric)."""
+        docs_root = self.tmp / "docsroot"
+        file_path = docs_root / "req" / "bad-encoding.md"
+        file_path.parent.mkdir(parents=True)
+        file_path.write_bytes(b"\xff\xfe this is not valid utf-8 \x00\x01")
+
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(docs_root)}):
+            result = self._invoke("--type", "req")
+
+        self.assertEqual(result.exit_code, 1, result.output)
+        self.assertIn(str(file_path), result.stdout)
+        self.assertIn("not valid utf-8", result.stdout)
+        self.assertNotIn("unreadable:", result.stdout)
         self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
 
     def test_feat_typed_non_folder_shape_path_gets_fallback_pointer(self):
@@ -863,9 +946,14 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
     ``.github/workflows/ci.yml``, or any file under ``tests/``. A sweep flag counts only as a
     standalone flag token (:func:`_line_carries_sweep_flag`, word-boundary match), so the CI
     step's own mandated line (``--all-extras`` adjacent to the command name, mandatory for the
-    mcp extra) is no false positive (Phase 130). The command name and the flags are built from
-    parts (see :data:`_LINT_CMD`/:data:`_SWEEP_FLAGS`), so this file's own source cannot trip
-    the scan it implements."""
+    mcp extra) is no false positive (Phase 130). The scan is CONTINUATION-AWARE (Phase 160,
+    I4): physical lines are folded at trailing-backslash continuations
+    (:func:`_logical_lines`) before matching, so a continuation-split invocation (the command
+    on line N ending in a backslash, a sweep flag on line N+1) is one logical command line and
+    cannot escape the check; a violation is still reported at the logical line's FIRST physical
+    line. The command name and the flags are built from parts (see
+    :data:`_LINT_CMD`/:data:`_SWEEP_FLAGS`), so this file's own source cannot trip the scan it
+    implements."""
 
     def test_no_sweep_invocation_in_hook_ci_or_tests(self):
         targets: list[Path] = [
@@ -884,7 +972,9 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
         violations: list[str] = []
         for target in targets:
             text = target.read_text(encoding="utf-8", errors="replace")
-            for line_number, line in enumerate(text.splitlines(), start=1):
+            # folded at continuation lines: a backslash-terminated physical line joins with the
+            # next, reported at the first physical line (Phase 160, I4)
+            for line_number, line in _logical_lines(text):
                 if _LINT_CMD not in line:
                     continue
                 if _line_carries_sweep_flag(line):
@@ -909,6 +999,21 @@ class TestLintNoSweepOnCommitPath(unittest.TestCase):
         )
         self.assertTrue(_line_carries_sweep_flag(_LINT_CMD + " --all"))
         self.assertTrue(_line_carries_sweep_flag(_LINT_CMD + " --type feat"))
+
+    def test_logical_lines_fold_a_continuation_split_sweep_invocation(self):
+        """The Phase 160 (I4) regression pin for the continuation fold: a
+        continuation-split invocation (the command on one physical line
+        ending in a backslash, a standalone sweep flag on the next) folds
+        to ONE logical line the matcher flags, reported at the first
+        physical line -- the shape that escaped the pre-fold scan; the
+        mandated one-line invocation stays unflagged (the negative
+        control)."""
+        text = "run " + _LINT_CMD + " \\\n    --all\n" + _LINT_CMD + " --skip-unrecognized\n"
+        folded = _logical_lines(text)
+
+        self.assertEqual([number for number, _ in folded], [1, 3])
+        self.assertTrue(_line_carries_sweep_flag(folded[0][1]))
+        self.assertFalse(_line_carries_sweep_flag(folded[1][1]))
 
 
 if __name__ == "__main__":

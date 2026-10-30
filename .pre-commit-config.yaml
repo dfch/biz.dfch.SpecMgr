@@ -301,7 +301,7 @@ repos:
           (accepted and documented). Files the pattern matches but the
           command skips or excludes (e.g. docs/appendix/*.md,
           docs/adr/README.md) pass with a 0-linted summary.
-        entry: uv run --frozen specmgr lint --skip-unrecognized
+        entry: uv run --frozen --all-extras specmgr lint --skip-unrecognized
         language: system
         pass_filenames: true
         require_serial: true

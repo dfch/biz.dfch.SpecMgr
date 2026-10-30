@@ -276,18 +276,17 @@ jobs:
       # merge commit sitting at the shallow boundary, whose parents are not
       # in the object store and which the shallow graft gives no traversable
       # ancestry, so `git merge-base HEAD ...` can never find a common
-      # ancestor there (the silent exit 1 that failed PR #241). The targeted
-      # `git fetch origin <base> --unshallow` converts the shallow checkout
-      # to a complete one (git's documented behaviour when the source is
-      # complete: the shallow file is dropped and every missing ref's full
-      # history is fetched), and the follow-up PLAIN fetch of the PR head
-      # (`refs/pull/N/head`, which GitHub exposes for same-repo and fork PRs
-      # alike) then arrives with its full history in FETCH_HEAD -- in a
-      # complete repo a plain fetch is a full fetch, and for fork PRs this
-      # second fetch is what carries the head's commits. A second
-      # `--unshallow` would fatal on the now-complete repo, so only the base
-      # fetch carries it; the shared checkout's fetch-depth is never
-      # changed. The changed files are
+      # ancestor there (the silent exit 1 that failed PR #241). Both fetches
+      # are PLAIN, and the step is state-independent because of that: in the
+      # shallow PR checkout a plain fetch of a ref that is not in the
+      # shallow set brings that ref's full history (the clone stays
+      # shallow), and in a complete checkout a plain fetch is just a full
+      # fetch -- so neither fetch needs `--unshallow` (which would fatal on
+      # a complete repository), and the step behaves the same whichever
+      # state the checkout is in. The head fetch (`refs/pull/N/head`, which
+      # GitHub exposes for same-repo and fork PRs alike) ends in FETCH_HEAD
+      # and is the one that carries the head's commits for fork PRs; the
+      # shared checkout's fetch-depth is never changed. The changed files are
       # NUL-delimited end to end (git diff -z, grep -z, xargs -0); when none
       # of them is an in-tree artifact the filtered list is empty and xargs
       # -r runs nothing -- the step skips cleanly.
@@ -297,16 +296,17 @@ jobs:
         PR_NUMBER: ${{ github.event.number }}
       run: |
         artifact_pattern='^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$'
-        # The PR checkout is shallow (fetch-depth 1) and HEAD is the PR merge
-        # commit at the shallow boundary: its parents are not in the object
-        # store and the shallow graft gives it no traversable ancestry, so
-        # `git merge-base HEAD ...` can never find a common ancestor there.
-        # The --unshallow base fetch converts the shallow checkout to a
-        # complete one (a second --unshallow would fatal on it), so the head
-        # fetch is plain -- still a full fetch, now that the repo is
-        # complete, and the one that carries the head's commits for fork PRs
-        # (refs/pull/N/head works for same-repo and fork PRs alike).
-        git fetch origin "$BASE_REF" --unshallow
+        # Both fetches are plain: in a shallow PR checkout a plain fetch of
+        # a ref not in the shallow set brings that ref's full history (the
+        # clone stays shallow), in a complete checkout a plain fetch is just
+        # a full fetch -- state-independent, no --unshallow (which would
+        # fatal on a complete repository). The head fetch (refs/pull/N/head,
+        # same-repo and fork PRs alike) ends in FETCH_HEAD and carries the
+        # head's commits for fork PRs; HEAD (the PR merge commit at the
+        # shallow boundary, whose parents are not in the object store and
+        # which the shallow graft gives no traversable ancestry) is never
+        # touched by merge-base.
+        git fetch origin "$BASE_REF"
         git fetch origin "refs/pull/${PR_NUMBER}/head"
         merge_base=$(git merge-base FETCH_HEAD "origin/$BASE_REF")
         # grep exits 1 when the filtered list is empty (the pull request

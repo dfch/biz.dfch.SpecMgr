@@ -213,10 +213,8 @@ The document type from the path layout ALONE (REQ-005).
 Two rules, in order: (1) the containing directory's name is a member
 of the registry's ``ALL_DOMAINS`` (e.g. ``docs/req/x.md``,
 ``docs/adr/x.md``); (2) the path has the ``feat/<id>/README.md``
-shape -- base name ``README.md`` with exactly one non-``README.md``
-path segment between a directory named after the ``feat`` domain and
-the file (e.g. ``.specmgr/feat/feat-1-x/README.md``). Independent of
-every ``SPECMGR_*_DIR`` variable.
+shape (see :func:`_is_feat_folder_shape`). Independent of every
+``SPECMGR_*_DIR`` variable.
 
 Args:
     path: The document's path.
@@ -245,6 +243,25 @@ Args:
 
 Returns:
     ``True`` when the file is excluded (never parsed, never failed).
+
+
+### `_is_feat_folder_shape(path: 'Path', reg: '_RegistryBacked') -> 'bool'`
+
+The ``feat/<id>/README.md`` folder shape (the ``feat`` path rule).
+
+Base name ``README.md`` with exactly one non-``README.md`` path
+segment (the feature's id) between a directory named after the
+``feat`` domain and the file (e.g. ``.specmgr/feat/feat-1-x/README.md``).
+The one predicate shared by BOTH the path-layout type inference
+(:func:`_infer_type`) and the repair pointer's id derivation
+(:func:`_derive_id`), so the two cannot drift apart (Phase 160, I1).
+
+Args:
+    path: The document's path.
+    reg: The registry-backed names (the ``feat`` domain name).
+
+Returns:
+    ``True`` when the path has the ``feat`` folder shape.
 
 
 ### `_iter_paths_for(doc_type: 'str', base_dir: 'Path', reg: '_RegistryBacked') -> 'Iterator[Path]'`

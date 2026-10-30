@@ -265,16 +265,41 @@ def _registry_backed() -> _RegistryBacked:
     return result
 
 
+def _is_feat_folder_shape(path: Path, reg: _RegistryBacked) -> bool:
+    """The ``feat/<id>/README.md`` folder shape (the ``feat`` path rule).
+
+    Base name ``README.md`` with exactly one non-``README.md`` path
+    segment (the feature's id) between a directory named after the
+    ``feat`` domain and the file (e.g. ``.specmgr/feat/feat-1-x/README.md``).
+    The one predicate shared by BOTH the path-layout type inference
+    (:func:`_infer_type`) and the repair pointer's id derivation
+    (:func:`_derive_id`), so the two cannot drift apart (Phase 160, I1).
+
+    Args:
+        path: The document's path.
+        reg: The registry-backed names (the ``feat`` domain name).
+
+    Returns:
+        ``True`` when the path has the ``feat`` folder shape.
+    """
+    assert isinstance(path, Path), type(path)
+    assert isinstance(reg, _RegistryBacked), type(reg)
+    result = (
+        path.name == _README_BASENAME
+        and path.parent.name not in ("", _README_BASENAME)
+        and path.parent.parent.name == reg.feat
+    )
+    return result
+
+
 def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
     """The document type from the path layout ALONE (REQ-005).
 
     Two rules, in order: (1) the containing directory's name is a member
     of the registry's ``ALL_DOMAINS`` (e.g. ``docs/req/x.md``,
     ``docs/adr/x.md``); (2) the path has the ``feat/<id>/README.md``
-    shape -- base name ``README.md`` with exactly one non-``README.md``
-    path segment between a directory named after the ``feat`` domain and
-    the file (e.g. ``.specmgr/feat/feat-1-x/README.md``). Independent of
-    every ``SPECMGR_*_DIR`` variable.
+    shape (see :func:`_is_feat_folder_shape`). Independent of every
+    ``SPECMGR_*_DIR`` variable.
 
     Args:
         path: The document's path.
@@ -290,11 +315,7 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
     if path.parent.name in reg.all_domains:
         result: str | None = path.parent.name
         return result
-    if (
-        path.name == _README_BASENAME
-        and path.parent.name not in ("", _README_BASENAME)
-        and path.parent.parent.name == reg.feat
-    ):
+    if _is_feat_folder_shape(path, reg):
         result = reg.feat
         return result
     result = None
@@ -424,11 +445,7 @@ def _derive_id(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
     assert isinstance(path, Path), type(path)
     assert isinstance(reg, _RegistryBacked), type(reg)
     if doc_type == reg.feat:
-        if (
-            path.name == _README_BASENAME
-            and path.parent.name not in ("", _README_BASENAME)
-            and path.parent.parent.name == reg.feat
-        ):
+        if _is_feat_folder_shape(path, reg):
             result: str | None = path.parent.name
             return result
         result = None
@@ -638,8 +655,15 @@ def lint(
         if text is None:
             try:
                 text = item.path.read_text(encoding=_ENCODING)
-            except (OSError, UnicodeDecodeError) as ex:
+            except OSError as ex:
                 parse_failures.append(_Failure(item.path, item.doc_type, f"unreadable: {ex}"))
+                continue
+            except UnicodeDecodeError as ex:
+                # the same per-file decode-failure text path mode prints
+                # (Phase 160, I3: the two read-failure channels were
+                # asymmetric before -- sweep said "unreadable" for a
+                # UnicodeDecodeError, path mode said "not valid utf-8")
+                parse_failures.append(_Failure(item.path, item.doc_type, f"not valid {_ENCODING}: {ex}"))
                 continue
         try:
             _parse_document(item.doc_type, text, reg)
