@@ -29,7 +29,35 @@ runs, before any filesystem access and before dispatch:
    state fail loudly at import, so the fallback never fires through the
    server).
 
+The read-only translation tools (``list_languages``/``check_translation_drift``, feat-197-i18n Phase 140) take a
+``type`` that is itself the subject of the question rather than a ``language`` of a dispatched write, so they use
+:func:`assert_language_aware_type` -- the same permanent "always English" wording for ``feat``/``adr`` -- before any
+id validation, and :func:`guard_language` for their language arguments.
+
 ## Functions
+
+### `assert_language_aware_type(type_: 'str') -> 'None'`
+
+Reject a ``type`` whose documents have no language variants, before any filesystem access.
+
+The type-level counterpart of :func:`guard_language` for the read-only translation tools
+(``list_languages``/``check_translation_drift``, feat-197-i18n Phase 140), which are *about* language variants
+and therefore cannot meaningfully accept ``feat`` or ``adr``: a language-aware domain
+(:data:`LANGUAGE_AWARE_DOMAINS`) passes; ``feat``/``adr`` are rejected with the same permanent wording as
+:func:`guard_language` ("`feat` documents are always English", REQ-002/REQ-009); any other value is an unknown
+type. Run it *before* ``validate_id`` so a ``feat`` request with a ``feat-NNN-slug`` id still gets the
+permanent explanation rather than an id-shape error.
+
+Parameters
+----------
+type_:
+    The caller-supplied document type.
+
+Raises
+------
+ValueError
+    ``type_`` is ``feat``/``adr`` (always English, permanent) or not a known document type.
+
 
 ### `guard_language(type_: 'str', language: 'str') -> 'None'`
 

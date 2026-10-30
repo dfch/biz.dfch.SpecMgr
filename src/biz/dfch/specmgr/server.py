@@ -598,7 +598,52 @@ all 13 domains (broken documents are skipped -- the render never fails for
 content), with the ``include_feat`` switch (the FEAT exclusion, applied
 last) and an optional ``title`` override (default: ``Reference Graph``;
 the diagram title is sanitized but never truncated, the node labels are
-truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40).
+truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40).;
+``list_languages`` (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008) --
+the read-only language-listing tool: takes a ``type`` (one of the eleven
+i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``;
+``feat`` and ``adr`` are permanently English and rejected with the "always
+English" ``ValueError``, before the id is looked at) and an ``id``, and returns a
+``LanguageListResult``: ``languages`` -- ``"en"`` first when the EN source exists
+(never invented: an id with variants but no EN source lists no ``"en"``), then
+every other language holding a variant sorted by code -- plus one entry per
+language (resolved ``path``, ``parseable``, and the parse ``error`` of a variant
+that exists but fails to parse, byte-identical to the domain's ``list_<d>``
+failed-row ``error``). It probes the flat ``docs/{type}/`` directory and each
+shape-valid ``docs/{type}/{language}/`` subdirectory through the domains' own
+language-aware readers -- never through, and never altering, the EN-only scans
+of the other tools (REQ-013); only ``*.md`` documents participate. A
+path-injection/wrong-format ``id`` is a ``ValueError`` before any filesystem
+access; an id that exists in no language raises the domain's own
+``XNotFoundError``. Strictly read-only (writes, creates and invalidates
+nothing);
+``check_translation_drift`` (feat-197-i18n Phase 140, Tasks 140.100/140.110,
+REQ-014, ACC-009) -- the read-only drift check between a translated variant
+(``language``, never ``"en"``) and its source (``source_language``, default
+``"en"``, any language with a heading table): one non-raising
+``TranslationDriftResult`` reports BOTH drift kinds. STRUCTURAL: both documents'
+raw body text is reduced to a heading skeleton (the parse boundary's own
+fence-aware heading recognizer), each heading is mapped back to canonical English
+through the document language's heading table, the free text of the data-carrying
+headings (``Option N:``, ``Step N:``, ``Extension N.``, ``AC-NNN (Method):``) is
+dropped so only the schema-constant token is compared, and timestamp-led update
+entries (change-log rows) are not compared; each ``missing``/``extra``/
+``reordered`` section is a finding (canonical ``heading``, ``path``, ``level``,
+positions), and a document that fails to parse is an ``unparseable`` finding
+carrying the parse error -- never swallowed, never raised. STALENESS: ``stale``
+is true iff the source's frontmatter ``updated`` is strictly newer than the
+variant's, compared as offset-aware datetimes (``T``/space separators and UTC
+offsets compare correctly; equal is not stale), with both timestamps, the signed
+``source_ahead_by_seconds`` and a ``staleness_error`` for a missing/unparseable
+timestamp. ``in_sync`` is true iff there is no structural finding, the variant is
+not stale and staleness could be determined. Wording, prose, frontmatter values
+and ``prb``'s English ``problem_statement`` are never compared. Guards before any
+filesystem access: ``feat``/``adr`` (always English), unknown ``type``,
+path-injection/wrong-format ``id``, a malformed or table-less ``language``/
+``source_language``, ``language="en"``, and equal languages are ``ValueError``s;
+a truly absent source or variant raises the domain's own ``XNotFoundError``
+(naming the missing side). Strictly read-only; no tool translates (translating is
+the ``translate_artifact`` prompt).
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, the generic

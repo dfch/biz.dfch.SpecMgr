@@ -61,11 +61,12 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         for domain in WHOLE_BODY_DOMAINS:
             self.assertNotIn(f"specmgr://{domain}/schema", uris)
 
-    def test_tool_total_is_115(self) -> None:
-        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115."""
+    def test_tool_total_is_117(self) -> None:
+        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115, + 2 for the read-only translation
+        tools ``list_languages`` and ``check_translation_drift`` (feat-197-i18n Phase 140) = 117."""
         result = len(self._tools)
 
-        self.assertEqual(result, 115)
+        self.assertEqual(result, 117)
 
     def test_resource_total_is_39(self) -> None:
         """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 1 for ``specmgr://i18n`` and + 1 for the

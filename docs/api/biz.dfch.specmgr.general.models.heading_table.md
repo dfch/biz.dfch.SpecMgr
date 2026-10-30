@@ -64,6 +64,31 @@ Traversable
     A lazily-resolved path-like handle; nothing is read yet.
 
 
+### `iter_heading_lines(text: 'str') -> 'Iterator[tuple[int, int, str]]'`
+
+Yield every ATX heading line of ``text`` that lies outside a fenced code block (feat-197-i18n).
+
+The single heading/fence recognizer behind both :func:`normalize_heading_lines` (the parse-boundary pre-pass)
+and the translation drift check's heading skeleton (feat-197-i18n Phase 140), so the two can never disagree on
+what a heading is: a line matching ``^#{1,6} `` (1-6 hashes, one space, then non-empty inline text -- the
+mdformat-normalized heading shape) outside a fenced code block, where a ``#``-leading line inside a
+``` / ~~~ fence is code, not a heading. Fences follow CommonMark: an opener is up to three leading spaces plus
+three or more backticks (info string free of backticks) or three or more tildes; the closer is a line of only
+the same fence character, at least as many as the opener, with at most trailing whitespace.
+
+Parameters
+----------
+text:
+    The (mdformat-normalized) body text to scan; split on ``"\n"``.
+
+Returns
+-------
+Iterator[tuple[int, int, str]]
+    ``(line_index, level, heading_text)`` per heading: the 0-based index of the line in ``text.split("\n")``,
+    the heading level (1-6, the number of hashes), and the inline text with surrounding whitespace stripped
+    (exactly the string ``match_alias`` sees).
+
+
 ### `load_heading_table(language: 'str') -> 'dict[str, str]'`
 
 Load a language's heading-mapping table, lazily once per process.
@@ -104,9 +129,8 @@ ValueError
 
 Rewrite every table-mapped heading line to its canonical text, fence-aware (ADR 38efdb66 item 5).
 
-The pre-parse heading-normalization pass: for each line matching
-``^#{1,6} `` (1-6 hashes, one space -- the mdformat-normalized heading
-shape) that lies outside a fenced code block, the line's inline text
+The pre-parse heading-normalization pass: for each heading line outside a fenced code block
+(:func:`iter_heading_lines`: ``^#{1,6} ``, the mdformat-normalized heading shape) the line's inline text
 (surrounding whitespace stripped -- exactly what ``match_alias`` sees)
 is looked up as ``normalized = table.get(heading_text, heading_text)``
 and the line rewritten to ``<hashes> <normalized>`` when (and only
@@ -116,11 +140,6 @@ stays byte-identical, so the pass is a pure no-op for text whose
 headings the table does not map (e.g. canonical EN text through a
 table, or a translation that leaves some heading untranslated by
 design).
-
-Fences follow CommonMark: an opener is up to three leading spaces plus
-three or more backticks (info string free of backticks) or three or
-more tildes; the closer is a line of only the same fence character, at
-least as many as the opener, with at most trailing whitespace.
 
 Parameters
 ----------

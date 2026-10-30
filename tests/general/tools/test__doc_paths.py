@@ -35,6 +35,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import (
     find_parse_failure,
     iter_doc_paths,
     iter_doc_paths_all_languages,
+    iter_language_dirs,
     language_for_doc_path,
     slugify,
 )
@@ -519,6 +520,36 @@ class TestIterDocPathsAllLanguages(unittest.TestCase):
             (base / "de-DE" / "d.md").write_text("d", encoding="utf-8")
             names = [str(p.relative_to(base)) for p in iter_doc_paths_all_languages(base)]
             self.assertEqual(names, ["a.md", "de/x.md"])
+
+
+class TestIterLanguageDirs(unittest.TestCase):
+    """Tests for iter_language_dirs (the language-directory discovery primitive, feat-197-i18n Phase 140)."""
+
+    def test_missing_directory_yields_nothing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(list(iter_language_dirs(Path(tmp) / "missing")), [])
+
+    def test_yields_shape_valid_language_directories_sorted_and_skips_everything_else(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "dec"
+            for name in ("fr", "de", "Notes", "de-DE", "DE", "deu", "x"):
+                (base / name).mkdir(parents=True)
+            (base / "xx").write_text("a file named like a language", encoding="utf-8")
+            (base / "a.md").write_text("a", encoding="utf-8")
+
+            result = [(language, path.name) for language, path in iter_language_dirs(base)]
+
+            self.assertEqual(result, [("de", "de"), ("fr", "fr")])
+
+    def test_does_not_inspect_directory_contents_or_descend(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "dec"
+            (base / "de" / "nested").mkdir(parents=True)
+            (base / "pt").mkdir()
+
+            result = [language for language, _path in iter_language_dirs(base)]
+
+            self.assertEqual(result, ["de", "pt"])  # an empty language dir is still a language location
 
 
 if __name__ == "__main__":

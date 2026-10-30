@@ -395,6 +395,30 @@ Iterator[Path]
     An iterator over the matching, sorted paths.
 
 
+### `iter_language_dirs(base_dir: 'Path') -> 'Iterator[tuple[str, Path]]'`
+
+Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
+
+The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
+ADR 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
+language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
+language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
+anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
+be empty, hold non-``.md`` assets, or hold documents of other ids) and never descends. Yields nothing (rather
+than raising) if ``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
+language-listing tool (``list_languages``) probes each yielded directory for one id.
+
+Parameters
+----------
+base_dir:
+    The domain's flat (default-language) base directory, e.g. ``docs/dec``.
+
+Returns
+-------
+Iterator[tuple[str, Path]]
+    An iterator over ``(language code, subdirectory path)`` pairs, sorted by language code.
+
+
 ### `language_for_doc_path(base_dir: 'Path', doc_path: 'Path') -> 'str | None'`
 
 Return the language a document path is encoded by, from its position under ``base_dir``.

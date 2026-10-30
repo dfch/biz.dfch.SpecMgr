@@ -84,6 +84,8 @@ first).
 | replace a variant's body | `update(type, id, content, language=L)` |
 | surgical change of a variant's body | `edit(type, id, old_str, new_str, language=L)` |
 | other generic tools | `set_status`, `set_classification`, `delete` also accept `language=L` and act on the variant only |
+| which languages an artifact exists in | `list_languages(type, id)` (read-only; `en` first when the EN source exists) |
+| is a variant in sync with its source | `check_translation_drift(type, id, language, source_language="en")` (read-only; structural drift and staleness; no tool translates) |
 
 - The generic dry-run `validate` tool has **no** `language` parameter. It
   validates canonical (English-heading) content only, so a translated body

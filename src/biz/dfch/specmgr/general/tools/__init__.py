@@ -109,6 +109,18 @@ over every parseable document of all 13 domains (broken documents are
 skipped -- the render never fails for content), with the
 ``include_feat`` switch and an optional ``title`` override
 (feat-207-reference-graph, Phase 120).
+``list_languages`` -- the read-only language-listing tool for one artifact (feat-197-i18n Phase 140, REQ-012,
+ACC-008): given a ``type`` (one of the eleven i18n-eligible domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs;
+``feat``/``adr`` are permanently English and rejected) and an ``id``, it returns the language codes the artifact
+exists in -- ``"en"`` first when the EN source exists, then the other languages holding a variant, sorted by code --
+with one entry per language (resolved path, ``parseable``, parse ``error``).
+``check_translation_drift`` -- the read-only drift check between a translated variant (``language``) and its source
+(``source_language``, default ``"en"``): one structured, non-raising result reports BOTH structural drift
+(``missing``/``extra``/``reordered`` sections against the canonical schema, heading text mapped through the language's
+heading table, free text of data-carrying headings ignored, an ``unparseable`` finding for a broken document) and
+staleness (the source's ``updated`` strictly newer than the variant's) (feat-197-i18n Phase 140, REQ-014, ACC-009).
+Neither tool writes, creates, or invalidates anything, and neither translates (translating is the
+``translate_artifact`` prompt).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)
@@ -127,13 +139,22 @@ from .set_status import set_status
 from .update import update
 from .validate import validate
 
+# The two read-only translation tools (feat-197-i18n Phase 140) are imported last, deliberately out of alphabetical
+# order: their shared ``_language_variants`` helper imports every language-aware domain's own ``tools`` modules, so
+# they must load only after ``delete`` (the first import above) has cascaded through the server's full domain list --
+# importing them first re-enters ``_domains`` while it is still partially initialized (a circular import).
+from .check_translation_drift import check_translation_drift  # isort: skip  # noqa: E402
+from .list_languages import list_languages  # isort: skip  # noqa: E402
+
 __all__ = [
+    "check_translation_drift",
     "delete",
     "edit",
     "find_related",
     "find_similar_text",
     "get_reference_diagram",
     "get_reference_diagram_all",
+    "list_languages",
     "list_references",
     "mdformat",
     "set_classification",

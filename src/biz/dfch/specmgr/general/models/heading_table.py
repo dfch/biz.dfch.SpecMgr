@@ -61,6 +61,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+from collections.abc import Iterator
 from importlib import resources
 from importlib.resources.abc import Traversable
 
@@ -68,6 +69,7 @@ from ..tools._path_safety import DEFAULT_LANGUAGE
 
 __all__ = [
     "heading_table_path",
+    "iter_heading_lines",
     "load_heading_table",
     "normalize_heading_lines",
     "reset_heading_table_cache",
@@ -251,12 +253,56 @@ def reset_heading_table_cache() -> None:
         _loaded_tables.clear()
 
 
+def iter_heading_lines(text: str) -> Iterator[tuple[int, int, str]]:
+    """Yield every ATX heading line of ``text`` that lies outside a fenced code block (feat-197-i18n).
+
+    The single heading/fence recognizer behind both :func:`normalize_heading_lines` (the parse-boundary pre-pass)
+    and the translation drift check's heading skeleton (feat-197-i18n Phase 140), so the two can never disagree on
+    what a heading is: a line matching ``^#{1,6} `` (1-6 hashes, one space, then non-empty inline text -- the
+    mdformat-normalized heading shape) outside a fenced code block, where a ``#``-leading line inside a
+    ``` / ~~~ fence is code, not a heading. Fences follow CommonMark: an opener is up to three leading spaces plus
+    three or more backticks (info string free of backticks) or three or more tildes; the closer is a line of only
+    the same fence character, at least as many as the opener, with at most trailing whitespace.
+
+    Parameters
+    ----------
+    text:
+        The (mdformat-normalized) body text to scan; split on ``"\\n"``.
+
+    Returns
+    -------
+    Iterator[tuple[int, int, str]]
+        ``(line_index, level, heading_text)`` per heading: the 0-based index of the line in ``text.split("\\n")``,
+        the heading level (1-6, the number of hashes), and the inline text with surrounding whitespace stripped
+        (exactly the string ``match_alias`` sees).
+    """
+    assert isinstance(text, str), type(text)
+
+    in_fence = False
+    fence_char = ""
+    fence_length = 0
+    for index, line in enumerate(text.split("\n")):
+        if in_fence:
+            closer = re.match(rf"^ {{0,3}}{re.escape(fence_char)}{{{fence_length},}}[ \t]*$", line)
+            if closer is not None:
+                in_fence = False
+            continue
+        fence = _FENCE_OPEN_PATTERN.match(line)
+        if fence is not None and not (fence.group(1)[0] == "`" and "`" in fence.group(2)):
+            in_fence = True
+            fence_char = fence.group(1)[0]
+            fence_length = len(fence.group(1))
+            continue
+        heading = _HEADING_LINE_PATTERN.match(line)
+        if heading is not None:
+            yield index, len(heading.group(1)), heading.group(2).strip()
+
+
 def normalize_heading_lines(text: str, table: dict[str, str]) -> str:
     """Rewrite every table-mapped heading line to its canonical text, fence-aware (ADR 38efdb66 item 5).
 
-    The pre-parse heading-normalization pass: for each line matching
-    ``^#{1,6} `` (1-6 hashes, one space -- the mdformat-normalized heading
-    shape) that lies outside a fenced code block, the line's inline text
+    The pre-parse heading-normalization pass: for each heading line outside a fenced code block
+    (:func:`iter_heading_lines`: ``^#{1,6} ``, the mdformat-normalized heading shape) the line's inline text
     (surrounding whitespace stripped -- exactly what ``match_alias`` sees)
     is looked up as ``normalized = table.get(heading_text, heading_text)``
     and the line rewritten to ``<hashes> <normalized>`` when (and only
@@ -266,11 +312,6 @@ def normalize_heading_lines(text: str, table: dict[str, str]) -> str:
     headings the table does not map (e.g. canonical EN text through a
     table, or a translation that leaves some heading untranslated by
     design).
-
-    Fences follow CommonMark: an opener is up to three leading spaces plus
-    three or more backticks (info string free of backticks) or three or
-    more tildes; the closer is a line of only the same fence character, at
-    least as many as the opener, with at most trailing whitespace.
 
     Parameters
     ----------
@@ -290,32 +331,11 @@ def normalize_heading_lines(text: str, table: dict[str, str]) -> str:
     assert isinstance(text, str), type(text)
     assert isinstance(table, dict), type(table)
 
-    out: list[str] = []
-    in_fence = False
-    fence_char = ""
-    fence_length = 0
-    for line in text.split("\n"):
-        if in_fence:
-            closer = re.match(rf"^ {{0,3}}{re.escape(fence_char)}{{{fence_length},}}[ \t]*$", line)
-            if closer is not None:
-                in_fence = False
-            out.append(line)
-            continue
-        fence = _FENCE_OPEN_PATTERN.match(line)
-        if fence is not None and not (fence.group(1)[0] == "`" and "`" in fence.group(2)):
-            in_fence = True
-            fence_char = fence.group(1)[0]
-            fence_length = len(fence.group(1))
-            out.append(line)
-            continue
-        heading = _HEADING_LINE_PATTERN.match(line)
-        if heading is not None:
-            heading_text = heading.group(2).strip()
-            normalized = table.get(heading_text, heading_text)
-            if normalized != heading_text:
-                out.append(f"{heading.group(1)} {normalized}")
-                continue
-        out.append(line)
+    lines = text.split("\n")
+    for index, level, heading_text in iter_heading_lines(text):
+        normalized = table.get(heading_text, heading_text)
+        if normalized != heading_text:
+            lines[index] = f"{'#' * level} {normalized}"
 
-    result = "\n".join(out)
+    result = "\n".join(lines)
     return result

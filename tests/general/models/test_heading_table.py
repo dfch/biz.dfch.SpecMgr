@@ -43,6 +43,7 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.models.heading_table import (
     heading_table_path,
+    iter_heading_lines,
     load_heading_table,
     normalize_heading_lines,
     reset_heading_table_cache,
@@ -458,6 +459,40 @@ class TestNormalizeHeadingLines(unittest.TestCase):
         text = "## Kontext und Problembeschreibung\n\n```\n# code\n```\n\n## Ende\n"
         result = normalize_heading_lines(text, self.table)
         self.assertEqual(len(result.split("\n")), len(text.split("\n")))
+
+
+class TestIterHeadingLines(unittest.TestCase):
+    """``iter_heading_lines`` -- the shared heading/fence recognizer (also behind the Phase 140 drift skeleton)."""
+
+    def test_yields_index_level_and_stripped_text_for_every_heading(self):
+        text = "# Title\n\nprose\n\n## Section  \n\n#### Deep\n"
+
+        result = list(iter_heading_lines(text))
+
+        self.assertEqual(result, [(0, 1, "Title"), (4, 2, "Section"), (6, 4, "Deep")])
+
+    def test_fenced_and_non_heading_lines_are_skipped(self):
+        text = "## A\n```\n## B\n```\n####### seven\n#nospace\n~~~\n## C\n~~~\n## D\n"
+
+        result = [heading for _index, _level, heading in iter_heading_lines(text)]
+
+        self.assertEqual(result, ["A", "D"])
+
+    def test_the_indexes_address_text_split_on_newline(self):
+        text = "x\n## A\n\n## B\n"
+
+        lines = text.split("\n")
+
+        for index, _level, heading in iter_heading_lines(text):
+            self.assertEqual(lines[index], f"## {heading}")
+
+    def test_normalize_agrees_with_the_recognizer(self):
+        """``normalize_heading_lines`` is built on the same recognizer: it rewrites exactly the yielded lines."""
+        text = "# T\n\n## Beschreibung\n\n```\n## Beschreibung\n```\n"
+
+        result = normalize_heading_lines(text, {"Beschreibung": "Description"})
+
+        self.assertEqual(result, "# T\n\n## Description\n\n```\n## Beschreibung\n```\n")
 
 
 class TestDeJsonIntegrity(unittest.TestCase):

@@ -43,6 +43,11 @@ runs, before any filesystem access and before dispatch:
    :data:`LANGUAGE_AWARE_DOMAINS` asserts in every generic tool make that
    state fail loudly at import, so the fallback never fires through the
    server).
+
+The read-only translation tools (``list_languages``/``check_translation_drift``, feat-197-i18n Phase 140) take a
+``type`` that is itself the subject of the question rather than a ``language`` of a dispatched write, so they use
+:func:`assert_language_aware_type` -- the same permanent "always English" wording for ``feat``/``adr`` -- before any
+id validation, and :func:`guard_language` for their language arguments.
 """
 
 from __future__ import annotations
@@ -51,7 +56,7 @@ from ..models.heading_table import resolve_heading_table
 from ._domains import ADR, FEAT, WHOLE_BODY_NO_FEAT_DOMAINS
 from ._path_safety import DEFAULT_LANGUAGE, assert_language
 
-__all__ = ["LANGUAGE_AWARE_DOMAINS", "guard_language"]
+__all__ = ["LANGUAGE_AWARE_DOMAINS", "assert_language_aware_type", "guard_language"]
 
 #: The domains whose generic-tool adapters honor a non-default ``language``
 #: (feat-197-i18n Phases 120/125: the eleven i18n-eligible domains req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr,
@@ -100,3 +105,36 @@ def guard_language(type_: str, language: str) -> None:
         f"language {language!r} is not supported for type {type_!r}; only {', '.join(LANGUAGE_AWARE_DOMAINS)} "
         f"documents support language variants -- omit `language` or pass 'en'"
     )
+
+
+def assert_language_aware_type(type_: str) -> None:
+    """Reject a ``type`` whose documents have no language variants, before any filesystem access.
+
+    The type-level counterpart of :func:`guard_language` for the read-only translation tools
+    (``list_languages``/``check_translation_drift``, feat-197-i18n Phase 140), which are *about* language variants
+    and therefore cannot meaningfully accept ``feat`` or ``adr``: a language-aware domain
+    (:data:`LANGUAGE_AWARE_DOMAINS`) passes; ``feat``/``adr`` are rejected with the same permanent wording as
+    :func:`guard_language` ("`feat` documents are always English", REQ-002/REQ-009); any other value is an unknown
+    type. Run it *before* ``validate_id`` so a ``feat`` request with a ``feat-NNN-slug`` id still gets the
+    permanent explanation rather than an id-shape error.
+
+    Parameters
+    ----------
+    type_:
+        The caller-supplied document type.
+
+    Raises
+    ------
+    ValueError
+        ``type_`` is ``feat``/``adr`` (always English, permanent) or not a known document type.
+    """
+    assert isinstance(type_, str), type(type_)
+
+    if type_ in LANGUAGE_AWARE_DOMAINS:
+        return
+    if type_ in (FEAT, ADR):
+        raise ValueError(
+            f"type {type_!r} does not support language variants: {type_} documents are always English "
+            f"(they have no language variants); only {', '.join(LANGUAGE_AWARE_DOMAINS)} documents do"
+        )
+    raise ValueError(f"unknown document type {type_!r}; expected one of {', '.join(LANGUAGE_AWARE_DOMAINS)}")

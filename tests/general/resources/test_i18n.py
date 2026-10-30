@@ -156,6 +156,8 @@ class TestI18nDescribesTheImplementedLayout(unittest.TestCase):
             "`set_classification`",
             "`delete`",
             "has **no** `language` parameter",
+            "`list_languages(type, id)`",
+            'check_translation_drift(type, id, language, source_language="en")',
         ):
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, surface)
@@ -427,7 +429,12 @@ class TestI18nHeadingsResourceTemplate(unittest.TestCase):
         import asyncio
 
         tools = {tool.name for tool in asyncio.run(mcp.list_tools())}
-        self.assertFalse({name for name in tools if "translat" in name.lower() or "heading" in name.lower()})
+        # `check_translation_drift` (feat-197-i18n Phase 140) is the one read-only tool whose name mentions
+        # translation: it compares a variant with its source and never translates; no tool serves a heading table.
+        self.assertEqual(
+            {name for name in tools if "translat" in name.lower() or "heading" in name.lower()},
+            {"check_translation_drift"},
+        )
 
 
 if __name__ == "__main__":

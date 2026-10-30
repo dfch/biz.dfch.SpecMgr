@@ -168,6 +168,16 @@ tables (ADR 38efdb66 items 3/4/5):
   runs; :func:`heading_table_path` -- the single seam every caller (and
   test) goes through for the table file's location.
 
+Also backs feat-197-i18n's (Phase 140) two read-only translation tools:
+
+- :class:`LanguageListResult`/:class:`LanguageEntry` -- the ``list_languages`` tool's result (REQ-012, ACC-008): the
+  language codes one artifact exists in (``"en"`` first when the EN source exists) with one entry per language
+  (resolved path, ``parseable`` flag, parse ``error`` for a variant that exists but fails to parse).
+- :class:`TranslationDriftResult`/:class:`DriftFinding` -- the ``check_translation_drift`` tool's non-raising result
+  (REQ-014, ACC-009): structural findings (``missing``/``extra``/``reordered``/``unparseable``) and the staleness
+  verdict of one run; ``translation_drift`` also holds the pure, I/O-free core of the drift check
+  (:func:`heading_skeleton`, :func:`compare_skeletons`, :func:`check_staleness`).
+
 Import this package to use either model directly::
 
     from biz.dfch.specmgr.general.models import DocSummary, PagedResult
@@ -201,6 +211,7 @@ from .heading_table import (
     resolve_heading_table,
 )
 from .invalid_status_result import InvalidStatusResult
+from .language_list_result import LanguageEntry, LanguageListResult
 from .paged_result import PagedResult
 from .parse_failure_result import ParseFailureResult
 from .rasci import Rasci, RasciVsRaci, RoleItem, Roles, parse_rasci
@@ -219,6 +230,15 @@ from .similarity_unavailable import (
     SimilarityUnavailableResult,
 )
 from .summary import DocSummary
+from .translation_drift import (
+    DriftFinding,
+    SkeletonEntry,
+    Staleness,
+    TranslationDriftResult,
+    check_staleness,
+    compare_skeletons,
+    heading_skeleton,
+)
 from .validate_result import ValidateResult, ValidationErrorEntry
 
 __all__ = [
@@ -228,10 +248,13 @@ __all__ = [
     "DEFAULT_MAX_LABEL",
     "Dtais",
     "DocSummary",
+    "DriftFinding",
     "Ears",
     "GraphEdge",
     "GraphNode",
     "InvalidStatusResult",
+    "LanguageEntry",
+    "LanguageListResult",
     "MethodItem",
     "PagedResult",
     "ParseFailureResult",
@@ -247,6 +270,9 @@ __all__ = [
     "Roles",
     "SimilarityHit",
     "SimilarityUnavailableResult",
+    "SkeletonEntry",
+    "Staleness",
+    "TranslationDriftResult",
     # PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
     "UpdateFrontmatter",  # pylint: disable=undefined-all-variable
     "UpdateResult",  # pylint: disable=undefined-all-variable
@@ -256,6 +282,9 @@ __all__ = [
     "WhenToApplyItem",
     "WhenToUse",
     "WhenToUseItem",
+    "check_staleness",
+    "compare_skeletons",
+    "heading_skeleton",
     "heading_table_path",
     "load_heading_table",
     "normalize_heading_lines",

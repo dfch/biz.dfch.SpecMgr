@@ -335,7 +335,9 @@ class TestTranslateArtifactRegistration(unittest.TestCase):
         from biz.dfch.specmgr.server import mcp
 
         tools = {tool.name for tool in asyncio.run(mcp.list_tools())}
-        self.assertFalse({name for name in tools if "translat" in name.lower()})
+        # `check_translation_drift` (feat-197-i18n Phase 140) is the one read-only tool whose name mentions
+        # translation: it compares a variant with its source and never translates, writes, or calls an LLM.
+        self.assertEqual({name for name in tools if "translat" in name.lower()}, {"check_translation_drift"})
 
 
 if __name__ == "__main__":

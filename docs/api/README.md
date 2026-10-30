@@ -112,6 +112,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - [`biz.dfch.specmgr.general.models.heading_table`](biz.dfch.specmgr.general.models.heading_table.md) — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- [`biz.dfch.specmgr.general.models.language_list_result`](biz.dfch.specmgr.general.models.language_list_result.md) — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.parse_failure_result`](biz.dfch.specmgr.general.models.parse_failure_result.md) — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
@@ -120,6 +121,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.similarity_hit`](biz.dfch.specmgr.general.models.similarity_hit.md) — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
 - [`biz.dfch.specmgr.general.models.similarity_unavailable`](biz.dfch.specmgr.general.models.similarity_unavailable.md) — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- [`biz.dfch.specmgr.general.models.translation_drift`](biz.dfch.specmgr.general.models.translation_drift.md) — Translation drift detection: the pure heading-skeleton comparison, the staleness comparison, and the
 - [`biz.dfch.specmgr.general.models.update_result`](biz.dfch.specmgr.general.models.update_result.md) — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
 - [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
@@ -143,6 +145,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._embedding`](biz.dfch.specmgr.general.tools._embedding.md) — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 - [`biz.dfch.specmgr.general.tools._embedding_cache`](biz.dfch.specmgr.general.tools._embedding_cache.md) — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
 - [`biz.dfch.specmgr.general.tools._language_guard`](biz.dfch.specmgr.general.tools._language_guard.md) — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phases 120/125).
+- [`biz.dfch.specmgr.general.tools._language_variants`](biz.dfch.specmgr.general.tools._language_variants.md) — Per-language document location for the read-only translation tools (feat-197-i18n Phase 140).
 - [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
@@ -156,12 +159,14 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - [`biz.dfch.specmgr.general.tools._startup_warmup`](biz.dfch.specmgr.general.tools._startup_warmup.md) — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
 - [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
+- [`biz.dfch.specmgr.general.tools.check_translation_drift`](biz.dfch.specmgr.general.tools.check_translation_drift.md) — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - [`biz.dfch.specmgr.general.tools.edit`](biz.dfch.specmgr.general.tools.edit.md) — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - [`biz.dfch.specmgr.general.tools.find_related`](biz.dfch.specmgr.general.tools.find_related.md) — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools.find_similar_text`](biz.dfch.specmgr.general.tools.find_similar_text.md) — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - [`biz.dfch.specmgr.general.tools.get_reference_diagram`](biz.dfch.specmgr.general.tools.get_reference_diagram.md) — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
 - [`biz.dfch.specmgr.general.tools.get_reference_diagram_all`](biz.dfch.specmgr.general.tools.get_reference_diagram_all.md) — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
+- [`biz.dfch.specmgr.general.tools.list_languages`](biz.dfch.specmgr.general.tools.list_languages.md) — ``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
 - [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).

@@ -161,6 +161,7 @@ __all__ = [
     "find_parse_failure",
     "iter_doc_paths",
     "iter_doc_paths_all_languages",
+    "iter_language_dirs",
     "language_for_doc_path",
     "slugify",
 ]
@@ -450,10 +451,42 @@ def iter_doc_paths_all_languages(base_dir: Path) -> Iterator[Path]:
     if not base_dir.exists():
         return iter(())
     paths = list(iter_doc_paths(base_dir))
-    for sub in sorted(base_dir.iterdir()):
-        if sub.is_dir() and LANGUAGE_PATTERN.fullmatch(sub.name):
-            paths.extend(iter_doc_paths(sub))
+    for _language, sub in iter_language_dirs(base_dir):
+        paths.extend(iter_doc_paths(sub))
     result = iter(sorted(paths))
+    return result
+
+
+def iter_language_dirs(base_dir: Path) -> Iterator[tuple[str, Path]]:
+    """Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
+
+    The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
+    ADR 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
+    language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
+    language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
+    anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
+    be empty, hold non-``.md`` assets, or hold documents of other ids) and never descends. Yields nothing (rather
+    than raising) if ``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
+    language-listing tool (``list_languages``) probes each yielded directory for one id.
+
+    Parameters
+    ----------
+    base_dir:
+        The domain's flat (default-language) base directory, e.g. ``docs/dec``.
+
+    Returns
+    -------
+    Iterator[tuple[str, Path]]
+        An iterator over ``(language code, subdirectory path)`` pairs, sorted by language code.
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+
+    if not base_dir.exists():
+        return iter(())
+    pairs = [
+        (sub.name, sub) for sub in sorted(base_dir.iterdir()) if sub.is_dir() and LANGUAGE_PATTERN.fullmatch(sub.name)
+    ]
+    result = iter(pairs)
     return result
 
 

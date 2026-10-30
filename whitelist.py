@@ -395,3 +395,20 @@ UNATTRIBUTED_MARKER_FORMS
 # live listing (a superset of it) instead -- the parameter is part of the
 # shared `reconcile_fn` call contract, not dead code.
 scan_paths
+
+# --- feat-197-i18n (Phase 140) -------------------------------------------
+# Pydantic result-model fields of the read-only `list_languages` /
+# `check_translation_drift` tools (`general/models/language_list_result.py`,
+# `general/models/translation_drift.py`). The fields are populated by keyword in the
+# tools' own constructors (vulture's constructor-kwarg suppression does not count
+# that as use) and read by tests and, dynamically, by the mcp SDK's pydantic
+# serializer when the result is returned over the wire -- which vulture's static
+# scan cannot see (the `structure_ok`/`checked_by` precedent above). The remaining
+# fields of the two models are read by name in the tools or the pure comparison
+# code and need no entry.
+languages
+source_position
+variant_position
+variant_path
+in_sync
+staleness_error
