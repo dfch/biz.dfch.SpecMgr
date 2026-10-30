@@ -302,14 +302,29 @@ the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_rsk``,
  ``get_rsk_example``,
  ``get_rsk_template``, ``get_rsk_schema``, ``create_rsk``.
-    Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
+    Decision tools (``dec/tools/``): ``parse_dec`` (takes no ``language`` parameter -- it
+derives the file's language from its path position relative to the decision base
+directory: flat ``docs/dec/`` = canonical/no table, a direct two-letter
+``docs/dec/{language}/`` subdirectory = that language's packaged heading-mapping
+table), ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
 ``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
 ``offset``/``limit``), prefixes every returned body line with its 1-based absolute
 body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
 the clamped offset and never restarts, so a number seen can be fed straight back
-into the generic ``update`` tool's ``offset``)), ``list_dec``,
+into the generic ``update`` tool's ``offset``; the optional ``language`` parameter
+(feat-197-i18n Phase 110, default ``"en"``) selects the variant to read --
+omitted/``"en"`` = the flat ``docs/dec/`` document exactly as before, any other
+ISO 639-1-shaped lowercase two-letter code = that language's variant at
+``docs/dec/{language}/`` (shape-guarded before any file access like ``id``, and a
+shape-valid code without a heading-mapping table is rejected up front); ``raw=True``
+returns the variant's body verbatim, ``raw=False`` parses it through the variant's
+table so the model holds canonical heading text), ``list_dec`` (the same optional
+``language`` parameter, default ``"en"`` -- omitted/``"en"`` scans the flat
+directory exactly as before, any other code scans only that language's
+subdirectory, listing exactly the existing variants of that language; deliberately
+no "all languages" mode -- the row shape is unchanged, no language column),
     ``get_dec_example``,
     ``get_dec_template``, ``get_dec_schema``, ``create_dec``.
      SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the

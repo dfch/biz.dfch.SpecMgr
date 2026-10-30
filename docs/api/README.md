@@ -110,6 +110,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.dtais`](biz.dfch.specmgr.general.models.dtais.md) — Pydantic schema and parser for the DTAIS verification-methods guidance
 - [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
+- [`biz.dfch.specmgr.general.models.heading_table`](biz.dfch.specmgr.general.models.heading_table.md) — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.parse_failure_result`](biz.dfch.specmgr.general.models.parse_failure_result.md) — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
@@ -142,7 +143,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
-- [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids,
 - [`biz.dfch.specmgr.general.tools._reference_graph`](biz.dfch.specmgr.general.tools._reference_graph.md) — The reference-graph builders: scoped source-centred and registry-wide graph construction
 - [`biz.dfch.specmgr.general.tools._references`](biz.dfch.specmgr.general.tools._references.md) — Shared cross-reference extraction and per-domain target resolution
 - [`biz.dfch.specmgr.general.tools._similarity_corpus`](biz.dfch.specmgr.general.tools._similarity_corpus.md) — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).

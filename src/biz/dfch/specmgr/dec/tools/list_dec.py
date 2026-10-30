@@ -49,6 +49,20 @@ smaller set (ACC-004). ``glob=None`` (the default) leaves every outcome
 byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
+
+**Language variants (feat-197-i18n Phase 110, ADR 38efdb66 items 1/6/7).**
+The optional ``language`` parameter (default ``"en"``) selects which
+directory this tool scans: omitted/``"en"`` = the flat ``docs/dec/``
+directory -- today's exact behavior; any other shape-validated code (e.g.
+``"de"``) = only the ``docs/dec/{language}/`` subdirectory, listing
+exactly the existing variants of that language (ACC-007). There is
+deliberately NO "all languages" mode (the ``DocSummary`` row shape carries
+no language column and would repeat ids). The language is shape-guarded
+before any filesystem access, and a shape-valid language without a
+packaged heading-mapping table is rejected up front with the table
+loader's actionable error (listing a document set that could never be
+parsed is not a meaningful outcome). The row shape is unchanged -- no
+language column.
 """
 
 from __future__ import annotations
@@ -56,13 +70,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from ...general.models import PagedResult
+from ...general.models.heading_table import resolve_heading_table
+from ...general.tools._doc_paths import iter_doc_paths_all_languages
 from ...general.tools._listing import build_summaries, default_failed_summary, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
+from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
 from ...server import mcp
 from ..models.v1 import DecDocument, DecSummary
 from ._cache import reconcile_dec_cache
 from ._io import read_dec
-from ._paths import iter_dec_paths
+from ._paths import dec_base_dir, iter_dec_paths
 
 
 def _to_summary(doc: DecDocument, path: Path) -> DecSummary:
@@ -89,6 +106,13 @@ def _to_failed_summary(path: Path, error: Exception) -> DecSummary:
         "one page at a time, for context before addressing one by id. 'ref' is an opaque, "
         "extensionless identifier -- not a filename to read from disk -- for documents that "
         "have no assigned id; use it with the get_dec tool instead. "
+        "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
+        "= the flat docs/dec/ directory (the default behavior, unchanged); any other ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = only that language's docs/dec/{language}/ subdirectory, "
+        "listing exactly the existing variants of that language (there is deliberately no "
+        "'all languages' mode). The language is shape-validated before any file access (an "
+        "invalid-shaped value is a ValueError, like an invalid id), and a shape-valid language without "
+        "a packaged heading-mapping table is rejected up front with an actionable ValueError. "
         "An optional glob pattern (e.g. 'dead*') filters the listing to the decisions "
         "whose id matches it, case-insensitively; glob=None (the default) lists everything, "
         "and an empty string matches nothing. max_results/offset control "
@@ -99,8 +123,9 @@ def list_dec(
     max_results: int | None = None,
     offset: int | None = None,
     glob: str | None = None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> PagedResult[DecSummary]:
-    """Return one page of one-line decision summaries from the configured base directory.
+    """Return one page of one-line decision summaries from one language's directory.
 
     A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
     or ``yaml.YAMLError`` -- the same channels
@@ -141,18 +166,50 @@ def list_dec(
         ``error_count = 0`` by construction (REQ-003); ``total`` is the
         match count and ``offset``/``max_results`` paging keeps its existing
         meaning on that smaller set.
+    language:
+        The language whose directory to list (feat-197-i18n Phase 110, ADR
+        38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
+        scans the flat ``docs/dec/`` directory -- today's exact behavior;
+        any other ISO 639-1-shaped lowercase two-letter code (e.g.
+        ``"de"``) scans only ``docs/dec/{language}/``, listing exactly the
+        existing variants of that language (ACC-007). There is deliberately
+        no "all languages" mode (the row shape carries no language column
+        and would repeat ids). Shape-guarded before any filesystem access
+        (like ``id``); a shape-valid code without a packaged
+        heading-mapping table is rejected up front with the table loader's
+        actionable error.
 
     Returns
     -------
     PagedResult[DecSummary]
         One entry per ``*.md`` file within the requested page (successes
         and failures both -- only entries whose ``id`` matches ``glob`` when
-        it is given), in filename-sorted order. ``results`` is empty if the
-        base directory does not exist, holds no decisions, ``offset`` is
-        past the end of the full list, or no id matches ``glob``.
+        it is given), in filename-sorted order, from the selected language's
+        directory only. ``results`` is empty if that directory does not
+        exist, holds no decisions, ``offset`` is past the end of the full
+        list, or no id matches ``glob``.
+
+    Raises
+    ------
+    ValueError
+        ``language`` is not an ISO 639-1-shaped lowercase two-letter code
+        (raised before any filesystem access), or a non-default ``language``
+        has no packaged heading-mapping table (raised before any filesystem
+        access).
     """
-    paths = list(iter_dec_paths())
-    reconcile_dec_cache(paths)  # feat-107-doc-cache Phase 4, REQ-005
+    assert_language(language)
+    if language != DEFAULT_LANGUAGE:
+        resolve_heading_table(language)
+
+    paths = list(iter_dec_paths(language))
+    # feat-107-doc-cache Phase 4, REQ-005 -- and feat-197-i18n Phase 110 (ADR 38efdb66
+    # item 9): with {language} subfolders, a scan of one language's directory no
+    # longer covers the whole domain, so reconcile against the domain-wide live
+    # listing (flat EN files plus every {language} subdirectory's files), never
+    # just the scanned directory -- or listing one language would evict the
+    # other languages' cached entries. With no subdirectory present the union
+    # is the scanned listing itself (the pre-i18n behavior, byte-identical).
+    reconcile_dec_cache(list(iter_doc_paths_all_languages(dec_base_dir())))
     summaries, error_count = build_summaries(paths, read_dec, _to_summary, _to_failed_summary)
 
     # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build

@@ -4,7 +4,7 @@ created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
 status: progress
 type: feat
-updated: '2026-10-29T21:06:25.512+01:00'
+updated: '2026-10-30T09:47:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -157,11 +157,11 @@ Open design questions to resolve during Phase 100 below:
 
 #### Phase 110: Path Resolution & Read-Side Plumbing (Pilot Domain: `dec`)
 
-- [ ] Task 110.100: Extend `general/tools/_doc_paths.py` to resolve a document path given `type`/`id`/optional `language`, and extend `general/tools/_path_safety` to validate the `language` value (REQ-008) with the same path-injection/confinement discipline already applied to `id`; confirm `iter_doc_paths`'s non-recursive scan does not descend into `{language}` subfolders (ACC-014).
+- [x] Task 110.100: Extend `general/tools/_doc_paths.py` to resolve a document path given `type`/`id`/optional `language`, and extend `general/tools/_path_safety` to validate the `language` value (REQ-008) with the same path-injection/confinement discipline already applied to `id`; confirm `iter_doc_paths`'s non-recursive scan does not descend into `{language}` subfolders (ACC-014).
 
-- [ ] Task 110.110: Add the optional `language` parameter to `get_dec`/`list_dec`, defaulting to `"en"` with unchanged behavior when omitted.
+- [x] Task 110.110: Add the optional `language` parameter to `get_dec`/`list_dec`, defaulting to `"en"` with unchanged behavior when omitted.
 
-- [ ] Task 110.120: Extend the markdown parser layer to apply the heading-mapping table when parsing a non-EN document, exercised against `dec`.
+- [x] Task 110.120: Extend the markdown parser layer to apply the heading-mapping table when parsing a non-EN document, exercised against `dec`.
 
 #### Phase 120: Write-Side Plumbing (Pilot Domain: `dec`)
 
@@ -209,11 +209,23 @@ Open design questions to resolve during Phase 100 below:
 
 ### Current Status
 
-**As of 2026-10-29**: Phase 100 (design) complete -- the directory-layout, heading-mapping-table, and language-vocabulary design is settled in ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772 ("Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary"), `dec` is confirmed as the pilot domain for Phases 110-130/ACC-005/006/007 (Task 100.140), and Phase 110 (path resolution & read-side plumbing for `dec`) is next.
+**As of 2026-10-30**: Phase 110 (path resolution & read-side plumbing) complete for the pilot domain `dec` -- the `language` guard, language-aware path resolution, the heading-mapping table (loader + fence-aware pre-pass + packaged `de.json`), and the `language` parameter on `get_dec`/`list_dec` (plus path-derived language on `parse_dec`) are live; EN behavior is byte-identical. Phase 120 (write-side plumbing for `dec`) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T09:47:00.000+01:00 - Phase 110 (read-side plumbing) complete: guard, path resolution, heading table, and `get_dec`/`list_dec` `language` for `dec`
+
+Implemented ADR 38efdb66's read-side contract for the pilot domain `dec` (Tasks 110.100/110.110/110.120). Read side only: `get_dec`/`list_dec` gained the optional `language` parameter (default `"en"`, unchanged behavior when omitted); `parse_dec` derives the language from the file's path position. No write tool, no other domain, and no `feat`/`adr` surface was touched.
+
+- **Language guard (Task 110.100, REQ-008/ACC-013):** `general.tools._path_safety.assert_language` (+ module constants `LANGUAGE_PATTERN` `^[a-z]{2}$` and `DEFAULT_LANGUAGE` `"en"`) validates a caller-supplied `language` by fullmatch before any filesystem access, in the same pre-guard position as `id`. Shape-only (open set); the closed set (table existence) is enforced separately at parse/write time. A payload like `"../../etc"`, `"de/x"`, `""`, or `"DE"` is rejected with an actionable `ValueError`.
+- **Path resolution (Task 110.100, ADR items 1/2):** `general.tools._doc_paths.doc_base_dir`/`ensure_doc_base_dir` take an optional `language` -- omitted/`"en"` resolves to today's flat `docs/{type}/` byte-identically, any other validated code to `docs/{type}/{language}/`. New `language_for_doc_path` recovers the language a document path is encoded by (its position), and `iter_doc_paths_all_languages` yields the domain-wide live listing (flat + every shape-valid `{language}` subdirectory) for cache reconcile. `iter_doc_paths` stays non-recursive and never descends into `{language}` subfolders (ACC-014, pinned by a new unit test).
+- **Heading-mapping table (Task 110.120, ADR items 3/4/5):** the packaged `general/data/headings/de.json` (114 entries) maps German fixed-text headings to canonical English. The closed set was derived systematically from the eleven i18n-eligible domains' document models (every `MarkdownSection` alias that is LITERAL, SPACE_SEPARATED, or a REGEX with no free-text group; data-carrying headings like `Option {N}:`/`Step {N}:`/`AC-{NNN}`/timestamp-led entries carry no entry, REQ-010). New `general.models.heading_table` provides the lazy once-per-process loader (rejects non-pairwise-distinct values and a missing table with an actionable error; no file for `en`), the omitted/EN-aware `resolve_heading_table`, and the fence-aware (``` / ~~~) line-based `normalize_heading_lines` pre-pass.
+- **Parser wiring (Task 110.120, ADR item 5):** the pre-pass is wired at `dec`'s text-to-model parse boundary (`dec.models.v1.parse_dec` gained an optional `language` keyword) -- after mdformat normalization, before the unchanged `models/md` engine. `dec.tools._cache.read_dec` derives the effective language from the file's own position, so every reader (get/list/parse) parses a variant with its table with no signature change, and `DocCache`'s path-keyed entries keep languages independent (ADR item 9 -- no cache code change). The generic disk-free `validate` tool gains no `language` parameter (stays EN/canonical-only).
+- **`get_dec`/`list_dec` (Task 110.110, ADR items 5/6/7):** both take `language: str = "en"`. Omitted/`"en"` is byte-identical to today. A non-default `language` is shape-guarded and its table resolved up front (before any filesystem access); `get_dec` reads the variant (raw returns the on-disk body verbatim, structured parses through the table to canonical keys), and the `ParseFailureResult` byte-identity contract holds for a broken DE variant against `list_dec(language="de")`. `list_dec(language="de")` lists only the DE variants; the row shape is unchanged (no language column).
+- **Package data:** `pyproject.toml`'s `biz.dfch.specmgr.general` package-data glob extended from `data/*.md` to also ship `data/headings/*.json`.
+- **Quality gate:** full suite green (4912 passed / 18 skipped, up from the pre-phase baseline, no test modified except where a signature change strictly required it -- none did); `ruff format --check`, `ruff check`, `vulture` clean; `specmgr docs` + `specmgr mcp-docs` regenerated; `specmgr schema` all 12 domains unchanged.
 
 #### 2026-10-29T21:06:25.512+01:00 - Phase 100 (design) complete: layout, mapping table, and language vocabulary settled in ADR 38efdb66
 
@@ -270,6 +282,20 @@ Feature drafted from GitHub issue #197 ("I18n: multi-language support of the sam
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T09:47:00.000+01:00 - Phase 110 implementation decisions (read-side plumbing for `dec`)
+
+Implementation-level decisions made while executing Phase 110, all within the ADR 38efdb66 contract (no deviations):
+
+| decision | choice | rationale |
+| --- | --- | --- |
+| Guard home + constants | `assert_language` + `LANGUAGE_PATTERN` (`^[a-z]{2}$`) + `DEFAULT_LANGUAGE` (`"en"`) in `general/tools/_path_safety.py` (alongside `validate_id`) | The plan/ADR name `_path_safety` as the guard's home; keeping the vocabulary's single source (pattern + default) there means the path-resolution module and the table loader both import from one place |
+| Language derivation for the parse chain | `read_dec` derives the effective language from the file's own position (`language_for_doc_path`), not from a caller argument | The location *is* the language encoding (ADR item 1), so every reader (get/list/parse, the generic tools' dec adapters) parses a variant with its table with zero signature changes; the `DocCache` path-keyed entry then stays correct per language (ADR item 9) |
+| Table-resolution fail-fast | `get_dec`/`list_dec` resolve the table (shape guard first) *before* any filesystem access | A shape-valid-but-unusable language (no table file) is a caller error and should be reported even when the file is absent or the directory empty -- the same guard-before-IO discipline as `id` |
+| Reconcile scope with subfolders | `dec`'s reconcile-on-scan (in `list_dec` and `find_dec_path`) now uses the domain-wide union (`iter_doc_paths_all_languages`: flat + every shape-valid `{language}` subdir) instead of the single scanned directory | With variants in subfolders, a scan of one language no longer covers the whole domain; reconciling against it alone would evict the other languages' cached entries (ADR item 9's "no `DocCache` code change" holds -- only the argument passed to the domain's existing `reconcile` wrapper changed) |
+| Heading-table module home | `general/models/heading_table.py` (new), eagerly exported from `general/models/__init__.py` | It is shared cross-domain data machinery (like `general/models/dtais.py`/`ears.py` for the packaged `general/data` files); its only `general.*` import is the leaf `general/tools/_path_safety`, so the eager import introduces no cycle (verified against the repo's actual import-order traces) |
+| Pre-pass location | A pure function (`normalize_heading_lines`) in the table module, applied inside `dec.models.v1.parse_dec` after `format_text` and before `Decision.from_text` | The `models/md` engine stays untouched (ADR item 5); the pass is a byte-identity no-op for any text whose headings the table does not map (including all EN text), so the default parse path is byte-identical |
+| `de.json` closed set | 114 entries, derived programmatically from the eleven i18n-eligible domains' document models (body field-tree walk of each `*Document`), translated to German with pairwise-distinct values | The ADR requires the set to be machine-derivable from the models, not hand-guessed; a Phase 150 drift test will re-derive it and assert exact coverage |
 
 #### 2026-10-29T21:00:00.000+01:00 - Task 100.150 resolutions: regex-locked English prose inventory (one field found, resolved (b))
 

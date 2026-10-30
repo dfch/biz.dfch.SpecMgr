@@ -34,6 +34,8 @@ from biz.dfch.specmgr.general.tools._doc_paths import (
     find_doc_path_by_id,
     find_parse_failure,
     iter_doc_paths,
+    iter_doc_paths_all_languages,
+    language_for_doc_path,
     slugify,
 )
 
@@ -187,6 +189,22 @@ class TestIterDocPaths(unittest.TestCase):
             (base / "not-markdown.txt").write_text("x", encoding="utf-8")
             paths = list(iter_doc_paths(base))
             self.assertEqual([p.name for p in paths], ["a.md", "b.md"])
+
+    def test_does_not_descend_into_language_subdirectories(self):
+        """The scan must stay flat: *.md files inside any subdirectory (a {language} variant folder
+        or any other) are never yielded (ACC-014 unit pin, feat-197-i18n REQ-013 -- the
+        non-recursive glob is what keeps every EN-only consumer EN-only by directory layout)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            (base / "a.md").write_text("a", encoding="utf-8")
+            (base / "de" / "nested").mkdir(parents=True)
+            (base / "de" / "a.md").write_text("de variant", encoding="utf-8")
+            (base / "de" / "b.md").write_text("de variant", encoding="utf-8")
+            (base / "Notes").mkdir()
+            (base / "Notes" / "c.md").write_text("other subdir", encoding="utf-8")
+            (base / "de" / "nested" / "d.md").write_text("deep", encoding="utf-8")
+            paths = list(iter_doc_paths(base))
+            self.assertEqual([p.name for p in paths], ["a.md"])
 
 
 class TestFindDocPathById(unittest.TestCase):
@@ -347,6 +365,160 @@ class TestFindParseFailure(unittest.TestCase):
             result = find_parse_failure(base, "deadbeef-0000-0000-0000-000000000000", _read_vanished)
 
             self.assertIsNone(result)
+
+
+class TestDocBaseDirLanguage(unittest.TestCase):
+    """Tests for doc_base_dir's optional language parameter (feat-197-i18n Phase 110, ADR 38efdb66 item 1)."""
+
+    def test_omitted_language_is_the_flat_directory(self):
+        """language omitted must resolve to today's exact flat path (byte-identical EN behavior)."""
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}):
+            self.assertEqual(doc_base_dir("dec"), Path("/tmp/custom-docs/dec"))
+
+    def test_none_language_is_the_flat_directory(self):
+        """language=None must resolve to today's exact flat path."""
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}):
+            self.assertEqual(doc_base_dir("dec", None), Path("/tmp/custom-docs/dec"))
+
+    def test_explicit_en_is_the_flat_directory(self):
+        """An explicit language='en' must resolve to the flat directory (EN is the only language
+        without a subfolder)."""
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}):
+            self.assertEqual(doc_base_dir("dec", "en"), Path("/tmp/custom-docs/dec"))
+
+    def test_other_language_is_its_subdirectory(self):
+        """A shape-validated non-default language resolves to docs/{type}/{language}/."""
+        with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}):
+            self.assertEqual(doc_base_dir("dec", "de"), Path("/tmp/custom-docs/dec/de"))
+
+    def test_invalid_language_is_rejected_before_path_construction(self):
+        """A shape-invalid language must raise ValueError (the guard runs before the path is
+        built -- no path-significant value can reach the join)."""
+        for value in ("", "d", "de3", "DE", "de x", "../../etc", "de/x", "/abs"):
+            with self.subTest(value=value):
+                with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: "/tmp/custom-docs"}):
+                    with self.assertRaises(ValueError) as ctx:
+                        doc_base_dir("dec", value)
+                    self.assertIn(repr(value), str(ctx.exception))
+
+    def test_language_parameter_does_not_create_the_directory(self):
+        """doc_base_dir (any language) must never create the directory as a side effect."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_root = Path(tmp) / "does-not-exist-yet"
+            with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(missing_root)}):
+                doc_base_dir("dec", "de")
+            self.assertFalse(missing_root.exists())
+
+
+class TestEnsureDocBaseDirLanguage(unittest.TestCase):
+    """Tests for ensure_doc_base_dir's optional language parameter (feat-197-i18n Phase 110)."""
+
+    def test_creates_the_language_subdirectory(self):
+        """ensure_doc_base_dir(type, 'de') must create docs/{type}/de/ (and its parents)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            missing_root = Path(tmp) / "does-not-exist-yet"
+            with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(missing_root)}):
+                result = ensure_doc_base_dir("dec", "de")
+            self.assertTrue(result.exists())
+            self.assertEqual(result, missing_root / "dec" / "de")
+
+    def test_en_creates_the_flat_directory_as_before(self):
+        """ensure_doc_base_dir(type, 'en') (and omitted) must create the flat directory, as before."""
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: tmp}):
+                self.assertEqual(ensure_doc_base_dir("dec", "en"), Path(tmp) / "dec")
+                self.assertEqual(ensure_doc_base_dir("dec"), Path(tmp) / "dec")
+
+
+class TestLanguageForDocPath(unittest.TestCase):
+    """Tests for language_for_doc_path (the path-position -> language derivation, ADR 38efdb66 item 5)."""
+
+    def _layout(self, tmp: str) -> Path:
+        base = Path(tmp) / "dec"
+        (base / "de" / "nested").mkdir(parents=True)
+        (base / "Notes").mkdir()
+        return base
+
+    def test_flat_document_is_none(self):
+        """A document directly in the flat base directory maps to None (canonical EN, no table)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            self.assertIsNone(language_for_doc_path(base, base / "a.md"))
+
+    def test_language_subdirectory_document_maps_to_its_language(self):
+        """A document directly in a shape-valid {language} subdirectory maps to that language."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            self.assertEqual(language_for_doc_path(base, base / "de" / "a.md"), "de")
+
+    def test_non_shape_valid_subdirectory_is_none(self):
+        """A document in a non-shape-validated subdirectory ('Notes', 'de-DE') maps to None -- it is
+        not a language location, so the document parses canonical-only."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            self.assertIsNone(language_for_doc_path(base, base / "Notes" / "a.md"))
+            (base / "de-DE").mkdir()
+            self.assertIsNone(language_for_doc_path(base, base / "de-DE" / "a.md"))
+
+    def test_deeper_nesting_is_none(self):
+        """A document nested deeper than one subdirectory maps to None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            self.assertIsNone(language_for_doc_path(base, base / "de" / "nested" / "a.md"))
+
+    def test_path_outside_the_base_is_none(self):
+        """A document outside the base directory entirely maps to None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            other = Path(tmp) / "other"
+            other.mkdir()
+            self.assertIsNone(language_for_doc_path(base, other / "a.md"))
+
+    def test_unresolved_and_resolved_spellings_agree(self):
+        """Relative and resolved spellings of the same location must classify identically
+        (both sides are .resolve()d)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = self._layout(tmp)
+            doc = base / "de" / "a.md"
+            self.assertEqual(language_for_doc_path(base, doc), language_for_doc_path(doc.parent.parent, doc))
+
+
+class TestIterDocPathsAllLanguages(unittest.TestCase):
+    """Tests for iter_doc_paths_all_languages (the domain-wide live listing, ADR 38efdb66 item 9)."""
+
+    def test_missing_directory_yields_nothing(self):
+        """A non-existent base directory must yield nothing, not raise."""
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(list(iter_doc_paths_all_languages(Path(tmp) / "missing")), [])
+
+    def test_union_of_flat_and_every_language_subdirectory(self):
+        """The union covers the flat files plus every file in every shape-valid {language}
+        subdirectory, sorted by path."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "dec"
+            (base / "de").mkdir(parents=True)
+            (base / "fr").mkdir()
+            (base / "b.md").write_text("b", encoding="utf-8")
+            (base / "a.md").write_text("a", encoding="utf-8")
+            (base / "de" / "x.md").write_text("x", encoding="utf-8")
+            (base / "fr" / "y.md").write_text("y", encoding="utf-8")
+            names = [str(p.relative_to(base)) for p in iter_doc_paths_all_languages(base)]
+            self.assertEqual(names, ["a.md", "b.md", "de/x.md", "fr/y.md"])
+
+    def test_non_language_subdirectories_are_excluded(self):
+        """Files in non-shape-validated subdirectories are not part of any domain's live
+        listing (no tool ever scans them, so no cache entry for them can exist)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "dec"
+            (base / "de").mkdir(parents=True)
+            (base / "Notes").mkdir()
+            (base / "de-DE").mkdir()
+            (base / "a.md").write_text("a", encoding="utf-8")
+            (base / "de" / "x.md").write_text("x", encoding="utf-8")
+            (base / "Notes" / "n.md").write_text("n", encoding="utf-8")
+            (base / "de-DE" / "d.md").write_text("d", encoding="utf-8")
+            names = [str(p.relative_to(base)) for p in iter_doc_paths_all_languages(base)]
+            self.assertEqual(names, ["a.md", "de/x.md"])
 
 
 if __name__ == "__main__":

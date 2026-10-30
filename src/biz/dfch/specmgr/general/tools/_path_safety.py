@@ -15,8 +15,8 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Reusable, doc-type-agnostic path-safety assertions for document ids and
-resolved paths (feat-36-delete, Phase 1).
+"""Reusable, doc-type-agnostic path-safety assertions for document ids,
+language codes, and resolved paths (feat-36-delete, Phase 1).
 
 Prevents path injection through a generic, type-dispatched document
 tool's ``type``/``id`` inputs and confines a resolved path to the domain's
@@ -28,6 +28,19 @@ filesystem mutation** -- the functions only inspect ``str`` and
 naming the offending value. (:func:`assert_within`'s read-only
 ``Path.resolve()`` calls are the module's single, sanctioned filesystem
 touch.)
+
+**Language codes (feat-197-i18n, REQ-008/ACC-013).** :func:`assert_language`
+is the shape guard for the caller-supplied ``language`` value every
+i18n-aware tool takes: an ISO 639-1-shaped lowercase two-letter code
+(:data:`LANGUAGE_PATTERN`, fullmatch ``^[a-z]{2}$``). The shape subsumes
+the separator/traversal checks :func:`assert_no_traversal` gives ``id`` --
+a two-lowercase-letter string can carry no path separator, no traversal
+sequence, no case ambiguity -- so no second, separator-specific check is
+needed. The guard is deliberately SHAPE-only (an open set: any
+shape-valid code passes); whether a code is *usable* (a packaged
+heading-mapping table exists for it) is enforced separately at
+parse/write time by the table loader (ADR 38efdb66 item 6), so the set of
+usable languages grows by adding one JSON file, never by a guard change.
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
@@ -48,7 +61,10 @@ import re
 from pathlib import Path
 
 __all__ = [
+    "DEFAULT_LANGUAGE",
+    "LANGUAGE_PATTERN",
     "assert_feat_id",
+    "assert_language",
     "assert_no_traversal",
     "assert_uuid",
     "assert_within",
@@ -67,6 +83,16 @@ _PATH_SEPARATORS = ("/", "\\")
 
 #: The relative-parent traversal sequence an id must never contain.
 _TRAVERSAL_SEQUENCE = ".."
+
+#: The ISO 639-1-shaped language-code shape (feat-197-i18n, ADR 38efdb66 item 6):
+#: exactly two lowercase ASCII letters. ``fullmatch``ed, not ``match``ed.
+LANGUAGE_PATTERN = re.compile(r"^[a-z]{2}$")
+
+#: The default/primary document language (feat-197-i18n, ADR 38efdb66 items 1/6/7):
+#: English. The only language without a ``{language}`` subfolder (its documents live
+#: directly in the domain's flat base directory) and without a heading-mapping table
+#: (its headings are the canonical form itself).
+DEFAULT_LANGUAGE = "en"
 
 
 def _uuid_types() -> frozenset[str]:
@@ -172,6 +198,51 @@ def assert_feat_id(id_: str) -> None:
 
     if not _FEAT_ID_PATTERN.match(id_):
         raise ValueError(f"id {id_!r} is not a well-formed feat-NNN-slug folder name (e.g. 'feat-36-delete')")
+
+
+def assert_language(language: str) -> None:
+    """Reject any language value that is not an ISO 639-1-shaped lowercase two-letter code.
+
+    The shape guard for the caller-supplied ``language`` every i18n-aware
+    tool takes (feat-197-i18n, REQ-008/ACC-013, ADR 38efdb66 item 6): the
+    value must fullmatch :data:`LANGUAGE_PATTERN` (``^[a-z]{2}$``). Called
+    before any filesystem access, in the same pre-guard position as
+    ``id``'s own :func:`validate_id`, so a payload like ``"../../etc"``,
+    ``"de/x"``, ``"/abs"``, ``"DE"``, or ``""`` can never become part of a
+    resolved path. The shape subsumes the separator/traversal checks
+    :func:`assert_no_traversal` applies to ``id`` -- a two-lowercase-letter
+    string cannot carry a path separator, a traversal sequence, or any
+    other path-significant character -- so no second check runs.
+
+    The guard is SHAPE-only (an open set): any shape-valid code passes.
+    Whether a code is *usable* -- i.e. a packaged heading-mapping table
+    exists for it -- is enforced separately at parse/write time (the table
+    loader raises its own actionable error for a code without a table),
+    which keeps this guard static and dependency-free while the set of
+    usable languages grows by adding one JSON file, never by a guard
+    change.
+
+    Parameters
+    ----------
+    language:
+        The language value to check.
+
+    Raises
+    ------
+    ValueError
+        The value does not fullmatch :data:`LANGUAGE_PATTERN` (empty, not
+        two characters, uppercase, digits, a path separator, or any other
+        non-lowercase-letter character); the message names the offending
+        value and the expected shape.
+    """
+    assert isinstance(language, str), type(language)
+
+    if not LANGUAGE_PATTERN.fullmatch(language):
+        raise ValueError(
+            f"language {language!r} is not a valid ISO 639-1-shaped lowercase two-letter code "
+            f"(e.g. 'de'); a language must be exactly two lowercase ASCII letters and cannot "
+            f"carry a path separator, traversal sequence, or any other path-significant character"
+        )
 
 
 def validate_id(type_: str, id_: str) -> None:

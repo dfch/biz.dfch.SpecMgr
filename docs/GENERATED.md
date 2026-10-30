@@ -129,6 +129,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
 - `general/models/dtais.py` — Pydantic schema and parser for the DTAIS verification-methods guidance
 - `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
+- `general/models/heading_table.py` — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/parse_failure_result.py` — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
@@ -161,7 +162,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
-- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids,
 - `general/tools/_reference_graph.py` — The reference-graph builders: scoped source-centred and registry-wide graph construction
 - `general/tools/_references.py` — Shared cross-reference extraction and per-domain target resolution
 - `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
@@ -590,4 +591,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 437
+**Test files**: 439
