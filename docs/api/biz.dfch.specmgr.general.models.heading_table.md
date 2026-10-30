@@ -30,9 +30,13 @@ this is the closed-set check, ADR item 6).
 
 :func:`normalize_heading_lines` is the pre-parse heading-normalization
 pre-pass of ADR item 5: a fence-aware (``` / ~~~ code fences), line-based
-transform that rewrites each ``^#{1,6} `` heading line outside a fence to
-its canonical text when (and only when) the table maps it, leaving every
-other line byte-identical. It sits at each domain's text-to-model parse
+transform that rewrites each ``^#{2,6} `` section-heading line outside a
+fence to its canonical text when (and only when) the table maps it, leaving
+every other line byte-identical. The level-1 line -- the document title (H1)
+-- is free text in every i18n-eligible domain (alias ``.+``, or the
+``sysrs`` English prefix pattern) and is NEVER looked up or rewritten, so a
+title that happens to equal a table key (e.g. a German title ``Quelle``)
+reaches the model unchanged (ADR item 5: the free-form H1 is unaffected). It sits at each domain's text-to-model parse
 boundary (for the pilot domain ``dec``, :func:`biz.dfch.specmgr.
 dec.models.v1.parse_dec`) *after* the mdformat normalization and *before*
 the unchanged ``models/md`` engine runs -- the engine then sees canonical
@@ -129,8 +133,8 @@ ValueError
 
 Rewrite every table-mapped heading line to its canonical text, fence-aware (ADR 38efdb66 item 5).
 
-The pre-parse heading-normalization pass: for each heading line outside a fenced code block
-(:func:`iter_heading_lines`: ``^#{1,6} ``, the mdformat-normalized heading shape) the line's inline text
+The pre-parse heading-normalization pass: for each section-heading line (levels 2-6) outside a fenced code
+block (:func:`iter_heading_lines`: ``^#{1,6} ``, the mdformat-normalized heading shape) the line's inline text
 (surrounding whitespace stripped -- exactly what ``match_alias`` sees)
 is looked up as ``normalized = table.get(heading_text, heading_text)``
 and the line rewritten to ``<hashes> <normalized>`` when (and only
@@ -139,7 +143,10 @@ when) it differs. Every other line -- including every line inside a
 stays byte-identical, so the pass is a pure no-op for text whose
 headings the table does not map (e.g. canonical EN text through a
 table, or a translation that leaves some heading untranslated by
-design).
+design). The level-1 heading line (a single ``#``, the document title)
+is never looked up in the table and is always left byte-identical: the
+title is free text and is never a table-mapped canonical heading, so
+mapping it would silently replace a title that equals a table key.
 
 Parameters
 ----------
@@ -153,8 +160,8 @@ table:
 Returns
 -------
 str
-    The text with every table-mapped heading line rewritten and every
-    other line unchanged (same line count, same join).
+    The text with every table-mapped section-heading line (levels 2-6) rewritten and every
+    other line -- the level-1 title line included -- unchanged (same line count, same join).
 
 
 ### `reset_heading_table_cache() -> 'None'`

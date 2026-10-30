@@ -589,8 +589,9 @@ applies to the eleven domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
 `rsk`, `dec`, `sop`, `vcr` and `sysrs`.
 
 **`feat` and `adr` are always English**, permanently: no `feat` or `adr`
-tool, resource or prompt takes a `language`, and the generic tools reject
-those two types if one is passed.
+tool, resource or prompt takes a `language`, and the generic tools reject a
+non-default `language` for those two types (`language="en"`, the default,
+is accepted and behaves as before).
 
 - **Reading and writing.** `get_<d>`, `list_<d>` and `create_<d>`, and
   the generic `update`, `edit`, `set_status`, `set_classification` and
@@ -634,6 +635,10 @@ those two types if one is passed.
   table and names each missing or surplus heading. Without a table file a
   language code is rejected when a document of that language is read or
   written.
+- **Titles and headings.** Only the section headings (levels 2-6) are
+  mapped through the table. The document title (the level-1 `#` line) is
+  free text in every language and is never looked up or rewritten, even
+  when it equals a table entry (a German title `Quelle` stays `Quelle`).
 
 ## Development
 

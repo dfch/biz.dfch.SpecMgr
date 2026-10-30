@@ -583,7 +583,7 @@ all 13 domains (broken documents are skipped -- the render never fails for
 content), with the ``include_feat`` switch (the FEAT exclusion, applied
 last) and an optional ``title`` override (default: ``Reference Graph``;
 the diagram title is sanitized but never truncated, the node labels are
-truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40).;
+truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40);
 ``list_languages`` (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008) --
 the read-only language-listing tool: takes a ``type`` (one of the eleven
 i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``;

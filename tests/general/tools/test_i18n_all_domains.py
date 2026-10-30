@@ -289,6 +289,36 @@ class TestAcc004Acc011HeadingTableCoversEveryDomain(unittest.TestCase):
                     spec.parse()(translate_to_de(en_text))
 
 
+class TestTitleEqualToTableKeyIsNeverMapped(unittest.TestCase):
+    """Regression for review finding E1: a German H1 equal to a de.json key is kept as written in every domain."""
+
+    #: ``sysrs`` requires its English H1 prefix (schema-enforced), the free title is the part after it.
+    _SYSRS_PREFIX = "System Requirements Specification: "
+
+    @staticmethod
+    def _with_title(spec: DomainSpec, title: str) -> str:
+        body = spec.de_body()
+        lines = body.split("\n")
+        index = next(i for i, line in enumerate(lines) if re.match(r"^# \S", line))
+        prefix = TestTitleEqualToTableKeyIsNeverMapped._SYSRS_PREFIX if spec.d == "sysrs" else ""
+        lines[index] = f"# {prefix}{title}"
+        return "\n".join(lines)
+
+    def test_the_title_survives_the_de_parse_in_every_domain(self):
+        table = load_heading_table("de")
+        for title in ("Quelle", "Weitere Informationen"):
+            self.assertIn(title, table)  # the premise: the title IS a table key
+            for spec in SPECS:
+                with self.subTest(domain=spec.d, title=title):
+                    body = self._with_title(spec, title)
+                    parse_body = getattr(spec.models(), f"parse_{spec.d}_body")
+                    result = parse_body(body, language="de")
+                    if spec.d == "sysrs":
+                        self.assertEqual(result.text, f"{self._SYSRS_PREFIX}{title}")
+                    else:
+                        self.assertEqual(result.text, title)
+
+
 class TestAcc012ClosedVocabularyStaysCanonical(_TempDocsMixin):
     """ACC-012 unit pin: schema-constant tokens never translate."""
 

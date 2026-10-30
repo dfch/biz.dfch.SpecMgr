@@ -537,3 +537,54 @@ class TestDeJsonIntegrity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestNormalizeHeadingLinesNeverMapsTheTitle(unittest.TestCase):
+    """Regression for review finding E1: the level-1 title line is free text and is never looked up in the table."""
+
+    def setUp(self) -> None:
+        self.table = {
+            "Quelle": "Source",
+            "Weitere Informationen": "More Information",
+            "Kontext und Problembeschreibung": "Context and Problem Statement",
+        }
+
+    def test_a_level_1_line_equal_to_a_table_key_stays_byte_identical(self):
+        """'# Quelle' (a German title that equals a table key) is not rewritten."""
+        for title in ("Quelle", "Weitere Informationen", "Kontext und Problembeschreibung"):
+            with self.subTest(title=title):
+                text = f"# {title}\n\nProse.\n"
+                result = normalize_heading_lines(text, self.table)
+                self.assertEqual(result, text)
+
+    def test_the_same_text_at_level_2_to_6_is_rewritten(self):
+        """Only the level differs: '## Quelle' .. '###### Quelle' become '<hashes> Source'."""
+        for level in range(2, 7):
+            with self.subTest(level=level):
+                hashes = "#" * level
+                result = normalize_heading_lines(f"{hashes} Quelle\n", self.table)
+                self.assertEqual(result, f"{hashes} Source\n")
+
+    def test_title_is_kept_while_the_section_heading_below_it_is_normalized(self):
+        """A document whose title equals a key: the title survives, the same-text section heading maps."""
+        text = "# Quelle\n\n## Quelle\n\nProse.\n"
+        result = normalize_heading_lines(text, self.table)
+        self.assertEqual(result, "# Quelle\n\n## Source\n\nProse.\n")
+
+    def test_a_fenced_title_lookalike_is_unaffected(self):
+        """A '# Quelle' line inside a fence is code (not a heading) and stays byte-identical; a mapped
+        heading after the fence is still rewritten."""
+        text = "# Quelle\n\n```\n# Quelle\n## Quelle\n```\n\n## Quelle\n"
+        result = normalize_heading_lines(text, self.table)
+        self.assertEqual(result, "# Quelle\n\n```\n# Quelle\n## Quelle\n```\n\n## Source\n")
+
+    def test_canonical_english_text_through_a_table_is_still_a_no_op(self):
+        """EN text with canonical headings (incl. an English title) is byte-identical through a table."""
+        text = "# Choose a Document Store\n\n## Context and Problem Statement\n\n## More Information\n"
+        result = normalize_heading_lines(text, self.table)
+        self.assertEqual(result, text)
+
+    def test_iter_heading_lines_still_yields_the_level_1_line(self):
+        """The shared recognizer (also behind the translation drift check) is unchanged: it yields level 1."""
+        result = list(iter_heading_lines("# Quelle\n\n## Quelle\n"))
+        self.assertEqual(result, [(0, 1, "Quelle"), (2, 2, "Quelle")])

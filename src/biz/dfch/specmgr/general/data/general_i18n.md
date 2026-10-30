@@ -52,9 +52,11 @@ first).
   surrounding whitespace. A code without a table file is shape-valid but
   unusable: every tool raises an actionable `ValueError`. Adding a language
   means adding one table file; this flow never invents one.
-- Resolution happens when a non-EN document is parsed: each heading line
-  (outside fenced code blocks) is looked up in the table. A hit is rewritten
-  to its canonical English text; a heading without an entry stays as it is.
+- Resolution happens when a non-EN document is parsed: each section-heading
+  line (levels 2-6, outside fenced code blocks) is looked up in the table. A
+  hit is rewritten to its canonical English text; a heading without an entry
+  stays as it is. The H1 title line is never looked up: a title is free text
+  and stays as written, even if it equals a table entry.
   The parsed model therefore always holds canonical headings and the same
   canonical keys as the EN parse. The on-disk file keeps its translation
   (`get_<d>(raw=True, language=...)` returns it verbatim).

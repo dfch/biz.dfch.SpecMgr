@@ -4,7 +4,7 @@ created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
 status: review
 type: feat
-updated: '2026-10-30T17:47:24.058+01:00'
+updated: '2026-10-30T18:37:21.154+01:00'
 version: 1.0.0
 ---
 
@@ -214,6 +214,12 @@ Open design questions to resolve during Phase 100 below:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T18:40:00.000+01:00 - Review fix E1: the H1 title is never mapped; three doc corrections
+
+Review finding E1: `normalize_heading_lines` looked up every heading line (levels 1-6) in the language table, so a German title that equals a table key (e.g. `# Quelle`, de.json `Quelle -> Source`) was silently replaced in the parsed model. Premise verified first: in all eleven i18n-eligible domains the level-1 title section is a free-text alias (`.+`; `sysrs`: the English prefix pattern `^System Requirements Specification: .+$`), never a table-mapped fixed heading, and no packaged document's H1 equals a de.json key or value. Fix: the pass now skips level-1 lines (`_TITLE_LEVEL`) and only looks up levels 2-6; `iter_heading_lines` is unchanged (it still yields level 1, which the translation drift skeleton relies on), so drift behavior is unchanged. Docstrings, `general_i18n.md` and the README now state that the title is never mapped. Regression tests: `tests/general/models/test_heading_table.py::TestNormalizeHeadingLinesNeverMapsTheTitle` (pure), `tests/dec/tools/test_i18n_language.py::TestTitleEqualToTableKeyIsNeverMapped` (`parse_dec_body`, `get_dec`, `list_dec`, titles `Quelle` and `Weitere Informationen`) and `tests/general/tools/test_i18n_all_domains.py::TestTitleEqualToTableKeyIsNeverMapped` (all eleven domains, `sysrs` with its prefix); they fail without the fix.
+
+Doc corrections made in the same pass: (D3) the stray `.;` in the `server.py` module docstring; (D4) the README now says the generic tools reject a non-default `language` for `feat`/`adr` (`language="en"` is accepted), not "reject those two types"; (D1) ADR 38efdb66 item 3 now says a table-less language on a read fails with the table resolved before any filesystem access (it previously said "only after path resolution, so a missing file keeps the normal not-found semantics", which the code never did). ADR item 5 still describes the pass as `^#{1,6} ` (left unedited on purpose, since the ADR edit was limited to the D1 sentence); its closing clause that the free-form H1 is unaffected is now literally true.
 
 #### 2026-10-30T15:44:19.000+01:00 - Final verification: ACC-001..ACC-015 confirmed
 

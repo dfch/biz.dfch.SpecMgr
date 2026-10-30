@@ -38,6 +38,7 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.dec.models.v1 import DecDocument
+from biz.dfch.specmgr.dec.models.v1.parser import parse_dec_body
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
@@ -582,6 +583,51 @@ class TestDecCacheLanguage(unittest.TestCase):
         assert isinstance(de_again, DecDocument)
         self.assertEqual(en.body.text, en_again.body.text)
         self.assertEqual(de.body.text, de_again.body.text)
+
+
+#: German H1 titles that equal a key of the packaged de heading table (``Quelle`` -> ``Source``,
+#: ``Weitere Informationen`` -> ``More Information``): review finding E1.
+_TITLES_EQUAL_TO_TABLE_KEYS = ("Quelle", "Weitere Informationen")
+
+
+class TestTitleEqualToTableKeyIsNeverMapped(unittest.TestCase):
+    """Regression for review finding E1: the free-form H1 title is never looked up in the heading table.
+
+    A German title that happens to equal a table key must reach the parsed model as written, on the
+    pure parse path (``parse_dec_body``) and through the tools (``get_dec``/``list_dec``).
+    """
+
+    def test_parse_dec_body_keeps_the_title_as_written(self):
+        for title in _TITLES_EQUAL_TO_TABLE_KEYS:
+            with self.subTest(title=title):
+                body = _DE_BODY.replace("# Dokumentlager w\u00e4hlen", f"# {title}", 1)
+                self.assertTrue(body.startswith(f"# {title}\n"))
+                result = parse_dec_body(body, language="de")
+                self.assertEqual(result.text, title)
+                # the section headings are still normalized to canonical keys
+                self.assertEqual(result.context.text.splitlines()[0], "## Context and Problem Statement")
+
+    def test_get_and_list_keep_the_title_as_written(self):
+        for title in _TITLES_EQUAL_TO_TABLE_KEYS:
+            with self.subTest(title=title):
+                with tempfile.TemporaryDirectory() as tmp:
+                    docs_root = Path(tmp)
+                    with mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(docs_root)}):
+                        reset_dec_cache()
+                        doc_id, _en_file, de_file = _seed_en_and_de(docs_root)
+                        de_text = de_file.read_text(encoding="utf-8")
+                        de_file.write_text(
+                            de_text.replace("# Dokumentlager w\u00e4hlen", f"# {title}", 1), encoding="utf-8"
+                        )
+                        reset_dec_cache()
+
+                        document = get_dec(doc_id, language="de")
+                        row = list_dec(language="de").results[0]
+
+                        assert isinstance(document, DecDocument)
+                        self.assertEqual(document.body.text, title)
+                        self.assertEqual(row.title, title)
+                        reset_dec_cache()
 
 
 if __name__ == "__main__":
