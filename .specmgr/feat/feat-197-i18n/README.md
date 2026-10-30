@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
-status: progress
+status: review
 type: feat
-updated: '2026-10-30T15:35:19.000+01:00'
+updated: '2026-10-30T17:47:24.058+01:00'
 version: 1.0.0
 ---
 
@@ -50,35 +50,35 @@ Most specmgr whole-body artifacts live as a single file per id under `./docs/{ty
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: For each of the eleven i18n-eligible domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs), creating/reading a non-EN language variant resolves to `./docs/{type}/{language}/{id}.md` (or the domain's existing filename convention under that subfolder), while EN continues to resolve to the existing `./docs/{type}/{id}.md` path, unchanged. `feat` is not exercised by this AC (see ACC-002).
+- [x] ACC-001: For each of the eleven i18n-eligible domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs), creating/reading a non-EN language variant resolves to `./docs/{type}/{language}/{id}.md` (or the domain's existing filename convention under that subfolder), while EN continues to resolve to the existing `./docs/{type}/{id}.md` path, unchanged. `feat` is not exercised by this AC (see ACC-002).
 
-- [ ] ACC-002: No `feat` tool, resource, or prompt accepts a `language` parameter; `get_feat`/`list_feat`/`create_feat`/`set_feat_id` behave identically before and after this feature ships, and no `./docs/feat/{language}/`-shaped (or `<base>/<id>/{language}/`-shaped) path is ever created or read.
+- [x] ACC-002: No `feat` tool, resource, or prompt accepts a `language` parameter; `get_feat`/`list_feat`/`create_feat`/`set_feat_id` behave identically before and after this feature ships, and no `./docs/feat/{language}/`-shaped (or `<base>/<id>/{language}/`-shaped) path is ever created or read.
 
-- [ ] ACC-003: Two language variants of the same artifact have identical `id` values in their frontmatter.
+- [x] ACC-003: Two language variants of the same artifact have identical `id` values in their frontmatter.
 
-- [ ] ACC-004: A translated document's section headings, even if rendered in the target language, resolve via the heading-mapping table to the same canonical schema keys the EN parser uses (REQ-004/REQ-005).
+- [x] ACC-004: A translated document's section headings, even if rendered in the target language, resolve via the heading-mapping table to the same canonical schema keys the EN parser uses (REQ-004/REQ-005).
 
-- [ ] ACC-005: Calling `get_<d>(id, language="de")` for the pilot domain (`dec`, Task 100.140) returns the German variant's content; calling `get_<d>(id)` (no `language`) is unaffected and still returns the EN content exactly as before this feature.
+- [x] ACC-005: Calling `get_<d>(id, language="de")` for the pilot domain (`dec`, Task 100.140) returns the German variant's content; calling `get_<d>(id)` (no `language`) is unaffected and still returns the EN content exactly as before this feature.
 
-- [ ] ACC-006: Calling, for the pilot domain (`dec`) with `language="de"`, each of `create_<d>`, `update`, `edit`, `set_status`, `set_classification`, and `delete` writes to (or acts on) the German variant's path only, leaving the EN variant's file content and `updated` timestamp untouched; this AC is satisfied only once all six tools have been exercised this way, not just one of them.
+- [x] ACC-006: Calling, for the pilot domain (`dec`) with `language="de"`, each of `create_<d>`, `update`, `edit`, `set_status`, `set_classification`, and `delete` writes to (or acts on) the German variant's path only, leaving the EN variant's file content and `updated` timestamp untouched; this AC is satisfied only once all six tools have been exercised this way, not just one of them.
 
-- [ ] ACC-007: Calling `list_<d>(language="de")` (or equivalent) for the pilot domain (`dec`) lists only the German variants that exist, and omitting `language` continues to list the EN variants exactly as before this feature; writing or reading a translation never duplicates or changes the shared `id`.
+- [x] ACC-007: Calling `list_<d>(language="de")` (or equivalent) for the pilot domain (`dec`) lists only the German variants that exist, and omitting `language` continues to list the EN variants exactly as before this feature; writing or reading a translation never duplicates or changes the shared `id`.
 
-- [ ] ACC-008: A new command/skill/tool reports the set of `language` codes currently available for a given artifact `type`/`id` (REQ-012), including at least `"en"`.
+- [x] ACC-008: A new command/skill/tool reports the set of `language` codes currently available for a given artifact `type`/`id` (REQ-012), including at least `"en"`.
 
-- [ ] ACC-009: A drift-detection tool run against a deliberately out-of-sync translation reports both the structural mismatch and the staleness condition.
+- [x] ACC-009: A drift-detection tool run against a deliberately out-of-sync translation reports both the structural mismatch and the staleness condition.
 
-- [ ] ACC-010: A translation command run against an EN artifact produces a new, schema-valid language variant sharing the same id.
+- [x] ACC-010: A translation command run against an EN artifact produces a new, schema-valid language variant sharing the same id.
 
-- [ ] ACC-011: A translated document validates against the exact same Pydantic schema as its EN counterpart for that domain (split out of the former compound ACC-004, REQ-004).
+- [x] ACC-011: A translated document validates against the exact same Pydantic schema as its EN counterpart for that domain (split out of the former compound ACC-004, REQ-004).
 
-- [ ] ACC-012: Closed-vocabulary/schema-constant field values and tokens (REQ-010) remain in canonical English in a translated document (split out of the former compound ACC-004, REQ-010).
+- [x] ACC-012: Closed-vocabulary/schema-constant field values and tokens (REQ-010) remain in canonical English in a translated document (split out of the former compound ACC-004, REQ-010).
 
-- [ ] ACC-013: A `language` value containing a path-traversal or path-injection payload (e.g. `../../etc`) is rejected before it becomes part of a resolved filesystem path, by the same `_path_safety`-style guard already applied to `id` (REQ-008).
+- [x] ACC-013: A `language` value containing a path-traversal or path-injection payload (e.g. `../../etc`) is rejected before it becomes part of a resolved filesystem path, by the same `_path_safety`-style guard already applied to `id` (REQ-008).
 
-- [ ] ACC-014: `find_related`/`find_similar_text`/`list_references`/`get_reference_diagram`/`get_reference_diagram_all` never resolve, enumerate, or index a `{language}` subfolder entry; every reference/similarity hit continues to resolve to the EN variant's path only (REQ-013).
+- [x] ACC-014: `find_related`/`find_similar_text`/`list_references`/`get_reference_diagram`/`get_reference_diagram_all` never resolve, enumerate, or index a `{language}` subfolder entry; every reference/similarity hit continues to resolve to the EN variant's path only (REQ-013).
 
-- [ ] ACC-015: No `adr` tool, resource, or prompt accepts a `language` parameter; `adr` document behavior is unchanged before and after this feature ships (REQ-009, mirrors ACC-002 for `feat`).
+- [x] ACC-015: No `adr` tool, resource, or prompt accepts a `language` parameter; `adr` document behavior is unchanged before and after this feature ships (REQ-009, mirrors ACC-002 for `feat`).
 
 ### Scope
 
@@ -209,11 +209,35 @@ Open design questions to resolve during Phase 100 below:
 
 ### Current Status
 
-**As of 2026-10-30T15:35:19.000+01:00**: Phase 150 (tests and documentation) complete -- all implementation phases of the plan are done; the orchestrator performs the final acceptance-criteria verification and moves the feature to review. Phase 150 added six LLM-free test modules (+69 tests; suite 5328 passed / 18 skipped): the registered-surface `feat`/`adr` exclusion regression (ACC-002/ACC-015), the EN-only consumers regression over a docs tree holding EN documents *and* marked `de/` variants (REQ-013/ACC-014), the exact-equality `de.json` drift test of ADR item 4(c) (runs on every shipped table), the remaining ACC-012 closed-vocabulary gaps (frontmatter `status` incl. SOP's lifecycle, `gol`, `sysrs`), an ACC-003 test with THREE languages of one artifact for all eleven domains, and an ACC-013 test over the whole discovered `language` surface. Documentation: `AGENTS.md` (a `feat-197-i18n` paragraph, the `adr`/`feat`/`general` bullets), `README.md` (a "Multi-Language Artifacts" section incl. how to add a language), `CHANGELOG.md` (`[Unreleased]` > Added), regenerated `docs/GENERATED.md`. One agent-facing text gap found and closed (`sysrs`' schema-enforced H1 prefix was missing from the never-translate texts). No production code, schema, `feat`/`adr` module or EN behavior changed.
+**As of 2026-10-30T15:44:19.000+01:00**: Implementation is complete -- Phases 100-150 are all done and committed, and all fifteen acceptance criteria (ACC-001..ACC-015) were independently verified by the orchestrator with passing tests (full suite 5328 passed / 18 skipped). The feature is ready for review; the pull request follows.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T15:44:19.000+01:00 - Final verification: ACC-001..ACC-015 confirmed
+
+The orchestrator independently re-ran the acceptance-criteria test modules; every one passed, and all fifteen Acceptance Criteria checkboxes are ticked. Evidence (the mapping recorded in the Phase 150 entry below):
+
+| ACC | pinned by (test modules under `tests/general/tools/` unless a path is given) |
+| --- | --- |
+| ACC-001 | `test_i18n_all_domains.py::TestAcc001PathResolutionAllDomains`, `test__doc_paths.py`, `tests/dec/tools/test_i18n_language.py::TestDecPathsLanguage`, `test_i18n_three_languages.py` |
+| ACC-002 | `test_language_guard.py::TestSurfacesThatMustStayLanguageFree`, `test_i18n_feat_adr_exclusion.py` |
+| ACC-003 | `test_i18n_all_domains.py`, `tests/dec/tools/test_i18n_write.py::TestSharedIdEndToEnd`, `test_i18n_three_languages.py` |
+| ACC-004 | `test_i18n_all_domains.py::TestAcc004Acc011...`, `tests/general/models/test_heading_table.py`, `test_translate_artifact_flow.py`, `tests/general/models/test_heading_table_drift.py` |
+| ACC-005 | `tests/dec/tools/test_i18n_language.py`, `test_i18n_all_domains.py` |
+| ACC-006 | `tests/dec/tools/test_i18n_write.py`, `test_i18n_all_domains.py::TestAcc006WriteToolsAllDomains`, `test_language_guard.py` |
+| ACC-007 | `tests/dec/tools/test_i18n_language.py`, `test_i18n_all_domains.py::TestAcc007ListAllDomains` |
+| ACC-008 | `test_list_languages.py`, `test_i18n_three_languages.py` |
+| ACC-009 | `test_check_translation_drift.py`, `tests/general/models/test_translation_drift.py`, `tests/opencode/test_skill_translation_status.py` |
+| ACC-010 | `tests/general/prompts/test_translate_artifact.py`, `test_translate_artifact_flow.py`, `tests/general/resources/test_i18n.py`, `tests/opencode/test_skill_translate_artifact.py` |
+| ACC-011 | `test_i18n_all_domains.py::TestAcc004Acc011...`, `test_heading_table_drift.py`, `test_translate_artifact_flow.py` |
+| ACC-012 | `test_i18n_all_domains.py::TestAcc012...`, `test_translate_artifact_flow.py`, `test_i18n_closed_vocabulary.py` |
+| ACC-013 | `tests/general/tools/test__path_safety.py`, `test_language_guard.py`, `test_i18n_all_domains.py::TestAcc013GuardBeforeFilesystemAllDomains`, `test_i18n_language_surface_guard.py` |
+| ACC-014 | `test__doc_paths.py`, `test_i18n_all_domains.py`, `test_i18n_en_only_consumers.py` |
+| ACC-015 | `test_language_guard.py`, `test_i18n_feat_adr_exclusion.py` |
+
+**Suite result:** full suite 5328 passed / 18 skipped. Implementation Phases 100-150 are complete; the feature is ready for review.
 
 #### 2026-10-30T15:35:19.000+01:00 - Phase 150 (tests and documentation) complete: gap analysis, six new test modules, AGENTS.md/README.md/CHANGELOG.md
 
