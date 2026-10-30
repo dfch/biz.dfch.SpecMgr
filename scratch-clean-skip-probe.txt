@@ -1,0 +1,1 @@
+scratch probe: verifies the feat-218 CI lint step clean-skip branch (empty changed-artifact list). Safe to delete.
