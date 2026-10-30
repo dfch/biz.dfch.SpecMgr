@@ -72,7 +72,7 @@ from collections.abc import Callable
 
 from ...dec.tools._cache import invalidate_dec_cache
 from ...dec.tools._io import load_by_id as load_dec_by_id
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._cache import invalidate_feat_cache, invalidate_feat_dirty_cache
 from ...feat.tools._io import load_by_id as load_feat_by_id
@@ -121,7 +121,8 @@ from ...vcr.tools._lock import vcr_lock
 from ...vcr.tools._paths import vcr_base_dir
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
 from ._embedding_cache import invalidate_embedding_cache
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 
 __all__ = ["delete"]
 
@@ -274,13 +275,22 @@ def _delete_rsk(id_: str) -> str:
     return str(path)  # REQ-001
 
 
-def _delete_dec(id_: str) -> str:
+def _delete_dec(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the decision ``id_`` from disk (REQ-001/004/005/006).
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/9).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one variant
+    file is unlinked -- only that file's own path-keyed cache entries (the
+    document cache and the embedding cache) are invalidated, so the EN
+    document (file, cache entry) is untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):  # REQ-004
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):  # REQ-004
         path, _existing = load_dec_by_id(base_dir, id_)  # resolves + DecNotFoundError
         assert_within(base_dir, path)  # REQ-003 defense-in-depth
         try:
@@ -398,6 +408,19 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "remove the domain in both places (feat-125-domain-lists, REQ-006)"
 )
 
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phase 120: the pilot
+#: domain ``dec`` only; Phase 125 extends it). Called with the language as the last positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str], str]] = {
+    "dec": _delete_dec,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
+
 
 @mcp.tool(
     name="delete",
@@ -412,12 +435,20 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "An invalid `id` (path-injection attempt or wrong format) is a `ValueError` "
         "raised before any file access; a missing document is the domain's own "
         "`XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole "
-        "delete entry point -- the former per-domain `delete_<d>` tools are removed."
+        "delete entry point -- the former per-domain `delete_<d>` tools are removed. "
+        "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
+        "delete: omitted/'en' = the flat default-language document, exactly the default behavior; a "
+        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/<type>/{language}/ (found by id-scan of that subdirectory), deleting that variant file ONLY "
+        "-- the EN file stays untouched. Only `dec` supports a non-default language so far: any other "
+        "`type` raises a `ValueError` for one (`feat` documents are always English), as does a malformed "
+        "`language` or one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
 def delete(
     id: str,
     type: WholeBodyType,
+    language: str = DEFAULT_LANGUAGE,
 ) -> str:
     """Permanently delete an existing document from disk, across the whole-body domains.
 
@@ -452,6 +483,20 @@ def delete(
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
         ``vcr``, ``sysrs``.
+    language:
+        The language variant to delete (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) deletes the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) deletes that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one variant file is removed (and
+        only its own cache entries invalidated): the EN document stays
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Only ``type="dec"`` supports a non-default language so
+        far -- any other ``type`` raises a ``ValueError`` for one
+        (``feat`` is always English; the remaining domains are not yet
+        enabled).
 
     Returns
     -------
@@ -464,7 +509,12 @@ def delete(
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format (raised before any filesystem access; nothing
-        is deleted).
+        is deleted). Also raised, before any filesystem access, for a
+        malformed ``language`` (not an ISO 639-1-shaped lowercase
+        two-letter code), a non-default ``language`` with ``type``
+        ``feat`` (always English) or any other domain not yet supporting
+        language variants, or a non-default ``language`` of ``dec``
+        without a packaged heading-mapping table.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError /
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
@@ -479,5 +529,11 @@ def delete(
     """
     # REQ-003: validate before any filesystem access (injection prevention).
     validate_id(type, id)
-    result = _ADAPTERS[type](id)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
+
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, language)
     return result

@@ -4,7 +4,7 @@ created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
 status: progress
 type: feat
-updated: '2026-10-30T09:47:00.000+01:00'
+updated: '2026-10-30T13:35:28.000+01:00'
 version: 1.0.0
 ---
 
@@ -165,11 +165,11 @@ Open design questions to resolve during Phase 100 below:
 
 #### Phase 120: Write-Side Plumbing (Pilot Domain: `dec`)
 
-- [ ] Task 120.100: Add the optional `language` parameter to `create_dec` and the generic `update`, `edit`, `set_status`, `set_classification`, and `delete` tools, exercised against `dec` (ACC-006 requires all six tools, not just one).
+- [x] Task 120.100: Add the optional `language` parameter to `create_dec` and the generic `update`, `edit`, `set_status`, `set_classification`, and `delete` tools, exercised against `dec` (ACC-006 requires all six tools, not just one).
 
-- [ ] Task 120.110: Confirm (do not implement unless proven necessary) that `DocCache`'s existing `Path`-keyed cache entries already keep different languages of the same `dec` id from colliding once Task 100.100/110.100 make path resolution language-aware; add a `DocCache` code change only if this verification finds a real collision.
+- [x] Task 120.110: Confirm (do not implement unless proven necessary) that `DocCache`'s existing `Path`-keyed cache entries already keep different languages of the same `dec` id from colliding once Task 100.100/110.100 make path resolution language-aware; add a `DocCache` code change only if this verification finds a real collision.
 
-- [ ] Task 120.120: Test (REQ-003 end-to-end) that writing/reading a `dec` translation never changes or duplicates the shared `id`, and that the EN variant's content/`updated` timestamp is untouched by a write to a non-default language.
+- [x] Task 120.120: Test (REQ-003 end-to-end) that writing/reading a `dec` translation never changes or duplicates the shared `id`, and that the EN variant's content/`updated` timestamp is untouched by a write to a non-default language.
 
 #### Phase 125: Read/Write Plumbing -- Remaining Domains
 
@@ -209,11 +209,23 @@ Open design questions to resolve during Phase 100 below:
 
 ### Current Status
 
-**As of 2026-10-30**: Phase 110 (path resolution & read-side plumbing) complete for the pilot domain `dec` -- the `language` guard, language-aware path resolution, the heading-mapping table (loader + fence-aware pre-pass + packaged `de.json`), and the `language` parameter on `get_dec`/`list_dec` (plus path-derived language on `parse_dec`) are live; EN behavior is byte-identical. Phase 120 (write-side plumbing for `dec`) is next.
+**As of 2026-10-30**: Phase 120 (write-side plumbing) complete for the pilot domain `dec` -- `create_dec` (optional `language` + `id` of the EN source) and the generic `update`/`edit`/`set_status`/`set_classification`/`delete` tools (optional `language`, default `"en"`) act on a `docs/dec/{language}/` variant file only, leaving the EN file's bytes and `updated` timestamp untouched (ACC-006, all six tools); every other type (and `feat`/`adr` permanently) rejects a non-default `language` before any filesystem access; the shared id is never changed or duplicated (REQ-003); `DocCache` needed no code change (Task 120.110 confirmed). EN behavior is byte-identical. Phase 125 (remaining ten domains) is next.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T13:35:28.000+01:00 - Phase 120 (write-side plumbing) complete: `create_dec` + generic `update`/`edit`/`set_status`/`set_classification`/`delete` honor `language` for `dec`
+
+Implemented ADR 38efdb66's write-side contract for the pilot domain `dec` (Tasks 120.100/120.110/120.120). Write side only: no other domain's `create_<d>`, no `feat`/`adr` module, no `validate`/similarity/reference tool was touched.
+
+- **Generic tools (Task 120.100, ACC-006/ACC-013):** `update`, `edit`, `set_status`, `set_classification`, and `delete` gained an optional `language: str = "en"` (appended last). A new shared guard `general/tools/_language_guard.guard_language(type, language)` runs right after `validate_id`, before any filesystem access and before dispatch: `assert_language` shape guard first (for *every* type and value, also on the rejection paths), then default-language pass-through, then -- for `dec` -- the heading-table resolve (fail-fast for a shape-valid code without a table, e.g. `fr`), and for every other type a `ValueError`: *permanent* wording for `feat`/`adr` ("`feat` documents are always English", REQ-002/REQ-009) and "language 'de' is not yet supported for type 'req'" for the ten domains Phase 125 will enable. The default language dispatches through the unchanged `_ADAPTERS` table with the unchanged argument shape (byte-identical); a non-default language goes through a new per-tool `_LANGUAGE_ADAPTERS` table (today `{"dec"}`, asserted equal to `LANGUAGE_AWARE_DOMAINS` so guard and dispatch cannot drift).
+- **`dec` adapters:** each takes `language` and resolves `dec_base_dir(language)`, so the id-scan, the parse-failure probe, and `assert_within` all run against the variant's own directory (the basename is never re-derived, ADR item 2); only that one variant file is written/unlinked. Content validation of a variant goes through the new `parse_dec_body(content, *, language=None)` (in `dec/models/v1/parser.py`, the body-only half of `parse_dec`, which now delegates to it), so translated headings are accepted exactly as the read side accepts them while the persisted text stays the caller's raw body byte-for-byte; with the language omitted it is byte-identical to the former `Decision.from_text(format_text(content))`. The `ParseFailureResult` / `ValidateResult` / `InvalidStatusResult` non-raising channels and their guard order are unchanged for the language path; a truly-absent DE id raises `DecNotFoundError` even when the EN document exists.
+- **`create_dec` variant mode (Task 120.100):** new optional `language` (default `"en"`) and `id` parameters. EN: `id` must be omitted (a fresh id is assigned, flat file -- byte-identical). Non-default language: `id` -- the *shared id of the EN source* -- is required (REQ-003: a variant never gets a fresh id), the EN source must exist (`DecNotFoundError` with an actionable "a language variant requires its 'en' source" message), the variant is written to `docs/dec/{language}/` under the EN source's exact basename (ADR item 2) with `status="draft"` and fresh `created`/`updated`, the body is validated through the language's table and persisted verbatim, and an existing variant is never overwritten (`FileExistsError`). Missing/misused `id`, malformed `language`, or a table-less language are `ValueError`s before any filesystem access; content-validation failure stays the non-raising `ValidateResult`. See Decisions Made.
+- **Locks (Task 120.100):** `dec/tools/_lock.dec_lock_key(id, language=None)` returns the bare id for EN (exactly today's key) and `"<id>/<language>"` for a variant, so the language variants of one id lock independently and never collide with an id key; every `dec` adapter and `create_dec` wrap their sequence in `dec_lock(dec_lock_key(id_, language))`. `dec_lock` itself keeps its single-argument signature.
+- **`DocCache` (Task 120.110) -- confirmed, no code change:** entries are keyed by the resolved `Path` and a variant lives at a distinct path, so write-warming (`read_dec(path)` after each write, path-derived language), invalidation (`invalidate_dec_cache(path)` on delete) and the domain-wide reconcile (Phase 110) already keep EN and DE independent. No real collision was found; pinned by tests (one entry per path; interleaved reads/writes never cross-leak; a write to one language leaves the other's cache entry object identical; delete of DE leaves EN cached and readable; scanning one language does not evict the other).
+- **Tests (Task 120.120, REQ-003):** an end-to-end test creates EN, creates the DE variant, updates/edits/sets-status the DE variant and reads both through `get_dec`/`list_dec`: the id is identical, each language directory lists exactly that one id, the file basenames match, and the EN bytes and `updated` are untouched after every step.
+- **Quality gate:** full suite green (4974 passed / 18 skipped; +60 new tests, no existing test modified); `ruff format --check`, `ruff check`, `vulture` clean; `specmgr docs` + `specmgr mcp-docs` regenerated; `specmgr schema` (+ the 12 per-domain package copies) all unchanged.
 
 #### 2026-10-30T09:47:00.000+01:00 - Phase 110 (read-side plumbing) complete: guard, path resolution, heading table, and `get_dec`/`list_dec` `language` for `dec`
 
@@ -282,6 +294,23 @@ Feature drafted from GitHub issue #197 ("I18n: multi-language support of the sam
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-30T13:35:28.000+01:00 - Phase 120 implementation decisions (write-side plumbing for `dec`)
+
+Implementation-level decisions made while executing Phase 120, all within the ADR 38efdb66 contract (no deviations):
+
+| decision | choice | rationale |
+| --- | --- | --- |
+| `create_dec` shared-id mechanism (REQ-003) | New optional `id` parameter = the shared id of the EN source; required with a non-default `language`, rejected (`ValueError`) with the default language | `create_dec` today assigns a fresh server-side id, which a variant must never get; reusing the established `id` parameter name (same meaning as in every other tool: "the document's identifier, shared across languages") is the minimal explicit mechanism -- no id inference, no id embedded in the submitted body, EN create stays byte-identical because `id` is forbidden there |
+| Variant frontmatter | Fresh `created`/`updated`, `status="draft"`, `type="dec"`, current schema `version`, no `classification` -- the EN frontmatter is not copied | Matches every other create (status never caller-supplied on create; the translation workflow of Phase 130 can set status/classification afterwards via the generic tools); copying EN's status would silently claim a translation is as reviewed as its source |
+| Order of checks in `create_dec` | Language/`id` argument guards and the table resolve (all pre-filesystem `ValueError`s) -> body validation (non-raising `ValidateResult`) -> EN-source lookup (`DecNotFoundError`) -> existing-variant guard (`FileExistsError`) | The `create_feat` precedent: "first in execution order wins" with content validation ahead of the filesystem-dependent guards; every pure-argument error is raised before any filesystem access |
+| Existing-variant guard | `FileExistsError` under the variant's own lock, checked after the EN source lookup | A variant must never be overwritten (use `update`/`edit` with the language instead); holding the per-language lock makes check-and-write atomic against concurrent mutation of that variant |
+| Missing-EN-source error | `DecNotFoundError` (the domain's established not-found exception) with an actionable message | The id the caller supplied does not resolve to any (parseable) EN document -- exactly the not-found condition `DecNotFoundError` already means; a message naming ADR item 2's "variant requires its EN source" makes the cause explicit |
+| Body-only validation helper | `parse_dec_body(content, *, language=None)` in `dec/models/v1/parser.py`; `parse_dec` delegates to it | One body-validation choke point shared by `create_dec` and the generic `update`/`edit` adapters (and the read side), so the write side accepts translated headings exactly as the read side does; the default path is byte-identical to `Decision.from_text(format_text(content))` |
+| Guard module | New `general/tools/_language_guard.py` (`guard_language`, `LANGUAGE_AWARE_DOMAINS`) shared by the five generic tools | One place for the shape-guard-then-support-then-table order and for the permanent (`feat`/`adr`) vs temporary (not-yet-enabled) wording; Phase 125 enables a domain by adding it to `LANGUAGE_AWARE_DOMAINS` and the per-tool `_LANGUAGE_ADAPTERS` (an import-time assert keeps the two in sync) |
+| Dispatch shape | Default language -> the unchanged `_ADAPTERS` table with the pre-i18n arguments; non-default -> per-tool `_LANGUAGE_ADAPTERS` with the language as the last argument | Keeps the EN path literally untouched (existing tests that spy on adapters/locks stay green) instead of threading a `language` argument through all twelve adapters of five tools; Phase 125 can collapse the two tables once every domain is enabled |
+| Per-language lock | `dec_lock_key(id, language)`: bare id for EN, `"<id>/<language>"` for a variant; `dec_lock` keeps its one-argument signature | The variants of one id are distinct files, so they should neither race with nor block on each other, and the EN lock key stays exactly today's (an existing test spies on `dec_lock(id)`); an id never contains `/`, so keys cannot collide |
+| Task 120.110 -- `DocCache` | **No `DocCache` code change.** Confirmed by test: path-keyed entries, write-warming via the path-deriving `read_dec`, `invalidate_dec_cache(path)` on delete, and the Phase 110 domain-wide reconcile already isolate languages | The verification found no real collision, which is the plan's condition for making no change; the tests pin the property so a future keying change cannot silently break it |
 
 #### 2026-10-30T09:47:00.000+01:00 - Phase 110 implementation decisions (read-side plumbing for `dec`)
 

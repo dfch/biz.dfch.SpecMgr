@@ -118,7 +118,7 @@ import frontmatter
 from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
@@ -192,7 +192,8 @@ from ...vcr.tools._write import write_vcr_file
 from ..models import ParseFailureResult
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._timestamps import now_timestamp
 
 __all__ = ["set_classification"]
@@ -439,14 +440,24 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter | P
     return new_frontmatter
 
 
-def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter | ParseFailureResult:
+def _set_classification_dec(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> DecFrontmatter | ParseFailureResult:
     """Replace the classification of the decision identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+    written -- the EN document (bytes, ``updated``, cache entry) stays
+    untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
         try:
             path, existing = load_dec_by_id(base_dir, id_)
         except DecNotFoundError:
@@ -628,6 +639,19 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "remove the domain in both places (feat-125-domain-lists, REQ-006)"
 )
 
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phase 120: the pilot
+#: domain ``dec`` only; Phase 125 extends it). Called with the language as the last positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str], _SetClassificationFrontmatter]] = {
+    "dec": _set_classification_dec,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
+
 
 @mcp.tool(
     name="set_classification",
@@ -650,13 +674,22 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         'raised before any file access; `type="adr"` passes the id validation (a well-formed '
         "UUID id) and raises the plain `KeyError` inherited from the dispatch-table lookup "
         "instead. Returns the updated frontmatter only (no body) on success; use the "
-        "corresponding `get_<d>` tool to fetch the full document afterward."
+        "corresponding `get_<d>` tool to fetch the full document afterward. "
+        "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
+        "act on: omitted/'en' = the flat default-language document, exactly the default behavior; a "
+        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/<type>/{language}/ (found by id-scan of that subdirectory), acting on that file ONLY -- the "
+        "EN file's content and `updated` timestamp stay untouched. Only `dec` supports a non-default "
+        "language so far: any other `type` raises a `ValueError` for one (`feat` documents are always "
+        "English), as does a malformed `language` or one with no packaged heading-mapping table -- all "
+        "raised before any file access."
     ),
 )
 def set_classification(
     id: str,
     type: WholeBodyType,
     classification: str,
+    language: str = DEFAULT_LANGUAGE,
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.
 
@@ -706,6 +739,19 @@ def set_classification(
     classification:
         The new classification value. Fully free-text; a blank or
         whitespace-only value clears the field back to ``None``/absent.
+    language:
+        The language variant to act on (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) acts on the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) acts on that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one file is touched: the EN
+        document's bytes, ``updated`` timestamp, and cache entry stay
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Only ``type="dec"`` supports a non-default language so
+        far -- any other ``type`` raises a ``ValueError`` for one (``feat`` is always English;
+        the remaining domains are not yet enabled).
 
     Returns
     -------
@@ -731,7 +777,12 @@ def set_classification(
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
         domain's own format, or ``type`` is an unknown document type
-        (raised before any filesystem access; nothing is written).
+        (raised before any filesystem access; nothing is written). Also
+        raised, before any filesystem access, for a malformed ``language``
+        (not an ISO 639-1-shaped lowercase two-letter code), a non-default
+        ``language`` with ``type`` ``feat`` (always English) or any other
+        domain not yet supporting language variants, or a non-default
+        ``language`` of ``dec`` without a packaged heading-mapping table.
     KeyError
         ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
         ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
@@ -751,7 +802,11 @@ def set_classification(
     # (`type="adr"` passes -- its id is a UUID -- and raises the plain `KeyError` inherited
     # from the dispatch-table lookup below).
     validate_id(type, id)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, classification)
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, classification)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, classification, language)
     return result

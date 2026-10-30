@@ -311,7 +311,18 @@ directory exactly as before, any other code scans only that language's
 subdirectory, listing exactly the existing variants of that language; deliberately
 no "all languages" mode -- the row shape is unchanged, no language column),
     ``get_dec_example``,
-    ``get_dec_template``, ``get_dec_schema``, ``create_dec``.
+    ``get_dec_template``, ``get_dec_schema``, ``create_dec`` (optional ``language``
+(default ``"en"``) and ``id`` parameters, feat-197-i18n Phase 120: omitted/``"en"``
+= a new flat ``docs/dec/`` document with a fresh server-assigned id exactly as
+before, ``id`` then must be omitted; a non-default ``language`` creates a
+TRANSLATION of an existing decision instead -- ``id``, the shared id of the EN
+source document, is then required (a missing one, or one given for the default
+language, is a ``ValueError`` before any file access), the EN source must exist
+(``DecNotFoundError`` otherwise), the variant is written to
+``docs/dec/{language}/`` under the EN source's exact file name with the shared id
+as its frontmatter ``id`` (``status`` draft), its body is validated through the
+language's heading-mapping table and persisted verbatim, and an existing variant of
+that id and language is never overwritten (``FileExistsError``)).
      SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -373,7 +384,20 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
   ``update_sysrs``/``set_status_sysrs`` tools of its own; deletion goes through the
   generic ``delete`` tool (``type="sysrs"``).
-  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
+  General tools (``general/tools/``) -- language variants (feat-197-i18n Phase 120):
+the generic ``update``/``edit``/``set_status``/``set_classification``/``delete``
+tools each take an optional ``language`` parameter (default ``"en"``, appended
+last). Omitted/``"en"`` dispatches exactly as before. A non-default
+ISO 639-1-shaped lowercase two-letter code acts on that language's variant file
+ONLY (``docs/<type>/{language}/``, located by id-scan; the EN file's bytes,
+``updated`` timestamp, and cache entry stay untouched, and a variant's content is
+validated through the language's heading-mapping table) -- honored by ``dec`` only
+so far; any other ``type`` raises a ``ValueError`` for a non-default language
+before any file access (``feat``/``adr`` permanently: those documents are always
+English; the remaining domains: not yet supported), as does a malformed ``language``
+or one without a packaged table. The generic ``validate`` tool takes no
+``language`` parameter (EN/canonical content only).
+General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the whole-body domains (``type`` is one of
   ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;

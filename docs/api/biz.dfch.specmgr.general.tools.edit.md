@@ -148,13 +148,23 @@ whichever concrete frontmatter model is returned.
 
 ## Functions
 
-### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
+### `_edit_dec(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
 Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), the stage-1 match runs
+against that variant's on-disk body, the stage-2 validation of the
+edited body goes through the variant's heading table
+(:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and only that
+one file is written -- the EN document stays untouched.
 
 
 ### `_edit_feat(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool') -> 'FeatFrontmatter | ParseFailureResult | ValidateResult'`
@@ -319,7 +329,7 @@ ValueError
     wrap prefix), nothing written.
 
 
-### `edit(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', old_str: 'str', new_str: 'str', replace_all: 'bool' = False) -> '_EditFrontmatter'`
+### `edit(id: 'str', type: 'Literal[*WHOLE_BODY_DOMAINS,]', old_str: 'str', new_str: 'str', replace_all: 'bool' = False, language: 'str' = 'en') -> '_EditFrontmatter'`
 
 Surgically replace a byte-exact occurrence of ``old_str`` in an existing document's body.
 
@@ -405,6 +415,21 @@ replace_all:
     ``False`` (default): ``old_str`` must match exactly once (multiple
     matches are an error). ``True``: every exact occurrence is
     rewritten.
+language:
+    The language variant to edit (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+    it) edits the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) edits that language's variant, located by id-scan
+    of ``docs/<type>/{language}/``: ``old_str`` is matched against that
+    variant's own on-disk body, the edited body is validated through
+    that language's heading-mapping table, and only that one file is
+    written -- the EN document's bytes, ``updated`` timestamp, and
+    cache entry stay untouched. Shape-guarded before any filesystem
+    access (like ``id``). Only ``type="dec"`` supports a non-default
+    language so far -- any other ``type`` raises a ``ValueError`` for
+    one (``feat`` is always English; the remaining domains are not yet
+    enabled).
 
 Returns
 -------
@@ -448,7 +473,12 @@ ValueError
     lock after the on-disk body is read). All four guard/stage-1
     ``ValueError``s carry the OC message verbatim with no
     ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
-    is written in any of these cases.
+    is written in any of these cases. Also raised, before any filesystem
+    access, for a malformed ``language`` (not an ISO 639-1-shaped
+    lowercase two-letter code), a non-default ``language`` with
+    ``type`` ``feat`` (always English) or any other domain not yet
+    supporting language variants, or a non-default ``language`` of
+    ``dec`` without a packaged heading-mapping table.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

@@ -165,7 +165,7 @@ range-mode call renders the touched range via :func:`_splice.splice_
 snippet` from the outcome's pre/post bodies and coordinates.
 
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -176,6 +176,19 @@ that per-domain tool was retired in feat-22 Phase 8, when the DEC
 domain -- merged from dev while still on the old per-domain mechanism
 -- was converted to the generic tools), plus the REQ-002 range branch
 (see :func:`_update_req`).
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects which variant file the
+adapter acts on: the id is scanned for in ``dec_base_dir(language)``
+(the flat EN directory, or the ``{language}`` subdirectory -- the
+basename is never re-derived), the lock is the variant's own
+(``dec_lock(dec_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table
+(:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and the write
+plus cache warming target that one file's own path -- the EN file
+(content, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
 
 ### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
@@ -321,7 +334,7 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 :func:`_update_req`).
 
 
-### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> 'UpdateResult | ParseFailureResult | ValidateResult'`
+### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None, language: 'str' = 'en') -> 'UpdateResult | ParseFailureResult | ValidateResult'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
@@ -401,6 +414,21 @@ limit:
     Optional number of lines to replace starting at ``offset``
     (``0`` = pure insert); must be given together with ``offset``
     (``limit`` without ``offset`` is a ``ValueError``).
+language:
+    The language variant to act on (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+    it) acts on the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) acts on that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived), with the content (or the spliced result)
+    validated through that language's heading-mapping table. Only that
+    one file is written: the EN document's bytes, ``updated``
+    timestamp, and cache entry stay untouched. Shape-guarded before any
+    filesystem access (like ``id``). Only ``type="dec"`` supports a
+    non-default language so far -- any other ``type`` raises a
+    ``ValueError`` for one (``feat`` is always English; the remaining
+    domains are not yet enabled).
 
 Returns
 -------

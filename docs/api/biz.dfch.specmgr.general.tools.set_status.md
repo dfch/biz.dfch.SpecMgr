@@ -157,7 +157,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'DecFrontmatter | ParseFailureResult'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -167,6 +167,15 @@ function body (same ``dec_lock``, ``load_by_id``, ``write_dec_file``,
 Phase 8, when the DEC domain -- merged from dev while still on the
 old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+written -- the EN document (bytes, ``updated``, cache entry) stays
+untouched, and the unchanged-status no-op compares against the
+variant's own current status.
 
 
 ### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult'`
@@ -294,7 +303,7 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``adr``, so ``superseded_by`` must never be given.
 
 
-### `set_status(id: 'str', type: 'WholeBodyOrAdrType', status: 'str', superseded_by: 'str | None' = None) -> '_SetStatusFrontmatter | InvalidStatusResult'`
+### `set_status(id: 'str', type: 'WholeBodyOrAdrType', status: 'str', superseded_by: 'str | None' = None, language: 'str' = 'en') -> '_SetStatusFrontmatter | InvalidStatusResult'`
 
 Replace the status of an existing document, across every domain.
 
@@ -359,6 +368,19 @@ Replace the status of an existing document, across every domain.
         ADR only. When given (with ``type="adr"``), ``status`` is
         composed as ``f"superseded by {superseded_by}"`` instead of being
         used verbatim. A ``ValueError`` for any other ``type``.
+    language:
+        The language variant to act on (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) acts on the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) acts on that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one file is touched: the EN
+        document's bytes, ``updated`` timestamp, and cache entry stay
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Only ``type="dec"`` supports a non-default language so
+        far -- any other ``type`` raises a ``ValueError`` for one (``feat`` and ``adr`` are always English;
+        the remaining domains are not yet enabled).
 
     Returns
     -------
@@ -398,7 +420,13 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResu
         domain's own format (raised before any filesystem access; nothing
         is written), or ``superseded_by`` given with a ``type`` other
         than ``"adr"`` (raised before any file access). Nothing is
-        written in either case.
+        written in either case. Also raised, before any filesystem
+        access, for a malformed ``language`` (not an ISO 639-1-shaped
+        lowercase two-letter code), a non-default ``language`` with
+        ``type`` ``feat``/``adr`` (always English) or any other domain
+        not yet supporting language variants, or a non-default
+        ``language`` of ``dec`` without a packaged heading-mapping
+        table.
     pydantic.ValidationError
         Does **not** raise for an out-of-vocabulary ``status`` -- that
         one case is pre-checked before dispatch (see Returns above) and

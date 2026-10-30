@@ -125,3 +125,45 @@ ValueError
     (the table loader's actionable error,
     :func:`biz.dfch.specmgr.general.models.load_heading_table`).
 
+
+### `parse_dec_body(content: 'str', *, language: 'str | None' = None) -> 'Decision'`
+
+Parse a frontmatter-free decision body text into a :class:`Decision`, in the given language.
+
+The body-only half of :func:`parse_dec` (feat-197-i18n Phase 120, ADR
+38efdb66 item 5): ``Decision.from_text(format_text(content))`` with the
+optional per-language heading-normalization pre-pass between the two.
+It is the single body-validation entry point the write side shares --
+``create_dec`` and the generic ``update``/``edit`` tools' ``dec``
+adapters validate the caller's raw body through it, so a language
+variant's translated headings are accepted exactly as the read side
+(:func:`parse_dec`, which itself delegates here) accepts them, and the
+persisted text stays the caller's raw body byte-for-byte (this function
+only validates; it never renders). With ``language`` omitted/``None``
+or ``"en"`` there is no table and the parse is byte-identical to the
+pre-i18n ``Decision.from_text(format_text(content))``.
+
+Parameters
+----------
+content:
+    The body markdown only (no YAML frontmatter block).
+language:
+    The body's language: ``None``/omitted or ``"en"`` = canonical
+    headings as-is; any other value resolves that language's
+    heading-mapping table via
+    :func:`biz.dfch.specmgr.general.models.resolve_heading_table`.
+
+Returns
+-------
+Decision
+    The structured body (canonical heading text for every section).
+
+Raises
+------
+AssertionError
+    A malformed heading/list structure.
+pydantic.ValidationError
+    A field or cross-field validation failure.
+ValueError
+    A non-default ``language`` without a packaged heading-mapping table.
+

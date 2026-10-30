@@ -159,6 +159,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_domains.py` — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
 - `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 - `general/tools/_embedding_cache.py` — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
+- `general/tools/_language_guard.py` — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phase 120).
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
@@ -591,4 +592,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 439
+**Test files**: 441

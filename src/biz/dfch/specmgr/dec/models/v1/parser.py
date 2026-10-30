@@ -71,7 +71,7 @@ from .body import Decision
 from .document import DecDocument
 from .frontmatter import DecFrontmatter
 
-__all__ = ["parse_dec"]
+__all__ = ["parse_dec", "parse_dec_body"]
 
 
 def parse_dec(text: str, *, language: str | None = None) -> DecDocument:
@@ -123,12 +123,59 @@ def parse_dec(text: str, *, language: str | None = None) -> DecDocument:
         :func:`biz.dfch.specmgr.general.models.load_heading_table`).
     """
     fm, content = parse_frontmatter(text, DecFrontmatter, domain="dec", stringify_metadata=_stringify_metadata)
+    body = parse_dec_body(content, language=language)
+    return DecDocument(frontmatter=fm, body=body)
+
+
+def parse_dec_body(content: str, *, language: str | None = None) -> Decision:
+    """Parse a frontmatter-free decision body text into a :class:`Decision`, in the given language.
+
+    The body-only half of :func:`parse_dec` (feat-197-i18n Phase 120, ADR
+    38efdb66 item 5): ``Decision.from_text(format_text(content))`` with the
+    optional per-language heading-normalization pre-pass between the two.
+    It is the single body-validation entry point the write side shares --
+    ``create_dec`` and the generic ``update``/``edit`` tools' ``dec``
+    adapters validate the caller's raw body through it, so a language
+    variant's translated headings are accepted exactly as the read side
+    (:func:`parse_dec`, which itself delegates here) accepts them, and the
+    persisted text stays the caller's raw body byte-for-byte (this function
+    only validates; it never renders). With ``language`` omitted/``None``
+    or ``"en"`` there is no table and the parse is byte-identical to the
+    pre-i18n ``Decision.from_text(format_text(content))``.
+
+    Parameters
+    ----------
+    content:
+        The body markdown only (no YAML frontmatter block).
+    language:
+        The body's language: ``None``/omitted or ``"en"`` = canonical
+        headings as-is; any other value resolves that language's
+        heading-mapping table via
+        :func:`biz.dfch.specmgr.general.models.resolve_heading_table`.
+
+    Returns
+    -------
+    Decision
+        The structured body (canonical heading text for every section).
+
+    Raises
+    ------
+    AssertionError
+        A malformed heading/list structure.
+    pydantic.ValidationError
+        A field or cross-field validation failure.
+    ValueError
+        A non-default ``language`` without a packaged heading-mapping table.
+    """
+    assert isinstance(content, str), type(content)
+    assert language is None or isinstance(language, str), type(language)
+
     formatted = format_text(content)
     table = resolve_heading_table(language)
     if table is not None:
         formatted = normalize_heading_lines(formatted, table)
-    body = Decision.from_text(formatted)
-    return DecDocument(frontmatter=fm, body=body)
+    result = Decision.from_text(formatted)
+    return result
 
 
 def _stringify_metadata(metadata: dict[str, object]) -> dict[str, object]:

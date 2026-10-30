@@ -70,11 +70,20 @@ caller (REQ-005).
 
 ## Functions
 
-### `_delete_dec(id_: 'str') -> 'str'`
+### `_delete_dec(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the decision ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/9).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one variant
+file is unlinked -- only that file's own path-keyed cache entries (the
+document cache and the embedding cache) are invalidated, so the EN
+document (file, cache entry) is untouched.
 
 
 ### `_delete_feat(id_: 'str') -> 'str'`
@@ -179,7 +188,7 @@ Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006)
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
 
-### `delete(id: 'str', type: 'WholeBodyType') -> 'str'`
+### `delete(id: 'str', type: 'WholeBodyType', language: 'str' = 'en') -> 'str'`
 
 Permanently delete an existing document from disk, across the whole-body domains.
 
@@ -214,6 +223,20 @@ type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
     ``vcr``, ``sysrs``.
+language:
+    The language variant to delete (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+    it) deletes the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) deletes that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived); only that one variant file is removed (and
+    only its own cache entries invalidated): the EN document stays
+    untouched. Shape-guarded before any filesystem access (like
+    ``id``). Only ``type="dec"`` supports a non-default language so
+    far -- any other ``type`` raises a ``ValueError`` for one
+    (``feat`` is always English; the remaining domains are not yet
+    enabled).
 
 Returns
 -------
@@ -226,7 +249,12 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format (raised before any filesystem access; nothing
-    is deleted).
+    is deleted). Also raised, before any filesystem access, for a
+    malformed ``language`` (not an ISO 639-1-shaped lowercase
+    two-letter code), a non-default ``language`` with ``type``
+    ``feat`` (always English) or any other domain not yet supporting
+    language variants, or a non-default ``language`` of ``dec``
+    without a packaged heading-mapping table.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /

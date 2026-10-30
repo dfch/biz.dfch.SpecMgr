@@ -169,10 +169,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Literal
 
-from ...dec.models.v1 import DecFrontmatter, Decision
+from ...dec.models.v1 import DecFrontmatter, parse_dec_body
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter, Feature
@@ -247,7 +247,8 @@ from ...vcr.tools._write import write_vcr_file
 from ..models import ParseFailureResult, ValidateResult, ValidationErrorEntry
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._splice import body_text
 from ._timestamps import now_timestamp
 from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -611,16 +612,26 @@ def _edit_rsk(
 
 
 def _edit_dec(
-    id_: str, old_str: str, new_str: str, replace_all: bool
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> DecFrontmatter | ParseFailureResult | ValidateResult:
     """Surgically replace exact occurrences of ``old_str`` in the decision identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
     ``DecNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), the stage-1 match runs
+    against that variant's on-disk body, the stage-2 validation of the
+    edited body goes through the variant's heading table
+    (:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and only that
+    one file is written -- the EN document stays untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
         try:
             path, existing = load_dec_by_id(base_dir, id_)
         except DecNotFoundError:
@@ -634,7 +645,7 @@ def _edit_dec(
         edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
         try:
             with wrap_tool_errors(domain="dec", tool="edit", channel=BODY_CHANNEL):
-                Decision.from_text(format_text(edited))
+                parse_dec_body(edited, language=language)
         except _CAUGHT_EXCEPTIONS as ex:
             message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
             return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -818,6 +829,19 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "remove the domain in both places (feat-159-edit, GitHub issue #159)"
 )
 
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phase 120: the pilot
+#: domain ``dec`` only; Phase 125 extends it). Called with the language as a 5th positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str, bool, str], _EditFrontmatter]] = {
+    "dec": _edit_dec,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
+
 
 @mcp.tool(
     name="edit",
@@ -851,15 +875,25 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "input, empty `old_str`) still raise. An invalid `id` (path-injection attempt or wrong format "
         "for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter "
         "only (no body; `updated` bumped) on success; use the corresponding `get_<d>` tool to fetch "
-        "the full document afterward."
+        "the full document afterward. The optional `language` parameter (default 'en', feat-197-i18n) "
+        "selects the language variant to edit: omitted/'en' = the flat default-language document, "
+        "exactly the default behavior; a non-default ISO 639-1-shaped lowercase two-letter code "
+        "(e.g. 'de') = that language's variant at docs/<type>/{language}/ (found by id-scan of that "
+        "subdirectory), matched against and written to that file ONLY -- the EN file's content and "
+        "`updated` timestamp stay untouched -- with the stage-2 validation going through that "
+        "language's heading-mapping table. Only `dec` supports a non-default language so far: any "
+        "other `type` raises a `ValueError` for one (`feat` and `adr` documents are always English), "
+        "as does a malformed `language` or one with no packaged heading-mapping table -- all raised "
+        "before any file access."
     ),
 )
-def edit(
+def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     id: str,
     type: Literal[*WHOLE_BODY_DOMAINS],
     old_str: str,
     new_str: str,
     replace_all: bool = False,
+    language: str = DEFAULT_LANGUAGE,
 ) -> _EditFrontmatter:
     """Surgically replace a byte-exact occurrence of ``old_str`` in an existing document's body.
 
@@ -945,6 +979,21 @@ def edit(
         ``False`` (default): ``old_str`` must match exactly once (multiple
         matches are an error). ``True``: every exact occurrence is
         rewritten.
+    language:
+        The language variant to edit (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+        it) edits the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) edits that language's variant, located by id-scan
+        of ``docs/<type>/{language}/``: ``old_str`` is matched against that
+        variant's own on-disk body, the edited body is validated through
+        that language's heading-mapping table, and only that one file is
+        written -- the EN document's bytes, ``updated`` timestamp, and
+        cache entry stay untouched. Shape-guarded before any filesystem
+        access (like ``id``). Only ``type="dec"`` supports a non-default
+        language so far -- any other ``type`` raises a ``ValueError`` for
+        one (``feat`` is always English; the remaining domains are not yet
+        enabled).
 
     Returns
     -------
@@ -988,7 +1037,12 @@ def edit(
         lock after the on-disk body is read). All four guard/stage-1
         ``ValueError``s carry the OC message verbatim with no
         ``domain tool (channel)`` wrap prefix (REQ-002/REQ-008). Nothing
-        is written in any of these cases.
+        is written in any of these cases. Also raised, before any filesystem
+        access, for a malformed ``language`` (not an ISO 639-1-shaped
+        lowercase two-letter code), a non-default ``language`` with
+        ``type`` ``feat`` (always English) or any other domain not yet
+        supporting language variants, or a non-default ``language`` of
+        ``dec`` without a packaged heading-mapping table.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
@@ -1010,6 +1064,8 @@ def edit(
         raise ValueError(
             f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} ('adr' is not supported)"
         )
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
     # REQ-008: the identical-input and empty-`old_str` guards fire before any filesystem access.
     if old_str == new_str:
         raise ValueError("No changes to apply: oldString and newString are identical.")
@@ -1020,6 +1076,8 @@ def edit(
             "or use update for an intentional full-file replacement."
         )
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, old_str, new_str, replace_all)
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, old_str, new_str, replace_all)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, old_str, new_str, replace_all, language)
     return result

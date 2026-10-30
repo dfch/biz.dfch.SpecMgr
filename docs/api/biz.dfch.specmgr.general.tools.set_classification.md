@@ -93,12 +93,20 @@ enriched (field path + line reference + fix hint) shape.
 
 ## Functions
 
-### `_set_classification_dec(id_: 'str', classification: 'str') -> 'DecFrontmatter | ParseFailureResult'`
+### `_set_classification_dec(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult'`
 
 Replace the classification of the decision identified by ``id_``.
 
 See :func:`_set_classification_req` for the full semantics (same
 ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+written -- the EN document (bytes, ``updated``, cache entry) stays
+untouched.
 
 
 ### `_set_classification_feat(id_: 'str', classification: 'str') -> 'FeatFrontmatter | ParseFailureResult'`
@@ -208,7 +216,7 @@ Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
 :func:`_set_classification_req` for the full semantics.
 
 
-### `set_classification(id: 'str', type: 'WholeBodyType', classification: 'str') -> '_SetClassificationFrontmatter'`
+### `set_classification(id: 'str', type: 'WholeBodyType', classification: 'str', language: 'str' = 'en') -> '_SetClassificationFrontmatter'`
 
 Replace the ``classification`` frontmatter field of an existing document.
 
@@ -258,6 +266,19 @@ type:
 classification:
     The new classification value. Fully free-text; a blank or
     whitespace-only value clears the field back to ``None``/absent.
+language:
+    The language variant to act on (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+    it) acts on the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) acts on that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived); only that one file is touched: the EN
+    document's bytes, ``updated`` timestamp, and cache entry stay
+    untouched. Shape-guarded before any filesystem access (like
+    ``id``). Only ``type="dec"`` supports a non-default language so
+    far -- any other ``type`` raises a ``ValueError`` for one (``feat`` is always English;
+    the remaining domains are not yet enabled).
 
 Returns
 -------
@@ -283,7 +304,12 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format, or ``type`` is an unknown document type
-    (raised before any filesystem access; nothing is written).
+    (raised before any filesystem access; nothing is written). Also
+    raised, before any filesystem access, for a malformed ``language``
+    (not an ISO 639-1-shaped lowercase two-letter code), a non-default
+    ``language`` with ``type`` ``feat`` (always English) or any other
+    domain not yet supporting language variants, or a non-default
+    ``language`` of ``dec`` without a packaged heading-mapping table.
 KeyError
     ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
     ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
