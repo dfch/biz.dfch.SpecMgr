@@ -124,7 +124,11 @@ for the full list)._
 
 ```bash
 specmgr version
+specmgr lint [paths]... [--type T [--dir D]] [--all] [--skip-unrecognized]  # in-tree spec artifact parseability gate: full model-level parse of the paths (type inferred from the layout, --type overrides) or a --type/--all sweep (exit 0 parsed / 1 parse failure or missing mcp extra / 2 usage-or-resolution)
 ```
+
+`specmgr lint` requires the `mcp` extra, like `specmgr diagram` (the
+decoupling is tracked as issue #238).
 
 ## UC → PlantUML Diagrams
 
