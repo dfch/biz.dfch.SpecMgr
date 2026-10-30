@@ -191,7 +191,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'GolFrontmatter | ParseFailureResult'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -200,8 +200,15 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 ``GolNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'PrbFrontmatter | ParseFailureResult'`
+
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -211,8 +218,15 @@ tool's function body (same ``prb_lock``, ``load_by_id``,
 retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'QaFrontmatter | ParseFailureResult'`
+
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -221,8 +235,15 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 ``QaNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written, the
+unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'ReqFrontmatter | ParseFailureResult'`
+
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -239,8 +260,15 @@ docstring): a target ``id`` whose only matching on-disk file fails to
 parse yields the non-raising ``ParseFailureResult`` instead of
 ``ReqNotFoundError`` (a truly-absent id still raises).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'RskFrontmatter | ParseFailureResult'`
+
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -249,8 +277,15 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 ``RskNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SopFrontmatter | ParseFailureResult'`
+
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -261,8 +296,15 @@ was never a per-domain ``set_status_sop`` tool to port -- this adapter
 was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'SysrsFrontmatter | ParseFailureResult'`
+
+### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -272,8 +314,15 @@ is dispatch-only from day one per ADR 36905d5b, so this adapter was
 written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is
+written, the unchanged-status no-op compares against the variant's own current status -- the EN
+document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'TskFrontmatter | ParseFailureResult'`
+
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -282,8 +331,15 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 ``TskNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'UcFrontmatter | ParseFailureResult'`
+
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -292,8 +348,15 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 ``UcNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written, the
+unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'VcrFrontmatter | ParseFailureResult'`
+
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -301,6 +364,13 @@ Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
 :func:`_set_status_req` for the full semantics. ``vcr`` is not
 ``adr``, so ``superseded_by`` must never be given.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written,
+the unchanged-status no-op compares against the variant's own current status -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
 ### `set_status(id: 'str', type: 'WholeBodyOrAdrType', status: 'str', superseded_by: 'str | None' = None, language: 'str' = 'en') -> '_SetStatusFrontmatter | InvalidStatusResult'`
@@ -378,9 +448,9 @@ Replace the status of an existing document, across every domain.
         never re-derived); only that one file is touched: the EN
         document's bytes, ``updated`` timestamp, and cache entry stay
         untouched. Shape-guarded before any filesystem access (like
-        ``id``). Only ``type="dec"`` supports a non-default language so
-        far -- any other ``type`` raises a ``ValueError`` for one (``feat`` and ``adr`` are always English;
-        the remaining domains are not yet enabled).
+        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` and ``adr`` are always English: a non-default language
+        for either raises a ``ValueError``).
 
     Returns
     -------
@@ -422,10 +492,8 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResu
         than ``"adr"`` (raised before any file access). Nothing is
         written in either case. Also raised, before any filesystem
         access, for a malformed ``language`` (not an ISO 639-1-shaped
-        lowercase two-letter code), a non-default ``language`` with
-        ``type`` ``feat``/``adr`` (always English) or any other domain
-        not yet supporting language variants, or a non-default
-        ``language`` of ``dec`` without a packaged heading-mapping
+        lowercase two-letter code), a non-default ``language`` with ``type`` ``feat``/``adr`` (always English), or
+        a non-default ``language`` without a packaged heading-mapping
         table.
     pydantic.ValidationError
         Does **not** raise for an out-of-vocabulary ``status`` -- that

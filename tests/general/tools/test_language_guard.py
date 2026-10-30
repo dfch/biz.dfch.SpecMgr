@@ -17,14 +17,21 @@
 
 """Tests for the generic tools' write-side ``language`` guard (feat-197-i18n Phase 120, ADR 38efdb66 items 2/6/10).
 
-Pins the permanent/temporary rejection matrix: the generic ``update``/
-``edit``/``set_status``/``set_classification``/``delete`` tools gained an
-optional ``language`` parameter that only the pilot domain ``dec`` honors in
-Phase 120; every other type (and ``feat``/``adr`` permanently) rejects a
-non-default ``language`` with an actionable ``ValueError`` before any
-filesystem access, while an omitted/``"en"`` language dispatches exactly as
-before (ACC-013 for the write tools, ACC-002/ACC-015 surface checks,
-REQ-013 surface check).
+Pins the rejection/dispatch matrix: the generic ``update``/``edit``/
+``set_status``/``set_classification``/``delete`` tools gained an optional
+``language`` parameter that Phase 120 enabled for the pilot domain ``dec``
+and Phase 125 for the remaining ten i18n-eligible domains (every whole-body
+domain except ``feat``); ``feat``/``adr`` permanently reject a non-default
+``language`` with an actionable ``ValueError`` before any filesystem access,
+while an omitted/``"en"`` language dispatches exactly as before (ACC-013 for
+the write tools, ACC-002/ACC-015 surface checks, REQ-013 surface check).
+
+Phase 125 edit history of this module (the "not yet supported" set shrank to
+nothing): the pilot-only pin on ``LANGUAGE_AWARE_DOMAINS`` became the
+eleven-domain pin; the per-type "temporarily rejected" matrix became the
+permanent ``feat``/``adr`` matrix plus a defensive unknown-type fallback test;
+the dec-only table-less/dispatch tests were generalized over every
+language-aware type.
 """
 
 from __future__ import annotations
@@ -140,9 +147,14 @@ def _booby_trapped_adapters(types: tuple[str, ...]) -> dict[str, mock.Mock]:
 class TestGuardLanguage(unittest.TestCase):
     """Unit tests of ``guard_language`` itself."""
 
-    def test_language_aware_domains_are_the_pilot_only_in_phase_120(self):
-        """Phase 120 enables ``dec`` only (Phase 125 extends the set)."""
-        self.assertEqual(LANGUAGE_AWARE_DOMAINS, ("dec",))
+    def test_language_aware_domains_are_the_eleven_i18n_eligible_domains(self):
+        """Phase 125: every whole-body domain except ``feat``, in canonical order (``feat``/``adr`` excluded)."""
+        self.assertEqual(LANGUAGE_AWARE_DOMAINS, tuple(d for d in WHOLE_BODY_DOMAINS if d != FEAT))
+        self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 11)
+        self.assertEqual(LANGUAGE_AWARE_DOMAINS[0], "req")
+        self.assertEqual(LANGUAGE_AWARE_DOMAINS[-1], "sysrs")
+        self.assertNotIn(FEAT, LANGUAGE_AWARE_DOMAINS)
+        self.assertNotIn(ADR, LANGUAGE_AWARE_DOMAINS)
 
     def test_default_language_always_passes_for_every_type(self):
         """'en' is the byte-identical flat path for every type, feat and adr included."""
@@ -150,15 +162,19 @@ class TestGuardLanguage(unittest.TestCase):
             with self.subTest(type=type_):
                 guard_language(type_, "en")
 
-    def test_dec_with_a_usable_language_passes(self):
-        """A shape-valid language with a packaged table passes for dec."""
-        guard_language("dec", "de")
+    def test_every_language_aware_domain_with_a_usable_language_passes(self):
+        """A shape-valid language with a packaged table passes for every language-aware domain."""
+        for type_ in LANGUAGE_AWARE_DOMAINS:
+            with self.subTest(type=type_):
+                guard_language(type_, "de")
 
-    def test_dec_with_a_tableless_language_is_rejected(self):
+    def test_every_language_aware_domain_with_a_tableless_language_is_rejected(self):
         """A shape-valid language without a packaged heading-mapping table is the loader's actionable error."""
-        with self.assertRaises(ValueError) as ctx:
-            guard_language("dec", "fr")
-        self.assertIn("no heading-mapping table", str(ctx.exception))
+        for type_ in LANGUAGE_AWARE_DOMAINS:
+            with self.subTest(type=type_):
+                with self.assertRaises(ValueError) as ctx:
+                    guard_language(type_, "fr")
+                self.assertIn("no heading-mapping table", str(ctx.exception))
 
     def test_shape_guard_runs_for_every_type_including_rejected_ones(self):
         """The shape error wins over the support error: a malformed value is reported as malformed for any type."""
@@ -180,38 +196,42 @@ class TestGuardLanguage(unittest.TestCase):
                 self.assertIn(f"{type_} documents are always English", message)
                 self.assertNotIn("not yet", message)
 
-    def test_other_domains_are_temporarily_rejected(self):
-        """The ten not-yet-enabled domains: 'not yet supported' wording naming the type."""
+    def test_no_whole_body_domain_other_than_feat_is_rejected_any_more(self):
+        """Phase 125: the temporary 'not yet supported' set is empty -- every whole-body domain but ``feat`` passes."""
         for type_ in WHOLE_BODY_DOMAINS:
-            if type_ in LANGUAGE_AWARE_DOMAINS or type_ == FEAT:
+            if type_ == FEAT:
                 continue
             with self.subTest(type=type_):
-                with self.assertRaises(ValueError) as ctx:
-                    guard_language(type_, "de")
-                message = str(ctx.exception)
-                self.assertIn(f"language 'de' is not yet supported for type {type_!r}", message)
-                self.assertNotIn("always English", message)
+                guard_language(type_, "de")
+
+    def test_unknown_type_hits_the_defensive_fallback(self):
+        """The remaining non-permanent branch is a defensive fallback for a type that is neither aware nor feat/adr."""
+        with self.assertRaises(ValueError) as ctx:
+            guard_language("zz", "de")
+        message = str(ctx.exception)
+        self.assertIn("language 'de' is not supported for type 'zz'", message)
+        self.assertIn("only req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs documents", message)
+        self.assertNotIn("always English", message)
 
 
 class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest.TestCase):
     """The permanent/temporary rejection matrix over every generic write tool (ACC-013, ACC-002, ACC-015)."""
 
-    def test_non_dec_types_reject_a_non_default_language_with_the_right_wording(self):
-        """For every tool x every non-dec type: a non-default language is a ValueError with the right wording,
-        raised before any adapter (== any filesystem access) runs."""
+    def test_feat_and_adr_reject_a_non_default_language_with_the_permanent_wording(self):
+        """For every tool x {feat, adr} (where the tool accepts it): a non-default language is a ValueError with the
+        permanent 'always English' wording, raised before any adapter (== any filesystem access) runs."""
         for name, _tool, module, types, make_call in _TOOLS:
             with mock.patch.object(module, "_ADAPTERS", _booby_trapped_adapters(types)):
                 for type_ in types:
                     if type_ in LANGUAGE_AWARE_DOMAINS:
                         continue
                     with self.subTest(tool=name, type=type_):
+                        self.assertIn(type_, (FEAT, ADR))
                         with self.assertRaises(ValueError) as ctx:
                             make_call(type_, _id_for(type_), language="de")()
                         message = str(ctx.exception)
-                        if type_ in (FEAT, ADR):
-                            self.assertIn(f"{type_} documents are always English", message)
-                        else:
-                            self.assertIn(f"language 'de' is not yet supported for type {type_!r}", message)
+                        self.assertIn(f"{type_} documents are always English", message)
+                        self.assertNotIn("not yet", message)
 
     def test_bad_language_is_a_shape_error_for_every_tool_and_type(self):
         """ACC-013: a path-injection-shaped language is rejected for every tool x type before any adapter runs."""
@@ -224,17 +244,18 @@ class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest
                                 make_call(type_, _id_for(type_), language=value)()
                             self.assertIn(repr(value), str(ctx.exception))
 
-    def test_dec_with_a_tableless_language_is_rejected_by_every_tool(self):
-        """A shape-valid, table-less language ('fr') is rejected for dec before any filesystem access."""
+    def test_tableless_language_is_rejected_by_every_tool_for_every_language_aware_type(self):
+        """A shape-valid, table-less language ('fr') is rejected for every aware type before any filesystem access."""
         for name, _tool, module, types, make_call in _TOOLS:
             with (
                 mock.patch.object(module, "_ADAPTERS", _booby_trapped_adapters(types)),
-                mock.patch.object(module, "_LANGUAGE_ADAPTERS", _booby_trapped_adapters(("dec",))),
+                mock.patch.object(module, "_LANGUAGE_ADAPTERS", _booby_trapped_adapters(LANGUAGE_AWARE_DOMAINS)),
             ):
-                with self.subTest(tool=name):
-                    with self.assertRaises(ValueError) as ctx:
-                        make_call("dec", _UUID, language="fr")()
-                    self.assertIn("no heading-mapping table", str(ctx.exception))
+                for type_ in LANGUAGE_AWARE_DOMAINS:
+                    with self.subTest(tool=name, type=type_):
+                        with self.assertRaises(ValueError) as ctx:
+                            make_call(type_, _UUID, language="fr")()
+                        self.assertIn("no heading-mapping table", str(ctx.exception))
 
     def test_default_language_dispatches_exactly_as_before(self):
         """language omitted and language='en' both dispatch through ``_ADAPTERS`` with exactly the pre-i18n
@@ -257,23 +278,32 @@ class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest
                                 expected = (expected[0], _status_for(type_), None)
                             adapters[type_].assert_called_once_with(*expected)
 
-    def test_dec_non_default_language_dispatches_to_the_language_adapter_with_the_language(self):
-        """A non-default dec language goes through ``_LANGUAGE_ADAPTERS`` with the language as the last argument."""
+    def test_non_default_language_dispatches_to_the_language_adapter_with_the_language(self):
+        """A non-default language goes through ``_LANGUAGE_ADAPTERS`` with the language as the last argument,
+        for every language-aware type."""
         for name, _tool, module, types, make_call in _TOOLS:
-            sentinel = object()
-            language_adapters = {"dec": mock.Mock(return_value=sentinel)}
-            with (
-                mock.patch.object(module, "_ADAPTERS", _booby_trapped_adapters(types)),
-                mock.patch.object(module, "_LANGUAGE_ADAPTERS", language_adapters),
-            ):
-                with self.subTest(tool=name):
-                    try:
-                        make_call("dec", _UUID, language="de")()
-                    except Exception:  # pylint: disable=broad-except
-                        pass
-                    language_adapters["dec"].assert_called_once()
-                    self.assertEqual(language_adapters["dec"].call_args.args[0], _UUID)
-                    self.assertEqual(language_adapters["dec"].call_args.args[-1], "de")
+            for type_ in LANGUAGE_AWARE_DOMAINS:
+                sentinel = object()
+                language_adapters = _booby_trapped_adapters(LANGUAGE_AWARE_DOMAINS)
+                language_adapters[type_] = mock.Mock(return_value=sentinel)
+                with (
+                    mock.patch.object(module, "_ADAPTERS", _booby_trapped_adapters(types)),
+                    mock.patch.object(module, "_LANGUAGE_ADAPTERS", language_adapters),
+                ):
+                    with self.subTest(tool=name, type=type_):
+                        try:
+                            make_call(type_, _UUID, language="de")()
+                        except Exception:  # pylint: disable=broad-except
+                            pass
+                        language_adapters[type_].assert_called_once()
+                        self.assertEqual(language_adapters[type_].call_args.args[0], _UUID)
+                        self.assertEqual(language_adapters[type_].call_args.args[-1], "de")
+
+    def test_language_adapter_tables_cover_exactly_the_language_aware_domains(self):
+        """Every generic tool's ``_LANGUAGE_ADAPTERS`` keys equal ``LANGUAGE_AWARE_DOMAINS`` (guard and dispatch agree)."""
+        for name, _tool, module, _types, _make_call in _TOOLS:
+            with self.subTest(tool=name):
+                self.assertEqual(tuple(module._LANGUAGE_ADAPTERS), LANGUAGE_AWARE_DOMAINS)
 
     def test_every_tool_has_a_language_parameter_defaulting_to_en(self):
         """The signature of each generic write tool ends with ``language: str = 'en'``."""

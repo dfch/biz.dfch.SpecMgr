@@ -39,12 +39,31 @@ Like ``dec.models.v1.parser.parse_dec``/``gol.models.v1.parser.parse_gol``,
 there is no dedicated structural-error exception type (no ``SopParseError``
 equivalent); both error channels are plain ``AssertionError`` /
 ``pydantic.ValidationError`` that propagate uncaught.
+
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
+domain: ``parse_sop`` is this domain's single text-to-model parse boundary --
+the choke point behind ``get_sop``'s non-raw reads, ``list_sop``'s rows (both
+via the cache-backed ``read_sop``), and the path-based ``parse_sop`` tool -- and
+it takes an optional ``language`` keyword (``None``/omitted or ``"en"`` =
+canonical, no table -- byte-identical to the pre-i18n EN path; any other
+language resolves its table via
+:func:`biz.dfch.specmgr.general.models.resolve_heading_table`). When a table
+exists, the mdformat-normalized body passes the fence-aware
+:func:`biz.dfch.specmgr.general.models.normalize_heading_lines` pre-pass
+before the *unchanged* ``models/md`` engine runs, so the parsed model holds
+canonical heading text while the on-disk file keeps its translation.
+``parse_sop_body`` is the body-only half of it (the single body-validation
+entry point the write side shares: ``create_sop`` and the generic
+``update``/``edit`` tools' ``sop`` adapters validate the caller's raw body
+through it).
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
+from biz.dfch.specmgr.general.models.heading_table import normalize_heading_lines, resolve_heading_table
 from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md._timestamps import normalize_yaml_datetime
@@ -53,10 +72,10 @@ from .body import Sop
 from .document import SopDocument
 from .frontmatter import SopFrontmatter
 
-__all__ = ["parse_sop"]
+__all__ = ["parse_sop", "parse_sop_body"]
 
 
-def parse_sop(text: str) -> SopDocument:
+def parse_sop(text: str, *, language: str | None = None) -> SopDocument:
     """Parse a full Standard Operating Procedure ``.md`` file's text into a :class:`SopDocument`.
 
     Parameters
@@ -65,6 +84,19 @@ def parse_sop(text: str) -> SopDocument:
         The complete file content, YAML frontmatter block and markdown body
         together, exactly as read from disk (or submitted verbatim by an MCP
         tool call that never wrote it to disk at all).
+    language:
+        The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+        ``None`` (the default) or ``"en"`` parses the canonical, English
+        headings as-is (no table -- byte-identical to the pre-i18n path);
+        any other value resolves that language's heading-mapping table and
+        applies the fence-aware heading-normalization pre-pass to the
+        mdformat-normalized body before the ``models/md`` engine runs, so a
+        translated document's fixed-text headings parse to the same
+        canonical schema keys as their EN counterpart (data-carrying regex
+        headings carry no table entry and match directly, their
+        schema-constant tokens staying canonical in the file). The
+        frontmatter is never transformed (its values are language-invariant,
+        REQ-010).
 
     Returns
     -------
@@ -77,10 +109,68 @@ def parse_sop(text: str) -> SopDocument:
         frontmatter YAML -- both frontmatter error channels are enriched by
         :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
         (feat-27-validation Phase 2).
+
+    Raises
+    ------
+    ValueError
+        A non-default ``language`` without a packaged heading-mapping table
+        (the table loader's actionable error,
+        :func:`biz.dfch.specmgr.general.models.load_heading_table`).
     """
     fm, content = parse_frontmatter(text, SopFrontmatter, domain="sop", stringify_metadata=_stringify_metadata)
-    body = Sop.from_text(format_text(content))
+    body = parse_sop_body(content, language=language)
     return SopDocument(frontmatter=fm, body=body)
+
+
+def parse_sop_body(content: str, *, language: str | None = None) -> Sop:
+    """Parse a frontmatter-free Standard Operating Procedure body text into a :class:`Sop`, in the given language.
+
+    The body-only half of :func:`parse_sop` (feat-197-i18n Phase 125, ADR
+    38efdb66 item 5): ``Sop.from_text(format_text(content))`` with the
+    optional per-language heading-normalization pre-pass between the two.
+    It is the single body-validation entry point the write side shares --
+    ``create_sop`` and the generic ``update``/``edit`` tools' ``sop``
+    adapters validate the caller's raw body through it, so a language
+    variant's translated headings are accepted exactly as the read side
+    (:func:`parse_sop`, which itself delegates here) accepts them, and the
+    persisted text stays the caller's raw body byte-for-byte (this function
+    only validates; it never renders). With ``language`` omitted/``None``
+    or ``"en"`` there is no table and the parse is byte-identical to the
+    pre-i18n ``Sop.from_text(format_text(content))``.
+
+    Parameters
+    ----------
+    content:
+        The body markdown only (no YAML frontmatter block).
+    language:
+        The body's language: ``None``/omitted or ``"en"`` = canonical
+        headings as-is; any other value resolves that language's
+        heading-mapping table via
+        :func:`biz.dfch.specmgr.general.models.resolve_heading_table`.
+
+    Returns
+    -------
+    Sop
+        The structured body (canonical heading text for every section).
+
+    Raises
+    ------
+    AssertionError
+        A malformed heading/list structure.
+    pydantic.ValidationError
+        A field or cross-field validation failure.
+    ValueError
+        A non-default ``language`` without a packaged heading-mapping table.
+    """
+    assert isinstance(content, str), type(content)
+    assert language is None or isinstance(language, str), type(language)
+
+    formatted = format_text(content)
+    table = resolve_heading_table(language)
+    if table is not None:
+        formatted = normalize_heading_lines(formatted, table)
+    result = Sop.from_text(formatted)
+    return result
 
 
 def _stringify_metadata(metadata: dict[str, object]) -> dict[str, object]:

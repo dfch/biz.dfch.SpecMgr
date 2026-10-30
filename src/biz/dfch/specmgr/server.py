@@ -399,19 +399,32 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
   ``update_sysrs``/``set_status_sysrs`` tools of its own; deletion goes through the
   generic ``delete`` tool (``type="sysrs"``).
-  General tools (``general/tools/``) -- language variants (feat-197-i18n Phase 120):
+  Language variants, every i18n-eligible domain (feat-197-i18n Phases 110/120/125): the
+``get_<d>``/``list_<d>`` tools take an optional ``language`` parameter (default ``"en"``)
+and the ``create_<d>`` tools an optional ``language`` plus ``id`` (the shared id of the
+EN source, required for a non-default language and forbidden for ``"en"``) for all
+eleven domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
+``vcr``/``sysrs`` -- exactly the behavior documented for ``get_dec``/``list_dec``/
+``create_dec`` above (flat ``docs/<type>/`` for ``"en"``, ``docs/<type>/{language}/``
+under the EN source's exact file name for any other code, shape-guarded before any file
+access, single language per ``list_<d>`` call, a new variant's ``status`` is the
+domain's own create status: ``draft``, ``open`` for ``rsk``); every ``parse_<d>`` tool
+derives the language from its path position; ``prb``'s ``problem_statement`` lead
+paragraph is exempt from translation (the one regex-locked English field, it stays the
+canonical English template sentence in every language). ``feat`` (always English) and
+``adr`` take no ``language`` parameter.
+  General tools (``general/tools/``) -- language variants (feat-197-i18n Phases 120/125):
 the generic ``update``/``edit``/``set_status``/``set_classification``/``delete``
 tools each take an optional ``language`` parameter (default ``"en"``, appended
 last). Omitted/``"en"`` dispatches exactly as before. A non-default
 ISO 639-1-shaped lowercase two-letter code acts on that language's variant file
 ONLY (``docs/<type>/{language}/``, located by id-scan; the EN file's bytes,
 ``updated`` timestamp, and cache entry stay untouched, and a variant's content is
-validated through the language's heading-mapping table) -- honored by ``dec`` only
-so far; any other ``type`` raises a ``ValueError`` for a non-default language
-before any file access (``feat``/``adr`` permanently: those documents are always
-English; the remaining domains: not yet supported), as does a malformed ``language``
-or one without a packaged table. The generic ``validate`` tool takes no
-``language`` parameter (EN/canonical content only).
+validated through the language's heading-mapping table) -- honored by every
+whole-body domain except ``feat``; ``feat``/``adr`` raise a ``ValueError`` for a
+non-default language before any file access (those documents are always English),
+as does a malformed ``language`` or one without a packaged table. The generic
+``validate`` tool takes no ``language`` parameter (EN/canonical content only).
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the whole-body domains (``type`` is one of

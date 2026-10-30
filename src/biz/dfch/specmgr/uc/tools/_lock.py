@@ -31,7 +31,9 @@ import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-__all__ = ["uc_lock"]
+from ...general.tools._path_safety import DEFAULT_LANGUAGE
+
+__all__ = ["uc_lock", "uc_lock_key"]
 
 #: Guards creation of/lookup into `_locks` -- held only for the instant it
 #: takes to get-or-create a per-id lock, never for the duration of a
@@ -54,6 +56,40 @@ def _lock_for(id_: str) -> threading.Lock:
         return lock
 
 
+def uc_lock_key(id_: str, language: str | None = None) -> str:
+    """Return the lock key for use case ``id_`` in ``language``.
+
+    **Per-language keying (feat-197-i18n Phase 125, ADR 38efdb66 item 9).**
+    The language variants of one ``id`` are distinct files (distinct
+    paths), so a mutation of one variant must neither race with, nor
+    needlessly block on, a mutation of another. The lock key is therefore
+    the pair (``id_``, language): for the default language (``None``/
+    omitted or ``"en"``) the key is the bare ``id_`` -- exactly today's
+    key, so the EN locking is byte-identical -- and for any other language
+    it is ``"<id_>/<language>"`` (an id never contains ``/``: it is a bare
+    UUID, validated before any lock is taken, so a variant key can never
+    collide with an id key).
+
+    Parameters
+    ----------
+    id_:
+        The use case's id (shared across every language variant).
+    language:
+        The variant's language; ``None``/omitted or ``"en"`` = the default
+        (flat EN) document.
+
+    Returns
+    -------
+    str
+        The key to pass to :func:`uc_lock`.
+    """
+    assert isinstance(id_, str), type(id_)
+    assert language is None or isinstance(language, str), type(language)
+
+    result = id_ if language is None or language == DEFAULT_LANGUAGE else f"{id_}/{language}"
+    return result
+
+
 @contextmanager
 def uc_lock(id_: str) -> Iterator[None]:
     """Serialize the read-modify-write mutation sequence for use-case ``id_``.
@@ -61,7 +97,11 @@ def uc_lock(id_: str) -> Iterator[None]:
     Every mutating tool wraps its whole ``load_by_id`` -> mutate -> write
     sequence in ``with uc_lock(id):`` so two concurrent calls targeting the
     same id run one after another instead of interleaving, preventing the
-    lost-update race described in this module's docstring.
+    lost-update race described in this module's docstring. The argument is
+    the lock *key*: the bare id for the default (EN) document, or
+    :func:`uc_lock_key`'s per-language key for a language variant
+    (feat-197-i18n Phase 125), so the language variants of one id are
+    serialized independently of each other.
     """
     lock = _lock_for(id_)
     with lock:

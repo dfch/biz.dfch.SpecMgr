@@ -107,28 +107,49 @@ key, not the removed folder) is invalidated in the same spot
 vector is never served.
 
 
-### `_delete_gol(id_: 'str') -> 'str'`
+### `_delete_gol(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the goal ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_prb(id_: 'str') -> 'str'`
+
+### `_delete_prb(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the problem statement ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_qa(id_: 'str') -> 'str'`
+
+### `_delete_qa(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the QA document ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_req(id_: 'str') -> 'str'`
+
+### `_delete_req(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the requirement ``id_`` from disk (REQ-001/004/005/006).
 
@@ -147,45 +168,94 @@ embedding-cache entry for ``(req, path)`` is invalidated in the same
 spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
 stale vector is never served.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_rsk(id_: 'str') -> 'str'`
+
+### `_delete_rsk(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the risk ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_sop(id_: 'str') -> 'str'`
+
+### `_delete_sop(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_sysrs(id_: 'str') -> 'str'`
+
+### `_delete_sysrs(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the System Requirements Specification ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_tsk(id_: 'str') -> 'str'`
+
+### `_delete_tsk(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the task list ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_uc(id_: 'str') -> 'str'`
+
+### `_delete_uc(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the use case ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_vcr(id_: 'str') -> 'str'`
+
+### `_delete_vcr(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
 ### `delete(id: 'str', type: 'WholeBodyType', language: 'str' = 'en') -> 'str'`
@@ -233,10 +303,9 @@ language:
     never re-derived); only that one variant file is removed (and
     only its own cache entries invalidated): the EN document stays
     untouched. Shape-guarded before any filesystem access (like
-    ``id``). Only ``type="dec"`` supports a non-default language so
-    far -- any other ``type`` raises a ``ValueError`` for one
-    (``feat`` is always English; the remaining domains are not yet
-    enabled).
+    ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
 Returns
 -------
@@ -251,10 +320,8 @@ ValueError
     domain's own format (raised before any filesystem access; nothing
     is deleted). Also raised, before any filesystem access, for a
     malformed ``language`` (not an ISO 639-1-shaped lowercase
-    two-letter code), a non-default ``language`` with ``type``
-    ``feat`` (always English) or any other domain not yet supporting
-    language variants, or a non-default ``language`` of ``dec``
-    without a packaged heading-mapping table.
+    two-letter code), a non-default ``language`` with ``type`` ``feat`` (always English), or a non-
+    default ``language`` without a packaged heading-mapping table.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /

@@ -140,7 +140,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._domains`](biz.dfch.specmgr.general.tools._domains.md) — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
 - [`biz.dfch.specmgr.general.tools._embedding`](biz.dfch.specmgr.general.tools._embedding.md) — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 - [`biz.dfch.specmgr.general.tools._embedding_cache`](biz.dfch.specmgr.general.tools._embedding_cache.md) — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
-- [`biz.dfch.specmgr.general.tools._language_guard`](biz.dfch.specmgr.general.tools._language_guard.md) — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phase 120).
+- [`biz.dfch.specmgr.general.tools._language_guard`](biz.dfch.specmgr.general.tools._language_guard.md) — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phases 120/125).
 - [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
