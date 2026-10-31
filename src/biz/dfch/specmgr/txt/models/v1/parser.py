@@ -60,16 +60,27 @@ canonical heading text while the on-disk file keeps its translation.
 ``parse_txt_body`` is the body-only half of it (the single body-validation
 entry point the write side shares: ``create_txt`` and the generic
 ``update``/``edit`` tools' ``txt`` adapters validate the caller's raw body
-through it). The opaque free-form body's own free headings are not schema
-headings: they carry no table entry and are left as-is in the model (only the
-fixed-text ``## Updates`` heading is table-mappable).
+through it).
+
+Unlike every other domain, ``txt`` does **not** run the generic
+:func:`~biz.dfch.specmgr.general.models.normalize_heading_lines` pass over the
+whole body (feat-229-txt Phase 180, review finding E1): the free-form body is
+opaque (REQ-002, "accepted verbatim"), so its free headings are *not* schema
+headings and must never be rewritten -- a free ``## Zusammenfassung`` has to stay
+exactly that in the parsed model, not become ``## Summary``. The only fixed-text
+schema heading of this domain is ``## Updates``, so :func:`_normalize_updates_heading`
+rewrites exactly that one line: the first top-level (outside a code fence) H2
+whose text the table maps to ``Updates`` (or that already reads ``Updates``) --
+the same "first top-level ``## Updates`` is the boundary" rule as the EN
+path, with the language's own spelling of the word. Every other line, free
+headings and update-entry content included, stays byte-identical.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-from biz.dfch.specmgr.general.models.heading_table import normalize_heading_lines, resolve_heading_table
+from biz.dfch.specmgr.general.models.heading_table import iter_heading_lines, resolve_heading_table
 from biz.dfch.specmgr.models.md._frontmatter_parse import parse_frontmatter
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md._timestamps import normalize_yaml_datetime
@@ -174,8 +185,59 @@ def parse_txt_body(content: str, *, language: str | None = None) -> Txt:
     formatted = format_text(content)
     table = resolve_heading_table(language)
     if table is not None:
-        formatted = normalize_heading_lines(formatted, table)
+        formatted = _normalize_updates_heading(formatted, table)
     result = Txt.from_text(formatted)
+    return result
+
+
+#: The canonical (English) text of this domain's one fixed-text schema heading.
+_UPDATES_HEADING = "Updates"
+
+#: The heading level of the ``## Updates`` section.
+_UPDATES_LEVEL = 2
+
+
+def _normalize_updates_heading(text: str, table: dict[str, str]) -> str:
+    """Rewrite the one table-mapped ``## Updates`` heading line to its canonical text; touch nothing else.
+
+    The txt-specific replacement for the generic
+    :func:`~biz.dfch.specmgr.general.models.normalize_heading_lines` pass
+    (feat-229-txt Phase 180, review finding E1): ``txt``'s body is opaque, so
+    only the boundary heading is a schema heading. The first top-level H2
+    (:func:`~biz.dfch.specmgr.general.models.heading_table.iter_heading_lines`:
+    fence-aware, ``^## `` at column 0) whose text equals ``Updates`` after the
+    table lookup is the boundary; when its text differs from ``Updates`` its
+    line is rewritten to ``## Updates``. Free body headings -- even ones whose
+    text happens to be another table key -- stay byte-identical, and so does
+    everything after the boundary (update-entry headings are timestamp-led and
+    carry no table entry; entry content is opaque too).
+
+    Parameters
+    ----------
+    text:
+        The mdformat-normalized body text.
+    table:
+        The language's ``<translated> -> <canonical>`` mapping.
+
+    Returns
+    -------
+    str
+        ``text`` with at most one line (the boundary heading) rewritten; same
+        line count, same join. Unchanged when no heading maps to ``Updates``
+        (the engine then rejects the document with its own missing-section error).
+    """
+    assert isinstance(text, str), type(text)
+    assert isinstance(table, dict), type(table)
+
+    result = text
+    for index, level, heading_text in iter_heading_lines(text):
+        if level != _UPDATES_LEVEL or table.get(heading_text, heading_text) != _UPDATES_HEADING:
+            continue
+        if heading_text != _UPDATES_HEADING:
+            lines = text.split("\n")
+            lines[index] = f"{'#' * _UPDATES_LEVEL} {_UPDATES_HEADING}"
+            result = "\n".join(lines)
+        break
     return result
 
 

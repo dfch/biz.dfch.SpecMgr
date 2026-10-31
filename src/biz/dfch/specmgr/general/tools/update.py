@@ -1272,8 +1272,6 @@ def _update_txt(
     touched by a non-default ``language`` call.
     """
     if offset is not None:
-        assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
-
         base_dir = txt_base_dir(language)
         with txt_lock(txt_lock_key(id_, language)):
             try:

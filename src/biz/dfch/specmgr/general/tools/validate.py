@@ -114,7 +114,7 @@ from ...server import mcp
 from ...sop.models.v1 import Sop, parse_sop
 from ...sysrs.models.v1 import Sysrs, parse_sysrs
 from ...tsk.models.v1 import Task, parse_tsk
-from ...txt.models.v1 import Txt, parse_txt
+from ...txt.models.v1 import parse_txt, parse_txt_body
 from ...uc.models.v2 import UseCase, parse_uc
 from ...vcr.models.v1 import Vcr, parse_vcr
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
@@ -501,7 +501,8 @@ def _validate_txt(content: str, full: bool) -> None:
     """Validate ``content`` as free-form text markdown.
 
     Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
-    label, ``parse_txt`` for the full document, ``Txt.from_text`` for the
+    label, ``parse_txt`` for the full document, ``parse_txt_body`` -- the
+    single body-validation entry point the write adapters share -- for the
     body-only shape; ``txt`` is dispatch-only from day one per ADR
     36905d5b) -- see :func:`_validate_req` for the shared semantics.
     """
@@ -523,7 +524,7 @@ def _validate_txt(content: str, full: bool) -> None:
                 "block was found. Pass full=True to validate a complete document instead."
             )
         with wrap_tool_errors(domain="txt", tool="validate", channel=BODY_CHANNEL):
-            Txt.from_text(format_text(content))
+            parse_txt_body(content)
 
 
 #: Dispatch table mapping the ``type`` value to its private adapter.

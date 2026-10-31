@@ -249,8 +249,8 @@ appendix
 definitions_and_acronyms
 # txt (feat-229 Phase 1): the `Txt` root's own `body`/`updates` fields and
 # `UpdateEntry`'s computed `timestamp`/`title` are read only via
-# (de)serialization; nothing in `src/` accesses the txt model's fields as
-# plain attributes yet (the `txt` tools come in Phase 110). `updates` and
+# (de)serialization; `src/` accesses the txt model's fields only through the
+# parser/tool plumbing, not as plain attributes. `updates` and
 # `timestamp` need no entry here -- they are already listed once above (this
 # file lists each name once, not per domain); `body` and `title` are listed
 # here -- they are incidentally marked used by unrelated src references today

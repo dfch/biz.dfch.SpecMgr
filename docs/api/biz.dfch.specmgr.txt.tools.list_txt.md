@@ -29,22 +29,22 @@ glob-given result has no failed rows and ``error_count = 0`` by
 construction (feat-200-list REQ-003); ``total`` is the match count and
 ``offset``/``max_results`` paging keeps its existing meaning on that
 smaller set (ACC-004). ``glob=None`` (the default) leaves every outcome
- byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
- a pattern, not an off-switch (it matches no id and yields a zero-row
- result).
+byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
+a pattern, not an off-switch (it matches no id and yields a zero-row
+result).
 
- **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
- A 1:1 port of ``list_req``'s ``language`` handling. The optional
- ``language`` parameter (default ``"en"``) selects which directory this tool
- scans: omitted/``"en"`` = the flat ``docs/txt/`` directory -- today's exact
- behavior; any other shape-validated code (e.g. ``"de"``) = only the
- ``docs/txt/{language}/`` subdirectory, listing exactly the existing
- variants of that language (ACC-007). There is deliberately NO "all
- languages" mode (the ``DocSummary`` row shape carries no language column
- and would repeat ids). The language is shape-guarded before any filesystem
- access, and a shape-valid language without a packaged heading-mapping table
- is rejected up front with the table loader's actionable error. The row
- shape is unchanged -- no language column.
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+A 1:1 port of ``list_req``'s ``language`` handling. The optional
+``language`` parameter (default ``"en"``) selects which directory this tool
+scans: omitted/``"en"`` = the flat ``docs/txt/`` directory -- today's exact
+behavior; any other shape-validated code (e.g. ``"de"``) = only the
+``docs/txt/{language}/`` subdirectory, listing exactly the existing
+variants of that language (ACC-007). There is deliberately NO "all
+languages" mode (the ``DocSummary`` row shape carries no language column
+and would repeat ids). The language is shape-guarded before any filesystem
+access, and a shape-valid language without a packaged heading-mapping table
+is rejected up front with the table loader's actionable error. The row
+shape is unchanged -- no language column.
 
 ## Functions
 

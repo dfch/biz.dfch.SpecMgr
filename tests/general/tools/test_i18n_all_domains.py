@@ -18,7 +18,8 @@
 """Parametrized i18n tests over all twelve language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
-domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``). The ``dec`` pilot keeps its
+domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
+them as the twelfth. The ``dec`` pilot keeps its
 own deep test modules (``tests/dec/tools/test_i18n_language.py``/``test_i18n_write.py``); this module drives *every*
 language-aware domain, ``dec`` included, through the same behaviors, so a regression in any one domain's port is caught
 here at a pragmatic depth:

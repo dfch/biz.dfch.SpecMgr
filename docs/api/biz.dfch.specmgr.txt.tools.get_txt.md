@@ -29,34 +29,34 @@ the parsed document -- produced by the same
 :func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
 generic ``update`` tool's range splice uses, so the line numbers a client
 counts in a raw read index byte-for-byte into the text the server splices
- against. With optional read-style ``offset``/``limit`` coordinates
- (feat-28-get-update, Phase 2), the same raw read instead returns the window
- of that text, served by the shared
- :func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
- out-of-range values, never erroring). With an optional ``numbered=True``
- (feat-153-off-by-n, Phase 3), each returned body line is additionally
- prefixed with its 1-based absolute body-line number in the ``"<n>: "``
- form.
+against. With optional read-style ``offset``/``limit`` coordinates
+(feat-28-get-update, Phase 2), the same raw read instead returns the window
+of that text, served by the shared
+:func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
 
- **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
- A 1:1 port of ``get_req``'s ``language`` handling. The optional ``language``
- parameter (default ``"en"``) selects which on-disk variant of the id to
- read: omitted/``"en"`` = the flat ``docs/txt/<id>.md`` document, exactly
- today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
- ``"de"``) = the variant at ``docs/txt/{language}/<id>.md`` (the EN source's
- exact basename). The language is shape-guarded by
- :func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
- any filesystem access (the same discipline as ``id``), and a shape-valid
- language without a packaged heading-mapping table is rejected up front with
- the table loader's actionable error, also before any filesystem access.
- A ``raw=True`` read of a variant returns the variant's on-disk body
- verbatim (its translation preserved); a ``raw=False`` read parses through
- the variant's heading table, so the structured model holds canonical
- heading text (ACC-004/ACC-011). The non-raising
- :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
- for a broken variant file exactly as for EN: the ``error`` text is
- byte-identical to ``list_txt(language=...)``'s failed row for the same
- file (ADR 9080b37c).
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_req``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/txt/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/txt/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_txt(language=...)``'s failed row for the same
+file (ADR 9080b37c).
 
 ## Functions
 

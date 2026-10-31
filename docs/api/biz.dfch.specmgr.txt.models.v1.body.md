@@ -1000,11 +1000,17 @@ otherwise-private `_value` is reachable through
   everything remaining), so the mandatory `updates` field declared
   after `body` fails with the engine's own error (REQ-011).
 
-  One cost note: the boundary check re-tokenizes the entire body text
-  via `parse(text)` on every parse, in addition to the engine's own
-  tokenization of the same text -- an O(body-size) cost paid twice per
-  parse, inherent to this override. If a "large txt body is slow"
-  report ever surfaces, this is the cause to investigate first.
+  One cost note (corrected in feat-229-txt Phase 180, review finding
+  G2): the boundary check re-tokenizes the body via `parse(text)`, but
+  that is cheap (about 0.03 s for an 80 KB body, measured). The cost
+  that grows with body size is the engine's own opaque-`MarkdownStr`
+  path, which re-runs `mdformat` over the body text repeatedly per parse
+  (about 0.8 s for the same 80 KB body, several seconds for a few
+  hundred KB), and every create/update/edit/validate and the first
+  `list_txt` over a cold corpus pay it. It is an accepted v1 trade-off
+  (the shared `models/md` engine is out of scope for this domain); if a
+  "large txt body is slow" report ever surfaces, investigate the
+  engine's repeated `format_text` calls first, not this override.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.
@@ -1367,11 +1373,17 @@ otherwise-private `_value` is reachable through
   everything remaining), so the mandatory `updates` field declared
   after `body` fails with the engine's own error (REQ-011).
 
-  One cost note: the boundary check re-tokenizes the entire body text
-  via `parse(text)` on every parse, in addition to the engine's own
-  tokenization of the same text -- an O(body-size) cost paid twice per
-  parse, inherent to this override. If a "large txt body is slow"
-  report ever surfaces, this is the cause to investigate first.
+  One cost note (corrected in feat-229-txt Phase 180, review finding
+  G2): the boundary check re-tokenizes the body via `parse(text)`, but
+  that is cheap (about 0.03 s for an 80 KB body, measured). The cost
+  that grows with body size is the engine's own opaque-`MarkdownStr`
+  path, which re-runs `mdformat` over the body text repeatedly per parse
+  (about 0.8 s for the same 80 KB body, several seconds for a few
+  hundred KB), and every create/update/edit/validate and the first
+  `list_txt` over a cold corpus pay it. It is an accepted v1 trade-off
+  (the shared `models/md` engine is out of scope for this domain); if a
+  "large txt body is slow" report ever surfaces, investigate the
+  engine's repeated `format_text` calls first, not this override.
 
   Args:
       text: Markdown source, pre-formatted with `mdformat`.

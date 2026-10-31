@@ -4,7 +4,7 @@ created: '2026-10-28T09:42:29.469+01:00'
 id: feat-229-txt
 status: review
 type: feat
-updated: '2026-10-31T08:14:17.000+01:00'
+updated: '2026-10-31T16:35:54.696+01:00'
 version: 1.0.0
 ---
 
@@ -51,6 +51,7 @@ The domain follows the domain-first hierarchy and is dispatch-only from day one 
 - REQ-009: `txt` is both a reference source and a reference target: `TXT <uuid>` is added to the tag vocabulary of `list_references`/`get_reference_diagram`, resolved by a `_load_txt` target resolver (title = the document's H1), and a free-floating `REQ <uuid>` (or any other known tag) in a `txt` body is picked up by the existing regex scan.
 - REQ-010: The frozen reference-graph palette gains a `TXT` entry coloured `LightGrey` (inserted after `SYSRS`, before `UNRESOLVED`; 14 entries become 15), with the `specmgr://reference-graph` rulebook amended with a dated note and the golden fixtures and pinned counts updated in the same change.
 - REQ-011: The engine's default parse error messages are kept unchanged; the packaged template and example are the structural documentation (no custom cause/fix-hint wrapping for the leftover-text or missing-`Updates` errors).
+- REQ-013: `txt` is one of the twelve language-aware domains (feat-197-i18n): `get_txt`/`list_txt`/`create_txt` take `language` (`create_txt` also `id`), `parse_txt` derives the language from the file position, and the five generic mutation tools carry a `txt` `_LANGUAGE_ADAPTERS` entry. In a language variant the heading-mapping table is applied to the `## Updates` heading only: the opaque body's free headings are never rewritten and are parsed verbatim (REQ-002), and the translation tooling treats them as canonical-by-convention (kept as in the EN source).
 - REQ-012: All cross-cutting registrations and generated artifacts are complete and drift-free: `server.py`, the `specmgr://config` resource, `commands/schema.py`, both `txt_schema.json` copies, `pyproject.toml` package data, `.pre-commit-config.yaml`, CI, `server.json`/`README.md`/`AGENTS.md`/`CHANGELOG.md`/`docs/MCP.md`/`docs/api/`, and the agent/skill text that enumerates domains.
 
 ### Acceptance Criteria
@@ -64,6 +65,7 @@ The domain follows the domain-first hierarchy and is dispatch-only from day one 
 - [x] ACC-007: Verifies REQ-010 -- the palette tuple, the rulebook (`general_reference_graph.md`) with its dated amendment note, `test_reference_graph.py`/`test__reference_graph.py`/`test_reference_graph_subset.py`/`test_get_reference_diagram.py` and the golden fixtures all agree on 15 entries with `("TXT", "LightGrey")` (the 15-entry agreement is confined to these artifacts -- the `plantuml/` structure checker and the UC rulebook carry no palette expectations), and a diagram containing a TXT node passes `validate_plantuml`.
 - [x] ACC-008: Verifies REQ-011 -- no `txt`-specific error-message wrapping exists beyond the shared `wrap_tool_errors` context, and the packaged `txt_template.md`/`txt_example.md` parse and validate green through `validate(type="txt", full=True)`.
 - [x] ACC-009: Verifies REQ-012 -- `specmgr schema`, `specmgr docs`, `specmgr mcp-docs` and the config-golden test show no drift, `tests/test_envregistry_*`, `tests/test_schema_surface_registration.py`, `tests/test_agent_facing_wording.py` and `tests/opencode/test_skill_specmgr_refs.py` pass, and `server.py`'s docstring lists every new tool/resource/prompt.
+- [x] ACC-012: Verifies REQ-013 -- `tests/txt/models/v1/test_parser_language.py` and `tests/txt/tools/test_txt_language.py` cover a `de` variant whose free body headings collide with table keys (kept verbatim by `parse_txt_body`, `get_txt`, `create_txt`, `update`), the translated `## Updates` boundary (incl. fenced, canonical and duplicate cases), the missing-boundary rejection without a write, a broken variant's `ParseFailureResult`, and the drift check's treatment of free headings (identical = no drift, renamed = `missing` + `extra`).
 - [x] ACC-010: The full test suite passes after every phase below, not just at the end.
 - [x] ACC-011: `ruff format --check`, `ruff check` and `vulture` all pass against the final state.
 
@@ -220,6 +222,18 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 - [x] Task 170.130: Regenerate `docs/api/`, `docs/GENERATED.md` (`specmgr docs`) and `docs/MCP.md` (`specmgr mcp-docs`); confirm `tests/test_schema_surface_registration.py` and `tests/test_agent_facing_wording.py` pass
 - [x] Task 170.140: Final gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`, `specmgr docs`/`schema`/`mcp-docs` drift checks, and set this feature's status to `review`
 
+#### Phase 180: Review fixes (feat-reviewer run after the origin/dev merge)
+
+- [x] Task 180.100: E1/G1 (decision (a)): replace the whole-body `normalize_heading_lines` pass in `txt/models/v1/parser.py` with the txt-specific `_normalize_updates_heading` (only the `## Updates` boundary line is table-mapped; free body headings and entry content stay verbatim); correct the parser docstring
+- [x] Task 180.110: G1: document the free-heading rule in `general_i18n.md` (`txt` row) and `general_translate_artifact_instructions.md`
+- [x] Task 180.120: G3/ACC-012: add `tests/txt/models/v1/test_parser_language.py` and `tests/txt/tools/test_txt_language.py`; confirm they fail against the old parser
+- [x] Task 180.130: D1: add REQ-013/ACC-012 to this plan and the language-awareness clause to the `txt` bullet in `AGENTS.md`
+- [x] Task 180.140: D2-D4: `server.py` "eleven" to "twelve" (`list_languages`), `txt_create_instructions.md` validation-failure wording (non-raising `ValidateResult`), stale `whitelist.py` comment
+- [x] Task 180.150: G2: correct the cost note in `TxtBody.get_extent` (measured: the cost is the engine's repeated `format_text`, not the boundary `parse`) and record it as an accepted v1 trade-off
+- [x] Task 180.160: I1: `_validate_txt` body-only path through `parse_txt_body`; I2: drop the tautological assert from the txt `update` adapter; I4: de-indent the `list_txt`/`parse_txt`/`get_txt` docstrings; I6: `test_i18n_all_domains.py` docstring
+- [x] Task 180.170: I5: document in `txt_create_instructions.md` that an H1 inside the body is accepted but discouraged (decision: document, do not reject -- the body is opaque); I3 left as is (the up-front `resolve_heading_table` is the deliberate fail-fast before any filesystem access)
+- [x] Task 180.180: Phase-end gate: `ruff format --check`, `ruff check`, `vulture`, full `pytest`, `specmgr docs`/`schema`/`mcp-docs` drift checks, `specmgr lint --all`
+
 ## Progress
 
 ### Current Status
@@ -233,6 +247,10 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31 16:45:00.000Z - Phase 180: feat-reviewer findings fixed (E1/G1 option (a) + all other findings, optional items included)
+
+A `feat-reviewer` run over the post-merge state returned 1 error, 3 gaps, 4 discrepancies, 6 improvements and 5 positives; all were handled as a new Phase 180 (tasks 180.100-180.180) rather than inline, so the findings stay traceable. **E1/G1 (decision (a), user-approved):** `parse_txt_body` no longer runs the generic `normalize_heading_lines` over the whole opaque body -- that rewrote free body headings that happened to equal heading-table keys (a free `## Zusammenfassung` parsed as `## Summary`, contradicting REQ-002). The new txt-specific `_normalize_updates_heading` (`txt/models/v1/parser.py`) rewrites exactly one line: the first top-level, non-fenced H2 whose table-mapped text is `Updates` (the same "first top-level `## Updates` is the boundary" rule as EN). Free headings and update-entry content stay byte-identical; EN is untouched. G1: the `txt` row of `general_i18n.md` and the structure rule of `general_translate_artifact_instructions.md` now say free body headings are canonical-by-convention (keep them as in the EN source; a renamed one is `missing` + `extra` drift) -- the wording avoids the word "drift" in the prompt text, because `test_no_reference_to_unimplemented_tools` forbids it there. **G3:** new `tests/txt/models/v1/test_parser_language.py` (10 tests: verbatim free headings, translated/canonical/fenced/duplicate boundary, entry-content headings, EN unchanged, missing boundary, and two drift-skeleton tests) and `tests/txt/tools/test_txt_language.py` (6 tests through `create_txt`/`get_txt`/`list_txt`/`update`, incl. rejection without a write and a broken variant's `ParseFailureResult`); verified they fail against the old parser (3 of them). **D1:** added REQ-013/ACC-012 to this plan and the language-awareness clause to the `txt` bullet in `AGENTS.md`. **D2-D4:** `server.py` `list_languages` "eleven" to "twelve" (+`txt`), `txt_create_instructions.md` now says a validation failure returns a non-raising `ValidateResult` (the "raises uncaught" wording was inherited from `vcr`/`dec`, which are out of scope), the stale `whitelist.py` comment. **G2:** the `TxtBody.get_extent` cost note corrected -- measured on an 80 KB body, the boundary `parse` is about 0.03 s while a full parse is about 0.8 s (the engine's repeated `mdformat` calls in the opaque-`MarkdownStr` path dominate); recorded as an accepted v1 trade-off (the shared engine stays out of scope). The note is in the method docstring, so both `txt_schema.json` copies stay unchanged. **I1:** `_validate_txt` body-only path now calls `parse_txt_body`. **I2:** the tautological assert dropped from the txt `update` adapter only (the other twelve copies are not this feature's to touch). **I3:** left as is -- the up-front `resolve_heading_table` in `create_txt` is the deliberate fail-fast before any filesystem access. **I4:** one-space docstring indentation removed from `list_txt`/`parse_txt`/`get_txt`. **I5:** documented, not rejected (the body is opaque; an H1 inside it parses, discouraged in the create instructions). **I6:** the `test_i18n_all_domains.py` docstring. **Gates:** `ruff format --check` (2252 files) + `ruff check` + `vulture` clean; full `pytest` **5614 passed / 18 skipped**; `specmgr docs` regenerated (8 pages) and idempotent, `specmgr mcp-docs` byte-identical on re-run, `specmgr schema` all 13 types "(unchanged)", `specmgr lint --all` linted=163 failed=0. No commit made.
 
 #### 2026-10-31 07:14:17.000Z - Merged with origin/dev (feat-197-i18n + feat-218); txt wired into the i18n surface
 

@@ -139,6 +139,10 @@ these from the source exactly:
   code blocks.
 - Headings that carry data tokens have no table entry: keep the token part
   and translate only the free-text part.
+- `txt` only: the headings inside the opaque free-form body (between the H1
+  and `## Updates`) are free text, not schema headings -- keep them exactly as
+  in the source (only `## Updates` itself is translated, through the table).
+  A translated free body heading no longer matches the source's structure.
 
 **Preserve the structure exactly:** the same headings in the same order and
 at the same levels, the same blank-line layout, the same list structure.

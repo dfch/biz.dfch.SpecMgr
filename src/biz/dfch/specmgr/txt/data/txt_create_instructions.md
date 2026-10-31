@@ -25,7 +25,9 @@ duplicate. Only proceed to step 1 if this is genuinely a new document.
   `REQ <uuid>` reference line (or any other known tag) may appear
   anywhere in the body. The body ends at the first top-level
   `## Updates` H2: do not put a second `## Updates` in the document,
-  and do not put any other H2 after it -- both are rejected.
+  and do not put any other H2 after it -- both are rejected. Use H2 to
+  H6 headings inside the body: a further H1 is not rejected (the body is
+  opaque) but is discouraged, since the first H1 is the document title.
 - `## Updates` -- mandatory, and the last section of the document: an
   optional leading HTML comment (conventionally "Newest entry first"),
   then at least one timestamp-led `### {timestamp} ( - | : ) {title}`
@@ -63,7 +65,8 @@ structurally uncertain or are resolving a validation error.
    the information gathered in step 2.
 2. Call `create_txt(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
-   validation failure raises uncaught and nothing is written.
+   validation failure returns a non-raising `ValidateResult`
+   (`valid=False`, with the error message) and nothing is written.
 3. Optionally call `validate(type="txt", content=content, full=False)`
    first if you want to dry-run the body without writing anything --
    `create_txt` already performs the same validation internally, so

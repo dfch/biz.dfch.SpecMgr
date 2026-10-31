@@ -734,7 +734,15 @@ type or cross-cutting:
   package, not top-level `models/`. Documents live flat under the shared
   docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
-  `SPECMGR_TXT_DIR`). `TXT <uuid>` is both a reference source and a
+  `SPECMGR_TXT_DIR`). `txt` is one of the twelve language-aware domains
+  (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
+  take `language` (`create_txt` also `id`), the five generic mutation tools
+  carry a `txt` `_LANGUAGE_ADAPTERS` entry, and — unlike every other domain —
+  the language variant's heading-mapping table is applied to the single
+  `## Updates` heading only (`txt/models/v1/parser._normalize_updates_heading`),
+  never to the opaque body's free headings, which are accepted and parsed
+  verbatim (keep them identical to the EN source; the drift check compares
+  them as-is). `TXT <uuid>` is both a reference source and a
   reference target (free-floating tokens in the body; the shared tag
   vocabulary is `GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT`), and
   the reference-graph palette carries a `TXT` entry coloured `LightGrey`

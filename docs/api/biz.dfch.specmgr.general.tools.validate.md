@@ -193,7 +193,8 @@ See :func:`_validate_req` for the shared semantics.
 Validate ``content`` as free-form text markdown.
 
 Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
-label, ``parse_txt`` for the full document, ``Txt.from_text`` for the
+label, ``parse_txt`` for the full document, ``parse_txt_body`` -- the
+single body-validation entry point the write adapters share -- for the
 body-only shape; ``txt`` is dispatch-only from day one per ADR
 36905d5b) -- see :func:`_validate_req` for the shared semantics.
 
