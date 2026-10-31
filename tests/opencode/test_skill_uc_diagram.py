@@ -22,12 +22,11 @@ feat-163's ``feat-numbering`` skill), the thin self-triggering
 ``.opencode/skill/uc-diagram/SKILL.md`` — plus the included optional
 ``.opencode/command/uc-diagram.md`` — points agents at the UC → PlantUML
 pipeline instead of restating it. These tests pin: the file's locations
-(notably the **singular** ``.opencode/skill/`` path — the repair-trio
-location, the repo's deliberate choice alongside ``.opencode/skills/`` which
-holds ``feat-numbering``; the skill lives in ``skill/`` because it belongs
-to the same host-artifact family as ``repair``, the ``task``-deferring
-trio shape); the skill's frontmatter (exactly the ``name``/``description``
-keys, ``name`` matching the folder, a non-empty third-person ``description``
+(the project skill path ``.opencode/skill/uc-diagram/`` — after the repo
+consolidated ``.opencode/skills/`` into ``.opencode/skill/``, every project
+skill lives under the singular ``skill/`` directory); the skill's frontmatter
+(exactly the ``name``/``description`` keys, ``name`` matching the folder, a non-empty
+third-person ``description``
 carrying the trigger keywords PlantUML/use case diagram/sequence diagram/
 specmgr — keyword matching is case-insensitive, a deliberate choice
 documented here, since opencode surfaces the description verbatim to agents

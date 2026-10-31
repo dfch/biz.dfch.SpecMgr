@@ -897,7 +897,7 @@ type or cross-cutting:
     (`.opencode/agent/ref-finder.md`), the `/refs <type> <id>` command
     (`.opencode/command/refs.md`, `agent: ref-finder`), and the
     self-triggering `specmgr-refs` OpenCode Skill
-    (`.opencode/skills/specmgr-refs/SKILL.md`, feat-152, GitHub issue
+    (`.opencode/skill/specmgr-refs/SKILL.md`, feat-152, GitHub issue
     #152) that routes single-document requests to `list_references`
     and codifies the graph/batch/reverse workflows and, since
     feat-207-reference-graph (GitHub issue #207), the rendered-diagram

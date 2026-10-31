@@ -572,7 +572,7 @@ references. `/refs` requires opencode — the tool itself is plain MCP,
 callable directly from any MCP client.
 
 Also in [opencode](https://opencode.ai), the project-local
-`specmgr-refs` skill (`.opencode/skills/specmgr-refs/SKILL.md`) is the
+`specmgr-refs` skill (`.opencode/skill/specmgr-refs/SKILL.md`) is the
 agent-initiated surface: it loads itself when a task matches
 reference-retrieval phrasings, routes single-document requests to the
 `list_references` tool, the `ref-finder` subagent, or the `/refs`

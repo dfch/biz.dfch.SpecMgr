@@ -17,7 +17,7 @@
 
 """feat-163 Phase 130, Task 130.110: ACC-006 consistency test for the feat-numbering project skill.
 
-The repo's second project OpenCode skill, ``.opencode/skills/feat-numbering/SKILL.md``
+The repo's second project OpenCode skill, ``.opencode/skill/feat-numbering/SKILL.md``
 (feat-150's ``repair`` skill, ``.opencode/skill/repair/SKILL.md``, being the first), teaches
 the FEAT Task List numbering scheme. These tests pin: the file's location; its frontmatter
 (exactly the ``name``/``description`` keys, ``name`` matching the folder, a non-empty
@@ -46,7 +46,7 @@ from biz.dfch.specmgr.feat.resources.feat_template import feat_template
 from biz.dfch.specmgr.general.tools import _packaged_data
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_SKILL_DIR = _REPO_ROOT / ".opencode" / "skills" / "feat-numbering"
+_SKILL_DIR = _REPO_ROOT / ".opencode" / "skill" / "feat-numbering"
 _SKILL_PATH = _SKILL_DIR / "SKILL.md"
 _SKILL_NAME = "feat-numbering"
 _TRIGGER_KEYWORDS: tuple[str, ...] = ("FEAT", "Task List", "Phase", "specmgr")
@@ -139,7 +139,7 @@ class TestSkillFileLocation(unittest.TestCase):
     """ACC-006: the skill exists at its default project-skill path."""
 
     def test_skill_file_exists(self):
-        """Task 130.100's file is committed at .opencode/skills/feat-numbering/SKILL.md."""
+        """Task 130.100's file is committed at .opencode/skill/feat-numbering/SKILL.md."""
         self.assertTrue(_SKILL_DIR.is_dir())
         self.assertTrue(_SKILL_PATH.is_file())
 

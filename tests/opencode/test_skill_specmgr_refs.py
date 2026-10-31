@@ -17,8 +17,8 @@
 
 """feat-152 Phase 110, Task 110.120: ACC-005 consistency test for the specmgr-refs project skill.
 
-The repo's third project OpenCode skill, ``.opencode/skills/specmgr-refs/SKILL.md``
-(feat-163's ``feat-numbering`` skill, ``.opencode/skills/feat-numbering/SKILL.md``,
+The repo's third project OpenCode skill, ``.opencode/skill/specmgr-refs/SKILL.md``
+(feat-163's ``feat-numbering`` skill, ``.opencode/skill/feat-numbering/SKILL.md``,
 being the previous one and feat-150's ``repair`` skill,
 ``.opencode/skill/repair/SKILL.md``, the first), is the agent-initiated router over the
 feat-144 cross-reference retrieval stack (the ``list_references`` MCP tool, the
@@ -58,7 +58,7 @@ import unittest
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_SKILL_DIR = _REPO_ROOT / ".opencode" / "skills" / "specmgr-refs"
+_SKILL_DIR = _REPO_ROOT / ".opencode" / "skill" / "specmgr-refs"
 _SKILL_PATH = _SKILL_DIR / "SKILL.md"
 _SKILL_NAME = "specmgr-refs"
 _TRIGGER_KEYWORDS: tuple[str, ...] = (
@@ -186,7 +186,7 @@ class TestSkillFileLocation(unittest.TestCase):
     """Pin a: the skill exists at its project-skill path."""
 
     def test_skill_file_exists(self):
-        """Task 110.100's file is committed at .opencode/skills/specmgr-refs/SKILL.md."""
+        """Task 110.100's file is committed at .opencode/skill/specmgr-refs/SKILL.md."""
         self.assertTrue(_SKILL_DIR.is_dir())
         self.assertTrue(_SKILL_PATH.is_file())
 
