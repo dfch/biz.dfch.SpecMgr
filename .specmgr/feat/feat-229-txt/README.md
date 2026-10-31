@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-28T09:42:29.469+01:00'
 id: feat-229-txt
-status: review
+status: done
 type: feat
-updated: '2026-10-31T16:35:54.696+01:00'
+updated: '2026-10-31T19:24:41.000+01:00'
 version: 1.0.0
 ---
 
@@ -247,6 +247,10 @@ Documents live flat under the shared docs root as `docs/txt/txt-{uuid}-{slug}.md
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31T19:24:41.000+01:00 - Closeout: feature merged to dev via PR #239; status set to done
+
+The feature shipped in the v0.38.0 release window: PR #239 was merged to `dev` (delivery commit `47b8932ad7d44d648cfbd59f8c00bfbca8930016`, 2026-10-31T17:16:25+01:00). All 11 acceptance criteria were met (see the Current Status paragraph); the post-merge fix passes (Phase 180) landed on `dev` in the same window. Status is set to `done` per the release precheck's feat closeout gate.
 
 #### 2026-10-31 16:45:00.000Z - Phase 180: feat-reviewer findings fixed (E1/G1 option (a) + all other findings, optional items included)
 

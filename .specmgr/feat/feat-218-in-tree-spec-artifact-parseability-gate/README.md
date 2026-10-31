@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-26T07:16:20.020+01:00'
 id: feat-218-in-tree-spec-artifact-parseability-gate
-status: review
+status: done
 type: feat
-updated: '2026-10-30T10:09:31.000+01:00'
+updated: '2026-10-31T19:24:41.000+01:00'
 version: 1.0.0
 ---
 
@@ -239,6 +239,10 @@ Phase 170 (the second feat-reviewer pass) fixed G1 (`--dir` combined with explic
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31T19:24:41.000+01:00 - Closeout: feature merged to dev via PR #241; status set to done
+
+The feature shipped in the v0.38.0 release window: PR #241 was merged to `dev` (delivery commit `4f9a02faf7d69d57173c0501fcde00b35bc424cb`, 2026-10-30T11:33:16+01:00). All 16 acceptance criteria were verified before merge (see the 2026-10-30T04:10:28.950Z entry). Status is set to `done` per the release precheck's feat closeout gate (the ruling recorded at close-out: `done` comes at merge).
 
 #### 2026-10-30T09:09:31.000Z - Phase 170 complete (second review pass: G1, G2, I1 fixed, I2 accepted, D1/D2 bookkeeping; the module now collects 54 tests + 43 subtests)
 

@@ -2,9 +2,9 @@
 classification: null
 created: '2026-10-29T11:14:24.992+01:00'
 id: feat-197-i18n
-status: review
+status: done
 type: feat
-updated: '2026-10-30T18:37:21.154+01:00'
+updated: '2026-10-31T19:24:41.000+01:00'
 version: 1.0.0
 ---
 
@@ -214,6 +214,10 @@ Open design questions to resolve during Phase 100 below:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31T19:24:41.000+01:00 - Closeout: feature merged to dev via PR #243; status set to done
+
+The feature shipped in the v0.38.0 release window: PR #243 was merged to `dev` (delivery commit `2ceeba500bf55f2be709f456bf86e92b60e0af20`, 2026-10-30T19:19:11+01:00). All acceptance criteria were verified before merge (see the 2026-10-30T15:44:19.000+01:00 final-verification entry). Status is set to `done` per the release precheck's feat closeout gate.
 
 #### 2026-10-30T18:40:00.000+01:00 - Review fix E1: the H1 title is never mapped; three doc corrections
 
