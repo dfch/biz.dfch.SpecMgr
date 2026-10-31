@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: planning
 type: feat
-updated: '2026-10-31T09:34:48.567+01:00'
+updated: '2026-10-31T22:29:01.822+01:00'
 version: 1.0.0
 ---
 
@@ -206,9 +206,9 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 #### Phase 125: .opencode/ layout normalization
 
-- [ ] Task 125.100: Commit the already-made-on-disk `skills/` -> `skill/` merge (4 skills: `feat-numbering`, `refine-feature`, `review-feature`, `specmgr-refs`; `skill/` is now the single skill directory, 6 skills, one subfolder each) and fix the stale references it broke: `tests/opencode/test_skill_feat_numbering.py` + `tests/opencode/test_skill_specmgr_refs.py` (path constants + docstrings; both red until fixed), `tests/opencode/test_skill_uc_diagram.py` (its module docstring's dual-layout prose), `tests/opencode/__init__.py` (module docstring), `AGENTS.md` (the `specmgr-refs` path in the `general/` bullet), `README.md` (the `specmgr-refs` path). Gate: the full test suite green.
+- [x] Task 125.100: Commit the already-made-on-disk `skills/` -> `skill/` merge (4 skills: `feat-numbering`, `refine-feature`, `review-feature`, `specmgr-refs`; `skill/` is now the single skill directory, 6 skills, one subfolder each) and fix the stale references it broke: `tests/opencode/test_skill_feat_numbering.py` + `tests/opencode/test_skill_specmgr_refs.py` (path constants + docstrings; both red until fixed), `tests/opencode/test_skill_uc_diagram.py` (its module docstring's dual-layout prose), `tests/opencode/__init__.py` (module docstring), `AGENTS.md` (the `specmgr-refs` path in the `general/` bullet), `README.md` (the `specmgr-refs` path). Gate: the full test suite green.
 
-- [ ] Task 125.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [x] Task 125.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 #### Phase 130: Distribution (harness bundle + agent-driven install)
 
@@ -238,11 +238,15 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Current Status
 
-**As of 2026-10-31**: planning. Split off from feat-150-mcp-lifecycle-commands (GitHub issue #150), whose own Phase 0 + Phase 1 scope is done and merged, via GitHub issue #167. No implementation started; the distribution scope (REQ-007/008/009, Phase 125/130) was re-scoped on 2026-10-31 -- single `general_harness_bundle.json` + `specmgr://harness-bundle` resource + agent-driven install, no CLI installer, no prompt, no ADR (see Updates/Decisions Made). Both the re-scope and the `skills/` -> `skill/` merge it documents are committed; the 2 red `tests/opencode/` files the merge left behind are Phase 125's exact target, and the next action is Task 125.100. A session handover note for a fresh agent is the newest Updates entry below.
+**As of 2026-10-31**: planning. Split off from feat-150-mcp-lifecycle-commands (GitHub issue #150), whose own Phase 0 + Phase 1 scope is done and merged, via GitHub issue #167. Phase 125 (`.opencode/` layout normalization) is complete: its code work landed as commit `10b032f` after the 08:34:48Z handover note, and the full quality gate was re-verified at closeout (see the newest Updates entry). The distribution scope (REQ-007/008/009, Phase 130) was re-scoped on 2026-10-31 -- single `general_harness_bundle.json` + `specmgr://harness-bundle` resource + agent-driven install, no CLI installer, no prompt, no ADR (see Decisions Made). The next action is Task 130.100; Task 130.150 (the end-to-end walkthrough fixture) requires a user-led fresh agent session, so the phase commit waits on it. Phases 100-120 and 140 stay deferred -- they have no dependency on 125/130.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31 21:29:01.822Z - Phase 125 closed out: code already landed in 10b032f, full gate re-verified
+
+Task 125.100's code work was executed after the 08:34:48Z handover note, in commit `10b032f` (`test(opencode): repoint skill pins to .opencode/skill/ after consolidation`): the 2 red test files (`tests/opencode/test_skill_feat_numbering.py`, `tests/opencode/test_skill_specmgr_refs.py`) re-pointed to `.opencode/skill/` (path constants + docstrings), `tests/opencode/test_skill_uc_diagram.py`'s and `tests/opencode/__init__.py`'s module docstrings fixed, and the stale `specmgr-refs` paths in `AGENTS.md` + `README.md` corrected. Closeout verification (2026-10-31): `tests/opencode/` green (88 passed) and the full quality gate re-run green -- `ruff format --check` (2258 files already formatted), `ruff check` (all checks passed), `vulture` (clean), full suite 5614 passed / 18 skipped; the doc-drift checks (`specmgr docs`/`mcp-docs`/`adr-toc`) are N/A for this phase (no `src/` change in 125). The handover note's repo-state details are stale: the branch moved further (v0.38.0 release commits since) and the untracked `zZz-skill/` directory no longer exists. Tasks 125.100/125.110 are checked off; the next action is Task 130.100.
 
 #### 2026-10-31 08:34:48.566Z - Handover: session ended, Phase 125 is next (repo state for a fresh agent)
 
