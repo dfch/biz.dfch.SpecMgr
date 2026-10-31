@@ -56,30 +56,71 @@ exception type without depending on the generic module's own exception.
 Extract the id from a parsed :class:`DecDocument` (``find_doc_path_by_id``'s ``get_id_fn``).
 
 
-### `dec_base_dir() -> 'Path'`
+### `_reconcile_dec_scan(scan_paths: 'Iterable[Path]') -> 'None'`
+
+Reconcile the decision cache against the domain-wide live listing (the ``find_dec_path`` ``reconcile_fn``).
+
+The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
+per-file work, with the scanned directory's own materialized path
+listing. With the ``{language}`` subfolder layout (feat-197-i18n
+Phase 110, ADR 38efdb66 item 9), a scan of one language directory no
+longer covers the whole domain -- reconciling against ``scan_paths``
+alone would evict every other language's cached entries -- so this
+wrapper instead hands :func:`~._cache.reconcile_dec_cache` the
+domain-wide union (the flat EN files plus every file in every
+shape-valid ``{language}`` subdirectory,
+``general.tools._doc_paths.iter_doc_paths_all_languages``).
+``scan_paths`` is intentionally unused: the union is a superset of it,
+and recomputing it from the directory listing keeps this one helper
+correct regardless of which language's directory was scanned. With no
+language subdirectory present the union is the scanned listing itself
+(the pre-i18n behavior, byte-identical).
+
+
+### `dec_base_dir(language: 'str | None' = None) -> 'Path'`
 
 Return the configured decision base directory, without creating it.
 
 Thin wrapper over ``general.tools._doc_paths.doc_base_dir(DEC_TYPE_NAME)``
--- see that function's own docstring for the env var/default it reads.
+-- see that function's own docstring for the env var/default it reads
+and for the optional ``language`` resolution (feat-197-i18n Phase 110):
+``None``/omitted or ``"en"`` = the flat ``docs/dec/`` directory exactly
+as before; any other shape-validated code = its ``docs/dec/{language}/``
+subdirectory.
+
+Parameters
+----------
+language:
+    The document language to resolve -- see
+    :func:`general.tools._doc_paths.doc_base_dir`.
 
 Returns
 -------
 Path
-    The resolved decision base directory.
+    The resolved decision base directory (in the given language).
 
 
-### `ensure_dec_base_dir() -> 'Path'`
+### `ensure_dec_base_dir(language: 'str | None' = None) -> 'Path'`
 
 Return the configured decision base directory, creating it if missing.
 
 Only ``create_dec`` should call this -- every other tool/resource uses
-the read-only :func:`dec_base_dir` instead.
+the read-only :func:`dec_base_dir` instead. The optional ``language``
+parameter selects the same flat-vs-subdirectory resolution as
+:func:`dec_base_dir` (feat-197-i18n Phase 110) before the directory is
+created.
+
+Parameters
+----------
+language:
+    The document language to resolve -- see
+    :func:`general.tools._doc_paths.ensure_doc_base_dir`.
 
 Returns
 -------
 Path
-    The resolved, now-guaranteed-to-exist decision base directory.
+    The resolved, now-guaranteed-to-exist decision base directory (in
+    the given language).
 
 
 ### `find_dec_path(base_dir: 'Path', id_: 'str') -> 'Path'`
@@ -95,14 +136,18 @@ that fails to parse
 one broken file must not prevent lookup of a different, valid id.
 Mirrors ``gol.tools._paths.find_gol_path``'s own skip-on-parse-failure
 rule. Before scanning, the cache is reconciled
-against the freshly materialized live path listing
-(:func:`~._cache.reconcile_dec_cache`), dropping any cached entry for a
-file deleted outside specmgr's own tooling (REQ-005).
+(:func:`~._cache.reconcile_dec_cache`) against the freshly
+materialized domain-wide live path listing (the flat EN files plus
+every ``{language}`` subdirectory's files -- a scan of one language
+must not evict the other languages' entries, feat-197-i18n Phase 110),
+dropping any cached entry for a file deleted outside specmgr's own
+tooling (REQ-005).
 
 Parameters
 ----------
 base_dir:
-    The directory to scan for ``*.md`` files.
+    The directory to scan for ``*.md`` files (the flat EN directory,
+    or one ``{language}`` subdirectory).
 id_:
     The id to look up.
 
@@ -117,11 +162,21 @@ DecNotFoundError
     If no file's ``frontmatter.id`` matches ``id_``.
 
 
-### `iter_dec_paths() -> 'Iterator[Path]'`
+### `iter_dec_paths(language: 'str | None' = None) -> 'Iterator[Path]'`
 
-Yield every decision ``*.md`` file under :func:`dec_base_dir`, sorted by name.
+Yield every decision ``*.md`` file in one language's directory, sorted by name.
 
-Yields nothing (rather than raising) if the base directory does not exist.
+The optional ``language`` (feat-197-i18n Phase 110) selects the scanned
+directory: ``None``/omitted or ``"en"`` = the flat ``docs/dec/``
+directory (exactly today's listing); any other shape-validated code =
+its ``docs/dec/{language}/`` subdirectory. Yields nothing (rather than
+raising) if the selected directory does not exist.
+
+Parameters
+----------
+language:
+    The document language whose directory to scan -- see
+    :func:`dec_base_dir`.
 
 Returns
 -------

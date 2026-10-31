@@ -165,7 +165,7 @@ range-mode call renders the touched range via :func:`_splice.splice_
 snippet` from the outcome's pre/post bodies and coordinates.
 
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -176,6 +176,19 @@ that per-domain tool was retired in feat-22 Phase 8, when the DEC
 domain -- merged from dev while still on the old per-domain mechanism
 -- was converted to the generic tools), plus the REQ-002 range branch
 (see :func:`_update_req`).
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects which variant file the
+adapter acts on: the id is scanned for in ``dec_base_dir(language)``
+(the flat EN directory, or the ``{language}`` subdirectory -- the
+basename is never re-derived), the lock is the variant's own
+(``dec_lock(dec_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table
+(:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and the write
+plus cache warming target that one file's own path -- the EN file
+(content, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
 
 ### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
@@ -191,7 +204,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -201,8 +214,17 @@ only ``updated`` bumped, ``write_gol_file``, ``GolNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.gol.models.v1.parse_gol_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -212,8 +234,17 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``; that per-domain tool was retired in feat-22
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -223,8 +254,16 @@ with only ``updated`` bumped, ``write_qa_file``, ``QaNotFoundError``;
 that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table (:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa_body`), and
+the write plus cache warming target that one file's own path -- the EN document (bytes,
+``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -252,8 +291,17 @@ public :class:`~biz.dfch.specmgr.general.models.UpdateResult` (computing
 the ``snippet`` once via :func:`_splice.splice_snippet`) instead of
 returning the bare frontmatter; the write behavior itself is unchanged.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.req.models.v1.parse_req_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -263,8 +311,17 @@ only ``updated`` bumped, ``write_rsk_file``, ``RskNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -276,8 +333,17 @@ per-domain ``update_sop`` tool to port -- this adapter was written
 directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -288,8 +354,17 @@ from day one per ADR 36905d5b, so there was never a per-domain
 ``update_sysrs`` tool to port -- this adapter was written directly in
 this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -299,8 +374,17 @@ with only ``updated`` bumped, ``write_tsk_file``, ``TskNotFoundError``;
 that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.tsk.models.v1.parse_tsk_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_txt(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_txt(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the free-form text document identified by ``id_`` (whole-body or line-range mode).
 
@@ -310,8 +394,17 @@ frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
 36905d5b, so this adapter was written directly in this shape), plus the
 REQ-002 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -321,8 +414,16 @@ body (same ``uc_lock``, ``load_by_id``, frontmatter carry-over with only
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table (:func:`~biz.dfch.specmgr.uc.models.v2.parse_uc_body`), and
+the write plus cache warming target that one file's own path -- the EN document (bytes,
+``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -331,8 +432,17 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 ``VcrNotFoundError``), plus the REQ-002 range branch (see
 :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.vcr.models.v1.parse_vcr_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> 'UpdateResult | ParseFailureResult | ValidateResult'`
+
+### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None, language: 'str' = 'en') -> 'UpdateResult | ParseFailureResult | ValidateResult'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
@@ -412,6 +522,20 @@ limit:
     Optional number of lines to replace starting at ``offset``
     (``0`` = pure insert); must be given together with ``offset``
     (``limit`` without ``offset`` is a ``ValueError``).
+language:
+    The language variant to act on (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+    it) acts on the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) acts on that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived), with the content (or the spliced result)
+    validated through that language's heading-mapping table. Only that
+    one file is written: the EN document's bytes, ``updated``
+    timestamp, and cache entry stay untouched. Shape-guarded before any
+    filesystem access (like ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
 Returns
 -------

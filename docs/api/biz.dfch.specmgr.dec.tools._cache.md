@@ -14,8 +14,13 @@ out into this standalone ``_cache.py`` module breaks the
 ``_io.py -> _paths.py -> _io.py`` cycle that would otherwise result: both
 ``_io.py`` and ``_paths.py`` depend *downward* on ``_cache.py``, and
 ``_cache.py`` depends on neither of them -- only on the generic
-``general.tools._doc_cache.DocCache`` class and this domain's own
-``dec.models.v1`` (DecDocument/parse_dec).
+``general.tools._doc_cache.DocCache`` class, the generic
+``general.tools._doc_paths.language_for_doc_path`` helper (the
+file-position -> language derivation, feat-197-i18n Phase 110), and this
+domain's own ``dec.models.v1`` (DecDocument/parse_dec). Its one
+``_paths`` import (``dec_base_dir``) is deferred inside ``read_dec`` for
+the same circular-import reason this module exists (see the function's
+own comment).
 
 **Module-level singleton, mirroring ``_lock.py``'s ``_locks`` registry.**
 Exactly one :class:`DocCache` instance exists per process for this domain,
@@ -43,7 +48,7 @@ implements (Phase 4, mechanically repeating Phase 3's ``req`` template).
 
 ## Functions
 
-### `_parse(text: 'str') -> 'DecDocument'`
+### `_parse(text: 'str', *, language: 'str | None' = None) -> 'DecDocument'`
 
 Parse ``text`` into a :class:`DecDocument` (the cache's own ``parse_fn`` -- Phase 6: text in, not ``Path``).
 
@@ -51,6 +56,10 @@ Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCac
 already read (and hashed) for this same call -- this function must not
 re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
 hash/parse TOCTOU race the previous two-independent-reads shape had).
+The optional ``language`` (feat-197-i18n Phase 110) is the effective
+language of the file being parsed -- ``None``/omitted or ``"en"`` runs
+the canonical EN parse, any other value applies that language's
+heading-mapping table at ``parse_dec``'s own pre-pass.
 
 
 ### `invalidate_dec_cache(path: 'Path') -> 'None'`
@@ -77,6 +86,19 @@ bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
 re-raised cached failure) is returned without re-invoking
 :func:`~biz.dfch.specmgr.dec.models.v1.parse_dec`.
 
+**Language-aware (feat-197-i18n Phase 110).** The effective language is
+derived from the file's own position relative to the decision base
+directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
+directly in the flat ``docs/dec/`` directory parses canonical/EN, a file
+directly in ``docs/dec/{language}/`` parses in that language, anything
+else canonical), never from a caller argument: the location *is* the
+language encoding (ADR 38efdb66 item 1), so every consumer of this
+reader (``find_dec_path``'s scan, ``list_dec``'s rows, ``load_by_id``'s
+second read, the generic tools' own dec adapters) parses a variant file
+with its table without any signature change, and the ``DocCache``'s
+path-keyed entries keep EN and every language of one id independent
+(ADR item 9 -- no cache code change).
+
 Parameters
 ----------
 path:
@@ -85,7 +107,8 @@ path:
 Returns
 -------
 DecDocument
-    The cached or freshly-parsed, validated document.
+    The cached or freshly-parsed, validated document (canonical heading
+    text; for a language variant, that language's table applied).
 
 
 ### `reconcile_dec_cache(live_paths: 'Iterable[Path]') -> 'None'`

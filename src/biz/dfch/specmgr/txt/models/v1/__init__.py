@@ -30,7 +30,7 @@ from ._util import SCHEMA_COMMENT_VERSION
 from .body import Txt, TxtBody, UpdateEntry, Updates
 from .document import TxtDocument
 from .frontmatter import TxtFrontmatter
-from .parser import parse_txt
+from .parser import parse_txt, parse_txt_body
 from .summary import TxtSummary
 
 __all__ = [
@@ -43,4 +43,5 @@ __all__ = [
     "UpdateEntry",
     "Updates",
     "parse_txt",
+    "parse_txt_body",
 ]

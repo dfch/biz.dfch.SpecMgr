@@ -30,7 +30,7 @@ frozen rulebook `specmgr://uc/plantuml` (`uc/data/uc_plantuml.md`).
 from ._util import SCHEMA_COMMENT_VERSION
 from .document import UcDocument
 from .frontmatter import UcFrontmatter
-from .parser import parse_uc
+from .parser import parse_uc, parse_uc_body
 from .renderer import PackageDocument, render_uc_diagram, render_uc_sequence_skeleton, render_use_case_package
 from .summary import UcSummary
 from .use_case import (
@@ -97,6 +97,7 @@ __all__ = [
     "UcSummary",
     "UseCase",
     "parse_uc",
+    "parse_uc_body",
     "render_uc_diagram",
     "render_uc_sequence_skeleton",
     "render_use_case_package",

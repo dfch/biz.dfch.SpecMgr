@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The new `specmgr lint` command (the in-tree spec artifact parseability
+  gate): runs the model-level FULL parse of each document's own domain
+  over the repo's own in-tree spec artifacts (the feature README.md files
+  under `.specmgr/feat/` and the documents under `docs/{type}/`) and
+  reports every unparseable document (file path + parse error), not just
+  the first — full parses only, never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  is precisely the masking that hid the feat-214 defect for three
+  consecutive commits. Three scopes, so the cost scales with the size of
+  a change and never with the size of the corpus: explicit paths with the
+  type inferred from the path layout alone (`--type` overrides inference,
+  `--skip-unrecognized` skips unknown layouts) — the `specmgr-lint`
+  pre-commit hook lints every staged in-tree artifact and the new
+  pull_request-only CI step lints every artifact changed against the base
+  branch (pinned to Python 3.13 like the docs drift steps, a clean skip
+  on an empty filtered list, the identical anchored file pattern in both)
+  — and the `--type T` / `--all` full-corpus sweeps, CLI-only (never on
+  the commit path or in the test suite), usable on demand or in a later
+  nightly job. The generated `docs/adr/README.md` table of contents is
+  unconditionally excluded (resolved type `adr` + base name `README.md`,
+  in whichever directory; `feat/{id}/README.md` is never excluded); each
+  failure report ends with a per-type repair pointer (`/repair {type}
+  {id}` for the whole-body domains, the id derived from the path, falling
+  back to `/repair {type}`; ADR — which the repair flow does not cover —
+  a fix-manually line); exit codes follow the plantuml-check family:
+  **0** every document parsed (incl. a run where every path was skipped
+  or excluded), **1** at least one document failed to parse or the `mcp`
+  extra is missing (required, like `specmgr diagram`; the decoupling is
+  tracked as issue #238), **2** a usage-or-resolution error. Accepted
+  limitation (the gate is change-scoped by design): a schema or parser
+  change can break untouched documents without failing the change-scoped
+  gate — the full sweep, manual or the follow-up nightly workflow, finds
+  them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
+  #218).
 - **Thirteenth domain feature (TXT/Free-Form Text tooling)**: new
   document-type domain, `txt` — a generic, minimally structured catch-all
   for unstructured markdown text that does not warrant a dedicated domain
@@ -62,6 +96,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     new `specmgr-schema-txt-package` hook), `AGENTS.md`, the root
     `README.md`, the agent/skill text, and the generated docs all updated
     for the thirteenth domain (feat-229-txt, GitHub issue #229).
+- Multi-language variants of the same artifact (feat-197-i18n, GitHub issue
+  #197, ADR 38efdb66): for the twelve domains `req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`, an artifact can exist in several
+  languages. English keeps `docs/<type>/`; every other language is a
+  `docs/<type>/<language>/` subfolder (`<language>` a lowercase two-letter
+  code) holding the variant under the English source's exact file name, with
+  the same `id` and the identical frontmatter and body schema (the language
+  lives in the file location only). `get_<d>`/`list_<d>`/`create_<d>` and the
+  generic `update`/`edit`/`set_status`/`set_classification`/`delete` tools
+  take an optional `language` (default `"en"`; omitting it is byte-identical
+  to the behavior before); `create_<d>` also takes the English source's
+  shared `id` for a non-default language. A caller-supplied `language` is
+  validated (`^[a-z]{2}$`) before any filesystem access. A per-language
+  heading-mapping table (`general/data/headings/<language>.json`, `de`
+  shipped) maps translated headings back to the canonical English headings at
+  the parse boundary, so a variant validates against the exact same schema;
+  closed-vocabulary values and schema-constant tokens are never translated,
+  and `prb`'s `problem_statement` stays English. A new language is added by
+  adding one JSON file, checked by a drift test against the document models.
+  `feat` and `adr` are permanently English-only (no `language` parameter on
+  any of their tools, resources or prompts).
+- The read-only tools `list_languages(type, id)` and
+  `check_translation_drift(type, id, language, source_language="en")`
+  (structural drift: missing/extra/reordered sections; staleness: the source
+  is newer than the translation), the `translate_artifact` prompt, the
+  `specmgr://i18n` resource and the `specmgr://i18n/headings/{language}`
+  resource template, plus the OpenCode `translate-artifact` and
+  `translation-status` skills and the `/translate` and `/translation-status`
+  commands.
+- `find_related`, `find_similar_text`, `list_references` and
+  `get_reference_diagram(_all)` stay English-only: a language variant is never
+  indexed, listed or resolved, and every hit or resolved reference is the
+  English document's path (pinned by regression tests, including a
+  non-recursive-scan guard).
 
 ### Changed
 

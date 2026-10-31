@@ -39,7 +39,7 @@ from .body import (
 )
 from .document import VcrDocument
 from .frontmatter import VcrFrontmatter
-from .parser import parse_vcr
+from .parser import parse_vcr, parse_vcr_body
 from .summary import VcrSummary
 
 __all__ = [
@@ -57,4 +57,5 @@ __all__ = [
     "VcrSummary",
     "Verifies",
     "parse_vcr",
+    "parse_vcr_body",
 ]

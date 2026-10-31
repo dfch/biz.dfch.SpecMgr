@@ -56,12 +56,40 @@ exception type without depending on the generic module's own exception.
 Extract the id from a parsed :class:`VcrDocument` (``find_doc_path_by_id``'s ``get_id_fn``).
 
 
-### `ensure_vcr_base_dir() -> 'Path'`
+### `_reconcile_vcr_scan(scan_paths: 'Iterable[Path]') -> 'None'`
+
+Reconcile the ``vcr`` cache against the domain-wide live listing (the ``find_vcr_path`` ``reconcile_fn``).
+
+The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
+per-file work, with the scanned directory's own materialized path
+listing. With the ``{language}`` subfolder layout (feat-197-i18n
+Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+longer covers the whole domain -- reconciling against ``scan_paths``
+alone would evict every other language's cached entries -- so this
+wrapper instead hands :func:`~._cache.reconcile_vcr_cache` the
+domain-wide union (the flat EN files plus every file in every
+shape-valid ``{language}`` subdirectory,
+``general.tools._doc_paths.iter_doc_paths_all_languages``).
+``scan_paths`` is intentionally unused: the union is a superset of it.
+With no language subdirectory present the union is the scanned listing
+itself (the pre-i18n behavior, byte-identical).
+
+
+### `ensure_vcr_base_dir(language: 'str | None' = None) -> 'Path'`
 
 Return the configured verification case record base directory, creating it if missing.
 
 Only ``create_vcr`` should call this -- every other tool/resource uses
 the read-only :func:`vcr_base_dir` instead.
+
+The optional ``language`` parameter selects the same flat-vs-subdirectory resolution as
+:func:`vcr_base_dir` (feat-197-i18n Phase 125) before the directory is created.
+
+Parameters
+----------
+language:
+    The document language to resolve -- see
+    :func:`general.tools._doc_paths.ensure_doc_base_dir`.
 
 Returns
 -------
@@ -83,13 +111,16 @@ one broken file must not prevent lookup of a different, valid id.
 Mirrors ``gol.tools._paths.find_gol_path``'s own skip-on-parse-failure
 rule. Before scanning, the cache is reconciled
 against the freshly materialized live path listing
-(:func:`~._cache.reconcile_vcr_cache`), dropping any cached entry for a
+(:func:`~._cache.reconcile_vcr_cache`, against the domain-wide live listing of every language
+-- a scan of one language must not evict the other languages' entries, feat-197-i18n
+Phase 125), dropping any cached entry for a
 file deleted outside specmgr's own tooling (REQ-005).
 
 Parameters
 ----------
 base_dir:
-    The directory to scan for ``*.md`` files.
+    The directory to scan for ``*.md`` files (the flat EN directory,
+    or one ``{language}`` subdirectory).
 id_:
     The id to look up.
 
@@ -104,11 +135,22 @@ VcrNotFoundError
     If no file's ``frontmatter.id`` matches ``id_``.
 
 
-### `iter_vcr_paths() -> 'Iterator[Path]'`
+### `iter_vcr_paths(language: 'str | None' = None) -> 'Iterator[Path]'`
 
 Yield every verification case record ``*.md`` file under :func:`vcr_base_dir`, sorted by name.
 
 Yields nothing (rather than raising) if the base directory does not exist.
+
+The optional ``language`` (feat-197-i18n Phase 125) selects the scanned directory:
+``None``/omitted or ``"en"`` = the flat ``docs/vcr/`` directory (exactly today's
+listing); any other shape-validated code = its ``docs/vcr/{language}/``
+subdirectory (non-recursive; never descends further).
+
+Parameters
+----------
+language:
+    The document language whose directory to scan -- see
+    :func:`vcr_base_dir`.
 
 Returns
 -------
@@ -116,12 +158,23 @@ Iterator[Path]
     An iterator over the matching, sorted paths.
 
 
-### `vcr_base_dir() -> 'Path'`
+### `vcr_base_dir(language: 'str | None' = None) -> 'Path'`
 
 Return the configured verification case record base directory, without creating it.
 
 Thin wrapper over ``general.tools._doc_paths.doc_base_dir(VCR_TYPE_NAME)``
 -- see that function's own docstring for the env var/default it reads.
+
+The optional ``language`` (feat-197-i18n Phase 125) selects the flat-vs-subdirectory
+resolution: ``None``/omitted or ``"en"`` = the flat ``docs/vcr/`` directory exactly
+as before; any other shape-validated code = its ``docs/vcr/{language}/``
+subdirectory.
+
+Parameters
+----------
+language:
+    The document language to resolve -- see
+    :func:`general.tools._doc_paths.doc_base_dir`.
 
 Returns
 -------

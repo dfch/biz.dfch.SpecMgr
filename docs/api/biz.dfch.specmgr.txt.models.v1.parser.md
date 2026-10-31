@@ -29,6 +29,26 @@ The engine's default error messages are kept unchanged -- no custom
 cause/fix-hint wrapping for the leftover-text or missing-``Updates`` errors
 (REQ-011).
 
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
+domain: ``parse_txt`` is this domain's single text-to-model parse boundary --
+the choke point behind ``get_txt``'s non-raw reads, ``list_txt``'s rows (both
+via the cache-backed ``read_txt``), and the path-based ``parse_txt`` tool -- and
+it takes an optional ``language`` keyword (``None``/omitted or ``"en"`` =
+canonical, no table -- byte-identical to the pre-i18n EN path; any other
+language resolves its table via
+:func:`biz.dfch.specmgr.general.models.resolve_heading_table`). When a table
+exists, the mdformat-normalized body passes the fence-aware
+:func:`biz.dfch.specmgr.general.models.normalize_heading_lines` pre-pass
+before the *unchanged* ``models/md`` engine runs, so the parsed model holds
+canonical heading text while the on-disk file keeps its translation.
+``parse_txt_body`` is the body-only half of it (the single body-validation
+entry point the write side shares: ``create_txt`` and the generic
+``update``/``edit`` tools' ``txt`` adapters validate the caller's raw body
+through it). The opaque free-form body's own free headings are not schema
+headings: they carry no table entry and are left as-is in the model (only the
+fixed-text ``## Updates`` heading is table-mappable).
+
 ## Functions
 
 ### `_stringify_metadata(metadata: 'dict[str, object]') -> 'dict[str, object]'`
@@ -62,7 +82,7 @@ date-only and six-digit fractions remain rejected (feat-146 REQ-003).
 Mirrors the same helper in ``vcr/models/v1/parser._stringify_metadata``.
 
 
-### `parse_txt(text: 'str') -> 'TxtDocument'`
+### `parse_txt(text: 'str', *, language: 'str | None' = None) -> 'TxtDocument'`
 
 Parse a full free-form text ``.md`` file's text into a :class:`TxtDocument`.
 
@@ -72,6 +92,19 @@ text:
     The complete file content, YAML frontmatter block and markdown body
     together, exactly as read from disk (or submitted verbatim by an MCP
     tool call that never wrote it to disk at all).
+language:
+    The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+    ``None`` (the default) or ``"en"`` parses the canonical, English
+    headings as-is (no table -- byte-identical to the pre-i18n path);
+    any other value resolves that language's heading-mapping table and
+    applies the fence-aware heading-normalization pre-pass to the
+    mdformat-normalized body before the ``models/md`` engine runs, so a
+    translated document's fixed-text headings parse to the same
+    canonical schema keys as their EN counterpart (data-carrying regex
+    headings carry no table entry and match directly, their
+    schema-constant tokens staying canonical in the file). The
+    frontmatter is never transformed (its values are language-invariant,
+    REQ-010).
 
 Returns
 -------
@@ -84,4 +117,53 @@ TxtDocument
     frontmatter YAML -- both frontmatter error channels are enriched by
     :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
     (feat-27-validation Phase 2).
+
+Raises
+------
+ValueError
+    A non-default ``language`` without a packaged heading-mapping table
+    (the table loader's actionable error,
+    :func:`biz.dfch.specmgr.general.models.load_heading_table`).
+
+
+### `parse_txt_body(content: 'str', *, language: 'str | None' = None) -> 'Txt'`
+
+Parse a frontmatter-free free-form text body text into a :class:`Txt`, in the given language.
+
+The body-only half of :func:`parse_txt` (feat-197-i18n Phase 125, ADR
+38efdb66 item 5): ``Txt.from_text(format_text(content))`` with the
+optional per-language heading-normalization pre-pass between the two.
+It is the single body-validation entry point the write side shares --
+``create_txt`` and the generic ``update``/``edit`` tools' ``txt``
+adapters validate the caller's raw body through it, so a language
+variant's translated headings are accepted exactly as the read side
+(:func:`parse_txt`, which itself delegates here) accepts them, and the
+persisted text stays the caller's raw body byte-for-byte (this function
+only validates; it never renders). With ``language`` omitted/``None``
+or ``"en"`` there is no table and the parse is byte-identical to the
+pre-i18n ``Txt.from_text(format_text(content))``.
+
+Parameters
+----------
+content:
+    The body markdown only (no YAML frontmatter block).
+language:
+    The body's language: ``None``/omitted or ``"en"`` = canonical
+    headings as-is; any other value resolves that language's
+    heading-mapping table via
+    :func:`biz.dfch.specmgr.general.models.resolve_heading_table`.
+
+Returns
+-------
+Txt
+    The structured body (canonical heading text for every section).
+
+Raises
+------
+AssertionError
+    A malformed heading/list structure.
+pydantic.ValidationError
+    A field or cross-field validation failure.
+ValueError
+    A non-default ``language`` without a packaged heading-mapping table.
 

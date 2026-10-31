@@ -29,9 +29,22 @@ glob-given result has no failed rows and ``error_count = 0`` by
 construction (feat-200-list REQ-003); ``total`` is the match count and
 ``offset``/``max_results`` paging keeps its existing meaning on that
 smaller set (ACC-004). ``glob=None`` (the default) leaves every outcome
-byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
-a pattern, not an off-switch (it matches no id and yields a zero-row
-result).
+ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
+ a pattern, not an off-switch (it matches no id and yields a zero-row
+ result).
+
+ **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+ A 1:1 port of ``list_req``'s ``language`` handling. The optional
+ ``language`` parameter (default ``"en"``) selects which directory this tool
+ scans: omitted/``"en"`` = the flat ``docs/txt/`` directory -- today's exact
+ behavior; any other shape-validated code (e.g. ``"de"``) = only the
+ ``docs/txt/{language}/`` subdirectory, listing exactly the existing
+ variants of that language (ACC-007). There is deliberately NO "all
+ languages" mode (the ``DocSummary`` row shape carries no language column
+ and would repeat ids). The language is shape-guarded before any filesystem
+ access, and a shape-valid language without a packaged heading-mapping table
+ is rejected up front with the table loader's actionable error. The row
+ shape is unchanged -- no language column.
 
 ## Functions
 
@@ -41,7 +54,7 @@ result).
 ### `_to_summary(doc: 'TxtDocument', path: 'Path') -> 'TxtSummary'`
 
 
-### `list_txt(max_results: 'int | None' = None, offset: 'int | None' = None, glob: 'str | None' = None) -> 'PagedResult[TxtSummary]'`
+### `list_txt(max_results: 'int | None' = None, offset: 'int | None' = None, glob: 'str | None' = None, language: 'str' = 'en') -> 'PagedResult[TxtSummary]'`
 
 Return one page of one-line free-form text summaries from the configured base directory.
 
@@ -79,10 +92,22 @@ glob:
     unfiltered call returns). An empty string is a pattern, not an
     off-switch: it matches no id (ids are never empty) and yields a
     zero-row result. Failed-to-parse rows carry ``id=None`` and therefore
-    never match any pattern, so a glob-given result has no failed rows
-    and ``error_count = 0`` by construction; ``total`` is the match count
-    and ``offset``/``max_results`` paging keeps its existing meaning on
-    that smaller set.
+     never match any pattern, so a glob-given result has no failed rows
+     and ``error_count = 0`` by construction; ``total`` is the match count
+     and ``offset``/``max_results`` paging keeps its existing meaning on
+     that smaller set.
+language:
+    The language whose directory to list (feat-197-i18n Phase 125, ADR
+    38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
+    scans the flat ``docs/txt/`` directory -- today's exact behavior;
+    any other ISO 639-1-shaped lowercase two-letter code (e.g.
+    ``"de"``) scans only ``docs/txt/{language}/``, listing exactly the
+    existing variants of that language (ACC-007). There is deliberately
+    no "all languages" mode (the row shape carries no language column
+    and would repeat ids). Shape-guarded before any filesystem access
+    (like ``id``); a shape-valid code without a packaged
+    heading-mapping table is rejected up front with the table loader's
+    actionable error.
 
 Returns
 -------
@@ -92,4 +117,11 @@ PagedResult[TxtSummary]
     it is given), in filename-sorted order. ``results`` is empty if the
     base directory does not exist, holds no free-form text documents,
     ``offset`` is past the end of the full list, or no id matches ``glob``.
+
+Raises
+------
+ValueError
+    ``language`` is not an ISO 639-1-shaped lowercase two-letter code (raised
+    before any filesystem access), or a non-default ``language`` has no packaged
+    heading-mapping table (raised before any filesystem access).
 

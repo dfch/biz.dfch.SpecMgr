@@ -25,9 +25,29 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/uc/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/uc/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_uc(language=...)``'s failed row for the same
+file (ADR 9080b37c).
+
 ## Functions
 
-### `get_uc(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None, numbered: 'bool' = False) -> 'UcDocument | str | ParseFailureResult'`
+### `get_uc(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None, numbered: 'bool' = False, language: 'str' = 'en') -> 'UcDocument | str | ParseFailureResult'`
 
 Read and return the use case identified by ``id``.
 
@@ -62,6 +82,19 @@ numbered:
     each line first (it is likewise never a valid ``edit`` ``old_str``).
     Combining it with ``raw=False`` raises ``ValueError`` (see
     ``Raises``).
+language:
+    The language variant to read (feat-197-i18n Phase 125, ADR
+    38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
+    reads the flat ``docs/uc/`` document -- today's exact behavior;
+    any other ISO 639-1-shaped lowercase two-letter code (e.g.
+    ``"de"``) reads the variant at ``docs/uc/{language}/`` under the
+    EN source's exact basename. Shape-guarded before any filesystem
+    access (like ``id``); a shape-valid code without a packaged
+    heading-mapping table is rejected up front with the table
+    loader's actionable error, also before any filesystem access. For
+    a variant, ``raw=True`` returns its on-disk body verbatim and
+    ``raw=False`` parses through its heading table (canonical heading
+    text in the model).
 
 Returns
 -------
@@ -84,6 +117,9 @@ UcDocument | str | ParseFailureResult
 Raises
 ------
 ValueError
+    ``language`` is not an ISO 639-1-shaped lowercase two-letter code, or a
+    non-default ``language`` has no packaged heading-mapping table (both raised
+    before any filesystem access, the same guard discipline as ``id``);
     ``id`` is a path-injection attempt or not a well-formed id for this domain
     (raised before any filesystem access), or ``offset``/``limit`` coordinates
     are given with ``raw=False`` (a parsed document requires the whole body),

@@ -85,6 +85,28 @@ triggers the exact same race for every one of the other domains. A file
 vanishing mid-scan this way is now skipped exactly like any other
 unparseable file, and the scan continues looking for the target id.
 
+**Language-variant directories (feat-197-i18n, ADR 38efdb66 items 1/6).** A
+non-default language ``L`` of a domain's documents lives in a direct
+``{L}`` subdirectory of the domain's flat base directory
+(``docs/{type}/{L}/<type>-<id>-<slug>.md``); the default language EN
+(:data:`~biz.dfch.specmgr.general.tools._path_safety.DEFAULT_LANGUAGE`,
+whether omitted or passed explicitly) keeps exactly today's flat path
+``docs/{type}/<type>-<id>-<slug>.md``. :func:`doc_base_dir`/
+:func:`ensure_doc_base_dir` take the optional ``language`` parameter that
+selects between the two (shape-guarding a non-default value via
+:func:`_path_safety.assert_language` before it becomes part of a path),
+:func:`language_for_doc_path` recovers the language a given document path
+is encoded by (its position relative to the flat base directory), and
+:func:`iter_doc_paths_all_languages` yields the domain-wide live listing
+(flat EN files plus every file in every shape-valid ``{language}``
+subdirectory) that a domain's reconcile-on-scan needs once a single scan
+no longer covers the whole domain. :func:`iter_doc_paths` itself is
+unchanged and stays non-recursive: it never descends into ``{language}``
+subfolders, which is exactly what keeps every EN-only consumer (each
+domain's own flat scan, plus ``list_references``,
+``find_related``/``find_similar_text``, ``get_reference_diagram(_all)``)
+EN-only by directory layout (REQ-013/ACC-014, ADR item 8).
+
 **A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
 encodes (feat-150-mcp-lifecycle-commands Phase 1a, ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c).** :func:`find_doc_path_by_id`'s
@@ -127,6 +149,7 @@ import yaml
 from pydantic import ValidationError
 
 from ... import _envregistry
+from ._path_safety import DEFAULT_LANGUAGE, LANGUAGE_PATTERN, assert_language
 
 __all__ = [
     "DEFAULT_DOCS_ROOT",
@@ -137,6 +160,9 @@ __all__ = [
     "find_doc_path_by_id",
     "find_parse_failure",
     "iter_doc_paths",
+    "iter_doc_paths_all_languages",
+    "iter_language_dirs",
+    "language_for_doc_path",
     "slugify",
 ]
 
@@ -203,7 +229,7 @@ def _docs_root() -> Path:
     return result
 
 
-def doc_base_dir(type_name: str) -> Path:
+def doc_base_dir(type_name: str, language: str | None = None) -> Path:
     """Return the base directory for ``type_name`` documents, without creating it.
 
     Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
@@ -214,44 +240,68 @@ def doc_base_dir(type_name: str) -> Path:
     this so merely reading never has the side effect of creating the
     directory -- see :func:`ensure_doc_base_dir` for the write path.
 
+    With an optional ``language`` (feat-197-i18n, ADR 38efdb66 item 1):
+    ``None`` (omitted) or the default language EN (:data:`DEFAULT_LANGUAGE`)
+    resolves to the flat ``docs/{type_name}`` directory -- exactly today's
+    path, unchanged; any other value is shape-guarded by
+    :func:`_path_safety.assert_language` first (a caller-supplied payload
+    like ``"../../etc"`` never reaches the path join) and resolves to the
+    language variant's subdirectory ``docs/{type_name}/{language}``.
+
     Parameters
     ----------
     type_name:
         The document type's subdirectory name, e.g. ``"req"``.
+    language:
+        The document language to resolve. ``None`` (the default) or
+        :data:`DEFAULT_LANGUAGE` (``"en"``) resolve to the flat, default
+        directory; any other shape-validated code (e.g. ``"de"``) resolves
+        to that code's subdirectory under the flat one.
 
     Returns
     -------
     Path
-        The resolved base directory for ``type_name`` documents.
+        The resolved base directory for ``type_name`` documents (in the
+        given language).
     """
     assert isinstance(type_name, str), type(type_name)
     assert type_name.strip()
 
-    result = _docs_root() / type_name
+    flat = _docs_root() / type_name
+    if language is None or language == DEFAULT_LANGUAGE:
+        result = flat
+        return result
+    assert_language(language)
+    result = flat / language
     return result
 
 
-def ensure_doc_base_dir(type_name: str) -> Path:
+def ensure_doc_base_dir(type_name: str, language: str | None = None) -> Path:
     """Return the base directory for ``type_name`` documents, creating it if missing.
 
     Only a doc type's ``create_*`` tool should call this -- every other
-    tool/resource uses the read-only :func:`doc_base_dir` instead.
+    tool/resource uses the read-only :func:`doc_base_dir` instead. The
+    optional ``language`` parameter selects the same flat-vs-subdirectory
+    resolution as :func:`doc_base_dir` (feat-197-i18n, ADR 38efdb66
+    item 1) before the directory is created.
 
     Parameters
     ----------
     type_name:
         The document type's subdirectory name, e.g. ``"req"``.
+    language:
+        The document language to resolve -- see :func:`doc_base_dir`.
 
     Returns
     -------
     Path
         The resolved, now-guaranteed-to-exist base directory for
-        ``type_name`` documents.
+        ``type_name`` documents (in the given language).
     """
     assert isinstance(type_name, str), type(type_name)
     assert type_name.strip()
 
-    result = doc_base_dir(type_name)
+    result = doc_base_dir(type_name, language)
     result.mkdir(parents=True, exist_ok=True)
     return result
 
@@ -290,6 +340,15 @@ def iter_doc_paths(base_dir: Path) -> Iterator[Path]:
 
     Yields nothing (rather than raising) if ``base_dir`` does not exist.
 
+    Non-recursive by design (feat-197-i18n, REQ-013/ACC-014, ADR 38efdb66
+    item 8): the single-level ``*.md`` glob never descends into
+    ``{language}`` subfolders (or any other subdirectory), so every
+    EN-only consumer of this function -- each domain's own flat scan, plus
+    ``list_references``, ``find_related``/``find_similar_text``, and
+    ``get_reference_diagram(_all)`` -- keeps seeing exactly the flat files
+    with zero code change. A future switch to a recursive glob would
+    silently break that property; the feature's own tests pin it.
+
     Parameters
     ----------
     base_dir:
@@ -305,6 +364,129 @@ def iter_doc_paths(base_dir: Path) -> Iterator[Path]:
     if not base_dir.exists():
         return iter(())
     result = iter(sorted(base_dir.glob("*.md")))
+    return result
+
+
+def language_for_doc_path(base_dir: Path, doc_path: Path) -> str | None:
+    """Return the language a document path is encoded by, from its position under ``base_dir``.
+
+    The inverse of :func:`doc_base_dir`'s own language resolution
+    (feat-197-i18n, ADR 38efdb66 items 1/5): the language is encoded by
+    directory location only, so a document directly under ``base_dir``
+    (the flat, default-EN directory) maps to ``None`` (no heading-mapping
+    table applies -- EN is the canonical form itself), and a document
+    directly under a shape-valid ``{language}`` subdirectory of
+    ``base_dir`` maps to that language code (e.g. ``docs/dec/de/x.md``
+    under ``docs/dec`` maps to ``"de"``). Every other position -- a
+    non-shape-valid subdirectory name (``"de-DE"``, ``"Notes"``), a
+    deeper nesting, or a path outside ``base_dir`` entirely -- maps to
+    ``None``: it is not a language location, so the document parses
+    canonical-only, exactly as today's flat behavior. Both paths are
+    ``.resolve()``d before comparison (the ``DocCache`` REQ-009
+    normalization discipline), so relative and absolute spellings of the
+    same location agree.
+
+    Parameters
+    ----------
+    base_dir:
+        The domain's flat (default-language) base directory, e.g.
+        ``docs/dec``.
+    doc_path:
+        The on-disk document path to classify.
+
+    Returns
+    -------
+    str | None
+        The shape-validated ``{language}`` code the document lives in, or
+        ``None`` for the flat directory (or any non-language location).
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+    assert isinstance(doc_path, Path), type(doc_path)
+
+    base = base_dir.resolve()
+    parent = doc_path.resolve().parent
+    if parent == base:
+        result = None
+        return result
+    if (
+        parent.is_relative_to(base)
+        and len(parent.relative_to(base).parts) == 1
+        and LANGUAGE_PATTERN.fullmatch(parent.name)
+    ):
+        result = parent.name
+        return result
+    result = None
+    return result
+
+
+def iter_doc_paths_all_languages(base_dir: Path) -> Iterator[Path]:
+    """Yield the domain-wide live ``*.md`` listing: the flat directory plus every ``{language}`` subdirectory.
+
+    The reconcile-on-scan counterpart of the language variant's directory
+    layout (feat-197-i18n, ADR 38efdb66 item 9): once a domain's documents
+    can live in a per-language subdirectory, a scan of one directory no
+    longer covers the whole domain, so a domain's cache-reconcile call must
+    be handed the union -- the flat (default-EN) files plus every file
+    directly under every shape-valid ``{language}`` subdirectory of
+    ``base_dir`` -- or a scan of one language would evict the other
+    languages' cached entries. Yields the union sorted by path, and nothing
+    (rather than raising) if ``base_dir`` does not exist. Non-recursive at
+    both levels, like :func:`iter_doc_paths`: a deeper nesting is never
+    part of any domain's live listing (no tool ever scans it, so no cache
+    entry for it can exist).
+
+    Parameters
+    ----------
+    base_dir:
+        The domain's flat (default-language) base directory, e.g.
+        ``docs/dec``.
+
+    Returns
+    -------
+    Iterator[Path]
+        An iterator over the matching, sorted paths.
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+
+    if not base_dir.exists():
+        return iter(())
+    paths = list(iter_doc_paths(base_dir))
+    for _language, sub in iter_language_dirs(base_dir):
+        paths.extend(iter_doc_paths(sub))
+    result = iter(sorted(paths))
+    return result
+
+
+def iter_language_dirs(base_dir: Path) -> Iterator[tuple[str, Path]]:
+    """Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
+
+    The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
+    ADR 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
+    language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
+    language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
+    anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
+    be empty, hold non-``.md`` assets, or hold documents of other ids) and never descends. Yields nothing (rather
+    than raising) if ``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
+    language-listing tool (``list_languages``) probes each yielded directory for one id.
+
+    Parameters
+    ----------
+    base_dir:
+        The domain's flat (default-language) base directory, e.g. ``docs/dec``.
+
+    Returns
+    -------
+    Iterator[tuple[str, Path]]
+        An iterator over ``(language code, subdirectory path)`` pairs, sorted by language code.
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+
+    if not base_dir.exists():
+        return iter(())
+    pairs = [
+        (sub.name, sub) for sub in sorted(base_dir.iterdir()) if sub.is_dir() and LANGUAGE_PATTERN.fullmatch(sub.name)
+    ]
+    result = iter(pairs)
     return result
 
 

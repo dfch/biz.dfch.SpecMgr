@@ -181,7 +181,8 @@ namespaces = true
     "data/*.json"
 ]
 "biz.dfch.specmgr.general" = [
-    "data/*.md"
+    "data/*.md",
+    "data/headings/*.json"
 ]
 
 [tool.coverage.run]

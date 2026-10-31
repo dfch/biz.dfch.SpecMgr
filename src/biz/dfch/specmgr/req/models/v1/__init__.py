@@ -42,7 +42,7 @@ from .body import (
 )
 from .document import ReqDocument
 from .frontmatter import ReqFrontmatter
-from .parser import parse_req
+from .parser import parse_req, parse_req_body
 from .summary import ReqSummary
 
 __all__ = [
@@ -65,4 +65,5 @@ __all__ = [
     "Source",
     "Tags",
     "parse_req",
+    "parse_req_body",
 ]

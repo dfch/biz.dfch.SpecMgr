@@ -24,7 +24,10 @@ type or cross-cutting:
   `create_adr_test`/`update_adr_test` A/B variants (see
   ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
-  `adr/models/`) — see the "models location" note below.
+  `adr/models/`) — see the "models location" note below. ADR is
+  **permanently single-language**: no `adr` tool/resource/prompt has a
+  `language` parameter (feat-197-i18n, REQ-009/ACC-015 — see the
+  `feat-197-i18n` paragraph below).
 - **`req/`** (Requirements) — `req/tools/` (`create_req`, `parse_req`,
   `list_req`, `get_req_schema`); whole-body and line-range
   updates go through the generic `update` tool in `general/tools/`
@@ -583,7 +586,14 @@ type or cross-cutting:
    pre-existing `SPECMGR_SIMILARITY_DISABLED` still gates the similarity
    phase only); when both flags are set, no thread starts at all (reported
    by `specmgr://config`'s own `feat_warmup_disabled` field, mirroring
-   `SimilarityConfig.disabled`'s own precedent).
+   `SimilarityConfig.disabled`'s own precedent). `feat` is **permanently
+   single-language (EN only)** (feat-197-i18n, REQ-002/ACC-002): its
+   folder-per-document addressing does not fit the `docs/{type}/{language}/`
+   convention, so no `feat` tool/resource/prompt has a `language`
+   parameter, no language path is ever created or read under
+   `SPECMGR_FEAT_DIR`, and `feat/tools/_paths.py`/`_cache.py` are unchanged
+   (see the `feat-197-i18n` paragraph below; the generic `language`-aware
+   tools reject `type="feat"` with the permanent wording).
 - **`vcr/`** (Verification Case Record) — same tools/resources/prompts
   shape as `req/`/`prb/`/`dec/` but for how a single REQ/UC is verified: a
   `## Verifies` single-value cross-reference (exactly one mandatory
@@ -1076,6 +1086,17 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
+   The `general/` package also owns the i18n machinery of the twelve
+   language-aware domains (feat-197-i18n, ADR 38efdb66; the full
+   description is the `feat-197-i18n` paragraph below): the optional
+   `language: str = "en"` parameter of `update`/`edit`/`set_status`/
+   `set_classification`/`delete` (validated by `_path_safety.assert_language`
+   and `_language_guard`, dispatched through each tool's
+   `_LANGUAGE_ADAPTERS`; `feat`/`adr` are permanently rejected with the
+   "always English" wording), `list_languages` and
+   `check_translation_drift` (read-only), the `translate_artifact` prompt,
+   `specmgr://i18n` and `specmgr://i18n/headings/{language}`, and the
+   `heading_table` loader over `general/data/headings/<language>.json`.
 
 **Models location — a real, intentional divergence, not an oversight**:
 the rule is domain-first — every document type keeps its schema inside
@@ -1158,9 +1179,19 @@ it whenever you add/remove/rename a resource, tool, or prompt.
 mirror of that same registration and must never be hand-edited.
 
 Still genuinely missing / not yet done (don't assume otherwise):
-- No `validate_adr` (or the generic `validate` tool, for the other
-  whole-body domains) tool runs over the repo's
-  own documents yet via pre-commit or CI. (ADR
+- The former gap — no validate-equivalent check over the repo's
+  own documents via pre-commit or CI — is closed at change scope:
+  the `specmgr lint` pre-commit hook (feat-218) lints every staged
+  in-tree spec artifact, and the CI pull-request step lints every
+  artifact changed against the base branch, both via the model-level
+  full parse (never the `list_<d>` listing path, whose `list_feat`
+  dirty stage is precisely the masking that hid the feat-214 defect).
+  What remains not yet done is the scheduled (nightly) full-corpus
+  sweep — the full sweep is CLI-only today (`specmgr lint --type T` /
+  `--all`), available for an on-demand or future nightly run; the
+  follow-up issue for that nightly workflow owns the accepted
+  limitation that a schema or parser change can break untouched
+  documents without failing any change-scoped gate. (ADR
   9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
   locally via pre-commit hook, not just CI")
 - No `ac` (Acceptance Criteria) domain exists yet, despite `server.py`'s
@@ -1261,6 +1292,107 @@ frontmatter phase, the `feat` full-parse phase, and then the unchanged
 itself (its own availability-probe-first/crash-containment/never-raising
 body, and the demand path it shares the cache with) is otherwise
 unchanged; only the startup orchestration moved.
+
+`feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
+added first-class **multi-language variants of the same artifact** for the
+**twelve** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
+`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt` (`general/tools/_language_guard.
+LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
+the default and keeps its exact, unchanged location; every other language is
+a `docs/{type}/{language}/` subfolder holding the variant under the EN
+source's **exact basename** (the slug always derives from the EN title, never
+a translated one), with the **same `id`** and the identical frontmatter/body
+schema — the language lives in the file's location only, there is no
+`language` frontmatter field. **`feat` and `adr` are permanently excluded**
+(REQ-002/REQ-009, ACC-002/ACC-015): no `feat`/`adr` tool, resource or prompt
+has a `language` parameter, no `{language}` path convention reaches `feat`'s
+folder-per-document addressing or `adr`'s directory, and a `language` that
+reaches a generic tool with `type="feat"`/`"adr"` is rejected with the
+permanent "`feat` documents are always English" wording
+(`_language_guard.guard_language`/`assert_language_aware_type`). The surface:
+
+- **`language: str = "en"`** — an optional last parameter of `get_<d>`/
+  `list_<d>` (single language per call, deliberately no "all languages"
+  mode; `list_<d>(language="de")` lists only the `de` variants), of
+  `create_<d>` (which gains an `id` parameter too: a non-default language
+  *requires* the EN source's shared `id` — the EN source must exist, the
+  variant is never overwritten, it starts as a fresh `draft`/`open`
+  document — and an `id` is *forbidden* for EN, so EN create is
+  byte-identical), and of the five generic tools `update`/`edit`/
+  `set_status`/`set_classification`/`delete` (the two-table dispatch keeps
+  the EN path literally untouched: `_ADAPTERS` for the default language,
+  `_LANGUAGE_ADAPTERS` for a variant, an import-time assert pinning it to
+  `LANGUAGE_AWARE_DOMAINS`). Omitted or `"en"` is byte-identical to the
+  pre-i18n behavior; `validate` and `parse_<d>` gained no parameter
+  (`validate` stays canonical/EN-only, `parse_<d>` derives the language from
+  the file's position under the base directory).
+- **Path safety (REQ-008, ACC-013)** — `general/tools/_path_safety.
+  assert_language` fullmatches `^[a-z]{2}$` before any filesystem access, in
+  the same position as `id`; the set is open at the guard and closed by the
+  heading tables (a shape-valid code without a table fails at parse/write
+  time with an actionable error). `_doc_paths.doc_base_dir`/
+  `ensure_doc_base_dir` take the language; `language_for_doc_path`,
+  `iter_doc_paths_all_languages` and `iter_language_dirs` are the other
+  language-aware path primitives, per-domain `<d>_lock_key(id, language)`
+  gives each language its own lock, and `DocCache` needed no change (its
+  entries are keyed by the resolved `Path`, so languages of one id never
+  collide).
+- **Heading-mapping table (REQ-004/005)** — one flat JSON object per language
+  (`<translated heading> -> <canonical English heading>`) in
+  `general/data/headings/<language>.json` (packaged data, `pyproject.toml`
+  glob `data/headings/*.json`), loaded lazily by `general/models/
+  heading_table.py` (`load_heading_table`, `resolve_heading_table`; rejects
+  non-pairwise-distinct values and a missing file). A fence-aware
+  `normalize_heading_lines` pre-pass at each domain's `parse_<d>` boundary
+  rewrites translated headings to canonical English before the unchanged
+  `models/md` engine runs, so the parsed model is the canonical document
+  (ACC-011) while the file keeps its translation. The table's domain is
+  closed and model-derived (fixed-text heading aliases only); data-carrying
+  headings and every closed-vocabulary/schema-constant token (REQ-010:
+  `status`/`classification`, RSK `Strategy`/`Probability`/`Impact`, VCR
+  `Coverage`/`AC-NNN (Method)`, `Option N:`/`Step N:`/`Extension N.`, SOP
+  lifecycle, `[ ]`/`[x]`, cross-reference tags, `sysrs`' H1 prefix) are never
+  translated, and `prb`'s `problem_statement` is an explicit English
+  exemption. **To add a language, add `general/data/headings/<language>.json`
+  — no code or guard change** — covering exactly the model-derived heading
+  set; `tests/general/models/test_heading_table_drift.py` runs on every
+  shipped table and names what is missing or surplus.
+- **Tools** (`general/tools/`, read-only, deterministic, no LLM):
+  `list_languages(type, id)` (REQ-012: the languages an artifact exists in,
+  `en` first when the EN source exists, a broken variant listed with
+  `parseable=False` rather than dropped) and `check_translation_drift(type,
+  id, language, source_language="en")` (REQ-014: one non-raising
+  `TranslationDriftResult` with structural drift — `missing`/`extra`/
+  `reordered`/`unparseable` findings over a fence-aware heading skeleton of
+  the raw bodies — *and* staleness — the source `updated` strictly newer than
+  the variant's); both share `_language_variants.py`/the pure core
+  `general/models/translation_drift.py` and reject `feat`/`adr`.
+- **Translation workflow (REQ-011)** — the MCP prompt `translate_artifact`
+  (`general/prompts/`, args `type`/`id`/`language`/optional `source_language`;
+  narration in `general/data/general_translate_artifact_instructions.md`), the
+  static resource `specmgr://i18n` (layout, vocabulary, the per-domain
+  never-translate list, `general/data/general_i18n.md`) and the resource
+  template `specmgr://i18n/headings/{language}` (a language's table as JSON);
+  no tool translates — translating is LLM judgment work around the
+  deterministic tools above. OpenCode surfaces: the `translate-artifact` skill
+  and `/translate <type> <id> <language> [source_language]`, the
+  `translation-status` skill and `/translation-status <type> <id> [language]`
+  (`.opencode/skill/`, `.opencode/command/`).
+- **EN-only consumers (REQ-013, ACC-014)** — `find_related`/
+  `find_similar_text`/`list_references`/`get_reference_diagram(_all)` gained
+  nothing and never see a variant: `iter_doc_paths` is a non-recursive
+  `*.md` glob that does not descend into `{language}` subfolders, so every
+  hit and every resolved reference is the EN path by directory layout alone.
+  Never switch it to a recursive glob —
+  `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
+
+The tests: `tests/general/tools/test_i18n_all_domains.py` (all twelve domains),
+`tests/dec/tools/test_i18n_*.py` (the `dec` pilot, deep),
+`test_i18n_feat_adr_exclusion.py` (the registered-surface regression for
+ACC-002/ACC-015), `test_i18n_en_only_consumers.py`, `test_i18n_closed_
+vocabulary.py`, `test_language_guard.py`, `test_list_languages.py`,
+`test_check_translation_drift.py`, and the heading-table/drift tests under
+`tests/general/models/`.
 
 Don't assume any domain package exists beyond the
 per-domain bullets in the Status section above (each with its respective
@@ -1382,7 +1514,21 @@ full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
 `pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
 last, before every commit, so a broken test or drift in
 `docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
-instead of failing later in CI. The `pytest` hook is deliberately ordered
+instead of failing later in CI. The local `specmgr lint` hook (feat-218)
+lints the staged in-tree spec artifacts (the feature README.md files under
+`.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
+anchored pattern `^(\.specmgr/feat/[^/]+/README\.md|docs/[^/]+/[^/]+\.md)$`)
+with the `specmgr lint` full-parse gate, and is placed ahead of the `pytest`
+hook. It is the config's first `pass_filenames: true` hook (every other
+local hook takes no file list) and runs with `require_serial: true`, so the
+staged files are linted by one process with one ordered summary (a staged
+list longer than the OS argument-length limit is still split into sequential
+invocations, each with its own summary). It parses the working-tree file
+contents, not the git index: a partially staged file is checked as it exists
+on disk (accepted and documented). A commit that stages only files the
+pattern matches but the command skips or excludes (e.g. `docs/appendix/*.md`,
+`docs/adr/README.md`) passes with a 0-linted summary.
+The `pytest` hook is deliberately ordered
 last (not right after `vulture`) so every faster check fails fast first;
 running the suite in parallel also cut its own wall time from 9-11 minutes
 (serial `coverage run -m unittest discover`) to roughly a minute measured on
@@ -1457,6 +1603,42 @@ extras onto every consumer of the base library.
   printed) of a file's or stdin's (`-`) diagram source; fully offline.
   Exit codes: **0** printed, **2** usage error (missing/unreadable file,
   empty input).
+- `specmgr lint [paths]... [--type T [--dir D]] [--all]
+  [--skip-unrecognized]` (feat-218, `commands/lint.py`): the in-tree spec
+  artifact parseability gate — runs the document's own domain's model-level
+  FULL parse over each document (never the `list_<d>`/`DocCache` listing
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  is precisely the masking that hid the feat-214 defect) and reports every
+  unparseable document (path + parse error), each followed by its per-type
+  repair pointer (whole-body domains `/repair {type} {id}`, the id derived
+  from the path — the folder name for feat, the file-name UUID for the
+  others — falling back to `/repair {type}`; ADR, which the repair flow
+  does not cover, a fix-manually line), plus one summary
+  (`linted`/`failed`/`skipped`/`excluded`). Three scopes, so the cost
+  scales with the size of a change and never with the size of the corpus:
+  path mode (the type is inferred from the path layout alone — the
+  containing directory named after a type, or the `feat/{id}/README.md`
+  shape — with the `--type` override and `--skip-unrecognized`; used by
+  the `specmgr-lint` pre-commit hook over the staged in-tree artifacts and
+  by the CI pull-request step over the artifacts changed against the base
+  branch), and the `--type T` sweep (from `--dir` if given, else the
+  domain's registered base directory) and the `--all` sweep — both
+  CLI-only, never on the commit path or in the test suite. The generated
+  `docs/adr/README.md` table of contents is unconditionally excluded
+  (resolved type `adr` + base name `README.md`, in whichever directory;
+  `feat/{id}/README.md` is never excluded). Exit codes: **0** every
+  document parsed (incl. a run where every path was skipped or excluded),
+  **1** at least one document failed to parse or the `mcp` extra is
+  missing (required, like `specmgr diagram`; the decoupling is tracked as
+  issue #238), **2** usage-or-resolution error (no paths and no sweep
+  flag, an unreadable or missing path, an unrecognized layout without
+  `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
+  paths, paths combined with `--all`, an unknown `--type`, `--all`
+  discovering nothing at all -- no document and no excluded one). Accepted
+  limitation: because the gate is change-scoped, a schema or parser change
+  can break untouched documents without failing any gate — the full sweep
+  (manual, or the follow-up nightly workflow whose issue owns the
+  limitation) finds them.
 
 ## MCP server (`server.py`)
 

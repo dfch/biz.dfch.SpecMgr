@@ -94,6 +94,18 @@ over every parseable document of all 14 domains (broken documents are
 skipped -- the render never fails for content), with the
 ``include_feat`` switch and an optional ``title`` override
 (feat-207-reference-graph, Phase 120).
+``list_languages`` -- the read-only language-listing tool for one artifact (feat-197-i18n Phase 140, REQ-012,
+ACC-008): given a ``type`` (one of the twelve i18n-eligible domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt;
+``feat``/``adr`` are permanently English and rejected) and an ``id``, it returns the language codes the artifact
+exists in -- ``"en"`` first when the EN source exists, then the other languages holding a variant, sorted by code --
+with one entry per language (resolved path, ``parseable``, parse ``error``).
+``check_translation_drift`` -- the read-only drift check between a translated variant (``language``) and its source
+(``source_language``, default ``"en"``): one structured, non-raising result reports BOTH structural drift
+(``missing``/``extra``/``reordered`` sections against the canonical schema, heading text mapped through the language's
+heading table, free text of data-carrying headings ignored, an ``unparseable`` finding for a broken document) and
+staleness (the source's ``updated`` strictly newer than the variant's) (feat-197-i18n Phase 140, REQ-014, ACC-009).
+Neither tool writes, creates, or invalidates anything, and neither translates (translating is the
+``translate_artifact`` prompt).
 Import this package to register all general tools at once::
 
     from biz.dfch.specmgr.general import tools  # noqa: F401 (side-effects only)

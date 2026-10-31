@@ -132,10 +132,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ...dec.models.v1 import DecFrontmatter, Decision
+from ...dec.models.v1 import DecFrontmatter, parse_dec_body
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._io import read_dec
-from ...dec.tools._lock import dec_lock
+from ...dec.tools._lock import dec_lock, dec_lock_key
 from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter, Feature
@@ -144,10 +144,10 @@ from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
-from ...gol.models.v1 import GolFrontmatter, Goal
+from ...gol.models.v1 import GolFrontmatter, parse_gol_body
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._io import read_gol
-from ...gol.tools._lock import gol_lock
+from ...gol.tools._lock import gol_lock, gol_lock_key
 from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import BODY_CHANNEL, wrap_tool_errors
@@ -161,70 +161,71 @@ from ..models import (  # pylint: disable=no-name-in-module
     ValidateResult,
     ValidationErrorEntry,
 )
-from ...prb.models.v1 import Prb, PrbFrontmatter
+from ...prb.models.v1 import PrbFrontmatter, parse_prb_body
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._io import read_prb
-from ...prb.tools._lock import prb_lock
+from ...prb.tools._lock import prb_lock, prb_lock_key
 from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
-from ...qa.models.v2 import Qa, QaFrontmatter
+from ...qa.models.v2 import QaFrontmatter, parse_qa_body
 from ...qa.tools._io import load_by_id as load_qa_by_id
 from ...qa.tools._io import read_qa
-from ...qa.tools._lock import qa_lock
+from ...qa.tools._lock import qa_lock, qa_lock_key
 from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
-from ...req.models.v1 import ReqFrontmatter, Requirement
+from ...req.models.v1 import ReqFrontmatter, parse_req_body
 from ...req.tools._io import load_by_id as load_req_by_id
 from ...req.tools._io import read_req
-from ...req.tools._lock import req_lock
+from ...req.tools._lock import req_lock, req_lock_key
 from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
-from ...rsk.models.v1 import Risk, RskFrontmatter
+from ...rsk.models.v1 import RskFrontmatter, parse_rsk_body
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._io import read_rsk
-from ...rsk.tools._lock import rsk_lock
+from ...rsk.tools._lock import rsk_lock, rsk_lock_key
 from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
-from ...sop.models.v1 import Sop, SopFrontmatter
+from ...sop.models.v1 import SopFrontmatter, parse_sop_body
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._io import read_sop
-from ...sop.tools._lock import sop_lock
+from ...sop.tools._lock import sop_lock, sop_lock_key
 from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
-from ...sysrs.models.v1 import Sysrs, SysrsFrontmatter
+from ...sysrs.models.v1 import SysrsFrontmatter, parse_sysrs_body
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
 from ...sysrs.tools._io import read_sysrs
-from ...sysrs.tools._lock import sysrs_lock
+from ...sysrs.tools._lock import sysrs_lock, sysrs_lock_key
 from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
-from ...tsk.models.v1 import Task, TskFrontmatter
+from ...tsk.models.v1 import TskFrontmatter, parse_tsk_body
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._io import read_tsk
-from ...tsk.tools._lock import tsk_lock
+from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
-from ...txt.models.v1 import Txt, TxtFrontmatter
+from ...txt.models.v1 import TxtFrontmatter, parse_txt_body
 from ...txt.tools._io import load_by_id as load_txt_by_id
 from ...txt.tools._io import read_txt
-from ...txt.tools._lock import txt_lock
+from ...txt.tools._lock import txt_lock, txt_lock_key
 from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
 from ...txt.tools._write import write_txt_file
-from ...uc.models.v2 import UcFrontmatter, UseCase
+from ...uc.models.v2 import UcFrontmatter, parse_uc_body
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
-from ...uc.tools._lock import uc_lock
+from ...uc.tools._lock import uc_lock, uc_lock_key
 from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
-from ...vcr.models.v1 import Vcr, VcrFrontmatter
+from ...vcr.models.v1 import VcrFrontmatter, parse_vcr_body
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._io import read_vcr
-from ...vcr.tools._lock import vcr_lock
+from ...vcr.tools._lock import vcr_lock, vcr_lock_key
 from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
 from ._doc_paths import find_parse_failure
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
-from ._path_safety import assert_within, validate_id
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._splice import body_text, splice_body, splice_snippet
 from ._timestamps import now_timestamp
 from .validate import _CAUGHT_EXCEPTIONS, _MAX_VALIDATE_ERROR_CHARS
@@ -284,7 +285,7 @@ class _UpdateOutcome:
 
 
 def _update_req(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -311,12 +312,21 @@ def _update_req(
     public :class:`~biz.dfch.specmgr.general.models.UpdateResult` (computing
     the ``snippet`` once via :func:`_splice.splice_snippet`) instead of
     returning the bare frontmatter; the write behavior itself is unchanged.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+    variant's own (``req_lock(req_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.req.models.v1.parse_req_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = req_base_dir()
-        with req_lock(id_):
+        base_dir = req_base_dir(language)
+        with req_lock(req_lock_key(id_, language)):
             try:
                 path, existing = load_req_by_id(base_dir, id_)
             except ReqNotFoundError:
@@ -331,7 +341,7 @@ def _update_req(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-                    Requirement.from_text(format_text(spliced))
+                    parse_req_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -345,13 +355,13 @@ def _update_req(
 
     try:
         with wrap_tool_errors(domain="req", tool="update", channel=BODY_CHANNEL):
-            Requirement.from_text(format_text(content))
+            parse_req_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = req_base_dir()
-    with req_lock(id_):
+    base_dir = req_base_dir(language)
+    with req_lock(req_lock_key(id_, language)):
         try:
             path, existing = load_req_by_id(base_dir, id_)
         except ReqNotFoundError:
@@ -372,7 +382,7 @@ def _update_req(
 
 
 def _update_uc(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -381,12 +391,20 @@ def _update_uc(
     ``updated`` bumped, ``write_uc_file``, ``UcNotFoundError``; that
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+    variant's own (``uc_lock(uc_lock_key(id_, language))``), the submitted/spliced body is validated
+    through the variant's heading table (:func:`~biz.dfch.specmgr.uc.models.v2.parse_uc_body`), and
+    the write plus cache warming target that one file's own path -- the EN document (bytes,
+    ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = uc_base_dir()
-        with uc_lock(id_):
+        base_dir = uc_base_dir(language)
+        with uc_lock(uc_lock_key(id_, language)):
             try:
                 path, existing = load_uc_by_id(base_dir, id_)
             except UcNotFoundError:
@@ -401,7 +419,7 @@ def _update_uc(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-                    UseCase.from_text(format_text(spliced))
+                    parse_uc_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -415,13 +433,13 @@ def _update_uc(
 
     try:
         with wrap_tool_errors(domain="uc", tool="update", channel=BODY_CHANNEL):
-            UseCase.from_text(format_text(content))
+            parse_uc_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = uc_base_dir()
-    with uc_lock(id_):
+    base_dir = uc_base_dir(language)
+    with uc_lock(uc_lock_key(id_, language)):
         try:
             path, existing = load_uc_by_id(base_dir, id_)
         except UcNotFoundError:
@@ -442,7 +460,7 @@ def _update_uc(
 
 
 def _update_tsk(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -451,12 +469,21 @@ def _update_tsk(
     with only ``updated`` bumped, ``write_tsk_file``, ``TskNotFoundError``;
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+    variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.tsk.models.v1.parse_tsk_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = tsk_base_dir()
-        with tsk_lock(id_):
+        base_dir = tsk_base_dir(language)
+        with tsk_lock(tsk_lock_key(id_, language)):
             try:
                 path, existing = load_tsk_by_id(base_dir, id_)
             except TskNotFoundError:
@@ -471,7 +498,7 @@ def _update_tsk(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-                    Task.from_text(format_text(spliced))
+                    parse_tsk_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -485,13 +512,13 @@ def _update_tsk(
 
     try:
         with wrap_tool_errors(domain="tsk", tool="update", channel=BODY_CHANNEL):
-            Task.from_text(format_text(content))
+            parse_tsk_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = tsk_base_dir()
-    with tsk_lock(id_):
+    base_dir = tsk_base_dir(language)
+    with tsk_lock(tsk_lock_key(id_, language)):
         try:
             path, existing = load_tsk_by_id(base_dir, id_)
         except TskNotFoundError:
@@ -512,7 +539,7 @@ def _update_tsk(
 
 
 def _update_qa(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -521,12 +548,20 @@ def _update_qa(
     with only ``updated`` bumped, ``write_qa_file``, ``QaNotFoundError``;
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+    variant's own (``qa_lock(qa_lock_key(id_, language))``), the submitted/spliced body is validated
+    through the variant's heading table (:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa_body`), and
+    the write plus cache warming target that one file's own path -- the EN document (bytes,
+    ``updated``, cache entry) is never touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = qa_base_dir()
-        with qa_lock(id_):
+        base_dir = qa_base_dir(language)
+        with qa_lock(qa_lock_key(id_, language)):
             try:
                 path, existing = load_qa_by_id(base_dir, id_)
             except QaNotFoundError:
@@ -541,7 +576,7 @@ def _update_qa(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-                    Qa.from_text(format_text(spliced))
+                    parse_qa_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -555,13 +590,13 @@ def _update_qa(
 
     try:
         with wrap_tool_errors(domain="qa", tool="update", channel=BODY_CHANNEL):
-            Qa.from_text(format_text(content))
+            parse_qa_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = qa_base_dir()
-    with qa_lock(id_):
+    base_dir = qa_base_dir(language)
+    with qa_lock(qa_lock_key(id_, language)):
         try:
             path, existing = load_qa_by_id(base_dir, id_)
         except QaNotFoundError:
@@ -582,7 +617,7 @@ def _update_qa(
 
 
 def _update_prb(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -591,12 +626,21 @@ def _update_prb(
     carry-over with only ``updated`` bumped, ``write_prb_file``,
     ``PrbNotFoundError``; that per-domain tool was retired in feat-22
     Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+    variant's own (``prb_lock(prb_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = prb_base_dir()
-        with prb_lock(id_):
+        base_dir = prb_base_dir(language)
+        with prb_lock(prb_lock_key(id_, language)):
             try:
                 path, existing = load_prb_by_id(base_dir, id_)
             except PrbNotFoundError:
@@ -611,7 +655,7 @@ def _update_prb(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-                    Prb.from_text(format_text(spliced))
+                    parse_prb_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -625,13 +669,13 @@ def _update_prb(
 
     try:
         with wrap_tool_errors(domain="prb", tool="update", channel=BODY_CHANNEL):
-            Prb.from_text(format_text(content))
+            parse_prb_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = prb_base_dir()
-    with prb_lock(id_):
+    base_dir = prb_base_dir(language)
+    with prb_lock(prb_lock_key(id_, language)):
         try:
             path, existing = load_prb_by_id(base_dir, id_)
         except PrbNotFoundError:
@@ -652,7 +696,7 @@ def _update_prb(
 
 
 def _update_gol(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -661,12 +705,21 @@ def _update_gol(
     only ``updated`` bumped, ``write_gol_file``, ``GolNotFoundError``; that
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+    variant's own (``gol_lock(gol_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.gol.models.v1.parse_gol_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = gol_base_dir()
-        with gol_lock(id_):
+        base_dir = gol_base_dir(language)
+        with gol_lock(gol_lock_key(id_, language)):
             try:
                 path, existing = load_gol_by_id(base_dir, id_)
             except GolNotFoundError:
@@ -681,7 +734,7 @@ def _update_gol(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-                    Goal.from_text(format_text(spliced))
+                    parse_gol_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -695,13 +748,13 @@ def _update_gol(
 
     try:
         with wrap_tool_errors(domain="gol", tool="update", channel=BODY_CHANNEL):
-            Goal.from_text(format_text(content))
+            parse_gol_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = gol_base_dir()
-    with gol_lock(id_):
+    base_dir = gol_base_dir(language)
+    with gol_lock(gol_lock_key(id_, language)):
         try:
             path, existing = load_gol_by_id(base_dir, id_)
         except GolNotFoundError:
@@ -722,7 +775,7 @@ def _update_gol(
 
 
 def _update_rsk(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -731,12 +784,21 @@ def _update_rsk(
     only ``updated`` bumped, ``write_rsk_file``, ``RskNotFoundError``; that
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+    variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = rsk_base_dir()
-        with rsk_lock(id_):
+        base_dir = rsk_base_dir(language)
+        with rsk_lock(rsk_lock_key(id_, language)):
             try:
                 path, existing = load_rsk_by_id(base_dir, id_)
             except RskNotFoundError:
@@ -751,7 +813,7 @@ def _update_rsk(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-                    Risk.from_text(format_text(spliced))
+                    parse_rsk_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -765,13 +827,13 @@ def _update_rsk(
 
     try:
         with wrap_tool_errors(domain="rsk", tool="update", channel=BODY_CHANNEL):
-            Risk.from_text(format_text(content))
+            parse_rsk_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = rsk_base_dir()
-    with rsk_lock(id_):
+    base_dir = rsk_base_dir(language)
+    with rsk_lock(rsk_lock_key(id_, language)):
         try:
             path, existing = load_rsk_by_id(base_dir, id_)
         except RskNotFoundError:
@@ -792,7 +854,7 @@ def _update_rsk(
 
 
 def _update_dec(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -803,12 +865,25 @@ def _update_dec(
     domain -- merged from dev while still on the old per-domain mechanism
     -- was converted to the generic tools), plus the REQ-002 range branch
     (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects which variant file the
+    adapter acts on: the id is scanned for in ``dec_base_dir(language)``
+    (the flat EN directory, or the ``{language}`` subdirectory -- the
+    basename is never re-derived), the lock is the variant's own
+    (``dec_lock(dec_lock_key(id_, language))``), the submitted/spliced body is validated
+    through the variant's heading table
+    (:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and the write
+    plus cache warming target that one file's own path -- the EN file
+    (content, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = dec_base_dir()
-        with dec_lock(id_):
+        base_dir = dec_base_dir(language)
+        with dec_lock(dec_lock_key(id_, language)):
             try:
                 path, existing = load_dec_by_id(base_dir, id_)
             except DecNotFoundError:
@@ -823,7 +898,7 @@ def _update_dec(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-                    Decision.from_text(format_text(spliced))
+                    parse_dec_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -837,13 +912,13 @@ def _update_dec(
 
     try:
         with wrap_tool_errors(domain="dec", tool="update", channel=BODY_CHANNEL):
-            Decision.from_text(format_text(content))
+            parse_dec_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
         try:
             path, existing = load_dec_by_id(base_dir, id_)
         except DecNotFoundError:
@@ -938,7 +1013,7 @@ def _update_feat(
 
 
 def _update_sop(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -949,12 +1024,21 @@ def _update_sop(
     per-domain ``update_sop`` tool to port -- this adapter was written
     directly in this shape), plus the REQ-002 range branch
     (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+    variant's own (``sop_lock(sop_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = sop_base_dir()
-        with sop_lock(id_):
+        base_dir = sop_base_dir(language)
+        with sop_lock(sop_lock_key(id_, language)):
             try:
                 path, existing = load_sop_by_id(base_dir, id_)
             except SopNotFoundError:
@@ -969,7 +1053,7 @@ def _update_sop(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-                    Sop.from_text(format_text(spliced))
+                    parse_sop_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -983,13 +1067,13 @@ def _update_sop(
 
     try:
         with wrap_tool_errors(domain="sop", tool="update", channel=BODY_CHANNEL):
-            Sop.from_text(format_text(content))
+            parse_sop_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = sop_base_dir()
-    with sop_lock(id_):
+    base_dir = sop_base_dir(language)
+    with sop_lock(sop_lock_key(id_, language)):
         try:
             path, existing = load_sop_by_id(base_dir, id_)
         except SopNotFoundError:
@@ -1010,7 +1094,7 @@ def _update_sop(
 
 
 def _update_vcr(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -1018,12 +1102,21 @@ def _update_vcr(
     frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
     ``VcrNotFoundError``), plus the REQ-002 range branch (see
     :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+    variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.vcr.models.v1.parse_vcr_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = vcr_base_dir()
-        with vcr_lock(id_):
+        base_dir = vcr_base_dir(language)
+        with vcr_lock(vcr_lock_key(id_, language)):
             try:
                 path, existing = load_vcr_by_id(base_dir, id_)
             except VcrNotFoundError:
@@ -1038,7 +1131,7 @@ def _update_vcr(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-                    Vcr.from_text(format_text(spliced))
+                    parse_vcr_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -1052,13 +1145,13 @@ def _update_vcr(
 
     try:
         with wrap_tool_errors(domain="vcr", tool="update", channel=BODY_CHANNEL):
-            Vcr.from_text(format_text(content))
+            parse_vcr_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = vcr_base_dir()
-    with vcr_lock(id_):
+    base_dir = vcr_base_dir(language)
+    with vcr_lock(vcr_lock_key(id_, language)):
         try:
             path, existing = load_vcr_by_id(base_dir, id_)
         except VcrNotFoundError:
@@ -1079,7 +1172,7 @@ def _update_vcr(
 
 
 def _update_sysrs(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -1089,12 +1182,21 @@ def _update_sysrs(
     from day one per ADR 36905d5b, so there was never a per-domain
     ``update_sysrs`` tool to port -- this adapter was written directly in
     this shape), plus the REQ-002 range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+    variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = sysrs_base_dir()
-        with sysrs_lock(id_):
+        base_dir = sysrs_base_dir(language)
+        with sysrs_lock(sysrs_lock_key(id_, language)):
             try:
                 path, existing = load_sysrs_by_id(base_dir, id_)
             except SysrsNotFoundError:
@@ -1109,7 +1211,7 @@ def _update_sysrs(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-                    Sysrs.from_text(format_text(spliced))
+                    parse_sysrs_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -1123,13 +1225,13 @@ def _update_sysrs(
 
     try:
         with wrap_tool_errors(domain="sysrs", tool="update", channel=BODY_CHANNEL):
-            Sysrs.from_text(format_text(content))
+            parse_sysrs_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = sysrs_base_dir()
-    with sysrs_lock(id_):
+    base_dir = sysrs_base_dir(language)
+    with sysrs_lock(sysrs_lock_key(id_, language)):
         try:
             path, existing = load_sysrs_by_id(base_dir, id_)
         except SysrsNotFoundError:
@@ -1150,7 +1252,7 @@ def _update_sysrs(
 
 
 def _update_txt(
-    id_: str, content: str, offset: int | None, limit: int | None
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
 ) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
     """Replace the body of the free-form text document identified by ``id_`` (whole-body or line-range mode).
 
@@ -1159,12 +1261,21 @@ def _update_txt(
     ``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
     36905d5b, so this adapter was written directly in this shape), plus the
     REQ-002 range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+    variant's own (``txt_lock(txt_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
     """
     if offset is not None:
         assert limit is None or offset is not None, "the public `update` guard enforces offset with limit"
 
-        base_dir = txt_base_dir()
-        with txt_lock(id_):
+        base_dir = txt_base_dir(language)
+        with txt_lock(txt_lock_key(id_, language)):
             try:
                 path, existing = load_txt_by_id(base_dir, id_)
             except TxtNotFoundError:
@@ -1179,7 +1290,7 @@ def _update_txt(
             spliced = splice_body(pre, offset, limit, content)
             try:
                 with wrap_tool_errors(domain="txt", tool="update", channel=BODY_CHANNEL):
-                    Txt.from_text(format_text(spliced))
+                    parse_txt_body(spliced, language=language)
             except _CAUGHT_EXCEPTIONS as ex:
                 message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
                 return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
@@ -1193,13 +1304,13 @@ def _update_txt(
 
     try:
         with wrap_tool_errors(domain="txt", tool="update", channel=BODY_CHANNEL):
-            Txt.from_text(format_text(content))
+            parse_txt_body(content, language=language)
     except _CAUGHT_EXCEPTIONS as ex:
         message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
         return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
 
-    base_dir = txt_base_dir()
-    with txt_lock(id_):
+    base_dir = txt_base_dir(language)
+    with txt_lock(txt_lock_key(id_, language)):
         try:
             path, existing = load_txt_by_id(base_dir, id_)
         except TxtNotFoundError:
@@ -1242,6 +1353,33 @@ _ADAPTERS: dict[
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
     "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phases 120/125: every whole-body
+#: domain except ``feat``). Called with the language as a 5th positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[
+    str,
+    Callable[[str, str, int | None, int | None, str], _UpdateOutcome | ParseFailureResult | ValidateResult],
+] = {
+    "req": _update_req,
+    "uc": _update_uc,
+    "tsk": _update_tsk,
+    "qa": _update_qa,
+    "prb": _update_prb,
+    "gol": _update_gol,
+    "rsk": _update_rsk,
+    "dec": _update_dec,
+    "sop": _update_sop,
+    "vcr": _update_vcr,
+    "sysrs": _update_sysrs,
+    "txt": _update_txt,
+}
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
 )
 
 
@@ -1310,15 +1448,25 @@ def _assemble_result(outcome: _UpdateOutcome) -> UpdateResult:
         "lines numbered post-splice, up to 2 unchanged context lines per side, each line "
         "`<marker> <n>: <line text>`); `snippet` is `None` in whole-body mode and for the "
         "whole-body-equivalent range (`offset=1` with `limit` omitted). Use the corresponding "
-        "`get_<d>` tool to fetch the full document afterward."
+        "`get_<d>` tool to fetch the full document afterward. The optional `language` parameter "
+        "(default 'en', feat-197-i18n) selects the language variant to act on: omitted/'en' = the "
+        "flat default-language document, exactly the default behavior; a non-default ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = that language's variant at docs/<type>/{language}/ "
+        "(found by id-scan of that subdirectory), acting on that file ONLY -- the EN file's content "
+        "and `updated` timestamp stay untouched -- with the submitted content validated through that "
+        "language's heading-mapping table (translated headings are accepted). "
+        "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
+        "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
+        "one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
-def update(
+def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     id: str,
     type: WholeBodyType,
     content: str,
     offset: int | None = None,
     limit: int | None = None,
+    language: str = DEFAULT_LANGUAGE,
 ) -> UpdateResult | ParseFailureResult | ValidateResult:
     """Replace the body of an existing document, in whole-body or line-range mode.
 
@@ -1398,6 +1546,20 @@ def update(
         Optional number of lines to replace starting at ``offset``
         (``0`` = pure insert); must be given together with ``offset``
         (``limit`` without ``offset`` is a ``ValueError``).
+    language:
+        The language variant to act on (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+        it) acts on the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) acts on that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived), with the content (or the spliced result)
+        validated through that language's heading-mapping table. Only that
+        one file is written: the EN document's bytes, ``updated``
+        timestamp, and cache entry stay untouched. Shape-guarded before any
+        filesystem access (like ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` is always English: a non-default language for it raises a
+        ``ValueError``).
 
     Returns
     -------
@@ -1483,8 +1645,13 @@ def update(
     if offset is None and limit is not None:
         raise ValueError(f"limit must be given together with offset, got offset={offset!r}, limit={limit!r}")
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, content, offset, limit)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
+
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, content, offset, limit)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, content, offset, limit, language)
     if isinstance(result, (ParseFailureResult, ValidateResult)):
         return result
     return _assemble_result(result)

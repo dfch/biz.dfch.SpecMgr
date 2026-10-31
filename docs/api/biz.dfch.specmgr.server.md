@@ -122,6 +122,23 @@ specmgr://reference-graph -- The frozen reference-graph rulebook: the determinis
                              the CLI file layout) plus the pointer at the UC rulebook
                              §3–§6 for the validation chain reused as-is -- raw markdown
                              domain-knowledge guidance (feat-207-reference-graph Phase 100).
+specmgr://i18n --       How language variants of the same artifact are stored and
+                        translated (feat-197-i18n Phase 130): the ``docs/{type}/{language}/``
+                        layout and the EN-slug basename rule, the language vocabulary and
+                        per-language heading tables, the tool surface honoring ``language``,
+                        the exact never-translate list per domain (closed-vocabulary and
+                        schema-constant tokens, the ``prb`` ``problem_statement``
+                        exemption), how to translate headings, the create-versus-update
+                        decision, and the guard/error semantics (``feat``/``adr`` are always
+                        English) -- raw markdown domain-knowledge guidance.
+specmgr://i18n/headings/{language} -- (resource template, feat-197-i18n Phase 130) A
+                        language's heading-mapping table as JSON text (``application/json``):
+                        a flat object mapping each translated heading text to its canonical
+                        English heading text, obtained via the heading-table loader (same
+                        validation as every parse). ``language`` is shape-guarded first;
+                        ``en`` (canonical, no table) and a language without a packaged table
+                        are an actionable ``ValueError``. Read-only; lets the
+                        ``translate_artifact`` flow read the table without a host file tool.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
                          rsk, dec, sop, feat, vcr, sysrs, txt), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
@@ -295,16 +312,42 @@ the clamped offset and never restarts, so a number seen can be fed straight back
 into the generic ``update`` tool's ``offset``)), ``list_rsk``,
  ``get_rsk_example``,
  ``get_rsk_template``, ``get_rsk_schema``, ``create_rsk``.
-    Decision tools (``dec/tools/``): ``parse_dec``, ``get_dec`` (``raw=True`` returns the
+    Decision tools (``dec/tools/``): ``parse_dec`` (takes no ``language`` parameter -- it
+derives the file's language from its path position relative to the decision base
+directory: flat ``docs/dec/`` = canonical/no table, a direct two-letter
+``docs/dec/{language}/`` subdirectory = that language's packaged heading-mapping
+table), ``get_dec`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
 ``numbered=True`` (raw-only; ``ValueError`` with ``raw=False``, like
 ``offset``/``limit``), prefixes every returned body line with its 1-based absolute
 body-line number in the ``"<n>: "`` form -- a windowed numbered read numbers from
 the clamped offset and never restarts, so a number seen can be fed straight back
-into the generic ``update`` tool's ``offset``)), ``list_dec``,
+into the generic ``update`` tool's ``offset``; the optional ``language`` parameter
+(feat-197-i18n Phase 110, default ``"en"``) selects the variant to read --
+omitted/``"en"`` = the flat ``docs/dec/`` document exactly as before, any other
+ISO 639-1-shaped lowercase two-letter code = that language's variant at
+``docs/dec/{language}/`` (shape-guarded before any file access like ``id``, and a
+shape-valid code without a heading-mapping table is rejected up front); ``raw=True``
+returns the variant's body verbatim, ``raw=False`` parses it through the variant's
+table so the model holds canonical heading text), ``list_dec`` (the same optional
+``language`` parameter, default ``"en"`` -- omitted/``"en"`` scans the flat
+directory exactly as before, any other code scans only that language's
+subdirectory, listing exactly the existing variants of that language; deliberately
+no "all languages" mode -- the row shape is unchanged, no language column),
     ``get_dec_example``,
-    ``get_dec_template``, ``get_dec_schema``, ``create_dec``.
+    ``get_dec_template``, ``get_dec_schema``, ``create_dec`` (optional ``language``
+(default ``"en"``) and ``id`` parameters, feat-197-i18n Phase 120: omitted/``"en"``
+= a new flat ``docs/dec/`` document with a fresh server-assigned id exactly as
+before, ``id`` then must be omitted; a non-default ``language`` creates a
+TRANSLATION of an existing decision instead -- ``id``, the shared id of the EN
+source document, is then required (a missing one, or one given for the default
+language, is a ``ValueError`` before any file access), the EN source must exist
+(``DecNotFoundError`` otherwise), the variant is written to
+``docs/dec/{language}/`` under the EN source's exact file name with the shared id
+as its frontmatter ``id`` (``status`` draft), its body is validated through the
+language's heading-mapping table and persisted verbatim, and an existing variant of
+that id and language is never overwritten (``FileExistsError``)).
      SOP tools (``sop/tools/``): ``parse_sop``, ``get_sop`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -390,7 +433,33 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   generic ``validate`` tool (``type="txt"``). A ``TXT <uuid>`` reference is both a
   reference source and a reference target (the shared tag vocabulary, feat-229-txt),
   and the reference-graph palette's 15th entry colours a TXT node ``LightGrey``.
-  General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
+  Language variants, every i18n-eligible domain (feat-197-i18n Phases 110/120/125): the
+``get_<d>``/``list_<d>`` tools take an optional ``language`` parameter (default ``"en"``)
+and the ``create_<d>`` tools an optional ``language`` plus ``id`` (the shared id of the
+EN source, required for a non-default language and forbidden for ``"en"``) for all
+twelve domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
+``vcr``/``sysrs``/``txt`` -- exactly the behavior documented for ``get_dec``/``list_dec``/
+``create_dec`` above (flat ``docs/<type>/`` for ``"en"``, ``docs/<type>/{language}/``
+under the EN source's exact file name for any other code, shape-guarded before any file
+access, single language per ``list_<d>`` call, a new variant's ``status`` is the
+domain's own create status: ``draft``, ``open`` for ``rsk``); every ``parse_<d>`` tool
+derives the language from its path position; ``prb``'s ``problem_statement`` lead
+paragraph is exempt from translation (the one regex-locked English field, it stays the
+canonical English template sentence in every language). ``feat`` (always English) and
+``adr`` take no ``language`` parameter.
+  General tools (``general/tools/``) -- language variants (feat-197-i18n Phases 120/125):
+the generic ``update``/``edit``/``set_status``/``set_classification``/``delete``
+tools each take an optional ``language`` parameter (default ``"en"``, appended
+last). Omitted/``"en"`` dispatches exactly as before. A non-default
+ISO 639-1-shaped lowercase two-letter code acts on that language's variant file
+ONLY (``docs/<type>/{language}/``, located by id-scan; the EN file's bytes,
+``updated`` timestamp, and cache entry stay untouched, and a variant's content is
+validated through the language's heading-mapping table) -- honored by every
+whole-body domain except ``feat``; ``feat``/``adr`` raise a ``ValueError`` for a
+non-default language before any file access (those documents are always English),
+as does a malformed ``language`` or one without a packaged table. The generic
+``validate`` tool takes no ``language`` parameter (EN/canonical content only).
+General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the whole-body domains (``type`` is one of
   ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``;
@@ -546,7 +615,52 @@ all 14 domains (broken documents are skipped -- the render never fails for
 content), with the ``include_feat`` switch (the FEAT exclusion, applied
 last) and an optional ``title`` override (default: ``Reference Graph``;
 the diagram title is sanitized but never truncated, the node labels are
-truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40).
+truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40);
+``list_languages`` (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008) --
+the read-only language-listing tool: takes a ``type`` (one of the eleven
+i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``;
+``feat`` and ``adr`` are permanently English and rejected with the "always
+English" ``ValueError``, before the id is looked at) and an ``id``, and returns a
+``LanguageListResult``: ``languages`` -- ``"en"`` first when the EN source exists
+(never invented: an id with variants but no EN source lists no ``"en"``), then
+every other language holding a variant sorted by code -- plus one entry per
+language (resolved ``path``, ``parseable``, and the parse ``error`` of a variant
+that exists but fails to parse, byte-identical to the domain's ``list_<d>``
+failed-row ``error``). It probes the flat ``docs/{type}/`` directory and each
+shape-valid ``docs/{type}/{language}/`` subdirectory through the domains' own
+language-aware readers -- never through, and never altering, the EN-only scans
+of the other tools (REQ-013); only ``*.md`` documents participate. A
+path-injection/wrong-format ``id`` is a ``ValueError`` before any filesystem
+access; an id that exists in no language raises the domain's own
+``XNotFoundError``. Strictly read-only (writes, creates and invalidates
+nothing);
+``check_translation_drift`` (feat-197-i18n Phase 140, Tasks 140.100/140.110,
+REQ-014, ACC-009) -- the read-only drift check between a translated variant
+(``language``, never ``"en"``) and its source (``source_language``, default
+``"en"``, any language with a heading table): one non-raising
+``TranslationDriftResult`` reports BOTH drift kinds. STRUCTURAL: both documents'
+raw body text is reduced to a heading skeleton (the parse boundary's own
+fence-aware heading recognizer), each heading is mapped back to canonical English
+through the document language's heading table, the free text of the data-carrying
+headings (``Option N:``, ``Step N:``, ``Extension N.``, ``AC-NNN (Method):``) is
+dropped so only the schema-constant token is compared, and timestamp-led update
+entries (change-log rows) are not compared; each ``missing``/``extra``/
+``reordered`` section is a finding (canonical ``heading``, ``path``, ``level``,
+positions), and a document that fails to parse is an ``unparseable`` finding
+carrying the parse error -- never swallowed, never raised. STALENESS: ``stale``
+is true iff the source's frontmatter ``updated`` is strictly newer than the
+variant's, compared as offset-aware datetimes (``T``/space separators and UTC
+offsets compare correctly; equal is not stale), with both timestamps, the signed
+``source_ahead_by_seconds`` and a ``staleness_error`` for a missing/unparseable
+timestamp. ``in_sync`` is true iff there is no structural finding, the variant is
+not stale and staleness could be determined. Wording, prose, frontmatter values
+and ``prb``'s English ``problem_statement`` are never compared. Guards before any
+filesystem access: ``feat``/``adr`` (always English), unknown ``type``,
+path-injection/wrong-format ``id``, a malformed or table-less ``language``/
+``source_language``, ``language="en"``, and equal languages are ``ValueError``s;
+a truly absent source or variant raises the domain's own ``XNotFoundError``
+(naming the missing side). Strictly read-only; no tool translates (translating is
+the ``translate_artifact`` prompt).
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
 ``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
 ``get_<d>`` tools (including ``get_adr``), the generic ``update``, the generic
@@ -711,7 +825,27 @@ structurally unable to repair a document that fails to parse), and a
 post-write ``get_<d>``/``list_<d>`` confirmation against the file as it now
 exists on disk (success: the parsed document, not an ``error``-carrying
 result); degrades to diagnose-only on a host without file tools
-(feat-150-mcp-lifecycle-commands, Phase 1).
+(feat-150-mcp-lifecycle-commands, Phase 1); ``translate_artifact`` -- guides
+producing or updating a target-language variant of a whole-body document
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/
+``sysrs``; ``feat`` and ``adr`` are always English and rejected) from its
+source-language content (arguments ``type``, ``id``, ``language``, optional
+``source_language`` default ``"en"``): read the ``specmgr://i18n`` resource
+first (and the heading table via ``specmgr://i18n/headings/{language}``), read the
+source via ``get_<d>(id, raw=True, language=...)`` (a
+``ParseFailureResult`` stops the flow), probe the target variant to decide
+``create_<d>(content, language, id)`` versus the generic ``update``/``edit`` with
+``language``, translate only free-form prose and fixed-text heading text (through
+the language's heading table) -- never the closed-vocabulary/schema-constant
+tokens (REQ-010) nor ``prb``'s ``problem_statement`` -- retry the write a bounded
+number of times on the non-raising ``ValidateResult`` (the generic ``validate``
+tool is canonical-only and cannot dry-run a translation), verify with
+``get_<d>(id, language=...)`` against the file on disk, and report; it never
+commits, never writes English, and a language without a heading table stops the
+flow. There is no MCP tool that translates and no dedicated subagent: the
+OpenCode host surface is the ``translate-artifact`` skill
+(``.opencode/skill/translate-artifact/SKILL.md``) and the ``/translate`` command
+(``.opencode/command/translate.md``) (feat-197-i18n, Phase 130).
 
 Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
@@ -721,7 +855,7 @@ domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``
-resources, the ``mdformat`` tool, or the ``compact_history``/``repair``
+resources, the ``mdformat`` tool, or the ``compact_history``/``repair``/``translate_artifact``
 prompts) stay under the top-level
 ``general`` package instead (``general.tools``/``general.resources``/``general.prompts``).
 Add a new domain by

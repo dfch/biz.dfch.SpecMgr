@@ -49,6 +49,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- `commands/lint.py` — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.
@@ -129,7 +130,9 @@ First-line docstrings from each module, organized by domain:
 - `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
 - `general/models/dtais.py` — Pydantic schema and parser for the DTAIS verification-methods guidance
 - `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
+- `general/models/heading_table.py` — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- `general/models/language_list_result.py` — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - `general/models/parse_failure_result.py` — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
@@ -138,15 +141,18 @@ First-line docstrings from each module, organized by domain:
 - `general/models/similarity_hit.py` — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
 - `general/models/similarity_unavailable.py` — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- `general/models/translation_drift.py` — Translation drift detection: the pure heading-skeleton comparison, the staleness comparison, and the
 - `general/models/update_result.py` — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
 - `general/models/validate_result.py` — The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
 - `general/prompts/repair.py` — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
+- `general/prompts/translate_artifact.py` — ``@mcp.prompt()``: translate_artifact (feat-197-i18n, Phase 130, REQ-011).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- `general/resources/i18n.py` — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/reference_graph.py` — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
@@ -158,10 +164,12 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_domains.py` — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
 - `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
 - `general/tools/_embedding_cache.py` — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
+- `general/tools/_language_guard.py` — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phases 120/125).
+- `general/tools/_language_variants.py` — Per-language document location for the read-only translation tools (feat-197-i18n Phase 140).
 - `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
-- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids,
 - `general/tools/_reference_graph.py` — The reference-graph builders: scoped source-centred and registry-wide graph construction
 - `general/tools/_references.py` — Shared cross-reference extraction and per-domain target resolution
 - `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
@@ -171,12 +179,14 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_startup_warmup.py` — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
+- `general/tools/check_translation_drift.py` — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 - `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
 - `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
 - `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
 - `general/tools/get_reference_diagram.py` — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
 - `general/tools/get_reference_diagram_all.py` — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
+- `general/tools/list_languages.py` — ``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
 - `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
@@ -621,4 +631,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 457
+**Test files**: 477
