@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: planning
 type: feat
-updated: '2026-10-31T07:58:19.585+01:00'
+updated: '2026-10-31T09:34:48.567+01:00'
 version: 1.0.0
 ---
 
@@ -238,11 +238,35 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Current Status
 
-**As of 2026-10-31**: planning. Split off from feat-150-mcp-lifecycle-commands (GitHub issue #150), whose own Phase 0 + Phase 1 scope is done and merged, via GitHub issue #167. No implementation started; the distribution scope (REQ-007/008/009, Phase 125/130) was re-scoped on 2026-10-31 -- single `general_harness_bundle.json` + `specmgr://harness-bundle` resource + agent-driven install, no CLI installer, no prompt, no ADR (see Updates/Decisions Made).
+**As of 2026-10-31**: planning. Split off from feat-150-mcp-lifecycle-commands (GitHub issue #150), whose own Phase 0 + Phase 1 scope is done and merged, via GitHub issue #167. No implementation started; the distribution scope (REQ-007/008/009, Phase 125/130) was re-scoped on 2026-10-31 -- single `general_harness_bundle.json` + `specmgr://harness-bundle` resource + agent-driven install, no CLI installer, no prompt, no ADR (see Updates/Decisions Made). Both the re-scope and the `skills/` -> `skill/` merge it documents are committed; the 2 red `tests/opencode/` files the merge left behind are Phase 125's exact target, and the next action is Task 125.100. A session handover note for a fresh agent is the newest Updates entry below.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31 08:34:48.566Z - Handover: session ended, Phase 125 is next (repo state for a fresh agent)
+
+Handover notes for the agent starting fresh. The Task List (Phase 125: Tasks 125.100/125.110; Phase 130: Tasks 130.100-130.170) is the authoritative task text; everything below is the session state and the settled design decisions.
+
+**Branch / repo state.** Local `dev` is 4 commits ahead of `origin/dev`, unpushed: 2 structurizr spike docs, `chore(opencode): consolidate .opencode/skills/ into .opencode/skill/`, and `docs(feat-167): re-scope distribution to harness-bundle resource + agent-driven install`. The feat-197-i18n PR (#243, commit `2ceeba5`) was pulled and the 4 commits rebased onto it; `AGENTS.md`/`README.md` are the post-i18n versions now. Pushing has not been requested -- leave the branch local.
+
+**Currently red (Phase 125's exact target).** The committed `skills/` -> `skill/` merge left 2 test files red: `tests/opencode/test_skill_feat_numbering.py` and `tests/opencode/test_skill_specmgr_refs.py` pin the old `.opencode/skills/...` paths (path constants + docstrings). Stale prose (not failing): `tests/opencode/test_skill_uc_diagram.py`'s module docstring (describes the former dual `skill/`+`skills/` layout as "the repo's deliberate choice"), `tests/opencode/__init__.py`'s module docstring (".opencode/skill/ and .opencode/skills/"), the `specmgr-refs` path in `AGENTS.md` and in `README.md` (both say `.opencode/skills/specmgr-refs/SKILL.md`, now `.opencode/skill/specmgr-refs/SKILL.md`). Post-rebase line numbers differ from any pre-rebase scan -- re-scan with `grep -rn "opencode/skills/" tests/ AGENTS.md README.md .specmgr/conventions/` and fix every hit against the post-i18n tree (i18n's own new references already use the singular `skill/` and are correct).
+
+**Bundle tree (Phase 130).** `.opencode/` now holds 24 bundle files: 6 in `agent/`, 10 in `command/` (i18n added `translate.md` + `translation-status.md`), 8 in `skill/` (i18n added `translate-artifact/` + `translation-status/`). An empty, untracked `zZz-skill/` directory sits in the working tree: git cannot commit it, the generator's exact-name scoping excludes it -- delete it or leave it, it changes nothing.
+
+**Settled decisions -- do not re-litigate (all recorded in Design Notes / Decisions Made / the REQ-ACC text):**
+
+- No ADR for the packaging/distribution decision (it was plan-scoped, unshipped; no prior ADR to overturn).
+- No MCP prompt for the install flow: OpenCode exposes no prompt surface to the agent (verified live in the handing-over session); the `specmgr://harness-bundle` resource is the sole discoverable entry point, and its `instructions` JSON field carries the complete protocol (wording in REQ-008).
+- Single blob resource, not manifest + per-file: MCP resources are pull-based (zero per-session context cost; verified live) and install is a rare event, so the split buys nothing.
+- Bundle shape: `{"instructions", "files": [{"path", "sha256", "content"}]}` -- no `harness` field, no `version` field (user decision); `path` relative to `.opencode/`; deterministic `json.dumps(indent=2, ensure_ascii=False)` + trailing newline; no timestamps (two runs over an unchanged tree must be byte-identical).
+- Generator: flat `specmgr harness-bundle` command (no Typer sub-application -- one stage, and the repo's documented Typer single-command pitfall applies), `[cli]`-only (no `mcp` import), exact top-level directory names `{agent, command, skill}` (singular), recursive `*.md`, sorted by path; a stray `*.md` at `.opencode/` top level or under a non-scoped directory warns on stderr and is never bundled.
+- Data file: `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` (the `_packaged_data` convention: `read_packaged_text("general", "harness_bundle", "json")`) + one `pyproject.toml` package-data entry.
+- Guards: pre-commit hook `specmgr-harness-bundle` (regenerate + `git diff --exit-code`, files `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc` entry shape) + CI parity check in the 3.13 job.
+- Phase discipline: every phase = full quality gate (ruff format/check, vulture, full pytest, doc-drift checks) + exactly one Conventional Commit, docs sync inside it. Commit style `type(scope): summary`; do not push (not requested).
+- Task 130.150 (the end-to-end walkthrough fixture) needs a real, fresh agent session that installs strictly from the bundle's `instructions` field -- plan for user involvement at that step (the feat-185-uc-diagrams ACC-002 precedent); the implementing agent cannot fully self-produce it.
+
+**Immediate next action.** Task 125.100 (fix the 2 red test files + the stale references above; gate green), then Task 125.110 (one commit), then Phase 130 in task order. Phases 100-120 (`refine_feat` / delegation ADR / `implement_feat`+`review_feat`) stay deferred -- they have no dependency on 125/130.
 
 #### 2026-10-31 06:58:19.585Z - Distribution re-scoped: single harness-bundle resource + agent-driven install
 
