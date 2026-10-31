@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: planning
 type: feat
-updated: '2026-10-31T22:29:01.822+01:00'
+updated: '2026-10-31T22:37:20.304+01:00'
 version: 1.0.0
 ---
 
@@ -130,7 +130,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - Phase 120 (`implement_feat`/`review_feat`) depends on Phase 110's new ADR (its UUID is an input to Phase 120's instruction files); Phase 100 (`refine_feat`) has no such dependency.
 
-- Phase 125 (`.opencode/` layout normalization) precedes Phase 130 (the bundle is generated over the normalized tree); neither depends on Phases 100-120, so the distribution slice (125 + 130) can be implemented before any of them.
+- Phase 125 (`.opencode/` layout normalization) precedes Phase 130 (the bundle is generated over the normalized tree); neither depends on Phases 100-120, so the distribution slice (125 + 130) can be implemented before any of them -- Phase 125 is complete (2026-10-31, commit `10b032f` + closeout; see Progress), so Phase 130 can start immediately at Task 130.100.
 
 #### Blocks
 
@@ -212,21 +212,21 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 #### Phase 130: Distribution (harness bundle + agent-driven install)
 
-- [ ] Task 130.100: `commands/harness_bundle.py`: the flat `specmgr harness-bundle` command (`[cli]`-only -- no `mcp` import): enumerate every `*.md` recursively under exactly `.opencode/{agent,command,skill}/` (exact top-level directory-name match; sorted by `path`; a stray `*.md` at `.opencode/` top level or under a non-scoped directory warns on stderr and is never bundled), emit `{"instructions": <module constant, the REQ-008 protocol>, "files": [{"path", "sha256", "content"}]}` via `json.dumps(indent=2, ensure_ascii=False)` + trailing newline (no timestamps -- two runs over an unchanged tree are byte-identical) to `src/biz/dfch/specmgr/general/data/general_harness_bundle.json`; print a summary line (file count, total bytes, output path); register in `cli.py` + export in `commands/__init__.py`; add the `pyproject.toml` `[tool.setuptools.package-data]` entry for the JSON file; run the command once and commit the generated bundle.
+- [ ] Task 130.100: `commands/harness_bundle.py`: the flat `specmgr harness-bundle` command (`[cli]`-only -- no `mcp` import): reads the repo-root layout from CWD (like `specmgr docs`/`specmgr adr-toc`; a missing `.opencode/` directory is a usage error, exit 2, nothing written) and enumerates every `*.md` recursively under exactly `.opencode/{agent,command,skill}/` (exact top-level directory-name match; sorted by `path`; a stray `*.md` at `.opencode/` top level or under a non-scoped directory -- `node_modules/`, `package.json`/`package-lock.json`, or a similarly-named directory such as the former `zZz-skill/` -- warns on stderr and is never bundled; the current tree is 24 files: 6 in `agent/`, 10 in `command/`, 8 in `skill/*/`), emit `{"instructions": <module constant, the REQ-008 protocol text verbatim>, "files": [{"path", "sha256", "content"}]}` via `json.dumps(indent=2, ensure_ascii=False)` + trailing newline (no timestamps -- two runs over an unchanged tree are byte-identical) to `src/biz/dfch/specmgr/general/data/general_harness_bundle.json`; print a summary line (file count, total bytes, output path); register in `cli.py` (the `from .commands import (...)` block + `app.command()(harness_bundle)`) + export in `commands/__init__.py`; add `"data/*.json"` to the existing `"biz.dfch.specmgr.general"` entry in `pyproject.toml`'s `[tool.setuptools.package-data]` (currently `["data/*.md", "data/headings/*.json"]`; `data/*.json` matches top-level JSON only, the bundle will be the first); run the command once and commit the generated bundle.
 
-- [ ] Task 130.110: Pre-commit local drift hook `specmgr-harness-bundle` (regenerate + `git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json`, files `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc` entry shape) + the CI parity check in the 3.13 job alongside the `specmgr docs`/`specmgr adr-toc` drift checks.
+- [ ] Task 130.110: Pre-commit local drift hook `specmgr-harness-bundle` in the docs-drift family (after the `specmgr-mcp-docs`/`specmgr-adr-toc` block, before `specmgr-lint`): `entry: bash -c 'uv run --frozen specmgr harness-bundle && git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json'`, `language: system`, `pass_filenames: false`, `files: ^\.opencode/(agent|command|skill)/.*\.md$` (the `specmgr-adr-toc` entry shape) + the CI parity check in the `build` job, Python 3.13-pinned like the `specmgr docs`/`adr-toc`/`mcp-docs` steps (`if: matrix.python-version == '3.13'`, `uv run --frozen --all-extras --python 3.13.13 specmgr harness-bundle && git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json`, with the same `::error::` hint wording).
 
-- [ ] Task 130.120: `general/resources/harness_bundle.py`: the `specmgr://harness-bundle` resource (`application/json`, `read_packaged_text("general", "harness_bundle", "json")` + fail-fast `json.loads` + the raw text returned unchanged -- the `rasci.py` pattern) + registration in `general/resources/__init__.py` (import + its docstring bullet).
+- [ ] Task 130.120: `general/resources/harness_bundle.py`: the `specmgr://harness-bundle` resource (`application/json`, `read_packaged_text("general", "harness_bundle", "json")` + fail-fast `json.loads` -- no model, the bundle has no schema of its own -- + the raw text returned unchanged, the `rasci.py` pattern) + registration in `general/resources/__init__.py` (import + its docstring bullet).
 
-- [ ] Task 130.130: `tests/commands/test_harness_bundle.py` (determinism: two runs byte-identical; enumeration completeness: a tmp-fixture copy of the scoped dirs gains a file and the generated bundle contains it with the correct sha256; exclusions: `node_modules/`, `package.json`, a `zZz-skill/`-style similarly-named sibling directory, and top-level stray `*.md` never appear; path ordering; `instructions` present) + `tests/general/resources/test_harness_bundle.py` (the resource returns the on-disk bundle byte-identically and it `json.loads`-parses to the full file list) + the hook diff-detection test.
+- [ ] Task 130.130: `tests/commands/test_harness_bundle.py` (determinism: two runs byte-identical; enumeration completeness: the current tree's 24 files, plus a tmp-fixture copy of the scoped dirs gains a file and the generated bundle contains it with the correct sha256; exclusions: `node_modules/`, `package.json`/`package-lock.json`, a similarly-named sibling directory, and top-level stray `*.md` never appear; path ordering; `instructions` present) + `tests/general/resources/test_harness_bundle.py` (the resource returns the on-disk bundle byte-identically and it `json.loads`-parses to the full file list; the `test_rasci.py` precedent) + the hook diff-detection test.
 
-- [ ] Task 130.140: README.md: the new section immediately after "Add to OpenCode" (the agent-driven install one-liner + what gets installed + the manual Claude Code path, per REQ-009, referencing that section for server setup) + the README Table of Contents entry.
+- [ ] Task 130.140: README.md: the new section immediately after `### Add to OpenCode` (the agent-driven install one-liner + what gets installed + the manual Claude Code path, per REQ-009, referencing that section for server setup) + the README Table of Contents entry.
 
-- [ ] Task 130.150: End-to-end walkthrough fixture (the feat-185-uc-diagrams ACC-002 precedent): a fresh temp harness config root, an agent run that installs strictly from the bundle's `instructions` field, every file verified sha256-clean (plus the skip behavior against a pre-identical file and the ask behavior against a pre-differing one), the transcript committed under `tests/fixtures/`.
+- [ ] Task 130.150: End-to-end walkthrough fixture (the feat-185-uc-diagrams ACC-002 precedent): a fresh temp harness config root, an agent run that installs strictly from the bundle's `instructions` field, every file verified sha256-clean (plus the skip behavior against a pre-identical file and the ask behavior against a pre-differing one), the transcript committed under `tests/fixtures/`. Requires a user-led fresh agent session (the implementing agent cannot self-produce it); the phase commit (Task 130.170) waits on this.
 
-- [ ] Task 130.160: Docs sync: `AGENTS.md` (the CLI section: the new flat `specmgr harness-bundle` command; the `general/resources` bullet: the new resource), `server.py`'s module docstring (Resources list), `specmgr docs` + `specmgr mcp-docs` regeneration, `CHANGELOG.md` entry.
+- [ ] Task 130.160: Docs sync: `AGENTS.md` (the Developer Commands/CLI section: the new flat `specmgr harness-bundle` command; the `general/resources` bullet: the new resource; the pre-commit paragraph: the new hook), `server.py`'s module docstring (Resources list), `specmgr docs` + `specmgr mcp-docs` regeneration, `CHANGELOG.md` entry. No `specmgr adr-toc` (no ADR), no `specmgr schema` (no model), no `server.json` (env-var-only manifest).
 
-- [ ] Task 130.170: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [ ] Task 130.170: Phase-end gate: the full quality gate green -- `uv run --frozen ruff format --check && uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, plus this phase's doc-drift checks (`specmgr docs` + `specmgr mcp-docs`, no diff) -- then exactly one Conventional Commit for the phase.
 
 #### Phase 140: Final Verification
 
@@ -243,6 +243,10 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-10-31 21:37:20.303Z - Phase 130 task text refined against the verified tree (full gate made explicit)
+
+Tasks 130.100-130.170 refined against the verified repo state (2026-10-31, read-only checks -- no code change): the CWD anchor + missing-dir exit-2 behavior, the exact `cli.py` registration site, the precise `pyproject.toml` edit (`"data/*.json"` into the existing `"biz.dfch.specmgr.general"` package-data entry), and the current 24-file tree with the real exclusion set (130.100); the exact hook entry shape/placement (`specmgr-adr-toc` family, before `specmgr-lint`) + the 3.13-pinned `build`-job CI step mirroring `ci.yml`'s `specmgr docs`/`adr-toc`/`mcp-docs` steps (130.110); the explicit no-model `json.loads` fail-fast (130.120); the pinned enumeration count + test homes per the `test_rasci.py`/`tests/commands/` precedents (130.130); the `### Add to OpenCode` README anchor (130.140); the user-involvement flag (130.150); the corrected docs-sync surface -- no `adr-toc`/`schema`/`server.json` (130.160); and the explicit full-gate command block in the phase-end task (130.170). The 125 -> 130 Dependencies note records that 125 is complete and 130 starts at Task 130.100.
 
 #### 2026-10-31 21:29:01.822Z - Phase 125 closed out: code already landed in 10b032f, full gate re-verified
 
