@@ -4,7 +4,7 @@ created: '2026-10-26T09:06:20.846+01:00'
 id: feat-173-req-iso29148-level-set
 status: planning
 type: feat
-updated: '2026-10-26T09:06:20.846+01:00'
+updated: '2026-10-31T19:22:32.000+01:00'
 version: 1.0.0
 ---
 
@@ -30,10 +30,12 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 - [ ] ACC-001: `parse_req` accepts each of `BRS`, `StRS`, `SyRS`, `SRS` as the `## Level` value and rejects `MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`, `MAY`, lowercase variants, and values with extra whitespace — the rejection error carries the new pattern (the feat-27 actionable-message shape).
 - [ ] ACC-002: The packaged template and example parse via `parse_req` (drift-guard tests green); `req/data/req_schema.json` is byte-identical to the `specmgr schema` output (the `specmgr-schema-req-package` pre-commit hook green).
-- [ ] ACC-003: `specmgr://iso29148` returns the packaged markdown verbatim; the drift-guard model parses it; a structural edit of the packaged file fails the tests (mirroring the ears/dtais test shapes).
+- [ ] ACC-003: `specmgr://iso29148` returns the packaged markdown verbatim; the drift-guard model parses it; a structural edit of the packaged file fails the tests (mirroring the ears/dtais test shapes). The model's strict ordered cross-check pins the `## Requirement obligation` section, so REQ-002's "obligation is carried by the requirement statement's phrasing" half is structurally owned here.
 - [ ] ACC-004: After the migration, `list_req` reports `error_count == 0` over the 14 `docs/req/` documents and the full `pytest` suite is green.
 - [ ] ACC-005: No change-history phrasing (no "previously", "now contains", "instead of") appears in `req/data/req_create_instructions.md`, `req/data/req_update_instructions.md`, the `req/models/v1/body.py` `Level`/`Requirement` docstrings, the template comment, or the resource markdown (review gate over the final diff).
 - [ ] ACC-006: `ruff format --check`, `ruff check`, `vulture`, and the `specmgr docs`/`specmgr mcp-docs` drift checks are all green on the final commit.
+- [ ] ACC-007: `req_create_instructions.md` carries the `specmgr://iso29148` read-first step and the kind elicitation; `req_update_instructions.md` carries the present-tense recovery directive for a legacy `## Level` value (REQ-004) — asserted by the prompt tests of Task 140.120, not by review alone.
+- [ ] ACC-008: (deferred to Phase 180, REQ-007) The SET artifact domain groups items of a single artifact type via forward references only and carries the ISO 29148 §5.2.6 set-examination guidance — acceptance criteria finalized when Task 180.100's design questions resolve.
 
 ### Scope
 
@@ -48,10 +50,10 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 #### Explicitly Out Of Scope
 
-- Implementing the `SET` artifact domain (issue #173 part 2) — planned in Phase 180, after its open design questions are resolved.
+- Implementing the `SET` artifact domain (issue #173 part 2) — out of scope for Phases 110–170; planned in Phase 180 of this feature, after its open design questions are resolved.
 - Changing `ReqSummary`/`list_req` output (it stays minimal: id/title/status/ref/path).
 - Re-wording obligation phrasing inside requirement statements during the migration (value replacement only).
-- New domains, new tools, or resources other than `specmgr://iso29148`.
+- New domains, new tools, or resources other than `specmgr://iso29148` (for Phases 110–170 — Phase 180's SET domain is the deferred exception).
 - Migrating external (out-of-repo) REQ documents — they recover via the actionable parse error plus the `update_req` recovery directive instead.
 
 ### Dependencies
@@ -62,7 +64,7 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 #### Blocks
 
-- Issue #173 part 2 (the `SET` domain) — the later phase of this same feature.
+- None external — issue #173 part 2 (the `SET` domain) is a deferred internal phase (180) of this same feature, not an external block.
 
 ### Design Notes
 
@@ -70,7 +72,7 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 **Option decision (2026-10-26, user).** Option 3 of the design discussion: repurpose `## Level` to the ISO 29148 kind and drop the RFC 2119 keywords entirely — this overrides the issue body's "renamed" wording (recorded in Decisions Made). The field is mandatory; the evolution is in-place on `req/models/v1` per the feat-132-prb-update precedent (existing documents fail to parse until migrated; the `update_req` prompt guides recovery; no dual-schema read support per repo convention). `ReqSummary`/`list_req` stay minimal (user decision). Migration values: all 14 in-repo documents are software requirements on the specmgr tool itself → `SRS`; the packaged example (a vehicle-engine temperature requirement) → `SyRS`.
 
-**Schema mechanics.** `_LEVEL_PATTERN = r"^(BRS|StRS|SyRS|SRS)$"` replaces the RFC 2119 pattern in `req/models/v1/body.py`. `Level` keeps its `MarkdownSection2WithComment` base (the optional `<!-- comment -->` prefix stays legal). Per the feat-189 note, the closed set lives in the `value` Field description, not a schema `enum` (the MCP SDK validates `structuredContent` payloads against the generated output schema; an object-typed `MarkdownParagraph` can never equal a string enum member). The `field_validator` keeps its shape (re.fullmatch against `value.text`). The mixed-case values are deliberate — the standard's own §3.2 spellings.
+**Schema mechanics.** `_LEVEL_PATTERN = r"^(BRS|StRS|SyRS|SRS)$"` replaces the RFC 2119 pattern in `req/models/v1/body.py`. `Level` keeps its `MarkdownSection2WithComment` base (the optional `<!-- comment -->` prefix stays legal). Per the feat-189 note, the closed set lives in the `value` Field description, not a schema `enum` (the MCP SDK validates `structuredContent` payloads against the generated output schema; an object-typed `MarkdownParagraph` can never equal a string enum member); the regression guard for exactly this emission is the feat-189 Phase 135 wire-satisfiability pin, `tests/test_mcp_output_schema_satisfiability.py` (all 12 domains). The `field_validator` keeps its shape (re.fullmatch against `value.text`). The mixed-case values are deliberate — the standard's own §3.2 spellings.
 
 **Resource shape (mirrors `specmgr://ears`).** `general/data/general_iso29148.md` (packaged markdown) + `general/models/iso29148.py` (`Iso29148` + `parse_iso29148`, parsed on every resource call purely to fail fast on structural drift, result discarded) + `general/resources/iso29148.py` (`@mcp.resource("specmgr://iso29148", ...)`, raw text, `text/markdown`) + registration in `general/resources/__init__.py` and `general/models/__init__.py`. No pyproject change needed — the `biz.dfch.specmgr.general` package-data entry already covers `data/*.md`. Content sections: H1; intro; `## The four requirement specifications` (closed list: abbreviation, full name, standard clause refs, one-line content summary each); `## When to use each` (same order, strict ordered cross-check per the `ears.py` pattern); `## Mapping to specmgr document types` (StRS ↔ `qa` elicitation, SyRS ↔ the `sysrs` aggregator — a REQ with `## Level: SyRS` belongs in a SYSRS `## Requirements` list, SRS ↔ software, BRS ↔ business level, `gol`-adjacent); `## Requirement obligation` (statement phrasing, `specmgr://ears`, the ISO "shall" convention); `## Characteristics of a set of requirements` (the §5.2.6 list, for the deferred SET phase).
 
@@ -78,24 +80,26 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 **Migration procedure.** For each of the 14 `docs/req/` documents: `get_req(id, raw=True, numbered=True)` → locate the `## Level` value line → generic `update(id, type="req", content, offset, limit)` line-range replace with `SRS` → verify. The packaged example and template are edited as files (`req/data/req_example.md`, `req/data/req_template.md`: comment line + value).
 
-**Touchpoint list (non-exhaustive).** `src/biz/dfch/specmgr/req/models/v1/body.py`; `src/biz/dfch/specmgr/req/data/{req_template.md, req_example.md, req_schema.json, req_create_instructions.md, req_update_instructions.md}`; `src/biz/dfch/specmgr/general/{data,models,resources}`; `src/biz/dfch/specmgr/server.py` (docstring); `tests/req/**` (parser tests, ~12 files carrying `## Level` boilerplate, prompt/template/schema/resource tests); `AGENTS.md`; `docs/api/**`, `docs/GENERATED.md`, `docs/MCP.md`; `CHANGELOG.md`; `pyproject.toml` (version); `docs/req/*.md` (14 files).
+**Touchpoint list (non-exhaustive).** `src/biz/dfch/specmgr/req/models/v1/body.py`; `src/biz/dfch/specmgr/req/data/{req_template.md, req_example.md, req_schema.json, req_create_instructions.md, req_update_instructions.md}`; `src/biz/dfch/specmgr/general/{data,models,resources}`; `src/biz/dfch/specmgr/server.py` (docstring); `tests/req/**` (parser tests, ~12 files carrying `## Level` boilerplate, prompt/template/schema/resource tests); `AGENTS.md`; `docs/api/**`, `docs/GENERATED.md`, `docs/MCP.md`; `CHANGELOG.md`; `pyproject.toml` (version); `docs/req/*.md` (14 files); `whitelist.py` (no change expected — nothing is removed, and the new `Iso29148`/`parse_iso29148` symbols are src-used by the resource; recorded so Phase 170's vulture run confirms rather than discovers).
 
 **Verification commands.**
 - `uv run --frozen ruff format --check && uv run --frozen ruff check`
 - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`
 - `uv run --frozen pytest -n auto --cov=src --cov-report=`
-- `uv run --frozen specmgr schema` (regenerates `docs/req_schema.json` + the `req/data/` package copy)
+- `uv run --frozen specmgr schema` (bare run: regenerates all `docs/*_schema.json`, default output dir `docs/`; the `req/data/req_schema.json` package copy comes from the separate `specmgr schema --type req --output-dir src/biz/dfch/specmgr/req/data` invocation the `specmgr-schema-req-package` pre-commit hook runs)
 - `uv run --frozen specmgr docs && uv run --frozen specmgr mcp-docs`
+
+**Commit granularity.** One Conventional Commit per phase (110–160) during development; at push time Phases 110–150 squash into a single atomic commit, so the breaking schema change and the 14-document migration land together (no intermediate pushed state with unparseable `docs/req/` documents). Phase 160 (housekeeping, CHANGELOG, version bump) stays its own commit; Phase 170 is the verification gate run before committing, not a code change.
 
 ### Related Decisions
 
 - GitHub issue #173 ("REQ: add 'ISO 29148 Requirement Level' and add new SET artifact type") — the source issue for this feature.
-- feat-132-prb-update — the in-place breaking `models/v1` evolution precedent (mandatory content added, pre-existing documents fail to parse until repaired, the update prompt guides recovery).
-- feat-189 Phase 135 — the closed set lives in the Field description, not a schema `enum` (MCP SDK `structuredContent` validation rationale).
+- FEAT feat-132-prb-update — the in-place breaking `models/v1` evolution precedent (mandatory content added, pre-existing documents fail to parse until repaired, the update prompt guides recovery).
+- FEAT feat-189-reduce-agent-round-trips (Phase 135) — the closed set lives in the Field description, not a schema `enum` (MCP SDK `structuredContent` validation rationale).
 - ADR 356d8781-e446-4c26-917a-eda85648ce9d — raw-markdown cross-cutting resources with model-backed drift guards (the `specmgr://ears`/`specmgr://dtais` shape this resource follows).
 - ADR ece4554b-725c-4f76-bc04-5d2b760363d2 — the domain-first layout; the resource lives under `general/` because the ISO 29148 kinds are cross-cutting domain knowledge, not owned by the `req` schema.
 - ADR 36905d5b-8057-4294-8665-c7eed5534db0 — the dispatch-only domain convention the deferred SET phase will follow.
-- feat-32-sysrs — the existing `sysrs` aggregator (ISO 29148 §9.5) and the source of this repo's prior 29148 clause citations.
+- FEAT feat-32-sysrs — the existing `sysrs` aggregator (ISO 29148 §9.5) and the source of this repo's prior 29148 clause citations.
 
 ### Task List
 
@@ -109,7 +113,7 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 - [ ] Task 110.100: `req/models/v1/body.py` — `_LEVEL_PATTERN` to `^(BRS|StRS|SyRS|SRS)$`; rewrite the `Level` docstring and the `value` Field description (closed set in the description, ISO 29148 §3.2/§5.4/§9.3-9.6 references, present-tense only); update the `Requirement.level` parameter doc.
 - [ ] Task 110.110: `tests/req/models/v1/test_parser.py` — accept the four values; reject MUST/SHOULD/MUST NOT/SHOULD NOT/MAY, lowercase variants, and extra-whitespace values (assert the error carries the pattern).
-- [ ] Task 110.120: Update the `## Level` boilerplate in the ~12 `tests/req` tool-test files (test__io, test__paths, test_list_req, test_list_req_glob, test__write, test_doc_cache_wiring, test__cache, test_parse_req, test_create_req, test_get_req) to a valid value.
+- [ ] Task 110.120: Update the `## Level` boilerplate in the 10 listed `tests/req` tool-test files (test__io, test__paths, test_list_req, test_list_req_glob, test__write, test_doc_cache_wiring, test__cache, test_parse_req, test_create_req, test_get_req) to a valid value — plus the two beyond-boilerplate constructs: `test_parse_req.py`'s parsed-value assertion (currently `assertEqual(..., "MUST")`) and `test_create_req.py`'s `.replace("MUST", "NOT-A-VALID-LEVEL")` negative-case trick.
 
 #### Phase 120: Packaged data
 
@@ -128,7 +132,7 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 - [ ] Task 140.100: `req/data/req_create_instructions.md` — the present-tense structure recap (`## Level` = one of BRS/StRS/SyRS/SRS); the `specmgr://iso29148` read-first step; eliciting the kind; obligation in the statement phrasing (the EARS pointer).
 - [ ] Task 140.110: `req/data/req_update_instructions.md` — the present-tense recovery directive for a legacy `## Level` value (read `specmgr://iso29148`, replace the value).
-- [ ] Task 140.120: `tests/req/prompts/test_create_req.py` (and the update-prompt test, if present) — update the section-name assertions.
+- [ ] Task 140.120: `tests/req/prompts/test_create_req.py` (and the update-prompt test, if present) — add assertions for the new prompt content (the `specmgr://iso29148` read-first step and kind elicitation in the create prompt, the recovery directive in the update prompt); the existing section-name assertions pass as-is, since no section name changes.
 
 #### Phase 150: Migration (same commit as Phases 110-140)
 
@@ -155,13 +159,17 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 
 ### Current Status
 
-**As of 2026-10-26**: Plan written; the direction is settled (option 3 — repurpose `## Level` to the ISO 29148 kind, drop RFC 2119, mandatory, in-place v1 evolution, SRS x14 + SyRS example, the `specmgr://iso29148` resource). Implementation (Phases 110-170) not started — awaiting the go-ahead. Phase 180 (SET) is deferred pending its design questions.
+**As of 2026-10-26**: Plan written; the direction is settled (option 3 — repurpose `## Level` to the ISO 29148 kind, drop RFC 2119, mandatory, in-place v1 evolution, SRS x14 + SyRS example, the `specmgr://iso29148` resource). Implementation (Phases 110-170) not started — awaiting the go-ahead. Phase 180 (SET) is deferred pending its design questions. Plan refined on 2026-10-31 after the feat-refiner review (traceability, scope-label, and count fixes — see the Updates entry).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-10-26 07:53:18.000Z - Created
+#### 2026-10-31 18:22:32.000Z - Plan refined after feat-refiner review
+
+The feat-refiner review confirmed every verifiable factual claim in the plan (14 REQ documents, the current RFC 2119 pattern, the mirrored resource/model shapes, both STE100 claims, a healthy reference graph — all 7 visited ADR nodes `accepted`, no cycles, no unresolved references) and produced 14 refinement items, all applied to the Plan section: new ACC-007 (REQ-004 prompt-content assertions) and ACC-008 (deferred REQ-007/Phase 180), ACC-003 now explicitly owns the resource's `## Requirement obligation` pin; the "Explicitly Out Of Scope" and "Blocks" labels re-scoped to Phases 110–170 (the SET domain is a deferred internal phase, not out of scope for the feature and not an external block); the tool-test file count corrected from ~12 to 10 with the two beyond-boilerplate constructs named (`test_parse_req.py`'s parsed-value assertion, `test_create_req.py`'s replace trick); Task 140.120 reworded to *add* prompt-content assertions; the `specmgr schema` verification note corrected (bare run = all `docs/*_schema.json`, package copy via the hook invocation); `whitelist.py` added to the touchpoint list (no change expected) and the feat-189 Phase 135 satisfiability pin named; the three feat citations tagged in `FEAT <id>` form so `list_references` sees them; the Created entry timestamp aligned to the frontmatter creation time (the six Decisions entries keep their 07:53:18Z design-discussion timestamps); and the commit-granularity rule stated (per-phase commits, 110–150 squashed atomic at push). No implementation started — status remains `planning`.
+
+#### 2026-10-26 08:06:20.846Z - Created
 
 Plan written from the 2026-10-26 design discussion. Issue #173 is reused (no new issue created); the REQ ISO 29148 level work is Phases 110-170 and the SET artifact type is deferred to Phase 180 of this same feature. The terminology was verified against the 29148:2018 full text: the standard has no collective word for the four, so `## Level` stands as specmgr's name for the field (see Design Notes).
 
