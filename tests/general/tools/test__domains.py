@@ -17,7 +17,7 @@
 
 """Unit tests for the shared ``WHOLE_BODY_DOMAINS`` registry (feat-134, Phase 1, REQ-012).
 
-Covers ACC-013 (the registry is the one source of the 12-domain set, ``adr``
+Covers ACC-013 (the registry is the one source of the 13-domain set, ``adr``
 excluded, and the lookup rejects ``adr``/unknown names with ``ValueError``)
 and the ``adr``-rejection half of ACC-007.
 """
@@ -34,9 +34,9 @@ from biz.dfch.specmgr.general.tools._domains import (
 
 
 class TestWholeBodyDomainsTuple(unittest.TestCase):
-    """ACC-013: the registry tuple is exactly the 12 whole-body domains, ``adr`` excluded."""
+    """ACC-013: the registry tuple is exactly the 13 whole-body domains, ``adr`` excluded."""
 
-    def test_equals_the_12_domain_tuple(self) -> None:
+    def test_equals_the_13_domain_tuple(self) -> None:
         expected = (
             "req",
             "uc",
@@ -50,6 +50,7 @@ class TestWholeBodyDomainsTuple(unittest.TestCase):
             "feat",
             "vcr",
             "sysrs",
+            "txt",
         )
 
         self.assertEqual(WHOLE_BODY_DOMAINS, expected)

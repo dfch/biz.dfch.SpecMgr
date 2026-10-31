@@ -14,7 +14,7 @@ stay in exactly one place.
 **Candidate enumeration (REQ-006/REQ-012).** :func:`iter_candidate_paths`
 yields every ``(domain name, on-disk path)`` candidate pair across the
 target whole-body domains -- the full registry set (req, uc, tsk, qa,
-prb, gol, rsk, dec, sop, feat, vcr, sysrs) by default, a
+prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt) by default, a
 caller-supplied, order-preserving, de-duplicated subset otherwise --
 flat domains via the shared ``iter_doc_paths`` and ``feat``'s
 ``<base>/<id>/README.md`` folder shape via its own bespoke
@@ -160,7 +160,7 @@ Yield every candidate ``(domain name, on-disk path)`` pair across the target dom
 
 The default target set is the full :data:`WHOLE_BODY_DOMAINS`
 registry set (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr,
-sysrs -- ``adr`` structurally excluded, issue #46); a
+sysrs, txt -- ``adr`` structurally excluded, issue #46); a
 caller-supplied ``target_types`` restricts the walk to that
 (order-preserving, de-duplicated) subset. Within each domain the
 paths come from the domain's own registry adapter -- the shared

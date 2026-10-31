@@ -57,9 +57,9 @@ Check a translated variant for structural drift and staleness against its source
 Parameters
 ----------
 type:
-    The document type: one of the eleven i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs`` (``feat``/``adr`` are permanently English and
-    rejected).
+    The document type: one of the twelve i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
+    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt`` (``feat``/``adr`` are permanently English
+    and rejected).
 id:
     The artifact's specmgr-assigned id (shared by both languages).
 language:

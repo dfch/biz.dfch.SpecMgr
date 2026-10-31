@@ -3,7 +3,7 @@
 ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -50,7 +50,7 @@ status-change entry point for every domain.
 
 No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
 adapter compares the requested target status against the document's
-current on-disk status -- for the 12 whole-body domains, plainly
+current on-disk status -- for the 13 whole-body domains, plainly
 ``existing.frontmatter.status == status``; for ``adr``, against the same
 composed target (``status`` or ``f"superseded by {superseded_by}"``)
 ``models.adr.v1.mutations.set_status`` would compute -- immediately after
@@ -86,7 +86,7 @@ An existing-but-broken document (feat-170-update-edit-parse-failure,
 GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
 the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
-fails to parse, each of the 12 whole-body adapters now returns the
+fails to parse, each of the 13 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 (``error``/``path``/``id``) instead of raising the domain's own
 ``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
@@ -339,6 +339,27 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
+### `_set_status_txt(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult'`
+
+Replace the status of the free-form text document identified by ``id_``.
+
+Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
+``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_status_req` for
+the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
+never be given.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is
+written, the unchanged-status no-op compares against the variant's own current status -- the EN
+document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+The allowed-status set is language-invariant (``status`` is a closed
+vocabulary value, never translated, REQ-010).
+
+
 ### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult'`
 
 Replace the status of the use case identified by ``id_``.
@@ -378,7 +399,8 @@ the unchanged-status no-op compares against the variant's own current status -- 
 Replace the status of an existing document, across every domain.
 
     Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
+    ``vcr``/``sysrs``/``txt``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
@@ -429,7 +451,7 @@ Replace the status of an existing document, across every domain.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``adr``.
+        ``vcr``, ``sysrs``, ``txt``, ``adr``.
     status:
         The new status. Must be one of the dispatched domain's own
         accepted values (see its ``XFrontmatter.status`` field). For

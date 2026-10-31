@@ -18,7 +18,7 @@
 """Tests for the ``list_languages`` tool (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
 
 Real tool calls against temporary base directories (``SPECMGR_DOCS_DIR``), no LLM. Covers: ACC-008 (EN only lists
-``["en"]``; EN + variants list ``"en"`` first, then the others sorted), the parametrized EN+DE case over all eleven
+``["en"]``; EN + variants list ``"en"`` first, then the others sorted), the parametrized EN+DE case over all twelve
 i18n-eligible domains, a variant without an EN source (``"en"`` is never invented), a broken variant (listed, flagged,
 byte-identical error text), a table-less language directory (listed, flagged), the layout rules (non-``.md`` siblings,
 ``sysrs``' ``.pdf``, shape-invalid directory names, other ids' documents are ignored), the guards before any filesystem
@@ -338,7 +338,7 @@ class TestListLanguagesGuards(_TempDocsMixin):
         self.assertIn(clause, str(write_guard.exception))
         self.assertIn(clause, str(listing_guard.exception))
 
-    def test_all_eleven_domains_are_accepted_by_the_type_guard(self):
+    def test_all_twelve_domains_are_accepted_by_the_type_guard(self):
         for domain in LANGUAGE_AWARE_DOMAINS:
             with self.subTest(domain=domain):
                 with self.assertRaises(LookupError):  # past the guards: only the not-found of a missing id

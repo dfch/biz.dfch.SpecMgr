@@ -7,8 +7,8 @@ generalization pattern (``find_doc_path_by_id``): a single module shared
 across every ``list_<domain>`` MCP tool, replacing the copy-pasted
 try/except/append loop that was, until this feature, byte-for-byte
 identical across ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``dec``/
-``sop``/``vcr``/``sysrs`` (``rsk``/``feat`` differ only in how one summary
-is *constructed*, handled below by their own ``to_summary``/
+``sop``/``vcr``/``sysrs``/``txt`` (``rsk``/``feat`` differ only in how one
+summary is *constructed*, handled below by their own ``to_summary``/
 ``to_failed_summary`` callbacks).
 
 **Before this feature**, a file that failed to parse was silently skipped:

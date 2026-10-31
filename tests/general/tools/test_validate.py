@@ -753,6 +753,57 @@ _SYSRS_FULL_DOCUMENT = (
     + _SYSRS_MINIMAL_BODY
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+_TXT_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized free-form text sections.\n"
+_TXT_BAD_FIELD_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    ### 2026-01-01 10:00:00.000Z - Older note
+
+    The older note content.
+
+    ### 2026-06-01 10:00:00.000Z - Newer note
+
+    The newer note content.
+    """
+)
+_TXT_FULL_DOCUMENT = (
+    textwrap.dedent(
+        """\
+    ---
+    id: txt-001
+    type: txt
+    version: 1.0.0
+    status: draft
+    created: '2026-08-31T00:00:00.000Z'
+    updated: '2026-08-31T00:00:00.000Z'
+    ---
+
+    """
+    )
+    + _TXT_MINIMAL_BODY
+)
+
 
 @dataclass(frozen=True)
 class _Case:
@@ -780,6 +831,7 @@ _CASES: list[_Case] = [
     _Case("feat", _FEAT_MINIMAL_BODY, _FEAT_MALFORMED_BODY, _FEAT_FULL_DOCUMENT, _FEAT_BAD_FIELD_BODY),
     _Case("vcr", _VCR_MINIMAL_BODY, _VCR_MALFORMED_BODY, _VCR_FULL_DOCUMENT, _VCR_BAD_FIELD_BODY),
     _Case("sysrs", _SYSRS_MINIMAL_BODY, _SYSRS_MALFORMED_BODY, _SYSRS_FULL_DOCUMENT, _SYSRS_BAD_FIELD_BODY),
+    _Case("txt", _TXT_MINIMAL_BODY, _TXT_MALFORMED_BODY, _TXT_FULL_DOCUMENT, _TXT_BAD_FIELD_BODY),
 ]
 
 

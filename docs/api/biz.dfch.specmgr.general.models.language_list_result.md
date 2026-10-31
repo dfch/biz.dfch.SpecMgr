@@ -448,7 +448,7 @@ The languages one artifact (``type``/``id``) currently exists in.
 Parameters
 ----------
 type:
-    The artifact's document type (one of the eleven i18n-eligible domains), echoed back.
+    The artifact's document type (one of the twelve i18n-eligible domains), echoed back.
 id:
     The artifact's id (shared by every language variant), echoed back.
 languages:

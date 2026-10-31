@@ -22,7 +22,7 @@ Complements the existing evidence -- ``test_i18n_all_domains.py`` (the ACC-012 u
 frontmatter), ``test_translate_artifact_flow.py`` (the 14-case negative matrix over nine domains) -- with what those do
 not reach:
 
-- **frontmatter ``status`` through the write tools of a variant (all eleven domains):** a translated status word is
+- **frontmatter ``status`` through the write tools of a variant (all twelve domains):** a translated status word is
   rejected by ``set_status(language="de")`` with the non-raising ``InvalidStatusResult`` naming the *canonical* allowed
   values, nothing is written, and a canonical value is accepted and persisted verbatim -- ``sop``'s five-value
   approval/effectivity lifecycle is exercised value by value (REQ-010 names it explicitly);

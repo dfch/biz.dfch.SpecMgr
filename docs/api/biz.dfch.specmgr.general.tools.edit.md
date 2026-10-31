@@ -5,7 +5,7 @@
 The generic, cross-domain, surgical exact-match string-replacement tool for
 the frontmatter-stripped body of the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_edit_<d>``), each mirroring
 the generic ``update`` tool's own adapter shape (same domain lock, same
 ``load_by_id``, same frontmatter carry-over with only ``updated`` bumped,
@@ -333,6 +333,24 @@ is written -- the EN document (bytes, ``updated``, cache entry) is never touched
 non-default ``language`` call.
 
 
+### `_edit_txt(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | ValidateResult'`
+
+Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
+
+Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+``TxtNotFoundError``).
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
+that variant's on-disk body, the stage-2 validation of the edited body goes through the
+variant's heading table (:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and only
+that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+by a non-default ``language`` call.
+
+
 ### `_edit_uc(id_: 'str', old_str: 'str', new_str: 'str', replace_all: 'bool', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | ValidateResult'`
 
 Surgically replace exact occurrences of ``old_str`` in the use case identified by ``id_``.
@@ -425,7 +443,7 @@ Surgically replace a byte-exact occurrence of ``old_str`` in an existing documen
 
 Cross-domain generic for the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same lock, same id resolution, same frontmatter
 carry-over, same verbatim persistence, same domain not-found error).
 The signature and the stage-1 runtime error strings mirror the
@@ -492,7 +510,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 old_str:
     The exact text to find in the current frontmatter-stripped on-disk
     body (byte-exact, including whitespace, indentation, and line

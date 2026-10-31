@@ -509,6 +509,37 @@ First-line docstrings from each module, organized by domain:
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
 
+**txt/**
+
+- `txt/__init__.py` — Free-Form Text (TXT) domain -- a generic, minimally structured catch-all for unstructured markdown text.
+- `txt/models/__init__.py` — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `txt/models/v1/__init__.py` — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `txt/models/v1/_util.py` — Shared, private constants for the ``txt.models.v1`` subpackage.
+- `txt/models/v1/body.py` — Free-Form Text (TXT) body models: an opaque free-form `body` plus a mandatory `## Updates` log.
+- `txt/models/v1/document.py` — Pydantic model for a full free-form text document (frontmatter + body).
+- `txt/models/v1/frontmatter.py` — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `txt/models/v1/parser.py` — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
+- `txt/models/v1/summary.py` — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- `txt/prompts/__init__.py` — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/prompts/create_txt.py` — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- `txt/prompts/update_txt.py` — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- `txt/resources/__init__.py` — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/resources/txt_example.py` — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- `txt/resources/txt_template.py` — Resource: specmgr://txt/template (feat-229-txt Phase 120).
+- `txt/tools/__init__.py` — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
+- `txt/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
+- `txt/tools/_io.py` — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
+- `txt/tools/_lock.py` — Per-document in-process lock guarding free-form text mutations.
+- `txt/tools/_paths.py` — Free-form text (TXT) base directory resolution and id -> path lookup (feat-229-txt Phase 110).
+- `txt/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_txt`` and
+- `txt/tools/create_txt.py` — ``@mcp.tool()`` wrapper: create_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt.py` — ``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt_example.py` — ``@mcp.tool()`` wrapper: get_txt_example (feat-229-txt Phase 110).
+- `txt/tools/get_txt_schema.py` — ``@mcp.tool()`` wrapper: get_txt_schema (feat-229-txt Phase 110).
+- `txt/tools/get_txt_template.py` — ``@mcp.tool()`` wrapper: get_txt_template (feat-229-txt Phase 110).
+- `txt/tools/list_txt.py` — ``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
+- `txt/tools/parse_txt.py` — ``@mcp.tool()`` wrapper: parse_txt (feat-229-txt Phase 110).
+
 **uc/**
 
 - `uc/__init__.py` — Use Case (UC) domain — Cockburn-based use case specification and validation.
@@ -600,4 +631,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 457
+**Test files**: 479

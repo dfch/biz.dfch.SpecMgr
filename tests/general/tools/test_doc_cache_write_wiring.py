@@ -178,6 +178,7 @@ _SET_STATUS_TARGETS_BY_DOMAIN: dict[str, str] = {
     FEAT: "progress",
     "vcr": "progress",
     "sysrs": "review",
+    "txt": "progress",
 }
 
 assert set(_SET_STATUS_TARGETS_BY_DOMAIN) == set(WHOLE_BODY_DOMAINS), (

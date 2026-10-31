@@ -1,6 +1,6 @@
 ---
 name: translate-artifact
-description: Use when translating a specmgr document into another language or bringing an existing translation up to date -- e.g. "translate this requirement into German", "create a German version of REQ ...", "update the French translation of ..." (the translate_artifact prompt flow -- read the specmgr://i18n guidance, read the source, create or update the language variant, never translate closed-vocabulary tokens) -- whether surfaced by an explicit /translate request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs only; feat and adr are always English and out of scope.
+description: Use when translating a specmgr document into another language or bringing an existing translation up to date -- e.g. "translate this requirement into German", "create a German version of REQ ...", "update the French translation of ..." (the translate_artifact prompt flow -- read the specmgr://i18n guidance, read the source, create or update the language variant, never translate closed-vocabulary tokens) -- whether surfaced by an explicit /translate request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt only; feat and adr are always English and out of scope.
 ---
 
 # Translate Artifact

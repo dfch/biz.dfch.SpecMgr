@@ -88,7 +88,7 @@ class TestFindRelatedRegistration(unittest.TestCase):
 
         self.assertNotIn("adr", type_prop["enum"])
         self.assertIn("req", type_prop["enum"])
-        self.assertEqual(len(type_prop["enum"]), 12)
+        self.assertEqual(len(type_prop["enum"]), 13)
 
 
 class _RankedCorpusMixin:
@@ -154,12 +154,13 @@ class TestFindRelatedRanking(SimilarityTestCase, _RankedCorpusMixin):
         self.seed_gol("Gol Doc", "alpha")
         self.seed_dec("Dec Doc", "alpha")
         self.seed_feat(_FEAT_MINIMAL_BODY)
+        self.seed_txt("Txt Doc", "alpha")
         self.install_fake()
 
         hits = find_related(type="req", id=source.id)
 
         types = {hit.type for hit in hits}
-        self.assertEqual(types, {"gol", "dec", "feat"})  # the source req is excluded
+        self.assertEqual(types, {"gol", "dec", "feat", "txt"})  # the source req is excluded
         self.assertNotIn("adr", types)
 
     def test_target_types_restricts_the_candidate_set(self) -> None:

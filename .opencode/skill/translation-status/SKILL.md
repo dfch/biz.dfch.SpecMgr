@@ -1,6 +1,6 @@
 ---
 name: translation-status
-description: Use when checking which languages a specmgr document exists in or whether a translation is still in sync with its source -- e.g. "which languages exist for REQ ...", "list the translations of ...", "is the German translation of ... up to date", "check translation drift", "is the German version of this decision stale" (the read-only list_languages and check_translation_drift MCP tools) -- whether surfaced by an explicit /translation-status request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs only; feat and adr are always English and out of scope.
+description: Use when checking which languages a specmgr document exists in or whether a translation is still in sync with its source -- e.g. "which languages exist for REQ ...", "list the translations of ...", "is the German translation of ... up to date", "check translation drift", "is the German version of this decision stale" (the read-only list_languages and check_translation_drift MCP tools) -- whether surfaced by an explicit /translation-status request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt only; feat and adr are always English and out of scope.
 ---
 
 # Translation Status

@@ -105,14 +105,14 @@ class TestI18nResource(unittest.TestCase):
 class TestI18nDescribesTheImplementedLayout(unittest.TestCase):
     """The layout, vocabulary, tool surface, and guard text match the implemented behavior."""
 
-    def test_names_all_eleven_domains_in_scope_and_excludes_feat_and_adr(self):
+    def test_names_all_twelve_domains_in_scope_and_excludes_feat_and_adr(self):
         text = i18n()
         scope = _section(text, "## 1. Scope")
 
         for domain in LANGUAGE_AWARE_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertIn(f"`{domain}`", scope)
-        self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 11)
+        self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 12)
         self.assertIn("`feat`", scope)
         self.assertIn("`adr`", scope)
         self.assertIn("always English", scope)
@@ -220,6 +220,7 @@ class TestI18nNeverTranslateList(unittest.TestCase):
             ),
         ),
         ("sysrs", ("type-tagged cross-reference bullets",)),
+        ("txt", ("the update-entry heading timestamp", "free-floating cross-reference lines")),
     )
 
     def _row(self, domain: str) -> str:

@@ -424,7 +424,7 @@ class TestDiagramRefsUsageAndResolutionErrors(_DiagramRefsTestBase):
         self.assertFalse(self.out_dir.exists())
 
     def test_an_unknown_type_exits_2_before_any_file_access(self):
-        """A type outside the 13-domain vocabulary → exit 2 (the ``validate_id`` unknown-type
+        """A type outside the 14-domain vocabulary → exit 2 (the ``validate_id`` unknown-type
         channel, before any file access), naming the offending value."""
         result = self._invoke("bogus", _C001, "--out", str(self.out_dir))
 

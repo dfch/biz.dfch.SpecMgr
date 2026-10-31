@@ -205,7 +205,8 @@ class ConfigInfo(BaseModel):
     domains:
         A mapping of domain name (``"adr"``, ``"req"``, ``"uc"``, ``"tsk"``,
         ``"qa"``, ``"prb"``, ``"gol"``, ``"rsk"``, ``"dec"``, ``"sop"``,
-        ``"feat"``, ``"vcr"``, ``"sysrs"``) to that domain's :class:`DomainConfig`.
+        ``"feat"``, ``"vcr"``, ``"sysrs"``, ``"txt"``) to that domain's
+        :class:`DomainConfig`.
     similarity:
         The static configuration of the semantic-similarity feature
         (feat-134 Phase 7, REQ-013): :class:`SimilarityConfig`.

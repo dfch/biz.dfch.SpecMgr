@@ -43,9 +43,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gate — the full sweep, manual or the follow-up nightly workflow, finds
   them (feat-218-in-tree-spec-artifact-parseability-gate, GitHub issue
   #218).
+- **Thirteenth domain feature (TXT/Free-Form Text tooling)**: new
+  document-type domain, `txt` — a generic, minimally structured catch-all
+  for unstructured markdown text that does not warrant a dedicated domain
+  (ad hoc notes, meeting minutes, review/audit write-ups, scratch
+  analysis): everything between the H1 and `## Updates` is opaque to the
+  parser (any markdown — paragraphs, lists, code blocks, H2..H6 headings —
+  accepted verbatim, mandatory), and the body ends at the first top-level
+  `## Updates` (mandatory, the last H2; a second `## Updates` or any H2
+  after it is rejected by the engine's own trailing-completeness error),
+  which holds at least one `### {timestamp} ( - | : ) {title}` entry,
+  newest first (the same entry heading regex, computed
+  `timestamp`/`title` fields and shared `validate_newest_first` helper as
+  `vcr`/`dec`/`sop`). Deliberately not a report and not a formal notes
+  type, and — unlike every other domain — no per-domain mutation tools of
+  any kind: `txt` is built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0, like `sop`/`vcr`/`sysrs`), so
+  whole-body and line-range updates go through the generic `update` tool
+  (`type="txt"`), surgical exact-match replacements through the generic
+  `edit` tool (`type="txt"`), status changes through the generic
+  `set_status` tool (`type="txt"` — the closed three-value vocabulary
+  `draft`/`progress`/`done`), classification changes through the generic
+  `set_classification` tool (`type="txt"`), deletions through the generic
+  `delete` tool (`type="txt"`), and disk-free/id-free dry-run content
+  validation through the generic `validate` tool (`type="txt"`); the
+  similarity tools (`find_related`/`find_similar_text`) and
+  `list_references` serve it by registration only:
+  - `txt/models/v1/`: Pydantic schema (`TxtFrontmatter` with the closed
+    three-value status set, the opaque `TxtBody` with the one boundary
+    `get_extent` override, the `Updates`/`UpdateEntry` leaf classes copied
+    from `vcr`, `TxtDocument`, `TxtSummary`), parser (`parse_txt`), and
+    JSON schema generation, inside the domain package itself.
+  - `txt/tools/`: `@mcp.tool()` wrappers for the TXT lifecycle
+    (`create_txt`, `parse_txt`, `list_txt` paged with `error_count` and
+    inline failed rows, `get_txt` with `raw`/`offset`/`limit`/`numbered`
+    and the non-raising `ParseFailureResult` channel, `get_txt_example`,
+    `get_txt_template`, `get_txt_schema`).
+  - `txt/resources/` (`specmgr://txt/example`, `specmgr://txt/template` —
+    no `specmgr://txt/{id}`, no `specmgr://txt/list`) and `txt/prompts/`
+    (`create_txt`/`update_txt` narrated instruction flows; `create_txt`
+    first checks `list_txt` for a near-duplicate).
+  - The `TXT <uuid>` reference tag (both a reference source and a
+    reference target, free-floating tokens in the body) with its
+    `_load_txt` resolver, and the frozen reference-graph palette's 15th
+    entry `TXT` coloured `LightGrey` (after `SYSRS`, before
+    `UNRESOLVED`).
+  - Documents live flat under the shared docs root as
+    `docs/txt/txt-{uuid}-{slug}.md` (the shared `SPECMGR_DOCS_DIR`-rooted
+    default like `req`/`vcr` — no `SPECMGR_TXT_DIR`).
+  - `server.py` updated to import the new `txt` domain package;
+    `.pre-commit-config.yaml` (the widened shared `files:` regex plus a
+    new `specmgr-schema-txt-package` hook), `AGENTS.md`, the root
+    `README.md`, the agent/skill text, and the generated docs all updated
+    for the thirteenth domain (feat-229-txt, GitHub issue #229).
 - Multi-language variants of the same artifact (feat-197-i18n, GitHub issue
-  #197, ADR 38efdb66): for the eleven domains `req`/`uc`/`tsk`/`qa`/`prb`/
-  `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`, an artifact can exist in several
+  #197, ADR 38efdb66): for the twelve domains `req`/`uc`/`tsk`/`qa`/`prb`/
+  `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`, an artifact can exist in several
   languages. English keeps `docs/<type>/`; every other language is a
   `docs/<type>/<language>/` subfolder (`<language>` a lowercase two-letter
   code) holding the variant under the English source's exact file name, with

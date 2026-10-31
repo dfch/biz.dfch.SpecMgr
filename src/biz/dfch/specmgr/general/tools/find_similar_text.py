@@ -24,7 +24,7 @@ document is resolved (there is nothing to resolve against yet), the
 query itself is the query-side vector (embedded through the provider's
 ``embed_query`` -- the default backend's retrieval-instruction prefix,
 REQ-010), and every candidate document across the target whole-body
-domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs by
+domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt by
 default, ``adr`` structurally excluded, issue #46; a caller-supplied
 ``target_types`` subset otherwise) is ranked against it with the same
 pure-Python cosine (dot-on-normalized) ``_similarity_ranking.
@@ -63,8 +63,9 @@ __all__ = ["find_similar_text"]
         "Find the documents most semantically similar to a free-form `query` text (for "
         "pre-creation dedup/discovery checks), ranked by cosine similarity of local sentence "
         "embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body "
-        "domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is "
-        "excluded structurally) -- restrict with `target_types`. Returns up to `top_k` (default 10, "
+        "domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt; "
+        "`adr` is excluded structurally) -- restrict with `target_types`. Returns up to `top_k` "
+        "(default 10, "
         "validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` "
         "descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An "
         "unparseable candidate still appears, embedded from its full raw text, with `id = null` and "
@@ -89,7 +90,7 @@ def find_similar_text(
     ``embed_query`` output (the default backend's retrieval-instruction
     prefix, REQ-010). Every candidate document across the target
     whole-body domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/
-    vcr/sysrs by default -- ``adr`` is structurally excluded, issue
+    vcr/sysrs/txt by default -- ``adr`` is structurally excluded, issue
     #46 -- or the caller-supplied ``target_types`` subset) is ranked
     against it by cosine similarity (dot product on L2-normalized
     vectors). Unparseable candidates still appear: embedded from their
@@ -114,7 +115,7 @@ def find_similar_text(
     target_types:
         The domains to search (each one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``), in the order to enumerate them in;
+        ``vcr``, ``sysrs``, ``txt``), in the order to enumerate them in;
         ``None`` (the default) means every whole-body domain.
     top_k:
         The maximum number of hits to return (1..100, default 10).

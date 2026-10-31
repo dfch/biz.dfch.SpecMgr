@@ -18,7 +18,7 @@
 """Tests for the ``check_translation_drift`` tool (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 
 Real tool calls against temporary base directories (``SPECMGR_DOCS_DIR``), no LLM. Covers: the in-sync baseline for
-all eleven i18n-eligible domains (each domain's packaged template translated through ``de.json``); **ACC-009** (a
+all twelve i18n-eligible domains (each domain's packaged template translated through ``de.json``); **ACC-009** (a
 deliberately out-of-sync translation reports the structural mismatch AND the staleness in one result); structural
 drift (missing, extra, reordered; for every domain via direct on-disk edits, and for ``dec``/``vcr`` through the write
 tools); no false positives (translated free text of ``Option N:``/``AC-NNN (Method):`` headings, prose-only

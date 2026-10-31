@@ -93,6 +93,10 @@ from biz.dfch.specmgr.sysrs.models.v1 import SysrsDocument, SysrsFrontmatter
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
 from biz.dfch.specmgr.sysrs.tools.list_sysrs import list_sysrs
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument, TxtFrontmatter
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
 from biz.dfch.specmgr.vcr.models.v1 import VcrDocument, VcrFrontmatter
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
@@ -401,6 +405,23 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 _FEAT_MINIMAL_BODY = textwrap.dedent(
     """\
     # Feature: Example Widget
@@ -512,6 +533,16 @@ _CASES: list[_Case] = [
         _FEAT_SLUG_ID,
     ),
     _Case(
+        "txt",
+        create_txt,
+        txt_base_dir,
+        TxtNotFoundError,
+        TxtFrontmatter,
+        TxtDocument,
+        _TXT_MINIMAL_BODY,
+        _FEAT_SLUG_ID,
+    ),
+    _Case(
         "feat",
         create_feat,
         feat_base_dir,
@@ -564,6 +595,7 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     _ParseFailureCase("feat", create_feat, feat_base_dir, FeatNotFoundError, list_feat, _FEAT_MINIMAL_BODY),
     _ParseFailureCase("vcr", create_vcr, vcr_base_dir, VcrNotFoundError, list_vcr, _VCR_MINIMAL_BODY),
     _ParseFailureCase("sysrs", create_sysrs, sysrs_base_dir, SysrsNotFoundError, list_sysrs, _SYSRS_MINIMAL_BODY),
+    _ParseFailureCase("txt", create_txt, txt_base_dir, TxtNotFoundError, list_txt, _TXT_MINIMAL_BODY),
 ]
 
 

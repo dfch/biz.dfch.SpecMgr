@@ -687,11 +687,73 @@ type or cross-cutting:
   `update`/`set_status` tools with `type="sysrs"`). Its schema lives at
   `sysrs/models/v1/`, inside the domain package, not top-level `models/`.
   See `.specmgr/feat/feat-32-sysrs/README.md` for the full design.
+- **`txt/`** (Free-Form Text) — same tools/resources/prompts
+  shape as `req/`/`prb/`/`dec/` but for generic, minimally structured
+  catch-all unstructured markdown text that does not warrant a dedicated
+  domain (ad hoc notes, meeting minutes, review/audit write-ups, scratch
+  analysis): everything between the H1 and `## Updates` is opaque to the
+  parser (any markdown, mandatory, may contain H2..H6 headings), and the
+  body ends at the first top-level `## Updates` (mandatory, the last H2 —
+  a second `## Updates` or any H2 after it is rejected by the engine's
+  own trailing-completeness error), which holds at least one
+  `### {timestamp} ( - | : ) {title}` entry, newest first, using the same
+  entry heading regex, computed `timestamp`/`title` fields and shared
+  `validate_newest_first` helper as `vcr`/`dec`/`sop`. `txt` is, like
+  `sop`/`vcr`/`sysrs`, built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain
+  `update_txt`/`set_status_txt`/`set_classification_txt`/`delete_txt`/
+  `validate_txt` tools at all: whole-body and line-range updates go
+  through the generic `update` tool in `general/tools/` (`type="txt"`),
+  surgical exact-match replacements through the generic `edit` tool
+  (`type="txt"`), status changes through the generic `set_status` tool
+  (`type="txt"` — the closed three-value vocabulary
+  `draft`/`progress`/`done`), classification changes through the generic
+  `set_classification` tool (`type="txt"`), deletions through the generic
+  `delete` tool (`type="txt"`), disk-free/id-free dry-run content
+  validation through the generic `validate` tool (`type="txt"`). 7 tools
+  (`create_txt`, `parse_txt`, `list_txt`, `get_txt`, `get_txt_example`,
+  `get_txt_template`, `get_txt_schema`); the `get_txt` tool takes
+  `raw: bool = False` — `raw=True` returns the frontmatter-stripped body
+  text as-is (the text `update`'s `offset`/`limit` index into), with
+  optional read-style `offset`/`limit` windowing of that raw read
+  (raw-only; out-of-range values clamp, never error) and a non-raising
+  `ParseFailureResult` for a document that exists but fails to parse. 2
+  resources in `txt/resources/` (`specmgr://txt/example`,
+  `specmgr://txt/template`; the structure reference is the
+  `get_txt_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `specmgr://txt/{id}` — id-based reads are `get_txt`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://txt/list` —
+  `list_txt` ships as a paged tool from day one, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` carries
+  `error_count` and reports a failed-to-parse document inline (with a
+  resolved `path`) rather than silently dropping it). 2 prompts in
+  `txt/prompts/` (`create_txt`/`update_txt` — `create_txt` first checks
+  `list_txt` for a near-duplicate; `update_txt` names the generic
+  `update`/`edit`/`set_status`/`set_classification` tools with
+  `type="txt"`). Its schema lives at `txt/models/v1/`, inside the domain
+  package, not top-level `models/`. Documents live flat under the shared
+  docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
+  `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
+  `SPECMGR_TXT_DIR`). `txt` is one of the twelve language-aware domains
+  (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
+  take `language` (`create_txt` also `id`), the five generic mutation tools
+  carry a `txt` `_LANGUAGE_ADAPTERS` entry, and — unlike every other domain —
+  the language variant's heading-mapping table is applied to the single
+  `## Updates` heading only (`txt/models/v1/parser._normalize_updates_heading`),
+  never to the opaque body's free headings, which are accepted and parsed
+  verbatim (keep them identical to the EN source; the drift check compares
+  them as-is). `TXT <uuid>` is both a reference source and a
+  reference target (free-floating tokens in the body; the shared tag
+  vocabulary is `GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT`), and
+  the reference-graph palette carries a `TXT` entry coloured `LightGrey`
+  (the 15th entry, after `SYSRS`, before `UNRESOLVED`; see the
+  `general/` bullet below). See `.specmgr/feat/feat-229-txt/README.md`
+  for the full design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
     *and* line-range replace for the whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs, read-style
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt, read-style
     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
     `limit` = count; omitted `limit` = through end of body, `0` = pure
     insert, `offset` `N+1` = append; strict validation, never clamped),
@@ -733,13 +795,13 @@ type or cross-cutting:
     (a well-formed UUID id, so it passes the id-shape validation) raises
     the plain `KeyError` from the dispatch-table lookup instead (a
     direct-Python-caller outcome only, unreachable through the server's
-    12-value `type` enum) — `set_status`'s out-of-vocabulary
+    13-value `type` enum) — `set_status`'s out-of-vocabulary
     `InvalidStatusResult` (case 2 of the same chain, ADR
     b399f1ce-ed42-4929-b01c-7a57d18e8014) still runs pre-lock/pre-load
     (first), and nothing is written in any failure case; a fifth extension
     of the same chain (feat-204-create-error, GitHub issue #204, ADR
     f14f125e-eaad-4f4f-a6fd-3c931bed726e) gives every `create_<d>` tool (the
-    12 whole-body domains) the non-raising `ValidateResult` for a
+    13 whole-body domains) the non-raising `ValidateResult` for a
     content-validation failure of the caller-submitted body (nothing
     written), and every `parse_<d>` tool the same for an existing-but-broken
     file — `parse_<d>`'s `OSError`-family file-access errors from
@@ -753,7 +815,7 @@ type or cross-cutting:
     generic surgical exact-match
     string replacement of an existing document's frontmatter-stripped body
     across the whole-body domains (`type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs; `adr` excluded —
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; `adr` excluded —
     unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
     `ValueError` for an unknown or `adr` `type`, following the generic
     `validate` tool's precedent): `old_str` must match the on-disk body
@@ -769,14 +831,14 @@ type or cross-cutting:
     domain incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`; `set_classification`, the generic free-text
     `classification` frontmatter field change for the whole-body
-    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt
     (`adr` excluded, same as `update`/`delete`, since ADR's separate
     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
     the body and every other frontmatter field untouched, with a
     blank/whitespace-only value clearing `classification` back to
     `None`/absent; `delete`, the generic type-dispatched hard-delete
     for the whole-body domains — `type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs (`adr` excluded), every one of these
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt (`adr` excluded), every one of these
     domains implements a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
     resolving by `id`, taking the domain's own lock, and returning the
@@ -811,10 +873,10 @@ type or cross-cutting:
     750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
     cross-domain cross-reference listing tool (feat-144-ref-artifact,
     GitHub issue #144) — takes a *source* document's `type` (one of
-    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs) + `id`,
+    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt) + `id`,
     regex-scans the source's frontmatter-stripped body for `<TYPE>
     <id>` references (the reference-tag vocabulary
-    GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/FEAT; case-insensitive tag,
+    GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT; case-insensitive tag,
     space/tab/dash separator, anywhere in a line; the UUID tags
     carry a canonical uuid id, while FEAT carries the full
     `feat-NNN-slug` id or the bare `feat-NNN` number), dedupes repeated
@@ -852,7 +914,7 @@ type or cross-cutting:
     PlantUML component diagram of the frozen `specmgr://reference-graph`
     rulebook — one node per artifact (label = the document title,
     truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` label limit, default 40),
-    a stereotype + colour per artifact type (the frozen 14-entry palette),
+    a stereotype + colour per artifact type (the frozen 15-entry palette),
     nodes grouped into per-domain curly `component "TYPE" { … }` domain
     groups, one label-free edge per unique reference (`{src} --> {dst}`,
     the referenced item carries the incoming arrow), every edge on a cycle
@@ -860,9 +922,9 @@ type or cross-cutting:
     of size ≥ 2) drawn with the red label-free `-[#red]->` arrow, and every
     reference whose target cannot be resolved on disk drawn as a top-level
     `<<UNRESOLVED>>` node.
-    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 13
+    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 14
     domains, `adr` INCLUDED — an ADR document referencing a REQ is a real
-    edge; the 13-vs-12 split vs the skill's 12-domain text workflows is
+    edge; the 14-vs-13 split vs the skill's 13-domain text workflows is
     reconciled in the skill's own note, above) + `id`, with the rulebook
     §7 guard order: `validate_id` AND the `depth` 1..5 check (a plain
     `int`, default 1) are BOTH a `ValueError` before any filesystem
@@ -872,7 +934,7 @@ type or cross-cutting:
     `get_<d>`/`list_references`); an existing-but-broken source returns
     the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error`
     byte-identical to the domain's `list_<d>` failed row (ADR 9080b37c) for
-    the 12 whole-body domains — time-qualified by ADR 3982712a for `feat`
+    the 13 whole-body domains — time-qualified by ADR 3982712a for `feat`
     (`get_feat` the unconditional full-fidelity authority), and the leg-read
     `AdrParseError`'s own text for `adr` (whose `list_adr` carries no failed
     row: broken ADRs are skipped), case 3 of the ADR 519d1206 chain);
@@ -950,7 +1012,7 @@ type or cross-cutting:
     types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
       but not scoped to it, and `specmgr://reference-graph` — the frozen
-      reference-graph → PlantUML rulebook (the emission layout + 14-entry
+      reference-graph → PlantUML rulebook (the emission layout + 15-entry
       palette, the alias/label/truncation rules, the title override +
       defaults, the FEAT-exclusion + cycle + construction semantics, the
       CLI file layout; raw markdown passthrough, the `specmgr://uc/plantuml`
@@ -1010,8 +1072,8 @@ type or cross-cutting:
      byte-identical to the plain `raw=True` text; and, per feat-150's
      precedent below, a numbered read of a document that exists but fails to
      parse still returns the `ParseFailureResult`, never numbered text.
-     `get_<d>` for the 12 whole-body domains
-    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`;
+     `get_<d>` for the 13 whole-body domains
+    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`;
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
@@ -1032,7 +1094,7 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
-   The `general/` package also owns the i18n machinery of the eleven
+   The `general/` package also owns the i18n machinery of the twelve
    language-aware domains (feat-197-i18n, ADR 38efdb66; the full
    description is the `feat-197-i18n` paragraph below): the optional
    `language: str = "en"` parameter of `update`/`edit`/`set_status`/
@@ -1188,7 +1250,7 @@ per-domain, content-hash-validated in-memory read cache
 singleton per domain in each domain's own `tools/_cache.py`, mirroring the
 existing per-domain `threading.Lock` registries in `_lock.py`) for every
 generic whole-body domain (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
-`dec`, `sop`, `feat`, `vcr`, `sysrs`), eliminating the redundant
+`dec`, `sop`, `feat`, `vcr`, `sysrs`, `txt`), eliminating the redundant
 markdown-it/Pydantic re-parsing cost `get_*`/`list_*` previously paid on
 every single call against an unchanged file — the real fix for the
 CPU-bound, GIL-holding bottleneck behind issue #107's reported timeouts
@@ -1241,8 +1303,8 @@ unchanged; only the startup orchestration moved.
 
 `feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
 added first-class **multi-language variants of the same artifact** for the
-**eleven** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
-`rsk`/`dec`/`sop`/`vcr`/`sysrs` (`general/tools/_language_guard.
+**twelve** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
+`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt` (`general/tools/_language_guard.
 LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
 the default and keeps its exact, unchanged location; every other language is
 a `docs/{type}/{language}/` subfolder holding the variant under the EN
@@ -1332,7 +1394,7 @@ permanent "`feat` documents are always English" wording
   Never switch it to a recursive glob —
   `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
 
-The tests: `tests/general/tools/test_i18n_all_domains.py` (all eleven domains),
+The tests: `tests/general/tools/test_i18n_all_domains.py` (all twelve domains),
 `tests/dec/tools/test_i18n_*.py` (the `dec` pilot, deep),
 `test_i18n_feat_adr_exclusion.py` (the registered-surface regression for
 ACC-002/ACC-015), `test_i18n_en_only_consumers.py`, `test_i18n_closed_
@@ -1591,7 +1653,8 @@ extras onto every consumer of the base library.
 - Builds the `SpecMgrServer` instance (`mcp` object) and the `_lifespan`
   (the unified startup warmup, ADR 3982712a),
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
-  `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `tsk`, `uc`, `vcr`) as its last line purely
+  `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
+  `vcr`) as its last line purely
   for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.
   When adding a new domain, add its import to that same last line —

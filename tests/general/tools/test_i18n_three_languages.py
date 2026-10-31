@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""ACC-001/ACC-003/REQ-003/REQ-012 with THREE languages of one artifact, for all eleven domains
+"""ACC-001/ACC-003/REQ-003/REQ-012 with THREE languages of one artifact, for all twelve domains
 (feat-197-i18n Phase 150, Task 150.100/150.110 gap closing).
 
 The shipped ``de`` table is the only real second language, so the existing suites exercise two languages at most.

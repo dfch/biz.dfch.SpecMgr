@@ -25,7 +25,7 @@ tree that holds BOTH the EN documents and ``de/`` variants of the same ids -- wi
 unambiguous (a ``gamma``-only German title the deterministic fake embedding backend scores as the nearest possible
 match, a German-only reference edge, German-only titles) -- and assert nothing of the variants surfaces.
 
-Coverage: every one of the eleven i18n-eligible domains for the similarity tools and the registry-wide diagram; the
+Coverage: every one of the twelve i18n-eligible domains for the similarity tools and the registry-wide diagram; the
 ``dec``/``req``/``vcr`` source domains deeply; the ``list_references`` resolved-row path/title; a ``de/``-only document
 is no resolvable source; plus the structural fact the whole property rests on -- each domain's flat scan, id lookup and
 listing never see a ``de/`` file, even a hand-planted one -- so a future recursive glob fails these tests.
@@ -359,9 +359,9 @@ class TestReferenceDiagramsStayEnOnly(_ReferenceFixtureTestCase):
 
 
 class TestRegistryDiagramAcrossAllDomainsStaysEnOnly(_EnOnlyTestCase):
-    """REQ-013/ACC-014: ``get_reference_diagram_all`` over all eleven domains holds one node per EN document."""
+    """REQ-013/ACC-014: ``get_reference_diagram_all`` over all twelve domains holds one node per EN document."""
 
-    def test_the_registry_wide_diagram_has_one_node_per_en_document_across_all_eleven_domains(self):
+    def test_the_registry_wide_diagram_has_one_node_per_en_document_across_all_twelve_domains(self):
         seeded = self.seed_all()
 
         diagram = get_reference_diagram_all()

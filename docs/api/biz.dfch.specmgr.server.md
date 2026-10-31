@@ -92,9 +92,13 @@ specmgr://vcr/example -- A complete, valid sample verification case record docum
 specmgr://vcr/template -- A verification case record template (every field present,
                           placeholder text) as raw markdown.
 specmgr://sysrs/example -- A complete, valid sample system requirements specification
-                        document as raw markdown.
+                         document as raw markdown.
 specmgr://sysrs/template -- A system requirements specification template (every field
-                          present, placeholder text) as raw markdown.
+                           present, placeholder text) as raw markdown.
+specmgr://txt/example -- A complete, valid sample free-form text document as raw
+                         markdown.
+specmgr://txt/template -- A free-form text template (every field present,
+                          placeholder text) as raw markdown.
 specmgr://dtais --      The DTAIS verification-method vocabulary (Demonstration, Test,
                         Analysis, Inspection, Special), the five valid
                         ``### AC-NNN (Method): ...`` method words, and when and how to
@@ -109,9 +113,9 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         requirements, Optional features) and when to use each -- raw
                         markdown domain-knowledge guidance.
 specmgr://reference-graph -- The frozen reference-graph rulebook: the deterministic
-                             PlantUML component-diagram emission layout for the
-                             cross-reference network (the 14-entry palette, the bracketed
-                             alias/label/truncation rules, the title override + defaults,
+                              PlantUML component-diagram emission layout for the
+                              cross-reference network (the 15-entry palette, the bracketed
+                              alias/label/truncation rules, the title override + defaults,
                              the FEAT-exclusion rule, the bare-`feat-NNN` source-id
                              rejection with the `list_feat` discovery pointer, the SCC
                              cycle rule + red-arrow syntax, the construction semantics,
@@ -136,7 +140,7 @@ specmgr://i18n/headings/{language} -- (resource template, feat-197-i18n Phase 13
                         are an actionable ``ValueError``. Read-only; lets the
                         ``translate_artifact`` flow read the table without a host file tool.
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                        rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and
+                         rsk, dec, sop, feat, vcr, sysrs, txt), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
                         self-diagnose a CWD/env-var misconfiguration without shell access to
@@ -209,7 +213,11 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
  ``specmgr://sysrs/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_sysrs`` tool only, and there is also no
  ``specmgr://sysrs/list`` resource either -- ``list_sysrs`` ships as a
- paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+ paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). TXT
+ has no ``specmgr://txt/{id}`` resource either, for the same reason --
+ id-based reads go through the ``get_txt`` tool only, and there is also no
+ ``specmgr://txt/list`` resource either -- ``list_txt`` ships as a paged
+ tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
@@ -401,12 +409,36 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
   ``update_sysrs``/``set_status_sysrs`` tools of its own; deletion goes through the
   generic ``delete`` tool (``type="sysrs"``).
+  Free-form text tools (``txt/tools/``): ``parse_txt``, ``get_txt``
+  (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
+  parsed document, optionally windowed with read-style ``offset``/``limit``
+  (raw-only, clamping), and, with ``numbered=True`` (raw-only; ``ValueError`` with
+  ``raw=False``, like ``offset``/``limit``), prefixes every returned body line with
+  its 1-based absolute body-line number in the ``"<n>: "`` form -- a windowed
+  numbered read numbers from the clamped offset and never restarts, so a number
+  seen can be fed straight back into the generic ``update`` tool's
+  ``offset``)), ``list_txt``, ``get_txt_example``, ``get_txt_schema``,
+  ``get_txt_template``, ``create_txt``. ``txt`` is the generic, minimally
+  structured catch-all domain (a mandatory free-form body plus a mandatory
+  newest-first ``## Updates`` log; everything between the H1 and ``## Updates`` is
+  opaque to the parser) and is built dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr``/``sysrs`` -- no
+  per-domain ``update_txt``/``set_status_txt``/``validate_txt``/``delete_txt``
+  tools of its own: whole-body and line-range updates go through the generic
+  ``update`` tool (``type="txt"``), surgical edits through the generic ``edit``
+  tool (``type="txt"``), status changes through the generic ``set_status`` tool
+  (``type="txt"``), classification changes through the generic
+  ``set_classification`` tool (``type="txt"``), deletions through the generic
+  ``delete`` tool (``type="txt"``), and dry-run content validation through the
+  generic ``validate`` tool (``type="txt"``). A ``TXT <uuid>`` reference is both a
+  reference source and a reference target (the shared tag vocabulary, feat-229-txt),
+  and the reference-graph palette's 15th entry colours a TXT node ``LightGrey``.
   Language variants, every i18n-eligible domain (feat-197-i18n Phases 110/120/125): the
 ``get_<d>``/``list_<d>`` tools take an optional ``language`` parameter (default ``"en"``)
 and the ``create_<d>`` tools an optional ``language`` plus ``id`` (the shared id of the
 EN source, required for a non-default language and forbidden for ``"en"``) for all
-eleven domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``vcr``/``sysrs`` -- exactly the behavior documented for ``get_dec``/``list_dec``/
+twelve domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
+``vcr``/``sysrs``/``txt`` -- exactly the behavior documented for ``get_dec``/``list_dec``/
 ``create_dec`` above (flat ``docs/<type>/`` for ``"en"``, ``docs/<type>/{language}/``
 under the EN source's exact file name for any other code, shape-guarded before any file
 access, single language per ``list_<d>`` call, a new variant's ``status`` is the
@@ -430,7 +462,7 @@ as does a malformed ``language`` or one without a packaged table. The generic
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
 preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 existing document's content across the whole-body domains (``type`` is one of
-  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``;
   optional read-style
   ``offset``/``limit`` body-line coordinates -- ``offset`` = 1-based first line,
   ``limit`` = number of lines, omitted ``limit`` = through end of body, ``0`` =
@@ -455,7 +487,7 @@ existing document's content across the whole-body domains (``type`` is one of
   ``edit`` (feat-159-edit, GitHub issue #159) -- surgical, exact-match string
   replacement of an existing document's frontmatter-stripped body across the
   whole-body domains (``type`` is one of
-  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``;
   ``adr`` is not supported -- an explicit pre-dispatch ``ValueError``, unlike
   ``update``'s inherited ``KeyError``, following the generic ``validate`` tool's
   precedent, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6); ``old_str`` must match
@@ -470,7 +502,7 @@ existing document's content across the whole-body domains (``type`` is one of
   ``updated`` bumped), with an invalid ``id`` a ``ValueError`` before any file
   access; ``set_status`` --
 replace an existing document's status across every domain (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``),
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``adr``),
 also bumping
 ``updated`` (the whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
@@ -478,7 +510,7 @@ also bumping
 ``set_classification`` -- replace the free-text ``classification``
 frontmatter field of an existing document across the whole-body
 domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``;
 ``adr`` is not supported), also bumping ``updated`` and leaving the body
 and every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent; no ``create_<d>`` tool
@@ -486,7 +518,7 @@ accepts a ``classification`` argument at all -- this is the sole
 classification-change entry point;
 ``delete`` -- the generic type-dispatched hard-delete for the
 whole-body domains (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is not supported),
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``; ``adr`` is not supported),
 resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
@@ -494,7 +526,7 @@ I/O failures;
 ``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
 the generic, disk-free/id-free dry-run content validator for the
 whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``;
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``;
 ``adr`` is not supported -- use ``validate_adr`` instead), replacing the
 former per-domain ``validate_<d>`` tools; it is the one generic tool
 above whose entire surface is non-raising structured results: it never
@@ -508,7 +540,7 @@ caller-usage errors still raise);
 ``find_related`` -- find the documents most semantically related to an
 existing document, given its ``type``/``id``, across every whole-body domain
 (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``; ``adr`` is excluded structurally),
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``; ``adr`` is excluded structurally),
 ranked by cosine similarity of local sentence embeddings (the ``similarity``
 extra, ``fastembed``/``bge-small``), excluding the source document itself;
 ``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
@@ -525,10 +557,10 @@ load) -- the tools always register; availability is decided at call time
 ``list_references`` (feat-144-ref-artifact, GitHub issue #144) -- the
 generic, cross-domain cross-reference listing tool: takes a *source*
 document's ``type`` (one of
-``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
+``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``)
 and its ``id``, scans the source's frontmatter-stripped body for
 ``<TYPE> <id>`` references (the shared reference-tag vocabulary
-``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``/
+``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``/``TXT``/
 ``FEAT``: case-insensitive tag, one or more space/tab/dash separators,
 anywhere in a line; the UUID tags carry a canonical uuid id, while
 ``FEAT`` carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
@@ -552,7 +584,7 @@ document that does not exist on disk raises the source domain's own
 ``get_reference_diagram`` (feat-207-reference-graph, Phase 120, REQ-004)
 -- the read-only, id-based reference-diagram tool: takes a *source*
 document's ``type`` (one of
-``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``)
+``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``)
 and its ``id``, plus ``depth`` (1..5, default 1, the forward BFS depth),
 ``reverse`` (additive, direct-only on the incoming side), ``include_feat``
 (the FEAT exclusion, applied last), and an optional ``title`` override;
@@ -571,7 +603,7 @@ a missing source raises the source domain's own ``XNotFoundError``
 (identical to ``get_<d>``); an existing-but-broken source returns the
 non-raising ``ParseFailureResult`` (``error``/``path``/``id``, the
 ``error`` text byte-identical to the domain's ``list_<d>`` failed-row
-``error`` for the same file (ADR 9080b37c) for the 12 whole-body domains --
+``error`` for the same file (ADR 9080b37c) for the 13 whole-body domains --
 time-qualified by ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 for ``feat``
 (``get_feat`` the unconditional full-fidelity authority), and the leg-read
 ``AdrParseError``'s own text for ``adr`` (whose ``list_adr`` carries no
@@ -579,14 +611,14 @@ failed row: broken ADRs are skipped));
 ``get_reference_diagram_all`` (feat-207-reference-graph, Phase 120,
 REQ-005) -- the read-only, registry-wide reference-diagram tool: the same
 deterministic PlantUML component diagram over every parseable document of
-all 13 domains (broken documents are skipped -- the render never fails for
+all 14 domains (broken documents are skipped -- the render never fails for
 content), with the ``include_feat`` switch (the FEAT exclusion, applied
 last) and an optional ``title`` override (default: ``Reference Graph``;
 the diagram title is sanitized but never truncated, the node labels are
 truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40);
 ``list_languages`` (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008) --
-the read-only language-listing tool: takes a ``type`` (one of the eleven
-i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``;
+the read-only language-listing tool: takes a ``type`` (one of the twelve
+i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``/``txt``;
 ``feat`` and ``adr`` are permanently English and rejected with the "always
 English" ``ValueError``, before the id is looked at) and an ``id``, and returns a
 ``LanguageListResult``: ``languages`` -- ``"en"`` first when the EN source exists
@@ -641,9 +673,9 @@ confine the resolved path to the domain's own base directory with
 ``general.tools._path_safety.assert_within`` after id resolution (defense-in-depth).
 ``delete`` itself is unchanged by this phase.
 Parse-failure error channel (feat-150-mcp-lifecycle-commands Phase 1a, ADR
-9080b37c-82b3-4f63-81f1-79641d0bf14c): every ``get_<d>`` tool for the 12
+9080b37c-82b3-4f63-81f1-79641d0bf14c): every ``get_<d>`` tool for the 13
 whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``; ``get_adr`` excluded) additionally returns a
+``feat``/``vcr``/``sysrs``/``txt``; ``get_adr`` excluded) additionally returns a
 structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
 document that exists but fails to parse, instead of raising the domain's
 not-found error -- the ``error`` text is byte-identical to that
@@ -768,12 +800,20 @@ cross-cutting ``specmgr://iso25010`` resource for the nine canonical ISO/IEC
 ``update``/``set_status`` tools with ``type="sysrs"`` (both whole-body and
 line-range via ``get_sysrs(id, raw=True)``) -- ``sysrs`` has no per-domain
 ``update_sysrs``/``set_status_sysrs`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+Free-form text prompts (``txt/prompts/``): ``create_txt``, ``update_txt`` --
+narrated instruction flows guiding an LLM through the TXT tool sequence
+above; ``create_txt`` first checks ``list_txt`` for a near-duplicate
+free-form text document. ``update_txt`` names the generic ``update``/
+``edit``/``set_status`` tools with ``type="txt"`` (both whole-body and
+line-range via ``get_txt(id, raw=True)``) -- ``txt`` has no per-domain
+``update_txt``/``set_status_txt`` tools (ADR
+36905d5b-8057-4294-8665-c7eed5534db0).
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
 ``README.md`` into an optional sibling ``history.md``, per ADR
 e369ee2e-3353-4f92-991c-6367d76d832e; ``repair`` -- guides repairing a
 whole-body document (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``; ADR out of scope) that fails to
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``; ADR out of scope) that fails to
 parse: discover it via ``get_<d>``'s non-raising parse-failure result
 (``error``/``path``/``id``, the ``error`` text carrying the same parse
 defect as ``list_<d>``'s failed row for the same file, modulo a possibly-
@@ -811,7 +851,7 @@ Modules are grouped domain-first
 (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
 domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``feat``, ``vcr``, ``sysrs``) is a
+``feat``, ``vcr``, ``sysrs``, ``txt``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
 tools/resources/prompts (e.g. ``specmgr://version``/``specmgr://iso25010``/``specmgr://dtais``
@@ -821,10 +861,10 @@ prompts) stay under the top-level
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
 module, next to the existing
-``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``sysrs``/``tsk``/``uc``/``vcr``
+``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``sop``/``sysrs``/``tsk``/``txt``/``uc``/``vcr``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
 decorators actually run. ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``feat``, ``vcr``, and ``sysrs``
+``feat``, ``vcr``, ``sysrs``, and ``txt``
 each register ``tools``, ``resources``, and ``prompts``; ``general`` now also
 registers all three.
 

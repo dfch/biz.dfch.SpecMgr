@@ -55,7 +55,7 @@ below (rulebook §7.1 Phase 150 note, Phase 160 correction).
 
 ``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim (the
 corrected 2026-10-15 layout) — the frozen emission subset the real-parser
-gate verifies (component declarations, the 14-entry skinparam block,
+gate verifies (component declarations, the 15-entry skinparam block,
 label-free ``-->``/red-arrow edges, a self-loop, the curly ``component
 "TYPE" { … }`` domain groups, a top-level ``<<UNRESOLVED>>`` node).
 
@@ -112,6 +112,7 @@ skinparam component {
   backgroundColor<<FEAT>> PaleTurquoise
   backgroundColor<<VCR>> Khaki
   backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<TXT>> LightGrey
   backgroundColor<<UNRESOLVED>> DarkRed
 }
 

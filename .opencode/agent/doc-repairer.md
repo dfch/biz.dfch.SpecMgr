@@ -1,7 +1,8 @@
 ---
 description: >-
-  Repairs one specmgr whole-body document (req/uc/tsk/qa/prb/gol/rsk/dec/
-  sop/feat/vcr/sysrs; ADR is out of scope) that currently fails to parse.
+  Repairs one specmgr whole-body document
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; ADR is out of
+  scope) that currently fails to parse.
   Discovers the failure via the `get_<d>`/`list_<d>` MCP tools, reads the
   raw file and writes the repaired text back with its own host file
   tools -- never via the generic `update` (or `edit`) MCP tool, which is
@@ -32,8 +33,8 @@ permission:
 
 You repair **one** specmgr document that currently fails to parse. You are
 launched with a `<type> [id]` pair: `type` is a whole-body domain
-(`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`),
-and `id` (optional) is that document's identifier -- a lowercase-hex uuid
+(`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/
+`txt`), and `id` (optional) is that document's identifier -- a lowercase-hex uuid
 for every domain except `feat`, which is a `feat-NNN-slug`. ADR is out of
 scope entirely. If the input is missing or malformed, use the `question`
 tool to ask for a clean pair rather than guessing.

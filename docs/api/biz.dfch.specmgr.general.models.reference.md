@@ -28,8 +28,8 @@ type:
     The referenced document's target domain name, lowercase -- one of
     ``general.tools._references.REFERENCE_TYPES`` (``gol``/``prb``/
     ``qa``/``uc``/``req``/``rsk``/``dec``/``adr``/``vcr``/``sysrs``/
-    ``feat``; the reference tag itself is the uppercase form of this
-    value).
+    ``txt``/``feat``; the reference tag itself is the uppercase form
+    of this value).
 id:
     The referenced document's own specmgr-assigned identifier, as it
     appeared in the source body (lowercased) -- a canonical

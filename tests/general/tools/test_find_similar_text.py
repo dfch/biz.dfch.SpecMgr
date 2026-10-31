@@ -100,13 +100,17 @@ class TestFindSimilarTextRanking(SimilarityTestCase):
     def test_target_types_restricts_the_candidate_set(self) -> None:
         self.seed_req("First Req", "alpha")
         self.seed_gol("First Goal", "alpha")
+        self.seed_txt("First Notes", "alpha")
         self.install_fake()
 
         only_req = find_similar_text(query="alpha", target_types=["req"])
+        only_txt = find_similar_text(query="alpha", target_types=["txt"])
         default = find_similar_text(query="alpha")
 
         self.assertEqual({hit.type for hit in only_req}, {"req"})
+        self.assertEqual({hit.type for hit in only_txt}, {"txt"})
         self.assertIn("gol", {hit.type for hit in default})
+        self.assertIn("txt", {hit.type for hit in default})
 
     def test_top_k_and_min_score_shape_the_results(self) -> None:
         self.seed_req("First Doc", "alpha alpha beta")  # 0.894

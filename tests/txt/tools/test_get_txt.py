@@ -1,0 +1,347 @@
+# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""Tests for the ``get_txt`` ``@mcp.tool()`` wrapper (feat-229-txt Phase 110).
+
+The two "raw-read coordinates index into the splice target" tests of
+``tests/vcr/tools/test_get_vcr.py`` are adapted: they pin the same raw/splice
+invariant directly against the shared ``body_text``/``window_body`` helpers
+the generic ``update`` tool's range splice uses.
+"""
+
+from __future__ import annotations
+
+import tempfile
+import textwrap
+import unittest
+from pathlib import Path
+from unittest import mock
+
+from biz.dfch.specmgr.general.models import ParseFailureResult
+from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools._splice import body_text, window_body
+from biz.dfch.specmgr.txt.models.v1 import TxtDocument
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+from biz.dfch.specmgr.txt.tools.get_txt import get_txt
+from biz.dfch.specmgr.txt.tools.list_txt import list_txt
+
+#: A well-formed but non-existent canonical UUID (the id
+#: must be well-formed to reach the domain's own not-found error past the
+#: path-safety guard).
+_MISSING_UUID = "00000000-0000-0000-0000-000000000000"
+_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Review Notes
+
+    Some free-form prose about what was reviewed.
+
+    ## Updates
+
+    ### 2026-08-31 00:00:00.000Z - Created
+
+    Initial draft of the review notes.
+    """
+)
+
+
+class TestGetTxt(unittest.TestCase):  # pylint: disable=too-many-public-methods
+    """Tests for the get_txt tool (one method per read path x outcome; the parse-failure,
+    numbered, and byte-identical-error test groups together push the class past
+    pylint's default of 20 public methods)."""
+
+    def setUp(self) -> None:
+        self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
+
+    def test_returns_matching_document(self) -> None:
+        """get_txt must return the full TxtDocument for a matching id."""
+        created = create_txt(_MINIMAL_BODY)
+
+        result = get_txt(created.id)
+
+        self.assertIsInstance(result, TxtDocument)
+        self.assertEqual(result.frontmatter.id, created.id)
+        self.assertEqual(result.body.text, "Sample Review Notes")
+
+    def test_raises_not_found_for_unknown_id(self) -> None:
+        """get_txt must raise TxtNotFoundError, with the standardized message, when no document matches."""
+        create_txt(_MINIMAL_BODY)
+
+        with self.assertRaises(TxtNotFoundError) as ctx:
+            get_txt(_MISSING_UUID)
+        message = str(ctx.exception)
+        self.assertIn("bare document UUID", message)
+        self.assertIn("without a domain prefix", message)
+
+    def _doc_path(self) -> Path:
+        """The single on-disk document file seeded for this test."""
+        matches = list((self.docs_root / "txt").glob("*.md"))
+        self.assertEqual(len(matches), 1)
+        result = matches[0]
+        return result
+
+    def test_raw_returns_body_text_via_shared_helper(self) -> None:
+        """raw=True must return the frontmatter-stripped body text, byte-identical to the shared body_text helper's output."""
+        created = create_txt(_MINIMAL_BODY)
+
+        result = get_txt(created.id, raw=True)
+
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, body_text(self._doc_path()))
+
+    def test_raw_line_coordinates_index_into_the_shared_body_text(self) -> None:
+        """The line numbers from a raw read must index byte-for-byte into the shared body_text --
+        the same text the generic ``update`` tool's range splice targets for ``type="txt"``."""
+        created = create_txt(_MINIMAL_BODY)
+        lines = get_txt(created.id, raw=True).splitlines()
+        k = lines.index("Some free-form prose about what was reviewed.") + 1
+
+        window = get_txt(created.id, raw=True, offset=k, limit=1)
+
+        self.assertEqual(window, lines[k - 1] + "\n")
+        # The same coordinates addressed through the shared window helper the splice uses.
+        self.assertEqual(window, window_body(body_text(self._doc_path()), k, 1))
+
+    def test_raw_windowed_read_returns_the_requested_slice(self) -> None:
+        """raw=True with offset/limit must return exactly the requested body window, each line
+        keeping its trailing newline."""
+        created = create_txt(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_txt(doc_id, raw=True).splitlines()
+
+        result = get_txt(doc_id, raw=True, offset=2, limit=3)
+
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, "\n".join(lines[1:4]) + "\n")
+
+    def test_raw_windowed_read_clamps_out_of_range_coordinates(self) -> None:
+        """raw=True: an offset past the last body line returns the empty string, and a limit
+        larger than the remaining lines caps at them."""
+        created = create_txt(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_txt(doc_id, raw=True).splitlines()
+
+        self.assertEqual(get_txt(doc_id, raw=True, offset=len(lines) + 1), "")
+        self.assertEqual(get_txt(doc_id, raw=True, offset=len(lines) + 10, limit=5), "")
+        self.assertEqual(get_txt(doc_id, raw=True, offset=2, limit=len(lines) + 10), "\n".join(lines[1:]) + "\n")
+
+    def test_coordinates_with_raw_false_raise_value_error(self) -> None:
+        """offset/limit with raw=False must raise ValueError (naming raw), before any file access."""
+        created = create_txt(_MINIMAL_BODY)
+
+        with self.assertRaises(ValueError) as ctx:
+            get_txt(created.id, raw=False, offset=2, limit=3)
+        message = str(ctx.exception)
+        self.assertIn("raw", message)
+        self.assertIn("offset", message)
+        with self.assertRaises(ValueError):
+            get_txt(created.id, raw=False, limit=3)
+
+    def test_numbered_raw_read_prefixes_absolute_line_numbers(self) -> None:
+        """numbered=True must prefix every body line with ``"<n>: "`` (1-based absolute numbers, single trailing
+        newline), and numbered=False must stay byte-identical to today's raw=True output."""
+        created = create_txt(_MINIMAL_BODY)
+        doc_id = created.id
+        unnumbered = get_txt(doc_id, raw=True)
+
+        self.assertEqual(get_txt(doc_id, raw=True, numbered=False), unnumbered)
+
+        lines = unnumbered.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        numbered = get_txt(doc_id, raw=True, numbered=True)
+        self.assertEqual(numbered, expected)
+        self.assertEqual(numbered.splitlines()[1], "2: ")  # the empty body line: trailing space, no special case
+        # A numbered no-window read equals the numbered whole-body-equivalent windowed read (byte-identical
+        # contract).
+        self.assertEqual(numbered, get_txt(doc_id, raw=True, numbered=True, offset=1))
+
+    def test_numbered_windowed_read_starts_at_clamped_offset_and_never_restarts(self) -> None:
+        """A windowed numbered read numbers from the clamped offset (absolute, not window-relative): a
+        k < 1 window starts at 1, a k > N window is empty and prints no numbers."""
+        created = create_txt(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_txt(doc_id, raw=True).splitlines()
+        k, m = 5, 3
+
+        window = get_txt(doc_id, raw=True, numbered=True, offset=k, limit=m)
+
+        self.assertEqual(window, "".join(f"{k + i}: {lines[k - 1 + i]}\n" for i in range(m)))
+        self.assertEqual(get_txt(doc_id, raw=True, numbered=True, offset=0, limit=2), f"1: {lines[0]}\n2: {lines[1]}\n")
+        self.assertEqual(get_txt(doc_id, raw=True, numbered=True, offset=len(lines) + 1), "")
+
+    def test_numbered_with_raw_false_raises_value_error_before_any_file_access(self) -> None:
+        """numbered=True with raw=False must raise ValueError -- even for a document that fails to
+        parse: the guard fires before the parse-failure channel."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        with self.assertRaises(ValueError) as ctx:
+            get_txt(created.id, raw=False, numbered=True)
+        message = str(ctx.exception)
+        self.assertIn("numbered", message)
+        self.assertIn("raw", message)
+
+    def test_numbered_raw_read_of_broken_document_returns_parse_failure_result(self) -> None:
+        """A numbered raw read of a document that exists but fails to parse must return the
+        ParseFailureResult channel, never numbered text."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_txt(created.id, raw=True, numbered=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+        self.assertEqual(result.id, created.id)
+
+    def test_raw_no_window_read_is_byte_identical_for_a_body_without_trailing_newline(self) -> None:
+        """The unnumbered no-window raw read must return the frontmatter-stripped body verbatim even when the
+        body has no trailing newline -- the no-window path bypasses window_body, which would add one; the
+        numbered read of the same body still normalizes to exactly one trailing newline."""
+        created = create_txt(_MINIMAL_BODY)
+        path = self._doc_path()
+        path.write_text(path.read_text(encoding="utf-8").rstrip("\n"), encoding="utf-8")
+        body = body_text(path)
+        self.assertFalse(body.endswith("\n"))
+
+        self.assertEqual(get_txt(created.id, raw=True), body)
+        self.assertEqual(get_txt(created.id, raw=True, numbered=False), body)
+
+        lines = body.splitlines()
+        expected = "".join(f"{n}: {line}\n" for n, line in enumerate(lines, start=1))
+        self.assertEqual(get_txt(created.id, raw=True, numbered=True), expected)
+
+    def test_windowed_raw_read_coordinates_index_into_the_shared_body_text(self) -> None:
+        """The coordinates of a windowed raw read must select exactly those lines of the shared
+        body_text (the generic ``update`` tool's splice target for ``type="txt"``)."""
+        created = create_txt(_MINIMAL_BODY)
+        doc_id = created.id
+        lines = get_txt(doc_id, raw=True).splitlines()
+        k, m = 7, 3
+        window = get_txt(doc_id, raw=True, offset=k, limit=m)
+        self.assertEqual(window, "\n".join(lines[k - 1 : k - 1 + m]) + "\n")
+        self.assertEqual(window, window_body(body_text(self._doc_path()), k, m))
+
+    def test_raw_false_returns_parsed_document_as_before(self) -> None:
+        """raw=False (explicit) must return the parsed document, exactly as the default call does."""
+        created = create_txt(_MINIMAL_BODY)
+
+        result = get_txt(created.id, raw=False)
+        default = get_txt(created.id)
+
+        self.assertIsInstance(result, TxtDocument)
+        self.assertEqual(result, default)
+
+    def test_raw_unknown_id_raises_not_found_in_both_modes(self) -> None:
+        """raw=True and raw=False must both raise TxtNotFoundError for an unknown id, windowed raw
+        reads included."""
+        create_txt(_MINIMAL_BODY)
+
+        with self.assertRaises(TxtNotFoundError):
+            get_txt(_MISSING_UUID, raw=True)
+        with self.assertRaises(TxtNotFoundError):
+            get_txt(_MISSING_UUID, raw=True, offset=2, limit=3)
+        with self.assertRaises(TxtNotFoundError):
+            get_txt(_MISSING_UUID, raw=False)
+
+    def test_broken_document_returns_parse_failure_result(self) -> None:
+        """get_txt must return a ParseFailureResult (not raise) for an id whose on-disk file fails to parse."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_txt(created.id)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertEqual(result.id, created.id)
+        self.assertEqual(result.path, str(self._doc_path().resolve()))
+        self.assertTrue(result.error)
+        self.assertNotIsInstance(result, TxtDocument)
+
+    def test_broken_document_raw_true_returns_parse_failure_result_never_str(self) -> None:
+        """raw=True on a broken document must return a ParseFailureResult, never a raw str."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        result = get_txt(created.id, raw=True)
+
+        self.assertIsInstance(result, ParseFailureResult)
+        self.assertNotIsInstance(result, str)
+
+    def test_broken_document_error_matches_list_failed_row_get_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_txt's failed-row error for the same broken
+        file, in cold-get-then-warm-list read order (ADR 9080b37c property)."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        get_result = get_txt(created.id)
+        failed = [summary for summary in list_txt().results if summary.title == "<failed to parse>"]
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_error_matches_list_failed_row_list_first(self) -> None:
+        """ParseFailureResult.error must be byte-identical to list_txt's failed-row error for the same broken
+        file, in cold-list-then-warm-get read order (ADR 9080b37c property)."""
+        created = create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        failed = [summary for summary in list_txt().results if summary.title == "<failed to parse>"]
+        get_result = get_txt(created.id)
+
+        self.assertIsInstance(get_result, ParseFailureResult)
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(get_result.error, failed[0].error)
+        # The core defect content (this fixture's structural parse failure) must be present in both texts.
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", get_result.error)
+        self.assertIn("Token[0]: expected 'heading_open', got 'paragraph_open'.", failed[0].error)
+
+    def test_broken_document_list_error_is_stable_across_repeated_calls(self) -> None:
+        """list_txt()'s row error text must be byte-identical across repeated calls."""
+        create_txt(_MINIMAL_BODY)
+        self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+        first_call = [s for s in list_txt().results if s.title == "<failed to parse>"]
+        second_call = [s for s in list_txt().results if s.title == "<failed to parse>"]
+
+        self.assertEqual(len(first_call), 1)
+        self.assertEqual(len(second_call), 1)
+        self.assertEqual(first_call[0].error, second_call[0].error)
+
+    def test_invalid_id_shape_raises_value_error(self) -> None:
+        """An id that is not a well-formed canonical UUID must raise ValueError before any file access."""
+        with self.assertRaises(ValueError):
+            get_txt("not-a-well-formed-uuid")
+
+    def test_path_separator_id_raises_value_error_before_any_file_access(self) -> None:
+        """A path-injection id (separator or traversal) must raise ValueError before any file access."""
+        create_txt(_MINIMAL_BODY)
+
+        with self.assertRaises(ValueError) as ctx:
+            get_txt("../txt")
+        self.assertIn("path separator", str(ctx.exception))
+        with self.assertRaises(ValueError):
+            get_txt(f"{'0' * 8}-{'0' * 4}-{'0' * 4}-{'0' * 4}-{'0' * 12}/x")
+        with self.assertRaises(ValueError):
+            get_txt("..")
+
+
+if __name__ == "__main__":
+    unittest.main()

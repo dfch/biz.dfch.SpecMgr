@@ -280,6 +280,25 @@ _DEC_TEMPLATE = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body: the vocabulary words live ONLY in the
+#: opaque free-form body (the paragraph between the H1 and ``## Updates``);
+#: the H1 and the update entry's heading/title/content are
+#: vocabulary-neutral, so a document's vector is determined solely by its
+#: ``{body}``.
+_TXT_TEMPLATE = textwrap.dedent(
+    """\
+    # {title}
+
+    {body}
+
+    ## Updates
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 #: A minimal, valid ``feat`` body (the folder-per-document domain); vocabulary-neutral,
 #: used to seed a ``feat`` document for the corpus-walk and ``set_feat_id`` tests.
 _FEAT_MINIMAL_BODY = textwrap.dedent(
@@ -425,6 +444,13 @@ class SimilarityTestCase(unittest.TestCase):
         from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 
         result = create_feat(body)
+        return result
+
+    def seed_txt(self, title: str, body: str) -> Any:
+        """Create a real ``txt`` document with vocabulary only in the free-form body; return its frontmatter."""
+        from biz.dfch.specmgr.txt.tools.create_txt import create_txt
+
+        result = create_txt(_TXT_TEMPLATE.format(title=title, body=body))
         return result
 
     def seed_unparseable_req(self, filename: str = "zz-broken.md") -> Path:

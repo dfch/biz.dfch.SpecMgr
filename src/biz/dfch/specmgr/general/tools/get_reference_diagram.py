@@ -25,7 +25,7 @@ the reference-graph rulebook (``specmgr://reference-graph`` /
 ``general/data/general_reference_graph.md`` §2–§5): one node per artifact
 (label = the document title, truncated to the ``SPECMGR_DIAGRAM_MAX_TITLE``
 label limit, default 40), a stereotype + colour per artifact type (the
-frozen 14-entry palette), nodes grouped into per-domain curly
+frozen 15-entry palette), nodes grouped into per-domain curly
 ``component "TYPE" { … }`` domain groups (the 2026-10-15 corrected form,
 rulebook §2.7), one label-free edge per unique reference (``{src} -->
 {dst}`` -- the referenced item carries the incoming arrow), every edge
@@ -47,7 +47,7 @@ existing-but-broken source returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` -- case 3 of the
 ADR 519d1206 workaround chain -- with the ``error`` text byte-identical to
 the domain's ``list_<d>`` failed-row ``error`` for the same file (ADR
-9080b37c) for the 12 whole-body domains -- time-qualified by ADR
+9080b37c) for the 13 whole-body domains -- time-qualified by ADR
 3982712a for ``feat`` (``get_feat`` the unconditional full-fidelity
 authority) -- and, for ``adr`` (whose ``list_adr`` carries no failed row:
 broken ADRs are skipped), the leg-read ``AdrParseError``'s own text), the
@@ -219,7 +219,7 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
         "source raises the source domain's own `XNotFoundError`; an existing-but-broken source "
         "returns the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error` text "
         "byte-identical to the domain's `list_<d>` failed-row `error` for the same file (ADR "
-        "9080b37c) for the 12 whole-body domains -- time-qualified by ADR 3982712a for `feat`; "
+        "9080b37c) for the 13 whole-body domains -- time-qualified by ADR 3982712a for `feat`; "
         "for `adr` (whose `list_adr` carries no failed row: broken ADRs are skipped), the "
         "leg-read `AdrParseError`'s own text). Returns PlantUML source (not a specmgr document) "
         "-- run it through "
@@ -240,7 +240,8 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
 
     The source is identified by ``type`` (every whole-body domain
     ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``, plus ``adr``) and its own ``id``. The graph
+    ``feat``/``vcr``/``sysrs``/``txt``, plus ``adr``) and its own
+    ``id``. The graph
     is the source document, its outgoing reference neighbourhood to
     ``depth`` (level 0 = the source; a level-k node is expanded only if
     k < ``depth`` and it resolved to an existing document), optionally plus
@@ -264,7 +265,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` (case 3 of
     the ADR 519d1206 workaround chain) instead of raising -- its ``error``
     text is byte-identical to that domain's ``list_<d>`` failed-row
-    ``error`` for the same file (ADR 9080b37c) for the 12 whole-body domains
+    ``error`` for the same file (ADR 9080b37c) for the 13 whole-body domains
     -- time-qualified by ADR 3982712a for ``feat`` (``get_feat`` the
     unconditional full-fidelity authority) -- and, for ``adr`` (whose
     ``list_adr`` carries no failed row: broken ADRs are skipped), the
@@ -286,7 +287,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     type:
         The source document's type / domain: one of ``adr``, ``req``,
         ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
-        ``sop``, ``feat``, ``vcr``, ``sysrs``.
+        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
     id:
         The source document's specmgr-assigned identifier (the canonical
         lowercase-hex UUID for every domain other than ``feat``; the full
@@ -298,7 +299,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
         (rulebook §3.2).
     reverse:
         When ``True``, add the direct incoming references to the source
-        (the additive 13-domain scan, rulebook §3.2).
+        (the additive 14-domain scan, rulebook §3.2).
     include_feat:
         When ``False``, apply the FEAT exclusion (rulebook §3.5) last: drop
         every FEAT node except this source (when it is one), then every
@@ -318,7 +319,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     Raises
     ------
     ValueError
-        ``type`` is outside the 13-domain vocabulary, ``id`` is a
+        ``type`` is outside the 14-domain vocabulary, ``id`` is a
         path-injection attempt or not in the dispatched domain's own format
         (for ``feat``: not a full ``feat-NNN-slug``), or ``depth`` is not a
         plain ``int`` in 1..5 -- all raised before any filesystem access;
@@ -327,7 +328,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
     FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-    AdrNotFoundError
+    TxtNotFoundError / AdrNotFoundError
         No document of the dispatched source ``type`` has this ``id`` --
         the source domain's own not-found error, propagated unchanged from
         the source domain's own ``load_by_id`` (identical to ``get_<d>``).

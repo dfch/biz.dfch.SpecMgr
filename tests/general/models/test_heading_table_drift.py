@@ -58,7 +58,7 @@ _MATCH_ANYTHING = ".+"
 
 
 def derive_heading_classes() -> tuple[set[str], dict[str, str]]:
-    """Walk the eleven document models once and classify every section heading alias.
+    """Walk the twelve document models once and classify every section heading alias.
 
     Returns:
         ``(fixed, data_carrying)``: ``fixed`` is the closed set of canonical fixed-text headings (LITERAL,

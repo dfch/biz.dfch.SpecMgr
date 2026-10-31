@@ -24,7 +24,7 @@ Design Notes §7 (``validate_id`` + the ``depth`` 1..5 range check, BOTH a
 ``list_references`` tests' missing-docs-root idiom, so a lookup that ever
 reached the filesystem would surface as the domain's own ``LookupError``,
 not a ``ValueError``), the source load's error mapping (a missing source
-raises the source domain's own ``XNotFoundError`` for every one of the 13
+raises the source domain's own ``XNotFoundError`` for every one of the 14
 domains; an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` -- its ``error`` text byte-identical to the domain's
 ``list_<d>`` failed-row ``error`` for the same file, ADR 9080b37c), the
@@ -63,6 +63,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS
 from biz.dfch.specmgr.general.tools._reference_graph import build_source_graph
 from biz.dfch.specmgr.general.tools.get_reference_diagram import get_reference_diagram
+from biz.dfch.specmgr.plantuml import chain
 from biz.dfch.specmgr.plantuml.structure import MODE_PREFLIGHT, MODE_STANDALONE, check_structure
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
@@ -71,6 +72,7 @@ from biz.dfch.specmgr.rsk.tools._paths import RskNotFoundError
 from biz.dfch.specmgr.sop.tools._paths import SopNotFoundError
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError
 from biz.dfch.specmgr.uc.tools._paths import UcNotFoundError
 from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 
@@ -119,8 +121,8 @@ class TestGetReferenceDiagramRegistration(unittest.TestCase):
 
         cls._tools = asyncio.run(mcp.list_tools())
 
-    def test_get_reference_diagram_registered_with_13_value_type_enum(self) -> None:
-        """``type`` is the full 13-domain vocabulary (adr included), ``type``/``id`` required, the
+    def test_get_reference_diagram_registered_with_14_value_type_enum(self) -> None:
+        """``type`` is the full 14-domain vocabulary (adr included), ``type``/``id`` required, the
         remaining parameters optional with the frozen defaults."""
         matching = [t for t in self._tools if t.name == "get_reference_diagram"]
         self.assertEqual(len(matching), 1)
@@ -176,7 +178,7 @@ class TestGetReferenceDiagramPathSafety(unittest.TestCase):
         """A feat-NNN-slug (and every pinned traversal shape, and the empty string) must raise
         ``ValueError`` for every UUID source domain -- the docs root does not exist, so a lookup
         that reached the filesystem would have raised the domain's ``LookupError`` instead."""
-        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr"):
+        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt", "adr"):
             for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID, _BARE_FEAT_ID):
                 with self.subTest(doc_type=doc_type, bad_id=bad_id):
                     with self.assertRaises(ValueError):
@@ -213,7 +215,7 @@ class TestGetReferenceDiagramPathSafety(unittest.TestCase):
 
 class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
     """ACC-003: a validly-shaped source id with no file on disk raises the source domain's own
-    ``XNotFoundError``, identical to ``get_<d>``/``list_references`` -- for every one of the 13
+    ``XNotFoundError``, identical to ``get_<d>``/``list_references`` -- for every one of the 14
     domains."""
 
     SEEDS = (("cycle/req-c001.md", f"docs/req/{_C001}.md"),)
@@ -231,6 +233,7 @@ class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
             ("dec", _MISSING_UUID, DecNotFoundError),
             ("sop", _MISSING_UUID, SopNotFoundError),
             ("vcr", _MISSING_UUID, VcrNotFoundError),
+            ("txt", _MISSING_UUID, TxtNotFoundError),
             ("feat", "feat-999-no-such-feature", FeatNotFoundError),
             ("adr", _MISSING_UUID, AdrNotFoundError),
         ]
@@ -303,6 +306,122 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
         self.assertEqual(result.id, _D002)
         self.assertEqual(result.path, str(broken.resolve()))
         self.assertTrue(result.error)
+
+
+class TestTxtNodeDiagram(_SeededRegistryTestCase):
+    """The TXT node end-to-end over the 15-entry palette (feat-229-txt Phase 150, REQ-010 /
+    ACC-007): a registry whose REQ source carries a free-floating ``TXT <uuid>`` reference
+    renders the TXT node (the ``<<TXT>>`` stereotype inside the ``component "TXT" { … }``
+    group, the resolved title) with the 15th skinparam line (``LightGrey``, after ``SYSRS``,
+    before ``UNRESOLVED``); the rendering is checker-clean in both structure modes and passes
+    the ``validate_plantuml`` chain's own all-unset floor (structure-only: ``checked_by`` is
+    ``"structure"``, ``structure_ok``, the parser never runs -- ``valid is None``); and
+    ``get_reference_diagram(type="txt", ...)`` is accepted end-to-end (the txt source's own H1
+    is the default diagram title, the incoming REQ reference surfaces via the reverse scan).
+    The two documents are written into the per-test tmp registry (not committed fixtures), so
+    the committed fixture set -- and the golden sweep's own 22-file count pin -- is untouched."""
+
+    #: The two inline documents' frozen ids (valid uuids, never seeded anywhere else).
+    _TXT_ID = "c00fc00f-c00f-4c0f-8c0f-c00fc00fc00f"  # txt "Palette Amendment Notes"
+    _REQ_ID = "c010c010-c010-4c10-8c10-c010c010c010"  # req "Txt Referencing Requirement"
+
+    def setUp(self) -> None:
+        super().setUp()
+        (self.docs_root / "txt").mkdir(parents=True)
+        (self.docs_root / "txt" / f"{self._TXT_ID}.md").write_text(
+            "---\n"
+            f"id: {self._TXT_ID}\n"
+            "type: txt\n"
+            "status: draft\n"
+            "version: 1.0.0\n"
+            "created: '2026-10-29T00:00:00.000Z'\n"
+            "updated: '2026-10-29T00:00:00.000Z'\n"
+            "---\n"
+            "\n"
+            "# Palette Amendment Notes\n"
+            "\n"
+            "Free-form notes on the reference-graph palette amendment.\n"
+            "\n"
+            "## Updates\n"
+            "\n"
+            "### 2026-10-29 00:00:00.000Z - Initial draft created\n"
+            "\n"
+            "First entry of the fixture document.\n",
+            encoding="utf-8",
+        )
+        (self.docs_root / "req").mkdir(parents=True)
+        (self.docs_root / "req" / f"{self._REQ_ID}.md").write_text(
+            "---\n"
+            f"id: {self._REQ_ID}\n"
+            "type: req\n"
+            "status: draft\n"
+            "version: 1.0.0\n"
+            "---\n"
+            "\n"
+            "# Txt Referencing Requirement\n"
+            "\n"
+            "WHILE the palette is amended, THE requirement must reference the notes.\n"
+            "\n"
+            "## Description\n"
+            "\n"
+            f"TXT {self._TXT_ID}: Palette Amendment Notes\n"
+            "\n"
+            "## Characteristics\n"
+            "\n"
+            "1. Safety\n"
+            "\n"
+            "## Level\n"
+            "\n"
+            "MUST\n"
+            "\n"
+            "## Source\n"
+            "\n"
+            "The reference-graph fixture registry.\n",
+            encoding="utf-8",
+        )
+
+    def test_req_source_rendering_carries_the_txt_node_and_the_15th_skinparam_line(self) -> None:
+        result = get_reference_diagram(type="req", id=self._REQ_ID, depth=1)
+
+        self.assertIsInstance(result, str)
+        # the TXT node: its own curly domain group + the <<TXT>> stereotype,
+        # the resolved title, the reference edge
+        self.assertIn('component "TXT" {', result)
+        self.assertIn(f'component "Palette Amendment Notes" as [TXT-{self._TXT_ID}] <<TXT>>', result)
+        self.assertIn(f"[REQ-{self._REQ_ID}] --> [TXT-{self._TXT_ID}]", result)
+        # the 15th skinparam line, in block order (after SYSRS, before UNRESOLVED)
+        sysrs = result.index("backgroundColor<<SYSRS>> Thistle")
+        txt = result.index("backgroundColor<<TXT>> LightGrey")
+        unresolved = result.index("backgroundColor<<UNRESOLVED>> DarkRed")
+        self.assertLess(sysrs, txt)
+        self.assertLess(txt, unresolved)
+        _checker_clean(result)
+
+    def test_txt_node_rendering_passes_the_validate_plantuml_all_unset_floor(self) -> None:
+        result = get_reference_diagram(type="req", id=self._REQ_ID, depth=1)
+
+        verdict = chain.validate_plantuml(result, env={})
+
+        # the all-unset floor (rulebook §7.1 checker contract): the structure
+        # check alone runs, green; the parser is never invoked (valid/rendered
+        # are None -- "not run", never "run and failed")
+        self.assertTrue(verdict.structure_ok)
+        self.assertEqual(verdict.checked_by, chain.CHECKED_BY_STRUCTURE)
+        self.assertIsNone(verdict.valid)
+        self.assertIsNone(verdict.rendered)
+        self.assertEqual(verdict.source_state, chain.STATE_NONE)
+        self.assertFalse(verdict.available)
+
+    def test_txt_source_is_accepted_end_to_end(self) -> None:
+        result = get_reference_diagram(type="txt", id=self._TXT_ID, depth=1, reverse=True)
+
+        self.assertIsInstance(result, str)
+        self.assertTrue(result.startswith("@startuml Palette Amendment Notes\n"))  # the scoped H1 default
+        # the incoming reference surfaces via the reverse scan (the txt body
+        # carries no outgoing references of its own)
+        self.assertIn(f'component "Txt Referencing Requirement" as [REQ-{self._REQ_ID}] <<REQ>>', result)
+        self.assertIn(f"[REQ-{self._REQ_ID}] --> [TXT-{self._TXT_ID}]", result)
+        _checker_clean(result)
 
 
 class TestCycleRegistryTool(_SeededRegistryTestCase):

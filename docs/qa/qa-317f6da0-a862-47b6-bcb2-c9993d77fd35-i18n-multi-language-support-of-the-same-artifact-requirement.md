@@ -4,7 +4,7 @@ created: '2026-10-06T11:17:59.324+02:00'
 id: 317f6da0-a862-47b6-bcb2-c9993d77fd35
 status: draft
 type: qa
-updated: '2026-10-06T11:17:59.324+02:00'
+updated: '2026-10-30T14:06:29.844+01:00'
 version: 1.0.0
 ---
 
@@ -94,8 +94,8 @@ deeper, more invasive change than Option 1's "append a subdir."
 > **1.0020**: Which document-type domains should be in scope for i18n
 > support, and should ADR be included?
 
-All twelve whole-body domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop,
-feat, vcr, sysrs) are in scope. ADR is explicitly excluded: it already has
+All thirteen whole-body domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop,
+feat, vcr, sysrs, txt) are in scope. ADR is explicitly excluded: it already has
 its own separate, simpler lifecycle (schema under the shared top-level
 `models/adr/`, no generic `update`/`set_status`/`delete`/`validate`
 dispatch tooling), consistent with how ADR has been excluded from other

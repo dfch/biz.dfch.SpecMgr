@@ -37,7 +37,7 @@ everything else you report is that tool's output.
 1. **Parse the input.** You receive a `<type> <id>` pair (e.g.
    `sysrs 3f2a1b3c-...`, `dec 9c1f...`, or `feat feat-144-ref-artifact`). `type` is
    one of the specmgr document domains (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
-   `rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`adr`); `id` is that document's
+   `rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`/`adr`); `id` is that document's
    identifier -- a lowercase-hex uuid for every domain except `feat`, which is a
    `feat-NNN-slug`. If the input is missing, malformed, or ambiguous, use the
    `question` tool to ask for a clean `<type> <id>` pair rather than guessing.

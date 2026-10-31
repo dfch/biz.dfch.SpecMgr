@@ -4,7 +4,7 @@ created: '2026-09-03 10:44:22.396+02:00'
 id: 8d752304-b076-4bad-89af-f8032158dd21
 status: draft
 type: sysrs
-updated: '2026-09-03 10:44:22.396+02:00'
+updated: '2026-10-30T14:08:12.419+01:00'
 version: 1.0.0
 ---
 
@@ -16,7 +16,7 @@ biz.dfch.SpecMgr exists to be an artifact manager for system specifications: an 
 
 ## System Scope
 
-The system provides thirteen document-type domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
+The system provides fourteen document-type domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
 
 ## Business Context and Goals
 
@@ -28,7 +28,7 @@ Specification artifacts (decisions, requirements, goals, risks, use cases, verif
 
 - GOL 08666592-a2d2-4309-95c6-3c94248ca342: AI-Agent-Native Specification Artifact Management
 
-  States the system's founding, organization-wide purpose: an MCP server that AI agents and other MCP clients use to create, read, list, update, and validate every one of the thirteen specification artifact types, so specification work stays machine-readable and consistently structured for the agents performing it.
+  States the system's founding, organization-wide purpose: an MCP server that AI agents and other MCP clients use to create, read, list, update, and validate every one of the fourteen specification artifact types, so specification work stays machine-readable and consistently structured for the agents performing it.
 
 - GOL b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts
 
@@ -79,29 +79,29 @@ Assumptions to take into account when allocating and deriving lower-level requir
 
 Dependencies:
 
-- The eleven flat-file whole-body domains and the feat domain depend on the cross-cutting general package's generic update, set_status, set_classification, and delete tools for their non-create mutation operations -- they do not each define their own equivalents.
+- The twelve flat-file whole-body domains and the feat domain depend on the cross-cutting general package's generic update, set_status, set_classification, and delete tools for their non-create mutation operations -- they do not each define their own equivalents.
 - Every domain except adr depends on the shared generic markdown parser and renderer infrastructure for its schema.
 
 ## System Overview
 
 ### System Context
 
-biz.dfch.SpecMgr's internal elements are: the MCP server process, the optional CLI, and the thirteen document-type domain packages plus the cross-cutting general package, each contributing its own tools, resources, and prompts to the server's registration at import time. The external actor is any MCP client -- an AI coding agent, the MCP Inspector, or another MCP-capable host -- that connects to the server over stdio, sse, or streamable-http and invokes its tools, resources, and prompts; a human maintainer is a second, less frequent external actor, interacting either through an MCP client on their behalf or by hand-editing the underlying .md files directly, which is safe since the filesystem is always re-read.
+biz.dfch.SpecMgr's internal elements are: the MCP server process, the optional CLI, and the fourteen document-type domain packages plus the cross-cutting general package, each contributing its own tools, resources, and prompts to the server's registration at import time. The external actor is any MCP client -- an AI coding agent, the MCP Inspector, or another MCP-capable host -- that connects to the server over stdio, sse, or streamable-http and invokes its tools, resources, and prompts; a human maintainer is a second, less frequent external actor, interacting either through an MCP client on their behalf or by hand-editing the underlying .md files directly, which is safe since the filesystem is always re-read.
 
 ```mermaid
 flowchart LR
   AGENT[AI agent / MCP client] -->|MCP: tools, resources, prompts| SERVER[specmgr MCP server]
   HUMAN[Human maintainer] -->|direct file edit| FS[(Domain .md files on disk)]
   HUMAN -->|CLI: docs, adr-toc, ...| CLI[specmgr CLI]
-  SERVER --> DOMAINS[13 domain packages + general]
+  SERVER --> DOMAINS[14 domain packages + general]
   DOMAINS <--> FS
   CLI --> FS
 ```
 
 ### System Functions
 
-- Per-domain CRUD and validation: each of the thirteen document-type domains provides create, read (by id, and a paged list), and validate operations for its own schema-defined document type, plus domain-specific mutation tools where the domain warrants them, e.g. ADR's update_section and option tools, or FEAT's set_feat_id.
-- Generic cross-domain dispatch: the general package's update, set_status, set_classification, and delete tools provide whole-body/line-range update, status change, classification change, and deletion uniformly across the twelve whole-body domains, and adr as a thirteenth for set_status, each taking an explicit type parameter rather than requiring a dedicated per-domain tool.
+- Per-domain CRUD and validation: each of the fourteen document-type domains provides create, read (by id, and a paged list), and validate operations for its own schema-defined document type, plus domain-specific mutation tools where the domain warrants them, e.g. ADR's update_section and option tools, or FEAT's set_feat_id.
+- Generic cross-domain dispatch: the general package's update, set_status, set_classification, and delete tools provide whole-body/line-range update, status change, classification change, and deletion uniformly across the thirteen whole-body domains, and adr as a fourteenth for set_status, each taking an explicit type parameter rather than requiring a dedicated per-domain tool.
 - Cross-cutting utilities: mdformat, which formats markdown while preserving frontmatter, and shared resources (version, iso25010, dtais, rasci) support every domain without being specific to any one of them.
 - Documentation generation: the CLI's docs, adr-toc, mcp-docs, and unused-code commands regenerate the project's own published documentation and dead-code reports from source.
 
@@ -209,6 +209,10 @@ Because this specification is retrospective, it also omits several optional sect
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-10-30 13:07:50.664Z - Corpus domain-count refresh for the txt addition
+
+feat-229-txt added `txt` as the 13th whole-body / 14th document-type domain, so the stale domain counts in System Scope, Goals, System Context (prose and diagram), System Functions, and Assumptions and Dependencies were refreshed per the feat-84 regeneration checklist, and the obsolete point-in-time snapshot appendix was removed in the same pass.
 
 ### 2026-09-03 00:00:00.000Z - Created
 

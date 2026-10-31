@@ -69,6 +69,7 @@ from biz.dfch.specmgr.general.models.reference_graph import render_reference_gra
 from biz.dfch.specmgr.general.tools._reference_graph import build_registry_graph, build_source_graph
 from biz.dfch.specmgr.models.adr import AdrParseError
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError
 
 from ._reference_graph_helpers import (
     _FIXTURES,
@@ -499,6 +500,8 @@ class TestBuilderErrorContract(_SeededRegistryTestCase):
             build_source_graph("feat", "feat-999-no-such-feature")
         with self.assertRaises(AdrNotFoundError):
             build_source_graph("adr", _MISSING_UUID)
+        with self.assertRaises(TxtNotFoundError):
+            build_source_graph("txt", _MISSING_UUID)
 
     def test_broken_flat_source_raises_the_domain_parse_error(self):
         # the broken dec fixture re-used as a req file: parse_req rejects the

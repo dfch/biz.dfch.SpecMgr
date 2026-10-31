@@ -15,18 +15,19 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Parametrized i18n tests over all eleven language-aware domains (feat-197-i18n Phase 125).
+"""Parametrized i18n tests over all twelve language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
-domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``). The ``dec`` pilot keeps its
+domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
+them as the twelfth. The ``dec`` pilot keeps its
 own deep test modules (``tests/dec/tools/test_i18n_language.py``/``test_i18n_write.py``); this module drives *every*
 language-aware domain, ``dec`` included, through the same behaviors, so a regression in any one domain's port is caught
 here at a pragmatic depth:
 
-- **ACC-001 x11** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
+- **ACC-001 x12** -- ``create_<d>(language=...)``/``get_<d>(language=...)`` resolve a non-EN variant to
   ``docs/{type}/{language}/<EN basename>`` while EN stays at ``docs/{type}/``;
 - **ACC-003/REQ-003** -- the variant carries the shared id;
-- **ACC-004/ACC-011 x11** -- a German-translated version of each domain's packaged *example* and *template* documents
+- **ACC-004/ACC-011 x12** -- a German-translated version of each domain's packaged *example* and *template* documents
   (derived from ``de.json`` by reverse-mapping the fixed-text headings) parses via ``parse_<d>(..., language="de")`` to
   a document structurally equal to the EN parse -- the evidence that ``de.json`` covers every domain's heading set;
 - **ACC-012 unit pin** -- every data-carrying heading (the ``de.json``-less tokens) and every frontmatter value stays
@@ -202,7 +203,7 @@ class TestEveryAwareDomainIsCovered(unittest.TestCase):
 
     def test_specs_cover_exactly_the_language_aware_domains(self):
         self.assertEqual(tuple(s.d for s in SPECS), LANGUAGE_AWARE_DOMAINS)
-        self.assertEqual(len(SPECS), 11)
+        self.assertEqual(len(SPECS), 12)
         self.assertEqual(set(LANGUAGE_AWARE_DOMAINS), set(WHOLE_BODY_DOMAINS) - {"feat"})
 
 

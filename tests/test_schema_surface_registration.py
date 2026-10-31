@@ -25,7 +25,16 @@ resources to get_<d>_schema tools"):
   more (neither as a static resource nor as a URI template);
 - the surface totals moved from 103 tools / 49 resources to 115 tools /
   37 resources (36 static + the ``specmgr://adr/{id}`` URI template), as
-  measured against the worktree surface at the ADR's writing time.
+  measured against the worktree surface at the ADR's writing time;
+- feat-229-txt Phase 130 (generic-tool registration) grew the live
+  surface by the 7 ``txt`` tools (115 + 7 = 122) and the 2 ``txt``
+  resources (37 + 2 = 39) **at the ``general.tools._domains`` import
+  edge** -- importing ``txt.tools._io``/``txt.tools._paths`` runs
+  ``txt/__init__.py``'s vcr-precedent ``from . import prompts, resources,
+  tools`` line, so every test process that imports
+  ``biz.dfch.specmgr.server`` registers the whole ``txt`` decorator
+  surface on the live ``mcp`` singleton ahead of Phase 160's own
+  ``server.py`` bottom-line import (which is then a no-op re-import).
 """
 
 from __future__ import annotations
@@ -61,19 +70,27 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         for domain in WHOLE_BODY_DOMAINS:
             self.assertNotIn(f"specmgr://{domain}/schema", uris)
 
-    def test_tool_total_is_117(self) -> None:
-        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115, + 2 for the read-only translation
-        tools ``list_languages`` and ``check_translation_drift`` (feat-197-i18n Phase 140) = 117."""
+    def test_tool_total_is_124(self) -> None:
+        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115, + 7 txt tools
+        (feat-229 Phase 130 import edge: ``general.tools._domains``'s module-level
+        ``txt.tools._io``/``txt.tools._paths`` imports run ``txt/__init__.py``'s
+        ``from . import prompts, resources, tools`` line, registering all 7 on the live
+        singleton ahead of Phase 160's ``server.py`` line), + 2 for the read-only
+        translation tools ``list_languages`` and ``check_translation_drift``
+        (feat-197-i18n Phase 140) = 124 (measured against the post-merge live surface)."""
         result = len(self._tools)
 
-        self.assertEqual(result, 117)
+        self.assertEqual(result, 124)
 
-    def test_resource_total_is_39(self) -> None:
-        """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 1 for ``specmgr://i18n`` and + 1 for the
-        ``specmgr://i18n/headings/{language}`` template (feat-197-i18n Phase 130) = 39."""
+    def test_resource_total_is_41(self) -> None:
+        """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 2 txt resources
+        (``specmgr://txt/example``/``specmgr://txt/template``, the same Phase 130 import
+        edge -- ``txt/__init__.py`` pulls ``txt.resources`` in with ``txt.tools``), + 1 for
+        ``specmgr://i18n`` and + 1 for the ``specmgr://i18n/headings/{language}`` template
+        (feat-197-i18n Phase 130) = 41 (measured against the post-merge live surface)."""
         result = len(self._resources) + len(self._templates)
 
-        self.assertEqual(result, 39)
+        self.assertEqual(result, 41)
 
 
 if __name__ == "__main__":

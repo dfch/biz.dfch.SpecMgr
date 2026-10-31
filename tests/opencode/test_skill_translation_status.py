@@ -50,7 +50,20 @@ _TRIGGER_PHRASES: tuple[str, ...] = (
     "/translation-status",
 )
 _TOOL_NAMES: tuple[str, ...] = ("list_languages", "check_translation_drift")
-_IN_SCOPE_DOMAINS: tuple[str, ...] = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs")
+_IN_SCOPE_DOMAINS: tuple[str, ...] = (
+    "req",
+    "uc",
+    "tsk",
+    "qa",
+    "prb",
+    "gol",
+    "rsk",
+    "dec",
+    "sop",
+    "vcr",
+    "sysrs",
+    "txt",
+)
 
 
 def _read_text(path: Path) -> str:

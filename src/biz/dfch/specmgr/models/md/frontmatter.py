@@ -62,8 +62,8 @@ DEFAULT_STATUS = "draft"
 #: six-digit-fraction (microsecond), and timezone-less values all fail this
 #: pattern -- ``created``/``updated`` are the two fields that are strictly
 #: date+time-only (feat-38-39-41-43-44 D5, retained); the entry-heading
-#: aliases of the six log-entry domains (``tsk``'s ``RecentUpdates``,
-#: ``dec``/``sop``/``vcr``/``sysrs``'s ``Updates``, ``feat``'s
+#: aliases of the seven log-entry domains (``tsk``'s ``RecentUpdates``,
+#: ``dec``/``sop``/``vcr``/``sysrs``/``txt``'s ``Updates``, ``feat``'s
 #: ``Updates``/``DecisionsMade``) enforce this same full date+time fragment
 #: as of feat-146 Phase 2, so a date-only value is rejected everywhere, not
 #: just here. Supersedes feat-38-39-41-43-44 D5's ``T`` rejection and D4's

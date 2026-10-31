@@ -27,7 +27,7 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
 (``specmgr://reference_graph`` / ``general/data/general_reference_graph.md`` §2):
 
 - :class:`GraphNode` -- one artifact: its lowercase domain ``type``, its
-  verbatim ``id`` (canonical lowercase-hex uuid for the 12 UUID domains, the
+  verbatim ``id`` (canonical lowercase-hex uuid for the 13 UUID domains, the
   full ``feat-NNN-slug`` or the bare ``feat-NNN`` for ``feat``), and its
   resolved title (the document's H1 as the builders derive it) or ``None``
   for a reference that could not be resolved on disk (the unresolved node
@@ -39,11 +39,11 @@ frozen PlantUML component-diagram source of the reference-graph rulebook
   the node and edge collections.
 - :func:`render_reference_graph` -- the frozen layout (rulebook §2.1–§2.8,
   corrected 2026-10-15): the ``@startuml {title}`` line (sanitised, **never
-  truncated**, §2.2/§5), the full 14-entry skinparam colour block (always,
+  truncated**, §2.2/§5), the full 15-entry skinparam colour block (always,
   in block order, §2.5), the ``left to right direction`` line, the
   top-level unresolved node lines (sorted by alias, §2.6), one curly
   domain group ``component "TYPE" { … }`` per non-empty domain (in the
-  13-domain order, nodes sorted by id, §2.7), and the deduped + sorted
+  14-domain order, nodes sorted by id, §2.7), and the deduped + sorted
   label-free edge lines (the red ``-[#red]->`` form on cycle edges only,
   §2.8/§4). The content sections (the ``@startuml`` line, the skinparam
   block, the direction line, the top-level unresolved node lines, each
@@ -96,10 +96,12 @@ DEFAULT_MAX_LABEL = 40
 #: registry-unique); every other domain takes the ``[TYPE-{id}]`` form.
 _FEAT = "feat"
 
-#: The frozen 13-domain group order (rulebook §2.7 -- ``ALL_DOMAINS``):
-#: the one constant this pure module may not import from
-#: ``general.tools._domains`` (the import-free bar); the drift is pinned by
-#: ``tests/general/models/test_reference_graph.py``.
+#: The frozen 14-domain group order (rulebook §2.7 -- ``ALL_DOMAINS``;
+#: ``txt`` joined the shared source in feat-229-txt Phase 130 and the
+#: rulebook's own palette amendment and entry-count text landed in its
+#: Phase 150): the one constant this pure module may not import from
+#: ``general.tools._domains`` (the import-free bar); the drift is pinned
+#: by ``tests/general/models/test_reference_graph.py``.
 _DOMAIN_ORDER: tuple[str, ...] = (
     "adr",
     "req",
@@ -114,10 +116,12 @@ _DOMAIN_ORDER: tuple[str, ...] = (
     "feat",
     "vcr",
     "sysrs",
+    "txt",
 )
 
-#: The frozen 14-entry palette (rulebook §2.5), in the skinparam block's own
-#: order (the 13 domain stereotypes, then ``UNRESOLVED``).
+#: The frozen 15-entry palette (rulebook §2.5 -- the ``TXT`` entry added by
+#: feat-229-txt Phase 150), in the skinparam block's own order (the 14
+#: domain stereotypes, then ``UNRESOLVED``).
 _PALETTE: tuple[tuple[str, str], ...] = (
     ("ADR", "LightYellow"),
     ("REQ", "LightBlue"),
@@ -132,6 +136,7 @@ _PALETTE: tuple[tuple[str, str], ...] = (
     ("FEAT", "PaleTurquoise"),
     ("VCR", "Khaki"),
     ("SYSRS", "Thistle"),
+    ("TXT", "LightGrey"),
     ("UNRESOLVED", "DarkRed"),
 )
 
@@ -159,13 +164,13 @@ class GraphNode:
     Parameters
     ----------
     type:
-        The artifact's lowercase domain name (one of the 13
+        The artifact's lowercase domain name (one of the 14
         ``general.tools._domains.ALL_DOMAINS`` names for builder-produced
         graphs; the renderer accepts any string, placing a node whose type
-        is outside the 13-domain order top-level, like unresolved nodes).
+        is outside the 14-domain order top-level, like unresolved nodes).
     id:
         The artifact's verbatim id: the canonical lowercase-hex uuid for the
-        12 UUID domains, the full ``feat-NNN-slug`` id or the bare
+        13 UUID domains, the full ``feat-NNN-slug`` id or the bare
         ``feat-NNN`` number for ``feat`` (the two spellings of one feature
         are two distinct nodes -- rulebook §3.7's inherited caveat).
     title:
@@ -323,7 +328,7 @@ def _node_line(node: GraphNode, max_label: int) -> str:
 
 
 def _skinparam_block() -> str:
-    """The frozen 14-entry skinparam colour block (rulebook §2.5) -- always emitted in full, in block order."""
+    """The frozen 15-entry skinparam colour block (rulebook §2.5) -- always emitted in full, in block order."""
     lines = ["skinparam component {"]
     lines.extend(f"  backgroundColor<<{stereotype}>> {colour}" for stereotype, colour in _PALETTE)
     lines.append("}")
@@ -447,10 +452,10 @@ def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MA
 
     The deterministic, byte-stable mapping the rulebook freezes (corrected
     2026-10-15): the ``@startuml {title}`` line (sanitised, never
-    truncated), the full 14-entry skinparam block, the ``left to right
+    truncated), the full 15-entry skinparam block, the ``left to right
     direction`` line, the top-level unresolved node lines (sorted by alias,
     before the first domain group), one curly domain group ``component
-    "TYPE" { … }`` per non-empty domain (in the 13-domain order, nodes
+    "TYPE" { … }`` per non-empty domain (in the 14-domain order, nodes
     sorted by id), and the deduped + sorted label-free edge lines (the red
     ``-[#red]->`` form exactly for the on-cycle edges of
     :func:`_on_cycle_edges`, plain ``-->`` otherwise). The content sections
@@ -518,16 +523,16 @@ def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MA
     sections: list[str] = [f"@startuml {_single_line(graph.title)}", _skinparam_block(), _DIRECTION]
 
     # The top-level section: unresolved nodes (sorted by alias) plus any
-    # resolved node whose type sits outside the 13-domain order (the
+    # resolved node whose type sits outside the 14-domain order (the
     # builder never produces one -- its reference vocabulary is a subset of
-    # the 13 domains -- so this placement is a hand-built-input totality
+    # the 14 domains -- so this placement is a hand-built-input totality
     # rule, not a frozen layout case).
     top_level = [node for node in nodes.values() if node.title is None or node.type not in _DOMAIN_ORDER]
     if top_level:
         top_level.sort(key=lambda node: _alias(node.type, node.id))
         sections.append("\n".join(_node_line(node, max_label) for node in top_level))
 
-    # One curly domain group per non-empty domain, in the frozen 13-domain
+    # One curly domain group per non-empty domain, in the frozen 14-domain
     # order (nodes sorted by id inside): the group is a ``component``
     # declaration opened with ``{`` and closed with the ``}`` line (the
     # 2026-10-15 parser-verified form -- the former braceless ``package

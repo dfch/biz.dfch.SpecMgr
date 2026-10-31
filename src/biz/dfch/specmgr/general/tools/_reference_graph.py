@@ -23,7 +23,7 @@ Thin over the feat-144-ref-artifact reference machinery (``general.tools._refere
 tool's own per-domain source-scan legs (the ``(<d>_base_dir, load_<d>_by_id)``
 pairs the tool's ``_SOURCE_LOADERS`` table holds, here re-dispatched over
 ``general.tools._domains.ALL_DOMAINS``): the reference extraction and target
-resolution semantics are inherited verbatim -- the 11-tag ``<TYPE> <id>``
+resolution semantics are inherited verbatim -- the 12-tag ``<TYPE> <id>``
 vocabulary (the UUID tags with a canonical uuid id, plus ``FEAT`` carrying the
 full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number), the code-fence
 extraction caveat, and the feat dual-spelling behaviour (rulebook §3.7).
@@ -34,11 +34,11 @@ Two builders, one frozen construction semantics each (rulebook §3):
   document, its outgoing reference neighbourhood to ``depth`` (level 0 = the
   source; a level-k node is expanded only if k < depth and it resolved to an
   existing document, its body read through the domain's own read path -- the
-  cache-aware leg for the 12 whole-body domains, the never-cached leg for
+  cache-aware leg for the 13 whole-body domains, the never-cached leg for
   ``adr``, ADR bfd76370), optionally plus the direct incoming references to
-  the source (``reverse``: a full scan of all 13 source domains, additive and
+  the source (``reverse``: a full scan of all 14 source domains, additive and
   direct-only on the incoming side, with the feat dual-spelling match rule).
-- :func:`build_registry_graph` -- the registry-wide graph: the same 13-domain
+- :func:`build_registry_graph` -- the registry-wide graph: the same 14-domain
   scan; every successfully parsed document is a node; every extracted
   reference an edge; a target not present as a scanned document gets its
   title via :func:`resolve_reference` (dangling ⇒ the unresolved node).
@@ -124,6 +124,9 @@ from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._cache import read_tsk
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._paths import tsk_base_dir
+from ...txt.tools._cache import read_txt
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._cache import read_uc
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
@@ -156,7 +159,7 @@ _REGISTRY_TITLE = "Reference Graph"
 #: here over ``ALL_DOMAINS``): the source document is resolved through the
 #: source domain's own id resolution (the domain's own ``XNotFoundError``
 #: propagates unchanged), and every scanned document is read through the
-#: domain's own read path below (cache-aware for the 12 whole-body domains,
+#: domain's own read path below (cache-aware for the 13 whole-body domains,
 #: never-cached for ``adr``).
 _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple[Path, BaseModel]]]] = {
     "req": (req_base_dir, load_req_by_id),
@@ -171,6 +174,7 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "feat": (feat_base_dir, load_feat_by_id),
     "vcr": (vcr_base_dir, load_vcr_by_id),
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
+    "txt": (txt_base_dir, load_txt_by_id),
     "adr": (adr_base_dir, load_adr_by_id),
 }
 
@@ -181,7 +185,7 @@ assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
 )
 
 #: Per source-domain read leg (rulebook §3's "the per-domain cache-aware
-#: reads; the never-cached adr leg"): the 12 whole-body domains read through
+#: reads; the never-cached adr leg"): the 13 whole-body domains read through
 #: their own content-hash-validated ``read_<d>`` cache singleton
 #: (feat-107-doc-cache; ``feat``'s CLEAN, full-parse stage), and ``adr``
 #: through its own plain ``read_adr`` (permanently DocCache-excluded, ADR
@@ -200,6 +204,7 @@ _SCAN_READERS: dict[str, Callable[[Path], Any]] = {
     "feat": read_feat,
     "vcr": read_vcr,
     "sysrs": read_sysrs,
+    "txt": read_txt,
     "adr": read_adr,
 }
 
@@ -249,7 +254,7 @@ def _unique_references(text: str) -> list[tuple[str, str]]:
 
 
 def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
-    """Every parseable document across all 13 source domains (rulebook §3.2/§3.3's full scan).
+    """Every parseable document across all 14 source domains (rulebook §3.2/§3.3's full scan).
 
     The full scan the reverse and registry-wide builders share (no listing,
     no pagination), in ``ALL_DOMAINS`` order (adr first) and each domain's
@@ -258,7 +263,7 @@ def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
     ``iter_doc_paths`` for every whole-body domain other than ``feat``,
     ``iter_feat_paths`` for ``feat``, ``iter_adr_paths`` for ``adr``). Each
     path is read through the domain's own leg (the cache-aware
-    ``read_<d>`` for the 12 whole-body domains, the never-cached
+    ``read_<d>`` for the 13 whole-body domains, the never-cached
     ``read_adr`` for ``adr``); a document that fails to parse
     (:data:`_SCAN_ERROR_TYPES` channels) or vanishes mid-scan
     (``FileNotFoundError``) is skipped (rulebook §3.4 -- never a node, never
@@ -459,7 +464,7 @@ def build_source_graph(
     precedent); each unique (type, id) reference adds exactly one edge +
     one node (the node title via :func:`resolve_reference`; a dangling
     target = ``title=None`` = the unresolved node). ``reverse=True`` is
-    ADDITIVE and direct-only on the incoming side: the full 13-domain scan
+    ADDITIVE and direct-only on the incoming side: the full 14-domain scan
     adds a scanned document as a node + one incoming edge to the source iff
     it carries a reference matching the source on (type, id) (the feat
     dual-spelling rule: a full ``feat-NNN-slug`` source also matches a bare
@@ -481,7 +486,7 @@ def build_source_graph(
     ----------
     source_type:
         The source document's lowercase domain name: one of
-        ``ALL_DOMAINS`` (the 12 whole-body domains plus ``adr``). Assumed
+        ``ALL_DOMAINS`` (the 13 whole-body domains plus ``adr``). Assumed
         validated by the caller (the Phase 120 tool's own ``type``
         parameter); a name outside ``ALL_DOMAINS`` is a ``KeyError``
         programming error.
@@ -496,7 +501,7 @@ def build_source_graph(
         ``assert``s the contract). Governs the forward part only.
     reverse:
         When ``True``, add the direct incoming references to the source
-        (the additive 13-domain scan, rulebook §3.2).
+        (the additive 14-domain scan, rulebook §3.2).
     include_feat:
         When ``False``, apply the FEAT exclusion (rulebook §3.5) last:
         drop every FEAT node except this source (when it is one), then
@@ -569,7 +574,7 @@ def build_source_graph(
                     next_frontier.append(target_key)
         frontier = next_frontier
 
-    # The reverse pass (additive, direct-only): the full 13-domain scan adds
+    # The reverse pass (additive, direct-only): the full 14-domain scan adds
     # a scanned document as a node + one incoming edge to the source iff it
     # carries a matching reference (the feat dual-spelling rule for a full
     # feat source). The source's own document is skipped (its self-reference,
@@ -603,7 +608,7 @@ def build_source_graph(
 def build_registry_graph(*, include_feat: bool = True) -> ReferenceGraph:
     """Build the registry-wide reference graph (rulebook §3.3/§3.5).
 
-    The same full 13-domain scan the reverse pass uses: every successfully
+    The same full 14-domain scan the reverse pass uses: every successfully
     parsed document is a node (title via :func:`_doc_title`); every
     extracted reference is an edge (deduped per source document); a target
     not present as a scanned document gets its title via

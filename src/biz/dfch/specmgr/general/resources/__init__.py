@@ -58,7 +58,7 @@ and the create-versus-update and guard semantics the ``translate_artifact``
 prompt reads first (its sibling resource template
 ``specmgr://i18n/headings/{language}`` serves a language's heading-mapping
 table as JSON, so the flow needs no host file tool); cross-cutting like
-``dtais``/``rasci``, since it spans the eleven i18n-eligible domains. Domain-specific
+``dtais``/``rasci``, since it spans the twelve i18n-eligible domains. Domain-specific
 resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::

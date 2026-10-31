@@ -447,6 +447,34 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
+- [`biz.dfch.specmgr.txt`](biz.dfch.specmgr.txt.md) — Free-Form Text (TXT) domain -- a generic, minimally structured catch-all for unstructured markdown text.
+- [`biz.dfch.specmgr.txt.models`](biz.dfch.specmgr.txt.models.md) — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.txt.models.v1`](biz.dfch.specmgr.txt.models.v1.md) — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.txt.models.v1._util`](biz.dfch.specmgr.txt.models.v1._util.md) — Shared, private constants for the ``txt.models.v1`` subpackage.
+- [`biz.dfch.specmgr.txt.models.v1.body`](biz.dfch.specmgr.txt.models.v1.body.md) — Free-Form Text (TXT) body models: an opaque free-form `body` plus a mandatory `## Updates` log.
+- [`biz.dfch.specmgr.txt.models.v1.document`](biz.dfch.specmgr.txt.models.v1.document.md) — Pydantic model for a full free-form text document (frontmatter + body).
+- [`biz.dfch.specmgr.txt.models.v1.frontmatter`](biz.dfch.specmgr.txt.models.v1.frontmatter.md) — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.txt.models.v1.parser`](biz.dfch.specmgr.txt.models.v1.parser.md) — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
+- [`biz.dfch.specmgr.txt.models.v1.summary`](biz.dfch.specmgr.txt.models.v1.summary.md) — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- [`biz.dfch.specmgr.txt.prompts`](biz.dfch.specmgr.txt.prompts.md) — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.create_txt`](biz.dfch.specmgr.txt.prompts.create_txt.md) — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.update_txt`](biz.dfch.specmgr.txt.prompts.update_txt.md) — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources`](biz.dfch.specmgr.txt.resources.md) — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_example`](biz.dfch.specmgr.txt.resources.txt_example.md) — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_template`](biz.dfch.specmgr.txt.resources.txt_template.md) — Resource: specmgr://txt/template (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.tools`](biz.dfch.specmgr.txt.tools.md) — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
+- [`biz.dfch.specmgr.txt.tools._cache`](biz.dfch.specmgr.txt.tools._cache.md) — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._io`](biz.dfch.specmgr.txt.tools._io.md) — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._lock`](biz.dfch.specmgr.txt.tools._lock.md) — Per-document in-process lock guarding free-form text mutations.
+- [`biz.dfch.specmgr.txt.tools._paths`](biz.dfch.specmgr.txt.tools._paths.md) — Free-form text (TXT) base directory resolution and id -> path lookup (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._write`](biz.dfch.specmgr.txt.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_txt`` and
+- [`biz.dfch.specmgr.txt.tools.create_txt`](biz.dfch.specmgr.txt.tools.create_txt.md) — ``@mcp.tool()`` wrapper: create_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt`](biz.dfch.specmgr.txt.tools.get_txt.md) — ``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_example`](biz.dfch.specmgr.txt.tools.get_txt_example.md) — ``@mcp.tool()`` wrapper: get_txt_example (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_schema`](biz.dfch.specmgr.txt.tools.get_txt_schema.md) — ``@mcp.tool()`` wrapper: get_txt_schema (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_template`](biz.dfch.specmgr.txt.tools.get_txt_template.md) — ``@mcp.tool()`` wrapper: get_txt_template (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.list_txt`](biz.dfch.specmgr.txt.tools.list_txt.md) — ``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.parse_txt`](biz.dfch.specmgr.txt.tools.parse_txt.md) — ``@mcp.tool()`` wrapper: parse_txt (feat-229-txt Phase 110).
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
 - [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.

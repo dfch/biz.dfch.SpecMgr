@@ -22,7 +22,7 @@ failure mode: a document that exists on disk but fails to parse
 
 This is a distinct, purpose-built model shared by every ``get_<d>`` tool
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/
-``sysrs``) -- it is not a reuse or subclass of
+``sysrs``/``txt``) -- it is not a reuse or subclass of
 :class:`~biz.dfch.specmgr.general.models.validate_result.ValidateResult` (the generic
 ``validate`` tool's own ``{valid, errors}`` shape) or of
 :class:`~biz.dfch.specmgr.general.models.invalid_status_result.InvalidStatusResult` (the

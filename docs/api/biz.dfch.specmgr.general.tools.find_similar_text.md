@@ -9,7 +9,7 @@ document is resolved (there is nothing to resolve against yet), the
 query itself is the query-side vector (embedded through the provider's
 ``embed_query`` -- the default backend's retrieval-instruction prefix,
 REQ-010), and every candidate document across the target whole-body
-domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs by
+domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt by
 default, ``adr`` structurally excluded, issue #46; a caller-supplied
 ``target_types`` subset otherwise) is ranked against it with the same
 pure-Python cosine (dot-on-normalized) ``_similarity_ranking.
@@ -41,7 +41,7 @@ no source to resolve, and the query-side vector is the provider's
 ``embed_query`` output (the default backend's retrieval-instruction
 prefix, REQ-010). Every candidate document across the target
 whole-body domains (all of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/
-vcr/sysrs by default -- ``adr`` is structurally excluded, issue
+vcr/sysrs/txt by default -- ``adr`` is structurally excluded, issue
 #46 -- or the caller-supplied ``target_types`` subset) is ranked
 against it by cosine similarity (dot product on L2-normalized
 vectors). Unparseable candidates still appear: embedded from their
@@ -66,7 +66,7 @@ query:
 target_types:
     The domains to search (each one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``), in the order to enumerate them in;
+    ``vcr``, ``sysrs``, ``txt``), in the order to enumerate them in;
     ``None`` (the default) means every whole-body domain.
 top_k:
     The maximum number of hits to return (1..100, default 10).

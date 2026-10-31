@@ -180,8 +180,8 @@ _docs_dir_var = _envregistry.register(
     default="docs",
     description=(
         "Shared base directory root for the document-type domains that do not have their own dedicated "
-        "directory environment variable (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs). Each "
-        "domain's own subdirectory is appended automatically, e.g. docs/req."
+        "directory environment variable (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs, txt). "
+        "Each domain's own subdirectory is appended automatically, e.g. docs/req."
     ),
     owner="general",
     format="filepath",

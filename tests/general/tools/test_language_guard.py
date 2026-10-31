@@ -28,7 +28,7 @@ the write tools, ACC-002/ACC-015 surface checks, REQ-013 surface check).
 
 Phase 125 edit history of this module (the "not yet supported" set shrank to
 nothing): the pilot-only pin on ``LANGUAGE_AWARE_DOMAINS`` became the
-eleven-domain pin; the per-type "temporarily rejected" matrix became the
+twelve-domain pin; the per-type "temporarily rejected" matrix became the
 permanent ``feat``/``adr`` matrix plus a defensive unknown-type fallback test;
 the dec-only table-less/dispatch tests were generalized over every
 language-aware type.
@@ -147,12 +147,12 @@ def _booby_trapped_adapters(types: tuple[str, ...]) -> dict[str, mock.Mock]:
 class TestGuardLanguage(unittest.TestCase):
     """Unit tests of ``guard_language`` itself."""
 
-    def test_language_aware_domains_are_the_eleven_i18n_eligible_domains(self):
+    def test_language_aware_domains_are_the_twelve_i18n_eligible_domains(self):
         """Phase 125: every whole-body domain except ``feat``, in canonical order (``feat``/``adr`` excluded)."""
         self.assertEqual(LANGUAGE_AWARE_DOMAINS, tuple(d for d in WHOLE_BODY_DOMAINS if d != FEAT))
-        self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 11)
+        self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 12)
         self.assertEqual(LANGUAGE_AWARE_DOMAINS[0], "req")
-        self.assertEqual(LANGUAGE_AWARE_DOMAINS[-1], "sysrs")
+        self.assertEqual(LANGUAGE_AWARE_DOMAINS[-1], "txt")
         self.assertNotIn(FEAT, LANGUAGE_AWARE_DOMAINS)
         self.assertNotIn(ADR, LANGUAGE_AWARE_DOMAINS)
 
@@ -210,7 +210,7 @@ class TestGuardLanguage(unittest.TestCase):
             guard_language("zz", "de")
         message = str(ctx.exception)
         self.assertIn("language 'de' is not supported for type 'zz'", message)
-        self.assertIn("only req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs documents", message)
+        self.assertIn("only req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs, txt documents", message)
         self.assertNotIn("always English", message)
 
 

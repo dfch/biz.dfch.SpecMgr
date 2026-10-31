@@ -22,7 +22,7 @@
 The generic, cross-domain, surgical exact-match string-replacement tool for
 the frontmatter-stripped body of the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_edit_<d>``), each mirroring
 the generic ``update`` tool's own adapter shape (same domain lock, same
 ``load_by_id``, same frontmatter carry-over with only ``updated`` bumped,
@@ -232,6 +232,12 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import TxtFrontmatter, parse_txt_body
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock, txt_lock_key
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter, parse_uc_body
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -269,6 +275,7 @@ _EditFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
     | ParseFailureResult
     | ValidateResult
 )
@@ -898,6 +905,52 @@ def _edit_sysrs(
     return new_frontmatter
 
 
+def _edit_txt(
+    id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
+) -> TxtFrontmatter | ParseFailureResult | ValidateResult:
+    """Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
+
+    Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+    ``TxtNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+    variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
+    that variant's on-disk body, the stage-2 validation of the edited body goes through the
+    variant's heading table (:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and only
+    that one file is written -- the EN document (bytes, ``updated``, cache entry) is never touched
+    by a non-default ``language`` call.
+    """
+    base_dir = txt_base_dir(language)
+    with txt_lock(txt_lock_key(id_, language)):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        edited = _match_and_replace(body_text(path), old_str, new_str, replace_all)
+        try:
+            with wrap_tool_errors(domain="txt", tool="edit", channel=BODY_CHANNEL):
+                parse_txt_body(edited, language=language)
+        except _CAUGHT_EXCEPTIONS as ex:
+            message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+            return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, edited)
+        read_txt(path)  # warm the cache (feat-107-doc-cache, REQ-006)
+    return new_frontmatter
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str, str, bool], _EditFrontmatter]] = {
     "req": _edit_req,
@@ -912,6 +965,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str, bool], _EditFrontmatter]] = {
     "feat": _edit_feat,
     "vcr": _edit_vcr,
     "sysrs": _edit_sysrs,
+    "txt": _edit_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -935,6 +989,7 @@ _LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str, bool, str], _EditFrontmat
     "sop": _edit_sop,
     "vcr": _edit_vcr,
     "sysrs": _edit_sysrs,
+    "txt": _edit_txt,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
@@ -999,7 +1054,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
 
     Cross-domain generic for the whole-body document types
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+    ``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
     private adapter (same lock, same id resolution, same frontmatter
     carry-over, same verbatim persistence, same domain not-found error).
     The signature and the stage-1 runtime error strings mirror the
@@ -1066,7 +1121,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
+        ``vcr``, ``sysrs``, ``txt``.
     old_str:
         The exact text to find in the current frontmatter-stripped on-disk
         body (byte-exact, including whitespace, indentation, and line

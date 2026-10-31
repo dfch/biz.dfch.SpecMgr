@@ -11,7 +11,7 @@ code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.
 iter_language_dirs`. Nothing here writes, creates, or invalidates anything.
 
-**Per-domain adapters.** The eleven i18n-eligible domains (:data:`~biz.dfch.specmgr.general.tools._language_guard.
+**Per-domain adapters.** The twelve i18n-eligible domains (:data:`~biz.dfch.specmgr.general.tools._language_guard.
 LANGUAGE_AWARE_DOMAINS`) all expose the same three callables under the same names -- ``<d>.tools._paths.<d>_base_dir``,
 ``<d>.tools._io.load_by_id``, ``<d>.tools._cache.read_<d>`` -- so the adapter table is built by one loop instead of
 33 hand-written imports; a domain that lacks one fails at import time, loudly.
@@ -77,7 +77,7 @@ shape-invalid directory name is never reported.
 Parameters
 ----------
 type_:
-    One of the eleven i18n-eligible domains (already validated by the caller).
+    One of the twelve i18n-eligible domains (already validated by the caller).
 id_:
     The document id (already validated by the caller).
 
@@ -104,7 +104,7 @@ asserts, and reads nothing but the one language's directory.
 Parameters
 ----------
 type_:
-    One of the eleven i18n-eligible domains.
+    One of the twelve i18n-eligible domains.
 id_:
     The document id (shared by every language variant).
 language:

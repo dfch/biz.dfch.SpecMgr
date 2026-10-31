@@ -247,10 +247,10 @@ count as a cardinal number in prose -- neither as a word (`ten`/`eleven`/`twelve
 nor as a digit (`10`/`11`/`12`/`13`, ...). Use an explicit domain list, or relational phrasing that
 does not depend on a count staying in sync, instead.
 
-- A hardcoded count silently goes stale every time a domain is added -- most recently `sysrs` --
+- A hardcoded count silently goes stale every time a domain is added -- most recently `txt` --
   and no test or lint rule currently catches the mismatch.
 - Prefer an explicit, already-accurate domain list (e.g. `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
-  `dec`/`sop`/`feat`/`vcr`/`sysrs`) over a count adjective in front of it.
+  `dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`) over a count adjective in front of it.
 - Prefer relational phrasing over a count when describing a set by contrast to another (e.g.
   "every domain except `feat`", "every domain except `adr`") rather than restating how many that
   leaves.
@@ -261,7 +261,7 @@ does not depend on a count staying in sync, instead.
 """Dispatches the generic update across the eleven whole-body domains."""
 
 # ✓ After: an explicit, self-verifying domain list -- nothing to keep in sync by hand
-"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
 
 # ✓ After: relational phrasing when contrasting against one excluded domain
 """Dispatches the generic update across every whole-body domain except `feat`."""
@@ -304,7 +304,7 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
 _UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr")
 
 # ✓ An explicit prose domain list in a docstring -- the sanctioned exception
-"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs."""
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
 ```
 
 ### Error Handling

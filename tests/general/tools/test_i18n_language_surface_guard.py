@@ -107,7 +107,7 @@ class TestEveryLanguageCarryingSurfaceGuardsBeforeTheFilesystem(unittest.TestCas
         self.assertEqual(list(self.parent.iterdir()), [])
 
     def test_the_discovered_surface_is_the_expected_size(self):
-        self.assertEqual(len(self.tool_functions), 39)
+        self.assertEqual(len(self.tool_functions), 42)
         self.assertEqual(set(self.prompt_functions), {"translate_artifact"})
         self.assertEqual(set(self.template_functions), {"specmgr://i18n/headings/{language}"})
 

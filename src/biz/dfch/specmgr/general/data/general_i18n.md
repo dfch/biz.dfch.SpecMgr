@@ -7,8 +7,8 @@ first).
 
 ## 1. Scope
 
-- **In scope (eleven domains):** `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
-  `rsk`, `dec`, `sop`, `vcr`, `sysrs`.
+- **In scope (twelve domains):** `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
+  `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`.
 - **Out of scope, permanently:** `feat` (always English, no language
   variants, no `language` parameter on any `feat` surface) and `adr` (always
   English, no `language` parameter on any `adr` surface). A non-default
@@ -148,6 +148,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 | `sop` | the `### Step <N>: <name>` heading token (`Step`, the number, the colon; the name is prose); the update-entry heading timestamp; the cross-reference tags | the lifecycle words (approval/effectivity) live in the frontmatter `status` and are never translated |
 | `vcr` | `## Coverage` word: `full`, `partial`, `none`; the `### AC-<NNN> (<Method>): <text>` heading token (`AC-`, the 3-digit number, and the DTAIS method word `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special`, see `specmgr://dtais`; the text after the colon is prose); the `## Verifies` line `REQ|UC <uuid>: <title>`; the update-entry heading timestamp | |
 | `sysrs` | the H1 prefix `System Requirements Specification: ` (only the title after it is prose and is translated); the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC` or `ADR`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
+| `txt` | the update-entry heading timestamp (the shared `## Updates` entry shape, section 5.1); the `## Updates` heading itself is a table-mapped fixed-text heading (the only one of this domain) | the headings of the opaque body (free text, not schema headings: the parser never rewrites them and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift); the free-floating cross-reference lines in the body (`<TAG> <uuid>: <title>`: the tag word, the uuid, and the `: <title>` text stay exactly as in the source) |
 
 The fixed-text headings of every domain (for example `## More Information`,
 `## Tags`, `## Source`, the RASCI headings `### Accountable`/`### Responsible`/

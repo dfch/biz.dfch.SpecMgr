@@ -21,7 +21,7 @@
 
 The generic, cross-domain hard-delete tool for the whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -111,6 +111,10 @@ from ...tsk.tools._cache import invalidate_tsk_cache
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import tsk_base_dir
+from ...txt.tools._cache import invalidate_txt_cache
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._lock import txt_lock, txt_lock_key
+from ...txt.tools._paths import txt_base_dir
 from ...uc.tools._cache import invalidate_uc_cache
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock, uc_lock_key
@@ -458,6 +462,31 @@ def _delete_sysrs(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     return str(path)  # REQ-001
 
 
+def _delete_txt(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
+    """Hard-delete the free-form text document ``id_`` from disk (REQ-001/004/005/006).
+
+    Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+    variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+    """
+    base_dir = txt_base_dir(language)
+    with txt_lock(txt_lock_key(id_, language)):  # REQ-004
+        path, _existing = load_txt_by_id(base_dir, id_)  # resolves + TxtNotFoundError
+        assert_within(base_dir, path)  # REQ-003 defense-in-depth
+        try:
+            path.unlink()  # REQ-006
+        except OSError as ex:
+            raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_txt_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("txt", path)  # feat-134 Phase 3, Task 3.6, REQ-008
+    return str(path)  # REQ-001
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str], str]] = {
     "req": _delete_req,
@@ -472,6 +501,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     "feat": _delete_feat,
     "vcr": _delete_vcr,
     "sysrs": _delete_sysrs,
+    "txt": _delete_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -495,6 +525,7 @@ _LANGUAGE_ADAPTERS: dict[str, Callable[[str, str], str]] = {
     "sop": _delete_sop,
     "vcr": _delete_vcr,
     "sysrs": _delete_sysrs,
+    "txt": _delete_txt,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
@@ -536,7 +567,7 @@ def delete(
 
     Cross-domain generic for every whole-body document type
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-    ``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+    ``sop``/``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
     private adapter (same id resolution via the domain's ``load_by_id``,
     same per-id domain lock around the whole resolve-then-delete sequence,
     same domain not-found error). Every flat domain (every whole-body domain
@@ -564,7 +595,7 @@ def delete(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
+        ``vcr``, ``sysrs``, ``txt``.
     language:
         The language variant to delete (feat-197-i18n Phase 120, ADR
         38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting

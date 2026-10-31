@@ -23,7 +23,7 @@ functions. This module pins the *registered MCP surface* itself -- the tools, pr
 templates the live ``mcp`` app actually exposes -- so the exclusion holds for what a client sees, not only for what a
 function signature says:
 
-- the set of registered tools carrying a ``language`` input property is *exactly* the intended one (the eleven
+- the set of registered tools carrying a ``language`` input property is *exactly* the intended one (the twelve
   domains' ``get_<d>``/``list_<d>``/``create_<d>``, the five generic write tools, and ``check_translation_drift``) --
   a new ``language`` parameter anywhere else fails here;
 - every tool/prompt/resource whose implementing function lives in the ``feat`` or ``adr`` domain package has no
@@ -147,12 +147,12 @@ class TestRegisteredToolSurface(_SurfaceTestCase):
     """ACC-002/ACC-015 for tools: no ``feat``/``adr`` tool carries ``language``; the carrier set is exact."""
 
     def test_the_tools_with_a_language_input_property_are_exactly_the_intended_set(self):
-        """39 tools: 11 domains x (get/list/create) + the five generic write tools + ``check_translation_drift``."""
+        """42 tools: 12 domains x (get/list/create) + the five generic write tools + ``check_translation_drift``."""
         carriers = {
             name for name, tool in self.tools.items() if _LANGUAGE in (tool.input_schema.get("properties") or {})
         }
 
-        self.assertEqual(len(_EXPECTED_LANGUAGE_TOOLS), 39)
+        self.assertEqual(len(_EXPECTED_LANGUAGE_TOOLS), 42)
         self.assertEqual(carriers - _EXPECTED_LANGUAGE_TOOLS, set(), "a tool gained an unplanned language parameter")
         self.assertEqual(_EXPECTED_LANGUAGE_TOOLS - carriers, set(), "a planned language parameter is missing")
 

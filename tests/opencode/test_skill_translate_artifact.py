@@ -51,7 +51,20 @@ _TRIGGER_PHRASES: tuple[str, ...] = (
 )
 _PROMPT_NAME = "translate_artifact"
 _RESOURCE_URI = "specmgr://i18n"
-_IN_SCOPE_DOMAINS: tuple[str, ...] = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs")
+_IN_SCOPE_DOMAINS: tuple[str, ...] = (
+    "req",
+    "uc",
+    "tsk",
+    "qa",
+    "prb",
+    "gol",
+    "rsk",
+    "dec",
+    "sop",
+    "vcr",
+    "sysrs",
+    "txt",
+)
 _CONTRACT_WORDS: tuple[str, ...] = ("question", "Never commit", "Never translate a closed-vocabulary")
 
 

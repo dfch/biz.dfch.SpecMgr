@@ -50,6 +50,7 @@ from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.req.tools.create_req import create_req
 from biz.dfch.specmgr.rsk.tools.create_rsk import create_rsk
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
 from biz.dfch.specmgr.uc.tools.create_uc import create_uc
 from biz.dfch.specmgr.vcr.tools.create_vcr import create_vcr
 
@@ -338,6 +339,22 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Sample Free-Form Text
+
+    Some free-form prose about the sample.
+
+    ## Updates
+
+    ### 2026-08-30 16:47:59.981Z - Initial entry
+
+    Content.
+    """
+)
+
+_TXT_TITLE = "Sample Free-Form Text"
+
 _ADR_TITLE = "Use the dispatch convention"
 
 
@@ -406,6 +423,7 @@ _TARGET_SEEDS: tuple[tuple[str, Callable[[str], Any], str, str], ...] = (
     ("dec", create_dec, _DEC_MINIMAL_BODY, "Title of the Decision"),
     ("vcr", create_vcr, _VCR_MINIMAL_BODY, "Sample Verification Case"),
     ("sysrs", create_sysrs, _SYSRS_MINIMAL_BODY, "System Requirements Specification: Sample Document"),
+    ("txt", create_txt, _TXT_MINIMAL_BODY, _TXT_TITLE),
 )
 
 
@@ -426,6 +444,21 @@ class TestFindReferences(unittest.TestCase):
                 result = find_references(text)
 
                 self.assertEqual(result, [(tag, _UUID)])
+
+    def test_txt_tag_extraction_variants(self):
+        """The TXT tag (feat-229-txt REQ-009): lowercase, CamelCase, and UPPERCASE spellings, and
+        the single-space, dash, double-space, and tab separators, must all extract as
+        ("txt", <uuid>) -- the free-floating reference shape a txt body carries."""
+        for text in (
+            f"txt {_UUID}: A free-form text document",
+            f"Txt {_UUID}: A free-form text document",
+            f"TXT {_UUID}: A free-form text document",
+            f"TXT-{_UUID}: A free-form text document",
+            f"TXT  {_UUID}: A free-form text document",
+            f"TXT\t{_UUID}: A free-form text document",
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(find_references(text), [("txt", _UUID)])
 
     def test_tag_is_case_insensitive(self):
         """lowercase, CamelCase, and UPPERCASE tag spellings must all match."""
@@ -704,11 +737,13 @@ class TestResolveReference(TempRefDirTestCase):
 
     def test_not_found_rows_never_raise(self):
         """A target absent on disk must yield a row with null title/path and the domain's own
-        not-found message in error -- for the flat, the adr, and a second flat domain."""
+        not-found message in error -- for the flat, the adr, a second flat domain, and the txt
+        target domain (feat-229-txt REQ-009)."""
         for ref_type, error_fragment in (
             ("req", "no requirement found with id"),
             ("gol", "no goal found with id"),
             ("adr", "no ADR found with id"),
+            ("txt", "no free-form text document found with id"),
         ):
             with self.subTest(ref_type=ref_type):
                 row = resolve_reference(ref_type, _MISSING_UUID)

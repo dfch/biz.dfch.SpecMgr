@@ -59,8 +59,8 @@ from ._path_safety import DEFAULT_LANGUAGE, assert_language
 __all__ = ["LANGUAGE_AWARE_DOMAINS", "assert_language_aware_type", "guard_language"]
 
 #: The domains whose generic-tool adapters honor a non-default ``language``
-#: (feat-197-i18n Phases 120/125: the eleven i18n-eligible domains req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr,
-#: sysrs -- derived from the shared domain registry, i.e. every whole-body domain except ``feat``, so the name set
+#: (feat-197-i18n Phases 120/125: the twelve i18n-eligible domains req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr,
+#: sysrs, txt -- derived from the shared domain registry, i.e. every whole-body domain except ``feat``, so the name set
 #: is never hand-listed a second time; ``feat`` and ``adr`` are permanently English).
 LANGUAGE_AWARE_DOMAINS: tuple[str, ...] = WHOLE_BODY_NO_FEAT_DOMAINS
 

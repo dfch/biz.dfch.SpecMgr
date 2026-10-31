@@ -40,7 +40,7 @@ tokens the never-translate list calls schema-enforced).
 
 Registered as a flat, top-level ``specmgr://i18n`` URI (like
 ``specmgr://dtais``/``specmgr://rasci``), since the language-variant
-convention spans eleven document domains -- it is not owned by any single
+convention spans twelve document domains -- it is not owned by any single
 domain's schema.
 
 The sibling resource **template** ``specmgr://i18n/headings/{language}``

@@ -4,7 +4,7 @@
 
 The generic, cross-domain hard-delete tool for the whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -230,6 +230,20 @@ unlinked (only that file's own path-keyed cache entries are invalidated) -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
+### `_delete_txt(id_: 'str', language: 'str' = 'en') -> 'str'`
+
+Hard-delete the free-form text document ``id_`` from disk (REQ-001/004/005/006).
+
+Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+
+
 ### `_delete_uc(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the use case ``id_`` from disk (REQ-001/004/005/006).
@@ -264,7 +278,7 @@ Permanently delete an existing document from disk, across the whole-body domains
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``sop``/``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same id resolution via the domain's ``load_by_id``,
 same per-id domain lock around the whole resolve-then-delete sequence,
 same domain not-found error). Every flat domain (every whole-body domain
@@ -292,7 +306,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
 language:
     The language variant to delete (feat-197-i18n Phase 120, ADR
     38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting

@@ -20,7 +20,7 @@
 """``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -67,7 +67,7 @@ status-change entry point for every domain.
 
 No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
 adapter compares the requested target status against the document's
-current on-disk status -- for the 12 whole-body domains, plainly
+current on-disk status -- for the 13 whole-body domains, plainly
 ``existing.frontmatter.status == status``; for ``adr``, against the same
 composed target (``status`` or ``f"superseded by {superseded_by}"``)
 ``models.adr.v1.mutations.set_status`` would compute -- immediately after
@@ -103,7 +103,7 @@ An existing-but-broken document (feat-170-update-edit-parse-failure,
 GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
 the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
-fails to parse, each of the 12 whole-body adapters now returns the
+fails to parse, each of the 13 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 (``error``/``path``/``id``) instead of raising the domain's own
 ``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
@@ -227,6 +227,13 @@ from ...tsk.tools._io import read_tsk
 from ...tsk.tools._lock import tsk_lock, tsk_lock_key
 from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import TxtFrontmatter
+from ...txt.models.v1.frontmatter import _ALLOWED_STATUSES as _TXT_ALLOWED_STATUSES
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock, txt_lock_key
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.models.v2.frontmatter import _ALLOWED_STATUSES as _UC_ALLOWED_STATUSES
 from ...uc.tools._io import load_by_id as load_uc_by_id
@@ -263,6 +270,7 @@ _SetStatusFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
     | Adr
     | ParseFailureResult
 )
@@ -285,6 +293,7 @@ _ALLOWED_STATUSES_BY_TYPE: dict[str, frozenset[str]] = {
     "feat": _FEAT_ALLOWED_STATUSES,
     "vcr": _VCR_ALLOWED_STATUSES,
     "sysrs": _SYSRS_ALLOWED_STATUSES,
+    "txt": _TXT_ALLOWED_STATUSES,
     ADR: _ADR_FIXED_STATUSES,
 }
 
@@ -897,6 +906,56 @@ def _set_status_sysrs(
     return new_frontmatter
 
 
+def _set_status_txt(
+    id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
+) -> TxtFrontmatter | ParseFailureResult:
+    """Replace the status of the free-form text document identified by ``id_``.
+
+    Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
+    ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_status_req` for
+    the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
+    never be given.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+    variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is
+    written, the unchanged-status no-op compares against the variant's own current status -- the EN
+    document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+    The allowed-status set is language-invariant (``status`` is a closed
+    vocabulary value, never translated, REQ-010).
+    """
+    assert superseded_by is None, "the public `set_status` guard rejects superseded_by for non-adr types"
+
+    base_dir = txt_base_dir(language)
+    with txt_lock(txt_lock_key(id_, language)):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        if existing.frontmatter.status == status:
+            return existing.frontmatter
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["status"] = status
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="txt", tool="set_status", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, raw_body)
+        read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return new_frontmatter
+
+
 def _set_status_adr(id_: str, status: str, superseded_by: str | None) -> Adr:
     """Replace the status of the ADR identified by ``id_``.
 
@@ -934,6 +993,7 @@ _ADAPTERS: dict[str, Callable[[str, str, str | None], _SetStatusFrontmatter]] = 
     "feat": _set_status_feat,
     "vcr": _set_status_vcr,
     "sysrs": _set_status_sysrs,
+    "txt": _set_status_txt,
     ADR: _set_status_adr,
 }
 
@@ -958,6 +1018,7 @@ _LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str | None, str], _SetStatusFr
     "sop": _set_status_sop,
     "vcr": _set_status_vcr,
     "sysrs": _set_status_sysrs,
+    "txt": _set_status_txt,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
@@ -1017,7 +1078,8 @@ def set_status(
     """Replace the status of an existing document, across every domain.
 
         Cross-domain generic for every document type
-        (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``adr``);
+        (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
+        ``vcr``/``sysrs``/``txt``/``adr``);
         dispatches on ``type`` to the domain's own ported adapter (same lock,
         same id resolution, same body handling, same domain not-found error).
 
@@ -1068,7 +1130,7 @@ def set_status(
         type:
             The document type / domain: one of ``req``, ``uc``, ``tsk``,
             ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-            ``vcr``, ``sysrs``, ``adr``.
+            ``vcr``, ``sysrs``, ``txt``, ``adr``.
         status:
             The new status. Must be one of the dispatched domain's own
             accepted values (see its ``XFrontmatter.status`` field). For

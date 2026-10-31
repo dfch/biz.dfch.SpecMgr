@@ -22,7 +22,7 @@
 The generic, cross-domain, type-dispatched dry-run validation tool for the
 whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_validate_<d>``), each a
 verbatim port of the deleted ``validate_<d>`` tool's body: ``has_frontmatter``
 detection via ``bool(frontmatter.loads(content).metadata)``, then either
@@ -114,6 +114,7 @@ from ...server import mcp
 from ...sop.models.v1 import Sop, parse_sop
 from ...sysrs.models.v1 import Sysrs, parse_sysrs
 from ...tsk.models.v1 import Task, parse_tsk
+from ...txt.models.v1 import parse_txt, parse_txt_body
 from ...uc.models.v2 import UseCase, parse_uc
 from ...vcr.models.v1 import Vcr, parse_vcr
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
@@ -496,6 +497,36 @@ def _validate_sysrs(content: str, full: bool) -> None:
             Sysrs.from_text(format_text(content))
 
 
+def _validate_txt(content: str, full: bool) -> None:
+    """Validate ``content`` as free-form text markdown.
+
+    Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
+    label, ``parse_txt`` for the full document, ``parse_txt_body`` -- the
+    single body-validation entry point the write adapters share -- for the
+    body-only shape; ``txt`` is dispatch-only from day one per ADR
+    36905d5b) -- see :func:`_validate_req` for the shared semantics.
+    """
+    has_frontmatter = _detect_frontmatter(content, domain="txt")
+
+    if full:
+        if not has_frontmatter:
+            raise ValueError(
+                "full=True requires 'content' to be a complete document (YAML frontmatter block "
+                "plus body) -- no frontmatter block was found. Pass full=False (the default) to "
+                "validate body-only content instead."
+            )
+        with wrap_tool_errors(domain="txt", tool="validate"):
+            parse_txt(content)
+    else:
+        if has_frontmatter:
+            raise ValueError(
+                "full=False requires 'content' to be body markdown only -- a YAML frontmatter "
+                "block was found. Pass full=True to validate a complete document instead."
+            )
+        with wrap_tool_errors(domain="txt", tool="validate", channel=BODY_CHANNEL):
+            parse_txt_body(content)
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     "req": _validate_req,
@@ -510,6 +541,7 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     "feat": _validate_feat,
     "vcr": _validate_vcr,
     "sysrs": _validate_sysrs,
+    "txt": _validate_txt,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -548,7 +580,7 @@ def validate(
 
     Cross-domain generic for every whole-body document type
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+    ``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
     private adapter (same ``has_frontmatter`` detection, same
     ``full=True``/``full=False`` body-only-vs-complete-document semantics,
     same ``wrap_tool_errors`` message enrichment as every retired
@@ -587,7 +619,7 @@ def validate(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
+        ``vcr``, ``sysrs``, ``txt``.
     content:
         The markdown to validate.
     full:

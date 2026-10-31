@@ -64,6 +64,11 @@
       "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/sysrs",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
+    },
+    "txt": {
+      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/txt",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
     }
   },
   "similarity": {

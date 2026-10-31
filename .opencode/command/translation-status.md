@@ -1,11 +1,11 @@
 ---
-description: Show which languages a specmgr document exists in and, for a given language, whether that translation has drifted from its source -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs; feat and adr are always English), $2 the document id, optional $3 the language to check.
+description: Show which languages a specmgr document exists in and, for a given language, whether that translation has drifted from its source -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt; feat and adr are always English), $2 the document id, optional $3 the language to check.
 ---
 
 Show the translation status of a specmgr document. My input:
 
 - `$1` (required): the document's domain -- one of `req`/`uc`/`tsk`/`qa`/
-  `prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`. `feat` and `adr` are always
+  `prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`. `feat` and `adr` are always
   English and out of scope.
 - `$2` (required): the artifact's shared id (a lowercase-hex uuid; every
   language variant reuses it).

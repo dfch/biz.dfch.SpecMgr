@@ -2,8 +2,9 @@
 
 ``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
 
-The generic, read-only language-listing tool for one artifact: given a ``type`` (one of the eleven i18n-eligible
-domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``) and an ``id``, it
+The generic, read-only language-listing tool for one artifact: given a ``type`` (one of the twelve i18n-eligible
+domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``/``txt``) and an
+``id``, it
 reports the language codes the artifact currently exists in -- the dedicated tool ADR 38efdb66 item 7 names in place of
 an "all languages" mode of ``list_<d>``. The result is a
 :class:`~biz.dfch.specmgr.general.models.language_list_result.LanguageListResult`: ``languages`` (``"en"`` first when
@@ -31,9 +32,9 @@ List the languages the artifact ``id`` of ``type`` currently exists in.
 Parameters
 ----------
 type:
-    The document type: one of the eleven i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``. ``feat`` and ``adr`` are accepted by the schema
-    only so that they get an explanation: they are permanently English and are rejected.
+    The document type: one of the twelve i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
+    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``. ``feat`` and ``adr`` are accepted by the
+    schema only so that they get an explanation: they are permanently English and are rejected.
 id:
     The artifact's specmgr-assigned id (shared by every language variant).
 

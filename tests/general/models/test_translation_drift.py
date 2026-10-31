@@ -22,7 +22,7 @@ Covers: the structural-key rule (table mapping, the data-carrying token reductio
 ancestor-path keys, occurrence disambiguation, h1/fence/prose invisibility), the diff (missing/extra/reordered, the
 LCS-based single-move reorder), the staleness comparison (parsed offset-aware datetimes, mixed separators/offsets,
 the equal boundary, missing/unparseable/offset-less values), and the **alias pin**: every free-text ``@alias`` REGEX
-of the eleven i18n-eligible domains' document models is covered by a token rule (a new data-carrying heading in any
+of the twelve i18n-eligible domains' document models is covered by a token rule (a new data-carrying heading in any
 domain fails this test until the rule table learns it).
 """
 
@@ -406,7 +406,7 @@ class TestResultModels(unittest.TestCase):
         self.assertEqual(TranslationDriftResult.model_validate_json(result.model_dump_json()), result)
 
 
-#: Every data-carrying (free-text or value-carrying) REGEX ``@alias`` of the eleven i18n-eligible domains' non-h1
+#: Every data-carrying (free-text or value-carrying) REGEX ``@alias`` of the twelve i18n-eligible domains' non-h1
 #: sections, mapped to a sample heading that fullmatches it. The drift check's token rules must cover each: a
 #: ``(free-text)`` row reduces to its schema-constant token, a ``(whole token)`` row compares as a whole (its text is
 #: entirely schema-constant), the update-entry row is excluded. A NEW data-carrying alias in any domain fails
