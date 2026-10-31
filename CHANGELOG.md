@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-10-31
+
 ### Added
 
 - The new `specmgr lint` command (the in-tree spec artifact parseability
@@ -175,8 +177,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tests/test_release_sh.py`'s new full-`precheck` gate and cleanup
   coverage close the gap the 2026-10-23 manual cleanup surfaced — feats
   shipping with their plans still at `status: review` and ~30 stale
-  feature branches accumulating per release (feat-233-update-release,
-  GitHub issue #233).
+   feature branches accumulating per release (feat-233-update-release,
+   GitHub issue #233).
+- `scripts/release.sh release-notes` is notes-only again: it no longer
+  composes or PATCHes a `vX.Y.Z - <text>` release name — the name is
+  whatever the publish workflow's "Make GitHub Release" job sets (the bare
+  version string), and the procedure never modifies it (the stage's
+  idempotency check compares the stored body alone). This reverts the
+  name-text behavior introduced in v0.17.0; every release actually cut
+  (v0.16.0–v0.37.0) already carried the bare version name, so no shipped
+  release changes — the SOP's step 9, the `/release` command, and the
+  `GH_SHIM` test pins follow.
+
+### Security
+
+- `uv.lock` transitive entries bumped to resolve 20 Dependabot security
+  alerts (lock-only change — no manifest or code change): `certifi`
+  2026.7.22 → 2026.10.23 (alert 29, GHSA-6q48-6c7w-9gw2, critical),
+  `virtualenv` 21.7.13 → 21.14.13 (15 alerts, high/medium/low), `filelock`
+  3.32.2 → 4.2.4 (3 alerts, 1 high / 2 low), `opentelemetry-api` 1.44.0 →
+  1.45.1 (1 alert, medium); the resolver forced `packaging` 26.2 → 26.3
+  (a new `virtualenv → packaging` edge, no added exposure). The 41 pillow
+  alerts (locked 12.3.0, blocked on the upstream fastembed `pillow<13.0`
+  cap) remain risk-accepted until the carved-out work of GitHub issue #235
+  lands (feat-232-dependabot-security-alerts, GitHub issue #232).
 
 ## [0.37.0] - 2026-10-22
 
