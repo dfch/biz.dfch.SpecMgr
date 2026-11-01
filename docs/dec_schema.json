@@ -144,7 +144,7 @@
       "type": "object"
     },
     "Decision": {
-      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the ADR's general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike\n    `sop`'s own optional equivalent) -- a decision must always have a\n    named accountable owner.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
+      "description": "The `dec` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. Keeps the ADR's general structure\n(MADR headings + an options collection) on the generic `models.md`\nengine -- see the module docstring.\n\nParameters\n----------\ncontext:\n    `## Context and Problem Statement`. Mandatory.\ndrivers:\n    `## Decision Drivers`. Optional.\nconsidered:\n    `## Considered Options`. Optional.\noutcome:\n    `## Decision Outcome` (mandatory lead paragraph, optional further\n    blocks after it -- feat-247 -- + optional\n    `### Consequences`/`### Confirmation`). Mandatory.\nroles_and_responsibilities:\n    `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike\n    `sop`'s own optional equivalent) -- a decision must always have a\n    named accountable owner.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nrelated_artifacts:\n    `## Related Artifacts` (four all-optional H3 bullet lists). Optional.\npros_and_cons:\n    `## Pros and Cons` (`### Option {N}: {name}` entries, >=1 if\n    present). Optional.\nmore_information:\n    `## More Information`. Optional.\nupdates:\n    `## Updates` (>=1 entry if present). Optional; last section.",
       "properties": {
         "considered": {
           "anyOf": [
@@ -263,7 +263,7 @@
       "type": "object"
     },
     "DecisionOutcome": {
-      "description": "`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.\n\nParameters\n----------\nstatement:\n    The mandatory lead paragraph directly under the H2 -- the outcome\n    itself (e.g. \"We chose option 1 because ...\"). Any other block in\n    place of a lead paragraph (a bare list, an H3 first, nothing at\n    all) is a structural error.\nconsequences:\n    `### Consequences` sub-section. Optional.\nconfirmation:\n    `### Confirmation` sub-section. Optional.",
+      "description": "`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.\n\nParameters\n----------\nstatement:\n    The mandatory lead paragraph directly under the H2 -- the outcome\n    itself (e.g. \"We chose option 1 because ...\"). Any other block in\n    place of a lead paragraph (a bare list, an H3 first, nothing at\n    all) is a structural error.\nfurther_blocks:\n    Optional further markdown blocks (paragraphs, bullet lists, ordered\n    lists, fenced code blocks) after the lead paragraph and before the\n    first H3 sub-section (feat-247-dec-outcome-blocks, GitHub issue\n    #247). A block quote, an HTML comment, a horizontal rule, or a\n    heading of any level ends the run and stays unconsumed, failing the\n    parse with the engine's own actionable \"text left over\" error.\nconsequences:\n    `### Consequences` sub-section. Optional.\nconfirmation:\n    `### Confirmation` sub-section. Optional.",
       "properties": {
         "confirmation": {
           "anyOf": [
@@ -288,6 +288,18 @@
           ],
           "default": null,
           "description": "`### Consequences` sub-section. Optional."
+        },
+        "further_blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OutcomeBlocks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional further markdown blocks (paragraphs, bullet/ordered lists, fenced code blocks) after the lead paragraph and before the first `###` sub-section."
         },
         "statement": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -411,6 +423,12 @@
       "description": "`### Option {N}: {name}` under `## Pros and Cons` -- one weighed option.\n\nA leaf H3 section: the number and the name both live in the heading\nitself (e.g. `### Option 1: Use PostgreSQL`), constrained by the regex\n`@alias` above and enforced by `match_alias` (`re.fullmatch`) at parse\ntime -- a missing colon/title (`### Option 1`), a non-numeric number\n(`### Option one: X`), or a title-less heading (`### Option 1:`) all\nfail the parse eagerly. The number may carry leading zeros\n(`### Option 01: X`); it is normalized to an integer by the computed\n`number` below. Option numbers need not be contiguous (gaps are\nallowed, numbers are never renumbered); duplicates are rejected by\n`Decision`'s own after-validator (the `ValidationError` channel). Any\nbody text under the heading is absorbed into the leaf like every other\nleaf `MarkdownSection`.\n\nParameters\n----------\nnumber:\n    Computed. The option's number (e.g. `1` for `### Option 1: X`, also\n    `1` for `### Option 01: X`). Never stored separately -- derived\n    from the retained heading text.\nname:\n    Computed. The option's name (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
       "properties": {},
       "title": "Option",
+      "type": "object"
+    },
+    "OutcomeBlocks": {
+      "description": "Further markdown blocks after `DecisionOutcome`'s mandatory lead paragraph\n(feat-247-dec-outcome-blocks, GitHub issue #247).\n\nLeaf class (no declared nested fields, no `@markdown` metadata of its\nown) mirroring this file's own `UpdateEntryContent` precedent: an\ninternal content-holding leaf that the parent's field loop resolves via\n`get_extent` and stores verbatim via the base `MarkdownStr` leaf\n`from_text` (`parse(text)` for the raw-HTML rejection, then `_value =\ntext`) -- which is exactly what makes the round-trip byte-exact\n(REQ-003).\n\nUnlike `UpdateEntryContent` -- which is last on its parent and therefore\nconsumes everything remaining -- `OutcomeBlocks` is *not* last: the\n`### Consequences`/`### Confirmation` H3 sections follow it. Its own\n`get_extent` therefore bounds the run it claims: it only claims an\nextent at all when the first token is one of the four accepted\nblock-start kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise it\nreturns `0` (the field is absent) and the H3 fields match exactly where\nthey always matched before a document carries no further blocks (the\nREQ-004 parity). When it does claim an extent, the run accumulates the\naccepted blocks and STOPS at the first non-accepted top-level block --\nin particular at the first heading of any level (h1-h6) -- by returning\nthat block's start line exclusive, so a block quote, an HTML comment, a\nhorizontal rule, or an H4+ heading left after the run is never consumed\nand fails the parse with the engine's own actionable \"text left over\nafter processing all fields\" error (REQ-001's rejected-kinds contract,\nenforced per distinct token kind).\n\nAdds a `text` computed property (mirroring `UpdateEntryContent`'s own,\nand `qa`'s `IntroductionBody.text` idiom, feat-114) so this\notherwise-private `_value` is reachable through `model_dump()`/\n`model_dump_json()` (REQ-003).",
+      "properties": {},
+      "title": "OutcomeBlocks",
       "type": "object"
     },
     "ProsAndCons": {

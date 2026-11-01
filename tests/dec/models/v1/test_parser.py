@@ -817,5 +817,137 @@ class TestParseDecBody(unittest.TestCase):
         self.assertIn("no heading-mapping table", str(ctx.exception))
 
 
+class TestParseDecOutcomeBlocks(unittest.TestCase):
+    """`parse_dec` with the relaxed `## Decision Outcome` lead (feat-247-dec-outcome-blocks, ACC-001/ACC-002/ACC-003).
+
+    The fixture document below is `_MINIMAL_DOC`'s section set plus the two
+    `### ` outcome sub-sections and, in the outcome lead, a second paragraph,
+    a bullet list, and a fenced code block after the mandatory lead paragraph.
+    """
+
+    _DOC = (
+        textwrap.dedent(
+            """\
+            # Choose a Document Store
+
+            ## Context and Problem Statement
+
+            The current store cannot serve the dashboard read path.
+
+            ## Decision Outcome
+
+            We chose the document store because it meets the latency budget.
+
+            The choice carries two sub-decisions.
+
+            - The read path stays synchronous.
+            - Writes go through the existing queue.
+
+            ```python
+            p95_ms = 80
+            ```
+
+            ### Consequences
+
+            Reporting reads from the nightly export.
+
+            ### Confirmation
+
+            A two-week load test.
+            """
+        )
+        + MANDATORY_ROLES_AND_SOURCE
+    )
+
+    def test_parses_document_with_further_blocks(self) -> None:
+        """ACC-001: the full parser accepts the relaxed lead; `statement` holds the first
+        paragraph, `further_blocks` the remainder, the H3s their sections."""
+        document = parse_dec(self._DOC)
+
+        outcome = document.body.outcome
+        self.assertEqual(outcome.statement.text, "We chose the document store because it meets the latency budget.")
+        assert outcome.further_blocks is not None
+        self.assertIn("- The read path stays synchronous.", outcome.further_blocks.text)
+        self.assertIn("p95_ms = 80", outcome.further_blocks.text)
+        assert outcome.consequences is not None
+        self.assertIn("nightly export", outcome.consequences.text)
+        assert outcome.confirmation is not None
+        self.assertIn("two-week load test", outcome.confirmation.text)
+
+    def test_further_blocks_document_round_trips_and_dumps(self) -> None:
+        """ACC-003: the body round-trips byte-exact and `model_dump(mode='json')` carries the extra
+        blocks under `outcome.further_blocks.text`."""
+        document = parse_dec(self._DOC)
+
+        self.assertEqual(str(document.body), format_text(self._DOC))
+        dump = document.model_dump(mode="json")
+        self.assertEqual(
+            dump["body"]["outcome"]["further_blocks"]["text"],
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n",
+        )
+
+    def test_rejected_block_in_the_outcome_lead_is_an_assertion_error(self) -> None:
+        """ACC-009: swapping the fenced code block for a block quote puts a rejected kind inside the
+        outcome lead -- the parser fails with the engine's actionable error, end to end."""
+        text = self._DOC.replace("```python\np95_ms = 80\n```", "> A quoted block.")
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
+
+    def test_bare_list_in_place_of_the_lead_is_an_assertion_error(self) -> None:
+        """ACC-002: a bare list in place of the lead paragraph is rejected end to end."""
+        text = self._DOC.replace(
+            "We chose the document store because it meets the latency budget.\n"
+            "\n"
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n",
+            "- A bare list in place of the lead paragraph.\n",
+        )
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
+
+    def test_empty_outcome_body_is_an_assertion_error(self) -> None:
+        """ACC-002: an empty `## Decision Outcome` body (no lead paragraph at all) is rejected end
+        to end."""
+        text = self._DOC.replace(
+            "We chose the document store because it meets the latency budget.\n"
+            "\n"
+            "The choice carries two sub-decisions.\n"
+            "\n"
+            "- The read path stays synchronous.\n"
+            "- Writes go through the existing queue.\n"
+            "\n"
+            "```python\n"
+            "p95_ms = 80\n"
+            "```\n"
+            "\n"
+            "### Consequences\n"
+            "\n"
+            "Reporting reads from the nightly export.\n"
+            "\n"
+            "### Confirmation\n"
+            "\n"
+            "A two-week load test.\n",
+            "",
+        )
+
+        with self.assertRaises(AssertionError):
+            parse_dec(text)
+
+
 if __name__ == "__main__":
     unittest.main()

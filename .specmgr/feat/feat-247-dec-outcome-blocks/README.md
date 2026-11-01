@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-01T07:22:27.849+01:00'
 id: feat-247-dec-outcome-blocks
-status: planning
+status: progress
 type: feat
-updated: '2026-11-01T11:15:00.000+01:00'
+updated: '2026-11-01T13:31:54.000+01:00'
 version: 1.0.0
 ---
 
@@ -84,11 +84,11 @@ Every list item in this document is written as a single physical line (the soft-
 
 #### Phase 110: Implementation
 
-- [ ] Task 110.100: Change `DecisionOutcome` in `dec/models/v1/body.py` per the chosen shape, with docstrings.
-- [ ] Task 110.110: Check every consumer of the lead paragraph for assumptions about a single-paragraph lead: the i18n tests (`tests/dec/tools/test_i18n_language.py`, `test_i18n_write.py`), the DEC create/update instruction texts, the DEC prompts and resources.
-- [ ] Task 110.120: Add tests in `tests/dec/models/v1/test_body.py` and `test_parser.py` for ACC-001, ACC-002, ACC-003 and ACC-009 (including the rejected shapes: bare list first, `### Consequences` first, empty, extra block after or between the H3 sections, block quote, horizontal rule, comment, H4+; and, per the confirmed Option A, a pipe-table content accepted as a paragraph), and run the existing `tests/dec/` suite for ACC-004.
-- [ ] Task 110.130: Add tool-level tests in `tests/dec/tools/` for `parse_dec` and the generic `validate` (`type="dec"`) with the relaxed shape, and one i18n test with a translated variant that carries extra blocks.
-- [ ] Task 110.140: Commit regression fixtures derived from the outcomes of the ADRs `750842b2`, `92cc4ce8` and `356d8781` and a test asserting they parse (ACC-007).
+- [x] Task 110.100: Change `DecisionOutcome` in `dec/models/v1/body.py` per the chosen shape, with docstrings.
+- [x] Task 110.110: Check every consumer of the lead paragraph for assumptions about a single-paragraph lead: the i18n tests (`tests/dec/tools/test_i18n_language.py`, `test_i18n_write.py`), the DEC create/update instruction texts, the DEC prompts and resources.
+- [x] Task 110.120: Add tests in `tests/dec/models/v1/test_body.py` and `test_parser.py` for ACC-001, ACC-002, ACC-003 and ACC-009 (including the rejected shapes: bare list first, `### Consequences` first, empty, extra block after or between the H3 sections, block quote, horizontal rule, comment, H4+; and, per the confirmed Option A, a pipe-table content accepted as a paragraph), and run the existing `tests/dec/` suite for ACC-004.
+- [x] Task 110.130: Add tool-level tests in `tests/dec/tools/` for `parse_dec` and the generic `validate` (`type="dec"`) with the relaxed shape, and one i18n test with a translated variant that carries extra blocks.
+- [x] Task 110.140: Commit regression fixtures derived from the outcomes of the ADRs `750842b2`, `92cc4ce8` and `356d8781` and a test asserting they parse (ACC-007).
 
 #### Phase 120: Generated Artifacts and Documentation
 
@@ -106,9 +106,9 @@ Every list item in this document is written as a single physical line (the soft-
 
 ### Current Status
 
-**As of 2026-11-01**: Planned from GitHub issue #247, the prerequisite found while reviewing the feat-46 migration plan. The plan was refined (feat-refiner) and the findings were applied; the Phase 100 engine spike is complete and the model shape is chosen (a dedicated `OutcomeBlocks` leaf used as the new optional `further_blocks` field of `DecisionOutcome`); no source code has been changed yet.
+**As of 2026-11-01**: Phases 100 and 110 are complete. The Phase 100 spike chose the model shape (the dedicated `OutcomeBlocks` leaf as the new optional `further_blocks` field of `DecisionOutcome` between `statement` and `consequences`), and Phase 110 implemented it exactly as specced: one new leaf class plus one new optional field in `dec/models/v1/body.py` (no `models/md` change), the full test matrix (model, parser, tool, i18n, and the three committed ADR-derived regression fixtures), and -- because the pre-commit drift hooks (`specmgr-schema`, `specmgr-schema-dec-package`, `specmgr-docs`, `specmgr-mcp-docs`) require the regenerated artifacts in the same commit as the model change -- the mechanical half of Phase 120 Task 120.100 (both `dec_schema.json` copies, `docs/api/*`, `docs/GENERATED.md`, `docs/MCP.md` checked as a no-op) was pulled forward and is staged. Quality gate green: ruff format/check clean, vulture clean (one `whitelist.py` entry for the new field), `tests/dec` 389 passed (356 baseline + 33 new).
 
-**Handover**: the next step is Phase 110, the implementation. The spike's full design record -- the exact leaf `get_extent` contract, the evidence for all four selection criteria, the rejected-candidate analysis, and the "tables are token-wise paragraphs" finding -- is in Decisions Made.
+**Handover**: the next step is Phase 120, which now holds only the *editorial* doc work: the DEC create/update instruction texts (ACC-008), the DEC template/example and AGENTS.md wording where they state the one-paragraph rule (Task 120.110), and the CHANGELOG `[Unreleased]` entry (Task 120.120). Nothing in Phase 120 requires a code or schema change; Task 120.100's export/whitelist/schema half is already done (Decisions Made, 2026-11-01 12:31:54.000Z entry).
 
 ### Blockers
 
@@ -117,6 +117,10 @@ Every list item in this document is written as a single physical line (the soft-
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 12:31:54.000Z - Phase 110: implementation complete (all five tasks)
+
+Implemented the Phase 100 spike's chosen shape exactly: `dec/models/v1/body.py` gains the `OutcomeBlocks` leaf (a bare `MarkdownStr` subclass, no `@markdown` metadata, mirroring `UpdateEntryContent`) with the spike-specified `get_extent` contract (claims an extent only when the first token is one of the four accepted block-start kinds; walks the token stream with a nesting-depth counter; stops at the first non-accepted top-level block -- in particular any heading -- returning its start line exclusive) and a `text` computed property for `model_dump()` visibility, plus the new optional `further_blocks: OutcomeBlocks | None` field on `DecisionOutcome` between `statement` and `consequences` (final order `statement`, `further_blocks`, `consequences`, `confirmation`). No `models/md` change. Tests added: `tests/dec/models/v1/test_body.py` (`TestDecisionOutcomeFurtherBlocks`, 19 tests: accepted shapes with byte-exact round-trips, `model_dump()` visibility, Option A pipe-table acceptance in both lead and non-lead position, the full rejected-shape matrix, and the no-further-blocks parity), `tests/dec/models/v1/test_parser.py` (`TestParseDecOutcomeBlocks`, 5 tests: full-document parse, round-trip + dump, end-to-end rejections), `tests/dec/tools/test_parse_dec.py` (`TestParseDecToolOutcomeBlocks`, 3 tests incl. the non-raising `ValidateResult` channel for a rejected kind), `tests/dec/tools/test_validate.py` (new file, 4 tests for the generic `validate` tool with `type="dec"`), `tests/dec/tools/test_i18n_language.py` (`TestI18nVariantWithFurtherBlocks`, 2 tests: a DE variant whose `## Entscheidungsergebnis` carries extra blocks parses to the canonical model with `further_blocks` populated), and `tests/dec/models/v1/test_adr_outcome_fixtures.py` (new file, 3 tests over the three committed regression fixtures under `tests/fixtures/dec-outcome-blocks/`, each carrying one of the plan-named ADRs' real `## Decision Outcome` section verbatim -- all three genuinely multi-block: lead + bullet list (750842b2), lead + second paragraph (92cc4ce8, 356d8781) -- with the ADRs' own UUIDs as the fixtures' `id` frontmatter). Consumer check (Task 110.110): the i18n tests read `body.outcome.statement.text` (unaffected -- `statement` stays first and mandatory), the DEC create/update instruction texts, prompts and resources make no single-paragraph assumption that breaks (their wording updates are Phase 120 Task 120.110/ACC-008). `whitelist.py` gains one entry for the new `further_blocks` field (vulture flagged it; the `OutcomeBlocks` class itself was not flagged, and the export lists stay unchanged per the `UpdateEntryContent` precedent). The mechanical half of Task 120.100 was pulled forward (the pre-commit drift hooks require the regenerated artifacts in the same commit as the model change): both `dec_schema.json` copies regenerate to add exactly the `further_blocks` property and the `OutcomeBlocks` def, `docs/api/biz.dfch.specmgr.dec.models.v1.body.md` and `docs/GENERATED.md` (test-file count 479 -> 481) regenerate, `docs/MCP.md` is a verified no-op, and a second regeneration pass reports no drift. Gate: `ruff format --check` (2264 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), `pytest tests/dec -n auto` (389 passed, incl. the 356 baseline unchanged), plus `pytest tests/commands/test_docs.py` (29 passed, the generated-docs consumer).
 
 #### 2026-11-01 10:15:00.000Z - Option A confirmed for the "tables" finding
 
@@ -137,6 +141,13 @@ Planned from a trial conversion of the 46 ADRs through the real `parse_dec`: 20 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 12:31:54.000Z - Phase 110 implementation decisions
+
+- Fixture location (Task 110.140): the three ADR-derived regression fixtures live under `tests/fixtures/dec-outcome-blocks/` (the repo's committed-fixture convention `tests/fixtures/<feature-or-domain>/`, as `uc-diagrams`, `reference-graphs`, `plantuml`, `config-golden` and `req` do), one complete DEC document per ADR (`adr-<uuid8>-outcome.md`) with the ADR's own UUID as the fixture's `id` frontmatter (provenance) and a `## Source` naming it; the pinned test is `tests/dec/models/v1/test_adr_outcome_fixtures.py`. All three plan-named ADR outcomes genuinely carry more than one lead block (750842b2: lead paragraph + bullet list of sub-decisions; 92cc4ce8 and 356d8781: lead paragraph + second paragraph), so no substitute outcome content was needed; each fixture also pins mdformat-stability and a byte-exact body round-trip.
+- Export/whitelist (Task 120.100 half, pulled forward): the `dec/models/__init__.py` and `dec/models/v1/__init__.py` `__all__` lists stay UNCHANGED -- `OutcomeBlocks` is an internal leaf, exactly the `UpdateEntryContent` precedent in the same file (also not exported), and nothing in the schema generator or the tests needs the package-level import (tests import it from `...body`). Vulture (min-confidence 60) flagged the new *field* name `further_blocks` (a pydantic field read only via (de)serialization, the established false-positive class of the whitelist's dec section), NOT the `OutcomeBlocks` class (referenced by the field's type annotation) -- so `whitelist.py` gained one `further_blocks` entry in that dec section with a comment. The generated schemas' `$defs` gain `OutcomeBlocks` with `properties: {}` (the `text` computed field, like `UpdateEntryContent`'s, does not appear in the input schema -- pydantic omits computed fields from `model_json_schema()`), and `SCHEMA_COMMENT_VERSION` stays `"v1"` (additive relaxation, REQ-004).
+- ACC-009 test interpretation ("extra block after or between the H3 sections"): verified against the pre-change engine that a plain paragraph trailing the `### Confirmation` body is ABSORBED into that leaf section's `_value` (a leaf `MarkdownSection3`'s extent spans to the next sibling/ancestor heading) -- existing behavior this feature does not change -- so "still rejected" pins the H3-ORDER violations: the new `test_duplicate_consequences_h3_after_confirmation_is_rejected` (a second `### Consequences` after `### Confirmation` -> "text left over"), alongside the pre-existing reversed-H3-order and unknown-H3 rejections, plus the rejected kinds inside the outcome lead (block quote, horizontal rule, HTML comment, H4/H5/H6, raw HTML) which the new tests pin with the exact "text left over" / "raw HTML is not permitted" / "found no match" channels.
+- The mechanical generated-artifact regeneration (both `dec_schema.json` copies, `docs/api/*`, `docs/GENERATED.md`, `docs/MCP.md` no-op check) was pulled forward from Phase 120 Task 120.100 into Phase 110 because the pre-commit drift hooks (`specmgr-schema`, `specmgr-schema-dec-package`, `specmgr-docs`, `specmgr-mcp-docs`) trigger on the `dec/models/v1/*.py` change and block a commit that does not carry the regenerated artifacts; Phase 120 therefore keeps only the editorial work (instruction texts, template/example/AGENTS.md wording, CHANGELOG).
 
 #### 2026-11-01 08:30:00.000Z - Spike (Task 100.100): chosen shape is the dedicated `dec`-local leaf `OutcomeBlocks` as the new optional `further_blocks` field
 

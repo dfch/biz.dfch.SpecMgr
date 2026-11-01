@@ -33,6 +33,15 @@ notes paragraph is supported (REQ-006).
 Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
 any markdown content (multi-paragraph, bullet/numbered list, fenced code
 block, block quote), not just a single paragraph.
+
+Also covers feat-247-dec-outcome-blocks (issue #247): `DecisionOutcome`
+accepts zero or more further blocks (paragraphs, bullet/ordered lists,
+fenced code blocks) after the mandatory lead paragraph, held in the new
+optional `further_blocks` field (the `OutcomeBlocks` leaf) -- with the
+rejected kinds (block quote, HTML comment, horizontal rule, H4+ heading,
+raw HTML) still failing the parse, pipe-table content accepted as a
+paragraph (confirmed Option A), and a no-further-blocks section parsing
+to exactly the pre-feature result.
 """
 
 from __future__ import annotations
@@ -54,6 +63,7 @@ from biz.dfch.specmgr.dec.models.v1.body import (
     Goals,
     MoreInformation,
     Option,
+    OutcomeBlocks,
     ProsAndCons,
     RelatedArtifacts,
     Requirements,
@@ -695,6 +705,201 @@ class TestDecisionOutcomeComposite(unittest.TestCase):
     def test_missing_statement_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             DecisionOutcome()
+
+
+class TestDecisionOutcomeFurtherBlocks(unittest.TestCase):
+    """`DecisionOutcome` accepts further blocks after the lead paragraph (feat-247-dec-outcome-blocks, ACC-001/ACC-003/ACC-009)."""
+
+    def test_parses_lead_plus_second_paragraph_plus_bullet_list(self) -> None:
+        """ACC-001: `statement` holds the lead paragraph; `further_blocks` holds the remainder."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "The choice carries two sub-decisions.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(sut.statement.text, "We chose option 1 because it is the cheapest.")
+        assert sut.further_blocks is not None
+        self.assertIsInstance(sut.further_blocks, OutcomeBlocks)
+        self.assertEqual(
+            sut.further_blocks.text,
+            "The choice carries two sub-decisions.\n\n- The first sub-decision.\n- The second sub-decision.\n",
+        )
+        self.assertIsNone(sut.consequences)
+        self.assertIsNone(sut.confirmation)
+
+    def test_lead_plus_second_paragraph_plus_bullet_list_round_trips(self) -> None:
+        """ACC-003: byte-exact model-to-text over lead + second paragraph + bullet list."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "The choice carries two sub-decisions.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(str(sut), text)
+
+    def test_lead_plus_ordered_list_round_trips(self) -> None:
+        """ACC-003: byte-exact round-trip over lead + ordered list, including a single item starting at 2."""
+        for list_text in (
+            "1. The first step.\n2. The second step.\n",
+            "2. The only numbered step.\n",
+        ):
+            with self.subTest(list_text=list_text):
+                text = format_text(f"## Decision Outcome\n\nWe chose option 1.\n\n{list_text}")
+
+                sut = DecisionOutcome.from_text(text)
+
+                assert sut.further_blocks is not None
+                self.assertEqual(sut.further_blocks.text, list_text)
+                self.assertEqual(str(sut), text)
+
+    def test_lead_plus_fence_round_trips(self) -> None:
+        """ACC-003: byte-exact round-trip over lead + fenced code block (with and without an info string)."""
+        for fence_text in (
+            "```python\nchoice = 1\n```\n",
+            "```\nplain code\n```\n",
+        ):
+            with self.subTest(fence_text=fence_text):
+                text = format_text(f"## Decision Outcome\n\nWe chose option 1.\n\n{fence_text}")
+
+                sut = DecisionOutcome.from_text(text)
+
+                assert sut.further_blocks is not None
+                self.assertEqual(sut.further_blocks.text, fence_text)
+                self.assertEqual(str(sut), text)
+
+    def test_mixed_run_before_the_h3s_round_trips(self) -> None:
+        """ACC-001/ACC-003: a paragraph + list + fence + paragraph run hands off to the H3s, byte-exact."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1.\n\n"
+            "Second paragraph.\n\n"
+            "- a bullet\n\n"
+            "```text\nfenced content\n```\n\n"
+            "Fourth paragraph.\n\n"
+            "### Consequences\n\n"
+            "Consequence prose.\n\n"
+            "### Confirmation\n\n"
+            "Confirmation prose.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        assert sut.further_blocks is not None
+        self.assertEqual(
+            sut.further_blocks.text,
+            "Second paragraph.\n\n- a bullet\n\n```text\nfenced content\n```\n\nFourth paragraph.\n",
+        )
+        assert sut.consequences is not None
+        self.assertIn("Consequence prose.", sut.consequences.text)
+        assert sut.confirmation is not None
+        self.assertIn("Confirmation prose.", sut.confirmation.text)
+        self.assertEqual(str(sut), text)
+
+    def test_model_dump_carries_further_blocks_text(self) -> None:
+        """ACC-003 (REQ-003): `model_dump(mode='json')` exposes the extra blocks under `further_blocks.text`."""
+        text = format_text("## Decision Outcome\n\nWe chose option 1.\n\nSecond paragraph.\n\n- a bullet\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        dump = sut.model_dump(mode="json")
+        self.assertEqual(dump["further_blocks"]["text"], "Second paragraph.\n\n- a bullet\n")
+
+    def test_pipe_table_after_the_lead_is_accepted_as_a_paragraph(self) -> None:
+        """Option A (confirmed): a GFM pipe table after the lead is a plain paragraph to the shared
+        commonmark tokenizer (which has no table token) -- accepted, not rejected by text pattern."""
+        text = format_text("## Decision Outcome\n\nWe chose option 1.\n\n| a | b |\n| - | - |\n| 1 | 2 |\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        assert sut.further_blocks is not None
+        self.assertIn("| a | b |", sut.further_blocks.text)
+        self.assertEqual(str(sut), text)
+
+    def test_pipe_table_as_the_lead_is_accepted_as_statement(self) -> None:
+        """Option A (confirmed): a pipe table in the lead position is a `statement` paragraph -- the
+        pre-feature lead behavior, no regression."""
+        text = format_text("## Decision Outcome\n\n| a | b |\n| - | - |\n| 1 | 2 |\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertIsNone(sut.further_blocks)
+        self.assertIn("| a | b |", sut.statement.text)
+        self.assertEqual(str(sut), text)
+
+    def test_lead_only_section_parses_to_today_exact_result(self) -> None:
+        """ACC-004 (REQ-004): no further blocks -- `further_blocks` is `None`, the parse result and
+        the `str()` output are exactly today's."""
+        text = format_text("## Decision Outcome\n\nSome outcome prose.\n")
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertIsNone(sut.further_blocks)
+        self.assertEqual(sut.statement.text, "Some outcome prose.")
+        self.assertIsNone(sut.consequences)
+        self.assertIsNone(sut.confirmation)
+        self.assertEqual(str(sut), text)
+        self.assertIsNone(sut.model_dump(mode="json")["further_blocks"])
+
+    def test_empty_outcome_body_is_rejected(self) -> None:
+        """ACC-002: an empty `## Decision Outcome` body (no lead paragraph at all) is still rejected
+        with the actionable "found no match" error naming `statement`."""
+        with self.assertRaisesRegex(AssertionError, "found no match"):
+            DecisionOutcome.from_text(format_text("## Decision Outcome\n"))
+
+    def test_block_quote_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level block quote after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n> A quoted block.\n")
+
+    def test_horizontal_rule_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level horizontal rule after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n---\n\nMore prose.\n")
+
+    def test_html_comment_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: a top-level HTML comment after the lead ends the run and stays unconsumed."""
+        self._assert_leftover_rejected("We chose option 1.\n\n<!-- an explanatory note -->\n\nMore prose.\n")
+
+    def test_headings_h4_to_h6_after_the_lead_are_rejected(self) -> None:
+        """ACC-009: an H4/H5/H6 heading after the lead ends the run (at the first heading of any level)
+        and stays unconsumed."""
+        for level in (4, 5, 6):
+            with self.subTest(level=level):
+                self._assert_leftover_rejected(f"We chose option 1.\n\n{'#' * level} Sub\n\nMore prose.\n")
+
+    def test_raw_html_after_the_lead_is_rejected(self) -> None:
+        """ACC-009: raw (non-comment) HTML is rejected by the engine's own raw-HTML rule, not accepted
+        as a further block."""
+        with self.assertRaisesRegex(AssertionError, "raw HTML is not permitted"):
+            DecisionOutcome.from_text(format_text("## Decision Outcome\n\nWe chose option 1.\n\n<div>raw</div>\n"))
+
+    def test_duplicate_consequences_h3_after_confirmation_is_rejected(self) -> None:
+        """ACC-009: a second `### Consequences` after `### Confirmation` violates the H3 order and is
+        still rejected -- no field is left to consume it."""
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(
+                format_text(
+                    "## Decision Outcome\n\n"
+                    "We chose option 1.\n\n"
+                    "### Consequences\n\n"
+                    "A consequence.\n\n"
+                    "### Confirmation\n\n"
+                    "A confirmation.\n\n"
+                    "### Consequences\n\n"
+                    "A duplicate heading.\n"
+                )
+            )
+
+    def _assert_leftover_rejected(self, lead: str) -> None:
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(format_text(f"## Decision Outcome\n\n{lead}"))
 
 
 class TestOptionComputedFields(unittest.TestCase):

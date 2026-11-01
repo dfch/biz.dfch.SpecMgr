@@ -630,5 +630,59 @@ class TestTitleEqualToTableKeyIsNeverMapped(unittest.TestCase):
                         reset_dec_cache()
 
 
+class TestI18nVariantWithFurtherBlocks(unittest.TestCase):
+    """feat-247-dec-outcome-blocks: a translated variant whose outcome section (``## Entscheidungsergebnis``)
+    carries further blocks after the lead paragraph parses to the canonical model with
+    ``further_blocks`` populated -- the extra blocks carry no heading, so the i18n heading skeleton
+    (and the drift check's structural comparison) is unaffected by them."""
+
+    _EN_BODY_WITH_BLOCKS = _EN_BODY.replace(
+        "We chose the document store.",
+        "We chose the document store.\n\nThe choice carries two sub-decisions.\n\n- The read path stays synchronous.",
+    )
+
+    _DE_BODY_WITH_BLOCKS = _DE_BODY.replace(
+        "Wir haben das Dokumentlager gew\u00e4hlt.",
+        "Wir haben das Dokumentlager gew\u00e4hlt.\n\nDie Entscheidung tr\u00e4gt zwei Teilentscheidungen.\n\n- Der Lesepfad bleibt synchron.",
+    )
+
+    def setUp(self) -> None:
+        self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
+        reset_dec_cache()
+        created = create_dec(self._EN_BODY_WITH_BLOCKS)
+        assert created.id is not None
+        self.doc_id = created.id
+        en_file = next((self.docs_root / "dec").glob("*.md"))
+        de_dir = self.docs_root / "dec" / "de"
+        de_dir.mkdir(parents=True)
+        frontmatter = en_file.read_text(encoding="utf-8").split("---\n")[1]
+        self.de_file = de_dir / en_file.name
+        self.de_file.write_text(f"---\n{frontmatter}---\n{self._DE_BODY_WITH_BLOCKS}", encoding="utf-8")
+        reset_dec_cache()
+
+    def test_de_variant_with_further_blocks_parses_to_the_canonical_model(self):
+        """get_dec(id, language='de') on the variant: the German lead stays the ``statement`` value, the
+        extra blocks land in ``further_blocks``, and the canonical section keys hold."""
+        result = get_dec(self.doc_id, language="de")
+
+        assert isinstance(result, DecDocument)
+        outcome = result.body.outcome
+        self.assertEqual(outcome.statement.text, "Wir haben das Dokumentlager gew\u00e4hlt.")
+        assert outcome.further_blocks is not None
+        self.assertIn("Die Entscheidung tr\u00e4gt zwei Teilentscheidungen.", outcome.further_blocks.text)
+        self.assertIn("- Der Lesepfad bleibt synchron.", outcome.further_blocks.text)
+
+    def test_parse_dec_tool_on_the_de_file_path_sees_the_further_blocks(self):
+        """The path-based ``parse_dec`` tool (the language derived from the file's position under the
+        base directory) parses the variant's extra blocks through the de heading table."""
+        result = parse_dec(str(self.de_file))
+
+        assert isinstance(result, DecDocument)
+        outcome = result.body.outcome
+        assert outcome.further_blocks is not None
+        self.assertIn("Der Lesepfad bleibt synchron.", outcome.further_blocks.text)
+
+
 if __name__ == "__main__":
     unittest.main()
