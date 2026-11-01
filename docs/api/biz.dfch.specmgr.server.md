@@ -105,6 +105,16 @@ specmgr://dtais --      The DTAIS verification-method vocabulary (Demonstration,
                         apply each -- raw markdown domain-knowledge guidance.
 specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
+specmgr://iso29148 --   The ISO/IEC/IEEE 29148:2018 four requirement specifications
+                        (``BRS``/``StRS``/``SyRS``/``SRS``, the standard's own §3.2
+                        abbreviations): the §5.4 mapping, the §6.2-6.4 processes, the
+                        §8.2-8.5 example outlines, the §9.3-9.6 content clauses, the
+                        mapping to specmgr document types, and the §5.2.6
+                        "Characteristics of a set of requirements" list -- the
+                        closed set ``req``'s ``## Level`` carries -- raw markdown,
+                        the ``specmgr://ears`` shape (ADR
+                        356d8781-e446-4c26-917a-eda85648ce9d; feat-173-
+                        req-iso29148-level-set, GitHub issue #173, Phase 130).
 specmgr://rasci --      The generic RASCI (Responsible/Accountable/Support/Consulted/
                         Informed) responsibility-assignment framework, as raw markdown.
 specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five

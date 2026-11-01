@@ -47,7 +47,14 @@ type or cross-cutting:
   carries `error_count` and reports a failed-to-parse document inline
   (marker `title`/`status`, `error`, plus a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3); `req/prompts/`
-  (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
+  (`create_req`/`update_req`). REQ's `## Level` is a mandatory
+  single-line closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind (exactly one of `BRS`/`StRS`/`SyRS`/
+  `SRS`, the standard's §3.2 abbreviations; the cross-cutting
+  `specmgr://iso29148` resource documents the four kinds, and obligation
+  is carried by the requirement statement's phrasing — EARS,
+  `specmgr://ears`) (feat-173-req-iso29148-level-set, GitHub issue #173).
+  Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
@@ -1006,8 +1013,11 @@ type or cross-cutting:
     value),
     `specmgr://ears` — the EARS requirement-phrasing templates (feat-92),
     `specmgr://iso25010` — the ISO/IEC 25010:2023
-    quality model, `specmgr://dtais` — the DTAIS verification-method
-    vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
+    quality model, `specmgr://iso29148` — the ISO/IEC/IEEE 29148:2018
+    four requirement specifications (`BRS`/`StRS`/`SyRS`/`SRS` — the
+    closed set `req`'s `## Level` carries), `specmgr://dtais` — the DTAIS
+    verification-method vocabulary VCR's `## Acceptance Criteria` depends
+    on, kept here rather
     than under `vcr/resources/` since it is domain-knowledge other document
     types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`

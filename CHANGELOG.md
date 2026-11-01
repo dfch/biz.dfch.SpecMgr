@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The cross-cutting `specmgr://iso29148` resource: the four
+  ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
+  `SyRS`, `SRS` — the standard's own §3.2 abbreviations), with the §5.4
+  mapping sentence, the §6.2-6.4 processes, the §8.2-8.5 example
+  outlines, the §9.3-9.6 content clauses, the mapping to specmgr
+  document types, and the §5.2.6 "Characteristics of a set of
+  requirements" list — the closed set `req`'s `## Level` carries.
+  Served as raw markdown with a model-backed drift guard (a structural
+  edit of the packaged markdown fails its parse model) — the
+  `specmgr://ears` shape (ADR 356d8781-e446-4c26-917a-eda85648ce9d;
+  feat-173-req-iso29148-level-set, GitHub issue #173).
+
+### Changed
+
+- **BREAKING**: `req`'s `## Level` is a mandatory single-line
+  closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind — exactly one of `BRS`, `StRS`, `SyRS`,
+  `SRS` (the standard's §3.2 abbreviations) — enforced in
+  `req/models/v1` by its own `_LEVEL_PATTERN`. This is an in-place
+  `req/models/v1` schema evolution (the feat-132-prb-update precedent:
+  no v2, no dual-schema read support), so an existing `req` document
+  with any other `## Level` value fails to parse until its value is one
+  of the four kinds; the `update_req` prompt carries a present-tense
+  recovery directive for that case (host-read the file at the
+  parse-failure `path`, replace the value, confirming read). The RFC
+  2119 obligation keywords (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/
+  `MAY`) are gone from the `req` schema — obligation is carried by the
+  requirement statement's phrasing (EARS, `specmgr://ears`), as
+  documented by the resource's `## Requirement obligation` section. All
+  14 in-repo `docs/req/` documents carry `SRS` (they specify the
+  specmgr tool itself); the packaged `req` template/example carry the
+  kind (`SyRS`); the `create_req` prompt reads `specmgr://iso29148`
+  first and elicits the kind; the i18n never-translate `## Level`
+  vocabulary is the four kinds; and the GOL model module docstring and
+  the `create_gol` prompt carry the current fact (a goal has no
+  `## Level` section; obligation lives on the requirements below it, in
+  each one's ISO 29148 kind plus its statement's own phrasing)
+  (feat-173-req-iso29148-level-set, GitHub issue #173).
+
 ## [0.38.0] - 2026-10-31
 
 ### Added
