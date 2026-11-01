@@ -92,6 +92,23 @@ jobs:
           exit 1
         }
 
+    - name: Make sure `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` is correct
+      # The generated harness bundle (feat-167-mcp-lifecycle-commands-2 Phase 130): the
+      # flat `specmgr harness-bundle` command re-enumerates the repo-root
+      # .opencode/{agent,command,skill}/ markdown tree deterministically (no timestamps,
+      # two runs byte-identical) and rewrites the single package-data file; a diff is
+      # drift. The specmgr-harness-bundle pre-commit hook runs the same
+      # regenerate + git diff --exit-code pair locally (scoped to the bundled files);
+      # this step is its CI backstop, pinned to Python 3.13 like the docs drift steps
+      # above.
+      if: matrix.python-version == '3.13'
+      run: |
+        uv run --frozen --all-extras --python 3.13.13 specmgr harness-bundle
+        git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json || {
+          echo "::error::src/biz/dfch/specmgr/general/data/general_harness_bundle.json is out of date -- run 'uv run --frozen --all-extras specmgr harness-bundle' and commit the result (see AGENTS.md)."
+          exit 1
+        }
+
     - name: Make sure `docs/*_schema.json` is correct
       # `specmgr schema` without --type regenerates/checks ALL registered doc types
       # (dec, feat, gol, prb, qa, req, rsk, sop, sysrs, tsk, txt, uc, vcr) in a single run, and the command itself

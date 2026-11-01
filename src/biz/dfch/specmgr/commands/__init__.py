@@ -35,6 +35,7 @@ from .adr_toc import adr_toc
 from .coverage_badge import coverage_badge
 from .diagram import diagram
 from .docs import docs
+from .harness_bundle import harness_bundle
 from .lint import lint
 from .mcp import mcp
 from .mcp_docs import mcp_docs
@@ -51,6 +52,7 @@ __all__ = [
     "coverage_badge",
     "diagram",
     "docs",
+    "harness_bundle",
     "lint",
     "mcp",
     "mcp_docs",

@@ -126,7 +126,8 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
 
     def test_all_commands_still_registered(self):
         """The full registered command set: the pre-existing commands + plantuml-check,
-        plantuml-encode, the diagram sub-group, and lint (feat-218, Phase 100)."""
+        plantuml-encode, the diagram sub-group, lint (feat-218, Phase 100), and
+        harness-bundle (feat-167-mcp-lifecycle-commands-2, Phase 130)."""
         names = set(get_command(app).commands)
 
         self.assertEqual(
@@ -137,6 +138,7 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
                 "docs",
                 "mcp-docs",
                 "adr-toc",
+                "harness-bundle",
                 "coverage-badge",
                 "schema",
                 "unused-code",
