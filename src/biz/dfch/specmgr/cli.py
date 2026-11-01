@@ -44,6 +44,7 @@ from .commands import (
     coverage_badge,
     diagram,
     docs,
+    harness_bundle,
     lint,
     mcp,
     mcp_docs,
@@ -134,6 +135,7 @@ app.command()(mcp)
 app.command()(docs)
 app.command()(mcp_docs)
 app.command()(adr_toc)
+app.command()(harness_bundle)
 app.command()(coverage_badge)
 app.command()(schema)
 app.command()(unused_code)

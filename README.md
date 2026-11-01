@@ -29,6 +29,7 @@ them as "extras" (see [Installation](#installation)).
 - [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
 - [Reference Graph Diagrams](#reference-graph-diagrams)
 - [MCP Server](#mcp-server)
+- [Installing the specmgr Harness Files](#installing-the-specmgr-harness-files)
 - [Usage](#usage)
 - [Referencing Artifacts](#referencing-artifacts)
 - [Multi-Language Artifacts](#multi-language-artifacts)
@@ -519,7 +520,75 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    what's published on PyPI — drop `--extra similarity` if you don't need
    [Semantic Similarity Search](#semantic-similarity-search).
 
-3. Save the file and restart OpenCode
+ 3. Save the file and restart OpenCode
+
+## Installing the specmgr Harness Files
+
+Beyond the MCP server itself, this repo ships its agent harness files —
+every markdown file under `.opencode/{agent,command,skill}/` (the
+subagents, slash commands, and skills the commands above drive) — as a
+single packaged bundle: the `specmgr://harness-bundle` MCP resource
+(`application/json`), an `instructions` field carrying the complete
+install protocol plus a `files` array with each file's `path` (relative
+to `.opencode/`), `sha256`, and verbatim `content`. The bundle is
+generated from the repo's own tree by the `specmgr harness-bundle` CLI
+command and drift-guarded by a pre-commit hook and a CI check, so the
+published bundle always matches the released `.opencode/` files
+exactly. The [Add to OpenCode](#add-to-opencode) section above covers
+the MCP server setup the harness files pair with — it is not repeated
+here.
+
+**Agent-driven install (recommended).** Ask your agent to install the
+specmgr harness files: it reads `specmgr://harness-bundle` (discoverable
+via the MCP host's resource listing) and follows the bundle's
+`instructions` field — picking its harness config root via the harness's
+own configuration skill (OpenCode: `customize-opencode`), writing every
+file byte-exact (skipping sha256-identical ones, asking you via the
+`question` tool before overwriting a differing one), re-verifying every
+write, and reporting installed/skipped/updated/failed per file. The
+install never reads, writes, or merges `opencode.json`.
+
+**What gets installed.** Every `.opencode/agent/*.md` subagent,
+`.opencode/command/*.md` slash command, and `.opencode/skill/*/SKILL.md`
+skill of the published package — the bundle is all-inclusive on purpose,
+since the commands' dependency closure (e.g. `/implement-feature`
+driving `phase-orchestrator` → `phase-implementer`) needs the existing
+agents too.
+
+**Manual / Claude Code path.** Claude Code's structurally similar
+`.claude/agents/*.md` and `.claude/commands/*.md` conventions (one
+markdown file per agent/command, YAML frontmatter plus prose body) make
+the bundle's files hand-portable: copy each file's frontmatter and body
+into the matching `.claude/` file, translating the permission model. The
+two models do not map one-to-one — OpenCode carries per-pattern
+`bash`/`edit`/`read` permission rules (last matching rule wins), while
+Claude Code's frontmatter takes a coarse tool allow-list (`tools:`) — so
+a hand-ported file is a simplified equivalent, not an automatic
+translation:
+
+```yaml
+# .claude/agents/ref-finder.md -- hand-ported from the bundle's
+# agent/ref-finder.md: the description and the prose body are unchanged,
+# and the OpenCode per-pattern permission rules (read/glob/grep/list
+# allowed, edit/write/task/bash denied) collapse to a coarse read-only
+# tool allow-list.
+---
+name: ref-finder
+description: >-
+  Lists and resolves the artifacts a single specmgr document references --
+  its `<TYPE> <id>` cross-reference lines -- by calling the `list_references`
+  MCP tool and reporting each referenced artifact's `type`/`id`/`title`/`path`,
+  flagging any that could not be resolved on disk. Read-only -- never edits,
+  writes, or commits.
+tools: Read, Grep, Glob, mcp__specmgr__list_references
+---
+
+<the file's prose body, unchanged>
+```
+
+OpenCode's skills (`.opencode/skill/*/SKILL.md`) have no Claude Code
+counterpart with the same self-triggering semantics; keep them as plain
+reference documents if you need their content.
 
 ## Usage
 
