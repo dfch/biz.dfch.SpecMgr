@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: review
 type: feat
-updated: '2026-11-01T16:41:33.451+01:00'
+updated: '2026-11-01T18:42:51.834+01:00'
 version: 1.0.0
 ---
 
@@ -76,7 +76,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - Targeted edits to 4 existing OpenCode files: `feat-reviewer.md` (the Proposed Fix Phase section) and `phase-orchestrator.md` (the review-fix loop) for the review-fix loop, `implement-feature.md` (doc update mentioning the automatic review-fix step, plus its "a a" typo fix), and `review-feature.md` (its body re-enumerates the report sections and would go stale without the new conditional section).
 
-- The `.opencode/` layout normalization: the user-made-on-disk `skills/` -> `skill/` merge (4 skills; `skill/` is now the single skill directory, 6 skills, one subfolder each) committed, and the stale references it broke fixed -- 2 red test files in `tests/opencode/`, stale docstrings, `AGENTS.md`, `README.md` (Phase 125).
+- The `.opencode/` layout normalization: the user-made-on-disk `skills/` -> `skill/` merge (4 skills; `skill/` is now the single skill directory -- 6 at consolidation, 8 after the i18n rebase -- one subfolder each) committed, and the stale references it broke fixed -- 2 red test files in `tests/opencode/`, stale docstrings, `AGENTS.md`, `README.md` (Phase 125).
 
 - Packaging: the single generated bundle file `general/data/general_harness_bundle.json`, the flat `specmgr harness-bundle` CLI command, the pre-commit drift hook, the CI parity check, and the `pyproject.toml` package-data entry (REQ-007).
 
@@ -206,7 +206,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 #### Phase 125: .opencode/ layout normalization
 
-- [x] Task 125.100: Commit the already-made-on-disk `skills/` -> `skill/` merge (4 skills: `feat-numbering`, `refine-feature`, `review-feature`, `specmgr-refs`; `skill/` is now the single skill directory, 6 skills, one subfolder each) and fix the stale references it broke: `tests/opencode/test_skill_feat_numbering.py` + `tests/opencode/test_skill_specmgr_refs.py` (path constants + docstrings; both red until fixed), `tests/opencode/test_skill_uc_diagram.py` (its module docstring's dual-layout prose), `tests/opencode/__init__.py` (module docstring), `AGENTS.md` (the `specmgr-refs` path in the `general/` bullet), `README.md` (the `specmgr-refs` path). Gate: the full test suite green.
+- [x] Task 125.100: Commit the already-made-on-disk `skills/` -> `skill/` merge (4 skills: `feat-numbering`, `refine-feature`, `review-feature`, `specmgr-refs`; `skill/` is now the single skill directory -- 6 at consolidation, 8 after the i18n rebase -- one subfolder each) and fix the stale references it broke: `tests/opencode/test_skill_feat_numbering.py` + `tests/opencode/test_skill_specmgr_refs.py` (path constants + docstrings; both red until fixed), `tests/opencode/test_skill_uc_diagram.py` (its module docstring's dual-layout prose), `tests/opencode/__init__.py` (module docstring), `AGENTS.md` (the `specmgr-refs` path in the `general/` bullet), `README.md` (the `specmgr-refs` path). Gate: the full test suite green.
 
 - [x] Task 125.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
@@ -234,15 +234,29 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - [ ] Task 140.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
+#### Phase 150: Fix phase (review cycle 1)
+
+- [x] Task 150.100: Correct the stale "6 skills" count to 8 in the plan's Scope/Included bullet (line 79) and in Task 125.100's own (checked-off) text (line 209) — the consolidated `skill/` directory holds 8 subfolders post-i18n-rebase (add `translate-artifact/` + `translation-status/` to the post-merge list, or reword as "6 at consolidation, 8 after the i18n rebase"); align with the handover entry's and Task 130.100's correct 8 / 6-10-8 figures (fixes D1).
+
+- [x] Task 150.110: In Current Status, remove or rewrite the stale sentence "The next action is the feature-level closeout (`status` -> `review`); Phases 100-120 and 140 stay deferred -- they have no dependency on 125/130." so the paragraph no longer both announces and reports the already-performed status move (fixes D2).
+
+- [x] Task 150.120: Add a Decisions Made entry recording that Phase 130 shipped as two Conventional Commits (`10a0184` implementation + `60bf2cf` walkthrough/closeout) as a documented, one-time exception to the one-commit-per-phase discipline, forced by Task 130.150's user-involvement boundary (the implementing agent cannot self-produce the hermetic walkthrough) — mirroring the rationale already in `60bf2cf`'s commit message (fixes D3).
+
+- [x] Task 150.130: Phase-end gate: full quality gate green (`uv run --frozen ruff format --check && uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, `specmgr docs` + `specmgr mcp-docs` no diff — plan-only changes make the doc commands no-ops), then exactly one Conventional Commit for the phase.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. The next action is the feature-level closeout (`status` -> `review`); Phases 100-120 and 140 stay deferred -- they have no dependency on 125/130. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130), with Phases 100-120 and 140 deferred pending the review outcome.
+**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). The next action is this plan's own review-cycle-1 fix phase (Phase 150: the three plan-document inconsistencies D1/D2/D3 raised by the feat-reviewer); Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending the review outcome.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 17:42:51.835Z - Review cycle 1: no Errors/Gaps, three plan-document inconsistencies (D1/D2/D3) fixed in Phase 150
+
+The post-implementation review (cycle 1, feat-reviewer) found no Errors and no Gaps, but three plan-document Inconsistencies, all fixed in this Phase 150 pass: D1 -- the stale "6 skills" count in the Scope/Included bullet and in Task 125.100's own text (the consolidated `skill/` directory holds 8 subfolders post-i18n-rebase; reworded "6 at consolidation, 8 after the i18n rebase"), D2 -- the Current Status sentence that both announced and reported the already-performed `status` -> `review` move (rewritten so the move is reported as done and the next action is this Phase 150 fix phase, Phases 100-120/140 still deferred), and D3 -- the undocumented two-commit split of Phase 130 (`10a0184` + `60bf2cf`), now recorded under Decisions Made. Plan-only changes: no fixture, `src/`, or `docs/` touched. The reviewer's Improvements (I1-I4) are advisory and were deliberately not acted on.
 
 #### 2026-11-01 15:41:33.454Z - Status set to review: distribution slice (Phase 125 + 130) complete
 
@@ -299,6 +313,10 @@ Drafted this feature by splitting the not-yet-started remainder (originally Phas
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 17:42:51.835Z - Phase 130 shipped as two Conventional Commits: documented one-time exception to the one-commit-per-phase discipline
+
+Phase 130 closed with two commits -- `10a0184` (the implementation, Tasks 130.100-140/160) and `60bf2cf` (the Task 130.150 end-to-end walkthrough fixture plus the Phase 130 closeout) -- as a one-time, documented exception to the 2026-09-24 one-commit-per-phase discipline (the 2026-09-24 20:57:09 Decisions Made entry). The split was forced by Task 130.150's user-involvement boundary: a hermetic, fresh-agent install walkthrough cannot be self-produced by the implementing agent, so the plan itself recorded "the phase commit (Task 130.170) waits on this" and the implementation (`10a0184`) landed before the walkthrough-driven closeout (`60bf2cf`). The same split is recorded in `60bf2cf`'s commit message and in the 2026-11-01 Updates entries; this entry moves the rationale into the feature-level Decisions Made log, per the plan's own ADR-vs-Decisions-Made convention (a decision scoped entirely to this feature's implementation belongs here, not in a full ADR).
 
 #### 2026-10-31 06:58:19.585Z - Distribution: single generated bundle file served as one MCP resource, installed by the harness's own agent
 
