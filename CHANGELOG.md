@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The `dec` `## Decision Outcome` lead is relaxed so that, after the
+  mandatory lead paragraph (the `statement` field, position and meaning
+  unchanged), zero or more further blocks — additional paragraphs,
+  bullet lists, ordered lists, and fenced code blocks — may follow
+  before the first `###` sub-section, carried by the new optional
+  `further_blocks` field (the `dec`-local `OutcomeBlocks` leaf) declared
+  between `statement` and `consequences` in `dec/models/v1` — an
+  additive, non-breaking schema evolution: a section whose first block
+  is not a paragraph (a bare list, a `###` heading, nothing) is still
+  rejected, `### Consequences`/`### Confirmation` keep their position,
+  optionality and meaning, and every previously valid document parses to
+  the same result with a byte-exact round-trip. The rejected kinds stay
+  rejected per distinct token kind (block quotes, HTML comments,
+  horizontal rules, H4+/H5/H6 headings, raw HTML); pipe-table content is
+  a plain paragraph to the shared commonmark tokenizer (which has no
+  table token) and is therefore accepted, consistent with the lead
+  paragraph's existing behavior. This unblocks the UUID-preserving ADR to
+  DEC conversion (GitHub issue #46), whose ~20 of 46 blocked ADRs (e.g.
+  `750842b2`, `92cc4ce8`, `356d8781`) carry multi-block outcomes
+  (feat-247-dec-outcome-blocks, GitHub issue #247).
+
 ## [0.38.0] - 2026-10-31
 
 ### Added

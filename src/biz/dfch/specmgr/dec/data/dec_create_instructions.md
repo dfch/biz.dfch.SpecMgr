@@ -26,8 +26,11 @@ step 1 if this is genuinely a new decision.
 - `## Considered Options` -- optional prose: a free-form summary of
   the options that were weighed.
 - `## Decision Outcome` -- mandatory: a lead paragraph naming the
-  chosen option (e.g. "We chose option 1 because ..."), followed by
-  optional `### Consequences` and `### Confirmation` H3 sections.
+  chosen option (e.g. "We chose option 1 because ...") -- the lead
+  MUST be a paragraph -- optionally followed by further blocks
+  (additional paragraphs, bullet or ordered lists, or code blocks)
+  before any H3, then the optional `### Consequences` and
+  `### Confirmation` H3 sections.
 - `## Roles and Responsibilities` -- mandatory RASCI composite: every
   decision always names an accountable owner, so this whole section is
   always present (unlike SOP's own optional equivalent):

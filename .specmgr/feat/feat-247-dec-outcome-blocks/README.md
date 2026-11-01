@@ -4,7 +4,7 @@ created: '2026-11-01T07:22:27.849+01:00'
 id: feat-247-dec-outcome-blocks
 status: progress
 type: feat
-updated: '2026-11-01T13:31:54.000+01:00'
+updated: '2026-11-01T15:58:23.000+01:00'
 version: 1.0.0
 ---
 
@@ -92,9 +92,9 @@ Every list item in this document is written as a single physical line (the soft-
 
 #### Phase 120: Generated Artifacts and Documentation
 
-- [ ] Task 120.100: Regenerate both copies of `dec_schema.json` (`src/biz/dfch/specmgr/dec/data/` and `docs/`), the API docs, `docs/MCP.md` and `docs/GENERATED.md` with `specmgr schema`, `specmgr docs` and `specmgr mcp-docs`, update the `dec/models` and `dec/models/v1` export lists and `whitelist.py` if a new class is added, and confirm no drift.
-- [ ] Task 120.110: Update `dec_create_instructions.md` (lines 28-30) and `dec_update_instructions.md` (line 50) for ACC-008, the DEC template/example (`dec_template.md`, `dec_example.md`) if they describe the one-paragraph lead, and AGENTS.md's DEC bullet if it states the rule; record in Decisions Made whether AGENTS.md needed a change.
-- [ ] Task 120.120: Add the CHANGELOG `[Unreleased]` entry.
+- [x] Task 120.100: Regenerate both copies of `dec_schema.json` (`src/biz/dfch/specmgr/dec/data/` and `docs/`), the API docs, `docs/MCP.md` and `docs/GENERATED.md` with `specmgr schema`, `specmgr docs` and `specmgr mcp-docs`, update the `dec/models` and `dec/models/v1` export lists and `whitelist.py` if a new class is added, and confirm no drift.
+- [x] Task 120.110: Update `dec_create_instructions.md` (lines 28-30) and `dec_update_instructions.md` (line 50) for ACC-008, the DEC template/example (`dec_template.md`, `dec_example.md`) if they describe the one-paragraph lead, and AGENTS.md's DEC bullet if it states the rule; record in Decisions Made whether AGENTS.md needed a change.
+- [x] Task 120.120: Add the CHANGELOG `[Unreleased]` entry.
 
 #### Phase 130: Verification
 
@@ -106,9 +106,9 @@ Every list item in this document is written as a single physical line (the soft-
 
 ### Current Status
 
-**As of 2026-11-01**: Phases 100 and 110 are complete. The Phase 100 spike chose the model shape (the dedicated `OutcomeBlocks` leaf as the new optional `further_blocks` field of `DecisionOutcome` between `statement` and `consequences`), and Phase 110 implemented it exactly as specced: one new leaf class plus one new optional field in `dec/models/v1/body.py` (no `models/md` change), the full test matrix (model, parser, tool, i18n, and the three committed ADR-derived regression fixtures), and -- because the pre-commit drift hooks (`specmgr-schema`, `specmgr-schema-dec-package`, `specmgr-docs`, `specmgr-mcp-docs`) require the regenerated artifacts in the same commit as the model change -- the mechanical half of Phase 120 Task 120.100 (both `dec_schema.json` copies, `docs/api/*`, `docs/GENERATED.md`, `docs/MCP.md` checked as a no-op) was pulled forward and is staged. Quality gate green: ruff format/check clean, vulture clean (one `whitelist.py` entry for the new field), `tests/dec` 389 passed (356 baseline + 33 new).
+**As of 2026-11-01**: Phases 100, 110 and 120 are complete. The Phase 100 spike chose the model shape (the dedicated `OutcomeBlocks` leaf as the new optional `further_blocks` field of `DecisionOutcome` between `statement` and `consequences`), Phase 110 implemented it exactly as specced (one new leaf class plus one new optional field in `dec/models/v1/body.py`, no `models/md` change, the full test matrix -- model, parser, tool, i18n, and the three committed ADR-derived regression fixtures -- and the mechanical half of Task 120.100, both `dec_schema.json` copies plus `docs/api/*`, `docs/GENERATED.md` and `docs/MCP.md` checked as a no-op, pulled forward because the pre-commit drift hooks require the regenerated artifacts in the same commit as the model change), and Phase 120 finished the editorial work: the DEC create/update instruction texts now describe the relaxed `## Decision Outcome` rule (ACC-008), the DEC template/example were checked and left unchanged (no one-paragraph-lead wording; a plain lead paragraph is still valid), AGENTS.md was checked and left unchanged (its DEC bullet never states the one-paragraph rule), the CHANGELOG `[Unreleased]` entry is in place, and all four generators re-ran as no-ops after the edits, so no generated artifact needed staging. Quality gate green: ruff format/check clean, vulture clean (one `whitelist.py` entry for the new field, from Phase 110), `tests/dec` 389 passed (356 baseline + 33 new).
 
-**Handover**: the next step is Phase 120, which now holds only the *editorial* doc work: the DEC create/update instruction texts (ACC-008), the DEC template/example and AGENTS.md wording where they state the one-paragraph rule (Task 120.110), and the CHANGELOG `[Unreleased]` entry (Task 120.120). Nothing in Phase 120 requires a code or schema change; Task 120.100's export/whitelist/schema half is already done (Decisions Made, 2026-11-01 12:31:54.000Z entry).
+**Handover**: the next step is Phase 130 (verification): Task 130.100's local quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, and the full `pytest -n auto --cov=src --cov-report=` suite), Task 130.105's `git diff --stat` review against ACC-005, and Task 130.110's one-off in-memory trial conversion of the 46 ADRs recorded as a snapshot (before: 46 total, 20 blocked, 26 clean; expected after: 46 clean for this rule) and handed to feat-46.
 
 ### Blockers
 
@@ -117,6 +117,10 @@ Every list item in this document is written as a single physical line (the soft-
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 14:58:23.000Z - Phase 120: generated artifacts and documentation complete (all three tasks)
+
+Task 120.100 (re-confirm no drift): all four generators -- `uv run --frozen specmgr schema`, `uv run --frozen specmgr schema --type dec --output-dir src/biz/dfch/specmgr/dec/data`, `uv run --frozen specmgr docs` and `uv run --frozen specmgr mcp-docs` -- ran as no-ops both before and after the Phase 120 edits (every artifact reported unchanged, `git status` clean after each run), confirming the Phase 110 pulled-forward regeneration; `docs/MCP.md` needed no regeneration because it embeds only the `create_dec`/`update_dec` prompt docstrings and argument tables, while the instruction files are packaged data read fresh at call time. Task 120.110: `dec_create_instructions.md`'s `## Decision Outcome` bullet and `dec_update_instructions.md`'s `outcome` mapping now describe the relaxed rule (ACC-008: mandatory lead paragraph, optionally followed by further paragraphs, bullet or ordered lists, or code blocks before any H3, then the optional `### Consequences`/`### Confirmation`); `dec_template.md` and `dec_example.md` were checked and left UNCHANGED (neither states a one-paragraph-lead rule -- the template's placeholder describes the mandatory lead, the example shows a plain single-paragraph lead, both still valid under the relaxation); AGENTS.md was checked and left UNCHANGED (its DEC bullet mentions `## Decision Outcome` only as a heading in the feat-29 Roles/Tags/Source context, ~line 404 -- it never states the one-paragraph rule, and it is outside ACC-005's allowed file set anyway). Task 120.120: the CHANGELOG `[Unreleased]` gained a `### Changed` entry (the relaxed outcome lead with the new `further_blocks` field, the rejected-kinds-per-distinct-token-kind contract, the pipe-table-content-as-paragraph acceptance, and the unblocking of the UUID-preserving ADR to DEC conversion, GitHub issue #46). No `.py` file, no `models/md` change, no DEC frontmatter change, and no AGENTS.md change in this phase. Quality gate: `ruff format --check` and `ruff check` pass, vulture (min-confidence 60) clean, all four generators report no drift after the edits, and `uv run --frozen --all-extras specmgr lint .specmgr/feat/feat-247-dec-outcome-blocks/README.md` exits 0 with failed=0.
 
 #### 2026-11-01 12:31:54.000Z - Phase 110: implementation complete (all five tasks)
 
@@ -141,6 +145,13 @@ Planned from a trial conversion of the 46 ADRs through the real `parse_dec`: 20 
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 14:58:23.000Z - Phase 120 documentation decisions
+
+- AGENTS.md: checked, NO CHANGE -- its DEC bullet mentions `## Decision Outcome` only as a heading name (the feat-29 `## Roles and Responsibilities`/`## Tags`/`## Source` insertion context, ~line 404) and never states the one-paragraph-lead rule, so there is nothing to update; AGENTS.md is also outside ACC-005's allowed file set, so it must not be touched either way (this records Task 120.110's "record in Decisions Made whether AGENTS.md needed a change" -- it did not).
+- `dec_template.md`/`dec_example.md`: checked, NO CHANGE -- neither file carries explicit "one paragraph only" wording: the template's `## Decision Outcome` placeholder is "The chosen option and the reason for it, as a lead paragraph." (describing the mandatory lead, still accurate) and the example shows a plain single-paragraph lead, which is still valid under the relaxation; the relaxed rule's full description now lives in the create/update instruction texts (ACC-008), which the `create_dec`/`update_dec` prompts direct the agent to as the structure reference.
+- `docs/MCP.md`: NO REGENERATION NEEDED after the instruction-text edits -- the mcp-docs generator embeds only the `@mcp.prompt()` docstrings and argument tables, and the instruction files are packaged data read fresh at call time (no `.py` change), so all four generators re-ran after the edits as no-ops with zero drift and no generated artifact needed staging.
+- CHANGELOG entry: `### Changed` (a backward-compatible relaxation, not an addition or removal), length matched to the 0.38.0 neighbors, the ` — ` em-dash style of the recent entries, and the `(feat-247-dec-outcome-blocks, GitHub issue #247)` provenance suffix like every other entry.
 
 #### 2026-11-01 12:31:54.000Z - Phase 110 implementation decisions
 
