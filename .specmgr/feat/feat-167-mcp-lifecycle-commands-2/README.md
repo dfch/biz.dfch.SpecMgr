@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
-status: planning
+status: review
 type: feat
-updated: '2026-11-01T15:48:36.549+01:00'
+updated: '2026-11-01T16:41:33.451+01:00'
 version: 1.0.0
 ---
 
@@ -238,11 +238,15 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Current Status
 
-**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. The next action is the feature-level closeout (`status` -> `review`); Phases 100-120 and 140 stay deferred -- they have no dependency on 125/130.
+**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. The next action is the feature-level closeout (`status` -> `review`); Phases 100-120 and 140 stay deferred -- they have no dependency on 125/130. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130), with Phases 100-120 and 140 deferred pending the review outcome.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 15:41:33.454Z - Status set to review: distribution slice (Phase 125 + 130) complete
+
+Per user direction, the feature moves from `planning` to `review` now that the distribution slice (Phase 125 + Phase 130) is complete. Phase 130 is closed: implementation committed as `10a0184`, and the end-to-end walkthrough fixture plus the Phase 130 closeout (Tasks 130.150/130.170 bookkeeping) as `60bf2cf`. Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred and are out of scope for this review for now.
 
 #### 2026-11-01 14:48:36.549Z - Task 130.150 done: end-to-end install walkthrough in a fresh hermetic OpenCode container, pinned by a committed fixture
 
