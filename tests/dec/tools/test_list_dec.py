@@ -40,18 +40,23 @@ from biz.dfch.specmgr.general.models import PagedResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._paging import DEFAULT_MAX_RESULTS, MAX_MAX_RESULTS
 
-_MINIMAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    ## Context and Problem Statement
+_MINIMAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 _OTHER_BODY = _MINIMAL_BODY.replace("Choose a Document Store", "Nightly Order Export")
@@ -68,28 +73,38 @@ class TestListDec(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_returns_summaries_and_skips_malformed_file(self) -> None:
+    def test_returns_summaries_and_reports_malformed_file_as_a_failed_entry(self) -> None:
         first = create_dec(_MINIMAL_BODY)
         second = create_dec(_OTHER_BODY)
 
         base_dir = ensure_dec_base_dir()
-        (base_dir / "broken.md").write_text("not a valid decision, no headings at all", encoding="utf-8")
+        broken_path = base_dir / "broken.md"
+        broken_path.write_text("not a valid decision, no headings at all", encoding="utf-8")
 
         sut = list_dec()
 
         self.assertIsInstance(sut, PagedResult)
-        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
         for summary in sut.results:
             self.assertIsInstance(summary, DecSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.id, second.id})
+        self.assertEqual(ids, {first.id, second.id, None})
         titles = {summary.title for summary in sut.results}
-        self.assertEqual(titles, {"Choose a Document Store", "Nightly Order Export"})
+        self.assertEqual(titles, {"Choose a Document Store", "Nightly Order Export", "<failed to parse>"})
         statuses = {summary.status for summary in sut.results}
-        self.assertEqual(statuses, {"draft"})
+        self.assertEqual(statuses, {"draft", "<failed to parse>"})
         for summary in sut.results:
             self.assertNotIn(".md", summary.ref)
             self.assertTrue(summary.ref)
+            self.assertTrue(Path(summary.path).is_absolute())
+
+        failed = next(summary for summary in sut.results if summary.ref == "broken")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), broken_path.resolve())
+        self.assertIsNotNone(failed.error)
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse((self.docs_root / "dec").exists())
@@ -178,7 +193,7 @@ class TestListDec(unittest.TestCase):
         self.assertEqual(past_end.results, [])
         self.assertFalse(past_end.truncated)
 
-    def test_total_reflects_full_parseable_count_regardless_of_paging(self) -> None:
+    def test_total_and_error_count_reflect_the_full_directory_regardless_of_paging(self) -> None:
         for i in range(5):
             create_dec(_body_with_title(f"Decision Number {i:02d}"))
         base_dir = ensure_dec_base_dir()
@@ -186,7 +201,8 @@ class TestListDec(unittest.TestCase):
 
         sut = list_dec(max_results=1, offset=1)
 
-        self.assertEqual(sut.total, 5)
+        self.assertEqual(sut.total, 6)
+        self.assertEqual(sut.error_count, 1)
 
 
 if __name__ == "__main__":

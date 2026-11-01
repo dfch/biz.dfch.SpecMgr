@@ -19,14 +19,20 @@
 
 Covers the alias acceptance/rejection of every heading class, the computed
 `RequirementItem.description`/`AcceptanceCriterionItem.criterion_description`/
-`Phase.number`/`Phase.title`/`UpdateEntry.timestamp`/`UpdateEntry.title`/
-`DecisionEntry.timestamp`/`DecisionEntry.title` fields, the
+`FeatTaskItem.task_description`/`Phase.number`/`Phase.title`/
+`UpdateEntry.timestamp`/`UpdateEntry.title`/`DecisionEntry.timestamp`/
+`DecisionEntry.title` fields, the
 `Scope`/`Dependencies`/`TaskList`/`Updates`/`DecisionsMade` composite shapes,
 `Feature`'s mandatory/optional section behavior, the newest-first ordering
 after-validator on `Updates`/`DecisionsMade`, and the full reference
 document's round-trip (seeded from
 `.specmgr/feat/feat-31-feature/example.md`, see
 `tests/feat/models/v1/data/feat_reference.md`).
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` and
+`DecisionEntry.content` accept any markdown content (multi-paragraph,
+bullet/numbered list, fenced code block, block quote), not just a single
+paragraph.
 """
 
 from __future__ import annotations
@@ -49,6 +55,7 @@ from biz.dfch.specmgr.feat.models.v1.body import (
     DependsOn,
     DesignNotes,
     ExplicitlyOutOfScope,
+    FeatTaskItem,
     Feature,
     Included,
     MoreInformation,
@@ -163,20 +170,30 @@ class TestRelatedPrsCommitsLiteralAlias(unittest.TestCase):
 
 
 class TestPhaseHeadingAlias(unittest.TestCase):
-    """`Phase`'s regex alias requires `Phase {N}: {title}` -- title mandatory, unpadded number."""
+    """`Phase`'s regex alias requires `Phase {NNN}: {title}` -- title mandatory, 3-digit number (gaps allowed)."""
 
     def test_accepts_numbered_titled_headings(self) -> None:
-        for heading in ("Phase 0: Scaffolding", "Phase 1: Models", "Phase 12: A: B"):
+        for heading in ("Phase 100: X", "Phase 105: A: B", "Phase 999: X"):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(Phase, heading))
 
     def test_rejects_headings_without_title(self) -> None:
-        for heading in ("Phase 1", "Phase 1:", "Phase 1: "):
+        for heading in ("Phase 100", "Phase 100:", "Phase 100: "):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(Phase, heading))
+
+    def test_rejects_legacy_unpadded_numbers(self) -> None:
+        for heading in ("Phase 0: X", "Phase 1: X", "Phase 12: X"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(Phase, heading))
+
+    def test_rejects_four_digit_numbers(self) -> None:
+        for heading in ("Phase 1000: X",):
             with self.subTest(heading=heading):
                 self.assertFalse(match_alias(Phase, heading))
 
     def test_rejects_nonnumeric_and_malformed_numbers(self) -> None:
-        for heading in ("Phase one: X", "phase 1: X", "Phases 1: X", "Phase1: X"):
+        for heading in ("Phase one: X", "phase 100: X", "Phases 100: X", "Phase100: X"):
             with self.subTest(heading=heading):
                 self.assertFalse(match_alias(Phase, heading))
 
@@ -197,6 +214,9 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
                 "2026-08-30 16:47:59.981Z : Paused for review",
                 "2026-08-30 14:02:11.123+02:00 : Initial scaffolding",
                 "2026-08-30 09:15:00.000-05:00 : x",
+                "2026-08-30T16:47:59.981Z - Paused for review",
+                "2026-08-30T14:02:11.123+02:00 - Initial scaffolding",
+                "2026-08-30T09:15:00.000-05:00 : x",
             ):
                 with self.subTest(cls=cls.__name__, heading=heading):
                     self.assertTrue(match_alias(cls, heading))
@@ -206,7 +226,7 @@ class TestUpdateEntryAndDecisionEntryHeadingAlias(unittest.TestCase):
             for heading in (
                 "2026-08-30 16:47:59Z - Missing milliseconds",
                 "2026-08-30 16:47:59.981 - Missing offset",
-                "2026-08-30T16:47:59.981Z - Wrong timestamp separator",
+                "2026-08-30 - Missing time",
                 "Anything Goes",
                 "2026-08-30 16:47:59.981Z",
                 "2026-08-30 16:47:59.981Z - ",
@@ -253,6 +273,20 @@ class TestRequirementItem(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Requirements.from_text(text)
 
+    def test_soft_wrapped_item_raises_actionable_error(self) -> None:
+        """feat-99-list-item: a soft-wrapped (lazy-continuation) `REQ-NNN:` bullet raises via
+        `.description`, naming the soft-wrap-specific cause/fix hint, instead of failing the
+        unanchored `_REQUIREMENT_ITEM_PATTERN` with a confusing message."""
+        text = format_text("- REQ-001: The widget must render within 200ms\n  across a second physical line.\n")
+        sut = RequirementItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
     def test_requirements_with_zero_items_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
             Requirements.from_text(format_text("### Requirements\n"))
@@ -282,6 +316,21 @@ class TestAcceptanceCriterionItem(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             _ = sut.criterion_description
+
+    def test_soft_wrapped_item_raises_actionable_error(self) -> None:
+        """feat-99-list-item: a soft-wrapped `ACC-NNN:` checklist bullet raises via
+        `.criterion_description`, covered transitively through the inherited
+        `TaskItem.description`'s own `single_line_text` guard -- no direct wiring needed on
+        `AcceptanceCriterionItem` itself."""
+        text = format_text("- [ ] ACC-001: Render time stays below 200ms\n  even under a second physical line.\n")
+        sut = AcceptanceCriterionItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.criterion_description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
 
     def test_acceptance_criteria_rejects_malformed_item_eagerly(self) -> None:
         text = format_text("### Acceptance Criteria\n\n- [ ] Not an acceptance criterion.\n")
@@ -349,34 +398,139 @@ class TestDependenciesComposite(unittest.TestCase):
         self.assertIsNotNone(sut.blocks)
 
 
+class TestFeatTaskItem(unittest.TestCase):
+    """`FeatTaskItem.task_description` re-matches `Task \\d{3}\\.\\d{3}: .+` against `.description`."""
+
+    def test_parses_unchecked_and_task_description(self) -> None:
+        sut = FeatTaskItem.from_text(format_text("- [ ] Task 100.100: Do the thing\n"))
+
+        self.assertFalse(sut.checked)
+        self.assertEqual(sut.task_description, "Do the thing")
+
+    def test_parses_checked(self) -> None:
+        sut = FeatTaskItem.from_text(format_text("- [x] Task 110.110: Done the thing\n"))
+
+        self.assertTrue(sut.checked)
+        self.assertEqual(sut.task_description, "Done the thing")
+
+    def test_parses_in_between_and_max_numbers(self) -> None:
+        for item_text, expected in (
+            ("- [ ] Task 105.105: In between", "In between"),
+            ("- [x] Task 999.999: Max", "Max"),
+        ):
+            with self.subTest(item_text=item_text):
+                sut = FeatTaskItem.from_text(format_text(f"{item_text}\n"))
+
+                self.assertEqual(sut.task_description, expected)
+
+    def test_malformed_item_raises_actionable_assertion_error_on_access(self) -> None:
+        for item_text in (
+            "Task 1.1: Short components",
+            "Task 100.10: Two-digit task component",
+            "Task 1000.100: Four-digit phase component",
+            "Task 100-100: Wrong separator",
+            "Task 100.100 No colon",
+            "Task 100.100:",
+            "Not a task at all",
+        ):
+            with self.subTest(item_text=item_text):
+                sut = FeatTaskItem.from_text(format_text(f"- [ ] {item_text}\n"))
+
+                with self.assertRaises(AssertionError) as ctx:
+                    _ = sut.task_description
+
+                self.assertEqual(
+                    str(ctx.exception),
+                    f"FeatTaskItem (line 1): expected 'Task NNN.MMM: <description>', got {item_text!r}",
+                )
+
+    def test_soft_wrapped_item_raises_actionable_error(self) -> None:
+        """feat-99-list-item: a soft-wrapped `Task NNN.MMM:` checklist bullet raises via
+        `.task_description`, covered transitively through the inherited
+        `TaskItem.description`'s own `single_line_text` guard -- no direct wiring needed on
+        `FeatTaskItem` itself."""
+        text = format_text("- [ ] Task 100.100: Do the thing\n  across a second physical line.\n")
+        sut = FeatTaskItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            _ = sut.task_description
+
+        message = str(ctx.exception)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+
+class TestPhaseTaskItemEagerValidation(unittest.TestCase):
+    """`Phase._validate_items_eagerly` forces `.checked`/`.task_description` at parse time."""
+
+    def test_phase_accepts_new_shape_task_numbers(self) -> None:
+        for item_text, expected_checked in (
+            ("- [ ] Task 100.100: A", False),
+            ("- [x] Task 100.110: B", True),
+            ("- [ ] Task 105.105: In between", False),
+            ("- [x] Task 999.999: Mismatched phase component", True),
+        ):
+            with self.subTest(item_text=item_text):
+                text = format_text(f"#### Phase 100: X\n\n{item_text}\n")
+
+                sut = Phase.from_text(text)
+
+                self.assertEqual(sut.items[0].checked, expected_checked)
+
+    def test_phase_rejects_malformed_task_items_eagerly(self) -> None:
+        for item_text in (
+            "- [ ] Task 1.1: Short components",
+            "- [ ] Task 100.10: Two-digit task component",
+            "- [ ] Task 1000.100: Four-digit phase component",
+            "- [ ] Task 100-100: Wrong separator",
+            "- [ ] Task 100.100 No colon",
+            "- [ ] No prefix at all",
+        ):
+            with self.subTest(item_text=item_text):
+                text = format_text(f"#### Phase 100: X\n\n{item_text}\n")
+
+                with self.assertRaises(ValidationError) as ctx:
+                    Phase.from_text(text)
+
+                message = str(ctx.exception)
+                self.assertIn("Phase > FeatTaskItem (line ", message)
+                self.assertIn("expected 'Task NNN.MMM: <description>'", message)
+
+
 class TestPhaseComputedFields(unittest.TestCase):
     """`Phase.number`/`Phase.title` are computed from the heading."""
 
     def test_parses_number_and_title(self) -> None:
-        text = format_text("#### Phase 1: Implementation\n\n- [ ] Task 1.1: Do the thing\n")
+        text = format_text("#### Phase 100: Implementation\n\n- [ ] Task 100.100: Do the thing\n")
 
         sut = Phase.from_text(text)
 
-        self.assertEqual(sut.number, 1)
+        self.assertEqual(sut.number, 100)
         self.assertEqual(sut.title, "Implementation")
         self.assertEqual(str(sut), text)
 
     def test_keeps_colons_inside_the_title(self) -> None:
-        sut = Phase.from_text(format_text("#### Phase 2: A: B\n\n- [ ] Task 2.1: X\n"))
+        sut = Phase.from_text(format_text("#### Phase 105: A: B\n\n- [ ] Task 105.100: X\n"))
 
-        self.assertEqual(sut.number, 2)
+        self.assertEqual(sut.number, 105)
         self.assertEqual(sut.title, "A: B")
 
     def test_rejects_heading_without_title_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
-            Phase.from_text(format_text("#### Phase 1\n\n- [ ] Task 1.1: X\n"))
+            Phase.from_text(format_text("#### Phase 100\n\n- [ ] Task 100.100: X\n"))
+
+    def test_rejects_legacy_unpadded_heading_at_parse_time(self) -> None:
+        for heading in ("#### Phase 1: X", "#### Phase 12: X", "#### Phase 1000: X"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    Phase.from_text(format_text(f"{heading}\n\n- [ ] Task 100.100: X\n"))
 
     def test_with_zero_items_raises_assertion_error(self) -> None:
         with self.assertRaises(AssertionError):
-            Phase.from_text(format_text("#### Phase 1: Implementation\n"))
+            Phase.from_text(format_text("#### Phase 100: Implementation\n"))
 
     def test_rejects_malformed_marker_eagerly(self) -> None:
-        text = format_text("#### Phase 1: Implementation\n\n- [z] Task 1.1: Bad marker\n")
+        text = format_text("#### Phase 100: Implementation\n\n- [z] Task 100.100: Bad marker\n")
 
         with self.assertRaises(ValidationError):
             Phase.from_text(text)
@@ -388,15 +542,31 @@ class TestTaskListComposite(unittest.TestCase):
     def test_parses_multiple_phases(self) -> None:
         text = format_text(
             "### Task List\n\n"
-            "#### Phase 0: Scaffolding\n\n"
-            "- [x] Task 0.1: Set up\n\n"
-            "#### Phase 1: Implementation\n\n"
-            "- [ ] Task 1.1: Build it\n"
+            "#### Phase 100: Scaffolding\n\n"
+            "- [x] Task 100.100: Set up\n\n"
+            "#### Phase 110: Implementation\n\n"
+            "- [ ] Task 110.100: Build it\n"
         )
 
         sut = TaskList.from_text(text)
 
-        self.assertEqual([p.number for p in sut.phases], [0, 1])
+        self.assertEqual([p.number for p in sut.phases], [100, 110])
+        self.assertEqual(str(sut), text)
+
+    def test_parses_in_between_phase_numbers_with_gaps(self) -> None:
+        text = format_text(
+            "### Task List\n\n"
+            "#### Phase 100: First\n\n"
+            "- [ ] Task 100.100: A\n\n"
+            "#### Phase 105: In between\n\n"
+            "- [ ] Task 105.100: B\n\n"
+            "#### Phase 120: Later\n\n"
+            "- [ ] Task 120.100: C\n"
+        )
+
+        sut = TaskList.from_text(text)
+
+        self.assertEqual([p.number for p in sut.phases], [100, 105, 120])
         self.assertEqual(str(sut), text)
 
     def test_with_zero_phases_raises_assertion_error(self) -> None:
@@ -416,7 +586,7 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30 16:47:59.981Z")
         self.assertEqual(sut.title, "Paused for review")
         self.assertEqual(str(sut), text)
@@ -426,10 +596,36 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
 
         sut = DecisionEntry.from_text(text)
 
-        self.assertEqual(sut.content.text, "Some decision text.")
+        self.assertEqual(sut.content.text, "Some decision text.\n")
         self.assertEqual(sut.timestamp, "2026-08-30 17:10:00.000Z")
         self.assertEqual(sut.title, "Deferred mobile gestures")
         self.assertEqual(str(sut), text)
+
+    def test_update_entry_parses_t_separator(self) -> None:
+        text = format_text("#### 2026-08-30T16:47:59.981Z - Paused for review\n\nSome update text.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some update text.\n")
+        self.assertEqual(sut.timestamp, "2026-08-30T16:47:59.981Z")
+        self.assertEqual(sut.title, "Paused for review")
+        self.assertEqual(str(sut), text)
+
+    def test_decision_entry_parses_t_separator(self) -> None:
+        text = format_text("#### 2026-08-30T17:10:00.000Z - Deferred mobile gestures\n\nSome decision text.\n")
+
+        sut = DecisionEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some decision text.\n")
+        self.assertEqual(sut.timestamp, "2026-08-30T17:10:00.000Z")
+        self.assertEqual(sut.title, "Deferred mobile gestures")
+        self.assertEqual(str(sut), text)
+
+    def test_entry_with_date_only_heading_raises_assertion_error(self) -> None:
+        for cls in (UpdateEntry, DecisionEntry):
+            with self.subTest(cls=cls.__name__):
+                with self.assertRaises(AssertionError):
+                    cls.from_text(format_text("#### 2026-08-30 - Missing time\n\nSome text.\n"))
 
     def test_entry_without_lead_paragraph_raises_assertion_error(self) -> None:
         for cls in (UpdateEntry, DecisionEntry):
@@ -442,6 +638,108 @@ class TestUpdateEntryAndDecisionEntry(unittest.TestCase):
             with self.subTest(cls=cls.__name__):
                 with self.assertRaises(ValidationError):
                     cls()
+
+
+class TestUpdateEntryAndDecisionEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry`/`DecisionEntry` `content` accept any markdown content verbatim, not just one
+    paragraph (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so each entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n- item one\n\n- item two\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+                self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n1. Do the first thing.\n\n2. Do the second thing.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\nSome lead prose.\n\n```\ncode block content\n```\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+                self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        for cls, heading in (
+            (UpdateEntry, "#### 2026-08-30 16:47:59.981Z - Paused for review"),
+            (DecisionEntry, "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures"),
+        ):
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"{heading}\n\n> A quoted observation.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(sut.content.text, "> A quoted observation.\n")
+                self.assertEqual(str(sut), text)
+
+    def test_model_dump_surfaces_non_paragraph_entry_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object -- for both the `Updates` and `Decisions Made` collections.
+        progress = Progress.from_text(
+            format_text(
+                "## Progress\n\n"
+                "### Current Status\n\nSome status.\n\n"
+                "### Updates\n\n"
+                "#### 2026-08-30 16:47:59.981Z - Paused for review\n\n"
+                "- item one\n\n"
+                "- item two\n\n"
+                "### Decisions Made\n\n"
+                "#### 2026-08-30 17:10:00.000Z - Deferred mobile gestures\n\n"
+                "- decision one\n\n"
+                "- decision two\n"
+            )
+        )
+
+        dump = Feature(plan=_minimal_plan(), progress=progress).model_dump(mode="json")
+
+        self.assertEqual(dump["progress"]["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
+        self.assertEqual(
+            dump["progress"]["decisions_made"]["decisions"][0]["content"]["text"],
+            "- decision one\n\n- decision two\n",
+        )
 
 
 class TestUpdatesOrdering(unittest.TestCase):
@@ -568,8 +866,8 @@ def _minimal_plan() -> Plan:
             "#### Explicitly Out Of Scope\n\n"
             "- Another.\n\n"
             "### Task List\n\n"
-            "#### Phase 0: Scaffolding\n\n"
-            "- [x] Task 0.1: Set up\n"
+            "#### Phase 100: Scaffolding\n\n"
+            "- [x] Task 100.100: Set up\n"
         )
     )
 

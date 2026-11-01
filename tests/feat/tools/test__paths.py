@@ -20,12 +20,14 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 import textwrap
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.feat.tools import _paths as feat_paths_module
 from biz.dfch.specmgr.feat.tools._paths import (
     DEFAULT_FEAT_DIR,
     FEAT_DIR_ENV_VAR,
@@ -34,6 +36,7 @@ from biz.dfch.specmgr.feat.tools._paths import (
     ensure_feat_base_dir,
     feat_base_dir,
     feature_title,
+    find_feat_parse_failure,
     find_feat_path_by_id,
     iter_feat_paths,
 )
@@ -45,8 +48,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # Feature: Example Widget
@@ -77,9 +80,9 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -123,6 +126,12 @@ class TestFeatBaseDir(unittest.TestCase):
         """SPECMGR_FEAT_DIR, when set, overrides the default."""
         with mock.patch.dict(os.environ, {FEAT_DIR_ENV_VAR: "/tmp/some-custom-feat-dir"}):
             self.assertEqual(feat_base_dir(), Path("/tmp/some-custom-feat-dir"))
+
+    def test_set_but_empty_env_var_falls_back_to_default(self) -> None:
+        """SPECMGR_FEAT_DIR, when set but empty, falls back to the default (the Option A
+        ``empty_falls_back_to_default`` registry flag, feat-208 Phase 110/120)."""
+        with mock.patch.dict(os.environ, {FEAT_DIR_ENV_VAR: ""}):
+            self.assertEqual(feat_base_dir(), DEFAULT_FEAT_DIR)
 
     def test_does_not_create_the_directory(self) -> None:
         """feat_base_dir must never create the directory as a side effect."""
@@ -234,6 +243,123 @@ class TestFindFeatPathById(unittest.TestCase):
                 find_feat_path_by_id(base, "feat-1-broken")
             message = str(ctx.exception)
             self.assertIn("could not be parsed", message)
+
+    def test_acc014_a_read_racing_set_feat_ids_rename_raises_feat_not_found_not_a_bare_file_not_found_error(
+        self,
+    ) -> None:
+        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): a lock-free read racing set_feat_id's
+        rename must not surface an uncaught FileNotFoundError.
+
+        Simulates the narrow window after `set_feat_id`'s
+        `old_path.parent.rename(new_path.parent)` succeeds but before its
+        cache-entry move runs: `path.exists()` above has already passed
+        (the file existed a moment ago), but by the time the cache-backed
+        `read_feat(path)` call's own internal `path.read_text()` actually
+        runs, the folder has vanished -- deterministically reproduced here
+        by having a patched `read_feat` delete the folder itself, then
+        delegate to the real (now genuinely file-missing) cache-backed
+        read, so the exact same `FileNotFoundError` this race would
+        produce in production propagates out of the patched call.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            expected_path = _write_feat_folder(base, "feat-1-mid-rename", "feat-1-mid-rename")
+            real_read_feat = feat_paths_module.read_feat
+
+            def _vanish_then_read(path: Path):
+                shutil.rmtree(path.parent)
+                return real_read_feat(path)
+
+            with mock.patch.object(feat_paths_module, "read_feat", side_effect=_vanish_then_read):
+                with self.assertRaises(FeatNotFoundError) as ctx:
+                    find_feat_path_by_id(base, "feat-1-mid-rename")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+            self.assertIn("FileNotFoundError", message)
+            self.assertFalse(expected_path.exists())
+
+    def test_acc015_malformed_yaml_frontmatter_raises_feat_not_found_not_a_bare_yaml_error(self) -> None:
+        """ACC-015 (feat-107-doc-cache Phase 7, REQ-013): a feature folder whose README.md has
+        deliberately malformed YAML frontmatter must raise FeatNotFoundError, not an uncaught
+        yaml.YAMLError.
+
+        Mirrors ACC-012's fixture/assertion shape (``tests/req/tools/test_doc_cache_wiring.py``),
+        adapted to feat's single-folder shortcut lookup: there is no sibling-file scan here to
+        demonstrate skip-on-failure with, since find_feat_path_by_id never scans -- it shortcuts
+        directly to the one target folder, so the only assertion possible is that the malformed
+        file's own lookup itself resolves to the graceful not-found error, not a crash.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-malformed-yaml"
+            folder.mkdir(parents=True)
+            (folder / README_FILENAME).write_text(
+                "---\n"
+                "id: [this is not valid yaml because the flow sequence is never closed\n"
+                "type: feat\n"
+                "version: 1.0.0\n"
+                "status: planning\n"
+                "created: '2026-08-30T00:00:00.000Z'\n"
+                "updated: '2026-08-30T00:00:00.000Z'\n"
+                "---\n"
+                "\n"
+                "# Feature: Malformed Frontmatter Fixture\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(FeatNotFoundError) as ctx:
+                find_feat_path_by_id(base, "feat-1-malformed-yaml")
+            message = str(ctx.exception)
+            self.assertIn("could not be parsed", message)
+
+
+class TestFindFeatParseFailure(unittest.TestCase):
+    """Tests for find_feat_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c)."""
+
+    def test_missing_folder_returns_none(self) -> None:
+        """A missing folder (no README.md) must return None -- not a parse failure."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+
+            self.assertIsNone(find_feat_parse_failure(base, "feat-1-missing"))
+
+    def test_parse_failure_returns_path_and_error(self) -> None:
+        """An existing folder whose README.md fails to parse must return (path, str(exc))."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-broken"
+            folder.mkdir(parents=True)
+            path = folder / README_FILENAME
+            path.write_text("not a valid document, no headings at all\n", encoding="utf-8")
+
+            result = find_feat_parse_failure(base, "feat-1-broken")
+
+            self.assertIsNotNone(result)
+            assert result is not None
+            self.assertEqual(result[0], path)
+            self.assertTrue(result[1])
+
+    def test_healthy_document_returns_none(self) -> None:
+        """An existing folder whose README.md parses cleanly must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            _write_feat_folder(base, "feat-1-ok", "feat-1-ok")
+
+            self.assertIsNone(find_feat_parse_failure(base, "feat-1-ok"))
+
+    def test_vanished_file_mid_scan_returns_none(self) -> None:
+        """A README.md that exists at scan time but whose read_feat call raises FileNotFoundError must return None."""
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-vanishing"
+            folder.mkdir(parents=True)
+            path = folder / README_FILENAME
+            path.write_text("irrelevant", encoding="utf-8")
+
+            with mock.patch.object(feat_paths_module, "read_feat", side_effect=FileNotFoundError("simulated vanish")):
+                result = find_feat_parse_failure(base, "feat-1-vanishing")
+
+            self.assertIsNone(result)
 
 
 if __name__ == "__main__":

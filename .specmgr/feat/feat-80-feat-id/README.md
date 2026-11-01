@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-04 16:27:34.938+02:00'
 id: feat-80-feat-id
-status: planning
+status: done
 type: feat
-updated: '2026-09-04 16:36:04.291+02:00'
+updated: '2026-10-07T06:21:19.549Z'
 version: 1.0.0
 ---
 
@@ -84,17 +84,17 @@ The fix mirrors feat-69's mechanical recipe exactly: drop the `FeatDocument(...)
 
 ### Task List
 
-#### Phase 1: Fix set_feat_id return shape
+#### Phase 100: Fix set_feat_id return shape
 
-- [x] Task 1.1: Change `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` and return `new_frontmatter` directly in `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`.
+- [x] Task 100.100: Change `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` and return `new_frontmatter` directly in `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`.
 
-- [x] Task 1.2: Update `set_feat_id`'s `description=`/docstring text to state the frontmatter-only return shape.
+- [x] Task 100.110: Update `set_feat_id`'s `description=`/docstring text to state the frontmatter-only return shape.
 
-- [x] Task 1.3: Update `tests/feat/tools/test_set_feat_id.py` with the three-assertion pattern (`isinstance(result, FeatFrontmatter)`, `not isinstance(result, FeatDocument)`, `not hasattr(result, "body")`).
+- [x] Task 100.120: Update `tests/feat/tools/test_set_feat_id.py` with the three-assertion pattern (`isinstance(result, FeatFrontmatter)`, `not isinstance(result, FeatDocument)`, `not hasattr(result, "body")`).
 
-- [x] Task 1.4: Update AGENTS.md's `feat/` bullet to reflect the corrected return shape.
+- [x] Task 100.130: Update AGENTS.md's `feat/` bullet to reflect the corrected return shape.
 
-- [x] Task 1.5: Run `uv run --frozen pytest -n auto`, `ruff format --check`, `ruff check`, `vulture`, and regenerate `specmgr docs`/`docs/MCP.md`; verify no drift.
+- [x] Task 100.140: Run `uv run --frozen pytest -n auto`, `ruff format --check`, `ruff check`, `vulture`, and regenerate `specmgr docs`/`docs/MCP.md`; verify no drift.
 
 ## Progress
 
@@ -106,7 +106,7 @@ The fix mirrors feat-69's mechanical recipe exactly: drop the `FeatDocument(...)
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-#### 2026-09-04 - Phase 1 implemented: set_feat_id returns frontmatter-only
+#### 2026-09-04 16:36:04.000+02:00 - Phase 1 implemented: set_feat_id returns frontmatter-only
 
 Changed `set_feat_id`'s return type annotation from `FeatDocument` to `FeatFrontmatter` in
 `src/biz/dfch/specmgr/feat/tools/set_feat_id.py`: dropped the now-unused `FeatDocument` import and
@@ -125,10 +125,6 @@ changes needed), `ruff check` (all checks passed), `vulture src/ whitelist.py --
 `FeatFrontmatter` return type), and `specmgr mcp-docs` (only `docs/MCP.md`'s `set_feat_id`
 entries changed to add the frontmatter-only callout). No additional straggler tool was found
 beyond the plan's Design Notes review -- ACC-005 stands confirmed as already documented.
-
-#### 2026-09-04 16:27:34.938+02:00 - Created
-
-Feature drafted from GitHub issue #80, scoped after a source-verified review confirming `set_feat_id` as the sole straggler among non-`get_<d>` document-returning tools.
 
 ### Related PRs / Commits
 

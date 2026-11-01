@@ -1,9 +1,9 @@
 ---
-created: '2025-04-01 06:18:52.437Z'
+created: '2025-04-01T06:18:52.437Z'
 id: c4e7b8a3-1f2d-4e9c-8b6a-3d5f7e9c1a2b
 status: active
 type: sop
-updated: '2025-04-27 14:39:07.916Z'
+updated: '2025-04-27T14:39:07.916Z'
 version: 1.0.0
 ---
 
@@ -129,26 +129,28 @@ with what was provisioned, close it, and record the completion date.
 
 ### Requirements
 
-- REQ-9687: Every new employee must be able to log in and send email on
-  their first working day.
+- REQ a36918f5-ec5f-4da5-836f-7fa45c8d5ef6: Every new employee must be
+  able to log in and send email on their first working day.
 
 ### Decisions
 
-- DEC-2703: Adopt least-privilege role groups as the default access
-  model.
+- DEC cadbc633-a7e0-496d-9edb-ebe87c285073: Adopt least-privilege role
+  groups as the default access model.
 
 ### Goals
 
-- GOL-0007: New employees reach full productive access on day one.
+- GOL bed97f1c-5b45-4613-bf02-0aa566127840: New employees reach full
+  productive access on day one.
 
-### Acceptance Criteria
+### Risks
 
-- ACC-1234: The access ticket is closed within one working day of the
-  start date.
+- RSK 7390bc51-39db-4ab0-99db-293cc3bc8396: Delayed Access Provisioning
+  Blocks Day-One Productivity.
 
 ### Sops
 
-- SOP-0042: Offboarding and account de-provisioning.
+- SOP 9eba5b10-d34d-4189-b60f-748a7ea683f5: Offboarding and account
+  de-provisioning.
 
 ## More Information
 

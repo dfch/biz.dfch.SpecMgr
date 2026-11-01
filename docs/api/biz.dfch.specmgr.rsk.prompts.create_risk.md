@@ -5,9 +5,9 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Risk (RSK) document using the existing
 ``rsk/tools/``/``rsk/resources/`` surface (``list_rsk``,
-``specmgr://rsk/template``/``specmgr://rsk/example``, ``specmgr://rsk/schema``,
+``specmgr://rsk/template``/``specmgr://rsk/example``, ``get_rsk_schema``,
 ``specmgr://rsk/tara``, ``specmgr://rsk/risk-matrix``, ``create_rsk``,
-``validate_rsk``).
+generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_rsk`` builds the entire RSK frontmatter

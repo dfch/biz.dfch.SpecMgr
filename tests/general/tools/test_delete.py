@@ -17,9 +17,9 @@
 
 """Tests for the generic ``delete`` ``@mcp.tool()`` wrapper (feat-36-delete, Phase 2).
 
-Parameterized over all twelve whole-body document types
+Parameterized over all whole-body document types
 (ACC-001/ACC-004/ACC-005/ACC-006); seeds a real, persisted document per
-type -- the eleven flat domains via the domain's own ``create_<d>`` tool in a
+type -- every flat domain (every whole-body domain except ``feat``) via the domain's own ``create_<d>`` tool in a
 temp ``SPECMGR_DOCS_DIR``, ``feat`` via its own ``create_feat`` in a temp
 ``SPECMGR_FEAT_DIR`` (mirroring the fixture strategy of
 ``tests/general/tools/test_set_status.py`` and
@@ -37,7 +37,7 @@ raising ``DeleteError`` (an ``OSError`` subclass) with the underlying
 ``OSError`` as ``__cause__`` and the resolved path in the message; and the
 domain's own per-id lock entered around the resolve-then-delete sequence.
 A registration smoke test (mirroring ``test_update.py``'s) verifies the
-live ``mcp`` registration carries ``delete`` with the 12-value ``type``
+live ``mcp`` registration carries ``delete`` with the full ``type``
 enum.
 """
 
@@ -65,6 +65,11 @@ from biz.dfch.specmgr.gol.tools._io import load_by_id as load_gol_by_id
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+
+#: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
+#: ``FEAT`` -- the feat document type name (the one folder-per-document domain) --
+#: and ``WHOLE_BODY_DOMAINS``, the registration test's expected enum derivation.
+from biz.dfch.specmgr.general.tools._domains import FEAT, WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.prb.tools._io import load_by_id as load_prb_by_id
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
@@ -83,6 +88,9 @@ from biz.dfch.specmgr.sop.tools.create_sop import create_sop
 from biz.dfch.specmgr.sysrs.tools._io import load_by_id as load_sysrs_by_id
 from biz.dfch.specmgr.sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from biz.dfch.specmgr.sysrs.tools.create_sysrs import create_sysrs
+from biz.dfch.specmgr.txt.tools._io import load_by_id as load_txt_by_id
+from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError, txt_base_dir
+from biz.dfch.specmgr.txt.tools.create_txt import create_txt
 from biz.dfch.specmgr.tsk.tools._io import load_by_id as load_tsk_by_id
 from biz.dfch.specmgr.tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
@@ -97,19 +105,16 @@ delete_module = importlib.import_module("biz.dfch.specmgr.general.tools.delete")
 delete = delete_module.delete
 DeleteError = delete_module.DeleteError
 
-#: The feat document type name (the one folder-per-document domain).
-_TYPE_FEAT = "feat"
-
 #: The pinned path-injection shapes (ACC-005), in addition to each type's own wrong-format id.
 _TRAVERSAL_IDS = ("../x", "a/b", "a\\b", "..")
 
-#: A well-formed but non-existent canonical UUID (the unknown-id case for the eleven UUID domains).
+#: A well-formed but non-existent canonical UUID (the unknown-id case for every UUID domain).
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 #: A well-formed but non-existent feat-NNN-slug (the unknown-id case for feat).
 _MISSING_FEAT_ID = "feat-999-no-such-feature"
 
-#: A well-formed feat-NNN-slug folder name (the wrong-format id for the eleven UUID domains).
+#: A well-formed feat-NNN-slug folder name (the wrong-format id for every UUID domain).
 _FEAT_SLUG_ID = "feat-36-delete"
 
 _REQ_MINIMAL_BODY = textwrap.dedent(
@@ -186,7 +191,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-19 - Kickoff
+    ### 2026-08-19 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -231,6 +236,8 @@ _QA_MINIMAL_BODY = textwrap.dedent(
 _PRB_MINIMAL_BODY = textwrap.dedent(
     """\
     # Simple Problem Statement
+
+    The current process is causing delays, for users because of missing automation.
 
     ## Current State
 
@@ -299,6 +306,10 @@ _RSK_MINIMAL_BODY = textwrap.dedent(
     ### Probability 2
 
     ### Impact 3
+
+    ## Source
+
+    The QA interview on 2026-09-17 that elicited this risk.
     """
 )
 
@@ -313,6 +324,20 @@ _DEC_MINIMAL_BODY = textwrap.dedent(
     ## Decision Outcome
 
     We chose the structured arrangement.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
@@ -362,9 +387,9 @@ _FEAT_MINIMAL_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -436,10 +461,27 @@ _SYSRS_MINIMAL_BODY = textwrap.dedent(
     """
 )
 
+#: A minimal, valid ``txt`` body (H1, opaque free-form body, one newest-first ``## Updates`` entry).
+_TXT_MINIMAL_BODY = textwrap.dedent(
+    """\
+    # Meeting notes for the incident review
+
+    Free-form notes body with a single paragraph.
+
+    ## Updates
+
+    <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+    ### 2026-06-01 10:00:00.000Z - Initial note
+
+    The initial note content.
+    """
+)
+
 
 @dataclass(frozen=True)
 class _Case:
-    """Per-type test data for the twelve whole-body document types."""
+    """Per-type test data for the whole-body document types."""
 
     doc_type: str
     create: Callable[[str], Any]
@@ -562,6 +604,15 @@ _CASES: list[_Case] = [
         minimal_body=_SYSRS_MINIMAL_BODY,
         wrong_format_id=_FEAT_SLUG_ID,
     ),
+    _Case(
+        doc_type="txt",
+        create=create_txt,
+        load_by_id=load_txt_by_id,
+        base_dir=txt_base_dir,
+        not_found_error=TxtNotFoundError,
+        minimal_body=_TXT_MINIMAL_BODY,
+        wrong_format_id=_FEAT_SLUG_ID,
+    ),
 ]
 
 
@@ -594,7 +645,7 @@ class TempDeleteDirTestCase(unittest.TestCase):
 
     def _target(self, case: _Case, doc_id: str) -> Path:
         """The deletion target: the ``*.md`` file for the flat domains, the folder for ``feat``."""
-        if case.doc_type == _TYPE_FEAT:
+        if case.doc_type == FEAT:
             result = feat_base_dir() / doc_id
         else:
             result = self._flat_path(case)
@@ -606,7 +657,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
     a follow-up load raises the domain not-found."""
 
     def test_delete_returns_deleted_path_and_removes_the_document(self) -> None:
-        """For each of the twelve types, delete must return the deleted file/folder path and remove it from disk."""
+        """For each of the whole-body document types, delete must return the deleted file/folder path and remove it from disk."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
@@ -633,7 +684,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
         history = folder / "history.md"
         history.write_text("# History\n\nAn archived older update entry.\n", encoding="utf-8")
 
-        result = delete(id=feat_id, type=_TYPE_FEAT)
+        result = delete(id=feat_id, type=FEAT)
 
         self.assertEqual(result, str(folder))
         self.assertFalse(folder.exists())
@@ -648,7 +699,7 @@ class TestDeleteWholeBodyDomains(TempDeleteDirTestCase):
                 created = self._seed(case)
                 doc_id = created.id
                 target = self._target(case, doc_id)
-                missing_id = _MISSING_FEAT_ID if case.doc_type == _TYPE_FEAT else _MISSING_UUID
+                missing_id = _MISSING_FEAT_ID if case.doc_type == FEAT else _MISSING_UUID
 
                 with self.assertRaises(case.not_found_error):
                     delete(id=missing_id, type=case.doc_type)
@@ -679,9 +730,9 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
     """ACC-005: a mocked unlink/rmtree OSError surfaces as DeleteError with the cause and the path in the message."""
 
     def test_unlink_failure_raises_delete_error_with_cause_and_path(self) -> None:
-        """For the eleven flat domains, a mocked Path.unlink OSError must raise DeleteError wrapping that exact OSError."""
+        """For every flat domain (every whole-body domain except ``feat``), a mocked Path.unlink OSError must raise DeleteError wrapping that exact OSError."""
         for case in _CASES:
-            if case.doc_type == _TYPE_FEAT:
+            if case.doc_type == FEAT:
                 continue
             with self.subTest(doc_type=case.doc_type):
                 created = self._seed(case)
@@ -708,7 +759,7 @@ class TestDeleteIoFailure(TempDeleteDirTestCase):
 
         with mock.patch("shutil.rmtree", side_effect=failure):
             with self.assertRaises(DeleteError) as ctx:
-                delete(id=feat_id, type=_TYPE_FEAT)
+                delete(id=feat_id, type=FEAT)
 
         self.assertIsInstance(ctx.exception, OSError)
         self.assertIs(ctx.exception.__cause__, failure)
@@ -720,7 +771,7 @@ class TestDeleteLocking(TempDeleteDirTestCase):
     """ACC-004: each adapter enters the domain's own per-id lock around the resolve-then-delete sequence."""
 
     def test_the_domain_lock_is_entered_around_the_delete(self) -> None:
-        """For each of the twelve types, the domain's own <d>_lock must be acquired with the id
+        """For each of the whole-body document types, the domain's own <d>_lock must be acquired with the id
         before the delete and released after."""
         for case in _CASES:
             with self.subTest(doc_type=case.doc_type):
@@ -751,7 +802,7 @@ class TestDeleteLocking(TempDeleteDirTestCase):
 
 
 class TestDeleteRegistration(unittest.TestCase):
-    """The live ``mcp`` registration carries ``delete`` with the 12-value ``type`` enum and required ``id``/``type``."""
+    """The live ``mcp`` registration carries ``delete`` with the full ``type`` enum and required ``id``/``type``."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -760,16 +811,13 @@ class TestDeleteRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_delete_registered_with_12_value_type_enum(self) -> None:
-        """``delete`` must be registered exactly once, with the 12-value ``type`` enum and required ``id``/``type``."""
+        """``delete`` must be registered exactly once, with the full ``type`` enum and required ``id``/``type``."""
         matching = [t for t in self._tools if t.name == "delete"]
         self.assertEqual(len(matching), 1)
 
         schema = matching[0].input_schema
         type_prop = schema["properties"]["type"]
-        self.assertEqual(
-            type_prop["enum"],
-            ["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
-        )
+        self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         self.assertEqual(schema["properties"]["id"]["type"], "string")
         self.assertEqual(schema["required"], ["id", "type"])

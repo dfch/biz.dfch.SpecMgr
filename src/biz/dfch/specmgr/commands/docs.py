@@ -44,6 +44,9 @@ import importlib
 import inspect
 import pkgutil
 import re
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -55,6 +58,69 @@ _REPO_ROOT = _SRC_ROOT.parent.parent.parent.parent  # repo root
 _DOCS_DIR = _REPO_ROOT / "docs"
 _PACKAGE = "biz.dfch.specmgr"
 _INDEX_FILENAME = "README.md"
+
+
+def _find_ruff() -> Path | None:
+    """Locate the ``ruff`` binary once per command run, or ``None`` when unavailable.
+
+    Prefers the current interpreter's own ``bin/`` directory (``Path(sys.executable).parent
+    / "ruff"`` -- the uv-managed venv's ruff, the same binary ``uv run --frozen ruff``
+    drives), falling back to a bare ``ruff`` on ``PATH``. ``ruff`` lives in the ``test``
+    extra, so a published ``[cli]``/``[mcp]``-only install may not have it at all; the
+    caller degrades to unformatted output (with one warning) rather than failing.
+    """
+    venv_ruff = Path(sys.executable).parent / "ruff"
+    if venv_ruff.is_file():
+        result: Path | None = venv_ruff
+        return result
+    path_ruff = shutil.which("ruff")
+    result = Path(path_ruff) if path_ruff is not None else None
+    return result
+
+
+def _ruff_format_written_markdown(ruff: Path | None, paths: list[Path]) -> None:
+    """Run ONE in-place ``ruff format`` over the markdown paths the run wrote (embedded code blocks only).
+
+    ``ruff format <paths...>`` reformats the fenced code blocks inside each file while
+    leaving the prose byte-identical, so the generated ``docs/`` tree is ``ruff format
+    --check``-clean without the pre-commit ``ruff-format`` hook and the ``specmgr docs``
+    byte-identity check being mutually exclusive on the same file (first hit: a docstring
+    embedded in ``biz.dfch.specmgr.server.md`` carries an Example block ruff would
+    reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not installed) or an
+    empty path list skips the call entirely (the caller's one "ruff not found" warning
+    already fired); a non-zero ruff exit (unexpected for well-formed markdown) degrades
+    to one warning naming ``ruff``, the exit code, and the first line of ruff's stderr
+    (a deterministic ``(no stderr)`` fallback when ruff printed nothing) -- the command
+    still succeeds and the files remain as ``ruff`` left them (``ruff`` processes each
+    file independently, so successfully-formatted files stay formatted); and a resolved
+    ruff that cannot be executed (an ``OSError`` from the subprocess call -- e.g. the
+    binary vanished between resolution and invocation, or is not executable) degrades
+    the same way: one warning naming ``ruff``, the command still succeeds, and the
+    files remain as written. The command never fails on ruff.
+    """
+    if ruff is None or not paths:
+        return
+    try:
+        completed = subprocess.run(
+            [str(ruff), "format", *[str(path) for path in paths]],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        typer.echo(
+            "⚠ ruff format could not be run (the resolved ruff binary vanished or is not executable); "
+            "files remain as written.",
+            err=True,
+        )
+        return
+    if completed.returncode != 0:
+        stderr_lines = [line for line in completed.stderr.splitlines() if line.strip()]
+        first_stderr = stderr_lines[0].strip() if stderr_lines else "(no stderr)"
+        typer.echo(
+            f"⚠ ruff format exited with code {completed.returncode} ({first_stderr}); files remain as ruff left them.",
+            err=True,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -382,7 +448,7 @@ def _generate_module_markdown(module_name: str) -> str | None:
     return "\n".join(lines)
 
 
-def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
+def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int, list[Path]]:
     """Write one Markdown file per module of ``package`` under ``api_dir``, plus a README index.
 
     After the current pages are written, stale pages are pruned: every flat
@@ -394,19 +460,27 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
     set: zero pages written, any module failed to import mid-run, or
     module collection was truncated before the walk completed.
 
+    Every written file is rendered verbatim: the single in-place
+    ``ruff format`` over the run's written paths happens once, after all
+    writes, in the caller (see ``docs`` and
+    ``_ruff_format_written_markdown``).
+
     Args:
         api_dir: Directory to write the module pages and index into.
         package: Dotted name of the package to document.
 
     Returns:
-        ``(written, pruned)`` -- the number of module files written and
-        the number of stale pages pruned.
+        ``(written, pruned, written_paths)`` -- the number of module files
+        written, the number of stale pages pruned, and the list of every
+        markdown path written in this run (the per-module pages plus the
+        ``README.md`` index when it was written), in write order.
     """
     api_dir.mkdir(parents=True, exist_ok=True)
 
     modules, collection_complete = _collect_all_modules(package)
     index_entries: list[tuple[str, str, str | None]] = []
     written_names: set[str] = set()
+    written_paths: list[Path] = []
     import_failures: int = 0
 
     for module_name in sorted(modules):
@@ -415,8 +489,10 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
             import_failures += 1
             continue
         filename = f"{module_name}.md"
-        (api_dir / filename).write_text(markdown, encoding="utf-8")
+        page_path = api_dir / filename
+        page_path.write_text(markdown, encoding="utf-8")
         written_names.add(filename)
+        written_paths.append(page_path)
 
         # Extract first-line docstring for the index
         try:
@@ -455,7 +531,10 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
                     index_lines.append(f"- [`{module_name}`]({filename})")
             index_lines.append("")
 
-        (api_dir / _INDEX_FILENAME).write_text("\n".join(index_lines), encoding="utf-8")
+        index_markdown = "\n".join(index_lines)
+        index_path = api_dir / _INDEX_FILENAME
+        index_path.write_text(index_markdown, encoding="utf-8")
+        written_paths.append(index_path)
 
     pruned: int = 0
     if index_entries and import_failures == 0 and collection_complete:
@@ -464,7 +543,7 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
                 path.unlink()
                 pruned += 1
 
-    result: tuple[int, int] = (len(index_entries), pruned)
+    result: tuple[int, int, list[Path]] = (len(index_entries), pruned, written_paths)
     return result
 
 
@@ -476,8 +555,8 @@ def _generate_api_docs(api_dir: Path, package: str) -> tuple[int, int]:
 def _pruning_was_skipped(module_count: int) -> bool:
     """Report whether the run that just wrote ``module_count`` pages must have skipped pruning.
 
-    ``_generate_api_docs`` returns only ``(written, pruned)``, so the skip
-    state is re-derived here instead: the run was untrustworthy when module
+    ``_generate_api_docs`` returns only ``(written, pruned, written_paths)``, so the
+    skip state is re-derived here instead: the run was untrustworthy when module
     collection was truncated, or when fewer pages were written than modules
     were collected (a per-module import failure). Both checks are cheap --
     every import has already been cached in ``sys.modules`` by the run
@@ -508,11 +587,42 @@ def docs(
     when non-zero, and a warning is echoed whenever pruning was skipped
     because the run was untrustworthy (see ``_generate_api_docs``). Run this
     after any structural change and commit the result (see ``AGENTS.md``).
+
+    Every rendered markdown document (the per-module ``api/*.md`` pages, the
+    ``api/README.md`` index, and ``GENERATED.md``) is ruff-formatted after
+    the run has written all of them: one in-place ``ruff format <paths...>``
+    call over the written paths (embedded fenced code blocks only -- the
+    prose stays byte-identical), so docstrings that embed code ruff would
+    reformat (first hit: an mcp-SDK ``Example`` block pulled into
+    ``biz.dfch.specmgr.server.md``) no longer make the pre-commit
+    ``ruff-format`` hook and this command's byte-identity check mutually
+    exclusive. This joins the existing ``_stable_signature_str``
+    normalizations that already make the output reproducible over raw
+    source. The ``ruff`` binary is resolved once per run (``_find_ruff``:
+    the current interpreter's ``bin/`` first, then ``PATH``); when it is
+    unavailable -- ``ruff`` lives in the ``test`` extra, so a published
+    ``[cli]``/``[mcp]``-only install lacks it -- one warning is emitted and
+    the call is skipped (the files stay as written), so the command never
+    fails on this (the ``similarity`` extra's availability-decided-at-call-time
+    precedent); when the single call exits non-zero (unexpected for
+    well-formed markdown), one warning names ``ruff`` and the exit code,
+    the command still succeeds, and the files remain as ``ruff`` left them
+    (``ruff`` processes each file independently, so successfully-formatted
+    files stay formatted).
     """
     docs_dir = output if output is not None else _DOCS_DIR
 
+    ruff = _find_ruff()
+    if ruff is None:
+        venv_candidate = Path(sys.executable).parent / "ruff"
+        typer.echo(
+            f"⚠ ruff not found (looked for {venv_candidate} and 'ruff' on PATH); "
+            "`specmgr docs` output will not be ruff-formatted (embedded code blocks stay as rendered).",
+            err=True,
+        )
+
     api_dir = docs_dir / "api"
-    module_count, pruned = _generate_api_docs(api_dir, _PACKAGE)
+    module_count, pruned, written_paths = _generate_api_docs(api_dir, _PACKAGE)
     typer.echo(f"✓ Wrote {module_count} module file(s) to {api_dir}")
     if pruned > 0:
         typer.echo(f"✓ Pruned {pruned} stale page(s) from {api_dir}")
@@ -522,3 +632,7 @@ def docs(
     generated_md_path = docs_dir / "GENERATED.md"
     generated_md_path.write_text(generate_generated_md(), encoding="utf-8")
     typer.echo(f"✓ Wrote {generated_md_path}")
+
+    # One in-place ruff format over everything written in this run (embedded
+    # code blocks only; the degradation contract lives in the helper).
+    _ruff_format_written_markdown(ruff, [*written_paths, generated_md_path])

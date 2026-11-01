@@ -22,12 +22,16 @@ Per-command behaviour is tested next to each command under
 ``tests/commands/``; this module only covers registration on ``app``.
 """
 
+import os
 import re
 import unittest
 from importlib.metadata import version
+from unittest import mock
 
+from typer.main import get_command
 from typer.testing import CliRunner
 
+from biz.dfch.specmgr import cli
 from biz.dfch.specmgr.cli import app
 
 runner = CliRunner()
@@ -76,6 +80,121 @@ class TestMcpCommand(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         stdout = _strip_ansi(result.stdout)
         for option in ("--transport", "-t", "--host", "-h", "--port", "-p"):
+            self.assertIn(option, stdout)
+
+
+class TestNoDotenvSentinelCli(unittest.TestCase):
+    """The ``SPECMGR_TESTS_NO_DOTENV`` sentinel as read by ``cli.py``'s own ``_load_default_dotenv``.
+
+    feat-208 Phase 130: the check migrated to the registry's raw ``get``
+    accessor but stays a bare **truthiness** test (the only such site among
+    the presence-gate vars), so a set-but-empty sentinel is FALSEY and
+    behaves as absent -- the ``.env`` dual-lookup load still runs. The
+    counterpart pins for the test-process's own copy of the loader live in
+    ``tests/plantuml/test_source_gate.py`` (``conftest._load_default_dotenv``
+    is outside the registry's scope and stays on ``os.environ``).
+    """
+
+    def test_set_sentinel_skips_the_dotenv_lookup_entirely(self):
+        """Sentinel set (truthy value): ``cli._load_default_dotenv`` must not even look for a ``.env``."""
+        with mock.patch.dict(os.environ, {cli.NO_DOTENV_SENTINEL: "1"}, clear=False):
+            with mock.patch.object(cli, "find_dotenv") as find:
+                with mock.patch.object(cli, "load_dotenv") as load:
+                    cli._load_default_dotenv()
+        find.assert_not_called()
+        load.assert_not_called()
+
+    def test_set_but_empty_sentinel_behaves_as_absent(self):
+        """Sentinel set-but-empty: the truthiness test is false, so the ``.env`` dual-lookup load runs
+        (the migrated site keeps its pre-migration semantics exactly)."""
+        with mock.patch.dict(os.environ, {cli.NO_DOTENV_SENTINEL: ""}, clear=False):
+            with mock.patch.object(cli, "find_dotenv", return_value=None) as find:
+                with mock.patch.object(cli, "load_dotenv") as load:
+                    cli._load_default_dotenv()
+        # find_dotenv(usecwd=False) returns None -> falls through to find_dotenv(usecwd=True)
+        self.assertEqual(find.call_count, 2)
+        load.assert_not_called()  # no path found -> nothing to load
+
+
+class TestDiagramAndPlantumlCommands(unittest.TestCase):
+    """Registration + help smoke for the feat-185-uc-diagrams Phase 130 commands.
+
+    Pins the ``_callback`` gotcha in both directions: the new ``diagram`` sub-group and the two flat
+    ``plantuml-*`` commands register alongside every pre-existing subcommand, and a pre-existing
+    subcommand still dispatches (the explicit callback keeps Typer from collapsing the app).
+    """
+
+    def test_all_commands_still_registered(self):
+        """The full registered command set: the pre-existing commands + plantuml-check,
+        plantuml-encode, the diagram sub-group, and lint (feat-218, Phase 100)."""
+        names = set(get_command(app).commands)
+
+        self.assertEqual(
+            names,
+            {
+                "version",
+                "mcp",
+                "docs",
+                "mcp-docs",
+                "adr-toc",
+                "coverage-badge",
+                "schema",
+                "unused-code",
+                "req-parse",
+                "mdformat",
+                "plantuml-check",
+                "plantuml-encode",
+                "diagram",
+                "lint",
+            },
+        )
+
+    def test_diagram_help_lists_the_uc_subcommand(self):
+        """``specmgr diagram --help`` renders and lists the ``uc`` subcommand."""
+        result = runner.invoke(app, ["diagram", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("uc", _strip_ansi(result.stdout))
+
+    def test_diagram_uc_help_lists_out_and_check(self):
+        """``specmgr diagram uc --help`` renders and documents the ``--out``/``--check`` options."""
+        result = runner.invoke(app, ["diagram", "uc", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        stdout = _strip_ansi(result.stdout)
+        for option in ("--out", "--check"):
+            self.assertIn(option, stdout)
+
+    def test_plantuml_check_help_renders(self):
+        """``specmgr plantuml-check --help`` renders."""
+        result = runner.invoke(app, ["plantuml-check", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+
+    def test_plantuml_encode_help_renders(self):
+        """``specmgr plantuml-encode --help`` renders."""
+        result = runner.invoke(app, ["plantuml-encode", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+
+    def test_preexisting_command_still_dispatches(self):
+        """A pre-existing subcommand still dispatches end-to-end (the ``_callback`` gotcha)."""
+        result = runner.invoke(app, ["version"])
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout.strip(), version("biz-dfch-specmgr"))
+
+
+class TestLintCommand(unittest.TestCase):
+    """Registration + help smoke for the feat-218 Phase 100 ``lint`` command."""
+
+    def test_lint_help_renders(self):
+        """``specmgr lint --help`` renders and documents the sweep/skip options."""
+        result = runner.invoke(app, ["lint", "--help"])
+
+        self.assertEqual(result.exit_code, 0)
+        stdout = _strip_ansi(result.stdout)
+        for option in ("--type", "--all", "--dir", "--skip-unrecognized"):
             self.assertIn(option, stdout)
 
 

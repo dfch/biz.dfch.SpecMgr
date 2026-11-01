@@ -11,15 +11,22 @@ the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import req  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_req``, ``get_req``, ``list_req``, ``get_req_example``,
-``get_req_template``, ``create_req``,
-``validate_req``), ``resources`` (``specmgr://req/schema``,
-``specmgr://req/example``, ``specmgr://req/template``), and ``prompts``
+``get_req_template``, ``get_req_schema``, ``create_req``), ``resources``
+(``specmgr://req/example``, ``specmgr://req/template``), and ``prompts``
 (``create_req``, ``update_req``) all exist; whole-body and line-range
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="req"``), and status changes go through the
 generic ``set_status`` tool in ``general.tools`` (``type="req"``).
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="req"``) -- the former
+``validate_req`` tool was removed in favor of it (feat-81-83-validation).
 Unlike ADR, REQ has no
 ``specmgr://req/{id}`` resource -- id-based reads go through the ``get_req``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
 ``specmgr://req/list`` resource was replaced by the ``list_req`` tool, so
 that paging parameters could be accepted (feat-13-list-paging).
+
+The former ``specmgr://req/schema`` resource was converted into the
+``get_req_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, ADR
+112b6498-078b-4a59-88b8-8ffb7a5041b3).

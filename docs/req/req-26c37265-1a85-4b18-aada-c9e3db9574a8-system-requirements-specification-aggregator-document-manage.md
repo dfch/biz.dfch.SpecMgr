@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:50.218+02:00'
 id: 26c37265-1a85-4b18-aada-c9e3db9574a8
 status: draft
 type: req
-updated: '2026-09-03 10:27:50.218+02:00'
+updated: '2026-09-30T14:56:36.749+02:00'
 version: 1.0.0
 ---
 
@@ -32,4 +32,4 @@ AGENTS.md's Status section (the `sysrs` bullet) and `.specmgr/feat/feat-32-sysrs
 
 ### Goals
 
-- GOL-b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts
+- GOL b663528e-08c5-426b-9f20-32192c0a3bdb: Cross-Referenceable, Non-Duplicating Specification Artifacts

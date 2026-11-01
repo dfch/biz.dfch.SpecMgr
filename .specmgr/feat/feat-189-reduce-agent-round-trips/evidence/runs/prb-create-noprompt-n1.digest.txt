@@ -1,0 +1,72 @@
+{
+ "run_id": "prb-create-noprompt-n1",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "-",
+ "events": 10,
+ "steps": 3,
+ "wall_seconds": 219.8,
+ "input_tokens": 153303,
+ "output_tokens": 2282,
+ "total_tool_calls": 3,
+ "specmgr_tool_calls": 3,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 0,
+ "failed_calls": [],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [
+  "specmgr_get_prb_template"
+ ],
+ "template_fetch_count": 1,
+ "example_fetches": [
+  "specmgr_get_prb_example"
+ ],
+ "example_fetch_count": 1,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [
+  {
+   "n": 3,
+   "tool": "specmgr_create_prb",
+   "status": "completed",
+   "error": ""
+  }
+ ],
+ "create_first_try_success": true,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_get_prb_template",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_prb_example",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_create_prb",
+   "status": "completed",
+   "input": {
+    "content": "# Build server onboarding takes too long\n\nThe manual, undocumented build server onboarding process is causing late project kickoffs, for engineering managers planning project start dates because a senior engineer must drive the setup step by step before the server can run its first build.\n\n## Current State\n\n### Summary\n\nOnboarding a new build server currently takes 3 to 4 working days of manual work. The steps live in a shared chat thread and in the heads of two engineers, and every new server needs a person to walk through the setup step by step before it can run the first build.\n\n### What Is the Problem?\n\nProvisioning and configuring a new build server is a manual, undocumented process.\n\n### Why Is It a Problem?\n\nEvery new server blocks project kickoffs until a senior engineer is available to drive the setup, and knowledge loss has already caused two broken handovers.\n\n### Where Is the Problem Observed?\n\nIn the DevOps build environment, during every build-server addition.\n\n### Who Is Impacted?\n\nEngineering managers planning project start dates and the build teams waiting for usable infrastructure.\n\n### When Was the Problem First Observed?\n\nDuring the first build-server handover in March 2026.\n\n### How Is the Problem Observed?\n\nLate project kickoffs and post-handover incidents that trace back to missing setup steps.\n\n### How Often Is the Problem Observed?\n\nOnce per new build server, which the current plan puts at one to two servers per quarter.\n\n## Gap\n\nA new build server takes 3 to 4 working days to onboard, while the expected duration is half a day of largely automated setup.\n\n## Impact\n\nThe delay costs the team approximately 1500 EUR per quarter in rework and lost schedule buffer.\n\n## Future State\n\nA new build server is provisioned, configured, and verified by an automated runbook in under half a day, without a senior engineer driving the setup."
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nDONE\n\nCreated problem statement `984dfb1b-7271-4344-bac4-bfe936be4a5d` (\"Build server onboarding takes too long\") with the lead sentence, all 5W2H current-state sections, Gap, Impact, and Future State as specified.",
+ "files_on_disk": [
+  "docs/prb/prb-984dfb1b-7271-4344-bac4-bfe936be4a5d-build-server-onboarding-takes-too-long.md",
+  "opencode.json"
+ ]
+}

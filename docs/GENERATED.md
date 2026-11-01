@@ -19,38 +19,42 @@ First-line docstrings from each module, organized by domain:
 **adr/**
 
 - `adr/__init__.py` — The Architecture Decision Record (ADR) domain package.
-- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
-- `adr/resources/adr_get.py` — Resource: specmgr://adr/{id} (plan §8, §9a).
-- `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
-- `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
-- `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
+- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr.
+- `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test.
+- `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr.
+- `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test.
+- `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records.
+- `adr/resources/adr_get.py` — Resource: specmgr://adr/{id}.
+- `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records.
+- `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr``.
+- `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations.
 - `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
-- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
-- `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (Task 3.2).
+- `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr.
 - `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
-- `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
-- `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
-- `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
+- `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create.
+- `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete.
+- `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list.
+- `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read.
+- `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update.
+- `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter.
+- `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section.
+- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (Task 3.2).
 
 **commands/**
 
 - `commands/__init__.py` — commands module.
 - `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- `commands/lint.py` — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - `commands/mdformat.py` — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- `commands/plantuml_check.py` — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- `commands/plantuml_encode.py` — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - `commands/req_parse.py` — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - `commands/schema.py` — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - `commands/unused_code.py` — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -72,20 +76,20 @@ First-line docstrings from each module, organized by domain:
 - `dec/prompts/update_dec.py` — ``@mcp.prompt()``: update_dec (Task 4.1).
 - `dec/resources/__init__.py` — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
 - `dec/resources/dec_example.py` — Resource: specmgr://dec/example (feat-21 Task 3.4).
-- `dec/resources/dec_schema.py` — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - `dec/resources/dec_template.py` — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - `dec/tools/__init__.py` — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
-- `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- `dec/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
+- `dec/tools/_io.py` — Thin file read helpers over ``parse_dec`` (feat-107-doc-cache Phase 4).
 - `dec/tools/_lock.py` — Per-document in-process lock guarding decision mutations.
 - `dec/tools/_paths.py` — Decision base directory resolution and id -> path lookup (Task 2.1).
 - `dec/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - `dec/tools/create_dec.py` — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - `dec/tools/get_dec.py` — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - `dec/tools/get_dec_example.py` — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- `dec/tools/get_dec_schema.py` — ``@mcp.tool()`` wrapper: get_dec_schema (feat-189 Phase 105, Task 105.110).
 - `dec/tools/get_dec_template.py` — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - `dec/tools/list_dec.py` — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - `dec/tools/parse_dec.py` — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- `dec/tools/validate_dec.py` — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 
 **feat/**
 
@@ -103,21 +107,22 @@ First-line docstrings from each module, organized by domain:
 - `feat/prompts/update_feat.py` — ``@mcp.prompt()``: update_feat (Task 4.1).
 - `feat/resources/__init__.py` — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - `feat/resources/feat_example.py` — Resource: specmgr://feat/example (feat-31 Task 3.5).
-- `feat/resources/feat_schema.py` — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - `feat/resources/feat_template.py` — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - `feat/tools/__init__.py` — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- `feat/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
 - `feat/tools/_io.py` — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - `feat/tools/_lock.py` — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - `feat/tools/_paths.py` — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
+- `feat/tools/_warmup.py` — The ``feat`` domain's own two-phase cache warmup (feat-187-list-feat-timeout, Task 110.120).
 - `feat/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_feat`` and
 - `feat/tools/create_feat.py` — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - `feat/tools/get_feat.py` — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - `feat/tools/get_feat_example.py` — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- `feat/tools/get_feat_schema.py` — ``@mcp.tool()`` wrapper: get_feat_schema (feat-189 Phase 105, Task 105.110).
 - `feat/tools/get_feat_template.py` — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - `feat/tools/list_feat.py` — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - `feat/tools/parse_feat.py` — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
 - `feat/tools/set_feat_id.py` — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
-- `feat/tools/validate_feat.py` — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 
 **general/**
 
@@ -125,36 +130,69 @@ First-line docstrings from each module, organized by domain:
 - `general/models/__init__.py` — Shared, cross-domain Pydantic models with no document-type-specific content.
 - `general/models/dtais.py` — Pydantic schema and parser for the DTAIS verification-methods guidance
 - `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
+- `general/models/heading_table.py` — Per-language section-heading mapping tables: the lazy loader and the fence-aware
+- `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- `general/models/language_list_result.py` — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- `general/models/parse_failure_result.py` — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - `general/models/rasci.py` — Pydantic schema and parser for the RASCI responsibility-assignment guidance
+- `general/models/reference.py` — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
+- `general/models/reference_graph.py` — The frozen reference-graph model + the deterministic PlantUML renderer (feat-207-reference-graph,
+- `general/models/similarity_hit.py` — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
+- `general/models/similarity_unavailable.py` — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - `general/models/summary.py` — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- `general/models/translation_drift.py` — Translation drift detection: the pure heading-skeleton comparison, the staleness comparison, and the
+- `general/models/update_result.py` — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
+- `general/models/validate_result.py` — The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 - `general/prompts/__init__.py` — MCP prompt registrations that are not specific to any single document
 - `general/prompts/compact_history.py` — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
-- `general/prompts/confluence_fetch.py` — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
-- `general/prompts/confluence_update.py` — ``@mcp.prompt()``: confluence_update (feat-50-confluence Phase 8, REQ-012/ACC-011).
+- `general/prompts/repair.py` — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
+- `general/prompts/translate_artifact.py` — ``@mcp.prompt()``: translate_artifact (feat-197-i18n, Phase 130, REQ-011).
 - `general/resources/__init__.py` — MCP resource registrations that are not specific to any single document
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- `general/resources/i18n.py` — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- `general/resources/reference_graph.py` — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
 - `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
-- `general/tools/_confluence_config.py` — Shared Confluence base-URL/bearer-token configuration, used by both
-- `general/tools/_confluence_url.py` — Shared, ``mcp``-free Confluence URL helpers, used by both
+- `general/tools/_diagram_config.py` — The ``SPECMGR_DIAGRAM_MAX_TITLE`` env-var helper (feat-207-reference-graph, Phase 110, REQ-008).
+- `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- `general/tools/_domains.py` — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
+- `general/tools/_embedding.py` — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
+- `general/tools/_embedding_cache.py` — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
+- `general/tools/_language_guard.py` — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phases 120/125).
+- `general/tools/_language_variants.py` — Per-language document location for the read-only translation tools (feat-197-i18n Phase 140).
+- `general/tools/_listing.py` — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - `general/tools/_packaged_data.py` — Generic, doc-type-agnostic access to packaged example/template/schema data
 - `general/tools/_paging.py` — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
-- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- `general/tools/_path_safety.py` — Reusable, doc-type-agnostic path-safety assertions for document ids,
+- `general/tools/_reference_graph.py` — The reference-graph builders: scoped source-centred and registry-wide graph construction
+- `general/tools/_references.py` — Shared cross-reference extraction and per-domain target resolution
+- `general/tools/_similarity_corpus.py` — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
+- `general/tools/_similarity_ranking.py` — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- `general/tools/_similarity_search.py` — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
+- `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
-- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
-- `general/tools/confluence_fetch.py` — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
-- `general/tools/confluence_update.py` — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
+- `general/tools/_startup_warmup.py` — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
+- `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
+- `general/tools/check_translation_drift.py` — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- `general/tools/edit.py` — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
+- `general/tools/find_related.py` — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- `general/tools/find_similar_text.py` — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
+- `general/tools/get_reference_diagram.py` — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
+- `general/tools/get_reference_diagram_all.py` — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
+- `general/tools/list_languages.py` — ``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
+- `general/tools/list_references.py` — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - `general/tools/mdformat.py` — ``@mcp.tool()`` wrapper: mdformat.
 - `general/tools/set_classification.py` — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - `general/tools/set_status.py` — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - `general/tools/update.py` — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
+- `general/tools/validate.py` — ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 
 **gol/**
 
@@ -171,20 +209,20 @@ First-line docstrings from each module, organized by domain:
 - `gol/prompts/update_gol.py` — ``@mcp.prompt()``: update_gol (Task 3.15).
 - `gol/resources/__init__.py` — MCP resource registrations for Goal (GOL) documents (Task 3.11).
 - `gol/resources/gol_example.py` — Resource: specmgr://gol/example (Task 3.11).
-- `gol/resources/gol_schema.py` — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - `gol/resources/gol_template.py` — Resource: specmgr://gol/template (Task 3.11).
 - `gol/tools/__init__.py` — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
-- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- `gol/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
+- `gol/tools/_io.py` — Thin file read helpers over ``parse_gol`` (feat-107-doc-cache Phase 4).
 - `gol/tools/_lock.py` — Per-document in-process lock guarding goal mutations.
 - `gol/tools/_paths.py` — Goal base directory resolution and id -> path lookup (Task 3.1).
 - `gol/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - `gol/tools/create_gol.py` — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - `gol/tools/get_gol.py` — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - `gol/tools/get_gol_example.py` — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- `gol/tools/get_gol_schema.py` — ``@mcp.tool()`` wrapper: get_gol_schema (feat-189 Phase 105, Task 105.110).
 - `gol/tools/get_gol_template.py` — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - `gol/tools/list_gol.py` — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - `gol/tools/parse_gol.py` — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- `gol/tools/validate_gol.py` — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 
 **models/**
 
@@ -193,24 +231,27 @@ First-line docstrings from each module, organized by domain:
 - `models/adr/v1/__init__.py` — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
 - `models/adr/v1/_util.py` — Shared, private validation helpers for the ``models.adr`` subpackage.
 - `models/adr/v1/adr.py` — Pydantic model for a full ADR document (frontmatter + body).
-- `models/adr/v1/body.py` — Pydantic model for the ADR body -- whole-section fields plus options
-- `models/adr/v1/frontmatter.py` — Pydantic model for the ADR YAML frontmatter block (plan §3).
-- `models/adr/v1/mutations.py` — Structured edit operations on an :class:`Adr` (plan §4, §5, §8).
-- `models/adr/v1/option.py` — Pydantic model for one ``### Option N: {title}`` sub-section (plan §5).
-- `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
-- `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
-- `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- `models/adr/v1/body.py` — Pydantic model for the ADR body -- whole-section fields plus options.
+- `models/adr/v1/frontmatter.py` — Pydantic model for the ADR YAML frontmatter block.
+- `models/adr/v1/mutations.py` — Structured edit operations on an :class:`Adr`.
+- `models/adr/v1/option.py` — Pydantic model for one ``### Option N: {title}`` sub-section.
+- `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
+- `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text.
+- `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output.
 - `models/config_info.py` — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
+- `models/md/_cross_reference.py` — Shared, private cross-reference format validator for `models.md` domain body models.
 - `models/md/_errors.py` — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - `models/md/_frontmatter_parse.py` — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - `models/md/_markdown.py` — Markdown shared instance.
 - `models/md/_ordering.py` — Shared, private newest-first ordering validation helper for `models.md` domain body models.
+- `models/md/_timestamps.py` — Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
 - `models/md/_util.py` — Shared, private validation helpers for the ``models.md`` subpackage.
 - `models/md/alias.py` — Alias decorator for MarkdownStr class name transformation.
 - `models/md/alias_match.py` — Match a parsed heading's actual text against a class's declared `@alias`.
 - `models/md/alias_type.py` — Alias type enumeration for MarkdownStr class name transformation.
+- `models/md/common_sections.py` — Shared base classes for whole-section fields that recur, byte-identically, across domains.
 - `models/md/frontmatter.py` — Generic base frontmatter model shared by every markdown-backed document type.
 - `models/md/markdown_block_quote.py` — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
 - `models/md/markdown_code_block.py` — A leaf-only fenced ("```") code block, never subclassable with declared fields.
@@ -233,6 +274,15 @@ First-line docstrings from each module, organized by domain:
 - `models/md/markdown_str.py` — Parse markdown into tokens using shared MarkdownIt instance.
 - `models/version_info.py` — Pydantic model for the ``specmgr://version`` resource.
 
+**plantuml/**
+
+- `plantuml/__init__.py` — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- `plantuml/backends.py` — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- `plantuml/chain.py` — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- `plantuml/encode.py` — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- `plantuml/structure.py` — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- `plantuml/url.py` — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
+
 **prb/**
 
 - `prb/__init__.py` — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
@@ -245,24 +295,24 @@ First-line docstrings from each module, organized by domain:
 - `prb/models/v1/parser.py` — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
 - `prb/models/v1/summary.py` — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
 - `prb/prompts/__init__.py` — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
-- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14).
-- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15).
+- `prb/prompts/create_prb.py` — ``@mcp.prompt()``: create_prb (Task 3.14, feat-132-prb-update Phase 2).
+- `prb/prompts/update_prb.py` — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - `prb/resources/__init__.py` — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - `prb/resources/prb_example.py` — Resource: specmgr://prb/example (Task 3.11).
-- `prb/resources/prb_schema.py` — Resource: specmgr://prb/schema (Task 3.11).
 - `prb/resources/prb_template.py` — Resource: specmgr://prb/template (Task 3.11).
 - `prb/tools/__init__.py` — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
-- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- `prb/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
+- `prb/tools/_io.py` — Thin file read helpers over ``parse_prb`` (feat-107-doc-cache Phase 4).
 - `prb/tools/_lock.py` — Per-document in-process lock guarding problem statement mutations.
 - `prb/tools/_paths.py` — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - `prb/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - `prb/tools/create_prb.py` — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - `prb/tools/get_prb.py` — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - `prb/tools/get_prb_example.py` — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- `prb/tools/get_prb_schema.py` — ``@mcp.tool()`` wrapper: get_prb_schema (feat-189 Phase 105, Task 105.110).
 - `prb/tools/get_prb_template.py` — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - `prb/tools/list_prb.py` — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - `prb/tools/parse_prb.py` — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- `prb/tools/validate_prb.py` — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 
 **qa/**
 
@@ -276,26 +326,26 @@ First-line docstrings from each module, organized by domain:
 - `qa/models/v2/parser.py` — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - `qa/models/v2/question_answer.py` — One adjacent question/answer pair with no heading of its own (QA v2).
 - `qa/models/v2/summary.py` — Pydantic model for one line of QA listing output.
-- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- `qa/prompts/__init__.py` — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/create_qa.py` — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- `qa/prompts/refine.py` — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- `qa/prompts/update_qa.py` — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - `qa/resources/__init__.py` — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - `qa/resources/qa_example.py` — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- `qa/resources/qa_schema.py` — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - `qa/resources/qa_template.py` — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - `qa/tools/__init__.py` — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
-- `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- `qa/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
+- `qa/tools/_io.py` — Thin file read helpers over ``parse_qa`` (feat-107-doc-cache Phase 4).
 - `qa/tools/_lock.py` — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - `qa/tools/_paths.py` — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - `qa/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - `qa/tools/create_qa.py` — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa.py` — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - `qa/tools/get_qa_example.py` — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- `qa/tools/get_qa_schema.py` — ``@mcp.tool()`` wrapper: get_qa_schema (feat-189 Phase 105, Task 105.110).
 - `qa/tools/get_qa_template.py` — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - `qa/tools/list_qa.py` — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - `qa/tools/parse_qa.py` — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- `qa/tools/validate_qa.py` — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 
 **req/**
 
@@ -312,9 +362,9 @@ First-line docstrings from each module, organized by domain:
 - `req/prompts/update_req.py` — ``@mcp.prompt()``: update_req (Task 3.19).
 - `req/resources/__init__.py` — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - `req/resources/req_example.py` — Resource: specmgr://req/example (Task 3.6).
-- `req/resources/req_schema.py` — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - `req/resources/req_template.py` — Resource: specmgr://req/template (Task 3.7).
 - `req/tools/__init__.py` — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- `req/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
 - `req/tools/_io.py` — Thin file read helpers over ``parse_req`` (Task 3.11).
 - `req/tools/_lock.py` — Per-document in-process lock guarding requirement mutations.
 - `req/tools/_paths.py` — Requirement base directory resolution and id -> path lookup (Task 3.11).
@@ -322,10 +372,10 @@ First-line docstrings from each module, organized by domain:
 - `req/tools/create_req.py` — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - `req/tools/get_req.py` — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - `req/tools/get_req_example.py` — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
+- `req/tools/get_req_schema.py` — ``@mcp.tool()`` wrapper: get_req_schema (feat-189 Phase 105, Task 105.110).
 - `req/tools/get_req_template.py` — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - `req/tools/list_req.py` — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - `req/tools/parse_req.py` — ``@mcp.tool()`` wrapper: parse_req.
-- `req/tools/validate_req.py` — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 
 **rsk/**
 
@@ -347,21 +397,22 @@ First-line docstrings from each module, organized by domain:
 - `rsk/resources/__init__.py` — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
 - `rsk/resources/risk_matrix.py` — Resource: specmgr://rsk/risk-matrix (Task 3.15).
 - `rsk/resources/rsk_example.py` — Resource: specmgr://rsk/example (Task 3.11).
-- `rsk/resources/rsk_schema.py` — Resource: specmgr://rsk/schema (Task 3.10).
 - `rsk/resources/rsk_template.py` — Resource: specmgr://rsk/template (Task 3.11).
 - `rsk/resources/tara.py` — Resource: specmgr://rsk/tara (Task 3.15).
 - `rsk/tools/__init__.py` — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
-- `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- `rsk/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for risks (feat-107-doc-cache Phase 4).
+- `rsk/tools/_io.py` — Thin file read helpers over ``parse_rsk`` (feat-107-doc-cache Phase 4).
 - `rsk/tools/_lock.py` — Per-document in-process lock guarding risk mutations.
 - `rsk/tools/_paths.py` — Risk base directory resolution and id -> path lookup (Task 3.1).
+- `rsk/tools/_sentinel.py` — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
 - `rsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - `rsk/tools/create_rsk.py` — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - `rsk/tools/get_rsk.py` — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - `rsk/tools/get_rsk_example.py` — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- `rsk/tools/get_rsk_schema.py` — ``@mcp.tool()`` wrapper: get_rsk_schema (feat-189 Phase 105, Task 105.110).
 - `rsk/tools/get_rsk_template.py` — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- `rsk/tools/validate_rsk.py` — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 
 **sop/**
 
@@ -379,20 +430,20 @@ First-line docstrings from each module, organized by domain:
 - `sop/prompts/update_sop.py` — ``@mcp.prompt()``: update_sop (Task 4.1).
 - `sop/resources/__init__.py` — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - `sop/resources/sop_example.py` — Resource: specmgr://sop/example (feat-30 Task 3.7).
-- `sop/resources/sop_schema.py` — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - `sop/resources/sop_template.py` — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - `sop/tools/__init__.py` — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
-- `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- `sop/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
+- `sop/tools/_io.py` — Thin file read helpers over ``parse_sop`` (feat-107-doc-cache Phase 4).
 - `sop/tools/_lock.py` — Per-document in-process lock guarding SOP mutations.
 - `sop/tools/_paths.py` — SOP base directory resolution and id -> path lookup (Task 2.1).
 - `sop/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sop`` and
 - `sop/tools/create_sop.py` — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
 - `sop/tools/get_sop.py` — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - `sop/tools/get_sop_example.py` — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- `sop/tools/get_sop_schema.py` — ``@mcp.tool()`` wrapper: get_sop_schema (feat-189 Phase 105, Task 105.110).
 - `sop/tools/get_sop_template.py` — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - `sop/tools/list_sop.py` — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - `sop/tools/parse_sop.py` — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
-- `sop/tools/validate_sop.py` — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 
 **sysrs/**
 
@@ -410,20 +461,20 @@ First-line docstrings from each module, organized by domain:
 - `sysrs/prompts/update_sysrs.py` — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - `sysrs/resources/__init__.py` — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - `sysrs/resources/sysrs_example.py` — Resource: specmgr://sysrs/example (Task 4.5).
-- `sysrs/resources/sysrs_schema.py` — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - `sysrs/resources/sysrs_template.py` — Resource: specmgr://sysrs/template (Task 4.5).
 - `sysrs/tools/__init__.py` — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
-- `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- `sysrs/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
+- `sysrs/tools/_io.py` — Thin file read helpers over ``parse_sysrs`` (feat-107-doc-cache Phase 4).
 - `sysrs/tools/_lock.py` — Per-document in-process lock guarding System Requirements Specification mutations.
 - `sysrs/tools/_paths.py` — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
 - `sysrs/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
 - `sysrs/tools/create_sysrs.py` — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
 - `sysrs/tools/get_sysrs.py` — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
 - `sysrs/tools/get_sysrs_example.py` — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- `sysrs/tools/get_sysrs_schema.py` — ``@mcp.tool()`` wrapper: get_sysrs_schema (feat-189 Phase 105, Task 105.110).
 - `sysrs/tools/get_sysrs_template.py` — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - `sysrs/tools/list_sysrs.py` — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - `sysrs/tools/parse_sysrs.py` — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
-- `sysrs/tools/validate_sysrs.py` — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 
 **tsk/**
 
@@ -443,20 +494,51 @@ First-line docstrings from each module, organized by domain:
 - `tsk/prompts/update_task.py` — ``@mcp.prompt()``: update_task (Task 3.13).
 - `tsk/resources/__init__.py` — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - `tsk/resources/tsk_example.py` — Resource: specmgr://tsk/example (Task 3.11).
-- `tsk/resources/tsk_schema.py` — Resource: specmgr://tsk/schema (Task 3.10).
 - `tsk/resources/tsk_template.py` — Resource: specmgr://tsk/template (Task 3.11).
 - `tsk/tools/__init__.py` — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
-- `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- `tsk/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
+- `tsk/tools/_io.py` — Thin file read helpers over ``parse_tsk`` (feat-107-doc-cache Phase 4).
 - `tsk/tools/_lock.py` — Per-document in-process lock guarding task list mutations.
 - `tsk/tools/_paths.py` — Task list base directory resolution and id -> path lookup (Task 3.1).
 - `tsk/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - `tsk/tools/create_tsk.py` — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - `tsk/tools/get_tsk.py` — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - `tsk/tools/get_tsk_example.py` — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- `tsk/tools/get_tsk_schema.py` — ``@mcp.tool()`` wrapper: get_tsk_schema (feat-189 Phase 105, Task 105.110).
 - `tsk/tools/get_tsk_template.py` — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - `tsk/tools/list_tsk.py` — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - `tsk/tools/parse_tsk.py` — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- `tsk/tools/validate_tsk.py` — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
+
+**txt/**
+
+- `txt/__init__.py` — Free-Form Text (TXT) domain -- a generic, minimally structured catch-all for unstructured markdown text.
+- `txt/models/__init__.py` — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `txt/models/v1/__init__.py` — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `txt/models/v1/_util.py` — Shared, private constants for the ``txt.models.v1`` subpackage.
+- `txt/models/v1/body.py` — Free-Form Text (TXT) body models: an opaque free-form `body` plus a mandatory `## Updates` log.
+- `txt/models/v1/document.py` — Pydantic model for a full free-form text document (frontmatter + body).
+- `txt/models/v1/frontmatter.py` — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `txt/models/v1/parser.py` — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
+- `txt/models/v1/summary.py` — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- `txt/prompts/__init__.py` — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/prompts/create_txt.py` — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- `txt/prompts/update_txt.py` — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- `txt/resources/__init__.py` — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- `txt/resources/txt_example.py` — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- `txt/resources/txt_template.py` — Resource: specmgr://txt/template (feat-229-txt Phase 120).
+- `txt/tools/__init__.py` — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
+- `txt/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
+- `txt/tools/_io.py` — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
+- `txt/tools/_lock.py` — Per-document in-process lock guarding free-form text mutations.
+- `txt/tools/_paths.py` — Free-form text (TXT) base directory resolution and id -> path lookup (feat-229-txt Phase 110).
+- `txt/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_txt`` and
+- `txt/tools/create_txt.py` — ``@mcp.tool()`` wrapper: create_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt.py` — ``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+- `txt/tools/get_txt_example.py` — ``@mcp.tool()`` wrapper: get_txt_example (feat-229-txt Phase 110).
+- `txt/tools/get_txt_schema.py` — ``@mcp.tool()`` wrapper: get_txt_schema (feat-229-txt Phase 110).
+- `txt/tools/get_txt_template.py` — ``@mcp.tool()`` wrapper: get_txt_template (feat-229-txt Phase 110).
+- `txt/tools/list_txt.py` — ``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
+- `txt/tools/parse_txt.py` — ``@mcp.tool()`` wrapper: parse_txt (feat-229-txt Phase 110).
 
 **uc/**
 
@@ -483,26 +565,38 @@ First-line docstrings from each module, organized by domain:
 - `uc/models/v2/document.py` — Pydantic model for a full use-case document (frontmatter + body).
 - `uc/models/v2/frontmatter.py` — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - `uc/models/v2/parser.py` — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- `uc/models/v2/renderer.py` — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - `uc/models/v2/summary.py` — Pydantic model for one line of UC listing output (Task 3.1.6).
 - `uc/prompts/__init__.py` — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - `uc/prompts/create_uc.py` — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- `uc/prompts/generate_uc_sequence_diagram.py` — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/prompts/update_uc.py` — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - `uc/resources/__init__.py` — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - `uc/resources/uc_example.py` — Resource: specmgr://uc/example (Task 3.1.4).
-- `uc/resources/uc_schema.py` — Resource: specmgr://uc/schema (Task 3.1.4).
+- `uc/resources/uc_plantuml.py` — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- `uc/resources/uc_plantuml_example.py` — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- `uc/resources/uc_plantuml_template.py` — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - `uc/resources/uc_template.py` — Resource: specmgr://uc/template (Task 3.1.4).
 - `uc/tools/__init__.py` — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
-- `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- `uc/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
+- `uc/tools/_io.py` — Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 - `uc/tools/_lock.py` — Per-document in-process lock guarding use-case mutations.
 - `uc/tools/_paths.py` — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - `uc/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - `uc/tools/create_uc.py` — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - `uc/tools/get_uc.py` — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- `uc/tools/get_uc_diagram.py` — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_example.py` — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- `uc/tools/get_uc_plantuml_example.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_plantuml_template.py` — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/get_uc_schema.py` — ``@mcp.tool()`` wrapper: get_uc_schema (feat-189 Phase 105, Task 105.110).
+- `uc/tools/get_uc_sequence_skeleton.py` — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/get_uc_template.py` — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- `uc/tools/get_use_case_package_diagram.py` — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - `uc/tools/list_uc.py` — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - `uc/tools/parse_uc.py` — ``@mcp.tool()`` wrapper: parse_uc.
-- `uc/tools/validate_uc.py` — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
+- `uc/tools/plantuml_encode.py` — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- `uc/tools/validate_plantuml.py` — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 
 **vcr/**
 
@@ -520,21 +614,21 @@ First-line docstrings from each module, organized by domain:
 - `vcr/prompts/update_vcr.py` — ``@mcp.prompt()``: update_vcr (Task 3.2).
 - `vcr/resources/__init__.py` — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
 - `vcr/resources/vcr_example.py` — Resource: specmgr://vcr/example (Task 3.1).
-- `vcr/resources/vcr_schema.py` — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - `vcr/resources/vcr_template.py` — Resource: specmgr://vcr/template (Task 3.1).
 - `vcr/tools/__init__.py` — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
-- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- `vcr/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
+- `vcr/tools/_io.py` — Thin file read helpers over ``parse_vcr`` (feat-107-doc-cache Phase 4).
 - `vcr/tools/_lock.py` — Per-document in-process lock guarding verification case record mutations.
 - `vcr/tools/_paths.py` — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - `vcr/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_vcr`` and
 - `vcr/tools/create_vcr.py` — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
 - `vcr/tools/get_vcr.py` — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - `vcr/tools/get_vcr_example.py` — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- `vcr/tools/get_vcr_schema.py` — ``@mcp.tool()`` wrapper: get_vcr_schema (feat-189 Phase 105, Task 105.110).
 - `vcr/tools/get_vcr_template.py` — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - `vcr/tools/list_vcr.py` — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - `vcr/tools/parse_vcr.py` — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
-- `vcr/tools/validate_vcr.py` — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).
 
 ## Test Coverage
 
-**Test files**: 366
+**Test files**: 479

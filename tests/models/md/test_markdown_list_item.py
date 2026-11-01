@@ -272,6 +272,45 @@ class TestMarkdownListItemText(unittest.TestCase):
         self.assertEqual(instance.text, "Item 1")
 
 
+class TestMarkdownListItemSingleLineText(unittest.TestCase):
+    """Tests for `single_line_text` (feat-99-list-item): rejects a soft-wrapped
+    (CommonMark lazy-continuation) item's `.text` with an actionable error."""
+
+    def test_returns_text_unchanged_for_a_single_physical_line(self) -> None:
+        text = format_text("- We know Buyer\n")
+        instance = MarkdownListItem.from_text(text)
+
+        result = instance.single_line_text(expected="some shape")
+
+        self.assertEqual(result, "We know Buyer")
+
+    def test_raises_for_a_soft_wrapped_two_physical_line_item(self) -> None:
+        text = format_text(
+            "- REQ-001: The widget must render within 200ms\n  and continue on a second physical line.\n"
+        )
+        instance = MarkdownListItem.from_text(text)
+
+        with self.assertRaises(AssertionError) as ctx:
+            instance.single_line_text(expected="'REQ-NNN: <description>'")
+
+        message = str(ctx.exception)
+        self.assertIn("MarkdownListItem (line 1)", message)
+        self.assertIn("expected 'REQ-NNN: <description>'", message)
+        self.assertIn("soft-wrapped/lazy-continuation list items are not supported", message)
+        self.assertIn("join the text onto one physical line", message)
+
+    def test_raises_names_correct_line_for_a_non_first_item(self) -> None:
+        text = format_text("- ok\n\n- REQ-002: Another requirement\n  soft-wrapped onto a second line.\n")
+        _remaining, items = MarkdownListItem.process_list_field("items", MarkdownListItem, text, optional=False)
+        assert items is not None, type(items)
+        instance = items[1]
+
+        with self.assertRaises(AssertionError) as ctx:
+            instance.single_line_text(expected="some shape")
+
+        self.assertIn("(line 3)", str(ctx.exception))
+
+
 class TestMarkdownListItemComplex(unittest.TestCase):
     def test_nested_list(self) -> None:
         class Document(MarkdownSection1):

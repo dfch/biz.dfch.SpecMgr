@@ -22,7 +22,11 @@ structured document model. ``get_rsk_example`` returns a complete, valid
 sample risk document as raw markdown; ``get_rsk_template`` returns a
 document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
-data file rather than anything on the caller's filesystem. ``get_rsk``
+data file rather than anything on the caller's filesystem.
+``get_rsk_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://rsk/schema`` resource). ``get_rsk``
 reads, parses, and returns a full risk document by id -- the sole id-based
 read path for RSK (there never was a ``specmgr://rsk/{id}`` resource to
 begin with). ``list_rsk`` (Task 3.14) returns one page of
@@ -39,10 +43,11 @@ preserving every frontmatter field except ``updated``. Status changes of an
 existing document go through the generic ``set_status`` tool in
 ``general.tools`` (``type="rsk"``), also bumping ``updated``, leaving the
 body untouched. Deletion of ``rsk`` documents goes through the generic
-``delete`` tool in ``general.tools`` (``type="rsk"``). ``validate_rsk`` is
-a disk-free, id-free dry run against a submitted ``content`` string,
-independent of the other tools. Import this package to register all risk
-tools at once::
+``delete`` tool in ``general.tools`` (``type="rsk"``). Disk-free, id-free
+dry-run content validation goes through the generic ``validate`` tool in
+``general.tools`` (``type="rsk"``) -- the former ``validate_rsk`` tool was
+removed in favor of it (feat-81-83-validation Phase 2). Import this
+package to register all risk tools at once::
 
     from biz.dfch.specmgr.rsk import tools  # noqa: F401 (side-effects only)
 """
@@ -50,17 +55,17 @@ tools at once::
 from .create_rsk import create_rsk
 from .get_rsk import get_rsk
 from .get_rsk_example import get_rsk_example
+from .get_rsk_schema import get_rsk_schema
 from .get_rsk_template import get_rsk_template
 from .list_rsk import list_rsk
 from .parse_rsk import parse_rsk
-from .validate_rsk import validate_rsk
 
 __all__ = [
     "create_rsk",
     "get_rsk",
     "get_rsk_example",
+    "get_rsk_schema",
     "get_rsk_template",
     "list_rsk",
     "parse_rsk",
-    "validate_rsk",
 ]

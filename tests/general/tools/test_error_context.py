@@ -17,14 +17,23 @@
 
 """feat-27-validation Phase 3, Task 3.4: tool-layer tests for the shared error-context wrapper.
 
-ACC-003: asserts that the exception string surfaced by ``create_<d>``/``validate_<d>`` and the
-generic ``update`` adapter (``general.tools.update``) prepends domain + tool context (built by
+ACC-003: asserts that the ``message`` surfaced by ``create_<d>``'s non-raising
+``ValidateResult`` (feat-204-create-error Phase 110, case 5 of the ADR 519d1206
+non-raising chain), plus the ``message`` returned by the generic ``validate``
+tool's non-raising result (feat-81-83-validation
+Phase 2, retiring the former ``validate_<d>`` tools) and the generic ``update`` adapter's
+non-raising ``ValidateResult`` (feat-170 Phase 120, Bug 2, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), prepend domain + tool context (built by
 ``models.md._errors.wrap_tool_errors``, Task 3.1) on top of the engine's own message
-(feat-27-validation Phases 1/2). Covers ``tsk`` and ``req`` -- the two domains the task names --
-plus one ``set_status`` case for completeness, since that generic tool's own adapters were
-touched by Task 3.2 as well.
+(feat-27-validation Phases 1/2). Covers ``tsk`` and
+``req`` -- the two domains the task names -- plus one ``set_status`` case for completeness, since
+that generic tool's own adapters were touched by Task 3.2 as well. Since
+feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), that ``set_status`` case's
+own out-of-vocabulary-status failure mode is pre-checked *before* dispatch and no longer reaches
+``wrap_tool_errors`` at all -- see ``TestGenericSetStatusToolErrorContext``'s own docstring below
+for how it still identifies the domain, via the non-raising ``InvalidStatusResult`` instead.
 
-Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-eleven-domain parametrization,
+Unlike ``tests/general/tools/test_update.py``'s exhaustive, all-domain parametrization,
 this file only needs one representative domain pair to prove the wrapper is actually wired in
 at the tool boundary -- the wrapper's own mechanics (all three channels, ``also_catch``,
 pass-through) are already fully covered by ``tests/models/md/test_errors.py``.
@@ -38,15 +47,13 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import InvalidStatusResult, ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.req.tools.create_req import create_req
-from biz.dfch.specmgr.req.tools.validate_req import validate_req
 from biz.dfch.specmgr.tsk.tools.create_tsk import create_tsk
-from biz.dfch.specmgr.tsk.tools.validate_tsk import validate_tsk
 
 _TSK_MINIMAL_BODY = textwrap.dedent(
     """\
@@ -56,7 +63,7 @@ _TSK_MINIMAL_BODY = textwrap.dedent(
 
     ## Recent Updates
 
-    ### 2026-08-15 - Kickoff
+    ### 2026-08-15 00:00:00.000Z - Kickoff
 
     Started the task list.
     """
@@ -102,67 +109,108 @@ class TempDocsDirTestCase(unittest.TestCase):
 
 
 class TestCreateToolErrorContext(TempDocsDirTestCase):
-    """``create_<d>``: a structural/field failure names the domain and the tool."""
+    """``create_<d>``: a structural/field failure names the domain and the tool.
+
+    Since feat-204-create-error (Phase 110, case 5 of the ADR 519d1206 non-raising
+    chain), ``create_<d>`` never raises for a content-validation failure -- it
+    returns the non-raising ``ValidateResult(valid=False, ...)`` instead, so these
+    tests assert against ``result.errors[0].message`` rather than a raised
+    exception (the same pattern ``TestValidateToolErrorContext`` above follows).
+    """
 
     def test_create_tsk_structural_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_tsk(_TSK_MALFORMED_BODY)
+        result = create_tsk(_TSK_MALFORMED_BODY)
 
-        self.assertIn("tsk create_tsk", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("tsk create_tsk", result.errors[0].message)
 
     def test_create_req_field_validation_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(ValidationError) as ctx:
-            create_req(_REQ_OUT_OF_VOCABULARY_BODY)
+        result = create_req(_REQ_OUT_OF_VOCABULARY_BODY)
 
-        self.assertIn("req create_req", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("req create_req", result.errors[0].message)
 
 
 class TestValidateToolErrorContext(unittest.TestCase):
-    """``validate_<d>``: a structural/field failure names the domain and the tool."""
+    """The generic ``validate`` tool: a structural/field failure names the domain and ``validate``.
+
+    Since feat-81-83-validation Phase 2, ``validate`` never raises for a content-validation
+    failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so these tests
+    assert against ``result.errors[0].message`` rather than a raised exception.
+    """
 
     def test_validate_tsk_structural_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_tsk(_TSK_MALFORMED_BODY)
+        result = validate(type="tsk", content=_TSK_MALFORMED_BODY)
 
-        self.assertIn("tsk validate_tsk", str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("tsk validate", result.errors[0].message)
 
     def test_validate_req_field_validation_failure_names_domain_and_tool(self) -> None:
-        with self.assertRaises(ValidationError) as ctx:
-            validate_req(_REQ_OUT_OF_VOCABULARY_BODY)
+        result = validate(type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
 
-        self.assertIn("req validate_req", str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("req validate", result.errors[0].message)
 
 
 class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
-    """The generic ``update`` adapter: a structural/field failure names the domain and ``update``."""
+    """The generic ``update`` adapter: a structural/field failure names the domain and ``update``.
+
+    Since feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), ``update`` never
+    raises for a content-validation failure -- it returns the non-raising
+    ``ValidateResult(valid=False, ...)`` instead, so these tests assert against
+    ``result.errors[0].message`` rather than a raised exception (the same pattern
+    ``TestValidateToolErrorContext`` above follows).
+    """
 
     def test_update_tsk_structural_failure_names_domain_and_tool(self) -> None:
         created = create_tsk(_TSK_MINIMAL_BODY)
 
-        with self.assertRaises(AssertionError) as ctx:
-            update(id=created.id, type="tsk", content=_TSK_MALFORMED_BODY)
+        result = update(id=created.id, type="tsk", content=_TSK_MALFORMED_BODY)
 
-        self.assertIn("tsk update", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("tsk update", result.errors[0].message)
 
     def test_update_req_field_validation_failure_names_domain_and_tool(self) -> None:
         created = create_req(_REQ_MINIMAL_BODY)
 
-        with self.assertRaises(ValidationError) as ctx:
-            update(id=created.id, type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
+        result = update(id=created.id, type="req", content=_REQ_OUT_OF_VOCABULARY_BODY)
 
-        self.assertIn("req update", str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("req update", result.errors[0].message)
 
 
 class TestGenericSetStatusToolErrorContext(TempDocsDirTestCase):
-    """The generic ``set_status`` adapter: an out-of-vocabulary status names the domain and ``set_status``."""
+    """The generic ``set_status`` adapter's out-of-vocabulary-status case still identifies the domain.
+
+    Since feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), an
+    out-of-vocabulary ``status`` is pre-checked *before* any adapter dispatch and therefore
+    never reaches the ``wrap_tool_errors``-wrapped ``XFrontmatter(**fm_data)`` reconstruction
+    ``TestCreateToolErrorContext``/``TestGenericUpdateToolErrorContext`` above exercise -- it
+    returns a structured, non-raising ``InvalidStatusResult`` instead of a raised,
+    wrapper-annotated ``pydantic.ValidationError``. The domain is still unambiguously
+    identified, just via the result's own ``type``/``message`` fields rather than
+    ``wrap_tool_errors``'s ``"{domain} {tool}"`` prefix.
+    """
 
     def test_set_status_tsk_out_of_vocabulary_names_domain_and_tool(self) -> None:
         created = create_tsk(_TSK_MINIMAL_BODY)
 
-        with self.assertRaises(ValidationError) as ctx:
-            set_status(id=created.id, type="tsk", status="not-a-real-status")
+        result = set_status(id=created.id, type="tsk", status="not-a-real-status")
 
-        self.assertIn("tsk set_status", str(ctx.exception))
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "tsk")
+        self.assertIn("tsk", result.message)
 
 
 if __name__ == "__main__":

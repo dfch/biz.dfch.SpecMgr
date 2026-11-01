@@ -31,18 +31,71 @@ carries six risk-specific derived fields (the zone levels, the TARA word,
 the first ``## Scope`` entry, and the residual-risk coordinates) that the
 factory derives from the parsed assessments in one place -- see the feature
 README's Decisions Made.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007) routed this tool through the
+shared ``general.tools._listing.build_summaries`` helper: a file that fails
+to parse now appears inline in ``results`` as a failed entry rather than
+being silently skipped. ``RskSummary``'s own extra risk-specific fields (not
+part of the shared ``DocSummary`` base) cannot be represented by the
+generic ``general.tools._listing.default_failed_summary`` builder every
+other domain uses, so a failed row is instead built by
+``rsk.tools._sentinel.build_failed_rsk_summary`` from a fixed, valid,
+deliberately worst-case-severity sentinel document -- see that module's own
+docstring and the feature README's Design Notes ("``RskSummary``'s extra
+fields -- sentinel-document design") for the full rationale.
+
+**feat-200-list (GitHub issue #200), Task 110.100: the optional ``glob``
+parameter.** This tool now takes an optional, case-insensitive ``glob``
+pattern matched against each document's own id (a UUID; REQ-002/REQ-004):
+the shared ``general.tools._listing.filter_summaries_by_glob`` helper runs
+on the materialized row list, between this tool's own row build and the
+``total``/paging step, so it never re-scans the filesystem on its own. A
+failed-to-parse row carries ``id=None`` and therefore never matches, so a
+glob-given result has no failed rows and ``error_count = 0`` by
+construction (REQ-003) -- for ``rsk`` exactly like the other domains, since
+the sentinel-built failed rows (``rsk.tools._sentinel``) also carry
+``id=None`` with ``error`` set; ``total`` is the match count and
+``offset``/``max_results`` paging keeps its existing meaning on that
+smaller set (ACC-004). ``glob=None`` (the default) leaves every outcome
+byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
+a pattern, not an off-switch (it matches no id and yields a zero-row
+result).
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+A 1:1 port of ``list_dec``'s ``language`` handling. The optional
+``language`` parameter (default ``"en"``) selects which directory this tool
+scans: omitted/``"en"`` = the flat ``docs/rsk/`` directory -- today's exact
+behavior; any other shape-validated code (e.g. ``"de"``) = only the
+``docs/rsk/{language}/`` subdirectory, listing exactly the existing
+variants of that language (ACC-007). There is deliberately NO "all
+languages" mode (the ``DocSummary`` row shape carries no language column
+and would repeat ids). The language is shape-guarded before any filesystem
+access, and a shape-valid language without a packaged heading-mapping table
+is rejected up front with the table loader's actionable error. The row
+shape is unchanged -- no language column.
 """
 
 from __future__ import annotations
 
-from pydantic import ValidationError
+from pathlib import Path
 
 from ...general.models import PagedResult
+from ...general.models.heading_table import resolve_heading_table
+from ...general.tools._doc_paths import iter_doc_paths_all_languages
+from ...general.tools._listing import build_summaries, filter_summaries_by_glob
 from ...general.tools._paging import normalize_paging, paginate
+from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
 from ...server import mcp
-from ..models.v1 import RskSummary
+from ..models.v1 import RskDocument, RskSummary
+from ._cache import reconcile_rsk_cache
 from ._io import read_rsk
-from ._paths import iter_rsk_paths
+from ._paths import iter_rsk_paths, rsk_base_dir
+from ._sentinel import build_failed_rsk_summary
+
+
+def _to_summary(doc: RskDocument, path: Path) -> RskSummary:
+    result = RskSummary.from_document(doc, ref=path.stem, path=str(path.resolve()))
+    return result
 
 
 @mcp.tool(
@@ -55,22 +108,46 @@ from ._paths import iter_rsk_paths
         "entry, and the residual-risk coordinates (residual_probability/residual_impact/"
         "residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to "
         "read from disk -- for documents that have no assigned id; use it with the get_rsk "
-        "tool instead. max_results/offset control paging (default page size 25, capped at "
-        "100); out-of-range values are clamped, not errored."
+        "tool instead. An optional glob pattern (e.g. 'dead*') filters the listing to the "
+        "risks whose id matches it, case-insensitively; glob=None (the default) lists "
+        "everything, and an empty string matches nothing. max_results/offset control paging "
+        "(default page size 25, capped at 100); out-of-range values are clamped, not errored. "
+        "The optional `language` parameter (default 'en') selects the directory scanned: omitted/'en' "
+        "= the flat docs/rsk/ directory (the default behavior, unchanged); any other ISO 639-1-shaped "
+        "lowercase two-letter code (e.g. 'de') = only that language's docs/rsk/{language}/ subdirectory, "
+        "listing exactly the existing variants of that language (there is deliberately no "
+        "'all languages' mode). The language is shape-validated before any file access (an "
+        "invalid-shaped value is a ValueError, like an invalid id), and a shape-valid language without "
+        "a packaged heading-mapping table is rejected up front with an actionable ValueError."
     ),
 )
-def list_rsk(max_results: int | None = None, offset: int | None = None) -> PagedResult[RskSummary]:
+def list_rsk(
+    max_results: int | None = None,
+    offset: int | None = None,
+    glob: str | None = None,
+    language: str = DEFAULT_LANGUAGE,
+) -> PagedResult[RskSummary]:
     """Return one page of one-line risk summaries from the configured base directory.
 
-    A file that fails to parse (``AssertionError`` or
-    ``pydantic.ValidationError`` -- the same two error channels
-    :func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk` raises) is silently
-    skipped -- a single malformed file must not break listing every other
-    valid one (mirrors ``rsk.tools._paths.find_rsk_path``'s own
-    skip-on-parse-failure rule). The complete, skip-broken-file-filtered
-    list is materialized first, then paginated in memory, so the returned
-    ``total`` always reflects the count of parseable documents only,
-    independent of paging.
+    A file that fails to parse (``AssertionError``, ``pydantic.ValidationError``,
+    or ``yaml.YAMLError`` -- the same channels
+    :func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk` raises) appears inline
+    in ``results`` as its own failed entry (``id=None``, ``title``/``status``
+    both the fixed marker ``"<failed to parse>"`` (overridden onto a
+    genuinely-parsed sentinel document -- see ``rsk.tools._sentinel``'s own
+    docstring for why ``title`` cannot be read off that document's real H1
+    the way every other domain's failed entry reads it off its own
+    ``path.stem``-adjacent marker), ``ref``/``path`` populated the same way
+    as a successful entry, and ``error`` carrying the exception's message)
+    rather than being silently skipped (feat-81-83-validation Phase 3,
+    REQ-006) -- a single malformed file must not break listing every other
+    valid one. The complete list (successes and failures both) is
+    materialized first, then -- when ``glob`` is given -- filtered to the
+    rows whose ``id`` matches it (the shared
+    ``general.tools._listing.filter_summaries_by_glob`` helper, applied
+    between the row build and the ``total``/paging step), then paginated in
+    memory, so the returned ``total``/``error_count`` always reflect the
+    whole directory (or that filtered subset), independent of paging.
 
     Parameters
     ----------
@@ -83,20 +160,64 @@ def list_rsk(max_results: int | None = None, offset: int | None = None) -> Paged
         Zero-based index of the first summary to include in this page.
         Defaults to ``0`` when not given (``None``); negative values are
         floored to ``0``.
+    glob:
+        Optional glob pattern matched, case-insensitively, against each
+        document's own id (a UUID) -- e.g. ``"dead*"`` (feat-200-list,
+        GitHub issue #200, REQ-002/REQ-004). Defaults to ``None`` (no
+        filtering: the complete directory is listed, exactly as before --
+        REQ-005). An empty string is a pattern, not an off-switch: it
+        matches no id (ids are never empty) and yields a zero-row result.
+        Failed-to-parse rows carry ``id=None`` and therefore never match
+        any pattern, so a glob-given result has no failed rows and
+        ``error_count = 0`` by construction (REQ-003); ``total`` is the
+        match count and ``offset``/``max_results`` paging keeps its existing
+        meaning on that smaller set.
+    language:
+        The language whose directory to list (feat-197-i18n Phase 125, ADR
+        38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
+        scans the flat ``docs/rsk/`` directory -- today's exact behavior;
+        any other ISO 639-1-shaped lowercase two-letter code (e.g.
+        ``"de"``) scans only ``docs/rsk/{language}/``, listing exactly the
+        existing variants of that language (ACC-007). There is deliberately
+        no "all languages" mode (the row shape carries no language column
+        and would repeat ids). Shape-guarded before any filesystem access
+        (like ``id``); a shape-valid code without a packaged
+        heading-mapping table is rejected up front with the table loader's
+        actionable error.
 
     Returns
     -------
     PagedResult[RskSummary]
-        One entry per successfully-parsed ``*.md`` file within the
-        requested page, in filename-sorted order. ``results`` is empty if
-        the base directory does not exist, holds no risks, or ``offset`` is
-        past the end of the full list.
+        One entry per ``*.md`` file within the requested page (successes
+        and failures both -- only entries whose ``id`` matches ``glob`` when
+        it is given), in filename-sorted order. ``results`` is empty if the
+        base directory does not exist, holds no risks, ``offset`` is past
+        the end of the full list, or no id matches ``glob``.
+
+    Raises
+    ------
+    ValueError
+        ``language`` is not an ISO 639-1-shaped lowercase two-letter code (raised
+        before any filesystem access), or a non-default ``language`` has no packaged
+        heading-mapping table (raised before any filesystem access).
     """
-    summaries: list[RskSummary] = []
-    for path in iter_rsk_paths():
-        try:
-            doc = read_rsk(path)
-        except (AssertionError, ValidationError):
-            continue
-        summaries.append(RskSummary.from_document(doc, ref=path.stem))
-    return paginate(summaries, *normalize_paging(max_results, offset))
+    assert_language(language)
+    if language != DEFAULT_LANGUAGE:
+        resolve_heading_table(language)
+
+    paths = list(iter_rsk_paths(language))
+    # feat-107-doc-cache REQ-005 -- and feat-197-i18n (ADR 38efdb66 item 9): with {language}
+    # subfolders, a scan of one language's directory no longer covers the whole domain, so
+    # reconcile against the domain-wide live listing (flat EN files plus every {language}
+    # subdirectory's files), never just the scanned directory -- or listing one language would
+    # evict the other languages' cached entries. With no subdirectory present the union is the
+    # scanned listing itself (the pre-i18n behavior, byte-identical).
+    reconcile_rsk_cache(list(iter_doc_paths_all_languages(rsk_base_dir())))
+    summaries, error_count = build_summaries(paths, read_rsk, _to_summary, build_failed_rsk_summary)
+
+    # feat-200-list, Task 110.100 (REQ-002/REQ-003): the id-glob filter runs between the row build
+    # above and the total/paging step below -- never a filesystem re-scan.
+    if glob is not None:
+        summaries, error_count = filter_summaries_by_glob(summaries, glob)
+
+    return paginate(summaries, *normalize_paging(max_results, offset), error_count=error_count)

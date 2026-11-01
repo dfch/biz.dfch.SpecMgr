@@ -1,9 +1,9 @@
 ---
-created: '2025-05-02 09:11:34.267Z'
+created: '2025-05-02T09:11:34.267Z'
 id: feat-99-example-widget
 status: progress
 type: feat
-updated: '2025-05-20 21:46:12.803Z'
+updated: '2025-05-20T21:46:12.803Z'
 version: 1.0.0
 ---
 
@@ -63,15 +63,15 @@ Free-form design rationale, schema sketches, etc.
 
 ### Task List
 
-#### Phase 0: Scaffolding
+#### Phase 100: Scaffolding
 
-- [x] Task 0.1: Create branch and package skeleton
+- [x] Task 100.100: Create branch and package skeleton
 
-#### Phase 1: Implementation
+#### Phase 110: Implementation
 
-- [ ] Task 1.1: Implement the widget component
+- [ ] Task 110.100: Implement the widget component
 
-- [ ] Task 1.2: Add keyboard navigation
+- [ ] Task 110.110: Add keyboard navigation
 
 ## Progress
 

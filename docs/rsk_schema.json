@@ -15,6 +15,7 @@
     },
     "Impact": {
       "description": "`### Impact {1..5}` under `## Initial/Residual Assessment` -- the impact coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Impact 3`), constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a missing value digit\n(`### Impact`), an out-of-range digit (`### Impact 6`), or a misspelled\nheading word all fail the parse eagerly. Any body text under the heading\nis absorbed into the leaf like every other leaf `MarkdownSection` (it is\nnot part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 impact value carried by the heading (e.g. `3`\n    for `### Impact 3`). Never stored separately -- derived from the\n    retained heading text.",
+      "pattern": "^Impact [1-5]$",
       "properties": {},
       "title": "Impact",
       "type": "object"
@@ -48,6 +49,28 @@
       "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
       "properties": {},
       "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownListItemWithNotes": {
+      "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "MarkdownListItemWithNotes",
       "type": "object"
     },
     "MarkdownParagraph": {
@@ -84,6 +107,7 @@
     },
     "Probability": {
       "description": "`### Probability {1..5}` under `## Initial/Residual Assessment` -- the probability coordinate of the 5x5 matrix.\n\nA leaf H3 section: the value lives in the heading itself (e.g.\n`### Probability 4`), constrained by the regex `@alias` above and\nenforced by `match_alias` (`re.fullmatch`) at parse time -- a missing\nvalue digit (`### Probability`), an out-of-range digit\n(`### Probability 6`), or a misspelled heading word all fail the parse\neagerly. Any body text under the heading is absorbed into the leaf like\nevery other leaf `MarkdownSection` (it is not part of the value).\n\nParameters\n----------\nvalue:\n    Computed. The 1..5 probability value carried by the heading (e.g.\n    `4` for `### Probability 4`). Never stored separately -- derived\n    from the retained heading text.",
+      "pattern": "^Probability [1-5]$",
       "properties": {},
       "title": "Probability",
       "type": "object"
@@ -108,7 +132,7 @@
       "type": "object"
     },
     "Risk": {
-      "description": "The `rsk` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding `cause`.\n    Inherited from `MarkdownSection1WithComment`.\ncause:\n    `## Cause`. Mandatory.\ntrigger:\n    `## Trigger`. Mandatory.\nconsequence:\n    `## Consequence`. Mandatory.\nscope:\n    `## Scope`. Mandatory, at least one entry.\ninitial_assessment:\n    `## Initial Assessment` (5x5, before mitigation). Mandatory.\nstrategy:\n    `## Strategy` (TARA 4-value closed set). Mandatory.\nmitigation:\n    `## Mitigation`. Mandatory.\nresidual_assessment:\n    `## Residual Assessment` (5x5, after mitigation). Mandatory.\nowner:\n    `## Owner`. Optional.\ntags:\n    `## Tags`. Optional.\nmore_information:\n    `## More Information`. Optional.",
+      "description": "The `rsk` body: a single H1 section with the fields below.\n\nThe H1 heading text is free-form. `comment` is inherited from\n`MarkdownSection1WithComment` (see its own docstring) -- not redeclared\nhere.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`) preceding `cause`.\n    Inherited from `MarkdownSection1WithComment`.\ncause:\n    `## Cause`. Mandatory.\ntrigger:\n    `## Trigger`. Mandatory.\nconsequence:\n    `## Consequence`. Mandatory.\nscope:\n    `## Scope`. Mandatory, at least one entry.\ninitial_assessment:\n    `## Initial Assessment` (5x5, before mitigation). Mandatory.\nstrategy:\n    `## Strategy` (TARA 4-value closed set). Mandatory.\nmitigation:\n    `## Mitigation`. Mandatory.\nresidual_assessment:\n    `## Residual Assessment` (5x5, after mitigation). Mandatory.\nowner:\n    `## Owner`. Optional.\ntags:\n    `## Tags`. Optional.\nsource:\n    `## Source`. Mandatory.\nmore_information:\n    `## More Information`. Optional.",
       "properties": {
         "cause": {
           "$ref": "#/$defs/Cause",
@@ -170,6 +194,10 @@
           "$ref": "#/$defs/Scope",
           "description": "`## Scope` section (>=1 affected system/component). Mandatory."
         },
+        "source": {
+          "$ref": "#/$defs/Source",
+          "description": "`## Source` section. Mandatory."
+        },
         "strategy": {
           "$ref": "#/$defs/Strategy",
           "description": "`## Strategy` section (TARA 4-value closed set). Mandatory."
@@ -199,7 +227,8 @@
         "initial_assessment",
         "strategy",
         "mitigation",
-        "residual_assessment"
+        "residual_assessment",
+        "source"
       ],
       "title": "Risk",
       "type": "object"
@@ -229,7 +258,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -246,6 +275,14 @@
         },
         "status": {
           "default": "open",
+          "enum": [
+            "accepted",
+            "closed",
+            "dropped",
+            "mitigating",
+            "occurred",
+            "open"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -265,7 +302,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {
@@ -296,6 +333,20 @@
       "title": "Scope",
       "type": "object"
     },
+    "Source": {
+      "description": "`## Source` -- single-line value naming the origin/authority of this\nrisk (e.g. the QA document, discussion, or report it derives from).\nMandatory.\n\nSubclasses the shared `models.md.SourceBase` (feat-29-dec-source-roles) --\nthe field declaration itself lives there; this class exists so `rsk`\nstill declares and owns its own concrete `Source` type. Note: the\ngenerated JSON Schema's `value` field description comes from\n`SourceBase` and is intentionally domain-neutral (\"this document\"),\nnot the domain-specific \"this risk\" wording used above -- see\n`SourceBase`'s own comment for the rationale (REQ-016).",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/MarkdownParagraph",
+          "description": "Single-line value naming the origin/authority of this document."
+        }
+      },
+      "required": [
+        "value"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
     "Strategy": {
       "description": "`## Strategy` -- single-line TARA response strategy. Mandatory.\n\nOne of the four TARA words: `transfer`, `accept`, `reduce`, `avoid`.",
       "properties": {
@@ -311,12 +362,12 @@
       "type": "object"
     },
     "Tags": {
-      "description": "`## Tags` -- bullet list of free-form labels for grouping/filtering risks. Optional.",
+      "description": "`## Tags` -- bullet list of free-form labels for grouping/filtering\nrisks. Optional.\n\nStructurally identical to `req`/`dec`/`gol`'s own `Tags` (issue #133):\neach item is a `MarkdownListItemWithNotes`, so a loose-list continuation\nparagraph under a tag is captured in the item's `notes` instead of being\nsilently dropped.",
       "properties": {
         "items": {
           "description": "Bullet list of free-form labels for grouping/filtering risks; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",

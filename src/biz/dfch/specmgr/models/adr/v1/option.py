@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Pydantic model for one ``### Option N: {title}`` sub-section (plan §5)."""
+"""Pydantic model for one ``### Option N: {title}`` sub-section."""
 
 from __future__ import annotations
 
@@ -27,9 +27,9 @@ class AdrOption(BaseModel):
 
     Rendered as ``### Option {number}: {partial_title}``. Options are never
     individually mandatory -- zero options is a valid ADR state -- and the
-    whole-section deletion sentinel from plan §4 does not apply to them;
-    removal only ever happens through the dedicated ``option_delete`` tool
-    (plan §5, §8), not by submitting a blank/``"REMOVE"`` value here.
+    whole-section deletion sentinel does not apply to them;
+    removal only ever happens through the dedicated ``option_delete`` tool,
+    not by submitting a blank/``"REMOVE"`` value here.
 
     Parameters
     ----------

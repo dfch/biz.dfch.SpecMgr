@@ -1,0 +1,1 @@
+List the task list documents using only the specmgr MCP tools. Reply DONE when finished.

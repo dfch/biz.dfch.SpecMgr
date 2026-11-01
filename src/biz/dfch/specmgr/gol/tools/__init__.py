@@ -22,7 +22,11 @@ structured document model. ``get_gol_example`` returns a complete, valid
 sample goal document as raw markdown; ``get_gol_template`` returns a document
 with every field present but populated with short placeholder ("blind text")
 content instead -- both read a packaged, build-guaranteed data file rather
-than anything on the caller's filesystem (Task 3.10). ``get_gol`` (Task 3.8)
+than anything on the caller's filesystem (Task 3.10).
+``get_gol_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://gol/schema`` resource). ``get_gol`` (Task 3.8)
 reads, parses, and returns a full goal document by id -- the sole id-based
 read path for GOL (there is no ``specmgr://gol/{id}`` resource, ADR
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_gol`` (Task 3.9) returns one
@@ -37,9 +41,11 @@ except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="gol"``), also
 bumping ``updated``, leaving the body untouched. Deletion of ``gol``
 documents goes through the generic ``delete`` tool in ``general.tools``
-(``type="gol"``). ``validate_gol`` (Task 3.7) is a disk-free, id-free dry
-run against a submitted ``content`` string, independent of the other tools.
-Import this package to register all goal tools at once::
+(``type="gol"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="gol"``)
+-- the former ``validate_gol`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all goal
+tools at once::
 
     from biz.dfch.specmgr.gol import tools  # noqa: F401 (side-effects only)
 """
@@ -47,17 +53,17 @@ Import this package to register all goal tools at once::
 from .create_gol import create_gol
 from .get_gol import get_gol
 from .get_gol_example import get_gol_example
+from .get_gol_schema import get_gol_schema
 from .get_gol_template import get_gol_template
 from .list_gol import list_gol
 from .parse_gol import parse_gol
-from .validate_gol import validate_gol
 
 __all__ = [
     "create_gol",
     "get_gol",
     "get_gol_example",
+    "get_gol_schema",
     "get_gol_template",
     "list_gol",
     "parse_gol",
-    "validate_gol",
 ]

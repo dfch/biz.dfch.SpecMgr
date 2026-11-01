@@ -20,27 +20,49 @@ want to change before calling any write tool.
 ## 3. Show which sections are present and which are empty
 
 Show the user which of the sections -- the mandatory `## Context and
-Problem Statement` and `## Decision Outcome` (always present), and the
-optional `## Decision Drivers`, `## Considered Options`, `## Related
+Problem Statement`, `## Decision Outcome`, `## Roles and
+Responsibilities`, and `## Source` (always present), and the optional
+`## Decision Drivers`, `## Considered Options`, `## Tags`, `## Related
 Artifacts`, `## Pros and Cons`, `## More Information`, `## Updates` --
 are already present with content and which are still absent. Use the
 `question` tool to ask which ones (if any) they want to add to or
 revise.
 
-## 4. Map the requested change to the right tool
+## 4. Read the RASCI role definitions before revising `## Roles and Responsibilities`
+
+If the requested change touches `## Roles and Responsibilities` (editing
+the existing RASCI assignment -- the section itself is always present,
+so this is never about adding it), fetch the cross-cutting
+`specmgr://rasci` resource first and read the generic RASCI
+(Responsible/Accountable/Support/Consulted/Informed) role definitions.
+The `dec` schema does not duplicate those definitions -- use the
+resource as the single source of truth for what each role means, then
+map the decision's actual people/teams onto the five roles following
+the binding sub-section order (Accountable, Responsible, Support,
+Consulted, Informed) and the structural rules (Accountable is a single
+paragraph; Responsible needs at least one bullet; Support/Consulted/
+Informed may each be present with zero items). Skip this step if the
+change does not touch the roles section.
+
+## 5. Map the requested change to the right tool
 
 - A change to the body -- the `context`, `drivers`, `considered`,
   `outcome` (lead paragraph, `### Consequences`, `### Confirmation`),
-  `related_artifacts`, `pros_and_cons` options, `more_information`, or
-  `updates` entries -- -> the generic `update` tool called with
+  `roles_and_responsibilities` (Accountable/Responsible/Support/
+  Consulted/Informed), `tags`, `source`, `related_artifacts`,
+  `pros_and_cons` options, `more_information`, or `updates` entries --
+  -> the generic `update` tool called with
   `type="dec"`: a **line-range replace** for a localized change, or a
   **whole-body replace** otherwise. `content` is body markdown only (no
   frontmatter block) in both cases.
   - **Line-range replace** (a localized change -- one paragraph, field,
-    or section): first call `get_dec(id, raw=True)` to see the exact
-    body text, identify the 1-based line to start at and how many lines
-    to replace -- `offset` is the first body line, `limit` the number of
-    lines (`offset`..`offset+limit-1`); `limit` omitted replaces through
+    or section): first call `get_dec(id, raw=True, numbered=True)` to
+    see the exact body text -- every line prefixed with its 1-based
+    body-line number, so no manual counting is needed and a number seen
+    can be fed straight back into `update`'s `offset` -- identify the
+    1-based line to start at and how many lines to replace -- `offset`
+    is the first body line, `limit` the number of lines
+    (`offset`..`offset+limit-1`); `limit` omitted replaces through
     the last body line, `limit=0` is a pure insert, and the `N+1`
     position is end-of-body: `offset = N+1` appends after the last line
     -- and call `update(id, type="dec", content, offset=..., limit=...)`
@@ -51,7 +73,19 @@ revise.
     line-range insert directly below the section's optional leading
     comment (or directly below the `## Updates` heading if no comment
     is present) -- new entries go first, since the section is
-    newest-first, enforced.
+    newest-first, enforced. Each entry's heading is
+    `### {timestamp} ( - | : ) {title}`, where `{timestamp}` is the full
+    date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (the
+    date/time separator may be `T` or a space; a date-only timestamp is
+    rejected), followed by the entry's own update text directly under the
+    H3 heading (any markdown content -- multiple paragraphs, lists, code
+    blocks, block quotes, not just a single paragraph), which is mandatory.
+    `offset`/`limit` address the frontmatter-stripped body, never the
+    raw on-disk `.md` file: the YAML frontmatter block is variable-
+    length, so a raw file read's line numbers are never the same as
+    body-line coordinates -- and never feed the `numbered=True` output
+    back verbatim as `content`: strip the `"<n>: "` prefix from each
+    line first.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="dec", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:
@@ -72,11 +106,16 @@ revise.
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
 
-## 5. Check the schema, and validate before writing if useful
+## 6. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://dec/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
-`validate_dec(content, full=False)` beforehand to dry-run the new body
+Call the `get_dec_schema` tool (the generated JSON Schema) only for a
+whole-body rewrite or a structural change -- adding, removing, or
+renaming sections, or editing closed-form content -- to confirm field
+names and constraints. Skip the fetch for a local splice (a line-range
+replace), where the raw body is already in context: `update` still
+validates the spliced result as a whole document before writing
+anything, so the skip is safe. Optionally call
+`validate(type="dec", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

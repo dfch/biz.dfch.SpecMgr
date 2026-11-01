@@ -17,7 +17,7 @@
 
 """Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 
-Every one of the twelve domains' ``parser.py`` modules (eleven whole-body domains plus ADR)
+Every one of the domains' ``parser.py`` modules (every whole-body domain plus ADR)
 shares the exact same three-line shape::
 
     post = frontmatter.loads(text)                                    # yaml.YAMLError
@@ -26,7 +26,7 @@ shares the exact same three-line shape::
 
 This module centralizes the first two lines' error handling behind :func:`parse_frontmatter`,
 so every domain parser gets identical enrichment of both frontmatter error channels without
-duplicating the line-remap/message-building logic twelve times (REQ-005):
+duplicating the line-remap/message-building logic separately in each one (REQ-005):
 
 - ``yaml.YAMLError`` (malformed YAML) -- :func:`enrich_frontmatter_yaml_error` returns a
   same-type, re-raiseable copy whose location marks name "the frontmatter block" (instead of

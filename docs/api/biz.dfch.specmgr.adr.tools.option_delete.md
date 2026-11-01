@@ -1,11 +1,11 @@
 # `biz.dfch.specmgr.adr.tools.option_delete`
 
-``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
+``@mcp.tool()`` wrapper: option_delete.
 
 Thin file-I/O/id-lookup adapter over
 ``models.adr.v1.mutations.option_delete``: re-reads and re-parses the
 current on-disk state, then re-renders and re-writes the full file; there
-is no in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md``
+is no in-memory cache of a parsed :class:`Adr`: the ``.md``
 file itself is always the source of truth. The whole sequence runs
 under ``_lock.adr_lock(id)`` so a concurrent mutation against the same
 id cannot interleave with it and cause a lost update.
@@ -21,7 +21,7 @@ wrapper's own name.
 Remove one option from the ADR identified by ``id``.
 
 Does not renumber or reorder the remaining options -- deleting one
-leaves a gap in the numbering (plan §5). Lets
+leaves a gap in the numbering. Lets
 :class:`~biz.dfch.specmgr.models.adr.AdrOptionNotFoundError` propagate
 if no option matches ``full_title``; nothing is written in that case.
 

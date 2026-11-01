@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``option_create`` ``@mcp.tool()`` wrapper (plan §5, §8, §9a)."""
+"""Tests for the ``option_create`` ``@mcp.tool()`` wrapper."""
 
 import concurrent.futures
 import unittest

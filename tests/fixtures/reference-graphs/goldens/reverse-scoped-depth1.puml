@@ -1,0 +1,34 @@
+@startuml Reverse Target
+
+skinparam component {
+  backgroundColor<<ADR>> LightYellow
+  backgroundColor<<REQ>> LightBlue
+  backgroundColor<<UC>> Pink
+  backgroundColor<<TSK>> Honeydew
+  backgroundColor<<QA>> LemonChiffon
+  backgroundColor<<PRB>> LightCoral
+  backgroundColor<<GOL>> Lavender
+  backgroundColor<<RSK>> Orange
+  backgroundColor<<DEC>> LightGreen
+  backgroundColor<<SOP>> PowderBlue
+  backgroundColor<<FEAT>> PaleTurquoise
+  backgroundColor<<VCR>> Khaki
+  backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<TXT>> LightGrey
+  backgroundColor<<UNRESOLVED>> DarkRed
+}
+
+left to right direction
+
+component "REQ" {
+component "Reverse Target" as [REQ-c006c006-c006-4c06-8c06-c006c006c006] <<REQ>>
+}
+
+component "FEAT" {
+component "Reverse Feature" as [feat-42] <<FEAT>>
+component "Reverse Feature" as [feat-42-reverse-feat] <<FEAT>>
+}
+
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42]
+[REQ-c006c006-c006-4c06-8c06-c006c006c006] --> [feat-42-reverse-feat]
+@enduml

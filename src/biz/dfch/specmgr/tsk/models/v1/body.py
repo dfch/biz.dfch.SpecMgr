@@ -18,7 +18,7 @@
 """TaskList (TSK) body models: whole-section fields under a single H1.
 
 Built on the generic `models.md` `MarkdownSection1WithComment`/
-`MarkdownSection2`/`MarkdownSection3`/`MarkdownParagraph`/`TaskItem` engine,
+`MarkdownSection2`/`MarkdownSection3`/`UpdateEntryContent`/`TaskItem` engine,
 mirroring `req/models/v1/body.py`'s "one class per heading/list" shape. `Task`
 is the top-level H1 container:
 
@@ -46,51 +46,88 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from ....models.md import (
-    MarkdownParagraph,
     MarkdownSection1WithComment,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    MarkdownStr,
     alias,
     AliasType,
 )
 from ....models.md._ordering import validate_newest_first
 from .task_item import TaskItem
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
-#: heading's inline content, no `###` marker), capturing the timestamp
-#: (named group `timestamp`) and the title (named group `title`). Mirrors
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained in
+#: a composite `MarkdownSection3`'s `.text` (which carries the heading's
+#: inline content, no `###` marker), capturing the timestamp (named group
+#: `timestamp`) and the title (named group `title`). Mirrors
 #: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`/`vcr.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`
 #: exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
-@alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
-    type=AliasType.REGEX,
-)
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
+#: The `### {full date+time} ( - | : ) {title}` H3 alias regex (feat-146's
+#: full date+time fragment, the same shape the base frontmatter's own
+#: `_DATE_TIME_PATTERN` enforces for `created`/`updated`), joined by either
+#: `" - "` or `" : "`. Lifted from the `@alias` decorator below into a
+#: module constant so the alias (the parse-time enforcement) and
+#: `UpdateEntry`'s own `json_schema_extra` metadata (feat-189 Phase 120,
+#: C13 -- schema-level documentation only) share one source.
+_UPDATE_ENTRY_ALIAS_PATTERN = r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$"
+
+
+@alias(value=_UPDATE_ENTRY_ALIAS_PATTERN, type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Recent Updates` -- one update entry.
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-19 - Kickoff` or
-    `### 2026-08-19 05:42:00.000+02:00 : Kickoff`. The em-dash separator is
-    rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC/VCR's own
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-19 05:42:00.000+02:00 - Kickoff` or
+    `### 2026-08-19T05:42:00.000Z : Kickoff`. The em-dash separator is
+    rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
+    ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
+    ``Z`` for UTC variant -- date-only is rejected (ADR
+    8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC/VCR's own
     `UpdateEntry` shape exactly.
 
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The timestamp carried by the heading, verbatim. Never
         stored separately -- derived from the retained heading text.
@@ -100,14 +137,21 @@ class UpdateEntry(MarkdownSection3):
         retained heading text.
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    # feat-189 Phase 120 (C13): the heading shape as a `pattern` key on this
+    # class's own generated JSON Schema entry -- metadata only: the heading
+    # text lives in private `_value` state (invisible to the validation-mode
+    # schema) and is enforced by the `@alias` REGEX above via `match_alias`
+    # at parse time.
+    model_config = ConfigDict(json_schema_extra={"pattern": _UPDATE_ENTRY_ALIAS_PATTERN})
+
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-19` or `2026-08-19 05:42:00.000+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-19 05:42:00.000+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -125,7 +169,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Kickoff` for `### 2026-08-19 - Kickoff`).
+        """The title carried by this heading (e.g. `Kickoff` for `### 2026-08-19 05:42:00.000+02:00 - Kickoff`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -165,7 +209,7 @@ class RecentUpdates(MarkdownSection2WithComment):
         `models.md`'s generic list-parsing engine already enforces this
         during `from_text` for any non-`Optional` `list[X]` field regardless
         of `min_length`, so this constraint makes direct Python construction
-        (e.g. a future `create_tsk` tool) consistent with parsing instead of
+        (e.g. the `create_tsk` tool) consistent with parsing instead of
         silently allowing `RecentUpdates(updates=[])`. A newly created `tsk`
         document must therefore seed a first entry (e.g. "Created") -- see
         the feature README's Decisions Made.
@@ -182,8 +226,8 @@ class RecentUpdates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "RecentUpdates")

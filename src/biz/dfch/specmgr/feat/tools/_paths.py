@@ -28,10 +28,21 @@ See ``.specmgr/feat/feat-31-feature/README.md`` Design Notes
 
 Mirrors ``adr.tools._paths``'s read-only/write split: :func:`feat_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
-effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``. There
-is deliberately no in-memory id -> path cache either -- every lookup
-re-reads whatever is currently on disk, matching this codebase's "the
-on-disk file is the sole source of truth" design.
+effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``.
+
+**Cache-backed single-file read (feat-107-doc-cache Phase 4, Task 4.1a).**
+:func:`find_feat_path_by_id` reads its single target file through the
+content-hash-validated ``feat`` cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d)
+via ``._cache``'s own ``read_feat`` (not ``parse_feat`` directly) -- a file
+whose on-disk content hash is unchanged since its last read is not
+re-parsed. This also fixes the same double-parse bug every other domain's
+``find_<domain>_path`` had: without it, ``load_by_id`` would parse this
+single file once here (to validate its frontmatter id) and again via
+``read_feat`` right after. There is no directory scan here to reconcile a
+cache against (unlike every other domain's ``find_<domain>_path``) -- see
+this module's own docstring above for why: the shortcut-only lookup never
+scans, so :func:`~._cache.reconcile_feat_cache` is instead called from
+``list_feat``, the one place that does scan.
 
 **The key behavioral divergence from every other (UUID-addressed) domain**:
 since ``id`` *is* the containing folder's own name by convention (REQ-004),
@@ -55,18 +66,55 @@ match the folder name it lives in" -- so ``load_by_id``/``get_feat``/every
 mutating tool built on this module gets one single, consistent
 not-found-shaped error to handle, without needing to separately catch
 ``AssertionError``/``ValidationError`` themselves.
+
+**A concurrent, lock-free read racing ``set_feat_id``'s rename is also
+treated as not-found (feat-107-doc-cache Phase 6, REQ-012).** ``get_feat``/
+``list_feat`` intentionally take no domain lock (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
+window after ``set_feat_id``'s ``old_path.parent.rename(new_path.parent)``
+succeeds but before its cache-entry move runs would otherwise see
+``old_path`` genuinely absent from disk mid-read -- the earlier
+``path.exists()`` check above can pass and then the file can vanish before
+the cache-backed :func:`~._cache.read_feat` call's own internal read
+completes, raising a plain ``FileNotFoundError`` that is not one of
+``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and therefore, before this fix,
+propagated uncaught instead of resolving to the same not-found-shaped error
+every other parse failure already produces. ``FileNotFoundError`` is now
+caught alongside ``AssertionError``/``ValidationError`` around that
+``read_feat`` call, below, and translated into the same
+:class:`FeatNotFoundError` -- a reader racing the rename this way now sees
+a graceful "not found" instead of an uncaught, unrelated-looking OS error.
+
+**Malformed frontmatter YAML is also skipped, not left to crash uncaught
+(feat-107-doc-cache Phase 7, REQ-013).** :func:`find_feat_path_by_id`'s
+``read_feat`` call now also catches ``yaml.YAMLError`` alongside
+``AssertionError``/``ValidationError``/``FileNotFoundError`` and translates
+it into the same :class:`FeatNotFoundError`. ``parse_feat`` raises
+``yaml.YAMLError`` unwrapped for malformed frontmatter YAML exactly like
+every other ``parse_<domain>`` (``models/md/_frontmatter_parse.py``), and
+this mirrors REQ-010's fix to the generic
+``general.tools._doc_paths.find_doc_path_by_id`` (Phase 6) and matches
+``feat.tools.list_feat``'s own ``DEFAULT_ERROR_TYPES`` handling of the same
+failure class -- this bespoke, non-generic path lookup was the one call
+site Phase 6 (Task 6.9) didn't reach, since that task only touched the
+generic module. Before this fix, a feature folder with malformed YAML
+frontmatter crashed ``find_feat_path_by_id`` (and, transitively, ``get_feat``
+and every mutating tool built on it) with an uncaught ``yaml.YAMLError``
+instead of the same graceful not-found-shaped error every other parse
+failure at this shortcut already produces.
 """
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
+import yaml
 from pydantic import ValidationError
 
+from ... import _envregistry
 from ...general.tools._doc_paths import slugify
-from ..models.v1 import parse_feat
+from ._cache import read_feat
 
 __all__ = [
     "DEFAULT_FEAT_DIR",
@@ -77,6 +125,7 @@ __all__ = [
     "ensure_feat_base_dir",
     "feat_base_dir",
     "feature_title",
+    "find_feat_parse_failure",
     "find_feat_path_by_id",
     "iter_feat_paths",
     "slugify",
@@ -89,10 +138,33 @@ __all__ = [
 #: plan's own folder).
 FEAT_DIR_ENV_VAR = "SPECMGR_FEAT_DIR"
 
+#: The registry record for :data:`FEAT_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`feat_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
+_feat_dir_var = _envregistry.register(
+    FEAT_DIR_ENV_VAR,
+    default=".specmgr/feat",
+    description="Base directory scanned for Feature folders (<base>/<id>/README.md).",
+    owner="feat",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
+
 #: Default feature base directory, relative to the current working
 #: directory -- the same folder this feature's own plan file lives in, in
-#: production.
-DEFAULT_FEAT_DIR = Path(".specmgr/feat")
+#: production (derived from the registry record above -- the registry is
+#: the single authority for the default; feat-208, Phase 110). The assert
+#: narrows the type for static checkers only (the record was registered
+#: with the non-None default literally above -- a program invariant,
+#: conventions Rule 2, mirroring ``_envregistry.get_with_default``'s own
+#: narrowing).
+assert _feat_dir_var.default is not None, (
+    f"{FEAT_DIR_ENV_VAR!r} is registered with a non-None default above; the derived constant cannot be None"
+)
+DEFAULT_FEAT_DIR = Path(_feat_dir_var.default)
 
 #: The doc-type name, for symmetry with every other domain's own
 #: ``<D>_TYPE_NAME`` constant (e.g. ``dec.tools._paths.DEC_TYPE_NAME``),
@@ -132,18 +204,20 @@ class FeatNotFoundError(LookupError):
 def feat_base_dir() -> Path:
     """Return the configured feature base directory, without creating it.
 
-    Reads :data:`FEAT_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_FEAT_DIR`. Read-only tools (``get_feat``, ``list_feat``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_feat_base_dir` for the write path.
+    Reads :data:`FEAT_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_FEAT_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_feat``,
+    ``list_feat``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_feat_base_dir`
+    for the write path.
 
     Returns
     -------
     Path
         The resolved feature base directory.
     """
-    value = os.environ.get(FEAT_DIR_ENV_VAR)
-    result = Path(value) if value else DEFAULT_FEAT_DIR
+    result = Path(_envregistry.get_with_default(FEAT_DIR_ENV_VAR))
     return result
 
 
@@ -239,10 +313,14 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
     ------
     FeatNotFoundError
         If ``<base_dir>/<id_>/README.md`` does not exist, if it exists but
-        fails to parse (``AssertionError``/``pydantic.ValidationError``),
-        or if it parses but its frontmatter ``id`` does not match ``id_``
-        (a folder/frontmatter mismatch, surfaced rather than silently
-        worked around).
+        fails to parse (``AssertionError``/``pydantic.ValidationError``/
+        ``yaml.YAMLError`` for malformed frontmatter YAML, feat-107-doc-cache
+        Phase 7, REQ-013 -- see this module's own docstring), if it vanishes
+        out from under a concurrent, lock-free read racing ``set_feat_id``'s
+        rename (``FileNotFoundError``, feat-107-doc-cache Phase 6, REQ-012 --
+        see this module's own docstring), or if it parses but its
+        frontmatter ``id`` does not match ``id_`` (a folder/frontmatter
+        mismatch, surfaced rather than silently worked around).
     """
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(id_, str), type(id_)
@@ -257,8 +335,19 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
         )
 
     try:
-        doc = parse_feat(path.read_text(encoding="utf-8"))
-    except (AssertionError, ValidationError) as ex:
+        doc = read_feat(path)  # feat-107-doc-cache Phase 4, Task 4.1a: cache-backed, fixes the double-parse bug
+    except (AssertionError, ValidationError, FileNotFoundError, yaml.YAMLError) as ex:
+        # FileNotFoundError (feat-107-doc-cache Phase 6, REQ-012): the file existed at the
+        # path.exists() check above but can still vanish before read_feat's own internal read
+        # completes, if this call races set_feat_id's rename in the narrow window before its
+        # cache-entry move runs -- get_feat/list_feat intentionally take no domain lock (ADR
+        # 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so this is a real, if narrow, possibility, not
+        # a defensive-only catch.
+        #
+        # yaml.YAMLError (feat-107-doc-cache Phase 7, REQ-013): parse_feat raises it unwrapped for
+        # malformed frontmatter YAML exactly like every other parse_<domain> -- mirrors REQ-010's
+        # fix to the generic general.tools._doc_paths.find_doc_path_by_id (Phase 6) and matches
+        # feat.tools.list_feat's own DEFAULT_ERROR_TYPES handling of the same failure class.
         raise FeatNotFoundError(
             f"feature folder {id_!r} exists at {path}, but its content could not be parsed as a valid "
             f"feature document ({type(ex).__name__}: {ex})."
@@ -272,4 +361,76 @@ def find_feat_path_by_id(base_dir: Path, id_: str) -> Path:
         )
 
     result = path
+    return result
+
+
+def find_feat_parse_failure(base_dir: Path, id_: str) -> tuple[Path, str] | None:
+    """Resolve the parse-failure for a ``feat`` id whose folder exists but is unparseable.
+
+    The ``feat``-specific companion to
+    :func:`general.tools._doc_paths.find_parse_failure`, for the flat-file
+    domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
+    folder's own name (ADR 8cf940c5), there is no directory scan to fall back
+    on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
+    checks that single path -- if it exists and the domain's own cache-backed
+    :func:`._cache.read_feat` (the **clean**, full-parse cache -- this
+    function always runs a full parse, never the dirty/frontmatter-stage
+    shortcut ``list_feat``'s own request path uses) raises a parse error
+    (``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError`` --
+    the same channels :func:`general.tools._listing.build_summaries` catches
+    for the other 11 domains' own ``list_<d>`` failed rows) it returns
+    ``(path, str(exc))`` -- byte-identical to ``list_feat``'s own failed
+    row's ``error`` field for the same file **once that file's clean stage
+    has converged** (identical field path and cause, including the trailing
+    pydantic documentation line -- fixed by feat-162-doc-cache-exception-footer,
+    GitHub issue #162, which preserves that footer on a warm re-raise); before
+    convergence (feat-187-list-feat-timeout, ADR
+    3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract), ``list_feat``'s
+    row may instead carry a transiently-healthy or dirty-stage-specific
+    ``error`` text for the same file -- this function itself is unaffected,
+    since it always runs the clean, full-parse read directly -- and
+    ``None`` otherwise (the folder/file is missing, it vanishes mid-scan, or it
+    parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
+    9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on
+    :class:`FeatNotFoundError` and returns a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
+    non-``None`` result. The four generic mutation tools' own ``_feat``
+    adapters (``update``/``edit``/``set_status``/``set_classification`` in
+    ``general/tools/``) call it the same way on the same catch
+    (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+    chain).
+
+    Parameters
+    ----------
+    base_dir:
+        The feature base directory.
+    id_:
+        The id (= the containing folder's own name) whose file may be
+        unparseable.
+
+    Returns
+    -------
+    tuple[Path, str] | None
+        ``(path, error_text)`` for the unparseable
+        ``<base_dir>/<id_>/README.md``, or ``None`` if there is no parse
+        failure to surface.
+    """
+    assert isinstance(base_dir, Path), type(base_dir)
+    assert isinstance(id_, str), type(id_)
+    assert id_.strip()
+
+    path = base_dir / id_ / README_FILENAME
+    if not path.exists():
+        result = None
+        return result
+    try:
+        read_feat(path)
+    except (AssertionError, ValidationError, yaml.YAMLError) as ex:
+        result = (path, str(ex))
+        return result
+    except FileNotFoundError:
+        result = None
+        return result
+    result = None
     return result

@@ -22,9 +22,11 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Verification Case Record (VCR) document by
 id, using the existing ``vcr/tools/`` surface (``get_vcr``,
-``validate_vcr``) plus the generic ``update``/``set_status`` tools in
+generic ``validate`` tool) plus the generic ``update``/``set_status`` tools in
 ``general/tools/`` (called with ``type="vcr"``; ``get_vcr``'s ``raw=True``
-parameter serves the line-range flow's line numbers). There is no
+parameter serves the line-range flow's line numbers, with ``numbered=True``
+additionally printing each line's 1-based body-line number, ready to feed
+into ``update``'s ``offset``). There is no
 ``specmgr://vcr/{id}`` resource to point at -- id-based reads always go
 through the ``get_vcr`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
@@ -72,7 +74,10 @@ from ...server import mcp
     title="Update a verification case record",
     description=(
         "Guides the LLM through revising an existing verification case record by id: reading "
-        "current state, applying the requested change with the right tool, and validating."
+        "current state, applying the requested change with the right tool, and validating. The "
+        "structure reference is the `get_vcr_schema` tool (the generated JSON Schema); the "
+        "`get_vcr_template`/`get_vcr_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def update_vcr(id: str, instructions: str | None = None) -> str:

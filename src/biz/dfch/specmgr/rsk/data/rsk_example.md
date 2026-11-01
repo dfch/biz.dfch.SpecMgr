@@ -1,9 +1,9 @@
 ---
-created: '2025-10-03 06:52:47.365Z'
+created: '2025-10-03T06:52:47.365Z'
 id: deadbeef-risk-risk-risk-deadbeefrisk
 status: open
 type: rsk
-updated: '2025-10-16 20:19:11.708Z'
+updated: '2025-10-16T20:19:11.708Z'
 version: 1.0.0
 ---
 
@@ -57,6 +57,10 @@ Ronald Rink
 - security
 
 - upload pipeline
+
+## Source
+
+QA interview 2026-09-17 -- risk elicitation for the document-processing upload pipeline (issue #15's worked example).
 
 ## More Information
 

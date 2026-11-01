@@ -17,11 +17,11 @@
 
 # pylint: disable=redefined-builtin  # id/type intentionally shadow the builtins: public tool API, issue #41
 
-"""``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+"""``@mcp.tool()`` wrapper: get_adr.
 
 Thin file-I/O/id-lookup adapter -- re-reads and re-parses the current
 on-disk state on every call; there is no in-memory cache of a parsed
-:class:`Adr` (plan §7, §9a): the ``.md`` file itself is always the source
+:class:`Adr`: the ``.md`` file itself is always the source
 of truth.
 """
 
@@ -49,7 +49,7 @@ def get_adr(id: str) -> Adr:
     Parameters
     ----------
     id:
-        The document's specmgr-assigned identifier (plan §9a).
+        The document's specmgr-assigned identifier.
 
     Returns
     -------

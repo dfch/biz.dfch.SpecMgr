@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.models.adr.v1.frontmatter`
 
-Pydantic model for the ADR YAML frontmatter block (plan §3).
+Pydantic model for the ADR YAML frontmatter block.
 
 ## Classes
 
@@ -8,7 +8,7 @@ Pydantic model for the ADR YAML frontmatter block (plan §3).
 
 The ADR YAML frontmatter block.
 
-Update contract: whole object, full replace only (plan §3) -- there is
+Update contract: whole object, full replace only -- there is
 no partial-update or deletion-sentinel mechanism for frontmatter; omit a
 key from the submitted object to drop it.
 
@@ -16,7 +16,7 @@ Parameters
 ----------
 id:
     The specmgr-assigned document identifier (a server-generated UUID
-    string), used to resolve ``id -> file path`` (plan §9a). This is a
+    string), used to resolve ``id -> file path``. This is a
     specmgr-only extension key, not part of the MADR 4.0.0 standard --
     assigned once by ``create_adr`` and never reassigned. Optional
     (``str | None = None``, default ``None``), the same non-breaking-
@@ -25,10 +25,10 @@ id:
     just not addressable via id-based tools until one is assigned.
 version:
     The specmgr schema major.minor.patch version this document was
-    written with (plan §6). This is a specmgr-only extension key, not
+    written with. This is a specmgr-only extension key, not
     part of the MADR 4.0.0 standard -- it is kept alongside the
     MADR-defined keys below purely so it round-trips through the
-    parse/render pipeline (plan §7) and lets a future parser dispatch
+    parse/render pipeline and lets a future parser dispatch
     an on-disk file to the ``models/adr/vN`` package that understands
     it, or recognize a document still on an older major version.
     Defaults to :data:`CURRENT_SCHEMA_VERSION`. Must share this

@@ -2,10 +2,13 @@
 
 ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 
-Mirrors ``req.tools.get_req`` -- a thin file-I/O/id-lookup adapter that
-re-reads and re-parses the current on-disk state on every call; there is no
-in-memory cache of a parsed :class:`TskDocument`: the ``.md`` file itself is
-always the source of truth.
+Mirrors ``req.tools.get_req`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
+routes through a content-hash-validated, per-domain in-memory cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
+when a file's content hash is unchanged since its last read, so a stale
+entry is structurally impossible.
 
 Implemented as a tool, not a resource, from the start -- id-based single-
 document reads for TSK never had a ``specmgr://tsk/{id}`` resource in the
@@ -23,11 +26,34 @@ against. With optional read-style ``offset``/``limit`` coordinates
 (feat-28-get-update, Phase 2), the same raw read instead returns the window
 of that text, served by the shared
 :func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
-out-of-range values, never erroring).
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/tsk/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/tsk/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_tsk(language=...)``'s failed row for the same
+file (ADR 9080b37c).
 
 ## Functions
 
-### `get_tsk(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None) -> 'TskDocument | str'`
+### `get_tsk(id: 'str', raw: 'bool' = False, offset: 'int | None' = None, limit: 'int | None' = None, numbered: 'bool' = False, language: 'str' = 'en') -> 'TskDocument | str | ParseFailureResult'`
 
 Read and return the task list identified by ``id``.
 
@@ -50,20 +76,60 @@ limit:
     With ``raw=True`` only: the number of body lines the window spans
     (default through the end of the body; capped at the remaining
     lines, a negative value returns the empty string).
+numbered:
+    With ``raw=True`` only: when ``True``, prefix every returned body
+    line with its 1-based absolute body-line number in the ``"<n>: "``
+    form (plain decimal, no padding) -- under ``offset``/``limit``
+    windowing the numbers start at the clamped ``offset`` and never
+    restart at 1, so a number seen in the output can be fed straight
+    back into the generic ``update`` tool's ``offset``. Numbered
+    output must never be fed back verbatim as ``content`` for
+    ``update`` or ``create_tsk`` -- strip the ``"<n>: "`` prefix from
+    each line first (it is likewise never a valid ``edit`` ``old_str``).
+    Combining it with ``raw=False`` raises ``ValueError`` (see
+    ``Raises``).
+language:
+    The language variant to read (feat-197-i18n Phase 125, ADR
+    38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
+    reads the flat ``docs/tsk/`` document -- today's exact behavior;
+    any other ISO 639-1-shaped lowercase two-letter code (e.g.
+    ``"de"``) reads the variant at ``docs/tsk/{language}/`` under the
+    EN source's exact basename. Shape-guarded before any filesystem
+    access (like ``id``); a shape-valid code without a packaged
+    heading-mapping table is rejected up front with the table
+    loader's actionable error, also before any filesystem access. For
+    a variant, ``raw=True`` returns its on-disk body verbatim and
+    ``raw=False`` parses through its heading table (canonical heading
+    text in the model).
 
 Returns
 -------
-TskDocument | str
+TskDocument | str | ParseFailureResult
     With ``raw=False``: the current on-disk document, freshly re-read
     and re-parsed. With ``raw=True``: the body text (or its
-    ``offset``/``limit`` window) as a plain string.
+    ``offset``/``limit`` window) as a plain string. With
+    ``numbered=True``, every returned line is additionally prefixed
+    with its ``"<n>: "`` 1-based absolute body-line number. When the
+    document
+    exists but fails to parse, a
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) is returned instead of raising --
+    ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
+    the same file (identical field path and cause, including the trailing pydantic
+    documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+    ``raw=True`` never returns a broken document's raw text.
     Raises :class:`._paths.TskNotFoundError` if no task list has this id.
 
 Raises
 ------
 ValueError
+    ``language`` is not an ISO 639-1-shaped lowercase two-letter code, or a
+    non-default ``language`` has no packaged heading-mapping table (both raised
+    before any filesystem access, the same guard discipline as ``id``);
     ``id`` is a path-injection attempt or not a well-formed id for this domain
     (raised before any filesystem access), or ``offset``/``limit`` coordinates
-    are given with ``raw=False`` (a parsed document requires the whole body;
-    also raised before any file access).
+    are given with ``raw=False`` (a parsed document requires the whole body),
+    or ``numbered=True`` is given with ``raw=False`` (numbering is a
+    ``raw=True``-only feature) -- both read-argument misuses raised before
+    any file access.
 

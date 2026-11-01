@@ -1,9 +1,9 @@
 ---
-created: '2025-07-09 05:38:12.294Z'
+created: '2025-07-09T05:38:12.294Z'
 id: deaddead-goal-goal-goal-deaddeadgoal
 status: draft
 type: gol
-updated: '2025-07-19 22:07:45.861Z'
+updated: '2025-07-19T22:07:45.861Z'
 version: 1.0.0
 ---
 
@@ -33,19 +33,19 @@ Where does this goal come from? This can be a document reference, an interest gr
 
 ### Requirements
 
-- A bullet list with related requirements. Optional.
+- REQ 00000000-0000-4000-8000-000000000001: title of the related requirement
 
 ### Decisions
 
-- A bullet list with related decisions. Optional.
+- DEC 00000000-0000-4000-8000-000000000002: title of the related decision
 
 ### Goals
 
-- A bullet list with related goals. Optional.
+- GOL 00000000-0000-4000-8000-000000000003: title of the related goal
 
-### Acceptance Criteria
+### Risks
 
-- A bullet list with related acceptance criteria. Optional.
+- RSK 00000000-0000-4000-8000-000000000004: title of the related risk
 
 ## More Information
 

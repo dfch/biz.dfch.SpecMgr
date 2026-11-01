@@ -16,29 +16,29 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """ADR base directory resolution, filename slugification, and id -> path
-lookup (plan §9a).
+lookup.
 
 Deliberately excludes any ``mcp``/file-write dependency beyond read-only
 directory listing/parsing, so this module stays testable without an MCP
 server: ``adr_base_dir`` never creates the directory (a read-only tool
 shouldn't have that side effect), only ``ensure_adr_base_dir`` does, and
-only ``create_adr`` (in ``tools.py``) calls it.
+only the ``create_adr`` tool calls it.
 
-There is deliberately no in-memory id -> path cache (plan §9a): every
+There is deliberately no in-memory id -> path cache: every
 lookup re-scans the base directory and re-parses each file's frontmatter,
-matching the "the on-disk file is the sole source of truth" design (plan
-§7) and avoiding a staleness problem against concurrent human edits.
+matching the "the on-disk file is the sole source of truth" design
+and avoiding a staleness problem against concurrent human edits.
 """
 
 from __future__ import annotations
 
-import os
 import re
 from collections.abc import Iterator
 from pathlib import Path
 
 from pydantic import ValidationError
 
+from ... import _envregistry
 from ...models.adr import AdrParseError, parse_adr
 
 __all__ = [
@@ -52,16 +52,39 @@ __all__ = [
     "slugify",
 ]
 
-#: Environment variable that overrides the ADR base directory (plan §9a).
+#: Environment variable that overrides the ADR base directory.
 ADR_DIR_ENV_VAR = "SPECMGR_ADR_DIR"
 
-#: Default ADR base directory, relative to the current working directory.
-DEFAULT_ADR_DIR = Path("docs/adr")
+#: The registry record for :data:`ADR_DIR_ENV_VAR` (feat-208, Phase 110;
+#: migrated to the registry accessor in Phase 120): the central env-var
+#: registry is the single authority for the variable's default and for its
+#: set-but-empty-falls-back-to-default read semantics (:func:`adr_base_dir`
+#: resolves ``Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))`` -- an
+#: unset or empty value falls back to the record's default).
+_adr_dir_var = _envregistry.register(
+    ADR_DIR_ENV_VAR,
+    default="docs/adr",
+    description="Base directory scanned for Architecture Decision Record (.md) files.",
+    owner="adr",
+    format="filepath",
+    empty_falls_back_to_default=True,
+)
+
+#: Default ADR base directory, relative to the current working directory
+#: (derived from the registry record above -- the registry is the single
+#: authority for the default; feat-208, Phase 110). The assert narrows the
+#: type for static checkers only (the record was registered with the
+#: non-None default literally above -- a program invariant, conventions
+#: Rule 2, mirroring ``_envregistry.get_with_default``'s own narrowing).
+assert _adr_dir_var.default is not None, (
+    f"{ADR_DIR_ENV_VAR!r} is registered with a non-None default above; the derived constant cannot be None"
+)
+DEFAULT_ADR_DIR = Path(_adr_dir_var.default)
 
 #: Anything that isn't a lowercase ASCII letter or digit, run-collapsed.
 _NON_ALNUM_RUN_PATTERN = re.compile(r"[^a-z0-9]+")
 
-#: Maximum length of a slugified title (plan §9a's filename scheme).
+#: Maximum length of a slugified title.
 _SLUG_MAX_LENGTH = 60
 
 
@@ -72,19 +95,22 @@ class AdrNotFoundError(LookupError):
 def adr_base_dir() -> Path:
     """Return the configured ADR base directory, without creating it.
 
-    Reads :data:`ADR_DIR_ENV_VAR` from the environment, falling back to
-    :data:`DEFAULT_ADR_DIR`. Read-only tools (``get_adr``, ``option_list``,
-    ...) use this so merely reading never has the side effect of creating
-    the directory -- see :func:`ensure_adr_base_dir` for the write path.
+    Reads :data:`ADR_DIR_ENV_VAR` through the central env-var registry's
+    ``get_with_default`` accessor, falling back to the record's default
+    (the derived :data:`DEFAULT_ADR_DIR`) when the variable is unset or
+    set-but-empty (feat-208, Phase 120). Read-only tools (``get_adr``,
+    ``option_list``, ...) use this so merely reading never has the side
+    effect of creating the directory -- see :func:`ensure_adr_base_dir`
+    for the write path.
     """
-    value = os.environ.get(ADR_DIR_ENV_VAR)
-    return Path(value) if value else DEFAULT_ADR_DIR
+    result = Path(_envregistry.get_with_default(ADR_DIR_ENV_VAR))
+    return result
 
 
 def ensure_adr_base_dir() -> Path:
     """Return the configured ADR base directory, creating it if missing.
 
-    Only ``create_adr`` (``tools.py``) calls this -- every other tool uses
+    Only the ``create_adr`` tool calls this -- every other tool uses
     the read-only :func:`adr_base_dir` instead.
     """
     path = adr_base_dir()
@@ -93,7 +119,7 @@ def ensure_adr_base_dir() -> Path:
 
 
 def slugify(title: str) -> str:
-    """Derive a filename-safe slug from an ADR title (plan §9a).
+    """Derive a filename-safe slug from an ADR title.
 
     Lowercases ``title``, collapses every run of non-``[a-z0-9]``
     characters into a single ``-``, strips leading/trailing ``-``,
@@ -118,7 +144,7 @@ def iter_adr_paths(base_dir: Path) -> Iterator[Path]:
 
 
 def find_adr_path(base_dir: Path, id_: str) -> Path:
-    """Resolve an ``id`` to its on-disk file path (plan §9a).
+    """Resolve an ``id`` to its on-disk file path.
 
     Scans every ``*.md`` file under ``base_dir``, parsing each and
     comparing ``frontmatter.id`` against ``id_``. A file that fails to

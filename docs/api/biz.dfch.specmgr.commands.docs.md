@@ -66,12 +66,23 @@ Count ``test_*.py`` files under ``tests/`` -- static, no subprocess.
 Extract the first docstring from a Python file.
 
 
+### `_find_ruff() -> pathlib.Path | None`
+
+Locate the ``ruff`` binary once per command run, or ``None`` when unavailable.
+
+Prefers the current interpreter's own ``bin/`` directory (``Path(sys.executable).parent
+/ "ruff"`` -- the uv-managed venv's ruff, the same binary ``uv run --frozen ruff``
+drives), falling back to a bare ``ruff`` on ``PATH``. ``ruff`` lives in the ``test``
+extra, so a published ``[cli]``/``[mcp]``-only install may not have it at all; the
+caller degrades to unformatted output (with one warning) rather than failing.
+
+
 ### `_format_signature(func: Any) -> str`
 
 Format a function signature, tolerating uninspectable callables.
 
 
-### `_generate_api_docs(api_dir: pathlib.Path, package: str) -> tuple[int, int]`
+### `_generate_api_docs(api_dir: pathlib.Path, package: str) -> tuple[int, int, list[pathlib.Path]]`
 
 Write one Markdown file per module of ``package`` under ``api_dir``, plus a README index.
 
@@ -84,13 +95,20 @@ whenever the run cannot be trusted to have written the full current
 set: zero pages written, any module failed to import mid-run, or
 module collection was truncated before the walk completed.
 
+Every written file is rendered verbatim: the single in-place
+``ruff format`` over the run's written paths happens once, after all
+writes, in the caller (see ``docs`` and
+``_ruff_format_written_markdown``).
+
 Args:
     api_dir: Directory to write the module pages and index into.
     package: Dotted name of the package to document.
 
 Returns:
-    ``(written, pruned)`` -- the number of module files written and
-    the number of stale pages pruned.
+    ``(written, pruned, written_paths)`` -- the number of module files
+    written, the number of stale pages pruned, and the list of every
+    markdown path written in this run (the per-module pages plus the
+    ``README.md`` index when it was written), in write order.
 
 
 ### `_generate_module_markdown(module_name: str) -> str | None`
@@ -122,12 +140,34 @@ List domain packages and their subpackages (``models/``, ``adr/``).
 
 Report whether the run that just wrote ``module_count`` pages must have skipped pruning.
 
-``_generate_api_docs`` returns only ``(written, pruned)``, so the skip
-state is re-derived here instead: the run was untrustworthy when module
+``_generate_api_docs`` returns only ``(written, pruned, written_paths)``, so the
+skip state is re-derived here instead: the run was untrustworthy when module
 collection was truncated, or when fewer pages were written than modules
 were collected (a per-module import failure). Both checks are cheap --
 every import has already been cached in ``sys.modules`` by the run
 itself. A healthy run with nothing to prune passes both checks.
+
+
+### `_ruff_format_written_markdown(ruff: pathlib.Path | None, paths: list[pathlib.Path]) -> None`
+
+Run ONE in-place ``ruff format`` over the markdown paths the run wrote (embedded code blocks only).
+
+``ruff format <paths...>`` reformats the fenced code blocks inside each file while
+leaving the prose byte-identical, so the generated ``docs/`` tree is ``ruff format
+--check``-clean without the pre-commit ``ruff-format`` hook and the ``specmgr docs``
+byte-identity check being mutually exclusive on the same file (first hit: a docstring
+embedded in ``biz.dfch.specmgr.server.md`` carries an Example block ruff would
+reformat). A missing ``ruff`` (``None`` -- the ``test`` extra is not installed) or an
+empty path list skips the call entirely (the caller's one "ruff not found" warning
+already fired); a non-zero ruff exit (unexpected for well-formed markdown) degrades
+to one warning naming ``ruff``, the exit code, and the first line of ruff's stderr
+(a deterministic ``(no stderr)`` fallback when ruff printed nothing) -- the command
+still succeeds and the files remain as ``ruff`` left them (``ruff`` processes each
+file independently, so successfully-formatted files stay formatted); and a resolved
+ruff that cannot be executed (an ``OSError`` from the subprocess call -- e.g. the
+binary vanished between resolution and invocation, or is not executable) degrades
+the same way: one warning naming ``ruff``, the command still succeeds, and the
+files remain as written. The command never fails on ruff.
 
 
 ### `_stable_signature_str(func: Any) -> str | None`
@@ -160,6 +200,28 @@ stale ``api/*.md`` pages are pruned; the pruning count is echoed only
 when non-zero, and a warning is echoed whenever pruning was skipped
 because the run was untrustworthy (see ``_generate_api_docs``). Run this
 after any structural change and commit the result (see ``AGENTS.md``).
+
+Every rendered markdown document (the per-module ``api/*.md`` pages, the
+``api/README.md`` index, and ``GENERATED.md``) is ruff-formatted after
+the run has written all of them: one in-place ``ruff format <paths...>``
+call over the written paths (embedded fenced code blocks only -- the
+prose stays byte-identical), so docstrings that embed code ruff would
+reformat (first hit: an mcp-SDK ``Example`` block pulled into
+``biz.dfch.specmgr.server.md``) no longer make the pre-commit
+``ruff-format`` hook and this command's byte-identity check mutually
+exclusive. This joins the existing ``_stable_signature_str``
+normalizations that already make the output reproducible over raw
+source. The ``ruff`` binary is resolved once per run (``_find_ruff``:
+the current interpreter's ``bin/`` first, then ``PATH``); when it is
+unavailable -- ``ruff`` lives in the ``test`` extra, so a published
+``[cli]``/``[mcp]``-only install lacks it -- one warning is emitted and
+the call is skipped (the files stay as written), so the command never
+fails on this (the ``similarity`` extra's availability-decided-at-call-time
+precedent); when the single call exits non-zero (unexpected for
+well-formed markdown), one warning names ``ruff`` and the exit code,
+the command still succeeds, and the files remain as ``ruff`` left them
+(``ruff`` processes each file independently, so successfully-formatted
+files stay formatted).
 
 
 ### `generate_generated_md() -> str`

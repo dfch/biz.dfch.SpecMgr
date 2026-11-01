@@ -41,7 +41,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from ....models.md import MarkdownSection2, MarkdownSection3, alias, AliasType
 
@@ -97,7 +97,14 @@ def level_from_product(product: int) -> str:
     return result
 
 
-@alias(value=r"^Probability [1-5]$", type=AliasType.REGEX)
+#: `Probability`'s own H3 alias regex. Lifted from the `@alias` decorator
+#: below into a module constant so the alias (the parse-time enforcement)
+#: and the class's `json_schema_extra` metadata (feat-189 Phase 120, C13 --
+#: schema-level documentation only) share one source.
+_PROBABILITY_ALIAS_PATTERN = r"^Probability [1-5]$"
+
+
+@alias(value=_PROBABILITY_ALIAS_PATTERN, type=AliasType.REGEX)
 class Probability(MarkdownSection3):
     """`### Probability {1..5}` under `## Initial/Residual Assessment` -- the probability coordinate of the 5x5 matrix.
 
@@ -116,6 +123,13 @@ class Probability(MarkdownSection3):
         `4` for `### Probability 4`). Never stored separately -- derived
         from the retained heading text.
     """
+
+    # feat-189 Phase 120 (C13): the heading shape as a `pattern` key on this
+    # class's own generated JSON Schema entry -- metadata only: the heading
+    # text lives in private `_value` state (invisible to the validation-mode
+    # schema) and is enforced by the `@alias` REGEX above via `match_alias`
+    # at parse time.
+    model_config = ConfigDict(json_schema_extra={"pattern": _PROBABILITY_ALIAS_PATTERN})
 
     @computed_field  # type: ignore
     @property
@@ -140,7 +154,11 @@ class Probability(MarkdownSection3):
         return result
 
 
-@alias(value=r"^Impact [1-5]$", type=AliasType.REGEX)
+#: Same as `_PROBABILITY_ALIAS_PATTERN` for the `Impact` leaf.
+_IMPACT_ALIAS_PATTERN = r"^Impact [1-5]$"
+
+
+@alias(value=_IMPACT_ALIAS_PATTERN, type=AliasType.REGEX)
 class Impact(MarkdownSection3):
     """`### Impact {1..5}` under `## Initial/Residual Assessment` -- the impact coordinate of the 5x5 matrix.
 
@@ -159,6 +177,11 @@ class Impact(MarkdownSection3):
         for `### Impact 3`). Never stored separately -- derived from the
         retained heading text.
     """
+
+    # feat-189 Phase 120 (C13): the heading shape as a `pattern` key on this
+    # class's own generated JSON Schema entry -- metadata only; see
+    # `Probability` for the rationale.
+    model_config = ConfigDict(json_schema_extra={"pattern": _IMPACT_ALIAS_PATTERN})
 
     @computed_field  # type: ignore
     @property

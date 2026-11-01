@@ -21,6 +21,10 @@ permission:
     "*": allow
   task: allow
   webfetch: allow
+  external_directory:
+    "*": ask
+    "/tmp/opencode/**": allow
+    "/tmp/**": allow
 ---
 
 # Phase Orchestrator

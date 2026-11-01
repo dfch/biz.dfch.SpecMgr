@@ -242,6 +242,71 @@ def process_data(data: list[str]) -> str:
     return result
 ```
 
+**Requirement:** Do not restate a generic tool's (or any cross-domain concept's) supported-domain
+count as a cardinal number in prose -- neither as a word (`ten`/`eleven`/`twelve`/`thirteen`, ...)
+nor as a digit (`10`/`11`/`12`/`13`, ...). Use an explicit domain list, or relational phrasing that
+does not depend on a count staying in sync, instead.
+
+- A hardcoded count silently goes stale every time a domain is added -- most recently `txt` --
+  and no test or lint rule currently catches the mismatch.
+- Prefer an explicit, already-accurate domain list (e.g. `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/
+  `dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`) over a count adjective in front of it.
+- Prefer relational phrasing over a count when describing a set by contrast to another (e.g.
+  "every domain except `feat`", "every domain except `adr`") rather than restating how many that
+  leaves.
+
+**Example:**
+```python
+# ✗ Before: a bare cardinal number that has to be hand-updated whenever a domain is added
+"""Dispatches the generic update across the eleven whole-body domains."""
+
+# ✓ After: an explicit, self-verifying domain list -- nothing to keep in sync by hand
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
+
+# ✓ After: relational phrasing when contrasting against one excluded domain
+"""Dispatches the generic update across every whole-body domain except `feat`."""
+```
+
+### Domain-List Constants
+
+**Requirement:** The document-type domain names live in ONE place --
+`src/biz/dfch/specmgr/general/tools/_domains.py`. Every `src/` and `tests/`
+module that names a set of document types imports the shared names
+(`WHOLE_BODY_DOMAINS`, `WHOLE_BODY_NO_FEAT_DOMAINS`, `UUID_DOMAINS`,
+`ALL_DOMAINS`, `ADR`, `FEAT`) instead of hand-listing the set itself.
+`WHOLE_BODY_DOMAINS` is the only hand-listed domain tuple in the repo; a new
+domain registers its name there once (in canonical position), per ADR
+c4efbde6-fd19-4aa8-8668-95316ed62dcc ("Single source of truth for the
+document-type domain-name set", feat-125-domain-lists).
+
+- The forbidden pattern is a hand-listed literal domain-name set in code --
+  a tuple/list/frozenset, a `Literal[...]` annotation, or a dict-key set --
+  that would have to be kept in sync with the shared source by hand.
+- The allowed patterns are (1) importing the shared names, and (2) explicit
+  prose domain lists in docstrings: the `specmgr docs` generator requires
+  string literals, so docstring prose is the sanctioned exception (the
+  Docstring Style rule above governs how that prose is written).
+- A named local constant holding a domain-name set (e.g. a test file's own
+  `_UUID_DOMAINS`) is the same drift vector as a hand-listed literal and must
+  be imported from the shared source instead.
+
+**Example:**
+```python
+# ✓ Import the shared source; guard a natural dispatch table against it
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
+
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
+# ✗ A hand-listed literal domain-name set that silently drifts from the shared source
+_UUID_DOMAINS = ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "adr")
+
+# ✓ An explicit prose domain list in a docstring -- the sanctioned exception
+"""Dispatches the generic update across req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt."""
+```
+
 ### Error Handling
 
 ```python
@@ -350,6 +415,66 @@ See the `## Operational Concept and Scenarios` section for details.
 - If you do hard-wrap for editor readability, always break at a plain word boundary that falls
   outside of any inline span.
 
+### Markdown Authoring (List Items Must Not Soft-Wrap)
+
+**Requirement:** A structurally-checked list item -- one whose own domain model applies a
+marker/pattern regex directly against `MarkdownListItem.text` (e.g. `tsk.TaskItem`,
+`feat.RequirementItem`/`AcceptanceCriterionItem`/`FeatTaskItem`,
+`rsk.ThresholdItem`/`StrategyItem`) -- must never soft-wrap (CommonMark lazy continuation)
+across two physical source lines.
+
+- **Authoring side:** keep such a bullet's text on a single physical line, however long, e.g.
+  `- REQ-001: The widget must render within 200ms.`, never split across an indented continuation
+  line the way a soft-wrapped paragraph would be.
+- **Implementation side:** every such subclass's computed field must call
+  `MarkdownListItem.single_line_text(self, *, expected: str) -> str`
+  (`models/md/markdown_list_item.py`) before running its own regex against the text. This
+  rejects a soft-wrapped bullet with an actionable `AssertionError` (field path, 1-based line, an
+  explicit "soft-wrapped/lazy-continuation list items are not supported" cause, and a "join onto
+  one physical line" fix hint) instead of silently mis-parsing it or failing the domain regex
+  with a confusing, unrelated message.
+- Free-form list items with no structural check of their own (e.g. `req`'s `## Tags`), and any
+  subclass whose own regex already tolerates multiple physical lines via `re.DOTALL` (e.g.
+  `rsk.QuadrantItem`/`MitigationItem`/`StatusItem`), must NOT call this guard -- they are meant
+  to keep tolerating soft-wraps unchanged.
+
+**Example:**
+```markdown
+<!-- ✓ Single physical line -->
+- REQ-001: The widget must render within 200ms.
+
+<!-- ✗ Soft-wrapped across two physical lines -- rejected by single_line_text() -->
+- REQ-001: The widget must render within 200ms
+  even under heavy load.
+```
+
+### UC Diagram Authoring (feat-185-uc-diagrams)
+
+**Requirement:** Author UC documents and their PlantUML diagram files per the
+frozen rulebook `specmgr://uc/plantuml` (content source
+`src/biz/dfch/specmgr/uc/data/uc_plantuml.md`). Three points:
+
+1. **Attribution authoring style** — write `Main Success Scenario` steps and
+   extension items that **start with the participant's cleaned label**
+   (e.g. `Company checks inventory for requested goods.` /
+   `Buyer confirms order details and signs for order.`), so the sequence
+   skeleton's longest-prefix pre-fill (rulebook §2.9.3) hits and leaves the
+   agent the fewest `UNATTRIBUTED` markers to resolve. The pre-fill is
+   **positional, not semantic** — the agent may still correct any pre-filled
+   arrow the free text shows to be wrong in the
+   `generate_uc_sequence_diagram` prompt flow.
+2. **Diagram file layout** (rulebook §2.10, CWD-relative for the CLI) —
+   `<project>/diagrams/uc/<id>.usecase.puml` + `package.puml` are
+   **git-tracked and CLI-regenerable** (`specmgr diagram uc` / `--check`);
+   `<id>.sequence.puml` is **git-tracked but agent-owned** — written by the
+   prompt flow after attribution (possibly with corrected arrows); the CLI
+   **never creates, overwrites, or diffs** it.
+3. **The `' validated: structure-only` header** — agent path only, and only
+   in the all-unset source state (rulebook §3.4): the sequence file is
+   written with that comment as its **first line** (above `@startuml`) so
+   the file's provenance is visible. Deterministic CLI output never carries
+   it (checker-clean by construction).
+
 ## TODO
 
 * Use "uv", do not use "pip"
@@ -378,3 +503,7 @@ These conventions were chosen to:
 - **2026-08-06:** Added test method naming conventions
 - **2026-08-06:** Added test data and fixtures guidelines
 - **2026-09-02:** Added markdown line-wrapping convention (avoid breaking inside inline spans)
+- **2026-09-09:** Added markdown list-item soft-wrap convention (structurally-checked list items
+  must stay on one physical line; call `MarkdownListItem.single_line_text()`)
+- **2026-10-05:** Added UC diagram authoring convention (attribution authoring style, diagram
+  file layout, structure-only header) — feat-185-uc-diagrams Phase 140

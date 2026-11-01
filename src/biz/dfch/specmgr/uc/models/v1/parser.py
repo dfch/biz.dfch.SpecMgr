@@ -1,7 +1,7 @@
 """Parse an on-disk Use Case ``.md`` file into a :class:`UseCase` (feature plan Task 1.3A).
 
 Pipeline stage 1 of "parse -> validate" (mirrors ``models/adr/v1/parser.py``'s "parse ->
-validate -> render" split, ADR's plan §7). This module only does the "parse" half; "validate"
+validate -> render" split). This module only does the "parse" half; "validate"
 is letting :class:`UseCase`/its nested models' own Pydantic validators run -- including the
 cross-field ``model_validator`` checks added in Task 1.3B (step numbering, action numbering,
 step-reference cross-resolution) -- there is no separate validation pass here.

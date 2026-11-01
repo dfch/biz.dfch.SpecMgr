@@ -21,10 +21,12 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Goal (GOL) document by id, using the existing
-``gol/tools/`` surface (``get_gol``, ``validate_gol``) plus the generic
+``gol/tools/`` surface (``get_gol``, generic ``validate`` tool) plus the generic
 ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="gol"``; ``get_gol``'s ``raw=True`` parameter serves the line-range
-flow's line numbers). There is no ``specmgr://gol/{id}`` resource to point at
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
@@ -74,7 +76,9 @@ from ...server import mcp
     description=(
         "Guides the LLM through revising an existing goal by id: reading current "
         "state, showing which sections are present vs. empty, eliciting revisions, "
-        "applying the change with the right tool, and validating."
+        "applying the change with the right tool, and validating. The structure reference is the "
+        "`get_gol_schema` tool (the generated JSON Schema); the `get_gol_template`/`get_gol_example` "
+        "tools return the authoring template and a complete sample."
     ),
 )
 def update_gol(id: str) -> str:

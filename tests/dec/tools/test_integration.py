@@ -21,7 +21,8 @@ Unlike the per-tool unit tests elsewhere under ``tests/dec/tools/``, this
 module drives the actual tool functions in a single realistic sequence --
  ``list_dec`` (empty) -> ``create_dec`` -> ``get_dec`` -> ``list_dec`` (1) ->
  ``update`` -> ``set_status`` (``type="dec"``) -> ``get_dec`` (status changed)
- -> ``list_dec`` (status reflected) -> ``validate_dec`` -> ``delete``
+ -> ``list_dec`` (status reflected) -> ``validate`` (generic, ``type="dec"``)
+ -> ``delete``
  (generic, ``type="dec"``) -- against a real temporary docs directory,
  confirming ACC-003's create->get->list->update->set_status->validate
  round-trip requirement with concrete evidence beyond the isolated
@@ -46,49 +47,58 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecFrontmatter
+from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.get_dec import get_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
-from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 
-_INITIAL_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+from ._helpers import MANDATORY_ROLES_AND_SOURCE
 
-    ## Context and Problem Statement
+_INITIAL_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    The current store cannot serve the dashboard read path.
+        ## Context and Problem Statement
 
-    ## Decision Outcome
+        The current store cannot serve the dashboard read path.
 
-    We chose the document store.
-    """
+        ## Decision Outcome
+
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
-_REVISED_BODY = textwrap.dedent(
-    """\
-    # Choose a Document Store
+_REVISED_BODY = (
+    textwrap.dedent(
+        """\
+        # Choose a Document Store
 
-    ## Context and Problem Statement
+        ## Context and Problem Statement
 
-    The current store cannot serve the dashboard read path.
+        The current store cannot serve the dashboard read path.
 
-    ## Decision Drivers
+        ## Decision Drivers
 
-    - Latency under 100 ms at p95.
+        - Latency under 100 ms at p95.
 
-    ## Decision Outcome
+        ## Decision Outcome
 
-    We chose the document store.
-    """
+        We chose the document store.
+        """
+    )
+    + MANDATORY_ROLES_AND_SOURCE
 )
 
 
@@ -105,7 +115,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
     def test_list_create_get_list_update_set_status_get_list_validate_delete_roundtrip(self) -> None:
         """list_dec -> create_dec -> get_dec -> list_dec -> update -> set_status -> get_dec ->
-        list_dec -> validate_dec -> delete (generic, type="dec"), live."""
+        list_dec -> validate (generic, type="dec") -> delete (generic, type="dec"), live."""
         # 0. list_dec: an empty base directory must list nothing.
         initial_page = list_dec()
         self.assertEqual(initial_page.total, 0)
@@ -142,20 +152,24 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         # 4. update (type="dec"): whole-body replace must bump only `updated` and preserve
         #    id/type/status/created/version (ACC-003).
         updated = update(dec_id, "dec", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertEqual(updated.version, created.version)
-        self.assertNotEqual(updated.updated, created.updated)
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertEqual(updated.frontmatter.version, created.version)
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
         accepted = set_status(dec_id, "dec", "accepted")
         self.assertEqual(accepted.status, "accepted")
-        self.assertEqual(accepted.id, updated.id)
-        self.assertEqual(accepted.created, updated.created)
-        self.assertNotEqual(accepted.updated, updated.updated)
+        self.assertEqual(accepted.id, updated.frontmatter.id)
+        self.assertEqual(accepted.created, updated.frontmatter.created)
+        self.assertNotEqual(accepted.updated, updated.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
@@ -171,12 +185,17 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertEqual(matches[0].status, "accepted")
         self.assertEqual(matches[0].title, "Choose a Document Store")
 
-        # 8. validate_dec (ACC-003): the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="dec") (ACC-003/ACC-004): the on-disk file must
+        #    validate as a complete document (full=True) and its body-only half must
+        #    validate as body-only -- never raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_dec(on_disk_text, full=True), True)
+        full_result = validate(type="dec", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_dec(body_only), True)
+        body_result = validate(type="dec", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="dec"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded file path, the file must be gone, and a
@@ -188,24 +207,32 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
             get_dec(dec_id)
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
-        """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside DEC's closed six-set)."""
+        """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside
+        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_dec(_INITIAL_BODY)
         expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "dec", "implemented")
+        result = set_status(created.id, "dec", "implemented")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "dec")
+        self.assertEqual(result.status, "implemented")
+        self.assertEqual(result.allowed_values, sorted(_DEC_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """ACC-003: validate_dec's body-only/full semantics must match validate_gol's --
-        invalid body fails (AssertionError); full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_dec("# Title\n\nJust a paragraph, no recognized decision sections.\n")
+        """ACC-003/ACC-004: the generic validate tool's (type="dec") body-only/full semantics --
+        an invalid body returns {valid: False, errors: [...]} (never raises); full=True with
+        body-only content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="dec", content="# Title\n\nJust a paragraph, no recognized decision sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_dec(_INITIAL_BODY, full=True)
+            validate(type="dec", content=_INITIAL_BODY, full=True)
 
 
 if __name__ == "__main__":

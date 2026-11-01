@@ -626,7 +626,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -643,6 +643,13 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "accepted",
+            "deprecated",
+            "draft",
+            "proposed",
+            "superseded"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -662,7 +669,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {

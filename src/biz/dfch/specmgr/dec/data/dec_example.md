@@ -1,9 +1,9 @@
 ---
-created: '2025-03-11 08:24:37.612Z'
+created: '2025-03-11T08:24:37.612Z'
 id: 3f6c1a2e-8b4d-4e7a-9c2f-5d8e1b6a7c90
 status: accepted
 type: dec
-updated: '2025-03-25 19:58:03.947Z'
+updated: '2025-03-25T19:58:03.947Z'
 version: 1.0.0
 ---
 
@@ -55,19 +55,55 @@ The arrangement is reviewed after one quarter, with office occupancy
 and onboarding feedback as the criteria. If the review finds no
 problem, the arrangement becomes the standing default.
 
+## Roles and Responsibilities
+
+### Accountable
+
+The VP of Engineering is accountable for this decision and its
+continued application across the organization.
+
+### Responsible
+
+- Engineering managers enforce the common office days within their
+  own teams and escalate scheduling conflicts.
+
+### Consulted
+
+- Facilities was consulted on desk and meeting-room capacity for the
+  three common office days.
+
+### Informed
+
+- All engineering staff are informed of the arrangement and any
+  changes to it via the engineering-wide announcement channel.
+
+## Tags
+
+- hybrid-work
+- engineering-policy
+
+## Source
+
+The engineering leadership offsite on 2025-02-20, following two years
+of per-team improvisation with no company-level rule.
+
 ## Related Artifacts
 
 ### Requirements
 
-- REQ-4412: Onboarding plan for new engineers
+- REQ 86476d47-2f88-44ed-8e79-540a62bb5fba: Onboarding plan for new engineers
 
 ### Decisions
 
-- DEC-1187: Common meeting times and no-meeting blocks
+- DEC 447f7350-f639-4217-aff3-e7cbdc70abd8: Common meeting times and no-meeting blocks
 
 ### Goals
 
-- GOL-0021: Retention of junior engineers in the first two years
+- GOL b483ae2a-5267-47ea-9728-df8c0c1b1290: Retention of junior engineers in the first two years
+
+### Risks
+
+- RSK 2c3c6b5b-d89d-4bf5-a3c1-f614da86b65c: Hybrid Schedule Reduces On-Site Mentoring Availability for Junior Engineers
 
 ## Pros and Cons
 
@@ -96,12 +132,12 @@ their own arrangements.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-07-28 : Accepted
+### 2026-07-28 09:15:42.317Z : Accepted
 
 The arrangement was accepted at the monthly engineering meeting. The
 first quarterly review is scheduled for end of October 2026.
 
-### 2026-07-14 - Created
+### 2026-07-14 00:00:00.000Z - Created
 
 The decision record was drafted by the engineering leadership team
 after two years of per-team improvisation.

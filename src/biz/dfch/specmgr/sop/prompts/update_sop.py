@@ -22,9 +22,11 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Standard Operating Procedure (SOP) document
 by id, using the existing ``sop/tools/`` surface (``get_sop``,
-``validate_sop``) plus the generic ``update``/``set_status`` tools in
+generic ``validate`` tool) plus the generic ``update``/``set_status`` tools in
 ``general/tools/`` (called with ``type="sop"``; ``get_sop``'s ``raw=True``
-parameter serves the line-range flow's line numbers). There is no
+parameter serves the line-range flow's line numbers, with ``numbered=True``
+additionally printing each line's 1-based body-line number, ready to feed
+into ``update``'s ``offset``). There is no
 ``specmgr://sop/{id}`` resource to point at -- id-based reads always go
 through the ``get_sop`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
@@ -77,7 +79,9 @@ from ...server import mcp
     title="Update a standard operating procedure",
     description=(
         "Guides the LLM through revising an existing SOP by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_sop_schema` tool (the generated JSON Schema); the "
+        "`get_sop_template`/`get_sop_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_sop(id: str, instructions: str | None = None) -> str:

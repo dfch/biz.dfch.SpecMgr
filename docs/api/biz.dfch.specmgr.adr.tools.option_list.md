@@ -1,10 +1,10 @@
 # `biz.dfch.specmgr.adr.tools.option_list`
 
-``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
+``@mcp.tool()`` wrapper: option_list.
 
 Thin file-I/O/id-lookup adapter over ``models.adr.v1.mutations.option_list``:
 re-reads and re-parses the current on-disk state; there is no in-memory
-cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file itself is
+cache of a parsed :class:`Adr`: the ``.md`` file itself is
 always the source of truth.
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)

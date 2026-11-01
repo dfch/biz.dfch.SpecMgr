@@ -59,9 +59,12 @@ the nine sub-sections. Skip this step if the change does not touch
   change, or a **whole-body replace** otherwise. `content` is body
   markdown only (no frontmatter block) in both cases.
   - **Line-range replace** (a localized change -- one bullet, one
-    paragraph, or one section): first call `get_sysrs(id, raw=True)`
-    to see the exact body text, identify the 1-based line to start at
-    and how many lines to replace -- `offset` is the first body line,
+    paragraph, or one section): first call
+    `get_sysrs(id, raw=True, numbered=True)` to see the exact body text
+    -- every line prefixed with its 1-based body-line number, so no
+    manual counting is needed and a number seen can be fed straight
+    back into `update`'s `offset` -- identify the 1-based line to start
+    at and how many lines to replace -- `offset` is the first body line,
     `limit` the number of lines (`offset`..`offset+limit-1`); `limit`
     omitted replaces through the last body line, `limit=0` is a pure
     insert, and the `N+1` position is end-of-body: `offset = N+1`
@@ -73,7 +76,20 @@ the nine sub-sections. Skip this step if the change does not touch
     a new `## Updates` entry is typically a line-range insert directly
     below the section's optional leading comment (or directly below
     the `## Updates` heading if no comment is present) -- new entries
-    go first, since the section is newest-first, enforced.
+    go first, since the section is newest-first, enforced. Each
+    entry's heading is `### {timestamp} ( - | : ) {title}`, where
+    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS`
+    + `Z` or `±HH:mm` (the date/time separator may be `T` or a space; a
+    date-only timestamp is rejected), followed by the entry's own update
+    text directly under the H3 heading (any markdown content -- multiple
+    paragraphs, lists, code blocks, block quotes, not just a single
+    paragraph), which is mandatory.
+    `offset`/`limit` address the frontmatter-stripped body, never the
+    raw on-disk `.md` file: the YAML frontmatter block is variable-
+    length, so a raw file read's line numbers are never the same as
+    body-line coordinates -- and never feed the `numbered=True` output
+    back verbatim as `content`: strip the `"<n>: "` prefix from each
+    line first.
   - **Whole-body replace** (a multi-section change, or whenever you
     are uncertain about the line range): call `update(id,
     type="sysrs", content)` with no `offset`/`limit` -- `content` is
@@ -96,11 +112,16 @@ the nine sub-sections. Skip this step if the change does not touch
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
 
-## 6. Check the schema, and validate before writing if useful
+## 6. Check the schema only for structural changes, and validate before writing if useful
 
-Fetch `specmgr://sysrs/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
-`validate_sysrs(content, full=False)` beforehand to dry-run the new
+Call the `get_sysrs_schema` tool (the generated JSON Schema) only for a
+whole-body rewrite or a structural change -- adding, removing, or
+renaming sections, or editing closed-form content -- to confirm field
+names and constraints. Skip the fetch for a local splice (a line-range
+replace), where the raw body is already in context: `update` still
+validates the spliced result as a whole document before writing
+anything, so the skip is safe. Optionally call
+`validate(type="sysrs", content=content, full=False)` beforehand to dry-run the new
 body without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

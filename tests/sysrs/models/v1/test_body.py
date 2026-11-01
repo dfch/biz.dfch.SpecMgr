@@ -26,6 +26,10 @@ containers, the `Requirements` >=1-of-9 after-validator (the
 cross-reference lists' zero-item rejection, the `Updates` timestamp-led
 alias + newest-first ordering check, the Task 1.3(e) empty-mandatory-leaf
 acceptance pin, and `Sysrs`'s misordering/structural-violation matrix.
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
 """
 
 from __future__ import annotations
@@ -703,12 +707,12 @@ class TestReferencesList(unittest.TestCase):
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias -- date-only or date+time lead, ` - `/` : ` separator."""
+    """`UpdateEntry`'s regex alias -- full date+time lead, ` - `/` : ` separator."""
 
-    def test_accepts_date_only_lead(self) -> None:
+    def test_rejects_date_only_lead(self) -> None:
         for heading in ("2026-08-30 - Created", "2026-08-30 : Created"):
             with self.subTest(heading=heading):
-                self.assertTrue(match_alias(UpdateEntry, heading))
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_accepts_full_date_time_lead(self) -> None:
         for heading in (
@@ -716,9 +720,17 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
             "2026-08-30 14:30:00.000Z - Approved",
             "2026-08-30 14:30:00.000+02:00 : Approved",
             "2026-08-30 14:30:00.000Z : Approved",
+            "2026-08-30T14:30:00.000+02:00 - Approved",
+            "2026-08-30T14:30:00.000Z : Approved",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-30T14:30:00.000Z - Created\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-30T14:30:00.000Z")
+        self.assertEqual(sut.title, "Created")
 
     def test_rejects_em_dash_separator(self) -> None:
         for heading in ("2026-08-30 — Approved", "2026-08-30 14:30:00.000Z — Approved"):
@@ -738,15 +750,18 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 class TestUpdatesContainer(unittest.TestCase):
     """`Updates` -- dynamic newest-first collection of timestamp-led entries."""
 
-    def test_parses_date_only_entries_newest_first(self) -> None:
+    def test_parses_date_time_entries_newest_first(self) -> None:
         text = format_text(
-            "## Updates\n\n### 2026-09-14 - Added Security Requirements\n\nSome text.\n\n"
-            "### 2026-08-30 - Initial draft created\n\nSome other text.\n"
+            "## Updates\n\n### 2026-09-14 00:00:00.000Z - Added Security Requirements\n\nSome text.\n\n"
+            "### 2026-08-30 00:00:00.000Z - Initial draft created\n\nSome other text.\n"
         )
 
         sut = Updates.from_text(text)
 
-        self.assertEqual([entry.timestamp for entry in sut.updates], ["2026-09-14", "2026-08-30"])
+        self.assertEqual(
+            [entry.timestamp for entry in sut.updates],
+            ["2026-09-14 00:00:00.000Z", "2026-08-30 00:00:00.000Z"],
+        )
         self.assertEqual(str(sut), text)
 
     def test_parses_date_time_entries_with_colon_separator(self) -> None:
@@ -758,13 +773,17 @@ class TestUpdatesContainer(unittest.TestCase):
         self.assertEqual(sut.updates[0].title, "Approved")
 
     def test_out_of_order_entries_raise_validation_error(self) -> None:
-        text = format_text("## Updates\n\n### 2026-08-30 - Older\n\nx\n\n### 2026-09-14 - Newer\n\ny\n")
+        text = format_text(
+            "## Updates\n\n### 2026-08-30 00:00:00.000Z - Older\n\nx\n\n### 2026-09-14 00:00:00.000Z - Newer\n\ny\n"
+        )
 
         with self.assertRaises(ValidationError):
             Updates.from_text(text)
 
     def test_equal_timestamps_are_allowed(self) -> None:
-        text = format_text("## Updates\n\n### 2026-08-30 - First\n\nx\n\n### 2026-08-30 - Second\n\ny\n")
+        text = format_text(
+            "## Updates\n\n### 2026-08-30 00:00:00.000Z - First\n\nx\n\n### 2026-08-30 00:00:00.000Z - Second\n\ny\n"
+        )
 
         sut = Updates.from_text(text)
 
@@ -780,12 +799,88 @@ class TestUpdatesContainer(unittest.TestCase):
 
     def test_comment_is_optional(self) -> None:
         text = format_text(
-            "## Updates\n\n<!-- Newest entry first -- prepend below. -->\n\n### 2026-08-30 - Created\n\nx\n"
+            "## Updates\n\n<!-- Newest entry first -- prepend below. -->\n\n### 2026-08-30 00:00:00.000Z - Created\n\nx\n"
         )
 
         sut = Updates.from_text(text)
 
         self.assertIsNotNone(sut.comment)
+
+
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-30 00:00:00.000Z - Created\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-30 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-30 00:00:00.000Z - Created\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-30 00:00:00.000Z - Created\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-30 00:00:00.000Z - Created\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_blank_content_raises_assertion_error(self) -> None:
+        # `content` stays mandatory: a heading with no body (or a whitespace-only
+        # body, which mdformat normalizes to nothing) fails the engine's
+        # mandatory-field zero-extent check (feat-180-updates, issue #180, ACC-005).
+        for body in ("", "   \n"):
+            with self.subTest(body=body):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"### 2026-08-30 00:00:00.000Z - Created\n{body}"))
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object.
+        kwargs = _minimal_sysrs_kwargs()
+        kwargs["updates"] = Updates.from_text(
+            format_text("## Updates\n\n### 2026-08-30 00:00:00.000Z - Created\n\n- item one\n\n- item two\n")
+        )
+
+        dump = Sysrs(**kwargs).model_dump(mode="json")
+
+        self.assertEqual(dump["updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
 
 
 class TestEmptyMandatoryLeafAccepted(unittest.TestCase):

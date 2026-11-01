@@ -25,9 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.req.models.v1 import ReqDocument, ReqFrontmatter, parse_req
 from biz.dfch.specmgr.req.tools._paths import req_base_dir
@@ -120,20 +120,34 @@ class TestCreateReq(TempReqDirTestCase):
 
         self.assertTrue(req_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_req(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_req(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("req create_req (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(req_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A field-level validation failure (bad `## Level` value) must raise, writing nothing."""
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A field-level validation failure (bad `## Level` value) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
         text = _MINIMAL_BODY.replace("MUST", "NOT-A-VALID-LEVEL")
 
-        with self.assertRaises(ValidationError):
-            create_req(text)
+        result = create_req(text)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("req create_req (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(req_base_dir().exists())
 
 

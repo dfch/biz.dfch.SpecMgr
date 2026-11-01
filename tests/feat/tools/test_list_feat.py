@@ -15,7 +15,16 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``list_feat`` ``@mcp.tool()`` wrapper (Task 2.3, ACC-003)."""
+"""Tests for the ``list_feat`` ``@mcp.tool()`` wrapper (Task 2.3, ACC-003).
+
+feat-81-83-validation Phase 3 (REQ-006): a folder whose ``README.md`` fails
+to parse no longer silently disappears from the listing -- it appears
+inline in ``results`` as a failed entry and contributes to both ``total``
+and the new ``error_count``. feat-81-83-validation Phase 4 (Task 4.2,
+REQ-007) retrofitted ``FeatSummary.path`` (both successful and failed
+entries) to the same resolved, absolute (``.resolve()``d) form every other
+whole-body domain already uses.
+"""
 
 from __future__ import annotations
 
@@ -62,9 +71,9 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -95,7 +104,7 @@ class TestListFeat(unittest.TestCase):
         self.feat_root = tmp / "feat"
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
-    def test_returns_summaries_and_skips_malformed_folder(self) -> None:
+    def test_returns_summaries_and_reports_malformed_folder_as_a_failed_entry(self) -> None:
         first = create_feat(_MINIMAL_BODY)
         second = create_feat(_OTHER_BODY)
 
@@ -107,20 +116,64 @@ class TestListFeat(unittest.TestCase):
         sut = list_feat()
 
         self.assertIsInstance(sut, PagedResult)
-        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
         for summary in sut.results:
             self.assertIsInstance(summary, FeatSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.id, second.id})
+        self.assertEqual(ids, {first.id, second.id, None})
         titles = {summary.title for summary in sut.results}
-        self.assertEqual(titles, {"Example Widget", "Nightly Order Export"})
+        self.assertEqual(titles, {"Example Widget", "Nightly Order Export", "<failed to parse>"})
         statuses = {summary.status for summary in sut.results}
-        self.assertEqual(statuses, {"planning"})
+        self.assertEqual(statuses, {"planning", "<failed to parse>"})
         for summary in sut.results:
             self.assertTrue(summary.ref)
-            self.assertEqual(summary.ref, summary.id)
-            self.assertTrue(summary.path.endswith(f"{summary.id}/{README_FILENAME}"))
-            self.assertTrue(Path(summary.path).exists())
+            self.assertTrue(Path(summary.path).is_absolute())
+            if summary.ref != "feat-99-broken":
+                self.assertEqual(summary.ref, summary.id)
+                self.assertTrue(summary.path.endswith(f"{summary.id}/{README_FILENAME}"))
+                self.assertTrue(Path(summary.path).exists())
+
+        failed = next(summary for summary in sut.results if summary.ref == "feat-99-broken")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), (broken / README_FILENAME).resolve())
+        self.assertTrue(failed.path.endswith(f"feat-99-broken/{README_FILENAME}"))
+        self.assertTrue(Path(failed.path).exists())
+        self.assertIsNotNone(failed.error)
+
+    def test_acc018_a_folder_vanishing_mid_scan_is_silently_omitted_not_reported_as_a_failed_entry(self) -> None:
+        """ACC-018 (feat-107-doc-cache Phase 8, REQ-016): a folder racing set_feat_id's rename (or
+        a concurrent delete) mid-scan (its README.md vanishes between the directory glob and the
+        per-file read) must be silently omitted from the returned page -- contributing to neither
+        results, total, nor error_count -- not appear as a failed entry (Phase 6/REQ-012's original,
+        now-superseded choice) and not propagate an uncaught FileNotFoundError out of this tool.
+        """
+        # feat-187-list-feat-timeout, Task 110.110: list_feat's own per-folder resolution now reads
+        # each path directly (`path.read_text()`), never through a `read_feat`-shaped callback -- so
+        # the vanish simulation patches `Path.read_text` itself instead of a `list_feat` module
+        # attribute (which no longer exists, since the rewired request path no longer imports
+        # `read_feat` at all).
+        created = create_feat(_MINIMAL_BODY)
+        second = create_feat(_OTHER_BODY)
+        base_dir = ensure_feat_base_dir()
+        path = base_dir / created.id / README_FILENAME
+        real_read_text = Path.read_text
+
+        def _vanish_then_read(self: Path, *args: object, **kwargs: object) -> str:
+            if self == path:
+                raise FileNotFoundError(f"simulated mid-scan rename race for {self}")
+            return real_read_text(self, *args, **kwargs)
+
+        with mock.patch.object(Path, "read_text", _vanish_then_read):
+            sut = list_feat()
+
+        self.assertEqual(sut.total, 1)
+        self.assertEqual(sut.error_count, 0)
+        self.assertEqual(len(sut.results), 1)
+        remaining_ids = {summary.id for summary in sut.results}
+        self.assertEqual(remaining_ids, {second.id})
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse(self.feat_root.exists())
@@ -181,7 +234,7 @@ class TestListFeat(unittest.TestCase):
 
         self.assertEqual(sut.offset, 0)
 
-    def test_total_reflects_full_parseable_count_regardless_of_paging(self) -> None:
+    def test_total_and_error_count_reflect_the_full_directory_regardless_of_paging(self) -> None:
         for i in range(5):
             create_feat(_body_with_title(f"Widget Number {i:02d}"))
         base_dir = ensure_feat_base_dir()
@@ -191,7 +244,8 @@ class TestListFeat(unittest.TestCase):
 
         sut = list_feat(max_results=1, offset=1)
 
-        self.assertEqual(sut.total, 5)
+        self.assertEqual(sut.total, 6)
+        self.assertEqual(sut.error_count, 1)
 
 
 if __name__ == "__main__":

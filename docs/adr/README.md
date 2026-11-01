@@ -4,6 +4,21 @@ Index of all ADRs in this repository.
 
 ## All ADRs
 
+- [Replace domain-specific validate tools with a generic type-dispatched validate tool](078bf395-0a5f-4afd-84f6-b7a2191a00e6-replace-domain-specific-validate-tools-with-a-generic-type-d.md)
+  - Id: 078bf395-0a5f-4afd-84f6-b7a2191a00e6
+  - Status: accepted
+  - Date: 2026-09-04
+  - Decision-makers: OpenCode agent + user decision
+- [Convert the 12 per-domain schema resources to get_<d>_schema tools](112b6498-078b-4a59-88b8-8ffb7a5041b3-convert-the-12-per-domain-schema-resources-to-get-d-schema-t.md)
+  - Id: 112b6498-078b-4a59-88b8-8ffb7a5041b3
+  - Status: accepted
+  - Date: 2026-10-17
+  - Decision-makers: dfch
+- [Revise the generic update tool's success return to frontmatter plus an optional before/after snippet](19ff316b-cd11-41a7-a616-ffd84917da51-revise-the-generic-update-tool-s-success-return-to-frontmatt.md)
+  - Id: 19ff316b-cd11-41a7-a616-ffd84917da51
+  - Status: accepted
+  - Date: 2026-09-28
+  - Decision-makers: OpenCode agent + user decision
 - [Replace domain-specific delete tools with a generic type-dispatched delete tool](1af6787b-eaab-4e8f-888f-531c1e76c19d-replace-domain-specific-delete-tools-with-a-generic-type-dis.md)
   - Id: 1af6787b-eaab-4e8f-888f-531c1e76c19d
   - Status: accepted
@@ -30,6 +45,15 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-08-27
   - Decision-makers: OpenCode agent + user decision
+- [Multi-language artifact variants: directory layout, heading-mapping table, and language vocabulary](38efdb66-8025-45c5-bbe8-45b25fc7a772-multi-language-artifact-variants-directory-layout-heading-ma.md)
+  - Id: 38efdb66-8025-45c5-bbe8-45b25fc7a772
+  - Status: accepted
+  - Date: 2026-10-29
+  - Decision-makers: OpenCode agent + user decision
+- [Two-Stage Dirty/Clean DocCache Staging and a Unified Startup Warmup Thread to Fix list_feat's Cold-Scan Timeout (#187)](3982712a-a46b-4b2b-809f-9c6925a49b44-two-stage-dirty-clean-doccache-staging-and-a-unified-startup.md)
+  - Id: 3982712a-a46b-4b2b-809f-9c6925a49b44
+  - Status: accepted
+  - Decision-makers: dfch
 - [Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports](3bf0326f-065a-424c-a2b9-87e5d5bcfa99-extract-mcp-singleton-into-its-own-module-to-break-domain-se.md)
   - Id: 3bf0326f-065a-424c-a2b9-87e5d5bcfa99
   - Status: accepted
@@ -42,6 +66,11 @@ Index of all ADRs in this repository.
   - Status: accepted
   - Date: 2026-09-01
   - Decision-makers: OpenCode agent + user decision
+- [Design validate as a non-raising, structured-result tool to work around client-side MCP error-content truncation](519d1206-4d2a-4500-9046-6db635209996-design-validate-as-a-non-raising-structured-result-tool-to-w.md)
+  - Id: 519d1206-4d2a-4500-9046-6db635209996
+  - Status: accepted
+  - Date: 2026-09-03
+  - Decision-makers: OpenCode agent + user decision
 - [Generic update_section(key, value) with deletion sentinel and mandatory-section rejection](71fd95d7-07f2-466f-81aa-d29b7e3ef34c-generic-update-section-key-value-with-deletion-sentinel-and.md)
   - Id: 71fd95d7-07f2-466f-81aa-d29b7e3ef34c
   - Status: accepted
@@ -50,10 +79,24 @@ Index of all ADRs in this repository.
   - Id: 737858a9-7796-4f01-ae35-5afc1c707818
   - Status: accepted
   - Date: 2026-08-05
+- [Add an embedding-based, cross-domain semantic similarity engine (find_related / find_similar_text) with a pluggable CPU-only provider](750842b2-aca4-4649-ba0c-855ec8e1f505-add-an-embedding-based-cross-domain-semantic-similarity-engi.md)
+  - Id: 750842b2-aca4-4649-ba0c-855ec8e1f505
+  - Status: accepted
+  - Decision-makers: dfch
 - [Expose listing and by-id reads as MCP resources in addition to tools](7531106b-074b-4bd8-a83a-e433d01676e2-expose-listing-and-by-id-reads-as-mcp-resources-in-addition.md)
   - Id: 7531106b-074b-4bd8-a83a-e433d01676e2
   - Status: accepted
   - Decision-makers: dfch
+- [Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain](7a626b12-b189-4561-a51d-ffb2e9e193b4-add-an-in-package-import-free-plantuml-package-with-a-strict.md)
+  - Id: 7a626b12-b189-4561-a51d-ffb2e9e193b4
+  - Status: accepted
+  - Date: 2026-10-03
+  - Decision-makers: dfch
+- [Preserve caller-visible tool error text across mcp >= 2.1.0 via a call_tool seam](80305c52-102e-4833-a233-3468bef29e11-preserve-caller-visible-tool-error-text-across-mcp-2-1-0-via.md)
+  - Id: 80305c52-102e-4833-a233-3468bef29e11
+  - Status: accepted
+  - Date: 2026-10-19
+  - Decision-makers: OpenCode agent + user decision
 - [Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints](832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md)
   - Id: 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   - Status: accepted
@@ -62,9 +105,24 @@ Index of all ADRs in this repository.
   - Id: 898bfcd0-85f9-462f-93a8-747bda4166c8
   - Status: accepted
   - Decision-makers: dfch
+- [Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)](8c889262-152b-4b8e-ae2c-75371f7a9edf-use-full-iso-8601-date-time-timestamps-in-all-entry-headings.md)
+  - Id: 8c889262-152b-4b8e-ae2c-75371f7a9edf
+  - Status: accepted
+  - Date: 2026-09-23
+  - Decision-makers: dfch
 - [id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution](8cf940c5-3100-485c-a12d-14b59b631712-id-filename-addressing-scheme-server-generated-uuid-id-slug.md)
   - Id: 8cf940c5-3100-485c-a12d-14b59b631712
   - Status: accepted
+  - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to get_<d>'s parse-failure case](9080b37c-82b3-4f63-81f1-79641d0bf14c-extend-the-non-raising-structured-result-workaround-to-get-d.md)
+  - Id: 9080b37c-82b3-4f63-81f1-79641d0bf14c
+  - Status: accepted
+  - Date: 2026-09-25
+  - Decision-makers: OpenCode agent + user decision
+- [Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server](92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c-remove-the-confluence-tools-confluence-fetch-confluence-upda.md)
+  - Id: 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
+  - Status: accepted
+  - Date: 2026-09-10
   - Decision-makers: dfch
 - [Enforce doc generation, lint, and tests locally via pre-commit hook, not just CI](9c687bb1-8ee7-41c8-84ec-07606356bc73-enforce-doc-generation-lint-and-tests-locally-via-pre-commit.md)
   - Id: 9c687bb1-8ee7-41c8-84ec-07606356bc73
@@ -76,9 +134,19 @@ Index of all ADRs in this repository.
   - Decision-makers: dfch
 - [Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill"](a156fdf9-052c-4f43-93a2-eeec04a91eac-rename-webfetch-to-confluence-fetch-add-confluence-update-an.md)
   - Id: a156fdf9-052c-4f43-93a2-eeec04a91eac
-  - Status: accepted
+  - Status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
   - Date: 2026-09-01
   - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to set_status's invalid-status case](b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md)
+  - Id: b399f1ce-ed42-4929-b01c-7a57d18e8014
+  - Status: accepted
+  - Date: 2026-09-07
+  - Decision-makers: OpenCode agent + user decision
+- [Extend the non-raising structured-result workaround to the generic mutation tools' failure cases](b8c9bfea-6dcf-4158-bfc5-4ec17abb842f-extend-the-non-raising-structured-result-workaround-to-the-g.md)
+  - Id: b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
+  - Status: accepted
+  - Date: 2026-09-30
+  - Decision-makers: OpenCode agent + user decision
 - [Frontmatter extension fields (id, version) with whole-object full-replace update contract](bbf412a7-965e-4435-8669-c338407d73b7-frontmatter-extension-fields-id-version-with-whole-object-fu.md)
   - Id: bbf412a7-965e-4435-8669-c338407d73b7
   - Status: accepted
@@ -87,6 +155,15 @@ Index of all ADRs in this repository.
   - Id: bc5e18ad-6bbf-4265-bae4-3e34984a2d29
   - Status: accepted
   - Decision-makers: dfch
+- [Add a content-hash-validated, per-domain in-memory read cache for the 12 generic whole-body domains](bfd76370-b59b-4d65-b550-a969f6c93c9d-add-a-content-hash-validated-per-domain-in-memory-read-cache.md)
+  - Id: bfd76370-b59b-4d65-b550-a969f6c93c9d
+  - Status: accepted
+  - Decision-makers: dfch
+- [Single source of truth for the document-type domain-name set](c4efbde6-fd19-4aa8-8668-95316ed62dcc-single-source-of-truth-for-the-document-type-domain-name-set.md)
+  - Id: c4efbde6-fd19-4aa8-8668-95316ed62dcc
+  - Status: accepted
+  - Date: 2026-09-22
+  - Decision-makers: OpenCode agent + user decision
 - [Base the ADR template on MADR 4.0.0](c73e4f9d-81f3-495d-bd3a-f660ab992ed3-base-the-adr-template-on-madr-4-0-0.md)
   - Id: c73e4f9d-81f3-495d-bd3a-f660ab992ed3
   - Status: accepted
@@ -126,3 +203,8 @@ Index of all ADRs in this repository.
   - Id: ece4554b-725c-4f76-bc04-5d2b760363d2
   - Status: accepted
   - Decision-makers: dfch
+- [Extend the non-raising structured-result workaround to the create_<d>/parse_<d> content-validation cases](f14f125e-eaad-4f4f-a6fd-3c931bed726e-extend-the-non-raising-structured-result-workaround-to-the-c.md)
+  - Id: f14f125e-eaad-4f4f-a6fd-3c931bed726e
+  - Status: accepted
+  - Date: 2026-10-08
+  - Decision-makers: OpenCode agent + user decision

@@ -1,15 +1,15 @@
 ---
-created: '2025-10-04 08:15:42.279Z'
+created: '2025-10-04T08:15:42.279Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: open
 type: rsk
-updated: '2025-10-18 11:03:56.834Z'
+updated: '2025-10-18T11:03:56.834Z'
 version: 1.0.0
 ---
 
 # Level 1 Heading is the Title of the Risk
 
-<!-- Optional HTML comment giving context for this risk. -->
+<!-- Optional HTML comment giving context for this risk. Closed sets: `## Strategy` is one of the four TARA words (transfer, accept, reduce, avoid -- see the specmgr://rsk/tara resource); the `### Probability {1..5}` and `### Impact {1..5}` headings carry 5x5 risk-matrix coordinates 1-5 (see the specmgr://rsk/risk-matrix resource). -->
 
 ## Cause
 
@@ -54,6 +54,10 @@ The responsible person or role.
 ## Tags
 
 - An optional tag
+
+## Source
+
+The origin or authority of this risk -- the QA document, discussion, or report it derives from.
 
 ## More Information
 

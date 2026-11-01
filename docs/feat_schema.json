@@ -22,6 +22,7 @@
     },
     "AcceptanceCriterionItem": {
       "description": "`- [ ] ACC-NNN: {text}` -- one checklist acceptance-criterion entry under `### Acceptance Criteria`.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `ACC-NNN: ` prefix\nagainst the inherited `description`.\n\nParameters\n----------\ncriterion_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `ACC-NNN: ` prefix further stripped. Raises `AssertionError` if\n    `.description` does not match `ACC-\\d{3}: .+`.",
+      "pattern": "^\\[( |x|X)\\]\\s*(.*)$",
       "properties": {
         "content": {
           "anyOf": [
@@ -61,17 +62,23 @@
       "type": "object"
     },
     "DecisionEntry": {
-      "description": "`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same `content: MarkdownParagraph`) --\na distinct class since it belongs to a semantically distinct section.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    decision text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Decisions Made` -- one decision entry.\n\nIdentical shape to `UpdateEntry` (same alias regex, same `timestamp`/\n`title` computed-field extraction, same single mandatory `content` leaf\nfield) -- a distinct class since it belongs to a semantically distinct\nsection.\n\nParameters\n----------\ncontent:\n    This entry's own decision text, directly under the H4 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H4 heading -- this entry's own decision text. Mandatory."
+          "$ref": "#/$defs/DecisionEntryContent",
+          "description": "This entry's own decision text, directly under the H4 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "DecisionEntry",
+      "type": "object"
+    },
+    "DecisionEntryContent": {
+      "description": "`DecisionEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `DecisionEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `DecisionEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "DecisionEntryContent",
       "type": "object"
     },
     "DecisionsMade": {
@@ -179,7 +186,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -196,6 +203,12 @@
         },
         "status": {
           "default": "planning",
+          "enum": [
+            "done",
+            "planning",
+            "progress",
+            "review"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -215,7 +228,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {
@@ -225,6 +238,29 @@
         }
       },
       "title": "FeatFrontmatter",
+      "type": "object"
+    },
+    "FeatTaskItem": {
+      "description": "`- [ ] Task NNN.MMM: {text}` -- one checklist task entry of a `Phase`'s flat item list.\n\nReuses `tsk.TaskItem`'s `checked`/`description`-from-checkbox split\nas-is, adding one more computed field re-matching the `Task NNN.MMM: `\nprefix against the inherited `description` -- the same layering\n`AcceptanceCriterionItem` above uses for `ACC-NNN: `.\n\nParameters\n----------\ntask_description:\n    Computed. `.description` (already checkbox-stripped) with the\n    `Task NNN.MMM: ` prefix further stripped. Raises `AssertionError`\n    if `.description` does not match `Task \\d{3}\\.\\d{3}: .+`.",
+      "pattern": "^\\[( |x|X)\\]\\s*(.*)$",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content"
+        }
+      },
+      "title": "FeatTaskItem",
       "type": "object"
     },
     "Feature": {
@@ -277,12 +313,12 @@
       "type": "object"
     },
     "Phase": {
-      "description": "`#### Phase N: {title}` under `### Task List` -- one phase's own flat checklist.\n\nUnpadded phase numbers (matching this very plan's own \"Phase 0\"..\"Phase\n5\" headings). Per-item metadata (`depends on:`/`status:`/`ETA`) stays\nunparsed free text inside each item's own description.\n\nParameters\n----------\nitems:\n    The flat `- [ ] .../- [x] ...` checklist for this phase, reusing\n    `tsk.models.v1.task_item.TaskItem` as-is. At least one item.\nnumber:\n    Computed. The phase's number (e.g. `1` for `#### Phase 1: X`).\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The phase's title (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
+      "description": "`#### Phase NNN: {title}` under `### Task List` -- one phase's own flat checklist.\n\n3-digit zero-padded phase numbers starting at 100, step 10 (`Phase\n100`, `Phase 110`, ...) by authoring convention -- the schema enforces\nonly the `NNN` shape: gaps and in-between values (e.g. `Phase 105`)\nalways parse, and the step-10 increment is never validated. Each item\ncarries the `Task NNN.MMM: ` prefix enforced by `FeatTaskItem` (see\n`items` below). Per-item metadata (`depends on:`/`status:`/`ETA`) stays\nunparsed free text inside each item's own description.\n\nParameters\n----------\nitems:\n    The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...`\n    checklist for this phase, as `FeatTaskItem` entries. At least one\n    item.\nnumber:\n    Computed. The phase's number (e.g. `100` for `#### Phase 100: X`).\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The phase's title (the heading text after `\": \"`). Never\n    stored separately -- derived from the retained heading text.",
       "properties": {
         "items": {
-          "description": "The flat `- [ ] .../- [x] ...` checklist for this phase, in document order. Must contain at least one item.",
+          "description": "The flat `- [ ] Task NNN.MMM: .../- [x] Task NNN.MMM: ...` checklist for this phase, in document order. Must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/TaskItem"
+            "$ref": "#/$defs/FeatTaskItem"
           },
           "minItems": 1,
           "title": "Items",
@@ -488,33 +524,11 @@
       "title": "Scope",
       "type": "object"
     },
-    "TaskItem": {
-      "description": "One `- [ ] .../- [x] ...` checklist entry of a `Task`'s flat item list.\n\nA leaf `MarkdownListItem` subclass (declares no nested `MarkdownStr`\nfields of its own, only the two computed properties below), so it parses/\nrenders exactly like the base class -- `checked`/`description` are purely\nderived views over the inherited `.text`, computed lazily rather than\nstored, and therefore never interfere with `MarkdownStr`'s field-based\n`from_text`/`__str__` distribution (see `MarkdownStr._get_field_names`).\n\nParameters\n----------\nchecked:\n    Computed. `True` for a `[x]`/`[X]` marker, `False` for a `[ ]`\n    marker. Raises `AssertionError` if `.text` does not start with a\n    well-formed checkbox marker at all.\ndescription:\n    Computed. The item's own text with the leading checkbox marker\n    stripped, e.g. `\"Do the thing\"` for `\"- [ ] Do the thing\"`. Raises\n    `AssertionError` under the same condition as `checked`.\ncontent:\n    An optional list of paragraphs with details content of the task item.",
-      "properties": {
-        "content": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/MarkdownParagraph"
-              },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Content"
-        }
-      },
-      "title": "TaskItem",
-      "type": "object"
-    },
     "TaskList": {
-      "description": "`### Task List` -- container for the `#### Phase N: ...` entries. No own text. Mandatory. At least\none phase.\n\nParameters\n----------\nphases:\n    The `#### Phase N: {title}` entries, in document order. At least\n    one phase.",
+      "description": "`### Task List` -- container for the `#### Phase NNN: ...` entries. No own text. Mandatory. At least\none phase.\n\nParameters\n----------\nphases:\n    The `#### Phase NNN: {title}` entries, in document order. At least\n    one phase.",
       "properties": {
         "phases": {
-          "description": "The `#### Phase N: {title}` entries, in document order. Must contain at least one phase.",
+          "description": "The `#### Phase NNN: {title}` entries, in document order. Must contain at least one phase.",
           "items": {
             "$ref": "#/$defs/Phase"
           },
@@ -530,17 +544,23 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.\n\nThe timestamp format is deliberately not the same format as frontmatter\n`created`/`updated` (the shared date+time variant produced by\n`general.tools._timestamps.now_timestamp()`, e.g.\n`2026-08-30 14:23:01.123Z`) -- this format is scoped to\n`### Updates`/`### Decisions Made` entry headings only, hand/LLM-authored\nbody content, not tool-generated frontmatter.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H4 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
+      "description": "`#### {timestamp} ( - | : ) {title}` under `### Updates` -- one update entry.\n\nThe timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`\nor space) + `HH:mm:ss.SSS` + explicit UTC offset (`+02:00`, `-05:00`)\nor `Z` for UTC -- the same format as frontmatter `created`/`updated`\n(both separators accepted, the `T`-separated form the machine-written\ncanonical variant, date-only rejected; ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H4 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The entry's ISO8601 timestamp, verbatim from the heading.\n    Never stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The entry's title (the heading text after `\" - \"`/\n    `\" : \"`). Never stored separately -- derived from the retained\n    heading text.",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H4 heading -- this entry's own update text. Mandatory."
+          "$ref": "#/$defs/UpdateEntryContent",
+          "description": "This entry's own update text, directly under the H4 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "UpdateEntry",
+      "type": "object"
+    },
+    "UpdateEntryContent": {
+      "description": "`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `UpdateEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `UpdateEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "UpdateEntryContent",
       "type": "object"
     },
     "Updates": {

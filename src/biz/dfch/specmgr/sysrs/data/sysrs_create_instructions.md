@@ -90,10 +90,15 @@ paraphrasing why it is referenced here.
 - `## Definitions and Acronyms` -- optional freeform prose.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
-  then `### {ISO8601 timestamp} ( - | : ) {title}` entries, newest-first
-  (e.g. `2026-08-30 14:30:00.000+02:00 - Created`), each with a
-  mandatory lead paragraph. New entries are prepended (newest first),
-  not appended.
+  then `### {timestamp} ( - | : ) {title}` entries, newest-first, where
+  `{timestamp}` is the full ISO 8601 date+time form
+   `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (e.g.
+   `### 2026-08-30 14:30:00.000+02:00 - Created`), each with the entry's own
+   update text directly under the H3 heading (any markdown content --
+   multiple paragraphs, lists, code blocks, block quotes, not just a single
+   paragraph), which is mandatory.
+  The date/time separator may be `T` or a space; a date-only timestamp
+  is rejected. New entries are prepended (newest first), not appended.
 
 Section order is binding, exactly as listed above.
 
@@ -119,13 +124,13 @@ use the `question` tool to elicit the mandatory fields first, then
 each optional field in turn, explicitly telling the user they may skip
 any optional field they cannot or do not want to answer yet.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://sysrs/template` or `specmgr://sysrs/example` as a
-starting point/style reference, then check `specmgr://sysrs/schema`
-(the generated JSON Schema) to confirm field names and constraints
-before drafting the body. Do not invent field names or section
-headings that are not present there.
+Call the `get_sysrs_template` and `get_sysrs_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_sysrs_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 
@@ -136,7 +141,7 @@ headings that are not present there.
    entire frontmatter is built automatically and `status` is fixed to
    `"draft"`. A structural or field validation failure raises uncaught
    and nothing is written.
-3. Optionally call `validate_sysrs(content, full=False)` first if you
+3. Optionally call `validate(type="sysrs", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_sysrs`
    already performs the same validation internally, so this step is
    never required, only a convenience.

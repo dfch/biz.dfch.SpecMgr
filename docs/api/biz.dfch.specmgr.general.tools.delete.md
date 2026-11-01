@@ -2,9 +2,9 @@
 
 ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
 
-The generic, cross-domain hard-delete tool for the twelve whole-body
+The generic, cross-domain hard-delete tool for the whole-body
 document types (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the explicit ``type``
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_delete_<d>``), each of which
 resolves the document by ``id`` through the domain's own ``load_by_id``
 (guaranteeing a valid, parseable document of that domain with that exact
@@ -13,7 +13,8 @@ the path is needed), takes the domain's own per-id lock around the whole
 resolve-then-delete sequence (the very lock the generic ``update`` and
 ``set_status`` tools take for the same id, so a concurrent same-id mutation
 cannot interleave with the delete), and hard-deletes the document from
-disk: the single ``*.md`` file for the eleven flat domains
+disk: the single ``*.md`` file for every flat domain (i.e. every
+whole-body domain except ``feat``)
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
 session transcripts in that folder; ``feat`` is folder-per-document, ADR
@@ -22,8 +23,8 @@ session transcripts in that folder; ``feat`` is folder-per-document, ADR
 
 Safety (REQ-003): the public :func:`delete` validates ``id`` via
 :func:`_path_safety.validate_id` (no ``/``, no ``\``, no ``..``, plus the
-domain's own format -- canonical lowercase-hex UUID for the ten UUID
-domains, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access,
+domain's own format -- canonical lowercase-hex UUID for every domain
+other than ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access,
 so a path-injection attempt or a wrong-format id is a ``ValueError`` raised
 before dispatch. Each adapter additionally confines the resolved path to
 the domain's own base directory with :func:`_path_safety.assert_within`
@@ -69,11 +70,20 @@ caller (REQ-005).
 
 ## Functions
 
-### `_delete_dec(id_: 'str') -> 'str'`
+### `_delete_dec(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the decision ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/9).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects the variant file: the
+id is scanned for in ``dec_base_dir(language)``, the lock is the
+variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one variant
+file is unlinked -- only that file's own path-keyed cache entries (the
+document cache and the embedding cache) are invalidated, so the EN
+document (file, cache entry) is untouched.
 
 
 ### `_delete_feat(id_: 'str') -> 'str'`
@@ -85,31 +95,61 @@ is the entire containing ``<base>/<id_>/`` folder (removed via
 ``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and
 any session transcripts in that folder), not the ``README.md`` file,
 and the folder path is what is returned -- see :func:`_delete_req` for
-the shared resolve/lock/safety semantics.
+the shared resolve/lock/safety semantics. On a successful ``rmtree``,
+the cache entry for ``path`` (the ``README.md`` file, the ``feat``
+cache's own key -- not the folder ``rmtree`` actually removed) is
+invalidated immediately (feat-107-doc-cache Phase 4, Task 4.1a,
+REQ-004) -- not invalidated at all if ``rmtree`` itself raises, since
+the folder is still on disk in that case -- and the feature's own
+embedding-cache entry for ``(feat, path)`` (the same ``README.md``
+key, not the removed folder) is invalidated in the same spot
+(feat-134 Phase 3, Task 3.6, REQ-008), so a deleted feature's stale
+vector is never served.
 
 
-### `_delete_gol(id_: 'str') -> 'str'`
+### `_delete_gol(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the goal ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_prb(id_: 'str') -> 'str'`
+
+### `_delete_prb(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the problem statement ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_qa(id_: 'str') -> 'str'`
+
+### `_delete_qa(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the QA document ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_req(id_: 'str') -> 'str'`
+
+### `_delete_req(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the requirement ``id_`` from disk (REQ-001/004/005/006).
 
@@ -120,66 +160,136 @@ guarantees a valid, parseable document before removal), takes
 the resolved path to the requirement base directory, and removes the
 single ``*.md`` file. The domain's own ``ReqNotFoundError`` propagates
 unchanged; an ``unlink`` I/O failure re-raises as
-:class:`DeleteError`.
+:class:`DeleteError`. On a successful ``unlink``, the cache entry for
+``path`` is invalidated immediately (feat-107-doc-cache Phase 3,
+REQ-004) -- not invalidated at all if ``unlink`` itself raises, since
+the file is still on disk in that case -- and the document's own
+embedding-cache entry for ``(req, path)`` is invalidated in the same
+spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
+stale vector is never served.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_delete_rsk(id_: 'str') -> 'str'`
+### `_delete_rsk(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the risk ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_sop(id_: 'str') -> 'str'`
+
+### `_delete_sop(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_sysrs(id_: 'str') -> 'str'`
+
+### `_delete_sysrs(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the System Requirements Specification ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_tsk(id_: 'str') -> 'str'`
+
+### `_delete_tsk(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the task list ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_uc(id_: 'str') -> 'str'`
+
+### `_delete_txt(id_: 'str', language: 'str' = 'en') -> 'str'`
+
+Hard-delete the free-form text document ``id_`` from disk (REQ-001/004/005/006).
+
+Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+
+
+### `_delete_uc(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the use case ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_delete_vcr(id_: 'str') -> 'str'`
+
+### `_delete_vcr(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the verification case record ``id_`` from disk (REQ-001/004/005/006).
 
 Same resolve/lock/safety semantics as :func:`_delete_req`.
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `delete(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']") -> 'str'`
 
-Permanently delete an existing document from disk, across the twelve whole-body domains.
+### `delete(id: 'str', type: 'WholeBodyType', language: 'str' = 'en') -> 'str'`
+
+Permanently delete an existing document from disk, across the whole-body domains.
 
 Cross-domain generic for every whole-body document type
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/
-``sop``/``feat``/``vcr``/``sysrs``); dispatches on ``type`` to the domain's own
+``sop``/``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
 private adapter (same id resolution via the domain's ``load_by_id``,
 same per-id domain lock around the whole resolve-then-delete sequence,
-same domain not-found error). The eleven flat domains remove their single
+same domain not-found error). Every flat domain (every whole-body domain
+except ``feat``) removes its single
 ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
 (``README.md``, any ``history.md``, any session transcripts --
 folder-per-document, ADR 8cf940c5).
 
 The ``id`` is validated before any filesystem access: a path-injection
 attempt (``/``, ``\``, or ``..``) or a wrong-format id (not a canonical
-lowercase-hex UUID for the ten UUID domains, or not a
+lowercase-hex UUID for every domain other than ``feat``, or not a
 ``feat-NNN-slug`` for ``feat``) is a ``ValueError`` raised before
 dispatch. The resolved path is additionally confined to the domain's
 own base directory (defense-in-depth) inside the lock.
@@ -196,20 +306,36 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``.
+    ``vcr``, ``sysrs``, ``txt``.
+language:
+    The language variant to delete (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+    it) deletes the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) deletes that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived); only that one variant file is removed (and
+    only its own cache entries invalidated): the EN document stays
+    untouched. Shape-guarded before any filesystem access (like
+    ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
 Returns
 -------
 str
-    The deleted path: the ``*.md`` file path for the eleven flat
-    domains, the folder path for ``feat``.
+    The deleted path: the ``*.md`` file path for every flat domain
+    (every whole-body domain except ``feat``), the folder path for ``feat``.
 
 Raises
 ------
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format (raised before any filesystem access; nothing
-    is deleted).
+    is deleted). Also raised, before any filesystem access, for a
+    malformed ``language`` (not an ISO 639-1-shaped lowercase
+    two-letter code), a non-default ``language`` with ``type`` ``feat`` (always English), or a non-
+    default ``language`` without a packaged heading-mapping table.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /

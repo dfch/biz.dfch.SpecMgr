@@ -36,6 +36,19 @@ Genuine dead code found by vulture should be deleted instead.
 # `@app.command()` -- see AGENTS.md's "CLI (cli.py)" section for why Typer needs it.
 _callback
 
+# --- PEP 562 module-level `__getattr__`/`__dir__` (lazy exports) ----------------
+# Invoked by Python's own attribute-access machinery on the defining module,
+# never called directly from this codebase's code.
+# (Currently `general.models`'s lazy `UpdateResult`/`UpdateFrontmatter` export,
+# feat-153-off-by-n Phase 2 -- see that module's `__getattr__` docstring for why
+# the import must stay lazy.)
+__getattr__
+# Companion PEP 562 `__dir__` (feat-153-off-by-n round 2): invoked by `dir()`/
+# `inspect.getmembers` on the defining module, never called directly; it exposes
+# the lazy `UpdateResult`/`UpdateFrontmatter` names to `dir()`/IDEs/the docs
+# generator without converting the export to an eager import.
+__dir__
+
 # --- Pydantic v2 `@field_validator`/`@model_validator` methods -------------------
 # Invoked by Pydantic's validation machinery on model construction, not by any
 # direct call in this codebase.
@@ -61,15 +74,18 @@ _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
 _._validate_partial_title
+_._validate_problem_statement
 _._validate_status
 _._validate_type_non_blank
 _._validate_value
 _._validate_version
 _._validate_items
 _._validate_at_least_one_present
+# qa (feat-156 Phase 1): `QaQuestionAnswer`'s own `field_validator("question")`
+# (the bold `**<d>.<NNNN>**: ` question-number prefix), invoked by Pydantic's
+# validation machinery, never called directly.
+_._validate_question
 _.validate_actions_numbered_sequentially
-_.validate_heading_structure
-_.validate_headings
 _.validate_level
 _.validate_status
 _.validate_step_references_resolve_and_are_unique
@@ -231,12 +247,73 @@ packaging_handling_shipping_and_transportation
 verification
 appendix
 definitions_and_acronyms
+# txt (feat-229 Phase 1): the `Txt` root's own `body`/`updates` fields and
+# `UpdateEntry`'s computed `timestamp`/`title` are read only via
+# (de)serialization; `src/` accesses the txt model's fields only through the
+# parser/tool plumbing, not as plain attributes. `updates` and
+# `timestamp` need no entry here -- they are already listed once above (this
+# file lists each name once, not per domain); `body` and `title` are listed
+# here -- they are incidentally marked used by unrelated src references today
+# (the `body` local in every domain parser's own `parse_<d>`, the `title=`
+# kwargs of the MCP tool decorators), but the entries pin the txt model
+# fields themselves regardless of that incidental usage.
+body
+title
 
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
+# (Constructor keyword arguments don't count as name references for vulture's
+# name-based "used" decision -- that is why these entries exist while
+# `base_dir` needs none: a local variable of that name in
+# `general.tools._similarity_corpus` already marks it used.)
 env_var
 env_var_set
+# config (feat-134 Phase 7): `SimilarityConfig` fields read only via
+# (de)serialization; nothing in `src/` accesses them as plain attributes
+# (`cache_dir` needs no entry -- the local variable of that name in
+# `general.resources.config._similarity_cache_dir` already marks it used).
+extra_installed
+disabled
+model_name
+# config (feat-185-uc-diagrams Phase 120): `PlantumlConfig`'s `jar`/`bin`
+# fields read only via (de)serialization; nothing in `src/` accesses them as
+# plain attributes (constructor keyword arguments don't count, same as the
+# entries above). `url` needs no entry -- the `plantuml.chain` module's own
+# `from . import ... url` marks the name used; `PlantumlSourceConfig.set`
+# needs none either (the `set` builtin call in `general.resources.config`
+# marks it), nor does `selected` (the local variable of that name in
+# `config_info()`).
+jar
+bin
 
+# config (feat-187-list-feat-timeout, Task 110.120): `ConfigInfo`'s own
+# `feat_warmup_disabled` field is written in the resource's own constructor
+# (`general.resources.config.config_info`) and read back only via
+# (de)serialization when the resource is read; nothing in `src/` accesses
+# it as a plain attribute.
+feat_warmup_disabled
+
+# config (feat-207-reference-graph Phase 120, REQ-010): `DiagramConfig`'s
+# `resolved` field is written in the resource's own constructor
+# (`general.resources.config.config_info`, from the shared
+# `general.tools._diagram_config.diagram_max_title` helper's effective value)
+# and read back only via (de)serialization when the resource is read; nothing
+# in `src/` accesses it as a plain attribute (the `set`/`valid`/`default`
+# siblings need no entries -- vulture's built-in whitelist already covers
+# them, empirically confirmed by the Phase 120 gate run).
+resolved
+
+# similarity (feat-134-related-artifact-similarity):
+# `SimilarityUnavailableResult`'s `available`/`reason` fields are written in
+# the model's own constructor (in `_embedding._similarity_availability`) and
+# read back only via (de)serialization when the tool returns them to the MCP
+# client; nothing in `src/` accesses them as plain attributes. The Phase 1
+# entries for `iter_paths` (now attribute-accessed by the registry consumers),
+# `embed_query` and `_similarity_availability` (now called from the Phase 3
+# `find_related`/`find_similar_text` tool bodies) are obsolete -- vulture sees
+# those `src/` uses.
+available
+reason
 # dtais (feat-92-resources Phase 2): `Dtais`/`CoverageRelationship` fields
 # read only via (de)serialization; nothing in `src/` accesses them as plain
 # attributes yet (the `general/resources/dtais.py` wiring comes later).
@@ -268,3 +345,82 @@ combining_patterns
 # Invoked by the MCP framework once registered, not called directly in `src/`.
 version_info
 config_info
+
+# doc cache (feat-107-doc-cache Phase 2): `DocCache`'s public API surface,
+# exercised only by its own unit tests so far; `invalidate`/`reconcile`/`move`
+# are wired into per-domain `read_<domain>`/`create_<domain>`/generic
+# `update`/`set_status`/`set_classification`/`delete`/`set_feat_id` call
+# sites in Phase 3/4, and `reset` is a test-only hook by design (never called
+# from `src/`).
+invalidate
+reconcile
+move
+reset
+
+# feat-187-list-feat-timeout (Task 110.120): `FeatWarmupResult`'s own
+# `frontmatter_phase`/`full_parse_phase` fields are constructed in
+# `feat.tools._warmup.warmup_feat_caches` and read back only by Phase 120's
+# own (later) test assertions -- constructor keyword arguments don't count
+# as name references for vulture's name-based "used" decision, the same
+# precedent the `config`/`SimilarityConfig` entries above already document.
+frontmatter_phase
+full_parse_phase
+
+# --- similarity (feat-134-related-artifact-similarity) ------------------
+# `documents` is the `_embedding._TextEmbeddingLike` structural-protocol
+# stub's own method argument -- a declaration with a `...` body, never a real
+# parameter that any `src/` code binds (the concrete `fastembed.TextEmbedding`
+# satisfies the protocol structurally and is only ever reached through the
+# lazy `get_default_provider` import). The `read_embedding`/
+# `invalidate_embedding_cache`/`move_embedding_cache`/`reset_embedding_cache`
+# cache wrappers, `reset_default_provider`, and the `SimilarityUnavailableResult`/
+# `WholeBodyDomain`/`WholeBodyType`/`WholeBodyOrAdrType`/`whole_body_domain`
+# registry names need no entries: vulture treats `__all__`-listed names as used.
+documents
+
+# --- plantuml (feat-185-uc-diagrams Phase 110) --------------------------
+# `PlantumlValidationResult`'s `structure_ok`/`checked_by` fields are set in
+# the result's own constructors (vulture's dataclass constructor-kwarg
+# suppression does not count that as use) and read by tests, the CLI
+# (Phase 130: `commands/plantuml_check.py` prints both per file), and the MCP
+# serialization of the §3.6 result (Phase 120): `uc.tools.validate_plantuml`
+# returns the dataclass verbatim and the mcp SDK's pydantic serializer reads
+# its fields dynamically, which vulture's static scan cannot see. The
+# remaining fields (`valid`/`rendered`/`errors`/`warnings`/`source_state`/
+# `available`/`reason`/`fix_hint`) need no entry: `chain.validate_plantuml`
+# reads the backend verdicts' same-named attributes, marking the names used.
+structure_ok
+checked_by
+# `UNATTRIBUTED_MARKER_FORMS` is the documentation/test pin of the three
+# frozen marker grammar forms (rulebook §2.9.4); the live shared constant is
+# `UNATTRIBUTED_MARKER_PREFIX` (used by both the renderer and the checker),
+# so the forms tuple itself is read only by the rulebook pin in tests.
+UNATTRIBUTED_MARKER_FORMS
+
+# --- feat-197-i18n (Phase 110) -------------------------------------------
+# `scan_paths` is `dec.tools._paths._reconcile_dec_scan`'s own parameter, the
+# `reconcile_fn` argument `general.tools._doc_paths.find_doc_path_by_id`
+# always supplies with the scanned directory's materialized path listing.
+# With the `{language}` subfolder layout (ADR 38efdb66 item 9), that single
+# directory no longer covers the whole domain, so the wrapper deliberately
+# ignores the argument and reconciles against the recomputed domain-wide
+# live listing (a superset of it) instead -- the parameter is part of the
+# shared `reconcile_fn` call contract, not dead code.
+scan_paths
+
+# --- feat-197-i18n (Phase 140) -------------------------------------------
+# Pydantic result-model fields of the read-only `list_languages` /
+# `check_translation_drift` tools (`general/models/language_list_result.py`,
+# `general/models/translation_drift.py`). The fields are populated by keyword in the
+# tools' own constructors (vulture's constructor-kwarg suppression does not count
+# that as use) and read by tests and, dynamically, by the mcp SDK's pydantic
+# serializer when the result is returned over the wire -- which vulture's static
+# scan cannot see (the `structure_ok`/`checked_by` precedent above). The remaining
+# fields of the two models are read by name in the tools or the pure comparison
+# code and need no entry.
+languages
+source_position
+variant_position
+variant_path
+in_sync
+staleness_error

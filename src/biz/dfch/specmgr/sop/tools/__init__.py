@@ -24,6 +24,10 @@ document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
 data file rather than anything on the caller's filesystem (Task 2.2; the
 real packaged data files arrive in Phase 3 Task 3.1/3.2).
+``get_sop_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://sop/schema`` resource).
 ``get_sop`` reads, parses, and returns a full SOP document by id -- the
 sole id-based read path for SOP (there is no ``specmgr://sop/{id}`` resource,
 ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_sop`` returns one page of
@@ -31,9 +35,11 @@ id/title/status/ref summaries of every SOP, shipped as a paged tool
 from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_sop``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the SOP base directory
-(``sop.tools._paths``/``_io``). ``validate_sop`` is a disk-free, id-free
-dry run against a submitted ``content`` string, independent of the other
-tools. Import this package to register all SOP tools at once::
+(``sop.tools._paths``/``_io``). Disk-free, id-free dry-run content
+validation goes through the generic ``validate`` tool in ``general.tools``
+(``type="sop"``) -- the former ``validate_sop`` tool was removed in favor
+of it (feat-81-83-validation Phase 2). Import this package to register all
+SOP tools at once::
 
     from biz.dfch.specmgr.sop import tools  # noqa: F401 (side-effects only)
 
@@ -50,17 +56,17 @@ frontmatter field except ``updated``; status changes go through the generic
 from .create_sop import create_sop
 from .get_sop import get_sop
 from .get_sop_example import get_sop_example
+from .get_sop_schema import get_sop_schema
 from .get_sop_template import get_sop_template
 from .list_sop import list_sop
 from .parse_sop import parse_sop
-from .validate_sop import validate_sop
 
 __all__ = [
     "create_sop",
     "get_sop",
     "get_sop_example",
+    "get_sop_schema",
     "get_sop_template",
     "list_sop",
     "parse_sop",
-    "validate_sop",
 ]

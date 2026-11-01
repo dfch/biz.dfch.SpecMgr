@@ -42,7 +42,7 @@ genuinely a new use case.
   - `### Channels to Secondary Actors` -- optional bullet list.
   - `### Related Use Cases` -- optional bullet list of cross-references.
 - `## Main Success Scenario` -- mandatory numbered list of steps, the
-  "everything goes right" path.
+  "everything goes right" path. (Attribution authoring style: start each step with the actor who performs it, e.g. `Company checks inventory for requested goods.` -- the PlantUML sequence-skeleton attribution pre-fill, rulebook `specmgr://uc/plantuml`, keys on that participant-label prefix.)
 - `## Extensions` -- optional. An optional introductory paragraph
   followed by zero or more `### Extension {step}{letter}. {condition}`
   sub-sections (e.g. `### Extension 3a. Company is out of stock`), each
@@ -69,19 +69,19 @@ performance target, channels, related use cases, the main success
 scenario steps, extensions, sub-variations, open issues, notes, and
 assumptions.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://uc/template` or `specmgr://uc/example` as a starting
-point/style reference, then check `specmgr://uc/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not
-present there.
+## 3. Use the template/example tools as references
+Call the `get_uc_template` and `get_uc_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_uc_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.
 2. Call `create_uc(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_uc(content, full=False)` first if you want
+3. Optionally call `validate(type="uc", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_uc` already
    performs the same validation internally, so this step is never
    required, only a convenience.

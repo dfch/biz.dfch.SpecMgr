@@ -2,8 +2,7 @@
 
 MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 
-``prb_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://prb/schema``). ``prb_example`` registers the packaged sample
+``prb_example`` registers the packaged sample
 problem statement document resource (``specmgr://prb/example``).
 ``prb_template`` registers the packaged problem statement template resource
 (``specmgr://prb/template``) -- every field present, populated with short
@@ -19,3 +18,9 @@ reads go through the ``get_prb`` tool only (``prb.tools.get_prb``), and no
 ``list_prb`` ``@mcp.tool()`` (``prb.tools.list_prb``) from the start, per
 ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
+The former schema resource (``prb_schema``, ``specmgr://prb/schema``) was
+converted the same way into the ``get_prb_schema`` ``@mcp.tool()``
+(``prb.tools.get_prb_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).

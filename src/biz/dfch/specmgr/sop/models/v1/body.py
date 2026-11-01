@@ -18,7 +18,7 @@
 """Standard Operating Procedure (SOP) body models: whole-section fields under a single H1.
 
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
-`MarkdownSection3`/`MarkdownParagraph`/`MarkdownListItem` engine: each class
+`MarkdownSection3`/`UpdateEntryContent`/`MarkdownListItem` engine: each class
 below models one markdown heading (`## `/`### `) or list, and `Sop` is the
 top-level H1 container. An SOP is built on the generic engine with the simple
 surface used by GOL/RSK/QA/DEC (see `.specmgr/feat/feat-30-sop/README.md`
@@ -29,7 +29,7 @@ Field declaration order on `Sop`/`RolesAndResponsibilities`/`Procedure`/
 Definitions -> Roles and Responsibilities (-> Accountable -> Responsible ->
 Support -> Consulted -> Informed) -> Safety and Precautions -> Procedure
 (-> Step 1: -> Step 2: -> ...) -> Related Artifacts (-> Requirements ->
-Decisions -> Goals -> Acceptance Criteria -> Sops) -> More Information ->
+Decisions -> Goals -> Risks -> Sops) -> More Information ->
 Updates (-> entry 1 -> entry 2 -> ...)), since `models.md`'s
 `MarkdownStr.from_text` distributes text among declared fields in that same
 order.
@@ -39,18 +39,29 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, model_validator
+from pydantic import Field, computed_field, field_validator, model_validator
 
 from ....models.md import (
-    MarkdownListItem,
-    MarkdownParagraph,
+    MarkdownListItemWithNotes,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    MarkdownStr,
+    AccountableBase,
+    ResponsibleBase,
+    SupportBase,
+    ConsultedBase,
+    InformedBase,
+    DecisionsBase,
+    GoalsBase,
+    RequirementsBase,
+    RisksBase,
+    RolesAndResponsibilitiesBase,
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN, validate_cross_reference_items
 from ....models.md._ordering import validate_newest_first
 
 
@@ -71,122 +82,65 @@ class Definitions(MarkdownSection2):
     reader. Optional, free-form prose."""
 
 
-class Accountable(MarkdownSection3):
+class Accountable(AccountableBase):
     """`### Accountable` under `## Roles and Responsibilities` -- the single
     owner who is ultimately answerable for the SOP.
 
-    A single mandatory paragraph (never a bullet list): exactly one owner,
-    structurally discouraging multiple owners. See the general
-    `specmgr://rasci` resource for RASCI role definitions.
-
-    Parameters
-    ----------
-    value:
-        The single paragraph naming the accountable party. Mandatory.
+    Subclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    value: MarkdownParagraph = Field(
-        description="The single paragraph naming the accountable party. Mandatory; never a bullet list."
-    )
 
-
-class Responsible(MarkdownSection3):
+class Responsible(ResponsibleBase):
     """`### Responsible` under `## Roles and Responsibilities` -- those who do
     the work the SOP describes.
 
-    A mandatory bullet list (>=1 entry). See the general `specmgr://rasci`
-    resource for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the responsible parties; must contain at least one
-        item.
+    Subclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list naming the responsible parties; must contain at least one item.",
-    )
 
-
-class Support(MarkdownSection3):
+class Support(SupportBase):
     """`### Support` under `## Roles and Responsibilities` -- those who
     provide resources or assistance to the responsible parties.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the support parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the support parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-class Consulted(MarkdownSection3):
+class Consulted(ConsultedBase):
     """`### Consulted` under `## Roles and Responsibilities` -- those whose
     opinions are sought before or during the work.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the consulted parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the consulted parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-class Informed(MarkdownSection3):
+class Informed(InformedBase):
     """`### Informed` under `## Roles and Responsibilities` -- those who are
     kept up to date on progress or outcomes.
 
-    An optional bullet list that MAY be present with zero list items (an
-    intentional "considered, currently empty" placeholder distinct from
-    omitting the heading entirely). See the general `specmgr://rasci` resource
-    for RASCI role definitions.
-
-    Parameters
-    ----------
-    items:
-        Bullet list naming the informed parties, or ``None`` when the heading
-        is present with no items. Optional as a whole.
+    Subclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)
+    -- see the general `specmgr://rasci` resource for RASCI role definitions.
     """
 
-    items: list[MarkdownListItem] | None = Field(
-        default=None,
-        description="Bullet list naming the informed parties, or ``None`` when the heading is present "
-        "with no items. Optional; the heading MAY appear with zero items.",
-    )
 
-
-@alias(value="Roles and Responsibilities", type=AliasType.LITERAL)
-class RolesAndResponsibilities(MarkdownSection2):
+class RolesAndResponsibilities(RolesAndResponsibilitiesBase):
     """`## Roles and Responsibilities` -- the RASCI responsibility assignment
     for this SOP. Optional as a whole; once present, `### Accountable` and
     `### Responsible` are both mandatory (strict-RACI "always has an owner and
     a doer"), while `### Support`/`### Consulted`/`### Informed` stay
     independently optional and MAY each be present with zero list items. See
     the general `specmgr://rasci` resource for RASCI role definitions.
+
+    Subclasses the shared `models.md.RolesAndResponsibilitiesBase`
+    (feat-29-dec-source-roles), which also carries the `@alias(value="Roles
+    and Responsibilities", ...)` override this class needs -- inherited
+    automatically, not redeclared here. The fields below narrow the base
+    class's field types to `sop`'s own concrete `Accountable`/`Responsible`/
+    `Support`/`Consulted`/`Informed` subclasses declared above.
 
     Parameters
     ----------
@@ -204,17 +158,21 @@ class RolesAndResponsibilities(MarkdownSection2):
         `### Informed` sub-section (bullet list, MAY be empty). Optional.
     """
 
-    accountable: Accountable = Field(
+    accountable: Accountable = Field(  # type: ignore
         description="`### Accountable` sub-section (single paragraph). Mandatory once this container is present."
     )
-    responsible: Responsible = Field(
+    responsible: Responsible = Field(  # type: ignore
         description="`### Responsible` sub-section (bullet list, >=1 item). Mandatory once this container is present."
     )
-    support: Support | None = Field(default=None, description="`### Support` sub-section. Optional; MAY be empty.")
-    consulted: Consulted | None = Field(
+    support: Support | None = Field(  # type: ignore
+        default=None, description="`### Support` sub-section. Optional; MAY be empty."
+    )
+    consulted: Consulted | None = Field(  # type: ignore
         default=None, description="`### Consulted` sub-section. Optional; MAY be empty."
     )
-    informed: Informed | None = Field(default=None, description="`### Informed` sub-section. Optional; MAY be empty.")
+    informed: Informed | None = Field(  # type: ignore
+        default=None, description="`### Informed` sub-section. Optional; MAY be empty."
+    )
 
 
 @alias(value="Safety and Precautions", type=AliasType.LITERAL)
@@ -324,79 +282,96 @@ class Procedure(MarkdownSection2):
     )
 
 
-class Requirements(MarkdownSection3):
-    """`### Requirements` under Related Artifacts -- bullet list of
-    cross-references to requirements, one per line
-    (e.g. "REQ-9687: <title>")."""
+class Requirements(RequirementsBase):
+    """`### Requirements` under Related Artifacts -- cross-references to
+    requirements.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to requirements, one per line "
-        '(e.g. "REQ-9687: <title>"); must contain at least one item.',
-    )
-
-
-class Decisions(MarkdownSection3):
-    """`### Decisions` under Related Artifacts -- bullet list of
-    cross-references to decisions, one per line (e.g. "DEC-2703: <title>")."""
-
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to decisions, one per line "
-        '(e.g. "DEC-2703: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.RequirementsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Requirements` type.
+    """
 
 
-class Goals(MarkdownSection3):
-    """`### Goals` under Related Artifacts -- bullet list of cross-references
-    to goals, one per line (e.g. "GOL-0007: <title>")."""
+class Decisions(DecisionsBase):
+    """`### Decisions` under Related Artifacts -- cross-references to
+    decisions.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to goals, one per line "
-        '(e.g. "GOL-0007: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.DecisionsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Decisions` type.
+    """
 
 
-class AcceptanceCriteria(MarkdownSection3):
-    """`### Acceptance Criteria` under Related Artifacts -- bullet list of
-    cross-references to acceptance criteria, one per line
-    (e.g. "ACC-1234: <title>")."""
+class Goals(GoalsBase):
+    """`### Goals` under Related Artifacts -- cross-references to goals.
 
-    items: list[MarkdownListItem] = Field(
-        min_length=1,
-        description="Bullet list of cross-references to acceptance criteria, one per line "
-        '(e.g. "ACC-1234: <title>"); must contain at least one item.',
-    )
+    Subclasses the shared `models.md.GoalsBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Goals` type.
+    """
+
+
+class Risks(RisksBase):
+    """`### Risks` under Related Artifacts -- cross-references to risks.
+
+    Subclasses the shared `models.md.RisksBase`
+    (feat-135-related-artifacts-risks) -- the field declaration and format
+    validator live there; this class exists so `sop` still declares and
+    owns its own concrete `Risks` type.
+    """
+
+
+_SOPS_PATTERN = rf"^SOP {UUID_PATTERN}: .+$"
 
 
 class Sops(MarkdownSection3):
-    """`### Sops` under Related Artifacts -- bullet list of cross-references to
-    other, related/superseding SOPs, one per line (e.g. "SOP-0042: <title>").
-    A self-cross-reference sub-list (GOL's self-referencing `Goals` sub-list
-    precedent)."""
+    """`### Sops` under Related Artifacts -- cross-references to other,
+    related/superseding SOPs. A self-cross-reference sub-list (GOL's
+    self-referencing `Goals` sub-list precedent).
 
-    items: list[MarkdownListItem] = Field(
+    Has no cross-domain twin (no other domain has a self-cross-reference
+    sub-list of this shape), so unlike `Requirements`/`Decisions`/`Goals`/
+    `Risks` above it is not built on a shared `models.md` base class --
+    it enforces the same `"SOP <uuid>: <title>"` format via its own inline
+    `field_validator`, calling the same shared
+    `models.md._cross_reference.validate_cross_reference_items` primitive
+    those base classes use internally (feat-135-related-artifacts-risks).
+
+    Parameters
+    ----------
+    items:
+        Bullet list of `SOP <uuid>: <title>` cross-references, each
+        optionally followed by an indented notes paragraph. Must contain at
+        least one item.
+    """
+
+    items: list[MarkdownListItemWithNotes] = Field(
         min_length=1,
-        description="Bullet list of cross-references to other SOPs, one per line "
-        '(e.g. "SOP-0042: <title>"); must contain at least one item.',
+        description="Bullet list of `SOP <uuid>: <title>` cross-references, each optionally followed by an "
+        "indented notes paragraph; must contain at least one item.",
     )
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
+        return validate_cross_reference_items(items, _SOPS_PATTERN)
 
 
 class RelatedArtifacts(MarkdownSection2):
     """`## Related Artifacts` -- container for five independent, all-optional
-    `### ` cross-reference lists (requirements/decisions/goals/acceptance
-    criteria/sops). Optional as a whole; no consistency check is enforced
-    between the sub-lists. The `### Sops` sub-list is a self-cross-reference
-    (a `sop` document may reference other, related/superseding SOPs).
+    `### ` cross-reference lists (requirements/decisions/goals/risks/sops).
+    Optional as a whole; no consistency check is enforced between the
+    sub-lists. The `### Sops` sub-list is a self-cross-reference (a `sop`
+    document may reference other, related/superseding SOPs).
     """
 
     requirements: Requirements | None = Field(default=None, description="`### Requirements` sub-section. Optional.")
     decisions: Decisions | None = Field(default=None, description="`### Decisions` sub-section. Optional.")
     goals: Goals | None = Field(default=None, description="`### Goals` sub-section. Optional.")
-    acceptance_criteria: AcceptanceCriteria | None = Field(
-        default=None, description="`### Acceptance Criteria` sub-section. Optional."
-    )
+    risks: Risks | None = Field(default=None, description="`### Risks` sub-section. Optional.")
     sops: Sops | None = Field(default=None, description="`### Sops` sub-section (self-cross-reference). Optional.")
 
 
@@ -413,37 +388,68 @@ class MoreInformation(MarkdownSection2):
 #: the `###` marker, and DEC's `Option`/RSK's `Probability`/`Impact`
 #: computed-field precedent (the value is carried by the heading and
 #: extracted at access time, never stored). Unlike DEC's leaf `Option`,
-#: `UpdateEntry` is a *composite* (it has a mandatory `content` paragraph),
+#: `UpdateEntry` is a *composite* (it has a mandatory `content` field),
 #: so its `.text` returns only the heading text, not the full extent --
 #: hence no `### ` prefix here.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
-@alias(value=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$", type=AliasType.REGEX)
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
+@alias(value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$", type=AliasType.REGEX)
 class UpdateEntry(MarkdownSection3):
     """`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-    The H3 heading text carries an ISO8601 timestamp and a title, joined by
-    either ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon,
-    space): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or
-    `### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is
-    rejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC
-    offset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**
-    the same format as frontmatter ``created``/``updated`` (which keep the
-    shared generic tools' format); this format is scoped to `## Updates`
-    entry headings only, which are hand/LLM-authored body content.
-    Constrained by the regex `@alias` above and enforced by `match_alias`
-    (`re.fullmatch`) at parse time -- a wrong timestamp format, a missing
-    offset, an em-dash separator, or a missing `` - ``/`` : `` title all
-    fail the parse eagerly.
+    The H3 heading text carries a full ISO 8601 date+time timestamp and a
+    title, joined by either ``" - "`` (space, hyphen, space) or ``" : "``
+    (space, colon, space): e.g. `### 2026-08-30 14:30:00.000+02:00 -
+    Approved` or `### 2026-08-30T14:30:00.000+02:00 : Approved`. The
+    em-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or
+    space) + ``HH:mm:ss.SSS`` with an explicit UTC offset (``+02:00``,
+    ``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter
+    ``created``/``updated`` (both separators accepted, date-only rejected;
+    ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to
+    `## Updates` entry headings only, which are hand/LLM-authored body
+    content. Constrained by the regex `@alias` above and enforced by
+    `match_alias` (`re.fullmatch`) at parse time -- a wrong timestamp
+    format (including a date-only value), a missing offset, an em-dash
+    separator, or a missing `` - ``/`` : `` title all fail the parse
+    eagerly.
 
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The ISO8601 timestamp carried by the heading. Never stored
         separately -- derived from the retained heading text.
@@ -458,8 +464,8 @@ class UpdateEntry(MarkdownSection3):
             `match_alias` already enforced it at parse time).
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore
@@ -536,8 +542,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "Updates")

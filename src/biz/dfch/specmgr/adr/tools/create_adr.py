@@ -15,13 +15,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
+"""``@mcp.tool()`` wrapper: create_adr (Task 3.2).
 
 Thin file-I/O adapter -- writes a brand-new ``.md`` file; there is no
-in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file
+in-memory cache of a parsed :class:`Adr`: the ``.md`` file
 itself is always the source of truth.
 
-Unlike the eleven whole-body domains' ``create_<d>`` tools, ``frontmatter``/
+Unlike the whole-body domains' ``create_<d>`` tools, ``frontmatter``/
 ``body`` here are already-typed Pydantic models (validated by the MCP SDK's
 own parameter parsing *before* this function body ever runs) rather than a
 raw ``content: str`` this function validates itself -- so there is little
@@ -47,7 +47,10 @@ from ._paths import ensure_adr_base_dir, slugify
     title="Create ADR",
     description=(
         "Create a new ADR: assigns a fresh id, derives a filename from the title, "
-        "validates, renders, and writes the new document to the ADR base directory."
+        "validates, renders, and writes the new document to the ADR base directory. "
+        "There is deliberately no `specmgr://adr/schema` resource -- this tool's own "
+        "typed input parameters (`frontmatter`: `AdrFrontmatter`, `body`: `AdrBody`) "
+        "are the authoritative ADR structure reference."
     ),
 )
 def create_adr(frontmatter: AdrFrontmatter, body: AdrBody) -> Adr:
@@ -55,10 +58,10 @@ def create_adr(frontmatter: AdrFrontmatter, body: AdrBody) -> Adr:
 
     A fresh id (``uuid.uuid4()``) is generated and always overwrites
     whatever ``frontmatter.id`` the caller submitted -- the id is
-    system-managed and assigned exactly once, at creation time (plan §9a),
+    system-managed and assigned exactly once, at creation time,
     the same "system-owned id" rule :func:`~.update_frontmatter.update_frontmatter`
     applies on every subsequent edit. The filename is ``f"{id}-{slug}.md"``,
-    where ``slug`` is derived from ``body.title`` (plan §9a).
+    where ``slug`` is derived from ``body.title``.
 
     Parameters
     ----------

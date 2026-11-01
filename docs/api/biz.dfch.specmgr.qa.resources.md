@@ -2,8 +2,7 @@
 
 MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 
-``qa_schema`` registers the persisted-JSON-Schema resource
-(``specmgr://qa/schema``). ``qa_example`` registers the packaged sample QA
+``qa_example`` registers the packaged sample QA
 document resource (``specmgr://qa/example``). ``qa_template`` registers the
 packaged QA template resource (``specmgr://qa/template``) -- every field
 present, populated with short placeholder ("blind text") content rather
@@ -20,3 +19,9 @@ a tool (get_req), not a resource"). The former listing resource (``qa_list``,
 ``@mcp.tool()`` (``qa.tools.list_qa``), so that paging parameters
 (``max_results``/``offset``) could be accepted -- see
 ``.specmgr/feat/feat-13-list-paging/README.md``.
+The former schema resource (``qa_schema``, ``specmgr://qa/schema``) was
+converted the same way into the ``get_qa_schema`` ``@mcp.tool()``
+(``qa.tools.get_qa_schema``), so that the generated JSON Schema is
+discoverable from the always-in-context tool surface instead of the
+resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(feat-189 Phase 105).

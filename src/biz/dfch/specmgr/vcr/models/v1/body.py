@@ -56,7 +56,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import Field, computed_field, field_validator, model_validator
+from pydantic import ConfigDict, Field, computed_field, field_validator, model_validator
 
 from ....models.md import (
     MarkdownListItem,
@@ -66,18 +66,22 @@ from ....models.md import (
     MarkdownSection2WithComment,
     MarkdownSection3,
     MarkdownSection4,
+    MarkdownStr,
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN
 from ....models.md._ordering import validate_newest_first
 
 #: Matches `## Verifies`' single-line `value` paragraph: exactly one `REQ`
 #: or `UC` cross-reference, tagged with its type, followed by a standard
-#: 8-4-4-4-12 hex UUID and a title (REQ-001). No id-prefix precedent existed
-#: elsewhere in the codebase to reuse for the UUID shape, so this introduces
-#: one -- see `.specmgr/feat/feat-33-vcr/README.md` Design Notes' persisted
-#: `Verifies` class sketch.
-_VERIFIES_PATTERN = r"^(REQ|UC) [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}: .+$"
+#: 8-4-4-4-12 hex UUID and a title (REQ-001). Built from the shared
+#: `models.md._cross_reference.UUID_PATTERN` fragment
+#: (feat-135-related-artifacts-risks, REQ-007) -- no id-prefix precedent
+#: existed elsewhere in the codebase when this was first introduced, see
+#: `.specmgr/feat/feat-33-vcr/README.md` Design Notes' persisted `Verifies`
+#: class sketch.
+_VERIFIES_PATTERN = rf"^(REQ|UC) {UUID_PATTERN}: .+$"
 
 
 class Verifies(MarkdownSection2WithComment):
@@ -135,7 +139,16 @@ class Coverage(MarkdownSection2):
     `## Coverage` is the only outcome signal (REQ-002).
     """
 
-    value: MarkdownParagraph = Field(description="Single-line coverage assessment. One of `full`, `partial`, `none`.")
+    value: MarkdownParagraph = Field(
+        # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
+        # object-typed schema node was removed -- the MCP SDK validates every
+        # `structuredContent` payload against the generated output schema,
+        # and an object instance can never equal a string `enum` member
+        # (round-trip-rerun.md, feat-189). The closed set already lives in
+        # the description; `_validate_value` below remains the sole
+        # enforcement point.
+        description="Single-line coverage assessment. One of `full`, `partial`, `none`.",
+    )
 
     @field_validator("value")
     @classmethod
@@ -180,8 +193,15 @@ class TestSteps(MarkdownSection4):
 _AC_HEADING_PATTERN = r"AC-(\d{3}) \((Demonstration|Test|Analysis|Inspection|Special)\): .+"
 _AC_HEADING_RE = re.compile(_AC_HEADING_PATTERN)
 
+#: The anchored form of `_AC_HEADING_PATTERN` the `@alias` decorator below
+#: enforces. Lifted into a module constant so the alias (the parse-time
+#: enforcement) and `AcceptanceCriterion`'s own `json_schema_extra` metadata
+#: (feat-189 Phase 120, C13 -- schema-level documentation only) share one
+#: source.
+_AC_ALIAS_PATTERN = rf"^{_AC_HEADING_PATTERN}$"
 
-@alias(value=rf"^{_AC_HEADING_PATTERN}$", type=AliasType.REGEX)
+
+@alias(value=_AC_ALIAS_PATTERN, type=AliasType.REGEX)
 class AcceptanceCriterion(MarkdownSection3):
     """`### AC-NNN (Method): <criterion text>` under `## Acceptance Criteria` -- one verification criterion.
 
@@ -190,7 +210,9 @@ class AcceptanceCriterion(MarkdownSection3):
     constrained by the regex `@alias` above and enforced by `match_alias`
     (`re.fullmatch`) at parse time -- a missing/out-of-range/malformed
     number, an unknown method word, or a title-less heading all fail the
-    parse eagerly (REQ-003). AC numbers need not be contiguous (gaps are
+    parse eagerly (REQ-003). The method word is one of the five DTAIS words:
+    `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special` (the
+    `specmgr://dtais` vocabulary). AC numbers need not be contiguous (gaps are
     allowed, numbers are never renumbered); duplicates are rejected by
     `Vcr`'s own after-validator (the `ValidationError` channel, mirroring
     DEC's `Decision._validate_option_numbers_unique`).
@@ -233,6 +255,28 @@ class AcceptanceCriterion(MarkdownSection3):
         (not lowercased/normalized). Never stored separately -- derived
         from the retained heading text.
     """
+
+    # feat-189 Phase 120 (C13), corrected in Phase 135: the heading
+    # constraint as `json_schema_extra` metadata on this class's own
+    # generated JSON Schema entry -- metadata only: neither the heading text
+    # nor the method word is a schema-surfaced field (the heading lives in
+    # private `_value` state, and `number`/`method` are computed fields,
+    # which the generator's validation-mode `model_json_schema()` omits), so
+    # the key lands on the class's own entry: `pattern` = the full
+    # `AC-NNN (Method): <text>` heading shape (the `@alias` REGEX above,
+    # enforced by `match_alias` at parse time, remains the sole enforcement
+    # point). The Phase 120 `enum` key (the closed DTAIS method-word set)
+    # was removed in Phase 135 -- it sat on this class's object-typed schema
+    # node, and the MCP SDK validates every `structuredContent` payload
+    # against the generated output schema, where an object instance can
+    # never equal a string `enum` member (round-trip-rerun.md, feat-189);
+    # the DTAIS set now lives in the class docstring's own `description` and
+    # in the `pattern`'s own group 2.
+    model_config = ConfigDict(
+        json_schema_extra={
+            "pattern": _AC_ALIAS_PATTERN,
+        }
+    )
 
     description: MarkdownParagraph | None = Field(
         default=None,
@@ -312,37 +356,67 @@ class MoreInformation(MarkdownSection2):
     """`## More Information` -- free-form optional supplementary text, no fixed format. Optional."""
 
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (which carries the
-#: heading's inline content, no `###` marker), capturing the timestamp
-#: (named group `timestamp`) and the title (named group `title`). Mirrors
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained in
+#: a composite `MarkdownSection3`'s `.text` (which carries the heading's
+#: inline content, no `###` marker), capturing the timestamp (named group
+#: `timestamp`) and the title (named group `title`). Mirrors
 #: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN` exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 @alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
 )
 class UpdateEntry(MarkdownSection3):
     """`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-31 - Created` or
-    `### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is
-    rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant (REQ-004). Mirrors DEC's
-    `UpdateEntry` shape exactly.
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or
+    `### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is
+    rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
+    ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
+    ``Z`` for UTC variant -- date-only is rejected (ADR
+    8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's `UpdateEntry`
+    shape exactly.
 
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The timestamp carried by the heading, verbatim. Never
         stored separately -- derived from the retained heading text.
@@ -352,14 +426,14 @@ class UpdateEntry(MarkdownSection3):
         retained heading text.
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-31` or `2026-08-31 07:40:12.500+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-31 07:40:12.500+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -377,7 +451,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Created` for `### 2026-08-31 - Created`).
+        """The title carried by this heading (e.g. `Created` for `### 2026-08-31 07:40:12.500+02:00 - Created`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -431,8 +505,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `feat.models.v1.body.Updates._validate_newest_first`
         without duplicating its logic. Raises on the first out-of-order pair.
         """
         validate_newest_first([update.timestamp for update in self.updates], "Updates")

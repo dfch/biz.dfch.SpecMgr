@@ -12,7 +12,7 @@ helper directly, so neither sub-package depends on the other just for this
 one file read.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://qa/schema``/``specmgr://qa/example``'s own precedent.
+``specmgr://qa/template``/``specmgr://qa/example``'s own precedent.
 
 ## Functions
 

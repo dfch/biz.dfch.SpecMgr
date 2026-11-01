@@ -11,10 +11,11 @@ container:
 ```
 # {H1 title}                                    Prb (free-form title)
 <!-- optional leading comment -->               comment: MarkdownComment | None (inherited)
+{fixed-template lead sentence}                  problem_statement: MarkdownParagraph
 
 ## Current State                                current_state: CurrentState
 ### Summary                                     summary: Summary
-### What Is the Problem?                        question_1: Question1 | None
+### What Is the Problem?                         question_1: Question1 | None
 ### Why Is It a Problem?                         question_2: Question2 | None
 ### Where Is the Problem Observed?               question_3: Question3 | None
 ### Who Is Impacted?                             question_4: Question4 | None
@@ -30,11 +31,19 @@ container:
 ```
 
 Field declaration order on `Prb`/`CurrentState` enforces markdown order
-(title -> optional comment (inherited) -> `current_state` -> `gap` ->
-`impact` -> `future_state` -> `references` -> `more_information`, and within
-`CurrentState`: `summary` -> `question_1` .. `question_7`), since
-`models.md`'s `MarkdownStr.from_text` distributes text among declared
-fields in that same order.
+(title -> optional comment (inherited) -> `problem_statement` ->
+`current_state` -> `gap` -> `impact` -> `future_state` -> `references` ->
+`more_information`, and within `CurrentState`: `summary` -> `question_1`
+.. `question_7`), since `models.md`'s `MarkdownStr.from_text` distributes
+text among declared fields in that same order. `problem_statement` is
+declared *first* among `Prb`'s own fields precisely because `comment` is
+*inherited* from `MarkdownSection1WithComment` rather than declared on
+`Prb` itself -- Pydantic orders `model_fields` base-class-first, so
+declaring `problem_statement` first among `Prb`'s own fields is what
+actually places it between `comment` and `current_state` (mirroring
+`general.models.rasci.Rasci.intro`/`general.models.ears.Ears.intro`'s
+mandatory-lead-paragraph-under-the-H1 shape, though neither of those has
+an inherited field ahead of its own `intro`).
 
 Every `Question{N}`/`Summary`/`Gap`/`Impact`/`FutureState`/`References`/
 `MoreInformation` class is a bare leaf subclass with no further declared
@@ -42,8 +51,10 @@ fields -- the same "opaque, captures any remaining markdown verbatim"
 pattern already used by REQ's `MoreInformation`/`Notes` and QA's
 `RawRequirements`/`MoreInformation`.
 
-**No `Root Cause` section** -- a deliberate, Six-Sigma-discipline-driven
-omission, not an oversight (see the feature README's Scope/Design Notes).
+**No `Root Cause` section** exists; the mandatory `problem_statement` lead
+sentence's `because [underlying cause]` clause carries the best-known
+cause by design (see the feature README's Scope/Design Notes) -- formal
+root-cause analysis remains a separate, later activity.
 
 ## Classes
 
@@ -898,18 +909,6 @@ question_7:
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `FutureState`
 
@@ -1737,18 +1736,6 @@ Leaf class (no declared fields) -- captures the text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Gap`
@@ -2581,18 +2568,6 @@ conflated with `Impact` (the consequence of the gap).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `Impact`
 
@@ -3423,18 +3398,6 @@ matters -> target state).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `MoreInformation`
 
@@ -4261,18 +4224,6 @@ matters -> target state).
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
-
 
 ### `Prb`
 
@@ -4286,7 +4237,14 @@ Parameters
 ----------
 comment:
     Optional explanatory HTML comment (`<!-- ... -->`) preceding
-    `current_state`. Inherited from `MarkdownSection1WithComment`.
+    `problem_statement`. Inherited from `MarkdownSection1WithComment`.
+problem_statement:
+    The mandatory lead paragraph directly under the H1 title (no
+    heading of its own), holding exactly one sentence following the
+    fixed template `[Current state] is causing [specific issue], for
+    [stakeholder] because [underlying cause].`. Mandatory. Declared
+    first among `Prb`'s own fields so it lands between the inherited
+    `comment` and `current_state` (see the module docstring).
 current_state:
     `## Current State`. Mandatory.
 gap:
@@ -4938,18 +4896,6 @@ more_information:
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection1'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h1 and no nested headings in tokens [3:].
 
 
 ### `Question1`
@@ -5779,18 +5725,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question2`
 
@@ -6618,18 +6552,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Question3`
@@ -7459,18 +7381,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question4`
 
@@ -8298,18 +8208,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `Question5`
@@ -9139,18 +9037,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question6`
 
@@ -9979,18 +9865,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 
 - `validate(value: 'Any') -> 'Self'`
 
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
-
 
 ### `Question7`
 
@@ -10818,18 +10692,6 @@ Leaf class (no declared fields) -- captures the answer text verbatim.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 
 
 ### `References`
@@ -11660,18 +11522,6 @@ see the feature README's Scope).
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection2'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h2 and no nested headings in tokens [3:].
 
 
 ### `Summary`
@@ -12504,16 +12354,4 @@ still unanswered.
 - `update_forward_refs(**localns: 'Any') -> 'None'`
 
 - `validate(value: 'Any') -> 'Self'`
-
-- `validate_heading_structure(self) -> 'MarkdownSection'`
-  Validate that section starts with a heading (h1-h6) triple.
-
-  Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-  Token [0] must have tag h1-h6.
-
-- `validate_headings(self) -> 'MarkdownSection3'`
-  Validate heading level and no nested headings.
-
-  Base class validates the heading triple structure.
-  This validates: specific tag h3 and no nested headings in tokens [3:].
 

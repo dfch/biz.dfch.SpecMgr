@@ -22,7 +22,8 @@ module drives the actual tool functions in a single realistic sequence --
  ``list_feat`` (empty) -> ``create_feat`` -> ``get_feat`` -> ``list_feat`` (1)
  -> ``update`` (whole-body) -> ``update`` (line-range) -> ``set_status``
  (``type="feat"``) -> ``get_feat`` (status changed) -> ``list_feat`` (status
- reflected) -> ``validate_feat`` -> ``delete`` (generic, ``type="feat"``) --
+ reflected) -> ``validate`` (generic, ``type="feat"``) -> ``delete``
+ (generic, ``type="feat"``) --
  against a real temporary feature base directory, confirming
  ACC-002/ACC-003/ACC-004's create->get->list->update->set_status->validate
  round-trip requirement with concrete evidence beyond the isolated
@@ -53,17 +54,18 @@ from pathlib import Path
 from unittest import mock
 
 import frontmatter
-from pydantic import ValidationError
 
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument, FeatFrontmatter
+from biz.dfch.specmgr.feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, README_FILENAME, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
-from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
+from biz.dfch.specmgr.general.models import InvalidStatusResult, UpdateResult
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
+from biz.dfch.specmgr.general.tools.validate import validate
 
 _INITIAL_BODY = textwrap.dedent(
     """\
@@ -95,9 +97,9 @@ _INITIAL_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -145,9 +147,9 @@ _REVISED_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -178,8 +180,8 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
 
     def test_full_lifecycle_roundtrip(self) -> None:
         """list_feat -> create_feat -> get_feat -> list_feat -> update (whole-body) ->
-        update (line-range) -> set_status -> get_feat -> list_feat -> validate_feat ->
-        delete (generic, type="feat"), live."""
+        update (line-range) -> set_status -> get_feat -> list_feat -> validate (generic,
+        type="feat") -> delete (generic, type="feat"), live."""
         # 0. list_feat: an empty base directory must list nothing.
         initial_page = list_feat()
         self.assertEqual(initial_page.total, 0)
@@ -218,23 +220,48 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         # 4. update (type="feat", whole-body): must bump only `updated` (the same
         #    microsecond timestamp format every other domain uses) and preserve
         #    id/type/status/created/version (ACC-004).
+        #    (feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        #    frontmatter fields live under .frontmatter; whole-body mode's snippet is None.)
         updated = update(feat_id, "feat", _REVISED_BODY)
-        self.assertIsInstance(updated, FeatFrontmatter)
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
         self.assertNotIsInstance(updated, FeatDocument)
         self.assertFalse(hasattr(updated, "body"))
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "planning")
-        self.assertEqual(updated.version, created.version)
-        self.assertRegex(updated.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        # NB: the local is named `updated_frontmatter` on purpose -- this test file also
+        # imports the `frontmatter` *library* (used in step 8), so a `frontmatter` local
+        # would shadow it for the rest of the method.
+        updated_frontmatter = updated.frontmatter
+        self.assertIsInstance(updated_frontmatter, FeatFrontmatter)
+        self.assertNotIsInstance(updated_frontmatter, FeatDocument)
+        self.assertFalse(hasattr(updated_frontmatter, "body"))
+        self.assertEqual(updated_frontmatter.id, created.id)
+        self.assertEqual(updated_frontmatter.type, created.type)
+        self.assertEqual(updated_frontmatter.created, created.created)
+        self.assertEqual(updated_frontmatter.status, "planning")
+        self.assertEqual(updated_frontmatter.version, created.version)
+        self.assertRegex(
+            updated_frontmatter.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+        )
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
         # 4b. update (type="feat", line-range): a single-line splice must round-trip
-        #     through the raw body text exactly like every other domain's own range mode.
+        #     through the raw body text exactly like every other domain's own range mode,
+        #     and must return the UpdateResult wrapper with a non-None snippet carrying the
+        #     dropped line at its pre-splice number and the inserted line at its post-splice
+        #     number (ACC-002's line-for-line mode; the 11 flat domains pin the same in
+        #     tests/general/tools/test_update.py).
         lines = get_feat(feat_id, raw=True).splitlines()
         line_number = lines.index("Short description.") + 1
-        update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        result = update(feat_id, "feat", "Updated short description.", offset=line_number, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {line_number}: Short description.", snippet_lines)
+        self.assertIn(f"+ {line_number}: Updated short description.", snippet_lines)
         after_range_update = get_feat(feat_id, raw=True).splitlines()
         self.assertEqual(after_range_update[line_number - 1], "Updated short description.")
         self.assertEqual(len(after_range_update), len(lines))
@@ -246,10 +273,10 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertNotIsInstance(in_progress, FeatDocument)
         self.assertFalse(hasattr(in_progress, "body"))
         self.assertEqual(in_progress.status, "progress")
-        self.assertEqual(in_progress.id, updated.id)
-        self.assertEqual(in_progress.created, updated.created)
+        self.assertEqual(in_progress.id, updated.frontmatter.id)
+        self.assertEqual(in_progress.created, updated.frontmatter.created)
         self.assertRegex(
-            in_progress.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
+            in_progress.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$"
         )
         self.assertEqual(len(get_feat(feat_id).body.plan.requirements.items), 2)
 
@@ -265,12 +292,17 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
         self.assertEqual(matches[0].status, "progress")
         self.assertEqual(matches[0].title, "Example Widget")
 
-        # 8. validate_feat (ACC-003): the on-disk file must validate as a complete
-        #    document (full=True) and its body-only half must validate as body-only.
+        # 8. validate (generic, type="feat") (ACC-003/ACC-004): the on-disk file must
+        #    validate as a complete document (full=True) and its body-only half must
+        #    validate as body-only -- never raising, always {valid, errors}.
         on_disk_text = expected_path.read_text(encoding="utf-8")
-        self.assertIs(validate_feat(on_disk_text, full=True), True)
+        full_result = validate(type="feat", content=on_disk_text, full=True)
+        self.assertTrue(full_result.valid)
+        self.assertEqual(full_result.errors, [])
         body_only = frontmatter.loads(on_disk_text).content  # type: ignore[union-attr]
-        self.assertIs(validate_feat(body_only), True)
+        body_result = validate(type="feat", content=body_only)
+        self.assertTrue(body_result.valid)
+        self.assertEqual(body_result.errors, [])
 
         # 9. delete (generic, type="feat"): a real hard delete via the generic tool -- the
         #    returned str must be the seeded <base>/<id>/ folder path, the whole folder must
@@ -282,24 +314,77 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
             get_feat(feat_id)
 
     def test_set_status_rejects_status_outside_the_closed_four_set(self) -> None:
-        """ACC-004: set_status (type="feat") must reject a status outside {planning, progress, review, done}."""
+        """ACC-004: set_status (type="feat") must reject a status outside {planning, progress,
+        review, done}, returning a non-raising ``InvalidStatusResult`` (ADR
+        b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_feat(_INITIAL_BODY)
         expected_path = feat_base_dir() / created.id / README_FILENAME
         before = expected_path.read_text(encoding="utf-8")
 
-        with self.assertRaises(ValidationError):
-            set_status(created.id, "feat", "in-progress")
+        result = set_status(created.id, "feat", "in-progress")
 
+        self.assertIsInstance(result, InvalidStatusResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(result.type, "feat")
+        self.assertEqual(result.status, "in-progress")
+        self.assertEqual(result.allowed_values, sorted(_FEAT_ALLOWED_STATUSES))
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:
-        """ACC-003: validate_feat's body-only/full semantics -- invalid body fails (AssertionError);
-        full=True requires a frontmatter block (ValueError)."""
-        with self.assertRaises(AssertionError):
-            validate_feat("# Title\n\nJust a paragraph, no recognized feature sections.\n")
+        """ACC-003/ACC-004: the generic validate tool's (type="feat") body-only/full semantics --
+        an invalid body returns {valid: False, errors: [...]} (never raises); full=True with
+        body-only content still raises ValueError (caller-usage error, not a content failure)."""
+        result = validate(type="feat", content="# Title\n\nJust a paragraph, no recognized feature sections.\n")
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
 
         with self.assertRaises(ValueError):
-            validate_feat(_INITIAL_BODY, full=True)
+            validate(type="feat", content=_INITIAL_BODY, full=True)
+
+    def test_range_update_size_changing_replace_snippet_numbers_pre_and_post_splice(self) -> None:
+        """feat's 12th-domain half of ACC-002's size-changing verification mode (feat is not in
+        ``test_update.py``'s ``_CASES`` -- it is the bespoke folder-per-document domain): a
+        1-line -> 2-line range update's snippet carries the dropped line at its pre-splice number,
+        the inserted lines at the post-splice numbers, and the context below shifted by the insert
+        (REQ-002's pre-splice/post-splice split)."""
+        created = create_feat(_INITIAL_BODY)
+        lines = get_feat(created.id, raw=True).splitlines()
+        k = lines.index("Short description.") + 1
+        fragment = "Updated short description.\nWith an added detail line."
+
+        result = update(created.id, "feat", fragment, offset=k, limit=1)
+
+        self.assertIsInstance(result, UpdateResult)
+        self.assertIsNotNone(result.snippet)
+        snippet_lines = result.snippet.splitlines()
+        for line in snippet_lines:
+            self.assertRegex(line, r"^[-+ ] \d+: ")
+        self.assertIn(f"- {k}: Short description.", snippet_lines)
+        self.assertIn(f"+ {k}: Updated short description.", snippet_lines)
+        self.assertIn(f"+ {k + 1}: With an added detail line.", snippet_lines)
+        # the line below the touched range keeps its text but takes the post-splice number k+2
+        if k < len(lines):
+            self.assertIn(f"  {k + 2}: {lines[k]}", snippet_lines)
+        expected = lines[: k - 1] + fragment.splitlines() + lines[k:]
+        self.assertEqual(get_feat(created.id, raw=True).splitlines(), expected)
+
+    def test_offset_one_omitted_limit_returns_snippet_none_like_whole_body_mode(self) -> None:
+        """feat's half of REQ-003/ACC-003: the whole-body-equivalent range (offset=1, limit omitted)
+        returns the UpdateResult wrapper with snippet=None exactly like whole-body mode (the 11 flat
+        domains pin the same in ``test_update.py``'s ``test_offset_one_equals_whole_body_mode``)."""
+        created = create_feat(_INITIAL_BODY)
+
+        whole_body = update(created.id, "feat", _REVISED_BODY)
+
+        self.assertIsInstance(whole_body, UpdateResult)
+        self.assertIsNone(whole_body.snippet)
+        body_after_whole_body = get_feat(created.id, raw=True)
+
+        ranged = update(created.id, "feat", _REVISED_BODY, offset=1)
+
+        self.assertIsInstance(ranged, UpdateResult)
+        self.assertIsNone(ranged.snippet)
+        self.assertEqual(get_feat(created.id, raw=True), body_after_whole_body)
 
 
 class TestCreateFeatConcurrencyIntegration(TempFeatDirTestCase):

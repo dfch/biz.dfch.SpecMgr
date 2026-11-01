@@ -39,6 +39,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from biz.dfch.specmgr.general.models import UpdateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.set_status import set_status
@@ -51,9 +52,16 @@ from biz.dfch.specmgr.prb.tools.get_prb_example import get_prb_example
 from biz.dfch.specmgr.prb.tools.get_prb_template import get_prb_template
 from biz.dfch.specmgr.prb.tools.list_prb import list_prb
 
+_LEAD_SENTENCE = (
+    "Mobile checkout failing for many customers is causing lost revenue, for the "
+    "mobile team because the checkout service intermittently times out."
+)
+
 _INITIAL_BODY = textwrap.dedent(
-    """\
+    f"""\
     # Checkout Errors Spike on Mobile
+
+    {_LEAD_SENTENCE}
 
     ## Current State
 
@@ -78,8 +86,10 @@ _INITIAL_BODY = textwrap.dedent(
 )
 
 _REVISED_BODY = textwrap.dedent(
-    """\
+    f"""\
     # Checkout Errors Spike on Mobile
+
+    {_LEAD_SENTENCE}
 
     ## Current State
 
@@ -138,11 +148,15 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
 
         # 2. update: whole-body replace must preserve id/type/created, bump updated.
         updated = update(prb_id, "prb", _REVISED_BODY)
-        self.assertEqual(updated.id, created.id)
-        self.assertEqual(updated.type, created.type)
-        self.assertEqual(updated.created, created.created)
-        self.assertEqual(updated.status, "draft")
-        self.assertNotEqual(updated.updated, created.updated)
+        # feat-153-off-by-n Phase 2: the return is the UpdateResult wrapper -- the
+        # frontmatter fields live under .frontmatter; whole-body mode's snippet is None.
+        self.assertIsInstance(updated, UpdateResult)
+        self.assertIsNone(updated.snippet)
+        self.assertEqual(updated.frontmatter.id, created.id)
+        self.assertEqual(updated.frontmatter.type, created.type)
+        self.assertEqual(updated.frontmatter.created, created.created)
+        self.assertEqual(updated.frontmatter.status, "draft")
+        self.assertNotEqual(updated.frontmatter.updated, created.updated)
         after_update = get_prb(prb_id)
         self.assertIn("Android", after_update.body.current_state.question_3.text)  # type: ignore[union-attr]
         self.assertIsNotNone(after_update.body.impact)
@@ -150,9 +164,9 @@ class TestPrbLifecycleIntegration(TempPrbDirTestCase):
         # 3. set_status (type="prb"): only status/updated may change.
         activated = set_status(prb_id, "prb", "active")
         self.assertEqual(activated.status, "active")
-        self.assertEqual(activated.id, updated.id)
-        self.assertEqual(activated.created, updated.created)
-        self.assertNotEqual(activated.updated, updated.updated)
+        self.assertEqual(activated.id, updated.frontmatter.id)
+        self.assertEqual(activated.created, updated.frontmatter.created)
+        self.assertNotEqual(activated.updated, updated.frontmatter.updated)
         # The body must be carried forward verbatim, untouched by the status change.
         self.assertIn("Android", get_prb(prb_id).body.current_state.question_3.text)  # type: ignore[union-attr]
 

@@ -12,7 +12,7 @@ helper directly, so neither sub-package depends on the other just for this
 one file read. Mirrors ``prb.resources.prb_example`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://gol/schema``'s own precedent.
+``specmgr://gol/template``'s own precedent.
 
 ## Functions
 

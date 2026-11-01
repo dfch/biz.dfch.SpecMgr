@@ -14,38 +14,68 @@
 An artifact manager for system specifications.
 
 This project is an **MCP server** that you can use to manage different
-specification artifacts.
-
-At this time, we have these artifact types:
-
-- Architecture Decision Record (ADR) (deprecated, will be phased out, use DEC instead)
-- Decision (DEC)
-- Feature (FEAT)
-- Goal (GOL)
-- Problem Statement (PRB)
-- Question and Answer (QA)
-- Requirement (REQ)
-- Risk (RSK)
-- Standard Operating Procedure (SOP)
-- System Requirements Specification (SYSRS)
-- Task List (TSK)
-- Use Case (UC)
-- Verification Case Record (VCR)
-
-See [MCP Server](#mcp-server) and [docs/MCP.md](docs/MCP.md) for details.
+specification artifacts — see [Concepts](#concepts) for the full list of
+artifact types and how they relate, and [MCP Server](#mcp-server) /
+[docs/MCP.md](docs/MCP.md) for the tool/resource/prompt reference.
 
 The **MCP server** (and the management **CLI**) are optional. You install
 them as "extras" (see [Installation](#installation)).
 
 ## Table of Contents
 
+- [Concepts](#concepts)
 - [Installation](#installation)
 - [CLI Usage](#cli-usage)
+- [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
+- [Reference Graph Diagrams](#reference-graph-diagrams)
 - [MCP Server](#mcp-server)
+- [Usage](#usage)
+- [Referencing Artifacts](#referencing-artifacts)
+- [Multi-Language Artifacts](#multi-language-artifacts)
 - [Development](#development)
 - [Testing](#testing)
 - [Make a Release](#make-a-release)
 - [License](#license)
+
+## Concepts
+
+Every artifact is a plain markdown file with a YAML frontmatter block on
+disk — git-friendly, diffable, and readable/editable by hand. The
+filesystem is always the source of truth; the MCP server wraps it with
+structured, validated read/write/list/status tools (see
+[Usage](#usage)).
+
+| Type | Purpose |
+| --- | --- |
+| QA — Question and Answer | Structured elicitation interview (organized by ISO/IEC 25010 characteristic) capturing stakeholder Q&A; usually where a new spec effort *starts* |
+| GOL — Goal | High-level business goal — what the organization wants to achieve, above individual requirements |
+| PRB — Problem Statement | Six-Sigma-style problem statement describing the problem a goal/requirement addresses |
+| REQ — Requirement | A single system requirement (EARS-style phrasing), classified by ISO/IEC 25010 characteristic |
+| UC — Use Case | Actor/system interaction describing a specific usage scenario |
+| RSK — Risk | Risk-register entry: cause/trigger/consequence, 5x5 probability/impact assessment (initial + residual), TARA response strategy |
+| DEC — Decision | General-purpose decision record (MADR-style), not limited to architecture |
+| ADR — Architecture Decision Record | Architecture-specific decision record; **deprecated**, use DEC instead |
+| TSK — Task List | Checklist of implementation tasks, e.g. for a requirement or feature |
+| VCR — Verification Case Record | Verifies **exactly one** REQ or UC; holds a collection of `AC-NNN` acceptance criteria (each with a DTAIS verification method) plus one overall coverage outcome (full/partial/none) |
+| SOP — Standard Operating Procedure | Step-by-step operational procedure with RASCI responsibility assignment and approval lifecycle |
+| FEAT — Feature | Development work-unit plan/progress tracking (`.specmgr/feat/<id>/README.md`) |
+| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC-ADR/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+| TXT — Free-Form Text | Generic, minimally structured catch-all for unstructured markdown that does not warrant a dedicated domain (ad hoc notes, meeting minutes, review/audit write-ups, scratch analysis); free body (any markdown, incl. H2..H6) plus a mandatory newest-first `## Updates` log |
+
+A typical spec effort starts with a **QA** elicitation interview, which
+surfaces **GOL**s (goals) and **PRB**s (problems). Those inform **REQ**s
+and **UC**s, which get risk-assessed (**RSK**) and backed by
+**DEC**isions, verified via one **VCR** per REQ/UC (each collecting its
+acceptance criteria), and tracked via **TSK** task lists. A **SYSRS**
+ties all of it together into one ISO/IEC/IEEE 29148-structured
+specification. **SOP** and **FEAT** support the process itself rather
+than sitting in this chain, and **TXT** is the free-form catch-all that
+likewise sits outside it (any markdown that does not warrant a dedicated
+artifact type).
+
+```
+QA -> GOL / PRB -> REQ / UC -> RSK / DEC -> TSK, VCR -> SYSRS (aggregates all)
+```
 
 ## Installation
 
@@ -67,10 +97,18 @@ With the MCP server:
 pip install "biz-dfch-specmgr[mcp]"
 ```
 
+With semantic-similarity search (`find_related`/`find_similar_text`, see
+[Semantic Similarity Search](#semantic-similarity-search) below), add the
+`similarity` extra on top of `mcp`:
+
+```bash
+pip install "biz-dfch-specmgr[mcp,similarity]"
+```
+
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv add "biz-dfch-specmgr[cli,mcp]"
+uv add "biz-dfch-specmgr[cli,mcp,similarity]"
 ```
 
 ## CLI Usage
@@ -80,13 +118,110 @@ in pre-commit hooks and `ci.yml`.
 
 _No domain document-management commands (create/update/status/etc.) exist
 in the CLI yet — those are currently MCP-only, see
-[MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), and a
-handful of cross-cutting/doc-generation commands (`specmgr --help` for the
-full list)._
+[MCP Server](#mcp-server). The CLI covers `version`, `mcp` (below), a
+handful of cross-cutting/doc-generation commands, and the diagram commands
+— UC → PlantUML (see
+[UC → PlantUML Diagrams](#uc--plantuml-diagrams)) and reference-graph (see
+[Reference Graph Diagrams](#reference-graph-diagrams)) (`specmgr --help`
+for the full list)._
 
 ```bash
 specmgr version
+specmgr lint [paths]... [--type T [--dir D]] [--all] [--skip-unrecognized]  # in-tree spec artifact parseability gate: full model-level parse of the paths (type inferred from the layout, --type overrides) or a --type/--all sweep (exit 0 parsed / 1 parse failure or missing mcp extra / 2 usage-or-resolution)
 ```
+
+`specmgr lint` requires the `mcp` extra, like `specmgr diagram` (the
+decoupling is tracked as issue #238).
+
+## UC → PlantUML Diagrams
+
+Specmgr can turn UC artifacts into PlantUML diagrams — deterministic
+use-case and package diagrams, plus sequence diagrams attributed by the
+agent flow.
+
+**Sequence diagrams (agent path).** The `generate_uc_sequence_diagram` MCP
+prompt (in OpenCode: the self-triggering `uc-diagram` skill or the
+`/uc-diagram <id>` command) runs the frozen rulebook flow: the agent
+attributes every `UNATTRIBUTED` message (asking via the `question` tool when
+not confident), validates with `validate_plantuml`, and writes
+`diagrams/uc/<id>.sequence.puml` host-natively — no specmgr tool writes
+`.puml` files.
+
+**Deterministic diagrams + tooling (CLI, deterministic-only — the CLI never
+creates, overwrites, or diffs the agent-owned `*.sequence.puml` files):**
+
+```bash
+specmgr diagram uc <id>|all --out <dir> [--check]  # per-UC <id>.usecase.puml + package.puml; --check byte-diffs without writing (exit 0 ok / 1 diff / 2 usage-or-render error)
+specmgr plantuml-check <path...>                   # validates any .puml through the chain (exit 0 valid / 1 invalid / 2 source misconfigured-or-unavailable / 3 inconclusive)
+specmgr plantuml-encode <path|->                   # offline classic SoWkI… encoding
+```
+
+**Validation source.** Exactly three env vars, the first one **set** is the
+only source used (no fall-through, no PATH discovery, no public default):
+`SPECMGR_PLANTUML_JAR` (a plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an
+executable speaking the PlantUML CLI contract), `SPECMGR_PLANTUML_URL` (a
+PlantUML server base URL). All unset ⇒ offline structure-only validation.
+Diagram content is never sent to plantuml.com unless you set that URL.
+
+The normative rulebook ships as the `specmgr://uc/plantuml` resource; the
+full MCP surface is in [docs/MCP.md](docs/MCP.md).
+
+## Reference Graph Diagrams
+
+Specmgr can render the deterministic cross-reference network between its
+artifacts (the `<TYPE> <id>` tag vocabulary behind the `list_references`
+tool) as a PlantUML component diagram — one node per artifact (label = the
+document title, truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` limit, default
+`40`), a stereotype + colour per artifact type (a frozen 15-entry palette),
+nodes grouped into per-domain curly `component "TYPE" { … }` domain groups,
+one label-free edge per unique reference (`{src} --> {dst}`), every edge
+that lies on a cycle (self-loops and same-SCC ≥ 2) drawn with a red
+label-free `-[#red]->` arrow, and every reference
+whose target cannot be resolved on disk drawn as a top-level `<<UNRESOLVED>>`
+node. Fully deterministic: the same registry and the same arguments always
+emit byte-identical source.
+
+**MCP tools.** `get_reference_diagram(type, id, depth=1, reverse=False,
+include_feat=True, title=None)` renders one source document's reference
+neighbourhood (the forward walk to `depth`, 1..5; `reverse=True` adds the
+direct incoming references, additive and direct-only);
+`get_reference_diagram_all(include_feat=True, title=None)` renders the
+registry-wide graph. Both return the PlantUML source directly (no file
+writes); the scoped tool accepts all 14 domains (`adr` included) and returns
+the non-raising `ParseFailureResult` for an existing-but-broken source; the
+registry-wide tool never raises for content.
+
+**CLI (writes the artifact, deterministic-only):**
+
+```bash
+specmgr diagram refs <type> <id> [--depth N] [--reverse] [--no-feat] [--title T] [--out diagrams/refs] [--check]  # scoped → <id>.refs.puml
+specmgr diagram refs all [--no-feat] [--title T] [--out diagrams/refs] [--check]                                   # registry-wide → reference-graph.puml
+```
+
+`--no-feat` drops every FEAT node except the explicitly requested source
+(then every edge touching a dropped node). Exit codes: `0` written / no
+diff, `1` a `--check` diff (a missing file counts as differing) or the
+missing `mcp` extra, `2` a usage-or-resolution error (wrong-format
+`type`/`id`/`depth` — a bare `feat-NNN` is rejected, use `list_feat` to
+discover the exact id — a missing source, an existing-but-broken source,
+`all` combined with a source). Written artifacts carry no structure-only
+header (checker-clean by construction).
+
+**Validation.** `specmgr plantuml-check <path...>` (or the `validate_plantuml`
+MCP tool over the source) validates the diagram through the same strict
+chain as the UC diagrams (the three `SPECMGR_PLANTUML_*` source env vars,
+see [UC → PlantUML Diagrams](#uc--plantuml-diagrams); all unset is the
+offline structure-only floor).
+
+**Label limit.** `SPECMGR_DIAGRAM_MAX_TITLE` (an int, default `40`) bounds
+the resolved-node H1 labels (word-boundary cut + `…`; a set-but-invalid
+value falls back to `40`); the `@startuml` diagram title is sanitized but
+never truncated. Its set/valid/default/resolved status is reported by the
+`diagram` section of the `specmgr://config` resource (the raw value is
+never disclosed).
+
+The normative rulebook ships as the `specmgr://reference-graph` resource;
+the full MCP surface is in [docs/MCP.md](docs/MCP.md).
 
 ## MCP Server
 
@@ -116,13 +251,60 @@ tool call, so hand-editing a file between calls is safe.
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
   via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
   like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
-- The `confluence_fetch` tool (renamed from `webfetch`; bearer-authenticated,
-  URL-filtered HTTP GET, intended primarily for Confluence instances using
-  PAT authentication) requires two environment variables:
-  `SPECMGR_CONFLUENCE_BASE_URL` (the base URL requested URLs must
-  case-insensitively start with) and `SPECMGR_CONFLUENCE_BEARER` (the
-  bearer token sent as the `Authorization` header). Both must be set or the
-  tool raises an error; there are no defaults.
+- PlantUML validation source (UC diagrams): `SPECMGR_PLANTUML_JAR` (a
+  plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an executable speaking the
+  PlantUML CLI contract), and `SPECMGR_PLANTUML_URL` (a PlantUML server base
+  URL) — the first one set is the only source used (no fall-through, no
+  PATH discovery, no public default); all unset is the offline
+  structure-only floor. See [UC → PlantUML Diagrams](#uc--plantuml-diagrams)
+  for the how-to.
+- Reference-graph diagram label limit: `SPECMGR_DIAGRAM_MAX_TITLE` (an int,
+  default `40`) — the maximum length of a resolved node's H1 label in the
+  `get_reference_diagram` / `get_reference_diagram_all` PlantUML diagrams
+  (word-boundary cut + `…`; the diagram title itself is never truncated). A
+  set-but-invalid value (empty, non-int, or < 1) falls back to `40`. Its
+  set/valid/default/resolved status is reported by the `diagram` section of
+  the `specmgr://config` resource (the raw value is never disclosed).
+
+The `specmgr mcp` command's own transport settings are likewise
+environment-driven: `SPECMGR_MCP_TRANSPORT` selects the transport (default
+`stdio`; the allowed values are `stdio`, `sse`, and `streamable-http`), and
+`SPECMGR_MCP_HOST` (default `localhost`) and `SPECMGR_MCP_PORT` (default
+`8000`) are the bind address and TCP port, used only in
+`sse`/`streamable-http` mode. The command's `--transport`/`--host`/`--port`
+flags take precedence over the variables — see [Start the MCP
+Server](#start-the-mcp-server) below for the options table.
+
+The `find_related`/`find_similar_text` tools (semantic-similarity search,
+requires the `similarity` extra) are turned off by setting the
+`SPECMGR_SIMILARITY_DISABLED` environment variable (any value;
+presence-based) — see [Semantic Similarity Search](#semantic-similarity-search)
+below for the full behavior (install, the non-blocking background warmup at
+server startup, the model cache location, and the structured unavailable
+result both tools return when the feature is disabled or the backend/model
+fails to load).
+
+The semantic-similarity feature's model cache directory is the
+`FASTEMBED_CACHE_PATH` environment variable (the third-party `fastembed`
+backend's own variable, not a `SPECMGR_*` one): an unset or empty value
+falls back to `<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on
+Linux). The resolved directory is reported by the `similarity` section of
+the `specmgr://config` resource — see [Semantic Similarity
+Search](#semantic-similarity-search) below for the full behavior.
+
+The `feat` domain's two background cache-warming phases (frontmatter and
+full-parse, run by the same unified server-startup warmup thread as the
+similarity warmup) are likewise turned off by setting the
+`SPECMGR_FEAT_WARMUP_DISABLED` environment variable (any value;
+presence-based) — see the background warmup paragraph of [Semantic
+Similarity Search](#semantic-similarity-search) below for the thread's
+full behavior and both opt-out flags.
+
+`SPECMGR_TESTS_NO_DOTENV` is a presence-based test/CI sentinel (no
+default; never set outside test runs): set to any value to skip the
+CLI's module-level default `.env` load entirely, so a test run sees no
+local (gitignored) `.env` configuration whatever the developer's machine
+has.
 
 All of the base directories above are resolved relative to the MCP server
 process's own current working directory unless overridden by their env var
@@ -133,6 +315,71 @@ per [Add to OpenCode](#add-to-opencode) below — read the `specmgr://config`
 resource to see every domain's actually-resolved absolute base directory
 and whether its env var is explicitly set, without needing shell access to
 the server's host.
+
+### Semantic Similarity Search
+
+The `find_related` and `find_similar_text` tools rank documents by
+semantic similarity using local sentence embeddings (no API keys, no
+network at inference time). `find_related(type, id)` finds the documents
+most related to an existing document; `find_similar_text(query)` finds the
+documents most similar to a free-form query — e.g. a draft you have not
+saved yet, for pre-creation dedup/discovery. Both tools always appear in
+the tool list, regardless of whether the feature is installed or enabled:
+when it is unavailable, each call returns a structured
+`{available: false, reason, message}` result instead of raising.
+
+**Install.** The tools need the optional `similarity` extra on top of
+`mcp` — the exact commands are in [Installation](#installation)
+(`pip install "biz-dfch-specmgr[mcp,similarity]"` or
+`uv add "biz-dfch-specmgr[cli,mcp,similarity]"`). The backend is
+`fastembed` running `BAAI/bge-small-en-v1.5` (CPU-only, ONNX Runtime,
+384-dim).
+
+**Model download and cache.** The model is downloaded once from the
+Hugging Face Hub the first time it is loaded (network required at that
+point only; after that, inference is fully offline). It is cached in
+`$FASTEMBED_CACHE_PATH` if that environment variable is set, otherwise in
+`<tempdir>/fastembed_cache` (e.g. `/tmp/fastembed_cache` on Linux).
+
+**Background warmup at server startup.** Unless both
+`SPECMGR_FEAT_WARMUP_DISABLED` and `SPECMGR_SIMILARITY_DISABLED` are set,
+the server starts a single background daemon thread at startup that runs
+three warmup phases, strictly in order: the `feat` frontmatter phase
+(cheap: frontmatter plus H1 only), the `feat` full-parse phase (expensive:
+the full `feat` corpus), and the similarity phase, which embeds the full
+document corpus into the in-memory cache. Each phase is independently
+gated by its own opt-out flag: `SPECMGR_FEAT_WARMUP_DISABLED` (any value;
+presence-based) skips the two `feat` phases, and
+`SPECMGR_SIMILARITY_DISABLED` (any value; presence-based) skips the
+similarity phase, regardless of whether the `similarity` extra is
+installed. With the extra missing, or with the model failing to load, the
+similarity phase runs the availability probe inside itself and exits
+immediately without cache writes (still never raising). The thread is
+non-blocking — server startup never waits for it (the model load/download,
+if needed, happens inside the thread, not on the startup path) — and a
+mid-warmup failure is logged and swallowed, leaving the cache partially
+warm. Its purpose is to keep the first tool call fast: against a cold
+cache, `list_feat` scans and re-parses the whole `feat` corpus on the
+request path, and the similarity tools embed the corpus on demand — both
+can cost minutes of CPU.
+
+**Opt-out.** Set `SPECMGR_SIMILARITY_DISABLED` (any value; presence-based)
+to disable the feature without uninstalling the extra — e.g. to skip the
+model download entirely, on a host where the model was never downloaded,
+or to free the memory the model and cache use. Both tools stay registered
+either way. Set `SPECMGR_FEAT_WARMUP_DISABLED` (any value; presence-based)
+to skip the two `feat` cache-warming phases without any other effect —
+e.g. on a host where `list_feat`/`get_feat` are rarely called. With both
+opt-out flags set, no warmup thread is started at all.
+
+**Introspection.** Read the `specmgr://config` resource for the feature's
+static configuration — its `similarity` section reports whether the
+`similarity` extra is installed, whether the opt-out flag is set, the
+model name, and the resolved cache directory (static facts only; reading
+the resource never loads the model or creates the cache directory), and
+its `feat_warmup_disabled` field reports whether the `feat` warmup opt-out
+flag is set — and the `specmgr://version` resource for the installed
+`fastembed` version (`null` when the extra is not installed).
 
 ### Start the MCP Server
 
@@ -197,6 +444,12 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   To also enable the [Semantic Similarity
+   Search](#semantic-similarity-search) feature (`find_related`/
+   `find_similar_text`), change `[mcp]` to `[mcp,similarity]` in the
+   `--from` value above — see that section for install/runtime-activation
+   details.
+
    **Option B — set the directory env vars explicitly** instead of (or in
    addition to) `--directory`:
 
@@ -219,6 +472,10 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    }
    ```
 
+   The same `[mcp]` -> `[mcp,similarity]` change in the `--from` value
+   applies here too, to enable [Semantic Similarity
+   Search](#semantic-similarity-search).
+
    Either option (or both together) makes the resolved base directories
    independent of wherever the MCP host happens to launch the server
    from. Whichever you choose, you can confirm it worked by reading the
@@ -226,7 +483,165 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    absolute base directory for every domain and whether its env var is
    explicitly set.
 
+   **Option C — run from a local source checkout (development).** Options
+   A and B both use `uvx` (`uv tool run`), which resolves
+   `biz-dfch-specmgr[...]` as a named package from the configured index
+   (PyPI by default) into an ephemeral tool environment — they always run
+   the *published* release, never local/unreleased changes. To instead run
+   the project at a specific directory on disk — using its own
+   `pyproject.toml`, lockfile, and source tree directly, including
+   unreleased/`dev`-branch commits — use `uv run --directory
+   <path-to-your-checkout>` (no `--from`, not `uvx`):
+
+   ```json
+   "specmgr": {
+     "type": "local",
+     "enabled": true,
+     "command": [
+       "uv",
+       "run",
+       "--directory",
+       "<path-to-your-checkout>",
+       "--extra",
+       "mcp",
+       "--extra",
+       "similarity",
+       "specmgr",
+       "mcp"
+     ]
+   }
+   ```
+
+   This is the mechanism for contributors/developers pointing OpenCode at
+   their own git checkout instead of the published package. Repeatable
+   `--extra` flags (or `--all-extras` for everything) control which
+   optional dependencies get synced into that local run, independent of
+   what's published on PyPI — drop `--extra similarity` if you don't need
+   [Semantic Similarity Search](#semantic-similarity-search).
+
 3. Save the file and restart OpenCode
+
+## Usage
+
+Once connected, your AI assistant sees two kinds of tools per document
+domain: **per-domain** tools (`create_<d>`, `get_<d>`, `list_<d>`,
+`parse_<d>`, plus `get_<d>_example`/`get_<d>_template`), and **generic
+dispatch** tools that take a `type=` parameter and behave the same way
+across every domain: `update` (whole-body or line-range edits),
+`set_status`, `set_classification`, `delete`, and `validate` (ADR is the
+one exception, predating this pattern, with its own dedicated tools
+instead). See [docs/MCP.md](docs/MCP.md) for the full list.
+
+The server also ships **prompts** (e.g. `create_req`, `update_req`,
+`implement_task`) — guided, multi-turn interview flows that are the
+intended way to author documents conversationally, rather than calling
+tools one by one. Most MCP hosts surface these as slash commands or a
+prompt picker.
+
+Day to day, you don't need to know any tool names at all — just ask your
+connected AI assistant in plain language, e.g.:
+
+- "Create a new goal for reducing customer onboarding time."
+- "List all open risks and show me the high-severity ones."
+- "Draft a task list for requirement `<id>`."
+
+To resolve the cross-references an artifact already carries, see
+[Referencing Artifacts](#referencing-artifacts).
+
+## Referencing Artifacts
+
+specmgr documents cross-reference each other via `<TYPE> <uuid>` lines
+in the structured locations (VCR's `## Verifies`, SYSRS's per-section
+bullet lists, DEC's `## Related Artifacts`) and — anywhere in free-form
+prose — via any of the reference tags, including a `FEAT` tag carrying
+a feature's own id (the full `feat-NNN-slug` or the bare `feat-NNN`
+number; the structured locations above remain uuid-only). The
+`list_references` MCP tool resolves those references: point your
+assistant at any artifact (`<type> <id>`) and it lists every
+cross-reference tag in the artifact's body, each resolved to the
+referenced document's type, id, title (its H1), and on-disk path.
+Results are paged like every `list_*` tool; references that do not
+resolve on disk come back as rows carrying an `error` (not a failure),
+and any other free-form or non-conforming text is ignored.
+
+In [opencode](https://opencode.ai), the `/refs <type> <id>` slash command
+(`.opencode/command/refs.md`) wraps the same tool: it delegates to the
+read-only `ref-finder` subagent (`.opencode/agent/ref-finder.md`), which
+calls `list_references` and reports the rows, flagging any **NOT FOUND**
+references. `/refs` requires opencode — the tool itself is plain MCP,
+callable directly from any MCP client.
+
+Also in [opencode](https://opencode.ai), the project-local
+`specmgr-refs` skill (`.opencode/skill/specmgr-refs/SKILL.md`) is the
+agent-initiated surface: it loads itself when a task matches
+reference-retrieval phrasings, routes single-document requests to the
+`list_references` tool, the `ref-finder` subagent, or the `/refs`
+command, and codifies the graph, batch, and reverse workflows that
+`/refs` and `ref-finder` do not cover.
+
+## Multi-Language Artifacts
+
+The same artifact can exist in several languages. English is the default
+and keeps its location (`docs/<type>/`); every other language is a
+`docs/<type>/<language>/` subfolder (`<language>` is a lowercase
+two-letter code such as `de`) that holds the variant under the **exact
+same file name** as its English source, with the **same `id`** and the
+identical frontmatter and body structure. The language lives in the
+file's location only — there is no `language` frontmatter field. It
+applies to the twelve domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
+`rsk`, `dec`, `sop`, `vcr`, `sysrs` and `txt`.
+
+**`feat` and `adr` are always English**, permanently: no `feat` or `adr`
+tool, resource or prompt takes a `language`, and the generic tools reject a
+non-default `language` for those two types (`language="en"`, the default,
+is accepted and behaves as before).
+
+- **Reading and writing.** `get_<d>`, `list_<d>` and `create_<d>`, and
+  the generic `update`, `edit`, `set_status`, `set_classification` and
+  `delete` tools take an optional `language` (default `"en"`; leaving it
+  out behaves exactly as before). `list_<d>(language="de")` lists only
+  the German variants. A variant is created from an existing English
+  document: `create_<d>(content, language="de", id=<id of the EN source>)`.
+  `validate` stays English-only.
+- **Headings.** A translated heading is mapped back to its canonical
+  English heading through a per-language table, so a variant is checked
+  against the exact same schema as the English document. The file keeps
+  its translation. Closed-vocabulary values (`status`, `classification`,
+  RSK `Strategy`/`Probability`/`Impact`, VCR `Coverage` and `AC-NNN
+  (Method)`, `Option N:`/`Step N:` tokens, `[ ]`/`[x]`, cross-reference
+  tags, SOP lifecycle values) are never translated, and neither is the
+  PRB `problem_statement` sentence.
+- **Translating.** The MCP prompt `translate_artifact` (`type`, `id`,
+  `language`, optional `source_language`) drives the translation; the
+  resources `specmgr://i18n` and `specmgr://i18n/headings/{language}`
+  document the rules and return a language's heading table. In
+  [opencode](https://opencode.ai): the `translate-artifact` skill and
+  `/translate <type> <id> <language> [source_language]`. No tool
+  translates by itself — the model does the translating around the
+  deterministic tools.
+- **Status and drift.** `list_languages(type, id)` reports the languages
+  an artifact exists in. `check_translation_drift(type, id, language)`
+  reports structural drift (missing, extra or reordered sections) and
+  staleness (the English source is newer than the translation). In
+  opencode: the `translation-status` skill and
+  `/translation-status <type> <id> [language]`.
+- **English-only search and references.** `find_related`,
+  `find_similar_text`, `list_references` and `get_reference_diagram(_all)`
+  never see a language variant: a hit or a resolved reference is always
+  the English document.
+- **Adding a language.** Add one file,
+  `src/biz/dfch/specmgr/general/data/headings/<language>.json` — a flat
+  JSON object `{"<translated heading>": "<canonical English heading>"}`
+  that covers exactly the fixed-text headings of the document models, with
+  distinct values. No code change is needed. The drift test
+  `tests/general/models/test_heading_table_drift.py` checks every shipped
+  table and names each missing or surplus heading. Without a table file a
+  language code is rejected when a document of that language is read or
+  written.
+- **Titles and headings.** Only the section headings (levels 2-6) are
+  mapped through the table. The document title (the level-1 `#` line) is
+  free text in every language and is never looked up or rewritten, even
+  when it equals a table entry (a German title `Quelle` stays `Quelle`).
 
 ## Development
 
@@ -364,7 +779,7 @@ a manual fallback command for every step):
 
 ```bash
 scripts/release.sh resolve minor         # print the target version (e.g. 0.15.0); no mutation
-scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks
+scripts/release.sh precheck 0.15.0       # fail-fast pre-release checks, incl. the feat closeout gate and the previous-release branch cleanup
 scripts/release.sh bump 0.15.0           # pyproject.toml + uv.lock
 scripts/release.sh changelog 0.15.0      # [Unreleased] -> dated section
 scripts/release.sh commit-push 0.15.0    # 3-file release commit, push dev, wait for CI
@@ -376,6 +791,18 @@ scripts/release.sh release-notes 0.15.0  # verify the release + set the GH relea
 scripts/release.sh status 0.15.0         # where does this release stand?
 scripts/release.sh all 0.15.0            # the whole chain, TTY only (interactive merge gate)
 ```
+
+`precheck` ends with two sub-items added by feat-233 (issue #233): the
+**feat closeout gate** — every `.specmgr/feat/feat-*/` folder shipped in
+the current release window (since the last tag) must be closed out to
+`status: done` in its README frontmatter, and a violation fails the
+precheck with one actionable line per offending feat (remediation: close
+out the named feats to `done` on `dev`, commit, re-run `precheck`); and
+the **previous-release branch cleanup** — stale `feat-*`/`fix/*` branches
+from the previous release or older are deleted on the local and `origin`
+side, each deletion proven by the branch's merged PR and guarded by four
+hazard checks (`--dry-run` makes this sub-item report-only: the
+would-delete/would-keep table, no ref is deleted).
 
 Changelog *curation* (SOP step 3) is an agent or manual step: the
 `changelog` stage only moves the already-curated `[Unreleased]` section

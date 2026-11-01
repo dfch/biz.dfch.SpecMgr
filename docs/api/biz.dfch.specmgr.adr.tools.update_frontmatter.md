@@ -1,10 +1,10 @@
 # `biz.dfch.specmgr.adr.tools.update_frontmatter`
 
-``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
+``@mcp.tool()`` wrapper: update_frontmatter.
 
 Thin file-I/O/id-lookup adapter -- re-reads and re-parses the current
 on-disk state, then re-renders and re-writes the full file; there is no
-in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md`` file
+in-memory cache of a parsed :class:`Adr`: the ``.md`` file
 itself is always the source of truth. The whole sequence runs under
 ``_lock.adr_lock(id)`` so a concurrent mutation against the same id cannot
 interleave with it and cause a lost update.
@@ -15,12 +15,12 @@ interleave with it and cause a lost update.
 
 Replace the frontmatter of the ADR identified by ``id``.
 
-Whole-object, full-replace semantics (plan §3): the submitted
+Whole-object, full-replace semantics: the submitted
 ``frontmatter`` entirely replaces the current one. The one exception
 is ``id`` itself -- it is always re-injected from the currently
 resolved document, ignoring whatever ``frontmatter.id`` the caller
 submitted, because the id is system-managed and never changes via this
-tool (plan §9a), even though every other frontmatter key follows
+tool, even though every other frontmatter key follows
 normal full-replace semantics.
 
 Parameters

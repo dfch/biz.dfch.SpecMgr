@@ -104,10 +104,10 @@ class TestMarkdownFrontmatter(unittest.TestCase):
     def test_created_and_updated_accept_explicit_values(self):
         """created/updated must accept explicit conforming date+time strings verbatim."""
         frontmatter = MarkdownFrontmatter(
-            type="uc", created="2026-08-05 00:00:00.000Z", updated="2026-08-11 00:00:00.000Z"
+            type="uc", created="2026-08-05T00:00:00.000Z", updated="2026-08-11T00:00:00.000Z"
         )
-        self.assertEqual(frontmatter.created, "2026-08-05 00:00:00.000Z")
-        self.assertEqual(frontmatter.updated, "2026-08-11 00:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05T00:00:00.000Z")
+        self.assertEqual(frontmatter.updated, "2026-08-11T00:00:00.000Z")
 
     def test_blank_created_and_updated_normalize_to_none(self):
         """A whitespace-only created/updated value must normalize to None."""
@@ -125,10 +125,18 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         with self.assertRaises(ValidationError):
             MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.123456Z")
 
-    def test_created_and_updated_reject_t_separator(self):
-        """A ``T``-separated value must be rejected -- only the space separator is accepted."""
-        with self.assertRaises(ValidationError):
-            MarkdownFrontmatter(type="uc", created="2026-08-05T12:00:00.000Z")
+    def test_created_and_updated_accept_t_separator(self):
+        """A ``T``-separated value must be accepted (feat-146) -- it is the machine-written
+        canonical form, and both separators parse."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05T12:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05T12:00:00.000Z")
+
+    def test_created_and_updated_accept_space_separator(self):
+        """A space-separated value must still be accepted (feat-146) -- the space separator
+        remains valid; existing space-form values keep parsing until their next write
+        converges them to the ``T`` form."""
+        frontmatter = MarkdownFrontmatter(type="uc", created="2026-08-05 12:00:00.000Z")
+        self.assertEqual(frontmatter.created, "2026-08-05 12:00:00.000Z")
 
     def test_created_and_updated_reject_timezone_less(self):
         """A value with no ``Z``/offset suffix at all must be rejected."""

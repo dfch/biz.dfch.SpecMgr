@@ -19,12 +19,31 @@ templates guidance resource (``specmgr://ears``, feat-92-resources
 REQ-006) -- cross-cutting domain knowledge for any requirement-phrasing
 document type (``req``, ``gol``, ``sysrs``, ...), not owned by any single
 domain's own schema, mirroring ``dtais``'s cross-domain placement
-rationale. ``config`` registers the ``specmgr://config`` diagnostic
-resource (feat-51-mcp-cwd REQ-001) -- the resolved absolute base directory
-and env-var-set flag for all twelve document domains, so a client can
+rationale. ``reference_graph`` registers the frozen reference-graph
+rulebook resource (``specmgr://reference-graph``,
+feat-207-reference-graph Phase 100) -- the deterministic PlantUML
+component-diagram spec for the cross-reference network (emission layout +
+palette, alias/label/truncation, title rules, FEAT-exclusion, the
+bare-``feat-NNN`` source-id rejection, the cycle rule + red-arrow syntax,
+the construction semantics, the CLI file layout) plus the pointer at the
+UC rulebook §3–§6 for the validation chain reused as-is; it spans every
+document domain, so it is cross-cutting rather than owned by any single
+domain's schema (the ``specmgr://uc/plantuml`` rulebook shape, registered
+flat top-level like ``dtais``/``iso25010``). ``config`` registers the
+``specmgr://config`` diagnostic resource (feat-51-mcp-cwd REQ-001) -- the
+resolved absolute base directory
+and env-var-set flag for every document domain, so a client can
 self-diagnose a CWD/env-var misconfiguration without shell access to the
 server's host; it never discloses the value of any environment variable,
-only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). Domain-specific
+only whether a domain's own ``SPECMGR_*_DIR`` is set (REQ-002). ``i18n`` registers
+the multi-language artifact-variant guidance resource (``specmgr://i18n``,
+feat-197-i18n Phase 130) -- the directory layout/basename rule, the language
+vocabulary and heading tables, the per-domain never-translate list (REQ-010),
+and the create-versus-update and guard semantics the ``translate_artifact``
+prompt reads first (its sibling resource template
+``specmgr://i18n/headings/{language}`` serves a language's heading-mapping
+table as JSON, so the flow needs no host file tool); cross-cutting like
+``dtais``/``rasci``, since it spans the twelve i18n-eligible domains. Domain-specific
 resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::

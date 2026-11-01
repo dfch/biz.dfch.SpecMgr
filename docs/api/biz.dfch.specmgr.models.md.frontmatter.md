@@ -5,7 +5,7 @@ Generic base frontmatter model shared by every markdown-backed document type.
 Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
 ``feat-5-md-model-parser``): this is a *base* frontmatter model carrying only
 the handful of fields every document type shares. A concrete document type
-(e.g. a future ``uc``/``req``) defines its own frontmatter model that
+(e.g. ``uc``/``req``) defines its own frontmatter model that
 subclasses :class:`MarkdownFrontmatter` and adds its own fields, narrowing
 ``type`` to a fixed ``Literal[...]`` value, e.g.::
 
@@ -49,14 +49,16 @@ type:
     needing to know that beforehand. Must not be blank.
 created:
     Free-form date/timestamp the document was first created. Optional.
-    The generated JSON Schema carries a ``pattern`` key (derived from
-    :data:`_DATE_TIME_PATTERN`, the same regex :meth:`_validate_date_time_format`
-    enforces at runtime) documenting the required ``yyyy-MM-dd
-    HH:mm:ss.fff`` + ``Z``/``±HH:mm`` format -- this is schema-level
-    documentation only, added via ``json_schema_extra`` rather than
-    ``Field(pattern=...)`` so that pydantic-core does not itself enforce
-    the pattern (which would fire before, and mask the message of,
-    :meth:`_validate_date_time_format`).
+    The required shape is ``yyyy-MM-dd`` + (``T`` or space) +
+    ``HH:mm:ss.SSS`` + ``Z``/``±HH:mm``; the machine-written canonical
+    form is the ``T``-separated one (the MCP is the only writer of
+    frontmatter). The generated JSON Schema carries a ``pattern`` key
+    (derived from :data:`_DATE_TIME_PATTERN`, the same regex
+    :meth:`_validate_date_time_format` enforces at runtime) documenting
+    that shape -- this is schema-level documentation only, added via
+    ``json_schema_extra`` rather than ``Field(pattern=...)`` so that
+    pydantic-core does not itself enforce the pattern (which would fire
+    before, and mask the message of, :meth:`_validate_date_time_format`).
 updated:
     Free-form date/timestamp the document was last updated. Optional.
     Carries the same schema-level ``pattern`` documentation as

@@ -17,10 +17,110 @@ bundled into this change.
 As with ``adr.tools._paths``, this module has no ``mcp``/file-write
 dependency beyond read-only directory listing: :func:`doc_base_dir` never
 creates the directory (a read-only tool shouldn't have that side effect),
-only :func:`ensure_doc_base_dir` does. There is deliberately no in-memory
-id -> path cache either -- every lookup re-scans the base directory and
-re-parses each file, matching this codebase's "the on-disk file is the sole
-source of truth" design.
+only :func:`ensure_doc_base_dir` does.
+
+**Cache-backed scan (feat-107-doc-cache Phase 3/4).** :func:`find_doc_path_by_id`
+no longer re-parses a file's raw text unconditionally on every scan. Its
+``read_fn`` parameter (formerly a text-taking ``parse_fn``) is expected to
+be a domain's own content-hash-validated, cache-backed reader (e.g.
+``req.tools._cache.read_req``) -- when a candidate file's on-disk content
+hash is unchanged since the last time that path was read, ``read_fn``
+returns the cached result without re-invoking the underlying parser
+(ADR bfd76370-b59b-4d65-b550-a969f6c93c9d). Callers may also pass
+``reconcile_fn`` (a domain's own cache-reconcile callable, e.g.
+``req.tools._cache.reconcile_req_cache``), invoked once against the freshly
+materialized live path listing *before* any per-file work, dropping any
+cached entry for a file deleted outside specmgr's own tooling (REQ-005) --
+this keeps orphan cleanup to a cheap set comparison rather than additional
+file reads. The filesystem nonetheless remains the sole source of truth
+(ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only ever a
+memoization keyed by a validated content hash, so a stale entry is
+structurally impossible -- it can only ever cost one extra parse, never an
+incorrect result.
+
+**Skip-on-parse-failure now also catches ``yaml.YAMLError`` (feat-107-doc-cache
+Phase 6, REQ-010).** :func:`find_doc_path_by_id`'s per-file scan loop skips
+a file that fails to parse so one broken file never blocks lookup of a
+different, valid id. Before Phase 6 this only caught ``AssertionError``/
+``ValueError``, which does not include ``yaml.YAMLError`` (not a
+``ValueError`` subclass) -- even though every ``parse_<domain>`` genuinely
+raises it unwrapped for malformed frontmatter YAML, and both ``DocCache``'s
+own ``CACHEABLE_ERROR_TYPES`` and ``general.tools._listing.build_summaries``
+already treated it as a normal, skippable failure. This was confirmed
+pre-existing and unrelated to the cache mechanism itself (unchanged since
+before Phase 3), but folded into this same remediation pass since it sits
+in code this feature already touches and directly contradicts the cache's
+own failure-handling contract.
+
+**Skip-on-parse-failure now also catches ``FileNotFoundError`` (feat-107-doc-cache
+Phase 8, REQ-014).** This scan iterates over a path list materialized at
+one point in time (the directory-listing snapshot up front), but the
+generic ``delete`` tool in ``general.tools`` only holds the *target*
+document's own per-id lock, never a whole-domain lock, while ``get_*``/
+``list_*`` intentionally take no lock at all (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of *any
+other* document in the same domain can remove a file between the scan's
+directory listing and that file's own turn in the loop, raising
+``FileNotFoundError`` out of ``read_fn``. Before Phase 8 this was not
+caught here, even though it is the identical race class REQ-012 (Phase 6)
+closed for ``feat`` alone, whose rename-based cache integration REQ-012
+originally (and, per its own now-corrected text, incorrectly) claimed was
+the only trigger for this class of bug -- the generic ``delete`` tool
+triggers the exact same race for every one of the other domains. A file
+vanishing mid-scan this way is now skipped exactly like any other
+unparseable file, and the scan continues looking for the target id.
+
+**Language-variant directories (feat-197-i18n, ADR 38efdb66 items 1/6).** A
+non-default language ``L`` of a domain's documents lives in a direct
+``{L}`` subdirectory of the domain's flat base directory
+(``docs/{type}/{L}/<type>-<id>-<slug>.md``); the default language EN
+(:data:`~biz.dfch.specmgr.general.tools._path_safety.DEFAULT_LANGUAGE`,
+whether omitted or passed explicitly) keeps exactly today's flat path
+``docs/{type}/<type>-<id>-<slug>.md``. :func:`doc_base_dir`/
+:func:`ensure_doc_base_dir` take the optional ``language`` parameter that
+selects between the two (shape-guarding a non-default value via
+:func:`_path_safety.assert_language` before it becomes part of a path),
+:func:`language_for_doc_path` recovers the language a given document path
+is encoded by (its position relative to the flat base directory), and
+:func:`iter_doc_paths_all_languages` yields the domain-wide live listing
+(flat EN files plus every file in every shape-valid ``{language}``
+subdirectory) that a domain's reconcile-on-scan needs once a single scan
+no longer covers the whole domain. :func:`iter_doc_paths` itself is
+unchanged and stays non-recursive: it never descends into ``{language}``
+subfolders, which is exactly what keeps every EN-only consumer (each
+domain's own flat scan, plus ``list_references``,
+``find_related``/``find_similar_text``, ``get_reference_diagram(_all)``)
+EN-only by directory layout (REQ-013/ACC-014, ADR item 8).
+
+**A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
+encodes (feat-150-mcp-lifecycle-commands Phase 1a, ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c).** :func:`find_doc_path_by_id`'s
+skip-on-parse-failure behavior above is deliberate and unchanged -- but it
+means ``get_<d>`` on a document whose own file is broken raised only the
+generic not-found error, with no parse cause/path/line, and that generic
+error was being discarded client-side anyway (the ADR 519d1206
+``isError: true`` truncation chain). :func:`find_parse_failure` recovers
+exactly that case: it scans for the single file whose stem encodes the id
+(``f"{id_}-"`` prefix), attempts the domain's own cache-backed reader on it,
+and returns ``(path, str(exc))`` when that read raises a parse error, so
+``get_<d>`` can return a non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` whose ``error``
+text is byte-identical to the domain's ``list_<d>`` failed-row ``error``
+(both are ``str()`` of the same exception from the same reader -- identical field
+path and cause, including the trailing pydantic documentation line --
+feat-162-doc-cache-exception-footer, GitHub issue #162, fixed ``DocCache``'s
+exception reconstruction to preserve that footer on a warm re-raise). It returns
+``None`` otherwise (no name match, a vanished file, or a name-matching file
+that parses cleanly), leaving the caller to re-raise its original not-found
+error unchanged. It does not alter :func:`find_doc_path_by_id`'s documented
+skip behavior; of the generic id-resolving tools, only ``delete``,
+``validate``, and ``list_references`` keep raising exactly as before on a
+broken target -- ``update``/``edit``/``set_status``/
+``set_classification`` now return the non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` via this probe
+on their own ``XNotFoundError`` catch (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the
+ADR 519d1206-4d2a-4500-9046-6db635209996 workaround chain).
 
 ## Classes
 
@@ -45,57 +145,103 @@ No document file found matching the given id, under a given base directory.
 
 Return the configured documents root directory, without creating it.
 
+Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
+set-but-empty (feat-208, Phase 120).
 
-### `doc_base_dir(type_name: 'str') -> 'Path'`
+
+### `doc_base_dir(type_name: 'str', language: 'str | None' = None) -> 'Path'`
 
 Return the base directory for ``type_name`` documents, without creating it.
 
-Reads :data:`DOCS_DIR_ENV_VAR` from the environment, falling back to
-:data:`DEFAULT_DOCS_ROOT`, then appends ``type_name`` as a subdirectory
-(e.g. ``docs/req`` for ``type_name="req"``). Read-only tools/resources
-use this so merely reading never has the side effect of creating the
+Reads :data:`DOCS_DIR_ENV_VAR` through the central env-var registry's
+``get_with_default`` accessor, falling back to the record's default
+(the derived :data:`DEFAULT_DOCS_ROOT`) when the variable is unset or
+set-but-empty, then appends ``type_name`` as a subdirectory (e.g.
+``docs/req`` for ``type_name="req"``). Read-only tools/resources use
+this so merely reading never has the side effect of creating the
 directory -- see :func:`ensure_doc_base_dir` for the write path.
+
+With an optional ``language`` (feat-197-i18n, ADR 38efdb66 item 1):
+``None`` (omitted) or the default language EN (:data:`DEFAULT_LANGUAGE`)
+resolves to the flat ``docs/{type_name}`` directory -- exactly today's
+path, unchanged; any other value is shape-guarded by
+:func:`_path_safety.assert_language` first (a caller-supplied payload
+like ``"../../etc"`` never reaches the path join) and resolves to the
+language variant's subdirectory ``docs/{type_name}/{language}``.
 
 Parameters
 ----------
 type_name:
     The document type's subdirectory name, e.g. ``"req"``.
+language:
+    The document language to resolve. ``None`` (the default) or
+    :data:`DEFAULT_LANGUAGE` (``"en"``) resolve to the flat, default
+    directory; any other shape-validated code (e.g. ``"de"``) resolves
+    to that code's subdirectory under the flat one.
 
 Returns
 -------
 Path
-    The resolved base directory for ``type_name`` documents.
+    The resolved base directory for ``type_name`` documents (in the
+    given language).
 
 
-### `ensure_doc_base_dir(type_name: 'str') -> 'Path'`
+### `ensure_doc_base_dir(type_name: 'str', language: 'str | None' = None) -> 'Path'`
 
 Return the base directory for ``type_name`` documents, creating it if missing.
 
 Only a doc type's ``create_*`` tool should call this -- every other
-tool/resource uses the read-only :func:`doc_base_dir` instead.
+tool/resource uses the read-only :func:`doc_base_dir` instead. The
+optional ``language`` parameter selects the same flat-vs-subdirectory
+resolution as :func:`doc_base_dir` (feat-197-i18n, ADR 38efdb66
+item 1) before the directory is created.
 
 Parameters
 ----------
 type_name:
     The document type's subdirectory name, e.g. ``"req"``.
+language:
+    The document language to resolve -- see :func:`doc_base_dir`.
 
 Returns
 -------
 Path
     The resolved, now-guaranteed-to-exist base directory for
-    ``type_name`` documents.
+    ``type_name`` documents (in the given language).
 
 
-### `find_doc_path_by_id(base_dir: 'Path', id_: 'str', parse_fn: 'Callable[[str], _DocT]', get_id_fn: 'Callable[[_DocT], str | None]') -> 'Path'`
+### `find_doc_path_by_id(base_dir: 'Path', id_: 'str', read_fn: 'Callable[[Path], _DocT]', get_id_fn: 'Callable[[_DocT], str | None]', reconcile_fn: 'Callable[[Iterable[Path]], None] | None' = None) -> 'Path'`
 
 Resolve an ``id`` to its on-disk file path, for any doc type.
 
-Scans every ``*.md`` file under ``base_dir``, parsing each via
-``parse_fn`` and comparing ``get_id_fn(parsed)`` against ``id_``. A file
-that fails to parse (``AssertionError`` or ``ValueError``, which
-``pydantic.ValidationError`` and every parser-specific error in this
-codebase -- e.g. ``AdrParseError`` -- subclass) is silently skipped --
-one broken file must not prevent lookup of a different, valid id.
+Materializes the full ``*.md`` path listing under ``base_dir`` up
+front, reconciles a cache against it (via ``reconcile_fn``, if given)
+before doing any per-file work, then scans that same materialized
+listing, reading each path via ``read_fn`` and comparing
+``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
+(``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
+and every parser-specific error in this codebase -- e.g.
+``AdrParseError`` -- subclass; ``yaml.YAMLError``, raised unwrapped
+for malformed frontmatter YAML by every ``parse_<domain>`` function,
+Phase 6, REQ-010; or ``FileNotFoundError``, raised by ``read_fn`` when
+a file vanishes between this function's own directory-listing
+snapshot and its own turn in the per-file scan loop -- e.g. a
+concurrent ``delete`` tool call racing this lock-free scan, Phase 8,
+REQ-014) is silently skipped -- one broken (or vanished) file must not
+prevent lookup of a different, valid id. Before Phase 6, ``yaml.YAMLError``
+was not caught here (it is not a ``ValueError`` subclass), even though
+``DocCache``'s own ``CACHEABLE_ERROR_TYPES`` and
+``general.tools._listing.build_summaries`` (the ``list_*`` read
+callback) both already treated it as a normal, skippable failure -- a
+domain directory with one file whose frontmatter YAML was malformed
+crashed this scan with an uncaught ``yaml.YAMLError`` for *any* id in
+that domain, not just the malformed file's own id. Before Phase 8,
+``FileNotFoundError`` was likewise not caught here, even though it is
+the identical delete/scan race class REQ-012 (Phase 6) closed for
+``feat`` alone -- see this module's own docstring above for the full
+explanation.
 
 Parameters
 ----------
@@ -103,12 +249,23 @@ base_dir:
     The directory to scan for ``*.md`` files.
 id_:
     The id to look up.
-parse_fn:
-    Parses a file's full text into a document object (e.g. ``parse_adr``,
-    ``parse_req``).
+read_fn:
+    Reads and parses a file at the given path into a document object
+    (e.g. a domain's own cache-backed ``read_<domain>``, such as
+    ``req.tools._cache.read_req``). Unlike the retired ``parse_fn`` this
+    replaces, ``read_fn`` takes a ``Path``, not text -- a cache-backed
+    reader decides for itself whether to re-read/re-parse ``path`` or
+    return an already-validated cached result.
 get_id_fn:
     Extracts the id (or ``None``) from a parsed document object (e.g.
     ``lambda doc: doc.frontmatter.id``).
+reconcile_fn:
+    When given, called once with the full materialized live path
+    listing before any per-file work, to drop any cache entry for a
+    path no longer present on disk (e.g.
+    ``req.tools._cache.reconcile_req_cache``, REQ-005). ``None`` (the
+    default) skips reconciliation entirely -- e.g. for a domain that
+    has not yet wired a cache through this function.
 
 Returns
 -------
@@ -121,11 +278,82 @@ DocNotFoundError
     If no file's parsed id matches ``id_``.
 
 
+### `find_parse_failure(base_dir: 'Path', id_: 'str', read_fn: 'Callable[[Path], _DocT]') -> 'tuple[Path, str] | None'`
+
+Resolve the parse-failure for an id whose on-disk file exists but is unparseable.
+
+Companion to :func:`find_doc_path_by_id` for the one case that function
+deliberately cannot surface: a file whose own stem encodes ``id_``
+(exactly one file can match, since names are unique) but whose content
+fails to parse. :func:`find_doc_path_by_id`
+silently skips such a file during its id scan (one broken file must not
+block lookup of a different, valid id), so ``get_<d>`` on a broken
+document would otherwise only raise the domain's generic not-found error,
+with no parse cause, path, or line. This function recovers exactly that
+case: it scans :func:`iter_doc_paths` for the single name-matching file -- a stem that
+carries ``id_`` as a hyphen-bounded token, i.e. ``f"-{id_}-" in stem``
+(the flat-file naming is ``<type>-<id>-<slug>.md``, so ``id_`` sits
+between the type prefix and the slug) or a ``f"{id_}-"`` prefix (the
+``<id>-<slug>.md`` form) -- attempts the domain's own cache-backed
+``read_fn`` on it, and returns
+``(path, str(exc))`` if that read raises a parse error
+(``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError`` --
+the same channels :func:`general.tools._listing.build_summaries` catches
+for the ``list_<d>`` failed row, so ``str(exc)`` here is byte-identical
+to that row's ``error`` field -- identical field path and cause,
+including the trailing pydantic documentation line, since
+feat-162-doc-cache-exception-footer (GitHub issue #162) fixed
+``DocCache``'s exception reconstruction to preserve that footer on a
+warm re-raise). It returns ``None`` for every other
+outcome -- no name match, a name-matching file that vanishes mid-scan
+(``FileNotFoundError``), or a name-matching file that parses cleanly
+(a frontmatter-id mismatch, i.e. the file is not the requested document)
+-- so a caller can re-raise its original not-found error unchanged.
+
+feat-150-mcp-lifecycle-commands Phase 1a, ADR
+9080b37c-82b3-4f63-81f1-79641d0bf14c: the ``get_<d>`` tools call this on
+the domain's ``XNotFoundError`` and return a non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
+non-``None`` result. The four generic mutation tools
+(``update``/``edit``/``set_status``/``set_classification``) now call it
+the same way from their own per-domain adapters on the same catch
+(feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+chain), with the same ``read_fn``/``assert_within`` mirroring.
+
+Parameters
+----------
+base_dir:
+    The directory to scan for ``*.md`` files.
+id_:
+    The id whose on-disk file may exist but be unparseable.
+read_fn:
+    The domain's own cache-backed reader (e.g. ``req.tools._cache.
+    read_req``) -- the same callable the domain's ``list_<d>`` tool reads
+    with, so the captured ``str(exc)`` matches its failed row.
+
+Returns
+-------
+tuple[Path, str] | None
+    ``(path, error_text)`` for the name-matching, unparseable file, or
+    ``None`` if there is no parse failure to surface (no name match, a
+    vanished file, or a name-matching file that parses cleanly).
+
+
 ### `iter_doc_paths(base_dir: 'Path') -> 'Iterator[Path]'`
 
 Yield every ``*.md`` file directly under ``base_dir``, sorted by name.
 
 Yields nothing (rather than raising) if ``base_dir`` does not exist.
+
+Non-recursive by design (feat-197-i18n, REQ-013/ACC-014, ADR 38efdb66
+item 8): the single-level ``*.md`` glob never descends into
+``{language}`` subfolders (or any other subdirectory), so every
+EN-only consumer of this function -- each domain's own flat scan, plus
+``list_references``, ``find_related``/``find_similar_text``, and
+``get_reference_diagram(_all)`` -- keeps seeing exactly the flat files
+with zero code change. A future switch to a recursive glob would
+silently break that property; the feature's own tests pin it.
 
 Parameters
 ----------
@@ -136,6 +364,94 @@ Returns
 -------
 Iterator[Path]
     An iterator over the matching, sorted paths.
+
+
+### `iter_doc_paths_all_languages(base_dir: 'Path') -> 'Iterator[Path]'`
+
+Yield the domain-wide live ``*.md`` listing: the flat directory plus every ``{language}`` subdirectory.
+
+The reconcile-on-scan counterpart of the language variant's directory
+layout (feat-197-i18n, ADR 38efdb66 item 9): once a domain's documents
+can live in a per-language subdirectory, a scan of one directory no
+longer covers the whole domain, so a domain's cache-reconcile call must
+be handed the union -- the flat (default-EN) files plus every file
+directly under every shape-valid ``{language}`` subdirectory of
+``base_dir`` -- or a scan of one language would evict the other
+languages' cached entries. Yields the union sorted by path, and nothing
+(rather than raising) if ``base_dir`` does not exist. Non-recursive at
+both levels, like :func:`iter_doc_paths`: a deeper nesting is never
+part of any domain's live listing (no tool ever scans it, so no cache
+entry for it can exist).
+
+Parameters
+----------
+base_dir:
+    The domain's flat (default-language) base directory, e.g.
+    ``docs/dec``.
+
+Returns
+-------
+Iterator[Path]
+    An iterator over the matching, sorted paths.
+
+
+### `iter_language_dirs(base_dir: 'Path') -> 'Iterator[tuple[str, Path]]'`
+
+Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
+
+The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
+ADR 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
+language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
+language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
+anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
+be empty, hold non-``.md`` assets, or hold documents of other ids) and never descends. Yields nothing (rather
+than raising) if ``base_dir`` does not exist. :func:`iter_doc_paths_all_languages` is built on it, and the
+language-listing tool (``list_languages``) probes each yielded directory for one id.
+
+Parameters
+----------
+base_dir:
+    The domain's flat (default-language) base directory, e.g. ``docs/dec``.
+
+Returns
+-------
+Iterator[tuple[str, Path]]
+    An iterator over ``(language code, subdirectory path)`` pairs, sorted by language code.
+
+
+### `language_for_doc_path(base_dir: 'Path', doc_path: 'Path') -> 'str | None'`
+
+Return the language a document path is encoded by, from its position under ``base_dir``.
+
+The inverse of :func:`doc_base_dir`'s own language resolution
+(feat-197-i18n, ADR 38efdb66 items 1/5): the language is encoded by
+directory location only, so a document directly under ``base_dir``
+(the flat, default-EN directory) maps to ``None`` (no heading-mapping
+table applies -- EN is the canonical form itself), and a document
+directly under a shape-valid ``{language}`` subdirectory of
+``base_dir`` maps to that language code (e.g. ``docs/dec/de/x.md``
+under ``docs/dec`` maps to ``"de"``). Every other position -- a
+non-shape-valid subdirectory name (``"de-DE"``, ``"Notes"``), a
+deeper nesting, or a path outside ``base_dir`` entirely -- maps to
+``None``: it is not a language location, so the document parses
+canonical-only, exactly as today's flat behavior. Both paths are
+``.resolve()``d before comparison (the ``DocCache`` REQ-009
+normalization discipline), so relative and absolute spellings of the
+same location agree.
+
+Parameters
+----------
+base_dir:
+    The domain's flat (default-language) base directory, e.g.
+    ``docs/dec``.
+doc_path:
+    The on-disk document path to classify.
+
+Returns
+-------
+str | None
+    The shape-validated ``{language}`` code the document lives in, or
+    ``None`` for the flat directory (or any non-language location).
 
 
 ### `slugify(title: 'str') -> 'str'`

@@ -61,9 +61,9 @@ _MINIMAL_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -120,7 +120,7 @@ class TestSetFeatId(TempFeatDirTestCase):
         self.assertEqual(result.created, created.created)
         self.assertEqual(result.version, created.version)
         self.assertNotEqual(result.updated, updated_before)
-        self.assertRegex(result.updated or "", r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
+        self.assertRegex(result.updated or "", r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(?:Z|[+-]\d{2}:\d{2})$")
 
         old_folder = feat_base_dir() / "feat-0-get-update"
         self.assertFalse(old_folder.exists())

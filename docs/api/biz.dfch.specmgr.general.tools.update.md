@@ -3,8 +3,8 @@
 ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
-twelve whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``). It dispatches on the
+whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -22,12 +22,31 @@ per-domain tool.
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
-the builtin shadow. The 12-way union return type is annotation-only -- the
+the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
+Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51, revising feature feat-69-
+update-context's "frontmatter-only" precedent for ``update`` alone): every
+successful call returns the shared
+:class:`~biz.dfch.specmgr.general.models.UpdateResult` wrapper -- its
+``frontmatter`` is the same per-domain frontmatter object feat-69 returned
+(carry-over with only ``updated`` bumped), and its ``snippet`` is, in range
+mode, the before/after window of the touched range (the dropped lines
+numbered pre-splice, the inserted lines numbered post-splice, up to 2
+unchanged context lines per side, each line ``<marker> <n>: <line text>``)
+computed once in the shared public dispatcher via
+:func:`._splice.splice_snippet`; ``snippet`` is ``None`` in whole-body mode
+(no ``offset``) and for the whole-body-equivalent range (``offset=1`` +
+omitted ``limit``). The adapters themselves return an internal
+:class:`_UpdateOutcome` (the new frontmatter plus, in range mode, the
+pre-splice body, the post-splice body, and the ``offset``/``limit``
+coordinates they used) so the dispatcher -- not any of the 13 adapters --
+assembles the ``UpdateResult``.
+
 ``feat`` is the one domain whose adapter (``_update_feat``) diverges from
-the other ten's identical shape in how it resolves ``id``: via
+every other domain's identical shape in how it resolves ``id``: via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
@@ -41,6 +60,48 @@ ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
 contract (``update_frontmatter``/``update_section``/``option_*``) has no
 whole-body replace by design.
 
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain).** Two failures now return a structured result instead of
+raising, with nothing written in either case. (1) On a target ``id`` whose
+only matching on-disk file fails to parse, every adapter returns the
+non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError``: the adapter catches the ``load_by_id`` failure (inside
+the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`._doc_paths.find_parse_failure` for the 11
+flat-file domains, called with the domain's own cache-backed ``read_<d>``
+as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged. (2) A content-validation failure on the submitted new content
+(whole-body mode: the pre-lock validation; range mode: the in-lock
+post-splice validation) returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.ValidateResult`
+(``valid=False``, ``errors=[...]``) instead of raising
+``AssertionError``/``pydantic.ValidationError`` -- the single
+``errors[].message`` is the enriched exception text capped exactly as the
+generic ``validate`` tool caps it (300 chars via
+:func:`models.md._markdown.snippet`, feat-110), mirroring ``validate``
+exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
+:mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
+``general.tools.validate``). The mode-dependent precedence when both failures hold at once is
+intentional (whole-body mode validates before loading, so
+``ValidateResult`` wins; range mode loads first, so
+``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
+(invalid ``id`` shape, ``limit`` given without ``offset``, misused range
+coordinates) still raises exactly as before, and a plain ``KeyError``
+still marks ``type="adr"`` (inherited from the dispatch-table lookup).
+
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
 validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
 ``ValueError`` before any filesystem access -- mirroring the generic
@@ -48,9 +109,63 @@ validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
 path to the domain's own base directory with ``_path_safety.assert_within``
 after ``load_by_id``, inside the domain lock.
 
+## Classes
+
+### `_UpdateOutcome`
+
+The generic ``update`` tool's internal per-domain adapter return (feat-153-off-by-n Phase 2, REQ-002/REQ-003).
+
+Carries everything the shared public dispatcher needs to assemble the
+public :class:`~biz.dfch.specmgr.general.models.UpdateResult`: the
+updated frontmatter, and -- in range mode only -- the pre-splice body,
+the post-splice body, and the ``offset``/``limit`` coordinates the
+adapter used (the same values it handed to
+:func:`~biz.dfch.specmgr.general.tools._splice.splice_body`). In
+whole-body mode the four range fields are all ``None`` and the dispatcher
+sets ``snippet=None``; so does it for the whole-body-equivalent range
+(``offset=1`` + omitted ``limit``), which the dispatcher detects from the
+coordinates. Never returned from the public tool itself -- the
+dispatcher converts every outcome to ``UpdateResult``.
+
+Parameters
+----------
+frontmatter:
+    The updated document's frontmatter only (no body) of the dispatched
+    domain type (feat-69-update-context's own return object, unchanged).
+pre_body:
+    Range mode only: the frontmatter-stripped body text as it existed
+    before the splice (``body_text`` of the on-disk file under the
+    domain lock).
+post_body:
+    Range mode only: the spliced body text -- the result of splicing
+    ``pre_body`` at the coordinates below via ``splice_body`` (the text
+    validated as a whole document and persisted).
+offset:
+    Range mode only: the 1-based first body line of the spliced range.
+limit:
+    Range mode only: the number of body lines the spliced range spans
+    (``0`` = pure insert; ``None`` = omitted, through the last body
+    line).
+
+
 ## Functions
 
-### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'DecFrontmatter'`
+### `_assemble_result(outcome: '_UpdateOutcome') -> 'UpdateResult'`
+
+Assemble the public ``UpdateResult`` from one adapter's internal :class:`_UpdateOutcome`.
+
+The shared dispatcher's single point where the before/after ``snippet``
+is computed -- once per successful call, never inside a per-domain
+adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+19ff316b-cd11-41a7-a616-ffd84917da51). ``snippet`` is ``None`` in exactly
+two cases: whole-body mode (no ``offset``) and the whole-body-equivalent
+range (``offset=1`` + omitted ``limit`` -- the range :func:`_splice.
+splice_body` documents as equivalent to the no-range mode); every other
+range-mode call renders the touched range via :func:`_splice.splice_
+snippet` from the outcome's pre/post bodies and coordinates.
+
+
+### `_update_dec(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the decision identified by ``id_`` (whole-body or line-range mode).
 
@@ -62,8 +177,21 @@ domain -- merged from dev while still on the old per-domain mechanism
 -- was converted to the generic tools), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+``language`` (the caller's already-guarded value; default ``"en"``,
+byte-identical to the pre-i18n adapter) selects which variant file the
+adapter acts on: the id is scanned for in ``dec_base_dir(language)``
+(the flat EN directory, or the ``{language}`` subdirectory -- the
+basename is never re-derived), the lock is the variant's own
+(``dec_lock(dec_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table
+(:func:`~biz.dfch.specmgr.dec.models.v1.parse_dec_body`), and the write
+plus cache warming target that one file's own path -- the EN file
+(content, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
 
-### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'FeatFrontmatter'`
+
+### `_update_feat(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the feature identified by ``id_`` (whole-body or line-range mode).
 
@@ -76,7 +204,7 @@ divergence (see the module docstring): ``id_`` resolves via
 other domain.
 
 
-### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'GolFrontmatter'`
+### `_update_gol(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the goal identified by ``id_`` (whole-body or line-range mode).
 
@@ -86,8 +214,17 @@ only ``updated`` bumped, ``write_gol_file``, ``GolNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+variant's own (``gol_lock(gol_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.gol.models.v1.parse_gol_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'PrbFrontmatter'`
+
+### `_update_prb(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the problem statement identified by ``id_`` (whole-body or line-range mode).
 
@@ -97,8 +234,17 @@ carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``; that per-domain tool was retired in feat-22
 Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+variant's own (``prb_lock(prb_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.prb.models.v1.parse_prb_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'QaFrontmatter'`
+
+### `_update_qa(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the QA document identified by ``id_`` (whole-body or line-range mode).
 
@@ -108,8 +254,16 @@ with only ``updated`` bumped, ``write_qa_file``, ``QaNotFoundError``;
 that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+variant's own (``qa_lock(qa_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table (:func:`~biz.dfch.specmgr.qa.models.v2.parse_qa_body`), and
+the write plus cache warming target that one file's own path -- the EN document (bytes,
+``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'ReqFrontmatter'`
+
+### `_update_req(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the requirement identified by ``id_`` (whole-body or line-range mode).
 
@@ -122,10 +276,32 @@ without ``offset`` is rejected by the public :func:`update` guard
 before dispatch), the on-disk body is re-read via :func:`body_text`,
 spliced via :func:`splice_body` at the read-style ``offset``/``limit``
 coordinates, and the *spliced result* is validated and persisted
-verbatim instead of the raw fragment.
+verbatim instead of the raw fragment. Failure returns (see the module
+docstring): a target ``id`` whose only matching on-disk file fails to
+parse yields the non-raising ``ParseFailureResult`` instead of
+``ReqNotFoundError`` (a truly-absent id still raises), and a
+content-validation failure on the submitted/spliced content yields the
+non-raising ``ValidateResult(valid=False, ...)`` instead of
+``AssertionError``/``pydantic.ValidationError``. As of feat-153-off-by-n
+Phase 2 (REQ-002/REQ-003) the adapter returns the dispatcher's internal
+:class:`_UpdateOutcome` -- the new frontmatter plus, in range mode, the
+pre-splice body, the post-splice body, and the ``offset``/``limit``
+coordinates it used -- so the shared public dispatcher assembles the
+public :class:`~biz.dfch.specmgr.general.models.UpdateResult` (computing
+the ``snippet`` once via :func:`_splice.splice_snippet`) instead of
+returning the bare frontmatter; the write behavior itself is unchanged.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+variant's own (``req_lock(req_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.req.models.v1.parse_req_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
 
-### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'RskFrontmatter'`
+### `_update_rsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the risk identified by ``id_`` (whole-body or line-range mode).
 
@@ -135,8 +311,17 @@ only ``updated`` bumped, ``write_rsk_file``, ``RskNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.rsk.models.v1.parse_rsk_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SopFrontmatter'`
+
+### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
 
@@ -148,8 +333,17 @@ per-domain ``update_sop`` tool to port -- this adapter was written
 directly in this shape), plus the REQ-002 range branch
 (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+variant's own (``sop_lock(sop_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.sop.models.v1.parse_sop_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'SysrsFrontmatter'`
+
+### `_update_sysrs(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the System Requirements Specification identified by ``id_`` (whole-body or line-range mode).
 
@@ -160,8 +354,17 @@ from day one per ADR 36905d5b, so there was never a per-domain
 ``update_sysrs`` tool to port -- this adapter was written directly in
 this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'TskFrontmatter'`
+
+### `_update_tsk(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the task list identified by ``id_`` (whole-body or line-range mode).
 
@@ -171,8 +374,37 @@ with only ``updated`` bumped, ``write_tsk_file``, ``TskNotFoundError``;
 that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
 range branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.tsk.models.v1.parse_tsk_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'UcFrontmatter'`
+
+### `_update_txt(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+Replace the body of the free-form text document identified by ``id_`` (whole-body or line-range mode).
+
+Mirrors :func:`_update_sysrs`'s shape (same ``txt_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
+``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
+36905d5b, so this adapter was written directly in this shape), plus the
+REQ-002 range branch (see :func:`_update_req`).
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+variant's own (``txt_lock(txt_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.txt.models.v1.parse_txt_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
+
+
+### `_update_uc(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the use case identified by ``id_`` (whole-body or line-range mode).
 
@@ -182,8 +414,16 @@ body (same ``uc_lock``, ``load_by_id``, frontmatter carry-over with only
 per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
 branch (see :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+variant's own (``uc_lock(uc_lock_key(id_, language))``), the submitted/spliced body is validated
+through the variant's heading table (:func:`~biz.dfch.specmgr.uc.models.v2.parse_uc_body`), and
+the write plus cache warming target that one file's own path -- the EN document (bytes,
+``updated``, cache entry) is never touched by a non-default ``language`` call.
 
-### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None') -> 'VcrFrontmatter'`
+
+### `_update_vcr(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).
 
@@ -192,118 +432,187 @@ frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 ``VcrNotFoundError``), plus the REQ-002 range branch (see
 :func:`_update_req`).
 
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.vcr.models.v1.parse_vcr_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
 
-### `update(id: 'str', type: "Literal['req', 'uc', 'tsk', 'qa', 'prb', 'gol', 'rsk', 'dec', 'sop', 'feat', 'vcr', 'sysrs']", content: 'str', offset: 'int | None' = None, limit: 'int | None' = None) -> '_UpdateFrontmatter'`
+
+### `update(id: 'str', type: 'WholeBodyType', content: 'str', offset: 'int | None' = None, limit: 'int | None' = None, language: 'str' = 'en') -> 'UpdateResult | ParseFailureResult | ValidateResult'`
 
 Replace the body of an existing document, in whole-body or line-range mode.
 
-    Cross-domain generic for the twelve whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same frontmatter carry-over, same verbatim
-    persistence, same domain not-found error).
+Cross-domain generic for the whole-body document types
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
+dispatches on ``type`` to the domain's own ported adapter (same lock,
+same id resolution, same frontmatter carry-over, same verbatim
+persistence, same domain not-found error).
 
-    **Whole-body mode** (no ``offset``/``limit``): ``content`` is body
-    markdown only, with no YAML frontmatter block -- the same shape the
-    per-domain ``update_<d>`` tools accept. Validated the same way: the
-    domain body model's ``from_text(format_text(content))``, letting
-    ``AssertionError`` (structural failure) or ``pydantic.ValidationError``
-    (field/cross-field failure) propagate uncaught, with nothing written in
-    either case.
+**Whole-body mode** (no ``offset``/``limit``): ``content`` is body
+markdown only, with no YAML frontmatter block -- the same shape the
+per-domain ``update_<d>`` tools accept. Validated the same way: the
+domain body model's ``from_text(format_text(content))`` -- a
+structural (``AssertionError``) or field/cross-field
+(``pydantic.ValidationError``) failure returns the non-raising
+``ValidateResult(valid=False, ...)`` (the single ``errors[].message``
+capped at 300 chars exactly as the generic ``validate`` tool caps it,
+feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206 chain)
+with nothing written.
 
-    **Range mode** (``offset`` given): ``content`` is a replacement
-    *fragment* addressed by read-style ``offset``/``limit`` coordinates,
-    where ``N`` is the number of lines of the current frontmatter-stripped
-    body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
-    virtual end-of-body position (one past the last line). ``offset`` is
-    the 1-based first body line to replace; ``limit`` is the number of
-    lines to replace -- the replaced range is ``offset..offset+limit-1``:
-    an omitted ``limit`` replaces through the last body line, ``limit=0``
-    is a pure insert of ``content``'s lines before line ``offset`` (with
-    ``offset=N+1`` that is the append case), and ``offset=N+1`` appends
-    after the last line. The on-disk body is re-read under the domain
-    lock, spliced (drop the range's lines, insert the fragment's lines at
-    position ``offset - 1``), and the *spliced result* -- not the fragment
-    -- is validated as a whole body exactly like whole-body mode and then
-    persisted verbatim, so unchanged regions of the on-disk body stay
-    byte-identical. An empty ``content`` deletes the range (legal iff the
-    result still validates). The YAML frontmatter is never addressable:
-    coordinates are body-relative by construction.
+**Range mode** (``offset`` given): ``content`` is a replacement
+*fragment* addressed by read-style ``offset``/``limit`` coordinates,
+where ``N`` is the number of lines of the current frontmatter-stripped
+body (the text ``get_<d>(id, raw=True)`` returns) and ``N+1`` is the
+virtual end-of-body position (one past the last line). ``offset`` is
+the 1-based first body line to replace; ``limit`` is the number of
+lines to replace -- the replaced range is ``offset..offset+limit-1``:
+an omitted ``limit`` replaces through the last body line, ``limit=0``
+is a pure insert of ``content``'s lines before line ``offset`` (with
+``offset=N+1`` that is the append case), and ``offset=N+1`` appends
+after the last line. The on-disk body is re-read under the domain
+lock, spliced (drop the range's lines, insert the fragment's lines at
+position ``offset - 1``), and the *spliced result* -- not the fragment
+-- is validated as a whole body exactly like whole-body mode and then
+persisted verbatim, so unchanged regions of the on-disk body stay
+byte-identical. An empty ``content`` deletes the range (legal iff the
+result still validates). The YAML frontmatter is never addressable:
+coordinates are body-relative by construction.
 
-    In both modes the existing file's frontmatter is carried over with
-    every field preserved except ``updated`` (bumped to the current
-    date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
-    ``status`` in particular is never settable through this tool -- the
-    generic ``set_status`` tool in ``general.tools`` is the only
-    status-change path.
+In both modes the existing file's frontmatter is carried over with
+every field preserved except ``updated`` (bumped to the current
+date+time timestamp, via ``general.tools._timestamps.now_timestamp()``);
+``status`` in particular is never settable through this tool -- the
+generic ``set_status`` tool in ``general.tools`` is the only
+status-change path.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for the ten UUID domains, ``feat-NNN-slug``
-    for ``feat``) **before** any filesystem access, so a path-injection
-    attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
-    Each adapter additionally confines the resolved path to the domain's
-    own base directory with ``_path_safety.assert_within`` inside the
-    lock -- defense-in-depth against any future gap in the id validation.
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+canonical lowercase-hex UUID for every domain other than ``feat``,
+``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a path-injection
+attempt or a wrong-format id is a ``ValueError`` raised before dispatch.
+Each adapter additionally confines the resolved path to the domain's
+own base directory with ``_path_safety.assert_within`` inside the
+lock -- defense-in-depth against any future gap in the id validation.
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
-    content:
-        Whole-body mode: the replacement body markdown, with no
-        frontmatter block. Range mode: the replacement fragment for the
-        lines ``offset..offset+limit-1`` (may be empty to delete the
-        range).
-    offset:
-        Optional 1-based first body line to replace; allowed ``1..N+1``,
-        where ``N+1`` (one past the last body line) is the virtual
-        end-of-body position. A given ``offset`` enters range mode; on its
-        own it replaces through the last body line.
-    limit:
-        Optional number of lines to replace starting at ``offset``
-        (``0`` = pure insert); must be given together with ``offset``
-        (``limit`` without ``offset`` is a ``ValueError``).
+Parameters
+----------
+id:
+    The document's specmgr-assigned identifier.
+type:
+    The document type / domain: one of ``req``, ``uc``, ``tsk``,
+    ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+    ``vcr``, ``sysrs``, ``txt``.
+content:
+    Whole-body mode: the replacement body markdown, with no
+    frontmatter block. Range mode: the replacement fragment for the
+    lines ``offset..offset+limit-1`` (may be empty to delete the
+    range).
+offset:
+    Optional 1-based first body line to replace; allowed ``1..N+1``,
+    where ``N+1`` (one past the last body line) is the virtual
+    end-of-body position. A given ``offset`` enters range mode; on its
+    own it replaces through the last body line.
+limit:
+    Optional number of lines to replace starting at ``offset``
+    (``0`` = pure insert); must be given together with ``offset``
+    (``limit`` without ``offset`` is a ``ValueError``).
+language:
+    The language variant to act on (feat-197-i18n Phase 120, ADR
+    38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
+    it) acts on the flat default-language document -- today's exact
+    behavior; any other ISO 639-1-shaped lowercase two-letter code
+    (e.g. ``"de"``) acts on that language's variant, located by
+    id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+    never re-derived), with the content (or the spliced result)
+    validated through that language's heading-mapping table. Only that
+    one file is written: the EN document's bytes, ``updated``
+    timestamp, and cache entry stay untouched. Shape-guarded before any
+    filesystem access (like ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+    (``feat`` is always English: a non-default language for it raises a
+    ``ValueError``).
 
-    Returns
-    -------
-ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
-GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter
-    The updated document's frontmatter only (no body) of the dispatched domain type;
-    use the corresponding ``get_<d>`` tool to fetch the full document afterward.
+Returns
+-------
+UpdateResult | ParseFailureResult | ValidateResult
+    On success, the updated document's
+    :class:`~biz.dfch.specmgr.general.models.UpdateResult` wrapper
+    (feat-153-off-by-n Phase 2, ADR 19ff316b-cd11-41a7-a616-ffd84917da51):
+    its ``frontmatter`` is the updated frontmatter only (no body) of
+    the dispatched domain type -- the same object feature
+    feat-69-update-context's "frontmatter-only" precedent returned --
+    and its ``snippet`` is, in range mode, the before/after window of
+    the touched range: up to 2 unchanged context lines above, the
+    dropped lines (numbered with their pre-splice 1-based body-line
+    numbers), the inserted lines (numbered with their post-splice
+    numbers), and up to 2 unchanged context lines below, each line
+    formatted ``<marker> <n>: <line text>`` (marker ``-``/``+``/
+    single space); the two numbering sequences are independent and
+    need not be contiguous when the replacement changes the line
+    count. ``snippet`` is ``None`` in exactly two cases: whole-body
+    mode (no ``offset``) and the whole-body-equivalent range
+    (``offset=1`` with omitted ``limit``). The ``offset``/``limit``
+    coordinates address lines of the frontmatter-stripped body --
+    never lines of the raw on-disk ``.md`` file (whose YAML
+    frontmatter block is variable-length, so a raw file read's line
+    numbers are never the same as body-line coordinates) -- the only
+    safe source of coordinates is a ``get_<d>(id, raw=True)`` read
+    (optionally ``numbered=True``), never a raw file read minus an
+    assumed constant, and a numbered read's output must never be fed
+    back verbatim into ``content`` (strip the ``"<n>: "`` prefix
+    first; it is likewise never a valid ``edit`` ``old_str``). Use
+    the corresponding ``get_<d>`` tool to fetch the full document
+    afterward. On a target ``id`` whose only matching on-disk file
+    fails to parse, a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+    (``error``/``path``/``id``) instead of the domain's not-found
+    error -- ``error`` is byte-identical to the domain's ``list_<d>``
+    failed row's ``error`` for the same file (identical field path and
+    cause, including the trailing pydantic documentation line; ADR
+    9080b37c-82b3-4f63-81f1-79641d0bf14c). On a content-validation
+    failure of the submitted new content (or, in range mode, of the
+    spliced result), a non-raising
+    :class:`~biz.dfch.specmgr.general.models.ValidateResult`
+    (``valid=False``, ``errors=[{message}]``) with the single
+    ``errors[].message`` capped at 300 chars exactly as the generic
+    ``validate`` tool caps it (feat-110), instead of
+    ``AssertionError``/``pydantic.ValidationError``. Nothing is written
+    in either failure case (feat-170-update-edit-parse-failure, GitHub
+    issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+    the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    structured-result workaround chain).
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written). Also raised for misused range coordinates: ``limit``
-        given without ``offset`` (raised before any file access), or
-        ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
-        ``offset + limit - 1 > N`` (raised after the on-disk body is read;
-        the message names the offending value(s) and the allowed range).
-        Nothing is written in any of these cases.
-    AssertionError
-        The (spliced) body is structurally invalid (e.g. a range that
-        deletes the H1). The message is prefixed with domain/tool/channel
-        context (e.g. ``"tsk update (body): ..."``) by the shared
-        tool-boundary wrapper (:func:`~biz.dfch.specmgr.models.md._errors.
-        wrap_tool_errors`), layered on top of the engine's own
-        field-path/line/snippet enrichment (feat-27-validation Phases
-        1/2). Nothing is written.
-    pydantic.ValidationError
-        A field/cross-field validation failure in the (spliced) body (e.g.
-        a range producing an out-of-vocabulary value) -- similarly
-        prefixed. Nothing is written.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the per-domain tools.
+Raises
+------
+ValueError
+    ``id`` is a path-injection attempt or not in the dispatched
+    domain's own format (raised before any filesystem access; nothing
+    is written). Also raised for misused range coordinates: ``limit``
+    given without ``offset`` (raised before any file access), or
+    ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
+    ``offset + limit - 1 > N`` (raised after the on-disk body is read;
+    the message names the offending value(s) and the allowed range).
+    Nothing is written in any of these cases.
+KeyError
+    A plain ``KeyError`` still marks ``type="adr"`` (inherited from
+    the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
+    UUID-shaped domain set, so ``type="adr"`` with a well-formed
+    UUID ``id`` passes ``validate_id`` and reaches the lookup, which
+    has no ``adr`` entry. Nothing is written. Unreachable through the
+    MCP server, whose ``type`` enum carries the 13 whole-body domains
+    only; a direct-Python-caller outcome.
+ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+    The target id is truly absent (no file on disk matches it at all)
+    -- the domain's own not-found error, unchanged from the per-domain
+    tools. An existing-but-broken document returns the non-raising
+    ``ParseFailureResult`` instead, and a content-validation failure of
+    the submitted/spliced content returns the non-raising
+    ``ValidateResult`` instead (both see Returns).
 

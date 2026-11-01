@@ -1,11 +1,11 @@
 # `biz.dfch.specmgr.adr.tools.update_section`
 
-``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
+``@mcp.tool()`` wrapper: update_section.
 
 Thin file-I/O/id-lookup adapter over
 ``models.adr.v1.mutations.update_section``: re-reads and re-parses the
 current on-disk state, then re-renders and re-writes the full file; there
-is no in-memory cache of a parsed :class:`Adr` (plan §7, §9a): the ``.md``
+is no in-memory cache of a parsed :class:`Adr`: the ``.md``
 file itself is always the source of truth. The whole sequence runs
 under ``_lock.adr_lock(id)`` so a concurrent mutation against the same
 id cannot interleave with it and cause a lost update.
@@ -20,7 +20,7 @@ wrapper's own name.
 
 Replace (or, via a deletion sentinel, clear) one whole-section field.
 
-Delegates to ``models.adr.v1.mutations.update_section`` (plan §4):
+Delegates to ``models.adr.v1.mutations.update_section``:
 ``value`` being blank/whitespace-only or the literal ``"REMOVE"``
 (case-insensitive) clears the section, unless ``key`` names a
 mandatory field, in which case ``AdrSectionError`` is raised and

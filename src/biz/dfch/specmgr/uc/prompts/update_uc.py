@@ -21,12 +21,14 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Use Case (UC) document by id, using the
-existing ``uc/tools/`` surface (``get_uc``, ``validate_uc``) plus the
+existing ``uc/tools/`` surface (``get_uc``, generic ``validate`` tool) plus the
 generic ``update``/``set_status``/``set_classification`` tools in
 ``general/tools/`` (called with ``type="uc"``). UC has no
 ``specmgr://uc/{id}`` resource -- id-based reads are ``get_uc``-only, ADR
 ddfb1109-422d-4507-8dbc-dc5e4bec9614; ``get_uc``'s ``raw=True`` parameter
-serves the line-range flow's line numbers.
+serves the line-range flow's line numbers (with ``numbered=True``
+additionally printing each line's 1-based body-line number, ready to
+feed into ``update``'s ``offset``).
 
 Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: UC's lifecycle surface is deliberately
@@ -60,7 +62,9 @@ from ...server import mcp
     title="Update a use case",
     description=(
         "Guides the LLM through revising an existing use case by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_uc_schema` tool (the generated JSON Schema); the "
+        "`get_uc_template`/`get_uc_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_uc(id: str, instructions: str | None = None) -> str:

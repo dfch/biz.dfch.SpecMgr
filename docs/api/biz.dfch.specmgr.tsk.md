@@ -12,17 +12,24 @@ against the shared ``mcp`` application instance at once::
     from biz.dfch.specmgr import tsk  # noqa: F401 (side-effects only)
 
 ``tools`` (``parse_tsk``, ``get_tsk``, ``list_tsk``, ``get_tsk_example``,
-``get_tsk_template``, ``create_tsk``,
-``validate_tsk``), ``resources`` (``specmgr://tsk/schema``,
-``specmgr://tsk/example``, ``specmgr://tsk/template``), and ``prompts``
+``get_tsk_template``, ``get_tsk_schema``, ``create_tsk``), ``resources``
+(``specmgr://tsk/example``, ``specmgr://tsk/template``), and ``prompts``
 (``create_task``, ``update_task``, ``implement_task``) all exist; whole-body
-and line-range updates of an existing document go through the generic
+and line-range updates go through the generic
 ``update`` tool in ``general.tools`` (``type="tsk"``), and status changes
 go through the generic ``set_status`` tool in ``general.tools``
-(``type="tsk"``). Like REQ,
+(``type="tsk"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools``
+(``type="tsk"``) -- the former ``validate_tsk`` tool was removed in favor
+of it (feat-81-83-validation). Like REQ,
 TSK has no ``specmgr://tsk/{id}`` resource -- id-based reads go through the
 ``get_tsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based REQ document reads as a tool (get_req), not a resource" --
 TSK never had such a resource to remove in the first place). Likewise, the
 former ``specmgr://tsk/list`` resource was replaced by the ``list_tsk``
 tool, so that paging parameters could be accepted (feat-13-list-paging).
+
+The former ``specmgr://tsk/schema`` resource was converted into the
+``get_tsk_schema`` tool, so that the generated JSON Schema is discoverable
+from the always-in-context tool surface (feat-189 Phase 105, ADR
+112b6498-078b-4a59-88b8-8ffb7a5041b3).

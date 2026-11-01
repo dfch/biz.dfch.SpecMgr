@@ -46,20 +46,27 @@ step 1 if this is genuinely a new SOP.
   entries (at least one). Numbers start at 1; leading zeros are
   accepted, gaps are allowed, duplicates are rejected.
 - `## Related Artifacts` -- optional container for up to five `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria, Sops (each `{ID}: {description}` per line; each
-  sub-list needs at least one item if present). `### Sops` is a
-  self-cross-reference (related/superseding SOPs).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks,
+  Sops (each bullet MUST match `<TAG> <uuid>: <title>` -- a
+  space-separated tag, a lowercase 8-4-4-4-12 hex UUID, and a title,
+  e.g. `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; each
+  sub-list needs at least one item if present; `Decisions` accepts
+  only the `DEC` tag, not `ADR`). `### Sops` is a self-cross-reference
+  (related/superseding SOPs), using the same format with the `SOP` tag.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
-  then `### {ISO8601 timestamp} ( - | : ) {title}` entries, newest-first
-  (e.g. `2026-08-30 14:30:00.000+02:00 - Created`), each with a
-  mandatory lead paragraph. The timestamp is `yyyy-MM-dd HH:mm:ss.fff`
-  with an explicit UTC offset (`+02:00`, `-05:00`) or `Z`, joined to the
-  title by `" - "` (space, hyphen, space) or `" : "` (space, colon,
-  space) -- the em-dash separator is rejected. This is a different
-  format from the frontmatter dates. New entries are prepended (newest
+  then `### {timestamp} ( - | : ) {title}` entries, newest-first (e.g.
+  `### 2026-08-30 14:30:00.000+02:00 - Created`), each with the entry's own
+  update text directly under the H3 heading (any markdown content --
+  multiple paragraphs, lists, code blocks, block quotes, not just a single
+  paragraph), which is mandatory. The timestamp is the full date+time form
+  `yyyy-MM-dd[T ]HH:mm:ss.SSS` with an explicit UTC offset (`+02:00`,
+  `-05:00`) or `Z` -- the same full format as the frontmatter
+  `created`/`updated` dates (the date/time separator may be `T` or a
+  space; a date-only timestamp is rejected) -- joined to the title by
+  `" - "` (space, hyphen, space) or `" : "` (space, colon, space): the
+  em-dash separator is rejected. New entries are prepended (newest
   first), not appended.
 
 Section order is binding: Purpose -> Scope -> Definitions -> Roles and
@@ -92,13 +99,13 @@ paragraph; Responsible needs at least one bullet; Support/Consulted/
 Informed may each be present with zero items). Skip this step only if
 the SOP will not have a `## Roles and Responsibilities` section at all.
 
-## 4. Use the template/example/schema as references
+## 4. Use the template/example tools as references
 
-Fetch `specmgr://sop/template` or `specmgr://sop/example` as a starting
-point/style reference, then check `specmgr://sop/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Call the `get_sop_template` and `get_sop_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_sop_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 5. Tool call sequence
 
@@ -109,7 +116,7 @@ there.
    entire frontmatter is built automatically and `status` is fixed to
    `"draft"`. A structural or field validation failure raises uncaught
    and nothing is written.
-3. Optionally call `validate_sop(content, full=False)` first if you
+3. Optionally call `validate(type="sop", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_sop`
    already performs the same validation internally, so this step is
    never required, only a convenience.

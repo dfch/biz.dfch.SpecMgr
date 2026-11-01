@@ -21,10 +21,14 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Decision (DEC) document by id, using the
-existing ``dec/tools/`` surface (``get_dec``, ``validate_dec``) plus the
+existing ``dec/tools/`` surface (``get_dec``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="dec"``; ``get_dec``'s ``raw=True`` parameter serves the line-range
-flow's line numbers). There is no ``specmgr://dec/{id}`` resource to point
+flow's line numbers, with ``numbered=True`` additionally printing each
+line's 1-based body-line number, ready to feed into ``update``'s
+``offset``) plus the cross-cutting ``specmgr://rasci`` resource
+(read first when the change touches ``## Roles and Responsibilities``).
+There is no ``specmgr://dec/{id}`` resource to point
 at -- id-based reads always go through the ``get_dec`` tool only (ADR
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
@@ -42,7 +46,8 @@ the requested change; when absent, the substituted fallback tells the LLM
 to ask the user before making any change rather than guessing.
 
 This prompt only ever *narrates* the revision flow (reading current state
-via `get_dec`, showing which sections are present vs. empty, eliciting
+via `get_dec`, showing which sections are present vs. empty, reading
+``specmgr://rasci`` when the roles section is touched, eliciting
 revisions via the `question` tool, then calling the generic `update` tool
 with `type="dec"`, with the generic `set_status` tool with `type="dec"`
 mentioned as a separate, optional follow-up) -- it never calls
@@ -72,7 +77,9 @@ from ...server import mcp
     title="Update a decision",
     description=(
         "Guides the LLM through revising an existing decision by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_dec_schema` tool (the generated JSON Schema); the "
+        "`get_dec_template`/`get_dec_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_dec(id: str, instructions: str | None = None) -> str:

@@ -28,7 +28,7 @@ depends on the other just for this one file read. Mirrors
 ``sop.resources.sop_template``/``vcr.resources.vcr_template`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://sysrs/schema``/``specmgr://sysrs/example``'s own precedent.
+``specmgr://sysrs/template``/``specmgr://sysrs/example``'s own precedent.
 """
 
 from __future__ import annotations

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "biz-dfch-specmgr"
-version = "0.21.0"
+version = "0.38.0"
 description = "An artifact manager for system specifications."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -62,8 +62,7 @@ cli = [
 
 mcp = [
     "biz-dfch-specmgr[cli]",
-    "mcp>=2.0.0",
-    "httpx>=0.27",
+    "mcp>=2.2.0",
 ]
 
 test = [
@@ -78,8 +77,13 @@ test = [
     "pytest-cov>=6.0",
 ]
 
+similarity = [
+    "biz-dfch-specmgr[mcp]",
+    "fastembed>=0.5.0",
+]
+
 dev = [
-    "biz-dfch-specmgr[cli,mcp,test]",
+    "biz-dfch-specmgr[cli,mcp,test,similarity]",
     "twine",
     "build",
     "uv",
@@ -164,6 +168,10 @@ namespaces = true
     "data/*.md",
     "data/*.json"
 ]
+"biz.dfch.specmgr.txt" = [
+    "data/*.md",
+    "data/*.json"
+]
 "biz.dfch.specmgr.uc" = [
     "data/*.md",
     "data/*.json"
@@ -173,7 +181,8 @@ namespaces = true
     "data/*.json"
 ]
 "biz.dfch.specmgr.general" = [
-    "data/*.md"
+    "data/*.md",
+    "data/headings/*.json"
 ]
 
 [tool.coverage.run]
@@ -188,3 +197,15 @@ filterwarnings = [
     # noisy across 24 test files that import it.
     "ignore::pytest.PytestCollectionWarning",
 ]
+markers = [
+    # feat-134: the single real-backend similarity test (loads the actual
+    # fastembed/bge-small model, downloading it on first use). Excluded from
+    # every default pytest invocation (CI matrix step and the pre-commit hook)
+    # via `addopts` below; developers opt in locally with `-m embedding_model`.
+    "embedding_model: real fastembed/bge-small backend test (downloads the model on first use; excluded from CI and default runs)",
+]
+# feat-134: keep the model-loading similarity test out of every default run
+# (CI + pre-commit + local) without editing ci.yml/.pre-commit-config.yaml.
+# An explicit `-m embedding_model` on the command line takes precedence over
+# this addopts expression, so `pytest -m embedding_model` still selects it.
+addopts = '-m "not embedding_model"'

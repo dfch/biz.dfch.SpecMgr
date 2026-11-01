@@ -20,8 +20,8 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Task List (TSK) document using the existing
 ``tsk/tools/``/``tsk/resources/`` surface (``list_tsk``,
-``specmgr://tsk/template``/``specmgr://tsk/example``, ``specmgr://tsk/schema``,
-``create_tsk``, ``validate_tsk``).
+``specmgr://tsk/template``/``specmgr://tsk/example``, ``get_tsk_schema``,
+``create_tsk``, generic ``validate`` tool).
 
 Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
 parameters to pre-fill: ``create_tsk`` builds the entire TSK frontmatter
@@ -58,7 +58,10 @@ from ...server import mcp
     title="Create a task list",
     description=(
         "Guides the LLM through checking for an existing similar task list, gathering the "
-        "required information, and driving create_tsk/validate_tsk to author a new TSK document."
+        "required information, and driving create_tsk/validate to author a new TSK document. The "
+        "structure reference is the `get_tsk_schema` tool (the generated JSON Schema); the "
+        "`get_tsk_template`/`get_tsk_example` tools return the authoring template and a complete "
+        "sample."
     ),
 )
 def create_task(topic: str) -> str:

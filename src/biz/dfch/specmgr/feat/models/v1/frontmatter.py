@@ -27,18 +27,19 @@ the base's ``"draft"`` (a `feat` document starts life ``"planning"``, not
 
 `created`/`updated` are inherited unchanged from `MarkdownFrontmatter`,
 including its own date+time-only format validator (D5,
-`.specmgr/feat/feat-38-39-41-43-44/README.md`) -- the canonical
-`yyyy-MM-dd HH:mm:ss.fff` + (`Z`/`±HH:mm`) shape is enforced for every
-domain, including `feat`, at the base-model layer, not re-declared here.
-The value itself is produced by the shared
-`general.tools._timestamps.now_timestamp()` helper, a tool-layer concern.
+`.specmgr/feat/feat-38-39-41-43-44/README.md`, broadened by feat-146 to
+accept the `T` separator) -- the `yyyy-MM-dd` + (`T` or space) +
+`HH:mm:ss.SSS` + (`Z`/`±HH:mm`) shape is enforced for every domain,
+including `feat`, at the base-model layer, not re-declared here. The value
+itself is produced by the shared `general.tools._timestamps.now_timestamp()`
+helper, a tool-layer concern, which writes the `T`-canonical form.
 """
 
 from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from biz.dfch.specmgr.models.md import MarkdownFrontmatter
 from biz.dfch.specmgr.models.md._util import default_if_blank
@@ -88,7 +89,16 @@ class FeatFrontmatter(MarkdownFrontmatter):
     """
 
     type: Literal["feat"] = "feat"  # type: ignore
-    status: str = DEFAULT_FEAT_STATUS
+
+    # feat-189 Phase 120 (C13): the `Field(...)` wrap (the redeclaration
+    # itself predates this feature) attaches `json_schema_extra` so the
+    # generated JSON Schema carries this same closed set as an `enum` key --
+    # schema-level documentation only, in the
+    # `MarkdownFrontmatter.created`/`.updated` `pattern`-metadata precedent:
+    # pydantic-core never enforces it, and `_validate_status` below remains
+    # the sole enforcement point. The default stays this class's own
+    # `"planning"`.
+    status: str = Field(default=DEFAULT_FEAT_STATUS, json_schema_extra={"enum": sorted(_ALLOWED_STATUSES)})
 
     @field_validator("status", mode="before")
     @classmethod

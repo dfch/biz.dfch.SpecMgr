@@ -29,7 +29,9 @@ content is inseparable from RSK's own ``## Strategy`` vocabulary). The
 content is limited to the five roles' generic definitions -- no
 ``sop``-specific heading names or cardinality rules leak in here; those
 stay exclusively in ``sop``'s own schema field docstrings (surfaced via
-``specmgr://sop/schema``) and packaged instructions.
+the ``get_sop_schema`` tool, the former ``specmgr://sop/schema`` resource,
+feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3) and packaged
+instructions.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
 ``iso25010``/``dtais``/``rsk/resources/tara``'s raw-markdown output, per

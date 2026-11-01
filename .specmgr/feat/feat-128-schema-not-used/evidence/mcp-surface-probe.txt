@@ -1,0 +1,466 @@
+TOOL COUNT: 94
+TOOLS:
+  create_tsk
+    description: Create a new task list: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the task list base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_tsk` tool to fetch the full document afterward.
+  get_tsk
+    description: Read, parse, and return a full task list document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_tsk_example
+    description: Return a complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_tsk_template
+    description: Return a TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list.
+  list_tsk
+    description: Ids, titles, statuses, and refs of task lists in the configured task list base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_tsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_tsk
+    description: Parse a task list markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.tsk.models.v1.TskDocument`.
+  create_feat
+    description: Create a new feature: assigns a fresh id (caller-chosen via the optional 'id' parameter, or defaulted to feat-0-<slug-from-title> when omitted -- no max+1 auto-generation), derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the feature base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_feat` tool to fetch the full document afterward.
+  get_feat
+    description: Read, parse, and return a full feature document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_feat_example
+    description: Return a complete, valid sample feature document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_feat_template
+    description: Return a FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature.
+  list_feat
+    description: Ids, titles, statuses, and refs of features in the configured feature base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_feat tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_feat
+    description: Parse a feature markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.feat.models.v1.FeatDocument`.
+  set_feat_id
+    description: Rename an existing feature's id: validates new_id's feat-NNN-slug shape, refuses if new_id's folder already exists, renames <base>/<id>/ to <base>/<new_id>/, rewrites the README frontmatter id to new_id, bumps updated, and leaves the body byte-identical. Does not update or search for references to the old id in any other document. Returns the renamed document's frontmatter only (no body); use the corresponding `get_feat` tool to fetch the full document afterward.
+  create_gol
+    description: Create a new goal: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the goal base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_gol` tool to fetch the full document afterward.
+  get_gol
+    description: Read, parse, and return a full goal document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_gol_example
+    description: Return a complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_gol_template
+    description: Return a GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal.
+  list_gol
+    description: Ids, titles, statuses, and refs of goals in the configured goal base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_gol tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_gol
+    description: Parse a goal markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.gol.models.v1.GolDocument`.
+  create_prb
+    description: Create a new Problem Statement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the problem statement base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_prb` tool to fetch the full document afterward.
+  get_prb
+    description: Read, parse, and return a full problem statement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_prb_example
+    description: Return a complete, valid sample problem statement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_prb_template
+    description: Return a PRB document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new problem statement.
+  list_prb
+    description: Ids, titles, statuses, and refs of problem statements in the configured problem statement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_prb tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_prb
+    description: Parse a problem statement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.prb.models.v1.PrbDocument`.
+  create_qa
+    description: Create a new Question and Answer (QA) document: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the QA base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_qa` tool to fetch the full document afterward.
+  get_qa
+    description: Read, parse, and return a full QA document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_qa_example
+    description: Return a complete, valid sample QA document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_qa_template
+    description: Return a QA document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new QA document.
+  list_qa
+    description: Ids, titles, statuses, and refs of QA documents in the configured QA base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_qa tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_qa
+    description: Parse a QA document markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`.
+  create_req
+    description: Create a new requirement: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the requirement base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_req` tool to fetch the full document afterward.
+  get_req
+    description: Read, parse, and return a full requirement document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_req_example
+    description: Return a complete, valid sample requirement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_req_template
+    description: Return a REQ document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new requirement.
+  list_req
+    description: Ids, titles, statuses, and refs of requirements in the configured requirement base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_req tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_req
+    description: Parse a requirement markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.req.models.v1.ReqDocument`.
+  create_rsk
+    description: Create a new risk: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the risk base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_rsk` tool to fetch the full document afterward.
+  get_rsk
+    description: Read, parse, and return a full risk document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_rsk_example
+    description: Return a complete, valid sample risk document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_rsk_template
+    description: Return a risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk.
+  list_rsk
+    description: Ids, titles, statuses, and refs of risks in the configured risk base directory, one page at a time, for context before addressing one by id. Each line also carries the initial/residual 5x5 zone levels, the TARA strategy word, the first `## Scope` entry, and the residual-risk coordinates (residual_probability/residual_impact/residual_product). 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_rsk tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_rsk
+    description: Parse a risk markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`.
+  create_sop
+    description: Create a new Standard Operating Procedure: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the SOP base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_sop` tool to fetch the full document afterward.
+  get_sop
+    description: Read, parse, and return a full SOP document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_sop_example
+    description: Return a complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_sop_template
+    description: Return a SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure.
+  list_sop
+    description: Ids, titles, statuses, and refs of Standard Operating Procedures in the configured SOP base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sop tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_sop
+    description: Parse a Standard Operating Procedure markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sop.models.v1.SopDocument`.
+  create_sysrs
+    description: Create a new System Requirements Specification: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the System Requirements Specification base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_sysrs` tool to fetch the full document afterward.
+  get_sysrs
+    description: Read, parse, and return a full System Requirements Specification document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_sysrs_example
+    description: Return a complete, valid sample System Requirements Specification document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_sysrs_template
+    description: Return a SYSRS document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new System Requirements Specification.
+  list_sysrs
+    description: Ids, titles, statuses, and refs of System Requirements Specifications in the configured System Requirements Specification base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_sysrs tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_sysrs
+    description: Parse a System Requirements Specification markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.sysrs.models.v1.SysrsDocument`.
+  create_uc
+    description: Create a new use case: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the use-case base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_uc` tool to fetch the full document afterward.
+  get_uc
+    description: Read, parse, and return a full use-case document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_uc_example
+    description: Return a complete, valid sample use case document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_uc_template
+    description: Return a UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case.
+  list_uc
+    description: Ids, titles, statuses, and refs of use cases in the configured use-case base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_uc tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_uc
+    description: Parse a use-case markdown file (YAML frontmatter + body) from disk into a structured document.
+  create_vcr
+    description: Create a new verification case record: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the verification case record base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_vcr` tool to fetch the full document afterward.
+  get_vcr
+    description: Read, parse, and return a full verification case record document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_vcr_example
+    description: Return a complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_vcr_template
+    description: Return a VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record.
+  list_vcr
+    description: Ids, titles, statuses, and refs of verification case records in the configured verification case record base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_vcr tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_vcr
+    description: Parse a verification case record markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.vcr.models.v1.VcrDocument`.
+  create_dec
+    description: Create a new decision: assigns a fresh id, derives a filename from the body's H1 title, validates the submitted body-only content, and writes the new document to the decision base directory. Returns the newly created document's frontmatter only (no body); use the corresponding `get_dec` tool to fetch the full document afterward.
+  get_dec
+    description: Read, parse, and return a full decision document (frontmatter and body) by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` (1-based, default 1) is the first body line to return, `limit` (line count, default through end of body) how many; out-of-range values clamp (`offset > N` returns the empty string), and coordinates with raw=False raise ValueError. A document that exists but fails to parse returns a `ParseFailureResult` (`error`/`path`/`id`) instead of raising; its `error` text carries the same parse defect as the domain's own `list` tool's failed-row `error` for the same file (identical field path and cause, though the trailing pydantic documentation line may differ by read order/cache state; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, Option B, 2026-09-26 -- the str-faithful reconstruction is tracked as a follow-up issue). An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before any file access.
+  get_dec_example
+    description: Return a complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  get_dec_template
+    description: Return a DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision.
+  list_dec
+    description: Ids, titles, statuses, and refs of decisions in the configured decision base directory, one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use it with the get_dec tool instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  parse_dec
+    description: Parse a decision markdown file (YAML frontmatter + body) from disk into a structured :class:`~biz.dfch.specmgr.dec.models.v1.DecDocument`.
+  delete
+    description: Permanently delete an existing document from disk across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported). Resolves the document by `id`, takes the domain lock, and removes it: the single `*.md` file for every flat domain (every whole-body domain except `feat`), or the entire `<base>/<id>/` folder for `feat`. Returns the deleted path as a string. An invalid `id` (path-injection attempt or wrong format) is a `ValueError` raised before any file access; a missing document is the domain's own `XNotFoundError`; an I/O failure is a `DeleteError`. This is the sole delete entry point -- the former per-domain `delete_<d>` tools are removed.
+  edit
+    description: Surgical, exact-match string replacement of an existing document's frontmatter-stripped body across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- an explicit pre-dispatch `ValueError`, unlike `update`'s inherited `KeyError`). Read the current body via the corresponding `get_<d>(id, raw=True)` first -- the read-before-edit step is a client convention, not server-enforced. Use `edit` for a surgical string replacement within an existing body; use the generic `update` tool for a whole-body or line-range replacement instead. The YAML frontmatter is never addressable (body only). The edit is 2-fold: stage 1 requires `old_str` to match the on-disk body byte-exactly -- uniquely, unless `replace_all` is `true`, in which case every exact occurrence is rewritten -- and stage 2 validates the *edited* body as a whole document; the document is written to disk only if both stages pass, and nothing is written on any failure (the file stays byte-unchanged). An empty `new_str` is a pure deletion (legal iff stage 2 validates). Matching is pure byte-exact with no line-ending normalization (an `old_str` containing `\n` will not match a CRLF body), no BOM handling, and no fuzzy/regex fallback. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body; `updated` bumped); use the corresponding `get_<d>` tool to fetch the full document afterward.
+  find_related
+    description: Find the documents most semantically related to an existing document, given its `type`/`id`, ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`; the source document itself is excluded from the results. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `type`/`id`/`target_types`/`top_k` is a `ValueError` before any filesystem access; a missing source is the domain's own `XNotFoundError`.
+  find_similar_text
+    description: Find the documents most semantically similar to a free-form `query` text (for pre-creation dedup/discovery checks), ranked by cosine similarity of local sentence embeddings (`fastembed`/`bge-small`, the `similarity` extra). By default every whole-body domain is searched (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is excluded structurally) -- restrict with `target_types`. Returns up to `top_k` (default 10, validated 1..100) hits as `{type, id, title, status, path, score}` rows, sorted by `score` descending; `min_score` (default: no filter) is an inclusive cosine lower bound. An unparseable candidate still appears, embedded from its full raw text, with `id = null` and the `<failed to parse>` marker title/status. When the embedding feature is unavailable (`SPECMGR_SIMILARITY_DISABLED` present, or the backend/model fails to load), returns the structured `{available: false, reason, message}` result instead of raising. A bad `target_types`/`top_k` is a `ValueError` before any filesystem access.
+  create_adr
+    description: Create a new ADR: assigns a fresh id, derives a filename from the title, validates, renders, and writes the new document to the ADR base directory.
+  get_adr
+    description: Read, parse, and return a full ADR document (frontmatter and body) by its id. An invalid id (path-injection attempt or wrong format) is a ValueError raised before any file access.
+  list_adr
+    description: Ids, titles, statuses, and refs of ADRs in the configured ADR base directory (SPECMGR_ADR_DIR), one page at a time, for context before addressing one by id. 'ref' is an opaque, extensionless identifier -- not a filename to read from disk -- for documents that have no assigned id; use get_adr with it instead. max_results/offset control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored.
+  option_create
+    description: Append a new 'Option N: ...' sub-section (plan §5), returning its assigned full title.
+  option_delete
+    description: Remove the option named full_title (plan §5), returning the remaining full titles.
+  option_list
+    description: Full titles of every current 'Option N: ...' sub-section, in document order (plan §5).
+  option_read
+    description: Return the current content of the option named full_title (plan §5).
+  option_update
+    description: Full-content replace of the option named full_title (plan §5), returning the new content.
+  update_frontmatter
+    description: Whole-object replace of an ADR's frontmatter (plan §3), preserving its existing id.
+  update_section
+    description: Whole-section replace/delete of one AdrBody field (plan §4).
+  validate_adr
+    description: Re-read and re-parse an ADR by id, letting the models' own Pydantic validators run.
+  list_references
+    description: Cross-references of one source document, resolved and paged. `type` is the source document's domain (one of adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs) and `id` the source's own identifier. The tool scans the source's frontmatter-stripped body for `<TYPE> <uuid>` references (the shared reference-tag vocabulary in general.tools._references: case-insensitive tag, space or dash separator, anywhere in a line), dedupes repeated occurrences (first-occurrence order preserved), and resolves each unique reference to the referenced document in its own target domain. Returns a `PagedResult` of one `ReferenceRow` per unique reference: `type`, `id`, `title` (the referenced document's H1), and `path` (the referenced document's resolved absolute file path). A reference that cannot be resolved on disk is a row with null `title`/`path` and the target domain's not-found message in `error` -- it never raises. `max_results`/`offset` control paging (default page size 25, capped at 100); out-of-range values are clamped, not errored. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access; a missing source document is the source domain's own `XNotFoundError`.
+  mdformat
+    description: Format a markdown file in place, preserving any YAML frontmatter. Returns True if the file was changed, False if already formatted.
+  set_classification
+    description: Replace the free-text `classification` frontmatter field of an existing document across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported), also bumping `updated` and leaving the body and every other frontmatter field untouched. `classification` is fully free-text -- no closed vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` tool accepts a `classification` argument at all -- this is the sole classification-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an unsupported `type` is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward.
+  set_status
+    description: Replace the status of an existing document across every domain (`type` is one of adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), also bumping `updated` (the whole-body domains) and leaving the body untouched. When `status` (or, for `type="adr"` with `superseded_by` given, the composed "superseded by X" value) already equals the document's current status, this is a no-op -- no write, no `updated` bump -- and still returns the same value shape a changed-status call would (issue #109). The new `status` must be one of the domain's own closed vocabulary values (see the domain's `XFrontmatter.status` field); an out-of-vocabulary `status` does NOT raise -- it returns a structured, non-raising `InvalidStatusResult` ({valid: false, type, status, allowed_values, message}) instead, so the allowed-values detail survives MCP clients that truncate error content. `superseded_by` is accepted only for `type="adr"` -- it composes the status as "superseded by {superseded_by}"; with any other `type` it is a `ValueError`. Neither `create_*` nor the generic `update` tool accepts a `status` argument at all -- this is the sole status-change entry point. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body, except for the unchanged `adr` branch); use the corresponding `get_<d>` tool to fetch the full document afterward.
+  update
+    description: Whole-body or line-range replace of an existing document's content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), preserving its id/type/status/created/version; only `updated` changes. With no `offset`/`limit`, `content` is the full replacement body (body markdown only, no frontmatter block). With `offset`, `content` replaces the body line(s) starting at 1-based line `offset` of the current on-disk body: `limit` is the number of lines to replace (`offset`..`offset+limit-1`; `limit` omitted = through the last body line, `limit=0` = pure insert), and `offset=N+1` (one past the last body line) appends after it; the spliced result is validated as a whole document before anything is written. `status` is never settable -- use the generic `set_status` tool. An invalid `id` (path-injection attempt or wrong format for `type`) is a `ValueError` raised before any file access. Returns the updated frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full document afterward.
+  validate
+    description: Disk-free, id-free dry run validating document content across the whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs; `adr` is not supported -- use `validate_adr` instead). `full=False` (default) validates body-only content (no frontmatter); `full=True` validates a complete document (frontmatter + body). Never raises for a content-validation failure: always returns `{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is `True`, and each `message` is truncated to at most `_MAX_VALIDATE_ERROR_CHARS` (300) characters (plus an `"... (truncated)"` suffix when truncation occurred) rather than returned verbatim without limit. A `full`/content-shape mismatch, or an unsupported `type`, is a caller-usage error and still raises `ValueError` before any validation runs. This is the sole validate entry point for these domains -- the former per-domain `validate_<d>` tools are removed; `validate_adr` remains a separate, unchanged, id-based tool.
+PROMPT COUNT: 32
+PROMPTS:
+  create_feat(topic)
+    title: Create a feature
+    description: Guides the LLM through checking for an existing similar feature, gathering the required information, and driving create_feat/validate to author a new FEAT document.
+  update_feat(id,instructions)
+    title: Update a feature
+    description: Guides the LLM through revising an existing feature by id: reading current state, applying the requested change with the right tool, and validating.
+  create_task(topic)
+    title: Create a task list
+    description: Guides the LLM through checking for an existing similar task list, gathering the required information, and driving create_tsk/validate to author a new TSK document.
+  implement_task(id)
+    title: Implement a task list
+    description: Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding.
+  update_task(id,instructions)
+    title: Update a task list
+    description: Guides the LLM through revising an existing task list by id: reading current state, applying the requested change with the right tool, and validating.
+  create_gol(topic)
+    title: Create a goal
+    description: Guides the LLM through checking for an existing similar goal, gathering the required information, and driving create_gol/validate to author a new GOL document.
+  update_gol(id)
+    title: Update a goal
+    description: Guides the LLM through revising an existing goal by id: reading current state, showing which sections are present vs. empty, eliciting revisions, applying the change with the right tool, and validating.
+  create_prb(topic,qa_id)
+    title: Create a problem statement
+    description: Guides the LLM through checking for an existing similar problem statement, optionally carrying over already-answered 5W2H questions from a linked QA document (qa_id), interviewing the user for whichever 5W2H current-state questions remain, synthesizing the Summary and Gap, composing the mandatory Problem Statement lead sentence, and driving create_prb/validate to author a new PRB document.
+  update_prb(id,instructions)
+    title: Update a problem statement
+    description: Guides the LLM through revising an existing problem statement by id: reading current state (recovering an old-shape document missing the mandatory lead sentence via a raw re-read if needed), showing which of the 7 5W2H questions are answered, eliciting revisions, re-synthesizing Summary/Gap, applying the change with the right tool, and validating.
+  create_qa(topic)
+    title: Create a QA document
+    description: Guides the LLM through checking for an existing similar QA document, gathering answers to ISO/IEC 25010:2023 characteristic-relevant questions, and driving create_qa/validate to author a new QA document.
+  refine(id_or_name,scope)
+    title: Add interview questions to a QA document
+    description: Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics.
+  update_qa(id,instructions)
+    title: Update a QA document
+    description: Guides the LLM through revising an existing QA document by id: reading current state, applying the requested change with the right tool, and validating.
+  create_req(topic)
+    title: Create a requirement
+    description: Guides the LLM through checking for an existing similar requirement, gathering the required information, and driving create_req/validate to author a new REQ document.
+  update_req(id,instructions)
+    title: Update a requirement
+    description: Guides the LLM through revising an existing requirement by id: reading current state, applying the requested change with the right tool, and validating.
+  create_risk(topic)
+    title: Create a risk
+    description: Guides the LLM through checking for an existing similar risk, gathering the required information, and driving create_rsk/validate to author a new RSK document.
+  update_risk(id,instructions)
+    title: Update a risk
+    description: Guides the LLM through revising an existing risk by id: reading current state, applying the requested change with the right tool, and validating.
+  create_sop(topic)
+    title: Create a standard operating procedure
+    description: Guides the LLM through checking for an existing similar SOP, gathering the required information, and driving create_sop/validate to author a new SOP document.
+  update_sop(id,instructions)
+    title: Update a standard operating procedure
+    description: Guides the LLM through revising an existing SOP by id: reading current state, applying the requested change with the right tool, and validating.
+  create_sysrs(topic)
+    title: Create a system requirements specification
+    description: Guides the LLM through checking for an existing similar system requirements specification, gathering the required information, and driving create_sysrs/validate to author a new SYSRS document.
+  update_sysrs(id,instructions)
+    title: Update a system requirements specification
+    description: Guides the LLM through revising an existing SYSRS by id: reading current state, applying the requested change with the right tool, and validating.
+  create_uc(topic)
+    title: Create a use case
+    description: Guides the LLM through checking for an existing similar use case, gathering the required information, and driving create_uc/validate to author a new UC document.
+  update_uc(id,instructions)
+    title: Update a use case
+    description: Guides the LLM through revising an existing use case by id: reading current state, applying the requested change with the right tool, and validating.
+  create_vcr(topic)
+    title: Create a verification case record
+    description: Guides the LLM through checking for an existing similar verification case record, gathering the required information, and driving create_vcr/validate to author a new VCR document.
+  update_vcr(id,instructions)
+    title: Update a verification case record
+    description: Guides the LLM through revising an existing verification case record by id: reading current state, applying the requested change with the right tool, and validating.
+  create_dec(topic)
+    title: Create a decision
+    description: Guides the LLM through checking for an existing similar decision, gathering the required information, and driving create_dec/validate to author a new DEC document.
+  update_dec(id,instructions)
+    title: Update a decision
+    description: Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating.
+  compact_history(feature_id,cutoff_hint)
+    title: Compact a feature folder's Recent Updates history
+    description: Guides the LLM through rotating older 'Recent Updates' entries out of a .specmgr feature folder's README.md and into an optional sibling history.md, leaving a pointer line behind, per ADR e369ee2e-3353-4f92-991c-6367d76d832e.
+  repair(type,id)
+    title: Repair a specmgr document that fails to parse
+    description: Guides the LLM through repairing a whole-body specmgr document that currently fails to parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- the error text carrying the same parse defect as list_<d>()'s failed row for the same file, modulo a possibly-missing trailing pydantic documentation line; every whole-body domain, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) when an id is given, or list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the host's own file-read tool, fix only what the error addresses while preserving the frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop validate(type, content, full=True) until green, write the repaired text back to the same path with the host's own file-write tool (never via the generic update (or edit) tool, which is structurally unable to repair a document that fails to parse), then confirm the repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only on a host without file read/write tools. ADR is out of scope.
+  create_adr(topic,decision_makers,consulted,informed)
+    title: Create an ADR
+    description: Guides the LLM through checking for an existing similar ADR, gathering the required information, and driving create_adr/option_create/set_status/validate_adr to author a new MADR-4.0.0-based Architecture Decision Record.
+  create_adr_test(topic,decision_makers,consulted,informed)
+    title: Create an ADR (step-gated test variant)
+    description: Experimental, strictly step-gated variant of create_adr for A/B comparison: the same MADR-4.0.0 structure and create_adr/option_create/set_status/validate_adr tool sequence, rewritten as hard numbered gates instead of narrated steps.
+  update_adr(id,instructions)
+    title: Update an ADR
+    description: Guides the LLM through revising an existing ADR by id: reading current state, applying the requested change with the right tool, and validating.
+  update_adr_test(id,instructions)
+    title: Update an ADR (step-gated test variant)
+    description: Experimental, strictly step-gated variant of update_adr for A/B comparison: the same read-first/map-to-tool/validate-last flow, rewritten as hard numbered gates instead of narrated steps.
+RESOURCE COUNT: 44
+RESOURCES:
+  specmgr://feat/example
+    name: feat_example
+    title: Feature (FEAT) Example
+    description: A complete, valid sample feature document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://feat/schema
+    name: feat_schema
+    title: Feature (FEAT) JSON Schema
+    description: The generated FEAT JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://feat/template
+    name: feat_template
+    title: Feature (FEAT) Template
+    description: A FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature.
+  specmgr://tsk/example
+    name: tsk_example
+    title: Task List (TSK) Example
+    description: A complete, valid sample task list document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://tsk/schema
+    name: tsk_schema
+    title: Task List (TSK) JSON Schema
+    description: The generated TSK JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://tsk/template
+    name: tsk_template
+    title: Task List (TSK) Template
+    description: A TSK document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new task list.
+  specmgr://gol/example
+    name: gol_example
+    title: Goal (GOL) Example
+    description: A complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://gol/schema
+    name: gol_schema
+    title: Goal (GOL) JSON Schema
+    description: The generated GOL JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://gol/template
+    name: gol_template
+    title: Goal (GOL) Template
+    description: A GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal.
+  specmgr://prb/example
+    name: prb_example
+    title: Problem Statement (PRB) Example
+    description: A complete, valid sample problem statement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://prb/schema
+    name: prb_schema
+    title: Problem Statement (PRB) JSON Schema
+    description: The generated PRB JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://prb/template
+    name: prb_template
+    title: Problem Statement (PRB) Template
+    description: A PRB document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new problem statement.
+  specmgr://qa/example
+    name: qa_example
+    title: Question and Answer (QA) Example
+    description: A complete, valid sample QA document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://qa/schema
+    name: qa_schema
+    title: Question and Answer (QA) JSON Schema
+    description: The generated QA JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://qa/template
+    name: qa_template
+    title: Question and Answer (QA) Template
+    description: A QA document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new QA document.
+  specmgr://req/example
+    name: req_example
+    title: Requirement (REQ) Example
+    description: A complete, valid sample requirement document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://req/schema
+    name: req_schema
+    title: Requirement (REQ) JSON Schema
+    description: The generated REQ JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://req/template
+    name: req_template
+    title: Requirement (REQ) Template
+    description: A REQ document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new requirement.
+  specmgr://rsk/example
+    name: rsk_example
+    title: Risk (RSK) Example
+    description: A complete, valid sample risk document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://rsk/schema
+    name: rsk_schema
+    title: Risk (RSK) JSON Schema
+    description: The generated RSK JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://rsk/template
+    name: rsk_template
+    title: Risk (RSK) Template
+    description: A risk document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new risk.
+  specmgr://rsk/risk-matrix
+    name: rsk_risk_matrix
+    title: Risk (RSK) 5x5 Risk Matrix
+    description: The 5x5 risk matrix: probability/impact scale anchors, the zone table, and the product thresholds (what 'high risk' and 'low risk' mean), as raw markdown domain-knowledge guidance.
+  specmgr://rsk/tara
+    name: rsk_tara
+    title: Risk (RSK) TARA Guidance
+    description: What TARA is (Transfer, Accept, Reduce, Avoid), the four valid `## Strategy` words, and when and how to apply each, as raw markdown domain-knowledge guidance.
+  specmgr://sop/example
+    name: sop_example
+    title: Standard Operating Procedure (SOP) Example
+    description: A complete, valid sample Standard Operating Procedure document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://sop/schema
+    name: sop_schema
+    title: Standard Operating Procedure (SOP) JSON Schema
+    description: The generated SOP JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://sop/template
+    name: sop_template
+    title: Standard Operating Procedure (SOP) Template
+    description: A SOP document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new Standard Operating Procedure.
+  specmgr://sysrs/example
+    name: sysrs_example
+    title: System Requirements Specification (SYSRS) Example
+    description: A complete, valid sample System Requirements Specification document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://sysrs/schema
+    name: sysrs_schema
+    title: System Requirements Specification (SYSRS) JSON Schema
+    description: The generated SYSRS JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://sysrs/template
+    name: sysrs_template
+    title: System Requirements Specification (SYSRS) Template
+    description: A SYSRS document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new System Requirements Specification.
+  specmgr://uc/example
+    name: uc_example
+    title: Use Case (UC) Example
+    description: A complete, valid sample use case document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://uc/schema
+    name: uc_schema
+    title: Use Case (UC) JSON Schema
+    description: The generated UC JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://uc/template
+    name: uc_template
+    title: Use Case (UC) Template
+    description: A UC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new use case.
+  specmgr://vcr/example
+    name: vcr_example
+    title: Verification Case Record (VCR) Example
+    description: A complete, valid sample verification case record document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://vcr/schema
+    name: vcr_schema
+    title: Verification Case Record (VCR) JSON Schema
+    description: The generated VCR JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://vcr/template
+    name: vcr_template
+    title: Verification Case Record (VCR) Template
+    description: A VCR document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new verification case record.
+  specmgr://dec/example
+    name: dec_example
+    title: Decision (DEC) Example
+    description: A complete, valid sample decision document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example.
+  specmgr://dec/schema
+    name: dec_schema
+    title: Decision (DEC) JSON Schema
+    description: The generated DEC JSON Schema (2020-12 dialect), generated by `specmgr schema` and kept current by a pre-commit hook/CI step. Includes a `$comment` schema-layout version marker for detecting a shape change without diffing the whole document.
+  specmgr://dec/template
+    name: dec_template
+    title: Decision (DEC) Template
+    description: A DEC document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new decision.
+  specmgr://config
+    name: config
+    title: SpecMgr Resolved Base Directory Configuration
+    description: For every document domain (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs), the resolved absolute base directory and whether the domain's SPECMGR_*_DIR environment variable is explicitly set, plus a static `similarity` section for the semantic-similarity feature (feat-134): whether the `similarity` extra (fastembed) is installed (a spec lookup, never an import), whether the presence-based SPECMGR_SIMILARITY_DISABLED opt-out flag is set, the fixed model name, and the resolved model cache directory (FASTEMBED_CACHE_PATH if set, else <tempdir>/fastembed_cache, reported but never created). Static configuration only -- the tools' own dynamic runtime availability is their structured {available, reason, message} result, not part of this resource. Never discloses the value of any environment variable except the resolved cache path, only whether the relevant directory-path/opt-out env vars are present.
+  specmgr://dtais
+    name: dtais
+    title: DTAIS Verification Method Vocabulary
+    description: What DTAIS is (Demonstration, Test, Analysis, Inspection, Special), the five valid `### AC-NNN (Method): ...` method words, and when and how to apply each, as raw markdown domain-knowledge guidance.
+  specmgr://ears
+    name: ears
+    title: EARS Requirement-Phrasing Templates
+    description: The EARS (Easy Approach to Requirements Syntax) five requirement-phrasing templates (Ubiquitous requirements, Event-driven requirements, Unwanted behaviours, State-driven requirements, Optional features) and when to use each, as raw markdown domain-knowledge guidance.
+  specmgr://iso25010
+    name: iso25010
+    title: ISO/IEC 25010:2023 Product Quality Model
+    description: The nine main characteristics (and their sub-characteristics) of the ISO/IEC 25010:2023 system/software product quality model, each with a description.
+  specmgr://rasci
+    name: rasci
+    title: RASCI Responsibility Assignment Guidance
+    description: What RASCI is (Responsible, Accountable, Support, Consulted, Informed), the five roles' standard definitions, and how RASCI differs from plain RACI, as raw markdown guidance.
+  specmgr://version
+    name: version
+    title: SpecMgr MCP Server Version
+    description: Installed version number of the biz-dfch-specmgr package that backs this MCP server, plus the installed fastembed package version (the similarity extra's embedding backend) or null when that extra is not installed (read via importlib.metadata, never an import of fastembed itself; feat-134 Phase 7). Lets a client check compatibility without a tool round-trip.

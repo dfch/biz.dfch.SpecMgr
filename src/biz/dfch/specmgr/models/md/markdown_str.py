@@ -683,25 +683,3 @@ class MarkdownStr(BaseModel):
                 # Handle complex types (nested Optional/Union combinations, etc.)
                 pass
         return field_names
-
-    # @field_validator("_value")
-    # @classmethod
-    # def validate_and_convert_text(cls, v: str) -> str:
-    #     if not isinstance(v, str):
-    #         raise ValueError(f"'text': '{type(v)}' != 'str'.")
-
-    #     env: dict = {}
-    #     tokens = md.parse(v, env)
-
-    #     # Normalise: parse and render roundtrip.
-    #     result: str = md.renderer.render(tokens, {}, env)
-
-    #     return result
-
-    # @model_validator(mode="after")
-    # def model_validator_after(self) -> MarkdownStr:
-    #     """Validate that _tokens is a list of Token instances."""
-    #     assert isinstance(self._tokens, list), f"Expected list, got {type(self._tokens)}"
-    #     for i, token in enumerate(self._tokens):
-    #         assert isinstance(token, Token), f"Token[{i}]: '{type(token)}' != 'Token'."
-    #     return self

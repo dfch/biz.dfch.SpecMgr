@@ -1,6 +1,6 @@
 # `biz.dfch.specmgr.adr.tools._lock`
 
-Per-document in-process lock guarding ADR mutations (plan §7, §9a).
+Per-document in-process lock guarding ADR mutations.
 
 Every mutating tool in this package (``update_section``,
 ``update_frontmatter``, ``option_create``, ``option_update``,
@@ -9,7 +9,7 @@ Every mutating tool in this package (``update_section``,
 shape: ``load_by_id``
 (re-read/re-parse the file), mutate the in-memory :class:`~..models.adr.Adr`,
 then ``write_adr`` (re-render/re-write the file). There is deliberately no
-in-memory cache (plan §7, §9a) -- the ``.md`` file is the sole source of
+in-memory cache -- the ``.md`` file is the sole source of
 truth -- which means that sequence is the *only* place document state lives
 between the read and the write.
 

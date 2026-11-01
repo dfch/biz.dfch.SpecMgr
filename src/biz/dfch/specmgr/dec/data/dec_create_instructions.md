@@ -28,9 +28,30 @@ step 1 if this is genuinely a new decision.
 - `## Decision Outcome` -- mandatory: a lead paragraph naming the
   chosen option (e.g. "We chose option 1 because ..."), followed by
   optional `### Consequences` and `### Confirmation` H3 sections.
+- `## Roles and Responsibilities` -- mandatory RASCI composite: every
+  decision always names an accountable owner, so this whole section is
+  always present (unlike SOP's own optional equivalent):
+  - `### Accountable` -- mandatory; a single paragraph naming the one
+    owner ultimately answerable for the decision (never a bullet list).
+  - `### Responsible` -- mandatory; a bullet list with at least one item
+    naming who carries out the decision or its consequences.
+  - `### Support` -- optional; a bullet list that MAY be present with
+    zero items (an intentional "considered, currently empty"
+    placeholder, distinct from omitting the heading).
+  - `### Consulted` -- optional; a bullet list, MAY be present with
+    zero items.
+  - `### Informed` -- optional; a bullet list, MAY be present with
+    zero items.
+- `## Tags` -- optional bullet list of free-form labels for
+  grouping/filtering decisions.
+- `## Source` -- mandatory prose: the origin/authority of this
+  decision, e.g. an issue, a meeting, or a stakeholder request.
 - `## Related Artifacts` -- optional container for up to four `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria (each `{ID}: {description}` per line).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks
+  (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
+  tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
+  `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
+  accepts only the `DEC` tag, not `ADR`).
 - `## Pros and Cons` -- optional appendix of `### Option {N}: {name}`
   sections, one per weighed option (the title after the colon is
   mandatory, numbers start at 1 and are never renumbered). The H2 is
@@ -39,50 +60,72 @@ step 1 if this is genuinely a new decision.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
   then timestamp-led `### {timestamp} ( - | : ) {title}` entries,
-  newest-first (e.g. `2026-08-27 - Created`, or the full date+time
-  variant `2026-08-27 14:30:00.000+02:00 - Created`), each with a
-  mandatory lead paragraph. New entries are prepended (newest first),
-  not appended.
+  newest-first, where `{timestamp}` is the full date+time form
+   `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (e.g.
+   `### 2026-08-27 14:30:00.000+02:00 - Created`), each with the entry's own
+   update text directly under the H3 heading (any markdown content --
+   multiple paragraphs, lists, code blocks, block quotes, not just a single
+   paragraph), which is mandatory.
+  The date/time separator may be `T` or a space; a date-only timestamp
+  is rejected. New entries are prepended (newest first), not appended.
 
 Section order is binding: Context and Problem Statement -> Decision
-Drivers -> Considered Options -> Decision Outcome -> Related Artifacts
--> Pros and Cons -> More Information -> Updates. The ADR heading
+Drivers -> Considered Options -> Decision Outcome -> Roles and
+Responsibilities -> Tags -> Source -> Related Artifacts -> Pros and Cons
+-> More Information -> Updates. The ADR heading
 `## Pros and Cons of the Options` is not part of this schema and must
 not be used.
 
 ## 2. Build a todo list, then gather the information one at a time
 
 Build a todo list with one entry per: the mandatory `## Context and
-Problem Statement` and `## Decision Outcome`, and each optional section
-(`## Decision Drivers`, `## Considered Options`, `## Related
+Problem Statement`, `## Decision Outcome`, `## Roles and
+Responsibilities`, and `## Source`, and each optional section (`##
+Decision Drivers`, `## Considered Options`, `## Tags`, `## Related
 Artifacts`, `## Pros and Cons`, `## More Information`, `## Updates`).
 Then use the `question` tool to elicit the mandatory fields first --
-the context and the outcome -- then each optional field in turn,
-explicitly telling the user they may skip any optional field they
-cannot or do not want to answer yet -- a freshly created decision may
-have zero optional sections.
+the context, the outcome, the roles and responsibilities, and the
+source -- then each optional field in turn, explicitly telling the user
+they may skip any optional field they cannot or do not want to answer
+yet -- a freshly created decision may have zero optional sections.
 
-## 3. Use the template/example/schema as references
+## 3. Read the RASCI role definitions before drafting `## Roles and Responsibilities`
 
-Fetch `specmgr://dec/template` or `specmgr://dec/example` as a starting
-point/style reference, then check `specmgr://dec/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+Before filling in `## Roles and Responsibilities`, fetch the
+cross-cutting `specmgr://rasci` resource and read the generic RASCI
+(Responsible/Accountable/Support/Consulted/Informed) role definitions.
+The `dec` schema does not duplicate those definitions here -- use the
+resource as the single source of truth for what each role means, then
+map the decision's actual people/teams onto the five roles following
+the binding sub-section order (Accountable, Responsible, Support,
+Consulted, Informed) and the structural rules in step 1 (Accountable is
+a single paragraph; Responsible needs at least one bullet;
+Support/Consulted/Informed may each be present with zero items). Unlike
+SOP's own optional `## Roles and Responsibilities`, this section is
+mandatory on every `dec` document, so this step is never skipped.
 
-## 4. Tool call sequence
+## 4. Use the template/example tools as references
+
+Call the `get_dec_template` and `get_dec_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_dec_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
+
+## 5. Tool call sequence
 
 1. Assemble the full body-only markdown per the structure above, from
-   the information gathered in step 2.
+   the information gathered in step 2 (and the roles content informed
+   by step 3).
 2. Call `create_dec(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_dec(content, full=False)` first if you
+3. Optionally call `validate(type="dec", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_dec`
    already performs the same validation internally, so this step is
    never required, only a convenience.
 
-## 5. Later revisions
+## 6. Later revisions
 
 Any later change to this decision should go through the `update_dec` prompt
 (or directly through the generic `update(id, type="dec", content)`,

@@ -1,25 +1,24 @@
 # `biz.dfch.specmgr.models.adr.v1.body`
 
-Pydantic model for the ADR body -- whole-section fields plus options
-(plan §4, §5).
+Pydantic model for the ADR body -- whole-section fields plus options.
 
 ## Classes
 
 ### `AdrBody`
 
-The ADR body: whole-section fields (plan §4) plus the dynamic
+The ADR body: whole-section fields plus the dynamic
 ``Option`` collection that backs the derived ``## Pros and Cons of the
-Options`` section (plan §5).
+Options`` section.
 
-Each whole-section field maps 1:1 to the ``key`` values the future
-``update_section(key, value)`` MCP tool accepts (plan §4's table),
-using this model's snake_case attribute names rather than the table's
+Each whole-section field maps 1:1 to the ``key`` values the
+``update_section(key, value)`` MCP tool accepts,
+using this model's snake_case attribute names rather than
 camelCase key strings -- the tool layer, not this model, is responsible
 for translating between the two.
 
 Mandatory fields (``title``, ``context_and_problem_statement``,
 ``considered_options``, ``decision_outcome``) must be non-blank; this
-mirrors plan §4's rule that ``update_section`` must reject a deletion
+mirrors the rule that ``update_section`` must reject a deletion
 sentinel targeting a mandatory section rather than write it. Optional
 fields (``decision_drivers``, ``consequences``, ``confirmation``,
 ``more_information``) normalize a blank/whitespace-only value to
@@ -36,8 +35,7 @@ decision_drivers:
     ``## Decision Drivers``. Optional.
 considered_options:
     ``## Considered Options``. Mandatory. Kept fully independent from
-    ``options`` below -- no consistency check is enforced between them
-    (plan §4).
+    ``options`` below -- no consistency check is enforced between them.
 decision_outcome:
     ``## Decision Outcome`` text before any H3. Mandatory.
 consequences:
@@ -47,7 +45,7 @@ confirmation:
 options:
     The dynamic ``### Option N: {title}`` collection. Backs the derived
     ``## Pros and Cons of the Options`` section, which is rendered iff
-    this list is non-empty (plan §5). Defaults to an empty list.
+    this list is non-empty. Defaults to an empty list.
 more_information:
     ``## More Information``, always last. Optional.
 

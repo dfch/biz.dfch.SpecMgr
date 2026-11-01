@@ -27,7 +27,7 @@ helper directly, so neither sub-package depends on the other just for this
 one file read. Mirrors ``dec.resources.dec_example`` file-for-file.
 
 The resource's URI is deliberately unversioned (no ``/v1``), matching
-``specmgr://feat/schema``'s own precedent.
+``specmgr://feat/template``'s own precedent.
 """
 
 from __future__ import annotations

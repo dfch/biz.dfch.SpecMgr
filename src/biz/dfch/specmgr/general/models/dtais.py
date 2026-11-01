@@ -83,7 +83,7 @@ __all__ = [
 #: text (see `MethodItem.method`). `re.DOTALL` is required: a soft-wrapped
 #: bullet's `.text` keeps the embedded newline of its continuation lines
 #: (`mdformat` does not reflow), and `.` would not otherwise match it --
-#: the same reasoning as `sysrs.models.v1.body._validate_cross_reference_items`.
+#: the same reasoning as `models.md._cross_reference.validate_cross_reference_items`.
 _METHOD_ITEM_PATTERN = re.compile(r"^`(?P<method>[A-Za-z]+)` -- .+$", re.DOTALL)
 
 #: Matches the "When to apply each method"/"Relationship to `## Coverage`"

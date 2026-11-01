@@ -21,10 +21,12 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Feature (FEAT) document by id, using the
-existing ``feat/tools/`` surface (``get_feat``, ``validate_feat``) plus the
+existing ``feat/tools/`` surface (``get_feat``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="feat"``; ``get_feat``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). There is no ``specmgr://feat/{id}``
+line-range flow's line numbers, with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset``). There is no ``specmgr://feat/{id}``
 resource to point at -- id-based reads always go through the ``get_feat``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
@@ -77,7 +79,9 @@ from ...server import mcp
     title="Update a feature",
     description=(
         "Guides the LLM through revising an existing feature by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_feat_schema` tool (the generated JSON Schema); the "
+        "`get_feat_template`/`get_feat_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_feat(id: str, instructions: str | None = None) -> str:

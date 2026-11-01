@@ -1,15 +1,17 @@
 ---
-created: '2025-08-05 08:15:42.634Z'
+created: '2025-08-05T08:15:42.634Z'
 id: deaddead-b00b-b00b-b00b-deaddeadb00b
 status: draft
 type: prb
-updated: '2025-08-19 14:37:08.451Z'
+updated: '2025-08-19T14:37:08.451Z'
 version: 1.0.0
 ---
 
 # Level 1 Heading is the Title of the Problem Statement
 
-<!-- Optional HTML comment giving context for this problem statement, such as who raised it and when. -->
+<!-- Optional HTML comment giving context for this problem statement, such as who raised it and when. The lead sentence below the H1 must follow the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- fill in only the four bracketed blanks, keeping the surrounding wording and punctuation verbatim; the sentence shown below is the concrete instance. -->
+
+The current process is causing delays, for users because of missing automation.
 
 ## Current State
 

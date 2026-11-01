@@ -1,4 +1,4 @@
-# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+# Copyright (C) 2026 Ronald Rink, http://d-fens.ch
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published
@@ -23,7 +23,11 @@ document model (added ahead of Task 3.1's full specification; unchanged).
 markdown (Task 3.1.2); ``get_uc_template`` returns a document with every
 field present but populated with short placeholder ("blind text") content
 instead (Task 3.1.3) -- both read a packaged, build-guaranteed data file
-rather than anything on the caller's filesystem. ``get_uc`` (Task 3.1.5)
+rather than anything on the caller's filesystem.
+``get_uc_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://uc/schema`` resource). ``get_uc`` (Task 3.1.5)
 reads, parses, and returns a full use-case document by id -- the sole
 id-based read path for UC. ``list_uc`` (feat-13-list-paging Task 2.3)
 returns one page of id/title/status/ref summaries of every use case,
@@ -39,27 +43,61 @@ Status changes of an existing document go through the generic
 ``set_status`` tool in ``general.tools`` (``type="uc"``), also bumping
 ``updated``, leaving the body untouched. Deletion of ``uc`` documents
 goes through the generic ``delete`` tool in ``general.tools``
-(``type="uc"``). ``validate_uc`` (Task 3.1.5) is a disk-free, id-free dry
-run against a submitted ``content`` string, independent of the other
-tools. Import this package to register all use-case tools at once::
+(``type="uc"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="uc"``)
+-- the former ``validate_uc`` tool was removed in favor of it
+(feat-81-83-validation Phase 2).
+
+The diagram surface (feat-185-uc-diagrams, Phase 120) is read-only and
+thin over the Phase 110 library (``uc.models.v2.renderer`` + the
+import-free ``plantuml`` package): ``get_uc_diagram``/
+``get_uc_sequence_skeleton`` render one use case's per-UC usecase diagram /
+sequence skeleton by id (``_path_safety``-guarded, cache-aware; an
+existing-but-broken document returns the non-raising ``ParseFailureResult``,
+the feat-150 precedent), ``get_use_case_package_diagram`` renders the
+multi-UC package diagram (``ids=None`` = every UC in ``list_uc`` order,
+delegated to the ``list_uc`` tool; missing/broken ids become skipped slots
+whose references take the deterministic unresolvable-note path -- the render
+never fails on an id), ``validate_plantuml`` is the strict validation chain
+(non-raising §3.6 result), ``get_uc_plantuml_template``/
+``get_uc_plantuml_example`` return the packaged PlantUML-source
+template/example verbatim, and ``plantuml_encode`` returns the classic
+``SoWkI…``-form URL encoding (the ``{enc}`` payload of
+``GET {base}/svg/{enc}``; the tool takes no base URL).
+
+Import this package to register all use-case tools at once::
 
     from biz.dfch.specmgr.uc import tools  # noqa: F401 (side-effects only)
 """
 
 from .create_uc import create_uc
 from .get_uc import get_uc
+from .get_uc_diagram import get_uc_diagram
 from .get_uc_example import get_uc_example
+from .get_uc_plantuml_example import get_uc_plantuml_example
+from .get_uc_plantuml_template import get_uc_plantuml_template
+from .get_uc_schema import get_uc_schema
+from .get_uc_sequence_skeleton import get_uc_sequence_skeleton
 from .get_uc_template import get_uc_template
+from .get_use_case_package_diagram import get_use_case_package_diagram
 from .list_uc import list_uc
 from .parse_uc import parse_uc
-from .validate_uc import validate_uc
+from .plantuml_encode import plantuml_encode
+from .validate_plantuml import validate_plantuml
 
 __all__ = [
     "create_uc",
     "get_uc",
+    "get_uc_diagram",
     "get_uc_example",
+    "get_uc_plantuml_example",
+    "get_uc_plantuml_template",
+    "get_uc_schema",
+    "get_uc_sequence_skeleton",
     "get_uc_template",
+    "get_use_case_package_diagram",
     "list_uc",
     "parse_uc",
-    "validate_uc",
+    "plantuml_encode",
+    "validate_plantuml",
 ]

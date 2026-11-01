@@ -22,10 +22,12 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing System Requirements Specification (SYSRS)
 document by id, using the existing ``sysrs/tools/`` surface (``get_sysrs``,
-``validate_sysrs``) plus the generic ``update``/``set_status``/
+generic ``validate`` tool) plus the generic ``update``/``set_status``/
 ``set_classification`` tools in ``general/tools/`` (called with
 ``type="sysrs"``; ``get_sysrs``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). There is no ``specmgr://sysrs/{id}``
+line-range flow's line numbers, with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset``). There is no ``specmgr://sysrs/{id}``
 resource to point at -- id-based reads always go through the ``get_sysrs``
 tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
@@ -81,7 +83,9 @@ from ...server import mcp
     title="Update a system requirements specification",
     description=(
         "Guides the LLM through revising an existing SYSRS by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_sysrs_schema` tool (the generated JSON Schema); the "
+        "`get_sysrs_template`/`get_sysrs_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_sysrs(id: str, instructions: str | None = None) -> str:

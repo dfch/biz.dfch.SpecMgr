@@ -25,9 +25,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from pydantic import ValidationError
-
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
+from biz.dfch.specmgr.general.tools.validate import _MAX_VALIDATE_ERROR_CHARS
 from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION
 from biz.dfch.specmgr.uc.models.v2 import UcDocument, UcFrontmatter, parse_uc
 from biz.dfch.specmgr.uc.tools._paths import uc_base_dir
@@ -132,21 +132,34 @@ class TestCreateUc(TempUcDirTestCase):
 
         self.assertTrue(uc_base_dir().is_dir())
 
-    def test_invalid_content_raises_and_writes_nothing(self) -> None:
-        """A structurally invalid body must raise AssertionError and write no file at all."""
-        with self.assertRaises(AssertionError):
-            create_uc(_MALFORMED_BODY)
+    def test_invalid_content_returns_validate_result_and_writes_nothing(self) -> None:
+        """A structurally invalid body must return ``ValidateResult(valid=False, ...)`` and write no
+        file at all (feat-204-create-error, Phase 110)."""
+        result = create_uc(_MALFORMED_BODY)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("uc create_uc (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(uc_base_dir().exists())
 
-    def test_field_validation_failure_raises_and_writes_nothing(self) -> None:
-        """A cross-field validation failure (unresolvable Extension step reference) must raise,
-        writing nothing."""
+    def test_field_validation_failure_returns_validate_result_and_writes_nothing(self) -> None:
+        """A cross-field validation failure (unresolvable Extension step reference) must return
+        ``ValidateResult(valid=False, ...)`` and write nothing (feat-204-create-error, Phase 110)."""
         text = _MINIMAL_BODY + ("\n## Extensions\n\n### Extension 99a. Out-of-range reference\n\n1. Not resolvable.\n")
 
-        with self.assertRaises(ValidationError):
-            create_uc(text)
+        result = create_uc(text)
 
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        message = result.errors[0].message
+        self.assertTrue(message)
+        self.assertIn("uc create_uc (body): ", message)
+        self.assertLessEqual(len(message), _MAX_VALIDATE_ERROR_CHARS + len("... (truncated)"))
         self.assertFalse(uc_base_dir().exists())
 
 

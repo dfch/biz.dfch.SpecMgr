@@ -18,7 +18,7 @@
 """System Requirements Specification (SYSRS) body models: whole-section fields under a single H1.
 
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
-`MarkdownSection2WithComment`/`MarkdownSection3`/`MarkdownParagraph`/
+`MarkdownSection2WithComment`/`MarkdownSection3`/`UpdateEntryContent`/
 `MarkdownListItem`/`MarkdownListItemWithNotes` engine: each class below
 models one markdown heading (`## `/`### `) or list, and `Sysrs` is the
 top-level H1 container. A `sysrs` document aggregates already-existing
@@ -80,50 +80,16 @@ from pydantic import Field, computed_field, field_validator, model_validator
 from ....models.md import (
     MarkdownListItem,
     MarkdownListItemWithNotes,
-    MarkdownParagraph,
     MarkdownSection1,
     MarkdownSection2,
     MarkdownSection2WithComment,
     MarkdownSection3,
+    MarkdownStr,
     alias,
     AliasType,
 )
+from ....models.md._cross_reference import UUID_PATTERN, validate_cross_reference_items
 from ....models.md._ordering import validate_newest_first
-
-#: The standard lowercase 8-4-4-4-12 hex UUID shape, shared by every
-#: cross-reference section's item-text pattern below -- the same
-#: uuid-fragment style as the shipped `vcr` precedent
-#: (`vcr.models.v1.body._VERIFIES_PATTERN`).
-_UUID_PATTERN = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
-
-
-def _validate_cross_reference_items(
-    items: list[MarkdownListItemWithNotes], pattern: str
-) -> list[MarkdownListItemWithNotes]:
-    """Enforce `pattern` against every item's `.text` (shared by every cross-reference list class below).
-
-    `re.DOTALL` is required: an item's `.text` keeps the embedded newline of
-    a soft-wrapped bullet line (`mdformat` does not reflow), and `.` would
-    not otherwise match it -- confirmed empirically in Phase 1 (Task 1.1).
-    The pattern itself is otherwise a plain `re.fullmatch` against the exact
-    `<ALLOWED-TYPE-TAG(S)> <uuid>: <title>` shape.
-
-    Args:
-        items: The list's already-list-level-validated items (e.g.
-            `Field(min_length=1)` has already run).
-        pattern: The calling class's own module-level pattern constant.
-
-    Returns:
-        `items`, unchanged, once every item matches.
-
-    Raises:
-        ValueError: some item's `.text` does not fullmatch `pattern` --
-            channeled by Pydantic into `pydantic.ValidationError`.
-    """
-    for item in items:
-        if not re.fullmatch(pattern, item.text, re.DOTALL):
-            raise ValueError(f"item must match pattern {pattern!r}, got {item.text!r}")
-    return items
 
 
 class SystemPurpose(MarkdownSection2):
@@ -149,7 +115,7 @@ class BusinessContext(MarkdownSection3):
 
 
 #: Matches `### Goals`' bullet item text: `GOL <uuid>: <title>` (REQ-006).
-_GOALS_PATTERN = rf"^GOL {_UUID_PATTERN}: .+$"
+_GOALS_PATTERN = rf"^GOL {UUID_PATTERN}: .+$"
 
 
 class Goals(MarkdownSection3):
@@ -174,11 +140,11 @@ class Goals(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _GOALS_PATTERN)
+        return validate_cross_reference_items(items, _GOALS_PATTERN)
 
 
 #: Matches `### Problem Statement`'s bullet item text: `PRB <uuid>: <title>`.
-_PROBLEM_STATEMENT_PATTERN = rf"^PRB {_UUID_PATTERN}: .+$"
+_PROBLEM_STATEMENT_PATTERN = rf"^PRB {UUID_PATTERN}: .+$"
 
 
 class ProblemStatement(MarkdownSection3):
@@ -201,7 +167,7 @@ class ProblemStatement(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _PROBLEM_STATEMENT_PATTERN)
+        return validate_cross_reference_items(items, _PROBLEM_STATEMENT_PATTERN)
 
 
 @alias(value="Business Context and Goals", type=AliasType.LITERAL)
@@ -242,7 +208,7 @@ class BusinessContextAndGoals(MarkdownSection2):
 
 
 #: Matches `## Stakeholder Needs and Elicitation`'s bullet item text: `QA <uuid>: <title>`.
-_STAKEHOLDER_NEEDS_PATTERN = rf"^QA {_UUID_PATTERN}: .+$"
+_STAKEHOLDER_NEEDS_PATTERN = rf"^QA {UUID_PATTERN}: .+$"
 
 
 @alias(value="Stakeholder Needs and Elicitation", type=AliasType.LITERAL)
@@ -270,11 +236,11 @@ class StakeholderNeedsAndElicitation(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _STAKEHOLDER_NEEDS_PATTERN)
+        return validate_cross_reference_items(items, _STAKEHOLDER_NEEDS_PATTERN)
 
 
 #: Matches `## Operational Concept and Scenarios`'s bullet item text: `UC <uuid>: <title>`.
-_OPERATIONAL_CONCEPT_PATTERN = rf"^UC {_UUID_PATTERN}: .+$"
+_OPERATIONAL_CONCEPT_PATTERN = rf"^UC {UUID_PATTERN}: .+$"
 
 
 @alias(value="Operational Concept and Scenarios", type=AliasType.LITERAL)
@@ -302,12 +268,12 @@ class OperationalConceptAndScenarios(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _OPERATIONAL_CONCEPT_PATTERN)
+        return validate_cross_reference_items(items, _OPERATIONAL_CONCEPT_PATTERN)
 
 
 #: Matches `## Decisions`'s bullet item text: `DEC <uuid>: <title>` OR `ADR <uuid>: <title>`
 #: (real `sysrs` documents may cross-reference either `dec` or `adr` ids, decided 2026-08-30).
-_DECISIONS_PATTERN = rf"^(DEC|ADR) {_UUID_PATTERN}: .+$"
+_DECISIONS_PATTERN = rf"^(DEC|ADR) {UUID_PATTERN}: .+$"
 
 
 class Decisions(MarkdownSection2):
@@ -332,11 +298,11 @@ class Decisions(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _DECISIONS_PATTERN)
+        return validate_cross_reference_items(items, _DECISIONS_PATTERN)
 
 
 #: Matches `## Risks`'s bullet item text: `RSK <uuid>: <title>`.
-_RISKS_PATTERN = rf"^RSK {_UUID_PATTERN}: .+$"
+_RISKS_PATTERN = rf"^RSK {UUID_PATTERN}: .+$"
 
 
 class Risks(MarkdownSection2):
@@ -358,7 +324,7 @@ class Risks(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _RISKS_PATTERN)
+        return validate_cross_reference_items(items, _RISKS_PATTERN)
 
 
 @alias(value="Assumptions and Dependencies", type=AliasType.LITERAL)
@@ -450,7 +416,7 @@ class SystemModesAndStates(MarkdownSection2):
 
 #: Matches every `## Requirements`/`## Other Characteristics` H3's bullet item
 #: text: `REQ <uuid>: <title>` (REQ-006).
-_REQ_PATTERN = rf"^REQ {_UUID_PATTERN}: .+$"
+_REQ_PATTERN = rf"^REQ {UUID_PATTERN}: .+$"
 
 
 class FunctionalSuitability(MarkdownSection3):
@@ -473,7 +439,7 @@ class FunctionalSuitability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class PerformanceEfficiency(MarkdownSection3):
@@ -496,7 +462,7 @@ class PerformanceEfficiency(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Compatibility(MarkdownSection3):
@@ -519,7 +485,7 @@ class Compatibility(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class InteractionCapability(MarkdownSection3):
@@ -542,7 +508,7 @@ class InteractionCapability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Reliability(MarkdownSection3):
@@ -564,7 +530,7 @@ class Reliability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Security(MarkdownSection3):
@@ -586,7 +552,7 @@ class Security(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Maintainability(MarkdownSection3):
@@ -608,7 +574,7 @@ class Maintainability(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Flexibility(MarkdownSection3):
@@ -631,7 +597,7 @@ class Flexibility(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Safety(MarkdownSection3):
@@ -654,7 +620,7 @@ class Safety(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class Requirements(MarkdownSection2):
@@ -741,7 +707,7 @@ class PhysicalCharacteristics(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class EnvironmentalConditions(MarkdownSection3):
@@ -764,7 +730,7 @@ class EnvironmentalConditions(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class InformationManagement(MarkdownSection3):
@@ -787,7 +753,7 @@ class InformationManagement(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 @alias(value="Policy and Regulation", type=AliasType.LITERAL)
@@ -815,7 +781,7 @@ class PolicyAndRegulation(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class SystemLifeCycleSustainment(MarkdownSection3):
@@ -838,7 +804,7 @@ class SystemLifeCycleSustainment(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 @alias(value="Packaging, Handling, Shipping and Transportation", type=AliasType.LITERAL)
@@ -867,7 +833,7 @@ class PackagingHandlingShippingAndTransportation(MarkdownSection3):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _REQ_PATTERN)
+        return validate_cross_reference_items(items, _REQ_PATTERN)
 
 
 class OtherCharacteristics(MarkdownSection2):
@@ -909,7 +875,7 @@ class OtherCharacteristics(MarkdownSection2):
 
 
 #: Matches `## Verification`'s bullet item text: `VCR <uuid>: <title>`.
-_VERIFICATION_PATTERN = rf"^VCR {_UUID_PATTERN}: .+$"
+_VERIFICATION_PATTERN = rf"^VCR {UUID_PATTERN}: .+$"
 
 
 class Verification(MarkdownSection2):
@@ -932,7 +898,7 @@ class Verification(MarkdownSection2):
     @field_validator("items")
     @classmethod
     def _validate_items(cls, items: list[MarkdownListItemWithNotes]) -> list[MarkdownListItemWithNotes]:
-        return _validate_cross_reference_items(items, _VERIFICATION_PATTERN)
+        return validate_cross_reference_items(items, _VERIFICATION_PATTERN)
 
 
 class References(MarkdownSection2):
@@ -985,21 +951,48 @@ class DefinitionsAndAcronyms(MarkdownSection2):
     """
 
 
-#: Matches a `{yyyy-MM-dd or full date+time} ( - | : ) {title}` heading line
-#: as retained in a composite `MarkdownSection3`'s `.text` (the heading's
-#: inline content, no `###` marker), capturing the timestamp (named group
+#: Matches a `{full date+time} ( - | : ) {title}` heading line as retained
+#: in a composite `MarkdownSection3`'s `.text` (the heading's inline
+#: content, no `###` marker), capturing the timestamp (named group
 #: `timestamp`) and the title (named group `title`). Mirrors
 #: `vcr.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN`/
-#: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN` exactly -- the locked
-#: post-sibling `## Updates` shape (feat-38-39-41-43-44 D2/D3), adopted by
-#: `sysrs` from day one.
+#: `dec.models.v1.body._UPDATE_ENTRY_HEADING_PATTERN` exactly.
 _UPDATE_ENTRY_HEADING_PATTERN = re.compile(
-    r"(?P<timestamp>\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?)(?: - | : )(?P<title>.+)"
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))(?: - | : )(?P<title>.+)"
 )
 
 
+class UpdateEntryContent(MarkdownStr):
+    """`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.
+
+    Leaf class (no declared fields) applying no `@markdown` type/tag
+    restriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/
+    `MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to
+    the unmodified `MarkdownStr` base implementation, which simply consumes
+    everything remaining in the given text regardless of its shape. Since
+    `content` is the sole (and last) field on `UpdateEntry` -- nothing
+    follows it before the next heading -- "everything remaining" is exactly
+    correct, and no custom stop-condition override is needed.
+
+    Mandatory: `UpdateEntry` declares `content` non-`Optional`, so the
+    engine's existing mandatory-field zero-extent check (the base
+    `MarkdownStr.get_extent` returning `0` for blank text) still rejects a
+    heading with no body content -- no new validator code.
+
+    Adds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`
+    idiom, feat-114) so this otherwise-private `_value` is reachable through
+    `model_dump()`/`model_dump_json()`.
+    """
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this update entry's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 @alias(
-    value=r"^\d{4}-\d{2}-\d{2}(?: \d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2}))?(?: - | : ).+$",
+    value=r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})(?: - | : ).+$",
     type=AliasType.REGEX,
 )
 class UpdateEntry(MarkdownSection3):
@@ -1007,20 +1000,21 @@ class UpdateEntry(MarkdownSection3):
     entry (a change to the `sysrs` document itself, not to the system it
     specifies).
 
-    The H3 heading text carries a timestamp and a title, joined by either
-    ``" - "`` (space, hyphen, space) or ``" : "`` (space, colon, space):
-    e.g. `### 2026-08-31 - Created` or
-    `### 2026-08-31 07:40:12.500+02:00 : Created`. The em-dash separator is
-    rejected. The timestamp is either a bare ``yyyy-MM-dd`` date or the
-    full ``yyyy-MM-dd HH:mm:ss.fff`` + explicit UTC offset (``+02:00``,
-    ``-05:00``) or ``Z`` for UTC variant. Mirrors DEC's/VCR's `UpdateEntry`
-    shape exactly (feat-38-39-41-43-44 D2/D3, adopted from day one).
+    The H3 heading text carries a full date+time timestamp and a title,
+    joined by either ``" - "`` (space, hyphen, space) or ``" : "`` (space,
+    colon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or
+    `### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is
+    rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
+    ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
+    ``Z`` for UTC variant -- date-only is rejected (ADR
+    8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC's/VCR's
+    `UpdateEntry` shape exactly.
 
     Parameters
     ----------
     content:
-        The lead paragraph right after the H3 heading -- this entry's own
-        update text. Mandatory.
+        This entry's own update text, directly under the H3 heading (any
+        markdown content, not just a single paragraph). Mandatory.
     timestamp:
         Computed. The timestamp carried by the heading, verbatim. Never
         stored separately -- derived from the retained heading text.
@@ -1030,14 +1024,14 @@ class UpdateEntry(MarkdownSection3):
         retained heading text.
     """
 
-    content: MarkdownParagraph = Field(
-        description="The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+    content: UpdateEntryContent = Field(
+        description="This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
     )
 
     @computed_field  # type: ignore
     @property
     def timestamp(self) -> str:
-        """The timestamp carried by this heading (e.g. `2026-08-31` or `2026-08-31 07:40:12.500+02:00`).
+        """The timestamp carried by this heading (e.g. `2026-08-31 07:40:12.500+02:00`).
 
         Returns:
             The timestamp string parsed from the retained heading text.
@@ -1055,7 +1049,7 @@ class UpdateEntry(MarkdownSection3):
     @computed_field  # type: ignore
     @property
     def title(self) -> str:
-        """The title carried by this heading (e.g. `Created` for `### 2026-08-31 - Created`).
+        """The title carried by this heading (e.g. `Created` for `### 2026-08-31 07:40:12.500+02:00 - Created`).
 
         Returns:
             The title parsed from the retained heading text (the text
@@ -1106,8 +1100,8 @@ class Updates(MarkdownSection2WithComment):
         """Reject entries that are not in newest-first order.
 
         Delegates to the shared `models.md._ordering.validate_newest_first`
-        helper (mixed date-only/date+time day-granularity rule, equal
-        values allowed) -- mirrors `sop`/`dec`/`vcr`'s own
+        helper (full date+time aware-datetime comparison, equal values
+        allowed) -- mirrors `sop`/`dec`/`vcr`'s own
         `Updates._validate_newest_first` without duplicating its logic.
         The `assert` inside that helper surfaces as `pydantic.ValidationError`
         here (a `model_validator(mode="after")` `assert`, per the 2026-09-02

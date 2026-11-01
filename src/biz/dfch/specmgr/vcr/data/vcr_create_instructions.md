@@ -44,10 +44,14 @@ genuinely a new verification case record.
 - `## Updates` -- optional, and the last section if present: an
   optional leading HTML comment (conventionally "Newest entry first"),
   then timestamp-led `### {timestamp} ( - | : ) {title}` entries,
-  newest-first (e.g. `2026-08-31 - Created`, or the full date+time
-  variant `2026-08-31 07:40:12.500+02:00 - Created`), each with a
-  mandatory lead paragraph. New entries are prepended (newest first),
-  not appended.
+  newest-first, where `{timestamp}` is the full date+time form
+   `yyyy-MM-dd[T ]HH:mm:ss.SSS` + `Z` or `±HH:mm` (e.g.
+   `### 2026-08-31 07:40:12.500+02:00 - Created`), each with the entry's own
+   update text directly under the H3 heading (any markdown content --
+   multiple paragraphs, lists, code blocks, block quotes, not just a single
+   paragraph), which is mandatory.
+  The date/time separator may be `T` or a space; a date-only timestamp
+  is rejected. New entries are prepended (newest first), not appended.
 
 Section order is binding: Verifies -> Coverage -> Acceptance Criteria
 -> More Information -> Updates.
@@ -64,15 +68,15 @@ explicitly telling the user they may skip any optional section they
 cannot or do not want to answer yet -- a freshly created verification
 case record may have zero optional sections.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://vcr/template` or `specmgr://vcr/example` as a
-starting point/style reference, then check `specmgr://vcr/schema` (the
-generated JSON Schema) to confirm field names and constraints before
-drafting the body. Fetch `specmgr://dtais` if you or the user are
-unsure which DTAIS method word applies to a given criterion. Do not
-invent field names, section headings, or method words that are not
-present there.
+Call the `get_vcr_template` and `get_vcr_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names, section headings, or method words that are not present there.
+Call the `get_vcr_schema` tool (the generated JSON Schema) only when you
+are structurally uncertain or are resolving a validation error. Fetch
+`specmgr://dtais` if you or the user are unsure which DTAIS method
+word applies to a given criterion.
 
 ## 4. Tool call sequence
 
@@ -81,7 +85,7 @@ present there.
 2. Call `create_vcr(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_vcr(content, full=False)` first if you
+3. Optionally call `validate(type="vcr", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_vcr`
    already performs the same validation internally, so this step is
    never required, only a convenience.

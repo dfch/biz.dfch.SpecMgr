@@ -42,5 +42,5 @@ entry (add a new one summarizing the work, or keep the existing ones --
 never end up with zero). This is a distinct, deliberate step: do not
 assume finishing the TodoWrite list alone is enough.
 
-Optionally, check `specmgr://tsk/schema` if you need to double-check
+Optionally, check the `get_tsk_schema` tool (the generated JSON Schema) if you need to double-check
 the document's structure before drafting the replacement body.

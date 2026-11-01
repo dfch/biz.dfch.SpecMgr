@@ -1,0 +1,84 @@
+{
+ "run_id": "prb-update-prompt-n3",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "7be8eccd-790c-471d-b7da-c7f71fa40e3d",
+ "events": 14,
+ "steps": 4,
+ "wall_seconds": 127.0,
+ "input_tokens": 208507,
+ "output_tokens": 1125,
+ "total_tool_calls": 4,
+ "specmgr_tool_calls": 4,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 1,
+ "failed_calls": [
+  {
+   "tool": "specmgr_get_prb",
+   "status": "error",
+   "error": "MCP error -32602: Structured content does not match the tool's output schema: data/result/body/current_state/question_1 must be equal to one of the allowed values, data/result/body/current_state/question_1 must be null, data/result/body/current_state/question_1 must match a schema in anyOf, data/res"
+  }
+ ],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [],
+ "template_fetch_count": 0,
+ "example_fetches": [],
+ "example_fetch_count": 0,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [],
+ "create_first_try_success": false,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_list_prb",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_prb",
+   "status": "error",
+   "input": {
+    "id": "7be8eccd-790c-471d-b7da-c7f71fa40e3d"
+   },
+   "error": "MCP error -32602: Structured content does not match the tool's output schema: data/result/body/current_state/question_1 must be equal to one of the allowed values, data/result/body/current_state/question_1 must be null, data/result/body/current_state/question_1 must match a schema in anyOf, data/res"
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "7be8eccd-790c-471d-b7da-c7f71fa40e3d",
+    "raw": true,
+    "numbered": true
+   },
+   "error": ""
+  },
+  {
+   "n": 4,
+   "tool": "specmgr_update",
+   "status": "completed",
+   "input": {
+    "id": "7be8eccd-790c-471d-b7da-c7f71fa40e3d",
+    "type": "prb",
+    "content": "The delay costs the team approximately 2500 EUR per quarter in rework and lost schedule buffer.",
+    "offset": 47,
+    "limit": 1
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nThe document is loaded (line 47 has the cost). Applying the localized change:\n\n\n\n\nDone \u2014 Impact section now states 2500 EUR per quarter (line 47 replaced, all other lines byte-identical, whole document validated by the server).\n\nDONE",
+ "files_on_disk": [
+  "docs/prb/7be8eccd-790c-471d-b7da-c7f71fa40e3d.md",
+  "opencode.json"
+ ]
+}

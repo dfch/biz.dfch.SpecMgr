@@ -20,6 +20,11 @@
 Migrated from ``tests/req/resources/test_req_list.py`` (the ``req_list``
 resource it exercised was converted into this tool), plus new paging
 assertions.
+
+feat-81-83-validation Phase 3 (REQ-006/REQ-007, Task 3.3): a malformed file
+no longer silently disappears from the listing -- it appears inline in
+``results`` as a failed entry and contributes to both ``total`` and the new
+``error_count``, and every successful entry now carries a resolved ``path``.
 """
 
 from __future__ import annotations
@@ -77,28 +82,64 @@ class TestListReq(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_returns_summaries_and_skips_malformed_file(self) -> None:
+    def test_returns_summaries_and_reports_malformed_file_as_a_failed_entry(self) -> None:
         first = create_req(_MINIMAL_BODY)
         second = create_req(_OTHER_BODY)
 
         base_dir = ensure_req_base_dir()
-        (base_dir / "broken.md").write_text("not a valid requirement, no headings at all", encoding="utf-8")
+        broken_path = base_dir / "broken.md"
+        broken_path.write_text("not a valid requirement, no headings at all", encoding="utf-8")
 
         sut = list_req()
 
         self.assertIsInstance(sut, PagedResult)
-        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.total, 3)
+        self.assertEqual(sut.error_count, 1)
         for summary in sut.results:
             self.assertIsInstance(summary, ReqSummary)
         ids = {summary.id for summary in sut.results}
-        self.assertEqual(ids, {first.id, second.id})
+        self.assertEqual(ids, {first.id, second.id, None})
         titles = {summary.title for summary in sut.results}
-        self.assertEqual(titles, {"Maximum Engine Temperature", "Minimum Oil Pressure"})
+        self.assertEqual(titles, {"Maximum Engine Temperature", "Minimum Oil Pressure", "<failed to parse>"})
         statuses = {summary.status for summary in sut.results}
-        self.assertEqual(statuses, {"draft"})
+        self.assertEqual(statuses, {"draft", "<failed to parse>"})
         for summary in sut.results:
             self.assertNotIn(".md", summary.ref)
             self.assertTrue(summary.ref)
+            self.assertTrue(Path(summary.path).is_absolute())
+
+        failed = next(summary for summary in sut.results if summary.ref == "broken")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertEqual(Path(failed.path), broken_path.resolve())
+        self.assertIsNotNone(failed.error)
+
+        for summary in sut.results:
+            if summary.ref != "broken":
+                self.assertIsNone(summary.error)
+
+    def test_malformed_yaml_frontmatter_is_reported_as_a_failed_entry(self) -> None:
+        """A malformed YAML frontmatter block raises `yaml.YAMLError`, not `AssertionError`/`ValidationError`.
+
+        Exercises the `yaml.YAMLError` arm of `build_summaries`'s default
+        `error_types` (feat-81-83-validation Phase 3, Design Notes) --
+        distinct from a structural/field-validation failure.
+        """
+        create_req(_MINIMAL_BODY)
+        base_dir = ensure_req_base_dir()
+        malformed = f"---\nid: req-1\nstatus: [unterminated\n---\n{_MINIMAL_BODY}"
+        (base_dir / "malformed-yaml.md").write_text(malformed, encoding="utf-8")
+
+        sut = list_req()
+
+        self.assertEqual(sut.total, 2)
+        self.assertEqual(sut.error_count, 1)
+        failed = next(summary for summary in sut.results if summary.ref == "malformed-yaml")
+        self.assertIsNone(failed.id)
+        self.assertEqual(failed.title, "<failed to parse>")
+        self.assertEqual(failed.status, "<failed to parse>")
+        self.assertIsNotNone(failed.error)
 
     def test_empty_result_for_missing_directory(self) -> None:
         self.assertFalse((self.docs_root / "req").exists())
@@ -172,7 +213,7 @@ class TestListReq(unittest.TestCase):
 
         self.assertTrue(sut.truncated)
 
-    def test_total_reflects_full_parseable_count_regardless_of_paging(self) -> None:
+    def test_total_and_error_count_reflect_the_full_directory_regardless_of_paging(self) -> None:
         for i in range(5):
             create_req(_body_with_title(f"Title {i}"))
         base_dir = ensure_req_base_dir()
@@ -180,7 +221,8 @@ class TestListReq(unittest.TestCase):
 
         sut = list_req(max_results=1, offset=1)
 
-        self.assertEqual(sut.total, 5)
+        self.assertEqual(sut.total, 6)
+        self.assertEqual(sut.error_count, 1)
 
 
 if __name__ == "__main__":

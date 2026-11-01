@@ -33,12 +33,16 @@ import frontmatter
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.dec.models.v1 import DecDocument
-from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
+from biz.dfch.specmgr.dec.models.v1.parser import parse_dec, parse_dec_body
 from biz.dfch.specmgr.models.md._markdown import format_text
 
+from tests.dec.tools._helpers import MANDATORY_ROLES_AND_SOURCE
+
 # Zero optional sections: the H1, the mandatory `## Context and Problem
-# Statement`, and the mandatory `## Decision Outcome` (with its lead
-# paragraph) -- nothing else. This is the shape a freshly created `dec`
+# Statement`, the mandatory `## Decision Outcome` (with its lead
+# paragraph), the mandatory `## Roles and Responsibilities` (with its
+# mandatory `### Accountable`/`### Responsible`), and the mandatory
+# `## Source` -- nothing else. This is the shape a freshly created `dec`
 # document may legitimately have (ACC-002: every optional section defaults
 # to `None` end to end through the full parser).
 _MINIMAL_DOC = textwrap.dedent(
@@ -48,8 +52,8 @@ _MINIMAL_DOC = textwrap.dedent(
     type: dec
     version: 1.0.0
     status: draft
-    created: '2026-08-26 00:00:00.000Z'
-    updated: '2026-08-26 00:00:00.000Z'
+    created: '2026-08-26T00:00:00.000Z'
+    updated: '2026-08-26T00:00:00.000Z'
     ---
 
     # Choose a Document Store
@@ -61,6 +65,20 @@ _MINIMAL_DOC = textwrap.dedent(
     ## Decision Outcome
 
     We chose the document store.
+
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
     """
 )
 
@@ -75,8 +93,8 @@ _FULL_DOC = textwrap.dedent(
     type: dec
     version: 1.0.0
     status: accepted
-    created: '2026-08-26 00:00:00.000Z'
-    updated: '2026-08-27 00:00:00.000Z'
+    created: '2026-08-26T00:00:00.000Z'
+    updated: '2026-08-27T00:00:00.000Z'
     ---
 
     # Choose a Document Store
@@ -105,15 +123,37 @@ _FULL_DOC = textwrap.dedent(
 
     A two-week load test.
 
+    ## Roles and Responsibilities
+
+    ### Accountable
+
+    The platform architecture lead.
+
+    ### Responsible
+
+    - The order service team.
+
+    ### Consulted
+
+    - The database reliability team.
+
+    ## Tags
+
+    - data-store
+
+    ## Source
+
+    The customer dashboard latency incident review meeting.
+
     ## Related Artifacts
 
     ### Requirements
 
-    - REQ-9687: Order dashboard read latency
+    - REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency
 
     ### Goals
 
-    - GOL-0007: Cost-neutral platform migration
+    - GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration
 
     ## Pros and Cons
 
@@ -131,15 +171,30 @@ _FULL_DOC = textwrap.dedent(
 
     ## Updates
 
-    ### 2026-08-27 : Confirmed
+    ### 2026-08-27 00:00:00.000Z : Confirmed
 
     Load test passed.
 
-    ### 2026-08-26 - Created
+    ### 2026-08-26 00:00:00.000Z - Created
 
     Initial decision record drafted.
     """
 )
+
+# The mandatory `## Roles and Responsibilities` + `## Source` block, reused
+# by tests below that build their own minimal fixture text and only need
+# these two now-mandatory sections satisfied, not exercised. Imported from
+# the shared `tests/dec/tools/_helpers.py` fixture (feat-29-dec-source-roles
+# Phase 7, REQ-017/ACC-016) instead of duplicating it locally, as this file
+# used to.
+#
+# Note: `MANDATORY_ROLES_AND_SOURCE` carries a leading `\n` that neither of
+# this file's own two use sites below strictly needs (each already
+# concatenates it after fixture text that ends in its own trailing blank
+# line) -- verified empirically that the swap is safe anyway, since
+# `format_text`'s mdformat normalization collapses the resulting extra
+# blank line before `parse_dec` ever sees it, so both use sites parse to an
+# identical result whether or not the leading `\n` is present.
 
 
 class TestParseDec(unittest.TestCase):
@@ -153,7 +208,7 @@ class TestParseDec(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "dec-001")
         self.assertEqual(document.frontmatter.type, "dec")
         self.assertEqual(document.frontmatter.status, "draft")
-        self.assertEqual(document.frontmatter.created, "2026-08-26 00:00:00.000Z")
+        self.assertEqual(document.frontmatter.created, "2026-08-26T00:00:00.000Z")
         self.assertEqual(document.body.text, "Choose a Document Store")
         self.assertIn("cannot serve the dashboard read path", document.body.context.text)
         self.assertEqual(document.body.outcome.statement.text, "We chose the document store.")
@@ -187,13 +242,14 @@ class TestParseDec(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Order dashboard read latency"],
+            ["REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency"],
         )
         self.assertIsNone(related_artifacts.decisions)
         self.assertEqual(
-            [item.text for item in related_artifacts.goals.items], ["GOL-0007: Cost-neutral platform migration"]
+            [item.text for item in related_artifacts.goals.items],
+            ["GOL ec2ca6b8-36be-4ded-b407-5cee3cb180f3: Cost-neutral platform migration"],
         )
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
         pros_and_cons = document.body.pros_and_cons
         self.assertIsNotNone(pros_and_cons)
@@ -209,8 +265,8 @@ class TestParseDec(unittest.TestCase):
         updates = document.body.updates
         self.assertIsNotNone(updates)
         self.assertEqual(len(updates.updates), 2)
-        self.assertEqual(updates.updates[0].content.text, "Load test passed.")
-        self.assertEqual(updates.updates[1].content.text, "Initial decision record drafted.")
+        self.assertEqual(updates.updates[0].content.text, "Load test passed.\n")
+        self.assertEqual(updates.updates[1].content.text, "Initial decision record drafted.\n")
 
     def test_full_document_round_trips(self) -> None:
         """The body of the full document round-trips byte-exact through `parse_dec`."""
@@ -233,24 +289,32 @@ class TestParseDec(unittest.TestCase):
 
     def test_related_artifacts_sub_lists_independently_optional(self) -> None:
         """Each of the four sub-lists can be present/absent independently (ACC-002)."""
-        text = textwrap.dedent(
-            """\
-            # Choose a Document Store
+        text = (
+            textwrap.dedent(
+                """\
+                # Choose a Document Store
 
-            ## Context and Problem Statement
+                ## Context and Problem Statement
 
-            The current store cannot serve the dashboard read path.
+                The current store cannot serve the dashboard read path.
 
-            ## Decision Outcome
+                ## Decision Outcome
 
-            We chose the document store.
+                We chose the document store.
 
-            ## Related Artifacts
+                """
+            )
+            + MANDATORY_ROLES_AND_SOURCE
+            + textwrap.dedent(
+                """\
 
-            ### Decisions
+                ## Related Artifacts
 
-            - DEC-2703: Nightly order export
-            """
+                ### Decisions
+
+                - DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export
+                """
+            )
         )
 
         document = parse_dec(text)
@@ -258,26 +322,32 @@ class TestParseDec(unittest.TestCase):
         related_artifacts = document.body.related_artifacts
         self.assertIsNotNone(related_artifacts)
         self.assertIsNone(related_artifacts.requirements)
-        self.assertEqual([item.text for item in related_artifacts.decisions.items], ["DEC-2703: Nightly order export"])
+        self.assertEqual(
+            [item.text for item in related_artifacts.decisions.items],
+            ["DEC a70c52dd-7185-4759-a518-e64fd3205d9e: Nightly order export"],
+        )
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
     def test_related_artifacts_with_zero_sub_lists_parses(self) -> None:
         """A `## Related Artifacts` H2 with none of the four sub-lists is valid (all children optional)."""
-        text = textwrap.dedent(
-            """\
-            # Choose a Document Store
+        text = (
+            textwrap.dedent(
+                """\
+                # Choose a Document Store
 
-            ## Context and Problem Statement
+                ## Context and Problem Statement
 
-            The current store cannot serve the dashboard read path.
+                The current store cannot serve the dashboard read path.
 
-            ## Decision Outcome
+                ## Decision Outcome
 
-            We chose the document store.
+                We chose the document store.
 
-            ## Related Artifacts
-            """
+                """
+            )
+            + MANDATORY_ROLES_AND_SOURCE
+            + "\n## Related Artifacts\n"
         )
 
         document = parse_dec(text)
@@ -287,7 +357,7 @@ class TestParseDec(unittest.TestCase):
         self.assertIsNone(related_artifacts.requirements)
         self.assertIsNone(related_artifacts.decisions)
         self.assertIsNone(related_artifacts.goals)
-        self.assertIsNone(related_artifacts.acceptance_criteria)
+        self.assertIsNone(related_artifacts.risks)
 
 
 class TestParseDecValueViolations(unittest.TestCase):
@@ -499,7 +569,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 - Created
+            ### 2026-08-26 00:00:00.000Z - Created
             """
         )
 
@@ -522,7 +592,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ## Updates
 
-            ### 2026-08-26 - Created
+            ### 2026-08-26 00:00:00.000Z - Created
 
             Some update text.
 
@@ -559,7 +629,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
             ### Requirements
 
-            - REQ-9687: Order dashboard read latency
+            - REQ cfa5456a-2374-4ce2-adfa-c3e9b0d9059e: Order dashboard read latency
             """
         )
 
@@ -683,6 +753,68 @@ class TestParseDecStructuralViolations(unittest.TestCase):
 
         with self.assertRaises(AssertionError):
             parse_dec(text)
+
+
+class TestUnquotedTimestampNormalization(unittest.TestCase):
+    """The `_stringify_metadata` datetime-coercion branch (feat-146 REQ-006/REQ-003).
+
+    An unquoted frontmatter `created`/`updated` timestamp is coerced by PyYAML to a
+    `datetime` before this domain's own `_stringify_metadata` runs -- such a value
+    must parse and converge to the `T`-canonical form, and an unquoted date-only
+    value must still be rejected by the frontmatter's own date+time pattern.
+    """
+
+    def test_unquoted_timestamps_converge_to_t_canonical_form(self) -> None:
+        """Unquoted `T`- and space-separated timestamps parse and converge to the `T`-canonical
+        form; an unquoted date-only value still fails the frontmatter pattern."""
+        text = _MINIMAL_DOC.replace("created: '2026-08-26T00:00:00.000Z'", "created: 2026-08-26T00:00:00.000Z").replace(
+            "updated: '2026-08-26T00:00:00.000Z'", "updated: 2026-08-26 00:00:00.000Z"
+        )
+        document = parse_dec(text)
+        self.assertEqual(document.frontmatter.created, "2026-08-26T00:00:00.000Z")
+        self.assertEqual(document.frontmatter.updated, "2026-08-26T00:00:00.000Z")
+
+        with self.assertRaises(ValidationError):
+            parse_dec(text.replace("created: 2026-08-26T00:00:00.000Z", "created: 2026-08-26"))
+
+
+class TestParseDecBody(unittest.TestCase):
+    """:func:`parse_dec_body` -- the body-only, language-aware validation entry point the write side shares
+    (feat-197-i18n Phase 120)."""
+
+    _EN_BODY = _MINIMAL_DOC.split("---\n", 2)[2]
+    _DE_BODY = (
+        _EN_BODY.replace("## Context and Problem Statement", "## Kontext und Problembeschreibung")
+        .replace("## Decision Outcome", "## Entscheidungsergebnis")
+        .replace("## Roles and Responsibilities", "## Rollen und Verantwortlichkeiten")
+        .replace("### Accountable", "### Endverantwortlich")
+        .replace("### Responsible", "### Durchf\u00fchrend")
+        .replace("## Source", "## Quelle")
+    )
+
+    def test_default_language_is_identical_to_the_pre_i18n_body_parse(self):
+        """With language omitted/None/'en' the result equals ``Decision.from_text(format_text(content))``."""
+        from biz.dfch.specmgr.dec.models.v1 import Decision
+
+        expected = Decision.from_text(format_text(self._EN_BODY))
+        for kwargs in ({}, {"language": None}, {"language": "en"}):
+            with self.subTest(kwargs=kwargs):
+                self.assertEqual(parse_dec_body(self._EN_BODY, **kwargs), expected)
+
+    def test_german_headings_parse_to_the_canonical_model_through_the_table(self):
+        """A DE body parses (via the de table) to the same canonical model as its EN counterpart."""
+        self.assertEqual(parse_dec_body(self._DE_BODY, language="de"), parse_dec_body(self._EN_BODY))
+
+    def test_german_headings_fail_without_the_table(self):
+        """The same DE body is an engine AssertionError for the default language (no table applied)."""
+        with self.assertRaises(AssertionError):
+            parse_dec_body(self._DE_BODY)
+
+    def test_tableless_language_is_a_value_error(self):
+        """A shape-valid language without a packaged table raises the loader's actionable ValueError."""
+        with self.assertRaises(ValueError) as ctx:
+            parse_dec_body(self._EN_BODY, language="fr")
+        self.assertIn("no heading-mapping table", str(ctx.exception))
 
 
 if __name__ == "__main__":

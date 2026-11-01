@@ -32,8 +32,11 @@ step 1 if this is genuinely a new requirement.
 - `## Source` -- mandatory single-line value naming the origin/authority
   of this requirement.
 - `## Related Artifacts` -- optional container for up to four `### `
-  cross-reference bullet lists: Requirements, Decisions, Goals,
-  Acceptance Criteria (each `{ID}: {description}` per line).
+  cross-reference bullet lists: Requirements, Decisions, Goals, Risks
+  (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
+  tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
+  `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
+  accepts only the `DEC` tag, not `ADR`).
 - `## More Information` -- optional freeform supplementary text.
 - `## Notes` -- optional freeform remarks.
 
@@ -42,19 +45,19 @@ Elicit (asking the user if not already given): the requirement statement,
 its characteristics, obligation level, and source, and optionally
 priority, tags, related artifacts, description, and notes.
 
-## 3. Use the template/example/schema as references
-Fetch `specmgr://req/template` or `specmgr://req/example` as a starting
-point/style reference, then check `specmgr://req/schema` (the generated
-JSON Schema) to confirm field names and constraints before drafting the
-body. Do not invent field names or section headings that are not present
-there.
+## 3. Use the template/example tools as references
+Call the `get_req_template` and `get_req_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_req_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 1. Draft the body-only markdown per the structure above.
 2. Call `create_req(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
    validation failure raises uncaught and nothing is written.
-3. Optionally call `validate_req(content, full=False)` first if you want
+3. Optionally call `validate(type="req", content=content, full=False)` first if you want
    to dry-run the body without writing anything -- `create_req` already
    performs the same validation internally, so this step is never
    required, only a convenience.

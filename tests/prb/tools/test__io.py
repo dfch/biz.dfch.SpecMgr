@@ -35,11 +35,13 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: prb
     version: 1.0.0
     status: draft
-    created: '2026-08-25 00:00:00.000Z'
-    updated: '2026-08-25 00:00:00.000Z'
+    created: '2026-08-25T00:00:00.000Z'
+    updated: '2026-08-25T00:00:00.000Z'
     ---
 
     # Simple Problem Statement
+
+    The current process is causing delays, for users because of missing automation.
 
     ## Current State
 

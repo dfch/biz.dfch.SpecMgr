@@ -21,8 +21,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from markdown_it.token import Token
-from pydantic import model_validator, computed_field, PrivateAttr
+from pydantic import computed_field
 
 from .markdown_str import MarkdownStr
 from ._markdown import format_text, not_in_mdformat_message, parse
@@ -60,8 +59,6 @@ def _alias_mismatch_message(path: str, line: int, cls: type, heading_text: str) 
 @markdown(type="heading_open")
 class MarkdownSection(MarkdownStr, ABC):
     """Abstract base class for markdown sections with heading constraints."""
-
-    _tokens: list[Token] = PrivateAttr(default_factory=list)
 
     @classmethod
     def get_extent(cls, text: str) -> int:
@@ -294,25 +291,6 @@ class MarkdownSection(MarkdownStr, ABC):
 
         body = super().__str__()
         return format_text(f"{heading_line}\n\n{body}")
-
-    @model_validator(mode="after")
-    def validate_heading_structure(self) -> MarkdownSection:
-        """Validate that section starts with a heading (h1-h6) triple.
-
-        Tokens [0:3] must form a heading triple (heading_open/inline/heading_close).
-        Token [0] must have tag h1-h6.
-        """
-        text = str(self)
-        tokens = parse(text)
-        _ = tokens
-
-        # assert len(tokens) >= 3, "Expected at least 3 tokens for heading triple"
-        # assert tokens[0].type == "heading_open", f"Token[0]: expected heading_open, got {tokens[0].type}"
-        # assert tokens[2].type == "heading_close", f"Token[2]: expected heading_close, got {tokens[2].type}"
-        # assert tokens[0].tag in ("h1", "h2", "h3", "h4", "h5", "h6"), (
-        #     f"Token[0]: expected h1-h6, got {tokens[0].tag}"
-        # )
-        return self
 
     @computed_field  # type: ignore
     @property

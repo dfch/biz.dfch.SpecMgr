@@ -20,8 +20,9 @@ drift, which is what a CI step relies on directly.
 
 The emitted dialect is Pydantic v2's native JSON Schema 2020-12 (``$defs``,
 not ``definitions``) -- see `feat-6-requirement-artifact`'s README
-"Decisions Made" for why this deliberately diverges from
-``uc_schema.json``'s hand-authored draft-07.
+"Decisions Made" for the rationale. Every registered document type
+is generated through this command; no registered schema is
+hand-authored.
 
 ## Functions
 
@@ -166,6 +167,20 @@ Generate TSK's JSON Schema (2020-12 dialect) from ``TskDocument.model_json_schem
 Mirrors :func:`generate_req_schema` exactly, but for ``tsk.models.v1``:
 the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
 default), and ``"$comment"`` holds ``tsk.models.v1.SCHEMA_COMMENT_VERSION``
+(currently ``"v1"``) instead of REQ's own version token.
+
+Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for
+the same byte-identical-output/drift-detection reason as
+:func:`generate_req_schema`.
+
+
+### `generate_txt_schema() -> str`
+
+Generate TXT's JSON Schema (2020-12 dialect) from ``TxtDocument.model_json_schema()``.
+
+Mirrors :func:`generate_req_schema` exactly, but for ``txt.models.v1``:
+the ``"$schema"`` key is injected the same way (Pydantic v2 omits it by
+default), and ``"$comment"`` holds ``txt.models.v1.SCHEMA_COMMENT_VERSION``
 (currently ``"v1"``) instead of REQ's own version token.
 
 Serializes with ``indent=2, sort_keys=True`` plus a trailing newline, for

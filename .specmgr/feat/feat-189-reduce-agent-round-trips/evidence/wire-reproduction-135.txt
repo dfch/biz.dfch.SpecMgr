@@ -1,0 +1,5 @@
+prb: list total=1 error_count=0 -> OK; get_prb (non-raw) -> OK (structured content present, id round-trips)
+vcr: list total=1 error_count=0 -> OK; get_vcr (non-raw) -> OK (structured content present, id round-trips)
+req: list total=1 error_count=0 -> OK; get_req (non-raw) -> OK (structured content present, id round-trips)
+rsk: list total=1 error_count=0 -> OK; get_rsk (non-raw) -> OK (structured content present, id round-trips)
+WIRE REPRODUCTION: PASS (all four non-raw get_<d> calls succeed)

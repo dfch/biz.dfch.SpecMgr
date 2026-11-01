@@ -24,6 +24,11 @@ coverage of each mandatory-vs-optional field combination: each optional
 section (`Description`/`Priority`/`Tags`/`Related Artifacts`/
 `More Information`/`Notes`) individually absent/present, and each of the
 four `Related Artifacts` sub-lists individually absent/present.
+
+Also covers feat-135-related-artifacts-risks: `AcceptanceCriteria` was
+removed and replaced by `Risks` (REQ-001/REQ-002), and every sub-list now
+enforces the shared `"<TAG> <uuid>: <title>"` cross-reference format
+(REQ-004) with an optional trailing notes paragraph (REQ-006).
 """
 
 from __future__ import annotations
@@ -33,7 +38,6 @@ import unittest
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.gol.models.v1.body import (
-    AcceptanceCriteria,
     Decisions,
     Description,
     Goal,
@@ -43,6 +47,7 @@ from biz.dfch.specmgr.gol.models.v1.body import (
     Priority,
     RelatedArtifacts,
     Requirements,
+    Risks,
     Source,
     Tags,
 )
@@ -50,16 +55,20 @@ from biz.dfch.specmgr.models.md import MarkdownParagraph
 from biz.dfch.specmgr.models.md._markdown import format_text
 from biz.dfch.specmgr.models.md.alias_match import match_alias
 
+# A well-formed, lowercase 8-4-4-4-12 hex UUID reused by every generic
+# (non-reference-document) cross-reference fixture below -- the exact value
+# is never significant, only its shape.
+_VALID_UUID = "12345678-1234-1234-1234-123456789abc"
+
 # Every `RelatedArtifacts` sub-list class alongside the exact canonical
 # heading text it must -- and only it must -- match. The headings derive
 # from the class names via the `AliasType.SPACE_SEPARATED` convention (no
-# explicit `@alias`), including the multi-word `AcceptanceCriteria` ->
-# "Acceptance Criteria" derivation.
+# explicit `@alias`).
 _SUB_LIST_CLASSES_AND_HEADINGS = [
     (Requirements, "Requirements"),
     (Decisions, "Decisions"),
     (Goals, "Goals"),
-    (AcceptanceCriteria, "Acceptance Criteria"),
+    (Risks, "Risks"),
 ]
 
 # The reference document's body (`gol_reference.md`, frontmatter stripped),
@@ -105,21 +114,21 @@ The vehicle program's 2027 market analysis and the sales organization's consumer
 
 ### Requirements
 
-- REQ-9687: Maximum temperatures of running engines in civil vehicles
+- REQ f04dc881-ec40-4072-9a75-35002fca2bd7: Maximum temperatures of running engines in civil vehicles
 
 ### Decisions
 
-- DEC-2703: Usage of metal conductors in moving engine parts
+- DEC 8502621c-177a-4e76-9bf2-d79b4e960b2c: Usage of metal conductors in moving engine parts
 
 ### Goals
 
-- GOL-0003: Affordable and Efficient Powertrains for the Consumer Segment
+- GOL 68a4a8dc-8a9f-4150-b7ca-dc5591ee6ede: Affordable and Efficient Powertrains for the Consumer Segment
 
-- GOL-0007: Competitive Engines in Consumer Vehicles
+- GOL 115fa636-2b33-4baa-be66-52bcbb8eaa7c: Competitive Engines in Consumer Vehicles
 
-### Acceptance Criteria
+### Risks
 
-- ACC-1234: Temperature Measurements on running combustion engines
+- RSK 7d310eed-1eeb-4820-bc79-03bc5ac4612c: Sensor Drift Under Sustained High-Temperature Operation
 
 ## More Information
 
@@ -174,11 +183,9 @@ class TestSubListHeadingAliases(unittest.TestCase):
     """Each `RelatedArtifacts` sub-list class resolves its own, correct, distinct heading alias.
 
     Regression-style coverage mirroring PRB's `Question{N}`-shaped alias
-    test: since the four sub-list headings are all short, single- (or
-    double-) word title-case names, this confirms each class's
-    `SPACE_SEPARATED`-derived alias matches its own exact wording and no
-    other sub-list's -- in particular that `AcceptanceCriteria` derives
-    "Acceptance Criteria" (space inserted) from its class name.
+    test: since the four sub-list headings are all short, single-word
+    title-case names, this confirms each class's `SPACE_SEPARATED`-derived
+    alias matches its own exact wording and no other sub-list's.
     """
 
     def test_each_sub_list_matches_its_own_canonical_heading_and_no_other(self) -> None:
@@ -198,9 +205,6 @@ class TestSubListHeadingAliases(unittest.TestCase):
             with self.subTest(cls=cls.__name__):
                 self.assertEqual(cls._metadata.get("type"), "heading_open")
                 self.assertEqual(cls._metadata.get("tag"), "h3")
-
-    def test_acceptance_criteria_rejects_unsplit_class_name(self) -> None:
-        self.assertFalse(match_alias(AcceptanceCriteria, "AcceptanceCriteria"))
 
 
 class TestStatementAndSourceMandatory(unittest.TestCase):
@@ -304,7 +308,9 @@ class TestOptionalSectionsIndividuallyOptional(unittest.TestCase):
     def test_related_artifacts_present(self) -> None:
         kwargs = _minimal_goal_kwargs()
         kwargs["related_artifacts"] = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Decisions\n\n- DEC-0001: Some decision.\n")
+            format_text(
+                "## Related Artifacts\n\n### Decisions\n\n- DEC 12345678-1234-1234-1234-123456789abc: Some decision.\n"
+            )
         )
 
         sut = Goal(**kwargs)
@@ -356,46 +362,48 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_requirements_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Requirements\n\n- REQ-0001: Some requirement.\n")
+            format_text(f"## Related Artifacts\n\n### Requirements\n\n- REQ {_VALID_UUID}: Some requirement.\n")
         )
 
         self.assertIsNotNone(sut.requirements)
-        self.assertEqual([item.text for item in sut.requirements.items], ["REQ-0001: Some requirement."])
+        self.assertEqual([item.text for item in sut.requirements.items], [f"REQ {_VALID_UUID}: Some requirement."])
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_decisions_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Decisions\n\n- DEC-0001: Some decision.\n")
+            format_text(f"## Related Artifacts\n\n### Decisions\n\n- DEC {_VALID_UUID}: Some decision.\n")
         )
 
         self.assertIsNotNone(sut.decisions)
-        self.assertEqual([item.text for item in sut.decisions.items], ["DEC-0001: Some decision."])
+        self.assertEqual([item.text for item in sut.decisions.items], [f"DEC {_VALID_UUID}: Some decision."])
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.goals)
-        self.assertIsNone(sut.acceptance_criteria)
+        self.assertIsNone(sut.risks)
 
     def test_goals_sub_list_present(self) -> None:
-        sut = RelatedArtifacts.from_text(format_text("## Related Artifacts\n\n### Goals\n\n- GOL-0001: Some goal.\n"))
-
-        self.assertIsNotNone(sut.goals)
-        self.assertEqual([item.text for item in sut.goals.items], ["GOL-0001: Some goal."])
-        self.assertIsNone(sut.requirements)
-        self.assertIsNone(sut.decisions)
-        self.assertIsNone(sut.acceptance_criteria)
-
-    def test_acceptance_criteria_sub_list_present(self) -> None:
         sut = RelatedArtifacts.from_text(
-            format_text("## Related Artifacts\n\n### Acceptance Criteria\n\n- ACC-0001: Some criterion.\n")
+            format_text(f"## Related Artifacts\n\n### Goals\n\n- GOL {_VALID_UUID}: Some goal.\n")
         )
 
-        self.assertIsNotNone(sut.acceptance_criteria)
-        self.assertEqual([item.text for item in sut.acceptance_criteria.items], ["ACC-0001: Some criterion."])
+        self.assertIsNotNone(sut.goals)
+        self.assertEqual([item.text for item in sut.goals.items], [f"GOL {_VALID_UUID}: Some goal."])
+        self.assertIsNone(sut.requirements)
+        self.assertIsNone(sut.decisions)
+        self.assertIsNone(sut.risks)
+
+    def test_risks_sub_list_present(self) -> None:
+        sut = RelatedArtifacts.from_text(
+            format_text(f"## Related Artifacts\n\n### Risks\n\n- RSK {_VALID_UUID}: Some risk.\n")
+        )
+
+        self.assertIsNotNone(sut.risks)
+        self.assertEqual([item.text for item in sut.risks.items], [f"RSK {_VALID_UUID}: Some risk."])
         self.assertIsNone(sut.requirements)
         self.assertIsNone(sut.decisions)
         self.assertIsNone(sut.goals)
@@ -408,7 +416,7 @@ class TestRelatedArtifactsSubListsIndividuallyOptional(unittest.TestCase):
         with self.assertRaises(ValidationError):
             Goals(items=[])
         with self.assertRaises(ValidationError):
-            AcceptanceCriteria(items=[])
+            Risks(items=[])
 
 
 class TestPriorityValueValidation(unittest.TestCase):
@@ -492,23 +500,124 @@ class TestGoalReferenceDocumentRoundTrips(unittest.TestCase):
         self.assertIsNotNone(related_artifacts)
         self.assertEqual(
             [item.text for item in related_artifacts.requirements.items],
-            ["REQ-9687: Maximum temperatures of running engines in civil vehicles"],
+            ["REQ f04dc881-ec40-4072-9a75-35002fca2bd7: Maximum temperatures of running engines in civil vehicles"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.decisions.items],
-            ["DEC-2703: Usage of metal conductors in moving engine parts"],
+            ["DEC 8502621c-177a-4e76-9bf2-d79b4e960b2c: Usage of metal conductors in moving engine parts"],
         )
         self.assertEqual(
             [item.text for item in related_artifacts.goals.items],
             [
-                "GOL-0003: Affordable and Efficient Powertrains for the Consumer Segment",
-                "GOL-0007: Competitive Engines in Consumer Vehicles",
+                "GOL 68a4a8dc-8a9f-4150-b7ca-dc5591ee6ede: Affordable and Efficient Powertrains for the Consumer Segment",
+                "GOL 115fa636-2b33-4baa-be66-52bcbb8eaa7c: Competitive Engines in Consumer Vehicles",
             ],
         )
         self.assertEqual(
-            [item.text for item in related_artifacts.acceptance_criteria.items],
-            ["ACC-1234: Temperature Measurements on running combustion engines"],
+            [item.text for item in related_artifacts.risks.items],
+            ["RSK 7d310eed-1eeb-4820-bc79-03bc5ac4612c: Sensor Drift Under Sustained High-Temperature Operation"],
         )
+
+
+# Every sub-list class alongside its own correct type tag (feat-135-related-artifacts-risks).
+_SUB_LIST_CLASSES_AND_TAGS = [
+    (Requirements, "REQ"),
+    (Decisions, "DEC"),
+    (Goals, "GOL"),
+    (Risks, "RSK"),
+]
+
+
+class TestSubListCrossReferenceFormatMatrix(unittest.TestCase):
+    """Every `RelatedArtifacts` sub-list enforces the shared `"<TAG> <uuid>: <title>"`
+    cross-reference format (feat-135-related-artifacts-risks, REQ-004, ACC-002/ACC-003):
+    a well-formed bullet parses, and each malformed variant (wrong tag, uppercase uuid,
+    malformed uuid, dash instead of space, missing title) raises `pydantic.ValidationError`.
+    """
+
+    def test_well_formed_bullet_parses(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertEqual(len(sut.items), 1)
+
+    def test_wrong_type_tag_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            wrong_tag = next(other_tag for _, other_tag in _SUB_LIST_CLASSES_AND_TAGS if other_tag != tag)
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {wrong_tag} {_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_uppercase_uuid_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID.upper()}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_malformed_uuid_raises_validation_error(self) -> None:
+        # One hex digit short in the last group.
+        malformed_uuid = "12345678-1234-1234-1234-123456789a"
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {malformed_uuid}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_dash_instead_of_space_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag}-{_VALID_UUID}: A title\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_missing_title_raises_validation_error(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}:\n")
+
+                with self.assertRaises(ValidationError):
+                    cls.from_text(text)
+
+    def test_decisions_rejects_adr_tag(self) -> None:
+        """`Decisions` is DEC-only (REQ-005/ACC-004): an `ADR` bullet is rejected."""
+        text = format_text(f"### Decisions\n\n- ADR {_VALID_UUID}: A title\n")
+
+        with self.assertRaises(ValidationError):
+            Decisions.from_text(text)
+
+
+class TestSubListNotesCapture(unittest.TestCase):
+    """A bullet with a trailing indented notes paragraph parses into `.items[0].notes`;
+    a bare bullet leaves `.items[0].notes` as `None` (feat-135-related-artifacts-risks,
+    REQ-006, ACC-005) -- every sub-list's `items` is now `list[MarkdownListItemWithNotes]`.
+    """
+
+    def test_bullet_with_notes_captures_notes(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n\n  A paraphrase note.\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNotNone(sut.items[0].notes)
+
+    def test_bare_bullet_leaves_notes_none(self) -> None:
+        for cls, tag in _SUB_LIST_CLASSES_AND_TAGS:
+            with self.subTest(cls=cls.__name__):
+                text = format_text(f"### {cls.__name__}\n\n- {tag} {_VALID_UUID}: A title\n")
+
+                sut = cls.from_text(text)
+
+                self.assertIsNone(sut.items[0].notes)
 
 
 if __name__ == "__main__":

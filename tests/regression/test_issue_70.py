@@ -25,7 +25,8 @@ Notes) and Phase 1b (a follow-up literal-reproduction deep dive) both conclusive
 -- even reproducing the exact literal reported heading text
 (``#### Phase N: Per-domain create_<d> tools``) at document sizes up to 175 lines, with multiple
 simultaneous violations, at various positions in the document, through ``Feature.from_text``,
-the in-process ``validate_feat`` tool, and a real MCP client over a real ``stdio`` transport. The
+the in-process ``validate_feat`` tool (since retired in favor of the generic ``validate`` tool,
+feat-81-83-validation Phase 2), and a real MCP client over a real ``stdio`` transport. The
 orchestrator/user accepted that "no gap found" verdict, so Task 3.1's conditional code fix in
 ``models/md/_markdown.py`` was skipped entirely -- this file exists purely to catch a *future*
 regression of today's already-correct behavior.
@@ -36,8 +37,9 @@ domain," not just ``feat`` (the domain issue #70 was literally filed against). T
 three domains with deliberately different body shapes, to exercise the shared parser through
 different structural paths rather than just one:
 
-1. **``feat``** -- the literal issue #70 reproduction: the bad token sits in a `` #### Phase N: ``
-   ``Task List`` heading, using the issue's own literal wording
+1. **``feat``** -- the issue #70 reproduction: the bad token sits in a ``#### Phase 300:``
+   ``Task List`` heading -- the phase number renumbered from the issue's ``Phase 3`` by the
+   feat-163 numbering scheme -- using the issue's own literal title wording
    (``Per-domain create_<d> tools``), inside a folder-per-document, nested-container schema.
 2. **``req``** -- the bad token sits in a bullet list item inside a free-form ``## Description``
    prose section, inside a flat, single-file, WHILE/THE-grammar schema.
@@ -45,8 +47,15 @@ different structural paths rather than just one:
    ``## Context and Problem Statement`` prose section, inside a flat, single-file, MADR-style
    schema.
 
-Each domain is driven through both ``validate_<d>`` (disk-free dry run) and ``create_<d>``
-(actual create, asserted to write nothing to disk on failure) -- the two surfaces ACC-002 names.
+Each domain is driven through both the generic ``validate`` tool (disk-free dry run) and
+``create_<d>`` (actual create, asserted to write nothing to disk on failure) -- the two
+surfaces ACC-002 names. Since feat-81-83-validation Phase 2, ``validate`` never raises for a
+content-validation failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead,
+so the ``validate``-tool tests below assert against ``result.errors[0].message`` rather than a
+raised exception. Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206
+non-raising chain), ``create_<d>`` never raises for a content-validation failure either --
+the same non-raising ``ValidateResult`` shape -- so the ``create_<d>``-tool tests below
+assert against ``result.errors[0].message`` as well.
 """
 
 from __future__ import annotations
@@ -58,13 +67,12 @@ from pathlib import Path
 from unittest import mock
 
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
-from biz.dfch.specmgr.dec.tools.validate_dec import validate_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
-from biz.dfch.specmgr.feat.tools.validate_feat import validate_feat
+from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, doc_base_dir
+from biz.dfch.specmgr.general.tools.validate import validate
 from biz.dfch.specmgr.req.tools.create_req import create_req
-from biz.dfch.specmgr.req.tools.validate_req import validate_req
 
 #: The cause + fix-hint substrings every one of this test's bad bodies must surface (REQ-003),
 #: taken from `models/md/_markdown.py::_raw_html_message`'s own message shape. `"at line"` checks
@@ -84,7 +92,9 @@ def _assert_actionable_message(message: str) -> None:
     Parameters
     ----------
     message:
-        The ``str(exception)`` a failed ``validate_<d>``/``create_<d>`` call raised.
+        A failed ``create_<d>`` call's non-raising ``ValidateResult``'s
+        ``result.errors[0].message`` (feat-204-create-error Phase 110), or a
+        failed generic ``validate`` call's ``result.errors[0].message``.
     """
     assert isinstance(message, str), type(message)
 
@@ -93,8 +103,9 @@ def _assert_actionable_message(message: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# feat: the literal issue #70 repro -- a bare `<word>`-shaped token in a
-# `#### Phase N: ...` Task List heading, using the issue's own literal wording.
+# feat: the issue #70 repro (phase number renumbered to `Phase 300` under the feat-163
+# scheme) -- a bare `<word>`-shaped token in a `#### Phase 300: ...` Task List heading,
+# using the issue's own literal title wording.
 # ---------------------------------------------------------------------------
 
 _FEAT_BAD_BODY = textwrap.dedent(
@@ -127,9 +138,9 @@ _FEAT_BAD_BODY = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 3: Per-domain create_<d> tools
+    #### Phase 300: Per-domain create_<d> tools
 
-    - [x] Task 3.1: Create branch and package skeleton
+    - [x] Task 300.100: Create branch and package skeleton
 
     ## Progress
 
@@ -201,24 +212,28 @@ _DEC_BAD_BODY = textwrap.dedent(
 
 
 class TestIssue70FeatBareHtmlTokenRegression(unittest.TestCase):
-    """The literal issue #70 repro (a bad `#### Phase N: ...` heading), for `feat`."""
+    """Issue #70's repro with the phase number renumbered to `Phase 300` under the feat-163
+    scheme (the heading carries the issue's literal title), for `feat`."""
 
     def setUp(self) -> None:
         tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.feat_root = tmp / "feat"
         self.enterContext(mock.patch.dict("os.environ", {FEAT_DIR_ENV_VAR: str(self.feat_root)}))
 
-    def test_validate_feat_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_feat(_FEAT_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="feat", content=_FEAT_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_feat_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_feat(_FEAT_BAD_BODY)
+        result = create_feat(_FEAT_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
         # Validation happens before the create lock/base-dir creation (create_feat's own
         # docstring), so nothing at all should exist on disk after a failed create.
@@ -232,17 +247,20 @@ class TestIssue70ReqBareHtmlTokenRegression(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_validate_req_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_req(_REQ_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="req", content=_REQ_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_req_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_req(_REQ_BAD_BODY)
+        result = create_req(_REQ_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
         req_dir = doc_base_dir("req")
         self.assertEqual([], list(req_dir.glob("*.md")) if req_dir.exists() else [])
@@ -255,17 +273,20 @@ class TestIssue70DecBareHtmlTokenRegression(unittest.TestCase):
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(self.docs_root)}))
 
-    def test_validate_dec_surfaces_an_actionable_message(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            validate_dec(_DEC_BAD_BODY)
+    def test_validate_surfaces_an_actionable_message(self) -> None:
+        result = validate(type="dec", content=_DEC_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
     def test_create_dec_surfaces_an_actionable_message_and_writes_nothing(self) -> None:
-        with self.assertRaises(AssertionError) as ctx:
-            create_dec(_DEC_BAD_BODY)
+        result = create_dec(_DEC_BAD_BODY)
 
-        _assert_actionable_message(str(ctx.exception))
+        self.assertIsInstance(result, ValidateResult)
+        self.assertFalse(result.valid)
+        self.assertEqual(len(result.errors), 1)
+        _assert_actionable_message(result.errors[0].message)
 
         dec_dir = doc_base_dir("dec")
         self.assertEqual([], list(dec_dir.glob("*.md")) if dec_dir.exists() else [])

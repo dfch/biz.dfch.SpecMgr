@@ -1,9 +1,9 @@
 ---
-created: '2025-05-01 07:23:46.815Z'
+created: '2025-05-01T07:23:46.815Z'
 id: deadbeef-dead-dead-dead-deadbeefdead
 status: draft
 type: sop
-updated: '2025-05-14 19:58:32.271Z'
+updated: '2025-05-14T19:58:32.271Z'
 version: 1.0.0
 ---
 
@@ -57,23 +57,23 @@ The actions that make up the first step.
 
 ### Requirements
 
-- A bullet list with related requirements, e.g. REQ-0001: title.
+- REQ 00000000-0000-4000-8000-000000000001: title of the related requirement
 
 ### Decisions
 
-- A bullet list with related decisions, e.g. DEC-0001: title.
+- DEC 00000000-0000-4000-8000-000000000002: title of the related decision
 
 ### Goals
 
-- A bullet list with related goals, e.g. GOL-0001: title.
+- GOL 00000000-0000-4000-8000-000000000003: title of the related goal
 
-### Acceptance Criteria
+### Risks
 
-- A bullet list with related acceptance criteria, e.g. ACC-0001: title.
+- RSK 00000000-0000-4000-8000-000000000004: title of the related risk
 
 ### Sops
 
-- A bullet list with related SOPs, e.g. SOP-0001: title.
+- SOP 00000000-0000-4000-8000-000000000005: title of the related SOP
 
 ## More Information
 

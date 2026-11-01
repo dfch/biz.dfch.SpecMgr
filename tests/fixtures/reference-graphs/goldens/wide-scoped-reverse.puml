@@ -1,0 +1,43 @@
+@startuml Wide Requirement One
+
+skinparam component {
+  backgroundColor<<ADR>> LightYellow
+  backgroundColor<<REQ>> LightBlue
+  backgroundColor<<UC>> Pink
+  backgroundColor<<TSK>> Honeydew
+  backgroundColor<<QA>> LemonChiffon
+  backgroundColor<<PRB>> LightCoral
+  backgroundColor<<GOL>> Lavender
+  backgroundColor<<RSK>> Orange
+  backgroundColor<<DEC>> LightGreen
+  backgroundColor<<SOP>> PowderBlue
+  backgroundColor<<FEAT>> PaleTurquoise
+  backgroundColor<<VCR>> Khaki
+  backgroundColor<<SYSRS>> Thistle
+  backgroundColor<<TXT>> LightGrey
+  backgroundColor<<UNRESOLVED>> DarkRed
+}
+
+left to right direction
+
+component "ADR" {
+component "Wide ADR" as [ADR-c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c] <<ADR>>
+}
+
+component "REQ" {
+component "Wide Requirement One" as [REQ-c009c009-c009-4c09-8c09-c009c009c009] <<REQ>>
+}
+
+component "UC" {
+component "Wide Use Case" as [UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] <<UC>>
+}
+
+component "GOL" {
+component "Wide Goal" as [GOL-c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b] <<GOL>>
+}
+
+[ADR-c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c] --> [REQ-c009c009-c009-4c09-8c09-c009c009c009]
+[REQ-c009c009-c009-4c09-8c09-c009c009c009] --> [GOL-c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b]
+[REQ-c009c009-c009-4c09-8c09-c009c009c009] -[#red]-> [UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a]
+[UC-c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a] -[#red]-> [REQ-c009c009-c009-4c09-8c09-c009c009c009]
+@enduml

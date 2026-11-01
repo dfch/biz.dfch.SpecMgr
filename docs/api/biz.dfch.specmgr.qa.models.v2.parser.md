@@ -25,6 +25,24 @@ MarkdownStr engine. Two error channels:
   cross-field invariants -- deliberately left uncaught here, same as all other
   parsers in the project.
 
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
+domain: ``parse_qa`` is this domain's single text-to-model parse boundary --
+the choke point behind ``get_qa``'s non-raw reads, ``list_qa``'s rows (both
+via the cache-backed ``read_qa``), and the path-based ``parse_qa`` tool -- and
+it takes an optional ``language`` keyword (``None``/omitted or ``"en"`` =
+canonical, no table -- byte-identical to the pre-i18n EN path; any other
+language resolves its table via
+:func:`biz.dfch.specmgr.general.models.resolve_heading_table`). When a table
+exists, the mdformat-normalized body passes the fence-aware
+:func:`biz.dfch.specmgr.general.models.normalize_heading_lines` pre-pass
+before the *unchanged* ``models/md`` engine runs, so the parsed model holds
+canonical heading text while the on-disk file keeps its translation.
+``parse_qa_body`` is the body-only half of it (the single body-validation
+entry point the write side shares: ``create_qa`` and the generic
+``update``/``edit`` tools' ``qa`` adapters validate the caller's raw body
+through it).
+
 ## Functions
 
 ### `_stringify_metadata(metadata: 'dict[str, object]') -> 'dict[str, object]'`
@@ -32,16 +50,33 @@ MarkdownStr engine. Two error channels:
 Coerce YAML-native scalar types back to ``str`` (or ``None``).
 
 ``python-frontmatter`` parses the YAML block using PyYAML's standard loader,
-which auto-converts unquoted dates/timestamps into Python datetime objects,
-but every :class:`QaFrontmatter` field inherited from
+which auto-converts unquoted dates/timestamps into Python ``datetime``/
+``date`` objects, but every :class:`QaFrontmatter` field inherited from
 :class:`~biz.dfch.specmgr.models.md.MarkdownFrontmatter` is ``str | None``,
 so a raw non-``str`` object would fail Pydantic's (deliberately non-coercive)
-string validation. Converting via ``str()`` reproduces what a human would have
-written.  ``None`` (from an empty YAML key like ``version:``) is passed
-through so the field's own optional-ness applies normally.
+string validation. ``None`` (from an empty YAML key like ``version:``) is
+passed through so the field's own optional-ness applies normally.
+
+A coerced ``datetime`` (an unquoted timestamp in either the ``T`` or the
+space separator) is normalized to the ``T``-canonical form with exactly
+three millisecond digits via
+:func:`~biz.dfch.specmgr.models.md._timestamps.normalize_yaml_datetime`
+(feat-146, REQ-006): a bare ``str()`` would drop the milliseconds of a
+whole-millisecond value (rendering six fraction digits -- a rejected
+shape), render a zero UTC offset as ``+00:00`` instead of ``Z``, and keep
+the space separator instead of converging to the machine-written ``T``
+form. That same helper's own guard returns a bare ``str()`` for a
+six-digit-fraction unquoted timestamp instead, so it reaches the
+frontmatter's date+time pattern validator in a rejected, actionable shape
+rather than being silently truncated into an accepted one. A coerced
+``date`` (an unquoted date-only value) still stringifies via ``str()`` to
+its ``yyyy-MM-dd`` text, where the same pattern validator rejects it --
+date-only and six-digit fractions remain rejected (feat-146 REQ-003).
+
+Mirrors the same helper in ``prb/models/v1/parser._stringify_metadata``.
 
 
-### `parse_qa(text: 'str') -> 'QaDocument'`
+### `parse_qa(text: 'str', *, language: 'str | None' = None) -> 'QaDocument'`
 
 Parse a full Question and Answer (QA) ``.md`` file's text into a :class:`QaDocument` (v2).
 
@@ -51,6 +86,19 @@ text:
     The complete file content, YAML frontmatter block and markdown body
     together, exactly as read from disk (or submitted verbatim by an MCP
     tool call that never wrote it to disk at all).
+language:
+    The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+    ``None`` (the default) or ``"en"`` parses the canonical, English
+    headings as-is (no table -- byte-identical to the pre-i18n path);
+    any other value resolves that language's heading-mapping table and
+    applies the fence-aware heading-normalization pre-pass to the
+    mdformat-normalized body before the ``models/md`` engine runs, so a
+    translated document's fixed-text headings parse to the same
+    canonical schema keys as their EN counterpart (data-carrying regex
+    headings carry no table entry and match directly, their
+    schema-constant tokens staying canonical in the file). The
+    frontmatter is never transformed (its values are language-invariant,
+    REQ-010).
 
 Returns
 -------
@@ -63,4 +111,53 @@ QaDocument
     frontmatter YAML -- both frontmatter error channels are enriched by
     :func:`~biz.dfch.specmgr.models.md._frontmatter_parse.parse_frontmatter`
     (feat-27-validation Phase 2).
+
+Raises
+------
+ValueError
+    A non-default ``language`` without a packaged heading-mapping table
+    (the table loader's actionable error,
+    :func:`biz.dfch.specmgr.general.models.load_heading_table`).
+
+
+### `parse_qa_body(content: 'str', *, language: 'str | None' = None) -> 'Qa'`
+
+Parse a frontmatter-free QA document body text into a :class:`Qa`, in the given language.
+
+The body-only half of :func:`parse_qa` (feat-197-i18n Phase 125, ADR
+38efdb66 item 5): ``Qa.from_text(format_text(content))`` with the
+optional per-language heading-normalization pre-pass between the two.
+It is the single body-validation entry point the write side shares --
+``create_qa`` and the generic ``update``/``edit`` tools' ``qa``
+adapters validate the caller's raw body through it, so a language
+variant's translated headings are accepted exactly as the read side
+(:func:`parse_qa`, which itself delegates here) accepts them, and the
+persisted text stays the caller's raw body byte-for-byte (this function
+only validates; it never renders). With ``language`` omitted/``None``
+or ``"en"`` there is no table and the parse is byte-identical to the
+pre-i18n ``Qa.from_text(format_text(content))``.
+
+Parameters
+----------
+content:
+    The body markdown only (no YAML frontmatter block).
+language:
+    The body's language: ``None``/omitted or ``"en"`` = canonical
+    headings as-is; any other value resolves that language's
+    heading-mapping table via
+    :func:`biz.dfch.specmgr.general.models.resolve_heading_table`.
+
+Returns
+-------
+Qa
+    The structured body (canonical heading text for every section).
+
+Raises
+------
+AssertionError
+    A malformed heading/list structure.
+pydantic.ValidationError
+    A field or cross-field validation failure.
+ValueError
+    A non-default ``language`` without a packaged heading-mapping table.
 

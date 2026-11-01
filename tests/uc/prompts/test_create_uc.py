@@ -39,22 +39,23 @@ class TestCreateUcPrompt(unittest.TestCase):
         result = create_uc("Some topic")
         self.assertIn("list_uc", result)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_uc_template/get_uc_example
+        tools and name the conditional get_uc_schema fetch."""
         result = create_uc("Some topic")
-        self.assertIn("specmgr://uc/template", result)
-        self.assertIn("specmgr://uc/example", result)
-        self.assertIn("specmgr://uc/schema", result)
+        self.assertIn("get_uc_template", result)
+        self.assertIn("get_uc_example", result)
+        self.assertIn("get_uc_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_uc tool, the template/schema
-        resources, and create_uc, in that order, matching the intended
+        tools, and create_uc, in that order, matching the intended
         sequence."""
         result = create_uc("Some topic")
         markers = [
             "list_uc",
-            "specmgr://uc/template",
-            "specmgr://uc/schema",
+            "get_uc_template",
+            "get_uc_schema",
             "create_uc(content)",
         ]
         positions = [result.index(marker) for marker in markers]

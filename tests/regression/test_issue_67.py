@@ -33,12 +33,15 @@ both the literal ACC-001 pattern and the broader round-milliseconds class, to lo
 fix and catch any future regression of the same defect class -- not just its narrowest reported
 symptom.
 
-Deliberately excluded from both checks: a date-only `### yyyy-MM-dd - {title}` heading (no
-time-of-day component at all). Task 1.5 confirmed these are a deliberately supported alternate
-granularity (several domains' own `_UPDATE_ENTRY_HEADING_PATTERN` makes the time-of-day
-component optional), not a placeholder defect -- this test's patterns only ever match a
-timestamp that *has* an explicit `HH:mm:ss.fff` time-of-day component, so date-only headings
-never trip either check.
+Deliberately excluded from both checks: an entry-heading line carrying the documented
+midnight-UTC migration shape, e.g. `### 2026-08-15 00:00:00.000Z - Created`. feat-146 Phase 2
+(ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) tightens every entry-heading alias to the full
+date+time form and migrates the 8 packaged date-only entry headings to exactly that midnight
+shape -- a date-only heading carries no time-of-day at all, so midnight UTC is the faithful,
+convention-fixed representation of it (the ADR's decision outcome prescribes
+`yyyy-MM-dd 00:00:00.000Z`). It is a documented migration shape, not a copy-paste
+placeholder, and no packaged data file keeps a date-only heading anymore (so the
+date-only-heading exclusion this note previously carried is moot).
 """
 
 from __future__ import annotations
@@ -54,6 +57,14 @@ _FULL_MIDNIGHT_PATTERN = re.compile(r"\d{2}:\d{2}:\d{2}\.000[Z+-]")
 #: second, not just full midnight -- e.g. `08:15:42.000Z`. Every full-midnight match is also a
 #: round-milliseconds match, so `_FULL_MIDNIGHT_PATTERN` is a strict subset of this one.
 _ROUND_MILLISECONDS_PATTERN = re.compile(r"\.000[Z+-]")
+
+#: The feat-146 Phase 2 midnight-UTC migration shape for formerly date-only entry headings
+#: (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): a `###`/`####` heading whose timestamp is
+#: exactly `yyyy-MM-dd 00:00:00.000Z` (either the space- or the `T`-separated form, matching
+#: the documented "both separators accepted" contract), followed by the entry's own `" - "`/`" : "` separator.
+#: Such a heading is a documented, convention-fixed migration of a time-of-day-less entry,
+#: not a round placeholder -- excluded from both checks below.
+_MIGRATED_MIDNIGHT_HEADING_PATTERN = re.compile(r"^#{3,4} \d{4}-\d{2}-\d{2}[T ]00:00:00\.000Z(?: - | : )\S")
 
 #: Repo root, resolved from this test file's own location (`tests/regression/test_issue_67.py`).
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -96,6 +107,8 @@ class TestIssue67NoRoundPlaceholderTimestamps(unittest.TestCase):
         for path in self.files:
             text = path.read_text(encoding="utf-8")
             for lineno, line in enumerate(text.splitlines(), start=1):
+                if _MIGRATED_MIDNIGHT_HEADING_PATTERN.match(line):
+                    continue
                 if _FULL_MIDNIGHT_PATTERN.search(line):
                     offenders.append(f"{path.relative_to(_REPO_ROOT)}:{lineno}: {line.strip()}")
 
@@ -106,6 +119,8 @@ class TestIssue67NoRoundPlaceholderTimestamps(unittest.TestCase):
         for path in self.files:
             text = path.read_text(encoding="utf-8")
             for lineno, line in enumerate(text.splitlines(), start=1):
+                if _MIGRATED_MIDNIGHT_HEADING_PATTERN.match(line):
+                    continue
                 if _ROUND_MILLISECONDS_PATTERN.search(line):
                     offenders.append(f"{path.relative_to(_REPO_ROOT)}:{lineno}: {line.strip()}")
 

@@ -1,15 +1,20 @@
 ---
-created: '2025-08-04 11:23:56.407Z'
+created: '2025-08-04T11:23:56.407Z'
 id: deaddead-cafe-cafe-cafe-deaddeadcafe
 status: active
 type: prb
-updated: '2025-08-17 08:14:39.052Z'
+updated: '2025-08-17T08:14:39.052Z'
 version: 1.0.0
 ---
 
 # Widget Registry Migration Rollback Failures
 
-<!-- Captured during the platform team's weekly incident review. -->
+<!-- Captured during the platform team's weekly incident review. The lead sentence follows the fixed template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].` -- only the four bracketed blanks are filled in, the surrounding wording and punctuation stay verbatim. -->
+
+The migration tool's lack of a rollback step is causing widgets to become
+half-migrated, for the on-call platform engineer because the
+WidgetRegistryV1 de-registration call sometimes fails after the
+WidgetRegistryV2 write succeeds.
 
 ## Current State
 
@@ -93,6 +98,7 @@ half-migrated state, and no manual recovery is required.
 ## More Information
 
 This problem statement was drafted after the third rollback incident, once
-a clear pattern across all three occurrences had emerged. No root cause
-analysis is included here by design; a separate root-cause investigation is
+a clear pattern across all three occurrences had emerged. No `## Root Cause`
+section exists; the lead sentence above carries the best-known cause by
+design. Formal root-cause analysis remains a separate, later activity,
 tracked internally and will be linked from `References` once complete.

@@ -1,0 +1,96 @@
+{
+ "run_id": "prb-update-prompt-n1",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "7b038823-317e-48b8-b67e-9b4244c5af26",
+ "events": 21,
+ "steps": 6,
+ "wall_seconds": 262.5,
+ "input_tokens": 316258,
+ "output_tokens": 1789,
+ "total_tool_calls": 5,
+ "specmgr_tool_calls": 5,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 1,
+ "failed_calls": [
+  {
+   "tool": "specmgr_get_prb",
+   "status": "error",
+   "error": "MCP error -32602: Structured content does not match the tool's output schema: data/result/body/current_state/question_1 must be equal to one of the allowed values, data/result/body/current_state/question_1 must be null, data/result/body/current_state/question_1 must match a schema in anyOf, data/res"
+  }
+ ],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [],
+ "template_fetch_count": 0,
+ "example_fetches": [],
+ "example_fetch_count": 0,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [],
+ "create_first_try_success": false,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_list_prb",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_prb",
+   "status": "error",
+   "input": {
+    "id": "7b038823-317e-48b8-b67e-9b4244c5af26"
+   },
+   "error": "MCP error -32602: Structured content does not match the tool's output schema: data/result/body/current_state/question_1 must be equal to one of the allowed values, data/result/body/current_state/question_1 must be null, data/result/body/current_state/question_1 must match a schema in anyOf, data/res"
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "7b038823-317e-48b8-b67e-9b4244c5af26",
+    "raw": true,
+    "numbered": true
+   },
+   "error": ""
+  },
+  {
+   "n": 4,
+   "tool": "specmgr_update",
+   "status": "completed",
+   "input": {
+    "id": "7b038823-317e-48b8-b67e-9b4244c5af26",
+    "type": "prb",
+    "content": "The delay costs the team approximately 2500 EUR per quarter in rework and lost schedule buffer.",
+    "offset": 47,
+    "limit": 1
+   },
+   "error": ""
+  },
+  {
+   "n": 5,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "7b038823-317e-48b8-b67e-9b4244c5af26",
+    "raw": true,
+    "offset": 45,
+    "limit": 7
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nThe structured read hit a schema mismatch; let me read the body raw.\n\n\n\n\nThe document parses fine in raw form (new format with a lead sentence). The requested change is a single-line fix in `## Impact` \u2014 the 5W2H answers are unchanged, so no Summary/Gap re-synthesis is needed. Applying a line-range replacement at body line 47:\n\n\n\n\nThe update was successful \u2014 the snippet confirmed that only line 47 was changed, and the id/status/created/version were preserved. Verifying the final state:\n\n\n\n\nVerified: `## Impact` now states 2500 EUR per quarter; all other sections byte-unchanged.\n\nDONE",
+ "files_on_disk": [
+  "docs/prb/7b038823-317e-48b8-b67e-9b4244c5af26.md",
+  "opencode.json"
+ ]
+}

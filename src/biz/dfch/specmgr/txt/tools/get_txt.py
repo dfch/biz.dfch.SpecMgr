@@ -1,0 +1,247 @@
+# Copyright (C) 2026 Ronald Rink, d-fens GmbH, http://d-fens.ch
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# pylint: disable=redefined-builtin  # id intentionally shadows the builtin: public tool API, issue #41
+
+"""``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+
+Mirrors ``vcr.tools.get_vcr`` -- a thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (ADR
+33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
+routes through a content-hash-validated, per-domain in-memory cache (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
+when a file's content hash is unchanged since its last read, so a stale
+entry is structurally impossible.
+
+This tool is the sole id-based read path for TXT: there is no
+``specmgr://txt/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+same reasoning as VCR's own ``get_vcr`` tool).
+
+**Path-safety guard (the same ``general.tools._path_safety`` guard as
+VCR).** This tool validates ``id`` via the shared
+``general.tools._path_safety.validate_id("txt", ...)`` dispatcher call,
+mirroring ``vcr.tools.get_vcr``'s own ``validate_id("vcr", ...)`` call:
+for every UUID-shaped domain (``txt`` among them, since the Phase 130
+``general.tools._domains`` registration) that composes exactly
+:func:`~biz.dfch.specmgr.general.tools._path_safety.assert_no_traversal`
+plus :func:`~biz.dfch.specmgr.general.tools._path_safety.assert_uuid`, in
+that order, both raised before any filesystem access.
+
+``raw=True`` returns the frontmatter-stripped body text verbatim instead of
+the parsed document -- produced by the same
+:func:`~biz.dfch.specmgr.general.tools._splice.body_text` helper the
+generic ``update`` tool's range splice uses, so the line numbers a client
+counts in a raw read index byte-for-byte into the text the server splices
+against. With optional read-style ``offset``/``limit`` coordinates
+(feat-28-get-update, Phase 2), the same raw read instead returns the window
+of that text, served by the shared
+:func:`~biz.dfch.specmgr.general.tools._splice.window_body` helper (clamping
+out-of-range values, never erroring). With an optional ``numbered=True``
+(feat-153-off-by-n, Phase 3), each returned body line is additionally
+prefixed with its 1-based absolute body-line number in the ``"<n>: "``
+form.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+A 1:1 port of ``get_req``'s ``language`` handling. The optional ``language``
+parameter (default ``"en"``) selects which on-disk variant of the id to
+read: omitted/``"en"`` = the flat ``docs/txt/<id>.md`` document, exactly
+today's behavior; any other shape-validated ISO 639-1-shaped code (e.g.
+``"de"``) = the variant at ``docs/txt/{language}/<id>.md`` (the EN source's
+exact basename). The language is shape-guarded by
+:func:`biz.dfch.specmgr.general.tools._path_safety.assert_language` before
+any filesystem access (the same discipline as ``id``), and a shape-valid
+language without a packaged heading-mapping table is rejected up front with
+the table loader's actionable error, also before any filesystem access.
+A ``raw=True`` read of a variant returns the variant's on-disk body
+verbatim (its translation preserved); a ``raw=False`` read parses through
+the variant's heading table, so the structured model holds canonical
+heading text (ACC-004/ACC-011). The non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
+for a broken variant file exactly as for EN: the ``error`` text is
+byte-identical to ``list_txt(language=...)``'s failed row for the same
+file (ADR 9080b37c).
+"""
+
+from __future__ import annotations
+
+from ...general.models import ParseFailureResult
+from ...general.models.heading_table import resolve_heading_table
+from ...general.tools._doc_paths import find_parse_failure
+from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language, assert_within, validate_id
+from ...general.tools._splice import body_text, validate_read_args, window_body
+from ...server import mcp
+from ..models.v1 import TxtDocument
+from ._io import load_by_id, read_txt
+from ._paths import TxtNotFoundError, txt_base_dir
+
+
+@mcp.tool(
+    name="get_txt",
+    title="Get free-form text",
+    description=(
+        "Read, parse, and return a full free-form text document (frontmatter and body) "
+        "by its id. Pass raw=True to return the frontmatter-stripped body text verbatim instead. "
+        "With raw=True, optional read-style `offset`/`limit` window the raw read: `offset` "
+        "(1-based, default 1) is the first body line to return, `limit` (line count, default "
+        "through end of body) how many; out-of-range values clamp (`offset > N` returns the empty "
+        "string), and coordinates with raw=False raise ValueError."
+        " A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising; "
+        "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
+        "for the same file (identical field path and cause, including the trailing pydantic "
+        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
+        "any file access."
+        " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
+        'absolute body-line number in the `"<n>: "` form (plain decimal, no padding) -- under '
+        "`offset`/`limit` windowing the numbers start at the clamped offset and never restart at 1, so a "
+        "number seen in the output can be fed straight back into the generic `update` tool's `offset`. "
+        "`numbered` is meaningful only with raw=True: combining it with raw=False raises ValueError (like "
+        "`offset`/`limit`), and a numbered read of a document that fails to parse returns the "
+        "`ParseFailureResult` described above, never numbered text. Numbered output must never be fed back "
+        'verbatim into `content` for `update` or `create_txt` -- strip the `"<n>: "` prefix from each '
+        "line first (it is likewise never a valid `edit` `old_str`)."
+        " The optional `language` parameter (default 'en') selects the language variant to read: "
+        "omitted/'en' = the flat docs/txt/ document, exactly the default behavior; any other "
+        "ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/txt/{language}/ (the EN source's exact basename). The language is shape-validated "
+        "before any file access (a path-injection-shaped payload is a ValueError, like an invalid "
+        "id), and a shape-valid language without a packaged heading-mapping table is rejected "
+        "up front with an actionable ValueError, also before any file access. A raw=True read of "
+        "a variant returns the variant's on-disk body verbatim (translation preserved); a "
+        "raw=False read parses it through the variant's heading table, so the structured model "
+        "holds canonical heading text. The `ParseFailureResult` `error` of a broken variant is "
+        "byte-identical to list_txt(language=...)'s failed row for the same file."
+    ),
+)
+def get_txt(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    id: str,
+    raw: bool = False,
+    offset: int | None = None,
+    limit: int | None = None,
+    numbered: bool = False,
+    language: str = DEFAULT_LANGUAGE,
+) -> TxtDocument | str | ParseFailureResult:
+    """Read and return the free-form text document identified by ``id``.
+
+    Parameters
+    ----------
+    id:
+        The document's specmgr-assigned identifier.
+    raw:
+        With ``False`` (the default), return the parsed document, exactly
+        as before. With ``True``, return the frontmatter-stripped body
+        text verbatim as a plain string -- the same text whose 1-based
+        lines the generic ``update`` tool's ``offset``/``limit``
+        coordinates address (shared body-extraction helper with the
+        splice) -- optionally windowed by ``offset``/``limit`` (see below).
+    offset:
+        With ``raw=True`` only: the 1-based first body line of the window
+        to return (default 1; values below 1 floor to 1, values past the
+        last body line return the empty string).
+    limit:
+        With ``raw=True`` only: the number of body lines the window spans
+        (default through the end of the body; capped at the remaining
+        lines, a negative value returns the empty string).
+    numbered:
+        With ``raw=True`` only: when ``True``, prefix every returned body
+        line with its 1-based absolute body-line number in the ``"<n>: "``
+        form (plain decimal, no padding) -- under ``offset``/``limit``
+        windowing the numbers start at the clamped ``offset`` and never
+        restart at 1, so a number seen in the output can be fed straight
+        back into the generic ``update`` tool's ``offset``. Numbered
+        output must never be fed back verbatim as ``content`` for
+        ``update`` or ``create_txt`` -- strip the ``"<n>: "`` prefix from
+        each line first (it is likewise never a valid ``edit`` ``old_str``).
+         Combining it with ``raw=False`` raises ``ValueError`` (see
+         ``Raises``).
+    language:
+        The language variant to read (feat-197-i18n Phase 125, ADR
+        38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
+        reads the flat ``docs/txt/`` document -- today's exact behavior;
+        any other ISO 639-1-shaped lowercase two-letter code (e.g.
+        ``"de"``) reads the variant at ``docs/txt/{language}/`` under the
+        EN source's exact basename. Shape-guarded before any filesystem
+        access (like ``id``); a shape-valid code without a packaged
+        heading-mapping table is rejected up front with the table
+        loader's actionable error, also before any filesystem access. For
+        a variant, ``raw=True`` returns its on-disk body verbatim and
+        ``raw=False`` parses through its heading table (canonical heading
+        text in the model).
+
+    Returns
+    -------
+    TxtDocument | str | ParseFailureResult
+        With ``raw=False``: the current on-disk document, freshly re-read
+        and re-parsed. With ``raw=True``: the body text (or its
+        ``offset``/``limit`` window) as a plain string. With
+        ``numbered=True``, every returned line is additionally prefixed
+        with its ``"<n>: "`` 1-based absolute body-line number. When the
+        document
+        exists but fails to parse, a
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) is returned instead of raising --
+        ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
+        the same file (identical field path and cause, including the trailing pydantic
+        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+        ``raw=True`` never returns a broken document's raw text.
+        Raises :class:`._paths.TxtNotFoundError` if no free-form text
+        document has this id.
+
+    Raises
+    ------
+    ValueError
+        ``language`` is not an ISO 639-1-shaped lowercase two-letter code, or a
+        non-default ``language`` has no packaged heading-mapping table (both raised
+        before any filesystem access, the same guard discipline as ``id``);
+        ``id`` is a path-injection attempt or not a well-formed id for this domain
+        (raised before any filesystem access), or ``offset``/``limit`` coordinates
+        are given with ``raw=False`` (a parsed document requires the whole body),
+        or ``numbered=True`` is given with ``raw=False`` (numbering is a
+        ``raw=True``-only feature) -- both read-argument misuses raised before
+        any file access.
+    """
+    # The shared dispatcher call, mirroring get_vcr's own validate_id("vcr", ...)
+    # (assert_no_traversal + assert_uuid, in that order, for every
+    # UUID-shaped domain -- see this module's docstring for the full
+    # rationale).
+    validate_id("txt", id)
+    assert_language(language)
+    validate_read_args(raw, offset, limit, numbered)
+    if language != DEFAULT_LANGUAGE:
+        resolve_heading_table(language)
+
+    base_dir = txt_base_dir(language)
+    try:
+        path, doc = load_by_id(base_dir, id)
+    except TxtNotFoundError:
+        parse_failure = find_parse_failure(base_dir, id, read_txt)
+        if parse_failure is None:
+            raise
+        failure_path, failure_error = parse_failure
+        assert_within(base_dir, failure_path)
+        return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id)
+    assert_within(base_dir, path)
+    if raw:
+        text = body_text(path)
+        if offset is None and limit is None and not numbered:
+            result: TxtDocument | str = text
+            return result
+        result = window_body(text, 1 if offset is None else offset, limit, numbered=numbered)
+        return result
+    result = doc
+    return result

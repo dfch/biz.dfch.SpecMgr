@@ -57,7 +57,7 @@ class TestCreateDecPrompt(unittest.TestCase):
 
     def test_mentions_todowrite_list(self):
         """The prompt must instruct building a todo list covering the mandatory
-        `context` + `outcome` + each optional section."""
+        `context` + `outcome` + `roles and responsibilities` + `source` + each optional section."""
         result = create_dec("Some topic")
         self.assertIn("todo list", result)
         for section in (
@@ -65,12 +65,24 @@ class TestCreateDecPrompt(unittest.TestCase):
             "Decision Drivers",
             "Considered Options",
             "Decision Outcome",
+            "Roles and Responsibilities",
+            "Tags",
+            "Source",
             "Related Artifacts",
             "Pros and Cons",
             "More Information",
             "Updates",
         ):
             self.assertIn(section, result)
+
+    def test_mentions_rasci_resource_for_roles_and_responsibilities(self):
+        """The prompt must instruct fetching the cross-cutting specmgr://rasci resource before
+        drafting the mandatory `## Roles and Responsibilities` section, and must not caveat this
+        step as skippable (unlike SOP, DEC's section is always present)."""
+        result = create_dec("Some topic")
+        self.assertIn("specmgr://rasci", result)
+        normalized = " ".join(result.split())
+        self.assertIn("this step is never skipped", normalized)
 
     def test_mentions_question_tool(self):
         """The prompt must instruct using the question tool to elicit information."""
@@ -92,32 +104,36 @@ class TestCreateDecPrompt(unittest.TestCase):
         normalized = " ".join(result.split())
         self.assertIn("is not part of this schema and must not be used", normalized)
 
-    def test_mentions_starting_point_resources(self):
-        """The prompt must point at the template/example/schema resources."""
+    def test_mentions_template_example_tools_and_conditional_schema(self):
+        """The prompt must point at the get_dec_template/get_dec_example
+        tools and name the conditional get_dec_schema fetch."""
         result = create_dec("Some topic")
-        self.assertIn("specmgr://dec/template", result)
-        self.assertIn("specmgr://dec/example", result)
-        self.assertIn("specmgr://dec/schema", result)
+        self.assertIn("get_dec_template", result)
+        self.assertIn("get_dec_example", result)
+        self.assertIn("get_dec_schema", result)
 
     def test_mentions_tool_sequence_in_order(self):
         """The prompt must mention the list_dec tool, the template/example
-        resources, specmgr://dec/schema, and create_dec, in that order,
+        tools, get_dec_schema, and create_dec, in that order,
         matching the intended sequence."""
         result = create_dec("Some topic")
         markers = [
             "list_dec",
-            "specmgr://dec/template",
-            "specmgr://dec/schema",
+            "get_dec_template",
+            "get_dec_schema",
             "create_dec(content)",
         ]
         positions = [result.index(marker) for marker in markers]
         self.assertEqual(positions, sorted(positions))
 
     def test_mentions_mandatory_fields(self):
-        """The mandatory DEC fields (context + outcome) must be named as the mandatory ones,
-        elicited before each optional field."""
+        """The mandatory DEC fields (context, outcome, roles and responsibilities, source) must
+        be named as the mandatory ones, elicited before each optional field."""
         result = " ".join(create_dec("Some topic").split())
-        self.assertIn("mandatory fields first -- the context and the outcome", result)
+        self.assertIn(
+            "mandatory fields first -- the context, the outcome, the roles and responsibilities, and the source",
+            result,
+        )
         self.assertIn("then each optional field in turn", result)
 
     def test_mentions_update_dec_for_later_revisions(self):

@@ -25,6 +25,10 @@ populated with short placeholder ("blind text") content instead -- both
 read a packaged, build-guaranteed data file rather than anything on the
 caller's filesystem (Task 3.2; the real packaged data files themselves
 arrive in Phase 4, so both tools raise ``FileNotFoundError`` until then).
+``get_sysrs_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://sysrs/schema`` resource).
 ``get_sysrs`` reads, parses, and returns a full System Requirements
 Specification document by id -- the sole id-based read path for SYSRS
 (there is no ``specmgr://sysrs/{id}`` resource, ADR
@@ -43,12 +47,14 @@ bumping ``updated``, leaving the body untouched. Classification changes go
 through the generic ``set_classification`` tool in ``general.tools``
 (``type="sysrs"``). Deletion of ``sysrs`` documents goes through the
 generic ``delete`` tool in ``general.tools`` (``type="sysrs"``).
-``validate_sysrs`` is a disk-free, id-free dry run against a submitted
-``content`` string, independent of the other tools. There is **no**
-per-domain ``update_sysrs``/``set_status_sysrs``/``delete_sysrs`` tool --
-dispatch-only from day one, ADR 36905d5b-8057-4294-8665-c7eed5534db0.
-Import this package to register all System Requirements Specification
-tools at once::
+Disk-free, id-free dry-run content validation goes through the generic
+``validate`` tool in ``general.tools`` (``type="sysrs"``) -- the former
+``validate_sysrs`` tool was removed in favor of it (feat-81-83-validation
+Phase 2). There is **no** per-domain
+``update_sysrs``/``set_status_sysrs``/``delete_sysrs``/``validate_sysrs``
+tool -- dispatch-only from day one, ADR
+36905d5b-8057-4294-8665-c7eed5534db0. Import this package to register all
+System Requirements Specification tools at once::
 
     from biz.dfch.specmgr.sysrs import tools  # noqa: F401 (side-effects only)
 """
@@ -56,17 +62,17 @@ tools at once::
 from .create_sysrs import create_sysrs
 from .get_sysrs import get_sysrs
 from .get_sysrs_example import get_sysrs_example
+from .get_sysrs_schema import get_sysrs_schema
 from .get_sysrs_template import get_sysrs_template
 from .list_sysrs import list_sysrs
 from .parse_sysrs import parse_sysrs
-from .validate_sysrs import validate_sysrs
 
 __all__ = [
     "create_sysrs",
     "get_sysrs",
     "get_sysrs_example",
+    "get_sysrs_schema",
     "get_sysrs_template",
     "list_sysrs",
     "parse_sysrs",
-    "validate_sysrs",
 ]

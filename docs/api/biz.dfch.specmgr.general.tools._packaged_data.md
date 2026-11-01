@@ -2,11 +2,11 @@
 
 Generic, doc-type-agnostic access to packaged example/template/schema data
 files (plan Task 5.3), generalizing ``req/_data.py``'s formerly REQ-only
-shape so a future artifact domain (UC, goal, acc, ...) never needs its own
+shape so a new artifact domain (UC, goal, acc, ...) never needs its own
 copy of this module.
 
 Fixed on-disk convention: ``{type_name}/data/{type_name}_{kind}.{ext}`` (e.g.
-``req/data/req_example.md``, a future ``uc/data/uc_example.md``) -- see
+``req/data/req_example.md``, ``uc/data/uc_example.md``) -- see
 `.specmgr/feat/feat-6-requirement-artifact/README.md`'s Task 5.2 design note
 for the full discussion. Files under this convention are real *package
 data* -- declared per-package under ``[tool.setuptools.package-data]``

@@ -1,9 +1,9 @@
 # `biz.dfch.specmgr.adr.tools._io`
 
-Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
+Thin file read/write helpers over ``parse_adr``/``render_adr``.
 
 No ``mcp`` dependency here either -- these are plain file-I/O adapters,
-kept separate from the ``@mcp.tool()``-decorated functions in ``tools.py``
+kept separate from the ``@mcp.tool()``-decorated functions in ``adr/tools/``
 so they stay independently testable.
 
 ## Functions
@@ -23,10 +23,10 @@ tuple[Path, Adr]
 
 ### `read_adr(path: 'Path') -> 'Adr'`
 
-Read and parse the ADR at ``path`` (plan §7's "re-read, re-parse").
+Read and parse the ADR at ``path`` ("re-read, re-parse").
 
 
 ### `write_adr(path: 'Path', adr: 'Adr') -> 'None'`
 
-Render ``adr`` and write it to ``path`` (plan §7's "re-render, re-write").
+Render ``adr`` and write it to ``path`` ("re-render, re-write").
 

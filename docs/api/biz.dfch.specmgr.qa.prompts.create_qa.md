@@ -1,12 +1,12 @@
 # `biz.dfch.specmgr.qa.prompts.create_qa`
 
-``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
+``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through drafting a brand-new Question and Answer (QA) document using the
 existing ``qa/tools/``/``qa/resources/`` surface (``list_qa``,
-``specmgr://qa/template``/``specmgr://qa/example``, ``specmgr://qa/schema``,
-``create_qa``, ``validate_qa``). Structural shape ported 1:1 from
+``specmgr://qa/template``/``specmgr://qa/example``, ``get_qa_schema``,
+``create_qa``, generic ``validate`` tool). Structural shape ported 1:1 from
 ``req.prompts.create_req``, with the instructional content rewritten to
 describe QA's own schema instead of REQ's.
 

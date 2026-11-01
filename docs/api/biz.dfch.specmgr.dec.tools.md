@@ -8,6 +8,10 @@ sample decision document as raw markdown; ``get_dec_template`` returns a
 document with every field present but populated with short placeholder
 ("blind text") content instead -- both read a packaged, build-guaranteed
 data file rather than anything on the caller's filesystem (Task 2.2).
+``get_dec_schema`` returns the domain's generated JSON Schema (2020-12
+dialect) as raw text, reading the same packaged, build-guaranteed data
+file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+replaces the removed ``specmgr://dec/schema`` resource).
 ``get_dec`` reads, parses, and returns a full decision document by id -- the
 sole id-based read path for DEC (there is no ``specmgr://dec/{id}`` resource,
 ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_dec`` returns one page of
@@ -22,8 +26,10 @@ except ``updated``. Status changes of an existing document go through the
 generic ``set_status`` tool in ``general.tools`` (``type="dec"``), also
 bumping ``updated``, leaving the body untouched. Deletion of ``dec``
 documents goes through the generic ``delete`` tool in ``general.tools``
-(``type="dec"``). ``validate_dec`` is a disk-free, id-free dry run against
-a submitted ``content`` string, independent of the other tools. Import this
-package to register all decision tools at once::
+(``type="dec"``). Disk-free, id-free dry-run content validation goes
+through the generic ``validate`` tool in ``general.tools`` (``type="dec"``)
+-- the former ``validate_dec`` tool was removed in favor of it
+(feat-81-83-validation Phase 2). Import this package to register all
+decision tools at once::
 
     from biz.dfch.specmgr.dec import tools  # noqa: F401 (side-effects only)

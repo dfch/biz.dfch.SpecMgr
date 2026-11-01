@@ -19,15 +19,16 @@
 
 """``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 
-The generic, cross-domain classification-change tool for the twelve
+The generic, cross-domain classification-change tool for the
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``).
-Unlike the 13-way ``set_status`` (``general/tools/set_status.py``), ``adr``
-is deliberately excluded here: ADR's separate ``AdrFrontmatter`` model
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``).
+Unlike ``set_status`` (``general/tools/set_status.py``), which also
+dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
+separate ``AdrFrontmatter`` model
 (``models/adr/``) is out of scope for the ``classification`` field entirely
 (``.specmgr/feat/feat-56-classification-attribute-in-frontmatter/README.md``
 Scope section) -- there is no ADR adapter, no ``superseded_by``-style
-parameter, and no 12th entry in the dispatch table.
+parameter, and no entry for it in the dispatch table.
 
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_classification_<d>``), each shaped exactly like
@@ -42,8 +43,8 @@ rather than ported from any retired per-domain tool -- true of every
 adapter in this module, since ``set_classification`` itself is new
 (there was never a per-domain ``set_classification_<d>`` tool to port).
 
-The ``feat`` adapter (``_set_classification_feat``) diverges from the other
-ten whole-body domains' identical shape in the same way
+The ``feat`` adapter (``_set_classification_feat``) diverges from every
+other whole-body domain's identical shape in the same way
 ``_update_feat``/``_set_status_feat`` do: it resolves ``id`` via
 ``feat.tools._paths``'s bespoke folder-per-document shortcut, not a
 flat-file directory scan (see ``.specmgr/feat/feat-31-feature/README.md``
@@ -52,8 +53,8 @@ Design Notes). It bumps ``updated`` to the same shared date+time timestamp
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
-to the builtin shadow. The 12-way union return type is annotation-only --
-the MCP input schema is built from the parameters, and the SDK serializes
+to the builtin shadow. The union return type is annotation-only -- the MCP
+input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
 Blank/whitespace-only ``classification`` values clear the field back to
@@ -67,6 +68,29 @@ No ``create_<d>`` tool accepts a ``classification`` argument (explicitly
 rejected in favor of this single generic tool, per the feature's Scope
 section) -- ``set_classification`` is the sole classification-change entry
 point for every domain.
+
+An existing-but-broken document (feat-170-update-edit-parse-failure,
+GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+workaround chain): on a target ``id`` whose only matching on-disk file
+fails to parse, every adapter now returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+(``error``/``path``/``id``) instead of raising the domain's own
+``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
+(inside the domain lock, before any write), probes the domain's existing
+parse-failure lookup (:func:`general.tools._doc_paths.find_parse_failure`,
+called with the domain's own cache-backed ``read_<d>`` as ``read_fn``;
+:func:`feat.tools._paths.find_feat_parse_failure` for ``feat``), and
+returns the result when the probe finds a name-matching broken file (the
+probed path passes the same ``_path_safety.assert_within`` guard the
+primary load path applies, mirroring every ``get_<d>``'s own branch). The
+``error`` text is byte-identical to the domain's ``list_<d>`` failed row's
+``error`` for the same file (identical field path and cause, including the
+trailing pydantic documentation line -- feat-162-doc-cache-exception-footer,
+GitHub issue #162, fixed ``DocCache``'s exception reconstruction to preserve
+that footer on a warm re-raise). A truly-absent ``id`` (no file on
+disk matches at all) still raises the domain's own not-found error
+unchanged.
 
 Safety (mirroring ``set_status``'s/``update``'s/``delete``'s own REQ-009/
 REQ-003): the public :func:`set_classification` validates ``id`` via
@@ -88,78 +112,99 @@ enriched (field path + line reference + fix hint) shape.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Literal
 
 import frontmatter
 
 from ...dec.models.v1 import DecFrontmatter
 from ...dec.tools._io import load_by_id as load_dec_by_id
-from ...dec.tools._lock import dec_lock
-from ...dec.tools._paths import dec_base_dir
+from ...dec.tools._io import read_dec
+from ...dec.tools._lock import dec_lock, dec_lock_key
+from ...dec.tools._paths import DecNotFoundError, dec_base_dir
 from ...dec.tools._write import write_dec_file
 from ...feat.models.v1 import FeatFrontmatter
+from ...feat.tools._cache import read_feat, read_feat_dirty
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
-from ...feat.tools._paths import feat_base_dir
+from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.tools._io import load_by_id as load_gol_by_id
-from ...gol.tools._lock import gol_lock
-from ...gol.tools._paths import gol_base_dir
+from ...gol.tools._io import read_gol
+from ...gol.tools._lock import gol_lock, gol_lock_key
+from ...gol.tools._paths import GolNotFoundError, gol_base_dir
 from ...gol.tools._write import write_gol_file
 from ...models.md._errors import FRONTMATTER_CHANNEL, wrap_tool_errors
 from ...prb.models.v1 import PrbFrontmatter
 from ...prb.tools._io import load_by_id as load_prb_by_id
-from ...prb.tools._lock import prb_lock
-from ...prb.tools._paths import prb_base_dir
+from ...prb.tools._io import read_prb
+from ...prb.tools._lock import prb_lock, prb_lock_key
+from ...prb.tools._paths import PrbNotFoundError, prb_base_dir
 from ...prb.tools._write import write_prb_file
 from ...qa.models.v2 import QaFrontmatter
 from ...qa.tools._io import load_by_id as load_qa_by_id
-from ...qa.tools._lock import qa_lock
-from ...qa.tools._paths import qa_base_dir
+from ...qa.tools._io import read_qa
+from ...qa.tools._lock import qa_lock, qa_lock_key
+from ...qa.tools._paths import QaNotFoundError, qa_base_dir
 from ...qa.tools._write import write_qa_file
 from ...req.models.v1 import ReqFrontmatter
 from ...req.tools._io import load_by_id as load_req_by_id
-from ...req.tools._lock import req_lock
-from ...req.tools._paths import req_base_dir
+from ...req.tools._io import read_req
+from ...req.tools._lock import req_lock, req_lock_key
+from ...req.tools._paths import ReqNotFoundError, req_base_dir
 from ...req.tools._write import write_req_file
 from ...rsk.models.v1 import RskFrontmatter
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
-from ...rsk.tools._lock import rsk_lock
-from ...rsk.tools._paths import rsk_base_dir
+from ...rsk.tools._io import read_rsk
+from ...rsk.tools._lock import rsk_lock, rsk_lock_key
+from ...rsk.tools._paths import RskNotFoundError, rsk_base_dir
 from ...rsk.tools._write import write_rsk_file
 from ...server import mcp
 from ...sop.models.v1 import SopFrontmatter
 from ...sop.tools._io import load_by_id as load_sop_by_id
-from ...sop.tools._lock import sop_lock
-from ...sop.tools._paths import sop_base_dir
+from ...sop.tools._io import read_sop
+from ...sop.tools._lock import sop_lock, sop_lock_key
+from ...sop.tools._paths import SopNotFoundError, sop_base_dir
 from ...sop.tools._write import write_sop_file
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...sysrs.tools._io import load_by_id as load_sysrs_by_id
-from ...sysrs.tools._lock import sysrs_lock
-from ...sysrs.tools._paths import sysrs_base_dir
+from ...sysrs.tools._io import read_sysrs
+from ...sysrs.tools._lock import sysrs_lock, sysrs_lock_key
+from ...sysrs.tools._paths import SysrsNotFoundError, sysrs_base_dir
 from ...sysrs.tools._write import write_sysrs_file
 from ...tsk.models.v1 import TskFrontmatter
 from ...tsk.tools._io import load_by_id as load_tsk_by_id
-from ...tsk.tools._lock import tsk_lock
-from ...tsk.tools._paths import tsk_base_dir
+from ...tsk.tools._io import read_tsk
+from ...tsk.tools._lock import tsk_lock, tsk_lock_key
+from ...tsk.tools._paths import TskNotFoundError, tsk_base_dir
 from ...tsk.tools._write import write_tsk_file
+from ...txt.models.v1 import TxtFrontmatter
+from ...txt.tools._io import load_by_id as load_txt_by_id
+from ...txt.tools._io import read_txt
+from ...txt.tools._lock import txt_lock, txt_lock_key
+from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
+from ...txt.tools._write import write_txt_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
-from ...uc.tools._lock import uc_lock
-from ...uc.tools._paths import uc_base_dir
+from ...uc.tools._io import read_uc
+from ...uc.tools._lock import uc_lock, uc_lock_key
+from ...uc.tools._paths import UcNotFoundError, uc_base_dir
 from ...uc.tools._write import write_uc_file
 from ...vcr.models.v1 import VcrFrontmatter
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
-from ...vcr.tools._lock import vcr_lock
-from ...vcr.tools._paths import vcr_base_dir
+from ...vcr.tools._io import read_vcr
+from ...vcr.tools._lock import vcr_lock, vcr_lock_key
+from ...vcr.tools._paths import VcrNotFoundError, vcr_base_dir
 from ...vcr.tools._write import write_vcr_file
-from ._path_safety import assert_within, validate_id
+from ..models import ParseFailureResult
+from ._doc_paths import find_parse_failure
+from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
+from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
+from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
 from ._timestamps import now_timestamp
 
 __all__ = ["set_classification"]
 
-#: The generic tool's 12-way return union -- annotation-only (see module docstring).
+#: The generic tool's return union -- annotation-only (see module docstring).
 _SetClassificationFrontmatter = (
     ReqFrontmatter
     | UcFrontmatter
@@ -173,10 +218,14 @@ _SetClassificationFrontmatter = (
     | SopFrontmatter
     | VcrFrontmatter
     | SysrsFrontmatter
+    | TxtFrontmatter
+    | ParseFailureResult
 )
 
 
-def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
+def _set_classification_req(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> ReqFrontmatter | ParseFailureResult:
     """Replace the classification of the requirement identified by ``id_``.
 
     Shaped exactly like :func:`~.set_status._set_status_req` (same
@@ -184,11 +233,29 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
     ``frontmatter.loads(...).content`` mechanism and verbatim
     re-persistence, frontmatter reconstructed through :class:`ReqFrontmatter`'s
     own constructor, ``write_req_file``, ``ReqNotFoundError``), replacing
-    ``classification`` instead of ``status``.
+    ``classification`` instead of ``status``. Failure return (see the module
+    docstring): a target ``id`` whose only matching on-disk file fails to
+    parse yields the non-raising ``ParseFailureResult`` instead of
+    ``ReqNotFoundError`` (a truly-absent id still raises).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
+    variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = req_base_dir()
-    with req_lock(id_):
-        path, existing = load_req_by_id(base_dir, id_)
+    base_dir = req_base_dir(language)
+    with req_lock(req_lock_key(id_, language)):
+        try:
+            path, existing = load_req_by_id(base_dir, id_)
+        except ReqNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_req)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -199,18 +266,36 @@ def _set_classification_req(id_: str, classification: str) -> ReqFrontmatter:
         with wrap_tool_errors(domain="req", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = ReqFrontmatter(**fm_data)
         write_req_file(path, new_frontmatter, raw_body)
+        read_req(path)  # warm the cache (feat-107-doc-cache Phase 3, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
+def _set_classification_uc(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> UcFrontmatter | ParseFailureResult:
     """Replace the classification of the use case identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
+    variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = uc_base_dir()
-    with uc_lock(id_):
-        path, existing = load_uc_by_id(base_dir, id_)
+    base_dir = uc_base_dir(language)
+    with uc_lock(uc_lock_key(id_, language)):
+        try:
+            path, existing = load_uc_by_id(base_dir, id_)
+        except UcNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_uc)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -221,18 +306,36 @@ def _set_classification_uc(id_: str, classification: str) -> UcFrontmatter:
         with wrap_tool_errors(domain="uc", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = UcFrontmatter(**fm_data)
         write_uc_file(path, new_frontmatter, raw_body)
+        read_uc(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
+def _set_classification_tsk(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> TskFrontmatter | ParseFailureResult:
     """Replace the classification of the task list identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
+    variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = tsk_base_dir()
-    with tsk_lock(id_):
-        path, existing = load_tsk_by_id(base_dir, id_)
+    base_dir = tsk_base_dir(language)
+    with tsk_lock(tsk_lock_key(id_, language)):
+        try:
+            path, existing = load_tsk_by_id(base_dir, id_)
+        except TskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_tsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -243,18 +346,36 @@ def _set_classification_tsk(id_: str, classification: str) -> TskFrontmatter:
         with wrap_tool_errors(domain="tsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = TskFrontmatter(**fm_data)
         write_tsk_file(path, new_frontmatter, raw_body)
+        read_tsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
+def _set_classification_qa(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> QaFrontmatter | ParseFailureResult:
     """Replace the classification of the QA document identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
+    variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = qa_base_dir()
-    with qa_lock(id_):
-        path, existing = load_qa_by_id(base_dir, id_)
+    base_dir = qa_base_dir(language)
+    with qa_lock(qa_lock_key(id_, language)):
+        try:
+            path, existing = load_qa_by_id(base_dir, id_)
+        except QaNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_qa)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -265,18 +386,36 @@ def _set_classification_qa(id_: str, classification: str) -> QaFrontmatter:
         with wrap_tool_errors(domain="qa", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = QaFrontmatter(**fm_data)
         write_qa_file(path, new_frontmatter, raw_body)
+        read_qa(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
+def _set_classification_prb(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> PrbFrontmatter | ParseFailureResult:
     """Replace the classification of the problem statement identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
+    variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = prb_base_dir()
-    with prb_lock(id_):
-        path, existing = load_prb_by_id(base_dir, id_)
+    base_dir = prb_base_dir(language)
+    with prb_lock(prb_lock_key(id_, language)):
+        try:
+            path, existing = load_prb_by_id(base_dir, id_)
+        except PrbNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_prb)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -287,18 +426,36 @@ def _set_classification_prb(id_: str, classification: str) -> PrbFrontmatter:
         with wrap_tool_errors(domain="prb", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = PrbFrontmatter(**fm_data)
         write_prb_file(path, new_frontmatter, raw_body)
+        read_prb(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
+def _set_classification_gol(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> GolFrontmatter | ParseFailureResult:
     """Replace the classification of the goal identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
+    variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = gol_base_dir()
-    with gol_lock(id_):
-        path, existing = load_gol_by_id(base_dir, id_)
+    base_dir = gol_base_dir(language)
+    with gol_lock(gol_lock_key(id_, language)):
+        try:
+            path, existing = load_gol_by_id(base_dir, id_)
+        except GolNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_gol)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -309,18 +466,36 @@ def _set_classification_gol(id_: str, classification: str) -> GolFrontmatter:
         with wrap_tool_errors(domain="gol", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = GolFrontmatter(**fm_data)
         write_gol_file(path, new_frontmatter, raw_body)
+        read_gol(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
+def _set_classification_rsk(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> RskFrontmatter | ParseFailureResult:
     """Replace the classification of the risk identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
+    variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = rsk_base_dir()
-    with rsk_lock(id_):
-        path, existing = load_rsk_by_id(base_dir, id_)
+    base_dir = rsk_base_dir(language)
+    with rsk_lock(rsk_lock_key(id_, language)):
+        try:
+            path, existing = load_rsk_by_id(base_dir, id_)
+        except RskNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_rsk)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -331,18 +506,37 @@ def _set_classification_rsk(id_: str, classification: str) -> RskFrontmatter:
         with wrap_tool_errors(domain="rsk", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = RskFrontmatter(**fm_data)
         write_rsk_file(path, new_frontmatter, raw_body)
+        read_rsk(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
+def _set_classification_dec(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> DecFrontmatter | ParseFailureResult:
     """Replace the classification of the decision identified by ``id_``.
 
     See :func:`_set_classification_req` for the full semantics (same
     ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
+
+    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+    ``language`` (the caller's already-guarded value; default ``"en"``,
+    byte-identical to the pre-i18n adapter) selects the variant file: the
+    id is scanned for in ``dec_base_dir(language)``, the lock is the
+    variant's own (``dec_lock(dec_lock_key(id_, language))``), and only that one file is
+    written -- the EN document (bytes, ``updated``, cache entry) stays
+    untouched.
     """
-    base_dir = dec_base_dir()
-    with dec_lock(id_):
-        path, existing = load_dec_by_id(base_dir, id_)
+    base_dir = dec_base_dir(language)
+    with dec_lock(dec_lock_key(id_, language)):
+        try:
+            path, existing = load_dec_by_id(base_dir, id_)
+        except DecNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_dec)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -353,10 +547,11 @@ def _set_classification_dec(id_: str, classification: str) -> DecFrontmatter:
         with wrap_tool_errors(domain="dec", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = DecFrontmatter(**fm_data)
         write_dec_file(path, new_frontmatter, raw_body)
+        read_dec(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
+def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter | ParseFailureResult:
     """Replace the classification of the feature identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``feat_lock``,
@@ -369,7 +564,15 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
     """
     base_dir = feat_base_dir()
     with feat_lock(id_):
-        path, existing = load_feat_by_id(base_dir, id_)
+        try:
+            path, existing = load_feat_by_id(base_dir, id_)
+        except FeatNotFoundError:
+            parse_failure = find_feat_parse_failure(base_dir, id_)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -380,10 +583,14 @@ def _set_classification_feat(id_: str, classification: str) -> FeatFrontmatter:
         with wrap_tool_errors(domain="feat", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = FeatFrontmatter(**fm_data)
         write_feat_file(path, new_frontmatter, raw_body)
+        read_feat(path)  # warm the clean cache (feat-107-doc-cache Phase 4, REQ-003)
+        read_feat_dirty(path)  # warm the dirty cache too (feat-187-list-feat-timeout, Task 110.130)
     return new_frontmatter
 
 
-def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
+def _set_classification_sop(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> SopFrontmatter | ParseFailureResult:
     """Replace the classification of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_classification_dec` (same
@@ -391,10 +598,25 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
     ``sop`` is the first domain built dispatch-only from day one per ADR
     36905d5b, so this adapter was written directly in this shape) -- see
     :func:`_set_classification_req` for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
+    variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = sop_base_dir()
-    with sop_lock(id_):
-        path, existing = load_sop_by_id(base_dir, id_)
+    base_dir = sop_base_dir(language)
+    with sop_lock(sop_lock_key(id_, language)):
+        try:
+            path, existing = load_sop_by_id(base_dir, id_)
+        except SopNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sop)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -405,19 +627,37 @@ def _set_classification_sop(id_: str, classification: str) -> SopFrontmatter:
         with wrap_tool_errors(domain="sop", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SopFrontmatter(**fm_data)
         write_sop_file(path, new_frontmatter, raw_body)
+        read_sop(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
+def _set_classification_vcr(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> VcrFrontmatter | ParseFailureResult:
     """Replace the classification of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_classification_dec`'s shape (same ``vcr_lock``,
     ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
     :func:`_set_classification_req` for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
+    variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written --
+    the EN document (bytes, ``updated``, cache entry) is never touched by a non-default ``language``
+    call.
     """
-    base_dir = vcr_base_dir()
-    with vcr_lock(id_):
-        path, existing = load_vcr_by_id(base_dir, id_)
+    base_dir = vcr_base_dir(language)
+    with vcr_lock(vcr_lock_key(id_, language)):
+        try:
+            path, existing = load_vcr_by_id(base_dir, id_)
+        except VcrNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_vcr)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -428,10 +668,13 @@ def _set_classification_vcr(id_: str, classification: str) -> VcrFrontmatter:
         with wrap_tool_errors(domain="vcr", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = VcrFrontmatter(**fm_data)
         write_vcr_file(path, new_frontmatter, raw_body)
+        read_vcr(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
-def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter:
+def _set_classification_sysrs(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> SysrsFrontmatter | ParseFailureResult:
     """Replace the classification of the System Requirements Specification identified by ``id_``.
 
     Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
@@ -439,10 +682,25 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
     is dispatch-only from day one per ADR 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_classification_req`
     for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
+    variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is written
+    -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
     """
-    base_dir = sysrs_base_dir()
-    with sysrs_lock(id_):
-        path, existing = load_sysrs_by_id(base_dir, id_)
+    base_dir = sysrs_base_dir(language)
+    with sysrs_lock(sysrs_lock_key(id_, language)):
+        try:
+            path, existing = load_sysrs_by_id(base_dir, id_)
+        except SysrsNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_sysrs)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
         assert_within(base_dir, path)
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
@@ -453,6 +711,50 @@ def _set_classification_sysrs(id_: str, classification: str) -> SysrsFrontmatter
         with wrap_tool_errors(domain="sysrs", tool="set_classification", channel=FRONTMATTER_CHANNEL):
             new_frontmatter = SysrsFrontmatter(**fm_data)
         write_sysrs_file(path, new_frontmatter, raw_body)
+        read_sysrs(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return new_frontmatter
+
+
+def _set_classification_txt(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> TxtFrontmatter | ParseFailureResult:
+    """Replace the classification of the free-form text document identified by ``id_``.
+
+    Mirrors :func:`_set_classification_sysrs`'s shape (same ``txt_lock``,
+    ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
+    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_classification_req`
+    for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
+    variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is written
+    -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
+    """
+    base_dir = txt_base_dir(language)
+    with txt_lock(txt_lock_key(id_, language)):
+        try:
+            path, existing = load_txt_by_id(base_dir, id_)
+        except TxtNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_txt)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["classification"] = classification
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="txt", tool="set_classification", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = TxtFrontmatter(**fm_data)
+        write_txt_file(path, new_frontmatter, raw_body)
+        read_txt(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
     return new_frontmatter
 
 
@@ -466,11 +768,41 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "gol": _set_classification_gol,
     "rsk": _set_classification_rsk,
     "dec": _set_classification_dec,
+    "sop": _set_classification_sop,
     "feat": _set_classification_feat,
+    "vcr": _set_classification_vcr,
+    "sysrs": _set_classification_sysrs,
+    "txt": _set_classification_txt,
+}
+
+assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
+    "_ADAPTERS keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- add or "
+    "remove the domain in both places (feat-125-domain-lists, REQ-006)"
+)
+
+#: The adapters that honor a non-default ``language`` (feat-197-i18n Phases 120/125: every whole-body
+#: domain except ``feat``). Called with the language as the last positional
+#: argument, only for a non-default language -- the default language always goes through
+#: :data:`_ADAPTERS` unchanged.
+_LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str], _SetClassificationFrontmatter]] = {
+    "req": _set_classification_req,
+    "uc": _set_classification_uc,
+    "tsk": _set_classification_tsk,
+    "qa": _set_classification_qa,
+    "prb": _set_classification_prb,
+    "gol": _set_classification_gol,
+    "rsk": _set_classification_rsk,
+    "dec": _set_classification_dec,
     "sop": _set_classification_sop,
     "vcr": _set_classification_vcr,
     "sysrs": _set_classification_sysrs,
+    "txt": _set_classification_txt,
 }
+
+assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
+    "_LANGUAGE_ADAPTERS keys drifted from general.tools._language_guard.LANGUAGE_AWARE_DOMAINS -- the guard "
+    "and the dispatch must agree on which domains honor a non-default language (feat-197-i18n Phase 120)"
+)
 
 
 @mcp.tool(
@@ -478,26 +810,43 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     title="Set document classification",
     description=(
         "Replace the free-text `classification` frontmatter field of an existing document across "
-        "the twelve whole-body domains (`type` is one of req, uc, tsk, qa, prb, gol, rsk, dec, sop, "
-        "feat, vcr; `adr` is not supported), also bumping `updated` and leaving the body and every "
-        "other frontmatter field untouched. `classification` is fully free-text -- no closed "
+        f"the whole-body domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported), "
+        "also bumping `updated` and leaving the body and every other frontmatter field untouched. "
+        "`classification` is fully free-text -- no closed "
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
         "tool accepts a `classification` argument at all -- this is the sole classification-change "
-        "entry point. An invalid `id` (path-injection attempt or wrong format for `type`) or an "
-        "unsupported `type` is a `ValueError` raised before any file access. Returns the updated "
-        "frontmatter only (no body); use the corresponding `get_<d>` tool to fetch the full "
-        "document afterward."
+        "entry point. A document that exists but fails to parse returns a `ParseFailureResult` "
+        "(`error`/`path`/`id`) instead of raising the domain's not-found error (a truly-absent id "
+        "still raises) -- its `error` text is byte-identical to the domain's `list_<d>` failed "
+        "row's `error` for the same file (identical field path and cause, including the trailing "
+        "pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "non-raising-structured-result workaround chain). An invalid `id` "
+        "(path-injection attempt or wrong format for `type`) or an unknown `type` is a `ValueError` "
+        'raised before any file access; `type="adr"` passes the id validation (a well-formed '
+        "UUID id) and raises the plain `KeyError` inherited from the dispatch-table lookup "
+        "instead. Returns the updated frontmatter only (no body) on success; use the "
+        "corresponding `get_<d>` tool to fetch the full document afterward. "
+        "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
+        "act on: omitted/'en' = the flat default-language document, exactly the default behavior; a "
+        "non-default ISO 639-1-shaped lowercase two-letter code (e.g. 'de') = that language's variant at "
+        "docs/<type>/{language}/ (found by id-scan of that subdirectory), acting on that file ONLY -- the "
+        "EN file's content and `updated` timestamp stay untouched. "
+        "Every whole-body type except `feat` supports a non-default language; for `feat` (always "
+        "English) a non-default `language` raises a `ValueError`, as does a malformed `language` or "
+        "one with no packaged heading-mapping table -- all raised before any file access."
     ),
 )
 def set_classification(
     id: str,
-    type: Literal["req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "feat", "vcr", "sysrs"],
+    type: WholeBodyType,
     classification: str,
+    language: str = DEFAULT_LANGUAGE,
 ) -> _SetClassificationFrontmatter:
     """Replace the ``classification`` frontmatter field of an existing document.
 
-    Cross-domain generic for the twelve whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``);
+    Cross-domain generic for the whole-body document types
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
     dispatches on ``type`` to the domain's own adapter (same lock, same id
     resolution, same body handling, same domain not-found error). ``adr``
     is deliberately excluded (its separate ``AdrFrontmatter`` model is out
@@ -520,10 +869,13 @@ def set_classification(
     Safety (mirroring ``set_status``'s/``update``'s/``delete``'s own
     REQ-009/REQ-003): ``id`` is validated via ``_path_safety.validate_id``
     (no ``/``, no ``\\``, no ``..``, plus the dispatched domain's own
-    format -- canonical lowercase-hex UUID for the eleven UUID domains,
-    ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
-    path-injection attempt, a wrong-format id, or an unsupported ``type``
-    is a ``ValueError`` raised before dispatch. Each adapter additionally
+        format -- canonical lowercase-hex UUID for every domain other than
+        ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
+    path-injection attempt, a wrong-format id, or an unknown ``type``
+    is a ``ValueError`` raised before dispatch -- but ``type="adr"`` passes
+    the validation (``adr`` is in ``_path_safety``'s UUID-shaped domain
+    set) and raises the plain ``KeyError`` inherited from the
+    dispatch-table lookup instead. Each adapter additionally
     confines the resolved path to the domain's own base directory with
     ``_path_safety.assert_within`` inside the lock -- defense-in-depth
     against any future gap in the id validation.
@@ -535,37 +887,77 @@ def set_classification(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``.
+        ``vcr``, ``sysrs``, ``txt``.
     classification:
         The new classification value. Fully free-text; a blank or
         whitespace-only value clears the field back to ``None``/absent.
+    language:
+        The language variant to act on (feat-197-i18n Phase 120, ADR
+        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+        it) acts on the flat default-language document -- today's exact
+        behavior; any other ISO 639-1-shaped lowercase two-letter code
+        (e.g. ``"de"``) acts on that language's variant, located by
+        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+        never re-derived); only that one file is touched: the EN
+        document's bytes, ``updated`` timestamp, and cache entry stay
+        untouched. Shape-guarded before any filesystem access (like
+        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+        (``feat`` is always English: a non-default language for it raises a
+        ``ValueError``).
 
     Returns
     -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter
-        The updated document's frontmatter only (no body) of the dispatched domain type;
-        use the corresponding ``get_<d>`` tool to fetch the full document afterward.
+    VcrFrontmatter | SysrsFrontmatter | ParseFailureResult
+        On success, the updated document's frontmatter only (no body) of the
+        dispatched domain type; use the corresponding ``get_<d>`` tool to
+        fetch the full document afterward. On a target ``id`` whose only
+        matching on-disk file fails to parse, a non-raising
+        :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+        (``error``/``path``/``id``) instead of the domain's not-found error
+        -- ``error`` is byte-identical to the domain's ``list_<d>`` failed
+        row's ``error`` for the same file (identical field path and cause,
+        including the trailing pydantic documentation line; ADR
+        9080b37c-82b3-4f63-81f1-79641d0bf14c) (feat-170-update-edit-parse-
+        failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
+        -- case 4 of the ADR 519d1206-4d2a-4500-9046-6db635209996
+        non-raising, structured-result workaround chain).
 
     Raises
     ------
     ValueError
         ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format, or ``type`` is not one of the twelve
-        supported domains (raised before any filesystem access; nothing
-        is written).
+        domain's own format, or ``type`` is an unknown document type
+        (raised before any filesystem access; nothing is written). Also
+        raised, before any filesystem access, for a malformed ``language``
+        (not an ISO 639-1-shaped lowercase two-letter code), a non-default
+        ``language`` with ``type`` ``feat`` (always English), or a non-default
+        ``language`` without a packaged heading-mapping table.
+    KeyError
+        ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
+        ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
+        passes) -- a plain ``KeyError`` inherited from the
+        dispatch-table lookup, which has no ``adr`` entry (nothing is
+        written).
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        No document of the dispatched ``type`` has this id -- the
-        domain's own not-found error, unchanged from the sibling generic
-        tools.
+        The target id is truly absent (no file on disk matches it at all) --
+        the domain's own not-found error, unchanged from the sibling generic
+        tools. An existing-but-broken document returns the non-raising
+        ``ParseFailureResult`` instead (see Returns).
     """
     # Mirrors set_status's/update's own REQ-009 guard: validate before any filesystem access
-    # (injection prevention); an unsupported `type` also raises ValueError here, before dispatch.
+    # (injection prevention); an unknown `type` also raises ValueError here, before dispatch
+    # (`type="adr"` passes -- its id is a UUID -- and raises the plain `KeyError` inherited
+    # from the dispatch-table lookup below).
     validate_id(type, id)
+    # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
+    guard_language(type, language)
 
-    adapter = _ADAPTERS[type]
-    result = adapter(id, classification)
+    if language == DEFAULT_LANGUAGE:
+        result = _ADAPTERS[type](id, classification)
+    else:
+        result = _LANGUAGE_ADAPTERS[type](id, classification, language)
     return result

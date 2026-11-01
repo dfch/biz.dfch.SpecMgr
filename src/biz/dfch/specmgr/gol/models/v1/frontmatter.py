@@ -29,9 +29,10 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from biz.dfch.specmgr.models.md import MarkdownFrontmatter
+from biz.dfch.specmgr.models.md.frontmatter import DEFAULT_STATUS
 
 #: Fixed, closed set of accepted ``status`` values for goals -- REQ's exact
 #: seven-value set: ``draft`` (still being written), ``proposed`` (under
@@ -78,6 +79,15 @@ class GolFrontmatter(MarkdownFrontmatter):
     """
 
     type: Literal["gol"] = "gol"  # type: ignore
+
+    # feat-189 Phase 120 (C13): redeclare the inherited `status` field (the
+    # only way to attach `json_schema_extra` to it) so the generated JSON
+    # Schema carries this same closed set as an `enum` key -- schema-level
+    # documentation only, in the `MarkdownFrontmatter.created`/`.updated`
+    # `pattern`-metadata precedent: pydantic-core never enforces it, and
+    # `_validate_status` below remains the sole enforcement point. The
+    # default stays the base's own `"draft"`.
+    status: str = Field(default=DEFAULT_STATUS, json_schema_extra={"enum": sorted(_ALLOWED_STATUSES)})
 
     @field_validator("status")
     @classmethod

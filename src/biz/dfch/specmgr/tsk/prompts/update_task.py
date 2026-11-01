@@ -21,10 +21,12 @@
 
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through revising an existing Task List (TSK) document by id, using the
-existing ``tsk/tools/`` surface (``get_tsk``, ``validate_tsk``) plus the
+existing ``tsk/tools/`` surface (``get_tsk``, generic ``validate`` tool) plus the
 generic ``update``/``set_status`` tools in ``general/tools/`` (called
 with ``type="tsk"``; ``get_tsk``'s ``raw=True`` parameter serves the
-line-range flow's line numbers). There is no
+line-range flow's line numbers, with ``numbered=True`` additionally
+printing each line's 1-based body-line number, ready to feed into
+``update``'s ``offset``). There is no
 ``specmgr://tsk/{id}`` resource to point at -- id-based reads always went
 through the ``get_tsk`` tool only (there was no earlier resource to remove,
 unlike REQ's own history -- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
@@ -63,7 +65,9 @@ from ...server import mcp
     title="Update a task list",
     description=(
         "Guides the LLM through revising an existing task list by id: reading current "
-        "state, applying the requested change with the right tool, and validating."
+        "state, applying the requested change with the right tool, and validating. The structure "
+        "reference is the `get_tsk_schema` tool (the generated JSON Schema); the "
+        "`get_tsk_template`/`get_tsk_example` tools return the authoring template and a complete sample."
     ),
 )
 def update_task(id: str, instructions: str | None = None) -> str:

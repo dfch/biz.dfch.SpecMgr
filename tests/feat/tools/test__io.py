@@ -23,8 +23,12 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from unittest import mock
+
+import yaml
 
 from biz.dfch.specmgr.feat.models.v1 import FeatDocument
+from biz.dfch.specmgr.feat.tools import _io as feat_io_module
 from biz.dfch.specmgr.feat.tools._io import load_by_id, read_feat
 from biz.dfch.specmgr.feat.tools._paths import FeatNotFoundError, README_FILENAME
 
@@ -35,8 +39,8 @@ _DOC_TEMPLATE = textwrap.dedent(
     type: feat
     version: 1.0.0
     status: planning
-    created: '2026-08-30 00:00:00.000Z'
-    updated: '2026-08-30 00:00:00.000Z'
+    created: '2026-08-30T00:00:00.000Z'
+    updated: '2026-08-30T00:00:00.000Z'
     ---
 
     # Feature: Example Widget
@@ -67,9 +71,9 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     ### Task List
 
-    #### Phase 0: Scaffolding
+    #### Phase 100: Scaffolding
 
-    - [x] Task 0.1: Create branch and package skeleton
+    - [x] Task 100.100: Create branch and package skeleton
 
     ## Progress
 
@@ -130,6 +134,47 @@ class TestLoadById(unittest.TestCase):
             base = Path(tmp)
             with self.assertRaises(FeatNotFoundError):
                 load_by_id(base, "feat-99-does-not-exist")
+
+    def test_acc014_a_second_read_racing_set_feat_ids_rename_raises_feat_not_found(self) -> None:
+        """ACC-014 (feat-107-doc-cache Phase 6, REQ-012): load_by_id's own second, independent
+        ``read_feat(path)`` call (after ``find_feat_path_by_id`` already succeeded) has exactly
+        the same narrow ``FileNotFoundError`` race window -- also closed here, not just in
+        ``find_feat_path_by_id`` itself.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-mid-rename"
+            folder.mkdir()
+            path = folder / README_FILENAME
+            path.write_text(_feat_text("feat-1-mid-rename"), encoding="utf-8")
+
+            with mock.patch.object(feat_io_module, "read_feat", side_effect=FileNotFoundError("vanished")):
+                with self.assertRaises(FeatNotFoundError) as ctx:
+                    load_by_id(base, "feat-1-mid-rename")
+            self.assertIn("could not be read", str(ctx.exception))
+
+    def test_acc015_malformed_yaml_frontmatter_raises_feat_not_found_not_a_bare_yaml_error(self) -> None:
+        """ACC-015 (feat-107-doc-cache Phase 7, REQ-013): load_by_id's own second, independent
+        read_feat(path) call must also translate a yaml.YAMLError from malformed frontmatter YAML
+        into FeatNotFoundError, not let it propagate uncaught -- consistency/defense-in-depth with
+        find_feat_path_by_id's own identical fix, even though find_feat_path_by_id already raises
+        first on the shared cache-backed read in practice.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            folder = base / "feat-1-malformed-yaml"
+            folder.mkdir()
+            path = folder / README_FILENAME
+            path.write_text(_feat_text("feat-1-malformed-yaml"), encoding="utf-8")
+
+            with mock.patch.object(
+                feat_io_module,
+                "read_feat",
+                side_effect=yaml.YAMLError("malformed frontmatter"),
+            ):
+                with self.assertRaises(FeatNotFoundError) as ctx:
+                    load_by_id(base, "feat-1-malformed-yaml")
+            self.assertIn("could not be read", str(ctx.exception))
 
 
 if __name__ == "__main__":

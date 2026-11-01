@@ -162,7 +162,11 @@ def not_in_mdformat_message(text: str) -> str:
         `text` and `format_text(text)` disagree -- or, when every line
         compares equal under `str.splitlines()` (e.g. `text` is missing
         its single trailing newline, which `splitlines()` does not turn
-        into an extra empty line), a message naming that instead.
+        into an extra empty line), a message naming that instead. In
+        either case, the offending text is passed through `snippet()`
+        before being embedded, so the message stays bounded regardless of
+        `text`'s own size (issue #110), matching every sibling
+        message-builder in this module (e.g. `_raw_html_message`).
     """
     assert isinstance(text, str), type(text)
     formatted = format_text(text)
@@ -170,7 +174,7 @@ def not_in_mdformat_message(text: str) -> str:
     if line_no == 0:
         return (
             "text is not in 'mdformat' -- every line matches, but the text still differs (typically a "
-            f"missing/extra trailing newline): got {text!r}, mdformat produces {formatted!r}"
+            f"missing/extra trailing newline): got {snippet(text)!r}, mdformat produces {snippet(formatted)!r}"
         )
     return (
         f"text is not in 'mdformat' -- first difference at line {line_no} (relative to this text's own "

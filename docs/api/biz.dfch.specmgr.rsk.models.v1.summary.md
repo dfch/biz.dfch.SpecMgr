@@ -36,11 +36,11 @@ status:
     six-value set). Inherited from :class:`DocSummary`.
 ref:
     The document's extensionless base name (e.g.
-    ``"rsk-<uuid>-a-title"``), deliberately *not* a filename or path --
-    callers must not read this off disk themselves, only pass it to
-    ``get_rsk`` alongside (or instead of) ``id``. Named ``ref`` rather
-    than ``filename`` precisely to avoid inviting direct filesystem
-    access (mirrors :class:`DocSummary`'s own rationale).
+    ``"rsk-<uuid>-a-title"``). Inherited from :class:`DocSummary`.
+path:
+    The real, absolute (``.resolve()``d) filesystem path to the
+    document's on-disk file. Inherited from :class:`DocSummary`
+    (feat-81-83-validation Phase 3, REQ-007).
 initial_level:
     The 5x5 zone (`low`/`medium`/`high`/`very high`) of the document's
     `## Initial Assessment` (before mitigation) -- its probability x
@@ -69,7 +69,7 @@ residual_product:
 
 - `construct(_fields_set: 'set[str] | None' = None, **values: 'Any') -> 'Self'`
 
-- `from_document(document: 'RskDocument', ref: 'str') -> 'RskSummary'`
+- `from_document(document: 'RskDocument', ref: 'str', path: 'str | None' = None) -> 'RskSummary'`
   Build one summary line from a parsed :class:`RskDocument`.
 
   The Phase 3 ``list_rsk`` tool's construction site: it derives every
@@ -86,6 +86,14 @@ residual_product:
   ref:
       The document's extensionless base name (e.g. a file path's
       ``stem``), for the inherited ``ref`` field.
+  path:
+      The real, absolute (``.resolve()``d) filesystem path to the
+      document's on-disk file, for the inherited ``path`` field
+      (feat-81-83-validation Phase 3, REQ-007). ``None`` defaults to
+      the empty string -- callers building a real ``list_rsk`` row
+      always pass this; it is optional only so existing callers that
+      construct a summary purely for its risk-specific fields are not
+      forced to supply a path.
 
   Returns
   -------
@@ -265,7 +273,7 @@ residual_product:
 
 - `dict(self, *, include: 'IncEx | None' = None, exclude: 'IncEx | None' = None, by_alias: 'bool' = False, exclude_unset: 'bool' = False, exclude_defaults: 'bool' = False, exclude_none: 'bool' = False) -> 'Dict[str, Any]'`
 
-- `from_document(document: 'RskDocument', ref: 'str') -> 'RskSummary'`
+- `from_document(document: 'RskDocument', ref: 'str', path: 'str | None' = None) -> 'RskSummary'`
   Build one summary line from a parsed :class:`RskDocument`.
 
   The Phase 3 ``list_rsk`` tool's construction site: it derives every
@@ -282,6 +290,14 @@ residual_product:
   ref:
       The document's extensionless base name (e.g. a file path's
       ``stem``), for the inherited ``ref`` field.
+  path:
+      The real, absolute (``.resolve()``d) filesystem path to the
+      document's on-disk file, for the inherited ``path`` field
+      (feat-81-83-validation Phase 3, REQ-007). ``None`` defaults to
+      the empty string -- callers building a real ``list_rsk`` row
+      always pass this; it is optional only so existing callers that
+      construct a summary purely for its risk-specific fields are not
+      forced to supply a path.
 
   Returns
   -------

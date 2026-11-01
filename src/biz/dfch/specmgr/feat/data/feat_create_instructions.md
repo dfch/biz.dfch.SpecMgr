@@ -42,21 +42,41 @@ step 1 if this is genuinely a new feature.
   - `### Dependencies` -- optional container, no own text, holding two
     independently optional leaves: `#### Depends On` and `#### Blocks`.
   - `### Design Notes` -- optional prose.
-  - `### Related Decisions` -- optional bullet list of related ADR/DEC
-    ids with a short description each.
+  - `### Related Decisions` -- optional free-form cross-reference list;
+    entries may reference an ADR id, a dec id, or any other decision
+    record.
   - `### Task List` -- mandatory container, no own text, holding at
-    least one `#### Phase N: {title}` entry (unpadded phase number, e.g.
-    "Phase 1"), each with its own flat checklist of at least one
-    `- [ ] .../- [x] ...` task item.
+    least one `#### Phase NNN: {title}` entry (3-digit zero-padded phase
+    number, e.g. "Phase 100"), each with its own flat checklist of at
+    least one `- [ ] Task NNN.MMM: {text}` (or `- [x] Task NNN.MMM:
+    {text}` once done) task item.
+    Task List numbering scheme: phases carry 3-digit zero-padded numbers
+    starting at 100, step 10 (`Phase 100`, `Phase 110`, `Phase 120`,
+    ...); each task line is `- [ ] Task NNN.MMM: {text}` (or `- [x] ...`
+    once done), where `NNN` is the enclosing phase's number and `MMM` is
+    a 3-digit zero-padded task number starting at 100, step 10, within
+    its phase (`Task 100.100`, `Task 100.110`, ...). The schema enforces
+    only the number SHAPES -- `#### Phase NNN: {title}` and the
+    `Task NNN.MMM: ` prefix -- not the step-10 increments, not
+    uniqueness, and not the match between a task's `NNN` and its
+    enclosing phase's number: those are authoring conventions. Gaps are
+    deliberate: to insert a new phase or task, pick the number between
+    its neighbours (e.g. `Phase 105`, `Task 100.105`) so existing numbers
+    never renumber; once assigned, a number is permanent, and removals
+    leave gaps.
 - `## Progress` -- mandatory container, no own text:
   - `### Current Status` -- mandatory prose: where things stand today.
-  - `### Blockers` -- optional prose/list of open blockers.
+  - `### Blockers` -- optional free-form list of open blockers.
   - `### Updates` -- mandatory, an optional leading HTML comment (e.g. an
     ordering hint) followed by at least one
     `#### {timestamp} ( - | : ) {title}` entry, newest-first, where
-    `{timestamp}` is `yyyy-MM-dd HH:mm:ss.fff±HH:mm` (or `Z` for UTC) and
-    the separator is `" - "` or `" : "` (the em-dash separator is
-    rejected), each with a lead paragraph.
+    `{timestamp}` is the full date+time form `yyyy-MM-dd[T ]HH:mm:ss.SSS` +
+    `Z` or `±HH:mm` (the date/time separator may be `T` or a space; a
+    date-only timestamp is rejected), joined to the title by `" - "` or
+    `" : "` (the em-dash separator is rejected), each with the entry's own
+    update/decision text directly under the H4 heading (any markdown
+    content -- multiple paragraphs, lists, code blocks, block quotes, not
+    just a single paragraph), which is mandatory.
   - `### Decisions Made` -- optional, same shape as `### Updates` (same
     timestamp format, same newest-first ordering, at least one entry once
     the section is present at all).
@@ -80,13 +100,13 @@ tool to elicit the mandatory fields first, then each optional field in
 turn, explicitly telling the user they may skip any optional field they
 cannot or do not want to answer yet.
 
-## 3. Use the template/example/schema as references
+## 3. Use the template/example tools as references
 
-Fetch `specmgr://feat/template` or `specmgr://feat/example` as a
-starting point/style reference, then check `specmgr://feat/schema` (the
-generated JSON Schema) to confirm field names and constraints before
-drafting the body. Do not invent field names or section headings that
-are not present there.
+Call the `get_feat_template` and `get_feat_example` tools as your
+starting point/style reference -- one hop each. Do not invent field
+names or section headings that are not present there. Call the
+`get_feat_schema` tool (the generated JSON Schema) only when you are
+structurally uncertain or are resolving a validation error.
 
 ## 4. Tool call sequence
 
@@ -103,7 +123,7 @@ are not present there.
    either failure case nothing is written. A structural or field
    validation failure on `content` likewise raises uncaught and nothing is
    written.
-3. Optionally call `validate_feat(content, full=False)` first if you
+3. Optionally call `validate(type="feat", content=content, full=False)` first if you
    want to dry-run the body without writing anything -- `create_feat`
    already performs the same validation internally, so this step is
    never required, only a convenience.

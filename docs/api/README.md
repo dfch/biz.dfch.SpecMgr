@@ -8,38 +8,43 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 
 - [`biz.dfch.specmgr`](biz.dfch.specmgr.md) — The main library init file.
 - [`biz.dfch.specmgr.__main__`](biz.dfch.specmgr.__main__.md) — Entry point for ``python -m biz.dfch.specmgr``.
+- [`biz.dfch.specmgr._envregistry`](biz.dfch.specmgr._envregistry.md) — Central, stdlib-only environment-variable registry (feat-208).
 - [`biz.dfch.specmgr._paths`](biz.dfch.specmgr._paths.md) — Private, dependency-free repo-root-relative path constants.
 - [`biz.dfch.specmgr.adr`](biz.dfch.specmgr.adr.md) — The Architecture Decision Record (ADR) domain package.
-- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test (.specmgr/feat/feat-9-doc-in-specmgr/adr-tool-plan.md §11).
-- [`biz.dfch.specmgr.adr.resources`](biz.dfch.specmgr.adr.resources.md) — MCP resource registrations for Architecture Decision Records (plan §8, §9a).
-- [`biz.dfch.specmgr.adr.resources.adr_get`](biz.dfch.specmgr.adr.resources.adr_get.md) — Resource: specmgr://adr/{id} (plan §8, §9a).
-- [`biz.dfch.specmgr.adr.tools`](biz.dfch.specmgr.adr.tools.md) — MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools._io`](biz.dfch.specmgr.adr.tools._io.md) — Thin file read/write helpers over ``parse_adr``/``render_adr`` (plan §7, §9a).
-- [`biz.dfch.specmgr.adr.tools._lock`](biz.dfch.specmgr.adr.tools._lock.md) — Per-document in-process lock guarding ADR mutations (plan §7, §9a).
+- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr.
+- [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test.
+- [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr.
+- [`biz.dfch.specmgr.adr.prompts.update_adr_test`](biz.dfch.specmgr.adr.prompts.update_adr_test.md) — ``@mcp.prompt()``: update_adr_test.
+- [`biz.dfch.specmgr.adr.resources`](biz.dfch.specmgr.adr.resources.md) — MCP resource registrations for Architecture Decision Records.
+- [`biz.dfch.specmgr.adr.resources.adr_get`](biz.dfch.specmgr.adr.resources.adr_get.md) — Resource: specmgr://adr/{id}.
+- [`biz.dfch.specmgr.adr.tools`](biz.dfch.specmgr.adr.tools.md) — MCP tool wrappers for Architecture Decision Records.
+- [`biz.dfch.specmgr.adr.tools._io`](biz.dfch.specmgr.adr.tools._io.md) — Thin file read/write helpers over ``parse_adr``/``render_adr``.
+- [`biz.dfch.specmgr.adr.tools._lock`](biz.dfch.specmgr.adr.tools._lock.md) — Per-document in-process lock guarding ADR mutations.
 - [`biz.dfch.specmgr.adr.tools._paths`](biz.dfch.specmgr.adr.tools._paths.md) — ADR base directory resolution, filename slugification, and id -> path
-- [`biz.dfch.specmgr.adr.tools.create_adr`](biz.dfch.specmgr.adr.tools.create_adr.md) — ``@mcp.tool()`` wrapper: create_adr (plan §8, §9a, §10 item 4; Task 3.2).
-- [`biz.dfch.specmgr.adr.tools.get_adr`](biz.dfch.specmgr.adr.tools.get_adr.md) — ``@mcp.tool()`` wrapper: get_adr (plan §8, §9a, §10 item 4).
+- [`biz.dfch.specmgr.adr.tools.create_adr`](biz.dfch.specmgr.adr.tools.create_adr.md) — ``@mcp.tool()`` wrapper: create_adr (Task 3.2).
+- [`biz.dfch.specmgr.adr.tools.get_adr`](biz.dfch.specmgr.adr.tools.get_adr.md) — ``@mcp.tool()`` wrapper: get_adr.
 - [`biz.dfch.specmgr.adr.tools.list_adr`](biz.dfch.specmgr.adr.tools.list_adr.md) — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
-- [`biz.dfch.specmgr.adr.tools.option_create`](biz.dfch.specmgr.adr.tools.option_create.md) — ``@mcp.tool()`` wrapper: option_create (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.option_delete`](biz.dfch.specmgr.adr.tools.option_delete.md) — ``@mcp.tool()`` wrapper: option_delete (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.option_list`](biz.dfch.specmgr.adr.tools.option_list.md) — ``@mcp.tool()`` wrapper: option_list (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.option_read`](biz.dfch.specmgr.adr.tools.option_read.md) — ``@mcp.tool()`` wrapper: option_read (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.option_update`](biz.dfch.specmgr.adr.tools.option_update.md) — ``@mcp.tool()`` wrapper: option_update (plan §5, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.update_frontmatter`](biz.dfch.specmgr.adr.tools.update_frontmatter.md) — ``@mcp.tool()`` wrapper: update_frontmatter (plan §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.update_section`](biz.dfch.specmgr.adr.tools.update_section.md) — ``@mcp.tool()`` wrapper: update_section (plan §4, §8, §9a, §10 item 4).
-- [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (plan §7, §8, §9a, §10 item 4; Task 3.2).
+- [`biz.dfch.specmgr.adr.tools.option_create`](biz.dfch.specmgr.adr.tools.option_create.md) — ``@mcp.tool()`` wrapper: option_create.
+- [`biz.dfch.specmgr.adr.tools.option_delete`](biz.dfch.specmgr.adr.tools.option_delete.md) — ``@mcp.tool()`` wrapper: option_delete.
+- [`biz.dfch.specmgr.adr.tools.option_list`](biz.dfch.specmgr.adr.tools.option_list.md) — ``@mcp.tool()`` wrapper: option_list.
+- [`biz.dfch.specmgr.adr.tools.option_read`](biz.dfch.specmgr.adr.tools.option_read.md) — ``@mcp.tool()`` wrapper: option_read.
+- [`biz.dfch.specmgr.adr.tools.option_update`](biz.dfch.specmgr.adr.tools.option_update.md) — ``@mcp.tool()`` wrapper: option_update.
+- [`biz.dfch.specmgr.adr.tools.update_frontmatter`](biz.dfch.specmgr.adr.tools.update_frontmatter.md) — ``@mcp.tool()`` wrapper: update_frontmatter.
+- [`biz.dfch.specmgr.adr.tools.update_section`](biz.dfch.specmgr.adr.tools.update_section.md) — ``@mcp.tool()`` wrapper: update_section.
+- [`biz.dfch.specmgr.adr.tools.validate_adr`](biz.dfch.specmgr.adr.tools.validate_adr.md) — ``@mcp.tool()`` wrapper: validate_adr (Task 3.2).
 - [`biz.dfch.specmgr.cli`](biz.dfch.specmgr.cli.md) — Typer CLI entry point for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.commands`](biz.dfch.specmgr.commands.md) — commands module.
 - [`biz.dfch.specmgr.commands.adr_toc`](biz.dfch.specmgr.commands.adr_toc.md) — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
+- [`biz.dfch.specmgr.commands.diagram`](biz.dfch.specmgr.commands.diagram.md) — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- [`biz.dfch.specmgr.commands.lint`](biz.dfch.specmgr.commands.lint.md) — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
 - [`biz.dfch.specmgr.commands.mdformat`](biz.dfch.specmgr.commands.mdformat.md) — ``mdformat`` -- format a markdown file the same way the MCP server does.
+- [`biz.dfch.specmgr.commands.plantuml_check`](biz.dfch.specmgr.commands.plantuml_check.md) — ``plantuml-check`` -- validate any ``.puml`` file(s) through the strict chain (feat-185-uc-diagrams, Phase 130).
+- [`biz.dfch.specmgr.commands.plantuml_encode`](biz.dfch.specmgr.commands.plantuml_encode.md) — ``plantuml-encode`` -- print the classic PlantUML URL encoding of a diagram source (feat-185-uc-diagrams, Phase 130).
 - [`biz.dfch.specmgr.commands.req_parse`](biz.dfch.specmgr.commands.req_parse.md) — ``req-parse`` -- parse a REQ markdown file from disk and print it to the terminal.
 - [`biz.dfch.specmgr.commands.schema`](biz.dfch.specmgr.commands.schema.md) — ``schema`` -- generate JSON Schema (2020-12) for registered document-type models.
 - [`biz.dfch.specmgr.commands.unused_code`](biz.dfch.specmgr.commands.unused_code.md) — ``unused-code`` -- report unreferenced Python symbols, or (with ``--test``) test-only ones.
@@ -58,20 +63,20 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.dec.prompts.update_dec`](biz.dfch.specmgr.dec.prompts.update_dec.md) — ``@mcp.prompt()``: update_dec (Task 4.1).
 - [`biz.dfch.specmgr.dec.resources`](biz.dfch.specmgr.dec.resources.md) — MCP resource registrations for Decision (DEC) documents (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.resources.dec_example`](biz.dfch.specmgr.dec.resources.dec_example.md) — Resource: specmgr://dec/example (feat-21 Task 3.4).
-- [`biz.dfch.specmgr.dec.resources.dec_schema`](biz.dfch.specmgr.dec.resources.dec_schema.md) — Resource: specmgr://dec/schema (feat-21 Task 3.4, packaged data).
 - [`biz.dfch.specmgr.dec.resources.dec_template`](biz.dfch.specmgr.dec.resources.dec_template.md) — Resource: specmgr://dec/template (feat-21 Task 3.4).
 - [`biz.dfch.specmgr.dec.tools`](biz.dfch.specmgr.dec.tools.md) — MCP tool wrappers for decisions (mirrors ``gol/tools/``'s own shape).
-- [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (Task 2.1).
+- [`biz.dfch.specmgr.dec.tools._cache`](biz.dfch.specmgr.dec.tools._cache.md) — Per-domain content-hash-validated read cache singleton for decisions (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.dec.tools._io`](biz.dfch.specmgr.dec.tools._io.md) — Thin file read helpers over ``parse_dec`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.dec.tools._lock`](biz.dfch.specmgr.dec.tools._lock.md) — Per-document in-process lock guarding decision mutations.
 - [`biz.dfch.specmgr.dec.tools._paths`](biz.dfch.specmgr.dec.tools._paths.md) — Decision base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.dec.tools._write`](biz.dfch.specmgr.dec.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_dec`` and
 - [`biz.dfch.specmgr.dec.tools.create_dec`](biz.dfch.specmgr.dec.tools.create_dec.md) — ``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec`](biz.dfch.specmgr.dec.tools.get_dec.md) — ``@mcp.tool()`` wrapper: get_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.get_dec_example`](biz.dfch.specmgr.dec.tools.get_dec_example.md) — ``@mcp.tool()`` wrapper: get_dec_example (Task 2.2).
+- [`biz.dfch.specmgr.dec.tools.get_dec_schema`](biz.dfch.specmgr.dec.tools.get_dec_schema.md) — ``@mcp.tool()`` wrapper: get_dec_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.dec.tools.get_dec_template`](biz.dfch.specmgr.dec.tools.get_dec_template.md) — ``@mcp.tool()`` wrapper: get_dec_template (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.list_dec`](biz.dfch.specmgr.dec.tools.list_dec.md) — ``@mcp.tool()`` wrapper: list_dec (Task 2.2).
 - [`biz.dfch.specmgr.dec.tools.parse_dec`](biz.dfch.specmgr.dec.tools.parse_dec.md) — ``@mcp.tool()`` wrapper: parse_dec (Task 2.2).
-- [`biz.dfch.specmgr.dec.tools.validate_dec`](biz.dfch.specmgr.dec.tools.validate_dec.md) — ``@mcp.tool()`` wrapper: validate_dec (Task 2.2).
 - [`biz.dfch.specmgr.feat`](biz.dfch.specmgr.feat.md) — Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
 - [`biz.dfch.specmgr.feat.models`](biz.dfch.specmgr.feat.models.md) — Feature (FEAT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.feat.models.v1`](biz.dfch.specmgr.feat.models.v1.md) — Feature (FEAT) v1 schema -- frontmatter, body, document, parser, summary.
@@ -86,98 +91,135 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.prompts.update_feat`](biz.dfch.specmgr.feat.prompts.update_feat.md) — ``@mcp.prompt()``: update_feat (Task 4.1).
 - [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.resources.feat_example`](biz.dfch.specmgr.feat.resources.feat_example.md) — Resource: specmgr://feat/example (feat-31 Task 3.5).
-- [`biz.dfch.specmgr.feat.resources.feat_schema`](biz.dfch.specmgr.feat.resources.feat_schema.md) — Resource: specmgr://feat/schema (feat-31 Task 3.5, packaged data).
 - [`biz.dfch.specmgr.feat.resources.feat_template`](biz.dfch.specmgr.feat.resources.feat_template.md) — Resource: specmgr://feat/template (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.tools`](biz.dfch.specmgr.feat.tools.md) — MCP tool wrappers for features (mirrors ``dec/tools/``'s own shape).
+- [`biz.dfch.specmgr.feat.tools._cache`](biz.dfch.specmgr.feat.tools._cache.md) — Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
 - [`biz.dfch.specmgr.feat.tools._io`](biz.dfch.specmgr.feat.tools._io.md) — Thin file read helpers over ``parse_feat`` (Task 2.2).
 - [`biz.dfch.specmgr.feat.tools._lock`](biz.dfch.specmgr.feat.tools._lock.md) — Per-document and global in-process locks guarding feature mutations (Task 2.2).
 - [`biz.dfch.specmgr.feat.tools._paths`](biz.dfch.specmgr.feat.tools._paths.md) — Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
+- [`biz.dfch.specmgr.feat.tools._warmup`](biz.dfch.specmgr.feat.tools._warmup.md) — The ``feat`` domain's own two-phase cache warmup (feat-187-list-feat-timeout, Task 110.120).
 - [`biz.dfch.specmgr.feat.tools._write`](biz.dfch.specmgr.feat.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_feat`` and
 - [`biz.dfch.specmgr.feat.tools.create_feat`](biz.dfch.specmgr.feat.tools.create_feat.md) — ``@mcp.tool()`` wrapper: create_feat (Task 2.3, feat-48-feat-id Phase 2).
 - [`biz.dfch.specmgr.feat.tools.get_feat`](biz.dfch.specmgr.feat.tools.get_feat.md) — ``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.get_feat_example`](biz.dfch.specmgr.feat.tools.get_feat_example.md) — ``@mcp.tool()`` wrapper: get_feat_example (Task 2.3).
+- [`biz.dfch.specmgr.feat.tools.get_feat_schema`](biz.dfch.specmgr.feat.tools.get_feat_schema.md) — ``@mcp.tool()`` wrapper: get_feat_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.feat.tools.get_feat_template`](biz.dfch.specmgr.feat.tools.get_feat_template.md) — ``@mcp.tool()`` wrapper: get_feat_template (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.list_feat`](biz.dfch.specmgr.feat.tools.list_feat.md) — ``@mcp.tool()`` wrapper: list_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.parse_feat`](biz.dfch.specmgr.feat.tools.parse_feat.md) — ``@mcp.tool()`` wrapper: parse_feat (Task 2.3).
 - [`biz.dfch.specmgr.feat.tools.set_feat_id`](biz.dfch.specmgr.feat.tools.set_feat_id.md) — ``@mcp.tool()`` wrapper: set_feat_id (Task 3.1, feat-48-feat-id Phase 3).
-- [`biz.dfch.specmgr.feat.tools.validate_feat`](biz.dfch.specmgr.feat.tools.validate_feat.md) — ``@mcp.tool()`` wrapper: validate_feat (Task 2.3).
 - [`biz.dfch.specmgr.general`](biz.dfch.specmgr.general.md) — General-purpose (cross-cutting, not domain-specific) tools, resources, and
 - [`biz.dfch.specmgr.general.models`](biz.dfch.specmgr.general.models.md) — Shared, cross-domain Pydantic models with no document-type-specific content.
 - [`biz.dfch.specmgr.general.models.dtais`](biz.dfch.specmgr.general.models.dtais.md) — Pydantic schema and parser for the DTAIS verification-methods guidance
 - [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
+- [`biz.dfch.specmgr.general.models.heading_table`](biz.dfch.specmgr.general.models.heading_table.md) — Per-language section-heading mapping tables: the lazy loader and the fence-aware
+- [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- [`biz.dfch.specmgr.general.models.language_list_result`](biz.dfch.specmgr.general.models.language_list_result.md) — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
+- [`biz.dfch.specmgr.general.models.parse_failure_result`](biz.dfch.specmgr.general.models.parse_failure_result.md) — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
 - [`biz.dfch.specmgr.general.models.rasci`](biz.dfch.specmgr.general.models.rasci.md) — Pydantic schema and parser for the RASCI responsibility-assignment guidance
+- [`biz.dfch.specmgr.general.models.reference`](biz.dfch.specmgr.general.models.reference.md) — One row of the generic ``list_references`` tool's ``PagedResult`` (feat-144-ref-artifact Phase 2).
+- [`biz.dfch.specmgr.general.models.reference_graph`](biz.dfch.specmgr.general.models.reference_graph.md) — The frozen reference-graph model + the deterministic PlantUML renderer (feat-207-reference-graph,
+- [`biz.dfch.specmgr.general.models.similarity_hit`](biz.dfch.specmgr.general.models.similarity_hit.md) — One ranked hit row of the two similarity tools (feat-134, Phase 3, ACC-001/ACC-002).
+- [`biz.dfch.specmgr.general.models.similarity_unavailable`](biz.dfch.specmgr.general.models.similarity_unavailable.md) — The two similarity tools' shared non-raising, structured "unavailable" result (feat-134, REQ-003).
 - [`biz.dfch.specmgr.general.models.summary`](biz.dfch.specmgr.general.models.summary.md) — Common base for every domain's one-line listing summary (feat-13 Task 1.3, REQ-003/ACC-001).
+- [`biz.dfch.specmgr.general.models.translation_drift`](biz.dfch.specmgr.general.models.translation_drift.md) — Translation drift detection: the pure heading-skeleton comparison, the staleness comparison, and the
+- [`biz.dfch.specmgr.general.models.update_result`](biz.dfch.specmgr.general.models.update_result.md) — The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
+- [`biz.dfch.specmgr.general.models.validate_result`](biz.dfch.specmgr.general.models.validate_result.md) — The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 - [`biz.dfch.specmgr.general.prompts`](biz.dfch.specmgr.general.prompts.md) — MCP prompt registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.prompts.compact_history`](biz.dfch.specmgr.general.prompts.compact_history.md) — ``@mcp.prompt()``: compact_history (Various improvements, Task 0.21).
-- [`biz.dfch.specmgr.general.prompts.confluence_fetch`](biz.dfch.specmgr.general.prompts.confluence_fetch.md) — ``@mcp.prompt()``: confluence_fetch (feat-50-confluence Phase 8, REQ-013/ACC-012).
-- [`biz.dfch.specmgr.general.prompts.confluence_update`](biz.dfch.specmgr.general.prompts.confluence_update.md) — ``@mcp.prompt()``: confluence_update (feat-50-confluence Phase 8, REQ-012/ACC-011).
+- [`biz.dfch.specmgr.general.prompts.repair`](biz.dfch.specmgr.general.prompts.repair.md) — ``@mcp.prompt()``: repair (feat-150-mcp-lifecycle-commands, Phase 1).
+- [`biz.dfch.specmgr.general.prompts.translate_artifact`](biz.dfch.specmgr.general.prompts.translate_artifact.md) — ``@mcp.prompt()``: translate_artifact (feat-197-i18n, Phase 130, REQ-011).
 - [`biz.dfch.specmgr.general.resources`](biz.dfch.specmgr.general.resources.md) — MCP resource registrations that are not specific to any single document
 - [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- [`biz.dfch.specmgr.general.resources.i18n`](biz.dfch.specmgr.general.resources.i18n.md) — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
+- [`biz.dfch.specmgr.general.resources.reference_graph`](biz.dfch.specmgr.general.resources.reference_graph.md) — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.
 - [`biz.dfch.specmgr.general.tools`](biz.dfch.specmgr.general.tools.md) — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
-- [`biz.dfch.specmgr.general.tools._confluence_config`](biz.dfch.specmgr.general.tools._confluence_config.md) — Shared Confluence base-URL/bearer-token configuration, used by both
-- [`biz.dfch.specmgr.general.tools._confluence_url`](biz.dfch.specmgr.general.tools._confluence_url.md) — Shared, ``mcp``-free Confluence URL helpers, used by both
+- [`biz.dfch.specmgr.general.tools._diagram_config`](biz.dfch.specmgr.general.tools._diagram_config.md) — The ``SPECMGR_DIAGRAM_MAX_TITLE`` env-var helper (feat-207-reference-graph, Phase 110, REQ-008).
+- [`biz.dfch.specmgr.general.tools._doc_cache`](biz.dfch.specmgr.general.tools._doc_cache.md) — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - [`biz.dfch.specmgr.general.tools._doc_paths`](biz.dfch.specmgr.general.tools._doc_paths.md) — Generic, doc-type-agnostic base directory resolution, filename slugification,
+- [`biz.dfch.specmgr.general.tools._domains`](biz.dfch.specmgr.general.tools._domains.md) — The shared document-type domain names and per-domain adapter registry (feat-125-domain-lists
+- [`biz.dfch.specmgr.general.tools._embedding`](biz.dfch.specmgr.general.tools._embedding.md) — Pluggable embedding provider seam plus the shared similarity-availability check (feat-134, Phase 1 + Phase 2).
+- [`biz.dfch.specmgr.general.tools._embedding_cache`](biz.dfch.specmgr.general.tools._embedding_cache.md) — Global, content-hash-validated in-memory embedding cache (feat-134, Phase 1, REQ-004).
+- [`biz.dfch.specmgr.general.tools._language_guard`](biz.dfch.specmgr.general.tools._language_guard.md) — The write-side ``language`` guard shared by the generic, type-dispatched tools (feat-197-i18n Phases 120/125).
+- [`biz.dfch.specmgr.general.tools._language_variants`](biz.dfch.specmgr.general.tools._language_variants.md) — Per-language document location for the read-only translation tools (feat-197-i18n Phase 140).
+- [`biz.dfch.specmgr.general.tools._listing`](biz.dfch.specmgr.general.tools._listing.md) — Generic, doc-type-agnostic ``list_<domain>`` summary construction (feat-81-83-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.general.tools._packaged_data`](biz.dfch.specmgr.general.tools._packaged_data.md) — Generic, doc-type-agnostic access to packaged example/template/schema data
 - [`biz.dfch.specmgr.general.tools._paging`](biz.dfch.specmgr.general.tools._paging.md) — Generic, doc-type-agnostic paging helpers (feat-13 Task 1.2).
-- [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids and
+- [`biz.dfch.specmgr.general.tools._path_safety`](biz.dfch.specmgr.general.tools._path_safety.md) — Reusable, doc-type-agnostic path-safety assertions for document ids,
+- [`biz.dfch.specmgr.general.tools._reference_graph`](biz.dfch.specmgr.general.tools._reference_graph.md) — The reference-graph builders: scoped source-centred and registry-wide graph construction
+- [`biz.dfch.specmgr.general.tools._references`](biz.dfch.specmgr.general.tools._references.md) — Shared cross-reference extraction and per-domain target resolution
+- [`biz.dfch.specmgr.general.tools._similarity_corpus`](biz.dfch.specmgr.general.tools._similarity_corpus.md) — Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
+- [`biz.dfch.specmgr.general.tools._similarity_ranking`](biz.dfch.specmgr.general.tools._similarity_ranking.md) — Pure-Python cosine (dot-on-normalized) ranking (feat-134, Phase 2, Task 2.4).
+- [`biz.dfch.specmgr.general.tools._similarity_search`](biz.dfch.specmgr.general.tools._similarity_search.md) — Shared per-candidate collection, hit-row assembly, and background warmup (feat-134, Phase 3).
+- [`biz.dfch.specmgr.general.tools._similarity_text`](biz.dfch.specmgr.general.tools._similarity_text.md) — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
-- [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers (feat-38-39-41-43-44 Phase 3, Task 3.1).
-- [`biz.dfch.specmgr.general.tools.confluence_fetch`](biz.dfch.specmgr.general.tools.confluence_fetch.md) — ``@mcp.tool()`` wrapper: confluence_fetch (renamed from ``webfetch``, ADR
-- [`biz.dfch.specmgr.general.tools.confluence_update`](biz.dfch.specmgr.general.tools.confluence_update.md) — ``@mcp.tool()`` wrapper: confluence_update (ADR a156fdf9-052c-4f43-93a2-eeec04a91eac,
+- [`biz.dfch.specmgr.general.tools._startup_warmup`](biz.dfch.specmgr.general.tools._startup_warmup.md) — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
+- [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
+- [`biz.dfch.specmgr.general.tools.check_translation_drift`](biz.dfch.specmgr.general.tools.check_translation_drift.md) — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
+- [`biz.dfch.specmgr.general.tools.edit`](biz.dfch.specmgr.general.tools.edit.md) — ``@mcp.tool()`` wrapper: edit (feat-159-edit, GitHub issue #159).
+- [`biz.dfch.specmgr.general.tools.find_related`](biz.dfch.specmgr.general.tools.find_related.md) — ``@mcp.tool()`` wrapper: find_related (feat-134, Phase 3, Task 3.1).
+- [`biz.dfch.specmgr.general.tools.find_similar_text`](biz.dfch.specmgr.general.tools.find_similar_text.md) — ``@mcp.tool()`` wrapper: find_similar_text (feat-134, Phase 3, Task 3.2).
+- [`biz.dfch.specmgr.general.tools.get_reference_diagram`](biz.dfch.specmgr.general.tools.get_reference_diagram.md) — ``@mcp.tool()`` wrapper: get_reference_diagram (feat-207-reference-graph, Phase 120, REQ-004).
+- [`biz.dfch.specmgr.general.tools.get_reference_diagram_all`](biz.dfch.specmgr.general.tools.get_reference_diagram_all.md) — ``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
+- [`biz.dfch.specmgr.general.tools.list_languages`](biz.dfch.specmgr.general.tools.list_languages.md) — ``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
+- [`biz.dfch.specmgr.general.tools.list_references`](biz.dfch.specmgr.general.tools.list_references.md) — ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 - [`biz.dfch.specmgr.general.tools.mdformat`](biz.dfch.specmgr.general.tools.mdformat.md) — ``@mcp.tool()`` wrapper: mdformat.
 - [`biz.dfch.specmgr.general.tools.set_classification`](biz.dfch.specmgr.general.tools.set_classification.md) — ``@mcp.tool()`` wrapper: set_classification (feat-56-classification, Phase 2).
 - [`biz.dfch.specmgr.general.tools.set_status`](biz.dfch.specmgr.general.tools.set_status.md) — ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 - [`biz.dfch.specmgr.general.tools.update`](biz.dfch.specmgr.general.tools.update.md) — ``@mcp.tool()`` wrapper: update (feat-22-consolidate-mutation-tools, Phase 2).
+- [`biz.dfch.specmgr.general.tools.validate`](biz.dfch.specmgr.general.tools.validate.md) — ``@mcp.tool()`` wrapper: validate (feat-81-83-validation, Phase 2).
 - [`biz.dfch.specmgr.gol`](biz.dfch.specmgr.gol.md) — Goal (GOL) domain -- high-level business goal specifications.
 - [`biz.dfch.specmgr.gol.prompts`](biz.dfch.specmgr.gol.prompts.md) — MCP prompt wrappers for Goals (Tasks 3.14-3.15).
 - [`biz.dfch.specmgr.gol.prompts.create_gol`](biz.dfch.specmgr.gol.prompts.create_gol.md) — ``@mcp.prompt()``: create_gol (Task 3.14).
 - [`biz.dfch.specmgr.gol.prompts.update_gol`](biz.dfch.specmgr.gol.prompts.update_gol.md) — ``@mcp.prompt()``: update_gol (Task 3.15).
 - [`biz.dfch.specmgr.gol.resources`](biz.dfch.specmgr.gol.resources.md) — MCP resource registrations for Goal (GOL) documents (Task 3.11).
 - [`biz.dfch.specmgr.gol.resources.gol_example`](biz.dfch.specmgr.gol.resources.gol_example.md) — Resource: specmgr://gol/example (Task 3.11).
-- [`biz.dfch.specmgr.gol.resources.gol_schema`](biz.dfch.specmgr.gol.resources.gol_schema.md) — Resource: specmgr://gol/schema (Task 3.11, packaged data).
 - [`biz.dfch.specmgr.gol.resources.gol_template`](biz.dfch.specmgr.gol.resources.gol_template.md) — Resource: specmgr://gol/template (Task 3.11).
 - [`biz.dfch.specmgr.gol.tools`](biz.dfch.specmgr.gol.tools.md) — MCP tool wrappers for goals (mirrors ``prb/tools/``'s own shape).
-- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (Task 3.1).
+- [`biz.dfch.specmgr.gol.tools._cache`](biz.dfch.specmgr.gol.tools._cache.md) — Per-domain content-hash-validated read cache singleton for goals (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.gol.tools._io`](biz.dfch.specmgr.gol.tools._io.md) — Thin file read helpers over ``parse_gol`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.gol.tools._lock`](biz.dfch.specmgr.gol.tools._lock.md) — Per-document in-process lock guarding goal mutations.
 - [`biz.dfch.specmgr.gol.tools._paths`](biz.dfch.specmgr.gol.tools._paths.md) — Goal base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.gol.tools._write`](biz.dfch.specmgr.gol.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_gol`` and
 - [`biz.dfch.specmgr.gol.tools.create_gol`](biz.dfch.specmgr.gol.tools.create_gol.md) — ``@mcp.tool()`` wrapper: create_gol (Task 3.3).
 - [`biz.dfch.specmgr.gol.tools.get_gol`](biz.dfch.specmgr.gol.tools.get_gol.md) — ``@mcp.tool()`` wrapper: get_gol (Task 3.8).
 - [`biz.dfch.specmgr.gol.tools.get_gol_example`](biz.dfch.specmgr.gol.tools.get_gol_example.md) — ``@mcp.tool()`` wrapper: get_gol_example (Task 3.10).
+- [`biz.dfch.specmgr.gol.tools.get_gol_schema`](biz.dfch.specmgr.gol.tools.get_gol_schema.md) — ``@mcp.tool()`` wrapper: get_gol_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.gol.tools.get_gol_template`](biz.dfch.specmgr.gol.tools.get_gol_template.md) — ``@mcp.tool()`` wrapper: get_gol_template (Task 3.10).
 - [`biz.dfch.specmgr.gol.tools.list_gol`](biz.dfch.specmgr.gol.tools.list_gol.md) — ``@mcp.tool()`` wrapper: list_gol (Task 3.9).
 - [`biz.dfch.specmgr.gol.tools.parse_gol`](biz.dfch.specmgr.gol.tools.parse_gol.md) — ``@mcp.tool()`` wrapper: parse_gol (Task 3.2).
-- [`biz.dfch.specmgr.gol.tools.validate_gol`](biz.dfch.specmgr.gol.tools.validate_gol.md) — ``@mcp.tool()`` wrapper: validate_gol (Task 3.7).
 - [`biz.dfch.specmgr.models`](biz.dfch.specmgr.models.md) — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.models.adr`](biz.dfch.specmgr.models.adr.md) — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
 - [`biz.dfch.specmgr.models.adr.v1`](biz.dfch.specmgr.models.adr.v1.md) — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
 - [`biz.dfch.specmgr.models.adr.v1._util`](biz.dfch.specmgr.models.adr.v1._util.md) — Shared, private validation helpers for the ``models.adr`` subpackage.
 - [`biz.dfch.specmgr.models.adr.v1.adr`](biz.dfch.specmgr.models.adr.v1.adr.md) — Pydantic model for a full ADR document (frontmatter + body).
-- [`biz.dfch.specmgr.models.adr.v1.body`](biz.dfch.specmgr.models.adr.v1.body.md) — Pydantic model for the ADR body -- whole-section fields plus options
-- [`biz.dfch.specmgr.models.adr.v1.frontmatter`](biz.dfch.specmgr.models.adr.v1.frontmatter.md) — Pydantic model for the ADR YAML frontmatter block (plan §3).
-- [`biz.dfch.specmgr.models.adr.v1.mutations`](biz.dfch.specmgr.models.adr.v1.mutations.md) — Structured edit operations on an :class:`Adr` (plan §4, §5, §8).
-- [`biz.dfch.specmgr.models.adr.v1.option`](biz.dfch.specmgr.models.adr.v1.option.md) — Pydantic model for one ``### Option N: {title}`` sub-section (plan §5).
-- [`biz.dfch.specmgr.models.adr.v1.parser`](biz.dfch.specmgr.models.adr.v1.parser.md) — Parse an on-disk ADR ``.md`` file into an :class:`Adr` (plan §7, §10 item 2).
-- [`biz.dfch.specmgr.models.adr.v1.renderer`](biz.dfch.specmgr.models.adr.v1.renderer.md) — Render an :class:`Adr` back into the canonical on-disk ``.md`` text (plan §7, §10 item 2).
-- [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output (plan §8, §9a).
+- [`biz.dfch.specmgr.models.adr.v1.body`](biz.dfch.specmgr.models.adr.v1.body.md) — Pydantic model for the ADR body -- whole-section fields plus options.
+- [`biz.dfch.specmgr.models.adr.v1.frontmatter`](biz.dfch.specmgr.models.adr.v1.frontmatter.md) — Pydantic model for the ADR YAML frontmatter block.
+- [`biz.dfch.specmgr.models.adr.v1.mutations`](biz.dfch.specmgr.models.adr.v1.mutations.md) — Structured edit operations on an :class:`Adr`.
+- [`biz.dfch.specmgr.models.adr.v1.option`](biz.dfch.specmgr.models.adr.v1.option.md) — Pydantic model for one ``### Option N: {title}`` sub-section.
+- [`biz.dfch.specmgr.models.adr.v1.parser`](biz.dfch.specmgr.models.adr.v1.parser.md) — Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
+- [`biz.dfch.specmgr.models.adr.v1.renderer`](biz.dfch.specmgr.models.adr.v1.renderer.md) — Render an :class:`Adr` back into the canonical on-disk ``.md`` text.
+- [`biz.dfch.specmgr.models.adr.v1.summary`](biz.dfch.specmgr.models.adr.v1.summary.md) — Pydantic model for one line of ADR listing output.
 - [`biz.dfch.specmgr.models.config_info`](biz.dfch.specmgr.models.config_info.md) — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - [`biz.dfch.specmgr.models.iso25010`](biz.dfch.specmgr.models.iso25010.md) — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - [`biz.dfch.specmgr.models.md`](biz.dfch.specmgr.models.md.md) — Markdown base models.
+- [`biz.dfch.specmgr.models.md._cross_reference`](biz.dfch.specmgr.models.md._cross_reference.md) — Shared, private cross-reference format validator for `models.md` domain body models.
 - [`biz.dfch.specmgr.models.md._errors`](biz.dfch.specmgr.models.md._errors.md) — Shared tool-boundary error enrichment (feat-27-validation Phase 3, Task 3.1).
 - [`biz.dfch.specmgr.models.md._frontmatter_parse`](biz.dfch.specmgr.models.md._frontmatter_parse.md) — Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 - [`biz.dfch.specmgr.models.md._markdown`](biz.dfch.specmgr.models.md._markdown.md) — Markdown shared instance.
 - [`biz.dfch.specmgr.models.md._ordering`](biz.dfch.specmgr.models.md._ordering.md) — Shared, private newest-first ordering validation helper for `models.md` domain body models.
+- [`biz.dfch.specmgr.models.md._timestamps`](biz.dfch.specmgr.models.md._timestamps.md) — Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
 - [`biz.dfch.specmgr.models.md._util`](biz.dfch.specmgr.models.md._util.md) — Shared, private validation helpers for the ``models.md`` subpackage.
 - [`biz.dfch.specmgr.models.md.alias`](biz.dfch.specmgr.models.md.alias.md) — Alias decorator for MarkdownStr class name transformation.
 - [`biz.dfch.specmgr.models.md.alias_match`](biz.dfch.specmgr.models.md.alias_match.md) — Match a parsed heading's actual text against a class's declared `@alias`.
 - [`biz.dfch.specmgr.models.md.alias_type`](biz.dfch.specmgr.models.md.alias_type.md) — Alias type enumeration for MarkdownStr class name transformation.
+- [`biz.dfch.specmgr.models.md.common_sections`](biz.dfch.specmgr.models.md.common_sections.md) — Shared base classes for whole-section fields that recur, byte-identically, across domains.
 - [`biz.dfch.specmgr.models.md.frontmatter`](biz.dfch.specmgr.models.md.frontmatter.md) — Generic base frontmatter model shared by every markdown-backed document type.
 - [`biz.dfch.specmgr.models.md.markdown`](biz.dfch.specmgr.models.md.markdown.md) — No documentation available.
 - [`biz.dfch.specmgr.models.md.markdown_block_quote`](biz.dfch.specmgr.models.md.markdown_block_quote.md) — A markdown block quote ("blockquote"), grouping every consecutive '>' line as one instance.
@@ -200,6 +242,12 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.models.md.markdown_section6_with_comment`](biz.dfch.specmgr.models.md.markdown_section6_with_comment.md) — Opt-in `MarkdownSection6` variant allowing a leading explanatory comment.
 - [`biz.dfch.specmgr.models.md.markdown_str`](biz.dfch.specmgr.models.md.markdown_str.md) — Parse markdown into tokens using shared MarkdownIt instance.
 - [`biz.dfch.specmgr.models.version_info`](biz.dfch.specmgr.models.version_info.md) — Pydantic model for the ``specmgr://version`` resource.
+- [`biz.dfch.specmgr.plantuml`](biz.dfch.specmgr.plantuml.md) — Import-free, stdlib-only PlantUML support library (feat-185-uc-diagrams, Phase 110).
+- [`biz.dfch.specmgr.plantuml.backends`](biz.dfch.specmgr.plantuml.backends.md) — The jar/bin local validation backends (rulebook §4 — the frozen invocation contract).
+- [`biz.dfch.specmgr.plantuml.chain`](biz.dfch.specmgr.plantuml.chain.md) — The strict first-set-wins validation chain + the frozen result model (rulebook §3).
+- [`biz.dfch.specmgr.plantuml.encode`](biz.dfch.specmgr.plantuml.encode.md) — The PlantUML classic URL text encoding and its inverse (rulebook §5.1).
+- [`biz.dfch.specmgr.plantuml.structure`](biz.dfch.specmgr.plantuml.structure.md) — The two-mode PlantUML structure checker (rulebook §6) + the shared UNATTRIBUTED marker constant.
+- [`biz.dfch.specmgr.plantuml.url`](biz.dfch.specmgr.plantuml.url.md) — The single-endpoint PlantUML URL protocol classifier (rulebook §5 — the frozen matrix).
 - [`biz.dfch.specmgr.prb`](biz.dfch.specmgr.prb.md) — Problem Statement (PRB) domain -- Six-Sigma-style problem statement specifications.
 - [`biz.dfch.specmgr.prb.models`](biz.dfch.specmgr.prb.models.md) — Problem Statement (PRB) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.prb.models.v1`](biz.dfch.specmgr.prb.models.v1.md) — Problem Statement (PRB) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -210,24 +258,24 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.prb.models.v1.parser`](biz.dfch.specmgr.prb.models.v1.parser.md) — Parse raw Problem Statement (PRB) ``.md`` text into a :class:`PrbDocument` (Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.prb.models.v1.summary`](biz.dfch.specmgr.prb.models.v1.summary.md) — Pydantic model for one line of PRB listing output (Phase 2, Task 2.3).
 - [`biz.dfch.specmgr.prb.prompts`](biz.dfch.specmgr.prb.prompts.md) — MCP prompt wrappers for Problem Statements (Tasks 3.14-3.15).
-- [`biz.dfch.specmgr.prb.prompts.create_prb`](biz.dfch.specmgr.prb.prompts.create_prb.md) — ``@mcp.prompt()``: create_prb (Task 3.14).
-- [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15).
+- [`biz.dfch.specmgr.prb.prompts.create_prb`](biz.dfch.specmgr.prb.prompts.create_prb.md) — ``@mcp.prompt()``: create_prb (Task 3.14, feat-132-prb-update Phase 2).
+- [`biz.dfch.specmgr.prb.prompts.update_prb`](biz.dfch.specmgr.prb.prompts.update_prb.md) — ``@mcp.prompt()``: update_prb (Task 3.15, feat-132-prb-update Phase 2).
 - [`biz.dfch.specmgr.prb.resources`](biz.dfch.specmgr.prb.resources.md) — MCP resource registrations for Problem Statement (PRB) documents (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_example`](biz.dfch.specmgr.prb.resources.prb_example.md) — Resource: specmgr://prb/example (Task 3.11).
-- [`biz.dfch.specmgr.prb.resources.prb_schema`](biz.dfch.specmgr.prb.resources.prb_schema.md) — Resource: specmgr://prb/schema (Task 3.11).
 - [`biz.dfch.specmgr.prb.resources.prb_template`](biz.dfch.specmgr.prb.resources.prb_template.md) — Resource: specmgr://prb/template (Task 3.11).
 - [`biz.dfch.specmgr.prb.tools`](biz.dfch.specmgr.prb.tools.md) — MCP tool wrappers for problem statements (mirrors ``tsk/tools/``'s own shape).
-- [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (Task 3.1).
+- [`biz.dfch.specmgr.prb.tools._cache`](biz.dfch.specmgr.prb.tools._cache.md) — Per-domain content-hash-validated read cache singleton for problem statements (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.prb.tools._io`](biz.dfch.specmgr.prb.tools._io.md) — Thin file read helpers over ``parse_prb`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.prb.tools._lock`](biz.dfch.specmgr.prb.tools._lock.md) — Per-document in-process lock guarding problem statement mutations.
 - [`biz.dfch.specmgr.prb.tools._paths`](biz.dfch.specmgr.prb.tools._paths.md) — Problem statement base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.prb.tools._write`](biz.dfch.specmgr.prb.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_prb`` and
 - [`biz.dfch.specmgr.prb.tools.create_prb`](biz.dfch.specmgr.prb.tools.create_prb.md) — ``@mcp.tool()`` wrapper: create_prb (Task 3.3).
 - [`biz.dfch.specmgr.prb.tools.get_prb`](biz.dfch.specmgr.prb.tools.get_prb.md) — ``@mcp.tool()`` wrapper: get_prb (Task 3.8).
 - [`biz.dfch.specmgr.prb.tools.get_prb_example`](biz.dfch.specmgr.prb.tools.get_prb_example.md) — ``@mcp.tool()`` wrapper: get_prb_example (Task 3.10).
+- [`biz.dfch.specmgr.prb.tools.get_prb_schema`](biz.dfch.specmgr.prb.tools.get_prb_schema.md) — ``@mcp.tool()`` wrapper: get_prb_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.prb.tools.get_prb_template`](biz.dfch.specmgr.prb.tools.get_prb_template.md) — ``@mcp.tool()`` wrapper: get_prb_template (Task 3.10).
 - [`biz.dfch.specmgr.prb.tools.list_prb`](biz.dfch.specmgr.prb.tools.list_prb.md) — ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 - [`biz.dfch.specmgr.prb.tools.parse_prb`](biz.dfch.specmgr.prb.tools.parse_prb.md) — ``@mcp.tool()`` wrapper: parse_prb (Task 3.2).
-- [`biz.dfch.specmgr.prb.tools.validate_prb`](biz.dfch.specmgr.prb.tools.validate_prb.md) — ``@mcp.tool()`` wrapper: validate_prb (Task 3.7).
 - [`biz.dfch.specmgr.qa`](biz.dfch.specmgr.qa.md) — Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 - [`biz.dfch.specmgr.qa.models`](biz.dfch.specmgr.qa.models.md) — Question and Answer (QA) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.qa.models.v2`](biz.dfch.specmgr.qa.models.v2.md) — Question and Answer (QA) v2 models -- adjacent question/answer pairs, no per-question heading.
@@ -238,35 +286,35 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.qa.models.v2.parser`](biz.dfch.specmgr.qa.models.v2.parser.md) — Parse raw Question and Answer (QA) ``.md`` text into a :class:`QaDocument` (v2).
 - [`biz.dfch.specmgr.qa.models.v2.question_answer`](biz.dfch.specmgr.qa.models.v2.question_answer.md) — One adjacent question/answer pair with no heading of its own (QA v2).
 - [`biz.dfch.specmgr.qa.models.v2.summary`](biz.dfch.specmgr.qa.models.v2.summary.md) — Pydantic model for one line of QA listing output.
-- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (Phase 4, Task 4.3).
-- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts`](biz.dfch.specmgr.qa.prompts.md) — MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.create_qa`](biz.dfch.specmgr.qa.prompts.create_qa.md) — ``@mcp.prompt()``: create_qa (feat-12-qa-artifact Phase 4, Task 4.3).
+- [`biz.dfch.specmgr.qa.prompts.refine`](biz.dfch.specmgr.qa.prompts.refine.md) — ``@mcp.prompt()``: refine (feat-7-various-improvements Phase 0, Task 0.19).
+- [`biz.dfch.specmgr.qa.prompts.update_qa`](biz.dfch.specmgr.qa.prompts.update_qa.md) — ``@mcp.prompt()``: update_qa (feat-12-qa-artifact Phase 4, Task 4.3).
 - [`biz.dfch.specmgr.qa.resources`](biz.dfch.specmgr.qa.resources.md) — MCP resource registrations for Question and Answer (QA) documents (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_example`](biz.dfch.specmgr.qa.resources.qa_example.md) — Resource: specmgr://qa/example (Phase 4, Task 4.2).
-- [`biz.dfch.specmgr.qa.resources.qa_schema`](biz.dfch.specmgr.qa.resources.qa_schema.md) — Resource: specmgr://qa/schema (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.resources.qa_template`](biz.dfch.specmgr.qa.resources.qa_template.md) — Resource: specmgr://qa/template (Phase 4, Task 4.2).
 - [`biz.dfch.specmgr.qa.tools`](biz.dfch.specmgr.qa.tools.md) — MCP tool wrappers for Question and Answer (QA) documents (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools._cache`](biz.dfch.specmgr.qa.tools._cache.md) — Per-domain content-hash-validated read cache singleton for QA documents (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.qa.tools._io`](biz.dfch.specmgr.qa.tools._io.md) — Thin file read helpers over ``parse_qa`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.qa.tools._lock`](biz.dfch.specmgr.qa.tools._lock.md) — Per-document in-process lock guarding Question and Answer (QA) mutations.
 - [`biz.dfch.specmgr.qa.tools._paths`](biz.dfch.specmgr.qa.tools._paths.md) — Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools._write`](biz.dfch.specmgr.qa.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_qa`` and
 - [`biz.dfch.specmgr.qa.tools.create_qa`](biz.dfch.specmgr.qa.tools.create_qa.md) — ``@mcp.tool()`` wrapper: create_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa`](biz.dfch.specmgr.qa.tools.get_qa.md) — ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.get_qa_example`](biz.dfch.specmgr.qa.tools.get_qa_example.md) — ``@mcp.tool()`` wrapper: get_qa_example (Phase 4, Task 4.1).
+- [`biz.dfch.specmgr.qa.tools.get_qa_schema`](biz.dfch.specmgr.qa.tools.get_qa_schema.md) — ``@mcp.tool()`` wrapper: get_qa_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.qa.tools.get_qa_template`](biz.dfch.specmgr.qa.tools.get_qa_template.md) — ``@mcp.tool()`` wrapper: get_qa_template (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.qa.tools.list_qa`](biz.dfch.specmgr.qa.tools.list_qa.md) — ``@mcp.tool()`` wrapper: list_qa (feat-13-list-paging Task 2.5).
 - [`biz.dfch.specmgr.qa.tools.parse_qa`](biz.dfch.specmgr.qa.tools.parse_qa.md) — ``@mcp.tool()`` wrapper: parse_qa (Phase 4, Task 4.1).
-- [`biz.dfch.specmgr.qa.tools.validate_qa`](biz.dfch.specmgr.qa.tools.validate_qa.md) — ``@mcp.tool()`` wrapper: validate_qa (Phase 4, Task 4.1).
 - [`biz.dfch.specmgr.req`](biz.dfch.specmgr.req.md) — Requirement (REQ) domain -- requirement specifications.
 - [`biz.dfch.specmgr.req.prompts`](biz.dfch.specmgr.req.prompts.md) — MCP prompt wrappers for Requirements (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.create_req`](biz.dfch.specmgr.req.prompts.create_req.md) — ``@mcp.prompt()``: create_req (Task 3.19).
 - [`biz.dfch.specmgr.req.prompts.update_req`](biz.dfch.specmgr.req.prompts.update_req.md) — ``@mcp.prompt()``: update_req (Task 3.19).
 - [`biz.dfch.specmgr.req.resources`](biz.dfch.specmgr.req.resources.md) — MCP resource registrations for Requirement (REQ) documents (Tasks 3.5-3.7, 3.18).
 - [`biz.dfch.specmgr.req.resources.req_example`](biz.dfch.specmgr.req.resources.req_example.md) — Resource: specmgr://req/example (Task 3.6).
-- [`biz.dfch.specmgr.req.resources.req_schema`](biz.dfch.specmgr.req.resources.req_schema.md) — Resource: specmgr://req/schema (Task 3.5, packaged data since Task 3.8).
 - [`biz.dfch.specmgr.req.resources.req_template`](biz.dfch.specmgr.req.resources.req_template.md) — Resource: specmgr://req/template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools`](biz.dfch.specmgr.req.tools.md) — MCP tool wrappers for requirements (mirrors ``uc/tools/``'s own shape).
+- [`biz.dfch.specmgr.req.tools._cache`](biz.dfch.specmgr.req.tools._cache.md) — Per-domain content-hash-validated read cache singleton for requirements (feat-107-doc-cache Phase 3).
 - [`biz.dfch.specmgr.req.tools._io`](biz.dfch.specmgr.req.tools._io.md) — Thin file read helpers over ``parse_req`` (Task 3.11).
 - [`biz.dfch.specmgr.req.tools._lock`](biz.dfch.specmgr.req.tools._lock.md) — Per-document in-process lock guarding requirement mutations.
 - [`biz.dfch.specmgr.req.tools._paths`](biz.dfch.specmgr.req.tools._paths.md) — Requirement base directory resolution and id -> path lookup (Task 3.11).
@@ -274,10 +322,10 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.req.tools.create_req`](biz.dfch.specmgr.req.tools.create_req.md) — ``@mcp.tool()`` wrapper: create_req (Task 3.12).
 - [`biz.dfch.specmgr.req.tools.get_req`](biz.dfch.specmgr.req.tools.get_req.md) — ``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 - [`biz.dfch.specmgr.req.tools.get_req_example`](biz.dfch.specmgr.req.tools.get_req_example.md) — ``@mcp.tool()`` wrapper: get_req_example (Task 3.6).
+- [`biz.dfch.specmgr.req.tools.get_req_schema`](biz.dfch.specmgr.req.tools.get_req_schema.md) — ``@mcp.tool()`` wrapper: get_req_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.req.tools.get_req_template`](biz.dfch.specmgr.req.tools.get_req_template.md) — ``@mcp.tool()`` wrapper: get_req_template (Task 3.7).
 - [`biz.dfch.specmgr.req.tools.list_req`](biz.dfch.specmgr.req.tools.list_req.md) — ``@mcp.tool()`` wrapper: list_req (feat-13-list-paging Task 2.2).
 - [`biz.dfch.specmgr.req.tools.parse_req`](biz.dfch.specmgr.req.tools.parse_req.md) — ``@mcp.tool()`` wrapper: parse_req.
-- [`biz.dfch.specmgr.req.tools.validate_req`](biz.dfch.specmgr.req.tools.validate_req.md) — ``@mcp.tool()`` wrapper: validate_req (Task 3.16).
 - [`biz.dfch.specmgr.rsk`](biz.dfch.specmgr.rsk.md) — Risk (RSK) domain -- risk registers for system specifications.
 - [`biz.dfch.specmgr.rsk.models`](biz.dfch.specmgr.rsk.models.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.rsk.models.v1`](biz.dfch.specmgr.rsk.models.v1.md) — Risk (RSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -296,21 +344,22 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.resources`](biz.dfch.specmgr.rsk.resources.md) — MCP resource registrations for Risk (RSK) documents (Tasks 3.10-3.11, 3.15).
 - [`biz.dfch.specmgr.rsk.resources.risk_matrix`](biz.dfch.specmgr.rsk.resources.risk_matrix.md) — Resource: specmgr://rsk/risk-matrix (Task 3.15).
 - [`biz.dfch.specmgr.rsk.resources.rsk_example`](biz.dfch.specmgr.rsk.resources.rsk_example.md) — Resource: specmgr://rsk/example (Task 3.11).
-- [`biz.dfch.specmgr.rsk.resources.rsk_schema`](biz.dfch.specmgr.rsk.resources.rsk_schema.md) — Resource: specmgr://rsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.rsk.resources.rsk_template`](biz.dfch.specmgr.rsk.resources.rsk_template.md) — Resource: specmgr://rsk/template (Task 3.11).
 - [`biz.dfch.specmgr.rsk.resources.tara`](biz.dfch.specmgr.rsk.resources.tara.md) — Resource: specmgr://rsk/tara (Task 3.15).
 - [`biz.dfch.specmgr.rsk.tools`](biz.dfch.specmgr.rsk.tools.md) — MCP tool wrappers for risks (mirrors ``tsk/tools/``'s own shape).
-- [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._cache`](biz.dfch.specmgr.rsk.tools._cache.md) — Per-domain content-hash-validated read cache singleton for risks (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.rsk.tools._io`](biz.dfch.specmgr.rsk.tools._io.md) — Thin file read helpers over ``parse_rsk`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.rsk.tools._lock`](biz.dfch.specmgr.rsk.tools._lock.md) — Per-document in-process lock guarding risk mutations.
 - [`biz.dfch.specmgr.rsk.tools._paths`](biz.dfch.specmgr.rsk.tools._paths.md) — Risk base directory resolution and id -> path lookup (Task 3.1).
+- [`biz.dfch.specmgr.rsk.tools._sentinel`](biz.dfch.specmgr.rsk.tools._sentinel.md) — RSK's sentinel-document construction for ``list_rsk``'s failed-entry rows (feat-81-83-validation Phase 3, Task 3.2).
 - [`biz.dfch.specmgr.rsk.tools._write`](biz.dfch.specmgr.rsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_rsk`` and
 - [`biz.dfch.specmgr.rsk.tools.create_rsk`](biz.dfch.specmgr.rsk.tools.create_rsk.md) — ``@mcp.tool()`` wrapper: create_rsk (Task 3.3).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk`](biz.dfch.specmgr.rsk.tools.get_rsk.md) — ``@mcp.tool()`` wrapper: get_rsk (Task 3.8).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_example`](biz.dfch.specmgr.rsk.tools.get_rsk_example.md) — ``@mcp.tool()`` wrapper: get_rsk_example (Task 3.9).
+- [`biz.dfch.specmgr.rsk.tools.get_rsk_schema`](biz.dfch.specmgr.rsk.tools.get_rsk_schema.md) — ``@mcp.tool()`` wrapper: get_rsk_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.rsk.tools.get_rsk_template`](biz.dfch.specmgr.rsk.tools.get_rsk_template.md) — ``@mcp.tool()`` wrapper: get_rsk_template (Task 3.9).
 - [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
-- [`biz.dfch.specmgr.rsk.tools.validate_rsk`](biz.dfch.specmgr.rsk.tools.validate_rsk.md) — ``@mcp.tool()`` wrapper: validate_rsk (Task 3.7).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
 - [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
 - [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -326,20 +375,20 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sop.prompts.update_sop`](biz.dfch.specmgr.sop.prompts.update_sop.md) — ``@mcp.prompt()``: update_sop (Task 4.1).
 - [`biz.dfch.specmgr.sop.resources`](biz.dfch.specmgr.sop.resources.md) — MCP resource registrations for Standard Operating Procedure (SOP) documents (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.resources.sop_example`](biz.dfch.specmgr.sop.resources.sop_example.md) — Resource: specmgr://sop/example (feat-30 Task 3.7).
-- [`biz.dfch.specmgr.sop.resources.sop_schema`](biz.dfch.specmgr.sop.resources.sop_schema.md) — Resource: specmgr://sop/schema (feat-30 Task 3.7, packaged data).
 - [`biz.dfch.specmgr.sop.resources.sop_template`](biz.dfch.specmgr.sop.resources.sop_template.md) — Resource: specmgr://sop/template (feat-30 Task 3.7).
 - [`biz.dfch.specmgr.sop.tools`](biz.dfch.specmgr.sop.tools.md) — MCP tool wrappers for Standard Operating Procedures (mirrors ``dec/tools/``'s own shape).
-- [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (Task 2.1).
+- [`biz.dfch.specmgr.sop.tools._cache`](biz.dfch.specmgr.sop.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SOPs (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.sop.tools._io`](biz.dfch.specmgr.sop.tools._io.md) — Thin file read helpers over ``parse_sop`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.sop.tools._lock`](biz.dfch.specmgr.sop.tools._lock.md) — Per-document in-process lock guarding SOP mutations.
 - [`biz.dfch.specmgr.sop.tools._paths`](biz.dfch.specmgr.sop.tools._paths.md) — SOP base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.sop.tools._write`](biz.dfch.specmgr.sop.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sop`` and
 - [`biz.dfch.specmgr.sop.tools.create_sop`](biz.dfch.specmgr.sop.tools.create_sop.md) — ``@mcp.tool()`` wrapper: create_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop`](biz.dfch.specmgr.sop.tools.get_sop.md) — ``@mcp.tool()`` wrapper: get_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.get_sop_example`](biz.dfch.specmgr.sop.tools.get_sop_example.md) — ``@mcp.tool()`` wrapper: get_sop_example (Task 2.2).
+- [`biz.dfch.specmgr.sop.tools.get_sop_schema`](biz.dfch.specmgr.sop.tools.get_sop_schema.md) — ``@mcp.tool()`` wrapper: get_sop_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.sop.tools.get_sop_template`](biz.dfch.specmgr.sop.tools.get_sop_template.md) — ``@mcp.tool()`` wrapper: get_sop_template (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.list_sop`](biz.dfch.specmgr.sop.tools.list_sop.md) — ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 - [`biz.dfch.specmgr.sop.tools.parse_sop`](biz.dfch.specmgr.sop.tools.parse_sop.md) — ``@mcp.tool()`` wrapper: parse_sop (Task 2.2).
-- [`biz.dfch.specmgr.sop.tools.validate_sop`](biz.dfch.specmgr.sop.tools.validate_sop.md) — ``@mcp.tool()`` wrapper: validate_sop (Task 2.2).
 - [`biz.dfch.specmgr.sysrs`](biz.dfch.specmgr.sysrs.md) — System Requirements Specification (SYSRS) domain -- an aggregator document type that
 - [`biz.dfch.specmgr.sysrs.models`](biz.dfch.specmgr.sysrs.models.md) — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
 - [`biz.dfch.specmgr.sysrs.models.v1`](biz.dfch.specmgr.sysrs.models.v1.md) — System Requirements Specification (SYSRS) models -- Pydantic schema and parser powered by the generic
@@ -354,20 +403,20 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.sysrs.prompts.update_sysrs`](biz.dfch.specmgr.sysrs.prompts.update_sysrs.md) — ``@mcp.prompt()``: update_sysrs (Task 5.1).
 - [`biz.dfch.specmgr.sysrs.resources`](biz.dfch.specmgr.sysrs.resources.md) — MCP resource registrations for System Requirements Specification (SYSRS) documents (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_example`](biz.dfch.specmgr.sysrs.resources.sysrs_example.md) — Resource: specmgr://sysrs/example (Task 4.5).
-- [`biz.dfch.specmgr.sysrs.resources.sysrs_schema`](biz.dfch.specmgr.sysrs.resources.sysrs_schema.md) — Resource: specmgr://sysrs/schema (Task 4.5, packaged data).
 - [`biz.dfch.specmgr.sysrs.resources.sysrs_template`](biz.dfch.specmgr.sysrs.resources.sysrs_template.md) — Resource: specmgr://sysrs/template (Task 4.5).
 - [`biz.dfch.specmgr.sysrs.tools`](biz.dfch.specmgr.sysrs.tools.md) — MCP tool wrappers for System Requirements Specification (SYSRS) documents (mirrors ``vcr/tools/``'s own shape).
-- [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (Task 3.1).
+- [`biz.dfch.specmgr.sysrs.tools._cache`](biz.dfch.specmgr.sysrs.tools._cache.md) — Per-domain content-hash-validated read cache singleton for SYSRS documents (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.sysrs.tools._io`](biz.dfch.specmgr.sysrs.tools._io.md) — Thin file read helpers over ``parse_sysrs`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.sysrs.tools._lock`](biz.dfch.specmgr.sysrs.tools._lock.md) — Per-document in-process lock guarding System Requirements Specification mutations.
 - [`biz.dfch.specmgr.sysrs.tools._paths`](biz.dfch.specmgr.sysrs.tools._paths.md) — System Requirements Specification (SYSRS) base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.sysrs.tools._write`](biz.dfch.specmgr.sysrs.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_sysrs`` and
 - [`biz.dfch.specmgr.sysrs.tools.create_sysrs`](biz.dfch.specmgr.sysrs.tools.create_sysrs.md) — ``@mcp.tool()`` wrapper: create_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs`](biz.dfch.specmgr.sysrs.tools.get_sysrs.md) — ``@mcp.tool()`` wrapper: get_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_example`](biz.dfch.specmgr.sysrs.tools.get_sysrs_example.md) — ``@mcp.tool()`` wrapper: get_sysrs_example (Task 3.2).
+- [`biz.dfch.specmgr.sysrs.tools.get_sysrs_schema`](biz.dfch.specmgr.sysrs.tools.get_sysrs_schema.md) — ``@mcp.tool()`` wrapper: get_sysrs_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.sysrs.tools.get_sysrs_template`](biz.dfch.specmgr.sysrs.tools.get_sysrs_template.md) — ``@mcp.tool()`` wrapper: get_sysrs_template (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.list_sysrs`](biz.dfch.specmgr.sysrs.tools.list_sysrs.md) — ``@mcp.tool()`` wrapper: list_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.sysrs.tools.parse_sysrs`](biz.dfch.specmgr.sysrs.tools.parse_sysrs.md) — ``@mcp.tool()`` wrapper: parse_sysrs (Task 3.2).
-- [`biz.dfch.specmgr.sysrs.tools.validate_sysrs`](biz.dfch.specmgr.sysrs.tools.validate_sysrs.md) — ``@mcp.tool()`` wrapper: validate_sysrs (Task 3.2).
 - [`biz.dfch.specmgr.tsk`](biz.dfch.specmgr.tsk.md) — TaskList (TSK) domain -- lightweight task/todo-list specifications.
 - [`biz.dfch.specmgr.tsk.models`](biz.dfch.specmgr.tsk.models.md) — TaskList (TSK) models -- Pydantic schema powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.tsk.models.v1`](biz.dfch.specmgr.tsk.models.v1.md) — TaskList (TSK) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -384,20 +433,48 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.tsk.prompts.update_task`](biz.dfch.specmgr.tsk.prompts.update_task.md) — ``@mcp.prompt()``: update_task (Task 3.13).
 - [`biz.dfch.specmgr.tsk.resources`](biz.dfch.specmgr.tsk.resources.md) — MCP resource registrations for Task List (TSK) documents (Tasks 3.10-3.11).
 - [`biz.dfch.specmgr.tsk.resources.tsk_example`](biz.dfch.specmgr.tsk.resources.tsk_example.md) — Resource: specmgr://tsk/example (Task 3.11).
-- [`biz.dfch.specmgr.tsk.resources.tsk_schema`](biz.dfch.specmgr.tsk.resources.tsk_schema.md) — Resource: specmgr://tsk/schema (Task 3.10).
 - [`biz.dfch.specmgr.tsk.resources.tsk_template`](biz.dfch.specmgr.tsk.resources.tsk_template.md) — Resource: specmgr://tsk/template (Task 3.11).
 - [`biz.dfch.specmgr.tsk.tools`](biz.dfch.specmgr.tsk.tools.md) — MCP tool wrappers for task lists (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (Task 3.1).
+- [`biz.dfch.specmgr.tsk.tools._cache`](biz.dfch.specmgr.tsk.tools._cache.md) — Per-domain content-hash-validated read cache singleton for task lists (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.tsk.tools._io`](biz.dfch.specmgr.tsk.tools._io.md) — Thin file read helpers over ``parse_tsk`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.tsk.tools._lock`](biz.dfch.specmgr.tsk.tools._lock.md) — Per-document in-process lock guarding task list mutations.
 - [`biz.dfch.specmgr.tsk.tools._paths`](biz.dfch.specmgr.tsk.tools._paths.md) — Task list base directory resolution and id -> path lookup (Task 3.1).
 - [`biz.dfch.specmgr.tsk.tools._write`](biz.dfch.specmgr.tsk.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_tsk`` and
 - [`biz.dfch.specmgr.tsk.tools.create_tsk`](biz.dfch.specmgr.tsk.tools.create_tsk.md) — ``@mcp.tool()`` wrapper: create_tsk (Task 3.3).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk`](biz.dfch.specmgr.tsk.tools.get_tsk.md) — ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_example`](biz.dfch.specmgr.tsk.tools.get_tsk_example.md) — ``@mcp.tool()`` wrapper: get_tsk_example (Task 3.9).
+- [`biz.dfch.specmgr.tsk.tools.get_tsk_schema`](biz.dfch.specmgr.tsk.tools.get_tsk_schema.md) — ``@mcp.tool()`` wrapper: get_tsk_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.tsk.tools.get_tsk_template`](biz.dfch.specmgr.tsk.tools.get_tsk_template.md) — ``@mcp.tool()`` wrapper: get_tsk_template (Task 3.9).
 - [`biz.dfch.specmgr.tsk.tools.list_tsk`](biz.dfch.specmgr.tsk.tools.list_tsk.md) — ``@mcp.tool()`` wrapper: list_tsk (feat-13-list-paging Task 2.4).
 - [`biz.dfch.specmgr.tsk.tools.parse_tsk`](biz.dfch.specmgr.tsk.tools.parse_tsk.md) — ``@mcp.tool()`` wrapper: parse_tsk (Task 3.2).
-- [`biz.dfch.specmgr.tsk.tools.validate_tsk`](biz.dfch.specmgr.tsk.tools.validate_tsk.md) — ``@mcp.tool()`` wrapper: validate_tsk (Task 3.7).
+- [`biz.dfch.specmgr.txt`](biz.dfch.specmgr.txt.md) — Free-Form Text (TXT) domain -- a generic, minimally structured catch-all for unstructured markdown text.
+- [`biz.dfch.specmgr.txt.models`](biz.dfch.specmgr.txt.models.md) — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.txt.models.v1`](biz.dfch.specmgr.txt.models.v1.md) — Free-Form Text (TXT) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.txt.models.v1._util`](biz.dfch.specmgr.txt.models.v1._util.md) — Shared, private constants for the ``txt.models.v1`` subpackage.
+- [`biz.dfch.specmgr.txt.models.v1.body`](biz.dfch.specmgr.txt.models.v1.body.md) — Free-Form Text (TXT) body models: an opaque free-form `body` plus a mandatory `## Updates` log.
+- [`biz.dfch.specmgr.txt.models.v1.document`](biz.dfch.specmgr.txt.models.v1.document.md) — Pydantic model for a full free-form text document (frontmatter + body).
+- [`biz.dfch.specmgr.txt.models.v1.frontmatter`](biz.dfch.specmgr.txt.models.v1.frontmatter.md) — Free-Form Text (TXT) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.txt.models.v1.parser`](biz.dfch.specmgr.txt.models.v1.parser.md) — Parse raw free-form text (TXT) ``.md`` text into a :class:`TxtDocument`.
+- [`biz.dfch.specmgr.txt.models.v1.summary`](biz.dfch.specmgr.txt.models.v1.summary.md) — Pydantic model for one line of TXT listing output (Phase 110, ``list_txt``).
+- [`biz.dfch.specmgr.txt.prompts`](biz.dfch.specmgr.txt.prompts.md) — MCP prompt wrappers for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.create_txt`](biz.dfch.specmgr.txt.prompts.create_txt.md) — ``@mcp.prompt()``: create_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.prompts.update_txt`](biz.dfch.specmgr.txt.prompts.update_txt.md) — ``@mcp.prompt()``: update_txt (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources`](biz.dfch.specmgr.txt.resources.md) — MCP resource registrations for free-form text (TXT) documents (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_example`](biz.dfch.specmgr.txt.resources.txt_example.md) — Resource: specmgr://txt/example (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.resources.txt_template`](biz.dfch.specmgr.txt.resources.txt_template.md) — Resource: specmgr://txt/template (feat-229-txt Phase 120).
+- [`biz.dfch.specmgr.txt.tools`](biz.dfch.specmgr.txt.tools.md) — MCP tool wrappers for free-form text documents (mirrors ``vcr/tools/``'s own shape).
+- [`biz.dfch.specmgr.txt.tools._cache`](biz.dfch.specmgr.txt.tools._cache.md) — Per-domain content-hash-validated read cache singleton for free-form text (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._io`](biz.dfch.specmgr.txt.tools._io.md) — Thin file read helpers over ``parse_txt`` (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._lock`](biz.dfch.specmgr.txt.tools._lock.md) — Per-document in-process lock guarding free-form text mutations.
+- [`biz.dfch.specmgr.txt.tools._paths`](biz.dfch.specmgr.txt.tools._paths.md) — Free-form text (TXT) base directory resolution and id -> path lookup (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools._write`](biz.dfch.specmgr.txt.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_txt`` and
+- [`biz.dfch.specmgr.txt.tools.create_txt`](biz.dfch.specmgr.txt.tools.create_txt.md) — ``@mcp.tool()`` wrapper: create_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt`](biz.dfch.specmgr.txt.tools.get_txt.md) — ``@mcp.tool()`` wrapper: get_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_example`](biz.dfch.specmgr.txt.tools.get_txt_example.md) — ``@mcp.tool()`` wrapper: get_txt_example (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_schema`](biz.dfch.specmgr.txt.tools.get_txt_schema.md) — ``@mcp.tool()`` wrapper: get_txt_schema (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.get_txt_template`](biz.dfch.specmgr.txt.tools.get_txt_template.md) — ``@mcp.tool()`` wrapper: get_txt_template (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.list_txt`](biz.dfch.specmgr.txt.tools.list_txt.md) — ``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
+- [`biz.dfch.specmgr.txt.tools.parse_txt`](biz.dfch.specmgr.txt.tools.parse_txt.md) — ``@mcp.tool()`` wrapper: parse_txt (feat-229-txt Phase 110).
 - [`biz.dfch.specmgr.uc`](biz.dfch.specmgr.uc.md) — Use Case (UC) domain — Cockburn-based use case specification and validation.
 - [`biz.dfch.specmgr.uc.models`](biz.dfch.specmgr.uc.models.md) — Use Case models — Pydantic schema for Cockburn-based use cases.
 - [`biz.dfch.specmgr.uc.models.v1`](biz.dfch.specmgr.uc.models.v1.md) — Use Case models v1 — Pydantic schema for Cockburn-based use cases.
@@ -421,27 +498,39 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.uc.models.v2.document`](biz.dfch.specmgr.uc.models.v2.document.md) — Pydantic model for a full use-case document (frontmatter + body).
 - [`biz.dfch.specmgr.uc.models.v2.frontmatter`](biz.dfch.specmgr.uc.models.v2.frontmatter.md) — Use-case frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
 - [`biz.dfch.specmgr.uc.models.v2.parser`](biz.dfch.specmgr.uc.models.v2.parser.md) — Parse raw use-case ``.md`` text into a :class:`UcDocument` (Task 1.8).
+- [`biz.dfch.specmgr.uc.models.v2.renderer`](biz.dfch.specmgr.uc.models.v2.renderer.md) — Deterministic UC → PlantUML renderers (feat-185-uc-diagrams, Phase 110).
 - [`biz.dfch.specmgr.uc.models.v2.summary`](biz.dfch.specmgr.uc.models.v2.summary.md) — Pydantic model for one line of UC listing output (Task 3.1.6).
 - [`biz.dfch.specmgr.uc.models.v2.use_case`](biz.dfch.specmgr.uc.models.v2.use_case.md) — No documentation available.
 - [`biz.dfch.specmgr.uc.prompts`](biz.dfch.specmgr.uc.prompts.md) — MCP prompt wrappers for Use Cases (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.prompts.create_uc`](biz.dfch.specmgr.uc.prompts.create_uc.md) — ``@mcp.prompt()``: create_uc (feat-57-uc-commands).
+- [`biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram`](biz.dfch.specmgr.uc.prompts.generate_uc_sequence_diagram.md) — ``@mcp.prompt()``: generate_uc_sequence_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.prompts.update_uc`](biz.dfch.specmgr.uc.prompts.update_uc.md) — ``@mcp.prompt()``: update_uc (feat-57-uc-commands).
 - [`biz.dfch.specmgr.uc.resources`](biz.dfch.specmgr.uc.resources.md) — MCP resource registrations for Use Case (UC) documents (Task 3.1.4, 3.1.6).
 - [`biz.dfch.specmgr.uc.resources.uc_example`](biz.dfch.specmgr.uc.resources.uc_example.md) — Resource: specmgr://uc/example (Task 3.1.4).
-- [`biz.dfch.specmgr.uc.resources.uc_schema`](biz.dfch.specmgr.uc.resources.uc_schema.md) — Resource: specmgr://uc/schema (Task 3.1.4).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml`](biz.dfch.specmgr.uc.resources.uc_plantuml.md) — Resource: specmgr://uc/plantuml (feat-185-uc-diagrams, Phase 100).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_example`](biz.dfch.specmgr.uc.resources.uc_plantuml_example.md) — Resource: specmgr://uc/plantuml-example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.resources.uc_plantuml_template`](biz.dfch.specmgr.uc.resources.uc_plantuml_template.md) — Resource: specmgr://uc/plantuml-template (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.resources.uc_template`](biz.dfch.specmgr.uc.resources.uc_template.md) — Resource: specmgr://uc/template (Task 3.1.4).
 - [`biz.dfch.specmgr.uc.tools`](biz.dfch.specmgr.uc.tools.md) — MCP tool wrappers for use cases (mirrors ``req/tools/``'s own shape).
-- [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools._cache`](biz.dfch.specmgr.uc.tools._cache.md) — Per-domain content-hash-validated read cache singleton for use cases (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.uc.tools._io`](biz.dfch.specmgr.uc.tools._io.md) — Thin file read helpers over ``parse_uc`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.uc.tools._lock`](biz.dfch.specmgr.uc.tools._lock.md) — Per-document in-process lock guarding use-case mutations.
 - [`biz.dfch.specmgr.uc.tools._paths`](biz.dfch.specmgr.uc.tools._paths.md) — Use-case base directory resolution and id -> path lookup (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools._write`](biz.dfch.specmgr.uc.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_uc`` and
 - [`biz.dfch.specmgr.uc.tools.create_uc`](biz.dfch.specmgr.uc.tools.create_uc.md) — ``@mcp.tool()`` wrapper: create_uc (Task 3.1.5).
 - [`biz.dfch.specmgr.uc.tools.get_uc`](biz.dfch.specmgr.uc.tools.get_uc.md) — ``@mcp.tool()`` wrapper: get_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.get_uc_diagram`](biz.dfch.specmgr.uc.tools.get_uc_diagram.md) — ``@mcp.tool()`` wrapper: get_uc_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_example`](biz.dfch.specmgr.uc.tools.get_uc_example.md) — ``@mcp.tool()`` wrapper: get_uc_example (Task 3.1.2).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_example`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_example.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_example (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_plantuml_template`](biz.dfch.specmgr.uc.tools.get_uc_plantuml_template.md) — ``@mcp.tool()`` wrapper: get_uc_plantuml_template (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.get_uc_schema`](biz.dfch.specmgr.uc.tools.get_uc_schema.md) — ``@mcp.tool()`` wrapper: get_uc_schema (feat-189 Phase 105, Task 105.110).
+- [`biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton`](biz.dfch.specmgr.uc.tools.get_uc_sequence_skeleton.md) — ``@mcp.tool()`` wrapper: get_uc_sequence_skeleton (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.get_uc_template`](biz.dfch.specmgr.uc.tools.get_uc_template.md) — ``@mcp.tool()`` wrapper: get_uc_template (Task 3.1.3).
+- [`biz.dfch.specmgr.uc.tools.get_use_case_package_diagram`](biz.dfch.specmgr.uc.tools.get_use_case_package_diagram.md) — ``@mcp.tool()`` wrapper: get_use_case_package_diagram (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.uc.tools.list_uc`](biz.dfch.specmgr.uc.tools.list_uc.md) — ``@mcp.tool()`` wrapper: list_uc (feat-13-list-paging Task 2.3).
 - [`biz.dfch.specmgr.uc.tools.parse_uc`](biz.dfch.specmgr.uc.tools.parse_uc.md) — ``@mcp.tool()`` wrapper: parse_uc.
-- [`biz.dfch.specmgr.uc.tools.validate_uc`](biz.dfch.specmgr.uc.tools.validate_uc.md) — ``@mcp.tool()`` wrapper: validate_uc (Task 3.1.5).
+- [`biz.dfch.specmgr.uc.tools.plantuml_encode`](biz.dfch.specmgr.uc.tools.plantuml_encode.md) — ``@mcp.tool()`` wrapper: plantuml_encode (feat-185-uc-diagrams, Phase 120).
+- [`biz.dfch.specmgr.uc.tools.validate_plantuml`](biz.dfch.specmgr.uc.tools.validate_plantuml.md) — ``@mcp.tool()`` wrapper: validate_plantuml (feat-185-uc-diagrams, Phase 120).
 - [`biz.dfch.specmgr.vcr`](biz.dfch.specmgr.vcr.md) — Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 - [`biz.dfch.specmgr.vcr.models`](biz.dfch.specmgr.vcr.models.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.vcr.models.v1`](biz.dfch.specmgr.vcr.models.v1.md) — Verification Case Record (VCR) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
@@ -456,17 +545,17 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.vcr.prompts.update_vcr`](biz.dfch.specmgr.vcr.prompts.update_vcr.md) — ``@mcp.prompt()``: update_vcr (Task 3.2).
 - [`biz.dfch.specmgr.vcr.resources`](biz.dfch.specmgr.vcr.resources.md) — MCP resource registrations for Verification Case Record (VCR) documents (Task 3.1).
 - [`biz.dfch.specmgr.vcr.resources.vcr_example`](biz.dfch.specmgr.vcr.resources.vcr_example.md) — Resource: specmgr://vcr/example (Task 3.1).
-- [`biz.dfch.specmgr.vcr.resources.vcr_schema`](biz.dfch.specmgr.vcr.resources.vcr_schema.md) — Resource: specmgr://vcr/schema (Task 3.1, packaged data).
 - [`biz.dfch.specmgr.vcr.resources.vcr_template`](biz.dfch.specmgr.vcr.resources.vcr_template.md) — Resource: specmgr://vcr/template (Task 3.1).
 - [`biz.dfch.specmgr.vcr.tools`](biz.dfch.specmgr.vcr.tools.md) — MCP tool wrappers for verification case records (mirrors ``dec/tools/``'s own shape).
-- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools._cache`](biz.dfch.specmgr.vcr.tools._cache.md) — Per-domain content-hash-validated read cache singleton for verification case records (feat-107-doc-cache Phase 4).
+- [`biz.dfch.specmgr.vcr.tools._io`](biz.dfch.specmgr.vcr.tools._io.md) — Thin file read helpers over ``parse_vcr`` (feat-107-doc-cache Phase 4).
 - [`biz.dfch.specmgr.vcr.tools._lock`](biz.dfch.specmgr.vcr.tools._lock.md) — Per-document in-process lock guarding verification case record mutations.
 - [`biz.dfch.specmgr.vcr.tools._paths`](biz.dfch.specmgr.vcr.tools._paths.md) — Verification case record base directory resolution and id -> path lookup (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools._write`](biz.dfch.specmgr.vcr.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_vcr`` and
 - [`biz.dfch.specmgr.vcr.tools.create_vcr`](biz.dfch.specmgr.vcr.tools.create_vcr.md) — ``@mcp.tool()`` wrapper: create_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr`](biz.dfch.specmgr.vcr.tools.get_vcr.md) — ``@mcp.tool()`` wrapper: get_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_example`](biz.dfch.specmgr.vcr.tools.get_vcr_example.md) — ``@mcp.tool()`` wrapper: get_vcr_example (Task 2.1).
+- [`biz.dfch.specmgr.vcr.tools.get_vcr_schema`](biz.dfch.specmgr.vcr.tools.get_vcr_schema.md) — ``@mcp.tool()`` wrapper: get_vcr_schema (feat-189 Phase 105, Task 105.110).
 - [`biz.dfch.specmgr.vcr.tools.get_vcr_template`](biz.dfch.specmgr.vcr.tools.get_vcr_template.md) — ``@mcp.tool()`` wrapper: get_vcr_template (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.list_vcr`](biz.dfch.specmgr.vcr.tools.list_vcr.md) — ``@mcp.tool()`` wrapper: list_vcr (Task 2.1).
 - [`biz.dfch.specmgr.vcr.tools.parse_vcr`](biz.dfch.specmgr.vcr.tools.parse_vcr.md) — ``@mcp.tool()`` wrapper: parse_vcr (Task 2.1).
-- [`biz.dfch.specmgr.vcr.tools.validate_vcr`](biz.dfch.specmgr.vcr.tools.validate_vcr.md) — ``@mcp.tool()`` wrapper: validate_vcr (Task 2.1).

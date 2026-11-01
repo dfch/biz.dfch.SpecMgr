@@ -27,7 +27,7 @@ from ._util import SCHEMA_COMMENT_VERSION
 from .body import RecentUpdates, Task, UpdateEntry
 from .document import TskDocument
 from .frontmatter import TskFrontmatter
-from .parser import parse_tsk
+from .parser import parse_tsk, parse_tsk_body
 from .summary import TskSummary
 from .task_item import TaskItem
 
@@ -41,4 +41,5 @@ __all__ = [
     "TskSummary",
     "UpdateEntry",
     "parse_tsk",
+    "parse_tsk_body",
 ]

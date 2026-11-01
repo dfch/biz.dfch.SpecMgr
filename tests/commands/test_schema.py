@@ -74,7 +74,7 @@ class TestGenerateReqSchema(unittest.TestCase):
 class TestGeneratedSchemaCreatedUpdatedPattern(unittest.TestCase):
     """feat-94 REQ-004: every affected domain's generated schema must carry `pattern` for
     `created`/`updated`, derived from `frontmatter._DATE_TIME_PATTERN`, not just a plain
-    `string | null` union. Parametrized (via `subTest`) across all twelve registered
+    `string | null` union. Parametrized (via `subTest`) across all registered
     `_GENERATORS` entries -- `adr` is intentionally excluded, since it is not registered here
     (its `AdrFrontmatter` has no `created`/`updated` fields, feat-94 Overview)."""
 

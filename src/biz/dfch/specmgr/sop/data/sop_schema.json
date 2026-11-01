@@ -1,27 +1,8 @@
 {
   "$comment": "v1",
   "$defs": {
-    "AcceptanceCriteria": {
-      "description": "`### Acceptance Criteria` under Related Artifacts -- bullet list of\ncross-references to acceptance criteria, one per line\n(e.g. \"ACC-1234: <title>\").",
-      "properties": {
-        "items": {
-          "description": "Bullet list of cross-references to acceptance criteria, one per line (e.g. \"ACC-1234: <title>\"); must contain at least one item.",
-          "items": {
-            "$ref": "#/$defs/MarkdownListItem"
-          },
-          "minItems": 1,
-          "title": "Items",
-          "type": "array"
-        }
-      },
-      "required": [
-        "items"
-      ],
-      "title": "AcceptanceCriteria",
-      "type": "object"
-    },
     "Accountable": {
-      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner who is ultimately answerable for the SOP.\n\nA single mandatory paragraph (never a bullet list): exactly one owner,\nstructurally discouraging multiple owners. See the general\n`specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\nvalue:\n    The single paragraph naming the accountable party. Mandatory.",
+      "description": "`### Accountable` under `## Roles and Responsibilities` -- the single\nowner who is ultimately answerable for the SOP.\n\nSubclasses the shared `models.md.AccountableBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "value": {
           "$ref": "#/$defs/MarkdownParagraph",
@@ -35,7 +16,7 @@
       "type": "object"
     },
     "Consulted": {
-      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions are sought before or during the work.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the consulted parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Consulted` under `## Roles and Responsibilities` -- those whose\nopinions are sought before or during the work.\n\nSubclasses the shared `models.md.ConsultedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
@@ -58,12 +39,12 @@
       "type": "object"
     },
     "Decisions": {
-      "description": "`### Decisions` under Related Artifacts -- bullet list of\ncross-references to decisions, one per line (e.g. \"DEC-2703: <title>\").",
+      "description": "`### Decisions` under Related Artifacts -- cross-references to\ndecisions.\n\nSubclasses the shared `models.md.DecisionsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `sop` still declares and\nowns its own concrete `Decisions` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to decisions, one per line (e.g. \"DEC-2703: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `DEC <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -83,12 +64,12 @@
       "type": "object"
     },
     "Goals": {
-      "description": "`### Goals` under Related Artifacts -- bullet list of cross-references\nto goals, one per line (e.g. \"GOL-0007: <title>\").",
+      "description": "`### Goals` under Related Artifacts -- cross-references to goals.\n\nSubclasses the shared `models.md.GoalsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `sop` still declares and\nowns its own concrete `Goals` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to goals, one per line (e.g. \"GOL-0007: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `GOL <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -102,7 +83,7 @@
       "type": "object"
     },
     "Informed": {
-      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on progress or outcomes.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the informed parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Informed` under `## Roles and Responsibilities` -- those who are\nkept up to date on progress or outcomes.\n\nSubclasses the shared `models.md.InformedBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
@@ -134,6 +115,28 @@
       "description": "One item (\"li\") of a markdown bullet or numbered list.\n\nUsed only as `items: list[MarkdownListItem]` (or `list[MarkdownListItem] |\nNone`) on a `MarkdownSection`/`MarkdownParagraph`/`MarkdownListItem` --\nthere is no separate list-container class, and a bare item cannot be\nparsed as a top-level/scalar field on its own; every item is assumed to\nstart with at least one paragraph (its own lead text).\n\nLeaf (no declared nested fields, the default): `_value` holds the item's\ncomplete extent verbatim, marker included. Composite (a subclass declares\nfields): `_value` holds only the item's own leading paragraph, marker\nincluded -- the marker cannot be reconstructed from class metadata alone,\nso it is kept verbatim -- and the remainder is dedented and delegated to\nnested field parsing; `__str__` re-indents the children's rendered output\nby the marker's own width before recombining.\n\nRound-trip note: a tight source list currently round-trips to a\nstructurally-equivalent loose list rather than byte-exact (loose lists\nremain byte-exact) -- an accepted, documented exception; see\n`from_text`/`__str__` docstrings below for the full mechanics.",
       "properties": {},
       "title": "MarkdownListItem",
+      "type": "object"
+    },
+    "MarkdownListItemWithNotes": {
+      "description": "One list item that captures continuation paragraphs (loose-list notes) via a declared `notes` field.\n\nMirrors `ExtensionItem`'s docstring: adds `notes` for captured continuation\nparagraphs inside a list item, so they appear in ``model_dump()``/JSON output\ninstead of being lost to Pydantic's private-attribute invisibility. Delegates\n``get_extent()`` / ``from_text()`` / ``__str__()`` to the inherited\n``MarkdownListItem`` (no new extent logic needed; ``MarkdownStr.process_list_field()``\niterates items by ``get_extent()`` and the field-distribution loop picks up\nremaining text).",
+      "properties": {
+        "notes": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/MarkdownParagraph"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "MarkdownListItemWithNotes",
       "type": "object"
     },
     "MarkdownParagraph": {
@@ -174,20 +177,8 @@
       "type": "object"
     },
     "RelatedArtifacts": {
-      "description": "`## Related Artifacts` -- container for five independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/acceptance\ncriteria/sops). Optional as a whole; no consistency check is enforced\nbetween the sub-lists. The `### Sops` sub-list is a self-cross-reference\n(a `sop` document may reference other, related/superseding SOPs).",
+      "description": "`## Related Artifacts` -- container for five independent, all-optional\n`### ` cross-reference lists (requirements/decisions/goals/risks/sops).\nOptional as a whole; no consistency check is enforced between the\nsub-lists. The `### Sops` sub-list is a self-cross-reference (a `sop`\ndocument may reference other, related/superseding SOPs).",
       "properties": {
-        "acceptance_criteria": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/AcceptanceCriteria"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "`### Acceptance Criteria` sub-section. Optional."
-        },
         "decisions": {
           "anyOf": [
             {
@@ -224,6 +215,18 @@
           "default": null,
           "description": "`### Requirements` sub-section. Optional."
         },
+        "risks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Risks"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "`### Risks` sub-section. Optional."
+        },
         "sops": {
           "anyOf": [
             {
@@ -241,12 +244,12 @@
       "type": "object"
     },
     "Requirements": {
-      "description": "`### Requirements` under Related Artifacts -- bullet list of\ncross-references to requirements, one per line\n(e.g. \"REQ-9687: <title>\").",
+      "description": "`### Requirements` under Related Artifacts -- cross-references to\nrequirements.\n\nSubclasses the shared `models.md.RequirementsBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `sop` still declares and\nowns its own concrete `Requirements` type.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to requirements, one per line (e.g. \"REQ-9687: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `REQ <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -260,7 +263,7 @@
       "type": "object"
     },
     "Responsible": {
-      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who do\nthe work the SOP describes.\n\nA mandatory bullet list (>=1 entry). See the general `specmgr://rasci`\nresource for RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the responsible parties; must contain at least one\n    item.",
+      "description": "`### Responsible` under `## Roles and Responsibilities` -- those who do\nthe work the SOP describes.\n\nSubclasses the shared `models.md.ResponsibleBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "description": "Bullet list naming the responsible parties; must contain at least one item.",
@@ -278,8 +281,27 @@
       "title": "Responsible",
       "type": "object"
     },
+    "Risks": {
+      "description": "`### Risks` under Related Artifacts -- cross-references to risks.\n\nSubclasses the shared `models.md.RisksBase`\n(feat-135-related-artifacts-risks) -- the field declaration and format\nvalidator live there; this class exists so `sop` still declares and\nowns its own concrete `Risks` type.",
+      "properties": {
+        "items": {
+          "description": "Bullet list of `RSK <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
+          "items": {
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
+          },
+          "minItems": 1,
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "Risks",
+      "type": "object"
+    },
     "RolesAndResponsibilities": {
-      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this SOP. Optional as a whole; once present, `### Accountable` and\n`### Responsible` are both mandatory (strict-RACI \"always has an owner and\na doer\"), while `### Support`/`### Consulted`/`### Informed` stay\nindependently optional and MAY each be present with zero list items. See\nthe general `specmgr://rasci` resource for RASCI role definitions.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory once this\n    container is present.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory once\n    this container is present.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
+      "description": "`## Roles and Responsibilities` -- the RASCI responsibility assignment\nfor this SOP. Optional as a whole; once present, `### Accountable` and\n`### Responsible` are both mandatory (strict-RACI \"always has an owner and\na doer\"), while `### Support`/`### Consulted`/`### Informed` stay\nindependently optional and MAY each be present with zero list items. See\nthe general `specmgr://rasci` resource for RASCI role definitions.\n\nSubclasses the shared `models.md.RolesAndResponsibilitiesBase`\n(feat-29-dec-source-roles), which also carries the `@alias(value=\"Roles\nand Responsibilities\", ...)` override this class needs -- inherited\nautomatically, not redeclared here. The fields below narrow the base\nclass's field types to `sop`'s own concrete `Accountable`/`Responsible`/\n`Support`/`Consulted`/`Informed` subclasses declared above.\n\nParameters\n----------\naccountable:\n    `### Accountable` sub-section (single paragraph). Mandatory once this\n    container is present.\nresponsible:\n    `### Responsible` sub-section (bullet list, >=1 item). Mandatory once\n    this container is present.\nsupport:\n    `### Support` sub-section (bullet list, MAY be empty). Optional.\nconsulted:\n    `### Consulted` sub-section (bullet list, MAY be empty). Optional.\ninformed:\n    `### Informed` sub-section (bullet list, MAY be empty). Optional.",
       "properties": {
         "accountable": {
           "$ref": "#/$defs/Accountable",
@@ -473,7 +495,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Created"
         },
         "id": {
@@ -490,6 +512,13 @@
         },
         "status": {
           "default": "draft",
+          "enum": [
+            "active",
+            "approved",
+            "draft",
+            "retired",
+            "review"
+          ],
           "title": "Status",
           "type": "string"
         },
@@ -509,7 +538,7 @@
             }
           ],
           "default": null,
-          "pattern": "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
           "title": "Updated"
         },
         "version": {
@@ -522,12 +551,12 @@
       "type": "object"
     },
     "Sops": {
-      "description": "`### Sops` under Related Artifacts -- bullet list of cross-references to\nother, related/superseding SOPs, one per line (e.g. \"SOP-0042: <title>\").\nA self-cross-reference sub-list (GOL's self-referencing `Goals` sub-list\nprecedent).",
+      "description": "`### Sops` under Related Artifacts -- cross-references to other,\nrelated/superseding SOPs. A self-cross-reference sub-list (GOL's\nself-referencing `Goals` sub-list precedent).\n\nHas no cross-domain twin (no other domain has a self-cross-reference\nsub-list of this shape), so unlike `Requirements`/`Decisions`/`Goals`/\n`Risks` above it is not built on a shared `models.md` base class --\nit enforces the same `\"SOP <uuid>: <title>\"` format via its own inline\n`field_validator`, calling the same shared\n`models.md._cross_reference.validate_cross_reference_items` primitive\nthose base classes use internally (feat-135-related-artifacts-risks).\n\nParameters\n----------\nitems:\n    Bullet list of `SOP <uuid>: <title>` cross-references, each\n    optionally followed by an indented notes paragraph. Must contain at\n    least one item.",
       "properties": {
         "items": {
-          "description": "Bullet list of cross-references to other SOPs, one per line (e.g. \"SOP-0042: <title>\"); must contain at least one item.",
+          "description": "Bullet list of `SOP <uuid>: <title>` cross-references, each optionally followed by an indented notes paragraph; must contain at least one item.",
           "items": {
-            "$ref": "#/$defs/MarkdownListItem"
+            "$ref": "#/$defs/MarkdownListItemWithNotes"
           },
           "minItems": 1,
           "title": "Items",
@@ -547,7 +576,7 @@
       "type": "object"
     },
     "Support": {
-      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nAn optional bullet list that MAY be present with zero list items (an\nintentional \"considered, currently empty\" placeholder distinct from\nomitting the heading entirely). See the general `specmgr://rasci` resource\nfor RASCI role definitions.\n\nParameters\n----------\nitems:\n    Bullet list naming the support parties, or ``None`` when the heading\n    is present with no items. Optional as a whole.",
+      "description": "`### Support` under `## Roles and Responsibilities` -- those who\nprovide resources or assistance to the responsible parties.\n\nSubclasses the shared `models.md.SupportBase` (feat-29-dec-source-roles)\n-- see the general `specmgr://rasci` resource for RASCI role definitions.",
       "properties": {
         "items": {
           "anyOf": [
@@ -570,17 +599,23 @@
       "type": "object"
     },
     "UpdateEntry": {
-      "description": "`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries an ISO8601 timestamp and a title, joined by\neither ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space, colon,\nspace): e.g. `### 2026-08-30 14:30:00.000+02:00 - Approved` or\n`### 2026-08-30 14:30:00.000+02:00 : Approved`. The em-dash separator is\nrejected. The format is ``yyyy-MM-dd HH:mm:ss.fff`` with an explicit UTC\noffset (``+02:00``, ``-05:00``) or ``Z`` for UTC -- deliberately **not**\nthe same format as frontmatter ``created``/``updated`` (which keep the\nshared generic tools' format); this format is scoped to `## Updates`\nentry headings only, which are hand/LLM-authored body content.\nConstrained by the regex `@alias` above and enforced by `match_alias`\n(`re.fullmatch`) at parse time -- a wrong timestamp format, a missing\noffset, an em-dash separator, or a missing `` - ``/`` : `` title all\nfail the parse eagerly.\n\nParameters\n----------\ncontent:\n    The lead paragraph right after the H3 heading -- this entry's own\n    update text. Mandatory.\ntimestamp:\n    Computed. The ISO8601 timestamp carried by the heading. Never stored\n    separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.\n\nRaises:\n    AssertionError: the retained heading text does not match\n        `UpdateEntry`'s declared `@alias` (unreachable via the engine:\n        `match_alias` already enforced it at parse time).",
+      "description": "`### {ISO8601 timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries a full ISO 8601 date+time timestamp and a\ntitle, joined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"``\n(space, colon, space): e.g. `### 2026-08-30 14:30:00.000+02:00 -\nApproved` or `### 2026-08-30T14:30:00.000+02:00 : Approved`. The\nem-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or\nspace) + ``HH:mm:ss.SSS`` with an explicit UTC offset (``+02:00``,\n``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter\n``created``/``updated`` (both separators accepted, date-only rejected;\nADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to\n`## Updates` entry headings only, which are hand/LLM-authored body\ncontent. Constrained by the regex `@alias` above and enforced by\n`match_alias` (`re.fullmatch`) at parse time -- a wrong timestamp\nformat (including a date-only value), a missing offset, an em-dash\nseparator, or a missing `` - ``/`` : `` title all fail the parse\neagerly.\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The ISO8601 timestamp carried by the heading. Never stored\n    separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.\n\nRaises:\n    AssertionError: the retained heading text does not match\n        `UpdateEntry`'s declared `@alias` (unreachable via the engine:\n        `match_alias` already enforced it at parse time).",
       "properties": {
         "content": {
-          "$ref": "#/$defs/MarkdownParagraph",
-          "description": "The lead paragraph directly under the H3 heading -- this entry's own update text. Mandatory."
+          "$ref": "#/$defs/UpdateEntryContent",
+          "description": "This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
         }
       },
       "required": [
         "content"
       ],
       "title": "UpdateEntry",
+      "type": "object"
+    },
+    "UpdateEntryContent": {
+      "description": "`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `UpdateEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `UpdateEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code.\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "UpdateEntryContent",
       "type": "object"
     },
     "Updates": {

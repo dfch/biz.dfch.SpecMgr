@@ -33,6 +33,13 @@ Environment variables (all optional, CLI flags take precedence):
 ``SPECMGR_MCP_PORT``
     TCP port for SSE/streamable-http mode (default ``8000``).
 
+The three defaults are sourced from the central env-var registry's
+records for these variables (registered below; feat-208 Phase 140) and
+evaluated to the same static import-time values as before the migration
+(``stdio``/``localhost``/``8000``); the ``envvar=`` wiring itself stays
+Typer's (Typer reads the variables from the environment at parse time,
+overriding the defaults).
+
 ## Functions
 
 ### `_warn_on_public_binding(host: str) -> None`

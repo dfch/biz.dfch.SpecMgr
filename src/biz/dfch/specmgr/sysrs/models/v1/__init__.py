@@ -73,7 +73,7 @@ from .body import (
 )
 from .document import SysrsDocument
 from .frontmatter import SysrsFrontmatter
-from .parser import parse_sysrs
+from .parser import parse_sysrs, parse_sysrs_body
 from .summary import SysrsSummary
 
 __all__ = [
@@ -124,4 +124,5 @@ __all__ = [
     "UserCharacteristics",
     "Verification",
     "parse_sysrs",
+    "parse_sysrs_body",
 ]

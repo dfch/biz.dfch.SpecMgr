@@ -1,0 +1,81 @@
+{
+ "run_id": "prb-update-noprompt-n1",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "eb2fa65b-9ab1-4478-9977-b4f99e083a14",
+ "events": 15,
+ "steps": 5,
+ "wall_seconds": 130.3,
+ "input_tokens": 249477,
+ "output_tokens": 534,
+ "total_tool_calls": 4,
+ "specmgr_tool_calls": 4,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 0,
+ "failed_calls": [],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [],
+ "template_fetch_count": 0,
+ "example_fetches": [],
+ "example_fetch_count": 0,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [],
+ "create_first_try_success": false,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_list_prb",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "eb2fa65b-9ab1-4478-9977-b4f99e083a14",
+    "raw": true,
+    "numbered": true
+   },
+   "error": ""
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_edit",
+   "status": "completed",
+   "input": {
+    "id": "eb2fa65b-9ab1-4478-9977-b4f99e083a14",
+    "type": "prb",
+    "old_str": "The delay costs the team approximately 1500 EUR per quarter in rework and lost schedule buffer.",
+    "new_str": "The delay costs the team approximately 2500 EUR per quarter in rework and lost schedule buffer."
+   },
+   "error": ""
+  },
+  {
+   "n": 4,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "eb2fa65b-9ab1-4478-9977-b4f99e083a14",
+    "raw": true,
+    "numbered": true,
+    "offset": 45,
+    "limit": 3
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nDONE",
+ "files_on_disk": [
+  "docs/prb/eb2fa65b-9ab1-4478-9977-b4f99e083a14.md",
+  "opencode.json"
+ ]
+}

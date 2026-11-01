@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP tool wrappers for Architecture Decision Records (plan §6, §8, §10 item 4).
+"""MCP tool wrappers for Architecture Decision Records.
 
 Thin file-I/O/id-lookup adapters over ``models/adr/v1/mutations.py`` plus
 ``parse_adr``/``render_adr``, exposed as ``@mcp.tool()``-decorated functions

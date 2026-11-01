@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""MCP prompt registrations for Question and Answer (QA) documents (Phase 4, Task 4.3).
+"""MCP prompt registrations for Question and Answer (QA) documents (feat-12-qa-artifact Phase 4, Task 4.3).
 
 ``create_qa`` guides drafting a brand-new QA document. ``update_qa`` guides
 revising an existing one by id. ``refine`` guides appending a fresh batch of

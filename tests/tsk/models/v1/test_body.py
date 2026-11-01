@@ -22,6 +22,10 @@
 `tests/models/md/test_markdown_section_with_comment.py`), so both its
 comment-present and comment-absent states are covered explicitly and
 thoroughly here, mirroring that file's own well-formed round-trip pattern.
+
+Also covers feat-180-updates (issue #180): `UpdateEntry.content` accepts
+any markdown content (multi-paragraph, bullet/numbered list, fenced code
+block, block quote), not just a single paragraph.
 """
 
 import unittest
@@ -46,11 +50,11 @@ _NO_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### 2026-08-15 - Progress
+### 2026-08-15 00:00:00.000Z - Progress
 
 Migrated one widget so far.
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -68,7 +72,7 @@ _WITH_COMMENT_TEXT = format_text(
 
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -89,7 +93,7 @@ class TestTaskWithoutComment(unittest.TestCase):
         )
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in sut.recent_updates.updates],
-            [("Progress", "Migrated one widget so far."), ("Kickoff", "Started the migration.")],
+            [("Progress", "Migrated one widget so far.\n"), ("Kickoff", "Started the migration.\n")],
         )
         self.assertEqual(str(sut), _NO_COMMENT_TEXT)
 
@@ -120,7 +124,7 @@ class TestTaskItemsValidation(unittest.TestCase):
                 """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started.
 """
@@ -154,7 +158,7 @@ class TestTaskItemMarkerValidatedEagerly(unittest.TestCase):
 
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started.
 """
@@ -187,7 +191,7 @@ class TestRecentUpdatesSingleEntry(unittest.TestCase):
             """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -197,8 +201,8 @@ Started the migration.
 
         self.assertEqual(len(sut.updates), 1)
         self.assertEqual(sut.updates[0].title, "Kickoff")
-        self.assertEqual(sut.updates[0].timestamp, "2026-08-01")
-        self.assertEqual(sut.updates[0].content.text, "Started the migration.")
+        self.assertEqual(sut.updates[0].timestamp, "2026-08-01 00:00:00.000Z")
+        self.assertEqual(sut.updates[0].content.text, "Started the migration.\n")
         self.assertEqual(str(sut), text)
 
 
@@ -210,15 +214,15 @@ class TestRecentUpdatesMultipleEntries(unittest.TestCase):
             """\
 ## Recent Updates
 
-### 2026-08-15 - Wrapping up
+### 2026-08-15 00:00:00.000Z - Wrapping up
 
 Only the shim removal is left.
 
-### 2026-08-08 - Halfway there
+### 2026-08-08 00:00:00.000Z - Halfway there
 
 Migrated half of the widgets.
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -229,9 +233,9 @@ Started the migration.
         self.assertEqual(
             [(entry.title, entry.content.text) for entry in sut.updates],
             [
-                ("Wrapping up", "Only the shim removal is left."),
-                ("Halfway there", "Migrated half of the widgets."),
-                ("Kickoff", "Started the migration."),
+                ("Wrapping up", "Only the shim removal is left.\n"),
+                ("Halfway there", "Migrated half of the widgets.\n"),
+                ("Kickoff", "Started the migration.\n"),
             ],
         )
         self.assertEqual(str(sut), text)
@@ -241,11 +245,11 @@ Started the migration.
             """\
 ## Recent Updates
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 
-### 2026-08-15 - Wrapping up
+### 2026-08-15 00:00:00.000Z - Wrapping up
 
 Only the shim removal is left.
 """
@@ -259,11 +263,11 @@ Only the shim removal is left.
             """\
 ## Recent Updates
 
-### 2026-08-01 - First
+### 2026-08-01 00:00:00.000Z - First
 
 First entry text.
 
-### 2026-08-01 - Second
+### 2026-08-01 00:00:00.000Z - Second
 
 Second entry text.
 """
@@ -280,7 +284,7 @@ Second entry text.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Started the migration.
 """
@@ -293,17 +297,22 @@ Started the migration.
 
 
 class TestUpdateEntryHeadingAlias(unittest.TestCase):
-    """`UpdateEntry`'s regex alias requires a `yyyy-MM-dd` (or full date+time) timestamp + ` - `/` : ` + `title`."""
+    """`UpdateEntry`'s regex alias requires a full date+time timestamp + ` - `/` : ` + `title`."""
 
-    def test_accepts_date_only_and_date_time_headings(self) -> None:
+    def test_accepts_full_date_time_headings(self) -> None:
         for heading in (
-            "2026-08-01 - Kickoff",
-            "2026-08-01 : Kickoff",
             "2026-08-01 05:42:00.000+02:00 - Kickoff",
             "2026-08-01 05:42:00.000Z : Kickoff",
+            "2026-08-01T05:42:00.000+02:00 - Kickoff",
+            "2026-08-01T05:42:00.000Z : Kickoff",
         ):
             with self.subTest(heading=heading):
                 self.assertTrue(match_alias(UpdateEntry, heading))
+
+    def test_rejects_date_only_headings(self) -> None:
+        for heading in ("2026-08-01 - Kickoff", "2026-08-01 : Kickoff"):
+            with self.subTest(heading=heading):
+                self.assertFalse(match_alias(UpdateEntry, heading))
 
     def test_rejects_non_timestamp_led_headings(self) -> None:
         for heading in ("Anything Goes Here 123", "Kickoff", "2026-8-1 - Kickoff"):
@@ -314,10 +323,10 @@ class TestUpdateEntryHeadingAlias(unittest.TestCase):
 class TestUpdateEntryComputedFields(unittest.TestCase):
     """`UpdateEntry.timestamp`/`UpdateEntry.title` are computed from the heading (ACC-002)."""
 
-    def test_parses_timestamp_and_title_date_only(self) -> None:
+    def test_parses_timestamp_and_title_date_time(self) -> None:
         text = format_text(
             """\
-### 2026-08-01 - Kickoff
+### 2026-08-01 00:00:00.000Z - Kickoff
 
 Some update text.
 """
@@ -325,9 +334,9 @@ Some update text.
 
         sut = UpdateEntry.from_text(text)
 
-        self.assertEqual(sut.timestamp, "2026-08-01")
+        self.assertEqual(sut.timestamp, "2026-08-01 00:00:00.000Z")
         self.assertEqual(sut.title, "Kickoff")
-        self.assertEqual(sut.content.text, "Some update text.")
+        self.assertEqual(sut.content.text, "Some update text.\n")
         self.assertEqual(str(sut), text)
 
     def test_parses_timestamp_and_title_date_time_with_colon_separator(self) -> None:
@@ -336,9 +345,102 @@ Some update text.
         self.assertEqual(sut.timestamp, "2026-08-01 05:42:00.000+02:00")
         self.assertEqual(sut.title, "Kickoff")
 
+    def test_parses_timestamp_and_title_t_separator(self) -> None:
+        sut = UpdateEntry.from_text(format_text("### 2026-08-01T05:42:00.000Z - Kickoff\n\nBody.\n"))
+
+        self.assertEqual(sut.timestamp, "2026-08-01T05:42:00.000Z")
+        self.assertEqual(sut.title, "Kickoff")
+
+    def test_rejects_date_only_heading_at_parse_time(self) -> None:
+        for heading in ("### 2026-08-01 - Kickoff", "### 2026-08-01 : Kickoff"):
+            with self.subTest(heading=heading):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"{heading}\n\nSome update text.\n"))
+
     def test_rejects_non_timestamp_led_heading_at_parse_time(self) -> None:
         with self.assertRaises(AssertionError):
             UpdateEntry.from_text(format_text("### Anything Goes Here 123\n\nSome update text.\n"))
+
+
+class TestUpdateEntryAcceptsNonParagraphContent(unittest.TestCase):
+    """`UpdateEntry.content` accepts any markdown content verbatim, not just one paragraph
+    (feat-180-updates, issue #180, ACC-002/ACC-003/ACC-004).
+
+    Every body below is mdformat-stable (mdformat renormalizes e.g. a
+    `+`-style bullet to `-`), so the entry round-trips byte-identically
+    and `.content.text` carries the raw body including mdformat's
+    canonical single trailing `"\n"`.
+    """
+
+    def test_multi_paragraph_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-01 00:00:00.000Z - Kickoff\n\nFirst paragraph.\n\nSecond paragraph.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "First paragraph.\n\nSecond paragraph.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_bullet_list_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-01 00:00:00.000Z - Kickoff\n\n- item one\n\n- item two\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "- item one\n\n- item two\n")
+        self.assertEqual(str(sut), text)
+
+    def test_numbered_list_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-01 00:00:00.000Z - Kickoff\n\n1. Do the first thing.\n\n2. Do the second thing.\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "1. Do the first thing.\n\n2. Do the second thing.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_fenced_code_block_content_parses_and_round_trips(self) -> None:
+        text = format_text(
+            "### 2026-08-01 00:00:00.000Z - Kickoff\n\nSome lead prose.\n\n```\ncode block content\n```\n"
+        )
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "Some lead prose.\n\n```\ncode block content\n```\n")
+        self.assertEqual(str(sut), text)
+
+    def test_block_quote_content_parses_and_round_trips(self) -> None:
+        text = format_text("### 2026-08-01 00:00:00.000Z - Kickoff\n\n> A quoted observation.\n")
+
+        sut = UpdateEntry.from_text(text)
+
+        self.assertEqual(sut.content.text, "> A quoted observation.\n")
+        self.assertEqual(str(sut), text)
+
+    def test_blank_content_raises_assertion_error(self) -> None:
+        # `content` stays mandatory: a heading with no body (or a whitespace-only
+        # body, which mdformat normalizes to nothing) fails the engine's
+        # mandatory-field zero-extent check (feat-180-updates, issue #180, ACC-005).
+        for body in ("", "   \n"):
+            with self.subTest(body=body):
+                with self.assertRaises(AssertionError):
+                    UpdateEntry.from_text(format_text(f"### 2026-08-01 00:00:00.000Z - Kickoff\n{body}"))
+
+    def test_model_dump_surfaces_non_paragraph_content(self) -> None:
+        # ACC-006: `model_dump()` (the MCP-transport path) carries the real entry text,
+        # not an empty object -- the same key path `tests/tsk/tools/test_parse_tsk.py`
+        # pins at document level.
+        text = format_text(
+            "# Migrate Widgets\n\n"
+            "- [ ] Do the first thing\n\n"
+            "## Recent Updates\n\n"
+            "### 2026-08-01 00:00:00.000Z - Kickoff\n\n"
+            "- item one\n\n"
+            "- item two\n"
+        )
+
+        dump = Task.from_text(text).model_dump(mode="json")
+
+        self.assertEqual(dump["recent_updates"]["updates"][0]["content"]["text"], "- item one\n\n- item two\n")
 
 
 if __name__ == "__main__":

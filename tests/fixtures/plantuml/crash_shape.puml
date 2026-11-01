@@ -1,0 +1,13 @@
+@startuml t
+actor Buyer
+participant Company
+
+Buyer -> Company: hi
+Company -> Company: self msg
+note right
+  attached note
+end note
+note left
+  next note
+end note
+@enduml

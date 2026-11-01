@@ -18,23 +18,32 @@ want to change before calling any write tool.
 ## 3. Map the requested change to the right tool
 - A change to the body -- the `cause`, `trigger`, `consequence`,
   `scope` entries, the `### Probability`/`### Impact` heading values of
-  either assessment, the `strategy` TARA word, the `mitigation`, or any
-  of the optional `owner`/`tags`/`more_information` sections -- -> the
+  either assessment, the `strategy` TARA word, the `mitigation`,
+  the `source` value, or any of the optional `owner`/`tags`/
+  `more_information` sections -- -> the
   generic `update` tool called with `type="rsk"`: a **line-range replace**
   for a localized change, or a **whole-body replace** otherwise.
   `content` is body markdown only (no frontmatter block) in both cases.
   - **Line-range replace** (a localized change -- one paragraph, field,
-    or section): first call `get_rsk(id, raw=True)` to see the exact
-    body text, identify the 1-based line to start at and how many lines
-    to replace -- `offset` is the first body line, `limit` the number of
-    lines (`offset`..`offset+limit-1`); `limit` omitted replaces through
+    or section): first call `get_rsk(id, raw=True, numbered=True)` to
+    see the exact body text -- every line prefixed with its 1-based
+    body-line number, so no manual counting is needed and a number seen
+    can be fed straight back into `update`'s `offset` -- identify the
+    1-based line to start at and how many lines to replace -- `offset`
+    is the first body line, `limit` the number of lines
+    (`offset`..`offset+limit-1`); `limit` omitted replaces through
     the last body line, `limit=0` is a pure insert, and the `N+1`
     position is end-of-body: `offset = N+1` appends after the last line
     -- and call `update(id, type="rsk", content, offset=..., limit=...)`
     passing only the replacement lines. The server splices the fragment
     into the current on-disk body and validates the result as a whole
     document before writing anything, so every out-of-range line stays
-    byte-identical.
+    byte-identical. `offset`/`limit` address the frontmatter-stripped
+    body, never the raw on-disk `.md` file: the YAML frontmatter block
+    is variable-length, so a raw file read's line numbers are never the
+    same as body-line coordinates -- and never feed the `numbered=True`
+    output back verbatim as `content`: strip the `"<n>: "` prefix from
+    each line first.
   - **Whole-body replace** (a multi-section change, or whenever you are
     uncertain about the line range): call `update(id, type="rsk", content)`
     with no `offset`/`limit` -- `content` is then the full replacement body:
@@ -53,10 +62,15 @@ want to change before calling any write tool.
   `update` never accepts or changes `classification`. Fully free-text;
   a blank or whitespace-only value clears it back to `None`/absent.
 
-## 4. Check the schema, and validate before writing if useful
-Fetch `specmgr://rsk/schema` to confirm field names and constraints
-before drafting the replacement body. Optionally call
-`validate_rsk(content, full=False)` beforehand to dry-run the new body
+## 4. Check the schema only for structural changes, and validate before writing if useful
+Call the `get_rsk_schema` tool (the generated JSON Schema) only for a
+whole-body rewrite or a structural change -- adding, removing, or
+renaming sections, or editing closed-form content -- to confirm field
+names and constraints. Skip the fetch for a local splice (a line-range
+replace), where the raw body is already in context: `update` still
+validates the spliced result as a whole document before writing
+anything, so the skip is safe. Optionally call
+`validate(type="rsk", content=content, full=False)` beforehand to dry-run the new body
 without writing anything -- `update` already performs the same
 validation internally, so this step is never required, only a
 convenience.

@@ -195,7 +195,7 @@ def _validation_error(metadata: dict[str, object]) -> ValidationError:
 
 # ---------------------------------------------------------------------------
 # Cross-domain coverage: `parse_tsk`/`parse_req`/`parse_adr` all apply the same enrichment
-# uniformly (REQ-005's "applied uniformly across ... all twelve domains", frontmatter scope).
+# uniformly (REQ-005's "applied uniformly across" every whole-body domain plus ADR, frontmatter scope).
 # ---------------------------------------------------------------------------
 
 _TSK_BODY = """\

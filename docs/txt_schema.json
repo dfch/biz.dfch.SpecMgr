@@ -1,0 +1,181 @@
+{
+  "$comment": "v1",
+  "$defs": {
+    "MarkdownComment": {
+      "description": "A standalone HTML comment block (`\"html_block\"`, e.g. `<!-- some note -->`).\n\nDeliberately leaf-only, like `MarkdownCodeBlock`. Declare an optional\n`comment: MarkdownComment | None` field on any `MarkdownStr` subclass to\nlet a value be preceded by such an explanatory comment without it\nbreaking that class's own structural field matching. See `get_extent`/\n`from_text`/`text` for the full mechanics.",
+      "properties": {},
+      "title": "MarkdownComment",
+      "type": "object"
+    },
+    "Txt": {
+      "description": "The `txt` body: a single H1 section with an opaque free-form `body` and a mandatory `## Updates` log.\n\nThe H1 heading text is free-form. Deliberately a plain\n`MarkdownSection1`, *not* `MarkdownSection1WithComment`: with a plain\nroot a leading HTML comment directly under the H1 stays inside the\nopaque `body` (the desired behaviour -- a comment-only body is accepted,\nREQ-002), while a `WithComment` root would take it as the root's own\n`comment` and leave the body empty (failing the mandatory `body`).\n\nParameters\n----------\nbody:\n    The opaque free-form markdown between the H1 and the first\n    top-level `## Updates` (REQ-002/REQ-003). Mandatory.\nupdates:\n    `## Updates` (>=1 newest-first `### ` entry). Mandatory; last\n    section (REQ-004).",
+      "properties": {
+        "body": {
+          "$ref": "#/$defs/TxtBody",
+          "description": "Opaque free-form body between the H1 and `## Updates`. Mandatory."
+        },
+        "updates": {
+          "$ref": "#/$defs/Updates",
+          "description": "`## Updates` section (>=1 newest-first entry). Mandatory; last."
+        }
+      },
+      "required": [
+        "body",
+        "updates"
+      ],
+      "title": "Txt",
+      "type": "object"
+    },
+    "TxtBody": {
+      "description": "`Txt.body`'s opaque free-form markdown -- everything between the H1 and the first top-level `## Updates`.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own. Unlike the unmodified `MarkdownStr` base\nimplementation -- which consumes *everything* remaining in the given\ntext, `## Updates` included, and would therefore make every `txt`\ndocument fail the engine's trailing-completeness check -- this class\noverrides `get_extent` with the one boundary the schema needs (REQ-003):\nstop at the first *top-level* (nesting level 0, i.e. not inside a code\nfence or any other block) H2 whose text is `Updates`. A fenced\n`## Updates` yields no `heading_open` token, so it stays in the body.\nWhen no such heading exists (the missing-`## Updates` case), the extent\nfalls back to the base implementation (everything remaining) and the\nmandatory `updates` field then fails with the engine's own\nmissing-mandatory-field error.\n\nMandatory: `Txt` declares `body` non-`Optional`, so a document whose H1\nis followed directly by `## Updates` (or by only whitespace, which\n`mdformat` normalizes away) finds a zero extent for the body and is\nrejected by the engine's existing mandatory-field error -- no extra\nvalidator (REQ-002). A comment-only body (just an HTML comment between\nthe H1 and `## Updates`) *is* accepted, the comment being part of the\nopaque body -- current parser behaviour, no extra policy (REQ-002).\n\nAdds a `text` computed property (mirroring `UpdateEntryContent.text`'s\nown idiom and `qa`'s `IntroductionBody.text`, feat-114) so this\notherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()` (REQ-006).",
+      "properties": {},
+      "title": "TxtBody",
+      "type": "object"
+    },
+    "TxtFrontmatter": {
+      "description": "Free-Form Text (TXT) frontmatter: `MarkdownFrontmatter` narrowed for the ``txt`` document type.\n\nParameters\n----------\ntype:\n    Fixed discriminator, always ``\"txt\"``. Narrows the base's mandatory,\n    default-less ``str`` field to a ``Literal[\"txt\"] = \"txt\"``, so a document\n    omitting ``type`` entirely still parses as a free-form text document.\nstatus:\n    One of ``\"draft\"``, ``\"progress\"``, ``\"done\"``. Narrows the base's\n    free-form ``str = \"draft\"`` default to this closed three-value set.\n    Blank/absent still defaults to ``\"draft\"`` (inherited from the base's\n    ``_default_blank_status_to_draft`` validator, which runs before this\n    one).\nversion:\n    The ``models.md`` schema major.minor.patch version this document's\n    frontmatter was written with. DO NOT CHANGE!\n\nAll other fields (``id``, ``created``, ``updated``, ``version``,\n``classification``) are inherited unchanged from\n:class:`MarkdownFrontmatter`.",
+      "properties": {
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "created": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "title": "Created"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "status": {
+          "default": "draft",
+          "enum": [
+            "done",
+            "draft",
+            "progress"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "type": {
+          "const": "txt",
+          "default": "txt",
+          "title": "Type",
+          "type": "string"
+        },
+        "updated": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}\\.\\d{3}(?:Z|[+-]\\d{2}:\\d{2})$",
+          "title": "Updated"
+        },
+        "version": {
+          "default": "1.0.0",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "title": "TxtFrontmatter",
+      "type": "object"
+    },
+    "UpdateEntry": {
+      "description": "`### {timestamp} ( - | : ) {title}` under `## Updates` -- one update entry.\n\nThe H3 heading text carries a full date+time timestamp and a title,\njoined by either ``\" - \"`` (space, hyphen, space) or ``\" : \"`` (space,\ncolon, space): e.g. `### 2026-08-31 07:40:12.500+02:00 - Created` or\n`### 2026-08-31T07:40:12.500+02:00 : Created`. The em-dash separator is\nrejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +\n``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or\n``Z`` for UTC variant -- date-only is rejected (ADR\n8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors VCR's own `UpdateEntry`\nshape exactly (REQ-004).\n\nParameters\n----------\ncontent:\n    This entry's own update text, directly under the H3 heading (any\n    markdown content, not just a single paragraph). Mandatory.\ntimestamp:\n    Computed. The timestamp carried by the heading, verbatim. Never\n    stored separately -- derived from the retained heading text.\ntitle:\n    Computed. The title carried by the heading (the text after\n    ``\" - \"``/``\" : \"``). Never stored separately -- derived from the\n    retained heading text.",
+      "properties": {
+        "content": {
+          "$ref": "#/$defs/UpdateEntryContent",
+          "description": "This entry's own update text, directly under the H3 heading (any markdown content). Mandatory."
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "title": "UpdateEntry",
+      "type": "object"
+    },
+    "UpdateEntryContent": {
+      "description": "`UpdateEntry.content`'s opaque markdown blob -- any markdown content, not just plain paragraphs.\n\nLeaf class (no declared fields) applying no `@markdown` type/tag\nrestriction of its own -- unlike `MarkdownParagraph`/`MarkdownSection*`/\n`MarkdownComment`. Because of that, `get_extent`/`from_text` fall back to\nthe unmodified `MarkdownStr` base implementation, which simply consumes\neverything remaining in the given text regardless of its shape. Since\n`content` is the sole (and last) field on `UpdateEntry` -- nothing\nfollows it before the next heading -- \"everything remaining\" is exactly\ncorrect, and no custom stop-condition override is needed.\n\nMandatory: `UpdateEntry` declares `content` non-`Optional`, so the\nengine's existing mandatory-field zero-extent check (the base\n`MarkdownStr.get_extent` returning `0` for blank text) still rejects a\nheading with no body content -- no new validator code (REQ-004).\n\nAdds a `text` computed property (mirroring `qa`'s `IntroductionBody.text`\nidiom, feat-114) so this otherwise-private `_value` is reachable through\n`model_dump()`/`model_dump_json()`.",
+      "properties": {},
+      "title": "UpdateEntryContent",
+      "type": "object"
+    },
+    "Updates": {
+      "description": "`## Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries. Mandatory, and the last\nsection of the document.\n\nTXT's own template (Phase 120) demonstrates a permanent \"newest first\"\nordering-hint HTML comment directly under this heading -- the same\nstructural-anchor role `feat`'s own\n`Updates(MarkdownSection3WithComment)` already gives its own comment\n(not authoring guidance), so this is\n`MarkdownSection2WithComment`, mirroring VCR's own `Updates`. No\ndedicated per-entry tools -- entries are prepended (newest-first) by\nediting the whole body.\n\nParameters\n----------\ncomment:\n    Optional explanatory HTML comment (`<!-- ... -->`), e.g.\n    `<!-- Newest entry first -- prepend new entries directly below\n    this comment. -->`. Inherited from `MarkdownSection2WithComment`.\nupdates:\n    The dynamic collection of `### ` entries, in document order,\n    newest-first (enforced, see `_validate_newest_first`). Requires\n    at least one entry (``min_length=1``) -- an H2 with zero entries is\n    a structural error (REQ-004).",
+      "properties": {
+        "comment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MarkdownComment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional explanatory HTML comment (`<!-- ... -->`)."
+        },
+        "updates": {
+          "description": "Dynamic collection of `### {timestamp} ( - | : ) {title}` entries, in document order, newest-first. Must contain at least one entry.",
+          "items": {
+            "$ref": "#/$defs/UpdateEntry"
+          },
+          "minItems": 1,
+          "title": "Updates",
+          "type": "array"
+        }
+      },
+      "required": [
+        "updates"
+      ],
+      "title": "Updates",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "A full free-form text document: YAML frontmatter and body.\n\nAttributes\n----------\nfrontmatter:\n    The YAML frontmatter block. See :class:`TxtFrontmatter`.\nbody:\n    The parsed free-form text sections. See :class:`Txt`.",
+  "properties": {
+    "body": {
+      "$ref": "#/$defs/Txt"
+    },
+    "frontmatter": {
+      "$ref": "#/$defs/TxtFrontmatter"
+    }
+  },
+  "required": [
+    "frontmatter",
+    "body"
+  ],
+  "title": "TxtDocument",
+  "type": "object"
+}

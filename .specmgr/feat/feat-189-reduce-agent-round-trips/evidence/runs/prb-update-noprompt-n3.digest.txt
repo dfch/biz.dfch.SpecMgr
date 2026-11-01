@@ -1,0 +1,80 @@
+{
+ "run_id": "prb-update-noprompt-n3",
+ "model": "vllm-sys0-2/qwen3.8-27b-bf16-896k-mtp-2",
+ "seed_uuid": "40bae7ec-1fe6-48dc-ab74-f8d112529edf",
+ "events": 15,
+ "steps": 5,
+ "wall_seconds": 53.9,
+ "input_tokens": 249339,
+ "output_tokens": 505,
+ "total_tool_calls": 4,
+ "specmgr_tool_calls": 4,
+ "non_specmgr_tool_calls": 0,
+ "non_specmgr_tools": [],
+ "failed_or_error_calls": 0,
+ "failed_calls": [],
+ "schema_fetches_tool": [],
+ "schema_fetches_tool_count": 0,
+ "schema_fetches_resource": [],
+ "schema_fetches_resource_count": 0,
+ "schema_fetch_count": 0,
+ "template_fetches": [],
+ "template_fetch_count": 0,
+ "example_fetches": [],
+ "example_fetch_count": 0,
+ "list_mcp_resources_calls": 0,
+ "prompt_calls": [],
+ "validate_calls": 0,
+ "create_call_sequence": [],
+ "create_first_try_success": false,
+ "create_failure_retries": 0,
+ "ordered_tool_calls": [
+  {
+   "n": 1,
+   "tool": "specmgr_list_prb",
+   "status": "completed",
+   "input": {},
+   "error": ""
+  },
+  {
+   "n": 2,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "40bae7ec-1fe6-48dc-ab74-f8d112529edf",
+    "raw": true,
+    "numbered": true
+   },
+   "error": ""
+  },
+  {
+   "n": 3,
+   "tool": "specmgr_edit",
+   "status": "completed",
+   "input": {
+    "id": "40bae7ec-1fe6-48dc-ab74-f8d112529edf",
+    "type": "prb",
+    "old_str": "1500 EUR per quarter",
+    "new_str": "2500 EUR per quarter"
+   },
+   "error": ""
+  },
+  {
+   "n": 4,
+   "tool": "specmgr_get_prb",
+   "status": "completed",
+   "input": {
+    "id": "40bae7ec-1fe6-48dc-ab74-f8d112529edf",
+    "raw": true,
+    "offset": 45,
+    "limit": 3
+   },
+   "error": ""
+  }
+ ],
+ "final_text": "\n\nDONE",
+ "files_on_disk": [
+  "docs/prb/40bae7ec-1fe6-48dc-ab74-f8d112529edf.md",
+  "opencode.json"
+ ]
+}
