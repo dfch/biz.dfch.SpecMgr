@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: review
 type: feat
-updated: '2026-11-01T18:42:51.834+01:00'
+updated: '2026-11-01T20:29:13.944+01:00'
 version: 1.0.0
 ---
 
@@ -244,15 +244,25 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - [x] Task 150.130: Phase-end gate: full quality gate green (`uv run --frozen ruff format --check && uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, `specmgr docs` + `specmgr mcp-docs` no diff — plan-only changes make the doc commands no-ops), then exactly one Conventional Commit for the phase.
 
+#### Phase 160: Fix phase (review cycle 2)
+
+- [x] Task 160.100: Rewrite Current Status's stale next-action sentence -- "The next action is this plan's own review-cycle-1 fix phase (Phase 150: the three plan-document inconsistencies D1/D2/D3 raised by the feat-reviewer);" -- so it reports Phase 150 as complete and points at what actually follows (e.g. "Phase 150 (the review-cycle-1 fix phase) is complete; Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending user direction"), consistent with the Task List's 4/4-checked Phase 150 and the 2026-11-01 17:42:51.835Z Updates entry, and following the Phase 125 closeout precedent (`2c00f48`) of checking off a completed phase and pointing Current Status at the subsequent phase in the same commit. The point-in-time Updates entry (line 259) is a historical log of what the cycle-1 pass did and stays as-is (fixes D4).
+
+- [x] Task 160.110: Phase-end gate: full quality gate green (`uv run --frozen ruff format --check && uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, `specmgr docs` + `specmgr mcp-docs` no diff — plan-only changes make the doc commands no-ops; the plan README must keep full-parsing under the feat model for the `specmgr lint` hook), then exactly one Conventional Commit for the phase.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). The next action is this plan's own review-cycle-1 fix phase (Phase 150: the three plan-document inconsistencies D1/D2/D3 raised by the feat-reviewer); Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending the review outcome.
+**As of 2026-11-01**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). Phase 150 (the review-cycle-1 fix phase that resolved D1/D2/D3) is now complete; Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending user direction.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-01 19:29:13.947Z - Review cycle 2: D4 (stale Current Status next-action sentence) fixed in Phase 160
+
+The review cycle-2 confirmation pass confirmed D1 and D3 fixed and the shipped artifact (the harness bundle + the walkthrough fixture) untouched, and found one new same-class inconsistency (D4 -- the D2 rewrite still named the just-completed Phase 150 as the "next action"); fixed in this Phase 160 pass. Plan-only change: no historical Updates entry or shipped artifact touched.
 
 #### 2026-11-01 17:42:51.835Z - Review cycle 1: no Errors/Gaps, three plan-document inconsistencies (D1/D2/D3) fixed in Phase 150
 
