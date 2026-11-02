@@ -11,7 +11,7 @@ version: 1.0.0
 
 ## Context and Problem Statement
 
-This document is a committed regression fixture for feat-247-dec-outcome-blocks (GitHub issue #247): it carries the real `## Decision Outcome` section of ADR 356d8781-e446-4c26-917a-eda85648ce9d verbatim inside a minimal-but-valid `dec` body, to prove that the relaxed `DecisionOutcome` lead (a mandatory paragraph plus zero or more further blocks) parses this outcome without "text left over".
+This document is a committed regression fixture for feat-247-dec-outcome-blocks (GitHub issue #247): it carries the real `## Decision Outcome` outcome lead (the section from its H2 heading through the first `###` sub-section) of ADR 356d8781-e446-4c26-917a-eda85648ce9d verbatim inside a minimal-but-valid `dec` body, to prove that the relaxed `DecisionOutcome` lead (a mandatory paragraph plus zero or more further blocks) parses this outcome without "text left over".
 
 ## Decision Outcome
 

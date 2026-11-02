@@ -18,7 +18,8 @@
 """Committed ADR-outcome regression fixtures (feat-247-dec-outcome-blocks, ACC-007).
 
 The three fixture documents under ``tests/fixtures/dec-outcome-blocks/`` each
-carry the real ``## Decision Outcome`` section of one of the ADRs named in the
+carry the real ``## Decision Outcome`` outcome lead (the section from its H2
+heading through the first ``###`` sub-section) of one of the ADRs named in the
 plan (``750842b2``, ``92cc4ce8``, ``356d8781`` -- the ADRs' own UUIDs are the
 fixtures' ``id`` frontmatter, and each fixture's ``## Source`` names its
 provenance) verbatim inside a minimal-but-valid ``dec`` body. Every one of

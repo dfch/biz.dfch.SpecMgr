@@ -804,6 +804,24 @@ class TestDecisionOutcomeFurtherBlocks(unittest.TestCase):
         self.assertIn("Confirmation prose.", sut.confirmation.text)
         self.assertEqual(str(sut), text)
 
+    def test_nested_block_quote_inside_a_list_item_is_consumed_and_round_trips(self) -> None:
+        """ACC-001/ACC-003: the rejected-kind contract is enforced at the top-level block boundary of the
+        outcome lead -- a block quote NESTED inside an accepted list item (indented under the bullet) is
+        not a top-level block of its own, so it is consumed as part of that list block and the whole
+        section round-trips byte-exact with `further_blocks` populated."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1 because it is the cheapest.\n\n"
+            "- The sub-decision.\n"
+            "  > A quoted rationale.\n"
+        )
+
+        sut = DecisionOutcome.from_text(text)
+
+        self.assertEqual(sut.statement.text, "We chose option 1 because it is the cheapest.")
+        assert sut.further_blocks is not None
+        self.assertEqual(str(sut), text)
+
     def test_model_dump_carries_further_blocks_text(self) -> None:
         """ACC-003 (REQ-003): `model_dump(mode='json')` exposes the extra blocks under `further_blocks.text`."""
         text = format_text("## Decision Outcome\n\nWe chose option 1.\n\nSecond paragraph.\n\n- a bullet\n")
@@ -879,6 +897,23 @@ class TestDecisionOutcomeFurtherBlocks(unittest.TestCase):
         as a further block."""
         with self.assertRaisesRegex(AssertionError, "raw HTML is not permitted"):
             DecisionOutcome.from_text(format_text("## Decision Outcome\n\nWe chose option 1.\n\n<div>raw</div>\n"))
+
+    def test_block_quote_after_an_accepted_run_is_rejected(self) -> None:
+        """ACC-009: the mid-run stop -- a rejected kind placed AFTER an accepted run (here the lead
+        paragraph, then an accepted bullet list, then a top-level block quote) still ends the run at the
+        first non-accepted top-level block: the bullet list is consumed by `further_blocks`, the block
+        quote is not, and the parse fails with "text left over" (the other rejection tests place the
+        offending kind as the first block of the remainder)."""
+        text = format_text(
+            "## Decision Outcome\n\n"
+            "We chose option 1.\n\n"
+            "- The first sub-decision.\n"
+            "- The second sub-decision.\n\n"
+            "> A quoted block.\n"
+        )
+
+        with self.assertRaisesRegex(AssertionError, "text left over"):
+            DecisionOutcome.from_text(text)
 
     def test_duplicate_consequences_h3_after_confirmation_is_rejected(self) -> None:
         """ACC-009: a second `### Consequences` after `### Confirmation` violates the H3 order and is
