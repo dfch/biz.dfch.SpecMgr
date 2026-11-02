@@ -47,7 +47,7 @@ frontmatter ``id``/``status``. A language without a heading table stops
 the flow (the table file ``general/data/headings/<language>.json`` must be
 added first -- never invented here).
 
-``type`` is one of the twelve i18n-eligible domains (imported from
+``type`` is one of the thirteen i18n-eligible domains (imported from
 ``general.tools._language_guard.LANGUAGE_AWARE_DOMAINS``, the single
 source of truth); ``feat`` and ``adr`` are permanently English and
 explicitly rejected. Like ``repair``, the prompt validates its arguments

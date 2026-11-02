@@ -741,7 +741,7 @@ type or cross-cutting:
   package, not top-level `models/`. Documents live flat under the shared
   docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
-  `SPECMGR_TXT_DIR`). `txt` is one of the twelve language-aware domains
+  `SPECMGR_TXT_DIR`). `txt` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
   take `language` (`create_txt` also `id`), the five generic mutation tools
   carry a `txt` `_LANGUAGE_ADAPTERS` entry, and — unlike every other domain —
@@ -753,9 +753,76 @@ type or cross-cutting:
   reference target (free-floating tokens in the body; the shared tag
   vocabulary is `GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT`), and
   the reference-graph palette carries a `TXT` entry coloured `LightGrey`
-  (the 15th entry, after `SYSRS`, before `UNRESOLVED`; see the
-  `general/` bullet below). See `.specmgr/feat/feat-229-txt/README.md`
+  (the 15th entry, after `SYSRS`; the 16th `SET` entry, coloured `Wheat`,
+  follows it before `UNRESOLVED` — see the `set/` bullet below and the
+  `general/` bullet). See `.specmgr/feat/feat-229-txt/README.md`
   for the full design.
+- **`set/`** (Set) — same tools/resources/prompts shape as
+  `req`/`prb`/`dec`/`txt` but for the convenience-bundle document type
+  (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180): one
+  set document bundles one or more already-existing specmgr artifacts of
+  any (mixed) type via forward references only — `SET` is not a tag of
+  the shared 12-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). 7 tools
+  (`create_set`, `parse_set`, `list_set`, `get_set`,
+  `get_set_example`, `get_set_template`, `get_set_schema`); the `get_set`
+  tool takes `raw: bool = False` — `raw=True` returns the
+  frontmatter-stripped body text as-is (the text `update`'s
+  `offset`/`limit` index into), with optional read-style
+  `offset`/`limit` windowing of that raw read (raw-only; out-of-range
+  values clamp, never error) and a non-raising `ParseFailureResult` for a
+  document that exists but fails to parse. 2 resources in
+  `set/resources/` (`specmgr://set/example`, `specmgr://set/template`; the
+  structure reference is the `get_set_schema` tool, ADR
+  112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://set/{id}` — id-based
+  reads are `get_set`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://set/list` —
+  `list_set` ships as a paged tool from day one, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` carries
+  `error_count` and reports a failed-to-parse document inline (with a
+  resolved `path`) rather than silently dropping it). 2 prompts in
+  `set/prompts/` (`create_set`/`update_set` — `create_set` first checks
+  `list_set` for a near-duplicate; `update_set` names the generic
+  `update`/`edit`/`set_status`/`set_classification` tools with
+  `type="set"`). Dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain
+  `update_set`/`set_status_set`/`validate_set`/`delete_set` tools:
+  whole-body and line-range updates go through the generic `update` tool
+  in `general/tools/` (`type="set"`), status changes through the generic
+  `set_status` tool (`type="set"`, the SET-specific four-value closed set
+  `draft`/`progress`/`done`/`review` carried by `SetFrontmatter.status`),
+  classification changes through the generic `set_classification` tool
+  (`type="set"`), deletions through the generic `delete` tool
+  (`type="set"`), and disk-free/id-free dry-run content validation through
+  the generic `validate` tool (`type="set"`). The body is strictly H1 ->
+  `## Description` (mandatory, opaque free markdown — any blocks, nested
+  H3–H6 included) -> `## Items` (mandatory flat bullet list, at least one
+  `<TAG> <uuid>: <title>` bullet — the shared 12-tag reference vocabulary
+  in any mix, `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  with an optional per-bullet notes paragraph; a duplicate `(tag, id)`
+  pair is rejected by a root `model_validator`, the VCR `AC-NNN`
+  duplicate-guard precedent); no `## Owner`, no `## Source`, no `## Tags`,
+  no other section (the engine's trailing-completeness error rejects any
+  further H2). Its schema lives at `set/models/v1/`, inside the domain
+  package, not top-level `models/`. Documents live flat under the shared
+  docs root as `docs/set/set-{uuid}-{slug}.md` (the shared
+  `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
+  `SPECMGR_SET_DIR`). `set` is one of the thirteen language-aware domains
+  (feat-197-i18n, see its paragraph below): `get_set`/`list_set`/
+  `create_set` take `language` (`create_set` also `id`), the five generic
+  mutation tools carry a `set` `_LANGUAGE_ADAPTERS` entry, and the
+  heading-mapping table is applied to both fixed-text schema headings
+  (`## Description`/`## Items`) — free nested headings inside the opaque
+  `## Description` follow the generic levels 2-6 lookup (a table hit is
+  rewritten to canonical, a miss stays verbatim). The host surface is the
+  self-triggering OpenCode skill `specmgr-set`
+  (`.opencode/skill/specmgr-set/SKILL.md` + `tests/opencode/
+  test_skill_set.py`; no dedicated `/set` command — the flow is the skill
+  plus the prompts). The reference-graph palette carries a `SET` entry
+  coloured `Wheat` (the 16th entry, after `TXT`, before `UNRESOLVED`; see
+  the `general/` bullet below). See
+  `.specmgr/feat/feat-173-req-iso29148-level-set/README.md` for the full
+  design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
@@ -808,7 +875,7 @@ type or cross-cutting:
     (first), and nothing is written in any failure case; a fifth extension
     of the same chain (feat-204-create-error, GitHub issue #204, ADR
     f14f125e-eaad-4f4f-a6fd-3c931bed726e) gives every `create_<d>` tool (the
-    13 whole-body domains) the non-raising `ValidateResult` for a
+    14 whole-body domains) the non-raising `ValidateResult` for a
     content-validation failure of the caller-submitted body (nothing
     written), and every `parse_<d>` tool the same for an existing-but-broken
     file — `parse_<d>`'s `OSError`-family file-access errors from
@@ -921,7 +988,7 @@ type or cross-cutting:
     PlantUML component diagram of the frozen `specmgr://reference-graph`
     rulebook — one node per artifact (label = the document title,
     truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` label limit, default 40),
-    a stereotype + colour per artifact type (the frozen 15-entry palette),
+    a stereotype + colour per artifact type (the frozen 16-entry palette),
     nodes grouped into per-domain curly `component "TYPE" { … }` domain
     groups, one label-free edge per unique reference (`{src} --> {dst}`,
     the referenced item carries the incoming arrow), every edge on a cycle
@@ -929,9 +996,9 @@ type or cross-cutting:
     of size ≥ 2) drawn with the red label-free `-[#red]->` arrow, and every
     reference whose target cannot be resolved on disk drawn as a top-level
     `<<UNRESOLVED>>` node.
-    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 14
+    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 15
     domains, `adr` INCLUDED — an ADR document referencing a REQ is a real
-    edge; the 14-vs-13 split vs the skill's 13-domain text workflows is
+    edge; the 15-vs-14 split vs the skill's 14-domain text workflows is
     reconciled in the skill's own note, above) + `id`, with the rulebook
     §7 guard order: `validate_id` AND the `depth` 1..5 check (a plain
     `int`, default 1) are BOTH a `ValueError` before any filesystem
@@ -941,7 +1008,7 @@ type or cross-cutting:
     `get_<d>`/`list_references`); an existing-but-broken source returns
     the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error`
     byte-identical to the domain's `list_<d>` failed row (ADR 9080b37c) for
-    the 13 whole-body domains — time-qualified by ADR 3982712a for `feat`
+    the 14 whole-body domains — time-qualified by ADR 3982712a for `feat`
     (`get_feat` the unconditional full-fidelity authority), and the leg-read
     `AdrParseError`'s own text for `adr` (whose `list_adr` carries no failed
     row: broken ADRs are skipped), case 3 of the ADR 519d1206 chain);
@@ -1022,7 +1089,7 @@ type or cross-cutting:
     types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
       but not scoped to it, and `specmgr://reference-graph` — the frozen
-      reference-graph → PlantUML rulebook (the emission layout + 15-entry
+      reference-graph → PlantUML rulebook (the emission layout + 16-entry
       palette, the alias/label/truncation rules, the title override +
       defaults, the FEAT-exclusion + cycle + construction semantics, the
       CLI file layout; raw markdown passthrough, the `specmgr://uc/plantuml`
@@ -1082,8 +1149,8 @@ type or cross-cutting:
      byte-identical to the plain `raw=True` text; and, per feat-150's
      precedent below, a numbered read of a document that exists but fails to
      parse still returns the `ParseFailureResult`, never numbered text.
-     `get_<d>` for the 13 whole-body domains
-    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`;
+     `get_<d>` for the 14 whole-body domains
+    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`/`set`;
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
@@ -1104,7 +1171,7 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
-   The `general/` package also owns the i18n machinery of the twelve
+   The `general/` package also owns the i18n machinery of the thirteen
    language-aware domains (feat-197-i18n, ADR 38efdb66; the full
    description is the `feat-197-i18n` paragraph below): the optional
    `language: str = "en"` parameter of `update`/`edit`/`set_status`/
@@ -1313,8 +1380,8 @@ unchanged; only the startup orchestration moved.
 
 `feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
 added first-class **multi-language variants of the same artifact** for the
-**twelve** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
-`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt` (`general/tools/_language_guard.
+**thirteen** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
+`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set` (`general/tools/_language_guard.
 LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
 the default and keeps its exact, unchanged location; every other language is
 a `docs/{type}/{language}/` subfolder holding the variant under the EN
@@ -1404,7 +1471,7 @@ permanent "`feat` documents are always English" wording
   Never switch it to a recursive glob —
   `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
 
-The tests: `tests/general/tools/test_i18n_all_domains.py` (all twelve domains),
+The tests: `tests/general/tools/test_i18n_all_domains.py` (all thirteen domains),
 `tests/dec/tools/test_i18n_*.py` (the `dec` pilot, deep),
 `test_i18n_feat_adr_exclusion.py` (the registered-surface regression for
 ACC-002/ACC-015), `test_i18n_en_only_consumers.py`, `test_i18n_closed_

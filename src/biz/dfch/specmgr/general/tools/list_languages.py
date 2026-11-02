@@ -19,7 +19,7 @@
 
 """``@mcp.tool()`` wrapper: list_languages (feat-197-i18n Phase 140, Task 140.120, REQ-012, ACC-008).
 
-The generic, read-only language-listing tool for one artifact: given a ``type`` (one of the twelve i18n-eligible
+The generic, read-only language-listing tool for one artifact: given a ``type`` (one of the thirteen i18n-eligible
 domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``/``txt``) and an
 ``id``, it
 reports the language codes the artifact currently exists in -- the dedicated tool ADR 38efdb66 item 7 names in place of
@@ -79,7 +79,7 @@ def list_languages(type: WholeBodyOrAdrType, id: str) -> LanguageListResult:
     Parameters
     ----------
     type:
-        The document type: one of the twelve i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
+        The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
         ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``. ``feat`` and ``adr`` are accepted by the
         schema only so that they get an explanation: they are permanently English and are rejected.
     id:

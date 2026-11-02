@@ -115,6 +115,10 @@ from ...txt.tools._cache import invalidate_txt_cache
 from ...txt.tools._io import load_by_id as load_txt_by_id
 from ...txt.tools._lock import txt_lock, txt_lock_key
 from ...txt.tools._paths import txt_base_dir
+from ...set.tools._cache import invalidate_set_cache
+from ...set.tools._io import load_by_id as load_set_by_id
+from ...set.tools._lock import set_lock, set_lock_key
+from ...set.tools._paths import set_base_dir
 from ...uc.tools._cache import invalidate_uc_cache
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._lock import uc_lock, uc_lock_key
@@ -487,6 +491,31 @@ def _delete_txt(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     return str(path)  # REQ-001
 
 
+def _delete_set(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
+    """Hard-delete the set document ``id_`` from disk (REQ-001/004/005/006).
+
+    Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+    variant's own (``set_lock(set_lock_key(id_, language))``), and only that one variant file is
+    unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+    (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+    """
+    base_dir = set_base_dir(language)
+    with set_lock(set_lock_key(id_, language)):  # REQ-004
+        path, _existing = load_set_by_id(base_dir, id_)  # resolves + SetNotFoundError
+        assert_within(base_dir, path)  # REQ-003 defense-in-depth
+        try:
+            path.unlink()  # REQ-006
+        except OSError as ex:
+            raise DeleteError(f"failed to delete {path}: {ex}") from ex  # REQ-005
+        invalidate_set_cache(path)  # feat-107-doc-cache Phase 4, REQ-004
+        invalidate_embedding_cache("set", path)  # feat-134 Phase 3, Task 3.6, REQ-008
+    return str(path)  # REQ-001
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str], str]] = {
     "req": _delete_req,
@@ -502,6 +531,7 @@ _ADAPTERS: dict[str, Callable[[str], str]] = {
     "vcr": _delete_vcr,
     "sysrs": _delete_sysrs,
     "txt": _delete_txt,
+    "set": _delete_set,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -526,6 +556,7 @@ _LANGUAGE_ADAPTERS: dict[str, Callable[[str, str], str]] = {
     "vcr": _delete_vcr,
     "sysrs": _delete_sysrs,
     "txt": _delete_txt,
+    "set": _delete_set,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (

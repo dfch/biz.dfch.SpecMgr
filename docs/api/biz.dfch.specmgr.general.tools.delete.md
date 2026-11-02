@@ -190,6 +190,20 @@ unlinked (only that file's own path-keyed cache entries are invalidated) -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
+### `_delete_set(id_: 'str', language: 'str' = 'en') -> 'str'`
+
+Hard-delete the set document ``id_`` from disk (REQ-001/004/005/006).
+
+Same resolve/lock/safety semantics as :func:`_delete_req`.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+variant's own (``set_lock(set_lock_key(id_, language))``), and only that one variant file is
+unlinked (only that file's own path-keyed cache entries are invalidated) -- the EN document
+(bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+
+
 ### `_delete_sop(id_: 'str', language: 'str' = 'en') -> 'str'`
 
 Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.

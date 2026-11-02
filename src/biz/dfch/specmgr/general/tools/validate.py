@@ -115,6 +115,7 @@ from ...sop.models.v1 import Sop, parse_sop
 from ...sysrs.models.v1 import Sysrs, parse_sysrs
 from ...tsk.models.v1 import Task, parse_tsk
 from ...txt.models.v1 import parse_txt, parse_txt_body
+from ...set.models.v1 import parse_set, parse_set_body
 from ...uc.models.v2 import UseCase, parse_uc
 from ...vcr.models.v1 import Vcr, parse_vcr
 from ._domains import WHOLE_BODY_DOMAINS, WholeBodyType
@@ -527,6 +528,36 @@ def _validate_txt(content: str, full: bool) -> None:
             parse_txt_body(content)
 
 
+def _validate_set(content: str, full: bool) -> None:
+    """Validate ``content`` as set markdown.
+
+    Verbatim-shape port of :func:`_validate_sysrs` (same ``set`` domain
+    label, ``parse_set`` for the full document, ``parse_set_body`` -- the
+    single body-validation entry point the write adapters share -- for the
+    body-only shape; ``set`` is dispatch-only from day one per ADR
+    36905d5b) -- see :func:`_validate_req` for the shared semantics.
+    """
+    has_frontmatter = _detect_frontmatter(content, domain="set")
+
+    if full:
+        if not has_frontmatter:
+            raise ValueError(
+                "full=True requires 'content' to be a complete document (YAML frontmatter block "
+                "plus body) -- no frontmatter block was found. Pass full=False (the default) to "
+                "validate body-only content instead."
+            )
+        with wrap_tool_errors(domain="set", tool="validate"):
+            parse_set(content)
+    else:
+        if has_frontmatter:
+            raise ValueError(
+                "full=False requires 'content' to be body markdown only -- a YAML frontmatter "
+                "block was found. Pass full=True to validate a complete document instead."
+            )
+        with wrap_tool_errors(domain="set", tool="validate", channel=BODY_CHANNEL):
+            parse_set_body(content)
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     "req": _validate_req,
@@ -542,6 +573,7 @@ _ADAPTERS: dict[str, Callable[[str, bool], None]] = {
     "vcr": _validate_vcr,
     "sysrs": _validate_sysrs,
     "txt": _validate_txt,
+    "set": _validate_set,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (

@@ -416,6 +416,37 @@ First-line docstrings from each module, organized by domain:
 - `rsk/tools/list_rsk.py` — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - `rsk/tools/parse_rsk.py` — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 
+**set/**
+
+- `set/__init__.py` — Set (SET) domain -- a convenience bundle of one or more artifacts of any (mixed) type.
+- `set/models/__init__.py` — Set (SET) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `set/models/v1/__init__.py` — Set (SET) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- `set/models/v1/_util.py` — Shared, private constants for the ``set.models.v1`` subpackage.
+- `set/models/v1/body.py` — Set (SET) body models: a mandatory opaque `## Description` plus a mandatory mixed-tag `## Items` list.
+- `set/models/v1/document.py` — Pydantic model for a full set document (frontmatter + body).
+- `set/models/v1/frontmatter.py` — Set (SET) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- `set/models/v1/parser.py` — Parse raw set (SET) ``.md`` text into a :class:`SetDocument`.
+- `set/models/v1/summary.py` — Pydantic model for one line of SET listing output (``list_set``).
+- `set/prompts/__init__.py` — MCP prompt wrappers for set (set) documents (feat-173-req-iso29148-level-set Phase 180).
+- `set/prompts/create_set.py` — ``@mcp.prompt()``: create_set (feat-173-req-iso29148-level-set Phase 180).
+- `set/prompts/update_set.py` — ``@mcp.prompt()``: update_set (feat-173-req-iso29148-level-set Phase 180).
+- `set/resources/__init__.py` — MCP resource registrations for set (set) documents (feat-173-req-iso29148-level-set Phase 180).
+- `set/resources/set_example.py` — Resource: specmgr://set/example (feat-173-req-iso29148-level-set Phase 180).
+- `set/resources/set_template.py` — Resource: specmgr://set/template (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/__init__.py` — MCP tool wrappers for set documents (mirrors ``txt/tools/``'s own shape).
+- `set/tools/_cache.py` — Per-domain content-hash-validated read cache singleton for set documents (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/_io.py` — Thin file read helpers over ``parse_set`` (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/_lock.py` — Per-document in-process lock guarding set document mutations.
+- `set/tools/_paths.py` — Set (SET) base directory resolution and id -> path lookup (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/_write.py` — Shared frontmatter+body composition/write helper for ``create_set`` and
+- `set/tools/create_set.py` — ``@mcp.tool()`` wrapper: create_set (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/get_set.py` — ``@mcp.tool()`` wrapper: get_set (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/get_set_example.py` — ``@mcp.tool()`` wrapper: get_set_example (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/get_set_schema.py` — ``@mcp.tool()`` wrapper: get_set_schema (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/get_set_template.py` — ``@mcp.tool()`` wrapper: get_set_template (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/list_set.py` — ``@mcp.tool()`` wrapper: list_set (feat-173-req-iso29148-level-set Phase 180).
+- `set/tools/parse_set.py` — ``@mcp.tool()`` wrapper: parse_set (feat-173-req-iso29148-level-set Phase 180).
+
 **sop/**
 
 - `sop/__init__.py` — Standard Operating Procedure (SOP) domain -- structured, step-by-step
@@ -633,4 +664,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 481
+**Test files**: 504

@@ -73,6 +73,12 @@ _._validate_when_to_use_matches_patterns
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
+# set (feat-173-req-iso29148-level-set Phase 180): `Set`'s own
+# `@model_validator(mode="after")` rejecting a duplicate `(tag, id)` pair
+# across `## Items` (the VCR `AC-NNN`/DEC `Option N` duplicate-number guard
+# precedent), invoked by Pydantic's validation machinery, never called
+# directly.
+_._validate_item_pairs_unique
 _._validate_partial_title
 _._validate_problem_statement
 _._validate_status

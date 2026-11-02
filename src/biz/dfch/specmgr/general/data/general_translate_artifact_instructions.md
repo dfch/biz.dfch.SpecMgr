@@ -7,10 +7,10 @@ Target:
 - source language: `$source_language`
 - target language: `$language`
 
-Scope: only the twelve i18n-eligible domains (`req`, `uc`, `tsk`, `qa`,
-`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`). `feat` and `adr`
-are always English and are out of scope: they have no language variants, and
-this flow never touches them.
+Scope: only the thirteen i18n-eligible domains (`req`, `uc`, `tsk`, `qa`,
+`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`). `feat` and
+`adr` are always English and are out of scope: they have no language
+variants, and this flow never touches them.
 
 Make a todo list and use the `question` tool whenever something is
 ambiguous -- do not guess. Use only the existing specmgr tools for every
@@ -143,6 +143,12 @@ these from the source exactly:
   and `## Updates`) are free text, not schema headings -- keep them exactly as
   in the source (only `## Updates` itself is translated, through the table).
   A translated free body heading no longer matches the source's structure.
+- `set`: the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the
+  12 reference tags; the tag, the id, and the title text stay exactly as in
+  the source -- only the notes paragraph under a bullet is translated) and
+  the `status` values (`draft`, `progress`, `done`, `review`); the headings
+  inside `## Description` are free text, not schema headings -- keep them
+  exactly as in the source (like the `txt` opaque-body rule).
 
 **Preserve the structure exactly:** the same headings in the same order and
 at the same levels, the same blank-line layout, the same list structure.

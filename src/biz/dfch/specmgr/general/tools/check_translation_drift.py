@@ -152,7 +152,7 @@ def check_translation_drift(
     Parameters
     ----------
     type:
-        The document type: one of the twelve i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
+        The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
         ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt`` (``feat``/``adr`` are permanently English
         and rejected).
     id:

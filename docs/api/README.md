@@ -363,6 +363,34 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.rsk.tools.list_rsk`](biz.dfch.specmgr.rsk.tools.list_rsk.md) — ``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 - [`biz.dfch.specmgr.rsk.tools.parse_rsk`](biz.dfch.specmgr.rsk.tools.parse_rsk.md) — ``@mcp.tool()`` wrapper: parse_rsk (Task 3.2).
 - [`biz.dfch.specmgr.server`](biz.dfch.specmgr.server.md) — MCP server for ``biz-dfch-specmgr``.
+- [`biz.dfch.specmgr.set`](biz.dfch.specmgr.set.md) — Set (SET) domain -- a convenience bundle of one or more artifacts of any (mixed) type.
+- [`biz.dfch.specmgr.set.models`](biz.dfch.specmgr.set.models.md) — Set (SET) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.set.models.v1`](biz.dfch.specmgr.set.models.v1.md) — Set (SET) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
+- [`biz.dfch.specmgr.set.models.v1._util`](biz.dfch.specmgr.set.models.v1._util.md) — Shared, private constants for the ``set.models.v1`` subpackage.
+- [`biz.dfch.specmgr.set.models.v1.body`](biz.dfch.specmgr.set.models.v1.body.md) — Set (SET) body models: a mandatory opaque `## Description` plus a mandatory mixed-tag `## Items` list.
+- [`biz.dfch.specmgr.set.models.v1.document`](biz.dfch.specmgr.set.models.v1.document.md) — Pydantic model for a full set document (frontmatter + body).
+- [`biz.dfch.specmgr.set.models.v1.frontmatter`](biz.dfch.specmgr.set.models.v1.frontmatter.md) — Set (SET) frontmatter, narrowing `feat-5-md-model-parser`'s generic `MarkdownFrontmatter`.
+- [`biz.dfch.specmgr.set.models.v1.parser`](biz.dfch.specmgr.set.models.v1.parser.md) — Parse raw set (SET) ``.md`` text into a :class:`SetDocument`.
+- [`biz.dfch.specmgr.set.models.v1.summary`](biz.dfch.specmgr.set.models.v1.summary.md) — Pydantic model for one line of SET listing output (``list_set``).
+- [`biz.dfch.specmgr.set.prompts`](biz.dfch.specmgr.set.prompts.md) — MCP prompt wrappers for set (set) documents (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.prompts.create_set`](biz.dfch.specmgr.set.prompts.create_set.md) — ``@mcp.prompt()``: create_set (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.prompts.update_set`](biz.dfch.specmgr.set.prompts.update_set.md) — ``@mcp.prompt()``: update_set (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.resources`](biz.dfch.specmgr.set.resources.md) — MCP resource registrations for set (set) documents (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.resources.set_example`](biz.dfch.specmgr.set.resources.set_example.md) — Resource: specmgr://set/example (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.resources.set_template`](biz.dfch.specmgr.set.resources.set_template.md) — Resource: specmgr://set/template (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools`](biz.dfch.specmgr.set.tools.md) — MCP tool wrappers for set documents (mirrors ``txt/tools/``'s own shape).
+- [`biz.dfch.specmgr.set.tools._cache`](biz.dfch.specmgr.set.tools._cache.md) — Per-domain content-hash-validated read cache singleton for set documents (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools._io`](biz.dfch.specmgr.set.tools._io.md) — Thin file read helpers over ``parse_set`` (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools._lock`](biz.dfch.specmgr.set.tools._lock.md) — Per-document in-process lock guarding set document mutations.
+- [`biz.dfch.specmgr.set.tools._paths`](biz.dfch.specmgr.set.tools._paths.md) — Set (SET) base directory resolution and id -> path lookup (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools._write`](biz.dfch.specmgr.set.tools._write.md) — Shared frontmatter+body composition/write helper for ``create_set`` and
+- [`biz.dfch.specmgr.set.tools.create_set`](biz.dfch.specmgr.set.tools.create_set.md) — ``@mcp.tool()`` wrapper: create_set (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.get_set`](biz.dfch.specmgr.set.tools.get_set.md) — ``@mcp.tool()`` wrapper: get_set (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.get_set_example`](biz.dfch.specmgr.set.tools.get_set_example.md) — ``@mcp.tool()`` wrapper: get_set_example (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.get_set_schema`](biz.dfch.specmgr.set.tools.get_set_schema.md) — ``@mcp.tool()`` wrapper: get_set_schema (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.get_set_template`](biz.dfch.specmgr.set.tools.get_set_template.md) — ``@mcp.tool()`` wrapper: get_set_template (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.list_set`](biz.dfch.specmgr.set.tools.list_set.md) — ``@mcp.tool()`` wrapper: list_set (feat-173-req-iso29148-level-set Phase 180).
+- [`biz.dfch.specmgr.set.tools.parse_set`](biz.dfch.specmgr.set.tools.parse_set.md) — ``@mcp.tool()`` wrapper: parse_set (feat-173-req-iso29148-level-set Phase 180).
 - [`biz.dfch.specmgr.sop`](biz.dfch.specmgr.sop.md) — Standard Operating Procedure (SOP) domain -- structured, step-by-step
 - [`biz.dfch.specmgr.sop.models`](biz.dfch.specmgr.sop.models.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.
 - [`biz.dfch.specmgr.sop.models.v1`](biz.dfch.specmgr.sop.models.v1.md) — Standard Operating Procedure (SOP) models -- Pydantic schema and parser powered by the generic ``models/md`` engine.

@@ -166,6 +166,17 @@ Validate ``content`` as risk markdown -- verbatim port of the retired ``validate
 See :func:`_validate_req` for the shared semantics.
 
 
+### `_validate_set(content: 'str', full: 'bool') -> 'None'`
+
+Validate ``content`` as set markdown.
+
+Verbatim-shape port of :func:`_validate_sysrs` (same ``set`` domain
+label, ``parse_set`` for the full document, ``parse_set_body`` -- the
+single body-validation entry point the write adapters share -- for the
+body-only shape; ``set`` is dispatch-only from day one per ADR
+36905d5b) -- see :func:`_validate_req` for the shared semantics.
+
+
 ### `_validate_sop(content: 'str', full: 'bool') -> 'None'`
 
 Validate ``content`` as SOP markdown -- verbatim port of the retired ``validate_sop``.

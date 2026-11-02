@@ -90,12 +90,13 @@ and an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` (feat-207-reference-graph, Phase 120).
 ``get_reference_diagram_all`` -- the read-only, registry-wide
 reference-diagram tool: the same deterministic PlantUML component diagram
-over every parseable document of all 14 domains (broken documents are
+over every parseable document of all 15 domains (broken documents are
 skipped -- the render never fails for content), with the
 ``include_feat`` switch and an optional ``title`` override
 (feat-207-reference-graph, Phase 120).
 ``list_languages`` -- the read-only language-listing tool for one artifact (feat-197-i18n Phase 140, REQ-012,
-ACC-008): given a ``type`` (one of the twelve i18n-eligible domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt;
+ACC-008): given a ``type`` (one of the thirteen i18n-eligible domains
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set;
 ``feat``/``adr`` are permanently English and rejected) and an ``id``, it returns the language codes the artifact
 exists in -- ``"en"`` first when the EN source exists, then the other languages holding a variant, sorted by code --
 with one entry per language (resolved path, ``parseable``, parse ``error``).

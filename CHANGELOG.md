@@ -21,6 +21,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `specmgr://ears` shape (ADR 356d8781-e446-4c26-917a-eda85648ce9d;
   feat-173-req-iso29148-level-set, GitHub issue #173).
 
+- The new `set` artifact domain (issue #173's second work package): a
+  convenience bundle of one or more already-existing specmgr artifacts
+  of any (mixed) type via forward references only — `SET` is not a tag
+  of the shared 12-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). The
+  body is strictly H1 → `## Description` (mandatory, opaque free
+  markdown) → `## Items` (mandatory flat bullet list, at least one
+  `<TAG> <uuid>: <title>` bullet from the shared 12-tag vocabulary in
+  any mix — `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
+  other sections. `SetFrontmatter.status` is the SET-specific
+  four-value closed set `draft`/`progress`/`done`/`review`. Full
+  dispatch-only surface per ADR 36905d5b (7 tools: `create_set`,
+  `parse_set`, `list_set`, `get_set` with `raw`/`offset`/`limit`/
+  `numbered`/`language` + the non-raising `ParseFailureResult` channel,
+  `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
+  `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
+  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
+  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  tool's dispatch table (forced by their import-time asserts), and the
+  self-triggering OpenCode skill `specmgr-set` as the host surface (no
+  dedicated `/set` command). `set` is the 13th language-aware domain
+  (the `## Description`/`## Items` headings join the packaged heading
+  tables, e.g. `de.json`'s `Beschreibung`/`Elemente`, plus the
+  never-translate line in `specmgr://i18n` and the
+  `translate_artifact` instructions), and the reference graph carries
+  the 16th palette entry (`SET` coloured `Wheat`, after `TXT`, before
+  `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
+  (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
+
 ### Changed
 
 - **BREAKING**: `req`'s `## Level` is a mandatory single-line

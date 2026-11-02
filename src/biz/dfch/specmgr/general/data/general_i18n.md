@@ -7,8 +7,8 @@ first).
 
 ## 1. Scope
 
-- **In scope (twelve domains):** `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
-  `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`.
+- **In scope (thirteen domains):** `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
+  `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`.
 - **Out of scope, permanently:** `feat` (always English, no language
   variants, no `language` parameter on any `feat` surface) and `adr` (always
   English, no `language` parameter on any `adr` surface). A non-default
@@ -149,6 +149,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 | `vcr` | `## Coverage` word: `full`, `partial`, `none`; the `### AC-<NNN> (<Method>): <text>` heading token (`AC-`, the 3-digit number, and the DTAIS method word `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special`, see `specmgr://dtais`; the text after the colon is prose); the `## Verifies` line `REQ|UC <uuid>: <title>`; the update-entry heading timestamp | |
 | `sysrs` | the H1 prefix `System Requirements Specification: ` (only the title after it is prose and is translated); the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC` or `ADR`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
 | `txt` | the update-entry heading timestamp (the shared `## Updates` entry shape, section 5.1); the `## Updates` heading itself is a table-mapped fixed-text heading (the only one of this domain) | the headings of the opaque body (free text, not schema headings: the parser never rewrites them and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift); the free-floating cross-reference lines in the body (`<TAG> <uuid>: <title>`: the tag word, the uuid, and the `: <title>` text stay exactly as in the source) |
+| `set` | the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the 12 reference tags `GOL`, `PRB`, `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `TXT`, `FEAT`: the tag, the id, and the `: <title>` text stay exactly as in the source -- the title is the referenced document's own H1, section 5.1; only the notes paragraph under a bullet is translated); the `status` values (`draft`, `progress`, `done`, `review`) | the headings inside `## Description` (free text, not schema headings: the parser accepts them verbatim and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift, the `txt` opaque-body rule) |
 
 The fixed-text headings of every domain (for example `## More Information`,
 `## Tags`, `## Source`, the RASCI headings `### Accountable`/`### Responsible`/

@@ -154,6 +154,9 @@ class TestTranslateArtifactRendering(unittest.TestCase):
             "`[ ]` / `[x]`",
             "<TAG> <uuid>: <title>",
             "timestamps",
+            "`## Items`",
+            "12 reference tags",
+            "`review`",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, result)
