@@ -1088,12 +1088,24 @@ type or cross-cutting:
     than under `vcr/resources/` since it is domain-knowledge other document
     types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-      but not scoped to it, and `specmgr://reference-graph` — the frozen
+      but not scoped to it, `specmgr://reference-graph` — the frozen
       reference-graph → PlantUML rulebook (the emission layout + 16-entry
       palette, the alias/label/truncation rules, the title override +
       defaults, the FEAT-exclusion + cycle + construction semantics, the
       CLI file layout; raw markdown passthrough, the `specmgr://uc/plantuml`
-      style; feat-207-reference-graph, GitHub issue #207)), and `general/prompts/` (`compact_history` — rotates
+      style; feat-207-reference-graph, GitHub issue #207), and
+      `specmgr://harness-bundle` — the packaged harness bundle
+      (`application/json`; the flat `specmgr harness-bundle` CLI command's
+      own generated package file served verbatim, a fail-fast `json.loads`
+      on every call — no model, the bundle has no schema of its own): the
+      complete agent-driven install protocol in the top-level
+      `instructions` field plus every `.opencode/{agent,command,skill}/`
+      markdown file as a `{path, sha256, content}` entry in `files` — the
+      agent's sole discoverable entry point for installing the published
+      harness files into a fresh harness setup (no install CLI, no MCP
+      prompt — OpenCode exposes no prompt surface to the agent;
+      feat-167-mcp-lifecycle-commands-2 Phase 130, GitHub issue #167)),
+      and `general/prompts/` (`compact_history` — rotates
       older `Recent Updates` entries out of any feature folder's `README.md`
       into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
       GitHub issue #150, Phase 1) — cross-cutting, takes `type` (one of the
@@ -1572,6 +1584,7 @@ uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (p
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
+uv run --frozen specmgr harness-bundle                                 # regenerate general/data/general_harness_bundle.json from .opencode/{agent,command,skill}/
 uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)
 uv run --frozen specmgr unused-code --test                             # report symbols only referenced from tests/, never src/
 uv run --frozen specmgr version                                        # run the CLI
@@ -1594,11 +1607,18 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
 runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
 (scoped to `src/**/*.py` changes), a local `specmgr adr-toc` hook (scoped to
-`docs/adr/**/*.md` changes), and the other doc/schema drift checks, then the
+`docs/adr/**/*.md` changes), a local `specmgr harness-bundle` hook (scoped
+to `.opencode/{agent,command,skill}/` markdown changes: regenerate the
+packaged harness bundle
+`src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
+repo-root `.opencode/` tree, then fail on diff), and the other doc/schema
+drift checks, then the
 full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
 `pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
 last, before every commit, so a broken test or drift in
-`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
+`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md`/
+`src/biz/dfch/specmgr/general/data/general_harness_bundle.json` gets caught
+locally
 instead of failing later in CI. The local `specmgr lint` hook (feat-218)
 lints the staged in-tree spec artifacts (the feature README.md files under
 `.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
@@ -1719,11 +1739,39 @@ extras onto every consumer of the base library.
   flag, an unreadable or missing path, an unrecognized layout without
   `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
   paths, paths combined with `--all`, an unknown `--type`, `--all`
-  discovering nothing at all -- no document and no excluded one). Accepted
-  limitation: because the gate is change-scoped, a schema or parser change
-  can break untouched documents without failing any gate — the full sweep
-  (manual, or the follow-up nightly workflow whose issue owns the
-  limitation) finds them.
+   discovering nothing at all -- no document and no excluded one). Accepted
+   limitation: because the gate is change-scoped, a schema or parser change
+   can break untouched documents without failing any gate — the full sweep
+   (manual, or the follow-up nightly workflow whose issue owns the
+   limitation) finds them.
+- `specmgr harness-bundle` (feat-167-mcp-lifecycle-commands-2 Phase 130,
+  `commands/harness_bundle.py`, `[cli]`-only — no `mcp` import, no server
+  import): regenerates the single committed package-data bundle
+  `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
+  repo-root `.opencode/` tree read out of the current working directory —
+  it enumerates every `*.md` recursively under exactly
+  `.opencode/{agent,command,skill}/` (exact top-level directory-name
+  match, singular names; sorted by `.opencode/`-relative `path`) and
+  emits `{"instructions": <the module's own install-protocol constant>,
+  "files": [{"path", "sha256", "content"}]}` — `content` the file's
+  verbatim text, `sha256` of that text — via `json.dumps(indent=2,
+  ensure_ascii=False)` + trailing newline, no timestamps, so two runs over
+  an unchanged tree are byte-identical. A stray `*.md` at the `.opencode/`
+  top level or under a non-scoped directory (`node_modules/`, a
+  similarly-named directory such as the former `zZz-skill/`) warns on
+  stderr (one warning per stray top-level entry) and is never bundled; a
+  missing `.opencode/` directory is a usage error. Exit codes: **0**
+  written, **2** usage error (missing `.opencode/`, nothing written).
+  Drift guards: the `specmgr-harness-bundle` pre-commit hook (the same
+  regenerate + `git diff --exit-code` pair, scoped to
+  `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
+  family's shape) and the Python 3.13-pinned CI parity step in
+  `.github/workflows/ci.yml` (alongside the `specmgr docs`/`adr-toc`/
+  `mcp-docs` steps). The generated file is served verbatim by the
+  `specmgr://harness-bundle` MCP resource (`application/json`, a
+  fail-fast `json.loads` on every call — no model, the bundle has no
+  schema of its own), whose `instructions` field is the agent-driven
+  install protocol for a fresh harness setup.
 
 ## MCP server (`server.py`)
 

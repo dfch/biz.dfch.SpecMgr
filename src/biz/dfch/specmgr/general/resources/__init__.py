@@ -63,7 +63,17 @@ and the create-versus-update and guard semantics the ``translate_artifact``
 prompt reads first (its sibling resource template
 ``specmgr://i18n/headings/{language}`` serves a language's heading-mapping
 table as JSON, so the flow needs no host file tool); cross-cutting like
-``dtais``/``rasci``, since it spans the thirteen i18n-eligible domains. Domain-specific
+``dtais``/``rasci``, since it spans the thirteen i18n-eligible domains. ``harness_bundle``
+registers the specmgr harness bundle resource (``specmgr://harness-bundle``,
+feat-167-mcp-lifecycle-commands-2 Phase 130, REQ-007/008) -- the single
+generated package-data file ``general/data/general_harness_bundle.json``
+served verbatim as ``application/json``: the complete agent-driven install
+protocol in the top-level ``instructions`` field plus every
+``.opencode/{agent,command,skill}/`` markdown file as a ``{path, sha256,
+content}`` entry in ``files``; the agent's sole discoverable entry point
+for installing the published harness files into a fresh harness setup (no
+install CLI, no MCP prompt -- OpenCode exposes no prompt surface to the
+agent). Domain-specific
 resources (e.g. ``adr_list``/``adr_get``)
 live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
 Import this package to load all cross-cutting resources at once::
@@ -71,13 +81,25 @@ Import this package to load all cross-cutting resources at once::
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
-from . import config, dtais, ears, i18n, iso25010, iso29148, rasci, reference_graph, version  # noqa: F401
+from . import (  # noqa: F401
+    config,
+    dtais,
+    ears,
+    harness_bundle,
+    i18n,
+    iso25010,
+    iso29148,
+    rasci,
+    reference_graph,
+    version,
+)
 from .i18n import i18n_headings  # noqa: F401
 
 __all__ = [
     "config",
     "dtais",
     "ears",
+    "harness_bundle",
     "i18n",
     "i18n_headings",
     "iso25010",

@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-42 resource(s), 2 resource template(s), 131 tool(s), 38 prompt(s).
+43 resource(s), 2 resource template(s), 131 tool(s), 38 prompt(s).
 
 ## Table of Contents
 
@@ -25,6 +25,7 @@ do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 | [`specmgr://feat/template`](#resource-feat_template) | A FEAT document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new feature. |
 | [`specmgr://gol/example`](#resource-gol_example) | A complete, valid sample goal document as raw markdown -- frontmatter and body -- exercising every section, for use as a learning example. |
 | [`specmgr://gol/template`](#resource-gol_template) | A GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal. |
+| [`specmgr://harness-bundle`](#resource-harness_bundle) | The packaged specmgr harness bundle as application/json: the complete agent-driven install protocol in the top-level `instructions` field plus every .opencode/{agent,command,skill}/ markdown file as a {path, sha256, content} entry in `files` (path relative to .opencode/, content verbatim). The active harness's own agent reads this resource and installs the files into its harness config root per the protocol -- byte-exact writes, sha256 skip/ask/verify, per-file report, never touching opencode.json. |
 | [`specmgr://i18n`](#resource-i18n) | How language variants of the same artifact are stored and translated: the docs/{type}/{language}/ layout and the EN-slug basename rule, the language vocabulary and per-language heading tables, the tool surface honoring `language`, the exact never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb problem_statement exemption), how to translate headings, the create-versus-update decision, and the guard/error semantics (feat and adr are always English) -- raw markdown domain-knowledge guidance. |
 | [`specmgr://iso25010`](#resource-iso25010) | The nine main characteristics (and their sub-characteristics) of the ISO/IEC 25010:2023 system/software product quality model, each with a description. |
 | [`specmgr://iso29148`](#resource-iso29148) | The four requirement specifications of ISO/IEC/IEEE 29148:2018 (BRS, StRS, SyRS, SRS) -- the §3.2 abbreviations, the §5.4 mapping (verbatim), the §6.2-6.4 processes, the §8.2-8.5 example outlines, the §9.3-9.6 content clauses, the mapping to specmgr document types, and the §5.2.6 characteristics of a set of requirements -- as raw markdown domain-knowledge guidance. |
@@ -121,6 +122,13 @@ A complete, valid sample goal document as raw markdown -- frontmatter and body -
 - **MIME type:** `text/markdown`
 
 A GOL document template -- frontmatter and every body field present, populated with short placeholder ('blind text') content -- as raw markdown, for use as a starting point when drafting a new goal.
+
+### Resource: harness_bundle
+
+- **URI:** `specmgr://harness-bundle`
+- **MIME type:** `application/json`
+
+The packaged specmgr harness bundle as application/json: the complete agent-driven install protocol in the top-level `instructions` field plus every .opencode/{agent,command,skill}/ markdown file as a {path, sha256, content} entry in `files` (path relative to .opencode/, content verbatim). The active harness's own agent reads this resource and installs the files into its harness config root per the protocol -- byte-exact writes, sha256 skip/ask/verify, per-file report, never touching opencode.json.
 
 ### Resource: i18n
 

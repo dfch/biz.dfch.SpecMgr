@@ -49,6 +49,7 @@ First-line docstrings from each module, organized by domain:
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- `commands/harness_bundle.py` — ``harness-bundle`` -- regenerate the packaged harness bundle from the repo-root ``.opencode/`` tree.
 - `commands/lint.py` — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - `commands/mcp.py` — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - `commands/mcp_docs.py` — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
@@ -153,6 +154,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/config.py` — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - `general/resources/dtais.py` — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - `general/resources/ears.py` — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- `general/resources/harness_bundle.py` — Resource: specmgr://harness-bundle (feat-167-mcp-lifecycle-commands-2, Phase 130, REQ-008).
 - `general/resources/i18n.py` — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - `general/resources/iso25010.py` — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - `general/resources/iso29148.py` — Resource: specmgr://iso29148 -- the ISO/IEC/IEEE 29148:2018 requirement-specifications guidance
@@ -664,4 +666,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 504
+**Test files**: 512

@@ -39,6 +39,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.commands.coverage_badge`](biz.dfch.specmgr.commands.coverage_badge.md) — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - [`biz.dfch.specmgr.commands.diagram`](biz.dfch.specmgr.commands.diagram.md) — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - [`biz.dfch.specmgr.commands.docs`](biz.dfch.specmgr.commands.docs.md) — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
+- [`biz.dfch.specmgr.commands.harness_bundle`](biz.dfch.specmgr.commands.harness_bundle.md) — ``harness-bundle`` -- regenerate the packaged harness bundle from the repo-root ``.opencode/`` tree.
 - [`biz.dfch.specmgr.commands.lint`](biz.dfch.specmgr.commands.lint.md) — ``lint`` -- the in-tree spec artifact parseability gate (feat-218, Phase 100).
 - [`biz.dfch.specmgr.commands.mcp`](biz.dfch.specmgr.commands.mcp.md) — ``mcp`` -- start the ``biz-dfch-specmgr`` MCP server.
 - [`biz.dfch.specmgr.commands.mcp_docs`](biz.dfch.specmgr.commands.mcp_docs.md) — ``mcp-docs`` -- regenerate docs/MCP.md from the live MCP server registration.
@@ -134,6 +135,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources.config`](biz.dfch.specmgr.general.resources.config.md) — Resource: specmgr://config -- resolved base directory diagnostics (feat-51-mcp-cwd).
 - [`biz.dfch.specmgr.general.resources.dtais`](biz.dfch.specmgr.general.resources.dtais.md) — Resource: specmgr://dtais -- the DTAIS verification-method vocabulary (feat-33-vcr Task 3.3).
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
+- [`biz.dfch.specmgr.general.resources.harness_bundle`](biz.dfch.specmgr.general.resources.harness_bundle.md) — Resource: specmgr://harness-bundle (feat-167-mcp-lifecycle-commands-2, Phase 130, REQ-008).
 - [`biz.dfch.specmgr.general.resources.i18n`](biz.dfch.specmgr.general.resources.i18n.md) — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
 - [`biz.dfch.specmgr.general.resources.iso29148`](biz.dfch.specmgr.general.resources.iso29148.md) — Resource: specmgr://iso29148 -- the ISO/IEC/IEEE 29148:2018 requirement-specifications guidance

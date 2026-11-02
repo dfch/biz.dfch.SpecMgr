@@ -186,6 +186,7 @@ namespaces = true
 ]
 "biz.dfch.specmgr.general" = [
     "data/*.md",
+    "data/*.json",
     "data/headings/*.json"
 ]
 

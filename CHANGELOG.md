@@ -9,6 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The new flat `specmgr harness-bundle` CLI command (`[cli]`-only, no
+  `mcp` import, `commands/harness_bundle.py`): reads the repo-root layout
+  from the current working directory, enumerates every `*.md` file
+  recursively under exactly `.opencode/{agent,command,skill}/` (exact
+  top-level directory-name match, singular names, sorted by
+  `.opencode/`-relative path; a stray markdown file outside that scope
+  warns on stderr and is never bundled; a missing `.opencode/` directory
+  is a usage error, exit 2, nothing written), and regenerates the single
+  package-data file
+  `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` of shape
+  `{"instructions": <install protocol>, "files": [{"path", "sha256",
+  "content"}]}` — serialized via `json.dumps(indent=2, ensure_ascii=False)`
+  plus a trailing newline, no timestamps, so two runs over an unchanged
+  tree are byte-identical. The new `specmgr://harness-bundle` MCP resource
+  (`application/json`, the `rasci.py` pattern: packaged read + fail-fast
+  `json.loads` on every call, the raw text returned unchanged — no model,
+  the bundle has no schema of its own) serves that file verbatim from an
+  editable checkout or a real, non-editable install: its top-level
+  `instructions` field carries the complete agent-driven install protocol
+  (harness config root via the harness's own configuration skill,
+  OpenCode: `customize-opencode`; byte-exact writes; the sha256
+  skip/ask/verify loop; the per-file installed/skipped/updated/failed
+  report; never touching `opencode.json`), making the resource the
+  agent's sole discoverable entry point for installing the published
+  harness files (every `.opencode/agent/*.md` subagent,
+  `.opencode/command/*.md` slash command, and `.opencode/skill/*/SKILL.md`
+  skill) into a fresh harness setup — no install CLI, no `--force`, no
+  sibling-directory detection, no MCP prompt (OpenCode exposes MCP tools
+  but not prompts to the agent). Drift guards: the `specmgr-harness-bundle`
+  pre-commit hook (the regenerate + `git diff --exit-code` pair, scoped to
+  `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
+  family's shape) and a Python 3.13-pinned CI parity check in the `build`
+  job alongside the existing `specmgr docs`/`adr-toc`/`mcp-docs` steps;
+  the README gains a new "Installing the specmgr Harness Files" section
+  (agent-driven install + what gets installed + the manual Claude Code
+  path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2
+  Phase 130, GitHub issue #167).
+
 - The cross-cutting `specmgr://iso29148` resource: the four
   ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
   `SyRS`, `SRS` — the standard's own §3.2 abbreviations), with the §5.4
@@ -76,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `create_gol` prompt carry the current fact (a goal has no
   `## Level` section; obligation lives on the requirements below it, in
   each one's ISO 29148 kind plus its statement's own phrasing)
-  (feat-173-req-iso29148-level-set, GitHub issue #173).
+   (feat-173-req-iso29148-level-set, GitHub issue #173).
 
 ## [0.38.0] - 2026-10-31
 

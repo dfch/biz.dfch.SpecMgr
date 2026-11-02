@@ -162,8 +162,26 @@ specmgr://i18n/headings/{language} -- (resource template, feat-197-i18n Phase 13
                         English heading text, obtained via the heading-table loader (same
                         validation as every parse). ``language`` is shape-guarded first;
                         ``en`` (canonical, no table) and a language without a packaged table
-                        are an actionable ``ValueError``. Read-only; lets the
-                        ``translate_artifact`` flow read the table without a host file tool.
+                         are an actionable ``ValueError``. Read-only; lets the
+                         ``translate_artifact`` flow read the table without a host file tool.
+specmgr://harness-bundle -- The packaged specmgr harness bundle as JSON
+                           (``application/json``, feat-167-mcp-lifecycle-commands-2 Phase 130,
+                           REQ-007/008): the complete agent-driven install protocol in the
+                           top-level ``instructions`` field plus every
+                           ``.opencode/{agent,command,skill}/`` markdown file as a
+                           ``{path, sha256, content}`` entry in ``files`` (``path`` relative to
+                           ``.opencode/``, ``content`` verbatim, ``sha256`` of that text).
+                           Served byte-verbatim from the generated package-data file
+                           ``general/data/general_harness_bundle.json`` (the flat
+                           ``specmgr harness-bundle`` CLI command's own output,
+                           drift-guarded by the ``specmgr-harness-bundle`` pre-commit hook
+                           and the Python 3.13-pinned CI parity step); the fail-fast
+                           ``json.loads`` on every call is the structural drift guard (no
+                           dedicated model -- the bundle has no schema of its own). The
+                           resource is the agent's sole discoverable entry point for
+                           installing the published harness files into a fresh harness
+                           setup (no install CLI, no MCP prompt -- OpenCode exposes no
+                           prompt surface to the agent).
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
                          rsk, dec, sop, feat, vcr, sysrs, txt), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is

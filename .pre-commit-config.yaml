@@ -65,6 +65,23 @@ repos:
         pass_filenames: false
         files: ^docs/adr/.*\.md$
 
+      - id: specmgr-harness-bundle
+        name: specmgr harness-bundle
+        description: >-
+          Regenerate the packaged harness bundle
+          (src/biz/dfch/specmgr/general/data/general_harness_bundle.json)
+          from the repo-root .opencode/{agent,command,skill}/ markdown
+          tree, then fail if that changed anything -- standard
+          formatter-hook UX: review and `git add` the regenerated file,
+          then commit again. Triggers only on a bundled .opencode/
+          markdown file (the files: pattern); the Python 3.13-pinned CI
+          parity check in .github/workflows/ci.yml (alongside the
+          `specmgr docs`/`adr-toc`/`mcp-docs` steps) is the backstop.
+        entry: bash -c 'uv run --frozen specmgr harness-bundle && git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json'
+        language: system
+        pass_filenames: false
+        files: ^\.opencode/(agent|command|skill)/.*\.md$
+
       - id: specmgr-schema
         name: specmgr schema
         description: >-
