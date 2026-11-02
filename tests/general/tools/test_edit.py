@@ -205,7 +205,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -666,7 +666,7 @@ _CASES: list[_Case] = [
         multi_marker="the",
         multi_replacement="that",
         multi_seed_suffix="",
-        field_error_marker="MUST",
+        field_error_marker="SRS",
         field_error_fragment="NOT-A-VALID-LEVEL",
         field_error_is_append=False,
         field_error_is_validation=True,

@@ -191,7 +191,7 @@ class TestI18nNeverTranslateList(unittest.TestCase):
     _PER_DOMAIN: tuple[tuple[str, tuple[str, ...]], ...] = (
         (
             "req",
-            ("`MUST`", "`SHOULD`", "`MUST NOT`", "`SHOULD NOT`", "`MAY`", "RFC 2119", "`## Priority`", "`## Level`"),
+            ("`BRS`", "`StRS`", "`SyRS`", "`SRS`", "`## Priority`", "`## Level`"),
         ),
         ("gol", ("`## Priority`",)),
         ("uc", ("`### Extension <N><letter>. <text>`", "`### Step <N>: <text>`", "`Subfunction`", "`User Goal`")),

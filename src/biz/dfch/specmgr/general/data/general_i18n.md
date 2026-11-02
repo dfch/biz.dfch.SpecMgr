@@ -137,7 +137,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 
 | domain | schema-enforced (never translate) | canonical by convention |
 | --- | --- | --- |
-| `req` | `## Level` value: `MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`, `MAY` (RFC 2119); `## Priority` value (integer 0-99); the cross-reference tags | `## Characteristics` bullets (the ISO/IEC 25010:2023 characteristic names of `specmgr://iso25010`); `## Tags` bullets (labels used for grouping and filtering) |
+| `req` | `## Level` value: `BRS`, `StRS`, `SyRS`, `SRS` (ISO 29148 requirement specification kinds); `## Priority` value (integer 0-99); the cross-reference tags | `## Characteristics` bullets (the ISO/IEC 25010:2023 characteristic names of `specmgr://iso25010`); `## Tags` bullets (labels used for grouping and filtering) |
 | `gol` | `## Priority` value (integer 0-99); the cross-reference tags | `## Tags` bullets |
 | `uc` | `### Extension <N><letter>. <text>` heading token (`Extension`, the number, the optional lowercase letter, the dot); `### Step <N>: <text>` sub-variation heading token (`Step`, the number, the colon); numbered-list numbers | `### Level` words (`Summary`, `User Goal`, `Subfunction`); the `Subordinate:`, `Superordinate:`, `Extension:` labels in `### Related Use Cases` bullets and the `return to step N` / `continue to step N` phrases (read by the EN-only diagram renderer); `UC <uuid>` references |
 | `tsk` | the `[ ]` / `[x]` checkbox markers (and each item's checked state); the update-entry heading timestamp | |

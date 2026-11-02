@@ -106,8 +106,8 @@ Produce the full target body text.
 **Never translate (closed vocabulary and schema constants, REQ-010).** Copy
 these from the source exactly:
 - the YAML frontmatter is not part of the body you write; never add one;
-- `req`: the `## Level` value (`MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`,
-  `MAY`) and the numeric `## Priority` value; keep the `## Characteristics`
+- `req`: the `## Level` value (`BRS`, `StRS`, `SyRS`, `SRS`) and the
+  numeric `## Priority` value; keep the `## Characteristics`
   bullets (ISO/IEC 25010:2023 names) and `## Tags` bullets canonical;
 - `gol`: the numeric `## Priority` value; keep `## Tags` bullets canonical;
 - `rsk`: the `## Strategy` word (`transfer`, `accept`, `reduce`, `avoid`)

@@ -80,7 +80,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -88,7 +88,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
     """
 )
 _REQ_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized requirement sections.\n"
-_REQ_BAD_FIELD_BODY = _REQ_MINIMAL_BODY.replace("MUST", "NOT-A-VALID-LEVEL")
+_REQ_BAD_FIELD_BODY = _REQ_MINIMAL_BODY.replace("SRS", "NOT-A-VALID-LEVEL")
 _REQ_FULL_DOCUMENT = (
     textwrap.dedent(
         """\

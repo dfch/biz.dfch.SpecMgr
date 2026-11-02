@@ -161,10 +161,10 @@ class TestStatusEnumInvariance(unittest.TestCase):
 
 
 class TestReqLevelInvariance(unittest.TestCase):
-    """The req `## Level` RFC 2119 closed set parses identically after the `enum` metadata."""
+    """The req `## Level` ISO 29148 closed set parses identically after the `enum` metadata."""
 
     def test_every_allowed_level_still_parses(self) -> None:
-        for word in ["MUST", "SHOULD", "MUST NOT", "SHOULD NOT", "MAY"]:
+        for word in ["BRS", "StRS", "SyRS", "SRS"]:
             with self.subTest(level=word):
                 sut = ReqLevel.from_text(format_text(f"## Level\n\n{word}\n"))
                 self.assertEqual(sut.value.text, word)
@@ -172,10 +172,7 @@ class TestReqLevelInvariance(unittest.TestCase):
     def test_unknown_level_still_rejected_with_same_message(self) -> None:
         with self.assertRaises(ValidationError) as ctx:
             ReqLevel.from_text(format_text("## Level\n\nNEVER\n"))
-        self.assertIn(
-            "value must match pattern '^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$', got 'NEVER'",
-            str(ctx.exception),
-        )
+        self.assertIn("value must match pattern '^(BRS|StRS|SyRS|SRS)$', got 'NEVER'", str(ctx.exception))
 
 
 class TestTskCheckboxInvariance(unittest.TestCase):

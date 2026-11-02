@@ -137,7 +137,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -161,7 +161,7 @@ _REQ_UPDATED_BODY = textwrap.dedent(
 
     ## Level
 
-    SHOULD
+    SRS
 
     ## Source
 
@@ -871,9 +871,9 @@ _CASES: list[_Case] = [
         middle_replacement="Updated description text.",
         append_fragment="\n## Notes\n\nA note.\n",
         eof_marker="## Level",
-        eof_fragment="## Level\n\nSHOULD\n\n## Source\n\nThe TISBA.\n",
+        eof_fragment="## Level\n\nSRS\n\n## Source\n\nThe TISBA.\n",
         deletable_suffix="\n## Notes\n\nA note.\n",
-        field_error_marker="MUST",
+        field_error_marker="SRS",
         field_error_fragment="NOT-A-VALID-LEVEL",
         field_error_is_append=False,
         field_error_is_validation=True,

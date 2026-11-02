@@ -113,6 +113,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - [`biz.dfch.specmgr.general.models.heading_table`](biz.dfch.specmgr.general.models.heading_table.md) — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- [`biz.dfch.specmgr.general.models.iso29148`](biz.dfch.specmgr.general.models.iso29148.md) — Pydantic schema and parser for the ISO/IEC/IEEE 29148:2018 requirement-
 - [`biz.dfch.specmgr.general.models.language_list_result`](biz.dfch.specmgr.general.models.language_list_result.md) — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
 - [`biz.dfch.specmgr.general.models.parse_failure_result`](biz.dfch.specmgr.general.models.parse_failure_result.md) — The ``get_<d>`` tools' own non-raising, structured result for the one narrowly-scoped
@@ -135,6 +136,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.resources.ears`](biz.dfch.specmgr.general.resources.ears.md) — Resource: specmgr://ears -- the EARS requirement-phrasing templates (feat-92-resources REQ-006).
 - [`biz.dfch.specmgr.general.resources.i18n`](biz.dfch.specmgr.general.resources.i18n.md) — Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 - [`biz.dfch.specmgr.general.resources.iso25010`](biz.dfch.specmgr.general.resources.iso25010.md) — Resource: specmgr://iso25010 (Task 0.8.3; feat-92-resources Phase 1).
+- [`biz.dfch.specmgr.general.resources.iso29148`](biz.dfch.specmgr.general.resources.iso29148.md) — Resource: specmgr://iso29148 -- the ISO/IEC/IEEE 29148:2018 requirement-specifications guidance
 - [`biz.dfch.specmgr.general.resources.rasci`](biz.dfch.specmgr.general.resources.rasci.md) — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - [`biz.dfch.specmgr.general.resources.reference_graph`](biz.dfch.specmgr.general.resources.reference_graph.md) — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - [`biz.dfch.specmgr.general.resources.version`](biz.dfch.specmgr.general.resources.version.md) — Resource: specmgr://version — MCP server package version number.

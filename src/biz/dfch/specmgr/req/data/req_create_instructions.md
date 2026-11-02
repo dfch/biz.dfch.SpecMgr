@@ -18,14 +18,20 @@ step 1 if this is genuinely a new requirement.
 ## 1. Structure recap (body markdown only, no frontmatter block)
 - `# {title}` -- H1, mandatory, free-form.
 - Lead paragraph directly under the H1 -- the requirement statement
-  itself, mandatory.
+  itself, mandatory. Obligation is carried by the statement's phrasing,
+  not by a field: `shall` expresses an obligation, `should` a
+  recommendation whose deviation must be justified. Read `specmgr://ears`
+  before phrasing the statement.
 - `## Description` -- optional prose giving context/rationale.
 - `## Characteristics` -- mandatory bullet list of ISO 25010:2023 quality
   attributes (e.g. "Functional Suitability", "Performance Efficiency",
   "Compatibility", "Interaction Capability", "Reliability", "Security",
   "Maintainability", "Flexibility", "Safety"); at least one item.
-- `## Level` -- mandatory single-line obligation strength: one of
-  MUST / SHOULD / MUST NOT / SHOULD NOT / MAY (RFC 2119 keywords).
+- `## Level` -- mandatory single-line ISO 29148 requirement
+  specification kind: one of BRS / StRS / SyRS / SRS (the
+  ISO/IEC/IEEE 29148:2018 §3.2 abbreviations). Fetch the
+  `specmgr://iso29148` resource before filling this in (step 3) to
+  confirm what each kind means and which one applies.
 - `## Priority` -- optional single-line value, 0-99 (lower means more
   important). Default: 50.
 - `## Tags` -- optional bullet list of free-form labels.
@@ -42,17 +48,27 @@ step 1 if this is genuinely a new requirement.
 
 ## 2. Gather information before calling any tool
 Elicit (asking the user if not already given): the requirement statement,
-its characteristics, obligation level, and source, and optionally
-priority, tags, related artifacts, description, and notes.
+its characteristics, its ISO 29148 requirement specification kind
+(`## Level`), and source, and optionally priority, tags, related
+artifacts, description, and notes.
 
-## 3. Use the template/example tools as references
+## 3. Read the ISO 29148 requirement specifications before drafting `## Level`
+Before filling in `## Level`, fetch the cross-cutting
+`specmgr://iso29148` resource and read the four requirement
+specifications (BRS, StRS, SyRS, SRS) and the "When to use each"
+guidance. The `req` schema does not duplicate those definitions here --
+use the resource as the single source of truth for what each kind
+means, then ask the user (via the `question` tool) which of the four
+kinds this requirement is.
+
+## 4. Use the template/example tools as references
 Call the `get_req_template` and `get_req_example` tools as your
 starting point/style reference -- one hop each. Do not invent field
 names or section headings that are not present there. Call the
 `get_req_schema` tool (the generated JSON Schema) only when you are
 structurally uncertain or are resolving a validation error.
 
-## 4. Tool call sequence
+## 5. Tool call sequence
 1. Draft the body-only markdown per the structure above.
 2. Call `create_req(content)` -- `content` is body markdown only; the
    entire frontmatter is built automatically. A structural or field
@@ -62,7 +78,7 @@ structurally uncertain or are resolving a validation error.
    performs the same validation internally, so this step is never
    required, only a convenience.
 
-## 5. Later revisions
+## 6. Later revisions
 Any later change to this requirement should go through the `update_req` prompt
 (or directly through the generic `update(id, type="req", content)`,
 `set_status(id, type="req", status)`, and

@@ -109,7 +109,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -135,7 +135,7 @@ _REQ_SECOND_BODY = textwrap.dedent(
 
     ## Level
 
-    SHOULD
+    SRS
 
     ## Source
 
@@ -330,7 +330,7 @@ def _req_body_with_missing_gol_reference() -> str:
 
         ## Level
 
-        MUST
+        SRS
 
         ## Source
 
@@ -359,7 +359,7 @@ def _req_body_with_gol_reference_twice(gol_id: str) -> str:
 
         ## Level
 
-        MUST
+        SRS
 
         ## Source
 
@@ -399,7 +399,7 @@ def _req_body_with_30_references(first_id: str, second_id: str, missing_ids: lis
         "",
         "## Level",
         "",
-        "MUST",
+        "SRS",
         "",
         "## Source",
         "",

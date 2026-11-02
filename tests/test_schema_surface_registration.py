@@ -82,15 +82,17 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
 
         self.assertEqual(result, 124)
 
-    def test_resource_total_is_41(self) -> None:
+    def test_resource_total_is_42(self) -> None:
         """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 2 txt resources
         (``specmgr://txt/example``/``specmgr://txt/template``, the same Phase 130 import
         edge -- ``txt/__init__.py`` pulls ``txt.resources`` in with ``txt.tools``), + 1 for
         ``specmgr://i18n`` and + 1 for the ``specmgr://i18n/headings/{language}`` template
-        (feat-197-i18n Phase 130) = 41 (measured against the post-merge live surface)."""
+        (feat-197-i18n Phase 130), + 1 for ``specmgr://iso29148``
+        (feat-173-req-iso29148-level-set Phase 130) = 42 (measured against the post-merge
+        live surface)."""
         result = len(self._resources) + len(self._templates)
 
-        self.assertEqual(result, 41)
+        self.assertEqual(result, 42)
 
 
 if __name__ == "__main__":

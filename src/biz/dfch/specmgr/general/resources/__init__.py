@@ -34,7 +34,12 @@ templates guidance resource (``specmgr://ears``, feat-92-resources
 REQ-006) -- cross-cutting domain knowledge for any requirement-phrasing
 document type (``req``, ``gol``, ``sysrs``, ...), not owned by any single
 domain's own schema, mirroring ``dtais``'s cross-domain placement
-rationale. ``reference_graph`` registers the frozen reference-graph
+rationale. ``iso29148`` registers the ISO/IEC/IEEE 29148:2018
+requirement-specifications guidance resource (``specmgr://iso29148``,
+feat-173-req-iso29148-level-set Phase 130) -- cross-cutting domain
+knowledge for ``req``'s ``## Level`` closed set (BRS/StRS/SyRS/SRS), not
+owned by ``req``'s own schema, mirroring ``ears``'s cross-domain
+placement rationale. ``reference_graph`` registers the frozen reference-graph
 rulebook resource (``specmgr://reference-graph``,
 feat-207-reference-graph Phase 100) -- the deterministic PlantUML
 component-diagram spec for the cross-reference network (emission layout +
@@ -66,7 +71,7 @@ Import this package to load all cross-cutting resources at once::
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)
 """
 
-from . import config, dtais, ears, i18n, iso25010, rasci, reference_graph, version  # noqa: F401
+from . import config, dtais, ears, i18n, iso25010, iso29148, rasci, reference_graph, version  # noqa: F401
 from .i18n import i18n_headings  # noqa: F401
 
 __all__ = [
@@ -76,6 +81,7 @@ __all__ = [
     "i18n",
     "i18n_headings",
     "iso25010",
+    "iso29148",
     "rasci",
     "reference_graph",
     "version",

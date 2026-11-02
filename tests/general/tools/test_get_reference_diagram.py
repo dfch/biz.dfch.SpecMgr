@@ -372,7 +372,7 @@ class TestTxtNodeDiagram(_SeededRegistryTestCase):
             "\n"
             "## Level\n"
             "\n"
-            "MUST\n"
+            "SRS\n"
             "\n"
             "## Source\n"
             "\n"

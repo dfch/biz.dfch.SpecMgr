@@ -340,6 +340,17 @@ rasci_vs_raci
 # attribute. `Ears.patterns`/`.when_to_use` ARE read by
 # `_validate_when_to_use_matches_patterns`, so they need no entry here.
 combining_patterns
+# iso29148 (feat-173-req-iso29148-level-set Phase 130): `Iso29148`'s own
+# `mapping`/`obligation` fields are leaf sections deliberately never
+# cross-checked by any `model_validator` (their presence and position are
+# pinned by the declaration order itself, the `combining_patterns`
+# precedent), so nothing in `src/` accesses them as plain attributes.
+# `Iso29148.intro`/`.specifications`/`.when_to_use`/`.characteristics` need
+# no entries -- `intro`/`characteristics` are already listed above, and
+# `specifications`/`when_to_use` ARE read by
+# `_validate_when_to_use_matches_patterns`.
+mapping
+obligation
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
