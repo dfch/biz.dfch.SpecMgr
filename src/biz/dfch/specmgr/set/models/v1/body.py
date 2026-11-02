@@ -211,10 +211,10 @@ class Set(MarkdownSection1):
         """Reject duplicate `(tag, id)` pairs across `## Items`.
 
         Two bullets that reference the same artifact -- the same reference
-        tag and the same id (case-normalized: the tag uppercased, the id
-        lowercased, the shapes the patterns accept are already canonical
-        case) -- are a duplicate and rejected (the VCR `AC-NNN`/DEC
-        `Option N` duplicate-number guard precedent). The id is compared
+        tag and the same id (the id lowercased; the tag arrives uppercase
+        from the bullet pattern) -- are a duplicate and rejected (the VCR
+        `AC-NNN`/DEC `Option N` duplicate-number guard precedent). The id
+        is compared
         exactly as spelled in the bullet: the bare `feat-NNN` number and
         the full `feat-NNN-slug` id are two different spellings of one
         feature and are therefore two different pairs here (a resolver's

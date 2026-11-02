@@ -25,8 +25,7 @@ abbreviations), §5.4 (the mapping sentence, reproduced verbatim),
 §6.2-6.4 (the processes: business or mission analysis; stakeholder needs
 and requirements definition; system [software] requirements definition),
 §8.2-8.5 (the example outlines), §9.3-9.6 (the normative content clauses),
-and §5.2.6 (the "Characteristics of a set of requirements" list, the
-input guidance for the deferred Phase 180 SET work).
+and §5.2.6 (the "Characteristics of a set of requirements" list).
 
 Mirrors :mod:`biz.dfch.specmgr.general.models.ears`'s shape closely: an
 H1-rooted document (:class:`Iso29148`, a `MarkdownSection1` subclass)
@@ -909,8 +908,9 @@ characteristic:
 Parameters
 ----------
 intro:
-    The note that the list is the input guidance for examining a
-    requirement set (the deferred Phase 180 SET work). Mandatory.
+    The note that the standard's §5.2.6 lists the characteristics a
+    set of requirements must exhibit, and that the list below
+    reproduces them. Mandatory.
 items:
     The `` **`Name`** -- {description} `` entries, in document order.
     Exactly 5, and exactly the closed, ordered

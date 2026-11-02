@@ -768,7 +768,7 @@ def _set_classification_txt(
 def _set_classification_set(
     id_: str, classification: str, language: str = DEFAULT_LANGUAGE
 ) -> SetFrontmatter | ParseFailureResult:
-    """Replace the classification of the free-form text document identified by ``id_``.
+    """Replace the classification of the set document identified by ``id_``.
 
     Mirrors :func:`_set_classification_sysrs`'s shape (same ``set_lock``,
     ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is

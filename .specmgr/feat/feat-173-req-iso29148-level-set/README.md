@@ -4,7 +4,7 @@ created: '2026-10-26T09:06:20.846+01:00'
 id: feat-173-req-iso29148-level-set
 status: review
 type: feat
-updated: '2026-11-02T13:46:42.000Z'
+updated: '2026-11-02T19:08:31.000Z'
 version: 1.0.0
 ---
 
@@ -167,6 +167,10 @@ Issue #173 has two work packages. This feature's Phases 110-170 implement the fi
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-02 19:08:31.000Z - Post-merge review findings addressed (G1/D1/D2/I1/I2)
+
+**Merge + conflict resolutions:** `origin/dev` merged into the branch at `e516eab` (PR #254); the shared-housekeeping conflicts (AGENTS.md, CHANGELOG.md, docs/MCP.md, docs/GENERATED.md, docs/api/, the `specmgr://harness-bundle` data file + its `tests/commands/test_harness_bundle.py` pin, and the surface-count tests `tests/test_schema_surface_registration.py` / `tests/general/tools/test_i18n_language_surface_guard.py`) resolved by taking the union of both branches' registrations. **Post-merge gate:** `ruff format --check` / `ruff check` / `vulture` green; full suite 5935 passed / 18 skipped / 9667 subtests; live surface 45 resources / 131 tools (the feature's 44 + dev's `specmgr://harness-bundle`). **feat-reviewer verdict:** no code errors — documentation/scope findings G1/D1/D2/I1/I2/I3, with I4 noted-not-a-defect (the `set` `Description` field-less-leaf follows the engine's own precedent). **Fixed this pass:** G1 — migrated the orphaned `tests/feat-6-requirement-artifact/examples/req-bb880f3c-…-no-local-user-database.md` `## Level` value `MUST` → `SRS` (confirmed unreferenced by `tests/`/`src/`/`.specmgr/`; the repo-wide sweep for a legacy `## Level` value shows every REQ-shaped document clean — the only 3 remaining `MUST` value lines sit in the feat-12/feat-16 session transcripts (`.specmgr/feat/*/session-*.md`), which are verbatim recorded conversations, not REQ documents, and are deliberately left untouched — rewriting history would falsify the record); D1 — appended `set` to the six generic-tool type lists in AGENTS.md's `general/` bullet (`update` / `edit` / `set_classification` / `delete` / `validate` / `list_references`); D2 — reworded the stale "deferred Phase 180 … builds on it" prose in `general_iso29148.md` and the `iso29148.py` module / `Characteristics` docstrings (and the `intro` Field description) to present-tense standard documentation; I1 — fixed the two `set` adapters' copy-paste "free-form text" → "set" docstrings; I2 — corrected the `## Items` duplicate-guard docstring's overstated case-normalization claim to match the code (id lowercased; tag fixed uppercase by the bullet pattern); I3 — this entry. `docs/api/` regenerated via `specmgr docs` (the `iso29148.py` rewording); `docs/MCP.md` unchanged (`specmgr mcp-docs` no diff — no registration change).
 
 #### 2026-11-02 13:46:42.000Z - Status set to review — implementation complete (Phases 110-180)
 

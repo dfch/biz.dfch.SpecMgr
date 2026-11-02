@@ -827,7 +827,7 @@ type or cross-cutting:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
     *and* line-range replace for the whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt, read-style
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set, read-style
     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
     `limit` = count; omitted `limit` = through end of body, `0` = pure
     insert, `offset` `N+1` = append; strict validation, never clamped),
@@ -889,7 +889,7 @@ type or cross-cutting:
     generic surgical exact-match
     string replacement of an existing document's frontmatter-stripped body
     across the whole-body domains (`type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; `adr` excluded —
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; `adr` excluded —
     unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
     `ValueError` for an unknown or `adr` `type`, following the generic
     `validate` tool's precedent): `old_str` must match the on-disk body
@@ -905,19 +905,20 @@ type or cross-cutting:
     domain incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`; `set_classification`, the generic free-text
     `classification` frontmatter field change for the whole-body
-    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set
     (`adr` excluded, same as `update`/`delete`, since ADR's separate
     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
     the body and every other frontmatter field untouched, with a
     blank/whitespace-only value clearing `classification` back to
     `None`/absent; `delete`, the generic type-dispatched hard-delete
     for the whole-body domains — `type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt (`adr` excluded), every one of these
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set (`adr` excluded), every one of these
     domains implements a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
     resolving by `id`, taking the domain's own lock, and returning the
     deleted path; `validate`, the generic, disk-free/id-free dry-run
-    content validator for the same whole-body domains (`adr`
+    content validator for the same whole-body domains (`type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; `adr`
     excluded, `validate_adr` remains its own standalone tool) —
     replacing the former per-domain `validate_<d>` tools
     (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
@@ -947,7 +948,7 @@ type or cross-cutting:
     750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
     cross-domain cross-reference listing tool (feat-144-ref-artifact,
     GitHub issue #144) — takes a *source* document's `type` (one of
-    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt) + `id`,
+    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) + `id`,
     regex-scans the source's frontmatter-stripped body for `<TYPE>
     <id>` references (the reference-tag vocabulary
     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT; case-insensitive tag,

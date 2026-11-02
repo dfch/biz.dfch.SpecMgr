@@ -81,9 +81,7 @@ phrasing a requirement statement.
 ## Characteristics of a set of requirements
 
 The standard's §5.2.6 lists the characteristics a set of requirements must
-exhibit; the list below is the input guidance for examining a requirement
-set, and feat-173's deferred Phase 180 (the `SET` artifact type) builds on
-it.
+exhibit, and the list below reproduces them.
 
 - **`Complete`** -- no requirement the set's purpose needs is missing from
   the set.

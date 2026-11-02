@@ -287,7 +287,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 
 ### `_set_status_set(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult'`
 
-Replace the status of the free-form text document identified by ``id_``.
+Replace the status of the set document identified by ``id_``.
 
 Mirrors :func:`_set_status_sysrs`'s shape (same ``set_lock``,
 ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
