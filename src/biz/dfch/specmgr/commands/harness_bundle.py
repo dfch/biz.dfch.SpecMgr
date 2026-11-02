@@ -20,8 +20,11 @@
 Like ``specmgr docs``/``specmgr adr-toc`` regenerate committed documentation
 from the codebase, this command regenerates the single committed package-data
 bundle from the repo layout -- read from the current working directory, so
-the repo root must be the CWD (a missing ``.opencode/`` directory is a usage
-error, exit 2, nothing written).
+the repo root must be the CWD. A missing ``.opencode/`` directory, a scoped
+markdown file that is not decodable as UTF-8 (or otherwise unreadable), and
+an unwritable or uncreatable bundle output path are usage errors: each is a
+deterministic stderr message naming the problem, exit 2, nothing written,
+and no traceback.
 
 It enumerates every ``*.md`` file recursively under exactly
 ``.opencode/{agent,command,skill}/`` -- exact top-level directory-name
@@ -103,6 +106,10 @@ in order.
      (for example agents/ where <path> starts with agent/, or skills/ where it
      starts with skill/), use that existing plural-variant directory in the target
      instead, so no file is registered twice under both spellings.
+   - If the root contains both a singular and a plural directory for the same first
+     path segment (for example both agent/ and agents/), do not guess: ask the user
+     which one to install into (for OpenCode: the question tool) and report the other
+     one as needing manual cleanup.
 
 3. Install the file at its target:
    - The target does not exist: create its parent directories and write "content"
@@ -175,13 +182,15 @@ def _stray_markdown_warnings(opencode_dir: Path) -> list[str]:
     return result
 
 
-def generate_bundle_text(opencode_dir: Path) -> str:
+def generate_bundle_text(opencode_dir: Path) -> tuple[str, int]:
     """Serialize the harness bundle over ``opencode_dir``'s scoped markdown tree.
 
-    Pure: reads the tree, writes nothing. The returned text is exactly what
-    the command writes to disk -- ``json.dumps(indent=2, ensure_ascii=False)``
-    plus a trailing newline, no timestamps -- so two calls over an unchanged
-    tree are byte-identical.
+    Pure: reads the tree, writes nothing. Returns the bundle text together
+    with the number of bundled files -- the text is exactly what the command
+    writes to disk (``json.dumps(indent=2, ensure_ascii=False)`` plus a
+    trailing newline, no timestamps, so two calls over an unchanged tree are
+    byte-identical), and the count comes from the same single pass over the
+    scoped tree, so the caller never has to enumerate it a second time.
     """
     files: list[dict[str, str]] = []
     for path in _scoped_markdown_files(opencode_dir):
@@ -190,7 +199,8 @@ def generate_bundle_text(opencode_dir: Path) -> str:
         rel_path = path.relative_to(opencode_dir).as_posix()
         files.append({"path": rel_path, "sha256": digest, "content": content})
     payload: dict[str, Any] = {"instructions": INSTRUCTIONS, "files": files}
-    result = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    result = (text, len(files))
     return result
 
 
@@ -205,8 +215,11 @@ def harness_bundle() -> None:
     (``{"instructions", "files": [{"path", "sha256", "content"}]}``,
     ``json.dumps(indent=2, ensure_ascii=False)`` + trailing newline, no
     timestamps) to ``src/biz/dfch/specmgr/general/data/general_harness_bundle.json``
-    under the repo root. A missing ``.opencode/`` directory is a usage
-    error (exit 2, nothing written). Prints a summary line (file count,
+    under the repo root. A missing ``.opencode/`` directory, a scoped
+    markdown file that is not decodable as UTF-8 (or otherwise unreadable),
+    and an unwritable or uncreatable bundle output path are usage errors
+    (each: one deterministic stderr message naming the problem, exit 2,
+    nothing written, no traceback). Prints a summary line (file count,
     total bytes, output path). Run this after any change to a bundled
     ``.opencode/`` markdown file and commit the result (the
     ``specmgr-harness-bundle`` pre-commit hook and the CI parity check fail
@@ -226,10 +239,27 @@ def harness_bundle() -> None:
     for warning in _stray_markdown_warnings(opencode_dir):
         typer.echo(f"⚠ {warning}", err=True)
 
-    text = generate_bundle_text(opencode_dir)
-    file_count = len(_scoped_markdown_files(opencode_dir))
+    try:
+        text, file_count = generate_bundle_text(opencode_dir)
+    except (UnicodeDecodeError, OSError) as error:
+        typer.echo(
+            f"error: {error} -- a scoped .opencode/ markdown file could not be read "
+            "(not decodable as UTF-8 or unreadable); nothing was written.",
+            err=True,
+        )
+        raise typer.Exit(2) from None
+
     output_path = repo_root / _BUNDLE_RELPATH
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(text, encoding="utf-8")
+    try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(text, encoding="utf-8")
+    except (UnicodeDecodeError, OSError) as error:
+        typer.echo(
+            f"error: {error} -- the bundle output path {output_path} is unwritable or "
+            "uncreatable; nothing was written.",
+            err=True,
+        )
+        raise typer.Exit(2) from None
+
     byte_count = len(text.encode("utf-8"))
     typer.echo(f"✓ Wrote {file_count} harness file(s) ({byte_count} bytes) to {output_path}")

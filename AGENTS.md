@@ -1684,7 +1684,8 @@ extras onto every consumer of the base library.
   similarly-named directory such as the former `zZz-skill/`) warns on
   stderr (one warning per stray top-level entry) and is never bundled; a
   missing `.opencode/` directory is a usage error. Exit codes: **0**
-  written, **2** usage error (missing `.opencode/`, nothing written).
+  written, **2** usage error (missing `.opencode/`, a non-decodable scoped
+  file, or an unwritable output path -- nothing written).
   Drift guards: the `specmgr-harness-bundle` pre-commit hook (the same
   regenerate + `git diff --exit-code` pair, scoped to
   `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
