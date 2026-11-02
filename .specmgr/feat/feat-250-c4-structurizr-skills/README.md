@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
-status: planning
+status: progress
 type: feat
-updated: '2026-11-01T15:45:39.084+01:00'
+updated: '2026-11-02T09:13:42.000+01:00'
 version: 1.0.0
 ---
 
@@ -126,17 +126,17 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 
 #### Phase 100: Measurement Harness
 
-- [ ] Task 100.100: Create the harness package `evals/c4-skills/` (Python, standard library only) with the run entry point, decide how `evals/` is made importable, and record that decision (an ADR if it is structure-level, otherwise the Updates log).
-- [ ] Task 100.110: Build the trial container and the injected OpenCode configuration (provider `vllm-sys0`, MCP sidecar, denied web access, condition-specific skills, the `upstream` skills fetched at the pinned SHA).
-- [ ] Task 100.120: Start and pin the `structurizr/mcp` sidecar and the Structurizr CLI image used by the graders as a matching pair, and pin the OpenCode image, the Python and `jq` versions and the `jrjsmrtn/c4-skills` commit SHA. Define the version tuple and the skill-variant content hash.
-- [ ] Task 100.130: Write the runner: sequential trials, random condition order with a recorded seed, per-trial timeout, the refusal to start on a busy vLLM, the re-check between trials, the recording of all versions, and the result cache for `none` and `upstream`.
-- [ ] Task 100.140: Write the parser for the `--format json` event stream and the metrics, including `validated_before_return` and the calls to `parse`, `validate` and `inspect`.
-- [ ] Task 100.150: Write the report: pass rates, the gate margins of ACC-008 and ACC-012, the per-case rule, Wilson intervals and pass^k as information, per-gate failures.
-- [ ] Task 100.160: Write unit tests under `tests/evals/` for the parser, the metrics, the intervals and the graders, using fixed known-good and known-bad workspaces and pre-exported JSON fixtures, with no model call. Tests that need the Structurizr CLI are skipped when Docker is missing.
-- [ ] Task 100.170: Run `none` against `upstream` on a small smoke case, record the real time per trial, and record the expected cost per phase and in total against the budget in Measurement.
-- [ ] Task 100.180: Write the preflight that records the vLLM endpoint, provider id, model id, speculative configuration and sampling parameters, and checks that the server is idle.
-- [ ] Task 100.190: Verify the licenses of `jrjsmrtn/c4-skills`, `passionsplay/structurizr-skill` and `structurizr/structurizr.github.io`, and record the provenance table (commit, license file, license type, check date). Move any source with an unconfirmed license to "ideas only".
-- [ ] Task 100.200: Add the repository housekeeping for `evals/`: `.gitignore` entries for trial work directories and cache, the treatment of `evals/` by ruff and pylint, the pytest import path, and a note that the pre-commit pytest hook is scoped to `src/` and `tests/` changes.
+- [x] Task 100.100: Create the harness package `evals/c4-skills/` (Python, standard library only) with the run entry point, decide how `evals/` is made importable, and record that decision (an ADR if it is structure-level, otherwise the Updates log).
+- [x] Task 100.110: Build the trial container and the injected OpenCode configuration (provider `vllm-sys0`, MCP sidecar, denied web access, condition-specific skills, the `upstream` skills fetched at the pinned SHA).
+- [x] Task 100.120: Start and pin the `structurizr/mcp` sidecar and the Structurizr CLI image used by the graders as a matching pair, and pin the OpenCode image, the Python and `jq` versions and the `jrjsmrtn/c4-skills` commit SHA. Define the version tuple and the skill-variant content hash.
+- [x] Task 100.130: Write the runner: sequential trials, random condition order with a recorded seed, per-trial timeout, the refusal to start on a busy vLLM, the re-check between trials, the recording of all versions, and the result cache for `none` and `upstream`.
+- [x] Task 100.140: Write the parser for the `--format json` event stream and the metrics, including `validated_before_return` and the calls to `parse`, `validate` and `inspect`.
+- [x] Task 100.150: Write the report: pass rates, the gate margins of ACC-008 and ACC-012, the per-case rule, Wilson intervals and pass^k as information, per-gate failures.
+- [x] Task 100.160: Write unit tests under `tests/evals/` for the parser, the metrics, the intervals and the graders, using fixed known-good and known-bad workspaces and pre-exported JSON fixtures, with no model call. Tests that need the Structurizr CLI are skipped when Docker is missing.
+- [x] Task 100.170: Run `none` against `upstream` on a small smoke case, record the real time per trial, and record the expected cost per phase and in total against the budget in Measurement.
+- [x] Task 100.180: Write the preflight that records the vLLM endpoint, provider id, model id, speculative configuration and sampling parameters, and checks that the server is idle.
+- [x] Task 100.190: Verify the licenses of `jrjsmrtn/c4-skills`, `passionsplay/structurizr-skill` and `structurizr/structurizr.github.io`, and record the provenance table (commit, license file, license type, check date). Move any source with an unconfirmed license to "ideas only".
+- [x] Task 100.200: Add the repository housekeeping for `evals/`: `.gitignore` entries for trial work directories and cache, the treatment of `evals/` by ruff and pylint, the pytest import path, and a note that the pre-commit pytest hook is scoped to `src/` and `tests/` changes.
 
 #### Phase 110: Skill structurizr-validate-loop
 
@@ -194,11 +194,29 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 
 ### Current Status
 
-**As of 2026-11-01**: Planning. The plan is refined after review (tool binding, triage of `inspect` findings, gate margins, held-out rule, pinning, licensing and housekeeping). Implementation has not started.
+**As of 2026-11-02**: Phase 100 (Measurement Harness) is done. The harness lives in `evals/c4-skills/` (standard library only, inner importable package `c4_skills/` plus the thin `run.py` launcher), with 63 unit tests under `tests/evals/` (no model call; the four Docker-dependent CLI tests skip when Docker is missing). All pins are recorded in `c4_skills/pins.py` (version tuple hash `0de1ba98…95a7b4`), the provenance table is committed at `evals/c4-skills/results/provenance.md` (all three sources confirmed MIT), and the Phase 100 smoke run (canonical record `evals/c4-skills/results/smoke-2026-11-02T065731Z/`, seed 602651) shows the full pipeline working: `none` 1/2 (one 1200 s timeout under a slow shared-server window), `upstream` 2/2, expected full-run cost 16.0 h at the observed median per-trial time (budget 30 h). Phase 110 can start.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-02 08:13:42.000Z - Phase 100 (Measurement Harness) complete
+
+Tasks 100.100-100.200 are done; the quality gates are green (ruff format/check, vulture, full pytest suite 5702 passed / 18 skipped, `specmgr lint` on this README).
+
+**Harness and importability.** `evals/c4-skills/` holds the standard-library-only harness: inner importable package `c4_skills/` + the thin launcher `run.py` (the hyphenated folder name is not a legal package name); `tests/evals/conftest.py` does the same `sys.path` insertion for the 63 unit tests. Nothing is added to the wheel or the harness bundle; `pyproject.toml` is untouched. Decision recorded in Decisions Made (not an ADR: feature-scoped, development-only infrastructure).
+
+**Pins and version tuple.** `ghcr.io/anomalyco/opencode:2.2.5` (digest `sha256:1690aad6…`), the spike-verified matching pair `structurizr/mcp:2026.04.20` + `structurizr/structurizr:2026.10.26-noble` (digests recorded), vLLM 0.26.0 serving `qwen3.8-27b-bf16-896k` at `http://127.0.0.1:8081/v1` (max_model_len 917504), host Python 3.13.13 (the uv project Python), jq 1.6, upstream `jrjsmrtn/c4-skills` @ `e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b` (re-verified against the GitHub API). The version tuple is the canonical JSON of these pins plus the injected sampling parameters (temperature 0.0, top_p 1.0, seed 1337); its sha256 is `0de1ba9850e9d7e426a2f12a852cf17d25b2f2f5d0d12f528ce3b4cb2395a7b4`. Skill-variant content hash = sha256 over the sorted (relative path, sha256 of content) pairs of the condition's skill files; `none` hashes the empty set (`4f53cda1…61202b945`). The preflight re-checks the mutable values (vLLM version/model, image digests, Python, jq) with every run and aborts on a mismatch; the speculative configuration (MTP, 5 tokens) is recorded as "as deployed, not externally verifiable" (vLLM 0.26.0 exposes no external metric for it).
+
+**Trial container and networking.** Trials run in `ghcr.io/anomalyco/opencode:2.2.5` with `--network host` (vLLM and the sidecar are bound to 127.0.0.1; there is no bridge route to them), a fresh work dir per trial, no host OpenCode config, no `AGENTS.md`, skills only from the condition (mounted at `.opencode/skills/<name>/` inside the work dir), and the injected `OPENCODE_CONFIG_CONTENT` denying `webfetch`/`websearch`/`question`. The harness starts its own pinned `structurizr/mcp` sidecar on a free ephemeral host port (health-checked with a real MCP initialize + tools/list round trip; the dev MCP on port 3000 is never used) and tears it down after the run. Trial and CLI containers run as the host uid:gid so work-dir files stay host-owned. The event-stream schema was verified empirically (a probe trial capture is committed at `results/probe-schema-3/` and pinned as a test fixture).
+
+**Smoke run (Task 100.170).** The canonical record is `results/smoke-2026-11-02T065731Z/` (k=2, seed 602651): `none` 1/2 (none-k0 PASS 83.0 s, none-k1 TIMEOUT at 1200 s with a valid on-disk workspace — the 06:57-07:17 UTC window ran under external shared-GPU load), `upstream` 2/2 (180.0 s and 42.6 s, the `structurizr-dsl` skill loaded in both). Two earlier runs are kept as history: `smoke-2026-11-01T224901Z` (first end-to-end proof: `none` k0 PASS in 27.5 s; its `none` k1 trial hit the 1200 s timeout, and killing the `docker run` client on timeout orphaned that trial's container — opencode 2.x starts a managed service on a random host-network port, and the next trial's container picked the same port and exited 1 before any model call. Fixed by running the trial container detached under a name, `docker kill`-ing the container (never just the client) on timeout, and sweeping stray `c4eval-trial-*` containers at run start) and `smoke-2026-11-02T053217Z` (a degraded-server window, ~10x slower per token: both `none` trials timed out at 1200 s, both `upstream` trials passed in 180.0 s / 42.6 s once the window passed; its `upstream` results are the ones the canonical run reused from the result cache, with the event streams copied over). No trial was contended-flagged in the canonical run (the runner's idle-wait absorbed the other clients; waits are recorded per trial, 0-556 s).
+
+**Cost vs budget (Measurement).** Measured per-trial times in the healthy windows: 27.5 s, 83.0 s, 42.6 s, 180.0 s, plus run 1's verbose upstream trial at 608 s (10 steps, 185k input tokens — the agent iterated on the model without ever calling the MCP). The canonical run's report estimates the full 90-trial run at 16.0 h at the observed median (641.9 s, dominated by one timeout) and 30.0 h worst case at the 1200 s timeout — both within the ~30 h budget. With `none`/`upstream` cached per (case, condition, version tuple, grader hash, skill variant hash), a skill phase pays only its `skill` trials plus uncached baselines (at the healthy-window median of ~100 s, a 3-case phase ≈ 15 skill trials ≈ 25-45 min of model time).
+
+**Licenses (Task 100.190).** All three adaptation sources are confirmed MIT at the pinned commits (provenance table at `results/provenance.md`): `jrjsmrtn/c4-skills` `e86d8a91…` (LICENSE, "Copyright (c) 2026 Georges Martin"), `passionsplay/structurizr-skill` `5e45154e…` (LICENSE, "Copyright (c) 2026 Benjamin Turner"), `structurizr/structurizr.github.io` `530a9645…` (LICENSE, MIT per the GitHub API; boilerplate copyright "2022 just-the-docs" from the Jekyll theme). Nothing moved to "ideas only".
+
+**Housekeeping (Task 100.200).** `.gitignore` now covers `evals/c4-skills/work/`, `evals/c4-skills/cache/` and `evals/c4-skills/.upstream/` (raw trial work dirs, the result cache, the fetched upstream checkout — never committed); committed run records under `results/` stay small (KB-scale event streams, capped at 2 MB per trial). ruff lints `evals/` from the repo root (enforced, green); pylint (advisory, `git ls-files '*.py'`) sees the files once committed; the pytest import path is the `tests/evals/conftest.py` `sys.path` insertion. The pre-commit pytest hook is scoped to `src/`+`tests/` changes, so the new `tests/evals/` tests run in pre-commit and CI. See `evals/c4-skills/README.md` for the layout and run instructions.
 
 #### 2026-11-01 15:40:00.000Z - Plan refined after review
 
@@ -211,3 +229,21 @@ The plan now reuses MIT-licensed sources (adapted, with attribution only where a
 #### 2026-11-01 13:10:53.141Z - Created
 
 The plan is created from GitHub issue 250.
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-02 08:13:42.000Z - Phase 100 harness decisions
+
+Recorded per the AGENTS.md criteria: all of these are feature-scoped, development-only infrastructure (nothing in `src/`, nothing shipped), so they live here, not in ADRs.
+
+- **Importability (Task 100.100)**: `evals/c4-skills/` is not a legal package name (hyphen), so the harness keeps an inner importable package `c4_skills/` plus the thin launcher `evals/c4-skills/run.py`; `tests/evals/conftest.py` performs the same `sys.path` insertion for the unit tests. No `pyproject.toml` change, nothing in the wheel, nothing imported from `src/`.
+- **Trial networking**: `--network host` for trial containers (vLLM at `127.0.0.1:8081` and the harness sidecar are loopback-bound; the default bridge network has no route to them). "Isolation" stays the plan's filesystem/config isolation (fresh work dir, no host OpenCode config, condition-only skills, web denied) — not network isolation.
+- **Container user + timeout semantics**: trial and grader-CLI containers run as the host uid:gid (work-dir files stay host-owned; root-owned files in the gitignored work roots would need docker to clean up). On a per-trial timeout the harness `docker kill`s the trial container by name — killing only the `docker run` client orphans the container, and opencode 2.x's managed service keeps a random host-network port bound (this collided with the next trial in smoke run 1); a stray-container sweep runs at every start.
+- **Sidecar**: the harness starts its own `structurizr/mcp` sidecar per run on a free ephemeral host port (never 3000/9797, the dev services' ports), health-checked with a real MCP `initialize` + `tools/list` round trip against the pinned six-tool set, torn down in a `finally`.
+- **Skill mount + discovery**: condition skills are copied into the trial work dir at `.opencode/skills/<name>/` (opencode 2.x's project location, plural `skills/`; the singular `skill/` remains supported for backwards compatibility). A live probe verified discovery and loading (the `skill` tool takes the identifier as `id`).
+- **Gates over the export JSON**: the `has_view` gate counts only user-defined views — the JSON exporter auto-generates `generatedKey` views (one container view per system, a system context view, a system landscape view) for every workspace. `relationship_technology` and every element count work on the deduplicated model relationships (view-scoped linked copies, carrying `linkedRelationshipId`, are excluded).
+- **jq-style queries in pure Python**: the stdlib-only constraint rules out shelling to `jq` inside the grader, so the queries are implemented as pure functions over the parsed `export -format json` document (unit-testable on pre-exported fixtures, ACC-006); the host `jq` 1.6 is still pinned and recorded because ad-hoc verification of exports uses it.
+- **Sampling parameters**: injected through the documented provider model `options` block (`temperature` 0.0, `topP` 1.0, `seed` 1337) and recorded in every preflight; their server-side application is not independently verified (the shared vLLM's throughput varies under external load, and the plan only requires recording what the harness injects).
+- **Canonical Phase 100 record**: `results/smoke-2026-11-02T065731Z/` (seed 602651); the two earlier smoke runs are kept as shared-server history (one healthy-window proof, one degraded window). A trial that timed out under a slow window is a flagged failure per the plan, not re-scored.
