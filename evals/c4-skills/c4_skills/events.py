@@ -22,7 +22,7 @@ OpenCode emits one JSON object per line. The shapes are version-dependent
 
 - it indexes every event by its top-level `type` token and keeps the raw
   objects (the committed fixture
-  ``tests/evals/fixtures/events/smoke-hello.ndjson`` pins the exact schema);
+  ``tests/evals/fixtures/events/probe-hello.ndjson`` pins the exact schema);
 - it recognises part-level types (`step-start`/`step`, `text`, `tool`,
   `reasoning`) wherever they appear under `part`, so a rename of one token
   degrades to an `unknown` count instead of a crash;

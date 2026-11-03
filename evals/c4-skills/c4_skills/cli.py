@@ -26,6 +26,23 @@ Subcommands:
 - ``run`` -- the full measurement run (Task 100.130).
 - ``report`` -- rebuild the report from an existing results dir.
 
+Exit codes (the documented contract, enforced by ``main``):
+
+- ``0`` -- ok.
+- ``1`` -- a runtime-shaped failure: a pin/preflight violation, the
+  sidecar or a trial container failing, a missing/failed docker or git
+  call (``RuntimeError``), or an I/O failure (``OSError``).
+- ``2`` -- a usage-shaped failure: an unknown case or gate
+  (``KeyError``), an invalid caller argument such as ``k <= 0`` or a
+  missing/misplaced ``--skills-dir`` (``ValueError``), or a caller
+  precondition on an artifact the command needs -- e.g. ``report``
+  against a results dir without ``run.json`` (``AssertionError``).
+
+Any other exception type is a harness bug and propagates as a raw
+traceback on purpose (it must not be papered over by an exit code).
+The ``probe`` subcommand additionally returns 2 for a failed probe
+outcome (a probe that did not verify the chain is not a pin failure).
+
 The harness is standard-library only; Docker and git are the only external
 tools (both host prerequisites recorded in the preflight).
 """
@@ -145,6 +162,17 @@ def cmd_run(args: argparse.Namespace) -> int:
     """Run the full measurement (the `run` subcommand)."""
     cases = [c.strip() for c in args.cases.split(",") if c.strip()]
     conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
+    if not cases:
+        raise ValueError("at least one case is required")
+    if not conditions:
+        raise ValueError("at least one condition is required")
+    if args.k <= 0:
+        raise ValueError(f"k must be > 0, got {args.k}")
+    if pins.CONDITION_SKILL in conditions:
+        if args.skills_dir is None:
+            raise ValueError("the skill condition needs --skills-dir <path>")
+    elif args.skills_dir is not None:
+        raise ValueError("--skills-dir is only valid with the skill condition")
     for case_id in cases:
         get_case(case_id)  # unknown case -> KeyError -> usage error
     for condition in conditions:
@@ -163,6 +191,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         cache_root=Path(args.cache) if args.cache else DEFAULT_CACHE_ROOT,
         timeout_s=args.timeout,
         label=args.label,
+        skills_dir=Path(args.skills_dir) if args.skills_dir else None,
     )
     config.results_dir.mkdir(parents=True, exist_ok=True)
     print(f"run {run_id}: cases={cases} conditions={conditions} k={config.k} seed={config.seed}")
@@ -224,6 +253,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--results-dir", default=None)
     p.add_argument("--workroot", default=None)
     p.add_argument("--cache", default=None)
+    p.add_argument(
+        "--skills-dir",
+        default=None,
+        help="the skill condition's variant directory (a skill folder or a root of skill folders)",
+    )
     p.add_argument("--timeout", type=int, default=pins.TRIAL_TIMEOUT_S, help="per-trial timeout in seconds")
     p.add_argument(
         "--comparison", default=pins.CONDITION_UPSTREAM, help="the phase's comparison condition for the margins"
@@ -242,12 +276,18 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """The CLI entry point (returns the process exit code).
 
+    The module docstring's exit-code contract is enforced here:
+    ``KeyError``/``ValueError``/``AssertionError`` are usage-shaped (exit
+    2), ``RuntimeError``/``OSError`` are runtime-shaped (exit 1); any
+    other exception type propagates (a harness bug, not a documented
+    failure shape).
+
     Args:
         argv: The argument list (defaults to `sys.argv[1:]`).
 
     Returns:
-        The exit code (0 ok, 1 pin/preflight failure, 2 usage, other = the
-        probe's run outcome).
+        The exit code (0 ok, 1 runtime failure, 2 usage; the probe's
+        failed outcome is a 2 by the probe's own convention).
     """
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -258,7 +298,16 @@ def main(argv: list[str] | None = None) -> int:
     except KeyError as exc:
         print(f"unknown case: {exc}")
         return 2
+    except ValueError as exc:
+        print(f"usage error: {exc}")
+        return 2
+    except AssertionError as exc:
+        print(f"usage error: precondition failed: {exc}")
+        return 2
     except RuntimeError as exc:
+        print(f"error: {exc}")
+        return 1
+    except OSError as exc:
         print(f"error: {exc}")
         return 1
     return result

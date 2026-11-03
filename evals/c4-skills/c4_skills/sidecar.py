@@ -23,6 +23,12 @@ a real MCP `initialize` + `tools/list` round trip, and is torn down after
 the run. The trial containers reach it over `--network host` at
 `http://127.0.0.1:<port>/mcp` (streamable HTTP; verified against the
 pinned image).
+
+Port selection is racy (bind/close -> container bind): when a sidecar
+fails to become healthy and its container logs show a bind/port-in-use
+failure, `start_sidecar` retries with a fresh port (up to
+`SIDECAR_START_ATTEMPTS` attempts); the residual window (the port taken
+after the log check) is absorbed by the same retry on the next attempt.
 """
 
 from __future__ import annotations
@@ -80,6 +86,12 @@ class SidecarHandle:
 def free_host_port() -> int:
     """Ask the host kernel for a free TCP port on 127.0.0.1.
 
+    The bind/close -> container-bind sequence is racy (TOCTOU): another
+    process can take the port in the gap, and the sidecar then fails to
+    bind. `start_sidecar` therefore retries with a fresh port when the
+    container logs show a bind/port-in-use failure; this function is just
+    the first candidate of that loop.
+
     Returns:
         A currently unbound port number.
     """
@@ -89,6 +101,43 @@ def free_host_port() -> int:
     sock.close()
     result = port
     return result
+
+
+#: How many sidecar start attempts (fresh port each) before the run aborts.
+SIDECAR_START_ATTEMPTS = 3
+
+#: The case-insensitive log markers of a bind/port-in-use failure.
+_PORT_COLLISION_MARKERS: tuple[str, ...] = (
+    "address already in use",
+    "port already in use",
+    "was already allocated",
+    "eaddrinuse",
+)
+
+
+def _port_collision_evidence(logs: str, port: int) -> str | None:
+    """Return the first log line evidencing a port collision, or None.
+
+    A collision means the port picked on the host was taken before the
+    sidecar could bind it (the `free_host_port` TOCTOU window): the JVM's
+    bind failure (`address already in use`, Spring's `Port N was already
+    in use`, docker's `port ... was already allocated`). Any other failure
+    (a crash for another reason, a tool-set drift) is NOT a collision and
+    must abort immediately instead of burning another attempt.
+
+    Args:
+        logs: The failed container's combined `docker logs` output.
+        port: The port the attempt was given (matches `Port N ...` lines).
+    """
+    for line in (logs or "").splitlines():
+        lowered = line.lower()
+        if any(marker in lowered for marker in _PORT_COLLISION_MARKERS):
+            result = line.strip()
+            return result
+        if f"port {port}" in lowered and ("in use" in lowered or "already" in lowered):
+            result = line.strip()
+            return result
+    return None
 
 
 def _mcp_round_trip(port: int) -> list[str]:
@@ -145,24 +194,8 @@ def _mcp_round_trip(port: int) -> list[str]:
     return result
 
 
-def start_sidecar(run_id: str) -> SidecarHandle:
-    """Start the pinned sidecar on a free ephemeral host port.
-
-    Args:
-        run_id: The run identifier (the container is named
-            `c4eval-mcp-<run_id>`).
-
-    Returns:
-        The SidecarHandle once the MCP round trip succeeds.
-
-    Raises:
-        RuntimeError: If the sidecar is not healthy within the startup
-            budget, or registers a tool set that differs from the pinned
-            image's (a pin drift).
-    """
-    assert isinstance(run_id, str) and run_id
-    port = free_host_port()
-    name = f"{CONTAINER_NAME_PREFIX}{run_id}"
+def _sidecar_docker_run(name: str, port: int) -> subprocess.CompletedProcess[str]:
+    """Start the pinned sidecar container detached (the docker run only)."""
     cmd = [
         "docker",
         "run",
@@ -179,26 +212,127 @@ def start_sidecar(run_id: str) -> SidecarHandle:
         *SIDECAR_ARGS,
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)  # noqa: S603 -- fixed pinned image
-    if proc.returncode != 0:
-        raise RuntimeError(f"sidecar docker run failed rc={proc.returncode}: {proc.stderr.strip()}")
-    container_id = proc.stdout.strip()
+    return proc
+
+
+def _wait_healthy(name: str, container_id: str, port: int) -> SidecarHandle:
+    """Poll the MCP round trip until healthy (or the startup budget ends).
+
+    Args:
+        name: The container name (the handle's).
+        container_id: The container id (the handle's).
+        port: The host port the sidecar was told to bind.
+
+    Returns:
+        The SidecarHandle once the MCP round trip succeeds.
+
+    Raises:
+        RuntimeError: If the sidecar is not healthy within the startup
+            budget, or registers a tool set that differs from the pinned
+            image's (a pin drift). The failed container is NOT removed
+            here -- the caller reads its logs first (the port-collision
+            evidence) and tears it down.
+    """
+    deadline = time.monotonic() + STARTUP_BUDGET_S
+    last_error: str = "no probe run"
+    while time.monotonic() < deadline:
+        try:
+            tools = _mcp_round_trip(port)
+            if set(tools) != EXPECTED_TOOLS:
+                raise RuntimeError(f"sidecar tool set {sorted(tools)} != pinned {sorted(EXPECTED_TOOLS)}")
+            handle = SidecarHandle(port=port, container_id=container_id, container_name=name)
+            return handle
+        except (urllib.error.URLError, RuntimeError, OSError, KeyError, json.JSONDecodeError) as exc:
+            last_error = str(exc)
+            time.sleep(HEALTH_POLL_S)
+    raise RuntimeError(f"sidecar not healthy after {STARTUP_BUDGET_S:.0f}s: {last_error}")
+
+
+def _container_logs(container_id: str) -> str:
+    """Return the failed container's combined logs (empty when unreadable).
+
+    Read BEFORE the `docker rm` of the teardown (the logs die with the
+    container). Never raises: log evidence is a diagnostic, not a gate.
+    """
     try:
-        deadline = time.monotonic() + STARTUP_BUDGET_S
-        last_error: str = "no probe run"
-        while time.monotonic() < deadline:
-            try:
-                tools = _mcp_round_trip(port)
-                if set(tools) != EXPECTED_TOOLS:
-                    raise RuntimeError(f"sidecar tool set {sorted(tools)} != pinned {sorted(EXPECTED_TOOLS)}")
-                handle = SidecarHandle(port=port, container_id=container_id, container_name=name)
-                return handle
-            except (urllib.error.URLError, RuntimeError, OSError, KeyError, json.JSONDecodeError) as exc:
-                last_error = str(exc)
-                time.sleep(HEALTH_POLL_S)
-        raise RuntimeError(f"sidecar not healthy after {STARTUP_BUDGET_S:.0f}s: {last_error}")
-    except BaseException:
-        stop_sidecar(container_id=container_id, container_name=name)
-        raise
+        proc = subprocess.run(  # noqa: S603 -- fixed container target
+            ["docker", "logs", container_id],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+    result = (proc.stdout or "") + (proc.stderr or "")
+    return result
+
+
+def _log_tail(logs: str, max_chars: int = 200) -> str:
+    """Return the last non-empty log line (truncated) for error context."""
+    lines = [line.strip() for line in (logs or "").splitlines() if line.strip()]
+    if not lines:
+        return ""
+    tail = lines[-1]
+    result = tail if len(tail) <= max_chars else tail[-max_chars:]
+    return result
+
+
+def start_sidecar(run_id: str) -> SidecarHandle:
+    """Start the pinned sidecar on a free ephemeral host port.
+
+    Port-collision retry (the `free_host_port` TOCTOU window): when an
+    attempt's health check fails, the container's logs are inspected and
+    a bind/port-in-use failure (`_port_collision_evidence`) triggers a
+    retry with a FRESH port -- up to `SIDECAR_START_ATTEMPTS` attempts in
+    total. Any other failure (a crash for another reason, a tool-set
+    drift) aborts immediately. The aborting error names the port, the
+    attempt, and the log evidence (the collision line, or the container
+    log tail for a non-collision); after the last attempt it also names
+    every earlier colliding port. A residual window remains: a port can
+    still be taken between the log check and the retry's bind -- the
+    same retry logic then absorbs it on the next attempt.
+
+    Args:
+        run_id: The run identifier (the container is named
+            `c4eval-mcp-<run_id>`).
+
+    Returns:
+        The SidecarHandle once the MCP round trip succeeds.
+
+    Raises:
+        RuntimeError: If the sidecar is not healthy within the startup
+            budget of the final attempt, registers a tool set that
+            differs from the pinned image's (a pin drift), or `docker
+            run` itself fails.
+    """
+    assert isinstance(run_id, str) and run_id
+    name = f"{CONTAINER_NAME_PREFIX}{run_id}"
+    collisions: list[str] = []
+    for attempt in range(1, SIDECAR_START_ATTEMPTS + 1):
+        port = free_host_port()
+        proc = _sidecar_docker_run(name, port)
+        if proc.returncode != 0:
+            raise RuntimeError(f"sidecar docker run failed rc={proc.returncode}: {proc.stderr.strip()}")
+        container_id = proc.stdout.strip()
+        try:
+            return _wait_healthy(name, container_id, port)
+        except RuntimeError as exc:
+            logs = _container_logs(container_id)
+            stop_sidecar(container_id=container_id, container_name=name)
+            evidence = _port_collision_evidence(logs, port)
+            if evidence is None or attempt == SIDECAR_START_ATTEMPTS:
+                detail = f"sidecar failed on port {port} (attempt {attempt}/{SIDECAR_START_ATTEMPTS}): {exc}"
+                if evidence is not None:
+                    detail += f"; log evidence: {evidence}"
+                else:
+                    tail = _log_tail(logs)
+                    if tail:
+                        detail += f"; container log tail: {tail}"
+                if collisions:
+                    detail += "; earlier port collision(s): " + "; ".join(collisions)
+                raise RuntimeError(detail) from exc
+            collisions.append(f"port {port}: {evidence}")
+    raise AssertionError("unreachable: the attempt loop returns or raises")
 
 
 def stop_sidecar(*, container_id: str | None = None, container_name: str | None = None) -> None:

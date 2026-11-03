@@ -120,6 +120,30 @@ class ResultCache:
         result: dict | None = stored
         return result
 
+    def get_reason(self, key: CacheKey) -> str:
+        """Return WHY a lookup for `key` hits or misses (self-explanatory runs).
+
+        The runner records the reason per trial in `run.json`
+        (`cache_reason`): `hit` (the entry exists and its key matches --
+        its trials may still lack the requested k; the runner reports that
+        itself as `miss:trial-absent`), `miss:file-absent`,
+        `miss:key-mismatch` or `miss:file-unparseable`.
+        """
+        path = self._path(key.case_id, key.condition)
+        if not path.is_file():
+            result = "miss:file-absent"
+            return result
+        try:
+            stored = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            result = "miss:file-unparseable"
+            return result
+        if not isinstance(stored, dict) or stored.get("key") != key.as_dict():
+            result = "miss:key-mismatch"
+            return result
+        result = "hit"
+        return result
+
     def put(self, key: CacheKey, trials: list[dict]) -> None:
         """Store one (case, condition)'s trial summaries under `key`.
 

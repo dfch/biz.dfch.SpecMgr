@@ -142,6 +142,30 @@ class TestResultCache(unittest.TestCase):
         with self.assertRaises(AssertionError):
             CacheKey.make("case", pins.CONDITION_SKILL, "g" * 64, "s" * 64)
 
+    def test_get_reason_reports_the_miss_kind(self) -> None:
+        cache = ResultCache(self.root)
+        key = self._key()
+        trial = {"plan": {"case_id": key.case_id, "condition": key.condition, "k_index": 0}, "passed": True}
+
+        self.assertEqual(cache.get_reason(key), "miss:file-absent")
+        cache.put(key, [trial])
+        self.assertEqual(cache.get_reason(key), "hit")
+
+        drifted = self._key(grader_hash="h" * 64)
+        self.assertEqual(cache.get_reason(drifted), "miss:key-mismatch")
+
+        other = self._key(case_id="another-case")
+        self.assertEqual(cache.get_reason(other), "miss:file-absent")
+
+    def test_get_reason_reports_an_unparseable_file(self) -> None:
+        cache = ResultCache(self.root)
+        key = self._key()
+        cache.root.mkdir(parents=True, exist_ok=True)
+        (cache.root / "smoke-create-system.none.json").write_text("{ not json", encoding="utf-8")
+
+        self.assertEqual(cache.get_reason(key), "miss:file-unparseable")
+        self.assertIsNone(cache.get(key))
+
 
 class TestReportFigures(unittest.TestCase):
     def _run_record(self) -> dict:

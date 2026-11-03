@@ -24,9 +24,16 @@ pre-exported workspace JSON); no model call, no Docker.
 import json
 import unittest
 
-from c4_skills.events import parse_events_file
+from c4_skills.events import ParsedTrial, parse_event_stream, parse_events_file
 from c4_skills.graders import GraderInputs
-from c4_skills.metrics import TRIAGE_EXPECTED, TRIAGE_UNTRIAGED, compute_metrics, extract_final_dsl
+from c4_skills.metrics import (
+    EDIT_TOOL_NAMES,
+    TRIAGE_EXPECTED,
+    TRIAGE_FIX,
+    TRIAGE_UNTRIAGED,
+    compute_metrics,
+    extract_final_dsl,
+)
 
 from .conftest import FIXTURES_DIR
 
@@ -213,6 +220,71 @@ class TestInspectTriage(unittest.TestCase):
 
         self.assertEqual(sut.inspect_findings, [])
         self.assertEqual(sut.inspect_triage, {})
+
+
+class TestEditToolNames(unittest.TestCase):
+    """I6: the `fix` triage signal counts the command-execution tools too.
+
+    The committed smoke streams show agents mutating files through the
+    pinned opencode image's command tools `shell` (a `command` input) and
+    `execute` (a `code` input), not only through `edit`/`write`.
+    """
+
+    def _stream_after_inspect(self, tool_name: str) -> ParsedTrial:
+        events = [
+            {
+                "type": "tool_use",
+                "part": {
+                    "type": "tool",
+                    "tool": "structurizr_inspect",
+                    "state": {
+                        "status": "completed",
+                        "output": '["ERROR: the container named Web Store is not included on any views"]',
+                    },
+                },
+            },
+            {
+                "type": "tool_use",
+                "part": {
+                    "type": "tool",
+                    "tool": tool_name,
+                    "state": {
+                        "status": "completed",
+                        "input": {"command": "sed -i s/old/new/ workspace.dsl"}
+                        if tool_name == "shell"
+                        else {"code": "process.exit(0)"},
+                        "output": "",
+                    },
+                },
+            },
+        ]
+        return parse_event_stream([json.dumps(event) for event in events])
+
+    def test_shell_call_after_inspect_is_a_fix(self) -> None:
+        parsed = self._stream_after_inspect("shell")
+        inputs = _inputs('workspace "X" "y" { model { } }', None)
+
+        result = compute_metrics(parsed, inputs)
+
+        finding = "ERROR: the container named Web Store is not included on any views"
+        self.assertEqual(result.inspect_triage, {finding: TRIAGE_FIX})
+
+    def test_execute_call_after_inspect_is_a_fix(self) -> None:
+        parsed = self._stream_after_inspect("execute")
+        inputs = _inputs('workspace "X" "y" { model { } }', None)
+
+        result = compute_metrics(parsed, inputs)
+
+        finding = "ERROR: the container named Web Store is not included on any views"
+        self.assertEqual(result.inspect_triage, {finding: TRIAGE_FIX})
+
+    def test_read_only_tools_do_not_count_as_edits(self) -> None:
+        self.assertNotIn("read", EDIT_TOOL_NAMES)
+        self.assertNotIn("skill", EDIT_TOOL_NAMES)
+
+    def test_command_execution_tools_are_in_the_edit_set(self) -> None:
+        for name in ("shell", "execute", "edit", "write"):
+            self.assertIn(name, EDIT_TOOL_NAMES)
 
 
 class TestFinalDslExtraction(unittest.TestCase):

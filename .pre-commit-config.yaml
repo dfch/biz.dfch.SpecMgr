@@ -356,7 +356,7 @@ repos:
         entry: uv run --frozen pytest -n auto --cov=src --cov-report=
         language: system
         pass_filenames: false
-        files: ^(src|tests)/.*\.py$
+        files: ^(src|tests|evals)/.*\.py$
 
       - id: specmgr-coverage-badge
         name: specmgr coverage-badge (CI source-less condition)

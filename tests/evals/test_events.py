@@ -24,6 +24,7 @@ is the same schema extended with the tool/skill/step-finish shapes the
 metrics tests need. No model call is involved in these tests.
 """
 
+import json
 import unittest
 
 from c4_skills.events import ParsedTrial, parse_event, parse_events_file, parse_event_stream
@@ -84,6 +85,18 @@ class TestParseToolStream(unittest.TestCase):
         self.assertEqual(sut.tokens["input"], 1000)
         self.assertEqual(sut.tokens["cache_read"], 50)
         self.assertEqual(dict(sut.unknown_types), {})
+
+    def test_tool_events_carry_the_real_top_level_token(self) -> None:
+        # the pinned opencode 2.2.5 stream emits TOP-LEVEL `tool_use`
+        # events (the part-level token stays `tool`); the fixture pins the
+        # real shape, not a legacy `tool` token
+        fixture = FIXTURES_DIR / "events" / "tool-stream.ndjson"
+
+        for line in fixture.read_text(encoding="utf-8").splitlines():
+            event = json.loads(line)
+            part = event.get("part") or {}
+            if part.get("type") == "tool":
+                self.assertEqual(event["type"], "tool_use")
 
     def test_tool_call_name_classification_with_mcp_prefix(self) -> None:
         expected_parse = 1
