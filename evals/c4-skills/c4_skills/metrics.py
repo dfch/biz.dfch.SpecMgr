@@ -136,8 +136,14 @@ def _validate_ok(call: ToolCall) -> bool:
     return call.status == "completed" and call.output.strip() == VALIDATE_OK_MARKER
 
 
-def _validated_texts(parsed: ParsedTrial) -> set[str]:
-    """Return the exact texts that got OK from a validate call (stream)."""
+def validated_texts(parsed: ParsedTrial) -> set[str]:
+    """Return the exact texts that got OK from a validate call (stream).
+
+    The set of `dsl` inputs of every terminal `validate`-suffixed call
+    whose output is the OK marker. The reference set of the
+    `validated_before_return` metric and the same-named gate (the gate
+    reuses it for its detail strings).
+    """
     result: set[str] = set()
     for call in parsed.calls_named(SUFFIX_VALIDATE):
         if _validate_ok(call):
@@ -276,7 +282,7 @@ def compute_metrics(
     assert isinstance(parsed, ParsedTrial)
     assert isinstance(inputs, GraderInputs)
 
-    ok_texts = _validated_texts(parsed)
+    ok_texts = validated_texts(parsed)
     final_text = parsed.final_text()
     final_dsl = extract_final_dsl(final_text)
 

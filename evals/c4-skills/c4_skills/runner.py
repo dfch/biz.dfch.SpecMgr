@@ -128,6 +128,9 @@ class TrialRecord:
             when no stream was captured).
         event_file_committed: The event stream was committed with the
             record (False for over-limit and uncommitted streams).
+        skills_installed: The skill names the condition installed into the
+            work dir before the agent started (empty for `none`). Additive
+            field: pre-existing records parse via the default.
         gates: The GateResult dicts, in the case's order.
         passed: Every gate passed and no timeout.
         metrics: The TrialMetrics JSON.
@@ -151,6 +154,7 @@ class TrialRecord:
     cache_reason: str = "n/a"
     event_file_bytes: int | None = None
     event_file_committed: bool = False
+    skills_installed: list[str] = field(default_factory=list)
 
     def to_json(self) -> dict:
         """Return the JSON-serialisable record (the cache unit)."""
@@ -585,7 +589,7 @@ def run_trial(
         shutil.rmtree(workdir)
     workdir.mkdir(parents=True)
     _write_setup_files(workdir, case)
-    _install_skills(workdir, plan.condition, upstream, skill_source)
+    skills_installed = _install_skills(workdir, plan.condition, upstream, skill_source)
 
     trial_dir = results_dir / "trials" / plan.case_id
     trial_dir.mkdir(parents=True, exist_ok=True)
@@ -622,13 +626,21 @@ def run_trial(
         parsed = parse_events_file(event_source)
     else:
         parsed = ParsedTrial()
-    triage_metrics = metrics_mod.compute_metrics(
+    trial_metrics = metrics_mod.compute_metrics(
         parsed,
         inputs,
         timeout=timed_out,
         contended=contended,
     )
-    gate_results = graders.grade_case(case, inputs)
+    gate_results = graders.grade_case(
+        graders.GateContext(
+            inputs=inputs,
+            case=case,
+            trial=parsed,
+            metrics=trial_metrics,
+            skills_installed=tuple(skills_installed),
+        )
+    )
     passed = graders.case_passed(gate_results) and not timed_out
 
     commit = commit_event_stream(event_source, event_path, results_dir)
@@ -648,10 +660,11 @@ def run_trial(
         event_file=commit.event_file,
         gates=[asdict(g) for g in gate_results],
         passed=passed,
-        metrics=triage_metrics.to_json(),
+        metrics=trial_metrics.to_json(),
         cache_reason=cache_reason,
         event_file_bytes=commit.event_file_bytes,
         event_file_committed=commit.event_file_committed,
+        skills_installed=skills_installed,
     )
     return record
 
@@ -936,8 +949,9 @@ def _record_from_json(raw: dict) -> TrialRecord:
     """Rebuild a TrialRecord from its JSON form (the cache-hit path).
 
     The additive fields (`cache_reason`, `event_file_bytes`,
-    `event_file_committed`) default for pre-existing records that predate
-    them (old cache entries and committed run records parse unchanged).
+    `event_file_committed`, `skills_installed`) default for pre-existing
+    records that predate them (old cache entries and committed run records
+    parse unchanged).
     """
     assert isinstance(raw, dict)
     plan_raw = raw.get("plan") or {}
@@ -966,5 +980,6 @@ def _record_from_json(raw: dict) -> TrialRecord:
         cache_reason=str(raw.get("cache_reason", "n/a")),
         event_file_bytes=raw.get("event_file_bytes"),
         event_file_committed=bool(raw.get("event_file_committed", event_file is not None)),
+        skills_installed=[str(name) for name in (raw.get("skills_installed") or [])],
     )
     return result
