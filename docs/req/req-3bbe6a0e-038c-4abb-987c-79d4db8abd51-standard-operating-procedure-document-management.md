@@ -22,7 +22,7 @@ AGENTS.md's Status section documents `sop` as the first domain built dispatch-on
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

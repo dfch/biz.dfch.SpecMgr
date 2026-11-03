@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `gol` package's tools (`create_gol`, `p
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

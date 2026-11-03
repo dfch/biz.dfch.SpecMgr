@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `dec` package's tools (`parse_dec`, `ge
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

@@ -34,7 +34,7 @@ Parameters
 domains:
     A mapping of domain name (``"adr"``, ``"req"``, ``"uc"``, ``"tsk"``,
     ``"qa"``, ``"prb"``, ``"gol"``, ``"rsk"``, ``"dec"``, ``"sop"``,
-    ``"feat"``, ``"vcr"``, ``"sysrs"``, ``"txt"``) to that domain's
+    ``"feat"``, ``"vcr"``, ``"sysrs"``, ``"txt"``, ``"set"``) to that domain's
     :class:`DomainConfig`.
 similarity:
     The static configuration of the semantic-similarity feature

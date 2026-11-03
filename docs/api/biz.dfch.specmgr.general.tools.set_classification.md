@@ -4,7 +4,7 @@
 
 The generic, cross-domain classification-change tool for the
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
 Unlike ``set_status`` (``general/tools/set_status.py``), which also
 dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
 separate ``AdrFrontmatter`` model
@@ -204,6 +204,24 @@ the EN document (bytes, ``updated``, cache entry) is never touched by a non-defa
 call.
 
 
+### `_set_classification_set(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult'`
+
+Replace the classification of the set document identified by ``id_``.
+
+Mirrors :func:`_set_classification_sysrs`'s shape (same ``set_lock``,
+``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
+dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_classification_req`
+for the full semantics.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is written
+-- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+``language`` call.
+
+
 ### `_set_classification_sop(id_: 'str', classification: 'str', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult'`
 
 Replace the classification of the SOP identified by ``id_``.
@@ -309,7 +327,7 @@ call.
 Replace the ``classification`` frontmatter field of an existing document.
 
 Cross-domain generic for the whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
 dispatches on ``type`` to the domain's own adapter (same lock, same id
 resolution, same body handling, same domain not-found error). ``adr``
 is deliberately excluded (its separate ``AdrFrontmatter`` model is out
@@ -350,7 +368,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``, ``txt``.
+    ``vcr``, ``sysrs``, ``txt``, ``set``.
 classification:
     The new classification value. Fully free-text; a blank or
     whitespace-only value clears the field back to ``None``/absent.

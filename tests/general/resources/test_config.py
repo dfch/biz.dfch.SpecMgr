@@ -543,8 +543,13 @@ class TestConfigGoldenIdentity(unittest.TestCase):
                 # TestConfigResourceDiagram, not this migration-transparency test. The golden
                 # predates it, so strip the key from the re-captured payload (same serialization
                 # call on the stripped dict, so every other byte stays compared as-is).
+                # The feat-173 Phase 180 `set` domain row is additive the same way -- its own
+                # values are pinned by TestConfigResource's own ALL_DOMAINS-iterating tests
+                # (test_all_domains_present et al.), not this migration-transparency test.
+                # The golden predates it, so strip the key from the re-captured payload too.
                 current_payload = json.loads(current_text)
                 current_payload.pop("diagram")
+                current_payload["domains"].pop("set", None)
                 current_text = pydantic_core.to_json(current_payload, fallback=str, indent=2).decode()
         finally:
             os.chdir(original_cwd)

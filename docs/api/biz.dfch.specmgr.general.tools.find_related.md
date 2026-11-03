@@ -61,7 +61,7 @@ Resolves the source document (the registry's own ``load_by_id``,
 path-safety guards included), embeds it through the
 content-hash-validated embedding cache, and ranks every candidate
 document across the target whole-body domains (all of
-req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt by default --
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set by default --
 ``adr`` is structurally excluded, issue #46 -- or the
 caller-supplied ``target_types`` subset) against the source's own
 vector by cosine similarity (dot product on L2-normalized vectors),
@@ -85,7 +85,7 @@ Parameters
 type:
     The source document's type / domain: one of ``req``, ``uc``,
     ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``feat``, ``vcr``, ``sysrs``, ``txt`` (``adr`` is rejected).
+    ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``adr`` is rejected).
 id:
     The source document's specmgr-assigned identifier: a canonical
     lowercase-hex UUID for every domain other than ``feat``, a
@@ -93,7 +93,7 @@ id:
 target_types:
     The domains to search (each one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``, ``txt``), in the order to enumerate them in;
+    ``vcr``, ``sysrs``, ``txt``, ``set``), in the order to enumerate them in;
     ``None`` (the default) means every whole-body domain.
 top_k:
     The maximum number of hits to return (1..100, default 10).

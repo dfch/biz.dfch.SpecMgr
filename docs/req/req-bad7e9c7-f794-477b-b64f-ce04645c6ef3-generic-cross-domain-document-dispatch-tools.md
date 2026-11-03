@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the cross-cutting `general` package: the ge
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

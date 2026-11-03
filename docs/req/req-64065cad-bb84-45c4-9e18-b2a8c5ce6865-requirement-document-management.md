@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `req` package's tools (`create_req`, `p
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

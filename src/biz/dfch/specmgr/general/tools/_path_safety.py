@@ -61,6 +61,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from ...models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_ID_PATTERN
+
 __all__ = [
     "DEFAULT_LANGUAGE",
     "LANGUAGE_PATTERN",
@@ -75,9 +77,6 @@ __all__ = [
 #: Canonical 8-4-4-4-12 lowercase-hex UUID shape (the form ``uuid.uuid4().str`` produces,
 #: which is what every ``create_<d>`` tool writes into the frontmatter ``id``).
 _UUID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
-
-#: The ``feat`` folder-name shape (ADR 8cf940c5): ``feat-NNN-slug``, lowercase alnum + hyphen.
-_FEAT_ID_PATTERN = re.compile(r"^feat-[0-9]+-[a-z0-9-]+$")
 
 #: The path-separator characters an id must never contain.
 _PATH_SEPARATORS = ("/", "\\")

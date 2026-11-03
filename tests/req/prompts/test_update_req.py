@@ -48,6 +48,35 @@ class TestUpdateReqPrompt(unittest.TestCase):
         for tool in ('update(id, type="req", content)', 'set_status(id, type="req", status)'):
             self.assertIn(tool, result)
 
+    def test_mentions_legacy_level_recovery_directive(self):
+        """The prompt must carry the present-tense recovery directive: a
+        get_req parse failure naming the ## Level value leads to reading
+        specmgr://iso29148, repairing the file with the host's own
+        file-read/file-write tools (no specmgr read returns the body of a
+        document that fails to parse, and the generic update/edit tools
+        cannot repair one), and a confirming get_req(id) call before
+        proceeding with the requested change."""
+        result = update_req("abc-123")
+        self.assertIn("**Legacy `## Level` value recovery.**", result)
+        self.assertIn("If `get_req(id)` returns a parse", result)
+        self.assertIn("failure whose error names the `## Level` value", result)
+        self.assertIn("Read the cross-cutting `specmgr://iso29148` resource to confirm the", result)
+        self.assertIn("four kinds (BRS, StRS, SyRS, SRS)", result)
+        for kind in ("BRS", "StRS", "SyRS", "SRS"):
+            with self.subTest(kind=kind):
+                self.assertIn(kind, result)
+        self.assertIn("No specmgr read returns the body of a document that fails to parse", result)
+        self.assertIn("read the raw file with the host's own file-read tool at", result)
+        self.assertIn("the `path` the parse-failure result carries", result)
+        self.assertIn("write the file back with", result)
+        self.assertIn("the host's own file-write tool -- the generic `update`/`edit` tools", result)
+        self.assertIn("Confirm the repair with a real `get_req(id)` call -- it must now parse", result)
+        self.assertIn("before proceeding with the originally requested", result)
+        self.assertLess(
+            result.index("**Legacy `## Level` value recovery.**"),
+            result.index("## 2. If no change was specified"),
+        )
+
     def test_mentions_range_update_flow(self):
         """The prompt must teach the line-range flow: read the exact body
         via get_req(id, raw=True, numbered=True), identify the 1-based line to start at

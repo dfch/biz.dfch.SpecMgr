@@ -45,7 +45,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the README gains a new "Installing the specmgr Harness Files" section
   (agent-driven install + what gets installed + the manual Claude Code
   path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2
-  Phase 130, GitHub issue #167).
+   Phase 130, GitHub issue #167).
+
+- The cross-cutting `specmgr://iso29148` resource: the four
+  ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
+  `SyRS`, `SRS` — the standard's own §3.2 abbreviations), with the §5.4
+  mapping sentence, the §6.2-6.4 processes, the §8.2-8.5 example
+  outlines, the §9.3-9.6 content clauses, the mapping to specmgr
+  document types, and the §5.2.6 "Characteristics of a set of
+  requirements" list — the closed set `req`'s `## Level` carries.
+  Served as raw markdown with a model-backed drift guard (a structural
+  edit of the packaged markdown fails its parse model) — the
+  `specmgr://ears` shape (ADR 356d8781-e446-4c26-917a-eda85648ce9d;
+  feat-173-req-iso29148-level-set, GitHub issue #173).
+
+- The new `set` artifact domain (issue #173's second work package): a
+  convenience bundle of one or more already-existing specmgr artifacts
+  of any (mixed) type via forward references only — `SET` is not a tag
+  of the shared 12-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). The
+  body is strictly H1 → `## Description` (mandatory, opaque free
+  markdown) → `## Items` (mandatory flat bullet list, at least one
+  `<TAG> <uuid>: <title>` bullet from the shared 12-tag vocabulary in
+  any mix — `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
+  other sections. `SetFrontmatter.status` is the SET-specific
+  four-value closed set `draft`/`progress`/`done`/`review`. Full
+  dispatch-only surface per ADR 36905d5b (7 tools: `create_set`,
+  `parse_set`, `list_set`, `get_set` with `raw`/`offset`/`limit`/
+  `numbered`/`language` + the non-raising `ParseFailureResult` channel,
+  `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
+  `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
+  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
+  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  tool's dispatch table (forced by their import-time asserts), and the
+  self-triggering OpenCode skill `specmgr-set` as the host surface (no
+  dedicated `/set` command). `set` is the 13th language-aware domain
+  (the `## Description`/`## Items` headings join the packaged heading
+  tables, e.g. `de.json`'s `Beschreibung`/`Elemente`, plus the
+  never-translate line in `specmgr://i18n` and the
+  `translate_artifact` instructions), and the reference graph carries
+  the 16th palette entry (`SET` coloured `Wheat`, after `TXT`, before
+  `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
+   (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
 
 ### Changed
 
@@ -87,7 +129,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   paragraph's existing behavior. This unblocks the UUID-preserving ADR to
   DEC conversion (GitHub issue #46), whose ~20 of 46 blocked ADRs (e.g.
   `750842b2`, `92cc4ce8`, `356d8781`) carry multi-block outcomes
-  (feat-247-dec-outcome-blocks, GitHub issue #247).
+   (feat-247-dec-outcome-blocks, GitHub issue #247).
+
+- **BREAKING**: `req`'s `## Level` is a mandatory single-line
+  closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind — exactly one of `BRS`, `StRS`, `SyRS`,
+  `SRS` (the standard's §3.2 abbreviations) — enforced in
+  `req/models/v1` by its own `_LEVEL_PATTERN`. This is an in-place
+  `req/models/v1` schema evolution (the feat-132-prb-update precedent:
+  no v2, no dual-schema read support), so an existing `req` document
+  with any other `## Level` value fails to parse until its value is one
+  of the four kinds; the `update_req` prompt carries a present-tense
+  recovery directive for that case (host-read the file at the
+  parse-failure `path`, replace the value, confirming read). The RFC
+  2119 obligation keywords (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/
+  `MAY`) are gone from the `req` schema — obligation is carried by the
+  requirement statement's phrasing (EARS, `specmgr://ears`), as
+  documented by the resource's `## Requirement obligation` section. All
+  14 in-repo `docs/req/` documents carry `SRS` (they specify the
+  specmgr tool itself); the packaged `req` template/example carry the
+  kind (`SyRS`); the `create_req` prompt reads `specmgr://iso29148`
+  first and elicits the kind; the i18n never-translate `## Level`
+  vocabulary is the four kinds; and the GOL model module docstring and
+  the `create_gol` prompt carry the current fact (a goal has no
+  `## Level` section; obligation lives on the requirements below it, in
+  each one's ISO 29148 kind plus its statement's own phrasing)
+   (feat-173-req-iso29148-level-set, GitHub issue #173).
 
 ## [0.38.0] - 2026-10-31
 

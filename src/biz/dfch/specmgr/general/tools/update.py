@@ -21,7 +21,7 @@
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
 whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -210,6 +210,12 @@ from ...txt.tools._io import read_txt
 from ...txt.tools._lock import txt_lock, txt_lock_key
 from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
 from ...txt.tools._write import write_txt_file
+from ...set.models.v1 import SetFrontmatter, parse_set_body
+from ...set.tools._io import load_by_id as load_set_by_id
+from ...set.tools._io import read_set
+from ...set.tools._lock import set_lock, set_lock_key
+from ...set.tools._paths import SetNotFoundError, set_base_dir
+from ...set.tools._write import write_set_file
 from ...uc.models.v2 import UcFrontmatter, parse_uc_body
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -1328,6 +1334,83 @@ def _update_txt(
     return _UpdateOutcome(frontmatter=new_frontmatter)
 
 
+def _update_set(
+    id_: str, content: str, offset: int | None, limit: int | None, language: str = DEFAULT_LANGUAGE
+) -> _UpdateOutcome | ParseFailureResult | ValidateResult:
+    """Replace the body of the set document identified by ``id_`` (whole-body or line-range mode).
+
+    Mirrors :func:`_update_sysrs`'s shape (same ``set_lock``, ``load_by_id``,
+    frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
+    ``SetNotFoundError``; ``set`` is dispatch-only from day one per ADR
+    36905d5b, so this adapter was written directly in this shape), plus the
+    REQ-002 range branch (see :func:`_update_req`).
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+    variant's own (``set_lock(set_lock_key(id_, language))``), the submitted/spliced body is
+    validated through the variant's heading table
+    (:func:`~biz.dfch.specmgr.set.models.v1.parse_set_body`), and the write plus cache warming
+    target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+    touched by a non-default ``language`` call.
+    """
+    if offset is not None:
+        base_dir = set_base_dir(language)
+        with set_lock(set_lock_key(id_, language)):
+            try:
+                path, existing = load_set_by_id(base_dir, id_)
+            except SetNotFoundError:
+                parse_failure = find_parse_failure(base_dir, id_, read_set)
+                if parse_failure is None:
+                    raise
+                failure_path, failure_error = parse_failure
+                assert_within(base_dir, failure_path)
+                return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+            assert_within(base_dir, path)
+            pre = body_text(path)
+            spliced = splice_body(pre, offset, limit, content)
+            try:
+                with wrap_tool_errors(domain="set", tool="update", channel=BODY_CHANNEL):
+                    parse_set_body(spliced, language=language)
+            except _CAUGHT_EXCEPTIONS as ex:
+                message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+                return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+            now = now_timestamp()
+            fm_data = existing.frontmatter.model_dump()
+            fm_data["updated"] = now
+            new_frontmatter = SetFrontmatter(**fm_data)
+            write_set_file(path, new_frontmatter, spliced)
+            read_set(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+        return _UpdateOutcome(frontmatter=new_frontmatter, pre_body=pre, post_body=spliced, offset=offset, limit=limit)
+
+    try:
+        with wrap_tool_errors(domain="set", tool="update", channel=BODY_CHANNEL):
+            parse_set_body(content, language=language)
+    except _CAUGHT_EXCEPTIONS as ex:
+        message = snippet(str(ex), max_chars=_MAX_VALIDATE_ERROR_CHARS)
+        return ValidateResult(valid=False, errors=[ValidationErrorEntry(message=message)])
+
+    base_dir = set_base_dir(language)
+    with set_lock(set_lock_key(id_, language)):
+        try:
+            path, existing = load_set_by_id(base_dir, id_)
+        except SetNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_set)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["updated"] = now
+        new_frontmatter = SetFrontmatter(**fm_data)
+        write_set_file(path, new_frontmatter, content)
+        read_set(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return _UpdateOutcome(frontmatter=new_frontmatter)
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[
     str,
@@ -1346,6 +1429,7 @@ _ADAPTERS: dict[
     "vcr": _update_vcr,
     "sysrs": _update_sysrs,
     "txt": _update_txt,
+    "set": _update_set,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -1373,6 +1457,7 @@ _LANGUAGE_ADAPTERS: dict[
     "vcr": _update_vcr,
     "sysrs": _update_sysrs,
     "txt": _update_txt,
+    "set": _update_set,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
@@ -1469,7 +1554,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     """Replace the body of an existing document, in whole-body or line-range mode.
 
     Cross-domain generic for the whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same frontmatter carry-over, same verbatim
     persistence, same domain not-found error).
@@ -1529,7 +1614,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``.
+        ``vcr``, ``sysrs``, ``txt``, ``set``.
     content:
         Whole-body mode: the replacement body markdown, with no
         frontmatter block. Range mode: the replacement fragment for the
@@ -1626,7 +1711,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         UUID-shaped domain set, so ``type="adr"`` with a well-formed
         UUID ``id`` passes ``validate_id`` and reaches the lookup, which
         has no ``adr`` entry. Nothing is written. Unreachable through the
-        MCP server, whose ``type`` enum carries the 13 whole-body domains
+        MCP server, whose ``type`` enum carries the 14 whole-body domains
         only; a direct-Python-caller outcome.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /

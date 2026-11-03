@@ -87,7 +87,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -97,7 +97,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
 _REQ_MALFORMED_BODY = "# Title\n\nJust a paragraph, no recognized sections.\n"
 
-_REQ_OUT_OF_VOCABULARY_BODY = _REQ_MINIMAL_BODY.replace("MUST", "NOT-A-VALID-LEVEL")
+_REQ_OUT_OF_VOCABULARY_BODY = _REQ_MINIMAL_BODY.replace("SRS", "NOT-A-VALID-LEVEL")
 
 
 class TempDocsDirTestCase(unittest.TestCase):
