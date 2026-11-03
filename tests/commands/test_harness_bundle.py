@@ -108,15 +108,15 @@ class TestGenerateBundleTextCurrentTree(unittest.TestCase):
         payload: dict[str, Any] = json.loads(text)
         return payload
 
-    def test_current_tree_enumerates_exactly_25_files(self):
+    def test_current_tree_enumerates_exactly_30_files(self):
         payload = self._bundle()
 
         paths = [entry["path"] for entry in payload["files"]]
 
         self.assertEqual(paths, _expected_scoped_paths(_REPO_ROOT))
-        self.assertEqual(len(paths), 25)
+        self.assertEqual(len(paths), 30)
         per_dir = {name: sum(1 for path in paths if path.startswith(name + "/")) for name in _SCOPED_DIRS}
-        self.assertEqual(per_dir, {"agent": 6, "command": 10, "skill": 9})
+        self.assertEqual(per_dir, {"agent": 6, "command": 10, "skill": 14})
 
     def test_top_level_and_file_entry_shape(self):
         payload = self._bundle()
