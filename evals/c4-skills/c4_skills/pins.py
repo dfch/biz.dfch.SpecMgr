@@ -205,6 +205,12 @@ FULL_CASES: tuple[str, ...] = (
 #: to measure the real time per trial.
 SMOKE_CASE = "smoke-create-system"
 
+#: The Phase 110 held-out case (Task 110.100/110.140): the same task shape
+#: as `create-system` in a different domain. Deliberately NOT part of
+#: `FULL_CASES` -- a held-out case is never used while tuning and runs
+#: once, at the end of its phase (Stop Rule).
+HELDOUT_VALIDATE_CASE = "heldout-validate"
+
 
 def version_tuple() -> dict[str, object]:
     """Return the version tuple as a plain dict (REQ-008 reproducibility).
