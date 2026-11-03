@@ -153,8 +153,8 @@ def check_translation_drift(
     ----------
     type:
         The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt`` (``feat``/``adr`` are permanently English
-        and rejected).
+        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``feat``/``adr`` are permanently
+        English and rejected).
     id:
         The artifact's specmgr-assigned id (shared by both languages).
     language:

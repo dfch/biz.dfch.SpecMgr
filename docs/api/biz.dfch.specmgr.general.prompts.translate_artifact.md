@@ -60,7 +60,7 @@ Parameters
 type:
     The document domain to translate: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``,
-    ``sysrs``, ``txt`` (matched case-insensitively). ``feat`` and ``adr``
+    ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat`` and ``adr``
     are permanently English and rejected with an actionable error; so is
     any other unknown value.
 id:

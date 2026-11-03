@@ -196,7 +196,7 @@ vice versa).
      arrow; every off-cycle edge renders plain `-->`.
    - **The reverse mandate's cost (scoped diagrams only):** the
      `reverse`/`--reverse` the workflow always requests makes the scoped
-     build run the FULL 14-DOMAIN SCAN for the direct incoming
+      build run the FULL 15-DOMAIN SCAN for the direct incoming
      references — O(registry size), the same cost the reverse workflow
      above states before running; state it in the report whenever you
      produced a scoped diagram. The registry-wide surface pays no such

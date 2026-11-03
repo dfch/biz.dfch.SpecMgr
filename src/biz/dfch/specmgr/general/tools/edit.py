@@ -22,7 +22,7 @@
 The generic, cross-domain, surgical exact-match string-replacement tool for
 the frontmatter-stripped body of the whole-body document types
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the explicit ``type``
+``feat``/``vcr``/``sysrs``/``txt``/``set``). It dispatches on the explicit ``type``
 parameter to a private per-domain adapter (``_edit_<d>``), each mirroring
 the generic ``update`` tool's own adapter shape (same domain lock, same
 ``load_by_id``, same frontmatter carry-over with only ``updated`` bumped,
@@ -915,7 +915,7 @@ def _edit_sysrs(
 def _edit_txt(
     id_: str, old_str: str, new_str: str, replace_all: bool, language: str = DEFAULT_LANGUAGE
 ) -> TxtFrontmatter | ParseFailureResult | ValidateResult:
-    """Surgically replace exact occurrences of ``old_str`` in the set document identified by ``id_``.
+    """Surgically replace exact occurrences of ``old_str`` in the free-form text document identified by ``id_``.
 
     Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
@@ -1109,7 +1109,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
 
     Cross-domain generic for the whole-body document types
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``/``txt``); dispatches on ``type`` to the domain's own
+    ``feat``/``vcr``/``sysrs``/``txt``/``set``); dispatches on ``type`` to the domain's own
     private adapter (same lock, same id resolution, same frontmatter
     carry-over, same verbatim persistence, same domain not-found error).
     The signature and the stage-1 runtime error strings mirror the
@@ -1176,7 +1176,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``.
+        ``vcr``, ``sysrs``, ``txt``, ``set``.
     old_str:
         The exact text to find in the current frontmatter-stripped on-disk
         body (byte-exact, including whitespace, indentation, and line

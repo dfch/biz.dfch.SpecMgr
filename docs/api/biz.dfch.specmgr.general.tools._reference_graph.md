@@ -21,7 +21,7 @@ Two builders, one frozen construction semantics each (rulebook §3):
   existing document, its body read through the domain's own read path -- the
   cache-aware leg for the 14 whole-body domains, the never-cached leg for
   ``adr``, ADR bfd76370), optionally plus the direct incoming references to
-  the source (``reverse``: a full scan of all 14 source domains, additive and
+  the source (``reverse``: a full scan of all 15 source domains, additive and
   direct-only on the incoming side, with the feat dual-spelling match rule).
 - :func:`build_registry_graph` -- the registry-wide graph: the same 15-domain
   scan; every successfully parsed document is a node; every extracted

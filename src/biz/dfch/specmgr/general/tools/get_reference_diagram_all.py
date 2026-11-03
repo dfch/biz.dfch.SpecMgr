@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # pylint: disable=duplicate-code  # the title-override + label-limit + render tail mirrors get_reference_diagram
-# (one module per tool; update.py's thirteen near-identical per-domain adapters are the house precedent)
+# (one module per tool; update.py's fourteen near-identical per-domain adapters are the house precedent)
 
 """``@mcp.tool()`` wrapper: get_reference_diagram_all (feat-207-reference-graph, Phase 120, REQ-005).
 

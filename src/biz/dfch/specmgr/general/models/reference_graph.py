@@ -528,7 +528,7 @@ def render_reference_graph(graph: ReferenceGraph, *, max_label: int = DEFAULT_MA
     # The top-level section: unresolved nodes (sorted by alias) plus any
     # resolved node whose type sits outside the 15-domain order (the
     # builder never produces one -- its reference vocabulary is a subset of
-    # the 14 domains -- so this placement is a hand-built-input totality
+    # the 15 domains -- so this placement is a hand-built-input totality
     # rule, not a frozen layout case).
     top_level = [node for node in nodes.values() if node.title is None or node.type not in _DOMAIN_ORDER]
     if top_level:

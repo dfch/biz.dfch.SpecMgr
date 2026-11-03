@@ -84,7 +84,7 @@ from ...server import mcp
     title="Translate a specmgr document into another language",
     description=(
         "Guides the LLM through producing (or updating) a target-language variant of a whole-body "
-        "specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt; feat and adr are always "
+        "specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat and adr are always "
         "English and out of scope): read the specmgr://i18n resource first, read the source via "
         "get_<d>(id, raw=True, language=...) (a ParseFailureResult stops the flow), decide create "
         "(create_<d>(content, language, id)) versus update (the generic update/edit with language), "
@@ -105,7 +105,7 @@ def translate_artifact(type: str, id: str, language: str, source_language: str =
     type:
         The document domain to translate: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``,
-        ``sysrs``, ``txt`` (matched case-insensitively). ``feat`` and ``adr``
+        ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat`` and ``adr``
         are permanently English and rejected with an actionable error; so is
         any other unknown value.
     id:

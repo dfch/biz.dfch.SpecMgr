@@ -168,7 +168,7 @@ specmgr://harness-bundle -- The packaged specmgr harness bundle as JSON
                            setup (no install CLI, no MCP prompt -- OpenCode exposes no
                            prompt surface to the agent).
 specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                         rsk, dec, sop, feat, vcr, sysrs, txt), the resolved absolute base directory and
+                         rsk, dec, sop, feat, vcr, sysrs, txt, set), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
                         self-diagnose a CWD/env-var misconfiguration without shell access to
@@ -898,7 +898,7 @@ result); degrades to diagnose-only on a host without file tools
 (feat-150-mcp-lifecycle-commands, Phase 1); ``translate_artifact`` -- guides
 producing or updating a target-language variant of a whole-body document
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/
-``sysrs``; ``feat`` and ``adr`` are always English and rejected) from its
+``sysrs``/``txt``/``set``; ``feat`` and ``adr`` are always English and rejected) from its
 source-language content (arguments ``type``, ``id``, ``language``, optional
 ``source_language`` default ``"en"``): read the ``specmgr://i18n`` resource
 first (and the heading table via ``specmgr://i18n/headings/{language}``), read the

@@ -1340,7 +1340,7 @@ per-domain, content-hash-validated in-memory read cache
 singleton per domain in each domain's own `tools/_cache.py`, mirroring the
 existing per-domain `threading.Lock` registries in `_lock.py`) for every
 generic whole-body domain (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
-`dec`, `sop`, `feat`, `vcr`, `sysrs`, `txt`), eliminating the redundant
+`dec`, `sop`, `feat`, `vcr`, `sysrs`, `txt`, `set`), eliminating the redundant
 markdown-it/Pydantic re-parsing cost `get_*`/`list_*` previously paid on
 every single call against an unchanged file — the real fix for the
 CPU-bound, GIL-holding bottleneck behind issue #107's reported timeouts
@@ -1779,7 +1779,7 @@ extras onto every consumer of the base library.
 - Builds the `SpecMgrServer` instance (`mcp` object) and the `_lifespan`
   (the unified startup warmup, ADR 3982712a),
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
-  `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
+  `gol`, `prb`, `qa`, `req`, `rsk`, `set`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
   `vcr`) as its last line purely
   for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.

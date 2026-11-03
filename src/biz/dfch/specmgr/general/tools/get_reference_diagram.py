@@ -240,7 +240,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
 
     The source is identified by ``type`` (every whole-body domain
     ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``/``txt``, plus ``adr``) and its own
+    ``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
     ``id``. The graph
     is the source document, its outgoing reference neighbourhood to
     ``depth`` (level 0 = the source; a level-k node is expanded only if
@@ -287,7 +287,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     type:
         The source document's type / domain: one of ``adr``, ``req``,
         ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
-        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
+        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
     id:
         The source document's specmgr-assigned identifier (the canonical
         lowercase-hex UUID for every domain other than ``feat``; the full
