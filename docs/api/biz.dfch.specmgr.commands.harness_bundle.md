@@ -5,8 +5,11 @@
 Like ``specmgr docs``/``specmgr adr-toc`` regenerate committed documentation
 from the codebase, this command regenerates the single committed package-data
 bundle from the repo layout -- read from the current working directory, so
-the repo root must be the CWD (a missing ``.opencode/`` directory is a usage
-error, exit 2, nothing written).
+the repo root must be the CWD. A missing ``.opencode/`` directory, a scoped
+markdown file that is not decodable as UTF-8 (or otherwise unreadable), and
+an unwritable or uncreatable bundle output path are usage errors: each is a
+deterministic stderr message naming the problem, exit 2, nothing written,
+and no traceback.
 
 It enumerates every ``*.md`` file recursively under exactly
 ``.opencode/{agent,command,skill}/`` -- exact top-level directory-name
@@ -63,14 +66,16 @@ warning list stays bounded regardless of how large ``node_modules/``
 is. Strays are never bundled.
 
 
-### `generate_bundle_text(opencode_dir: 'Path') -> 'str'`
+### `generate_bundle_text(opencode_dir: 'Path') -> 'tuple[str, int]'`
 
 Serialize the harness bundle over ``opencode_dir``'s scoped markdown tree.
 
-Pure: reads the tree, writes nothing. The returned text is exactly what
-the command writes to disk -- ``json.dumps(indent=2, ensure_ascii=False)``
-plus a trailing newline, no timestamps -- so two calls over an unchanged
-tree are byte-identical.
+Pure: reads the tree, writes nothing. Returns the bundle text together
+with the number of bundled files -- the text is exactly what the command
+writes to disk (``json.dumps(indent=2, ensure_ascii=False)`` plus a
+trailing newline, no timestamps, so two calls over an unchanged tree are
+byte-identical), and the count comes from the same single pass over the
+scoped tree, so the caller never has to enumerate it a second time.
 
 
 ### `harness_bundle() -> 'None'`
@@ -85,8 +90,11 @@ path), warns on stderr for every stray markdown file outside that scope
 (``{"instructions", "files": [{"path", "sha256", "content"}]}``,
 ``json.dumps(indent=2, ensure_ascii=False)`` + trailing newline, no
 timestamps) to ``src/biz/dfch/specmgr/general/data/general_harness_bundle.json``
-under the repo root. A missing ``.opencode/`` directory is a usage
-error (exit 2, nothing written). Prints a summary line (file count,
+under the repo root. A missing ``.opencode/`` directory, a scoped
+markdown file that is not decodable as UTF-8 (or otherwise unreadable),
+and an unwritable or uncreatable bundle output path are usage errors
+(each: one deterministic stderr message naming the problem, exit 2,
+nothing written, no traceback). Prints a summary line (file count,
 total bytes, output path). Run this after any change to a bundled
 ``.opencode/`` markdown file and commit the result (the
 ``specmgr-harness-bundle`` pre-commit hook and the CI parity check fail

@@ -49,6 +49,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `specmgr harness-bundle` generator and its install protocol, refined
+  by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review
+  cycle 3, GitHub issue #167): the feat-numbering skill
+  (`.opencode/skill/feat-numbering/SKILL.md`) no longer references the
+  deleted TSK `tsk-2687d267` (the feat-150 plan-document numbering
+  migration is deferred without a live tracker; the successor
+  `tsk-1b36c754` is named as the TSK whose repair scope a future migration
+  would need its own tracker or an explicit scope extension of); the
+  bundle's `instructions` install protocol gains the both-spellings
+  collision case in step 2 (a root containing both a singular and a plural
+  directory for the same first path segment -- do not guess, ask the user
+  which one to install into, and report the other as needing manual
+  cleanup); the `specmgr harness-bundle` exit-2 usage-error contract now
+  also covers a scoped `.md` file that is not decodable as UTF-8 and an
+  unwritable/uncreatable output path (a deterministic stderr message
+  naming the problem + "nothing was written", no traceback, no partial
+  bundle); and `generate_bundle_text` returns the bundle text together
+  with the bundled-file count, so the command enumerates the scoped
+  `.opencode/` tree exactly once.
 - The `dec` `## Decision Outcome` lead is relaxed so that, after the
   mandatory lead paragraph (the `statement` field, position and meaning
   unchanged), zero or more further blocks — additional paragraphs,
