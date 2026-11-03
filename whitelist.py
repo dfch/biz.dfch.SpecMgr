@@ -189,6 +189,10 @@ context
 drivers
 considered
 outcome
+# dec (feat-247 Phase 110): `DecisionOutcome.further_blocks` -- the new
+# optional field read only via (de)serialization (the `models.md` field
+# loop) and the tests; no `src/` code accesses it as a plain attribute.
+further_blocks
 # sop (feat-30 Phase 1): `Sop`/`RolesAndResponsibilities`/`RelatedArtifacts`/
 # `UpdateEntry` fields (and the `UpdateEntry.timestamp` `@computed_field`) read
 # only via (de)serialization; nothing in `src/` accesses them as plain

@@ -390,7 +390,12 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
         pins.STRUCTURIZR_CLI_IMAGE,
         *args,
     ]
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)  # noqa: S603 -- fixed pinned image, no user input
+    proc = subprocess.run(  # noqa: S603 -- fixed pinned image, no user input
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
     result: tuple[int, str] = (proc.returncode, (proc.stderr or "") + (proc.stdout or ""))
     return result
 

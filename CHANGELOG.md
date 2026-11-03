@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the README gains a new "Installing the specmgr Harness Files" section
   (agent-driven install + what gets installed + the manual Claude Code
   path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2
-  Phase 130, GitHub issue #167).
+   Phase 130, GitHub issue #167).
 
 - The cross-cutting `specmgr://iso29148` resource: the four
   ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
@@ -87,9 +87,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `translate_artifact` instructions), and the reference graph carries
   the 16th palette entry (`SET` coloured `Wheat`, after `TXT`, before
   `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
-  (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
+   (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
 
 ### Changed
+
+- The `specmgr harness-bundle` generator and its install protocol, refined
+  by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review
+  cycle 3, GitHub issue #167): the feat-numbering skill
+  (`.opencode/skill/feat-numbering/SKILL.md`) no longer references the
+  deleted TSK `tsk-2687d267` (the feat-150 plan-document numbering
+  migration is deferred without a live tracker; the successor
+  `tsk-1b36c754` is named as the TSK whose repair scope a future migration
+  would need its own tracker or an explicit scope extension of); the
+  bundle's `instructions` install protocol gains the both-spellings
+  collision case in step 2 (a root containing both a singular and a plural
+  directory for the same first path segment -- do not guess, ask the user
+  which one to install into, and report the other as needing manual
+  cleanup); the `specmgr harness-bundle` exit-2 usage-error contract now
+  also covers a scoped `.md` file that is not decodable as UTF-8 and an
+  unwritable/uncreatable output path (a deterministic stderr message
+  naming the problem + "nothing was written", no traceback, no partial
+  bundle); and `generate_bundle_text` returns the bundle text together
+  with the bundled-file count, so the command enumerates the scoped
+  `.opencode/` tree exactly once.
+- The `dec` `## Decision Outcome` lead is relaxed so that, after the
+  mandatory lead paragraph (the `statement` field, position and meaning
+  unchanged), zero or more further blocks — additional paragraphs,
+  bullet lists, ordered lists, and fenced code blocks — may follow
+  before the first `###` sub-section, carried by the new optional
+  `further_blocks` field (the `dec`-local `OutcomeBlocks` leaf) declared
+  between `statement` and `consequences` in `dec/models/v1` — an
+  additive, non-breaking schema evolution: a section whose first block
+  is not a paragraph (a bare list, a `###` heading, nothing) is still
+  rejected, `### Consequences`/`### Confirmation` keep their position,
+  optionality and meaning, and every previously valid document parses to
+  the same result with a byte-exact round-trip. The rejected kinds stay
+  rejected per distinct token kind (block quotes, HTML comments,
+  horizontal rules, H4+/H5/H6 headings, raw HTML); pipe-table content is
+  a plain paragraph to the shared commonmark tokenizer (which has no
+  table token) and is therefore accepted, consistent with the lead
+  paragraph's existing behavior. This unblocks the UUID-preserving ADR to
+  DEC conversion (GitHub issue #46), whose ~20 of 46 blocked ADRs (e.g.
+  `750842b2`, `92cc4ce8`, `356d8781`) carry multi-block outcomes
+   (feat-247-dec-outcome-blocks, GitHub issue #247).
 
 - **BREAKING**: `req`'s `## Level` is a mandatory single-line
   closed-value field carrying the ISO/IEC/IEEE 29148:2018

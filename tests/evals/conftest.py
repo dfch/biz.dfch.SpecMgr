@@ -21,11 +21,11 @@ Two responsibilities:
 
 1. **The import path** -- `evals/` is deliberately not part of the wheel
    (development-only, Task 100.100); this conftest puts the harness root
-   (`evals/c4-skills/`) on `sys.path` so `import c4_skills` works from
-   every test module here, mirroring the thin launcher
-   `evals/c4-skills/run.py`. The pre-commit pytest hook is scoped to
-   `src/`+`tests/` changes, so these tests run in pre-commit/CI exactly
-   like every other test in this package.
+    (`evals/c4-skills/`) on `sys.path` so `import c4_skills` works from
+    every test module here, mirroring the thin launcher
+    `evals/c4-skills/run.py`. The pre-commit pytest hook is scoped to
+    `src/`+`tests/`+`evals/` changes, so these tests run in pre-commit/CI
+    exactly like every other test in this package.
 
 2. **The Docker gate** -- the tests that exercise the real Structurizr CLI
    (the grader collection) skip when Docker is missing (ACC-006); every

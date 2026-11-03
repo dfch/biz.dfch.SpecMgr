@@ -41,6 +41,6 @@ before drafting or revising a `### Task List`:
   `Phase 110`; `Task 100.105` between `Task 100.100` and `Task 100.110`) and insert the one new
   numbered line -- never renumber existing lines.
 - A number is permanent once assigned; removing a phase or task leaves a gap on purpose.
-- Legacy documents written before this scheme are handled by the follow-up migration TSK
-  tsk-2687d267 -- do not reintroduce their legacy numbering shapes when adding or editing phases
-  and tasks.
+- Legacy documents written before this scheme are not migrated by this skill (the feat-163 strict
+  no-migration policy) -- do not reintroduce their legacy numbering shapes when adding or editing
+  phases and tasks.

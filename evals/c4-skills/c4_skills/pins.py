@@ -123,8 +123,9 @@ SAMPLING_PARAMETERS: dict[str, object] = {
 # still produced identical results; the pair is pinned together)
 # ---------------------------------------------------------------------------
 
-#: The OpenCode trial image (tag AND digest -- the digest is what the runner
-#: actually pulls/runs).
+#: The OpenCode trial image (tag + digest). The runner pulls/runs the TAG;
+#: the digest is the integrity pin the preflight enforces -- it aborts the
+#: run when the locally stored image `RepoDigests` differ from this value.
 OPENCODE_IMAGE = "ghcr.io/anomalyco/opencode:2.2.5"
 OPENCODE_IMAGE_DIGEST = "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9"
 

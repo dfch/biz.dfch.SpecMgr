@@ -28,9 +28,21 @@ vLLM reports running requests, re-checks (and waits) between trials, and
 flags -- never fails -- a trial that ran while another client was active.
 A per-trial timeout is a failure, flagged separately.
 
+The event stream is captured into the gitignored work root (a sibling of
+the trial's mounted work dir, never inside it) by a single non-following
+`docker logs <name>` after the container stops, so no start-gap output is
+lost; streams up to EVENT_FILE_COMMIT_LIMIT are committed into the
+results dir, over-limit streams stay in the work dir and are flagged in
+the trial record (`event_file_committed: false`, `event_file_bytes`).
+
 The result cache (Task 100.130) reuses the `none`/`upstream` trial
 summaries when (case, condition, version tuple, grader hash, skill variant
-hash) all match, so skill iterations cost only the `skill` trials.
+hash) all match, so skill iterations cost only the `skill` trials; the
+per-trial cache hit/miss reason is recorded in `run.json`
+(`cache_reason`). The `skill` condition takes its variant from
+`RunConfig.skills_dir` (`load_skill_source`): the files are copied into
+the trial work dir before the container starts and hashed with
+`pins.skill_variant_hash`, which the run record carries.
 """
 
 from __future__ import annotations
@@ -54,9 +66,19 @@ from .upstream import UpstreamSource, mount_skills_into
 #: The in-container work dir (the trial's CWD).
 CONTAINER_WORKDIR = "/work"
 
-#: The event stream is committed with the trial record only up to this size
-#: (larger streams are summarized, the file kept in the work dir).
+#: The event stream is committed with the trial record only up to this size.
+#: An over-limit stream is NOT committed and NOT deleted: it stays in the
+#: gitignored work dir (useful for debugging, the dir is never committed),
+#: the trial record carries `event_file: null`, `event_file_committed:
+#: false` and the stream's size in `event_file_bytes`.
 EVENT_FILE_COMMIT_LIMIT = 2_000_000
+
+#: The event types a trial's stream may legitimately start with (every
+#: healthy stream opens with a `step_start`; a container that dies before
+#: the first step emits a lone `error` event -- the smoke run 1 port
+#: collision did). A captured stream whose first line is anything else is
+#: suspect (truncated or wrong source) and is reported.
+EVENT_STREAM_FIRST_TYPES: frozenset[str] = frozenset({"step_start", "error"})
 
 #: The run id's time-stamp format (committed results are keyed by it).
 RUN_ID_FORMAT = "%Y-%m-%dT%H%M%SZ"
@@ -95,8 +117,17 @@ class TrialRecord:
         idle_wait_s: Seconds the runner waited for vLLM to drain before
             starting this trial.
         cached: The summary came from the result cache (no trial run).
+        cache_reason: Why the cache was or was not used for this trial
+            (`hit` / `miss:file-absent` / `miss:key-mismatch` /
+            `miss:file-unparseable` / `miss:trial-absent` / `n/a` when the
+            condition is not cacheable). Additive field: pre-existing
+            records parse via the default.
         event_file: The committed event stream file (relative to the run
-            results dir), or None.
+            results dir), or None (over-limit streams stay in the work dir).
+        event_file_bytes: The captured event stream's size in bytes (None
+            when no stream was captured).
+        event_file_committed: The event stream was committed with the
+            record (False for over-limit and uncommitted streams).
         gates: The GateResult dicts, in the case's order.
         passed: Every gate passed and no timeout.
         metrics: The TrialMetrics JSON.
@@ -117,6 +148,9 @@ class TrialRecord:
     gates: list[dict] = field(default_factory=list)
     passed: bool = False
     metrics: dict = field(default_factory=dict)
+    cache_reason: str = "n/a"
+    event_file_bytes: int | None = None
+    event_file_committed: bool = False
 
     def to_json(self) -> dict:
         """Return the JSON-serialisable record (the cache unit)."""
@@ -214,6 +248,55 @@ def _docker_inspect(container_name: str, template: str) -> str:
     return result
 
 
+def _capture_full_logs(container_name: str, log_path: Path) -> None:
+    """Write the container's FULL log to `log_path` (single, non-following).
+
+    One `docker logs <name>` after the container has exited (or been
+    killed) captures everything it emitted -- a `docker logs -f --tail 0`
+    started AFTER `docker run` would miss the output produced in the gap
+    between the two calls. The capture runs before the `docker rm`, so the
+    logs are still available. A capture failure (container already gone,
+    docker error) leaves an empty file in place and never raises: the
+    parse tolerates empty/truncated streams and the trial's own outcome
+    (exit code, gates) is unaffected.
+    """
+    try:
+        with open(log_path, "w", encoding="utf-8") as log_file:
+            subprocess.run(  # noqa: S603 -- fixed container name
+                ["docker", "logs", container_name],
+                stdout=log_file,
+                stderr=subprocess.DEVNULL,
+                timeout=120,
+            )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def _stream_first_type(path: Path) -> str | None:
+    """Return the `type` token of the stream's first event line (or None).
+
+    The cheap integrity check for a captured stream: every healthy trial
+    stream opens with a `step_start`, a container that dies before its
+    first step emits a lone `error` event; anything else (including an
+    empty file) is suspect.
+    """
+    try:
+        with open(path, encoding="utf-8") as file:
+            first_line = file.readline().strip()
+    except OSError:
+        return None
+    if not first_line:
+        return None
+    try:
+        event = json.loads(first_line)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(event, dict):
+        return None
+    result: str | None = str(event.get("type") or None)
+    return result
+
+
 def _run_opencode_container(
     workdir: Path,
     case: Case,
@@ -227,7 +310,12 @@ def _run_opencode_container(
     The container is addressed by name throughout: on timeout the harness
     sends `docker kill` to the CONTAINER (never just to the client), so a
     timed-out trial cannot orphan a process that keeps a host-network port
-    or a vLLM sequence slot.
+    or a vLLM sequence slot. The exit code comes from `docker inspect`
+    (`{{.State.ExitCode}}` -- the same value `docker wait` would report),
+    so a killed (timed-out) trial keeps its exit code of None plus the
+    timeout flag. The event stream is captured AFTER the container stops,
+    by one non-following `docker logs <name>` (the full log; no start gap
+    can lose output).
 
     Returns:
         (exit_code, timed_out, wall_time_s). The exit code is None when the
@@ -268,14 +356,7 @@ def _run_opencode_container(
     timed_out = False
     exit_code: int | None = None
     deadline = started + timeout_s
-    log_file = open(log_path, "w", encoding="utf-8")
-    log_tail = subprocess.Popen(  # noqa: S603 -- fixed container name
-        ["docker", "logs", "-f", "--tail", "0", container_name],
-        stdout=log_file,
-        stderr=subprocess.DEVNULL,
-    )
     try:
-        timed_out = False
         while True:
             status = _docker_inspect(container_name, "{{.State.Status}}")
             if status != "running":
@@ -287,13 +368,8 @@ def _run_opencode_container(
             time.sleep(CONTAINER_POLL_S)
         if not timed_out:
             exit_code = int(_docker_inspect(container_name, "{{.State.ExitCode}}"))
+        _capture_full_logs(container_name, log_path)
     finally:
-        log_tail.terminate()
-        try:
-            log_tail.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            log_tail.kill()
-        log_file.close()
         subprocess.run(["docker", "rm", "-f", container_name], capture_output=True, timeout=60)  # noqa: S603
     wall = time.monotonic() - started
     result: tuple[int | None, bool, float] = (exit_code, timed_out, wall)
@@ -308,12 +384,152 @@ def _write_setup_files(workdir: Path, case: Case) -> None:
         target.write_text(text, encoding="utf-8")
 
 
-def _install_skills(workdir: Path, condition: str, upstream: UpstreamSource | None) -> list[str]:
+@dataclass(frozen=True)
+class EventCommit:
+    """The event-stream commit decision of one trial (D2).
+
+    Attributes:
+        event_file: The committed stream's path relative to the run's
+            results dir (None when the stream was not committed).
+        event_file_bytes: The captured stream's size in bytes (None when
+            no stream was captured at all).
+        event_file_committed: The stream was copied into the results dir.
+    """
+
+    event_file: str | None
+    event_file_bytes: int | None
+    event_file_committed: bool
+
+
+def commit_event_stream(event_source: Path, event_path: Path, results_dir: Path) -> EventCommit:
+    """Copy the trial's event stream into the results dir when it fits.
+
+    The stream is captured in the gitignored work dir (never inside the
+    trial's mounted work dir, where the agent would see it); only streams
+    up to EVENT_FILE_COMMIT_LIMIT are copied into the committed results
+    dir. An over-limit stream is kept in the work dir for debugging and
+    flagged in the decision (`event_file_committed` False, size recorded)
+    instead of being summarized or deleted.
+
+    Args:
+        event_source: The captured stream in the work root.
+        event_path: Where the committed stream lands (results dir).
+        results_dir: The run's results dir (the event_file base).
+
+    Returns:
+        The EventCommit decision.
+    """
+    assert isinstance(event_source, Path) and isinstance(event_path, Path)
+    if not event_source.is_file():
+        return EventCommit(event_file=None, event_file_bytes=None, event_file_committed=False)
+    size = event_source.stat().st_size
+    if size > EVENT_FILE_COMMIT_LIMIT:
+        return EventCommit(event_file=None, event_file_bytes=size, event_file_committed=False)
+    event_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(event_source, event_path)
+    result = EventCommit(
+        event_file=str(event_path.relative_to(results_dir)),
+        event_file_bytes=size,
+        event_file_committed=True,
+    )
+    return result
+
+
+@dataclass(frozen=True)
+class SkillSource:
+    """A verified `skill`-condition variant (Phases 110-150).
+
+    Attributes:
+        skills_root: The directory that contains the skill folders (the
+            variant root; files are hashed relative to it, the same shape
+            as `UpstreamSource.files`).
+        skills: The skill folder names found under `skills_root`.
+        files: Every skill file as (path relative to `skills_root`,
+            bytes) -- the input of `pins.skill_variant_hash`.
+    """
+
+    skills_root: Path
+    skills: tuple[str, ...]
+    files: list[tuple[str, bytes]]
+
+
+def load_skill_source(path: Path) -> SkillSource:
+    """Load and verify one `skill` variant directory (pure filesystem read).
+
+    `path` is either a variant root (one or more direct subfolders that
+    each carry a `SKILL.md`) or a single skill folder (itself carrying a
+    `SKILL.md`); the files are hashed relative to the containing skills
+    root in both shapes, so the same content hashes equally from either.
+
+    Args:
+        path: The variant directory on the host.
+
+    Returns:
+        The verified SkillSource.
+
+    Raises:
+        ValueError: When the directory is missing or carries no skill
+            folder (a usage error, mapped to exit code 2).
+    """
+    assert isinstance(path, Path)
+    path = path.resolve()
+    if not path.is_dir():
+        raise ValueError(f"skills dir does not exist: {path}")
+    if (path / "SKILL.md").is_file():
+        skills_root = path.parent
+        skill_dirs = (path.name,)
+    else:
+        skills_root = path
+        skill_dirs = tuple(sorted(p.name for p in path.iterdir() if p.is_dir() and (p / "SKILL.md").is_file()))
+    if not skill_dirs:
+        raise ValueError(f"no skill folder (a directory carrying a SKILL.md) in {path}")
+    files: list[tuple[str, bytes]] = []
+    for skill in skill_dirs:
+        for file_path in sorted((skills_root / skill).glob("**/*")):
+            if file_path.is_file():
+                files.append((file_path.relative_to(skills_root).as_posix(), file_path.read_bytes()))
+    result = SkillSource(skills_root=skills_root, skills=skill_dirs, files=files)
+    return result
+
+
+def _copy_skill_folders(workdir: Path, source: SkillSource) -> list[str]:
+    """Copy a verified skill variant into the trial work dir.
+
+    The target is `<workdir>/.opencode/skills/<name>/` (opencode 2.x's
+    project skill location, the same layout `mount_skills_into` uses for
+    the `upstream` condition). Returns the skill names copied.
+    """
+    assert workdir.is_dir()
+    target_root = workdir / ".opencode" / "skills"
+    copied: list[str] = []
+    for skill in source.skills:
+        src = source.skills_root / skill
+        dst = target_root / skill
+        dst.mkdir(parents=True, exist_ok=True)
+        for path in src.rglob("*"):
+            if path.is_file():
+                rel = path.relative_to(src)
+                out = dst / rel
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_bytes(path.read_bytes())
+        copied.append(skill)
+    result = copied
+    return result
+
+
+def _install_skills(
+    workdir: Path,
+    condition: str,
+    upstream: UpstreamSource | None,
+    skill_source: SkillSource | None = None,
+) -> list[str]:
     """Install the condition's skills into the work dir (returns the names).
 
-    `none`: nothing. `upstream`: the fetched, unmodified upstream skills.
-    `skill`: the adapted skills from the variant dir (Phases 110-150 pass a
-    directory; Phase 100 never reaches this branch with content).
+    Runs BEFORE the trial container starts. `none`: nothing. `upstream`:
+    the fetched, unmodified upstream skills. `skill`: the verified variant
+    directory (Phases 110-150 pass it through `RunConfig.skills_dir`; the
+    files are copied in here, so the trial's work dir always carries them
+    before the agent sees anything).
     """
     assert condition in pins.CONDITIONS
     if condition == pins.CONDITION_NONE:
@@ -322,25 +538,9 @@ def _install_skills(workdir: Path, condition: str, upstream: UpstreamSource | No
         if upstream is None:
             raise RuntimeError("the upstream condition needs a verified upstream source")
         return mount_skills_into(workdir, upstream)
-    # skill: a variant directory is supplied through the work dir itself
-    # (Phases 110-150 copy their files into <workdir>/.opencode/skills/
-    # before the runner is invoked); nothing to do here.
-    skill_root = workdir / ".opencode" / "skills"
-    if skill_root.is_dir():
-        return sorted(p.name for p in skill_root.iterdir() if p.is_dir() and (p / "SKILL.md").is_file())
-    return []
-
-
-def _skill_variant_files(workdir: Path) -> list[tuple[str, bytes]]:
-    """Collect the work dir's skill files (for the variant content hash)."""
-    skill_root = workdir / ".opencode" / "skills"
-    if not skill_root.is_dir():
-        return []
-    files: list[tuple[str, bytes]] = []
-    for path in sorted(skill_root.glob("**/*")):
-        if path.is_file():
-            files.append((path.relative_to(skill_root).as_posix(), path.read_bytes()))
-    return files
+    if skill_source is None:
+        raise ValueError("the skill condition needs a verified skill source (RunConfig.skills_dir)")
+    return _copy_skill_folders(workdir, skill_source)
 
 
 def run_trial(
@@ -352,8 +552,16 @@ def run_trial(
     mcp_port: int,
     upstream: UpstreamSource | None,
     timeout_s: int = pins.TRIAL_TIMEOUT_S,
+    skill_source: SkillSource | None = None,
+    cache_reason: str = "n/a",
 ) -> TrialRecord:
     """Run one trial end to end (container + graders + metrics + record).
+
+    The event stream is captured into the gitignored work root (a sibling
+    of the trial's mounted work dir -- never inside it, where the agent
+    would see it) and committed into the results dir when it fits
+    (`commit_event_stream`); the metrics always parse the captured stream,
+    over-limit or not.
 
     Args:
         plan: The TrialPlan.
@@ -363,6 +571,10 @@ def run_trial(
         mcp_port: The harness sidecar's host port.
         upstream: The verified upstream source (the `upstream` condition).
         timeout_s: The per-trial wall-clock timeout.
+        skill_source: The verified skill variant (the `skill` condition).
+        cache_reason: The result-cache outcome for this trial (recorded
+            with it; a fresh trial carries the lookup's miss reason or
+            `n/a` for non-cacheable conditions).
 
     Returns:
         The TrialRecord.
@@ -373,12 +585,13 @@ def run_trial(
         shutil.rmtree(workdir)
     workdir.mkdir(parents=True)
     _write_setup_files(workdir, case)
-    _install_skills(workdir, plan.condition, upstream)
+    _install_skills(workdir, plan.condition, upstream, skill_source)
 
     trial_dir = results_dir / "trials" / plan.case_id
     trial_dir.mkdir(parents=True, exist_ok=True)
     record_name = f"{plan.condition}-k{plan.k_index}"
     event_path = trial_dir / f"{record_name}.events.ndjson"
+    event_source = workroot / f"{_trial_workdir_name(plan, run_id)}.events.ndjson"
 
     idle, last_seen, idle_wait = preflight.wait_until_idle(budget_s=3600.0, poll_s=pins.IDLE_POLL_INTERVAL_S)
     if not idle:
@@ -389,15 +602,24 @@ def run_trial(
     started_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     samples, sampler_thread, stop_event = _start_contended_sampler()
     container_name = f"{TRIAL_CONTAINER_PREFIX}{run_id}.{plan.case_id}.{plan.condition}-k{plan.k_index}"
-    exit_code, timed_out, wall = _run_opencode_container(workdir, case, mcp_port, timeout_s, event_path, container_name)
+    exit_code, timed_out, wall = _run_opencode_container(
+        workdir, case, mcp_port, timeout_s, event_source, container_name
+    )
     stop_event.set()
     sampler_thread.join(timeout=5.0)
     contended = _was_contended(samples)
     finished_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
+    first_type = _stream_first_type(event_source)
+    if first_type not in EVENT_STREAM_FIRST_TYPES:
+        print(
+            f"warning: trial {record_name} event stream does not open with a step_start/error event "
+            f"(first type: {first_type!r}); the capture may be truncated"
+        )
+
     inputs = graders.collect_inputs(workdir)
-    if event_path.is_file():
-        parsed = parse_events_file(event_path)
+    if event_source.is_file():
+        parsed = parse_events_file(event_source)
     else:
         parsed = ParsedTrial()
     triage_metrics = metrics_mod.compute_metrics(
@@ -409,11 +631,7 @@ def run_trial(
     gate_results = graders.grade_case(case, inputs)
     passed = graders.case_passed(gate_results) and not timed_out
 
-    commit_event: str | None = None
-    if event_path.is_file() and event_path.stat().st_size <= EVENT_FILE_COMMIT_LIMIT:
-        commit_event = str(event_path.relative_to(results_dir))
-    else:
-        event_path.unlink(missing_ok=True)
+    commit = commit_event_stream(event_source, event_path, results_dir)
 
     record = TrialRecord(
         plan=plan,
@@ -427,10 +645,13 @@ def run_trial(
         contended=contended,
         idle_wait_s=idle_wait,
         cached=False,
-        event_file=commit_event,
+        event_file=commit.event_file,
         gates=[asdict(g) for g in gate_results],
         passed=passed,
         metrics=triage_metrics.to_json(),
+        cache_reason=cache_reason,
+        event_file_bytes=commit.event_file_bytes,
+        event_file_committed=commit.event_file_committed,
     )
     return record
 
@@ -493,6 +714,8 @@ class RunConfig:
         cache_root: The gitignored result cache dir.
         timeout_s: The per-trial wall-clock timeout.
         label: A short run label for the report (e.g. `smoke`).
+        skills_dir: The `skill` condition's variant directory (required
+            iff `skill` is in `conditions`; see `load_skill_source`).
     """
 
     run_id: str
@@ -505,6 +728,7 @@ class RunConfig:
     cache_root: Path
     timeout_s: int = pins.TRIAL_TIMEOUT_S
     label: str = ""
+    skills_dir: Path | None = None
 
 
 def _write_trial_record(results_dir: Path, record: TrialRecord) -> Path:
@@ -535,8 +759,19 @@ def run(config: RunConfig) -> dict:
     Raises:
         RuntimeError: When the preflight pin check fails or the sidecar
             does not come up.
+        ValueError: When the `skill` condition is used without (or with a
+            malformed) `skills_dir`, or `skills_dir` is given without the
+            `skill` condition (usage errors; the CLI maps them to exit 2).
     """
     assert config.case_ids and config.conditions
+    if pins.CONDITION_SKILL in config.conditions:
+        if config.skills_dir is None:
+            raise ValueError("the skill condition needs a variant directory (RunConfig.skills_dir)")
+        skill_source = load_skill_source(config.skills_dir)
+    elif config.skills_dir is not None:
+        raise ValueError("skills_dir is only valid when the skill condition is run")
+    else:
+        skill_source = None
     stale = sidecar.sidecar_container_list()
     if stale:
         raise RuntimeError(f"stale c4eval-mcp sidecar(s) still running: {stale}; tear them down first")
@@ -596,21 +831,32 @@ def run(config: RunConfig) -> dict:
         plans = plan_trials(config.case_ids, list(config.conditions), config.k, config.seed)
         records: list[TrialRecord] = []
         for plan in plans:
-            skill_variant = pins.skill_variant_hash(
-                upstream.files if (plan.condition == pins.CONDITION_UPSTREAM and upstream is not None) else []
-            )
+            if plan.condition == pins.CONDITION_UPSTREAM and upstream is not None:
+                skill_variant = pins.skill_variant_hash(upstream.files)
+            elif plan.condition == pins.CONDITION_SKILL and skill_source is not None:
+                skill_variant = pins.skill_variant_hash(skill_source.files)
+            else:
+                skill_variant = pins.skill_variant_hash([])
             record: TrialRecord | None = None
+            cache_reason = "n/a"
             if plan.condition in pins.CACHEABLE_CONDITIONS:
                 key = CacheKey.make(plan.case_id, plan.condition, grader_hash, skill_variant)
-                hit = cache.get(key)
-                if hit is not None:
+                lookup_reason = cache.get_reason(key)
+                if lookup_reason == "hit":
+                    hit = cache.get(key)
+                    assert hit is not None
                     for cached_trial in hit.get("trials", []):
                         if cached_trial.get("plan", {}).get("k_index") == plan.k_index:
                             raw = dict(cached_trial)
                             raw["cached"] = True
+                            raw["cache_reason"] = "hit"
                             record = _record_from_json(raw)
                             _copy_cached_event(config.results_dir, raw)
                             break
+                    else:
+                        cache_reason = "miss:trial-absent"
+                else:
+                    cache_reason = lookup_reason
             if record is None:
                 record = run_trial(
                     plan,
@@ -620,6 +866,8 @@ def run(config: RunConfig) -> dict:
                     mcp_port=handle.port,
                     upstream=upstream,
                     timeout_s=config.timeout_s,
+                    skill_source=skill_source,
+                    cache_reason=cache_reason,
                 )
                 if plan.condition in pins.CACHEABLE_CONDITIONS:
                     key = CacheKey.make(plan.case_id, plan.condition, grader_hash, skill_variant)
@@ -646,6 +894,10 @@ def run(config: RunConfig) -> dict:
             "trial_timeout_s": config.timeout_s,
             "version_tuple": pins.version_tuple(),
             "version_tuple_hash": pins.version_tuple_hash(),
+            # the skill condition's variant content hash (None when the run
+            # has no skill condition) -- Phases 110-150 record each measured
+            # variant by this hash
+            "skill_variant_hash": pins.skill_variant_hash(skill_source.files) if skill_source is not None else None,
             "order": [
                 {"case": p.case_id, "condition": p.condition, "k": p.k_index, "cached": r.cached}
                 for p, r in zip(plans, records)
@@ -681,7 +933,12 @@ def _copy_cached_event(results_dir: Path, cached_trial: dict) -> None:
 
 
 def _record_from_json(raw: dict) -> TrialRecord:
-    """Rebuild a TrialRecord from its JSON form (the cache-hit path)."""
+    """Rebuild a TrialRecord from its JSON form (the cache-hit path).
+
+    The additive fields (`cache_reason`, `event_file_bytes`,
+    `event_file_committed`) default for pre-existing records that predate
+    them (old cache entries and committed run records parse unchanged).
+    """
     assert isinstance(raw, dict)
     plan_raw = raw.get("plan") or {}
     plan = TrialPlan(
@@ -689,6 +946,7 @@ def _record_from_json(raw: dict) -> TrialRecord:
         condition=str(plan_raw.get("condition", "")),
         k_index=int(plan_raw.get("k_index", 0)),
     )
+    event_file = raw.get("event_file")
     result = TrialRecord(
         plan=plan,
         run_id=str(raw.get("run_id", "")),
@@ -701,9 +959,12 @@ def _record_from_json(raw: dict) -> TrialRecord:
         contended=bool(raw.get("contended", False)),
         idle_wait_s=float(raw.get("idle_wait_s", 0.0)),
         cached=bool(raw.get("cached", True)),
-        event_file=raw.get("event_file"),
+        event_file=event_file,
         gates=list(raw.get("gates", [])),
         passed=bool(raw.get("passed", False)),
         metrics=dict(raw.get("metrics", {})),
+        cache_reason=str(raw.get("cache_reason", "n/a")),
+        event_file_bytes=raw.get("event_file_bytes"),
+        event_file_committed=bool(raw.get("event_file_committed", event_file is not None)),
     )
     return result

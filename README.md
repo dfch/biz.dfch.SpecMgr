@@ -520,7 +520,7 @@ To add the `specmgr` MCP server to your OpenCode configuration:
    what's published on PyPI — drop `--extra similarity` if you don't need
    [Semantic Similarity Search](#semantic-similarity-search).
 
- 3. Save the file and restart OpenCode
+3. Save the file and restart OpenCode
 
 ## Installing the specmgr Harness Files
 

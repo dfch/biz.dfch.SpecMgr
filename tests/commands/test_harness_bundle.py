@@ -35,8 +35,9 @@ Pins the REQ-007 generator contract:
   [{"path", "sha256", "content"}]}`` with ``instructions`` present,
   non-empty, and the module constant verbatim; ``files`` sorted by
   ``.opencode/``-relative ``path``.
-* **Usage error** -- a missing ``.opencode/`` directory is exit 2, nothing
-  written.
+* **Usage error** -- a missing ``.opencode/`` directory, a scoped file that
+  is not decodable as UTF-8, and an unwritable/uncreatable bundle output
+  path are each exit 2, nothing written, no traceback.
 * **Drift pin** -- the committed bundle is byte-identical to a fresh
   in-memory generation over the current tree (the
   ``specmgr-harness-bundle`` hook's own regenerate step, minus the write).
@@ -103,7 +104,8 @@ class TestGenerateBundleTextCurrentTree(unittest.TestCase):
     """The pure generator over the real repo tree (read-only; the tree is never mutated)."""
 
     def _bundle(self) -> dict[str, Any]:
-        payload: dict[str, Any] = json.loads(generate_bundle_text(_REPO_ROOT / ".opencode"))
+        text, _ = generate_bundle_text(_REPO_ROOT / ".opencode")
+        payload: dict[str, Any] = json.loads(text)
         return payload
 
     def test_current_tree_enumerates_exactly_25_files(self):
@@ -148,15 +150,18 @@ class TestGenerateBundleTextCurrentTree(unittest.TestCase):
         for token in ("customize-opencode", "sha256", "question", "opencode.json", "byte-exact"):
             with self.subTest(token=token):
                 self.assertIn(token, INSTRUCTIONS)
+        # the both-spellings collision case (review cycle 3, finding I3): a root
+        # containing both a singular and a plural directory must not be guessed at
+        self.assertIn("both a singular and a plural", INSTRUCTIONS)
 
     def test_two_calls_are_byte_identical(self):
-        first = generate_bundle_text(_REPO_ROOT / ".opencode")
-        second = generate_bundle_text(_REPO_ROOT / ".opencode")
+        first, _ = generate_bundle_text(_REPO_ROOT / ".opencode")
+        second, _ = generate_bundle_text(_REPO_ROOT / ".opencode")
 
         self.assertEqual(first, second)
 
     def test_trailing_newline_and_utf8_unescaped(self):
-        text = generate_bundle_text(_REPO_ROOT / ".opencode")
+        text, _ = generate_bundle_text(_REPO_ROOT / ".opencode")
 
         self.assertTrue(text.endswith("\n"))
         self.assertFalse(text.endswith("\n\n"))
@@ -165,7 +170,8 @@ class TestGenerateBundleTextCurrentTree(unittest.TestCase):
         """The drift pin: the committed file equals the hook's regenerate step, minus the write."""
         committed = (_REPO_ROOT / _BUNDLE_RELPATH).read_text(encoding="utf-8")
 
-        self.assertEqual(committed, generate_bundle_text(_REPO_ROOT / ".opencode"))
+        text, _ = generate_bundle_text(_REPO_ROOT / ".opencode")
+        self.assertEqual(committed, text)
 
 
 class _HarnessBundleCommandBase(unittest.TestCase):
@@ -284,7 +290,9 @@ class TestHarnessBundleCommand(_HarnessBundleCommandBase):
 
 
 class TestHarnessBundleMissingOpencodeDir(_HarnessBundleCommandBase):
-    """A missing ``.opencode/`` directory is a usage error: exit 2, nothing written."""
+    """The I/O usage errors (review cycle 3, finding G4): a missing ``.opencode/``
+    directory, a scoped file that is not decodable as UTF-8, and an unwritable
+    or uncreatable bundle output path -- each exit 2, nothing written, no traceback."""
 
     def test_missing_opencode_dir_exits_2_and_writes_nothing(self):
         shutil.rmtree(self.tmp / ".opencode")
@@ -296,6 +304,31 @@ class TestHarnessBundleMissingOpencodeDir(_HarnessBundleCommandBase):
         self.assertNotIn("Traceback", result.stderr)
         self.assertFalse(self._bundle_path().exists())
         self.assertFalse((self.tmp / "src").exists())
+
+    def test_non_utf8_scoped_file_exits_2_and_writes_nothing(self):
+        (self.tmp / ".opencode" / "agent" / "binary-agent.md").write_bytes(b"\xff\xfe not utf8\n")
+
+        result = self._invoke()
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("nothing was written", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertFalse(self._bundle_path().exists())
+        self.assertFalse((self.tmp / "src").exists())
+
+    @unittest.skipIf(os.geteuid() == 0, "root ignores directory permission modes")
+    def test_unwritable_output_path_exits_2_and_writes_nothing(self):
+        parent = self.tmp / "src" / "biz" / "dfch" / "specmgr" / "general"
+        parent.mkdir(parents=True)
+        parent.chmod(0o555)
+        self.addCleanup(parent.chmod, 0o755)
+
+        result = self._invoke()
+
+        self.assertEqual(result.exit_code, 2, result.output)
+        self.assertIn("nothing was written", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertFalse(self._bundle_path().exists())
 
 
 class TestHookAndCiPins(unittest.TestCase):

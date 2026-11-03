@@ -33,7 +33,8 @@ evals/c4-skills/
 ├── results/                # committed, reproducible run records (small)
 │   ├── smoke-*/            # preflight.json, run.json, report.{md,json}, trials/
 │   └── provenance.md       # Task 100.190: license/provenance table
-├── work/                   # gitignored: fresh trial work dirs
+├── work/                   # gitignored: fresh trial work dirs + the captured
+│                           # event streams (over-limit ones never committed)
 └── cache/                  # gitignored: result cache + the fetched upstream checkout
 ```
 
@@ -66,11 +67,25 @@ uv run --frozen python evals/c4-skills/run.py probe
 uv run --frozen python evals/c4-skills/run.py run \
     --cases smoke-create-system --conditions none,upstream --k 2 --label smoke
 
+# 3b. Phases 110-150 add the skill condition with its variant directory
+#     (one skill folder, or a root of skill folders; hashed + copied into
+#     every skill trial's work dir before the container starts):
+uv run --frozen python evals/c4-skills/run.py run \
+    --cases <phase-cases> --conditions none,upstream,skill --k 5 \
+    --skills-dir .opencode/skill/<name> --label <phase>
+
 # 4. rebuild the report of an existing run
 uv run --frozen python evals/c4-skills/run.py report --results-dir evals/c4-skills/results/<run-id>
 ```
 
-Exit codes: `0` ok, `1` pin/preflight failure or runner error, `2` usage.
+Exit codes: `0` ok; `1` a runtime-shaped failure (a pin/preflight
+violation, the sidecar or a trial container failing, a runner error, an
+I/O failure); `2` a usage-shaped failure (an invalid argument such as
+`k <= 0` or a missing/misplaced `--skills-dir`, an unknown case, or a
+missing artifact the command needs, e.g. `report` on a dir without
+`run.json`). Any other exception type is a harness bug and stays a raw
+traceback. The `probe` subcommand's failed outcome is a `2` by its own
+convention (a probe that did not verify the chain is not a pin failure).
 
 ## Isolation and the shared server
 
@@ -82,7 +97,10 @@ Exit codes: `0` ok, `1` pin/preflight failure or runner error, `2` usage.
   is filesystem/config isolation, not network isolation.
 - The harness starts its own pinned `structurizr/mcp` sidecar on a free
   ephemeral host port and tears it down after the run; the development MCP
-  on port 3000 is never used.
+  on port 3000 is never used. Port selection is racy (bind/close ->
+  container bind): a sidecar whose logs show a bind/port-in-use failure is
+  retried with a fresh port (up to 3 attempts), any other failure aborts
+  with the port and the log evidence named.
 - The vLLM server is shared (2 sequence slots). The runner refuses to start
   a trial while `vllm:num_requests_running > 0` (it waits, then re-checks
   between trials) and **flags** -- never fails -- a trial that ran while
@@ -107,8 +125,11 @@ mismatch.
 metrics over pinned fixtures (a verbatim probe capture + a synthetic
 tool stream), the graders over pre-exported CLI JSON fixtures (the
 known-good/known-bad/known-weak split, ACC-006), the Wilson/pass^k/margin
-machinery, the pins/cache/report machinery. The four Docker-dependent CLI
-tests skip when Docker is missing. The pre-commit `pytest` hook is scoped to
-`src/`+`tests/` changes, so `tests/evals/` runs in pre-commit and CI like
-every other test; ruff lints `evals/` from the repo root automatically, and
-pylint (advisory, `git ls-files '*.py'`) sees the files once committed.
+machinery, the pins/cache/report machinery, and the runner/sidecar/CLI
+robustness logic (pure Python, the container layer mocked). The four
+Docker-dependent CLI tests skip when Docker is missing. The pre-commit
+`pytest` hook is scoped to `src/`+`tests/`+`evals/` changes (a harness-code
+change alone also triggers the local suite; CI's full matrix covers it
+regardless), so `tests/evals/` runs in pre-commit and CI like every other
+test; ruff lints `evals/` from the repo root automatically, and pylint
+(advisory, `git ls-files '*.py'`) sees the files once committed.

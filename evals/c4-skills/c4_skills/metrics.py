@@ -54,8 +54,16 @@ TRIAGE_EXPECTED = "expected"
 TRIAGE_REPORTED = "reported"
 TRIAGE_UNTRIAGED = "untriaged"
 
-#: The tool names whose calls count as a file edit (for fix triage).
-EDIT_TOOL_NAMES: frozenset[str] = frozenset({"edit", "write", "apply_patch", "patch"})
+#: The tool names whose calls count as a file edit (for the `fix` triage
+#: signal). Coarse and INFORMATIONAL ONLY -- this never gates: the pinned
+#: opencode image (2.2.5) reports its command-execution tools as `shell`
+#: (a `command` input) and `execute` (a `code` input), and the committed
+#: smoke streams show agents mutating files through both (e.g. heredoc
+#: writes, `sed`-style fixes); the dedicated editors are `edit`/`write`,
+#: plus the `apply_patch`/`patch` names of other agent CLIs (kept for
+#: schema drift). A call to a name here after the last inspect counts as
+#: "edited"; what it edited is not checked.
+EDIT_TOOL_NAMES: frozenset[str] = frozenset({"edit", "write", "apply_patch", "patch", "shell", "execute"})
 
 #: A fenced code block in the final text.
 _FENCE_RE = re.compile(r"```[a-zA-Z0-9_-]*\n(.*?)```", re.DOTALL)

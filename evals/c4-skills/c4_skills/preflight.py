@@ -92,7 +92,8 @@ def vllm_running_requests() -> int | None:
         The integer sum, or None when the metrics endpoint does not answer.
     """
     try:
-        with urllib.request.urlopen(pins.VLLM_METRICS_URL, timeout=15) as response:  # noqa: S310 -- pinned local endpoint
+        metrics_url = pins.VLLM_METRICS_URL
+        with urllib.request.urlopen(metrics_url, timeout=15) as response:  # noqa: S310 -- pinned local endpoint
             body = response.read().decode("utf-8")
     except (urllib.error.URLError, OSError, TimeoutError):
         return None
