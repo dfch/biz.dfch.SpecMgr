@@ -63,7 +63,7 @@ yields no `heading_open` token, so it stays in the opaque content.
 the eleven UUID tags carry a canonical 8-4-4-4-12 hex id, `FEAT` carries
 the full `feat-NNN-slug` id or the bare `feat-NNN` number (the same shapes
 the `general.tools._references` extractor and `assert_feat_id` accept --
-imported from their single source, `general.tools._path_safety`, so the
+imported from their single source, `models.md._cross_reference`, so the
 three cannot drift, the feat-177 precedent). Each bullet is a
 `MarkdownListItemWithNotes` (the SYSRS cross-reference-list shape): the
 bullet line itself plus an optional per-bullet notes paragraph. Duplicate
@@ -77,7 +77,6 @@ import re
 
 from pydantic import Field, field_validator, model_validator
 
-from ....general.tools._path_safety import _FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN
 from ....models.md import (
     MarkdownListItemWithNotes,
     MarkdownSection1,
@@ -85,14 +84,16 @@ from ....models.md import (
     alias,
     AliasType,
 )
-from ....models.md._cross_reference import UUID_PATTERN
+from ....models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN, UUID_PATTERN
 
-#: The shared full feat id shape (`general.tools._path_safety`'s anchored
-#: :data:`_FEAT_ID_PATTERN` minus the ``^``/``$`` anchors, e.g.
+#: The shared full feat id shape (`models.md._cross_reference`'s anchored
+#: :data:`FEAT_ID_PATTERN` minus the ``^``/``$`` anchors, e.g.
 #: ``feat-[0-9]+-[a-z0-9-]+``): the single source, imported rather than
 #: re-spelled so this module's `FEAT` bullet shape cannot drift from
-#: ``assert_feat_id``'s own check (the feat-177 single-source precedent that
-#: ``general.tools._references`` follows for the same constant).
+#: ``assert_feat_id``'s own check (the feat-177 single-source precedent
+#: that ``general.tools._path_safety`` and ``general.tools._references``
+#: follow for the same constant, all three importing from the same
+#: model-side home).
 _FEAT_FULL_ID_SHAPE = _FEAT_FULL_ID_PATTERN.pattern.removeprefix("^").removesuffix("$")
 
 #: :data:`_FEAT_FULL_ID_SHAPE` split at the hyphen preceding its final

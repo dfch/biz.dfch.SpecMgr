@@ -48,7 +48,7 @@ yields no `heading_open` token, so it stays in the opaque content.
 the eleven UUID tags carry a canonical 8-4-4-4-12 hex id, `FEAT` carries
 the full `feat-NNN-slug` id or the bare `feat-NNN` number (the same shapes
 the `general.tools._references` extractor and `assert_feat_id` accept --
-imported from their single source, `general.tools._path_safety`, so the
+imported from their single source, `models.md._cross_reference`, so the
 three cannot drift, the feat-177 precedent). Each bullet is a
 `MarkdownListItemWithNotes` (the SYSRS cross-reference-list shape): the
 bullet line itself plus an optional per-bullet notes paragraph. Duplicate
