@@ -47,7 +47,9 @@ change does not touch the roles section.
 ## 5. Map the requested change to the right tool
 
 - A change to the body -- the `context`, `drivers`, `considered`,
-  `outcome` (lead paragraph, `### Consequences`, `### Confirmation`),
+  `outcome` (mandatory lead paragraph, optionally further
+  paragraphs/lists/code blocks before the `### Consequences` and
+  `### Confirmation` H3 sections),
   `roles_and_responsibilities` (Accountable/Responsible/Support/
   Consulted/Informed), `tags`, `source`, `related_artifacts`,
   `pros_and_cons` options, `more_information`, or `updates` entries --
