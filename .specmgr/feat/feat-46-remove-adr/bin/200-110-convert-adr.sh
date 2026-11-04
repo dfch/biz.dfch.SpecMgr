@@ -12,7 +12,9 @@
 # feat-247 (multi-block Decision Outcome), 2 at least one needs a human judgment / usage error.
 #
 # Run with: bash 200-110-convert-adr.sh <uuid-or-8hex-prefix>... | --all [--show] [--write]
-#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen python).
+#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen --extra mcp python).
+#   The mcp extra is required: the trial conversion imports the real parse_dec, whose dec
+#   package __init__ chain reaches server.py (the third-party mcp package).
 
 set -euo pipefail
 
@@ -20,7 +22,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git -C "$HERE" rev-parse --show-toplevel)"
 cd "$ROOT"
 export PYTHONPATH="$ROOT/src:$HERE${PYTHONPATH:+:$PYTHONPATH}" PYTHONDONTWRITEBYTECODE=1
-read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen python}"
+read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen --extra mcp python}"
 
 "${PY[@]}" - "$@" <<'PYEOF'
 import sys

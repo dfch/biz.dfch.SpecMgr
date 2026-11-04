@@ -14,7 +14,9 @@
 # and --force keeps its frozen created/updated values unless --refresh-dates is also given.
 #
 # Run with: bash 100-110-survey-adrs.sh [--write] [--force] [--refresh-dates]
-#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen python).
+#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen --extra mcp python).
+#   The mcp extra is required: the trial conversion imports the real parse_dec, whose dec
+#   package __init__ chain reaches server.py (the third-party mcp package).
 
 set -euo pipefail
 
@@ -22,7 +24,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git -C "$HERE" rev-parse --show-toplevel)"
 cd "$ROOT"
 export PYTHONPATH="$ROOT/src:$HERE${PYTHONPATH:+:$PYTHONPATH}" PYTHONDONTWRITEBYTECODE=1
-read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen python}"
+read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen --extra mcp python}"
 
 "${PY[@]}" - "$@" <<'PYEOF'
 import json, sys

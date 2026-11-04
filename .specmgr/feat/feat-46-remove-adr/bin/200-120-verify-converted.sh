@@ -17,7 +17,9 @@
 #
 # Run with: bash 200-120-verify-converted.sh [--adr-dir DIR] [--require-all] [--no-lint]
 #   --adr-dir  where the ADR sources live (default docs/adr; use the archive location later)
-#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen python).
+#   SPECMGR_PYTHON overrides the interpreter (default: uv run --frozen --extra mcp python).
+#   The mcp extra is required: parse_dec (the domain __init__ chain reaches server.py, the
+#   third-party mcp package) and the embedded `specmgr lint` (needs cli, included by mcp).
 
 set -euo pipefail
 
@@ -25,7 +27,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git -C "$HERE" rev-parse --show-toplevel)"
 cd "$ROOT"
 export PYTHONPATH="$ROOT/src:$HERE${PYTHONPATH:+:$PYTHONPATH}" PYTHONDONTWRITEBYTECODE=1
-read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen python}"
+read -r -a PY <<< "${SPECMGR_PYTHON:-uv run --frozen --extra mcp python}"
 
 "${PY[@]}" - "$@" <<'PYEOF'
 import re, subprocess, sys
