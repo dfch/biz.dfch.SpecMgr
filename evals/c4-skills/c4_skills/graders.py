@@ -648,6 +648,12 @@ def find_dsl_file(workdir: Path) -> Path | None:
 def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
     """Run one Structurizr CLI command over the work dir (Docker).
 
+    The CLI container runs with `--network none`: it only reads the
+    mounted work dir and writes `out/`, so it needs no network at all
+    (verified in the Phase 110 canaries -- the graders never needed
+    egress, and the flag removes the last container class that could
+    reach the host network).
+
     Returns:
         The exit code and the combined stderr/stdout text.
     """
@@ -656,6 +662,8 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
         "docker",
         "run",
         "--rm",
+        "--network",
+        "none",
         *preflight.host_user_flags(),
         "-v",
         f"{workdir}:/w",

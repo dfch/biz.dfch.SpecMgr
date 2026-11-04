@@ -15,13 +15,27 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The injected OpenCode configuration (Task 100.110).
+"""The injected OpenCode configuration (Task 100.110, reworked for the
+Phase 110 egress-control change).
 
 Every trial container runs with exactly this config, injected through the
 `OPENCODE_CONFIG_CONTENT` env var (the documented inline-config source; no
 host OpenCode config is mounted, no project config file is written). The
-config is condition-agnostic except for the MCP sidecar port: the
-`none`/`upstream`/`skill` difference is the mounted skills, not the config.
+config is condition-agnostic except for the two endpoints, and those are
+explicit arguments, never derived: the trial containers live on the run's
+private `--internal` network, where the ONLY reachable endpoints are the
+two the harness exposes -- vLLM access on the network's gateway IP
+(`baseURL` -- the run's forwarder, or the shared vLLM's strictly-verified
+0.0.0.0 bind, mode-invariant to this config) and the sidecar on its
+container IP (`mcp` url). The `none`/`upstream`/`skill` difference is the
+mounted skills, not the config.
+
+The `mcp.<name>` block keeps the pinned image's deprecated shape: a config
+schema probe (Phase 110) verified that both the deprecated shape and
+`mcp.servers` + `codemode: false` yield NO native MCP tools in the pinned
+opencode image -- Code Mode is the access path (the detection layer reads
+the Code Mode invocations out of the event stream), so the shape must not
+be "upgraded".
 """
 
 from __future__ import annotations
@@ -49,18 +63,23 @@ MCP_TIMEOUT_MS = 300_000
 OPENCODE_CONFIG_CONTENT_ENV = "OPENCODE_CONFIG_CONTENT"
 
 
-def build_opencode_config(mcp_port: int) -> dict:
+def build_opencode_config(*, vllm_base_url: str, mcp_url: str) -> dict:
     """Build the injected OpenCode config for one run.
 
     Args:
-        mcp_port: The host port of the harness's own structurizr MCP
-            sidecar (the trial containers use `--network host`, so
-            `127.0.0.1:<port>` reaches it).
+        vllm_base_url: The provider `baseURL` as reachable from the trial
+            container: `http://<gateway_ip>:8081/v1` -- vLLM access on the
+            private network's gateway IP (the run's forwarder, or the
+            shared vLLM's verified 0.0.0.0 bind; mode-invariant here).
+        mcp_url: The MCP sidecar's URL as reachable from the trial
+            container: `http://<sidecar_ip>:<port>/mcp` -- the sidecar's
+            own address on the private network.
 
     Returns:
         A JSON-serialisable dict (written with sorted keys).
     """
-    assert isinstance(mcp_port, int) and 1 <= mcp_port <= 65535
+    assert isinstance(vllm_base_url, str) and vllm_base_url.startswith("http://")
+    assert isinstance(mcp_url, str) and mcp_url.startswith("http://")
     result: dict = {
         "$schema": "https://opencode.ai/config.json",
         "model": f"{pins.PROVIDER_ID}/{pins.MODEL_ID}",
@@ -69,7 +88,7 @@ def build_opencode_config(mcp_port: int) -> dict:
                 "npm": PROVIDER_NPM,
                 "name": "vLLM sys0 (shared, 2 sequence slots)",
                 "options": {
-                    "baseURL": pins.VLLM_ENDPOINT,
+                    "baseURL": vllm_base_url,
                     "apiKey": PROVIDER_API_KEY,
                 },
                 "models": {
@@ -89,7 +108,7 @@ def build_opencode_config(mcp_port: int) -> dict:
         "mcp": {
             MCP_SERVER_NAME: {
                 "type": "remote",
-                "url": f"http://127.0.0.1:{mcp_port}/mcp",
+                "url": mcp_url,
                 "enabled": True,
                 "timeout": MCP_TIMEOUT_MS,
             }
@@ -117,8 +136,14 @@ def build_opencode_config(mcp_port: int) -> dict:
     return result
 
 
-def opencode_config_content(mcp_port: int) -> str:
-    """Return the `OPENCODE_CONFIG_CONTENT` value (canonical JSON)."""
-    config = build_opencode_config(mcp_port)
+def opencode_config_content(*, vllm_base_url: str, mcp_url: str) -> str:
+    """Return the `OPENCODE_CONFIG_CONTENT` value (canonical JSON).
+
+    Args:
+        vllm_base_url: The provider `baseURL` (see
+            :func:`build_opencode_config`).
+        mcp_url: The MCP sidecar's URL (see :func:`build_opencode_config`).
+    """
+    config = build_opencode_config(vllm_base_url=vllm_base_url, mcp_url=mcp_url)
     result = json.dumps(config, indent=2, sort_keys=True) + "\n"
     return result

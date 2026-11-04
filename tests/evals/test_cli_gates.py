@@ -44,12 +44,17 @@ def _skip_if_no_docker(testcase: unittest.TestCase) -> None:
 
 
 def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
+    # Mirrors c4_skills.graders._run_cli, including the Phase 110
+    # `--network none` (the CLI image needs no network: these four tests
+    # are the live proof that it works).
     from c4_skills.preflight import host_user_flags
 
     cmd = [
         "docker",
         "run",
         "--rm",
+        "--network",
+        "none",
         *host_user_flags(),
         "-v",
         f"{workdir}:/w",

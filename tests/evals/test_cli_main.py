@@ -133,6 +133,9 @@ class TestSkillsDirWiring(unittest.TestCase):
         config = captured["config"]
         self.assertEqual(config.skills_dir, variant)
         self.assertEqual(config.conditions, ["none", "skill"])
+        # Phase 110: the additive network_name field defaults to empty
+        # (the run derives c4eval-<run_id> -- no CLI flag)
+        self.assertEqual(config.network_name, "")
 
 
 if __name__ == "__main__":

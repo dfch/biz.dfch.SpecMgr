@@ -197,8 +197,13 @@ def run_preflight(
             SHA verification).
         upstream_source: A verified UpstreamSource when the upstream
             condition is used (its SHA and files feed the record).
-        mcp_port: The sidecar port (recorded with the run).
-        extra: Extra facts to fold into the record (seed, k, cases, ...).
+        mcp_port: The sidecar's port (recorded with the run; since Phase
+            110 the sidecar answers on the run's private network, so this
+            is its fixed container port -- the container IP itself is an
+            `extra` fact, `sidecar_ip`).
+        extra: Extra facts to fold into the record (seed, k, cases, ...,
+            and since Phase 110 the network topology: `network_mode`,
+            `network_name`, `sidecar_ip`, `vllm_base_url`).
 
     Returns:
         The PreflightResult (`ok=False` lists the violated pins).
