@@ -61,6 +61,7 @@ from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
+from biz.dfch.specmgr.feat.models.v1 import FeatFrontmatter
 from biz.dfch.specmgr.feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -1295,6 +1296,84 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
             f"Allowed values: {', '.join(expected_allowed)}",
         )
         self.assertEqual(path.read_bytes(), before)
+
+
+class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
+    """feat-108-fsm Phase 100 (the cross-cutting seam, REQ-002/REQ-005): the post-load/pre-write
+    ``check_status_transition`` call is wired into the whole-body adapters, but while every
+    ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` entry is still ``None`` (Phase 100's
+    passthrough state) it returns ``None`` and the call proceeds byte-identically to today's
+    behavior.
+
+    The no-op, out-of-vocabulary, parse-failure, and path-safety order pins are this module's
+    existing tests (unchanged by this phase); this class adds the seam-specific pins: the check
+    is actually invoked (with the domain, the document's current on-disk status, and the
+    requested target), it runs AFTER the no-op comparison (a same-status call never reaches it)
+    and AFTER the pre-dispatch out-of-vocabulary channel (an out-of-vocabulary call never
+    reaches it), and a transition the final per-domain tables will one day reject (req
+    ``draft`` -> ``accepted``) still succeeds with today's exact return shape while every table
+    is ``None``.
+    """
+
+    def test_transition_check_is_wired_post_load_and_passes_through_for_req(self) -> None:
+        """The req adapter must call ``check_status_transition("req", <current>, <target>)`` after its
+        own load/no-op and, on the Phase-100 passthrough (``None``), proceed to the write with
+        today's exact return shape (the domain's own frontmatter, status changed)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        spy.assert_called_once_with("req", created.status, case.valid_status)
+        self.assertIsInstance(result, case.frontmatter_type)
+        self.assertNotIsInstance(result, case.document_type)
+        self.assertEqual(result.status, case.valid_status)
+
+    def test_transition_check_is_wired_post_load_and_passes_through_for_feat(self) -> None:
+        """The same, for ``feat`` (separate case shape: folder + ``README.md``, no ``language``
+        parameter -- the same wiring point)."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type="feat", status="progress")
+
+        spy.assert_called_once_with("feat", created.status, "progress")
+        self.assertIsInstance(result, FeatFrontmatter)
+        self.assertEqual(result.status, "progress")
+
+    def test_transition_check_runs_after_the_noop_comparison(self) -> None:
+        """REQ-005/ACC-005 order pin: a same-status call returns at the no-op and never reaches
+        the transition check (mirrors this module's existing no-op test pattern)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+        first_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            second_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        spy.assert_not_called()
+        self.assertEqual(second_result, first_result)
+
+    def test_out_of_vocabulary_status_still_returns_invalid_status_result_before_the_transition_check(self) -> None:
+        """REQ-005/ACC-005 order pin: the pre-dispatch ``InvalidStatusResult`` channel runs before
+        any adapter (and thus before the transition check) -- the spy must not see the call."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
+
+        self.assertIsInstance(result, InvalidStatusResult)
+        spy.assert_not_called()
 
 
 if __name__ == "__main__":

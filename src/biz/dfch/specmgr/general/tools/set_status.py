@@ -126,6 +126,33 @@ against a broken existing document still returns ``InvalidStatusResult``
 (that check never reaches ``load_by_id``). The ``adr`` adapter stays
 raise-based (ADR is out of scope for this feature).
 
+Per-domain status state machine (feat-108-fsm, GitHub issue #108): each
+whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
+:func:`general.tools._status_fsm.check_status_transition` check --
+immediately after its own unchanged-status no-op comparison and before the
+raw-body re-read (so a rejection is pre-write: nothing is persisted and
+``updated`` is not bumped) -- against the dispatched domain's own
+``_STATUS_TRANSITIONS`` state machine, aggregated centrally in
+``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` (keyed to the
+``general.tools._domains`` registry, opt-in per domain). This is the tool's
+second, post-load error surface, distinct from the pre-dispatch, pre-load
+out-of-vocabulary ``InvalidStatusResult`` check above (which still runs
+first and is unchanged): a transition the domain's machine does not allow
+returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+(``valid``/``type``/``from_status``/``to_status``/``allowed_values``/
+``message``, where ``allowed_values`` are the targets allowed from the
+document's current state, sorted -- never the domain's full flat vocabulary;
+an empty list marks a terminal current state) instead of writing -- case 6
+of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
+result workaround chain. During the phased rollout a domain whose table has
+not landed yet carries a ``None`` aggregation entry and passes through
+unchanged -- as of Phase 100 every whole-body domain is in that state, so
+behavior is byte-identical to today; the no-op, out-of-vocabulary,
+``ParseFailureResult``, and path-safety order is untouched, and
+``_set_status_adr`` never calls the check (REQ-006: ADR keeps its
+flat-vocabulary behavior).
+
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
 wrapper's own name.
@@ -164,7 +191,7 @@ from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._lock import feat_lock
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
 from ...feat.tools._write import write_feat_file
-from ...general.models import InvalidStatusResult, ParseFailureResult
+from ...general.models import InvalidStatusResult, InvalidStatusTransitionResult, ParseFailureResult
 from ...gol.models.v1 import GolFrontmatter
 from ...gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATUSES
 from ...gol.tools._io import load_by_id as load_gol_by_id
@@ -259,6 +286,7 @@ from ._doc_paths import find_parse_failure
 from ._domains import ADR, ALL_DOMAINS, WholeBodyOrAdrType
 from ._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
 from ._path_safety import DEFAULT_LANGUAGE, assert_within, validate_id
+from ._status_fsm import check_status_transition
 from ._timestamps import now_timestamp
 
 __all__ = ["set_status"]
@@ -281,6 +309,7 @@ _SetStatusFrontmatter = (
     | SetFrontmatter
     | Adr
     | ParseFailureResult
+    | InvalidStatusTransitionResult
 )
 
 #: Each whole-body domain's own closed status vocabulary, plus ADR's fixed set,
@@ -354,7 +383,7 @@ def _check_status_allowed(type_: str, status: str, superseded_by: str | None) ->
 
 def _set_status_req(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> ReqFrontmatter | ParseFailureResult:
+) -> ReqFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the requirement identified by ``id_``.
 
     Verbatim port of the previous per-domain requirement status tool's
@@ -393,6 +422,9 @@ def _set_status_req(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("req", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -408,7 +440,7 @@ def _set_status_req(
 
 def _set_status_uc(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> UcFrontmatter | ParseFailureResult:
+) -> UcFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the use case identified by ``id_``.
 
     Verbatim port of the previous per-domain use-case status tool's
@@ -439,6 +471,9 @@ def _set_status_uc(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("uc", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -454,7 +489,7 @@ def _set_status_uc(
 
 def _set_status_tsk(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> TskFrontmatter | ParseFailureResult:
+) -> TskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the task list identified by ``id_``.
 
     Verbatim port of the previous per-domain task list status tool's
@@ -485,6 +520,9 @@ def _set_status_tsk(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("tsk", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -500,7 +538,7 @@ def _set_status_tsk(
 
 def _set_status_qa(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> QaFrontmatter | ParseFailureResult:
+) -> QaFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the QA document identified by ``id_``.
 
     Verbatim port of the previous per-domain QA document status tool's
@@ -531,6 +569,9 @@ def _set_status_qa(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("qa", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -546,7 +587,7 @@ def _set_status_qa(
 
 def _set_status_prb(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> PrbFrontmatter | ParseFailureResult:
+) -> PrbFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the problem statement identified by ``id_``.
 
     Verbatim port of the previous per-domain problem statement status
@@ -578,6 +619,9 @@ def _set_status_prb(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("prb", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -593,7 +637,7 @@ def _set_status_prb(
 
 def _set_status_gol(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> GolFrontmatter | ParseFailureResult:
+) -> GolFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the goal identified by ``id_``.
 
     Verbatim port of the previous per-domain goal status tool's function
@@ -624,6 +668,9 @@ def _set_status_gol(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("gol", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -639,7 +686,7 @@ def _set_status_gol(
 
 def _set_status_rsk(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> RskFrontmatter | ParseFailureResult:
+) -> RskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the risk identified by ``id_``.
 
     Verbatim port of the previous per-domain risk status tool's function
@@ -670,6 +717,9 @@ def _set_status_rsk(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("rsk", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -685,7 +735,7 @@ def _set_status_rsk(
 
 def _set_status_dec(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> DecFrontmatter | ParseFailureResult:
+) -> DecFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the decision identified by ``id_``.
 
     Verbatim port of the previous per-domain decision status tool's
@@ -720,6 +770,9 @@ def _set_status_dec(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("dec", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -733,7 +786,9 @@ def _set_status_dec(
     return new_frontmatter
 
 
-def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFrontmatter | ParseFailureResult:
+def _set_status_feat(
+    id_: str, status: str, superseded_by: str | None
+) -> FeatFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the feature identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``feat_lock``,
@@ -760,6 +815,9 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("feat", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -776,7 +834,7 @@ def _set_status_feat(id_: str, status: str, superseded_by: str | None) -> FeatFr
 
 def _set_status_sop(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> SopFrontmatter | ParseFailureResult:
+) -> SopFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the SOP identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
@@ -809,6 +867,9 @@ def _set_status_sop(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("sop", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -824,7 +885,7 @@ def _set_status_sop(
 
 def _set_status_vcr(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> VcrFrontmatter | ParseFailureResult:
+) -> VcrFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the verification case record identified by ``id_``.
 
     Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
@@ -855,6 +916,9 @@ def _set_status_vcr(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("vcr", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -870,7 +934,7 @@ def _set_status_vcr(
 
 def _set_status_sysrs(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> SysrsFrontmatter | ParseFailureResult:
+) -> SysrsFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the System Requirements Specification identified by ``id_``.
 
     Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
@@ -902,6 +966,9 @@ def _set_status_sysrs(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("sysrs", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -917,7 +984,7 @@ def _set_status_sysrs(
 
 def _set_status_txt(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> TxtFrontmatter | ParseFailureResult:
+) -> TxtFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the free-form text document identified by ``id_``.
 
     Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
@@ -952,6 +1019,9 @@ def _set_status_txt(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("txt", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -967,7 +1037,7 @@ def _set_status_txt(
 
 def _set_status_set(
     id_: str, status: str, superseded_by: str | None, language: str = DEFAULT_LANGUAGE
-) -> SetFrontmatter | ParseFailureResult:
+) -> SetFrontmatter | ParseFailureResult | InvalidStatusTransitionResult:
     """Replace the status of the set document identified by ``id_``.
 
     Mirrors :func:`_set_status_sysrs`'s shape (same ``set_lock``,
@@ -1002,6 +1072,9 @@ def _set_status_set(
         assert_within(base_dir, path)
         if existing.frontmatter.status == status:
             return existing.frontmatter
+        transition_result = check_status_transition("set", existing.frontmatter.status, status)
+        if transition_result is not None:
+            return transition_result
         raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
 
         now = now_timestamp()
@@ -1218,7 +1291,8 @@ def set_status(
         -------
     ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
     GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-    VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult
+    VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult |
+    InvalidStatusTransitionResult
         On success, the updated document's frontmatter only (no body) of the
         dispatched domain type for the whole-body domains; for ``type="adr"``
         (unchanged, out of scope for this feature) the full ``Adr`` document,
@@ -1243,7 +1317,17 @@ def set_status(
         (feat-170-update-edit-parse-failure, GitHub issue
         #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
         519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
-        workaround chain).
+        workaround chain). For the whole-body domains, a transition the
+        dispatched domain's own ``_STATUS_TRANSITIONS`` state machine does not
+        allow (checked post-load, pre-write, immediately after the no-op
+        comparison) returns a non-raising
+        :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+        (``allowed_values`` are the targets allowed from the document's current
+        state, sorted; an empty list marks a terminal current state) instead of
+        writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108;
+        see the module docstring). During the phased rollout a domain whose
+        table has not landed yet passes through unchanged, and ``type="adr"``
+        never produces this result (REQ-006).
 
         Raises
         ------

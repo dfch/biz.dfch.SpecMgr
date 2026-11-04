@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
-status: planning
+status: progress
 type: feat
-updated: '2026-11-04T15:08:46.000+01:00'
+updated: '2026-11-04T16:52:00.000+01:00'
 version: 1.0.0
 ---
 
@@ -184,9 +184,9 @@ set:
 
 #### Phase 100: Cross-cutting mechanism
 
-- [ ] Task 100.100: Add the `InvalidStatusTransitionResult` model to `general/models/` (sibling to `InvalidStatusResult`) and export it from `general/models/__init__.py`.
-- [ ] Task 100.110: Build the central `_STATUS_TRANSITIONS_BY_TYPE` aggregation in `general/tools/` (keyed to the `_domains` registry, opt-in per domain with `None` = passthrough) plus the shared pure check helper `(type, current, target) -> InvalidStatusTransitionResult | None`, with the import-time drift assert.
-- [ ] Task 100.120: Wire the helper into each `_set_status_<d>` adapter post-load/pre-write (after the no-op comparison, before the raw-body re-read/write), preserving the no-op, out-of-vocabulary, `ParseFailureResult`, and path-safety order (table-less domains pass through until Phases 110/120 land their respective tables); leave the ADR adapter untouched.
+- [x] Task 100.100: Add the `InvalidStatusTransitionResult` model to `general/models/` (sibling to `InvalidStatusResult`) and export it from `general/models/__init__.py`.
+- [x] Task 100.110: Build the central `_STATUS_TRANSITIONS_BY_TYPE` aggregation in `general/tools/` (keyed to the `_domains` registry, opt-in per domain with `None` = passthrough) plus the shared pure check helper `(type, current, target) -> InvalidStatusTransitionResult | None`, with the import-time drift assert.
+- [x] Task 100.120: Wire the helper into each `_set_status_<d>` adapter post-load/pre-write (after the no-op comparison, before the raw-body re-read/write), preserving the no-op, out-of-vocabulary, `ParseFailureResult`, and path-safety order (table-less domains pass through until Phases 110/120 land their respective tables); leave the ADR adapter untouched.
 
 #### Phase 110: Pilot — REQ
 
@@ -214,7 +214,7 @@ set:
 
 ### Current Status
 
-Planning. The feature is drafted from issue #108 with the design decisions locked (phased cross-cutting then REQ pilot then the rest, ADR excluded, a non-raising `InvalidStatusTransitionResult` with current-state-relative `allowed_values`, domain-owned tables plus central aggregation, cycling-friendly `status: [targets]` representation). No implementation has started.
+Phase 100 (Cross-cutting mechanism) is complete. The `InvalidStatusTransitionResult` model (Task 100.100), the central `_STATUS_TRANSITIONS_BY_TYPE` aggregation plus the pure `check_status_transition` helper in `general/tools/_status_fsm.py` with its Phase 100 subset-form import-time drift assert (Task 100.110), and the post-load/pre-write wiring into all 14 whole-body `set_status` adapters (Task 100.120) are in place; the ADR adapter is untouched. While every aggregation entry is still `None` (the passthrough seam), `set_status` behavior is byte-identical to pre-feature. Next: Phase 110 (Pilot — REQ: `req`'s own `_STATUS_TRANSITIONS` table plus the end-to-end REQ tests).
 
 ### Blockers
 
@@ -223,6 +223,10 @@ Planning. The feature is drafted from issue #108 with the design decisions locke
 ### Updates
 
 <!-- Newest first. -->
+
+#### 2026-11-04T15:52:00.000Z - Implemented Phase 100: the cross-cutting status state-machine mechanism
+
+Implemented Phase 100 (Tasks 100.100/100.110/100.120). Task 100.100: `InvalidStatusTransitionResult` (`general/models/invalid_status_transition_result.py`, a sibling of `InvalidStatusResult`, exported from `general/models/__init__.py`) with the locked `valid`/`type`/`from_status`/`to_status`/`allowed_values`/`message` shape and the two locked message forms (normal with the sorted `allowed_values` joined in field order, terminal with an empty list). Task 100.110: `general/tools/_status_fsm.py` — the `_STATUS_TRANSITIONS_BY_TYPE` aggregation (one entry per `WHOLE_BODY_DOMAINS` member, every value `None` in Phase 100, no `adr` entry), the Phase 100 subset-form import-time drift assert (keys ⊆ `WHOLE_BODY_DOMAINS`, `ADR` absent, every non-`None` table's current-status keys and target values checked against the domain's own `_ALLOWED_STATUSES` — vacuous today, active from Phase 110), the pure core `decide_transition(table, type_, current, target)`, and the public `check_status_transition(type_, current, target)` (module stays mcp-free like the other `_private.py` helpers). Task 100.120: the helper is wired into all 14 whole-body `_set_status_<d>` adapters in `set_status.py` immediately after the no-op comparison and before the raw-body re-read; each adapter's return annotation and the `_SetStatusFrontmatter` union alias (and the public `set_status` docstring Returns) carry the new member; the module docstring documents the two-error-surface design. The `@mcp.tool` description and `server.py` are untouched (Phase 130); `_set_status_adr` is byte-identical (ACC-006). Tests: `tests/general/models/test_invalid_status_transition_result.py` (model shape + both message forms), `tests/general/tools/test__status_fsm.py` (aggregation invariants, the pure core's passthrough/allowed/disallowed/terminal/not-a-key paths, the helper's lookup), and a new `TestSetStatusTransitionSeam` in `tests/general/tools/test_set_status.py` (spy-pinned wiring + passthrough for req/feat, the no-op-first and out-of-vocabulary-first order pins). Gate: `ruff format --check` (2408 files clean), `ruff check` (clean), `vulture --min-confidence 60` (clean; `whitelist.py` gained the two unique model field names `from_status`/`to_status`), targeted pytest (`tests/general/models` + `test__status_fsm.py` + `test_set_status.py` + `test__domains.py`: 216 passed), wider sweep `tests/general` + `tests/set` (1476 passed). `specmgr docs` regenerated (two new API pages, updated indexes).
 
 #### 2026-11-04T14:08:46.000Z - Applied plan-refinement findings (G1, D1, I1)
 
@@ -233,6 +237,10 @@ Applied the three findings from a plan-refinement pass. G1: the two `### Depende
 Created the `feat-108-fsm` plan. Scope is the 14 whole-body domains with ADR excluded. Rollout is phased: a Phase 100 cross-cutting mechanism (the `InvalidStatusTransitionResult` model, the central aggregation linked to the `_domains` registry, and the post-load/pre-write check wired into the adapters), a Phase 110 REQ pilot, and a Phase 120 rollout of the remaining 13 domains. A disallowed transition returns a non-raising result whose `allowed_values` are the targets valid from the current state (distinct from the pre-existing pre-load out-of-vocabulary `InvalidStatusResult`, which keeps the full flat vocabulary). Per-domain tables are domain-owned next to each `_ALLOWED_STATUSES` and expressed as a cycling-friendly `status: [targets]` mapping.
 
 ### Decisions Made
+
+#### 2026-11-04T15:52:00.000Z - Phase 100 implementation choices
+
+Locked the Phase 100 implementation details: (a) `InvalidStatusTransitionResult.allowed_values` is **sorted** (the plan's field spec), and the message joins that sorted field in field order — the plan's Design Notes example lists the values in table order, but the sorted field spec wins, keeping the structured result self-consistent under client-side truncation (the ADR 519d1206 rationale). (b) A `current` status that is not a key of the domain's table is treated as a **terminal state** (empty `allowed_values`, terminal message form) — the decision stays total and deterministic, although this is structurally unreachable once a domain's table pins full vocabulary coverage. (c) The helper module is `general/tools/_status_fsm.py` — the plan's suggested "e.g." name, used as-is. (d) The decision is factored into the pure core `decide_transition(table, type_, current, target)` (the plan's `decide`, renamed for descriptiveness) so the public `check_status_transition` only indexes the aggregation; tests exercise the core with temporary tables without mutating module state (plus one `mock.patch.dict` test for the lookup itself). Bookkeeping: the frontmatter `status` moved `planning` -> `progress` with implementation started.
 
 #### 2026-11-04T13:21:56.524Z - Locked scope, channel, and mechanics during planning
 

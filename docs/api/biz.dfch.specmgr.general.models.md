@@ -39,6 +39,19 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
   ``pydantic.ValidationError`` propagate. Distinct from
   :class:`ValidateResult` -- a different tool's own model.
 
+Also backs feat-108-fsm's (Phase 100) extension of that same non-raising
+workaround to the generic ``set_status`` tool's second, post-load failure
+mode (GitHub issue #108 -- case 6 of the ADR 519d1206 chain):
+
+- :class:`InvalidStatusTransitionResult` -- the non-raising, structured
+  result each whole-body ``_set_status_<d>`` adapter returns when the
+  requested transition (``from_status`` -> ``to_status``) is rejected by the
+  dispatched domain's own ``_STATUS_TRANSITIONS`` state machine, after the
+  document is loaded and before any write. A sibling of
+  :class:`InvalidStatusResult`, not a reuse or subclass: ``allowed_values``
+  are the targets allowed from the current state (sorted; empty for a
+  terminal current state), never the domain's full flat vocabulary.
+
 Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
 similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
