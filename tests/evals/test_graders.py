@@ -782,6 +782,137 @@ class TestFileUntouchedGate(unittest.TestCase):
         self.assertIn("gate misused", result.detail)
 
 
+class TestCodeModeGates(unittest.TestCase):
+    """The Phase 110 locked harness fix: the stream-derived gates count
+    Code Mode invocations (the only remote-MCP access path of the pinned
+    opencode 2.2.5 image) in addition to native calls, with the locked
+    conservative attribution rules. The gate SEMANTICS and names are
+    untouched -- only what they count changed."""
+
+    CODEMODE_STREAM = EVENTS / "codemode-stream.ndjson"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.case = CASES["create-system"]
+
+    def test_parse_called_passes_on_codemode_parse_calls(self) -> None:
+        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+
+        result = _gate("parse_called", context)
+
+        self.assertTrue(result.passed)
+        # 2 Code Mode parse references + 1 native parse call
+        self.assertIn("3 terminal parse call(s)", result.detail)
+
+    def test_validate_ok_called_passes_on_attributed_codemode_ok(self) -> None:
+        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+
+        result = _gate("validate_ok_called", context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("3 validate call(s) answered OK", result.detail)
+
+    def test_multi_call_block_never_flips_validate_ok(self) -> None:
+        # the block returns an object carrying "validate": "OK" -- the
+        # locked rule attributes OK only to a block that references
+        # exactly one tool and answers exactly the marker
+        code = (
+            "const dsl = `x`;\n"
+            "const [parse, validate] = await Promise.allSettled([\n"
+            "  tools.structurizr.parse({ dsl }),\n"
+            "  tools.structurizr.validate({ dsl }),\n"
+            "]);\n"
+            "return { validate: validate.status === 'fulfilled' ? validate.value : validate.reason };\n"
+        )
+        context = _context(
+            self.case,
+            _minimal_inputs(None),
+            trial=_stream(_execute_event(code, "completed", '{\n  "validate": "OK"\n}')),
+        )
+
+        result = _gate("validate_ok_called", context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("1 validate call(s) in total", result.detail)
+
+    def test_inspect_called_passes_on_codemode_inspect(self) -> None:
+        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+
+        result = _gate("inspect_called", context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("1 terminal inspect call(s)", result.detail)
+
+    def test_triage_complete_over_codemode_findings(self) -> None:
+        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+
+        result = _gate("triage_complete", context)
+
+        # the fixture: 1 expected (MCP limits) + 1 fix (post-inspect edit)
+        self.assertTrue(result.passed)
+        self.assertIn("all 2 finding(s)", result.detail)
+
+    def test_validated_before_return_passes_on_the_attributed_inline_literal(self) -> None:
+        from .test_codemode import FIXTURE_DSL
+
+        inputs = _minimal_inputs(FIXTURE_DSL, export_json=_load_export("good"))
+        context = _context(self.case, inputs, trial=parse_events_file(self.CODEMODE_STREAM))
+
+        result = _gate("validated_before_return", context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("on-disk file", result.detail)
+
+    def test_validated_before_return_fails_when_the_dsl_is_unattributable(self) -> None:
+        # a shorthand-variable dsl that answered OK adds no text: the
+        # byte-identity gate fails (conservative by design)
+        code = (
+            'const dsl = `workspace "X" "y" { model { } }`;\n'
+            "const result = await tools.structurizr.validate({ dsl });\n"
+            "return result;\n"
+        )
+        inputs = _minimal_inputs('workspace "X" "y" { model { } }')
+        context = _context(self.case, inputs, trial=_stream(_execute_event(code, "completed", "OK")))
+
+        result = _gate("validated_before_return", context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no validate call answered the OK marker with a dsl input", result.detail)
+
+    def test_error_status_block_never_flips_validate_ok(self) -> None:
+        code = "const result = await tools.structurizr.validate({ dsl: 'x' });\n"
+        context = _context(self.case, _minimal_inputs(None), trial=_stream(_execute_event(code, "error", "OK")))
+
+        result = _gate("validate_ok_called", context)
+
+        self.assertFalse(result.passed)
+
+    def test_native_only_regression_over_the_loop_fixture(self) -> None:
+        # the pre-fix expectations over a native-only stream are unchanged
+        context = _context(self.case, _minimal_inputs(None), trial=_loop_parsed())
+
+        for name, needle in (
+            ("parse_called", "1 terminal parse call(s)"),
+            ("validate_ok_called", "2 validate call(s) answered OK"),
+            ("inspect_called", "1 terminal inspect call(s)"),
+        ):
+            result = _gate(name, context)
+            self.assertTrue(result.passed, name)
+            self.assertIn(needle, result.detail)
+
+
+def _execute_event(code: str, status: str, output: str) -> dict:
+    """Build one synthetic Code Mode `execute` tool event (pinned schema)."""
+    return {
+        "type": "tool_use",
+        "part": {
+            "type": "tool",
+            "tool": "execute",
+            "state": {"status": status, "input": {"code": code}, "output": output},
+        },
+    }
+
+
 class TestMcpLimitStatedGate(unittest.TestCase):
     def test_pass_when_the_final_text_states_the_limit(self) -> None:
         case = CASES["no-trigger"]
