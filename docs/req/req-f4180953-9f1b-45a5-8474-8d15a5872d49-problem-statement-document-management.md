@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `prb` package's tools (`create_prb`, `p
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

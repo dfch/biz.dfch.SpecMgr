@@ -88,7 +88,7 @@ class TestFindRelatedRegistration(unittest.TestCase):
 
         self.assertNotIn("adr", type_prop["enum"])
         self.assertIn("req", type_prop["enum"])
-        self.assertEqual(len(type_prop["enum"]), 13)
+        self.assertEqual(len(type_prop["enum"]), 14)
 
 
 class _RankedCorpusMixin:

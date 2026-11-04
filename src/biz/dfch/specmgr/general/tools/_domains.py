@@ -37,10 +37,10 @@ this package (``update``'s/``set_status``'s/``set_classification``'s/
 the two new similarity tools (Phase 3) would have been the sixth and
 seventh copies.
 
-- :data:`WHOLE_BODY_DOMAINS` -- the 13-domain tuple itself: the only
+- :data:`WHOLE_BODY_DOMAINS` -- the 14-domain tuple itself: the only
   hand-listed tuple in the module, the whole-body document types in the
   canonical order ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``,
-  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
+  ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
   Every other
   name-set constant is derived from it, never hand-listed a second
   time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
@@ -117,6 +117,9 @@ from ...req.tools._paths import req_base_dir
 from ...rsk.models.v1.parser import parse_rsk
 from ...rsk.tools._io import load_by_id as load_rsk_by_id
 from ...rsk.tools._paths import rsk_base_dir
+from ...set.models.v1.parser import parse_set
+from ...set.tools._io import load_by_id as load_set_by_id
+from ...set.tools._paths import set_base_dir
 from ...sop.models.v1.parser import parse_sop
 from ...sop.tools._io import load_by_id as load_sop_by_id
 from ...sop.tools._paths import sop_base_dir
@@ -178,6 +181,7 @@ WHOLE_BODY_DOMAINS: tuple[str, ...] = (
     "vcr",
     "sysrs",
     "txt",
+    "set",
 )
 
 #: The whole-body document types without ``feat`` (derived from
@@ -341,6 +345,13 @@ _DOMAINS: dict[str, WholeBodyDomain] = {
         iter_paths=iter_doc_paths,
         load_by_id=load_txt_by_id,
         parse_text=parse_txt,
+    ),
+    "set": WholeBodyDomain(
+        name="set",
+        base_dir=set_base_dir,
+        iter_paths=iter_doc_paths,
+        load_by_id=load_set_by_id,
+        parse_text=parse_set,
     ),
 }
 

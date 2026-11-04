@@ -83,6 +83,15 @@ model-backed drift-guard convention (ADR
   backing ``specmgr://ears``, purely to fail fast on structural drift (the
   parsed result is discarded by the resource itself).
 
+Also backs feat-173-req-iso29148-level-set's (Phase 130) cross-cutting
+ISO 29148 requirement-specifications resource (REQ-003, ADR 356d8781):
+
+- :func:`parse_iso29148`/:class:`Iso29148` -- parses the ISO/IEC/IEEE
+  29148:2018 requirement-specifications guidance document
+  (``general/data/general_iso29148.md``) backing ``specmgr://iso29148``,
+  purely to fail fast on structural drift (the parsed result is discarded
+  by the resource itself).
+
 Also backs feat-144-ref-artifact's generic ``list_references`` tool
 (REQ-002/REQ-003/REQ-004):
 

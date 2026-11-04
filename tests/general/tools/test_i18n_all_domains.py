@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Parametrized i18n tests over all twelve language-aware domains (feat-197-i18n Phase 125).
+"""Parametrized i18n tests over all thirteen language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
 domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
@@ -199,11 +199,11 @@ class _TempDocsMixin(unittest.TestCase):
 
 
 class TestEveryAwareDomainIsCovered(unittest.TestCase):
-    """The parametrization table is exactly the eleven language-aware domains."""
+    """The parametrization table is exactly the thirteen language-aware domains."""
 
     def test_specs_cover_exactly_the_language_aware_domains(self):
         self.assertEqual(tuple(s.d for s in SPECS), LANGUAGE_AWARE_DOMAINS)
-        self.assertEqual(len(SPECS), 12)
+        self.assertEqual(len(SPECS), 13)
         self.assertEqual(set(LANGUAGE_AWARE_DOMAINS), set(WHOLE_BODY_DOMAINS) - {"feat"})
 
 

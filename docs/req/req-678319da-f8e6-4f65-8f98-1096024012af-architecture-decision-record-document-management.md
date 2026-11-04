@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `adr` package as the original, most com
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

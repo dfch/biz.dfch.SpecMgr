@@ -1,0 +1,126 @@
+# `biz.dfch.specmgr.set.tools._cache`
+
+Per-domain content-hash-validated read cache singleton for set documents (feat-173-req-iso29148-level-set Phase 180).
+
+1:1 port of ``vcr.tools._cache``'s shape for the ``set`` domain -- see that
+module's own docstring for the full circular-import rationale this module
+also follows: ``set.tools._io``'s ``load_by_id`` needs ``find_set_path``
+(from ``_paths.py``) to resolve an id to a path; with the cache wired in,
+``_paths.py``'s ``find_set_path`` needs a cache-backed ``read_fn`` to pass
+to ``general.tools._doc_paths.find_doc_path_by_id`` -- and the only
+cache-backed reader available is ``read_set``. Pulling the cache singleton
+and ``read_set`` out into this standalone ``_cache.py`` module breaks the
+``_io.py -> _paths.py -> _io.py`` cycle that would otherwise result: both
+``_io.py`` and ``_paths.py`` depend *downward* on ``_cache.py``, and
+``_cache.py`` depends on neither of them -- only on the generic
+``general.tools._doc_cache.DocCache`` class and this domain's own
+``set.models.v1`` (SetDocument/parse_set).
+
+**Module-level singleton, mirroring ``_lock.py``'s ``_locks`` registry.**
+Exactly one :class:`DocCache` instance exists per process for this domain,
+created once at import time and reused for the process's lifetime -- the
+same shape as ``_lock.py``'s per-id lock registry, just a single instance
+here rather than one-per-id, since a domain only ever needs one cache. No
+call site threads an explicit cache instance through function signatures;
+callers simply import and call the plain functions below
+(``read_set``/``invalidate_set_cache``/``reconcile_set_cache``), and those
+functions close over the module-level ``_cache`` singleton.
+
+**Test isolation.** Because ``_cache`` is a module-level singleton, it
+would otherwise persist across every test case that runs in the same
+process (this codebase's test suite runs under ``pytest-xdist``/``-n
+auto``: each worker is its own process, so cross-worker leakage is not a
+concern, but cross-*test*-within-the-same-worker leakage very much is).
+:func:`reset_set_cache` exists purely so tests can clear every cached entry
+in ``setUp``/``tearDown`` and never observe another test's cached state.
+It is not for production use.
+
+See ADR bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
+module wires up for the ``set`` domain.
+
+## Functions
+
+### `_parse(text: 'str', *, language: 'str | None' = None) -> 'SetDocument'`
+
+Parse ``text`` into a :class:`SetDocument` (the cache's own ``parse_fn``).
+
+Receives the exact text :meth:`~biz.dfch.specmgr.general.tools._doc_cache.DocCache.read`
+already read (and hashed) for this same call -- this function must not
+re-read the file itself (feat-107-doc-cache Phase 6, REQ-007: closes the
+hash/parse TOCTOU race the previous two-independent-reads shape had).
+The optional ``language`` (feat-197-i18n Phase 125) is the effective
+language of the file being parsed -- ``None``/omitted or ``"en"`` runs
+the canonical EN parse, any other value applies that language's
+heading-mapping table at ``parse_set``'s own pre-pass.
+
+
+### `invalidate_set_cache(path: 'Path') -> 'None'`
+
+Drop ``path``'s cached entry, if present.
+
+Called by the generic ``delete`` tool's ``set`` adapter immediately
+after a successful ``unlink()``, so a deleted document's
+stale cache entry is never served.
+
+Parameters
+----------
+path:
+    The filesystem path whose cache entry to drop.
+
+
+### `read_set(path: 'Path') -> 'SetDocument'`
+
+Read and parse the set document at ``path``, through the cache.
+
+A file is only ever re-parsed when its on-disk content hash no longer
+matches the hash recorded at the last read of ``path`` (ADR
+bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
+re-raised cached failure) is returned without re-invoking
+:func:`~biz.dfch.specmgr.set.models.v1.parse_set`.
+
+**Language-aware (feat-197-i18n Phase 125).** The effective language is
+derived from the file's own position relative to the set document base
+directory (``general.tools._doc_paths.language_for_doc_path`` -- a file
+directly in the flat ``docs/set/`` directory parses canonical/EN, a file
+directly in ``docs/set/{language}/`` parses in that language, anything
+else canonical), never from a caller argument: the location *is* the
+language encoding (ADR 38efdb66 item 1), so every consumer of this
+reader (``find_set_path``'s scan, ``list_set``'s rows, ``load_by_id``'s
+second read, the generic tools' own set adapters) parses a variant file
+with its table without any signature change, and the ``DocCache``'s
+path-keyed entries keep EN and every language of one id independent
+(ADR item 9 -- no cache code change).
+
+Parameters
+----------
+path:
+    The filesystem path to the set document ``.md`` file.
+
+Returns
+-------
+SetDocument
+    The cached or freshly-parsed, validated document.
+
+
+### `reconcile_set_cache(live_paths: 'Iterable[Path]') -> 'None'`
+
+Drop every cached entry whose path is not in ``live_paths``.
+
+Called before any per-file work in both ``find_set_path``'s scan (via
+``general.tools._doc_paths.find_doc_path_by_id``'s ``reconcile_fn``
+parameter) and ``list_set``, so a file deleted outside specmgr's own
+tooling does not leak in memory indefinitely.
+
+Parameters
+----------
+live_paths:
+    The current, live set of on-disk paths for the ``set`` domain.
+
+
+### `reset_set_cache() -> 'None'`
+
+Clear every cached entry.
+
+Test-only: not for production use. See the module docstring's "Test
+isolation" section.
+

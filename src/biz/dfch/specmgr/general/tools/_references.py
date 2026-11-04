@@ -84,6 +84,7 @@ from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._io import load_by_id as load_feat_by_id
 from ...feat.tools._paths import FeatNotFoundError, feat_base_dir, feature_title, iter_feat_paths
+from ...models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._paths import gol_base_dir
 from ...prb.tools._io import load_by_id as load_prb_by_id
@@ -103,7 +104,6 @@ from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._paths import vcr_base_dir
 from ..models.reference import ReferenceRow
-from ._path_safety import _FEAT_ID_PATTERN as _FEAT_FULL_ID_PATTERN
 
 __all__ = [
     "REFERENCE_TYPES",
@@ -154,7 +154,7 @@ _REFERENCE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-#: The full feat id shape shared from ``general.tools._path_safety`` (its
+#: The full feat id shape shared from ``models.md._cross_reference`` (its
 #: anchored :data:`_FEAT_FULL_ID_PATTERN` minus the ``^``/``$`` anchors,
 #: e.g. ``feat-[0-9]+-[a-z0-9-]+``): the single source for the FEAT
 #: reference pattern's id shapes below and for :func:`_load_feat`'s

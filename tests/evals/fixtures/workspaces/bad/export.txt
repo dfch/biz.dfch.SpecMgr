@@ -1,0 +1,12 @@
+19:20:08.838 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl
+com.structurizr.dsl.StructurizrDslParserException: Unexpected end of DSL content - are one or more closing curly braces missing?
+	at com.structurizr.dsl.StructurizrDslParser.parse(StructurizrDslParser.java:1377)
+	at com.structurizr.dsl.StructurizrDslParser.parse(StructurizrDslParser.java:188)
+	at com.structurizr.command.AbstractCommand.loadWorkspace(AbstractCommand.java:93)
+	at com.structurizr.command.ExportCommand.run(ExportCommand.java:196)
+	at com.structurizr.Application.main(Application.java:59)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:106)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:64)
+	at org.springframework.boot.loader.launch.WarLauncher.main(WarLauncher.java:53)

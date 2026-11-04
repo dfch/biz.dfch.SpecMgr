@@ -57,6 +57,7 @@ from ...prb.models.v1 import PrbFrontmatter
 from ...qa.models.v2 import QaFrontmatter
 from ...req.models.v1 import ReqFrontmatter
 from ...rsk.models.v1 import RskFrontmatter
+from ...set.models.v1 import SetFrontmatter
 from ...sop.models.v1 import SopFrontmatter
 from ...sysrs.models.v1 import SysrsFrontmatter
 from ...tsk.models.v1 import TskFrontmatter
@@ -67,7 +68,7 @@ from ...vcr.models.v1 import VcrFrontmatter
 __all__ = ["UpdateFrontmatter", "UpdateResult"]
 
 #: The whole-body domains' frontmatter types (req/uc/tsk/qa/prb/gol/rsk/dec/
-#: sop/feat/vcr/sysrs/txt), unioned: the type of :class:`UpdateResult`'s
+#: sop/feat/vcr/sysrs/txt/set), unioned: the type of :class:`UpdateResult`'s
 #: ``frontmatter`` field (single source -- the generic ``update`` tool's
 #: dispatch module imports this alias instead of re-listing the frontmatter
 #: classes; add a new domain's frontmatter here and in the tool's dispatch
@@ -86,6 +87,7 @@ UpdateFrontmatter = (
     | VcrFrontmatter
     | SysrsFrontmatter
     | TxtFrontmatter
+    | SetFrontmatter
 )
 
 

@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `tsk` package's tools (`create_tsk`, `p
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

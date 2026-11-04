@@ -4,7 +4,7 @@
 
 The generic, cross-domain whole-body *and* line-range replace tool for the
 whole-body document types (``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``). It dispatches on the
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``). It dispatches on the
 explicit ``type`` parameter to a private per-domain adapter (``_update_<d>``),
 each a **verbatim port** of
 the corresponding per-domain ``update_<d>`` tool's function body (same
@@ -321,6 +321,26 @@ target that one file's own path -- the EN document (bytes, ``updated``, cache en
 touched by a non-default ``language`` call.
 
 
+### `_update_set(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
+
+Replace the body of the set document identified by ``id_`` (whole-body or line-range mode).
+
+Mirrors :func:`_update_sysrs`'s shape (same ``set_lock``, ``load_by_id``,
+frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
+``SetNotFoundError``; ``set`` is dispatch-only from day one per ADR
+36905d5b, so this adapter was written directly in this shape), plus the
+REQ-002 range branch (see :func:`_update_req`).
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+variant's own (``set_lock(set_lock_key(id_, language))``), the submitted/spliced body is
+validated through the variant's heading table
+(:func:`~biz.dfch.specmgr.set.models.v1.parse_set_body`), and the write plus cache warming
+target that one file's own path -- the EN document (bytes, ``updated``, cache entry) is never
+touched by a non-default ``language`` call.
+
+
 ### `_update_sop(id_: 'str', content: 'str', offset: 'int | None', limit: 'int | None', language: 'str' = 'en') -> '_UpdateOutcome | ParseFailureResult | ValidateResult'`
 
 Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).
@@ -447,7 +467,7 @@ touched by a non-default ``language`` call.
 Replace the body of an existing document, in whole-body or line-range mode.
 
 Cross-domain generic for the whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
 dispatches on ``type`` to the domain's own ported adapter (same lock,
 same id resolution, same frontmatter carry-over, same verbatim
 persistence, same domain not-found error).
@@ -507,7 +527,7 @@ id:
 type:
     The document type / domain: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``, ``txt``.
+    ``vcr``, ``sysrs``, ``txt``, ``set``.
 content:
     Whole-body mode: the replacement body markdown, with no
     frontmatter block. Range mode: the replacement fragment for the
@@ -604,7 +624,7 @@ KeyError
     UUID-shaped domain set, so ``type="adr"`` with a well-formed
     UUID ``id`` passes ``validate_id`` and reaches the lookup, which
     has no ``adr`` entry. Nothing is written. Unreachable through the
-    MCP server, whose ``type`` enum carries the 13 whole-body domains
+    MCP server, whose ``type`` enum carries the 14 whole-body domains
     only; a direct-Python-caller outcome.
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /

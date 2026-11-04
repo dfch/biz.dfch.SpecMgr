@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `qa` package as a single-schema (v2-onl
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

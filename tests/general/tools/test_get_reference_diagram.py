@@ -24,7 +24,7 @@ Design Notes §7 (``validate_id`` + the ``depth`` 1..5 range check, BOTH a
 ``list_references`` tests' missing-docs-root idiom, so a lookup that ever
 reached the filesystem would surface as the domain's own ``LookupError``,
 not a ``ValueError``), the source load's error mapping (a missing source
-raises the source domain's own ``XNotFoundError`` for every one of the 14
+raises the source domain's own ``XNotFoundError`` for every one of the 15
 domains; an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` -- its ``error`` text byte-identical to the domain's
 ``list_<d>`` failed-row ``error`` for the same file, ADR 9080b37c), the
@@ -121,8 +121,8 @@ class TestGetReferenceDiagramRegistration(unittest.TestCase):
 
         cls._tools = asyncio.run(mcp.list_tools())
 
-    def test_get_reference_diagram_registered_with_14_value_type_enum(self) -> None:
-        """``type`` is the full 14-domain vocabulary (adr included), ``type``/``id`` required, the
+    def test_get_reference_diagram_registered_with_15_value_type_enum(self) -> None:
+        """``type`` is the full 15-domain vocabulary (adr included), ``type``/``id`` required, the
         remaining parameters optional with the frozen defaults."""
         matching = [t for t in self._tools if t.name == "get_reference_diagram"]
         self.assertEqual(len(matching), 1)
@@ -215,7 +215,7 @@ class TestGetReferenceDiagramPathSafety(unittest.TestCase):
 
 class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
     """ACC-003: a validly-shaped source id with no file on disk raises the source domain's own
-    ``XNotFoundError``, identical to ``get_<d>``/``list_references`` -- for every one of the 14
+    ``XNotFoundError``, identical to ``get_<d>``/``list_references`` -- for every one of the 15
     domains."""
 
     SEEDS = (("cycle/req-c001.md", f"docs/req/{_C001}.md"),)
@@ -309,7 +309,7 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
 
 
 class TestTxtNodeDiagram(_SeededRegistryTestCase):
-    """The TXT node end-to-end over the 15-entry palette (feat-229-txt Phase 150, REQ-010 /
+    """The TXT node end-to-end over the 16-entry palette (feat-229-txt Phase 150, REQ-010 /
     ACC-007): a registry whose REQ source carries a free-floating ``TXT <uuid>`` reference
     renders the TXT node (the ``<<TXT>>`` stereotype inside the ``component "TXT" { … }``
     group, the resolved title) with the 15th skinparam line (``LightGrey``, after ``SYSRS``,
@@ -372,7 +372,7 @@ class TestTxtNodeDiagram(_SeededRegistryTestCase):
             "\n"
             "## Level\n"
             "\n"
-            "MUST\n"
+            "SRS\n"
             "\n"
             "## Source\n"
             "\n"

@@ -15,6 +15,7 @@ skinparam component {
   backgroundColor<<VCR>> Khaki
   backgroundColor<<SYSRS>> Thistle
   backgroundColor<<TXT>> LightGrey
+  backgroundColor<<SET>> Wheat
   backgroundColor<<UNRESOLVED>> DarkRed
 }
 

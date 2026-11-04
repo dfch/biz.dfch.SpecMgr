@@ -180,7 +180,7 @@ _REQ_BAD_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 

@@ -224,7 +224,7 @@ _REQ_TEMPLATE = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
