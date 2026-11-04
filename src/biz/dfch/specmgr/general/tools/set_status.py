@@ -147,11 +147,11 @@ an empty list marks a terminal current state) instead of writing -- case 6
 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
 result workaround chain. During the phased rollout a domain whose table has
 not landed yet carries a ``None`` aggregation entry and passes through
-unchanged -- as of Phase 100 every whole-body domain is in that state, so
-behavior is byte-identical to today; the no-op, out-of-vocabulary,
-``ParseFailureResult``, and path-safety order is untouched, and
-``_set_status_adr`` never calls the check (REQ-006: ADR keeps its
-flat-vocabulary behavior).
+unchanged -- as of Phase 110 ``req`` is enforced (its own table has landed)
+and the other whole-body domains still pass through until Phase 120; the
+no-op, out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
+untouched, and ``_set_status_adr`` never calls the check (REQ-006: ADR keeps
+its flat-vocabulary behavior).
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this

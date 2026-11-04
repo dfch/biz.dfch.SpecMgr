@@ -40,8 +40,9 @@ current-state-relative detail survives MCP clients that truncate ``isError`` tex
 Phased rollout (REQ-003's opt-in seam): an entry's value is ``None`` until the domain's own
 ``_STATUS_TRANSITIONS`` table lands (Phases 110/120, next to the domain's own ``_ALLOWED_STATUSES``
 in its ``models/<v>/frontmatter.py``); a ``None`` entry is a passthrough -- :func:`check_status_transition`
-returns ``None`` and the adapter proceeds exactly as before -- so Phase 100 (every entry ``None``)
-is byte-identical to today's behavior for every call. ADR is excluded (REQ-006): it has no entry
+returns ``None`` and the adapter proceeds exactly as before. As of Phase 110 the pilot domain
+``req`` is enforced (its own table has landed) and every other whole-body domain is still a
+passthrough until Phase 120 lands its table. ADR is excluded (REQ-006): it has no entry
 and ``_set_status_adr`` never calls into this module.
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/`` support module: this
@@ -59,6 +60,7 @@ from ...gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL_ALLOWED_STATU
 from ...prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
 from ...qa.models.v2.frontmatter import _ALLOWED_STATUSES as _QA_ALLOWED_STATUSES
 from ...req.models.v1.frontmatter import _ALLOWED_STATUSES as _REQ_ALLOWED_STATUSES
+from ...req.models.v1.frontmatter import _STATUS_TRANSITIONS as _REQ_STATUS_TRANSITIONS
 from ...rsk.models.v1.frontmatter import _ALLOWED_STATUSES as _RSK_ALLOWED_STATUSES
 from ...set.models.v1.frontmatter import _ALLOWED_STATUSES as _SET_ALLOWED_STATUSES
 from ...sop.models.v1.frontmatter import _ALLOWED_STATUSES as _SOP_ALLOWED_STATUSES
@@ -102,11 +104,11 @@ assert set(_STATUS_VOCABULARIES_BY_TYPE) == set(WHOLE_BODY_DOMAINS), (
 #: one entry per whole-body domain, keyed to the ``general.tools._domains`` registry. An entry's
 #: value is the domain's own ``_STATUS_TRANSITIONS`` table (current status -> allowed target
 #: statuses, set semantics) once it lands in Phases 110/120 (domain-owned, next to the domain's
-#: own ``_ALLOWED_STATUSES``); ``None`` = no table yet (the opt-in passthrough seam), so Phase 100
-#: -- every value ``None`` -- is byte-identical to today's behavior for every call. ADR has no
-#: entry (REQ-006).
+#: own ``_ALLOWED_STATUSES``); ``None`` = no table yet (the opt-in passthrough seam). As of
+#: Phase 110 ``req`` carries its own landed table and is enforced; every other whole-body
+#: domain is still ``None`` (passthrough) until Phase 120. ADR has no entry (REQ-006).
 _STATUS_TRANSITIONS_BY_TYPE: dict[str, dict[str, frozenset[str]] | None] = {
-    "req": None,
+    "req": _REQ_STATUS_TRANSITIONS,
     "uc": None,
     "tsk": None,
     "qa": None,
@@ -126,8 +128,8 @@ _STATUS_TRANSITIONS_BY_TYPE: dict[str, dict[str, frozenset[str]] | None] = {
 # aggregation is keyed to the shared domain registry (every key a whole-body domain, ADR
 # structurally absent -- tightened to full coverage of every whole-body domain in Phase 120,
 # Task 120.120), and every non-None table names only statuses from its domain's own closed
-# vocabulary (vacuous while every value is None: it becomes active as Phases 110/120 land the
-# per-domain tables).
+# vocabulary (active for every landed table -- ``req`` since Phase 110 -- and the rest as
+# Phase 120 lands its tables).
 assert set(_STATUS_TRANSITIONS_BY_TYPE) <= set(WHOLE_BODY_DOMAINS), (
     "_STATUS_TRANSITIONS_BY_TYPE keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- "
     "add or remove the domain in both places (feat-125-domain-lists, REQ-006; feat-108-fsm, REQ-003)"

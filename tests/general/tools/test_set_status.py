@@ -482,7 +482,10 @@ _CASES: list[_Case] = [
         frontmatter_type=ReqFrontmatter,
         document_type=ReqDocument,
         minimal_body=_REQ_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 110: req's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="open",
         allowed_statuses=_REQ_ALLOWED_STATUSES,
     ),
@@ -1299,26 +1302,28 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
 
 
 class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
-    """feat-108-fsm Phase 100 (the cross-cutting seam, REQ-002/REQ-005): the post-load/pre-write
-    ``check_status_transition`` call is wired into the whole-body adapters, but while every
-    ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` entry is still ``None`` (Phase 100's
-    passthrough state) it returns ``None`` and the call proceeds byte-identically to today's
-    behavior.
+    """feat-108-fsm Phase 100/110 (the cross-cutting seam, REQ-002/REQ-005): the post-load/pre-write
+    ``check_status_transition`` call is wired into the whole-body adapters. As of Phase 110 the
+    ``req`` entry of ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` carries the landed
+    ``req`` table (the req pins below therefore drive an allowed transition, ``draft`` ->
+    ``proposed``) while the ``feat`` entry -- like every other non-req whole-body domain -- is
+    still the ``None`` passthrough seam until Phase 120.
 
     The no-op, out-of-vocabulary, parse-failure, and path-safety order pins are this module's
     existing tests (unchanged by this phase); this class adds the seam-specific pins: the check
     is actually invoked (with the domain, the document's current on-disk status, and the
     requested target), it runs AFTER the no-op comparison (a same-status call never reaches it)
     and AFTER the pre-dispatch out-of-vocabulary channel (an out-of-vocabulary call never
-    reaches it), and a transition the final per-domain tables will one day reject (req
-    ``draft`` -> ``accepted``) still succeeds with today's exact return shape while every table
-    is ``None``.
+    reaches it), and an allowed transition proceeds to the write with the exact return shape
+    (the domain's own frontmatter, status changed). The disallowed-transition outcome itself is
+    the e2e module ``test_set_status_fsm_req.py``'s subject (Phase 110).
     """
 
     def test_transition_check_is_wired_post_load_and_passes_through_for_req(self) -> None:
         """The req adapter must call ``check_status_transition("req", <current>, <target>)`` after its
-        own load/no-op and, on the Phase-100 passthrough (``None``), proceed to the write with
-        today's exact return shape (the domain's own frontmatter, status changed)."""
+        own load/no-op and, for an allowed transition (Phase 110: the landed req table allows
+        ``draft`` -> ``proposed``), proceed to the write with the exact return shape (the
+        domain's own frontmatter, status changed)."""
         case = next(c for c in _CASES if c.doc_type == "req")
         created = case.create(case.minimal_body)
 

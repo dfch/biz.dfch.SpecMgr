@@ -429,12 +429,13 @@ class TestAcc006WriteToolsAllDomains(_TempDocsMixin):
                 self.assertIn("(v3)", de_file.read_text(encoding="utf-8"))
                 self.assertNotIn("(v2)", de_file.read_text(encoding="utf-8"))
 
-                # set_status -- to another allowed value (the variant's own status is its create status)
-                allowed = sorted(_allowed_statuses(spec.d) - {spec.status})
-                result = set_status(id=doc_id, type=spec.d, status=allowed[0], language="de")
-                self.assertEqual(result.status, allowed[0])
+                # set_status -- to another allowed value (the variant's own status is its create
+                # status; feat-108-fsm Phase 110: a transition the domain's machine allows from it)
+                target = _set_status_target(spec)
+                result = set_status(id=doc_id, type=spec.d, status=target, language="de")
+                self.assertEqual(result.status, target)
                 self.assertEqual(en_file.read_bytes(), en_bytes)
-                self.assertIn(f"status: {allowed[0]}", de_file.read_text(encoding="utf-8").split("---\n")[1])
+                self.assertIn(f"status: {target}", de_file.read_text(encoding="utf-8").split("---\n")[1])
 
                 # set_classification
                 result = set_classification(id=doc_id, type=spec.d, classification="internal", language="de")
@@ -876,6 +877,20 @@ def _lead_paragraph(body: str) -> str:
 def _allowed_statuses(d: str) -> set[str]:
     module = importlib.import_module("biz.dfch.specmgr.general.tools.set_status")
     result = set(module._ALLOWED_STATUSES_BY_TYPE[d])
+    return result
+
+
+def _set_status_target(spec: DomainSpec) -> str:
+    """A canonical status ``set_status`` may move the fresh (create-status) DE variant to -- the
+    ACC-006 write row's target. Since feat-108-fsm Phase 110 the target must additionally be a
+    transition the domain's own state machine allows from the variant's create status: ``req``'s
+    landed machine rejects its old alphabetical pick (``draft`` -> ``accepted``), so ``req`` gets
+    the allowed ``draft`` -> ``proposed``; every other whole-body domain is still the table-less
+    passthrough (Phase 120 lands its machines and may extend this override)."""
+    if spec.d == "req":
+        result = "proposed"
+        return result
+    result = sorted(_allowed_statuses(spec.d) - {spec.status})[0]
     return result
 
 

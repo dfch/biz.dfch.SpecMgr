@@ -16,15 +16,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Unit tests for the generic ``set_status`` tool's own per-domain status state machine
-(``general.tools._status_fsm``, feat-108-fsm Phase 100, REQ-003/REQ-004, GitHub issue #108).
+(``general.tools._status_fsm``, feat-108-fsm Phase 100/110, REQ-003/REQ-004, GitHub issue #108).
 
-Covers the Phase 100 import-time invariants (the aggregation is keyed to the shared
-``general.tools._domains`` registry, ADR excluded, every entry still the ``None`` passthrough
+Covers the import-time invariants (the aggregation is keyed to the shared ``general.tools.
+_domains`` registry, ADR excluded, and -- as of Phase 110 -- the ``req`` entry carries the
+landed domain table while every other whole-body domain is still the ``None`` passthrough
 seam), the pure :func:`decide_transition` core (passthrough, allowed, disallowed with the sorted
 current-state-relative ``allowed_values`` + the locked normal message form, the terminal message
 form, and the total/terminal treatment of a ``current`` that is not a table key), and the public
 :func:`check_status_transition` helper (table-less and unregistered types pass through; the
-aggregation lookup is exercised with a temporarily patched entry, no module state mutated).
+aggregation lookup is exercised with a temporarily patched entry, no module state mutated; the
+landed req table is enforced straight from module state).
 """
 
 from __future__ import annotations
@@ -35,15 +37,17 @@ from unittest import mock
 
 from biz.dfch.specmgr.general.models import InvalidStatusTransitionResult
 from biz.dfch.specmgr.general.tools._domains import ADR, WHOLE_BODY_DOMAINS
+from biz.dfch.specmgr.req.models.v1.frontmatter import _STATUS_TRANSITIONS as _REQ_LANDED_TABLE
 
 status_fsm_module = importlib.import_module("biz.dfch.specmgr.general.tools._status_fsm")
 check_status_transition = status_fsm_module.check_status_transition
 decide_transition = status_fsm_module.decide_transition
 
-#: A temporary state machine (the req design shape from the feature plan's Design Notes -- the
-#: table itself is NOT yet in the module: that is Phase 110) the decision-path tests run
-#: :func:`decide_transition` against. Every current status and every target is inside req's own
-#: closed vocabulary, so the import-time per-entry validity check would accept it.
+#: The locked req table (the feature plan's Design Notes shape): the golden pin for the landed
+#: ``req.models.v1.frontmatter._STATUS_TRANSITIONS`` constant (the full 7x7 matrix walk lives in
+#: ``tests/req/models/v1/test_frontmatter.py`` and the e2e module
+#: ``tests/general/tools/test_set_status_fsm_req.py``). Every current status and every target is
+#: inside req's own closed vocabulary, so the import-time per-entry validity check accepts it.
 _REQ_TABLE: dict[str, frozenset[str]] = {
     "draft": frozenset({"proposed", "rejected"}),
     "proposed": frozenset({"accepted", "rejected", "draft"}),
@@ -68,9 +72,11 @@ _TERMINAL_MESSAGE = (
 
 
 class TestStatusTransitionsAggregation(unittest.TestCase):
-    """REQ-003/ACC-007 (Phase 100 form): the aggregation is keyed to the registry, ADR excluded,
-    and the import-time drift assert passed (the module import at the top of this file is the
-    proof -- a failed assert would have made this file unimportable)."""
+    """REQ-003/ACC-007 (Phase 100 form, the Phase 110 state of the values): the aggregation is
+    keyed to the registry, ADR excluded, and the import-time drift assert passed (the module
+    import at the top of this file is the proof -- a failed assert would have made this file
+    unimportable). As of Phase 110 the ``req`` entry is the landed domain table (enforced);
+    every other whole-body domain is still the ``None`` passthrough seam until Phase 120."""
 
     def test_module_imports_cleanly(self) -> None:
         self.assertIsNotNone(status_fsm_module)
@@ -87,10 +93,20 @@ class TestStatusTransitionsAggregation(unittest.TestCase):
 
         self.assertNotIn(ADR, sut)
 
-    def test_phase_100_every_entry_is_the_none_passthrough(self) -> None:
+    def test_phase_110_req_entry_is_the_landed_domain_table(self) -> None:
+        """REQ-001/REQ-003: the aggregation carries req's own constant by identity (domain-owned,
+        no copy) and it equals the locked table shape."""
+        sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
+
+        self.assertIs(sut["req"], _REQ_LANDED_TABLE)
+        self.assertEqual(sut["req"], _REQ_TABLE)
+
+    def test_phase_110_every_other_entry_is_the_none_passthrough(self) -> None:
         sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
 
         for domain in WHOLE_BODY_DOMAINS:
+            if domain == "req":
+                continue  # Phase 110: req's table has landed (see test_phase_110_req_entry_is_the_landed_domain_table)
             with self.subTest(domain=domain):
                 self.assertIsNone(sut[domain])
 
@@ -162,12 +178,34 @@ class TestCheckStatusTransition(unittest.TestCase):
 
     def test_tableless_whole_body_domain_passes_through(self) -> None:
         for domain in WHOLE_BODY_DOMAINS:
+            if domain == "req":
+                continue  # Phase 110: req's table has landed and is enforced (see below)
             with self.subTest(domain=domain):
                 self.assertIsNone(check_status_transition(domain, "draft", "accepted"))
 
     def test_unregistered_type_passes_through(self) -> None:
         self.assertIsNone(check_status_transition(ADR, "draft", "accepted"))
         self.assertIsNone(check_status_transition("bogus", "draft", "accepted"))
+
+    def test_landed_req_table_is_enforced_straight_from_module_state(self) -> None:
+        """Phase 110: with no patching, the aggregation's req entry (the landed domain table)
+        decides -- an allowed transition passes, a disallowed one returns the normal form, a
+        terminal current state the terminal form."""
+        self.assertIsNone(check_status_transition("req", "draft", "proposed"))
+
+        result = check_status_transition("req", "accepted", "draft")
+
+        self.assertIsInstance(result, InvalidStatusTransitionResult)
+        self.assertEqual(result.from_status, "accepted")
+        self.assertEqual(result.to_status, "draft")
+        self.assertEqual(result.allowed_values, ["deprecated", "implemented", "rejected", "superseded"])
+        self.assertEqual(result.message, _NORMAL_MESSAGE)
+
+        terminal = check_status_transition("req", "superseded", "draft")
+
+        self.assertIsInstance(terminal, InvalidStatusTransitionResult)
+        self.assertEqual(terminal.allowed_values, [])
+        self.assertEqual(terminal.message, _TERMINAL_MESSAGE)
 
     def test_helper_indexes_the_aggregation(self) -> None:
         with mock.patch.dict(status_fsm_module._STATUS_TRANSITIONS_BY_TYPE, {"req": _REQ_TABLE}):

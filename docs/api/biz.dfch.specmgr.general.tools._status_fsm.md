@@ -25,8 +25,9 @@ current-state-relative detail survives MCP clients that truncate ``isError`` tex
 Phased rollout (REQ-003's opt-in seam): an entry's value is ``None`` until the domain's own
 ``_STATUS_TRANSITIONS`` table lands (Phases 110/120, next to the domain's own ``_ALLOWED_STATUSES``
 in its ``models/<v>/frontmatter.py``); a ``None`` entry is a passthrough -- :func:`check_status_transition`
-returns ``None`` and the adapter proceeds exactly as before -- so Phase 100 (every entry ``None``)
-is byte-identical to today's behavior for every call. ADR is excluded (REQ-006): it has no entry
+returns ``None`` and the adapter proceeds exactly as before. As of Phase 110 the pilot domain
+``req`` is enforced (its own table has landed) and every other whole-body domain is still a
+passthrough until Phase 120 lands its table. ADR is excluded (REQ-006): it has no entry
 and ``_set_status_adr`` never calls into this module.
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/`` support module: this
