@@ -4,7 +4,7 @@ created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
 status: planning
 type: feat
-updated: '2026-11-04T14:21:56.524+01:00'
+updated: '2026-11-04T15:08:46.000+01:00'
 version: 1.0.0
 ---
 
@@ -64,8 +64,8 @@ The generic `set_status` tool currently validates a requested status only agains
 
 #### Depends On
 
-- feat-103-set-status-error (the existing `InvalidStatusResult` non-raising precedent the new result mirrors).
-- feat-125-domain-lists (the `general/tools/_domains` single source of truth the aggregation links to).
+- FEAT feat-103-set-status-error (the existing `InvalidStatusResult` non-raising precedent the new result mirrors).
+- FEAT feat-125-domain-lists (the `general/tools/_domains` single source of truth the aggregation links to).
 
 #### Blocks
 
@@ -186,7 +186,7 @@ set:
 
 - [ ] Task 100.100: Add the `InvalidStatusTransitionResult` model to `general/models/` (sibling to `InvalidStatusResult`) and export it from `general/models/__init__.py`.
 - [ ] Task 100.110: Build the central `_STATUS_TRANSITIONS_BY_TYPE` aggregation in `general/tools/` (keyed to the `_domains` registry, opt-in per domain with `None` = passthrough) plus the shared pure check helper `(type, current, target) -> InvalidStatusTransitionResult | None`, with the import-time drift assert.
-- [ ] Task 100.120: Wire the helper into each `_set_status_<d>` adapter post-load/pre-write (after the no-op comparison, before the raw-body re-read/write), preserving the no-op, out-of-vocabulary, `ParseFailureResult`, and path-safety order; leave the ADR adapter untouched.
+- [ ] Task 100.120: Wire the helper into each `_set_status_<d>` adapter post-load/pre-write (after the no-op comparison, before the raw-body re-read/write), preserving the no-op, out-of-vocabulary, `ParseFailureResult`, and path-safety order (table-less domains pass through until Phases 110/120 land their respective tables); leave the ADR adapter untouched.
 
 #### Phase 110: Pilot — REQ
 
@@ -224,13 +224,17 @@ Planning. The feature is drafted from issue #108 with the design decisions locke
 
 <!-- Newest first. -->
 
-#### 2026-11-04T10:34:31.000Z - Drafted feature plan from issue #108
+#### 2026-11-04T14:08:46.000Z - Applied plan-refinement findings (G1, D1, I1)
+
+Applied the three findings from a plan-refinement pass. G1: the two `### Dependencies` entries now carry `FEAT` reference tags, so the machine-readable reference surface coincides with the prose surface. D1: the drafting-era Updates/Decisions entry timestamps are aligned to the frontmatter `created` stamp (the entries cannot predate file creation). I1: Task 100.120 now states the REQ-003 passthrough seam explicitly (table-less domains pass through until Phases 110/120 land their respective tables).
+
+#### 2026-11-04T13:21:56.524Z - Drafted feature plan from issue #108
 
 Created the `feat-108-fsm` plan. Scope is the 14 whole-body domains with ADR excluded. Rollout is phased: a Phase 100 cross-cutting mechanism (the `InvalidStatusTransitionResult` model, the central aggregation linked to the `_domains` registry, and the post-load/pre-write check wired into the adapters), a Phase 110 REQ pilot, and a Phase 120 rollout of the remaining 13 domains. A disallowed transition returns a non-raising result whose `allowed_values` are the targets valid from the current state (distinct from the pre-existing pre-load out-of-vocabulary `InvalidStatusResult`, which keeps the full flat vocabulary). Per-domain tables are domain-owned next to each `_ALLOWED_STATUSES` and expressed as a cycling-friendly `status: [targets]` mapping.
 
 ### Decisions Made
 
-#### 2026-11-04T10:34:31.000Z - Locked scope, channel, and mechanics during planning
+#### 2026-11-04T13:21:56.524Z - Locked scope, channel, and mechanics during planning
 
 Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a central aggregation linked to `general/tools/_domains`. Chose a cycling-friendly `status: [targets]` representation so a document can move `review` -> `done` and back. Fixed the failure channel upfront as a non-raising `InvalidStatusTransitionResult` (the current-state-relative `allowed_values` payload makes the structured result the truncation-surviving form, per the ADR 519d1206 chain) and dropped the earlier `ValueError` spike. Kept the pre-load out-of-vocabulary `InvalidStatusResult` distinct and unchanged. Chose phased rollout starting with REQ.
 
