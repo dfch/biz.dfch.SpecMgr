@@ -33,6 +33,7 @@ cycle 1 fixes:
   container starts.
 """
 
+import errno
 import io
 import subprocess
 import tempfile
@@ -40,7 +41,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from c4_skills import pins
+from c4_skills import pins, preflight, runner, sidecar
 from c4_skills.graders import GraderInputs
 from c4_skills.runner import (
     EVENT_FILE_COMMIT_LIMIT,
@@ -51,6 +52,7 @@ from c4_skills.runner import (
     _stream_first_type,
     commit_event_stream,
     load_skill_source,
+    run,
     run_trial,
 )
 
@@ -364,12 +366,15 @@ class TestRunTrialSkillCondition(unittest.TestCase):
         self.source = load_skill_source(variant)
         self.captured: dict = {}
 
-    def _fake_container(self, workdir, case, mcp_port, timeout_s, log_path, container_name):
+    def _fake_container(self, workdir, case, *, network, vllm_base_url, mcp_url, timeout_s, log_path, container_name):
         # at the moment the container "starts", record what the agent would
         # already see in its mounted work dir
         skill_md = workdir / ".opencode" / "skills" / "structurizr-validate-loop" / "SKILL.md"
         self.captured["skills_present_before_start"] = skill_md.is_file()
         self.captured["skill_bytes_before_start"] = skill_md.read_text(encoding="utf-8") if skill_md.is_file() else None
+        self.captured["container_network"] = network
+        self.captured["vllm_base_url"] = vllm_base_url
+        self.captured["mcp_url"] = mcp_url
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text(MINIMAL_STREAM, encoding="utf-8")
         return 0, False, 1.5
@@ -387,7 +392,9 @@ class TestRunTrialSkillCondition(unittest.TestCase):
                 run_id="run-x",
                 workroot=self.workroot,
                 results_dir=self.results_dir,
-                mcp_port=12345,
+                network="c4eval-run-x",
+                vllm_base_url="http://172.21.0.1:8081/v1",
+                mcp_url="http://172.21.0.3:8181/mcp",
                 upstream=None,
                 skill_source=self.source,
                 cache_reason="n/a",
@@ -408,6 +415,493 @@ class TestRunTrialSkillCondition(unittest.TestCase):
         self.assertEqual(record.metrics["steps"], 1)
         # the skill condition never passed without a workspace (gates fail)
         self.assertFalse(record.passed)
+        # Phase 110: the trial container got the private network + the two
+        # explicit endpoints (never a host mcp port)
+        self.assertEqual(self.captured["container_network"], "c4eval-run-x")
+        self.assertEqual(self.captured["vllm_base_url"], "http://172.21.0.1:8081/v1")
+        self.assertEqual(self.captured["mcp_url"], "http://172.21.0.3:8181/mcp")
+
+
+class TestNetworkHelpers(unittest.TestCase):
+    """Phase 110: the per-run private network lifecycle (docker mocked)."""
+
+    def test_network_name_is_derived_from_the_run_id(self) -> None:
+        sut = runner.network_name_for
+
+        self.assertEqual(sut("run-x"), "c4eval-run-x")
+        self.assertEqual(sut("p110-prove-2026-11-03T162909Z"), "c4eval-p110-prove-2026-11-03T162909Z")
+
+    def test_create_run_network_is_an_internal_bridge(self) -> None:
+        captured: dict = {}
+
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            captured["cmd"] = cmd
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            runner.create_run_network("c4eval-run-x")
+
+        self.assertEqual(captured["cmd"], ["docker", "network", "create", "--internal", "c4eval-run-x"])
+
+    def test_create_run_network_failure_raises(self) -> None:
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            return subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr="exists already")
+
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            with self.assertRaises(RuntimeError) as ctx:
+                runner.create_run_network("c4eval-run-x")
+
+        self.assertIn("exists already", str(ctx.exception))
+
+    def test_remove_run_network_is_best_effort(self) -> None:
+        # docker gone (OSError) or rc != 0: never raises (teardown context)
+        with mock.patch("subprocess.run", side_effect=OSError("docker gone")):
+            runner.remove_run_network("c4eval-run-x")
+
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            return subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr="still in use")
+
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            runner.remove_run_network("c4eval-run-x")
+
+    def test_sweep_run_networks_removes_and_returns_the_names(self) -> None:
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            if cmd[1:3] == ["network", "ls"]:
+                return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="c4eval-old-run\n", stderr="")
+            assert cmd[1:3] == ["network", "rm"]
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with mock.patch("subprocess.run", side_effect=fake_run) as run_mock:
+            result = runner.sweep_run_networks()
+
+        self.assertEqual(result, ["c4eval-old-run"])
+        self.assertEqual(run_mock.call_count, 2)
+        self.assertEqual(run_mock.call_args.args[0][-1], "c4eval-old-run")
+
+    def test_sweep_run_networks_never_raises_when_docker_is_gone(self) -> None:
+        with mock.patch("subprocess.run", side_effect=OSError("docker gone")):
+            self.assertEqual(runner.sweep_run_networks(), [])
+
+    def test_network_gateway_ip_parses_the_inspect_answer(self) -> None:
+        captured: dict = {}
+
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            captured["cmd"] = cmd
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="172.21.0.1\n", stderr="")
+
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            result = runner.network_gateway_ip("c4eval-run-x")
+
+        self.assertEqual(result, "172.21.0.1")
+        self.assertEqual(captured["cmd"][:2], ["docker", "network"])
+        self.assertIn("c4eval-run-x", captured["cmd"])
+
+    def test_network_gateway_ip_missing_is_a_runtime_error(self) -> None:
+        def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="\n", stderr="")
+
+        with mock.patch("subprocess.run", side_effect=fake_run):
+            with self.assertRaises(RuntimeError) as ctx:
+                runner.network_gateway_ip("c4eval-run-x")
+
+        self.assertIn("no gateway", str(ctx.exception))
+
+
+class TestVerifyDirectVllm(unittest.TestCase):
+    """Option C: the STRICT verification of a direct (0.0.0.0-bound) vLLM.
+
+    A permissive "something answers on 8081" is not acceptable: the probes
+    must see the exact pinned version AND the pinned model id, from the
+    host, on the gateway's vLLM port.
+    """
+
+    GATEWAY = "172.21.0.1"
+
+    def _good_docs(self) -> dict[str, object]:
+        return {
+            f"http://{self.GATEWAY}:{pins.vllm_host_port()}/version": {"version": pins.VLLM_VERSION_PIN},
+            f"http://{self.GATEWAY}:{pins.vllm_host_port()}/v1/models": {
+                "object": "list",
+                "data": [{"id": pins.MODEL_ID, "max_model_len": pins.MODEL_MAX_CONTEXT}],
+            },
+        }
+
+    def _verify(self, docs: dict[str, object]):
+        fetched: list[str] = []
+
+        def fake_get_json(url: str, timeout_s: float = 5.0) -> object:
+            fetched.append(url)
+            return docs.get(url)
+
+        with mock.patch("c4_skills.runner._gateway_http_json", side_effect=fake_get_json):
+            runner._verify_direct_vllm(self.GATEWAY)
+        return fetched
+
+    def test_a_verified_server_passes_and_both_probes_run(self) -> None:
+        fetched = self._verify(self._good_docs())
+
+        self.assertEqual(
+            fetched,
+            [
+                f"http://{self.GATEWAY}:{pins.vllm_host_port()}/version",
+                f"http://{self.GATEWAY}:{pins.vllm_host_port()}/v1/models",
+            ],
+        )
+
+    def test_a_wrong_version_is_a_pin_violation(self) -> None:
+        docs = self._good_docs()
+        docs[f"http://{self.GATEWAY}:{pins.vllm_host_port()}/version"] = {"version": "9.9.9"}
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self._verify(docs)
+
+        message = str(ctx.exception)
+        self.assertIn("'9.9.9'", message)
+        self.assertIn(pins.VLLM_VERSION_PIN, message)
+
+    def test_an_unreachable_server_is_a_pin_violation(self) -> None:
+        # no answer at all (the /version probe returns None)
+        docs = self._good_docs()
+        del docs[f"http://{self.GATEWAY}:{pins.vllm_host_port()}/version"]
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self._verify(docs)
+
+        self.assertIn("None", str(ctx.exception))
+
+    def test_a_model_set_without_the_pin_is_a_pin_violation(self) -> None:
+        docs = self._good_docs()
+        docs[f"http://{self.GATEWAY}:{pins.vllm_host_port()}/v1/models"] = {
+            "object": "list",
+            "data": [{"id": "some-other-model"}],
+        }
+
+        with self.assertRaises(RuntimeError) as ctx:
+            self._verify(docs)
+
+        message = str(ctx.exception)
+        self.assertIn(pins.MODEL_ID, message)
+        self.assertIn("some-other-model", message)
+
+    def test_non_json_answers_are_pin_violations(self) -> None:
+        docs = self._good_docs()
+        docs[f"http://{self.GATEWAY}:{pins.vllm_host_port()}/version"] = "not json at all"
+
+        with self.assertRaises(RuntimeError):
+            self._verify(docs)
+
+
+class TestEstablishVllmAccess(unittest.TestCase):
+    """Option C: the mode selection (forwarder preferred, verified direct fallback)."""
+
+    GATEWAY = "172.21.0.1"
+
+    def test_a_successful_bind_is_forwarder_mode(self) -> None:
+        fake_handle = object()
+        with (
+            mock.patch("c4_skills.runner.forwarder.start_forwarder", return_value=fake_handle) as start_mock,
+            mock.patch("c4_skills.runner._verify_direct_vllm") as verify_mock,
+        ):
+            handle, mode = runner.establish_vllm_access(self.GATEWAY)
+
+        self.assertIs(handle, fake_handle)
+        self.assertEqual(mode, "forwarder")
+        self.assertFalse(verify_mock.called)
+        kwargs = start_mock.call_args.kwargs
+        self.assertEqual(kwargs["bind_ip"], self.GATEWAY)
+        self.assertEqual(kwargs["bind_port"], pins.vllm_host_port())
+        self.assertEqual(kwargs["target_ip"], pins.vllm_host())
+        self.assertEqual(kwargs["target_port"], pins.vllm_host_port())
+
+    def test_eaddrinuse_with_a_verified_server_is_direct_mode(self) -> None:
+        with (
+            mock.patch(
+                "c4_skills.runner.forwarder.start_forwarder",
+                side_effect=OSError(errno.EADDRINUSE, "Address already in use"),
+            ),
+            mock.patch("c4_skills.runner._verify_direct_vllm") as verify_mock,
+        ):
+            handle, mode = runner.establish_vllm_access(self.GATEWAY)
+
+        self.assertIsNone(handle)
+        self.assertEqual(mode, "direct-0.0.0.0-bind")
+        verify_mock.assert_called_once_with(self.GATEWAY)
+
+    def test_eaddrinuse_with_an_unverified_server_aborts(self) -> None:
+        error = RuntimeError("direct vLLM access unverified: ...")
+        with (
+            mock.patch(
+                "c4_skills.runner.forwarder.start_forwarder",
+                side_effect=OSError(errno.EADDRINUSE, "Address already in use"),
+            ),
+            mock.patch("c4_skills.runner._verify_direct_vllm", side_effect=error),
+        ):
+            with self.assertRaises(RuntimeError) as ctx:
+                runner.establish_vllm_access(self.GATEWAY)
+
+        self.assertIs(ctx.exception, error)  # the verification failure is the abort
+
+    def test_a_non_eaddrinuse_bind_error_propagates(self) -> None:
+        error = OSError(errno.EADDRNOTAVAIL, "Cannot assign requested address")
+        with (
+            mock.patch("c4_skills.runner.forwarder.start_forwarder", side_effect=error) as start_mock,
+            mock.patch("c4_skills.runner._verify_direct_vllm") as verify_mock,
+        ):
+            with self.assertRaises(OSError) as ctx:
+                runner.establish_vllm_access(self.GATEWAY)
+
+        self.assertIs(ctx.exception, error)  # a genuine harness failure, not a fallback
+        self.assertEqual(start_mock.call_count, 1)
+        self.assertFalse(verify_mock.called)
+
+
+class TestRunLifecycle(unittest.TestCase):
+    """Phase 110: `run`'s network/forwarder lifecycle and teardown order.
+
+    The container layer is mocked at `runner._run_opencode_container`
+    (the established pattern of this file); the docker-level helpers
+    (create/remove/sweep network, gateway) and the sidecar/forwarder
+    layers are mocked at their module boundary, and every call is
+    recorded in one shared list so the ORDER is asserted, not just the
+    membership.
+    """
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory(prefix="c4eval-lifecycle-")
+        self.addCleanup(lambda: self._tmp.cleanup())
+        self.root = Path(self._tmp.name)
+        self.workroot = self.root / "work"
+        self.results_dir = self.root / "results" / "run-x"
+        self.cache_root = self.root / "cache"
+        self.workroot.mkdir()
+        self.results_dir.mkdir(parents=True)
+        self.calls: list[str] = []
+        self.captured: dict = {}
+
+    def _config(self, network_name: str = "") -> runner.RunConfig:
+        return runner.RunConfig(
+            run_id="run-x",
+            case_ids=[pins.SMOKE_CASE],
+            conditions=[pins.CONDITION_NONE],
+            k=1,
+            seed=7,
+            workroot=self.workroot,
+            results_dir=self.results_dir,
+            cache_root=self.cache_root,
+            network_name=network_name,
+        )
+
+    def _fake_container(self, workdir, case, *, network, vllm_base_url, mcp_url, timeout_s, log_path, container_name):
+        self.captured["container_network"] = network
+        self.captured["vllm_base_url"] = vllm_base_url
+        self.captured["mcp_url"] = mcp_url
+        if self.captured.get("container_should_raise"):
+            raise RuntimeError("trial exploded")
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text(MINIMAL_STREAM, encoding="utf-8")
+        return 0, False, 1.5
+
+    def _patches(self, direct_mode: bool = False, verify_error: Exception | None = None):
+        def fake_sidecar_list() -> list[str]:
+            return []
+
+        def fake_create(name: str) -> None:
+            self.calls.append(f"create_run_network:{name}")
+
+        def fake_start_sidecar(run_id: str, network: str) -> sidecar.SidecarHandle:
+            self.calls.append(f"sidecar_start:{network}")
+            return sidecar.SidecarHandle(
+                ip="172.21.0.3", port=sidecar.SIDECAR_PORT, container_id="cid-1", container_name=f"c4eval-mcp-{run_id}"
+            )
+
+        def fake_gateway(name: str) -> str:
+            self.calls.append(f"gateway:{name}")
+            return "172.21.0.1"
+
+        def fake_start_forwarder(*, bind_ip: str, bind_port: int, target_ip: str, target_port: int) -> object:
+            if direct_mode:
+                # the shared vLLM's 0.0.0.0 bind already owns the address:port
+                self.calls.append("forwarder_start_attempt")
+                raise OSError(errno.EADDRINUSE, "Address already in use")
+            self.calls.append("forwarder_start")
+            self.captured["forwarder"] = (bind_ip, bind_port, target_ip, target_port)
+            return object()
+
+        def fake_verify_direct(gateway_ip: str) -> None:
+            self.calls.append(f"vllm_verify:{gateway_ip}")
+            if verify_error is not None:
+                raise verify_error
+
+        def fake_stop_forwarder(handle: object) -> None:
+            self.calls.append("forwarder_stop")
+
+        def fake_stop_sidecar(*, container_id: str | None = None, container_name: str | None = None) -> None:
+            self.calls.append("sidecar_stop")
+
+        def fake_remove(name: str) -> None:
+            self.calls.append(f"remove_run_network:{name}")
+
+        def fake_preflight(**kwargs: object) -> preflight.PreflightResult:
+            self.captured.setdefault("preflights", []).append(kwargs)
+            # carry the extra facts into the data so the REAL
+            # write_preflight commits them to preflight.json on disk
+            extra = kwargs.get("extra")
+            data = dict(extra) if isinstance(extra, dict) else {}
+            return preflight.PreflightResult(ok=True, data=data)
+
+        return (
+            mock.patch("c4_skills.runner.sidecar.sidecar_container_list", side_effect=fake_sidecar_list),
+            mock.patch("c4_skills.runner.sweep_trial_containers", return_value=[]),
+            mock.patch("c4_skills.runner.sweep_run_networks", return_value=[]),
+            mock.patch("c4_skills.runner.create_run_network", side_effect=fake_create),
+            mock.patch("c4_skills.runner.network_gateway_ip", side_effect=fake_gateway),
+            mock.patch("c4_skills.runner.remove_run_network", side_effect=fake_remove),
+            mock.patch("c4_skills.runner.sidecar.start_sidecar", side_effect=fake_start_sidecar),
+            mock.patch("c4_skills.runner.sidecar.stop_sidecar", side_effect=fake_stop_sidecar),
+            mock.patch("c4_skills.runner.forwarder.start_forwarder", side_effect=fake_start_forwarder),
+            mock.patch("c4_skills.runner.forwarder.stop", side_effect=fake_stop_forwarder),
+            mock.patch("c4_skills.runner._verify_direct_vllm", side_effect=fake_verify_direct),
+            mock.patch("c4_skills.preflight.run_preflight", side_effect=fake_preflight),
+            mock.patch("c4_skills.preflight.local_host_addr", return_value="127.0.0.1"),
+            mock.patch("c4_skills.preflight.wait_until_idle", return_value=(True, 0, 0.0)),
+            mock.patch("c4_skills.preflight.vllm_running_requests", return_value=0),
+            mock.patch("c4_skills.runner._run_opencode_container", side_effect=self._fake_container),
+            mock.patch("c4_skills.graders.collect_inputs", return_value=_empty_inputs()),
+        )
+
+    def _enter(self, patches: tuple) -> None:
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+
+    def test_lifecycle_order_endpoints_and_records(self) -> None:
+        self._enter(self._patches())
+
+        result = run(self._config())
+
+        self.assertEqual(
+            [c.split(":")[0] for c in self.calls],
+            [
+                "create_run_network",
+                "sidecar_start",
+                "gateway",
+                "forwarder_start",
+                "forwarder_stop",
+                "sidecar_stop",
+                "remove_run_network",
+            ],
+        )
+        # the derived network name (no override) everywhere
+        self.assertEqual(self.calls[0], "create_run_network:c4eval-run-x")
+        self.assertEqual(self.calls[-1], "remove_run_network:c4eval-run-x")
+        # the forwarder: gateway IP -> vLLM loopback, on vLLM's port
+        self.assertEqual(self.captured["forwarder"], ("172.21.0.1", 8081, "127.0.0.1", 8081))
+        # the trial container: the private network + the two explicit endpoints
+        self.assertEqual(self.captured["container_network"], "c4eval-run-x")
+        self.assertEqual(self.captured["vllm_base_url"], "http://172.21.0.1:8081/v1")
+        self.assertEqual(self.captured["mcp_url"], "http://172.21.0.3:8181/mcp")
+        # the run record carries the new topology pin
+        self.assertEqual(result["version_tuple"]["network_mode"], pins.NETWORK_MODE)
+        # the committed preflight records the topology facts (incl. the mode)
+        preflight_doc = (self.results_dir / "preflight.json").read_text(encoding="utf-8")
+        self.assertIn('"network_mode": "internal-bridge"', preflight_doc)
+        self.assertIn('"network_name": "c4eval-run-x"', preflight_doc)
+        self.assertIn('"sidecar_ip": "172.21.0.3"', preflight_doc)
+        self.assertIn('"vllm_access": "forwarder"', preflight_doc)
+        self.assertIn('"vllm_base_url": "http://172.21.0.1:8081/v1"', preflight_doc)
+        # the second (post-sidecar) preflight carries the sidecar port
+        preflights = self.captured["preflights"]
+        self.assertEqual(len(preflights), 2)
+        self.assertEqual(preflights[1]["mcp_port"], sidecar.SIDECAR_PORT)
+
+    def test_an_explicit_network_name_overrides_the_derivation(self) -> None:
+        self._enter(self._patches())
+
+        run(self._config(network_name="custom-net-1"))
+
+        self.assertEqual(self.calls[0], "create_run_network:custom-net-1")
+        self.assertEqual(self.calls[-1], "remove_run_network:custom-net-1")
+        self.assertEqual(self.captured["container_network"], "custom-net-1")
+
+    def test_a_failing_trial_still_tears_down_in_order(self) -> None:
+        self.captured["container_should_raise"] = True
+        self._enter(self._patches())
+
+        with self.assertRaises(RuntimeError) as ctx:
+            run(self._config())
+
+        self.assertIn("trial exploded", str(ctx.exception))
+        self.assertEqual(
+            [c.split(":")[0] for c in self.calls],
+            [
+                "create_run_network",
+                "sidecar_start",
+                "gateway",
+                "forwarder_start",
+                "forwarder_stop",
+                "sidecar_stop",
+                "remove_run_network",
+            ],
+        )
+
+    def test_direct_mode_lifecycle_no_forwarder_stop_and_same_url(self) -> None:
+        # option C fallback: the bind is already owned (EADDRINUSE), the
+        # strict verification passes, and the run goes on with the SAME
+        # vLLM URL -- teardown must not stop a forwarder that was never
+        # started
+        self._enter(self._patches(direct_mode=True))
+
+        result = run(self._config())
+
+        self.assertEqual(
+            [c.split(":")[0] for c in self.calls],
+            [
+                "create_run_network",
+                "sidecar_start",
+                "gateway",
+                "forwarder_start_attempt",
+                "vllm_verify",
+                "sidecar_stop",
+                "remove_run_network",
+            ],
+        )
+        self.assertNotIn("forwarder_stop", [c.split(":")[0] for c in self.calls])
+        self.assertEqual(self.calls[4], "vllm_verify:172.21.0.1")
+        # mode-invariant URL, recorded mode
+        self.assertEqual(self.captured["vllm_base_url"], "http://172.21.0.1:8081/v1")
+        self.assertEqual(self.captured["mcp_url"], "http://172.21.0.3:8181/mcp")
+        preflight_doc = (self.results_dir / "preflight.json").read_text(encoding="utf-8")
+        self.assertIn('"vllm_access": "direct-0.0.0.0-bind"', preflight_doc)
+        self.assertEqual(result["version_tuple"]["network_mode"], pins.NETWORK_MODE)
+
+    def test_direct_mode_with_an_unverified_server_aborts_and_tears_down(self) -> None:
+        # the pin violation aborts BEFORE any trial, and the teardown still
+        # runs (sidecar down, network removed)
+        self._enter(
+            self._patches(
+                direct_mode=True,
+                verify_error=RuntimeError("direct vLLM access unverified: wrong version"),
+            )
+        )
+
+        with self.assertRaises(RuntimeError) as ctx:
+            run(self._config())
+
+        self.assertIn("wrong version", str(ctx.exception))
+        self.assertEqual(
+            [c.split(":")[0] for c in self.calls],
+            [
+                "create_run_network",
+                "sidecar_start",
+                "gateway",
+                "forwarder_start_attempt",
+                "vllm_verify",
+                "sidecar_stop",
+                "remove_run_network",
+            ],
+        )
+        # no trial container ever ran
+        self.assertNotIn("container_network", self.captured)
 
 
 if __name__ == "__main__":

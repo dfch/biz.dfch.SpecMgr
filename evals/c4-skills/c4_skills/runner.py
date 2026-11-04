@@ -15,13 +15,34 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The trial runner (Task 100.130).
+"""The trial runner (Task 100.130, reworked for the Phase 110 egress-
+control change).
 
 Sequential trials (one at a time, `-j 1` semantics): the planned (case,
 condition, k) combinations are shuffled once with a recorded seed, and each
 trial runs in its own fresh work dir and its own OpenCode container
-(``--network host``, no host OpenCode config mounted, no `AGENTS.md`, no
-skills except the condition's, web access denied by the injected config).
+(no host OpenCode config mounted, no `AGENTS.md`, no skills except the
+condition's, web access denied by the injected config).
+
+Network topology (the Phase 110 locked directive -- the agent under test
+must never reach the external network unless explicitly configured): every
+run owns one private Docker bridge network `c4eval-<run_id>` created with
+`--internal` (Docker enforces NO egress from it). On that network live the
+trial containers and the harness sidecar (its container IP), and the
+vLLM access the trial's config points at the network's gateway IP
+(a host interface address): PREFER the run's vLLM forwarder bound there
+(proxying to the shared vLLM on the host loopback -- best isolation, the
+gateway's only vLLM exposure is the forwarder); when that bind fails with
+EADDRINUSE the shared vLLM already owns the gateway address:port (it
+answers on 0.0.0.0), and the DIRECT path is used instead -- but only after
+`establish_vllm_access` strictly verifies from the host that the pinned
+vLLM server (exact version + model id) is what answers there (option C,
+locked decision). The injected config's two endpoints are those two
+addresses in BOTH modes -- nothing else is reachable from a trial. Each
+trial container gets its own netns, which also removes the opencode
+"managed service on a random host port" collision class that bit Phase 100
+smoke run 1 (a killed-or-orphaned service held a host port the next trial's
+container picked the same).
 
 The shared-server rules (Measurement): the runner refuses to start while
 vLLM reports running requests, re-checks (and waits) between trials, and
@@ -47,16 +68,19 @@ the trial work dir before the container starts and hashed with
 
 from __future__ import annotations
 
+import errno
 import json
 import random
 import shutil
 import subprocess
 import threading
 import time
+import urllib.error
+import urllib.request
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from . import graders, metrics as metrics_mod, pins, preflight, sidecar
+from . import forwarder, graders, metrics as metrics_mod, pins, preflight, sidecar
 from .cache import CacheKey, ResultCache
 from .cases import Case, get_case
 from .events import ParsedTrial, parse_events_file
@@ -230,12 +254,257 @@ def _was_contended(samples: list[int]) -> bool:
 
 #: The trial container name prefix (the timeout kill addresses the container
 #: by name -- killing the `docker run` client alone would orphan the
-#: container, and opencode 2.x's managed service would keep its host-network
-#: port bound for the next trial).
+#: container and its vLLM sequence slot. Phase 100 additionally had the
+#: orphaned opencode managed service hold a host-network port for the next
+#: trial; the Phase 110 private network removed that class -- each trial
+#: container now has its own netns, so a killed container's ports die with
+#: it).
 TRIAL_CONTAINER_PREFIX = "c4eval-trial-"
 
 #: The poll interval while waiting for a trial container to exit.
 CONTAINER_POLL_S = 2.0
+
+#: The per-run network name prefix (one `--internal` bridge network per run
+#: id, `c4eval-<run_id>`; the sidecar and every trial container join it,
+#: and the vLLM forwarder binds its gateway IP).
+NETWORK_PREFIX = "c4eval-"
+
+
+def network_name_for(run_id: str) -> str:
+    """Return the per-run private network name (derived from the run id).
+
+    No CLI flag: the network is 1:1 with the run, exactly like the sidecar
+    container name.
+
+    Args:
+        run_id: The run identifier.
+
+    Returns:
+        The network name (`c4eval-<run_id>`).
+    """
+    result = f"{NETWORK_PREFIX}{run_id}"
+    return result
+
+
+def create_run_network(name: str) -> None:
+    """Create the run's private `--internal` bridge network.
+
+    `--internal` makes Docker enforce that containers on the network have
+    no route to the outside world (the egress block of the Phase 110
+    locked directive); the default bridge subnet is used (the runner does
+    not need to know the subnet -- only the gateway, which it resolves
+    afterwards).
+
+    Args:
+        name: The network name (`c4eval-<run_id>`).
+
+    Raises:
+        RuntimeError: When docker cannot create the network (docker
+            unavailable, or a same-name network the sweep missed).
+    """
+    assert isinstance(name, str) and name
+    proc = subprocess.run(  # noqa: S603 -- fixed name
+        ["docker", "network", "create", "--internal", name],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"docker network create {name} failed: {proc.stderr.strip()}")
+
+
+def remove_run_network(name: str) -> None:
+    """Remove the run's private network (best-effort, never raises).
+
+    Teardown runs in a `finally` after the sidecar stop; a failure here
+    must not mask the run's outcome (the next run's sweep catches the
+    leftover).
+    """
+    assert isinstance(name, str) and name
+    try:
+        subprocess.run(  # noqa: S603 -- fixed name
+            ["docker", "network", "rm", name],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def sweep_run_networks() -> list[str]:
+    """Remove every leftover `c4eval-*` network (best-effort, never raises).
+
+    Safety sweep at run start, next to :func:`sweep_trial_containers` (a
+    crashed run can leave its per-run network behind). The harness assumes
+    single-run-per-host, exactly like the sidecar-staleness check: a live
+    `c4eval-mcp-*` container already refuses the run, so any network
+    carrying the prefix at this point is a crash leftover, not a
+    concurrent run's.
+
+    Returns:
+        The removed network names.
+    """
+    try:
+        proc = subprocess.run(  # noqa: S603 -- fixed filter
+            ["docker", "network", "ls", "--filter", f"name={NETWORK_PREFIX}", "--format", "{{.Name}}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    removed: list[str] = []
+    for name in (proc.stdout or "").splitlines():
+        net_name = name.strip()
+        if not net_name:
+            continue
+        try:
+            subprocess.run(["docker", "network", "rm", net_name], capture_output=True, text=True, timeout=60)  # noqa: S603
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        removed.append(net_name)
+    result = removed
+    return result
+
+
+def network_gateway_ip(name: str) -> str:
+    """Return the run network's gateway IP (the vLLM access address).
+
+    The gateway is a host interface address: the host may bind it (the
+    forwarder's preferred address), and the host reaches every container
+    on the network through it (while the `--internal` flag keeps the
+    containers' own egress blocked). The trial's vLLM endpoint is always
+    this address on vLLM's port, in either access mode.
+
+    Args:
+        name: The network name.
+
+    Returns:
+        The gateway IPv4 address.
+
+    Raises:
+        RuntimeError: When docker cannot inspect the network, or the
+            network has no gateway (no vLLM access address for the trial).
+    """
+    assert isinstance(name, str) and name
+    proc = subprocess.run(  # noqa: S603 -- fixed name
+        ["docker", "network", "inspect", name, "--format", "{{(index .IPAM.Config 0).Gateway}}"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"docker network inspect {name} failed: {proc.stderr.strip()}")
+    gateway = proc.stdout.strip()
+    if not gateway:
+        raise RuntimeError(f"network {name} has no gateway IP (no vLLM access address for the trial)")
+    result = gateway
+    return result
+
+
+def _gateway_http_json(url: str, timeout_s: float = 5.0) -> dict | None:
+    """GET one JSON document from the host; None on any failure.
+
+    The option-C verification probes (strict, from the host). A failure
+    here is a verification failure, not a harness crash: the caller names
+    what it found and aborts the run before any trial.
+    """
+    try:
+        with urllib.request.urlopen(url, timeout=timeout_s) as response:  # noqa: S310 -- the run's own gateway IP (a host interface address)
+            return json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, OSError, json.JSONDecodeError, TimeoutError):
+        return None
+
+
+def _verify_direct_vllm(gateway_ip: str) -> None:
+    """Strictly verify that the PINNED vLLM server answers on the gateway's vLLM port.
+
+    The option-C fallback (the shared vLLM's own 0.0.0.0 bind already owns
+    the gateway address:port) is legal only when what answers there really
+    is the pinned server -- a permissive "something answers on 8081" is a
+    pin violation. Both checks run from the host and are exact:
+
+    - `GET http://<gateway_ip>:<port>/version` must be JSON whose
+      `version` equals `pins.VLLM_VERSION_PIN`;
+    - `GET http://<gateway_ip>:<port>/v1/models` must be JSON whose
+      `data` list contains `pins.MODEL_ID`.
+
+    Args:
+        gateway_ip: The run network's gateway IP.
+
+    Raises:
+        RuntimeError: When either check fails (unreachable, non-JSON, a
+            different version, or a different model set) -- the message
+            names what was found, and the run must abort before any trial.
+    """
+    assert isinstance(gateway_ip, str) and gateway_ip
+    port = pins.vllm_host_port()
+    version_doc = _gateway_http_json(f"http://{gateway_ip}:{port}/version")
+    version = version_doc.get("version") if isinstance(version_doc, dict) else None
+    if version != pins.VLLM_VERSION_PIN:
+        raise RuntimeError(
+            f"direct vLLM access unverified: GET http://{gateway_ip}:{port}/version answered {version!r} "
+            f"(expected the pinned version {pins.VLLM_VERSION_PIN!r}); something else answers on the "
+            "vLLM port at the run's gateway -- aborting before any trial"
+        )
+    models_doc = _gateway_http_json(f"http://{gateway_ip}:{port}/v1/models")
+    model_ids: list[str] = []
+    if isinstance(models_doc, dict):
+        for entry in models_doc.get("data") or []:
+            if isinstance(entry, dict):
+                model_ids.append(str(entry.get("id")))
+    if pins.MODEL_ID not in model_ids:
+        raise RuntimeError(
+            f"direct vLLM access unverified: GET http://{gateway_ip}:{port}/v1/models does not serve "
+            f"{pins.MODEL_ID!r} (served: {model_ids}); aborting before any trial"
+        )
+
+
+def establish_vllm_access(gateway_ip: str) -> tuple[forwarder.ForwarderHandle | None, str]:
+    """Establish the run's vLLM access on the private network (option C, conditional).
+
+    PREFERRED: the vLLM forwarder bound to `<gateway_ip>:<vllm_port>`
+    (best isolation -- the gateway's only vLLM exposure is the forwarder's).
+    When that bind fails with EADDRINUSE, the shared vLLM server itself
+    already owns the gateway address:port (it answers on 0.0.0.0) -- the
+    DIRECT path is then used, but only after :func:`_verify_direct_vllm`
+    strictly verified from the host that the pinned server (exact version
+    + model id) is what answers there. Any OTHER bind error is a genuine
+    harness failure and propagates unchanged. The trial's vLLM endpoint
+    URL is mode-invariant: `http://<gateway_ip>:<vllm_port>/v1` in both
+    modes -- that is the point.
+
+    Args:
+        gateway_ip: The run network's gateway IP (a host interface address).
+
+    Returns:
+        (handle, mode): the forwarder handle (None in direct mode) and the
+        access mode (`"forwarder"` | `"direct-0.0.0.0-bind"`), recorded
+        with the run (preflight extra `vllm_access`).
+
+    Raises:
+        RuntimeError: EADDRINUSE with something other than the pinned vLLM
+            server answering on the gateway's vLLM port (a pin violation;
+            the run must abort before any trial).
+        OSError: Any other bind error (not EADDRINUSE) -- propagated.
+    """
+    assert isinstance(gateway_ip, str) and gateway_ip
+    try:
+        handle = forwarder.start_forwarder(
+            bind_ip=gateway_ip,
+            bind_port=pins.vllm_host_port(),
+            target_ip=pins.vllm_host(),
+            target_port=pins.vllm_host_port(),
+        )
+    except OSError as exc:
+        if exc.errno != errno.EADDRINUSE:
+            raise  # a genuine harness failure, not a fallback trigger
+        _verify_direct_vllm(gateway_ip)  # raises when the pin is not verified
+        result: tuple[forwarder.ForwarderHandle | None, str] = (None, "direct-0.0.0.0-bind")
+        return result
+    result = (handle, "forwarder")
+    return result
 
 
 def _docker_inspect(container_name: str, template: str) -> str:
@@ -304,17 +573,27 @@ def _stream_first_type(path: Path) -> str | None:
 def _run_opencode_container(
     workdir: Path,
     case: Case,
-    mcp_port: int,
+    *,
+    network: str,
+    vllm_base_url: str,
+    mcp_url: str,
     timeout_s: int,
     log_path: Path,
     container_name: str,
 ) -> tuple[int | None, bool, float]:
     """Run one trial container (detached) and capture its event output.
 
+    The container joins the run's private `--internal` network (its own
+    netns -- the egress block plus the removal of the Phase 100
+    host-network managed-service port collision class) and is given
+    exactly two endpoints in the injected config: `vllm_base_url` (the
+    vLLM forwarder on the network's gateway IP) and `mcp_url` (the sidecar
+    on its container IP).
+
     The container is addressed by name throughout: on timeout the harness
     sends `docker kill` to the CONTAINER (never just to the client), so a
-    timed-out trial cannot orphan a process that keeps a host-network port
-    or a vLLM sequence slot. The exit code comes from `docker inspect`
+    timed-out trial cannot orphan a process that keeps a vLLM sequence
+    slot. The exit code comes from `docker inspect`
     (`{{.State.ExitCode}}` -- the same value `docker wait` would report),
     so a killed (timed-out) trial keeps its exit code of None plus the
     timeout flag. The event stream is captured AFTER the container stops,
@@ -334,7 +613,7 @@ def _run_opencode_container(
         "--name",
         container_name,
         "--network",
-        "host",
+        network,
         *preflight.host_user_flags(),
         "-e",
         "HOME=/tmp/oc-home",
@@ -343,7 +622,7 @@ def _run_opencode_container(
         "-v",
         f"{workdir}:{CONTAINER_WORKDIR}",
         "-e",
-        f"{OPENCODE_CONFIG_CONTENT_ENV}={opencode_config_content(mcp_port)}",
+        f"{OPENCODE_CONFIG_CONTENT_ENV}={opencode_config_content(vllm_base_url=vllm_base_url, mcp_url=mcp_url)}",
         pins.OPENCODE_IMAGE,
         "run",
         "--format",
@@ -553,7 +832,9 @@ def run_trial(
     run_id: str,
     workroot: Path,
     results_dir: Path,
-    mcp_port: int,
+    network: str,
+    vllm_base_url: str,
+    mcp_url: str,
     upstream: UpstreamSource | None,
     timeout_s: int = pins.TRIAL_TIMEOUT_S,
     skill_source: SkillSource | None = None,
@@ -572,7 +853,12 @@ def run_trial(
         run_id: The run identifier (work dir + record naming).
         workroot: The gitignored trial work dir root.
         results_dir: The committed results dir for this run.
-        mcp_port: The harness sidecar's host port.
+        network: The run's private `--internal` network name (the trial
+            container joins it).
+        vllm_base_url: The vLLM endpoint as reachable from the trial
+            (`http://<gateway_ip>:8081/v1`, through the run's forwarder).
+        mcp_url: The sidecar endpoint as reachable from the trial
+            (`http://<sidecar_ip>:<port>/mcp`).
         upstream: The verified upstream source (the `upstream` condition).
         timeout_s: The per-trial wall-clock timeout.
         skill_source: The verified skill variant (the `skill` condition).
@@ -607,7 +893,14 @@ def run_trial(
     samples, sampler_thread, stop_event = _start_contended_sampler()
     container_name = f"{TRIAL_CONTAINER_PREFIX}{run_id}.{plan.case_id}.{plan.condition}-k{plan.k_index}"
     exit_code, timed_out, wall = _run_opencode_container(
-        workdir, case, mcp_port, timeout_s, event_source, container_name
+        workdir,
+        case,
+        network=network,
+        vllm_base_url=vllm_base_url,
+        mcp_url=mcp_url,
+        timeout_s=timeout_s,
+        log_path=event_source,
+        container_name=container_name,
     )
     stop_event.set()
     sampler_thread.join(timeout=5.0)
@@ -673,8 +966,9 @@ def sweep_trial_containers() -> list[str]:
     """Kill and remove every leftover `c4eval-trial-*` container.
 
     Safety sweep (a previous crashed run may have left a trial container
-    behind on the host network, still holding a port and a vLLM sequence
-    slot). Returns the removed container ids.
+    behind, still holding a vLLM sequence slot; the run's own network
+    leftover is the :func:`sweep_run_networks` counterpart). Returns the
+    removed container ids.
     """
     proc = subprocess.run(  # noqa: S603 -- fixed filter
         ["docker", "ps", "-aq", "--filter", f"name={TRIAL_CONTAINER_PREFIX}"],
@@ -729,6 +1023,9 @@ class RunConfig:
         label: A short run label for the report (e.g. `smoke`).
         skills_dir: The `skill` condition's variant directory (required
             iff `skill` is in `conditions`; see `load_skill_source`).
+        network_name: The run's private network name (additive; empty
+            derives `c4eval-<run_id>` -- no CLI flag, the network is 1:1
+            with the run).
     """
 
     run_id: str
@@ -742,6 +1039,7 @@ class RunConfig:
     timeout_s: int = pins.TRIAL_TIMEOUT_S
     label: str = ""
     skills_dir: Path | None = None
+    network_name: str = ""
 
 
 def _write_trial_record(results_dir: Path, record: TrialRecord) -> Path:
@@ -756,12 +1054,16 @@ def _write_trial_record(results_dir: Path, record: TrialRecord) -> Path:
 def run(config: RunConfig) -> dict:
     """Run one full harness measurement (the Task 100.130 runner).
 
-    Sequence: refuse a stale sidecar, preflight (pins + idle), start the
-    pinned sidecar, verify upstream when needed, plan the shuffled trial
-    order (seed recorded), run every trial sequentially (cached
-    `none`/`upstream` trials are reused, not reordered), write the per-
-    trial records + `run.json`, tear the sidecar down, and build the
-    report.
+    Sequence: refuse a stale sidecar, sweep leftover trial containers and
+    run networks, preflight (pins + idle), create the run's private
+    `--internal` network (`c4eval-<run_id>`), start the pinned sidecar on
+    it, establish the vLLM access on the network's gateway IP (option C:
+    the forwarder preferred, a strictly-verified direct bind when the
+    forwarder's bind is already owned), verify upstream when needed, plan
+    the shuffled trial order (seed recorded), run every trial sequentially
+    (cached `none`/`upstream` trials are reused, not reordered), write the
+    per-trial records + `run.json`, and tear down in order: forwarder (when
+    in use), sidecar, network. The report is built by the caller.
 
     Args:
         config: The RunConfig.
@@ -770,8 +1072,9 @@ def run(config: RunConfig) -> dict:
         The run record (the `run.json` payload).
 
     Raises:
-        RuntimeError: When the preflight pin check fails or the sidecar
-            does not come up.
+        RuntimeError: When the preflight pin check fails, the run network
+            cannot be created or has no gateway, or the sidecar does not
+            come up.
         ValueError: When the `skill` condition is used without (or with a
             malformed) `skills_dir`, or `skills_dir` is given without the
             `skill` condition (usage errors; the CLI maps them to exit 2).
@@ -785,12 +1088,16 @@ def run(config: RunConfig) -> dict:
         raise ValueError("skills_dir is only valid when the skill condition is run")
     else:
         skill_source = None
+    network = config.network_name or network_name_for(config.run_id)
     stale = sidecar.sidecar_container_list()
     if stale:
         raise RuntimeError(f"stale c4eval-mcp sidecar(s) still running: {stale}; tear them down first")
     swept = sweep_trial_containers()
     if swept:
         print(f"swept {len(swept)} leftover trial container(s): {swept}")
+    swept_networks = sweep_run_networks()
+    if swept_networks:
+        print(f"swept {len(swept_networks)} leftover run network(s): {swept_networks}")
 
     upstream: UpstreamSource | None = None
     if pins.CONDITION_UPSTREAM in config.conditions:
@@ -810,14 +1117,27 @@ def run(config: RunConfig) -> dict:
             "trial_timeout_s": config.timeout_s,
             "version_tuple_hash": pins.version_tuple_hash(),
             "host_addr": preflight.local_host_addr(),
+            "network_mode": pins.NETWORK_MODE,
+            "network_name": network,
         },
     )
     if not preflight_result.ok:
         preflight.write_preflight(config.results_dir / "preflight.json", preflight_result)
         raise RuntimeError("preflight pin check failed: " + "; ".join(preflight_result.problems))
 
-    handle = sidecar.start_sidecar(config.run_id)
+    handle: sidecar.SidecarHandle | None = None
+    forwarder_handle: forwarder.ForwarderHandle | None = None
     try:
+        create_run_network(network)
+        handle = sidecar.start_sidecar(config.run_id, network)
+        gateway_ip = network_gateway_ip(network)
+        # option C (conditional): the forwarder is preferred; an EADDRINUSE
+        # bind (the shared vLLM already owns the gateway address:port) falls
+        # back to the direct path after strict pin verification. The trial's
+        # vLLM URL is the same in both modes.
+        forwarder_handle, vllm_access = establish_vllm_access(gateway_ip)
+        vllm_base_url = f"http://{gateway_ip}:{pins.vllm_host_port()}/v1"
+        mcp_url = f"http://{handle.ip}:{handle.port}/mcp"
         preflight_result = preflight.run_preflight(
             conditions=list(config.conditions),
             upstream_source=upstream,
@@ -831,6 +1151,11 @@ def run(config: RunConfig) -> dict:
                 "trial_timeout_s": config.timeout_s,
                 "version_tuple_hash": pins.version_tuple_hash(),
                 "host_addr": preflight.local_host_addr(),
+                "network_mode": pins.NETWORK_MODE,
+                "network_name": network,
+                "sidecar_ip": handle.ip,
+                "vllm_access": vllm_access,
+                "vllm_base_url": vllm_base_url,
             },
         )
         preflight.write_preflight(config.results_dir / "preflight.json", preflight_result)
@@ -871,12 +1196,17 @@ def run(config: RunConfig) -> dict:
                 else:
                     cache_reason = lookup_reason
             if record is None:
+                # vllm_base_url/mcp_url were built right after the sidecar
+                # start (above the loop); the sidecar handle itself is not
+                # needed here -- the trial gets the two endpoint URLs only.
                 record = run_trial(
                     plan,
                     run_id=config.run_id,
                     workroot=config.workroot,
                     results_dir=config.results_dir,
-                    mcp_port=handle.port,
+                    network=network,
+                    vllm_base_url=vllm_base_url,
+                    mcp_url=mcp_url,
                     upstream=upstream,
                     timeout_s=config.timeout_s,
                     skill_source=skill_source,
@@ -921,7 +1251,15 @@ def run(config: RunConfig) -> dict:
             json.dumps(run_record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
     finally:
-        sidecar.stop_sidecar(container_id=handle.container_id)
+        # Teardown order (all best-effort, never raising): the forwarder
+        # first (it holds the gateway bind), then the sidecar, then the
+        # network (which removes the gateway interface the forwarder was
+        # bound to). A leftover of any step is the next run's sweep.
+        if forwarder_handle is not None:
+            forwarder.stop(forwarder_handle)
+        if handle is not None:
+            sidecar.stop_sidecar(container_id=handle.container_id)
+        remove_run_network(network)
     return run_record
 
 

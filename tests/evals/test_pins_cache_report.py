@@ -47,6 +47,17 @@ class TestVersionTuple(unittest.TestCase):
         self.assertEqual(len(first), expected_length)
         int(first, 16)  # must be lowercase hex
 
+    def test_version_tuple_hash_matches_the_pinned_golden(self) -> None:
+        # The golden of the Phase 110 egress-control change (it added the
+        # `network_mode` pin; the Phase 100 golden was
+        # 0de1ba9850e9d7e426a2f12a852cf17d25b2f2f5d0d12f528ce3b4cb2395a7b4).
+        # A change here invalidates every cached baseline by design --
+        # update this literal (computed, never guessed) when the tuple
+        # legitimately changes.
+        sut = pins.version_tuple_hash
+
+        self.assertEqual(sut(), "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662")
+
     def test_version_tuple_carries_the_pins(self) -> None:
         sut = pins.version_tuple
 
@@ -61,6 +72,19 @@ class TestVersionTuple(unittest.TestCase):
         self.assertEqual(result["upstream_sha"], pins.UPSTREAM_SHA_PIN)
         self.assertEqual(result["sampling_parameters"], dict(pins.SAMPLING_PARAMETERS))
         self.assertEqual(result["trial_timeout_s"], pins.TRIAL_TIMEOUT_S)
+        self.assertEqual(result["network_mode"], pins.NETWORK_MODE)
+        self.assertEqual(result["network_mode"], "internal-bridge")
+
+
+class TestVllmEndpointHelpers(unittest.TestCase):
+    """The forwarder's bind/target facts derived from the pinned endpoint."""
+
+    def test_vllm_host_and_port_match_the_pin(self) -> None:
+        self.assertEqual(pins.vllm_host(), "127.0.0.1")
+        self.assertEqual(pins.vllm_host_port(), 8081)
+        # the helpers and the endpoint stay in sync (one source of truth)
+        self.assertIn(f":{pins.vllm_host_port()}/v1", pins.VLLM_ENDPOINT)
+        self.assertIn(pins.vllm_host(), pins.VLLM_ENDPOINT)
 
 
 class TestSkillVariantHash(unittest.TestCase):

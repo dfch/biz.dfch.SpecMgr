@@ -72,8 +72,45 @@ CACHEABLE_CONDITIONS: frozenset[str] = frozenset({CONDITION_NONE, CONDITION_UPST
 #: The OpenCode provider id the harness injects (REQ-008).
 PROVIDER_ID = "vllm-sys0"
 
-#: The vLLM OpenAI-compatible endpoint on the host (bound to 127.0.0.1).
+#: The vLLM OpenAI-compatible endpoint the harness PROBES from the host.
+#: The shared vLLM server actually answers on `0.0.0.0:8081` (verified via
+#: `ss -tlnp`; it is shared infrastructure and cannot be rebound), so the
+#: `127.0.0.1` form works for the preflight and the contention sampler
+#: under either bind. The trial containers reach the same server at the
+#: per-run private network's GATEWAY IP (see :data:`NETWORK_MODE`):
+#: preferably through the run's vLLM forwarder bound there, or directly
+#: when the 0.0.0.0 bind already owns the gateway address:port -- the
+#: option-C conditional in `runner.establish_vllm_access` (strictly
+#: verified in that case). The trial's vLLM URL is mode-invariant.
 VLLM_ENDPOINT = "http://127.0.0.1:8081/v1"
+
+
+def vllm_host() -> str:
+    """Return the host part of :data:`VLLM_ENDPOINT` (the forwarder's target).
+
+    Returns:
+        The host the shared vLLM server answers on the loopback (pinned to
+        `127.0.0.1`).
+    """
+    host_port = VLLM_ENDPOINT.split("://", 1)[1].split("/", 1)[0]
+    result = host_port.rsplit(":", 1)[0]
+    return result
+
+
+def vllm_host_port() -> int:
+    """Return the port of :data:`VLLM_ENDPOINT` (the forwarder's bind/target port).
+
+    The runner binds the vLLM forwarder to the private network's gateway IP
+    on exactly this port, so a trial container's
+    `http://<gateway>:<port>/v1` reaches the host's loopback-bound vLLM.
+
+    Returns:
+        The vLLM TCP port (pinned to 8081).
+    """
+    host_port = VLLM_ENDPOINT.split("://", 1)[1].split("/", 1)[0]
+    result = int(host_port.rsplit(":", 1)[1])
+    return result
+
 
 #: The Prometheus metrics endpoint the runner uses for the idle/contention
 #: checks (`vllm:num_requests_running`).
@@ -170,6 +207,21 @@ UPSTREAM_SKILLS: tuple[str, ...] = ("c4-deployment", "c4-model", "c4-review", "s
 # runner defaults
 # ---------------------------------------------------------------------------
 
+#: The trial containers' network topology (Phase 110, locked user directive):
+#: every run owns one private Docker bridge network
+#: (`docker network create --internal c4eval-<run_id>`) on which the trial
+#: containers and the harness sidecar live, and where the vLLM access the
+#: trial's config points at is served from the network's gateway IP (a host
+#: interface address): the host-side vLLM forwarder bound there when it can
+#: bind (preferred, best isolation), or the shared vLLM's own 0.0.0.0 bind
+#: answering there directly when it already owns the address:port (the
+#: option-C fallback, strictly verified). `--internal` means Docker enforces
+#: NO route from that network to the outside world, so the agent under test
+#: can only reach those two explicitly configured endpoints. It replaces the
+#: Phase 100 `--network host` decision. Part of the version tuple: a change
+#: here invalidates every cached baseline by design.
+NETWORK_MODE = "internal-bridge"
+
 #: Per-trial wall-clock timeout in seconds (Task 100.130: a timeout is a
 #: failure, flagged separately).
 TRIAL_TIMEOUT_S = 1200
@@ -218,7 +270,9 @@ def version_tuple() -> dict[str, object]:
     The tuple is the set of pins that fully determine a trial's
     environment: the three images (tag + digest), the model and provider,
     the vLLM version pin, the host Python and jq versions, the upstream
-    commit, the sampling parameters and the runner timeout.
+    commit, the sampling parameters, the runner timeout and the trial
+    network topology (Phase 110: `internal-bridge`, the per-run egress-
+    blocking private network).
 
     Returns:
         A JSON-serialisable dict, sorted for stable hashing.
@@ -227,6 +281,7 @@ def version_tuple() -> dict[str, object]:
         "conditions_cacheable": sorted(CACHEABLE_CONDITIONS),
         "jq": JQ_VERSION_PIN,
         "model_id": MODEL_ID,
+        "network_mode": NETWORK_MODE,
         "opencode_image": OPENCODE_IMAGE,
         "opencode_image_digest": OPENCODE_IMAGE_DIGEST,
         "python": PYTHON_VERSION_PIN,
