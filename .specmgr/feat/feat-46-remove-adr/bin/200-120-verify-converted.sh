@@ -3,12 +3,18 @@
 #
 # Per DEC whose id is in adr-manifest.json (a missing DEC is "pending", not a failure, unless
 # --require-all): file name == ADR file name; parses via `parse_dec`; frontmatter id/type/
-# status/created/updated/version as the manifest says, classification null; the H1 equals the
-# wrapped <token> code spans); the migration `## Updates` entry carries the same timestamp as
-# `updated`; FIDELITY -- undoing exactly the allowed transformations (inserted Roles/Source/
-# Related Artifacts/Updates sections, the Pros-and-Cons heading rename, the wrapped bare
-# tokens) reproduces the ADR body (compared after trailing-whitespace and blank-run
-# normalisation); supersession -- the superseding DEC lists the older one, the older DEC has
+# status/created/updated/version as the manifest says, classification null; the migration
+# `## Updates` entry carries the same timestamp as `updated`; FIDELITY -- undoing exactly the
+# allowed section transformations (inserted Roles/Source/Related Artifacts/Updates sections,
+# the Pros-and-Cons heading rename) of the DEC body reproduces the ADR body with exactly the
+# bare <token> wrapping applied (`wrap_bare_tokens`, the `convert()` step) -- including the
+# H1, which must equal the wrapped ADR H1 -- after trailing-whitespace and blank-run
+# normalisation. Comparing against the wrapped ADR body (rather than unwrapping the spans in
+# the DEC text positionally) is required because a positional unwrap is unsound whenever the
+# ADR already carries a code span identical to a wrapped run (e.g. 112b6498 with 8 pre-existing
+# `get_<d>_schema` spans; feat-46 Phase 120 rule extension); the manifest's wrapped-token list
+# must still equal the one re-derived from the ADR body (stale-manifest guard, as in
+# `convert()`); supersession -- the superseding DEC lists the older one, the older DEC has
 # status `superseded` and no outbound reference to the newer one. Finally `specmgr lint
 # --type dec` (full parse of every DEC) unless --no-lint.
 #
@@ -73,9 +79,6 @@ for uid, e in adrs.items():
                 problems.append(f"frontmatter {key}: {got!r} != None (absent/null)")
         elif str(got) != val:
             problems.append(f"frontmatter {key}: {got!r} != {val!r}")
-    h1 = lib.title_of(body)
-    if lib.unwrap_runs(h1, e["wrapped_tokens"]).strip() != e["title"]:
-        problems.append(f"title differs: {h1!r}")
     m = re.search(r"^## Updates\n(?:.*\n)*?### (\S+) - Converted from ADR", body, re.M)
     if not m or m.group(1) != e["updated"]:
         problems.append("migration Updates entry missing or not dated == updated")
@@ -84,9 +87,15 @@ for uid, e in adrs.items():
         problems.append(f"ADR source missing: {adr_path}")
     else:
         _, adr_body = lib.split_document(adr_path.read_text(encoding="utf-8"))
+        wrapped_body, wrapped_list = lib.wrap_bare_tokens(adr_body)
+        if wrapped_list != e["wrapped_tokens"]:
+            problems.append(f"wrapped tokens differ from the manifest (stale manifest?): {wrapped_list}")
+        h1 = lib.title_of(body)
+        if h1.strip() != lib.title_of(wrapped_body).strip():
+            problems.append(f"title differs: {h1!r}")
         back = lib.unconvert(text, e)
-        if lib.normalise(back) != lib.normalise(adr_body):
-            problems.append("FIDELITY: DEC body minus allowed transformations != ADR body")
+        if lib.normalise(back) != lib.normalise(wrapped_body):
+            problems.append("FIDELITY: DEC body minus allowed section transformations != ADR body with the wrapping applied")
     if e["status"] == "superseded" and "## Related Artifacts" in body and f"DEC {e['superseded_by']}" in body:
         problems.append("older DEC must not reference its superseder")
     if problems:

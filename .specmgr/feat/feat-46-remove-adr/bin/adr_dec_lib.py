@@ -142,12 +142,6 @@ def _wrap_run(match: re.Match, wrapped: list[str]) -> str:
     return f"{lead}`{core}`{trail}"
 
 
-def unwrap_runs(body: str, wrapped: list[str]) -> str:
-    for core in wrapped:
-        body = body.replace(f"`{core}`", core, 1)
-    return body
-
-
 # --------------------------------------------------------------------------------------------
 # manifest
 # --------------------------------------------------------------------------------------------
@@ -269,7 +263,15 @@ def convert(entry: dict, manifest: dict, adr_text: str) -> str:
 
 
 def unconvert(dec_text: str, entry: dict) -> str:
-    """Undo the allowed transformations of `convert`, for the fidelity comparison."""
+    """Undo the allowed section transformations of `convert`, for the fidelity comparison.
+
+    The result must equal `wrap_bare_tokens(adr_body)` (the ADR body with exactly the bare
+    <token> wrapping applied) -- the caller compares against that, not the raw ADR body.
+    Unwrapping the wrapped spans inside the DEC text positionally was unsound: whenever the
+    ADR already carried a code span identical to a wrapped run (e.g. 112b6498 with 8
+    pre-existing `get_<d>_schema` spans), the first-occurrence replacement hit the pre-existing
+    span and left the wrapped one in place (feat-46 Phase 120 rule extension).
+    """
     _, body = split_document(dec_text)
     kept: list[str] = []
     skip = False
@@ -284,7 +286,7 @@ def unconvert(dec_text: str, entry: dict) -> str:
     text = "\n".join(kept)
     if entry["has_pros_heading"]:
         text = re.sub(r"^## Pros and Cons$", PROS_ADR, text, flags=re.M)
-    return unwrap_runs(text, entry["wrapped_tokens"])
+    return text
 
 
 def normalise(text: str) -> str:
