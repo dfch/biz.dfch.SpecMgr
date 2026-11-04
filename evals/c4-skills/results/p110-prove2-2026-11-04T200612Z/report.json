@@ -1,0 +1,82 @@
+{
+  "cases": [
+    "create-system",
+    "mcp-limits",
+    "no-trigger",
+    "heldout-validate"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 6.8,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.8,
+    "mean_wall_time_s": 357.8,
+    "measured_trials": 14,
+    "median_wall_time_s": 272.1,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p110-prove2",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 6,
+        "contended": 0,
+        "timeout": 3
+      },
+      "gate_failures": {
+        "cli_export": 4,
+        "cli_valid": 5,
+        "has_person": 4,
+        "has_system": 4,
+        "has_view": 5,
+        "inspect_called": 10,
+        "limits_acknowledged": 3,
+        "mcp_limit_stated": 5,
+        "parse_called": 10,
+        "relationship_technology": 5,
+        "triage_complete": 13,
+        "two_containers": 4,
+        "validate_ok_called": 5,
+        "validated_before_return": 15
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-validate": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 20,
+      "wilson": [
+        0.0,
+        0.16112516018512968
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p110-prove2-2026-11-04T200612Z",
+  "seed": 448993,
+  "skill_margins": null,
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}
