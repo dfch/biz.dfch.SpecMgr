@@ -3,7 +3,7 @@
 #
 # Per DEC whose id is in adr-manifest.json (a missing DEC is "pending", not a failure, unless
 # --require-all): file name == ADR file name; parses via `parse_dec`; frontmatter id/type/
-# status/created/updated/version as the manifest says; the H1 equals the ADR title (modulo the
+# status/created/updated/version as the manifest says, classification null; the H1 equals the
 # wrapped <token> code spans); the migration `## Updates` entry carries the same timestamp as
 # `updated`; FIDELITY -- undoing exactly the allowed transformations (inserted Roles/Source/
 # Related Artifacts/Updates sections, the Pros-and-Cons heading rename, the wrapped bare
@@ -63,10 +63,14 @@ for uid, e in adrs.items():
         problems.append(f"parse: {err}")
     fm, body = lib.split_document(text)
     want = {"id": uid, "type": "dec", "status": e["status"], "created": e["created"],
-            "updated": e["updated"], "version": "1.0.0"}
+            "updated": e["updated"], "version": "1.0.0", "classification": None}
     for key, val in want.items():
-        if str(fm.get(key)) != val:
-            problems.append(f"frontmatter {key}: {fm.get(key)!r} != {val!r}")
+        got = fm.get(key)
+        if val is None:
+            if got is not None:
+                problems.append(f"frontmatter {key}: {got!r} != None (absent/null)")
+        elif str(got) != val:
+            problems.append(f"frontmatter {key}: {got!r} != {val!r}")
     h1 = lib.title_of(body)
     if lib.unwrap_runs(h1, e["wrapped_tokens"]).strip() != e["title"]:
         problems.append(f"title differs: {h1!r}")

@@ -11,7 +11,9 @@ shared versioned models") — one bullet per implemented package, document
 type or cross-cutting:
 
 - **`adr/`** (Architecture Decision Records) — the original, most complete
-  domain. `adr/tools/` has 11 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
+  domain. **FROZEN as of 2026-11-04: no new ADRs are created — new decisions
+  are DEC documents (GitHub issue #46, the feat-46-remove-adr rollout).**
+  `adr/tools/` has 11 `@mcp.tool()` wrappers (`get_adr`, `list_adr`,
   `create_adr`, `update_frontmatter`, `update_section`,
   `option_list`/`option_create`/`option_read`/`option_update`/
   `option_delete`, `validate_adr`); ADR status changes go through the
