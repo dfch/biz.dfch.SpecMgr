@@ -3,7 +3,7 @@
 Pydantic schema and parser for the RASCI responsibility-assignment guidance
 document (``general/data/general_rasci.md``), feat-92-resources REQ-005.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://rasci`` (``general/resources/rasci.py``)

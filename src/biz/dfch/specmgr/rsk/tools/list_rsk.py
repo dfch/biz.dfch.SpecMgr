@@ -17,7 +17,7 @@
 
 """``@mcp.tool()`` wrapper: list_rsk (Task 3.14).
 
-Per feat-13 / ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, listing is a paged
+Per feat-13 / DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, listing is a paged
 ``@mcp.tool()`` rather than a ``specmgr://rsk/list`` resource: MCP resources
 cannot take arbitrary parameters (only URI-template path segments), and
 ``max_results``/``offset`` paging needs exactly that -- the same resource->
@@ -61,7 +61,7 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
 scans: omitted/``"en"`` = the flat ``docs/rsk/`` directory -- today's exact
@@ -206,7 +206,7 @@ def list_rsk(
         resolve_heading_table(language)
 
     paths = list(iter_rsk_paths(language))
-    # feat-107-doc-cache REQ-005 -- and feat-197-i18n (ADR 38efdb66 item 9): with {language}
+    # feat-107-doc-cache REQ-005 -- and feat-197-i18n (DEC 38efdb66 item 9): with {language}
     # subfolders, a scan of one language's directory no longer covers the whole domain, so
     # reconcile against the domain-wide live listing (flat EN files plus every {language}
     # subdirectory's files), never just the scanned directory -- or listing one language would

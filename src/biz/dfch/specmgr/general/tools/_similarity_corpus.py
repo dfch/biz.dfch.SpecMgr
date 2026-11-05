@@ -33,7 +33,7 @@ prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) by default, a
 caller-supplied, order-preserving, de-duplicated subset otherwise --
 flat domains via the shared ``iter_doc_paths`` and ``feat``'s
 ``<base>/<id>/README.md`` folder shape via its own bespoke
-``iter_feat_paths`` (ADR 8cf940c5). Every target name is validated up
+``iter_feat_paths`` (DEC 8cf940c5). Every target name is validated up
 front via :func:`whole_body_domain` (a ``ValueError`` **before any
 filesystem access** -- ``adr`` and every unknown name rejected,
 REQ-009/ACC-007), so the returned iterator itself is a plain lazy path
@@ -69,7 +69,7 @@ raw text as the embedding input for an unparseable one (REQ-009). It is
 the Phase 3 per-candidate entry point -- including inside the embedding
 cache's ``embed_fn`` closures, where it is called on the exact
 already-read file text and never re-reads the file itself (the cache's
-own TOCTOU contract, ADR bfd76370).
+own TOCTOU contract, DEC bfd76370).
 
 **Dependency-light.** Standard library + ``python-frontmatter`` (base
 dependency) + the Phase 1/2 ``general.tools`` siblings only -- no
@@ -116,7 +116,7 @@ def iter_candidate_paths(target_types: Sequence[str] | None = None) -> Iterator[
     paths come from the domain's own registry adapter -- the shared
     flat-file ``iter_doc_paths`` (every domain other than ``feat``) or
     ``feat``'s own ``iter_feat_paths`` (``<base>/<id>/README.md``,
-    folder-per-document, ADR 8cf940c5) -- in the adapter's own sorted
+    folder-per-document, DEC 8cf940c5) -- in the adapter's own sorted
     order, so the enumeration is deterministic for a given on-disk
     state. The base directories resolve through the domains' own
     ``SPECMGR_*_DIR`` env vars / defaults at iteration time, and a
@@ -306,7 +306,7 @@ def candidate_similarity_text(domain: str, text: str) -> SimilarityText:
     Phase 6 -- the cache stores the resulting ``SimilarityText`` with its
     vector, so a warm read serves the stored metadata instead of re-running
     this), where re-reading the file would break the cache's own
-    hash-then-embed TOCTOU contract (ADR bfd76370); the tests call it
+    hash-then-embed TOCTOU contract (DEC bfd76370); the tests call it
     directly.
 
     Args:

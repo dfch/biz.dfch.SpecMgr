@@ -31,7 +31,7 @@ than re-listed: ``general.models.validate_result._CAUGHT_EXCEPTIONS``
 ``validate_adr`` tool uses) plus UTF-8 decode errors -- caught per file so
 one bad file cannot abort the aggregate report. Full parses only, never
 the listing path (REQ-003): the ``list_feat`` dirty stage (frontmatter+H1
-only, ADR 3982712a) is precisely the masking that hid the feat-214 defect
+only, DEC 3982712a) is precisely the masking that hid the feat-214 defect
 for three consecutive commits.
 
 Three scopes, so the cost scales with the size of a change and never with

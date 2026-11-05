@@ -2,7 +2,7 @@
 
 The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
 failure mode: an out-of-vocabulary ``status`` value for the dispatched domain ``type``
-(feat-103-set-status-error, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
+(feat-103-set-status-error, DEC b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
 structured-result workaround to set_status's invalid-status case").
 
 This is a distinct, purpose-built model for ``set_status`` -- it is not a reuse or subclass of

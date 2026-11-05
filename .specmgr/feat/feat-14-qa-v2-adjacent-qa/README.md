@@ -95,9 +95,9 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr`
-  structure), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr`
+  structure), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based
   reads); the existing, unmodified `models/md` engine (`MarkdownStr`,
   `MarkdownSection`, `MarkdownSection2`, `MarkdownSection2WithComment`,
   `MarkdownBlockQuote`, `MarkdownComment`, `MarkdownParagraph`); the

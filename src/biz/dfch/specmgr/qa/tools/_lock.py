@@ -69,7 +69,7 @@ def _lock_for(id_: str) -> threading.Lock:
 def qa_lock_key(id_: str, language: str | None = None) -> str:
     """Return the lock key for QA document ``id_`` in ``language``.
 
-    **Per-language keying (feat-197-i18n Phase 125, ADR 38efdb66 item 9).**
+    **Per-language keying (feat-197-i18n Phase 125, DEC 38efdb66 item 9).**
     The language variants of one ``id`` are distinct files (distinct
     paths), so a mutation of one variant must neither race with, nor
     needlessly block on, a mutation of another. The lock key is therefore

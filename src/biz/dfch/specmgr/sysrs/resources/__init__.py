@@ -38,7 +38,7 @@ The former schema resource (``sysrs_schema``, ``specmgr://sysrs/schema``) was
 converted the same way into the ``get_sysrs_schema`` ``@mcp.tool()``
 (``sysrs.tools.get_sysrs_schema``), so that the generated JSON Schema is
 discoverable from the always-in-context tool surface instead of the
-resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+resource layer -- see DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 (feat-189 Phase 105).
 
 Unlike SOP (gained ``specmgr://rasci``) and VCR (gained ``specmgr://dtais``),

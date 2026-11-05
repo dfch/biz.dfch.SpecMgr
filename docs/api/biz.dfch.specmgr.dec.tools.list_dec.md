@@ -35,7 +35,7 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
-**Language variants (feat-197-i18n Phase 110, ADR 38efdb66 items 1/6/7).**
+**Language variants (feat-197-i18n Phase 110, DEC 38efdb66 items 1/6/7).**
 The optional ``language`` parameter (default ``"en"``) selects which
 directory this tool scans: omitted/``"en"`` = the flat ``docs/dec/``
 directory -- today's exact behavior; any other shape-validated code (e.g.

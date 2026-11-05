@@ -50,7 +50,7 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
-**Language variants (feat-197-i18n Phase 110, ADR 38efdb66 items 1/6/7).**
+**Language variants (feat-197-i18n Phase 110, DEC 38efdb66 items 1/6/7).**
 The optional ``language`` parameter (default ``"en"``) selects which
 directory this tool scans: omitted/``"en"`` = the flat ``docs/dec/``
 directory -- today's exact behavior; any other shape-validated code (e.g.
@@ -202,7 +202,7 @@ def list_dec(
         resolve_heading_table(language)
 
     paths = list(iter_dec_paths(language))
-    # feat-107-doc-cache Phase 4, REQ-005 -- and feat-197-i18n Phase 110 (ADR 38efdb66
+    # feat-107-doc-cache Phase 4, REQ-005 -- and feat-197-i18n Phase 110 (DEC 38efdb66
     # item 9): with {language} subfolders, a scan of one language's directory no
     # longer covers the whole domain, so reconcile against the domain-wide live
     # listing (flat EN files plus every {language} subdirectory's files), never

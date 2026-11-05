@@ -37,7 +37,7 @@ lock, same ``load_by_id``, same ``_path_safety.assert_within`` guard, same
 raw-body re-read via the established ``frontmatter.loads(...).content``
 mechanism and verbatim re-persistence) but replacing ``classification``
 instead of ``status`` in the reconstructed frontmatter. ``sop`` is built
-dispatch-only from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), so
+dispatch-only from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), so
 its ``_set_classification_sop`` adapter was written directly in this shape
 rather than ported from any retired per-domain tool -- true of every
 adapter in this module, since ``set_classification`` itself is new
@@ -70,8 +70,8 @@ section) -- ``set_classification`` is the sole classification-change entry
 point for every domain.
 
 An existing-but-broken document (feat-170-update-edit-parse-failure,
-GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
-the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
 fails to parse, every adapter now returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
@@ -245,7 +245,7 @@ def _set_classification_req(
     parse yields the non-raising ``ParseFailureResult`` instead of
     ``ReqNotFoundError`` (a truly-absent id still raises).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
     variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written --
@@ -285,7 +285,7 @@ def _set_classification_uc(
     See :func:`_set_classification_req` for the full semantics (same
     ``uc_lock``, ``load_by_id``, ``write_uc_file``, ``UcNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
     variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written --
@@ -325,7 +325,7 @@ def _set_classification_tsk(
     See :func:`_set_classification_req` for the full semantics (same
     ``tsk_lock``, ``load_by_id``, ``write_tsk_file``, ``TskNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
     variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written --
@@ -365,7 +365,7 @@ def _set_classification_qa(
     See :func:`_set_classification_req` for the full semantics (same
     ``qa_lock``, ``load_by_id``, ``write_qa_file``, ``QaNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
     variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written --
@@ -405,7 +405,7 @@ def _set_classification_prb(
     See :func:`_set_classification_req` for the full semantics (same
     ``prb_lock``, ``load_by_id``, ``write_prb_file``, ``PrbNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
     variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written --
@@ -445,7 +445,7 @@ def _set_classification_gol(
     See :func:`_set_classification_req` for the full semantics (same
     ``gol_lock``, ``load_by_id``, ``write_gol_file``, ``GolNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
     variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written --
@@ -485,7 +485,7 @@ def _set_classification_rsk(
     See :func:`_set_classification_req` for the full semantics (same
     ``rsk_lock``, ``load_by_id``, ``write_rsk_file``, ``RskNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
     variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written --
@@ -525,7 +525,7 @@ def _set_classification_dec(
     See :func:`_set_classification_req` for the full semantics (same
     ``dec_lock``, ``load_by_id``, ``write_dec_file``, ``DecNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+    **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 item 2).**
     ``language`` (the caller's already-guarded value; default ``"en"``,
     byte-identical to the pre-i18n adapter) selects the variant file: the
     id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -606,7 +606,7 @@ def _set_classification_sop(
     36905d5b, so this adapter was written directly in this shape) -- see
     :func:`_set_classification_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
     variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written --
@@ -647,7 +647,7 @@ def _set_classification_vcr(
     ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
     :func:`_set_classification_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
     variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written --
@@ -686,11 +686,11 @@ def _set_classification_sysrs(
 
     Mirrors :func:`_set_classification_sop`'s shape (same ``sysrs_lock``,
     ``load_by_id``, ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs``
-    is dispatch-only from day one per ADR 36905d5b, so this adapter was
+    is dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_classification_req`
     for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
     variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is written
@@ -729,11 +729,11 @@ def _set_classification_txt(
 
     Mirrors :func:`_set_classification_sysrs`'s shape (same ``txt_lock``,
     ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
-    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_classification_req`
     for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
     variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is written
@@ -772,11 +772,11 @@ def _set_classification_set(
 
     Mirrors :func:`_set_classification_sysrs`'s shape (same ``set_lock``,
     ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
-    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_classification_req`
     for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
     variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is written
@@ -871,8 +871,8 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "(`error`/`path`/`id`) instead of raising the domain's not-found error (a truly-absent id "
         "still raises) -- its `error` text is byte-identical to the domain's `list_<d>` failed "
         "row's `error` for the same file (identical field path and cause, including the trailing "
-        "pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
-        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "pydantic documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain). An invalid `id` "
         "(path-injection attempt or wrong format for `type`) or an unknown `type` is a `ValueError` "
         'raised before any file access; `type="adr"` passes the id validation (a well-formed '
@@ -972,8 +972,8 @@ def set_classification(
         row's ``error`` for the same file (identical field path and cause,
         including the trailing pydantic documentation line; ADR
         9080b37c-82b3-4f63-81f1-79641d0bf14c) (feat-170-update-edit-parse-
-        failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
-        -- case 4 of the ADR 519d1206-4d2a-4500-9046-6db635209996
+        failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
+        -- case 4 of the DEC 519d1206-4d2a-4500-9046-6db635209996
         non-raising, structured-result workaround chain).
 
     Raises

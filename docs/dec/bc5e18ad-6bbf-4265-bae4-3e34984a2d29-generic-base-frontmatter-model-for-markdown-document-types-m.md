@@ -12,11 +12,11 @@ version: 1.0.0
 
 ## Context and Problem Statement
 
-feat-5-md-model-parser's REQ-006 needs a typed frontmatter model layered on top of the already-working python-frontmatter-based stripping (frontmatter.loads(text).content/.metadata). The only existing typed frontmatter model, AdrFrontmatter (models/adr/v1/frontmatter.py), is tailored specifically to the ADR/MADR shape (id, version, status, date, decision_makers, consulted, informed) and has no document-type discriminator. As additional document types (uc, req, ...) are introduced on top of the generic heading-recursion engine (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae), each would otherwise need to hand-roll its own frontmatter model from scratch, duplicating the same handful of core fields (id, created, updated, status, version) per type -- the same scaling problem 832cd6c1 already solved for section bodies, just one layer up in the document.
+feat-5-md-model-parser's REQ-006 needs a typed frontmatter model layered on top of the already-working python-frontmatter-based stripping (frontmatter.loads(text).content/.metadata). The only existing typed frontmatter model, AdrFrontmatter (models/adr/v1/frontmatter.py), is tailored specifically to the ADR/MADR shape (id, version, status, date, decision_makers, consulted, informed) and has no document-type discriminator. As additional document types (uc, req, ...) are introduced on top of the generic heading-recursion engine (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae), each would otherwise need to hand-roll its own frontmatter model from scratch, duplicating the same handful of core fields (id, created, updated, status, version) per type -- the same scaling problem 832cd6c1 already solved for section bodies, just one layer up in the document.
 
 ## Decision Drivers
 
-Reusability of core frontmatter fields across current and future document types without duplicating them per type; ability to discriminate which document type a frontmatter block belongs to before/without knowing which concrete body model to parse into; preserving models/md/'s existing no-dependency-on-models/adr/v1/ invariant (ADR 832cd6c1); not forcing an unrelated, unscoped migration of the already-shipped, MADR-specific AdrFrontmatter; avoiding a new cross-cutting shared-validator module before there is a second consumer that actually needs it.
+Reusability of core frontmatter fields across current and future document types without duplicating them per type; ability to discriminate which document type a frontmatter block belongs to before/without knowing which concrete body model to parse into; preserving models/md/'s existing no-dependency-on-models/adr/v1/ invariant (DEC 832cd6c1); not forcing an unrelated, unscoped migration of the already-shipped, MADR-specific AdrFrontmatter; avoiding a new cross-cutting shared-validator module before there is a second consumer that actually needs it.
 
 ## Considered Options
 
@@ -50,7 +50,7 @@ dfch
 
 ## More Information
 
-Tracked in .specmgr/feat/feat-5-md-model-parser/README.md (GitHub issue #5), REQ-006/Task 4.1. Related: ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae (generic heading-recursion engine this frontmatter model sits alongside, models/md/'s no-dependency-on-models/adr/v1/ invariant).
+Tracked in .specmgr/feat/feat-5-md-model-parser/README.md (GitHub issue #5), REQ-006/Task 4.1. Related: DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae (generic heading-recursion engine this frontmatter model sits alongside, models/md/'s no-dependency-on-models/adr/v1/ invariant).
 
 ## Updates
 

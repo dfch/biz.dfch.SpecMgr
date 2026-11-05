@@ -25,13 +25,13 @@ small frontmatter YAML block is code-generated and prepended -- mirrors
 ``prb.tools.create_prb``/``req.tools.create_req`` exactly.
 
 Thin file-I/O adapter. The ``.md`` file itself is always the source of
-truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
 warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
 ever a content-hash-validated memoization of that file's own current
 state, never an independent fact, matching every other tool in this
 codebase.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/2/5/6).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/2/5/6).**
 A 1:1 port of ``create_dec``'s ``language``/``id`` handling. ``create_gol``
 gains two optional parameters, ``language`` (default ``"en"``) and ``id``.
 With ``language`` omitted/``"en"`` the tool is byte-identical to before: it
@@ -80,8 +80,8 @@ from ._write import write_gol_file
         "document to the goal base directory. A content-validation failure of the submitted "
         "body returns a non-raising `ValidateResult` (`valid=False`, a single `errors[].message` "
         "capped at 300 chars as the generic `validate` tool caps it, feat-110) instead of raising "
-        "`AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
-        "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
+        "`AssertionError`/`pydantic.ValidationError` (DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
+        "GitHub issue #204 -- case 5 of the DEC 519d1206 non-raising-structured-result workaround "
         "chain); nothing is written in that case. The structure reference is the `get_gol_schema` tool "
         "(the generated JSON Schema); the `get_gol_template`/`get_gol_example` tools return the "
         "authoring template and a complete sample. Returns the newly created document's "
@@ -121,8 +121,8 @@ def create_gol(  # pylint: disable=too-many-locals
     (``Goal.from_text(format_text(content))``). A structural failure raises
     ``AssertionError`` and a field/cross-field failure raises
     ``pydantic.ValidationError`` -- but this tool catches both
-    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
     structured-result workaround chain) and returns the enriched message
     (domain/tool/channel context prepended by the shared tool-boundary
     wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,
@@ -142,7 +142,7 @@ def create_gol(  # pylint: disable=too-many-locals
     frontmatter ``id`` is that same id, never a fresh one, REQ-003), the EN
     source must exist, and the variant is written to
     ``docs/gol/{language}/`` under the EN source's exact basename
-    (ADR 38efdb66 item 2). ``content`` is validated through the variant's
+    (DEC 38efdb66 item 2). ``content`` is validated through the variant's
     heading-mapping table, and the existing-variant guard
     (``FileExistsError``) runs under the variant's own per-language lock.
 
@@ -194,7 +194,7 @@ def create_gol(  # pylint: disable=too-many-locals
         all raised before any filesystem access; nothing is written.
     GolNotFoundError
         A non-default ``language`` was given but no EN source document
-        with ``id`` exists (a variant requires its EN source, ADR 38efdb66
+        with ``id`` exists (a variant requires its EN source, DEC 38efdb66
         item 2); nothing is written.
     FileExistsError
         A variant of ``id`` in this non-default ``language`` already
@@ -247,7 +247,7 @@ def create_gol(  # pylint: disable=too-many-locals
 
 
 def _create_variant(id_: str, language: str, content: str) -> GolFrontmatter:
-    """Create the ``language`` variant of the existing EN ``gol`` document ``id_`` (ADR 38efdb66 item 2).
+    """Create the ``language`` variant of the existing EN ``gol`` document ``id_`` (DEC 38efdb66 item 2).
 
     Resolves the EN source's path (the flat directory's id-scan), reuses its
     exact basename inside ``docs/gol/{language}/``, and writes the

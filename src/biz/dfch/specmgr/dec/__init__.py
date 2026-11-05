@@ -41,9 +41,9 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_dec`` tool was removed in favor of it (feat-81-83-validation).
 Like GOL, DEC has no
 ``specmgr://dec/{id}`` resource -- id-based reads go through the ``get_dec``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged
-``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 The former ``specmgr://dec/schema`` resource was converted into the
 ``get_dec_schema`` tool, so that the generated JSON Schema is discoverable

@@ -17,7 +17,7 @@
 
 """The Architecture Decision Record (ADR) domain package.
 
-See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
 
 Groups every ADR-specific *interface* module -- ``tools`` (``@mcp.tool()``
 wrappers), ``prompts`` (``@mcp.prompt()`` flows), and ``resources``

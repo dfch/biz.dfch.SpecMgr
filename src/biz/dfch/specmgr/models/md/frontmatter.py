@@ -17,7 +17,7 @@
 
 """Generic base frontmatter model shared by every markdown-backed document type.
 
-Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
+Per DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
 ``feat-5-md-model-parser``): this is a *base* frontmatter model carrying only
 the handful of fields every document type shares. A concrete document type
 (e.g. ``uc``/``req``) defines its own frontmatter model that
@@ -37,7 +37,7 @@ future convergence is noted there but not decided.
 
 This module has no import dependency on ``models.adr.v1`` or any other
 document-type package, consistent with ``models.md``'s existing
-no-dependency invariant (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
+no-dependency invariant (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ from ._util import CURRENT_SCHEMA_VERSION, blank_to_none, default_if_blank, vali
 DEFAULT_STATUS = "draft"
 
 #: The date+time variant accepted for ``created``/``updated`` (feat-146,
-#: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): ``yyyy-MM-dd`` + (``T`` or
+#: DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf): ``yyyy-MM-dd`` + (``T`` or
 #: space) + ``HH:mm:ss.SSS`` (exactly three millisecond digits), followed by
 #: either ``Z`` (UTC) or a signed ``±HH:mm`` offset. The machine-written
 #: canonical form is the ``T``-separated one (the MCP is the only writer of

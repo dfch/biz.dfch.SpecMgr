@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """ACC-001..005 tests for the two-stage dirty/clean ``list_feat`` cold-scan-timeout fix
-(feat-187-list-feat-timeout, GitHub issue #187, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44).
+(feat-187-list-feat-timeout, GitHub issue #187, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44).
 
 Phase 100/110 already implemented the production code this module exercises
 (the feat-local dirty/clean ``DocCache`` pair in ``feat/tools/_cache.py``,

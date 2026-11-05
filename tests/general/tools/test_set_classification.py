@@ -772,12 +772,12 @@ class TestSetClassificationAssertWithinSpy(TempDocsDirTestCase):
 
 
 class TestSetClassificationParseFailure(TempDocsDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) from the generic ``set_classification`` tool's single protected
     ``load_by_id`` call site, with nothing written to disk -- the ``error`` carries the same
     parse defect as the domain's own ``list_<d>`` failed row for the same file (the ``get_<d>``
-    precedent, ADR 9080b37c). All 12 whole-body domains, ``feat`` included (this module's
+    precedent, DEC 9080b37c). All 12 whole-body domains, ``feat`` included (this module's
     unified case shape).
 
     A truly-absent id still raises the domain's own not-found error (REQ-002): the regression

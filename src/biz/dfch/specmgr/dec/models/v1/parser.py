@@ -40,7 +40,7 @@ there is no dedicated structural-error exception type (no ``DecParseError``
 equivalent); both error channels are plain ``AssertionError`` /
 ``pydantic.ValidationError`` that propagate uncaught.
 
-**Heading-mapping table pre-pass (feat-197-i18n Phase 110, ADR 38efdb66
+**Heading-mapping table pre-pass (feat-197-i18n Phase 110, DEC 38efdb66
 item 5).** This free function is ``dec``'s single text-to-model parse
 boundary -- the choke point behind ``get_dec``'s non-raw reads, ``list_dec``'s
 rows (both via the cache-backed ``read_dec``), and the path-based ``parse_dec``
@@ -84,7 +84,7 @@ def parse_dec(text: str, *, language: str | None = None) -> DecDocument:
         together, exactly as read from disk (or submitted verbatim by an MCP
         tool call that never wrote it to disk at all).
     language:
-        The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+        The document's language (feat-197-i18n, DEC 38efdb66 item 5):
         ``None`` (the default) or ``"en"`` parses the canonical, English
         headings as-is (no table -- byte-identical to the pre-i18n path);
         any other value resolves that language's heading-mapping table and

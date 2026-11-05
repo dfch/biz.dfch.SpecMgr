@@ -332,7 +332,7 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
 
     def test_domain_count_reconciliation_note_present(self):
         """The explicit 15-domain (diagram surface, adr included) vs 14-domain
-        (text workflows, adr excluded by design, ADR bfd76370) reconciliation
+        (text workflows, adr excluded by design, DEC bfd76370) reconciliation
         note is pinned."""
         _, body = _split_frontmatter(_skill_text())
 

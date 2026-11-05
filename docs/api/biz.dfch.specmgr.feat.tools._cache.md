@@ -3,7 +3,7 @@
 Per-domain content-hash-validated read cache singleton for features (feat-107-doc-cache Phase 4, Task 4.1a).
 
 ``feat`` is the one domain whose cache integration is necessarily bespoke
-(the feature plan's own Design Notes, and ADR bfd76370-b59b-4d65-b550-a969f6c93c9d):
+(the feature plan's own Design Notes, and DEC bfd76370-b59b-4d65-b550-a969f6c93c9d):
 ``feat.tools._paths``/``feat.tools.set_feat_id`` never route through the
 shared ``general.tools._doc_paths`` module every other whole-body
 domain's ``_cache.py`` module plugs into (Phase 4's mechanical rollout) --
@@ -25,7 +25,7 @@ directly.** Same circular-import rationale as every other domain's own
 imports ``find_feat_path_by_id`` from ``_paths.py``; with the cache wired
 in, ``_paths.py``'s ``find_feat_path_by_id`` needs a cache-backed
 ``read_feat`` to avoid re-parsing the same file twice per ``get_feat`` call
-(the same double-parse bug ADR bfd76370-b59b-4d65-b550-a969f6c93c9d fixes
+(the same double-parse bug DEC bfd76370-b59b-4d65-b550-a969f6c93c9d fixes
 for every other domain) -- and the only cache-backed reader available is
 ``read_feat``. Pulling the cache singleton and ``read_feat`` out into this
 standalone ``_cache.py`` module breaks the ``_io.py -> _paths.py -> _io.py``
@@ -46,7 +46,7 @@ concern, but cross-*test*-within-the-same-worker leakage very much is).
 entry in ``setUp``/``tearDown`` and never observe another test's cached
 state. It is not for production use.
 
-See ADR bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
+See DEC bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
 module wires up for the ``feat`` domain, and
 ``.specmgr/feat/feat-107-doc-cache/README.md`` for the feature plan this
 implements (Phase 4, Task 4.1a).

@@ -7,7 +7,7 @@ Replaces the earlier ``specmgr://adr/list`` resource
 MCP resources cannot take arbitrary parameters (only URI-template path
 segments), and ``max_results``/``offset`` paging needs exactly that -- the
 same resource->tool reasoning already applied to ``get_req``
-(ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). See
+(DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging
 contract shared by every ``list_<domain>`` tool.
 

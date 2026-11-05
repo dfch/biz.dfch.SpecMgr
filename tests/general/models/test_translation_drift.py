@@ -411,7 +411,7 @@ class TestResultModels(unittest.TestCase):
 #: ``(free-text)`` row reduces to its schema-constant token, a ``(whole token)`` row compares as a whole (its text is
 #: entirely schema-constant), the update-entry row is excluded. A NEW data-carrying alias in any domain fails
 #: ``test_every_data_carrying_alias_is_covered`` until it is added here and to the rule table of
-#: ``translation_drift`` (ADR 38efdb66 item 3 closedness).
+#: ``translation_drift`` (DEC 38efdb66 item 3 closedness).
 _COVERED_ALIASES: dict[str, tuple[str, str | None]] = {
     r"^Option \d+: .+$": ("Option 7: Whatever", "Option 7:"),
     r"^Step \d+: .+$": ("Step 2: Whatever", "Step 2:"),

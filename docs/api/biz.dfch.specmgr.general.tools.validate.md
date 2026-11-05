@@ -53,8 +53,8 @@ structurally the odd one out among the (previously) separate per-domain
 parameter, and its own structural-failure channel is ``AdrParseError``
 (a ``ValueError`` subclass) rather than ``AssertionError`` -- so it is kept
 as its own standalone tool, unchanged, and excluded from this
-consolidation. See ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends
-ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+consolidation. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends
+DEC 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
 (previously covering only mutation-adjacent tools) to this read-only/
 dry-run tool category.
 

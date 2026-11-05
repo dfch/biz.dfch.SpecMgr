@@ -4,7 +4,7 @@ Pydantic model for one line of SET listing output (``list_set``).
 
 Mirrors :class:`~biz.dfch.specmgr.txt.models.v1.summary.TxtSummary`
 field-for-field, for the paged ``list_set`` tool -- a paged MCP tool from
-day one per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so SET has no
+day one per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so SET has no
 ``specmgr://set/list`` resource. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref``/``path``/``error`` fields, with no

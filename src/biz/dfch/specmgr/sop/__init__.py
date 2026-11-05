@@ -26,7 +26,7 @@ generic ``models/md`` parser with the simple surface used by GOL/RSK/QA/DEC
 -- no fine-grained mutation tools, no by-id resource.
 
 SOP is the **first domain built from scratch entirely on the post-feat-22
-generic mutation tools** (ADR 36905d5b-8057-4294-8665-c7eed5534db0): it has
+generic mutation tools** (DEC 36905d5b-8057-4294-8665-c7eed5534db0): it has
 no ``update_sop``/``set_status_sop`` tools of its own -- it dispatches
 straight into the generic ``update``/``set_status`` tools in
 ``general.tools`` from day one, per the convention ``AGENTS.md`` already
@@ -52,7 +52,7 @@ Like DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
 through the ``get_sop`` tool only (ADR
 ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged
-``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 The former ``specmgr://sop/schema`` resource was converted into the
 ``get_sop_schema`` tool, so that the generated JSON Schema is discoverable

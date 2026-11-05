@@ -33,7 +33,7 @@ correspond to a page written in this run.
 
 - REQ-001: `specmgr docs` deletes stale `api/*.md` pages — any flat `*.md` file in the output `api/` directory (default `docs/api/`, or wherever `--output` points) whose name is not a page written by the same run and is not the generated `README.md` index.
 - REQ-002: Pruning is conservative and safe: it touches only flat `*.md` files inside the `api/` directory this command manages — never `README.md`, never other file types, never nested directories, never anything outside that directory. Pruning is skipped entirely rather than deleting the existing tree whenever the run cannot be trusted to have written the full current set: if a run generates *no* pages at all (e.g. the package import fails outright), if any module fails to import mid-run, or if module collection is truncated before the walk completes.
-- REQ-003: Reproducibility is preserved: on an unchanged tree, repeated `specmgr docs` runs remain byte-identical and idempotent, so the pre-commit hook and CI drift check (ADR 9c687bb1) keep passing.
+- REQ-003: Reproducibility is preserved: on an unchanged tree, repeated `specmgr docs` runs remain byte-identical and idempotent, so the pre-commit hook and CI drift check (DEC 9c687bb1) keep passing.
 - REQ-004: The command reports pruning: the `docs` entry point echoes how many stale pages were removed (only when the count is non-zero), next to the existing "wrote N module file(s)" line.
 
 ### Acceptance Criteria
@@ -77,7 +77,7 @@ correspond to a page written in this run.
 
 #### Depends On
 
-- ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73 (pre-commit/CI
+- DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73 (pre-commit/CI
   drift check that makes byte-identical reproducibility, REQ-003, a hard
   constraint).
 #### Blocks

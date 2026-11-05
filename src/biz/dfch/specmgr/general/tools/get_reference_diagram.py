@@ -45,7 +45,7 @@ error mapping (a missing source raises the source domain's own
 ``XNotFoundError``, identical to ``get_<d>``/``list_references``; an
 existing-but-broken source returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` -- case 3 of the
-ADR 519d1206 workaround chain -- with the ``error`` text byte-identical to
+DEC 519d1206 workaround chain -- with the ``error`` text byte-identical to
 the domain's ``list_<d>`` failed-row ``error`` for the same file (ADR
 9080b37c) for the 14 whole-body domains -- time-qualified by ADR
 3982712a for ``feat`` (``get_feat`` the unconditional full-fidelity
@@ -134,18 +134,18 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
     ``feat.tools._paths.find_feat_parse_failure`` (the folder-per-document
     counterpart -- its ``error`` is byte-identical to ``list_feat``'s own
     failed row for the same file once that file's clean stage has converged,
-    time-qualified by ADR 3982712a), every other domain through the shared
+    time-qualified by DEC 3982712a), every other domain through the shared
     flat-file ``find_parse_failure`` name-match scan called with the
     domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
     whole-body domains, whose ``list_<d>`` failed row reads with the same
     ``read_fn``, so the captured ``str(exc)`` is byte-identical to that
-    row's ``error`` -- ADR 9080b37c). For ``adr``, ``find_parse_failure``
+    row's ``error`` -- DEC 9080b37c). For ``adr``, ``find_parse_failure``
     's own leg read propagates the domain's parse error (``AdrParseError`` is
     outside its catch tuple -- the Phase 110 mechanism's own adr channel), in
     which case the single name-matching file is the broken source itself and
     the captured ``str(exc)`` is that ``AdrParseError``'s own text
     (``list_adr`` carries no failed row -- broken ADRs are skipped -- so the
-    ADR 9080b37c byte-identity has no referent there). The probed path
+    DEC 9080b37c byte-identity has no referent there). The probed path
     passes the same ``assert_within`` guard every ``get_<d>``/``update``
     branch applies.
 
@@ -219,7 +219,7 @@ def _broken_source_failure(type_: str, id_: str) -> ParseFailureResult | None:
         "source raises the source domain's own `XNotFoundError`; an existing-but-broken source "
         "returns the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error` text "
         "byte-identical to the domain's `list_<d>` failed-row `error` for the same file (ADR "
-        "9080b37c) for the 14 whole-body domains -- time-qualified by ADR 3982712a for `feat`; "
+        "9080b37c) for the 14 whole-body domains -- time-qualified by DEC 3982712a for `feat`; "
         "for `adr` (whose `list_adr` carries no failed row: broken ADRs are skipped), the "
         "leg-read `AdrParseError`'s own text). Returns PlantUML source (not a specmgr document) "
         "-- run it through "
@@ -263,10 +263,10 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
     (identical to ``get_<d>``/``list_references``); an existing-but-broken
     source returns the non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` (case 3 of
-    the ADR 519d1206 workaround chain) instead of raising -- its ``error``
+    the DEC 519d1206 workaround chain) instead of raising -- its ``error``
     text is byte-identical to that domain's ``list_<d>`` failed-row
-    ``error`` for the same file (ADR 9080b37c) for the 14 whole-body domains
-    -- time-qualified by ADR 3982712a for ``feat`` (``get_feat`` the
+    ``error`` for the same file (DEC 9080b37c) for the 14 whole-body domains
+    -- time-qualified by DEC 3982712a for ``feat`` (``get_feat`` the
     unconditional full-fidelity authority) -- and, for ``adr`` (whose
     ``list_adr`` carries no failed row: broken ADRs are skipped), the
     leg-read ``AdrParseError``'s own text. The build then never raises
@@ -344,7 +344,7 @@ def get_reference_diagram(  # pylint: disable=too-many-arguments,too-many-positi
         # An existing-but-broken source: the builder raised the domain's
         # own parse error (its _raise_broken_source probe, the Phase 110
         # mechanism) -- convert to the non-raising ParseFailureResult (the
-        # feat-150 precedent, case 3 of the ADR 519d1206 chain).
+        # feat-150 precedent, case 3 of the DEC 519d1206 chain).
         failure = _broken_source_failure(type, id)
         if failure is not None:
             return failure

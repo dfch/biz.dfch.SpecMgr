@@ -19,7 +19,7 @@ As of this decision, strictness is inconsistent across these locations. Frontmat
 ## Decision Drivers
 
 - One convention per timestamp concept across all artifact types (the twelve whole-body domains; the ADR domain is excluded — deprecated, with its own frontmatter model and no `created`/`updated`).
-- Accepting correct ISO 8601: the `T`-separated combined date+time form is ISO 8601's standard extended form (ADR 23a14195) and should parse wherever specmgr accepts a timestamp.
+- Accepting correct ISO 8601: the `T`-separated combined date+time form is ISO 8601's standard extended form (DEC 23a14195) and should parse wherever specmgr accepts a timestamp.
 - Frontmatter is system-owned: a single machine-written canonical form removes ambiguity from the write side.
 - Simplifying newest-first ordering validation (removing the mixed-granularity rule and the naive/aware hazard).
 - Agent ergonomics (GitHub issue #146): a uniform, unambiguous validation contract plus actionable parse errors (field path, line, expected regex, offending text) reduces trial-and-error round-trips.
@@ -43,7 +43,7 @@ Migrations in the same change: the 8 packaged date-only entry headings become sp
 
 - **Breaking** (in-place `models/v1` evolution per the prb/feat-132 precedent — no v2 schema): existing `tsk`/`dec`/`vcr`/`sysrs` documents with date-only entry headings fail to parse until migrated; the complete repo-owned inventory is migrated within the feature (listed in the decision outcome).
 - Supersedes feat-38-39-41-43-44's D4 (space-separated canonical write form), D5/ACC-005 (T rejection for frontmatter), D7/D11 (date-only migration and normalization shapes), and REQ-004/ACC-004 (the lenient entry-heading split). feat-32-sysrs' "locked lenient `## Updates` shape" note and feat-67-70-71's "deliberately supported alternate granularity" note are refined likewise — brief supersession notes are added to those feature READMEs.
-- Aligns with, rather than supersedes, ADR 23a14195 ("Use ISO 8601 for all dates and times"): that ADR's standard combined form is `T`-separated; this ADR makes `T` the machine-written canonical form and accepts space as well for human-facing readability.
+- Aligns with, rather than supersedes, DEC 23a14195 ("Use ISO 8601 for all dates and times"): that ADR's standard combined form is `T`-separated; this ADR makes `T` the machine-written canonical form and accepts space as well for human-facing readability.
 - Existing space-form values (frontmatter or entry headings) remain valid indefinitely; frontmatter values converge to `T` on each write. No mass-migration of existing `docs/` frontmatter is performed.
 - GitHub issue #146's second claim — a bare, non-descriptive `Error executing tool create_feat` with no validation detail — was verified non-reproducible on the current server + MCP SDK 2.0.0: the alias-mismatch message carries the field path, 1-based line number, raw `@alias` regex, and the offending text, and the SDK propagates the full message (`Error executing tool <name>: <message>`); the reporter's bare error was client-side display truncation. The raw regex is intentionally retained as the machine-readable format contract for agent consumers; no prose rewording of the error is introduced by this decision.
 - After the migration, `tests/regression/test_issue_67.py`'s date-only-heading exclusion becomes moot (no packaged data file keeps a date-only heading).
@@ -68,7 +68,7 @@ GitHub issue #146
 
 **Pros:**
 - One convention per timestamp concept across all artifact types; templates and instructions teach a single shape.
-- Accepts correct ISO 8601 (the `T` combined form per ADR 23a14195).
+- Accepts correct ISO 8601 (the `T` combined form per DEC 23a14195).
 - Machine-written frontmatter has an unambiguous canonical form.
 - Newest-first validation simplifies to plain aware-datetime comparison.
 - Fixes the #146 confusion class (cross-domain strictness divergence).
@@ -83,7 +83,7 @@ GitHub issue #146
 - Minimal change surface: only the four lenient domains tighten; the frontmatter regex and the write side are unchanged.
 
 **Cons:**
-- Rejects the standard ISO 8601 `T` combined form — contrary to ADR 23a14195's standard combined form and the requester's requirement.
+- Rejects the standard ISO 8601 `T` combined form — contrary to DEC 23a14195's standard combined form and the requester's requirement.
 - Keeps the D5 T-rejection and a two-form split between machine-written (space) and human ISO 8601 (`T`) values.
 
 ### Option 3: Loosen to date-or-full everywhere

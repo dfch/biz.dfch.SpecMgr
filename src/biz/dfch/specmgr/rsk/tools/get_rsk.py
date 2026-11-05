@@ -48,7 +48,7 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
 A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
 parameter (default ``"en"``) selects which on-disk variant of the id to
 read: omitted/``"en"`` = the flat ``docs/rsk/<id>.md`` document, exactly
@@ -66,7 +66,7 @@ heading text (ACC-004/ACC-011). The non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
 for a broken variant file exactly as for EN: the ``error`` text is
 byte-identical to ``list_rsk(language=...)``'s failed row for the same
-file (ADR 9080b37c).
+file (DEC 9080b37c).
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ from ._paths import RskNotFoundError, rsk_base_dir
         "(`error`/`path`/`id`) instead of raising; "
         "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
         "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
         " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
@@ -190,7 +190,7 @@ def get_rsk(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         (``error``/``path``/``id``) is returned instead of raising --
         ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
         the same file (identical field path and cause, including the trailing pydantic
-        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+        documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c);
         ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.RskNotFoundError` if no risk has this id.
 

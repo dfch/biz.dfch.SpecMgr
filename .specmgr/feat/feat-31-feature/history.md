@@ -581,7 +581,7 @@ Notes: `sop` (feat-30) is still unimplemented (planning only, no
 #### 2026-08-30T00:00:00.000Z - Update (planning)
 Completed: Full design discussion with the user across two planning
   rounds: (1) extracted the common structure from all 17 existing
-  `.specmgr/feat/*/README.md` files plus ADR e369ee2e and the two most
+  `.specmgr/feat/*/README.md` files plus DEC e369ee2e and the two most
   recent "add artifact type" features (`feat-18-goal`, `feat-21-decision`)
   and the in-flight `feat-30-sop`; (2) resolved every open design question
   (body-modeling depth → mostly opaque leaves with a structured `Updates`

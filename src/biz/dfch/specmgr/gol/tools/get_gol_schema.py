@@ -30,7 +30,7 @@ pre-commit ``specmgr-schema-gol-package`` hook/CI step -- the same
 ``commands/schema.py``.
 
 Replaces the removed ``specmgr://gol/schema`` resource
-(``gol.resources.gol_schema``) with this tool, per ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(``gol.resources.gol_schema``) with this tool, per DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 ("Convert the 12 per-domain schema resources to get_<d>_schema tools"):
 the raw-text return deliberately follows the sibling
 ``get_gol_template``/``get_gol_example`` tools' own convention instead of
@@ -69,7 +69,7 @@ def get_gol_schema() -> str:
     let-it-raise convention every other tool/resource in this codebase
     follows.
 
-    Unlike the removed ``specmgr://gol/schema`` resource (ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3), the
+    Unlike the removed ``specmgr://gol/schema`` resource (DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3), the
     returned text is **not** parsed into a dict: it is the raw JSON document
     (the machine-readable / parsed-JSON view of the structure, not the
     markdown view), which the agent reads as text.

@@ -4,7 +4,7 @@ Resource: specmgr://i18n (feat-197-i18n, Phase 130, REQ-010/REQ-011).
 
 Static, cross-cutting domain-knowledge resource documenting how specmgr
 stores and translates language variants of the same artifact: the
-directory layout and the EN-slug basename rule (ADR 38efdb66), the
+directory layout and the EN-slug basename rule (DEC 38efdb66), the
 language vocabulary and the per-language heading-mapping tables, the
 tool surface that honors ``language``, the exact never-translate list per
 domain (REQ-010: the closed-vocabulary and schema-constant tokens plus the

@@ -14,7 +14,7 @@ THE system shall provide System Requirements Specification (SYSRS) document mana
 
 ## Description
 
-AGENTS.md's Status section documents `sysrs` alongside `sop`/`vcr` as built dispatch-only from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0): 7 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`, `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`, `validate_sysrs`), no per-domain `update_sysrs`/`set_status_sysrs` tools of its own. Its sections accept only `<TYPE> <uuid>: <title>` cross-reference bullets, never inline copies of the referenced document's content, so a SysRS never duplicates the requirements/goals/decisions it aggregates.
+AGENTS.md's Status section documents `sysrs` alongside `sop`/`vcr` as built dispatch-only from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0): 7 tools (`create_sysrs`, `parse_sysrs`, `list_sysrs`, `get_sysrs`, `get_sysrs_example`, `get_sysrs_template`, `validate_sysrs`), no per-domain `update_sysrs`/`set_status_sysrs` tools of its own. Its sections accept only `<TYPE> <uuid>: <title>` cross-reference bullets, never inline copies of the referenced document's content, so a SysRS never duplicates the requirements/goals/decisions it aggregates.
 
 ## Characteristics
 

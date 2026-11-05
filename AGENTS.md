@@ -20,11 +20,11 @@ type or cross-cutting:
   generic `set_status` tool in `general/tools/` (called with
   `type="adr"`, ADR-only `superseded_by`); `adr/resources/` exposes
   `specmgr://adr/{id}` only — no `specmgr://adr/list` (listing is the
-  `list_adr` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13);
+  `list_adr` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13);
   `adr/prompts/` has
   narrated `create_adr`/`update_adr` prompts plus step-gated
   `create_adr_test`/`update_adr_test` A/B variants (see
-  ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f). Its Pydantic
+  DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f). Its Pydantic
   schema uniquely lives under the shared top-level `models/adr/` (not
   `adr/models/`) — see the "models location" note below. ADR is
   **permanently single-language**: no `adr` tool/resource/prompt has a
@@ -41,7 +41,7 @@ type or cross-cutting:
   former `validate_req` tool was removed in favor of it
   (feat-81-83-validation); `req/resources/` (`specmgr://req/example`,
   `specmgr://req/template`; the former `specmgr://req/schema` resource is the
-  `get_req_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://req/{id}`
+  `get_req_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://req/{id}`
   — id-based reads are `get_req`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://req/list` —
   listing is the `list_req` tool, ADR
@@ -95,7 +95,7 @@ type or cross-cutting:
    (raw-only; out-of-range values clamp, never error); no
   `specmgr://uc/{id}` resource for the same reason as
   REQ, and no `specmgr://uc/list` resource either — listing is the
-  `list_uc` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  `list_uc` tool (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
   failed-to-parse document inline (with a resolved `path`) rather than
    silently dropping it,
@@ -177,9 +177,9 @@ type or cross-cutting:
   `TodoWrite` list from its items, and uses the `question` tool to resolve
   ambiguity). Its resources are the usual `specmgr://tsk/example`/
   `specmgr://tsk/template` only (the former `specmgr://tsk/schema` resource is the
-  `get_tsk_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3) — no
+  `get_tsk_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3) — no
   `specmgr://tsk/{id}` and no `specmgr://tsk/list` resource (listing is
-  the `list_tsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  the `list_tsk` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
   failed-to-parse document inline (with a resolved `path`) rather than
   silently dropping it,
@@ -203,9 +203,9 @@ type or cross-cutting:
    (raw-only; out-of-range values clamp, never error); `qa/resources/`
   (`specmgr://qa/example`,
   `specmgr://qa/template`; the former `specmgr://qa/schema` resource is the
-  `get_qa_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://qa/{id}`
+  `get_qa_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://qa/{id}`
   — id-based reads are
-  `get_qa`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `get_qa`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://qa/list` — listing is the `list_qa` tool, ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
@@ -258,7 +258,7 @@ type or cross-cutting:
   112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://prb/{id}` — id-based reads are `get_prb`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://prb/list` — listing
-  is the `list_prb` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
+  is the `list_prb` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose
   `PagedResult` now also carries `error_count` and reports a
   failed-to-parse document inline (with a resolved `path`) rather than
   silently dropping it,
@@ -355,14 +355,14 @@ type or cross-cutting:
    (feat-81-83-validation); `rsk/resources/`
   (`specmgr://rsk/example`,
   `specmgr://rsk/template`; the former `specmgr://rsk/schema` resource is
-  the `get_rsk_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3, plus two static
+  the `get_rsk_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3, plus two static
   domain-knowledge resources
   `specmgr://rsk/tara` — what TARA is and when/how to apply each of the
   four words — and `specmgr://rsk/risk-matrix` — the 5x5 scale anchors,
   zone table, and product thresholds; no `specmgr://rsk/{id}` — id-based
-  reads are `get_rsk`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  reads are `get_rsk`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://rsk/list` — `list_rsk` ships as a paged tool from day one,
-  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, and its `RskSummary` lines
+  DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, and its `RskSummary` lines
   carry the residual-risk coordinates so a register-wide risk-matrix view
   can be built from the listing alone; its `PagedResult` now also carries
   `error_count` and reports a failed-to-parse document inline as a
@@ -392,11 +392,11 @@ type or cross-cutting:
    (feat-81-83-validation); `dec/resources/`
   (`specmgr://dec/example`,
   `specmgr://dec/template`; the former `specmgr://dec/schema` resource is the
-  `get_dec_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `get_dec_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://dec/{id}` — id-based reads
-  are `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  are `get_dec`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://dec/list` — `list_dec` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
   also carries `error_count` and reports a failed-to-parse document
   inline (with a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3); `dec/prompts/`
@@ -440,7 +440,7 @@ type or cross-cutting:
   approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
   `get_sop`, `get_sop_example`, `get_sop_template`, `get_sop_schema`); `sop` is the **first
   domain built dispatch-only from day
-  one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
+  one** (DEC 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
   `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, so
   whole-body
   and line-range updates go through the generic `update` tool in
@@ -459,11 +459,11 @@ type or cross-cutting:
    (feat-81-83-validation); `sop/resources/`
   (`specmgr://sop/example`,
   `specmgr://sop/template`; the former `specmgr://sop/schema` resource is the
-  `get_sop_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `get_sop_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://sop/{id}` — id-based reads
-  are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  are `get_sop`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sop/list` — `list_sop` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
   also carries `error_count` and reports a failed-to-parse document
   inline (with a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3); `sop/prompts/`
@@ -481,10 +481,10 @@ type or cross-cutting:
   below) for the generic RASCI role definitions used by its
   `## Roles and Responsibilities` section, not a domain-local one.
 - **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
-  README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
+  README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e) into a
   real, schema-backed domain, and is the one domain in this codebase whose
   own addressing genuinely deviates from every other domain's precedent
-  (ADR 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
+  (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
   `feat-NNN-slug` — the containing folder's own name, not a
   server-generated UUID — and documents live one-per-folder as
   `<base>/<id>/README.md` (a fixed filename), not flat files directly
@@ -525,11 +525,11 @@ type or cross-cutting:
   removed in favor of it (feat-81-83-validation);
   `feat/resources/` (`specmgr://feat/example`,
   `specmgr://feat/template`; the former `specmgr://feat/schema` resource is the
-  `get_feat_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `get_feat_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://feat/{id}` — id-based reads
-  are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  are `get_feat`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://feat/list` — `list_feat` ships as a paged tool from day
-  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
+  one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now
   also carries `error_count` and reports a failed-to-parse folder inline, with a resolved `path`
   (feat-81-83-validation Phase 4 retrofitted `FeatSummary`'s own `path` to
   match) rather than silently dropping it, feat-81-83-validation Phase 3);
@@ -558,7 +558,7 @@ type or cross-cutting:
    design. `list_feat` is the one `list_<d>` tool backed by a two-stage
    dirty/clean `DocCache` instead of the generic `build_summaries` sweep
    every other domain uses (feat-187-list-feat-timeout, GitHub issue #187,
-   ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): its request path resolves
+   DEC 3982712a-a46b-4b2b-809f-9c6925a49b44): its request path resolves
    every folder from one file read plus the clean (full-parse) cache's
    own parse-free `peek_preloaded` lookup, falling back on a miss to a
    second, feat-local "dirty" `DocCache` instance (`feat/tools/_cache.py`)
@@ -578,7 +578,7 @@ type or cross-cutting:
    call) or a tier-2 missing/wrong-shape-H1 row (a dirty-stage-specific
    `error` text that converges to byte-identical only once a full parse
    has passed that file). This time-qualifies the `list_<d>`/`get_<d>`
-   error byte-identity property (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+   error byte-identity property (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c)
    for `feat` only -- `get_feat` remains the unconditional, full-fidelity
    authority throughout; every other domain's property is unchanged. A
    unified background daemon thread (`specmgr-startup-warmup`, spawned by
@@ -634,7 +634,7 @@ type or cross-cutting:
     tool was removed in favor of it (feat-81-83-validation);
     `vcr/resources/` (`specmgr://vcr/example`,
   `specmgr://vcr/template`; the former `specmgr://vcr/schema` resource is the
-  `get_vcr_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `get_vcr_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://vcr/{id}` — id-based reads are `get_vcr`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://vcr/list` —
   `list_vcr` ships as a paged tool from day one, ADR
@@ -679,11 +679,11 @@ type or cross-cutting:
   raw read (raw-only; out-of-range values clamp, never error). 2 resources
   in `sysrs/resources/` (`specmgr://sysrs/example`,
   `specmgr://sysrs/template`; the former `specmgr://sysrs/schema` resource is
-  the `get_sysrs_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  the `get_sysrs_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://sysrs/{id}` — id-based reads are
-  `get_sysrs`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+  `get_sysrs`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
   `specmgr://sysrs/list` — `list_sysrs` ships as a paged tool from day one,
-  ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
+  DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` now also
   carries `error_count` and reports a failed-to-parse document inline
   (with a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3).
@@ -729,7 +729,7 @@ type or cross-cutting:
   `ParseFailureResult` for a document that exists but fails to parse. 2
   resources in `txt/resources/` (`specmgr://txt/example`,
   `specmgr://txt/template`; the structure reference is the
-  `get_txt_schema` tool, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
+  `get_txt_schema` tool, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3; no
   `specmgr://txt/{id}` — id-based reads are `get_txt`-only, ADR
   ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://txt/list` —
   `list_txt` ships as a paged tool from day one, ADR
@@ -849,7 +849,7 @@ type or cross-cutting:
     19ff316b-cd11-41a7-a616-ffd84917da51),
     splice-then-validate-whole — and now with two non-raising failure
     channels (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the DEC 519d1206
     non-raising-structured-result chain): on a target id whose only
     matching on-disk file fails to parse it returns the non-raising
     `ParseFailureResult` (`error`/`path`/`id`, the same parse defect as
@@ -923,7 +923,7 @@ type or cross-cutting:
     req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; `adr`
     excluded, `validate_adr` remains its own standalone tool) —
     replacing the former per-domain `validate_<d>` tools
-    (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
+    (feat-81-83-validation, DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
     it is the one generic tool here whose entire surface is non-raising
     structured results: it never raises for a
     content-validation failure, always returning
@@ -1010,11 +1010,11 @@ type or cross-cutting:
     source raises the source domain's own `XNotFoundError` (identical to
     `get_<d>`/`list_references`); an existing-but-broken source returns
     the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error`
-    byte-identical to the domain's `list_<d>` failed row (ADR 9080b37c) for
-    the 14 whole-body domains — time-qualified by ADR 3982712a for `feat`
+    byte-identical to the domain's `list_<d>` failed row (DEC 9080b37c) for
+    the 14 whole-body domains — time-qualified by DEC 3982712a for `feat`
     (`get_feat` the unconditional full-fidelity authority), and the leg-read
     `AdrParseError`'s own text for `adr` (whose `list_adr` carries no failed
-    row: broken ADRs are skipped), case 3 of the ADR 519d1206 chain);
+    row: broken ADRs are skipped), case 3 of the DEC 519d1206 chain);
     `reverse` is additive
     (the forward expansion to `depth` plus the direct incoming edges,
     direct-only on the incoming side), `include_feat=False` drops every
@@ -1054,7 +1054,7 @@ type or cross-cutting:
     still returning the full document with `body` intact
     (feat-69-update-context); `update` is the deliberate exception to that
     frontmatter-only precedent — since feat-153-off-by-n (GitHub issue
-    #153, ADR 19ff316b-cd11-41a7-a616-ffd84917da51) it returns the
+    #153, DEC 19ff316b-cd11-41a7-a616-ffd84917da51) it returns the
     `UpdateResult` wrapper instead: the same per-domain frontmatter object
     under `frontmatter`, plus `snippet`, which is `None` in whole-body mode
     and, in range mode, the before/after window of the touched range
@@ -1123,7 +1123,7 @@ type or cross-cutting:
       feat-162-doc-cache-exception-footer, GitHub issue #162), plus `path`, the
       absolute on-disk file; a truly absent id still raises the domain's
       not-found error;
-      ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) or `list_<d>()`'s `<failed
+      DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) or `list_<d>()`'s `<failed
       to parse>` failed row (without one), read the raw file with the host's
       own file-read tool
       (no specmgr MCP tool can return the raw content of a document that fails
@@ -1177,7 +1177,7 @@ type or cross-cutting:
     returns the result (never a raw `str`); a healthy document's shape and every other outcome
     are unchanged (feat-150-mcp-lifecycle-commands Phase 1a, ADR
     9080b37c-82b3-4f63-81f1-79641d0bf14c — the third extension of the
-    ADR 519d1206 client-side-`isError`-truncation workaround chain after
+    DEC 519d1206 client-side-`isError`-truncation workaround chain after
     `validate` and `set_status`'s invalid-status case). `get_<d>` (every
     domain, incl. `get_adr`), `update`, and
    `set_status` apply the same `general/tools/_path_safety` guards `delete`
@@ -1187,7 +1187,7 @@ type or cross-cutting:
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
    The `general/` package also owns the i18n machinery of the thirteen
-   language-aware domains (feat-197-i18n, ADR 38efdb66; the full
+   language-aware domains (feat-197-i18n, DEC 38efdb66; the full
    description is the `feat-197-i18n` paragraph below): the optional
    `language: str = "en"` parameter of `update`/`edit`/`set_status`/
    `set_classification`/`delete` (validated by `_path_safety.assert_language`
@@ -1361,14 +1361,14 @@ succeeds. ADR (`models/adr/v1`) is explicitly, permanently excluded from
 this cache mechanism, since it is expected to be phased out later and does
 not justify its own independently-implemented cache module — see ADR
 bfd76370-b59b-4d65-b550-a969f6c93c9d for the full rationale. That ADR
-refines, not replaces, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
+refines, not replaces, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
 "filesystem is the sole source of truth" invariant: every cache access
 re-validates the file's current content hash before deciding whether to
 skip re-parsing, so a stale entry is structurally impossible — it can only
 ever cost one extra parse, never an incorrect result.
 
 `feat-187-list-feat-timeout` (GitHub issue #187) fixed `list_feat`'s
-cold-scan timeout (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44) by adding two
+cold-scan timeout (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44) by adding two
 additive, generic `DocCache` primitives in `general/tools/_doc_cache.py`
 — `peek_preloaded(path, text)` (a valid stored result, document or
 cacheable failure, or `None`, never parses, materializing like `read`'s
@@ -1393,7 +1393,7 @@ itself (its own availability-probe-first/crash-containment/never-raising
 body, and the demand path it shares the cache with) is otherwise
 unchanged; only the startup orchestration moved.
 
-`feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
+`feat-197-i18n` (GitHub issue #197, DEC 38efdb66-8025-45c5-bbe8-45b25fc7a772)
 added first-class **multi-language variants of the same artifact** for the
 **thirteen** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
 `rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set` (`general/tools/_language_guard.
@@ -1513,7 +1513,7 @@ bullet's own enumeration above — check first.
 
 ## Development Artifacts (`.specmgr/`)
 
-Per ADR e369ee2e-3353-4f92-991c-6367d76d832e ("Organize development
+Per DEC e369ee2e-3353-4f92-991c-6367d76d832e ("Organize development
 artifacts in `.specmgr` with feature-driven work units"), development
 planning/progress artifacts live under `.specmgr/`, separate from published
 documentation in `docs/`:
@@ -1551,7 +1551,7 @@ documentation in `docs/`:
   separate `GitHub Issue` field/body-line: the issue number is the `NNN`
   infix already embedded in `id`/the folder name (`feat-NNN-slug`) — `0`
   means no issue yet — so it is never duplicated elsewhere in the file. See
-  ADR e369ee2e-3353-4f92-991c-6367d76d832e's Option 1 for the full
+  DEC e369ee2e-3353-4f92-991c-6367d76d832e's Option 1 for the full
   rationale.
 - **`doc/` has been migrated** into this structure — development planning docs
    now live in `.specmgr/feat/` with their respective feature folders.
@@ -1642,7 +1642,7 @@ running the suite in parallel also cut its own wall time from 9-11 minutes
 (serial `coverage run -m unittest discover`) to roughly a minute measured on
 the primary dev machine. `specmgr coverage-badge` must stay immediately
 after it, since it reads the `.coverage` data `pytest-cov` just produced.
-(ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
+(DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73: "Enforce doc generation/lint/tests
 locally via pre-commit hook, not just CI") If a commit is blocked by a dangling
 or stale `INSTALL_PYTHON` pointer in the shared `.git/hooks/pre-commit` (e.g. it
 points at a deleted worktree venv and the hook aborts with `` `pre-commit` not
@@ -1715,7 +1715,7 @@ extras onto every consumer of the base library.
   [--skip-unrecognized]` (feat-218, `commands/lint.py`): the in-tree spec
   artifact parseability gate — runs the document's own domain's model-level
   FULL parse over each document (never the `list_<d>`/`DocCache` listing
-  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, DEC 3982712a)
   is precisely the masking that hid the feat-214 defect) and reports every
   unparseable document (path + parse error), each followed by its per-type
   repair pointer (whole-body domains `/repair {type} {id}`, the id derived
@@ -1780,7 +1780,7 @@ extras onto every consumer of the base library.
 ## MCP server (`server.py`)
 
 - Builds the `SpecMgrServer` instance (`mcp` object) and the `_lifespan`
-  (the unified startup warmup, ADR 3982712a),
+  (the unified startup warmup, DEC 3982712a),
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
   `gol`, `prb`, `qa`, `req`, `rsk`, `set`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
   `vcr`) as its last line purely
@@ -1802,7 +1802,7 @@ extras onto every consumer of the base library.
   None`), which the SDK's own `_handle_call_tool` catch then stringifies
   into the `is_error=True` result: the v2.0.0 wire shape minus the
   `Error executing tool <name>: ` prefix, uniform for every registered
-  tool, no per-domain logic (ADR 80305c52,
+  tool, no per-domain logic (DEC 80305c52,
   feat-221-mcp-220-error-contract Phase 100; the behavioral guard for
   future 2.x bumps is `tests/test_mcp_error_contract.py`, not the locked
   version number).

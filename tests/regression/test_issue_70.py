@@ -52,7 +52,7 @@ Each domain is driven through both the generic ``validate`` tool (disk-free dry 
 surfaces ACC-002 names. Since feat-81-83-validation Phase 2, ``validate`` never raises for a
 content-validation failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead,
 so the ``validate``-tool tests below assert against ``result.errors[0].message`` rather than a
-raised exception. Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206
+raised exception. Since feat-204-create-error Phase 110 (case 5 of the DEC 519d1206
 non-raising chain), ``create_<d>`` never raises for a content-validation failure either --
 the same non-raising ``ValidateResult`` shape -- so the ``create_<d>``-tool tests below
 assert against ``result.errors[0].message`` as well.

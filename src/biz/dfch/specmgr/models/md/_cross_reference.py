@@ -48,7 +48,7 @@ from .markdown_list_item import MarkdownListItemWithNotes
 #: inline `_VERIFIES_PATTERN` UUID fragment).
 UUID_PATTERN = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
-#: The ``feat`` folder-name shape (ADR 8cf940c5): ``feat-NNN-slug``,
+#: The ``feat`` folder-name shape (DEC 8cf940c5): ``feat-NNN-slug``,
 #: lowercase alnum + hyphen. The single source for the tools-layer feat-id
 #: validation (``general.tools._path_safety``), the FEAT reference pattern
 #: (``general.tools._references``), and the `## Items` FEAT bullet shape

@@ -26,7 +26,7 @@ The fix reuses the existing `snippet()` convention (already designed for exactly
 
 - REQ-001: `general/tools/validate.py`'s `validate()` function caps `ValidationErrorEntry.message`'s length by passing `str(ex)` through `models/md/_markdown.py::snippet()` with a named constant `_MAX_VALIDATE_ERROR_CHARS = 300`, instead of using `str(ex)` verbatim.
 
-- REQ-002: This change is scoped to the generic `validate` tool only -- `validate_adr` and the shared `wrap_tool_errors` layer are explicitly left unchanged, since OpenCode's known `isError: true` client-side content-discarding bug (ADR 519d1206) means truncating raised-exception paths has no practical payoff today; `validate`'s non-raising `ValidateResult` is the one path that reliably reaches the client unbounded.
+- REQ-002: This change is scoped to the generic `validate` tool only -- `validate_adr` and the shared `wrap_tool_errors` layer are explicitly left unchanged, since OpenCode's known `isError: true` client-side content-discarding bug (DEC 519d1206) means truncating raised-exception paths has no practical payoff today; `validate`'s non-raising `ValidateResult` is the one path that reliably reaches the client unbounded.
 
 - REQ-003: Fix `models/md/_markdown.py::not_in_mdformat_message()`'s `line_no == 0` branch to route `text`/`formatted` through `snippet()` before embedding them in the message, matching every sibling message-builder in that module.
 
@@ -148,7 +148,7 @@ Feature folder created after an investigation-first planning session for GitHub 
 
 #### 2026-09-08 08:00:00.000Z - Scope validate() only, not wrap_tool_errors/validate_adr
 
-`validate_adr` raises on failure, and OpenCode's client-side `isError: true` content-discarding bug (ADR 519d1206) already reduces those messages to a bare "Error executing tool ..." regardless of server-side length -- so capping that path has no practical benefit today. Capping the shared `wrap_tool_errors` layer would additionally affect every other raising tool in the repo (`create_<d>`, `update`, etc.), a much larger blast radius than issue #110's narrow "reduce noisy output" ask. Scoped to `validate`'s non-raising `ValidateResult`, the one path confirmed to reach MCP clients unbounded today.
+`validate_adr` raises on failure, and OpenCode's client-side `isError: true` content-discarding bug (DEC 519d1206) already reduces those messages to a bare "Error executing tool ..." regardless of server-side length -- so capping that path has no practical benefit today. Capping the shared `wrap_tool_errors` layer would additionally affect every other raising tool in the repo (`create_<d>`, `update`, etc.), a much larger blast radius than issue #110's narrow "reduce noisy output" ask. Scoped to `validate`'s non-raising `ValidateResult`, the one path confirmed to reach MCP clients unbounded today.
 
 #### 2026-09-08 07:53:48.000Z - Fix the 2 extra full-suite regressions as test-only changes, not production changes
 

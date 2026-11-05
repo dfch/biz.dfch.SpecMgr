@@ -85,7 +85,7 @@ class TestMatchAlias(unittest.TestCase):
         self.assertFalse(match_alias(NoAliasMultiWord, "literally anything"))
 
     def test_regex_alias_accepts_any_non_empty_heading_text(self) -> None:
-        """The `.+` regex opt-out (ADR 832cd6c1 v1.3.1) accepts any non-empty text,
+        """The `.+` regex opt-out (DEC 832cd6c1 v1.3.1) accepts any non-empty text,
         but still rejects an empty heading."""
         self.assertTrue(match_alias(_AcceptAnyNonEmptyHeading, "Buy Goods"))
         self.assertTrue(match_alias(_AcceptAnyNonEmptyHeading, "*Emphasized* Title"))

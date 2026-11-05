@@ -2,7 +2,7 @@
 
 Generic base frontmatter model shared by every markdown-backed document type.
 
-Per ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
+Per DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (REQ-006/Task 4.1 of
 ``feat-5-md-model-parser``): this is a *base* frontmatter model carrying only
 the handful of fields every document type shares. A concrete document type
 (e.g. ``uc``/``req``) defines its own frontmatter model that
@@ -22,7 +22,7 @@ future convergence is noted there but not decided.
 
 This module has no import dependency on ``models.adr.v1`` or any other
 document-type package, consistent with ``models.md``'s existing
-no-dependency invariant (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
+no-dependency invariant (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 
 ## Classes
 

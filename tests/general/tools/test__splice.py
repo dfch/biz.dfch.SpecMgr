@@ -223,7 +223,7 @@ class TestSpliceBody(unittest.TestCase):
 
 
 class TestSpliceSnippet(unittest.TestCase):
-    """Tests for the no-I/O splice_snippet helper (feat-153-off-by-n Phase 2, REQ-002, ADR 19ff316b).
+    """Tests for the no-I/O splice_snippet helper (feat-153-off-by-n Phase 2, REQ-002, DEC 19ff316b).
 
     The full ACC-002 matrix (all domains, every splice shape) is this
     feature's Phase 5; this class pins the byte-exact line format (the ADR's
@@ -309,7 +309,7 @@ class TestSpliceSnippet(unittest.TestCase):
         self.assertIn("  2: \n", snippet)
 
     def test_adr_worked_example_byte_exact(self) -> None:
-        """ADR 19ff316b's Decision Outcome item 3 worked example, asserted verbatim."""
+        """DEC 19ff316b's Decision Outcome item 3 worked example, asserted verbatim."""
         pre = "line one\n\n## Some Heading\n(the single old line that was replaced)\n(unchanged line)\n(final line)\n"
         post = splice_body(pre, 4, 1, "first new line\nsecond new line\nthird new line\n")
         snippet = splice_snippet(pre, post, 4, 1)

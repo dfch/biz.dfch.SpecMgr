@@ -1453,13 +1453,13 @@ class TestEditRegistration(unittest.TestCase):
 
 
 class TestEditParseFailure(TempEditDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) from the generic ``edit`` tool's single protected
     ``load_by_id`` call site (the lock is held across the whole read -> match -> validate ->
     write sequence, so stage 1/stage 2 are never reached), with nothing written to disk -- the
     ``error`` carries the same parse defect as the domain's own ``list_<d>`` failed row for
-    the same file (the ``get_<d>`` precedent, ADR 9080b37c). All 13 whole-body domains,
+    the same file (the ``get_<d>`` precedent, DEC 9080b37c). All 13 whole-body domains,
     ``feat`` included (this module's unified case shape).
 
     A truly-absent id still raises the domain's own not-found error (REQ-002): the regression
@@ -1498,7 +1498,7 @@ class TestEditParseFailure(TempEditDirTestCase):
 
 
 class TestEditValidateFailure(TempEditDirTestCase):
-    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
+    """feat-170 Phase 120 (Bug 2, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an edit whose
     *post-edit* result is structurally/field invalid must return the non-raising
     ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
     exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with

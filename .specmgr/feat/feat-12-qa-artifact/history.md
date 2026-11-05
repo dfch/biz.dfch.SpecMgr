@@ -37,7 +37,7 @@ glob). **Task 5.5**: Added two new CI steps to `.github/workflows/ci.yml`, place
 implemented (ADR, REQ, UC, TSK, QA, general)" and its lead-in sentence to "Five document-type domains plus one
 cross-cutting package". Added a `qa/` bullet after the `tsk/` bullet (matching the existing chronological-order
 convention the other bullets already use, not alphabetical), mirroring REQ's/TSK's own bullet depth (tools list,
-resources list, prompts list, no-`/{id}`-resource note citing ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Updated the
+resources list, prompts list, no-`/{id}`-resource note citing DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Updated the
 "Still genuinely missing" list: added `validate_qa` to the pre-commit/CI enforcement bullet (for consistency -- `qa` has
 the identical gap REQ/UC/TSK already have), added `delete_qa` to the stubs bullet, and added `qa` to the
 tools/resources/prompts registration-summary bullet. Updated the closing "don't assume any other domain package exists
@@ -129,7 +129,7 @@ Completed: Phase 3 (Pydantic Models & Parser) — Tasks 3.1, 3.1.1, 3.2, 3.3. **
 package: `src/biz/dfch/specmgr/qa/__init__.py` (docstring-only for now, since `tools`/`resources`/`prompts` don't exist
 until Phase 4 -- it does not import them yet, unlike `req`/`tsk`'s own `__init__.py`), plus `qa/models/__init__.py` and
 `qa/models/v1/{__init__,_util,frontmatter, body,document,parser,summary}.py`, all inside the domain package per the
-domain-first layout (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), mirroring `req`/`tsk`'s exact file shapes read directly
+domain-first layout (DEC ece4554b-725c-4f76-bc04-5d2b760363d2), mirroring `req`/`tsk`'s exact file shapes read directly
 from disk first. `QaFrontmatter` reuses `TskFrontmatter`'s `_ALLOWED_STATUSES` pattern verbatim
 (`draft`/`active`/`done`/`cancelled`). `body.py` implements the full schema from Design Notes: `Qa(MarkdownSection1)`,
 `General(MarkdownSection2WithComment)` with `Introduction (MarkdownSection3WithComment)`/`RawRequirements(MarkdownSection3)`, `QaSection(MarkdownSection3WithComment)` with

@@ -24,7 +24,7 @@ sequence, no case ambiguity -- so no second, separator-specific check is
 needed. The guard is deliberately SHAPE-only (an open set: any
 shape-valid code passes); whether a code is *usable* (a packaged
 heading-mapping table exists for it) is enforced separately at
-parse/write time by the table loader (ADR 38efdb66 item 6), so the set of
+parse/write time by the table loader (DEC 38efdb66 item 6), so the set of
 usable languages grows by adding one JSON file, never by a guard change.
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
@@ -61,7 +61,7 @@ purely for use by ``get_<d>``/``update``/``set_status``.
 The ``_domains`` import is deferred into this helper (called once per
 :func:`validate_id` call, not at module import) because ``_domains``
 pulls in every domain's own adapter imports (the feat-134 registry,
-ADR 750842b2) and this module is imported from every ``get_<d>``
+DEC 750842b2) and this module is imported from every ``get_<d>``
 tool -- a module-level import here would be an import cycle.
 
 
@@ -69,7 +69,7 @@ tool -- a module-level import here would be an import cycle.
 
 Reject any id that is not a well-formed ``feat-NNN-slug`` folder name.
 
-Enforced for the ``feat`` domain (folder-per-document, ADR 8cf940c5):
+Enforced for the ``feat`` domain (folder-per-document, DEC 8cf940c5):
 ``feat-``, one or more digits, ``-``, then a non-empty run of lowercase
 alnum and hyphen.
 
@@ -90,7 +90,7 @@ ValueError
 Reject any language value that is not an ISO 639-1-shaped lowercase two-letter code.
 
 The shape guard for the caller-supplied ``language`` every i18n-aware
-tool takes (feat-197-i18n, REQ-008/ACC-013, ADR 38efdb66 item 6): the
+tool takes (feat-197-i18n, REQ-008/ACC-013, DEC 38efdb66 item 6): the
 value must fullmatch :data:`LANGUAGE_PATTERN` (``^[a-z]{2}$``). Called
 before any filesystem access, in the same pre-guard position as
 ``id``'s own :func:`validate_id`, so a payload like ``"../../etc"``,

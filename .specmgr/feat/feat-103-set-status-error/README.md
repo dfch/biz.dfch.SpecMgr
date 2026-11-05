@@ -14,7 +14,7 @@ version: 1.0.0
 
 ### Overview
 
-GitHub issue #103 reports that set_status's error for an invalid status value is uninformative. Investigation found the underlying message is already complete and actionable; the real defect is the previously diagnosed OpenCode 1.18.27 client-side truncation of `isError: true` MCP results (ADR 519d1206), which that ADR deliberately left set_status exposed to. This feature narrowly extends 519d1206's non-raising workaround to set_status's single most common, easily triggered failure mode -- an out-of-vocabulary `status` for a given `type` -- returning a structured, non-raising result instead of a raised pydantic.ValidationError, so the allowed-values detail survives clients that drop error content. Every other set_status failure mode continues to raise unchanged. The drafted, unfiled upstream OpenCode bug report is also finally filed.
+GitHub issue #103 reports that set_status's error for an invalid status value is uninformative. Investigation found the underlying message is already complete and actionable; the real defect is the previously diagnosed OpenCode 1.18.27 client-side truncation of `isError: true` MCP results (DEC 519d1206), which that ADR deliberately left set_status exposed to. This feature narrowly extends 519d1206's non-raising workaround to set_status's single most common, easily triggered failure mode -- an out-of-vocabulary `status` for a given `type` -- returning a structured, non-raising result instead of a raised pydantic.ValidationError, so the allowed-values detail survives clients that drop error content. Every other set_status failure mode continues to raise unchanged. The drafted, unfiled upstream OpenCode bug report is also finally filed.
 
 ### Requirements
 
@@ -22,7 +22,7 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 - REQ-002: every other set_status failure mode (unknown id, path-injection/invalid id shape, superseded_by misuse on non-adr types, any other unexpected validation failure) continues to raise exactly as today -- this is a narrow fix, not a full non-raising redesign of set_status.
 
-- REQ-003: a new ADR is authored, referencing and narrowly extending ADR 519d1206's non-raising-workaround rationale to this one additional case, explicitly documenting why the rest of set_status stays raise-based.
+- REQ-003: a new ADR is authored, referencing and narrowly extending DEC 519d1206's non-raising-workaround rationale to this one additional case, explicitly documenting why the rest of set_status stays raise-based.
 
 - REQ-004: each domain's existing `_ALLOWED_STATUSES`/`_FIXED_STATUSES` constant remains the single source of truth for its vocabulary -- set_status's pre-check reuses it rather than duplicating the list.
 
@@ -58,7 +58,7 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 - Updated/added tests asserting the new structured result and its content for the invalid-status path.
 
-- A new ADR documenting and scoping this narrow extension of ADR 519d1206's rationale.
+- A new ADR documenting and scoping this narrow extension of DEC 519d1206's rationale.
 
 - Updated set_status docstring and regenerated docs/MCP.md.
 
@@ -78,7 +78,7 @@ GitHub issue #103 reports that set_status's error for an invalid status value is
 
 #### Depends On
 
-- ADR 519d1206-4d2a-4500-9046-6db635209996 ("Design validate as a non-raising, structured-result tool..."): this feature explicitly extends its rationale to one additional tool/case.
+- DEC 519d1206-4d2a-4500-9046-6db635209996 ("Design validate as a non-raising, structured-result tool..."): this feature explicitly extends its rationale to one additional tool/case.
 
 - feat-27-validation (done): supplies the actionable per-domain status-vocabulary messages this feature's structured result reuses.
 
@@ -90,13 +90,13 @@ Pre-check happens in `general/tools/set_status.py` before each adapter's `wrap_t
 
 ### Related Decisions
 
-- ADR 519d1206-4d2a-4500-9046-6db635209996: non-raising validate workaround; this feature's new ADR narrowly extends its scope to set_status's invalid-status case only.
+- DEC 519d1206-4d2a-4500-9046-6db635209996: non-raising validate workaround; this feature's new ADR narrowly extends its scope to set_status's invalid-status case only.
 
 ### Task List
 
 #### Phase 100: Design & ADR
 
-- [x] Task 100.100: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted. **(ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, reviewed and approved by the user; status set to `accepted`)**
+- [x] Task 100.100: Draft and create the new ADR extending 519d1206 to set_status's invalid-status case; get sign-off; set status accepted. **(DEC b399f1ce-ed42-4929-b01c-7a57d18e8014, reviewed and approved by the user; status set to `accepted`)**
 
 - [x] Task 100.110: Design the shared status-vocabulary lookup (mapping type -> allowed values, incl. ADR's fixed set + pattern) without duplicating each domain's existing private constant.
 
@@ -171,7 +171,7 @@ Task 4.3 was explicitly scope-adjusted by the user to review-and-possibly-update
 bug report's text, never to file it. On review, two small, substantive updates were judged worth making rather
 than leaving the draft untouched: (1) the top status blockquote, which already cross-referenced ADR
 519d1206 as the one prior instance of this repo's non-raising workaround, was extended to also cross-reference
-this feature's own ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, since feat-103 is now a second, concrete,
+this feature's own DEC b399f1ce-ed42-4929-b01c-7a57d18e8014, since feat-103 is now a second, concrete,
 independent instance of the same underlying OpenCode defect forcing the same kind of server-side workaround on
 an otherwise-unrelated tool; (2) the Impact section gained one sentence noting the workaround had to be applied
 twice within the same week, which strengthens the report's core claim (this is a systemic risk for any
@@ -186,15 +186,15 @@ one more corroborating data point.
 
 #### 2026-09-07 16:00:00.000Z - Pre-check skips status validation entirely for adr+superseded_by
 
-Resolved, with the user's sign-off, an edge case flagged at the end of Phase 2: for `type="adr"` with `superseded_by` given, the invalid-status pre-check now skips validating `status` entirely (never rejects it, regardless of content), matching `models.adr.v1.mutations.set_status`'s own existing semantics of ignoring `status` and composing `"superseded by {superseded_by}"` in that case. Without this, the pre-check would have incorrectly rejected an otherwise-valid `superseded_by` call whenever the caller's (discarded) `status` argument happened to be out of vocabulary -- a behavior regression the original ADR text did not explicitly address. ADR b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome (point 3) was amended to record this refinement.
+Resolved, with the user's sign-off, an edge case flagged at the end of Phase 2: for `type="adr"` with `superseded_by` given, the invalid-status pre-check now skips validating `status` entirely (never rejects it, regardless of content), matching `models.adr.v1.mutations.set_status`'s own existing semantics of ignoring `status` and composing `"superseded by {superseded_by}"` in that case. Without this, the pre-check would have incorrectly rejected an otherwise-valid `superseded_by` call whenever the caller's (discarded) `status` argument happened to be out of vocabulary -- a behavior regression the original ADR text did not explicitly address. DEC b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome (point 3) was amended to record this refinement.
 
 #### 2026-09-07 12:00:00.000Z - Scoped to a narrow pre-check, not a full redesign
 
-Chose to extend ADR 519d1206's non-raising workaround only to set_status's single most common failure mode (invalid status value), leaving every other set_status failure mode raise-based, rather than converting set_status's entire contract to non-raising -- keeps the change small and testable, and mirrors 519d1206's own "targeted workaround, not a general best practice" framing.
+Chose to extend DEC 519d1206's non-raising workaround only to set_status's single most common failure mode (invalid status value), leaving every other set_status failure mode raise-based, rather than converting set_status's entire contract to non-raising -- keeps the change small and testable, and mirrors 519d1206's own "targeted workaround, not a general best practice" framing.
 
 ### More Information
 
-- ADR 519d1206-4d2a-4500-9046-6db635209996: the prior decision this feature extends.
+- DEC 519d1206-4d2a-4500-9046-6db635209996: the prior decision this feature extends.
 
 - `.specmgr/feat/feat-81-83-validation/README.md` and `opencode-issue-mcp-tool-error-truncated.md`: the original investigation and drafted upstream report this feature builds on.
 

@@ -17,10 +17,10 @@
 
 """Feature (FEAT) domain -- formalizes the ``.specmgr/feat/<id>/README.md`` convention.
 
-Per ADR e369ee2e-3353-4f92-991c-6367d76d832e ("Organize development
+Per DEC e369ee2e-3353-4f92-991c-6367d76d832e ("Organize development
 artifacts in ``.specmgr`` with feature-driven work units") and
 ``.specmgr/feat/feat-31-feature/README.md``, this domain-first package
-(ADR ece4554b-725c-4f76-bc04-5d2b760363d2) formalizes a convention already
+(DEC ece4554b-725c-4f76-bc04-5d2b760363d2) formalizes a convention already
 used by hand 17+ times before this package existed. ``feat`` is deliberately
 special among domains: ``id`` is ``feat-NNN-slug`` (the containing folder's
 own name), not a server-generated UUID, and documents live one-per-folder
@@ -43,7 +43,7 @@ former ``validate_feat`` tool was removed in favor of the generic
 ``validate`` tool, feat-81-83-validation). Resources:
 ``specmgr://feat/example``, ``specmgr://feat/template`` (no ``/{id}``, no
 ``/list``); the former ``specmgr://feat/schema`` resource was converted into
-the ``get_feat_schema`` tool (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3).
+the ``get_feat_schema`` tool (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 Prompts: ``create_feat(topic)``/``update_feat(id, instructions=None)`` -- narrated instruction flows only,
 reading packaged instructions data from ``feat/data/``.
 

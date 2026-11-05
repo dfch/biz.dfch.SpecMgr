@@ -89,7 +89,7 @@ unique reference to the referenced document in its own target domain, and
 returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
 reference (``type``/``id``/``title``/``path``, plus ``error`` for
 references that could not be resolved -- the shared ``list_*`` paging
-mechanism, ADR ec9f5262; feat-144-ref-artifact, the ``feat`` tag added
+mechanism, DEC ec9f5262; feat-144-ref-artifact, the ``feat`` tag added
 by feat-177-list-ref-feat). ``get_reference_diagram`` -- the
 read-only, id-based reference-diagram tool (``type`` is one of
 req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set/adr): renders one source

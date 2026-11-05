@@ -128,7 +128,7 @@ these from the source exactly:
 - `prb`: the `problem_statement` lead paragraph under the H1 (the one
   sentence `[Current state] is causing [specific issue], for [stakeholder]
   because [underlying cause].`) stays canonical English in every language
-  (ADR 38efdb66 item 11): copy it byte for byte; its translation would be
+  (DEC 38efdb66 item 11): copy it byte for byte; its translation would be
   rejected by the schema;
 - `sysrs`: the H1 prefix `System Requirements Specification: ` (translate
   only the title after it) and the type-tagged cross-reference bullets;

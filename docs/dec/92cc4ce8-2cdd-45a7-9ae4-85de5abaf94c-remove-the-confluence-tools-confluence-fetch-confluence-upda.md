@@ -12,11 +12,11 @@ version: 1.0.0
 
 ## Context and Problem Statement
 
-GitHub issue #120 ("Remove confluence tools") asks to remove the Confluence-specific MCP tools `confluence_fetch` and `confluence_update`, and their supporting helper modules, prompts, and data files, from this specmgr MCP server. These tools were added by feat-50-confluence (GitHub issue #50) and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, which renamed a generic `webfetch` tool to `confluence_fetch`, added `confluence_update` as a Confluence-page-writing counterpart, and self-constructed Confluence REST API URLs from browsable page URLs.
+GitHub issue #120 ("Remove confluence tools") asks to remove the Confluence-specific MCP tools `confluence_fetch` and `confluence_update`, and their supporting helper modules, prompts, and data files, from this specmgr MCP server. These tools were added by feat-50-confluence (GitHub issue #50) and DEC a156fdf9-052c-4f43-93a2-eeec04a91eac, which renamed a generic `webfetch` tool to `confluence_fetch`, added `confluence_update` as a Confluence-page-writing counterpart, and self-constructed Confluence REST API URLs from browsable page URLs.
 
 This specmgr MCP server exists to manage system-specification artifacts -- the REQ/UC/TSK/QA/PRB/GOL/RSK/DEC/SOP/FEAT/VCR/SYSRS/ADR document-type domains described in `AGENTS.md`. `confluence_fetch`/`confluence_update` instead implement a wiki/CMS synchronization concern (fetching and publishing arbitrary Confluence pages via the Confluence REST API), unrelated to any of those document-type domains. Living in the cross-cutting `general/` package alongside genuinely domain-agnostic utility tools (`mdformat`, the generic `update`/`set_status`/`set_classification`/`delete`/`validate` dispatch tools, and the `iso25010`/`dtais`/`rasci`/`version` reference resources), the two Confluence tools stand out as the only ones that are not utilities *for* spec-document management -- they are a separate product surface (Confluence page I/O) that happens to share a codebase. This blurs the server's single responsibility and is the trigger for this reversal.
 
-This ADR documents the decision to remove `confluence_fetch`, `confluence_update`, and their supporting code entirely, and formally supersedes ADR a156fdf9-052c-4f43-93a2-eeec04a91eac, which is the ADR that originally introduced and shaped this functionality (the rename from `webfetch`, the URL self-construction design, and the shared `_confluence_config.py`/`_confluence_url.py` helpers). That ADR's decision to have these tools at all is reversed here; its own analysis of Confluence REST API/URL/SSO-redirect behavior remains historically accurate but is no longer acted upon.
+This ADR documents the decision to remove `confluence_fetch`, `confluence_update`, and their supporting code entirely, and formally supersedes DEC a156fdf9-052c-4f43-93a2-eeec04a91eac, which is the ADR that originally introduced and shaped this functionality (the rename from `webfetch`, the URL self-construction design, and the shared `_confluence_config.py`/`_confluence_url.py` helpers). That ADR's decision to have these tools at all is reversed here; its own analysis of Confluence REST API/URL/SSO-redirect behavior remains historically accurate but is no longer acted upon.
 
 ## Decision Drivers
 
@@ -48,12 +48,12 @@ This decision covers the ADR/decision-record step only (Phase 1 of feat-120-remo
 
 **Negative:**
 - This is a breaking change for any existing consumer of `confluence_fetch`/`confluence_update` and their `SPECMGR_CONFLUENCE_BASE_URL`/`SPECMGR_CONFLUENCE_BEARER` environment variables; such a consumer must migrate to an alternative (e.g. a standalone Confluence/Atlassian MCP server) with no deprecation shim or transition period provided by this repository.
-- The URL-self-construction, SSO-redirect-detection, and Confluence-REST-API-shape knowledge captured in ADR a156fdf9-052c-4f43-93a2-eeec04a91eac's analysis is no longer exercised by any code in this repository once Phase 2 completes; that knowledge is preserved only in the superseded ADR's text and in feat-50-confluence's historical feature folder, not in any active implementation.
+- The URL-self-construction, SSO-redirect-detection, and Confluence-REST-API-shape knowledge captured in DEC a156fdf9-052c-4f43-93a2-eeec04a91eac's analysis is no longer exercised by any code in this repository once Phase 2 completes; that knowledge is preserved only in the superseded ADR's text and in feat-50-confluence's historical feature folder, not in any active implementation.
 - If Confluence integration is ever needed again by this server specifically, the removed code would need to be reimplemented (or restored from version control history) rather than simply re-enabled.
 
 ### Confirmation
 
-Phase 1 (this ADR) is confirmed by the new ADR file existing under `docs/adr/` and ADR a156fdf9-052c-4f43-93a2-eeec04a91eac's frontmatter `status` reading `superseded by <this ADR's id>`. Phase 2 (the actual removal) is confirmed by: no `confluence_fetch`/`confluence_update` tool or prompt registering with the MCP server; the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) passing with no Confluence-related test collection errors; no remaining `import httpx`/`from httpx` reference under `src/` and `httpx` removed from `pyproject.toml`/`NOTICE`; and `specmgr docs`/`specmgr mcp-docs` producing zero further `git status` diff.
+Phase 1 (this ADR) is confirmed by the new ADR file existing under `docs/adr/` and DEC a156fdf9-052c-4f43-93a2-eeec04a91eac's frontmatter `status` reading `superseded by <this ADR's id>`. Phase 2 (the actual removal) is confirmed by: no `confluence_fetch`/`confluence_update` tool or prompt registering with the MCP server; the full quality gate (`ruff format --check`, `ruff check`, `vulture src/ whitelist.py --min-confidence 60`, `pytest -n auto`) passing with no Confluence-related test collection errors; no remaining `import httpx`/`from httpx` reference under `src/` and `httpx` removed from `pyproject.toml`/`NOTICE`; and `specmgr docs`/`specmgr mcp-docs` producing zero further `git status` diff.
 
 ## Roles and Responsibilities
 
@@ -115,7 +115,7 @@ GitHub issue #120
 
 - GitHub issue: https://github.com/dfch/biz.dfch.SpecMgr/issues/120
 - Feature folder: `.specmgr/feat/feat-120-remove-confluence/README.md`
-- Supersedes ADR a156fdf9-052c-4f43-93a2-eeec04a91eac ("Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill""), the ADR that originally introduced the functionality removed here.
+- Supersedes DEC a156fdf9-052c-4f43-93a2-eeec04a91eac ("Rename `webfetch` to `confluence_fetch`, add `confluence_update`, and self-construct Confluence REST API URLs instead of relying on a non-existent "confluence skill""), the ADR that originally introduced the functionality removed here.
 
 ## Updates
 

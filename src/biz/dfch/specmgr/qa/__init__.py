@@ -17,7 +17,7 @@
 
 """Question and Answer (QA) domain -- requirements-elicitation interview specifications.
 
-This is a domain-first package (per ADR ece4554b-725c-4f76-bc04-5d2b760363d2),
+This is a domain-first package (per DEC ece4554b-725c-4f76-bc04-5d2b760363d2),
 mirroring ``req``'s/``tsk``'s layout, containing models, tools, prompts, and
 resources for managing ``qa`` documents.
 
@@ -38,7 +38,7 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_qa`` tool was removed in favor of it (feat-81-83-validation).
 Like REQ, QA has no
 ``specmgr://qa/{id}`` resource -- id-based reads go through the ``get_qa``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
 ``specmgr://qa/list`` resource was replaced by the ``list_qa`` tool, so
 that paging parameters could be accepted (feat-13-list-paging).
 

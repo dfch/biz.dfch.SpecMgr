@@ -30,7 +30,7 @@ exception type (no ``SetParseError`` equivalent); both error channels are plain
 The engine's default error messages are kept unchanged -- no custom
 cause/fix-hint wrapping for the leftover-text or missing-section errors.
 
-**Heading-mapping table pre-pass (feat-197-i18n, ADR 38efdb66 item 5).** A
+**Heading-mapping table pre-pass (feat-197-i18n, DEC 38efdb66 item 5).** A
 1:1 port of ``vcr.models.v1.parser``'s own pre-pass for this domain:
 ``parse_set`` is this domain's single text-to-model parse boundary -- the
 choke point behind ``get_set``'s non-raw reads, ``list_set``'s rows (both
@@ -99,7 +99,7 @@ text:
     together, exactly as read from disk (or submitted verbatim by an MCP
     tool call that never wrote it to disk at all).
 language:
-    The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+    The document's language (feat-197-i18n, DEC 38efdb66 item 5):
     ``None`` (the default) or ``"en"`` parses the canonical, English
     headings as-is (no table -- byte-identical to the pre-i18n path);
     any other value resolves that language's heading-mapping table and
@@ -136,7 +136,7 @@ ValueError
 
 Parse a frontmatter-free set body text into a :class:`Set`, in the given language.
 
-The body-only half of :func:`parse_set` (feat-197-i18n, ADR 38efdb66
+The body-only half of :func:`parse_set` (feat-197-i18n, DEC 38efdb66
 item 5): ``Set.from_text(format_text(content))`` with the optional
 per-language heading-normalization pre-pass between the two. It is the
 single body-validation entry point the write side shares --

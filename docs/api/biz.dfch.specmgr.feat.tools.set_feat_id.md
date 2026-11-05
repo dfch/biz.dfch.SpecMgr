@@ -10,7 +10,7 @@ addressable end-to-end (REQ-005). This is the one path that ever changes a
 the initial id, but has no way to fix it later (e.g. once a GitHub issue
 number is known); ``set_feat_id`` is that fix-up path, motivated by the
 ``feat-NNN-slug`` convention where ``NNN`` is meant to be the GitHub issue
-number (ADR e369ee2e-3353-4f92-991c-6367d76d832e).
+number (DEC e369ee2e-3353-4f92-991c-6367d76d832e).
 
 ``new_id`` is validated against the same ``feat-NNN-slug`` shape
 ``create_feat``'s optional ``id`` parameter uses

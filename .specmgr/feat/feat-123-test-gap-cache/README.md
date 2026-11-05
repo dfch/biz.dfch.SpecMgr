@@ -54,7 +54,7 @@ This feature closes that gap: a future refactor that silently drops one of those
 
 - Any change to `src/` production code: the post-closeout review confirmed the shipped implementation is correct across all 12 domains, so this feature adds tests only -- if a new test surfaced a real bug, that fix would be a separate feature.
 - Re-implementation or duplication of `req`'s dedicated end-to-end wiring-test behaviors (`tests/req/tools/test_doc_cache_wiring.py`: exact parse counts, content-change detection, orphan reconciliation, concurrency) -- the `req` rows in the new table cover only the four call-site gaps.
-- Any coverage of `adr`, which is permanently excluded from the cache mechanism (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d).
+- Any coverage of `adr`, which is permanently excluded from the cache mechanism (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d).
 - The `find_doc_path_by_id` reconcile-on-scan wiring, already covered by `tests/general/tools/test_doc_cache_structural.py`.
 - Refactoring the existing structural test or `req`'s wiring test into the new table -- both stay as-is.
 

@@ -24,7 +24,7 @@ Question: how should the generated schema be exposed on the MCP surface -- keep 
 
 - Discoverability on the always-in-context tool surface (the RCA's #1 root cause): the schema's own metadata must be visible without reaching the resource layer.
 - Eliminate the 2-hop resource route (the RCA's #2 root cause): one tool call instead of discover-then-read.
-- Consistency with ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-based reads as tools) and ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (listing as paged tools): the schema resource is the last per-domain authoring resource, and its conversion makes the per-domain authoring surface fully tool-based.
+- Consistency with DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-based reads as tools) and DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 (listing as paged tools): the schema resource is the last per-domain authoring resource, and its conversion makes the per-domain authoring surface fully tool-based.
 - Collapse plan items C6 (pointer clauses) and C7 (usage-oriented rewording) into one surface: the `get_<d>_schema` tool description carries both, instead of C7 living in a resource description agents never see.
 - Zero content change: the same packaged file and the same provenance sentence; the fetch stays demoted (never a mandatory pre-authoring fetch), so the feature's T1-T3 measurable targets are unaffected.
 
@@ -52,7 +52,7 @@ Recorded rationale lines:
 - C6/C7 collapse into one surface: the `get_<d>_schema` tool description carries both the non-prescriptive pointer clause (C6) and the usage-oriented wording (C7); plan C7 (resource-description rewording only) is superseded.
 - Tool-count delta, recorded as measured at this ADR's writing time against the current worktree surface: the published 0.34.0 probe count of 94 tools is stale; the worktree already carries 103 `@mcp.tool(` decorators (verified by line-anchored grep over `src/` at writing time) plus 49 `@mcp.resource(` registrations. The conversion adds 12 tools and removes 12 resources, so the expected figures are 103 -> 115 tools and 49 -> 37 resources, to be confirmed by the Phase 130 Task 130.100 live-surface probe.
 
-Lineage: ADR 7531106b-074b-4bd8-a83a-e433d01676e2 ("Expose listing and by-id reads as MCP resources in addition to tools") is the mechanism's ancestor (listing/by-id reads as resources in addition to tools); the 12 per-domain schema resources were never within that ADR's decision scope (it covers the ADR domain's own `specmgr://adr/list`/`specmgr://adr/{id}` pair only), and this ADR's tool-only direction continues ADR ec9f5262-9912-49d0-903f-fcfb54f28c13's partial reversal of it (which retired the listing side of 7531106b while leaving its by-id resource side untouched).
+Lineage: DEC 7531106b-074b-4bd8-a83a-e433d01676e2 ("Expose listing and by-id reads as MCP resources in addition to tools") is the mechanism's ancestor (listing/by-id reads as resources in addition to tools); the 12 per-domain schema resources were never within that ADR's decision scope (it covers the ADR domain's own `specmgr://adr/list`/`specmgr://adr/{id}` pair only), and this ADR's tool-only direction continues DEC ec9f5262-9912-49d0-903f-fcfb54f28c13's partial reversal of it (which retired the listing side of 7531106b while leaving its by-id resource side untouched).
 
 ### Consequences
 

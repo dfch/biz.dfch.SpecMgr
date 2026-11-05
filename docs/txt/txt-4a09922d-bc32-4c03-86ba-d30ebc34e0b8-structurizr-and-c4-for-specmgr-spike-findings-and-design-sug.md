@@ -14,7 +14,7 @@ Write-up of a planning and tooling spike (2026-11-01) on using Structurizr DSL a
 
 Related existing artifact (the PlantUML support package whose validation chain this spike exercised):
 
-ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
+DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
 
 ## Scope and decisions taken in the discussion
 

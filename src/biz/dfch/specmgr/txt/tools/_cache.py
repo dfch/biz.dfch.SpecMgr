@@ -50,7 +50,7 @@ concern, but cross-*test*-within-the-same-worker leakage very much is).
 in ``setUp``/``tearDown`` and never observe another test's cached state.
 It is not for production use.
 
-See ADR bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
+See DEC bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
 module wires up for the ``txt`` domain.
 """
 
@@ -105,7 +105,7 @@ def read_txt(path: Path) -> TxtDocument:
     directly in the flat ``docs/txt/`` directory parses canonical/EN, a file
     directly in ``docs/txt/{language}/`` parses in that language, anything
     else canonical), never from a caller argument: the location *is* the
-    language encoding (ADR 38efdb66 item 1), so every consumer of this
+    language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_txt_path``'s scan, ``list_txt``'s rows, ``load_by_id``'s
     second read, the generic tools' own txt adapters) parses a variant file
     with its table without any signature change, and the ``DocCache``'s

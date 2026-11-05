@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Closed-set drift test of the packaged heading-mapping tables (feat-197-i18n Phase 150, ADR 38efdb66 item 4(c)).
+"""Closed-set drift test of the packaged heading-mapping tables (feat-197-i18n Phase 150, DEC 38efdb66 item 4(c)).
 
 The ADR promised a drift test that derives the closed set of fixed-text headings from the i18n-eligible domains'
 document models and asserts every language table covers *exactly* that set. ``test_heading_table.py`` derives the set
@@ -168,7 +168,7 @@ class TestDerivation(unittest.TestCase):
 
 
 class TestEveryShippedTableCoversTheClosedSetExactly(unittest.TestCase):
-    """ADR 38efdb66 item 4(c): each ``general/data/headings/<language>.json`` covers exactly the model-derived set."""
+    """DEC 38efdb66 item 4(c): each ``general/data/headings/<language>.json`` covers exactly the model-derived set."""
 
     def setUp(self) -> None:
         reset_heading_table_cache()

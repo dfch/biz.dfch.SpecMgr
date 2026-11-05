@@ -14,7 +14,7 @@ THE system shall provide feature (FEAT) document management, including create, r
 
 ## Description
 
-AGENTS.md's Status section documents the `feat` package as the one domain whose addressing genuinely deviates from every other domain's precedent (ADR 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen `feat-NNN-slug`, the containing folder's own name, not a server-generated UUID, and documents live one-per-folder as `<base>/<id>/README.md`. This very feature (feat-84-specmgr-sysrs) is itself a FEAT document managed through these tools.
+AGENTS.md's Status section documents the `feat` package as the one domain whose addressing genuinely deviates from every other domain's precedent (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen `feat-NNN-slug`, the containing folder's own name, not a server-generated UUID, and documents live one-per-folder as `<base>/<id>/README.md`. This very feature (feat-84-specmgr-sysrs) is itself a FEAT document managed through these tools.
 
 ## Characteristics
 

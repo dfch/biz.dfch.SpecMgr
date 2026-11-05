@@ -192,7 +192,7 @@ class TestMarkdownSectionAliasEnforcement(unittest.TestCase):
 
     def test_regex_alias_accepts_any_non_empty_heading_text(self) -> None:
         """A class opting into a permissive regex alias (`.+`) accepts arbitrary
-        heading text, per ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.3.1."""
+        heading text, per DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.3.1."""
         text = mdformat.text("### Anything Goes\ncontent\n")
         instance = _AnyHeadingLeafSection.from_text(text)
         self.assertEqual(instance._value, text)

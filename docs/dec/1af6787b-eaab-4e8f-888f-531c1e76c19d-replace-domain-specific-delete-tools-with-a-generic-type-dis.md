@@ -20,8 +20,8 @@ Every document domain except ADR shipped an unimplemented `delete_<d>` MCP tool:
 - An explicit `type` parameter keeps id resolution single-domain (no cross-domain ambiguity).
 - Injection safety: the free-form `id` input must be validated before any filesystem access, and the resolved path must be confined to the domain's base directory.
 - Reuse of each domain's existing per-id lock, `load_by_id` resolver, and base-dir plumbing rather than new plumbing.
-- Filesystem is the sole source of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a delete is a hard removal from disk, with no separate deletion record.
-- The structural precedent of the generic, type-dispatched `update` and `set_status` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+- Filesystem is the sole source of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a delete is a hard removal from disk, with no separate deletion record.
+- The structural precedent of the generic, type-dispatched `update` and `set_status` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
 
 ## Considered Options
 
@@ -39,7 +39,7 @@ Option 1 was chosen and implemented in feature `feat-36-delete`. The generic `de
 
 - Breaking (0.x): eleven MCP tools removed, one added. The MCP tool list is the only client contract and the change is recorded in `CHANGELOG.md` under `[Unreleased]`.
 - The reusable `general/tools/_path_safety.py` guards (`assert_no_traversal`, `assert_uuid`, `assert_feat_id`, `validate_id`, `assert_within`) are wired into `delete` only; the `get_<d>`, `update`, and `set_status` tools are untouched here but can adopt the module later with zero rework for their own injection protection.
-- `feat` deletes its entire `<base>/<id>/` folder (folder-per-document, ADR 8cf940c5-3100-485c-a12d-14b59b631712); the ten flat domains delete their single `*.md` file. The tool returns the deleted path as a string.
+- `feat` deletes its entire `<base>/<id>/` folder (folder-per-document, DEC 8cf940c5-3100-485c-a12d-14b59b631712); the ten flat domains delete their single `*.md` file. The tool returns the deleted path as a string.
 
 ## Roles and Responsibilities
 
@@ -65,12 +65,12 @@ Bad: the `delete` tool file grows as domains are added (one adapter per domain);
 ### Option 2: Implement each `delete_<d>` stub independently
 
 Good: no new generic surface; each domain stays self-contained.
-Bad: eleven near-duplicate implementations of the same resolve/lock/delete sequence; no shared path-safety module (each would need its own, or none); the tool surface stays at eleven delete tools, contradicting the minimal-surface driver and the `update`/`set_status` precedent of ADR 36905d5b-8057-4294-8665-c7eed5534db0. Rejected.
+Bad: eleven near-duplicate implementations of the same resolve/lock/delete sequence; no shared path-safety module (each would need its own, or none); the tool surface stays at eleven delete tools, contradicting the minimal-surface driver and the `update`/`set_status` precedent of DEC 36905d5b-8057-4294-8665-c7eed5534db0. Rejected.
 
 ### Option 3: UUID-only id resolution scanning all domains
 
 Good: no `type` parameter required by callers.
-Bad: cross-domain UUID ambiguity (the same UUID could exist in several domains — which one is deleted?); a full-directory scan over every domain on the write path; the same reasons ADR 36905d5b-8057-4294-8665-c7eed5534db0 rejected this shape for `update`. Rejected.
+Bad: cross-domain UUID ambiguity (the same UUID could exist in several domains — which one is deleted?); a full-directory scan over every domain on the write path; the same reasons DEC 36905d5b-8057-4294-8665-c7eed5534db0 rejected this shape for `update`. Rejected.
 
 ## More Information
 

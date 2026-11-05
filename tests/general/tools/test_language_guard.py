@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the generic tools' write-side ``language`` guard (feat-197-i18n Phase 120, ADR 38efdb66 items 2/6/10).
+"""Tests for the generic tools' write-side ``language`` guard (feat-197-i18n Phase 120, DEC 38efdb66 items 2/6/10).
 
 Pins the rejection/dispatch matrix: the generic ``update``/``edit``/
 ``set_status``/``set_classification``/``delete`` tools gained an optional

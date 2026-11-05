@@ -19,7 +19,7 @@ language pair; read the source via ``get_<d>(id, raw=True, language=...)``
 ``update``/``edit`` with ``language``); read the target language's heading
 table and translate only free-form prose plus the fixed-text heading text
 through that table, never the closed-vocabulary / schema-constant tokens
-(REQ-010) nor -- per ADR 38efdb66 item 11 -- ``prb``'s ``problem_statement``
+(REQ-010) nor -- per DEC 38efdb66 item 11 -- ``prb``'s ``problem_statement``
 lead paragraph; write with bounded retries on the non-raising
 ``ValidateResult`` (a translated body cannot be dry-run: the generic
 ``validate`` tool is canonical-only and has no ``language`` parameter, so

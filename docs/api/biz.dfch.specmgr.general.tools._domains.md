@@ -7,7 +7,7 @@ This module is the single source of truth for the document-type domain
 **names** (feat-125-domain-lists, REQ-001, ADR c4efbde6-fd19-4aa8-8668-
 95316ed62dcc "Single source of truth for the document-type domain-name
 set") and for the per-domain **adapters** every cross-domain consumer
-needs (feat-134, Phase 1, REQ-012, ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
+needs (feat-134, Phase 1, REQ-012, DEC 750842b2-aca4-4649-ba0c-855ec8e1f505,
 **corpus and registry** sub-decision).
 
 Every other module that names a set of document types imports the names
@@ -95,7 +95,7 @@ Attributes:
         directory, sorted) for every domain other than ``feat``,
         ``iter_feat_paths`` (``<base>/<id>/README.md``, sorted by
         folder name) for ``feat`` -- the one bespoke,
-        folder-per-document domain (ADR 8cf940c5).
+        folder-per-document domain (DEC 8cf940c5).
     load_by_id:
         The domain's ``load_by_id`` -- resolves ``id_`` under the given
         base directory and parses the matching document, raising the

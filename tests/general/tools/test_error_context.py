@@ -18,7 +18,7 @@
 """feat-27-validation Phase 3, Task 3.4: tool-layer tests for the shared error-context wrapper.
 
 ACC-003: asserts that the ``message`` surfaced by ``create_<d>``'s non-raising
-``ValidateResult`` (feat-204-create-error Phase 110, case 5 of the ADR 519d1206
+``ValidateResult`` (feat-204-create-error Phase 110, case 5 of the DEC 519d1206
 non-raising chain), plus the ``message`` returned by the generic ``validate``
 tool's non-raising result (feat-81-83-validation
 Phase 2, retiring the former ``validate_<d>`` tools) and the generic ``update`` adapter's
@@ -28,7 +28,7 @@ b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), prepend domain + tool context (built by
 (feat-27-validation Phases 1/2). Covers ``tsk`` and
 ``req`` -- the two domains the task names -- plus one ``set_status`` case for completeness, since
 that generic tool's own adapters were touched by Task 3.2 as well. Since
-feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), that ``set_status`` case's
+feat-103-set-status-error (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014), that ``set_status`` case's
 own out-of-vocabulary-status failure mode is pre-checked *before* dispatch and no longer reaches
 ``wrap_tool_errors`` at all -- see ``TestGenericSetStatusToolErrorContext``'s own docstring below
 for how it still identifies the domain, via the non-raising ``InvalidStatusResult`` instead.
@@ -111,7 +111,7 @@ class TempDocsDirTestCase(unittest.TestCase):
 class TestCreateToolErrorContext(TempDocsDirTestCase):
     """``create_<d>``: a structural/field failure names the domain and the tool.
 
-    Since feat-204-create-error (Phase 110, case 5 of the ADR 519d1206 non-raising
+    Since feat-204-create-error (Phase 110, case 5 of the DEC 519d1206 non-raising
     chain), ``create_<d>`` never raises for a content-validation failure -- it
     returns the non-raising ``ValidateResult(valid=False, ...)`` instead, so these
     tests assert against ``result.errors[0].message`` rather than a raised
@@ -161,7 +161,7 @@ class TestValidateToolErrorContext(unittest.TestCase):
 class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
     """The generic ``update`` adapter: a structural/field failure names the domain and ``update``.
 
-    Since feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), ``update`` never
+    Since feat-170 Phase 120 (Bug 2, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), ``update`` never
     raises for a content-validation failure -- it returns the non-raising
     ``ValidateResult(valid=False, ...)`` instead, so these tests assert against
     ``result.errors[0].message`` rather than a raised exception (the same pattern
@@ -192,7 +192,7 @@ class TestGenericUpdateToolErrorContext(TempDocsDirTestCase):
 class TestGenericSetStatusToolErrorContext(TempDocsDirTestCase):
     """The generic ``set_status`` adapter's out-of-vocabulary-status case still identifies the domain.
 
-    Since feat-103-set-status-error (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), an
+    Since feat-103-set-status-error (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014), an
     out-of-vocabulary ``status`` is pre-checked *before* any adapter dispatch and therefore
     never reaches the ``wrap_tool_errors``-wrapped ``XFrontmatter(**fm_data)`` reconstruction
     ``TestCreateToolErrorContext``/``TestGenericUpdateToolErrorContext`` above exercise -- it

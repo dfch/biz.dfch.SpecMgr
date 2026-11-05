@@ -12,7 +12,7 @@ path and cause, including the trailing pydantic documentation line) and
 ``path`` (the absolute on-disk
 file), for every one of the whole-body domains per ADR
 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for ``feat`` only
-(feat-187-list-feat-timeout, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44):
+(feat-187-list-feat-timeout, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44):
 ``get_feat`` always fully parses and remains the unconditional,
 full-fidelity authority, but ``list_feat``'s own row may transiently carry
 a different (healthy-looking or dirty-stage-specific) ``error``/title/

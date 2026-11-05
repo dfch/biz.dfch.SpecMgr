@@ -7,11 +7,11 @@ updated: '2026-11-01T00:00:00.000Z'
 version: 1.0.0
 ---
 
-# Regression fixture: Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server (outcome of ADR 92cc4ce8)
+# Regression fixture: Remove the Confluence tools (`confluence_fetch`, `confluence_update`) from the MCP server (outcome of DEC 92cc4ce8)
 
 ## Context and Problem Statement
 
-This document is a committed regression fixture for feat-247-dec-outcome-blocks (GitHub issue #247): it carries the real `## Decision Outcome` outcome lead (the section from its H2 heading through the first `###` sub-section) of ADR 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c verbatim inside a minimal-but-valid `dec` body, to prove that the relaxed `DecisionOutcome` lead (a mandatory paragraph plus zero or more further blocks) parses this outcome without "text left over".
+This document is a committed regression fixture for feat-247-dec-outcome-blocks (GitHub issue #247): it carries the real `## Decision Outcome` outcome lead (the section from its H2 heading through the first `###` sub-section) of DEC 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c verbatim inside a minimal-but-valid `dec` body, to prove that the relaxed `DecisionOutcome` lead (a mandatory paragraph plus zero or more further blocks) parses this outcome without "text left over".
 
 ## Decision Outcome
 
@@ -31,4 +31,4 @@ The platform architecture lead.
 
 ## Source
 
-Regression fixture derived from the `## Decision Outcome` section of ADR 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c.
+Regression fixture derived from the `## Decision Outcome` section of DEC 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c.

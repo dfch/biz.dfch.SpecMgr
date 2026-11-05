@@ -13,7 +13,7 @@ SOP/VCR -- no fine-grained mutation tools, no by-id resource, no
 deterministic re-render.
 
 ``sysrs`` is, like SOP, built from scratch entirely on the generic
-mutation tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0): it has no
+mutation tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0): it has no
 ``update_sysrs``/``set_status_sysrs`` tools of its own -- it dispatches
 straight into the generic ``update``/``set_status`` tools in
 ``general.tools``, and deletion goes through the generic ``delete`` tool
@@ -29,7 +29,7 @@ feat-81-83-validation Phase 2), ``sysrs.resources`` (2 resources --
 ``specmgr://sysrs/example``,
 ``specmgr://sysrs/template``; no ``/{id}``, no ``/list``;
 the former ``specmgr://sysrs/schema`` resource was converted into
-the ``get_sysrs_schema`` tool, feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3), and
+the ``get_sysrs_schema`` tool, feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3), and
 ``sysrs.prompts`` (2 prompts -- ``create_sysrs``, ``update_sysrs``) all
 carry real content. Every cross-reference section
 (``### Goals``, ``## Decisions``, ``## Requirements``'s nine H3s, ...)

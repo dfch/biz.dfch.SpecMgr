@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """feat-189 Phase 105 (C17) registration facts against the live ``mcp`` app
-(ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3, "Convert the 12 per-domain schema
+(DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3, "Convert the 12 per-domain schema
 resources to get_<d>_schema tools"):
 
 - every whole-body domain's ``get_<d>_schema`` tool is registered

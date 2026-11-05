@@ -18,7 +18,7 @@ AGENTS.md describes the domain-first architecture underlying every document-type
 
 ## Source
 
-AGENTS.md's description of the domain-first architecture (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and the `sysrs` domain's cross-reference-only design (`.specmgr/feat/feat-32-sysrs/README.md`).
+AGENTS.md's description of the domain-first architecture (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and the `sysrs` domain's cross-reference-only design (`.specmgr/feat/feat-32-sysrs/README.md`).
 
 ## Notes
 

@@ -4,7 +4,7 @@ Pydantic model for a full ADR document (frontmatter + body).
 
 Deliberately holds no file/id/path information -- the file/directory
 naming and id-assignment scheme is the specmgr-assigned ``{id}-{slug}.md``
-scheme (ADR 8cf940c5-3100-485c-a12d-14b59b631712), implemented in
+scheme (DEC 8cf940c5-3100-485c-a12d-14b59b631712), implemented in
 ``adr/tools/`` and out of scope for this schema.
 
 ## Classes

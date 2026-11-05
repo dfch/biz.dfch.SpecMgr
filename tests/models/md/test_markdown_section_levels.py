@@ -36,7 +36,7 @@ from biz.dfch.specmgr.models.md.markdown_section6 import MarkdownSection6
 # None of these six classes declares an @alias: each class name's
 # `AliasType.SPACE_SEPARATED` derivation (e.g. "TopLevel" -> "Top Level")
 # already equals its fixture heading text verbatim, which is exactly what
-# the no-@alias default now produces (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
+# the no-@alias default now produces (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae
 # v1.4.0) -- an explicit `@alias(type=AliasType.SPACE_SEPARATED)` here would
 # only restate that default, so it is omitted.
 

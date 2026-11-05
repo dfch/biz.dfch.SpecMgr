@@ -262,15 +262,20 @@ def convert(entry: dict, manifest: dict, adr_text: str) -> str:
     return frontmatter + "\n".join(new)
 
 
-def unconvert(dec_text: str, entry: dict) -> str:
-    """Undo the allowed section transformations of `convert`, for the fidelity comparison.
+def unconvert(dec_text: str, entry: dict, manifest: dict) -> str:
+    """Undo the allowed transformations of `convert`, for the fidelity comparison.
 
     The result must equal `wrap_bare_tokens(adr_body)` (the ADR body with exactly the bare
     <token> wrapping applied) -- the caller compares against that, not the raw ADR body.
     Unwrapping the wrapped spans inside the DEC text positionally was unsound: whenever the
     ADR already carried a code span identical to a wrapped run (e.g. 112b6498 with 8
     pre-existing `get_<d>_schema` spans), the first-occurrence replacement hit the pre-existing
-    span and left the wrapped one in place (feat-46 Phase 120 rule extension).
+    span and left the wrapped one in place (feat-46 Phase 120 rule extension). Since the
+    Phase 130 tier-A retag, the inherited DEC-body citations carry the `DEC` tag where the
+    ADR body carries `ADR`, so this also inverts the retag (`unretag_text`) after the
+    section removal -- the conversion's own `## Related Artifacts` bullets are stripped
+    first, and the ADR sources carry no pre-existing `DEC <manifest-id>` citation, so the
+    inversion is exact (feat-46 Phase 130 rule extension).
     """
     _, body = split_document(dec_text)
     kept: list[str] = []
@@ -286,7 +291,8 @@ def unconvert(dec_text: str, entry: dict) -> str:
     text = "\n".join(kept)
     if entry["has_pros_heading"]:
         text = re.sub(r"^## Pros and Cons$", PROS_ADR, text, flags=re.M)
-    return text
+    result, _count = unretag_text(text, manifest)
+    return result
 
 
 def normalise(text: str) -> str:
@@ -453,6 +459,56 @@ def scan_refs(tag_from: str, manifest: dict, tiers: set[str]):
 
 def _case(tag: str, to: str) -> str:
     return to.upper() if tag.isupper() else to.lower() if tag.islower() else to.capitalize()
+
+
+def unretag_text(text: str, manifest: dict) -> tuple[str, int]:
+    """The exact inverse of `retag_text` (feat-46 Phase 130, for the verifier's fidelity check).
+
+    Rewrites the manifest's retagged DEC citations back to their ADR shape: `DEC <uuid>` ->
+    `ADR <uuid>` (manifest ids only, case preserved), `DEC <8-hex>` -> `ADR <8-hex>`
+    (unambiguous prefixes only), and `docs/dec/<stem>` -> `docs/adr/<stem>` (manifest stems
+    only; `retag_text`'s path branch hardcodes "dec" as the target, so this one hardcodes
+    "adr"). `retag_text` never touches KEEP_MARKER lines, and this one mirrors that. The
+    inversion is exact because the ADR sources carry no pre-existing `DEC <manifest-id>`
+    citation (verified 2026-11-04) and `unconvert` strips the conversion's own
+    `## Related Artifacts` bullets before calling this. Returns (new text, replacements).
+    """
+    patterns = reference_patterns("DEC", manifest)
+    path = re.compile(
+        r"(docs/)dec(/)((?:" + "|".join(re.escape(e["stem"]) for e in manifest["adrs"].values()) + r")(?:\.md)?)"
+    )
+    smap = short_map(manifest)
+    count = 0
+    out = []
+    for line in text.split("\n"):
+        if KEEP_MARKER in line:
+            out.append(line)
+            continue
+
+        def full(m):
+            nonlocal count
+            if m.group(3).lower() not in manifest["adrs"]:
+                return m.group(0)
+            count += 1
+            return f"{_case(m.group(1), 'ADR')}{m.group(2)}{m.group(3)}"
+
+        def short(m):
+            nonlocal count
+            if len(smap.get(m.group(3).lower(), [])) != 1:
+                return m.group(0)
+            count += 1
+            return f"{_case(m.group(1), 'ADR')}{m.group(2)}{m.group(3)}"
+
+        def pathsub(m):
+            nonlocal count
+            count += 1
+            return f"{m.group(1)}adr{m.group(2)}{m.group(3)}"
+
+        line = patterns["full"].sub(full, line)
+        line = patterns["short"].sub(short, line)
+        line = path.sub(pathsub, line)
+        out.append(line)
+    return "\n".join(out), count
 
 
 def retag_text(text: str, tag_from: str, tag_to: str, manifest: dict) -> tuple[str, int]:

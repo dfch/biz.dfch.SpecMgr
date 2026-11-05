@@ -6,12 +6,12 @@ Mirrors ``dec.tools.get_dec`` -- a thin file-I/O/id-lookup adapter. The
 ``README.md`` file itself remains the sole source of truth (ADR
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the underlying single-file read now
 routes through ``feat``'s own bespoke content-hash-validated in-memory
-cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
+cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
 re-parsing when a file's content hash is unchanged since its last read, so
 a stale entry is structurally impossible.
 
 This tool is the sole id-based read path for FEAT: there is no
-``specmgr://feat/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``specmgr://feat/{id}`` resource (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 same reasoning as every other domain's own ``get_*`` tools).
 
 ``raw=True`` returns the frontmatter-stripped body text verbatim instead of
@@ -87,7 +87,7 @@ FeatDocument | str | ParseFailureResult
     ``SPECMGR_FEAT_WARMUP_DISABLED``), ``list_feat``'s row may instead
     carry a transiently-healthy or dirty-stage-specific ``error`` (ADR
     3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract,
-    time-qualifying ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c for
+    time-qualifying DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c for
     ``feat`` only -- every other domain's list/get error byte-identity
     stays unconditional);
     ``raw=True`` never returns a broken document's raw text.

@@ -589,7 +589,7 @@ running MCP server) until it is restarted, or the probe caches are cleared (the
 rationale (the agent's validate loop must not re-probe on every call) covers re-probing
 cost, which is exactly what an outcome-agnostic cache delivers.
 
-### 3.6 Result model (frozen shape — non-raising structured result, the ADR 519d1206 chain precedent)
+### 3.6 Result model (frozen shape — non-raising structured result, the DEC 519d1206 chain precedent)
 
 ```
 {

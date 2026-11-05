@@ -82,7 +82,7 @@ queries. Each resolved folder's row follows the three-tier contract
 violation already caught at the clean stage) is a byte-identical failed
 row (the clean cache's own fresh-exception reconstruction, so this text is
 byte-identical to ``get_feat``'s ``ParseFailureResult.error`` for the same
-file, ADR 9080b37c); a dirty **success** is a row built from the
+file, DEC 9080b37c); a dirty **success** is a row built from the
 frontmatter+H1 payload -- correct ``id``/``title``/``status``/``ref``/
 ``path``, but *transiently* healthy if this file also carries a body-level
 defect the dirty stage never looks for (tier 3's documented limitation,
@@ -95,7 +95,7 @@ dirty-stage-specific ``error`` text that does **not** yet match
 ``get_feat``'s own body-aware message for the same defect, converging to
 byte-identical only once the clean stage has passed this file). This
 convergence is what time-qualifies the ``list_<d>``/``get_<d>`` error
-byte-identity property (ADR 9080b37c) for ``feat`` specifically -- every
+byte-identity property (DEC 9080b37c) for ``feat`` specifically -- every
 other domain's property is unchanged. The opt-out flag
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (``general.tools._startup_warmup``) stops
 the background warmup from ever running at all, under which convergence

@@ -11,7 +11,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr._envregistry`](biz.dfch.specmgr._envregistry.md) — Central, stdlib-only environment-variable registry (feat-208).
 - [`biz.dfch.specmgr._paths`](biz.dfch.specmgr._paths.md) — Private, dependency-free repo-root-relative path constants.
 - [`biz.dfch.specmgr.adr`](biz.dfch.specmgr.adr.md) — The Architecture Decision Record (ADR) domain package.
-- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- [`biz.dfch.specmgr.adr.prompts`](biz.dfch.specmgr.adr.prompts.md) — MCP prompt wrappers for Architecture Decision Records (DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f).
 - [`biz.dfch.specmgr.adr.prompts.create_adr`](biz.dfch.specmgr.adr.prompts.create_adr.md) — ``@mcp.prompt()``: create_adr.
 - [`biz.dfch.specmgr.adr.prompts.create_adr_test`](biz.dfch.specmgr.adr.prompts.create_adr_test.md) — ``@mcp.prompt()``: create_adr_test.
 - [`biz.dfch.specmgr.adr.prompts.update_adr`](biz.dfch.specmgr.adr.prompts.update_adr.md) — ``@mcp.prompt()``: update_adr.

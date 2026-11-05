@@ -751,7 +751,7 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
 
     def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
         """A status valid in one domain but not the tested one must return a non-raising
-        ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) whose content
+        ``InvalidStatusResult`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) whose content
         identifies the rejected value and the domain's own full allowed-values list, file
         byte-identical (never raises ``pydantic.ValidationError`` any more)."""
         for case in _CASES:
@@ -922,7 +922,7 @@ class TestSetStatusAdr(TempDocsDirTestCase):
 
     def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
         """A status valid in one domain but not ADR's must return a non-raising
-        ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- ``allowed_values``
+        ``InvalidStatusResult`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- ``allowed_values``
         is ADR's own fixed 6-value set plus the literal ``"superseded by <target-id>"`` trailing
         entry documenting the pattern -- file byte-identical (never raises
         ``pydantic.ValidationError`` any more)."""
@@ -1168,12 +1168,12 @@ class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
 
 
 class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) from the generic ``set_status`` tool's single protected
     ``load_by_id`` call site, with nothing written to disk -- the ``error`` carries the same
     parse defect as the domain's own ``list_<d>`` failed row for the same file (the ``get_<d>``
-    precedent, ADR 9080b37c). The pre-dispatch ``_check_status_allowed``/``InvalidStatusResult``
+    precedent, DEC 9080b37c). The pre-dispatch ``_check_status_allowed``/``InvalidStatusResult``
     check runs before the lock/load and is unaffected: these tests use a valid in-vocabulary
     status so execution reaches ``load_by_id`` (an out-of-vocabulary status against a broken
     document still returns ``InvalidStatusResult`` first). ``feat`` carries the same coverage

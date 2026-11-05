@@ -37,7 +37,7 @@ non-raising :class:`~biz.dfch.specmgr.general.models.translation_drift.Translati
   compare correctly; equal or older is not stale; a missing/unparseable timestamp is reported in ``staleness_error``.
 
 Drift is about structure and staleness, never about wording or translation quality: prose, list items, frontmatter
-values and ``prb``'s regex-locked English ``problem_statement`` lead paragraph (ADR 38efdb66 item 11) are invisible
+values and ``prb``'s regex-locked English ``problem_statement`` lead paragraph (DEC 38efdb66 item 11) are invisible
 to it. The tool is strictly read-only: it writes, creates, and invalidates nothing.
 
 **Languages.** ``language`` is the variant (always non-EN: ``"en"`` is the canonical source form, never a translation

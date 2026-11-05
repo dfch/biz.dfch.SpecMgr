@@ -63,8 +63,8 @@ if the resulting id's folder already exists on disk, this raises
 (``Feature.from_text(format_text(content))``). A structural failure
 raises ``AssertionError`` and a field/cross-field failure raises
 ``pydantic.ValidationError`` -- but this tool catches both
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain) and returns the enriched message
 (domain/tool/channel context prepended by the shared tool-boundary
 wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,

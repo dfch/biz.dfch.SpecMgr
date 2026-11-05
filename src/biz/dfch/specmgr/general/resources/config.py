@@ -49,7 +49,7 @@ the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
 ``<tempdir>/fastembed_cache``). A third presence flag,
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
-ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+DEC 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
 whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
 are disabled. A fourth, ``SPECMGR_DIAGRAM_MAX_TITLE``
 (feat-207-reference-graph Phase 120, REQ-010), is likewise presence-only

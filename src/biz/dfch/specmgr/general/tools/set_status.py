@@ -95,13 +95,13 @@ letting ``pydantic.ValidationError`` propagate from the adapter's
 ``XFrontmatter``/``AdrFrontmatter`` reconstruction. This is a narrow,
 additive exception to this tool's otherwise raise-based contract
 (mirroring the generic ``validate`` tool's own non-raising workaround,
-ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
+DEC 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
 (a truly-absent id, path-injection/wrong-shape id, ``superseded_by``
 misuse on a non-``adr`` type) still raises exactly as before.
 
 An existing-but-broken document (feat-170-update-edit-parse-failure,
-GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
-the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
 fails to parse, each of the 14 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
@@ -284,7 +284,7 @@ _SetStatusFrontmatter = (
 )
 
 #: Each whole-body domain's own closed status vocabulary, plus ADR's fixed set,
-#: keyed by ``type`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014). Reuses each domain's existing
+#: keyed by ``type`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014). Reuses each domain's existing
 #: ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant directly -- no new duplicated list. ADR's
 #: ``"superseded by ..."`` pattern is checked separately (see :func:`_check_status_allowed`),
 #: since it is not a fixed, enumerable member of this mapping's ``adr`` entry.
@@ -370,7 +370,7 @@ def _set_status_req(
     parse yields the non-raising ``ParseFailureResult`` instead of
     ``ReqNotFoundError`` (a truly-absent id still raises).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
     variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written,
@@ -416,7 +416,7 @@ def _set_status_uc(
     ``UcNotFoundError``; that per-domain tool was retired in feat-22
     Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
     variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written, the
@@ -462,7 +462,7 @@ def _set_status_tsk(
     ``TskNotFoundError``; that per-domain tool was retired in feat-22
     Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
     variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written,
@@ -508,7 +508,7 @@ def _set_status_qa(
     ``QaNotFoundError``; that per-domain tool was retired in feat-22
     Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
     variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written, the
@@ -555,7 +555,7 @@ def _set_status_prb(
     retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
     full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
     variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written,
@@ -601,7 +601,7 @@ def _set_status_gol(
     ``GolNotFoundError``; that per-domain tool was retired in feat-22
     Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
     variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written,
@@ -647,7 +647,7 @@ def _set_status_rsk(
     ``RskNotFoundError``; that per-domain tool was retired in feat-22
     Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
     variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written,
@@ -695,7 +695,7 @@ def _set_status_dec(
     old per-domain mechanism -- was converted to the generic tools) --
     see :func:`_set_status_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+    **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 item 2).**
     ``language`` (the caller's already-guarded value; default ``"en"``,
     byte-identical to the pre-i18n adapter) selects the variant file: the
     id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -781,12 +781,12 @@ def _set_status_sop(
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
     ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-    first domain built dispatch-only from day one per ADR 36905d5b, so there
+    first domain built dispatch-only from day one per DEC 36905d5b, so there
     was never a per-domain ``set_status_sop`` tool to port -- this adapter
     was written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
     variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written,
@@ -832,7 +832,7 @@ def _set_status_vcr(
     :func:`_set_status_req` for the full semantics. ``vcr`` is not
     ``adr``, so ``superseded_by`` must never be given.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
     variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written,
@@ -875,11 +875,11 @@ def _set_status_sysrs(
 
     Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
     ``load_by_id``, ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs``
-    is dispatch-only from day one per ADR 36905d5b, so this adapter was
+    is dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
     variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is
@@ -922,12 +922,12 @@ def _set_status_txt(
 
     Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
     ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
-    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
     never be given.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
     variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is
@@ -972,12 +972,12 @@ def _set_status_set(
 
     Mirrors :func:`_set_status_sysrs`'s shape (same ``set_lock``,
     ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
-    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    dispatch-only from day one per DEC 36905d5b, so this adapter was
     written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics. ``set`` is not ``adr``, so ``superseded_by`` must
     never be given.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
     variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is
@@ -1110,8 +1110,8 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "out-of-vocabulary-status `InvalidStatusResult` check above still runs first, "
         "pre-lock/pre-load) -- its `error` text is byte-identical to the domain's `list_<d>` "
         "failed row's `error` for the same file (identical field path and cause, including the "
-        "trailing pydantic documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
-        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "trailing pydantic documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain). Neither `create_*` nor "
         "the generic `update` tool accepts a `status` argument at all -- this is the sole "
         "status-change entry point. An invalid `id` (path-injection attempt or wrong format "
@@ -1229,7 +1229,7 @@ def set_status(
         bump (issue #109's no-op case). When ``status`` is not in the
         dispatched domain's closed vocabulary, returns an
         :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
-        (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
+        (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
         below for why this one case no longer raises. When the target
         ``id``'s only matching on-disk file fails to parse (the whole-body
         domains), a non-raising
@@ -1238,10 +1238,10 @@ def set_status(
         not-found error -- ``error`` is byte-identical to the domain's
         ``list_<d>`` failed row's ``error`` for the same file (identical
         field path and cause, including the trailing pydantic documentation
-        line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+        line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
         id still raising the domain's own not-found error
         (feat-170-update-edit-parse-failure, GitHub issue
-        #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
         519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
         workaround chain).
 
@@ -1291,7 +1291,7 @@ def set_status(
     # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
     guard_language(type, language)
 
-    # ADR b399f1ce-ed42-4929-b01c-7a57d18e8014: pre-check status before any domain lock/file I/O.
+    # DEC b399f1ce-ed42-4929-b01c-7a57d18e8014: pre-check status before any domain lock/file I/O.
     invalid_status_result = _check_status_allowed(type, status, superseded_by)
     if invalid_status_result is not None:
         return invalid_status_result

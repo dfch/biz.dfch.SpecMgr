@@ -28,7 +28,7 @@ when a file's content hash is unchanged since its last read, so a stale
 entry is structurally impossible.
 
 This tool is the sole id-based read path for SYSRS: there is no
-``specmgr://sysrs/{id}`` resource (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``specmgr://sysrs/{id}`` resource (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 same reasoning as GOL/DEC/REQ/UC/TSK/QA/PRB/SOP/VCR's own ``get_*`` tools).
 
 ``raw=True`` returns the frontmatter-stripped body text verbatim instead of
@@ -45,7 +45,7 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
 A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
 parameter (default ``"en"``) selects which on-disk variant of the id to
 read: omitted/``"en"`` = the flat ``docs/sysrs/<id>.md`` document, exactly
@@ -63,7 +63,7 @@ heading text (ACC-004/ACC-011). The non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
 for a broken variant file exactly as for EN: the ``error`` text is
 byte-identical to ``list_sysrs(language=...)``'s failed row for the same
-file (ADR 9080b37c).
+file (DEC 9080b37c).
 """
 
 from __future__ import annotations
@@ -93,7 +93,7 @@ from ._paths import SysrsNotFoundError, sysrs_base_dir
         "(`error`/`path`/`id`) instead of raising; "
         "its `error` text is byte-identical to the domain's own `list` tool's failed-row `error` "
         "for the same file (identical field path and cause, including the trailing pydantic "
-        "documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
+        "documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
         "any file access."
         " With raw=True, an optional `numbered=True` prefixes every returned body line with its 1-based "
@@ -187,7 +187,7 @@ def get_sysrs(  # pylint: disable=too-many-arguments,too-many-positional-argumen
         (``error``/``path``/``id``) is returned instead of raising --
         ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
         the same file (identical field path and cause, including the trailing pydantic
-        documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+        documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c);
         ``raw=True`` never returns a broken document's raw text.
         Raises :class:`._paths.SysrsNotFoundError` if no System Requirements
         Specification has this id.

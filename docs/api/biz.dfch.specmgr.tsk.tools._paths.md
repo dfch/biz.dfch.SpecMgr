@@ -23,7 +23,7 @@ specmgr's own tooling) is dropped before any per-file work on every scan.
 ``read_tsk``/``reconcile_tsk_cache`` are imported from ``._cache``, not
 ``._io``, to avoid a circular import -- see ``._cache``'s own module
 docstring for the full rationale. The filesystem remains the sole source
-of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
+of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
 ever a memoization keyed by validated content hash, never an independent
 fact about what exists on disk.
 
@@ -63,7 +63,7 @@ Reconcile the ``tsk`` cache against the domain-wide live listing (the ``find_tsk
 The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
 per-file work, with the scanned directory's own materialized path
 listing. With the ``{language}`` subfolder layout (feat-197-i18n
-Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+Phase 125, DEC 38efdb66 item 9), a scan of one language directory no
 longer covers the whole domain -- reconciling against ``scan_paths``
 alone would evict every other language's cached entries -- so this
 wrapper instead hands :func:`~._cache.reconcile_tsk_cache` the

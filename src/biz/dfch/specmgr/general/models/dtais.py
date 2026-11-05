@@ -18,7 +18,7 @@
 """Pydantic schema and parser for the DTAIS verification-methods guidance
 document (``general/data/general_dtais.md``), feat-92-resources REQ-002.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://dtais`` (``general/resources/dtais.py``)

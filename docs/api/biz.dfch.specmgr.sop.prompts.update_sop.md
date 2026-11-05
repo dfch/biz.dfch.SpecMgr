@@ -11,7 +11,7 @@ parameter serves the line-range flow's line numbers, with ``numbered=True``
 additionally printing each line's 1-based body-line number, ready to feed
 into ``update``'s ``offset``). There is no
 ``specmgr://sop/{id}`` resource to point at -- id-based reads always go
-through the ``get_sop`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+through the ``get_sop`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 SOP is the first domain built with **no** per-domain mutation tools at
 all: there is no ``update_sop``/``set_status_sop`` tool -- every body

@@ -32,7 +32,7 @@ Like VCR/SYSRS, TXT has no by-id single-document *resource* -- id-based
 reads go through the ``get_txt`` tool only (``txt.tools.get_txt``), and
 no ``specmgr://txt/list`` resource either -- listing goes through the
 ``list_txt`` ``@mcp.tool()`` (``txt.tools.list_txt``) from the start, per
-ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
+DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 TXT ships the generated JSON Schema as the ``get_txt_schema`` ``@mcp.tool()``
 (``txt.tools.get_txt_schema``) from day one, per ADR

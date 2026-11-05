@@ -10,11 +10,11 @@ content instead (Task 3.7) -- both read a packaged, build-guaranteed data file
 rather than anything on the caller's filesystem.
 ``get_req_schema`` returns the domain's generated JSON Schema (2020-12
 dialect) as raw text, reading the same packaged, build-guaranteed data
-file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://req/schema`` resource). ``get_req`` (feat-7-various-
 improvements Task 0.9) reads, parses, and returns a full requirement document
 by id -- the sole id-based read path for REQ, replacing the former
-``specmgr://req/{id}`` resource (see ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+``specmgr://req/{id}`` resource (see DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 ``list_req`` (feat-13-list-paging Task 2.2) returns one page of id/title/
 status/ref summaries of every requirement, replacing the former
 ``specmgr://req/list`` resource so that ``max_results``/``offset`` paging

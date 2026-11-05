@@ -1,7 +1,7 @@
 # `biz.dfch.specmgr.general.models.update_result`
 
 The generic ``update`` tool's own success return shape (feat-153-off-by-n Phase 2,
-REQ-002/REQ-003, ADR 19ff316b-cd11-41a7-a616-ffd84917da51, "Revise the generic
+REQ-002/REQ-003, DEC 19ff316b-cd11-41a7-a616-ffd84917da51, "Revise the generic
 update tool's success return to frontmatter plus an optional before/after snippet").
 
 Revises feature feat-69-update-context's "frontmatter-only" return precedent
@@ -12,7 +12,7 @@ range in range mode (``None`` in whole-body mode and for the
 whole-body-equivalent ``offset=1`` + omitted-``limit`` range).
 ``create_<d>``/``set_status``/``set_classification`` keep feat-69's bare-
 frontmatter return, and ``delete``/``edit``/the ADR tools are unchanged --
-the revision is scoped to ``update`` specifically (ADR 19ff316b's
+the revision is scoped to ``update`` specifically (DEC 19ff316b's
 Decision Outcome item 5).
 
 Like :class:`~biz.dfch.specmgr.general.models.parse_failure_result.

@@ -29,10 +29,10 @@ re-hashes ``path``'s full on-disk text (``hashlib.blake2b``) and compares it
 against the hash recorded at the last successful/failed read of that path
 *before* deciding whether to skip re-parsing -- a stale entry is
 structurally impossible, it can only ever cost one extra parse. This
-refines, rather than violates, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
+refines, rather than violates, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
 "the filesystem is the sole source of truth" invariant. See ADR
 bfd76370-b59b-4d65-b550-a969f6c93c9d for the full design this module
-implements, including its relationship to ADR 33c5ab08 and the explicit
+implements, including its relationship to DEC 33c5ab08 and the explicit
 ADR-domain exclusion above.
 
 **Phase 6 (feat-107-doc-cache): a hash/parse TOCTOU race, and two latent
@@ -85,7 +85,7 @@ reconstruction (GitHub issue #162).
 guards *only* its dict get/set/pop bookkeeping -- never the file read, never
 the caller-supplied ``parse_fn`` call itself, and never held across any
 domain-level per-id lock (e.g. ``req_lock``, ``feat_create_lock``/
-``feat_lock``). Per ADR bfd76370-b59b-4d65-b550-a969f6c93c9d, this cache's
+``feat_lock``). Per DEC bfd76370-b59b-4d65-b550-a969f6c93c9d, this cache's
 lock is always the *innermost* lock acquired in any call stack: a caller
 holding a domain lock may acquire this cache's lock, but this cache never
 acquires a domain lock itself, and never holds its own lock across a call
@@ -99,7 +99,7 @@ path -- content-hash-only for this first version.
 **feat-187-list-feat-timeout, Task 110.105: two additive, single-read
 primitives (``peek_preloaded``/``read_preloaded``), ``read`` refactored
 onto them.** Added to support ``feat``'s two-stage dirty/clean cache
-staging (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44, fixing GitHub issue
+staging (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44, fixing GitHub issue
 #187's ``list_feat`` cold-scan timeout) without inventing a second,
 independently-implemented cache mechanism: :meth:`DocCache.peek_preloaded`
 looks up a path's cached result against text the caller already read,

@@ -32,7 +32,7 @@ Like VCR/SYSRS, SET has no by-id single-document *resource* -- id-based
 reads go through the ``get_set`` tool only (``set.tools.get_set``), and
 no ``specmgr://set/list`` resource either -- listing goes through the
 ``list_set`` ``@mcp.tool()`` (``set.tools.list_set``) from the start, per
-ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
+DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 set ships the generated JSON Schema as the ``get_set_schema`` ``@mcp.tool()``
 (``set.tools.get_set_schema``) from day one, per ADR

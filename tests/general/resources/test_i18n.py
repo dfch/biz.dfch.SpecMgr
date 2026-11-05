@@ -20,7 +20,7 @@
 The resource serves the packaged i18n guidance (``general/data/general_i18n.md``) as raw markdown (no dedicated
 parse model, like ``specmgr://reference-graph``). Because the document is what the ``translate_artifact`` flow reads
 first, these tests pin (a) the registration and the verbatim passthrough, (b) that the never-translate list covers
-every closed-vocabulary token family REQ-010 names (and the ``prb`` ``problem_statement`` exemption of ADR 38efdb66
+every closed-vocabulary token family REQ-010 names (and the ``prb`` ``problem_statement`` exemption of DEC 38efdb66
 item 11), (c) that it describes the implemented layout/vocabulary/guard behavior, and (d) -- against the real models --
 that the tokens its "schema-enforced" column lists really are rejected when translated (the full domain matrix lives in
 ``tests/general/prompts/test_translate_artifact_flow.py``), so the guidance cannot silently drift from the schemas.

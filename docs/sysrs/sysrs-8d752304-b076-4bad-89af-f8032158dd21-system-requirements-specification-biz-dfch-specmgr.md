@@ -36,35 +36,35 @@ Specification artifacts (decisions, requirements, goals, risks, use cases, verif
 
 ## Decisions
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models
 
   The core organizing principle behind every domain package this specification's Requirements and Decisions sections cross-reference: each document type owns its own tools, prompts, resources, and schema, co-located rather than scattered across interface-layer-first packages.
 
-- ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3: Filesystem is the sole source of truth: no in-memory id-to-document cache
+- DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3: Filesystem is the sole source of truth: no in-memory id-to-document cache
 
   Establishes that every domain's .md files, not any in-memory index, are authoritative -- the invariant the System Scope section above relies on when describing hand-editing safety.
 
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712: id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712: id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution
 
   Fixes how every cross-reference bullet in this document resolves to a real file: a server-generated UUID id plus a fresh directory scan, not a cached index.
 
-- ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
+- DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
 
   The shared parser and renderer infrastructure that every domain's schema besides ADR itself is built on, including the req, gol, and sysrs schemas this document depends on.
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0: Consolidate whole-body update and status-change tools into generic type-dispatched tools
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0: Consolidate whole-body update and status-change tools into generic type-dispatched tools
 
   Fixes the convention this document's own regeneration workflow relies on: whole-body and line-range updates and status changes go through the generic update and set_status tools with an explicit type parameter, not per-domain tools.
 
-- ADR ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose list resources as paged MCP tools, not resources
+- DEC ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose list resources as paged MCP tools, not resources
 
   Fixes how an agent discovers existing cross-reference candidates before drafting or refreshing a sysrs document like this one, rather than reading an unbounded resource.
 
-- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based REQ document reads as a tool (get_req), not a resource
+- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based REQ document reads as a tool (get_req), not a resource
 
   Fixes the precedent every later domain, including sysrs itself, follows for id-based reads: a get_&lt;d&gt; tool, not a resource -- the same precedent this document's own get_sysrs follows.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in `.specmgr` with feature-driven work units
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in `.specmgr` with feature-driven work units
 
   Fixes the .specmgr/feat/feat-NNN-slug/README.md convention this very specification was produced under, feat-84-specmgr-sysrs, distinct from the published, generated documentation under docs/.
 

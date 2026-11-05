@@ -19,7 +19,7 @@ First-line docstrings from each module, organized by domain:
 **adr/**
 
 - `adr/__init__.py` — The Architecture Decision Record (ADR) domain package.
-- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
+- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f).
 - `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr.
 - `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test.
 - `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr.

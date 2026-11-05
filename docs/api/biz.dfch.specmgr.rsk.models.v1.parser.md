@@ -27,7 +27,7 @@ Like ``req.models.v1.parser.parse_req`` and ``tsk.models.v1.parser.parse_tsk``,
 there is no dedicated structural-error exception type; both error channels are
 plain ``AssertionError`` / ``pydantic.ValidationError`` that propagate uncaught.
 
-**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, DEC 38efdb66
 item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
 domain: ``parse_rsk`` is this domain's single text-to-model parse boundary --
 the choke point behind ``get_rsk``'s non-raw reads, ``list_rsk``'s rows (both
@@ -90,7 +90,7 @@ text:
     together, exactly as read from disk (or submitted verbatim by an MCP
     tool call that never wrote it to disk at all).
 language:
-    The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+    The document's language (feat-197-i18n, DEC 38efdb66 item 5):
     ``None`` (the default) or ``"en"`` parses the canonical, English
     headings as-is (no table -- byte-identical to the pre-i18n path);
     any other value resolves that language's heading-mapping table and

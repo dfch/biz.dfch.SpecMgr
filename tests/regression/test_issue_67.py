@@ -35,7 +35,7 @@ symptom.
 
 Deliberately excluded from both checks: an entry-heading line carrying the documented
 midnight-UTC migration shape, e.g. `### 2026-08-15 00:00:00.000Z - Created`. feat-146 Phase 2
-(ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) tightens every entry-heading alias to the full
+(DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf) tightens every entry-heading alias to the full
 date+time form and migrates the 8 packaged date-only entry headings to exactly that midnight
 shape -- a date-only heading carries no time-of-day at all, so midnight UTC is the faithful,
 convention-fixed representation of it (the ADR's decision outcome prescribes
@@ -59,7 +59,7 @@ _FULL_MIDNIGHT_PATTERN = re.compile(r"\d{2}:\d{2}:\d{2}\.000[Z+-]")
 _ROUND_MILLISECONDS_PATTERN = re.compile(r"\.000[Z+-]")
 
 #: The feat-146 Phase 2 midnight-UTC migration shape for formerly date-only entry headings
-#: (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf): a `###`/`####` heading whose timestamp is
+#: (DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf): a `###`/`####` heading whose timestamp is
 #: exactly `yyyy-MM-dd 00:00:00.000Z` (either the space- or the `T`-separated form, matching
 #: the documented "both separators accepted" contract), followed by the entry's own `" - "`/`" : "` separator.
 #: Such a heading is a documented, convention-fixed migration of a time-of-day-less entry,

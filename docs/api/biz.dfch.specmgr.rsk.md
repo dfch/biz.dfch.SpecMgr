@@ -24,7 +24,7 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_rsk`` tool was removed in favor of it (feat-81-83-validation).
 Like REQ/TSK, RSK has no
 ``specmgr://rsk/{id}`` resource -- id-based reads go through the
-``get_rsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``get_rsk`` tool only (same rationale as DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based document reads as a tool, not a resource" -- RSK never had
 such a resource to remove in the first place). Likewise, there is no
 ``specmgr://rsk/list`` resource -- listing is the paged ``list_rsk`` tool,

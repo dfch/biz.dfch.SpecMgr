@@ -3,7 +3,7 @@
 Per-language section-heading mapping tables: the lazy loader and the fence-aware
 normalization pre-pass (feat-197-i18n Phase 110).
 
-Implements ADR 38efdb66's items 3/4/5 for the read side: one flat JSON
+Implements DEC 38efdb66's items 3/4/5 for the read side: one flat JSON
 object per language at ``general/data/headings/<language>.json`` mapping
 ``<translated heading text> -> <canonical English heading text>`` (keys and
 values are the heading's inline text without the leading ``#`` markers and
@@ -131,7 +131,7 @@ ValueError
 
 ### `normalize_heading_lines(text: 'str', table: 'dict[str, str]') -> 'str'`
 
-Rewrite every table-mapped heading line to its canonical text, fence-aware (ADR 38efdb66 item 5).
+Rewrite every table-mapped heading line to its canonical text, fence-aware (DEC 38efdb66 item 5).
 
 The pre-parse heading-normalization pass: for each section-heading line (levels 2-6) outside a fenced code
 block (:func:`iter_heading_lines`: ``^#{1,6} ``, the mdformat-normalized heading shape) the line's inline text

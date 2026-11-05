@@ -277,7 +277,7 @@ The instructional bodies are **not inline strings** — they live in packaged da
 
 ## 5. Example ADR document structure
 
-Full on-disk examples in `/home/user/src/biz.dfch.SpecMgr/docs/adr/` (23 ADRs). Canonical example with options: `docs/adr/9d3800cf-b3b4-4d46-8b68-3573d932b1c8-detect-unreferenced-code-with-vulture-not-snakefood-enforced.md`:
+Full on-disk examples in `/home/user/src/biz.dfch.SpecMgr/docs/adr/` (23 ADRs). Canonical example with options: `docs/dec/9d3800cf-b3b4-4d46-8b68-3573d932b1c8-detect-unreferenced-code-with-vulture-not-snakefood-enforced.md`:
 
 ```
 
@@ -589,7 +589,7 @@ Private helpers (all three domains have identical-shape copies):
 | `gol_example.py` | `specmgr://gol/example` | `gol_example` | `text/markdown` | `read_packaged_text("gol", "example")` — same read as the tool. |
 | `gol_template.py` | `specmgr://gol/template` | `gol_template` | `text/markdown` | `read_packaged_text("gol", "template")`. |
 
-No `specmgr://gol/{id}` (ADR ddfb1109) and no `specmgr://gol/list` (paged tool from day one, ADR ec9f5262). `resources/__init__.py`: `from . import gol_example, gol_schema, gol_template`.
+No `specmgr://gol/{id}` (DEC ddfb1109) and no `specmgr://gol/list` (paged tool from day one, DEC ec9f5262). `resources/__init__.py`: `from . import gol_example, gol_schema, gol_template`.
 
 ### 1.4 Prompts — `gol/prompts/`
 
@@ -855,7 +855,7 @@ Private helpers: `_paths.py` (`QA_TYPE_NAME = "qa"`, `QaNotFoundError`, `qa_base
 | `specmgr://qa/example` | `qa_example` | `text/markdown` | packaged `qa_example.md` |
 | `specmgr://qa/template` | `qa_template` | `text/markdown` | packaged `qa_template.md` |
 
-No `specmgr://qa/{id}` (ADR ddfb1109); the former `specmgr://qa/list` was replaced by the `list_qa` tool (feat-13). `resources/__init__.py`: `from . import qa_example, qa_schema, qa_template`. (A stale `__pycache__/qa_list.cpython-313.pyc` remains — no source.)
+No `specmgr://qa/{id}` (DEC ddfb1109); the former `specmgr://qa/list` was replaced by the `list_qa` tool (feat-13). `resources/__init__.py`: `from . import qa_example, qa_schema, qa_template`. (A stale `__pycache__/qa_list.cpython-313.pyc` remains — no source.)
 
 ### 3.4 Prompts — `qa/prompts/` (3 prompts — `refine` is QA-unique)
 
@@ -960,7 +960,7 @@ I have a complete picture. Here is the report.
 # The "new generic parser": the `models/md` engine
 
 The generic parser is the **`biz.dfch.specmgr.models.md` package** at
-`/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/` — a generic, document-type-agnostic "heading-mapped Markdown-to-Pydantic" parse/render engine. It was built in feature **`.specmgr/feat/feat-5-md-model-parser/`** (README title: *"Feature: Generic heading-mapped Markdown-to-Pydantic document parser"*, status `done`, v1.16.4) and is governed by **ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae`** (`docs/adr/832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md`, v1.5.0, accepted) plus **ADR `bc5e18ad-6bbf-4265-bae4-3e34984a2d29`** (generic base frontmatter model). Every non-ADR domain (UC, REQ, TSK, QA, PRB, GOL, RSK) is already built on it; the legacy ADR parser (`models/adr/`) deliberately was *not* migrated onto it.
+`/home/user/src/biz.dfch.SpecMgr/src/biz/dfch/specmgr/models/md/` — a generic, document-type-agnostic "heading-mapped Markdown-to-Pydantic" parse/render engine. It was built in feature **`.specmgr/feat/feat-5-md-model-parser/`** (README title: *"Feature: Generic heading-mapped Markdown-to-Pydantic document parser"*, status `done`, v1.16.4) and is governed by **ADR `832cd6c1-ef8a-4bfc-990e-a610823f61ae`** (`docs/dec/832cd6c1-ef8a-4bfc-990e-a610823f61ae-generic-heading-mapped-markdown-to-pydantic-parsing-with-dec.md`, v1.5.0, accepted) plus **ADR `bc5e18ad-6bbf-4265-bae4-3e34984a2d29`** (generic base frontmatter model). Every non-ADR domain (UC, REQ, TSK, QA, PRB, GOL, RSK) is already built on it; the legacy ADR parser (`models/adr/`) deliberately was *not* migrated onto it.
 
 Top-level `models/` contains: `__init__.py`, `adr/`, `iso25010.py`, `md/`, `version_info.py`.
 
@@ -2808,7 +2808,7 @@ DecDocument(frontmatter, body) — parse_dec(text) glue — DecSummary(DocSummar
 Surface (simple shape, GOL/RSK/QA):
 
 - Tools (10): create_dec(content), update_dec(id, content), set_status_dec(id, status[, superseded_by]), parse_dec(path), list_dec(max_results, offset), get_dec(id), get_dec_example(), get_dec_template(), delete_dec(id) stub, validate_dec(content, full=False)
-- Resources (3): specmgr://dec/{schema,example,template} — no /{id}, no /list (ADR ddfb1109 / ec9f5262 precedent)
+- Resources (3): specmgr://dec/{schema,example,template} — no /{id}, no /list (DEC ddfb1109 / ec9f5262 precedent)
 - Prompts (2): create_dec(topic), update_dec(id, instructions?)
 - Storage: docs/dec/ (generic \_doc_paths, SPECMGR_DOCS_DIR), filenames dec-{uuid}-{slug}.md, raw body persisted byte-for-byte (no render_dec — writes preserve the caller's validated markdown)
 - Wiring: server.py import + docstring, commands/schema.py \_GENERATORS + generate_dec_schema, pyproject package-data, pre-commit hooks (expand 8 globs + new dec-package hook), CI drift steps, AGENTS.md, docs/MCP.md + docs/GENERATED.md + docs/api regenerated, .specmgr/feat/feat-NNN-decision/README.md, tests/dec mirrors tests/gol.
@@ -5003,7 +5003,7 @@ Found 100 matches (more matches available)
 
   Line 78: GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 
-  Line 81:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+  Line 81:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
 
   Line 143: text guiding an LLM through the RSK tool sequence above.
 

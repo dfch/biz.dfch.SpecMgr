@@ -19,7 +19,7 @@
 
 ``find_related``/``find_similar_text`` (semantic similarity) and ``list_references``/``get_reference_diagram``/
 ``get_reference_diagram_all`` (cross-references) must never resolve, enumerate, or index a ``docs/{type}/{language}/``
-entry, and every reference or similarity hit resolves to the EN variant's path (ADR 38efdb66 item 8: a directory-layout
+entry, and every reference or similarity hit resolves to the EN variant's path (DEC 38efdb66 item 8: a directory-layout
 property of the non-recursive ``iter_doc_paths`` scan, with zero code change in those tools). These tests build a docs
 tree that holds BOTH the EN documents and ``de/`` variants of the same ids -- with content *marked* so a leak is
 unambiguous (a ``gamma``-only German title the deterministic fake embedding backend scores as the nearest possible
@@ -375,7 +375,7 @@ class TestRegistryDiagramAcrossAllDomainsStaysEnOnly(_EnOnlyTestCase):
 
 
 class TestFlatScansNeverSeeALanguageFolder(unittest.TestCase):
-    """The structural fact ADR 38efdb66 item 8 rests on, per domain: a ``de/`` file is invisible to the flat scan,
+    """The structural fact DEC 38efdb66 item 8 rests on, per domain: a ``de/`` file is invisible to the flat scan,
     the id lookup and the listing -- even when hand-planted. A future recursive glob fails these tests."""
 
     def setUp(self) -> None:

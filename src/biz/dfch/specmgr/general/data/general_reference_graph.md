@@ -373,7 +373,7 @@ writing (UC rulebook §2.10 point 2). `specmgr plantuml-check` /
 Level 0 = the source. A level-k node is expanded only if k < depth and it
 resolved to an existing document (its body read through the domain's read
 path — the cache-aware leg for the 14 whole-body domains, the never-cached
-leg for adr, ADR bfd76370). Each unique (type, id) reference adds exactly
+leg for adr, DEC bfd76370). Each unique (type, id) reference adds exactly
 one edge + one node (the node title via the reference resolution; a dangling
 target = no title = the unresolved node of §2.6). `depth` is validated 1..5
 (default 1); a malformed value is a `ValueError` before any filesystem
@@ -713,6 +713,6 @@ block-boundary pins and pin every verified shape (feature plan Task 150.130).
   `list_references` guard contract: `src/biz/dfch/specmgr/general/tools/_references.py`
   — FEAT feat-144-ref-artifact (GitHub issue #144); the `FEAT` tag's dual
   id shape — FEAT feat-177-list-ref-feat.
-- `plantuml/` package placement + strict chain policy: ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4.
-- The DocCache adr exclusion (the never-cached adr leg of §3): ADR bfd76370-b59b-4d65-b550-a969f6c93c9d.
-- Non-raising structured-result precedent (the §3.4 broken-source `ParseFailureResult` is case 3 of the chain): ADR 519d1206-4d2a-4500-9046-6db635209996 and its extensions ADR b399f1ce-ed42-4929-b01c-7a57d18e8014, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f.
+- `plantuml/` package placement + strict chain policy: DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4.
+- The DocCache adr exclusion (the never-cached adr leg of §3): DEC bfd76370-b59b-4d65-b550-a969f6c93c9d.
+- Non-raising structured-result precedent (the §3.4 broken-source `ParseFailureResult` is case 3 of the chain): DEC 519d1206-4d2a-4500-9046-6db635209996 and its extensions DEC b399f1ce-ed42-4929-b01c-7a57d18e8014, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f.

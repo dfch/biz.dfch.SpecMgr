@@ -378,7 +378,7 @@ def _load_adr(ref_id: str) -> tuple[str, Path]:
     """Resolve one ``adr`` reference to ``(title, path)`` (feat-144 Task 2.1).
 
     ``adr`` is the one target domain that never reads through the doc
-    cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d -- ADR is permanently
+    cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d -- ADR is permanently
     excluded from the cache mechanism), and ``title`` is the referenced
     ADR's own ``# {title}`` H1 via ``doc.body.title`` (not
     ``doc.body.text``). ``AdrNotFoundError`` propagates unchanged (caught

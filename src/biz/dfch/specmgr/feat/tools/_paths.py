@@ -32,7 +32,7 @@ effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``.
 
 **Cache-backed single-file read (feat-107-doc-cache Phase 4, Task 4.1a).**
 :func:`find_feat_path_by_id` reads its single target file through the
-content-hash-validated ``feat`` cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d)
+content-hash-validated ``feat`` cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d)
 via ``._cache``'s own ``read_feat`` (not ``parse_feat`` directly) -- a file
 whose on-disk content hash is unchanged since its last read is not
 re-parsed. This also fixes the same double-parse bug every other domain's
@@ -370,7 +370,7 @@ def find_feat_parse_failure(base_dir: Path, id_: str) -> tuple[Path, str] | None
     The ``feat``-specific companion to
     :func:`general.tools._doc_paths.find_parse_failure`, for the flat-file
     domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
-    folder's own name (ADR 8cf940c5), there is no directory scan to fall back
+    folder's own name (DEC 8cf940c5), there is no directory scan to fall back
     on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
     checks that single path -- if it exists and the domain's own cache-backed
     :func:`._cache.read_feat` (the **clean**, full-parse cache -- this
@@ -398,7 +398,7 @@ def find_feat_parse_failure(base_dir: Path, id_: str) -> tuple[Path, str] | None
     adapters (``update``/``edit``/``set_status``/``set_classification`` in
     ``general/tools/``) call it the same way on the same catch
     (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC 519d1206
     chain).
 
     Parameters

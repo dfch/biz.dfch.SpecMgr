@@ -58,7 +58,7 @@ version: 1.0.0
 
 - Fuzzy or typo-tolerant matching.
 
-- Changes to `get_<d>`/`parse_<d>` or to resources (listing is a tool, not a resource, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+- Changes to `get_<d>`/`parse_<d>` or to resources (listing is a tool, not a resource, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 - Any new CLI command.
 
@@ -74,15 +74,15 @@ version: 1.0.0
 
 Matching rule. The `glob` value is evaluated with `fnmatchcase(id.lower(), pattern.lower())` — both the stored id and the pattern are explicitly lowercased first. This is deliberate: on POSIX, `fnmatch.fnmatch` is case-sensitive (its `os.path.normcase` is the identity), so the portable case-insensitive form is lowercase-both-sides plus `fnmatchcase`. The case-insensitivity is a deliberate search-UX choice, not an alignment with existing lookups: by-id resolution (`get_<d>` and path scanning) is exact and case-sensitive, and the true shared property is that ids are stored in one canonical lowercase form (`feat` slugs are shape-validated as lowercase via `assert_feat_id`; document UUIDs are created as `str(uuid.uuid4())`). An empty string is a pattern, not an off-switch: `glob=""` matches no id (ids are never empty) and yields a zero-row result; only `glob=None` disables filtering.
 
-Pipeline position. Each `list_<d>` tool builds one summary row per document, then computes `total`, applies `offset`/`max_results` paging, and sets `truncated`. The filter runs on the row list between the row build and the `total` computation, so `total` is the match count and paging keeps its existing meaning on the smaller set. `error_count` is recomputed on the same filtered row list; because failed-to-parse rows carry `id=None` and never match any `glob`, a `glob`-given result has no failed rows and `error_count = 0` by construction (keeping the whole-directory count would allow `error_count > total`). Broken-document discovery — the `repair` workflow's `list_<d>`-based surfacing of failed rows — therefore stays an unfiltered-listing / `ref`-based job: ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 rejected hiding parse failures for exactly this reason. For `feat` specifically the row build is feat-187's two-stage (dirty/clean `DocCache`) resolution — the filter applies to the rows it produces and must not re-scan the filesystem on its own (that would bypass the cache and regress the cold-scan timeout fix) — and during the warmup window a not-yet-fully-parsed broken folder transiently resolves to a healthy row with a real id (so it can match) before converging to an `id=None` failed row; the filter sees whatever its row build produces, healthy or failed.
+Pipeline position. Each `list_<d>` tool builds one summary row per document, then computes `total`, applies `offset`/`max_results` paging, and sets `truncated`. The filter runs on the row list between the row build and the `total` computation, so `total` is the match count and paging keeps its existing meaning on the smaller set. `error_count` is recomputed on the same filtered row list; because failed-to-parse rows carry `id=None` and never match any `glob`, a `glob`-given result has no failed rows and `error_count = 0` by construction (keeping the whole-directory count would allow `error_count > total`). Broken-document discovery — the `repair` workflow's `list_<d>`-based surfacing of failed rows — therefore stays an unfiltered-listing / `ref`-based job: DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 rejected hiding parse failures for exactly this reason. For `feat` specifically the row build is feat-187's two-stage (dirty/clean `DocCache`) resolution — the filter applies to the rows it produces and must not re-scan the filesystem on its own (that would bypass the cache and regress the cold-scan timeout fix) — and during the warmup window a not-yet-fully-parsed broken folder transiently resolves to a healthy row with a real id (so it can match) before converging to an `id=None` failed row; the filter sees whatever its row build produces, healthy or failed.
 
 One shared helper. The filter lives in a single function in `general/tools/` (alongside the other shared list plumbing) and is called by all twelve tools, so the matching rule cannot drift between domains and is tested in one place.
 
 ### Related Decisions
 
-- ADR ec9f5262-9912-49d0-903f-fcfb54f28c13: listing is a paged `list_<d>` tool, not a `specmgr://<d>/list` resource — this feature extends those tools' parameter surface.
+- DEC ec9f5262-9912-49d0-903f-fcfb54f28c13: listing is a paged `list_<d>` tool, not a `specmgr://<d>/list` resource — this feature extends those tools' parameter surface.
 
-- ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `list_feat`'s two-stage dirty/clean `DocCache` — the filter must sit after that resolution (see Design Notes).
+- DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): `list_feat`'s two-stage dirty/clean `DocCache` — the filter must sit after that resolution (see Design Notes).
 
 ### Task List
 

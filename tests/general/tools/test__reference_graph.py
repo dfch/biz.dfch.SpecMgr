@@ -475,7 +475,7 @@ class TestWideRegistry(_SeededRegistryTestCase):
             self.assertNotIn(f"[DEC-{_D002}]", rendered)
 
     def test_adr_leg_is_carried(self):
-        # the never-cached adr leg (ADR bfd76370): the ADR document is a node
+        # the never-cached adr leg (DEC bfd76370): the ADR document is a node
         # and its reference an edge in both modes
         for graph in (build_registry_graph(), build_source_graph("req", _W001, depth=1, reverse=True)):
             rendered = render_reference_graph(graph)

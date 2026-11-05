@@ -59,7 +59,7 @@ read and the write-back must be host-native.
       reference and fix hint for structural failures -- byte-identical to
       `list_<type>()`'s failed row, including the trailing pydantic
       documentation line; for `feat`, that identity is time-qualified
-      (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): while its background
+      (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44): while its background
       warmup has not yet fully parsed the file, `list_feat`'s row may
       instead carry tier-2 wording that only converges later, or be a
       tier-3 transiently-healthy row at all -- `get_feat`'s own `error`

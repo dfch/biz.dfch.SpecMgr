@@ -289,7 +289,7 @@ class TestFindDocPathById(unittest.TestCase):
 
 
 class TestFindParseFailure(unittest.TestCase):
-    """Tests for find_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c)."""
+    """Tests for find_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, DEC 9080b37c)."""
 
     def test_name_match_parse_fail_returns_path_and_error(self) -> None:
         """A name-matching file that fails to parse must return (path, str(exc))."""
@@ -369,7 +369,7 @@ class TestFindParseFailure(unittest.TestCase):
 
 
 class TestDocBaseDirLanguage(unittest.TestCase):
-    """Tests for doc_base_dir's optional language parameter (feat-197-i18n Phase 110, ADR 38efdb66 item 1)."""
+    """Tests for doc_base_dir's optional language parameter (feat-197-i18n Phase 110, DEC 38efdb66 item 1)."""
 
     def test_omitted_language_is_the_flat_directory(self):
         """language omitted must resolve to today's exact flat path (byte-identical EN behavior)."""
@@ -432,7 +432,7 @@ class TestEnsureDocBaseDirLanguage(unittest.TestCase):
 
 
 class TestLanguageForDocPath(unittest.TestCase):
-    """Tests for language_for_doc_path (the path-position -> language derivation, ADR 38efdb66 item 5)."""
+    """Tests for language_for_doc_path (the path-position -> language derivation, DEC 38efdb66 item 5)."""
 
     def _layout(self, tmp: str) -> Path:
         base = Path(tmp) / "dec"
@@ -485,7 +485,7 @@ class TestLanguageForDocPath(unittest.TestCase):
 
 
 class TestIterDocPathsAllLanguages(unittest.TestCase):
-    """Tests for iter_doc_paths_all_languages (the domain-wide live listing, ADR 38efdb66 item 9)."""
+    """Tests for iter_doc_paths_all_languages (the domain-wide live listing, DEC 38efdb66 item 9)."""
 
     def test_missing_directory_yields_nothing(self):
         """A non-existent base directory must yield nothing, not raise."""

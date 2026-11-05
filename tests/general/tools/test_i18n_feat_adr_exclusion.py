@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Registered-surface and behavioral regression tests for the permanent ``feat``/``adr`` i18n exclusion
-(feat-197-i18n Phase 150, Task 150.100; REQ-002/ACC-002, REQ-009/ACC-015, ADR 38efdb66 item 10).
+(feat-197-i18n Phase 150, Task 150.100; REQ-002/ACC-002, REQ-009/ACC-015, DEC 38efdb66 item 10).
 
 ``tests/general/tools/test_language_guard.py`` pins the *Python signatures* of a handful of ``feat``/``adr`` tool
 functions. This module pins the *registered MCP surface* itself -- the tools, prompts, resources and resource

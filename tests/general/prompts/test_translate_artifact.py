@@ -166,7 +166,7 @@ class TestTranslateArtifactRendering(unittest.TestCase):
         self.assertIn("`problem_statement` lead paragraph", result)
         self.assertIn("stays canonical English in every language", result)
         self.assertIn("byte for byte", result)
-        self.assertIn("ADR 38efdb66 item 11", result)
+        self.assertIn("DEC 38efdb66 item 11", result)
 
     def test_structure_and_soft_wrap_rules(self):
         result = _one_line(translate_fn("dec", _ID, "de"))

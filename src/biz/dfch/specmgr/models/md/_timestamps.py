@@ -21,7 +21,7 @@ read path and the MCP write side (feat-146 Phase 1, ADR
 
 This module is the single source of the machine-written canonical date+time
 form: ``yyyy-MM-ddTHH:mm:ss.SSS`` (``T``-separated, ISO 8601's standard
-extended combined form per ADR 23a14195-339c-48af-99d2-97c9964041ae)
+extended combined form per DEC 23a14195-339c-48af-99d2-97c9964041ae)
 followed by either ``Z`` (UTC, i.e. a zero UTC offset) or a signed
 ``±HH:mm`` offset, with milliseconds truncated to *exactly* three digits
 (not the six-digit microsecond precision :meth:`datetime.datetime.isoformat`

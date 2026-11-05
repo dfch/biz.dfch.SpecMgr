@@ -20,7 +20,7 @@
 The shared, private, ``mcp``-free helper behind the ``list_languages`` and ``check_translation_drift`` tools: given a
 document ``type``/``id`` it finds the on-disk document of one *language* (or of every language) without ever
 touching the EN-only scans of the other generic tools (REQ-013) -- it resolves each language's own directory through
-the domain's own ``<d>_base_dir(language)`` (ADR 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
+the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
 code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed ``load_by_id``/``read_<d>``
 (a variant is parsed through its language's heading table, derived from its path position), and discovers the
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.

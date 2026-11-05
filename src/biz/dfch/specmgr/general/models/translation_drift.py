@@ -31,8 +31,8 @@ built on), so the drift check and the parser can never disagree on what a headin
 language-invariant **structural key**:
 
 1. its text is mapped back to canonical English through the language's heading table (``table.get(text, text)``,
-   ADR 38efdb66 item 5 -- a heading without an entry is already canonical or genuinely unknown);
-2. a **data-carrying heading** -- one whose schema alias carries a free-text group, ADR 38efdb66 item 3 -- is reduced
+   DEC 38efdb66 item 5 -- a heading without an entry is already canonical or genuinely unknown);
+2. a **data-carrying heading** -- one whose schema alias carries a free-text group, DEC 38efdb66 item 3 -- is reduced
    to its schema-constant token part, dropping the free text the translator legitimately changes
    (:data:`_TOKEN_PATTERNS`): ``Option N: <title>`` -> ``Option N:`` (dec), ``Step N: <title>`` -> ``Step N:``
    (sop, uc), ``Extension N<l>. <title>`` -> ``Extension N<l>.`` (uc), ``AC-NNN (Method): <text>`` ->
@@ -96,7 +96,7 @@ _MIN_SKELETON_LEVEL = 2
 #: Separator of the canonical ancestor chain in a heading's structural key/path.
 _PATH_SEPARATOR = " > "
 
-#: The schema-constant token parts of the data-carrying headings (ADR 38efdb66 item 3): each pattern fullmatches a
+#: The schema-constant token parts of the data-carrying headings (DEC 38efdb66 item 3): each pattern fullmatches a
 #: canonical-mapped heading text and its single group is the token kept as the structural key. Derived from the
 #: free-text ``@alias`` REGEX patterns of the thirteen i18n-eligible domains' models -- ``dec`` ``^Option \d+: .+$``,
 #: ``sop``/``uc`` ``^Step \d+: .+$``, ``uc`` ``^Extension \d+[a-z]?\. .+$``, ``vcr`` ``AC-(\d{3}) (<DTAIS>): .+`` --

@@ -109,7 +109,7 @@ serialization, the inherited ``_write.py`` caveat identical to
 frontmatter only is returned (no body).
 
 **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead
 of raising, with nothing written in either case. (1) On a target ``id``
@@ -375,7 +375,7 @@ def _edit_req(
     non-raising ``ValidateResult(valid=False, ...)`` instead of
     ``AssertionError``/``pydantic.ValidationError``.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
     variant's own (``req_lock(req_lock_key(id_, language))``), the stage-1 match runs against that
@@ -421,7 +421,7 @@ def _edit_uc(
     frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
     ``UcNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
     variant's own (``uc_lock(uc_lock_key(id_, language))``), the stage-1 match runs against that
@@ -467,7 +467,7 @@ def _edit_tsk(
     frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
     ``TskNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
     variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -513,7 +513,7 @@ def _edit_qa(
     frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
     ``QaNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
     variant's own (``qa_lock(qa_lock_key(id_, language))``), the stage-1 match runs against that
@@ -559,7 +559,7 @@ def _edit_prb(
     frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
     ``PrbNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
     variant's own (``prb_lock(prb_lock_key(id_, language))``), the stage-1 match runs against that
@@ -605,7 +605,7 @@ def _edit_gol(
     frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
     ``GolNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
     variant's own (``gol_lock(gol_lock_key(id_, language))``), the stage-1 match runs against that
@@ -651,7 +651,7 @@ def _edit_rsk(
     frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
     ``RskNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
     variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -697,7 +697,7 @@ def _edit_dec(
     frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
     ``DecNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+    **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/5).**
     ``language`` (the caller's already-guarded value; default ``"en"``,
     byte-identical to the pre-i18n adapter) selects the variant file: the
     id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -783,7 +783,7 @@ def _edit_sop(
     frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
     ``SopNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
     variant's own (``sop_lock(sop_lock_key(id_, language))``), the stage-1 match runs against that
@@ -829,7 +829,7 @@ def _edit_vcr(
     frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
     ``VcrNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
     variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the stage-1 match runs against that
@@ -875,7 +875,7 @@ def _edit_sysrs(
     frontmatter carry-over with only ``updated`` bumped,
     ``write_sysrs_file``, ``SysrsNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
     variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the stage-1 match runs against
@@ -921,7 +921,7 @@ def _edit_txt(
     frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
     ``TxtNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
     variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
@@ -967,7 +967,7 @@ def _edit_set(
     frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
     ``SetNotFoundError``).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
     variant's own (``set_lock(set_lock_key(id_, language))``), the stage-1 match runs against
@@ -1074,12 +1074,12 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "(`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text "
         "is byte-identical to the domain's `list_<d>` failed row's `error` for the same file "
         "(identical field path and cause, including the trailing pydantic documentation line; "
-        "ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
+        "DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
         "not-found error. A stage-2 content-validation "
         "failure on the post-edit result returns a non-raising `ValidateResult` (`valid=False`, "
         "`errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool "
         "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR "
-        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain). Stage-1's not-found/multiple-matches guards "
         "and every caller-usage `ValueError` (invalid `id` shape, unknown or `adr` `type`, identical "
         "input, empty `old_str`) still raise. An invalid `id` (path-injection attempt or wrong format "
@@ -1132,8 +1132,8 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     non-raising ``ValidateResult(valid=False, ...)`` (the single
     ``errors[].message`` capped at 300 chars exactly as the generic
     ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
-    failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
-    case 4 of the ADR 519d1206 chain), with nothing written in either case.
+    failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+    case 4 of the DEC 519d1206 chain), with nothing written in either case.
 
     **2-fold write (REQ-003).** The disk write happens strictly after both
     stages pass: the domain lock is held across the entire read -> match ->
@@ -1226,7 +1226,7 @@ def edit(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         ``validate`` tool caps it (feat-110), instead of
         ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
         either failure case (feat-170-update-edit-parse-failure, GitHub issue
-        #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+        #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
         519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
         workaround chain).
 

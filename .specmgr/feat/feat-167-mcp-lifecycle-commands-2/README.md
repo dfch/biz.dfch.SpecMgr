@@ -16,7 +16,7 @@ version: 1.0.0
 
 This feature carries the remaining scope of GitHub issue #150 ("MCP-Native Feature-Lifecycle Commands") that was not yet started when that feature's own Phase 0 (`get_<d>` parse-failure error channel) and Phase 1 (`repair`) were implemented, reviewed, and merged as feat-150-mcp-lifecycle-commands. That feature is closed out at its Phase 0 + Phase 1 scope; the remaining four items -- (1) a portable, MCP-native version of the OpenCode-only `implement_feature` workflow, (2) an automatic post-implementation review-and-fix-phase follow-up, (3) a pre-implementation plan-refinement command, and (4) an easy way to get these OpenCode-native commands onto a fresh OpenCode install -- are tracked here, under GitHub issue #167.
 
-The split (rather than continuing inside feat-150's own plan document) is because GitHub issue #163 (feat-163-feat-numbering) introduces a stricter FEAT Task List numbering scheme -- 3-digit `#### Phase NNN: {title}` headings and `- [ ] Task NNN.MMM: {text}` checklist items, both shape-enforced by the schema, gap-friendly and permanent once assigned -- with an explicit no-migration policy for existing plan documents. This feature is authored directly in that new scheme from the start, so it never needs migration, rather than mixing schemes inside feat-150's already-merged plan or renumbering already-shipped content referenced elsewhere in the repo (AGENTS.md, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, `CHANGELOG.md`, `server.py`'s module docstring).
+The split (rather than continuing inside feat-150's own plan document) is because GitHub issue #163 (feat-163-feat-numbering) introduces a stricter FEAT Task List numbering scheme -- 3-digit `#### Phase NNN: {title}` headings and `- [ ] Task NNN.MMM: {text}` checklist items, both shape-enforced by the schema, gap-friendly and permanent once assigned -- with an explicit no-migration policy for existing plan documents. This feature is authored directly in that new scheme from the start, so it never needs migration, rather than mixing schemes inside feat-150's already-merged plan or renumbering already-shipped content referenced elsewhere in the repo (AGENTS.md, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c, `CHANGELOG.md`, `server.py`'s module docstring).
 
 The unifying design principle carried over from feat-150 (see Design Notes) is unchanged: every new capability gets a **portable MCP prompt** (narration-only text, works in any MCP host, following the existing `create_*`/`update_*`/`implement_task`/`refine`/`compact_history`/`repair` precedent) *and*, where real file-editing/iteration/multi-agent delegation is required, a **richer OpenCode-native subagent + command** with real permission enforcement (mirroring the existing `phase-orchestrator`/`phase-implementer`/`feat-reviewer`/`ref-finder`/`doc-repairer` precedent). The distribution item (REQ-007/008/009) is the deliberate exception to the prompt half of that principle: its agent-facing carrier is the `specmgr://harness-bundle` resource's own `instructions` field, not a prompt (OpenCode exposes no MCP prompt surface to the agent -- see Design Notes).
 
@@ -122,7 +122,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - feat-163-feat-numbering (GitHub issue #163): this document's own `Phase NNN`/`Task NNN.MMM` Task List numbering scheme.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
 - feat-27-validation / feat-81-83-validation (the enriched validate errors `refine_feat`'s `validate` re-check relies on).
 
@@ -168,7 +168,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - New ADR (Phase 110, before Phase 120): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full ADR per this repo's own ADR-vs-feature-log convention. Its UUID is an input to Phase 120's instruction files and is recorded here once created.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
 ### Task List
 

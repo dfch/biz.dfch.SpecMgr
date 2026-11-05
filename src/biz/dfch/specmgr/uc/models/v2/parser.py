@@ -35,7 +35,7 @@ are invalid raises `pydantic.ValidationError` the normal Pydantic way --
 both are deliberately left to propagate uncaught, exactly like `parse_adr`
 leaves its own two error channels uncaught.
 
-**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, DEC 38efdb66
 item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
 domain: ``parse_uc`` is this domain's single text-to-model parse boundary --
 the choke point behind ``get_uc``'s non-raw reads, ``list_uc``'s rows (both
@@ -80,7 +80,7 @@ def parse_uc(text: str, *, language: str | None = None) -> UcDocument:
         together, exactly as read from disk (or submitted verbatim by a
         caller that never wrote it to disk at all, e.g. an MCP tool call).
     language:
-        The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+        The document's language (feat-197-i18n, DEC 38efdb66 item 5):
         ``None`` (the default) or ``"en"`` parses the canonical, English
         headings as-is (no table -- byte-identical to the pre-i18n path);
         any other value resolves that language's heading-mapping table and

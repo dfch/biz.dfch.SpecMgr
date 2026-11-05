@@ -16708,7 +16708,7 @@ em-dash separator is rejected. The format is ``yyyy-MM-dd`` + (``T`` or
 space) + ``HH:mm:ss.SSS`` with an explicit UTC offset (``+02:00``,
 ``-05:00``) or ``Z`` for UTC -- the same full format as frontmatter
 ``created``/``updated`` (both separators accepted, date-only rejected;
-ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to
+DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is scoped to
 `## Updates` entry headings only, which are hand/LLM-authored body
 content. Constrained by the regex `@alias` above and enforced by
 `match_alias` (`re.fullmatch`) at parse time -- a wrong timestamp

@@ -92,7 +92,7 @@ serialization, the inherited ``_write.py`` caveat identical to
 frontmatter only is returned (no body).
 
 **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead
 of raising, with nothing written in either case. (1) On a target ``id``
@@ -156,7 +156,7 @@ Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+**Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/5).**
 ``language`` (the caller's already-guarded value; default ``"en"``,
 byte-identical to the pre-i18n adapter) selects the variant file: the
 id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -186,7 +186,7 @@ Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
 ``GolNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
 variant's own (``gol_lock(gol_lock_key(id_, language))``), the stage-1 match runs against that
@@ -204,7 +204,7 @@ Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
 variant's own (``prb_lock(prb_lock_key(id_, language))``), the stage-1 match runs against that
@@ -222,7 +222,7 @@ Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
 ``QaNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
 variant's own (``qa_lock(qa_lock_key(id_, language))``), the stage-1 match runs against that
@@ -251,7 +251,7 @@ stage-2 content-validation failure of the edited body yields the
 non-raising ``ValidateResult(valid=False, ...)`` instead of
 ``AssertionError``/``pydantic.ValidationError``.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
 variant's own (``req_lock(req_lock_key(id_, language))``), the stage-1 match runs against that
@@ -269,7 +269,7 @@ Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
 ``RskNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
 variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -287,7 +287,7 @@ Mirror of :func:`_edit_req`'s shape (same ``set_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
 ``SetNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
 variant's own (``set_lock(set_lock_key(id_, language))``), the stage-1 match runs against
@@ -305,7 +305,7 @@ Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
 ``SopNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
 variant's own (``sop_lock(sop_lock_key(id_, language))``), the stage-1 match runs against that
@@ -323,7 +323,7 @@ Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped,
 ``write_sysrs_file``, ``SysrsNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
 variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the stage-1 match runs against
@@ -341,7 +341,7 @@ Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
 variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -359,7 +359,7 @@ Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
 ``TxtNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
 variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
@@ -377,7 +377,7 @@ Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
 ``UcNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
 variant's own (``uc_lock(uc_lock_key(id_, language))``), the stage-1 match runs against that
@@ -395,7 +395,7 @@ Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 ``VcrNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
 variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the stage-1 match runs against that
@@ -484,8 +484,8 @@ field/cross-field (``pydantic.ValidationError``) failure returns the
 non-raising ``ValidateResult(valid=False, ...)`` (the single
 ``errors[].message`` capped at 300 chars exactly as the generic
 ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
-failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
-case 4 of the ADR 519d1206 chain), with nothing written in either case.
+failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+case 4 of the DEC 519d1206 chain), with nothing written in either case.
 
 **2-fold write (REQ-003).** The disk write happens strictly after both
 stages pass: the domain lock is held across the entire read -> match ->
@@ -578,7 +578,7 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
     ``validate`` tool caps it (feat-110), instead of
     ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
     either failure case (feat-170-update-edit-parse-failure, GitHub issue
-    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
 

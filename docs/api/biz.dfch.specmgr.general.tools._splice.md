@@ -28,14 +28,14 @@ range mode and every ``get_<d>`` tool's ``raw=True`` reads (and the
   (numbering starts at the clamped offset and never restarts at 1 within a
   window, so a number seen in a numbered read can be fed straight back into
   the generic ``update`` tool's ``offset``; feat-153-off-by-n Phase 3,
-  REQ-004, ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item
+  REQ-004, DEC 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item
   6).
 - :func:`splice_snippet` renders the before/after window of a range-mode
   splice (the dropped lines, the inserted lines, and up to 2 unchanged
   context lines per side, each labeled with its 1-based body-line number per
   the pre-splice/post-splice split) as the ``snippet`` string the generic
   ``update`` tool returns on success in range mode (feat-153-off-by-n
-  Phase 2, REQ-002, ADR 19ff316b-cd11-41a7-a616-ffd84917da51).
+  Phase 2, REQ-002, DEC 19ff316b-cd11-41a7-a616-ffd84917da51).
 - :func:`validate_read_args` raises ``ValueError`` for the ``get_<d>``
   read-argument misuses -- the ``offset``/``limit`` windowing coordinates or
   ``numbered=True`` combined with ``raw=False`` -- the single shared guard
@@ -303,7 +303,7 @@ raising. Let ``N = len(text.splitlines())`` be the number of lines of
   any given ``limit`` is capped at the remaining lines (``N - offset +
   1``), and a negative ``limit`` yields an empty window.
 - With ``numbered=True`` (feat-153-off-by-n Phase 3, REQ-004, ACC-011;
-  ADR 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item 6),
+  DEC 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome item 6),
   each returned line is additionally prefixed with its 1-based
   **absolute** body-line number in the ``f"{n}: {text}"`` form (plain
   decimal, no padding; the line text verbatim, so an empty body line

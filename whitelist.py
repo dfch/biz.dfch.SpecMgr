@@ -422,7 +422,7 @@ UNATTRIBUTED_MARKER_FORMS
 # `scan_paths` is `dec.tools._paths._reconcile_dec_scan`'s own parameter, the
 # `reconcile_fn` argument `general.tools._doc_paths.find_doc_path_by_id`
 # always supplies with the scanned directory's materialized path listing.
-# With the `{language}` subfolder layout (ADR 38efdb66 item 9), that single
+# With the `{language}` subfolder layout (DEC 38efdb66 item 9), that single
 # directory no longer covers the whole domain, so the wrapper deliberately
 # ignores the argument and reconciles against the recomputed domain-wide
 # live listing (a superset of it) instead -- the parameter is part of the

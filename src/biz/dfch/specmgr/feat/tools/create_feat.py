@@ -69,8 +69,8 @@ from ._write import write_feat_file
         "the new document to the feature base directory. A content-validation failure of the "
         "submitted body returns a non-raising `ValidateResult` (`valid=False`, a single "
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
-        "instead of raising `AssertionError`/`pydantic.ValidationError` (ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
-        "GitHub issue #204 -- case 5 of the ADR 519d1206 non-raising-structured-result workaround "
+        "instead of raising `AssertionError`/`pydantic.ValidationError` (DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e, "
+        "GitHub issue #204 -- case 5 of the DEC 519d1206 non-raising-structured-result workaround "
         "chain); nothing is written in that case. Content validation runs BEFORE the id-shape "
         "`ValueError` and already-existing-id/folder `FileExistsError` guards, so a compound failure "
         "(invalid content + a malformed or already-existing id) returns the `ValidateResult` and the "
@@ -115,8 +115,8 @@ def create_feat(content: str, id: str | None = None) -> FeatFrontmatter | Valida
     (``Feature.from_text(format_text(content))``). A structural failure
     raises ``AssertionError`` and a field/cross-field failure raises
     ``pydantic.ValidationError`` -- but this tool catches both
-    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
     structured-result workaround chain) and returns the enriched message
     (domain/tool/channel context prepended by the shared tool-boundary
     wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,

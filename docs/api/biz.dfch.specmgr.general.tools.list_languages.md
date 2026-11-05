@@ -5,7 +5,7 @@
 The generic, read-only language-listing tool for one artifact: given a ``type`` (one of the thirteen i18n-eligible
 domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/``sysrs``/``txt``/``set``) and an
 ``id``, it
-reports the language codes the artifact currently exists in -- the dedicated tool ADR 38efdb66 item 7 names in place of
+reports the language codes the artifact currently exists in -- the dedicated tool DEC 38efdb66 item 7 names in place of
 an "all languages" mode of ``list_<d>``. The result is a
 :class:`~biz.dfch.specmgr.general.models.language_list_result.LanguageListResult`: ``languages`` (``"en"`` first when
 the EN source exists -- ACC-008 -- then every other language that holds a variant, sorted by code) plus one entry per

@@ -6,13 +6,13 @@ The one place the "for every candidate: result-row metadata plus cached
 vector" loop lives, so the two similarity tools (``find_related``/
 ``find_similar_text``, Phase 3, Task 3.1/3.2) and the background warmup
 (Phase 3, Task 3.7, REQ-011) share a single, TOCTOU-safe per-candidate
-pattern instead of triplicating it (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
+pattern instead of triplicating it (DEC 750842b2-aca4-4649-ba0c-855ec8e1f505,
 **ranking** and **warmup** sub-decisions):
 
 - :func:`make_embed_fn` -- the embedding-cache ``embed_fn`` closure for one
   ``(provider, domain)``: it re-runs ``_similarity_corpus.
   candidate_similarity_text`` on the *exact text the cache itself read and
-  hashed* (the cache's own TOCTOU contract, ADR bfd76370: the stored
+  hashed* (the cache's own TOCTOU contract, DEC bfd76370: the stored
   vector's content always matches the stored hash), then embeds just the
   resulting ``embedding_text`` through the provider's document-side
   :meth:`~biz.dfch.specmgr.general.tools._embedding.EmbeddingProvider.embed`
@@ -59,8 +59,8 @@ pattern instead of triplicating it (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
   invoked as phase 3 of the single, unified
   ``general.tools._startup_warmup.start_startup_warmup`` daemon thread
   (``specmgr-startup-warmup``), which also runs two new ``feat``-domain
-  warmup phases ahead of it (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44,
-  refining this feature's own ADR 750842b2's **Warmup** sub-decision via
+  warmup phases ahead of it (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44,
+  refining this feature's own DEC 750842b2's **Warmup** sub-decision via
   its v1.4.0 note). :func:`warmup_similarity_cache` itself, its own
   availability-probe-first/crash-containment/never-raising body, and the
   demand path it shares the cache with, are all otherwise unchanged by
@@ -162,7 +162,7 @@ The TOCTOU-safe embedding-cache ``embed_fn`` closure for one ``(provider, domain
 
 The closure hands the *given* text -- the exact text the cache
 (``_embedding_cache.read_embedding``) itself read and hashed, never a
-separately-read copy (ADR bfd76370's TOCTOU contract: the stored
+separately-read copy (DEC bfd76370's TOCTOU contract: the stored
 vector's content must match the stored hash) -- through
 ``candidate_similarity_text`` (the unparseable-text decision, plus the
 marker degradation, REQ-009), embeds just the resulting

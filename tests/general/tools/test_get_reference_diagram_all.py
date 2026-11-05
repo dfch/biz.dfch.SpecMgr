@@ -99,7 +99,7 @@ class TestWideRegistryAllTool(_SeededRegistryTestCase):
         self.assertNotIn(f"[DEC-{_D002}]", result)  # never an edge source
 
     def test_the_adr_leg_is_carried(self):
-        """The never-cached adr leg (ADR bfd76370): the ADR document is a node and its reference
+        """The never-cached adr leg (DEC bfd76370): the ADR document is a node and its reference
         an edge in the registry-wide diagram too."""
         result = get_reference_diagram_all()
         self.assertIn('component "ADR" {', result)

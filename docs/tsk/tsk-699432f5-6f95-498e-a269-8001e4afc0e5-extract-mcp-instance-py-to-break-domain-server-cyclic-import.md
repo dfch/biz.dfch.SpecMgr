@@ -9,7 +9,7 @@ version: 1.0.0
 
 # Extract `mcp_instance.py` to Break Domain/Server Cyclic Imports
 
-<!-- Implements the decision recorded in ADR 3bf0326f-065a-424c-a2b9-87e5d5bcfa99 ("Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports"). Mechanical refactor: no behavior change, ~80 files touched. -->
+<!-- Implements the decision recorded in DEC 3bf0326f-065a-424c-a2b9-87e5d5bcfa99 ("Extract MCP Singleton into Its Own Module to Break Domain/Server Cyclic Imports"). Mechanical refactor: no behavior change, ~80 files touched. -->
 
 - [ ] Task 1: Create a new leaf module `src/biz/dfch/specmgr/mcp_instance.py` holding the `_lifespan` async context manager and the `mcp = MCPServer(...)` construction, moved verbatim out of `server.py`
 - [ ] Task 2: Update `server.py` to `from .mcp_instance import mcp` instead of constructing `MCPServer(...)` itself; keep its bottom-of-file `from . import adr, general, qa, req, tsk, uc` domain registration imports unchanged, in the same relative position
@@ -23,4 +23,4 @@ version: 1.0.0
 
 ### 2026-08-19 00:00:00.000Z - Created
 
-Created from feat-7-various-improvements Task 0.22, following ADR 3bf0326f-065a-424c-a2b9-87e5d5bcfa99's decision to extract the `MCPServer` singleton into a leaf module. No implementation started yet.
+Created from feat-7-various-improvements Task 0.22, following DEC 3bf0326f-065a-424c-a2b9-87e5d5bcfa99's decision to extract the `MCPServer` singleton into a leaf module. No implementation started yet.

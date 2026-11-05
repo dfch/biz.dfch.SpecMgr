@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``dec`` domain's read-side ``language`` support (feat-197-i18n Phase 110, ADR 38efdb66).
+"""Tests for the ``dec`` domain's read-side ``language`` support (feat-197-i18n Phase 110, DEC 38efdb66).
 
 Pins the pilot-domain read side: ``get_dec``/``list_dec``'s optional
 ``language`` parameter (default ``"en"``, omitted = today's exact behavior),
@@ -56,7 +56,7 @@ from ._helpers import MANDATORY_ROLES_AND_SOURCE
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 #: The EN document body (the single filename authority: the DE variant is stored under the
-#: EN source's exact basename, ADR 38efdb66 item 2).
+#: EN source's exact basename, DEC 38efdb66 item 2).
 _EN_BODY = (
     textwrap.dedent(
         """\
@@ -288,7 +288,7 @@ class TestGetDecLanguage(unittest.TestCase):
     def test_broken_de_variant_returns_parse_failure_result_byte_identical_to_list_row(self):
         """get_dec(id, language='de') on a broken DE variant must return the non-raising
         ParseFailureResult whose error text is byte-identical to list_dec(language='de')'s failed
-        row for the same file (the feat-150/162 byte-identity contract, ADR 9080b37c, extended to
+        row for the same file (the feat-150/162 byte-identity contract, DEC 9080b37c, extended to
         language variants)."""
         broken = self.de_file.read_text(encoding="utf-8").replace("## Entscheidungsergebnis", "## BROKEN-HEADING")
         self.de_file.write_text(broken, encoding="utf-8")
@@ -321,7 +321,7 @@ class TestGetDecLanguage(unittest.TestCase):
 
 
 class TestListDecLanguage(unittest.TestCase):
-    """Tests for list_dec's optional language parameter (ACC-007 read half, ADR 38efdb66 item 7)."""
+    """Tests for list_dec's optional language parameter (ACC-007 read half, DEC 38efdb66 item 7)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -394,7 +394,7 @@ class TestListDecLanguage(unittest.TestCase):
         """list_dec reconciles the cache against the domain-wide live listing (flat EN files plus
         every {language} subdirectory's files), never just the scanned directory -- with a DE
         variant present, reconciling a DE scan still carries the EN file, so the EN cache entries
-        survive (ADR 38efdb66 item 9, behaviorally pinned at the call-argument level)."""
+        survive (DEC 38efdb66 item 9, behaviorally pinned at the call-argument level)."""
         import importlib
 
         list_module = importlib.import_module("biz.dfch.specmgr.dec.tools.list_dec")
@@ -425,7 +425,7 @@ class TestListDecLanguage(unittest.TestCase):
 
 
 class TestParseDecLanguage(unittest.TestCase):
-    """Tests for the parse_dec tool's path-derived language (ADR 38efdb66 item 5)."""
+    """Tests for the parse_dec tool's path-derived language (DEC 38efdb66 item 5)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -479,7 +479,7 @@ class TestParseDecLanguage(unittest.TestCase):
     def test_a_path_under_a_tableless_language_directory_raises_the_loader_error(self):
         """A file under a shape-valid {language} directory without a packaged table (docs/dec/fr/)
         fails with the table loader's actionable ValueError at parse time (the language is
-        shape-valid but unusable, ADR 38efdb66 item 3/6)."""
+        shape-valid but unusable, DEC 38efdb66 item 3/6)."""
         fr_dir = self.docs_root / "dec" / "fr"
         fr_dir.mkdir(parents=True)
         frontmatter = self.en_file.read_text(encoding="utf-8").split("---\n")[1]
@@ -544,7 +544,7 @@ class TestDecPathsLanguage(unittest.TestCase):
 
 
 class TestDecCacheLanguage(unittest.TestCase):
-    """Tests for the cache's cross-language behavior (ADR 38efdb66 item 9: no cache code change,
+    """Tests for the cache's cross-language behavior (DEC 38efdb66 item 9: no cache code change,
     path-keyed entries keep languages independent)."""
 
     def setUp(self) -> None:

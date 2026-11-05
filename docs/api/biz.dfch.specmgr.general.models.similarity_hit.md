@@ -10,7 +10,7 @@ path, score)`` (ACC-001/ACC-002; the 2026-09-18 plan refinement dropped the
 earlier draft's redundant ``ref`` field and added ``status``).
 
 A candidate document that fails to parse still produces a hit row
-(REQ-009, ADR 750842b2-aca4-4649-ba0c-855ec8e1f505's **embedding input**
+(REQ-009, DEC 750842b2-aca4-4649-ba0c-855ec8e1f505's **embedding input**
 sub-decision): its ``id`` is ``None`` (the marker rows are not
 addressable) and its ``title``/``status`` are the fixed
 ``"<failed to parse>"`` marker (``general.tools._listing.

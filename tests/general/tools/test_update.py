@@ -1196,7 +1196,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
                 result = update(id=created.id, type=case.doc_type, content=case.updated_body)
 
-                # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): the return is the
+                # feat-153-off-by-n Phase 2 (REQ-003, DEC 19ff316b): the return is the
                 # UpdateResult wrapper -- the feat-69 frontmatter-only contract moved
                 # under result.frontmatter; whole-body mode carries snippet=None.
                 self.assertIsInstance(result, UpdateResult)
@@ -1292,7 +1292,7 @@ class TestUpdateWholeBody(TempDocsDirTestCase):
 
 #: Every snippet line's prefix: a 1-character marker (`-`/`+`/space) + one space +
 #: the plain decimal line number + the exact `": "` separator (feat-153-off-by-n
-#: Phase 2, REQ-002; ADR 19ff316b's Decision Outcome item 3).
+#: Phase 2, REQ-002; DEC 19ff316b's Decision Outcome item 3).
 _SNIPPET_LINE_PREFIX = r"^[-+ ] \d+: "
 
 
@@ -1494,7 +1494,7 @@ class TestUpdateRange(TempDocsDirTestCase):
                     path = self._doc_path(case)
                     whole_body_file = path.read_text(encoding="utf-8")
 
-                    # feat-153-off-by-n Phase 2 (REQ-003, ADR 19ff316b): both the
+                    # feat-153-off-by-n Phase 2 (REQ-003, DEC 19ff316b): both the
                     # whole-body mode and the whole-body-equivalent range return the
                     # UpdateResult wrapper with snippet=None -- never a snippet.
                     self.assertIsInstance(whole_body, UpdateResult)
@@ -1772,11 +1772,11 @@ class TestUpdateAssertWithinSpy(TempUpdateInjectionDirTestCase):
 
 
 class TestUpdateParseFailure(TempUpdateInjectionDirTestCase):
-    """feat-170 Phase 110 (Bug 1, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
+    """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
     on-disk file fails to parse must return the non-raising ``ParseFailureResult`` (never the
     domain's ``XNotFoundError``) in both whole-body and range modes, with nothing written to
     disk -- the ``error`` carries the same parse defect as the domain's own ``list_<d>``
-    failed row for the same file (the ``get_<d>`` precedent, ADR 9080b37c). ``feat`` carries
+    failed row for the same file (the ``get_<d>`` precedent, DEC 9080b37c). ``feat`` carries
     the same coverage in its own separate case shape (folder + ``README.md``), mirroring this
     module's existing split of ``feat`` out of the flat-file ``_CASES`` loop.
 
@@ -1869,7 +1869,7 @@ class TestUpdateParseFailure(TempUpdateInjectionDirTestCase):
 
 
 class TestUpdateValidateFailure(TempUpdateInjectionDirTestCase):
-    """feat-170 Phase 120 (Bug 2, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): genuinely invalid new
+    """feat-170 Phase 120 (Bug 2, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): genuinely invalid new
     content against a healthy existing document must return the non-raising
     ``ValidateResult(valid=False, ...)`` (never raise) -- the single ``errors[].message`` capped
     exactly as the generic ``validate`` tool caps it (300 chars via ``snippet``, feat-110) -- with

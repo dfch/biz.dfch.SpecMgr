@@ -3,7 +3,7 @@
 Pydantic schema and parser for the 5x5 risk-matrix guidance document
 (``rsk/data/rsk_risk_matrix.md``), feat-92-resources REQ-004.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://rsk/risk-matrix`` (``rsk/resources/
@@ -35,7 +35,7 @@ without leaving any part of the document unaccounted for.
 `ThresholdItem` recovers a bullet's low/high bound and zone name via three
 separate `@computed_field`s (`low: int`, `high: int`, `zone: str`), reusing
 `feat.RequirementItem`/`tsk.TaskItem`'s established `MarkdownListItem` +
-regex precedent (ADR 356d8781-e446-4c26-917a-eda85648ce9d's Decision
+regex precedent (DEC 356d8781-e446-4c26-917a-eda85648ce9d's Decision
 Drivers) rather than inventing a new shared `models/md` primitive. The
 zone name can contain a space (`"very high"`), so the regex's zone group
 allows an internal space.

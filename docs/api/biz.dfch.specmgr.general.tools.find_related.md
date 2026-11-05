@@ -19,7 +19,7 @@ itself (by resolved-path comparison -- ACC-001's self-exclusion, ADR
 and ranks the rest with the pure-Python cosine (dot-on-normalized)
 ``_similarity_ranking.rank_candidates``.
 
-**Availability first (REQ-003, ADR 750842b2's Availability sub-decision).**
+**Availability first (REQ-003, DEC 750842b2's Availability sub-decision).**
 The tool body checks ``_embedding._similarity_availability()`` **first
 thing** -- before any argument validation, source resolution, or
 filesystem access: when it returns the structured, non-raising

@@ -14,7 +14,13 @@
 # ADR already carries a code span identical to a wrapped run (e.g. 112b6498 with 8 pre-existing
 # `get_<d>_schema` spans; feat-46 Phase 120 rule extension); the manifest's wrapped-token list
 # must still equal the one re-derived from the ADR body (stale-manifest guard, as in
-# `convert()`); supersession -- the superseding DEC lists the older one, the older DEC has
+# `convert()`). After the Phase 130 retag, `unconvert` additionally inverts it on the DEC
+# body (`unretag_text`: `DEC <manifest-id>` -> `ADR <manifest-id>`, `docs/dec/<stem>` ->
+# `docs/adr/<stem>`; full/short/manifest-only like `retag_text`, KEEP_MARKER lines skipped)
+# so the inherited, retagged citations compare equal to the ADR body's -- exact because the
+# ADR sources carry no pre-existing `DEC <manifest-id>` citation and the conversion's own
+# Related Artifacts bullets are stripped before the inversion (feat-46 Phase 130 rule
+# extension); supersession -- the superseding DEC lists the older one, the older DEC has
 # status `superseded` and no outbound reference to the newer one. Finally `specmgr lint
 # --type dec` (full parse of every DEC) unless --no-lint.
 #
@@ -93,7 +99,7 @@ for uid, e in adrs.items():
         h1 = lib.title_of(body)
         if h1.strip() != lib.title_of(wrapped_body).strip():
             problems.append(f"title differs: {h1!r}")
-        back = lib.unconvert(text, e)
+        back = lib.unconvert(text, e, manifest)
         if lib.normalise(back) != lib.normalise(wrapped_body):
             problems.append("FIDELITY: DEC body minus allowed section transformations != ADR body with the wrapping applied")
     if e["status"] == "superseded" and "## Related Artifacts" in body and f"DEC {e['superseded_by']}" in body:

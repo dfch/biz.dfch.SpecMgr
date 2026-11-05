@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Tests for ``general.models.heading_table`` (the per-language heading-mapping table loader and the
-fence-aware normalization pre-pass, feat-197-i18n Phase 110, ADR 38efdb66 items 3/4/5).
+fence-aware normalization pre-pass, feat-197-i18n Phase 110, DEC 38efdb66 items 3/4/5).
 
 Covers: the lazy once-per-process load (the ``heading_table_path`` seam), the
 loader's rejection channels (missing table for a shape-valid code, malformed
@@ -124,7 +124,7 @@ def _concrete_types(annotation: object) -> list[type]:
 def _derive_canonical_headings() -> set[str]:
     """Derive the closed set of fixed-text canonical headings reachable from the document models.
 
-    The test-side mirror of the ADR 38efdb66 item 3/4 closed-set derivation: for every
+    The test-side mirror of the DEC 38efdb66 item 3/4 closed-set derivation: for every
     i18n-eligible domain, walk its ``*Document`` body class's field tree (the sections the
     engine can actually match when parsing a document) and collect each section's effective
     ``@alias`` (LITERAL value, SPACE_SEPARATED class-name derivation, or a REGEX carrying no
@@ -214,7 +214,7 @@ class TestLoadHeadingTable(unittest.TestCase):
 
     def test_missing_table_for_a_shape_valid_code_is_an_actionable_error(self):
         """A shape-valid code without a packaged table file is unusable: an actionable ValueError
-        naming the missing file (ADR 38efdb66 item 3/6)."""
+        naming the missing file (DEC 38efdb66 item 3/6)."""
         with self.assertRaises(ValueError) as ctx:
             load_heading_table("fr")
         message = str(ctx.exception)
@@ -309,7 +309,7 @@ class TestResolveHeadingTable(unittest.TestCase):
 
 
 class TestNormalizeHeadingLines(unittest.TestCase):
-    """Tests for normalize_heading_lines (the fence-aware, line-based pre-pass, ADR 38efdb66 item 5)."""
+    """Tests for normalize_heading_lines (the fence-aware, line-based pre-pass, DEC 38efdb66 item 5)."""
 
     def setUp(self) -> None:
         self.table = {

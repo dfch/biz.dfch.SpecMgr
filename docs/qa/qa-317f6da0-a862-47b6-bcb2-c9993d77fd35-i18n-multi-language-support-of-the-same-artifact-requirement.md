@@ -81,7 +81,7 @@ the existing per-domain base-directory resolution (`SPECMGR_<DOMAIN>_DIR`):
 adding a language segment is just "descend one more directory below the
 existing resolved base when language != default," with no change to the
 resolution contract itself. It is also consistent with this codebase's
-domain-first convention (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) — type
+domain-first convention (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) — type
 stays the top organizing unit everywhere else (tools/prompts/resources,
 `docs/api`, etc.).
 

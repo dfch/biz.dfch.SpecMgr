@@ -314,7 +314,7 @@ class TestFindFeatPathById(unittest.TestCase):
 
 
 class TestFindFeatParseFailure(unittest.TestCase):
-    """Tests for find_feat_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, ADR 9080b37c)."""
+    """Tests for find_feat_parse_failure (feat-150-mcp-lifecycle-commands Phase 1a, DEC 9080b37c)."""
 
     def test_missing_folder_returns_none(self) -> None:
         """A missing folder (no README.md) must return None -- not a parse failure."""

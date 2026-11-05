@@ -5,7 +5,7 @@
 Returns instructional text -- not itself a tool call -- that guides an LLM
 through rotating older ``### Recent Updates`` entries out of a `.specmgr`
 feature folder's ``README.md`` and into an optional sibling ``history.md``,
-per ADR e369ee2e-3353-4f92-991c-6367d76d832e's chosen option (which
+per DEC e369ee2e-3353-4f92-991c-6367d76d832e's chosen option (which
 documents this rotation mechanism but deliberately leaves its exact
 trigger/cutoff undecided, to be resolved case-by-case). This complements
 the domain-specific ``create_*``/``update_*``/``refine`` prompts but is

@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   requirements" list — the closed set `req`'s `## Level` carries.
   Served as raw markdown with a model-backed drift guard (a structural
   edit of the packaged markdown fails its parse model) — the
-  `specmgr://ears` shape (ADR 356d8781-e446-4c26-917a-eda85648ce9d;
+  `specmgr://ears` shape (DEC 356d8781-e446-4c26-917a-eda85648ce9d;
   feat-173-req-iso29148-level-set, GitHub issue #173).
 
 - The new `set` artifact domain (issue #173's second work package): a
@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
   other sections. `SetFrontmatter.status` is the SET-specific
   four-value closed set `draft`/`progress`/`done`/`review`. Full
-  dispatch-only surface per ADR 36905d5b (7 tools: `create_set`,
+  dispatch-only surface per DEC 36905d5b (7 tools: `create_set`,
   `parse_set`, `list_set`, `get_set` with `raw`/`offset`/`limit`/
   `numbered`/`language` + the non-raising `ParseFailureResult` channel,
   `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
@@ -166,7 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   under `.specmgr/feat/` and the documents under `docs/{type}/`) and
   reports every unparseable document (file path + parse error), not just
   the first — full parses only, never the `list_<d>`/`DocCache` listing
-  path, whose `list_feat` dirty stage (frontmatter+H1 only, ADR 3982712a)
+  path, whose `list_feat` dirty stage (frontmatter+H1 only, DEC 3982712a)
   is precisely the masking that hid the feat-214 defect for three
   consecutive commits. Three scopes, so the cost scales with the size of
   a change and never with the size of the corpus: explicit paths with the
@@ -248,7 +248,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `README.md`, the agent/skill text, and the generated docs all updated
     for the thirteenth domain (feat-229-txt, GitHub issue #229).
 - Multi-language variants of the same artifact (feat-197-i18n, GitHub issue
-  #197, ADR 38efdb66): for the twelve domains `req`/`uc`/`tsk`/`qa`/`prb`/
+  #197, DEC 38efdb66): for the twelve domains `req`/`uc`/`tsk`/`qa`/`prb`/
   `gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`, an artifact can exist in several
   languages. English keeps `docs/<type>/`; every other language is a
   `docs/<type>/<language>/` subfolder (`<language>` a lowercase two-letter
@@ -363,7 +363,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   agent no longer has to know to read a resource to discover a domain's
   structure; the deliberate absence of a `specmgr://adr/schema` counterpart
   is documented in the `create_adr` tool description (the tool's own typed
-  input parameters are the ADR structure reference) (ADR 112b6498,
+  input parameters are the ADR structure reference) (DEC 112b6498,
   feat-189-reduce-agent-round-trips, GitHub issue #189).
 - An env-gated golden parser sweep (every reference-graph golden through
   `chain.validate_plantuml`, asserting `valid=True` + `rendered=True` + a
@@ -437,7 +437,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tests/test_mcp_error_contract.py` (4 tests over anyio memory streams:
   malformed id -> original `ValueError` text, well-formed-but-absent id
   -> the domain's not-found text, healthy call -> unchanged success
-  shape), not the locked version number (ADR 80305c52,
+  shape), not the locked version number (DEC 80305c52,
   feat-221-mcp-220-error-contract, GitHub issue #221).
 - The `specmgr docs` generator now ruff-formats the embedded code blocks
   of its own generated markdown (the per-module `api/*.md` pages, the
@@ -458,7 +458,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The 12 `specmgr://<domain>/schema` MCP resources (req/uc/tsk/qa/prb/
   gol/rsk/dec/sop/feat/vcr/sysrs), superseded by the `get_<d>_schema`
-  tools (see Added) (ADR 112b6498, feat-189-reduce-agent-round-trips,
+  tools (see Added) (DEC 112b6498, feat-189-reduce-agent-round-trips,
   GitHub issue #189).
 
 ### Fixed
@@ -754,7 +754,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - The formalised UC → PlantUML diagram pipeline (feat-185-uc-diagrams,
-  GitHub issue #185, ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4): the
+  GitHub issue #185, DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4): the
   import-free, stdlib-only `plantuml/` package — the classic `SoWkI…`-form
   URL text encoder, the two-mode structure checker, the jar/bin/url
   validation backends, and the strict first-set-wins, no-fall-through
@@ -823,7 +823,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `raw=False` guard, now factored into the shared `validate_read_args`
   helper in `general/tools/_splice.py`), and a numbered read of a
   document that exists but fails to parse returns the non-raising
-  `ParseFailureResult` (feat-150, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c),
+  `ParseFailureResult` (feat-150, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c),
   never numbered text. The default (`numbered=False`) output remains
   byte-identical to the existing `raw=True` text, and the `numbered`
   prefix is one format family with the new `update` `snippet` (each
@@ -914,8 +914,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ParseFailureResult` (`error`/`path`/`id`) -- instead of raising the
   domain's not-found error -- when the target id's only matching on-disk
   file fails to parse (GitHub issue #170, feat-170-update-edit-
-  parse-failure, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, the fourth
-  extension of the ADR 519d1206 client-side-`isError`-truncation
+  parse-failure, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, the fourth
+  extension of the DEC 519d1206 client-side-`isError`-truncation
   non-raising structured-result workaround chain, after `validate`'s
   `{valid, errors}` result, `set_status`'s `InvalidStatusResult`, and
   `get_<d>`'s `ParseFailureResult`): the per-domain adapters catch the
@@ -939,7 +939,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   result): the single `errors[].message` is capped at 300 characters
   exactly as the generic `validate` tool caps it (feat-110), mirroring
   `validate` including its own caught-exception set (GitHub issue #170,
-  ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
+  DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f).
 - `vcr`/`feat`/`dec`/`sop`/`sysrs`/`tsk`: the timestamped entries'
   `content` field now accepts any markdown content -- multiple
   paragraphs, lists, code blocks, block quotes -- not just a single
@@ -987,7 +987,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and get-first), not merely the same defect modulo that trailing line
   (GitHub issue #162).
 - `list_feat`'s cold-scan timeout (feat-187-list-feat-timeout, GitHub
-  issue #187, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): the tool's very
+  issue #187, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44): the tool's very
   first call against a cold server process now returns the complete
   directory (`total` correct from call one) well under any client request
   timeout, regardless of corpus size, instead of potentially timing out
@@ -1072,7 +1072,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (identical field path and cause, including the trailing pydantic
   documentation line -- feat-162-doc-cache-exception-footer, GitHub issue #162),
   plus `path`, the absolute on-disk file; a truly absent id still raises
-  the domain's not-found error; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c)
+  the domain's not-found error; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c)
   or `list_<d>()`'s `<failed to parse>` failed row (without one, whose
   `title`/`status` carry the marker and whose `id` is null while
   `ref`/`path`/`error` are populated), read the raw file with the host's
@@ -1108,8 +1108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   commands, GitHub issue #150, Phase 1, REQ-012).
 - `ParseFailureResult`, a new shared, non-raising Pydantic model in
   `general/models/` (feat-150-mcp-lifecycle-commands, GitHub issue #150,
-  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- the third member of
-  the ADR 519d1206 client-side-`isError`-truncation workaround chain (after
+  Phase 1a, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- the third member of
+  the DEC 519d1206 client-side-`isError`-truncation workaround chain (after
   `validate`'s `{valid, errors}` and `set_status`'s `InvalidStatusResult`):
   fields `error` (the parse-failure message), `path` (absolute on-disk file
   path), and `id` (the requested id, echoed). Backed by a new shared helper
@@ -1175,7 +1175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now returns the non-raising `ParseFailureResult` (`error`/`path`/`id`) for
   a document that exists but fails to parse, instead of raising the domain's
   not-found error (feat-150-mcp-lifecycle-commands, GitHub issue #150,
-  Phase 1a, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
+  Phase 1a, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c). The `error` text
   is byte-identical to the domain's `list_<d>` tool's failed-row `error`
   for the same file (identical field path and cause, including the trailing
   pydantic documentation line -- feat-162-doc-cache-exception-footer,
@@ -1339,7 +1339,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **BREAKING**: Every whole-body document type's timestamps now use one
   uniform full ISO 8601 date+time form (`yyyy-MM-dd` + `T` or space +
-  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf,
+  `HH:mm:ss.fff` + `Z`/`±HH:mm`) (DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf,
   GitHub issue #146, feat-146-date-time):
   - Frontmatter `created`/`updated` of all twelve whole-body domains (ADR
     excluded) are now written in the `T`-separated canonical form by the
@@ -1406,7 +1406,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   actionable message, so the MCP-registered `type` enums can no longer
   drift from the dispatch tables. **Note**: `set_status`'s registered
   `type` enum now lists `adr` first (ordering-only, non-normative). New
-  ADR c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
+  DEC c4efbde6-fd19-4aa8-8668-95316ed62dcc refines the future-domain
   convention: a new domain now also registers its name in
   `general/tools/_domains.py`'s `WHOLE_BODY_DOMAINS` in addition to the
   existing dispatch entries.
@@ -1870,7 +1870,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   numbers a client sees in any `get_<d>(raw=True)` read, windowed or not,
   index byte-for-byte into the same text the generic `update` tool splices
   against) is defined once and shared by all eleven tools (GitHub issue
-  #28; ADR 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d).
+  #28; DEC 4ec08dcb-fcb7-4961-abaf-ff7803e2f21d).
 
 - `confluence_update` MCP tool (`general/tools/`): writes a local Markdown
   file's rendered content into an existing Confluence page's body via the
@@ -1980,7 +1980,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   URL's host (e.g. to an SSO login page) and raises instead of returning
   that content, and supports binary/image download via a
   `destination_path` parameter (content-type based). GitHub issue #50,
-  ADR a156fdf9-052c-4f43-93a2-eeec04a91eac.
+  DEC a156fdf9-052c-4f43-93a2-eeec04a91eac.
 
 - **BREAKING**: frontmatter `created`/`updated` now strictly require the
   date+time variant `yyyy-MM-dd HH:mm:ss.fff` followed by `Z` (UTC) or a
@@ -2224,8 +2224,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   criteria. Fills a gap identified during `feat-32-sysrs` planning (no
   existing domain modeled ISO/IEC/IEEE 29148's/MITRE SE Guide's
   "Verification / Test and Evaluation" concept). Follows the domain-first
-  hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
-  "simple surface" from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0
+  hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
+  "simple surface" from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0
   -- no per-domain mutation tools, including no per-AC create/read/update/
   delete tools):
   - `vcr/models/v1/`: Pydantic schema (`VcrFrontmatter` with a closed
@@ -2271,7 +2271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Eleventh domain feature (FEAT/Feature tooling)**: formalized the ad hoc
-  `.specmgr/feat/<id>/README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e)
+  `.specmgr/feat/<id>/README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e)
   into a real, schema-backed `feat` document-type domain, with full MCP tool surface,
   resources, prompts, and cross-cutting registration. Deliberately special among domains:
   uses non-UUID `feat-NNN-slug` ids (chosen by user, derived from H1 title) and
@@ -2394,10 +2394,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_dec`, `update_dec`, `set_status_dec`, `parse_dec`, `list_dec`,
     `get_dec`, `get_dec_example`, `get_dec_template`, `validate_dec`),
     plus a stub for `delete_dec`. `list_dec` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `dec/resources/`: `specmgr://dec/schema`, `specmgr://dec/example`,
     `specmgr://dec/template` (no `specmgr://dec/{id}` — id-based reads are
-    `get_dec`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `get_dec`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
     `specmgr://dec/list` — listing is the `list_dec` tool, ADR
     ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `dec/prompts/`: `create_dec(topic)`/`update_dec(id, instructions?)`
@@ -2428,10 +2428,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_gol`, `update_gol`, `set_status_gol`, `parse_gol`, `list_gol`,
     `get_gol`, `get_gol_example`, `get_gol_template`, `validate_gol`),
     plus a stub for `delete_gol`. `list_gol` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `gol/resources/`: `specmgr://gol/schema`, `specmgr://gol/example`,
     `specmgr://gol/template` (no `specmgr://gol/{id}` — id-based reads are
-    `get_gol`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+    `get_gol`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
     `specmgr://gol/list` — listing is the `list_gol` tool, ADR
     ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `gol/prompts/`: narrated `create_gol`/`update_gol` prompts driving a
@@ -2460,7 +2460,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`create_rsk`, `update_rsk`, `set_status_rsk`, `parse_rsk`, `list_rsk`,
     `get_rsk`, `get_rsk_example`, `get_rsk_template`, `validate_rsk`),
     plus a stub for `delete_rsk`. `list_rsk` ships as a paged tool from day
-    one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), and its `RskSummary`
+    one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13), and its `RskSummary`
     lines carry the residual-risk coordinates so a register-wide
     risk-matrix view can be built from the listing alone.
   - `rsk/resources/`: `specmgr://rsk/schema`, `specmgr://rsk/example`,
@@ -2470,7 +2470,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     zone table, and product thresholds) (no `specmgr://rsk/{id}` —
     id-based reads are `get_rsk`-only, ADR
     ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://rsk/list` — listing
-    is the `list_rsk` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+    is the `list_rsk` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
   - `rsk/prompts/`: `create_risk`/`update_risk` prompts (the issue's
     literal wording, not the `rsk`-prefixed convention the tools/resources
     use) driving a narrated `TodoWrite` + `question`-tool interview flow.

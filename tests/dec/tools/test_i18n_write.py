@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the ``dec`` domain's write-side ``language`` support (feat-197-i18n Phase 120, ADR 38efdb66).
+"""Tests for the ``dec`` domain's write-side ``language`` support (feat-197-i18n Phase 120, DEC 38efdb66).
 
 Pins the pilot-domain write side: ``create_dec``'s variant creation (requires
 the EN source, shared id, EN basename, no overwrite), and the generic

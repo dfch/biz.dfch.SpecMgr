@@ -22,7 +22,7 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_req`` tool was removed in favor of it (feat-81-83-validation).
 Unlike ADR, REQ has no
 ``specmgr://req/{id}`` resource -- id-based reads go through the ``get_req``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
 ``specmgr://req/list`` resource was replaced by the ``list_req`` tool, so
 that paging parameters could be accepted (feat-13-list-paging).
 

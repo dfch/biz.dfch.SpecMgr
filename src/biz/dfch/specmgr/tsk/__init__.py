@@ -38,7 +38,7 @@ through the generic ``validate`` tool in ``general.tools``
 (``type="tsk"``) -- the former ``validate_tsk`` tool was removed in favor
 of it (feat-81-83-validation). Like REQ,
 TSK has no ``specmgr://tsk/{id}`` resource -- id-based reads go through the
-``get_tsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``get_tsk`` tool only (same rationale as DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based REQ document reads as a tool (get_req), not a resource" --
 TSK never had such a resource to remove in the first place). Likewise, the
 former ``specmgr://tsk/list`` resource was replaced by the ``list_tsk``

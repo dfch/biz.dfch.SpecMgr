@@ -27,7 +27,7 @@ not a ``ValueError``), the source load's error mapping (a missing source
 raises the source domain's own ``XNotFoundError`` for every one of the 15
 domains; an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` -- its ``error`` text byte-identical to the domain's
-``list_<d>`` failed-row ``error`` for the same file, ADR 9080b37c), the
+``list_<d>`` failed-row ``error`` for the same file, DEC 9080b37c), the
 byte-stable return over the Phase 110 seeded registries (the env var
 UNSET in the test process, guarded by the shared
 ``_SeededRegistryTestCase`` base, so ``max_label`` is the frozen default
@@ -269,7 +269,7 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
         listing = list_dec()
         failed = [row for row in listing.results if row.error is not None]
         self.assertEqual(len(failed), 1)
-        # ADR 9080b37c: byte-identical to the domain's list_<d> failed row for the same file.
+        # DEC 9080b37c: byte-identical to the domain's list_<d> failed row for the same file.
         self.assertEqual(result.error, failed[0].error)
         self.assertEqual(result.path, failed[0].path)
 
