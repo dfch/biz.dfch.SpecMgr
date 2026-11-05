@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
-status: progress
+status: review
 type: feat
-updated: '2026-11-05T23:17:03.000+01:00'
+updated: '2026-11-06T00:18:32.547+01:00'
 version: 1.0.0
 ---
 
