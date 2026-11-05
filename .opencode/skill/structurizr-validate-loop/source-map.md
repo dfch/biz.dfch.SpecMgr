@@ -17,6 +17,9 @@ at the pinned commit.
 |---|---|---|
 | The loop ordering (parse/fix, validate until done, inspect, summarize findings without treating them as failures) | `skills/structurizr/SKILL.md`, "Workflow: create or change a model" and "Gotchas" | Ideas only. The upstream steps run Docker via `scripts/structurizr.sh` and are dropped; the MCP tool names, the `OK` contract, the triage labels, the exact-text rule, and the MCP limits are this repo's (spike findings 2, 3, and 8 of TXT `4a09922d-bc32-4c03-86ba-d30ebc34e0b8` plus REQ-003/REQ-006/REQ-011). |
 | The MCP facts (stateless tools over DSL text) | `skills/structurizr/references/mcp.md`, opening paragraph; spike Finding 3 | Ideas only. The upstream file's "Run the server" and "Connect an agent" content is dropped (Docker/Claude-specific). |
+| "How to call the tools" section (added in iteration 2) | — | Ideas only: the Code Mode call shapes (one call per block, no filesystem in the sandbox, the final `validate` as a plain inline literal, fix-the-named-error) are this repo's harness findings, not upstream passages. |
+| "Triage and the final answer" section (added in iteration 2) | — | Ideas only: the final-answer template and the quote-every-finding rule implement REQ-003's triage; the upstream skill has no final-answer template. |
+| The `!include`/`!docs` fallback protocol in "The MCP limits" (extended in iteration 2) | — | Ideas only: the refusal strings are the pinned MCP's own output observed in this harness; the single-file fallback and the no-`!theme`-URL warning are this repo's. |
 
 No passage in `SKILL.md` copies text; it has no attribution line in
 `NOTICE.md`.
@@ -48,6 +51,7 @@ validate-vs-inspect.md` unless noted.
 | "Quoting" section | `validate-vs-inspect.md` ("Unexpected tokens / parse errors" row) + `dsl-best-practices.md` "## Descriptions and technology" (what carries the quoted strings) | rewritten from the two passages |
 | "Relationship description and technology" section | `dsl-best-practices.md` "## Descriptions and technology" + `skills/structurizr/SKILL.md` ("Give every relationship a description and a technology") + the inspect finding rows naming the two rule ids | merged; the bullets near-verbatim |
 | "Flat identifiers" section | `dsl-best-practices.md` "## Identifiers: flat by default" + `skills/structurizr/SKILL.md` ("Prefer flat identifiers") | merged, near-verbatim |
+| "Explicit view keys" section (added in iteration 2) | — | ideas only: the `[a-zA-Z0-9_-]` key constraint and error string are this harness's observed CLI/parse output, not an upstream passage; no attribution line |
 
 ## Dropped upstream content (no local passage)
 
