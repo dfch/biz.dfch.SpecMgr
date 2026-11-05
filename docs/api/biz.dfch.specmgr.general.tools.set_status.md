@@ -109,7 +109,8 @@ against a broken existing document still returns ``InvalidStatusResult``
 (that check never reaches ``load_by_id``). The ``adr`` adapter stays
 raise-based (ADR is out of scope for this feature).
 
-Per-domain status state machine (feat-108-fsm, GitHub issue #108): each
+Per-domain status state machine (feat-108-fsm, GitHub issue #108, ADR
+a79608e4-88cd-498f-8ca1-445df4d04f92): each
 whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
 :func:`general.tools._status_fsm.check_status_transition` check --
 immediately after its own unchanged-status no-op comparison and before the
@@ -558,10 +559,11 @@ InvalidStatusTransitionResult
     :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
     (``allowed_values`` are the targets allowed from the document's current
     state, sorted; an empty list marks a terminal current state) instead of
-    writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108;
-    see the module docstring). During the phased rollout a domain whose
-    table has not landed yet passes through unchanged, and ``type="adr"``
-    never produces this result (REQ-006).
+    writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108,
+    ADR a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
+    The rollout is complete as of Phase 120 (every whole-body domain's
+    own table has landed and is enforced), and ``type="adr"`` never
+    produces this result (REQ-006: ADR keeps its flat-vocabulary behavior).
 
     Raises
     ------

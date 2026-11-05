@@ -883,6 +883,20 @@ type or cross-cutting:
     (incl. `create_feat`'s guards, whose execution order relative to content
     validation is unchanged: a compound failure returns `ValidateResult`
     first, "first-in-execution-order wins") still raise;
+    `set_status`'s second, post-load error surface (a sixth extension of
+    the same chain, feat-108-fsm, GitHub issue #108, ADR
+    a79608e4-88cd-498f-8ca1-445df4d04f92) enforces each whole-body domain's
+    own `_STATUS_TRANSITIONS` state machine (next to its `_ALLOWED_STATUSES`
+    in its own frontmatter module; the central `general/tools/_status_fsm.py`
+    aggregation keyed to the `general/tools/_domains` registry, full-coverage
+    import-time assert) post-load/pre-write, immediately after the
+    unchanged-status no-op comparison, and a disallowed transition returns
+    the non-raising `InvalidStatusTransitionResult` (current-state-relative
+    sorted `allowed_values`; `[]` plus the terminal message form for a
+    terminal current state; nothing written, `updated` not bumped) instead of
+    writing — `adr` excluded (keeps its flat-vocabulary behavior), with the
+    case-2 out-of-vocabulary `InvalidStatusResult` above still running
+    pre-lock/pre-load first (unchanged);
     `_CAUGHT_EXCEPTIONS`/`_MAX_VALIDATE_ERROR_CHARS` are defined in
     `general/models/validate_result.py` and re-exported by
     `general/tools/validate.py` (their one source of truth); `edit`, the

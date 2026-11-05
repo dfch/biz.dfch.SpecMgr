@@ -126,7 +126,8 @@ against a broken existing document still returns ``InvalidStatusResult``
 (that check never reaches ``load_by_id``). The ``adr`` adapter stays
 raise-based (ADR is out of scope for this feature).
 
-Per-domain status state machine (feat-108-fsm, GitHub issue #108): each
+Per-domain status state machine (feat-108-fsm, GitHub issue #108, ADR
+a79608e4-88cd-498f-8ca1-445df4d04f92): each
 whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
 :func:`general.tools._status_fsm.check_status_transition` check --
 immediately after its own unchanged-status no-op comparison and before the
@@ -1198,7 +1199,25 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "Every whole-body type except `feat` supports a non-default language; for `feat` and `adr` "
         "(always English) a non-default `language` raises a `ValueError`, as does a malformed "
         "`language` or one with no packaged heading-mapping table -- all raised before any file "
-        "access."
+        "access. "
+        "Per-domain status state machine (feat-108-fsm, GitHub issue #108, ADR "
+        "a79608e4-88cd-498f-8ca1-445df4d04f92): each whole-body domain's own `_STATUS_TRANSITIONS` "
+        "table (current status -> allowed target statuses, defined next to the domain's own "
+        "`_ALLOWED_STATUSES` in its frontmatter module) is enforced post-load/pre-write, immediately "
+        "after the unchanged-status no-op comparison and before any write: a transition the machine "
+        "does not allow returns a non-raising `InvalidStatusTransitionResult` (`{valid: false, type, "
+        "from_status, to_status, allowed_values, message}`) instead of writing -- `allowed_values` "
+        "are the targets allowed FROM THE CURRENT STATE, sorted, never the domain's full flat "
+        "vocabulary, and an empty `allowed_values` marks a terminal current state, whose message "
+        "reads `... Status '{from_status}' is terminal (no outgoing transitions).` -- and nothing is "
+        "persisted (the `updated` timestamp is not bumped). This is the tool's second, post-load "
+        "error surface, distinct from the pre-dispatch/pre-load out-of-vocabulary "
+        "`InvalidStatusResult` above (case 2 of the ADR 519d1206-4d2a-4500-9046-6db635209996 "
+        "non-raising-structured-result chain, still running first, unchanged): the transition check "
+        "is case 6 of the same chain, so the current-state-relative detail survives MCP clients that "
+        "truncate error content. "
+        '`type="adr"` is excluded (it keeps its flat-vocabulary behavior) and never produces this '
+        "result."
     ),
 )
 def set_status(
@@ -1323,10 +1342,11 @@ def set_status(
         :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
         (``allowed_values`` are the targets allowed from the document's current
         state, sorted; an empty list marks a terminal current state) instead of
-        writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108;
-        see the module docstring). During the phased rollout a domain whose
-        table has not landed yet passes through unchanged, and ``type="adr"``
-        never produces this result (REQ-006).
+        writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108,
+        ADR a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
+        The rollout is complete as of Phase 120 (every whole-body domain's
+        own table has landed and is enforced), and ``type="adr"`` never
+        produces this result (REQ-006: ADR keeps its flat-vocabulary behavior).
 
         Raises
         ------
