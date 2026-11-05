@@ -1314,12 +1314,15 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
 
 
 class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
-    """feat-108-fsm Phase 100/110 (the cross-cutting seam, REQ-002/REQ-005): the post-load/pre-write
-    ``check_status_transition`` call is wired into the whole-body adapters. As of Phase 110 the
-    ``req`` entry of ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` carries the landed
-    ``req`` table (the req pins below therefore drive an allowed transition, ``draft`` ->
-    ``proposed``) while the ``feat`` entry -- like every other non-req whole-body domain -- is
-    still the ``None`` passthrough seam until Phase 120.
+    """feat-108-fsm (the cross-cutting seam, REQ-002/REQ-005, GitHub issue #108): the
+    post-load/pre-write ``check_status_transition`` call is wired into the whole-body adapters
+    (Phase 100). As of Phase 120 the rollout is complete: every entry of
+    ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` carries the domain's own landed
+    table (``req`` since Phase 110, the remaining whole-body domains since Phase 120), and no
+    entry is the ``None`` passthrough any more -- the pins below therefore drive an allowed
+    transition of their own domain's landed table (``req``: ``draft`` -> ``proposed``;
+    ``feat``: ``planning`` -> ``progress``), with ``feat`` -- like every other whole-body
+    domain -- enforced like ``req``.
 
     The no-op, out-of-vocabulary, parse-failure, and path-safety order pins are this module's
     existing tests (unchanged by this phase); this class adds the seam-specific pins: the check
@@ -1331,11 +1334,11 @@ class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
     the e2e module ``test_set_status_fsm_req.py``'s subject (Phase 110).
     """
 
-    def test_transition_check_is_wired_post_load_and_passes_through_for_req(self) -> None:
+    def test_transition_check_is_wired_post_load_and_drives_an_allowed_transition_for_req(self) -> None:
         """The req adapter must call ``check_status_transition("req", <current>, <target>)`` after its
-        own load/no-op and, for an allowed transition (Phase 110: the landed req table allows
-        ``draft`` -> ``proposed``), proceed to the write with the exact return shape (the
-        domain's own frontmatter, status changed)."""
+        own load/no-op and, for an allowed transition of the landed req table (``draft`` ->
+        ``proposed``), proceed to the write with the exact return shape (the domain's own
+        frontmatter, status changed)."""
         case = next(c for c in _CASES if c.doc_type == "req")
         created = case.create(case.minimal_body)
 
@@ -1349,9 +1352,10 @@ class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
         self.assertNotIsInstance(result, case.document_type)
         self.assertEqual(result.status, case.valid_status)
 
-    def test_transition_check_is_wired_post_load_and_passes_through_for_feat(self) -> None:
+    def test_transition_check_is_wired_post_load_and_drives_an_allowed_transition_for_feat(self) -> None:
         """The same, for ``feat`` (separate case shape: folder + ``README.md``, no ``language``
-        parameter -- the same wiring point)."""
+        parameter -- the same wiring point; the pin drives an allowed transition of the landed
+        feat table, ``planning`` -> ``progress``)."""
         created = create_feat(_FEAT_MINIMAL_BODY)
 
         with mock.patch.object(
