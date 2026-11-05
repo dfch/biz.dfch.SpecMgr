@@ -4,7 +4,7 @@ created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
 status: review
 type: feat
-updated: '2026-11-05T16:12:48.000+01:00'
+updated: '2026-11-05T19:29:25.000+01:00'
 version: 1.0.0
 ---
 
@@ -214,7 +214,7 @@ set:
 
 ### Current Status
 
-Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry.
+Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry. The post-implementation review (feat-reviewer) ran and is complete — all ACCs confirmed met, the single wording finding fixed (`4a360327`), PR #256 CI green; the feature awaits merge (not merged — by design).
 
 ### Blockers
 
@@ -223,6 +223,14 @@ Implementation complete — all five phases (100–140) landed and committed, th
 ### Updates
 
 <!-- Newest first. -->
+
+#### 2026-11-05T18:29:25.000Z - Post-implementation review run — one finding (D1) fixed, CI re-green
+
+Ran the feat-reviewer post-implementation review (read-only, over `git diff 3d2c3f8..HEAD` at the review commit). It confirmed all nine acceptance criteria met (ACC-003 with the recorded Phase-120 cycle-walk deviation), no behavioral defects, and no blocking gaps, and verified the 14 `_STATUS_TRANSITIONS` tables + the 14 per-domain golden pins byte-exact against the plan's Design Notes, the pre-load-vs-post-load channel order spy-pinned, the ADR adapter diff-free, and `docs/MCP.md`/`server.py`/`AGENTS.md`/ADR a79608e4-88cd-498f-8ca1-445df4d04f92 mutually consistent.
+
+Non-blocking improvement items from the review: I1 = the one actual finding — stale Phase-110 rollout wording in `tests/general/tools/test_set_status.py`'s `TestSetStatusTransitionSeam` class docstring (it still said the `feat` entry "is still the `None` passthrough seam until Phase 120") plus the two `..._passes_through_for_req/feat` test method names, wording-only (the pins drive table-ALLOWED transitions: req `draft` -> `proposed`, feat `planning` -> `progress`); I2 (the e2e matrix seeds a fresh document per pair — runtime acceptable, cosmetic) and I3 (`docs/api/` lacks `req.models.v1.frontmatter`/`gol.models.v1.frontmatter` pages — verified pre-existing at the plan's base commit, not feature drift; a candidate follow-up issue) both left as recorded, not actioned.
+
+I1/D1 fixed in commit `4a360327` (`fix(feat-108-fsm): review D1 — stale Phase-110 rollout wording in the set_status seam tests`): the class docstring reworded to the Phase-120-complete reality (every aggregation entry carries the domain's own landed table, no `None` passthrough remains), both seam test methods renamed to `test_transition_check_is_wired_post_load_and_drives_an_allowed_transition_for_req/feat`, method docstrings aligned; no behavior/assertion change; targeted suite green (28 passed, 204 subtests); PR #256 CI re-run fully green (all 8 checks pass on `4a360327`).
 
 #### 2026-11-05T15:12:48.000Z - Set status to review — implementation complete, ACC-001…ACC-009 met
 
@@ -290,13 +298,14 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 
 ### Related PRs / Commits
 
+- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`, CI green — all 8 checks pass on `4a360327`)
 - 0a745cb Phase 100 — cross-cutting status state-machine mechanism (issue #108)
 - c5fa928 Phase 110 — REQ pilot: req status state machine + end-to-end enforcement tests (issue #108)
 - 2d22059 Phase 120 — remaining 13 domain state machines, full-coverage assert, golden + e2e matrix tests (issue #108)
 - 3e11707 Phase 130 — set_status tool/server/AGENTS.md docs sync + ADR a79608e4 (issue #108)
 - 930851c Phase 140 — quality gate green, acceptance criteria walked (issue #108)
-
-The PR will be opened after this commit (the status-to-`review` commit itself is not yet known and is therefore not listed).
+- a6e5082 set status to review — implementation complete, ACC-001…ACC-009 ticked (issue #108)
+- 4a360327 review D1 — stale Phase-110 rollout wording in the set_status seam tests (issue #108)
 
 ### More Information
 
