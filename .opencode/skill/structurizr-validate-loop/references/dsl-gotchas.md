@@ -46,3 +46,12 @@ identifiers every reference must spell out the full path, and mistakes
 produce the same "element does not exist" error as a typo. With flat
 identifiers, every identifier must be unique across the whole model,
 and flat identifiers validate on the first try more often.
+
+## Explicit view keys
+
+Give every view an explicit key: `systemContext bookshop "SystemContext"
+{ ... }`. The key may only contain `a-zA-Z0-9_-` — no spaces:
+`"System Context"` fails with `View keys can only contain the following
+characters: a-zA-Z0-9_-`. A view without a key gets an auto-generated
+one that `inspect` flags; a plain camelCase key (`SystemContext`,
+`Containers`) avoids both.

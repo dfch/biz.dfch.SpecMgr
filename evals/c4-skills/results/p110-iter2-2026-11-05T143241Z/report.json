@@ -1,0 +1,137 @@
+{
+  "cases": [
+    "create-system",
+    "mcp-limits",
+    "no-trigger"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 11.4,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.3,
+    "mean_wall_time_s": 593.9,
+    "measured_trials": 15,
+    "median_wall_time_s": 455.0,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p110-iter2",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 15,
+        "contended": 0,
+        "timeout": 3
+      },
+      "gate_failures": {
+        "cli_export": 4,
+        "cli_valid": 5,
+        "has_person": 4,
+        "has_system": 4,
+        "has_view": 5,
+        "inspect_called": 5,
+        "limits_acknowledged": 3,
+        "mcp_limit_stated": 5,
+        "parse_called": 5,
+        "relationship_technology": 5,
+        "triage_complete": 8,
+        "two_containers": 4,
+        "validate_ok_called": 5,
+        "validated_before_return": 10
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "create-system": {
+          "passes": 0,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 15,
+      "wilson": [
+        0.0,
+        0.2038833035964871
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 2,
+        "timeout": 4
+      },
+      "gate_failures": {
+        "cli_export": 1,
+        "cli_valid": 2,
+        "dsl_written": 1,
+        "has_person": 1,
+        "has_system": 1,
+        "has_view": 1,
+        "inspect_called": 1,
+        "limits_acknowledged": 1,
+        "mcp_limit_stated": 5,
+        "parse_called": 1,
+        "relationship_technology": 1,
+        "triage_complete": 3,
+        "two_containers": 2,
+        "validate_ok_called": 1,
+        "validated_before_return": 1
+      },
+      "pass_power_k": 2.452059386044665e-09,
+      "pass_rate": 0.26666666666666666,
+      "passes": 4,
+      "per_case": {
+        "create-system": {
+          "passes": 2,
+          "trials": 5
+        },
+        "mcp-limits": {
+          "passes": 2,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 15,
+      "wilson": [
+        0.10897453249617367,
+        0.5195043425155204
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p110-iter2-2026-11-05T143241Z",
+  "seed": 865648,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": true,
+      "clearly_worse_cases": [],
+      "none_rate": 0.0,
+      "ok": true,
+      "rate_margin_pp": -26.67,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.10897453249617367,
+      0.5195043425155204
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}
