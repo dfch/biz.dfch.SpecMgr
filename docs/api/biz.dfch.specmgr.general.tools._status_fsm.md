@@ -22,19 +22,20 @@ marks a terminal current state) -- case 6 of the ADR
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result workaround chain, so the
 current-state-relative detail survives MCP clients that truncate ``isError`` text.
 
-Phased rollout (REQ-003's opt-in seam): an entry's value is ``None`` until the domain's own
-``_STATUS_TRANSITIONS`` table lands (Phases 110/120, next to the domain's own ``_ALLOWED_STATUSES``
-in its ``models/<v>/frontmatter.py``); a ``None`` entry is a passthrough -- :func:`check_status_transition`
-returns ``None`` and the adapter proceeds exactly as before. As of Phase 110 the pilot domain
-``req`` is enforced (its own table has landed) and every other whole-body domain is still a
-passthrough until Phase 120 lands its table. ADR is excluded (REQ-006): it has no entry
-and ``_set_status_adr`` never calls into this module.
+Rollout complete (REQ-003/ACC-007): every whole-body domain's own ``_STATUS_TRANSITIONS`` table
+has landed (next to the domain's own ``_ALLOWED_STATUSES`` in its ``models/<v>/frontmatter.py``)
+and is enforced -- ``req`` as the Phase 110 pilot, the remaining whole-body domains as of Phase
+120. The import-time drift assert below is the full-coverage form: keys equal the shared
+``general.tools._domains`` registry, no entry is ``None``, and ADR is excluded (REQ-006: it has
+no entry and ``_set_status_adr`` never calls into this module). The pure core
+:func:`decide_transition` still treats a ``None`` table as a passthrough (the total-decision
+seam, exercised by tests with temporary tables and by unregistered types such as ``adr``).
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/`` support module: this
-module is plain data plus pure functions (it imports the per-domain closed vocabularies from each
-domain's own ``models/<v>/frontmatter.py`` exactly as ``set_status.py`` does for its own
-``_ALLOWED_STATUSES_BY_TYPE`` -- no re-derived vocabulary), so importing it never registers or
-touches a tool.
+module is plain data plus pure functions (it imports the per-domain closed vocabularies and the
+per-domain state machines from each domain's own ``models/<v>/frontmatter.py`` exactly as
+``set_status.py`` does for its own ``_ALLOWED_STATUSES_BY_TYPE`` -- no re-derived vocabulary,
+no re-derived table), so importing it never registers or touches a tool.
 
 ## Functions
 
@@ -43,12 +44,13 @@ touches a tool.
 The shared check the whole-body ``_set_status_<d>`` adapters call post-load/pre-write.
 
 Looks up the dispatched ``type_``'s own table in :data:`_STATUS_TRANSITIONS_BY_TYPE` and
-delegates to :func:`decide_transition`. A table-less domain (a ``None`` entry, or any type
-without an entry -- e.g. ``adr``, which never calls this) passes through (``None``), so the
-aggregation stays opt-in during the phased rollout (feat-108-fsm, REQ-003). The adapters call
-this inside their domain lock, after the unchanged-status no-op comparison and before the
-raw-body re-read -- a rejection is pre-write (nothing is persisted, ``updated`` is not
-bumped).
+delegates to :func:`decide_transition`. A ``None`` lookup result passes through (``None``):
+as of Phase 120 no whole-body domain's entry is ``None`` any more (the rollout is complete,
+every whole-body domain is enforced), so the passthrough covers only types without an
+aggregation entry -- e.g. ``adr``, which never calls this (feat-108-fsm, REQ-003/REQ-006).
+The adapters call this inside their domain lock, after the unchanged-status no-op comparison
+and before the raw-body re-read -- a rejection is pre-write (nothing is persisted,
+``updated`` is not bumped).
 
 Parameters
 ----------

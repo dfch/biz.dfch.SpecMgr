@@ -16,17 +16,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Unit tests for the generic ``set_status`` tool's own per-domain status state machine
-(``general.tools._status_fsm``, feat-108-fsm Phase 100/110, REQ-003/REQ-004, GitHub issue #108).
+(``general.tools._status_fsm``, feat-108-fsm Phase 100/110/120, REQ-003/REQ-004, GitHub
+issue #108).
 
 Covers the import-time invariants (the aggregation is keyed to the shared ``general.tools.
-_domains`` registry, ADR excluded, and -- as of Phase 110 -- the ``req`` entry carries the
-landed domain table while every other whole-body domain is still the ``None`` passthrough
-seam), the pure :func:`decide_transition` core (passthrough, allowed, disallowed with the sorted
-current-state-relative ``allowed_values`` + the locked normal message form, the terminal message
-form, and the total/terminal treatment of a ``current`` that is not a table key), and the public
-:func:`check_status_transition` helper (table-less and unregistered types pass through; the
-aggregation lookup is exercised with a temporarily patched entry, no module state mutated; the
-landed req table is enforced straight from module state).
+_domains`` registry, ADR excluded, and -- as of Phase 120 -- every whole-body entry carries
+its domain's own landed table by identity: the rollout is complete, no ``None`` passthrough
+remains), the pure :func:`decide_transition` core (passthrough, allowed, disallowed with the
+sorted current-state-relative ``allowed_values`` + the locked normal message form, the
+terminal message form, and the total/terminal treatment of a ``current`` that is not a table
+key), and the public :func:`check_status_transition` helper (unregistered types pass
+through; the aggregation lookup is exercised with a temporarily patched entry, no module
+state mutated; every whole-body domain's landed table is enforced straight from module
+state).
 """
 
 from __future__ import annotations
@@ -35,13 +37,52 @@ import importlib
 import unittest
 from unittest import mock
 
+from biz.dfch.specmgr.dec.models.v1.frontmatter import _STATUS_TRANSITIONS as _DEC_LANDED_TABLE
+from biz.dfch.specmgr.feat.models.v1.frontmatter import _STATUS_TRANSITIONS as _FEAT_LANDED_TABLE
 from biz.dfch.specmgr.general.models import InvalidStatusTransitionResult
 from biz.dfch.specmgr.general.tools._domains import ADR, WHOLE_BODY_DOMAINS
+from biz.dfch.specmgr.gol.models.v1.frontmatter import _STATUS_TRANSITIONS as _GOL_LANDED_TABLE
+from biz.dfch.specmgr.prb.models.v1.frontmatter import _STATUS_TRANSITIONS as _PRB_LANDED_TABLE
+from biz.dfch.specmgr.qa.models.v2.frontmatter import _STATUS_TRANSITIONS as _QA_LANDED_TABLE
 from biz.dfch.specmgr.req.models.v1.frontmatter import _STATUS_TRANSITIONS as _REQ_LANDED_TABLE
+from biz.dfch.specmgr.rsk.models.v1.frontmatter import _STATUS_TRANSITIONS as _RSK_LANDED_TABLE
+from biz.dfch.specmgr.set.models.v1.frontmatter import _STATUS_TRANSITIONS as _SET_LANDED_TABLE
+from biz.dfch.specmgr.sop.models.v1.frontmatter import _STATUS_TRANSITIONS as _SOP_LANDED_TABLE
+from biz.dfch.specmgr.sysrs.models.v1.frontmatter import _STATUS_TRANSITIONS as _SYSRS_LANDED_TABLE
+from biz.dfch.specmgr.tsk.models.v1.frontmatter import _STATUS_TRANSITIONS as _TSK_LANDED_TABLE
+from biz.dfch.specmgr.txt.models.v1.frontmatter import _STATUS_TRANSITIONS as _TXT_LANDED_TABLE
+from biz.dfch.specmgr.uc.models.v2.frontmatter import _STATUS_TRANSITIONS as _UC_LANDED_TABLE
+from biz.dfch.specmgr.vcr.models.v1.frontmatter import _STATUS_TRANSITIONS as _VCR_LANDED_TABLE
 
 status_fsm_module = importlib.import_module("biz.dfch.specmgr.general.tools._status_fsm")
 check_status_transition = status_fsm_module.check_status_transition
 decide_transition = status_fsm_module.decide_transition
+
+#: Every whole-body domain's own landed table, keyed by type (Phase 120: full coverage --
+#: ``req`` since Phase 110, the remaining whole-body domains since Phase 120): the identity
+#: pin for the aggregation's entries (domain-owned constants, carried by the aggregation,
+#: not copies).
+_LANDED_TABLES_BY_TYPE: dict[str, dict[str, frozenset[str]]] = {
+    "req": _REQ_LANDED_TABLE,
+    "uc": _UC_LANDED_TABLE,
+    "tsk": _TSK_LANDED_TABLE,
+    "qa": _QA_LANDED_TABLE,
+    "prb": _PRB_LANDED_TABLE,
+    "gol": _GOL_LANDED_TABLE,
+    "rsk": _RSK_LANDED_TABLE,
+    "dec": _DEC_LANDED_TABLE,
+    "sop": _SOP_LANDED_TABLE,
+    "feat": _FEAT_LANDED_TABLE,
+    "vcr": _VCR_LANDED_TABLE,
+    "sysrs": _SYSRS_LANDED_TABLE,
+    "txt": _TXT_LANDED_TABLE,
+    "set": _SET_LANDED_TABLE,
+}
+
+assert set(_LANDED_TABLES_BY_TYPE) == set(WHOLE_BODY_DOMAINS), (
+    "_LANDED_TABLES_BY_TYPE keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- "
+    "add or remove the domain in both places (feat-125-domain-lists)"
+)
 
 #: The locked req table (the feature plan's Design Notes shape): the golden pin for the landed
 #: ``req.models.v1.frontmatter._STATUS_TRANSITIONS`` constant (the full 7x7 matrix walk lives in
@@ -72,11 +113,12 @@ _TERMINAL_MESSAGE = (
 
 
 class TestStatusTransitionsAggregation(unittest.TestCase):
-    """REQ-003/ACC-007 (Phase 100 form, the Phase 110 state of the values): the aggregation is
-    keyed to the registry, ADR excluded, and the import-time drift assert passed (the module
-    import at the top of this file is the proof -- a failed assert would have made this file
-    unimportable). As of Phase 110 the ``req`` entry is the landed domain table (enforced);
-    every other whole-body domain is still the ``None`` passthrough seam until Phase 120."""
+    """REQ-003/ACC-007 (the full-coverage form, Phase 120): the aggregation is keyed to the
+    registry, ADR excluded, and the import-time drift assert passed (the module import at the
+    top of this file is the proof -- a failed assert would have made this file unimportable).
+    As of Phase 120 the rollout is complete: every whole-body entry is the domain's own
+    landed table (``req`` since Phase 110, the rest since Phase 120), carried by identity,
+    and no ``None`` passthrough entry remains."""
 
     def test_module_imports_cleanly(self) -> None:
         self.assertIsNotNone(status_fsm_module)
@@ -93,22 +135,24 @@ class TestStatusTransitionsAggregation(unittest.TestCase):
 
         self.assertNotIn(ADR, sut)
 
-    def test_phase_110_req_entry_is_the_landed_domain_table(self) -> None:
-        """REQ-001/REQ-003: the aggregation carries req's own constant by identity (domain-owned,
-        no copy) and it equals the locked table shape."""
+    def test_every_entry_is_its_own_landed_domain_table(self) -> None:
+        """REQ-001/REQ-003/ACC-007: the aggregation carries every domain's own constant by
+        identity (domain-owned, no copy) and each equals the locked table shape."""
         sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
 
-        self.assertIs(sut["req"], _REQ_LANDED_TABLE)
+        for domain, landed_table in _LANDED_TABLES_BY_TYPE.items():
+            with self.subTest(domain=domain):
+                self.assertIs(sut[domain], landed_table)
         self.assertEqual(sut["req"], _REQ_TABLE)
 
-    def test_phase_110_every_other_entry_is_the_none_passthrough(self) -> None:
+    def test_no_entry_is_the_none_passthrough(self) -> None:
+        """ACC-007 (full coverage): the Phase-100/110 ``None`` passthrough seam is gone --
+        every whole-body domain's table has landed and is enforced."""
         sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
 
         for domain in WHOLE_BODY_DOMAINS:
-            if domain == "req":
-                continue  # Phase 110: req's table has landed (see test_phase_110_req_entry_is_the_landed_domain_table)
             with self.subTest(domain=domain):
-                self.assertIsNone(sut[domain])
+                self.assertIsNotNone(sut[domain])
 
     def test_vocabularies_cover_exactly_the_whole_body_domains(self) -> None:
         sut = status_fsm_module._STATUS_VOCABULARIES_BY_TYPE
@@ -173,15 +217,27 @@ class TestDecideTransition(unittest.TestCase):
 
 
 class TestCheckStatusTransition(unittest.TestCase):
-    """The public helper: the aggregation lookup (table-less pass-through, unregistered types)
-    plus one temporarily patched entry proving the lookup delegates to the core."""
+    """The public helper: the aggregation lookup (unregistered types pass through; every
+    whole-body domain is enforced straight from module state as of Phase 120) plus one
+    temporarily patched entry proving the lookup delegates to the core."""
 
-    def test_tableless_whole_body_domain_passes_through(self) -> None:
+    def test_every_whole_body_domain_is_enforced_not_passthrough(self) -> None:
+        """Phase 120: no whole-body domain is a table-less passthrough any more -- for each,
+        a table-allowed transition from its create status passes and the diagonal (no
+        state carries itself as its own target in any locked table) is rejected."""
+        start_statuses = {"rsk": "open", "feat": "planning"}
         for domain in WHOLE_BODY_DOMAINS:
-            if domain == "req":
-                continue  # Phase 110: req's table has landed and is enforced (see below)
             with self.subTest(domain=domain):
-                self.assertIsNone(check_status_transition(domain, "draft", "accepted"))
+                table = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE[domain]
+                start = start_statuses.get(domain, "draft")
+                self.assertIsNone(check_status_transition(domain, start, sorted(table[start])[0]))
+
+                result = check_status_transition(domain, start, start)
+
+                self.assertIsInstance(result, InvalidStatusTransitionResult)
+                self.assertEqual(result.type, domain)
+                self.assertEqual(result.from_status, start)
+                self.assertEqual(result.to_status, start)
 
     def test_unregistered_type_passes_through(self) -> None:
         self.assertIsNone(check_status_transition(ADR, "draft", "accepted"))

@@ -139,6 +139,12 @@ class TestGolLifecycleIntegration(TempGolDirTestCase):
         self.assertIsNotNone(get_gol(gol_id).body.description)
 
         # 5. set_status (type="gol"): only status/updated may change.
+        #    feat-108-fsm Phase 120: the domain's own state machine is enforced, so the
+        #    transition walks the legal path draft -> proposed -> accepted (draft -> accepted
+        #    is rejected pre-write with InvalidStatusTransitionResult).
+        proposed = set_status(gol_id, "gol", "proposed")
+        self.assertEqual(proposed.status, "proposed")
+        self.assertEqual(proposed.id, updated.frontmatter.id)
         accepted = set_status(gol_id, "gol", "accepted")
         self.assertEqual(accepted.status, "accepted")
         self.assertEqual(accepted.id, updated.frontmatter.id)

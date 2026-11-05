@@ -11,6 +11,11 @@ the deliberately lighter TXT three-value set). See
 `.specmgr/feat/feat-173-req-iso29148-level-set/README.md` (the 2026-11-01
 Decisions Made entry) for the full rationale.
 
+This module also owns the set status state machine (feat-108-fsm, GitHub
+issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `SetFrontmatter`

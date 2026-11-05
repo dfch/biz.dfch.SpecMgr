@@ -496,7 +496,10 @@ _CASES: list[_Case] = [
         frontmatter_type=UcFrontmatter,
         document_type=UcDocument,
         minimal_body=_UC_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: uc's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="implemented",
         allowed_statuses=_UC_ALLOWED_STATUSES,
     ),
@@ -540,7 +543,10 @@ _CASES: list[_Case] = [
         frontmatter_type=GolFrontmatter,
         document_type=GolDocument,
         minimal_body=_GOL_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: gol's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="open",
         allowed_statuses=_GOL_ALLOWED_STATUSES,
     ),
@@ -562,7 +568,10 @@ _CASES: list[_Case] = [
         frontmatter_type=DecFrontmatter,
         document_type=DecDocument,
         minimal_body=_DEC_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: dec's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="implemented",
         allowed_statuses=_DEC_ALLOWED_STATUSES,
     ),
@@ -573,7 +582,10 @@ _CASES: list[_Case] = [
         frontmatter_type=SopFrontmatter,
         document_type=SopDocument,
         minimal_body=_SOP_MINIMAL_BODY,
-        valid_status="active",
+        # feat-108-fsm Phase 120: sop's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``approved`` (``draft`` -> ``active`` is rejected by the machine).
+        valid_status="approved",
         invalid_status="implemented",
         allowed_statuses=_SOP_ALLOWED_STATUSES,
     ),

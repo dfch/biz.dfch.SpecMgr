@@ -69,6 +69,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.general.tools._language_guard import LANGUAGE_AWARE_DOMAINS
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.general.tools._status_fsm import _STATUS_TRANSITIONS_BY_TYPE
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.edit import edit
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
@@ -874,23 +875,14 @@ def _lead_paragraph(body: str) -> str:
     raise AssertionError("no lead paragraph found")
 
 
-def _allowed_statuses(d: str) -> set[str]:
-    module = importlib.import_module("biz.dfch.specmgr.general.tools.set_status")
-    result = set(module._ALLOWED_STATUSES_BY_TYPE[d])
-    return result
-
-
 def _set_status_target(spec: DomainSpec) -> str:
-    """A canonical status ``set_status`` may move the fresh (create-status) DE variant to -- the
-    ACC-006 write row's target. Since feat-108-fsm Phase 110 the target must additionally be a
-    transition the domain's own state machine allows from the variant's create status: ``req``'s
-    landed machine rejects its old alphabetical pick (``draft`` -> ``accepted``), so ``req`` gets
-    the allowed ``draft`` -> ``proposed``; every other whole-body domain is still the table-less
-    passthrough (Phase 120 lands its machines and may extend this override)."""
-    if spec.d == "req":
-        result = "proposed"
-        return result
-    result = sorted(_allowed_statuses(spec.d) - {spec.status})[0]
+    """The alphabetically-first LEGAL transition from the variant's create status -- the ACC-006
+    write row's target. Since feat-108-fsm Phase 120 every whole-body domain's own state machine
+    is landed and enforced, the target is derived from the central aggregation's own table for
+    the spec's domain: ``sorted(_STATUS_TRANSITIONS_BY_TYPE[spec.d][spec.status])[0]``
+    (feat-197's ACC-006 row now targets a machine-legal transition for every domain -- this
+    replaced the old full-vocabulary alphabetical pick and the ``req``-only override)."""
+    result = sorted(_STATUS_TRANSITIONS_BY_TYPE[spec.d][spec.status])[0]
     return result
 
 

@@ -134,7 +134,7 @@ raw-body re-read (so a rejection is pre-write: nothing is persisted and
 ``updated`` is not bumped) -- against the dispatched domain's own
 ``_STATUS_TRANSITIONS`` state machine, aggregated centrally in
 ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` (keyed to the
-``general.tools._domains`` registry, opt-in per domain). This is the tool's
+``general.tools._domains`` registry). This is the tool's
 second, post-load error surface, distinct from the pre-dispatch, pre-load
 out-of-vocabulary ``InvalidStatusResult`` check above (which still runs
 first and is unchanged): a transition the domain's machine does not allow
@@ -145,11 +145,10 @@ returns the non-raising
 document's current state, sorted -- never the domain's full flat vocabulary;
 an empty list marks a terminal current state) instead of writing -- case 6
 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
-result workaround chain. During the phased rollout a domain whose table has
-not landed yet carries a ``None`` aggregation entry and passes through
-unchanged -- as of Phase 110 ``req`` is enforced (its own table has landed)
-and the other whole-body domains still pass through until Phase 120; the
-no-op, out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
+result workaround chain. The rollout is complete as of Phase 120: every
+whole-body domain's own table has landed and is enforced (``req`` first, in
+Phase 110; the remaining whole-body domains in Phase 120); the no-op,
+out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
 untouched, and ``_set_status_adr`` never calls the check (REQ-006: ADR keeps
 its flat-vocabulary behavior).
 
