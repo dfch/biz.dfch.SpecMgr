@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
-status: progress
+status: review
 type: feat
-updated: '2026-11-05T14:06:43.031+01:00'
+updated: '2026-11-05T16:12:48.000+01:00'
 version: 1.0.0
 ---
 
@@ -30,15 +30,15 @@ The generic `set_status` tool currently validates a requested status only agains
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: For each of the 14 whole-body domains, `_STATUS_TRANSITIONS` exists in its frontmatter module and is pinned by a per-domain golden matrix test.
-- [ ] ACC-002: After its phase lands, `set_status` for a whole-body domain rejects a disallowed transition (e.g. req `accepted` -> `draft`) before any write by returning `InvalidStatusTransitionResult` whose `allowed_values` are the allowed targets from the current state (including an empty list for a terminal current state), and allows the reverse where the table permits.
-- [ ] ACC-003: A multi-step cycle (e.g. feat `review` -> `done` -> `progress` -> `done`) succeeds while each step is in the domain's table.
-- [ ] ACC-004: The no-op (requested status equals current) still returns success with no write and no `updated` bump.
-- [ ] ACC-005: The pre-load out-of-vocabulary `InvalidStatusResult` path is unchanged and still runs before dispatch, distinct from the new transition check.
-- [ ] ACC-006: ADR `set_status` behavior is byte-identical to today (no transition enforcement).
-- [ ] ACC-007: The `_STATUS_TRANSITIONS_BY_TYPE` drift assert passes; after the final rollout phase it asserts full coverage of the 14 non-ADR whole-body domains.
-- [ ] ACC-008: `docs/MCP.md`, `server.py`, and `AGENTS.md` are updated and consistent with a new ADR.
-- [ ] ACC-009: The full quality gate is green: ruff format/check, pylint (advisory), vulture, pytest, and `specmgr docs` drift.
+- [x] ACC-001: For each of the 14 whole-body domains, `_STATUS_TRANSITIONS` exists in its frontmatter module and is pinned by a per-domain golden matrix test.
+- [x] ACC-002: After its phase lands, `set_status` for a whole-body domain rejects a disallowed transition (e.g. req `accepted` -> `draft`) before any write by returning `InvalidStatusTransitionResult` whose `allowed_values` are the allowed targets from the current state (including an empty list for a terminal current state), and allows the reverse where the table permits.
+- [x] ACC-003: A multi-step cycle (e.g. feat `review` -> `done` -> `progress` -> `done`) succeeds while each step is in the domain's table.
+- [x] ACC-004: The no-op (requested status equals current) still returns success with no write and no `updated` bump.
+- [x] ACC-005: The pre-load out-of-vocabulary `InvalidStatusResult` path is unchanged and still runs before dispatch, distinct from the new transition check.
+- [x] ACC-006: ADR `set_status` behavior is byte-identical to today (no transition enforcement).
+- [x] ACC-007: The `_STATUS_TRANSITIONS_BY_TYPE` drift assert passes; after the final rollout phase it asserts full coverage of the 14 non-ADR whole-body domains.
+- [x] ACC-008: `docs/MCP.md`, `server.py`, and `AGENTS.md` are updated and consistent with a new ADR.
+- [x] ACC-009: The full quality gate is green: ruff format/check, pylint (advisory), vulture, pytest, and `specmgr docs` drift.
 
 ### Scope
 
@@ -214,7 +214,7 @@ set:
 
 ### Current Status
 
-All five phases (100–140) are complete and the full Phase-140 quality gate is green — implementation done, awaiting review. Task 140.100/140.110 (verification only — no feature code, table, doc wording, or test subject changed; no fix was needed): `ruff format --check` → 2413 files already formatted; `ruff check` → all checks passed; `pylint $(git ls-files '*.py')` → 9.03/10, advisory only (CI runs it with `|| true`), with zero findings naming code this feature introduced (`_status_fsm.py`, `invalid_status_transition_result.py`, and the 14 frontmatter `_STATUS_TRANSITIONS` modules are finding-free; the feature's test-file findings are pre-existing repo conventions — C0116/W0212/E1136 patterns already present across the pre-existing suite); `vulture src/ whitelist.py --min-confidence 60` → clean; `pytest -n auto --cov=src --cov-report= -q` → 6131 passed, 18 skipped, 11203 subtests passed (120.12 s); `specmgr docs` → 587 module files + `docs/GENERATED.md` written, zero drift, second run byte-identical; `specmgr lint --all` → `linted=171 failed=0 skipped=0 excluded=1` (every corpus document parses, incl. the new ADR and this README); `specmgr adr-toc` + `specmgr mcp-docs` → zero drift, second runs byte-identical. Full evidence in the 2026-11-05T13:06:43Z Updates entry. Frontmatter `status` stays `progress` and ACC-001…ACC-009 stay unticked — both are the orchestrator's final step after this gate evidence.
+Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry.
 
 ### Blockers
 
@@ -223,6 +223,20 @@ All five phases (100–140) are complete and the full Phase-140 quality gate is 
 ### Updates
 
 <!-- Newest first. -->
+
+#### 2026-11-05T15:12:48.000Z - Set status to review — implementation complete, ACC-001…ACC-009 met
+
+Set the frontmatter `status` to `review` and ticked all nine acceptance criteria (per-ACC evidence below; the per-command quality-gate evidence is the Phase-140 entry beneath).
+
+- ACC-001: every one of the 14 whole-body domains owns `_STATUS_TRANSITIONS` in its `models/<v>/frontmatter.py` next to `_ALLOWED_STATUSES` (the two-constant form — `_STATUS_TRANSITIONS_RAW` list literals plus the normalized `dict[str, frozenset[str]]` — with the two import-time asserts), and each is pinned by its own per-domain golden matrix test (`Test<D>StatusTransitions` in `tests/<d>/models/vN/test_frontmatter.py`: exact normalized equality vs the locked table, terminal/no-terminal pin, key coverage == `_ALLOWED_STATUSES`, in-vocabulary targets, full N×N pair matrix); the tables verified byte-exact to the plan's locked Design Notes.
+- ACC-002: `set_status` rejects a disallowed transition pre-write — e.g. req `accepted` -> `draft` returns `InvalidStatusTransitionResult` with `allowed_values == ["deprecated", "implemented", "rejected", "superseded"]` (sorted, current-state-relative, not the full vocabulary) and the exact normal-form message while the on-disk file stays byte-identical (`updated` not bumped); a terminal current state (req/gol `superseded`/`deprecated`, uc/dec same) returns `allowed_values == []` plus the terminal-form message; the reverse/allowed edges persist (`tests/general/tools/test_set_status_fsm_req.py` + `tests/general/tools/test_set_status_fsm_domains.py` — the full per-domain N×N matrix walk through the public tool for all 13 remaining domains).
+- ACC-003: the multi-step cycle succeeds while each step is in the domain's table — feat's e2e cycle `planning -> progress -> review -> done -> review -> done` (each step in the locked feat table; note the plan's example segment `progress -> done` is NOT allowed by the locked feat table, so the walk takes the minimal legal back-edge through `review` — the deviation is recorded in this plan's Phase-120 Decisions Made), plus the named cycle walk with a back edge for every other domain.
+- ACC-004: the no-op (requested status == current) still returns success with no write and no `updated` bump — pinned on a terminal state (req `superseded` requesting `superseded`: file bytes + mtime unchanged, success shape returned) and on each domain's "final-feeling" state in `test_set_status_fsm_domains.py`; the no-op runs BEFORE the transition check (a terminal state is never rejected on its own status).
+- ACC-005: the pre-dispatch/pre-load out-of-vocabulary `InvalidStatusResult` path is unchanged, still runs first, and is distinct from the transition check — spy-pinned (an out-of-vocabulary call never reaches `check_status_transition`), per-domain e2e-pinned (the returned object is `InvalidStatusResult` with the full flat sorted vocabulary, never `InvalidStatusTransitionResult`).
+- ACC-006: ADR `set_status` behavior is byte-identical — `_set_status_adr` carries no diff in any phase, the aggregation has no `adr` entry (pinned), and every ADR test in the suite passes.
+- ACC-007: the `_STATUS_TRANSITIONS_BY_TYPE` full-coverage import-time assert passes — keys equal `WHOLE_BODY_DOMAINS`, no `None` entry remains, `ADR` absent, per-entry vocabulary checks active; pinned by `tests/general/tools/test__status_fsm.py`.
+- ACC-008: `docs/MCP.md` (regenerated via `specmgr mcp-docs` — exactly the two `set_status` description lines), `server.py`'s module docstring (the General-tools `set_status` entry + the sixth extension in the ADR 519d1206 chain paragraph, incl. the f14f125e case-6-slot bookkeeping record), and `AGENTS.md`'s `general/` bullet (the case-6 clause) are all updated and consistent with the new ADR a79608e4-88cd-498f-8ca1-445df4d04f92 (accepted, dated 2026-11-05, `specmgr lint`-clean, `specmgr adr-toc` regenerated).
+- ACC-009: the full quality gate green — see the Phase-140 Updates entry above for the per-command evidence (ruff format 2413 files / ruff check / vulture clean / full pytest 6131 passed, 18 skipped, 11203 subtests / `specmgr docs` zero drift / `specmgr lint --all` linted=171 failed=0 excluded=1 / pylint advisory 9.03/10, zero findings naming feature-introduced code).
 
 #### 2026-11-05T13:06:43.000Z - Ran Phase 140: Quality gates (the full gate green on the first run of every command — no fixes needed, nothing pre-existing to record)
 
@@ -276,7 +290,13 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 
 ### Related PRs / Commits
 
-- None yet.
+- 0a745cb Phase 100 — cross-cutting status state-machine mechanism (issue #108)
+- c5fa928 Phase 110 — REQ pilot: req status state machine + end-to-end enforcement tests (issue #108)
+- 2d22059 Phase 120 — remaining 13 domain state machines, full-coverage assert, golden + e2e matrix tests (issue #108)
+- 3e11707 Phase 130 — set_status tool/server/AGENTS.md docs sync + ADR a79608e4 (issue #108)
+- 930851c Phase 140 — quality gate green, acceptance criteria walked (issue #108)
+
+The PR will be opened after this commit (the status-to-`review` commit itself is not yet known and is therefore not listed).
 
 ### More Information
 
