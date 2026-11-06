@@ -24,9 +24,10 @@ network's gateway IP and relays to vLLM on the host loopback. Here the
 echo server -- the same code paths, no external dependency.
 
 Covers the locked contract: connect -> echo -> close; a streaming write
-stays intact; `stop` closes the listener (and unblocks the accept loop)
-while active connections drain; client disconnects and a down target
-never raise.
+stays intact; `stop` drains the accept queue and joins the accept loop
+before it closes the listener (a connection queued before `stop` is never
+reset by the close), active connections drain; client disconnects and a
+down target never raise.
 """
 
 import socket
@@ -170,7 +171,7 @@ class TestForwarderRoundTrip(_ForwarderCase):
 
 
 class TestForwarderStop(_ForwarderCase):
-    """stop closes the listener and unblocks; active connections drain."""
+    """stop drains the accept queue, joins the accept loop, then closes the listener."""
 
     def test_stop_closes_the_listener_and_new_connects_refuse(self) -> None:
         sut = self._start
@@ -194,7 +195,7 @@ class TestForwarderStop(_ForwarderCase):
 
         client = _connect(*handle.address)
         client.sendall(payload)
-        # the echo is in flight; stop now (listener closes, relays drain)
+        # the echo is in flight; stop now (the queue drains, relays continue)
         forwarder.stop(handle)
         received = b""
         while len(received) < len(payload):
@@ -205,6 +206,43 @@ class TestForwarderStop(_ForwarderCase):
         client.close()
 
         self.assertEqual(received, payload)
+
+    def test_stop_never_resets_a_connection_queued_before_it(self) -> None:
+        # Regression (the plantuml-parser CI failure): a real connection whose
+        # kernel-level handshake completed before stop() but that the accept
+        # loop had not yet accept()ed used to sit in the accept queue when
+        # the listener closed -> the kernel reset it (ConnectionResetError)
+        # or its first byte was stolen by the marker probe. The poll-based
+        # drain makes this impossible by construction: stop joins the accept
+        # loop (which exits only once the queue is drained) BEFORE the
+        # listener closes. Stress the scheduling window: fresh forwarder per
+        # iteration, stop() immediately after the connect+send. (25
+        # iterations: each stop pays one accept-loop poll cycle (~100 ms)
+        # for the drained-queue check, so 50 would stretch past the small-
+        # runtime budget the spec allows trimming for.)
+        payload = b"queued-before-stop"
+        for _ in range(25):
+            handle = forwarder.start_forwarder(
+                bind_ip="127.0.0.1",
+                bind_port=_free_port(),
+                target_ip="127.0.0.1",
+                target_port=self._target_port,
+            )
+            client = socket.create_connection(handle.address, timeout=WAIT_S)
+            client.sendall(payload)
+            forwarder.stop(handle)  # immediately -- the drain is not guaranteed to have run yet
+            received = b""
+            try:
+                while len(received) < len(payload):
+                    chunk = client.recv(65_536)
+                    if not chunk:
+                        break
+                    received += chunk
+            finally:
+                client.close()
+            forwarder.stop(handle)  # double stop on the finished handle: quiet
+
+            self.assertEqual(received, payload)  # the queued connection was drained, not reset
 
     def test_stop_is_idempotent_and_never_raises(self) -> None:
         sut = self._start
