@@ -1315,7 +1315,13 @@ Still genuinely missing / not yet done (don't assume otherwise):
   position), then one dispatch entry to each of the two generic tools in
    `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
    adapter in the generic `delete` tool, one `edit` adapter in the generic
-   `edit` tool, plus a `raw` parameter on the new
+   `edit` tool, one `_STATUS_TRANSITIONS` table of its own in its
+   `models/<v>/frontmatter.py` (next to its `_ALLOWED_STATUSES`) and its
+   registration into `general/tools/_status_fsm.py`'s
+   `_STATUS_TRANSITIONS_BY_TYPE` aggregation — whose full-coverage
+   import-time assert fails loudly if the table or its registration is
+   missing (feat-108-fsm, GitHub issue #108, ADR
+   a79608e4-88cd-498f-8ca1-445df4d04f92), plus a `raw` parameter on the new
   `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's

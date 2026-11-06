@@ -4,7 +4,7 @@ created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
 status: review
 type: feat
-updated: '2026-11-05T19:29:25.000+01:00'
+updated: '2026-11-06T11:35:03.848+01:00'
 version: 1.0.0
 ---
 
@@ -32,7 +32,7 @@ The generic `set_status` tool currently validates a requested status only agains
 
 - [x] ACC-001: For each of the 14 whole-body domains, `_STATUS_TRANSITIONS` exists in its frontmatter module and is pinned by a per-domain golden matrix test.
 - [x] ACC-002: After its phase lands, `set_status` for a whole-body domain rejects a disallowed transition (e.g. req `accepted` -> `draft`) before any write by returning `InvalidStatusTransitionResult` whose `allowed_values` are the allowed targets from the current state (including an empty list for a terminal current state), and allows the reverse where the table permits.
-- [x] ACC-003: A multi-step cycle (e.g. feat `review` -> `done` -> `progress` -> `done`) succeeds while each step is in the domain's table.
+- [x] ACC-003: A multi-step cycle (e.g. feat `planning` -> `progress` -> `review` -> `done` -> `review` -> `done`) succeeds while each step is in the domain's table.
 - [x] ACC-004: The no-op (requested status equals current) still returns success with no write and no `updated` bump.
 - [x] ACC-005: The pre-load out-of-vocabulary `InvalidStatusResult` path is unchanged and still runs before dispatch, distinct from the new transition check.
 - [x] ACC-006: ADR `set_status` behavior is byte-identical to today (no transition enforcement).
