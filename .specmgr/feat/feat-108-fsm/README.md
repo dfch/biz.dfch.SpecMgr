@@ -4,7 +4,7 @@ created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
 status: review
 type: feat
-updated: '2026-11-06T15:39:56.674+01:00'
+updated: '2026-11-06T17:01:17.961+01:00'
 version: 1.0.0
 ---
 
@@ -232,7 +232,7 @@ The reviewer's positives, condensed: (i) every table is pinned at three independ
 
 Non-blocking findings from the review, all fixed in commit `527a0e7c` (`fix(feat-108-fsm): review G1/D1/I1 — CHANGELOG entry, ACC-003 legal cycle, AGENTS.md ac-domain FSM clause (issue #108)`), docs-only (no code/test change), and no behavioral defect was found: G1 — no `CHANGELOG.md` `[Unreleased]` entry for the new `set_status` state-machine enforcement / `InvalidStatusTransitionResult` shape; fixed by one `### Changed` bullet documenting the post-load/pre-write check, the 14 domain-owned tables plus the `general/tools/_status_fsm.py` aggregation, the result's fields and both message forms, the undisturbed channel order, the ADR exclusion, and the case-6 bookkeeping. D1 — the plan's ACC-003 example segment `progress` -> `done` is not in the locked feat table (`progress`: [review, planning]), so the cited example cycle was impossible as written; fixed by rewording ACC-003 to the implemented legal walk `planning` -> `progress` -> `review` -> `done` -> `review` -> `done` (documentation-only, no behavior change; the Phase-120 Decisions Made entry and the ACC-003 evidence line already recorded the walk deviation). I1 — AGENTS.md's `ac`-domain onboarding paragraph listed the registry/dispatch/get-tool steps but not the new obligation; fixed by the clause that a new whole-body domain must also define its own `_STATUS_TRANSITIONS` table (next to its `_ALLOWED_STATUSES`) and register it into `general/tools/_status_fsm.py`'s aggregation, whose full-coverage import-time assert fails loudly if either is missing.
 
-Push state, at time of writing: the two second-review commits (the fix `527a0e7c` and this recording commit) are not yet pushed; PR #256's last CI run was fully green on `4a360327`, and a re-run is pending after the push.
+Push state, at time of writing: the two second-review commits (the fix `527a0e7c` and this recording commit) are not yet pushed; PR #256's last CI run was fully green on `4a360327`, and a re-run is pending after the push. The post-push re-run is fully green — all 8 checks pass on `586f682a` (as of 2026-11-06T16:01:17.000Z).
 
 #### 2026-11-05T18:29:25.000Z - Post-implementation review run — one finding (D1) fixed, CI re-green
 
@@ -308,7 +308,7 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 
 ### Related PRs / Commits
 
-- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`; last CI run fully green on `4a360327` — the two second-review commits are pending push/CI at time of writing)
+- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`, CI green — all 8 checks pass on `586f682a`)
 - 0a745cb Phase 100 — cross-cutting status state-machine mechanism (issue #108)
 - c5fa928 Phase 110 — REQ pilot: req status state machine + end-to-end enforcement tests (issue #108)
 - 2d22059 Phase 120 — remaining 13 domain state machines, full-coverage assert, golden + e2e matrix tests (issue #108)
