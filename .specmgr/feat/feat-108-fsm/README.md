@@ -4,7 +4,7 @@ created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
 status: review
 type: feat
-updated: '2026-11-06T11:35:03.848+01:00'
+updated: '2026-11-06T15:39:56.674+01:00'
 version: 1.0.0
 ---
 
@@ -214,7 +214,7 @@ set:
 
 ### Current Status
 
-Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry. The post-implementation review (feat-reviewer) ran and is complete — all ACCs confirmed met, the single wording finding fixed (`4a360327`), PR #256 CI green; the feature awaits merge (not merged — by design).
+Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry. The post-implementation review (feat-reviewer) ran and is complete — all ACCs confirmed met, the single wording finding fixed (`4a360327`), PR #256 CI green. A second post-implementation review (feat-reviewer, over `git diff 83be6624..HEAD`) confirmed all nine ACCs met, the 14 `_STATUS_TRANSITIONS` tables and their golden pins byte-exact, and no behavioral defects; its three non-blocking findings (G1 CHANGELOG entry, D1 ACC-003 example segment, I1 AGENTS.md onboarding clause) are fixed (`527a0e7c`, docs-only); the feature awaits merge (not merged — by design).
 
 ### Blockers
 
@@ -223,6 +223,16 @@ Implementation complete — all five phases (100–140) landed and committed, th
 ### Updates
 
 <!-- Newest first. -->
+
+#### 2026-11-06T14:39:56.000Z - Second post-implementation review run — three findings (G1, D1, I1) fixed
+
+Ran the second feat-reviewer post-implementation review (read-only, over `git diff 83be6624..HEAD` — the feature's 10 commits from the origin/dev merge-base; 70 files, +4668/−74). It confirmed all nine acceptance criteria met, the 14 `_STATUS_TRANSITIONS` tables byte-exact against the plan's locked Design Notes, and no behavioral defects, with its own independent re-verification: full pytest 6131 passed/18 skipped/11203 subtests, `ruff format --check`/`ruff check`/`vulture` clean, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, and `specmgr lint` clean on the feature README; all 14 per-domain golden test tables verified equal to their source tables; ADR a79608e4's case-6 slot bookkeeping of the ADR 519d1206 chain verified (f14f125e's "delete as the later candidate (case 6)" prediction overtaken — `delete` remains the later candidate; no accepted ADR edited).
+
+The reviewer's positives, condensed: (i) every table is pinned at three independent layers (the per-domain golden class with exact normalized equality + the terminal pin + the full N×N matrix, the aggregation's import-time drift/coverage asserts, and the full per-domain N×N matrix walk through the public `set_status` with on-disk byte-identity assertions for every rejected pair); (ii) the e2e spec data itself is un-driftable (`TestFsmDomainSpecs` pins the spec tables by identity to the aggregation's own constants, verifies every walk/cycle step machine-legal and state-reachable, and verifies the out-of-vocabulary values foreign-here/valid-elsewhere); (iii) the REQ-005 channel-order contract is spy-pinned (same-status never reaches the transition check — no-op first, even on terminal states; out-of-vocabulary returns pre-dispatch without the check running; the two result classes pinned distinct by `assertNotIsInstance` in both directions); (iv) the one forced deviation (the ACC-003 feat cycle) was resolved by changing the walk, not the machine — the locked table shipped byte-for-byte, recorded in three mutually consistent places; (v) the i18n fallout was handled table-driven (one shared `_set_status_target` helper over the central aggregation's landed table instead of the old alphabetical derivation, keeping every feat-197 ACC-006 write-row green for all thirteen language-aware domains).
+
+Non-blocking findings from the review, all fixed in commit `527a0e7c` (`fix(feat-108-fsm): review G1/D1/I1 — CHANGELOG entry, ACC-003 legal cycle, AGENTS.md ac-domain FSM clause (issue #108)`), docs-only (no code/test change), and no behavioral defect was found: G1 — no `CHANGELOG.md` `[Unreleased]` entry for the new `set_status` state-machine enforcement / `InvalidStatusTransitionResult` shape; fixed by one `### Changed` bullet documenting the post-load/pre-write check, the 14 domain-owned tables plus the `general/tools/_status_fsm.py` aggregation, the result's fields and both message forms, the undisturbed channel order, the ADR exclusion, and the case-6 bookkeeping. D1 — the plan's ACC-003 example segment `progress` -> `done` is not in the locked feat table (`progress`: [review, planning]), so the cited example cycle was impossible as written; fixed by rewording ACC-003 to the implemented legal walk `planning` -> `progress` -> `review` -> `done` -> `review` -> `done` (documentation-only, no behavior change; the Phase-120 Decisions Made entry and the ACC-003 evidence line already recorded the walk deviation). I1 — AGENTS.md's `ac`-domain onboarding paragraph listed the registry/dispatch/get-tool steps but not the new obligation; fixed by the clause that a new whole-body domain must also define its own `_STATUS_TRANSITIONS` table (next to its `_ALLOWED_STATUSES`) and register it into `general/tools/_status_fsm.py`'s aggregation, whose full-coverage import-time assert fails loudly if either is missing.
+
+Push state, at time of writing: the two second-review commits (the fix `527a0e7c` and this recording commit) are not yet pushed; PR #256's last CI run was fully green on `4a360327`, and a re-run is pending after the push.
 
 #### 2026-11-05T18:29:25.000Z - Post-implementation review run — one finding (D1) fixed, CI re-green
 
@@ -298,7 +308,7 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 
 ### Related PRs / Commits
 
-- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`, CI green — all 8 checks pass on `4a360327`)
+- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`; last CI run fully green on `4a360327` — the two second-review commits are pending push/CI at time of writing)
 - 0a745cb Phase 100 — cross-cutting status state-machine mechanism (issue #108)
 - c5fa928 Phase 110 — REQ pilot: req status state machine + end-to-end enforcement tests (issue #108)
 - 2d22059 Phase 120 — remaining 13 domain state machines, full-coverage assert, golden + e2e matrix tests (issue #108)
@@ -306,6 +316,7 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 - 930851c Phase 140 — quality gate green, acceptance criteria walked (issue #108)
 - a6e5082 set status to review — implementation complete, ACC-001…ACC-009 ticked (issue #108)
 - 4a360327 review D1 — stale Phase-110 rollout wording in the set_status seam tests (issue #108)
+- 527a0e7c review G1/D1/I1 — CHANGELOG entry, ACC-003 legal cycle, AGENTS.md ac-domain FSM clause (issue #108)
 
 ### More Information
 
