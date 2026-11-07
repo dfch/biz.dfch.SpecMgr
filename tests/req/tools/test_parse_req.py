@@ -53,7 +53,7 @@ _VALID_DOC = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -108,7 +108,7 @@ class TestParseReqTool(unittest.TestCase):
                 body["statement"]["text"],
                 "WHILE the engine is running, THE temperature must be a maximum of 80 \u00b0C.",
             )
-            self.assertEqual(body["level"]["value"]["text"], "MUST")
+            self.assertEqual(body["level"]["value"]["text"], "SRS")
 
     def test_model_dump_surfaces_leaf_section_body_content(self) -> None:
         """Regression test: `model_dump()` must surface the full body prose --

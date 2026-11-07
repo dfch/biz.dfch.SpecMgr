@@ -26,7 +26,7 @@ now agrees with the module's own constants.
 ## 1. Overview
 
 One node per artifact (label = the document title, truncated per §5), one
-stereotype + colour per artifact type (the frozen 15-entry palette, §2.5),
+stereotype + colour per artifact type (the frozen 16-entry palette, §2.5),
 nodes grouped into per-domain curly `component "TYPE" { … }` domain groups
 (§2.7), one LABEL-FREE edge per unique reference (the referenced item
 carries the incoming arrow, §2.8), every edge that lies on a cycle drawn
@@ -74,6 +74,7 @@ skinparam component {
   backgroundColor<<VCR>> Khaki
   backgroundColor<<SYSRS>> Thistle
   backgroundColor<<TXT>> LightGrey
+  backgroundColor<<SET>> Wheat
   backgroundColor<<UNRESOLVED>> DarkRed
 }
 
@@ -99,7 +100,7 @@ Section structure (the precise reading of "blank lines as shown"): the
 content sections — the `@startuml {title}` line, the `skinparam component
 { … }` block, the `left to right direction` line, the top-level unresolved
 node lines (one subgroup), one `component "TYPE" { … }` curly domain group
-per non-empty domain (one subgroup each, in the 14-domain order), and the
+per non-empty domain (one subgroup each, in the 15-domain order), and the
 edge section — are separated by exactly one blank line; an empty
 subgroup/section is omitted entirely (it leaves no residual blank line);
 `@enduml` always follows the last non-empty section directly (no blank line
@@ -143,7 +144,7 @@ sanitize-but-never-truncate algorithm is unchanged.
 
 ### 2.3 Alias (bracketed)
 
-- The 13 UUID domains (every domain except `feat` —
+- The 14 UUID domains (every domain except `feat` —
   `general/tools/_domains.py`'s `UUID_DOMAINS`): `[TYPE-{uuid}]` — the
   UPPERCASE type tag, the verbatim lowercase uuid (e.g.
   `[REQ-1a2b3c4d-5e6f-4a5b-8c9d-0e1f2a3b4c5d]`).
@@ -169,12 +170,12 @@ FEAT label (`"Feature: PlantUML Reference Graph Diagrams"`) is the
 hand-built renderer anchor's verbatim text (see the §2.9 note below), not
 builder output.
 
-### 2.5 Palette (the frozen 15-entry skinparam block)
+### 2.5 Palette (the frozen 16-entry skinparam block)
 
 The `skinparam component { … }` block of §2.1, verbatim — always emitted in
-FULL (all 15 entries, in the block's order: ADR, REQ, UC, TSK, QA, PRB, GOL,
-RSK, DEC, SOP, FEAT, VCR, SYSRS, TXT, UNRESOLVED) regardless of which types
-appear in the diagram.
+FULL (all 16 entries, in the block's order: ADR, REQ, UC, TSK, QA, PRB, GOL,
+RSK, DEC, SOP, FEAT, VCR, SYSRS, TXT, SET, UNRESOLVED) regardless of which
+types appear in the diagram.
 
 **§2.5 amended 2026-10-29 (feat-229-txt Phase 150, REQ-010):** the palette
 gains a 15th entry — `TXT` coloured `LightGrey`, inserted after `SYSRS`,
@@ -192,6 +193,21 @@ joined `ALL_DOMAINS` in feat-229-txt Phase 130 — §2.1/§2.7), the 12 UUID
 domains become 13 (§2.3), the 12 whole-body domains become 13 (§3.1), the
 13 source-domain scans become 14 (§3.2/§3.3), and the 14-entry palette
 references become 15 (§1/§4.3).
+
+**§2.5 amended 2026-11-01 (feat-173-req-iso29148-level-set Phase 180,
+REQ-007):** the palette gains a 16th entry — `SET` coloured `Wheat`,
+inserted after `TXT`, before `UNRESOLVED` (15 entries become 16) — the
+colour of the new `set` convenience-bundle domain's nodes (feat-173-
+req-iso29148-level-set, GitHub issue #173). `Wheat` is a standard PlantUML
+colour not already used by any entry in the frozen tuple (the 2026-10-29
+amendment's own selection was verified the same way, by rendering the
+frozen palette probe; no new probe is recorded here). The §2.1 shape's
+skinparam block and the §2.9 worked example carry the 16th line. The same
+amendment moves every other entry-count mention in this rulebook: the
+14-domain group order becomes 15 (`set` joined `ALL_DOMAINS` in
+feat-173 Phase 180 — §2.1/§2.7), the 13 UUID domains become 14 (§2.3), the
+13 whole-body domains become 14 (§3.1), the 14 source-domain scans become
+15 (§3.2/§3.3), and the 15-entry palette references become 16 (§1/§4.3).
 
 ### 2.6 Unresolved nodes
 
@@ -215,7 +231,7 @@ byte layout).
 
 One `component "{TYPE}" { … }` curly domain group per NON-EMPTY domain (a
 domain with no node emits no group), in `ALL_DOMAINS` order (adr, req, uc,
-tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt); the group title is the
+tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set); the group title is the
 UPPERCASE type tag. The group is a `component` declaration line ending with
 `{`, closed by the `}` line. Nodes are sorted by id (the verbatim id string,
 lexicographic) inside a group.
@@ -287,6 +303,7 @@ skinparam component {
   backgroundColor<<VCR>> Khaki
   backgroundColor<<SYSRS>> Thistle
   backgroundColor<<TXT>> LightGrey
+  backgroundColor<<SET>> Wheat
   backgroundColor<<UNRESOLVED>> DarkRed
 }
 
@@ -355,7 +372,7 @@ writing (UC rulebook §2.10 point 2). `specmgr plantuml-check` /
 
 Level 0 = the source. A level-k node is expanded only if k < depth and it
 resolved to an existing document (its body read through the domain's read
-path — the cache-aware leg for the 13 whole-body domains, the never-cached
+path — the cache-aware leg for the 14 whole-body domains, the never-cached
 leg for adr, ADR bfd76370). Each unique (type, id) reference adds exactly
 one edge + one node (the node title via the reference resolution; a dangling
 target = no title = the unresolved node of §2.6). `depth` is validated 1..5
@@ -364,7 +381,7 @@ access.
 
 ### 3.2 Reverse (additive, direct-only)
 
-A full scan of all 14 source domains (`ALL_DOMAINS` — adr included),
+A full scan of all 15 source domains (`ALL_DOMAINS` — adr included),
 iterating each domain's own path iterator directly — no listing, no
 pagination — reusing the `list_references` source-scan legs (the per-domain
 cache-aware reads; the never-cached adr leg). A scanned document becomes a
@@ -379,13 +396,13 @@ forward part only and is never a no-op.
 the scan iterates each domain's own path iterator directly (no listing, no
 pagination); the earlier "A paged full scan (all pages)" wording named a
 paged-listing mechanism the implementation does not use. The outcome is
-equivalent — every parseable document of all 14 domains is seen, broken and
+equivalent — every parseable document of all 15 domains is seen, broken and
 id-less documents skipped — so the frozen construction semantics are
 unchanged.
 
 ### 3.3 Registry-wide
 
-The same 14-domain scan: every successfully-parsed document is a node — a
+The same 15-domain scan: every successfully-parsed document is a node — a
 document whose frontmatter `id` is `None` is skipped (it carries no
 `(type, id)` graph key; reachable today only for hand-authored id-less
 ADRs); every extracted reference is an edge; a target not present as a
@@ -446,7 +463,7 @@ On-cycle edges render `{src-alias} -[#red]-> {dst-alias}` (label-free, §2.8
 env-gated test(s) that run where a `SPECMGR_PLANTUML_*` source is
 configured (the `tests/conftest.py` `plantuml_source()` machinery) and skip
 cleanly where none is — verifying the full emission subset (§2.9:
-`component "…" as [alias] <<ST>>` declarations, the 15-entry skinparam
+`component "…" as [alias] <<ST>>` declarations, the 16-entry skinparam
 colour block, label-free `-->` / red-arrow edges, self-loops, the curly
 `component "TYPE" { … }` domain groups, top-level unresolved nodes)
 end-to-end through the real parser (parse + render), and — since

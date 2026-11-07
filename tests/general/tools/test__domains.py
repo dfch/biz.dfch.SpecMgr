@@ -36,7 +36,7 @@ from biz.dfch.specmgr.general.tools._domains import (
 class TestWholeBodyDomainsTuple(unittest.TestCase):
     """ACC-013: the registry tuple is exactly the 13 whole-body domains, ``adr`` excluded."""
 
-    def test_equals_the_13_domain_tuple(self) -> None:
+    def test_equals_the_14_domain_tuple(self) -> None:
         expected = (
             "req",
             "uc",
@@ -51,6 +51,7 @@ class TestWholeBodyDomainsTuple(unittest.TestCase):
             "vcr",
             "sysrs",
             "txt",
+            "set",
         )
 
         self.assertEqual(WHOLE_BODY_DOMAINS, expected)

@@ -15,7 +15,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Parametrized i18n tests over all twelve language-aware domains (feat-197-i18n Phase 125).
+"""Parametrized i18n tests over all thirteen language-aware domains (feat-197-i18n Phase 125).
 
 Phase 125 rolled the ``dec`` pilot's read/write ``language`` plumbing out to the remaining ten i18n-eligible
 domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``sop``/``vcr``/``sysrs``); ``txt`` (feat-229-txt) joined
@@ -69,6 +69,7 @@ from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.general.tools._language_guard import LANGUAGE_AWARE_DOMAINS
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
+from biz.dfch.specmgr.general.tools._status_fsm import _STATUS_TRANSITIONS_BY_TYPE
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.edit import edit
 from biz.dfch.specmgr.general.tools.set_classification import set_classification
@@ -199,11 +200,11 @@ class _TempDocsMixin(unittest.TestCase):
 
 
 class TestEveryAwareDomainIsCovered(unittest.TestCase):
-    """The parametrization table is exactly the eleven language-aware domains."""
+    """The parametrization table is exactly the thirteen language-aware domains."""
 
     def test_specs_cover_exactly_the_language_aware_domains(self):
         self.assertEqual(tuple(s.d for s in SPECS), LANGUAGE_AWARE_DOMAINS)
-        self.assertEqual(len(SPECS), 12)
+        self.assertEqual(len(SPECS), 13)
         self.assertEqual(set(LANGUAGE_AWARE_DOMAINS), set(WHOLE_BODY_DOMAINS) - {"feat"})
 
 
@@ -429,12 +430,13 @@ class TestAcc006WriteToolsAllDomains(_TempDocsMixin):
                 self.assertIn("(v3)", de_file.read_text(encoding="utf-8"))
                 self.assertNotIn("(v2)", de_file.read_text(encoding="utf-8"))
 
-                # set_status -- to another allowed value (the variant's own status is its create status)
-                allowed = sorted(_allowed_statuses(spec.d) - {spec.status})
-                result = set_status(id=doc_id, type=spec.d, status=allowed[0], language="de")
-                self.assertEqual(result.status, allowed[0])
+                # set_status -- to another allowed value (the variant's own status is its create
+                # status; feat-108-fsm Phase 110: a transition the domain's machine allows from it)
+                target = _set_status_target(spec)
+                result = set_status(id=doc_id, type=spec.d, status=target, language="de")
+                self.assertEqual(result.status, target)
                 self.assertEqual(en_file.read_bytes(), en_bytes)
-                self.assertIn(f"status: {allowed[0]}", de_file.read_text(encoding="utf-8").split("---\n")[1])
+                self.assertIn(f"status: {target}", de_file.read_text(encoding="utf-8").split("---\n")[1])
 
                 # set_classification
                 result = set_classification(id=doc_id, type=spec.d, classification="internal", language="de")
@@ -873,9 +875,14 @@ def _lead_paragraph(body: str) -> str:
     raise AssertionError("no lead paragraph found")
 
 
-def _allowed_statuses(d: str) -> set[str]:
-    module = importlib.import_module("biz.dfch.specmgr.general.tools.set_status")
-    result = set(module._ALLOWED_STATUSES_BY_TYPE[d])
+def _set_status_target(spec: DomainSpec) -> str:
+    """The alphabetically-first LEGAL transition from the variant's create status -- the ACC-006
+    write row's target. Since feat-108-fsm Phase 120 every whole-body domain's own state machine
+    is landed and enforced, the target is derived from the central aggregation's own table for
+    the spec's domain: ``sorted(_STATUS_TRANSITIONS_BY_TYPE[spec.d][spec.status])[0]``
+    (feat-197's ACC-006 row now targets a machine-legal transition for every domain -- this
+    replaced the old full-vocabulary alphabetical pick and the ``req``-only override)."""
+    result = sorted(_STATUS_TRANSITIONS_BY_TYPE[spec.d][spec.status])[0]
     return result
 
 

@@ -33,7 +33,7 @@ data-file history), not by any test:
   live tool/prompt metadata;
 - G3: the closed-set/comment content folded into the 6 template/example files
   in Phases 100/110 (prb lead-sentence frame, tsk task-text fidelity
-  directive, req RFC 2119 set, rsk TARA set + ``specmgr://rsk/`` pointers, qa
+  directive, req ISO 29148 kind set, rsk TARA set + ``specmgr://rsk/`` pointers, qa
   question-prefix rule, vcr coverage set) -- nothing asserted the comment
   content through the domains' own parsers.
 
@@ -253,12 +253,13 @@ class TestTemplateExampleCommentContent(unittest.TestCase):
         self.assertNotIn("Number the tasks", raw)
         self.assertNotIn("Task 1:", raw)
 
-    def test_req_template_names_full_rfc2119_set(self) -> None:
-        """The req template's ``## Level`` comment names the full RFC 2119 set
-        (the five words ``req``'s ``_LEVEL_PATTERN`` enforces)."""
+    def test_req_template_names_iso29148_kind_set(self) -> None:
+        """The req template's ``## Level`` comment names the four ISO 29148
+        requirement specification kinds (the set ``req``'s ``_LEVEL_PATTERN``
+        enforces)."""
         doc = parse_req(read_packaged_text("req", "template"))
         self.assertIn(
-            "RFC 2119 Requirement Keyword: one of MUST, SHOULD, MUST NOT, SHOULD NOT, MAY", doc.body.level.comment.text
+            "ISO 29148 requirement specification kind: one of BRS, StRS, SyRS, SRS", doc.body.level.comment.text
         )
 
     def test_rsk_template_names_tara_set_and_matrix_pointers(self) -> None:

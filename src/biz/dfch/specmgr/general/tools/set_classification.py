@@ -21,7 +21,7 @@
 
 The generic, cross-domain classification-change tool for the
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
 Unlike ``set_status`` (``general/tools/set_status.py``), which also
 dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
 separate ``AdrFrontmatter`` model
@@ -183,6 +183,12 @@ from ...txt.tools._io import read_txt
 from ...txt.tools._lock import txt_lock, txt_lock_key
 from ...txt.tools._paths import TxtNotFoundError, txt_base_dir
 from ...txt.tools._write import write_txt_file
+from ...set.models.v1 import SetFrontmatter
+from ...set.tools._io import load_by_id as load_set_by_id
+from ...set.tools._io import read_set
+from ...set.tools._lock import set_lock, set_lock_key
+from ...set.tools._paths import SetNotFoundError, set_base_dir
+from ...set.tools._write import write_set_file
 from ...uc.models.v2 import UcFrontmatter
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._io import read_uc
@@ -219,6 +225,7 @@ _SetClassificationFrontmatter = (
     | VcrFrontmatter
     | SysrsFrontmatter
     | TxtFrontmatter
+    | SetFrontmatter
     | ParseFailureResult
 )
 
@@ -758,6 +765,49 @@ def _set_classification_txt(
     return new_frontmatter
 
 
+def _set_classification_set(
+    id_: str, classification: str, language: str = DEFAULT_LANGUAGE
+) -> SetFrontmatter | ParseFailureResult:
+    """Replace the classification of the set document identified by ``id_``.
+
+    Mirrors :func:`_set_classification_sysrs`'s shape (same ``set_lock``,
+    ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
+    dispatch-only from day one per ADR 36905d5b, so this adapter was
+    written directly in this shape) -- see :func:`_set_classification_req`
+    for the full semantics.
+
+    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+    selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+    variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is written
+    -- the EN document (bytes, ``updated``, cache entry) is never touched by a non-default
+    ``language`` call.
+    """
+    base_dir = set_base_dir(language)
+    with set_lock(set_lock_key(id_, language)):
+        try:
+            path, existing = load_set_by_id(base_dir, id_)
+        except SetNotFoundError:
+            parse_failure = find_parse_failure(base_dir, id_, read_set)
+            if parse_failure is None:
+                raise
+            failure_path, failure_error = parse_failure
+            assert_within(base_dir, failure_path)
+            return ParseFailureResult(error=failure_error, path=str(failure_path.resolve()), id=id_)
+        assert_within(base_dir, path)
+        raw_body = frontmatter.loads(path.read_text(encoding="utf-8")).content  # type: ignore[union-attr]
+
+        now = now_timestamp()
+        fm_data = existing.frontmatter.model_dump()
+        fm_data["classification"] = classification
+        fm_data["updated"] = now
+        with wrap_tool_errors(domain="set", tool="set_classification", channel=FRONTMATTER_CHANNEL):
+            new_frontmatter = SetFrontmatter(**fm_data)
+        write_set_file(path, new_frontmatter, raw_body)
+        read_set(path)  # warm the cache (feat-107-doc-cache Phase 4, REQ-003)
+    return new_frontmatter
+
+
 #: Dispatch table mapping the ``type`` value to its private adapter.
 _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "req": _set_classification_req,
@@ -773,6 +823,7 @@ _ADAPTERS: dict[str, Callable[[str, str], _SetClassificationFrontmatter]] = {
     "vcr": _set_classification_vcr,
     "sysrs": _set_classification_sysrs,
     "txt": _set_classification_txt,
+    "set": _set_classification_set,
 }
 
 assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
@@ -797,6 +848,7 @@ _LANGUAGE_ADAPTERS: dict[str, Callable[[str, str, str], _SetClassificationFrontm
     "vcr": _set_classification_vcr,
     "sysrs": _set_classification_sysrs,
     "txt": _set_classification_txt,
+    "set": _set_classification_set,
 }
 
 assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
@@ -846,7 +898,7 @@ def set_classification(
     """Replace the ``classification`` frontmatter field of an existing document.
 
     Cross-domain generic for the whole-body document types
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``);
+    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
     dispatches on ``type`` to the domain's own adapter (same lock, same id
     resolution, same body handling, same domain not-found error). ``adr``
     is deliberately excluded (its separate ``AdrFrontmatter`` model is out
@@ -887,7 +939,7 @@ def set_classification(
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``.
+        ``vcr``, ``sysrs``, ``txt``, ``set``.
     classification:
         The new classification value. Fully free-text; a blank or
         whitespace-only value clears the field back to ``None``/absent.

@@ -73,6 +73,12 @@ _._validate_when_to_use_matches_patterns
 _._validate_ac_numbers_unique
 _._validate_option_numbers_unique
 _._validate_step_numbers_unique
+# set (feat-173-req-iso29148-level-set Phase 180): `Set`'s own
+# `@model_validator(mode="after")` rejecting a duplicate `(tag, id)` pair
+# across `## Items` (the VCR `AC-NNN`/DEC `Option N` duplicate-number guard
+# precedent), invoked by Pydantic's validation machinery, never called
+# directly.
+_._validate_item_pairs_unique
 _._validate_partial_title
 _._validate_problem_statement
 _._validate_status
@@ -344,6 +350,17 @@ rasci_vs_raci
 # attribute. `Ears.patterns`/`.when_to_use` ARE read by
 # `_validate_when_to_use_matches_patterns`, so they need no entry here.
 combining_patterns
+# iso29148 (feat-173-req-iso29148-level-set Phase 130): `Iso29148`'s own
+# `mapping`/`obligation` fields are leaf sections deliberately never
+# cross-checked by any `model_validator` (their presence and position are
+# pinned by the declaration order itself, the `combining_patterns`
+# precedent), so nothing in `src/` accesses them as plain attributes.
+# `Iso29148.intro`/`.specifications`/`.when_to_use`/`.characteristics` need
+# no entries -- `intro`/`characteristics` are already listed above, and
+# `specifications`/`when_to_use` ARE read by
+# `_validate_when_to_use_matches_patterns`.
+mapping
+obligation
 
 # --- MCP `@mcp.resource(...)`/`@mcp.tool()` entry points -------------------------
 # Invoked by the MCP framework once registered, not called directly in `src/`.
@@ -428,3 +445,15 @@ variant_position
 variant_path
 in_sync
 staleness_error
+
+# --- feat-108-fsm (Phase 100) ---------------------------------------------
+# `InvalidStatusTransitionResult`'s own `from_status`/`to_status` fields
+# (`general/models/invalid_status_transition_result.py`), populated by keyword
+# in `general.tools._status_fsm.decide_transition` (vulture's constructor-kwarg
+# suppression does not count that as use) and read by tests and, dynamically,
+# by the mcp SDK's pydantic serializer when the result is returned over the
+# wire -- the same precedent as the entries above. The model's remaining fields
+# (`valid`/`type`/`allowed_values`/`message`) are shared names vulture already
+# sees used in `src/` and need no entry.
+from_status
+to_status

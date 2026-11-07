@@ -23,7 +23,7 @@ The generic, cross-domain cross-reference listing tool (ADR 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
 every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
-``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``) plus ``adr`` --
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) plus ``adr`` --
 reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
@@ -96,6 +96,8 @@ from ...tsk.tools._io import load_by_id as load_tsk_by_id
 from ...tsk.tools._paths import tsk_base_dir
 from ...txt.tools._io import load_by_id as load_txt_by_id
 from ...txt.tools._paths import txt_base_dir
+from ...set.tools._io import load_by_id as load_set_by_id
+from ...set.tools._paths import set_base_dir
 from ...uc.tools._io import load_by_id as load_uc_by_id
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._io import load_by_id as load_vcr_by_id
@@ -129,6 +131,7 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "vcr": (vcr_base_dir, load_vcr_by_id),
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
     "txt": (txt_base_dir, load_txt_by_id),
+    "set": (set_base_dir, load_set_by_id),
     "adr": (adr_base_dir, load_adr_by_id),
 }
 
@@ -192,7 +195,7 @@ def list_references(
 
     The source is identified by ``type`` (every whole-body domain
     ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``/``txt``, plus ``adr``) and its own
+    ``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
     ``id``, and is validated via ``_path_safety.validate_id`` before any
     filesystem access (ACC-005). The source is then read as raw, frontmatter-stripped
     body text (``_splice.body_text`` -- the doc-cache does not apply to it,
@@ -231,7 +234,7 @@ def list_references(
     type:
         The source document's type / domain: one of ``adr``, ``req``,
         ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
-        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
+        ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
     id:
         The source document's specmgr-assigned identifier (the
         ``feat-NNN-slug`` folder name for ``feat``).

@@ -21,7 +21,16 @@ import unittest
 
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.txt.models.v1.frontmatter import TxtFrontmatter
+from biz.dfch.specmgr.txt.models.v1.frontmatter import _ALLOWED_STATUSES, _STATUS_TRANSITIONS, TxtFrontmatter
+
+#: The locked free-form-text status state machine (feat-108-fsm Phase 120, the feature
+#: plan's Design Notes table): current status -> the allowed target statuses. This domain
+#: has no terminal state (every current status carries at least one allowed target).
+_EXPECTED_TRANSITIONS = {
+    "draft": frozenset({"progress"}),
+    "progress": frozenset({"done", "draft"}),
+    "done": frozenset({"progress"}),
+}
 
 
 class TestTxtFrontmatter(unittest.TestCase):
@@ -104,6 +113,44 @@ class TestTxtFrontmatter(unittest.TestCase):
         sut = TxtFrontmatter(classification="internal")
 
         self.assertEqual(sut.classification, "internal")
+
+
+class TestTxtStatusTransitions(unittest.TestCase):
+    """feat-108-fsm Phase 120 (REQ-001, ACC-001's txt pin): the free-form-text status
+    state machine owned next to ``_ALLOWED_STATUSES``, golden-pinned -- the full 3x3
+    transition matrix over the vocabulary is classified exactly as the locked table says."""
+
+    def test_table_equals_the_locked_design(self) -> None:
+        self.assertEqual(_STATUS_TRANSITIONS, _EXPECTED_TRANSITIONS)
+
+    def test_no_state_is_terminal(self) -> None:
+        """This domain has no terminal state: every current status carries at least one allowed
+        target (the locked table's explicit property, distinct from the terminal-bearing
+        req/uc/dec/gol machines)."""
+        for current, targets in _STATUS_TRANSITIONS.items():
+            with self.subTest(current=current):
+                self.assertTrue(targets)
+
+    def test_keys_cover_exactly_the_closed_status_vocabulary(self) -> None:
+        """Full vocabulary coverage: every status is a key exactly once, so a document's on-disk
+        status is always a key and the "current not a key" case is structurally unreachable."""
+        self.assertEqual(set(_STATUS_TRANSITIONS), _ALLOWED_STATUSES)
+
+    def test_every_target_is_in_the_closed_status_vocabulary(self) -> None:
+        for current, targets in _STATUS_TRANSITIONS.items():
+            with self.subTest(current=current):
+                self.assertTrue(targets <= _ALLOWED_STATUSES, targets)
+
+    def test_full_three_by_three_matrix_is_pinned(self) -> None:
+        """Every (current, target) pair of the three-value vocabulary classifies allowed iff the
+        locked table says so (the matrix the generic ``set_status`` tool enforces end-to-end)."""
+        for current in _ALLOWED_STATUSES:
+            for target in _ALLOWED_STATUSES:
+                with self.subTest(current=current, target=target):
+                    self.assertEqual(
+                        target in _STATUS_TRANSITIONS[current],
+                        target in _EXPECTED_TRANSITIONS[current],
+                    )
 
 
 if __name__ == "__main__":

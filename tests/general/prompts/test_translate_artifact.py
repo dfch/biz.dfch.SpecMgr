@@ -127,9 +127,10 @@ class TestTranslateArtifactRendering(unittest.TestCase):
         result = _one_line(translate_fn("dec", _ID, "de"))
         self.assertIn("Never translate (closed vocabulary and schema constants, REQ-010)", result)
         for token in (
-            "`MUST`",
-            "`SHOULD NOT`",
-            "`MAY`",
+            "`BRS`",
+            "`StRS`",
+            "`SyRS`",
+            "`SRS`",
             "## Priority",
             "`transfer`",
             "`accept`",
@@ -153,6 +154,9 @@ class TestTranslateArtifactRendering(unittest.TestCase):
             "`[ ]` / `[x]`",
             "<TAG> <uuid>: <title>",
             "timestamps",
+            "`## Items`",
+            "12 reference tags",
+            "`review`",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, result)

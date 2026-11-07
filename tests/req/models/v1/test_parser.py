@@ -26,6 +26,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from biz.dfch.specmgr.req.models.v1 import ReqDocument
+from biz.dfch.specmgr.req.models.v1.body import _LEVEL_PATTERN
 from biz.dfch.specmgr.req.models.v1.parser import parse_req
 
 _REFERENCE_PATH = (
@@ -58,7 +59,7 @@ _MINIMAL_DOC = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SyRS
 
     ## Source
 
@@ -98,7 +99,7 @@ class TestParseReq(unittest.TestCase):
         self.assertEqual(document.frontmatter.id, "deaddead-dead-dead-dead-deaddeaddead")
         self.assertEqual(document.body.text, "Maximum Engine Temperature")
         self.assertEqual([item.text for item in document.body.characteristics.items], ["Safety", "Reliability"])
-        self.assertEqual(document.body.level.value.text, "MUST")
+        self.assertEqual(document.body.level.value.text, "SyRS")
         self.assertIsNotNone(document.body.priority)
         self.assertEqual(document.body.priority.value.text, "50")
         self.assertIsNotNone(document.body.tags)
@@ -125,6 +126,44 @@ class TestParseReq(unittest.TestCase):
         )
         self.assertIsNotNone(document.body.more_information)
         self.assertIsNotNone(document.body.notes)
+
+    def test_level_accepts_every_iso_29148_kind(self) -> None:
+        """Each of the four ISO/IEC/IEEE 29148:2018 requirement specification kinds parses
+        as the `## Level` value."""
+        for kind in ["BRS", "StRS", "SyRS", "SRS"]:
+            with self.subTest(kind=kind):
+                text = _MINIMAL_DOC.replace("SyRS", kind)
+
+                document = parse_req(text)
+
+                self.assertEqual(document.body.level.value.text, kind)
+
+    def test_level_rejects_out_of_set_values_with_the_pattern_in_the_error(self) -> None:
+        """Values outside the four ISO 29148 kinds -- the RFC 2119 obligation words,
+        lowercase spellings, and extra-whitespace spellings -- fail validation, and the
+        rejection error carries `_LEVEL_PATTERN`."""
+        for bad in [
+            "MUST",
+            "SHOULD",
+            "MUST NOT",
+            "SHOULD NOT",
+            "MAY",
+            "must",
+            "should",
+            "may",
+            "brs",
+            "stRs",
+            "srs",
+            "S R S",
+            "SRS SRS",
+        ]:
+            with self.subTest(bad=bad):
+                text = _MINIMAL_DOC.replace("SyRS", bad)
+
+                with self.assertRaises(ValidationError) as ctx:
+                    parse_req(text)
+
+                self.assertIn(f"value must match pattern {_LEVEL_PATTERN!r}", str(ctx.exception))
 
     def test_defaults_frontmatter_when_absent(self) -> None:
         """Omitting the frontmatter block entirely still parses, applying ReqFrontmatter's defaults."""

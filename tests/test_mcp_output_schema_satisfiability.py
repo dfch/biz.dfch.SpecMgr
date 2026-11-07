@@ -30,10 +30,10 @@ such a node) ALWAYS failed with ``MCP error -32602`` / "Invalid structured
 content". The 11 emissions were removed in Phase 135 (closed-set facts
 retained in the field/class descriptions; regression-guarded against
 re-emission by ``tests/test_schema_metadata_content.py``); this test is the
-13-domain pin that the fix actually holds on the wire.
+14-domain pin that the fix actually holds on the wire.
 
 For every whole-body domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/
-sysrs/txt, the shared ``WHOLE_BODY_DOMAINS`` source):
+sysrs/txt/set, the shared ``WHOLE_BODY_DOMAINS`` source):
 
 1. parse the domain's packaged example through its own models-level
    ``parse_<d>(text)`` (the same parser every ``parse_<d>``/``get_<d>``
@@ -80,6 +80,7 @@ from biz.dfch.specmgr.prb.tools.get_prb import get_prb
 from biz.dfch.specmgr.qa.tools.get_qa import get_qa
 from biz.dfch.specmgr.req.tools.get_req import get_req
 from biz.dfch.specmgr.rsk.tools.get_rsk import get_rsk
+from biz.dfch.specmgr.set.tools.get_set import get_set
 from biz.dfch.specmgr.sop.tools.get_sop import get_sop
 from biz.dfch.specmgr.sysrs.tools.get_sysrs import get_sysrs
 from biz.dfch.specmgr.tsk.tools.get_tsk import get_tsk
@@ -105,6 +106,7 @@ _GET_TOOLS: dict[str, Callable[..., Any]] = {
     "vcr": get_vcr,
     "sysrs": get_sysrs,
     "txt": get_txt,
+    "set": get_set,
 }
 
 assert set(_GET_TOOLS) == set(WHOLE_BODY_DOMAINS), (

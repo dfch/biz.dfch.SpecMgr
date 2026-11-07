@@ -69,6 +69,7 @@ _DOCUMENT_MODEL_PACKAGES = {
     "vcr": "biz.dfch.specmgr.vcr.models.v1",
     "sysrs": "biz.dfch.specmgr.sysrs.models.v1",
     "txt": "biz.dfch.specmgr.txt.models.v1",
+    "set": "biz.dfch.specmgr.set.models.v1",
 }
 
 #: Regex constructs that mark a pattern as data-carrying (free text, values, alternatives,

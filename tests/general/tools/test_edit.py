@@ -205,7 +205,7 @@ _REQ_MINIMAL_BODY = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 
@@ -666,7 +666,7 @@ _CASES: list[_Case] = [
         multi_marker="the",
         multi_replacement="that",
         multi_seed_suffix="",
-        field_error_marker="MUST",
+        field_error_marker="SRS",
         field_error_fragment="NOT-A-VALID-LEVEL",
         field_error_is_append=False,
         field_error_is_validation=True,
@@ -1432,7 +1432,7 @@ class TestEditRegistration(unittest.TestCase):
 
     def test_edit_registered_exactly_once_with_pinned_input_schema(self) -> None:
         """ACC-006: the live MCP registration carries ``edit`` exactly once, with the
-        13-value ``type`` enum (no ``adr``)."""
+        14-value ``type`` enum (no ``adr``)."""
         matching = [t for t in self._tools if t.name == "edit"]
         self.assertEqual(len(matching), 1)
 
@@ -1440,7 +1440,7 @@ class TestEditRegistration(unittest.TestCase):
         type_prop = schema["properties"]["type"]
         self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
-        self.assertEqual(len(type_prop["enum"]), 13)
+        self.assertEqual(len(type_prop["enum"]), 14)
         self.assertNotIn("adr", type_prop["enum"])
         self.assertEqual(schema["required"], ["id", "type", "old_str", "new_str"])
 

@@ -38,8 +38,11 @@ step 1 if this is genuinely a new goal.
 
 No `## Characteristics` section exists in this schema, and none should be
 added: ISO 25010:2023 quality characteristics grade requirements, not
-goals. Likewise no `## Level` section -- a goal is implicitly always a
-MUST; RFC 2119 obligation strength applies to the requirements below it.
+goals. Likewise no `## Level` section -- a goal states what to achieve,
+not which ISO/IEC/IEEE 29148:2018 requirement-specification kind the
+requirements below it are; obligation lives on those requirements, in
+each one's `## Level` kind plus its statement's own phrasing
+(`specmgr://ears`).
 
 ## 2. Build a todo list, then gather the information one at a time
 
