@@ -2,9 +2,9 @@
 classification: null
 created: '2026-09-04T21:02:26.742+02:00'
 id: feat-46-remove-adr
-status: progress
+status: review
 type: feat
-updated: '2026-11-07T16:42:39.457+01:00'
+updated: '2026-11-07T16:21:18.592+01:00'
 version: 1.0.0
 ---
 
