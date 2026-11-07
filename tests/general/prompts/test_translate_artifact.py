@@ -155,7 +155,7 @@ class TestTranslateArtifactRendering(unittest.TestCase):
             "<TAG> <uuid>: <title>",
             "timestamps",
             "`## Items`",
-            "12 reference tags",
+            "11 reference tags",
             "`review`",
         ):
             with self.subTest(token=token):

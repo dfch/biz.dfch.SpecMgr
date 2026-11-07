@@ -8,7 +8,7 @@ heading, and `Set` is the top-level H1 container. A `set` document bundles
 one or more already-existing specmgr artifacts of any (mixed) type via
 forward references only -- the items remain the source of truth, and nothing
 in an item ever points back to the set (`SET` is deliberately not a tag of
-the shared 12-tag reference vocabulary). See
+the shared 11-tag reference vocabulary). See
 `.specmgr/feat/feat-173-req-iso29148-level-set/README.md`'s Design Notes
 (the 2026-11-01 finalized design) for the full rationale.
 
@@ -43,9 +43,9 @@ SOP `Purpose` free-form-prose precedent; the TXT opaque-body precedent for
 why no field is declared). A fenced `## Items` line inside the description
 yields no `heading_open` token, so it stays in the opaque content.
 
-`Items`'s bullets are the shared 12-tag reference vocabulary in any mix
+`Items`'s bullets are the shared 11-tag reference vocabulary in any mix
 (`GOL`/`PRB`/`QA`/`UC`/`REQ`/`RSK`/`DEC`/`VCR`/`SYSRS`/`TXT`/`FEAT`):
-the eleven UUID tags carry a canonical 8-4-4-4-12 hex id, `FEAT` carries
+the ten UUID tags carry a canonical 8-4-4-4-12 hex id, `FEAT` carries
 the full `feat-NNN-slug` id or the bare `feat-NNN` number (the same shapes
 the `general.tools._references` extractor and `assert_feat_id` accept --
 imported from their single source, `models.md._cross_reference`, so the
@@ -892,14 +892,14 @@ precedent and the TXT opaque-body precedent).
 
 ### `Items`
 
-`## Items` -- the flat bullet list of bundled artifacts, in any mix of the 12 reference tags.
+`## Items` -- the flat bullet list of bundled artifacts, in any mix of the 11 reference tags.
 Mandatory, at least one item.
 
 Parameters
 ----------
 items:
     Bullet list of `<TAG> <uuid-or-feat-id>: <title>` cross-references
-    from the shared 12-tag reference vocabulary (the eleven UUID tags
+    from the shared 11-tag reference vocabulary (the ten UUID tags
     plus `FEAT`), any mix, each optionally followed by an indented notes
     paragraph (the `MarkdownListItemWithNotes` shape SYSRS uses). Must
     contain at least one item.

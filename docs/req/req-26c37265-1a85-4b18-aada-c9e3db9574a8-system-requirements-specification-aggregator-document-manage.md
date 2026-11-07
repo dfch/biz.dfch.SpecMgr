@@ -4,13 +4,13 @@ created: '2026-09-03 10:27:50.218+02:00'
 id: 26c37265-1a85-4b18-aada-c9e3db9574a8
 status: draft
 type: req
-updated: '2026-09-30T14:56:36.749+02:00'
+updated: '2026-11-07T09:08:13.741+01:00'
 version: 1.0.0
 ---
 
 # System Requirements Specification Aggregator Document Management
 
-THE system shall provide System Requirements Specification (SYSRS) document management, including create, read, list, and validate operations for an aggregator document type that ties together existing `gol`/`prb`/`qa`/`uc`/`req`/`rsk`/`dec`/`adr`/`vcr` artifacts into one coherent, navigable specification via type-tagged cross-reference lists, built dispatch-only on the generic `update`/`set_status`/`set_classification`/`delete` tools from day one.
+THE system shall provide System Requirements Specification (SYSRS) document management, including create, read, list, and validate operations for an aggregator document type that ties together existing `gol`/`prb`/`qa`/`uc`/`req`/`rsk`/`dec`/`vcr` artifacts into one coherent, navigable specification via type-tagged cross-reference lists, built dispatch-only on the generic `update`/`set_status`/`set_classification`/`delete` tools from day one.
 
 ## Description
 

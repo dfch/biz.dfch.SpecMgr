@@ -29,8 +29,8 @@ trigger keywords bundle/group/set -- keyword matching is case-insensitive,
 a deliberate choice documented here, since opencode surfaces the description
 verbatim to agents in whatever casing it was authored in); and the key body
 wording (the convenience-bundle invariant, the items-remain-the-source-of-
-truth rule, the forward-references-only rule with the absent-``SET``-tag
-consequence, the mixed-types rule over the 12 reference tags, the fixed
+ truth rule, the forward-references-only rule with the absent-``SET``-tag
+ consequence, the mixed-types rule over the 11 reference tags, the fixed
 H1/Description/Items shape, the ``list_set`` near-duplicate check, the
 ``create_set`` prompt pointer, the ``question``/never-commit contract).
 There is deliberately NO dedicated ``/set`` command (design decision,

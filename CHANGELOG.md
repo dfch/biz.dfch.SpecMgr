@@ -152,9 +152,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   first and elicits the kind; the i18n never-translate `## Level`
   vocabulary is the four kinds; and the GOL model module docstring and
   the `create_gol` prompt carry the current fact (a goal has no
-  `## Level` section; obligation lives on the requirements below it, in
-  each one's ISO 29148 kind plus its statement's own phrasing)
-   (feat-173-req-iso29148-level-set, GitHub issue #173).
+   `## Level` section; obligation lives on the requirements below it, in
+   each one's ISO 29148 kind plus its statement's own phrasing)
+    (feat-173-req-iso29148-level-set, GitHub issue #173).
+
+### Removed
+
+- **BREAKING**: the ADR (Architecture Decision Record) artifact type is
+  removed (GitHub issue #46, feat-46-remove-adr): the `adr/` domain
+  package and its `models/adr/` schema package are deleted with their
+  tests, the 11 ADR MCP tools (`get_adr`, `list_adr`, `create_adr`,
+  `update_frontmatter`, `update_section`, the five `option_*` tools, and
+  `validate_adr`), the `specmgr://adr/{id}` resource, the ADR prompts,
+  the `specmgr adr-toc` CLI command, the `SPECMGR_ADR_DIR` environment
+  variable, and the `specmgr-adr-toc` pre-commit hook and CI step. The
+  46 ADR documents are converted to DECs at `docs/dec/<uuid>-<slug>.md`
+  reusing each ADR's UUID and file name (per the "Convert an ADR to a
+  DEC" SOP), every citation of a migrated id is retargeted
+  `ADR <uuid>` -> `DEC <uuid>`, and the original ADR sources are
+  archived, not deleted, under `docs/archive/adr/` (the preserved
+  generated TOC as `adr-toc.md`; the conversion SOP at
+  `docs/archive/sop/`). `set_status` loses its ADR-only `superseded_by`
+  parameter with the adr branch, `sysrs`'s `## Decisions` section
+  accepts `DEC` bullets only, and the `ADR` tag is out of the shared
+  reference-tag vocabulary (11 tags) and the reference-graph palette
+  (15 entries). No new ADRs are created — new decisions are DEC
+  documents (the removal freeze, announced in AGENTS.md before the
+  rollout, held for the whole migration).
 
 ## [0.38.0] - 2026-10-31
 

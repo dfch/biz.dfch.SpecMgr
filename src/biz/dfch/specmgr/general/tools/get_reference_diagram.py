@@ -25,7 +25,7 @@ the reference-graph rulebook (``specmgr://reference-graph`` /
 ``general/data/general_reference_graph.md`` §2–§5): one node per artifact
 (label = the document title, truncated to the ``SPECMGR_DIAGRAM_MAX_TITLE``
 label limit, default 40), a stereotype + colour per artifact type (the
-frozen 16-entry palette), nodes grouped into per-domain curly
+frozen 15-entry palette), nodes grouped into per-domain curly
 ``component "TYPE" { … }`` domain groups (the 2026-10-15 corrected form,
 rulebook §2.7), one label-free edge per unique reference (``{src} -->
 {dst}`` -- the referenced item carries the incoming arrow), every edge

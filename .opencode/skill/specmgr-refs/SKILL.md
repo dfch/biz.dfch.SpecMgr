@@ -149,7 +149,7 @@ multi-hop graph workflow above and must not be stolen by this one (and
 vice versa).
 
 1. **Read the rulebook first**: `specmgr://reference-graph` — the frozen
-   emission layout (the 16-entry palette, the bracketed aliases, the label
+   emission layout (the 15-entry palette, the bracketed aliases, the label
    truncation), the construction semantics, and the pointer at the UC
    rulebook §3–§6 for the validation chain reused as-is. Where anything
    below and the rulebook differ, the rulebook wins.

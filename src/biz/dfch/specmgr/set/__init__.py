@@ -24,7 +24,7 @@ already-existing specmgr artifacts of any (mixed) type via forward
 references only: a single ``# {title}`` H1, a mandatory opaque free-markdown
 ``## Description`` introductory section (any blocks allowed), and a mandatory
 ``## Items`` flat bullet list (at least one ``<TAG> <uuid>: <title>`` bullet
-from the shared 12-tag reference vocabulary in any mix, optional per-bullet
+from the shared 11-tag reference vocabulary in any mix, optional per-bullet
 notes, duplicate ``(tag, id)`` pairs rejected). The items remain the source
 of truth -- a set is a convenience bundle, and nothing in an item ever points
 back to the set (``SET`` is not a reference tag). See

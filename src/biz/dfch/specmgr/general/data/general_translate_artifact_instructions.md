@@ -144,7 +144,7 @@ these from the source exactly:
   in the source (only `## Updates` itself is translated, through the table).
   A translated free body heading no longer matches the source's structure.
 - `set`: the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the
-  12 reference tags; the tag, the id, and the title text stay exactly as in
+  11 reference tags; the tag, the id, and the title text stay exactly as in
   the source -- only the notes paragraph under a bullet is translated) and
   the `status` values (`draft`, `progress`, `done`, `review`); the headings
   inside `## Description` are free text, not schema headings -- keep them

@@ -18,7 +18,7 @@
 """Body-model tests for ``set`` (feat-173-req-iso29148-level-set Phase 180).
 
 Covers the opaque ``## Description`` (any markdown, verbatim round-trip), the
-mandatory mixed-tag ``## Items`` list (the 12 reference tags in any mix,
+mandatory mixed-tag ``## Items`` list (the 11 reference tags in any mix,
 per-bullet notes, the duplicate ``(tag, id)`` guard), the binding section
 order (H1 -> Description -> Items, engine trailing-completeness for any
 further H2), and the ``min_length=1`` items rule.
@@ -129,7 +129,7 @@ class TestItems(unittest.TestCase):
         self.assertIsNone(sut.items.items[1].notes)
 
     def test_unknown_tag_is_rejected(self) -> None:
-        # SOP is a whole-body domain but not one of the 12 reference tags
+        # SOP is a whole-body domain but not one of the 11 reference tags
         with self.assertRaises(ValidationError):
             Set.from_text(_doc(items="- SOP 00000000-0000-4000-8000-000000000001: S"))
 

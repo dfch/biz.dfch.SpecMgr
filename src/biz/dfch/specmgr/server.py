@@ -138,8 +138,8 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         markdown domain-knowledge guidance.
 specmgr://reference-graph -- The frozen reference-graph rulebook: the deterministic
                               PlantUML component-diagram emission layout for the
-                              cross-reference network (the 16-entry palette, the bracketed
-                              alias/label/truncation rules, the title override + defaults,
+                               cross-reference network (the 15-entry palette, the bracketed
+                               alias/label/truncation rules, the title override + defaults,
                              the FEAT-exclusion rule, the bare-`feat-NNN` source-id
                              rejection with the `list_feat` discovery pointer, the SCC
                              cycle rule + red-arrow syntax, the construction semantics,
@@ -487,9 +487,9 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
    the clamped offset and never restarts, so a number seen can be fed straight back
    into the generic ``update`` tool's ``offset``)), ``list_set``,
    ``get_set_example``, ``get_set_schema``, ``get_set_template``, ``create_set``.
-   ``set`` is the convenience-bundle domain: a mandatory opaque free-markdown
-   ``## Description`` plus a mandatory ``## Items`` flat bullet list (any mix of the
-   shared 12-tag reference vocabulary, ``<TAG> <uuid>: <title>``, at least one item,
+    ``set`` is the convenience-bundle domain: a mandatory opaque free-markdown
+    ``## Description`` plus a mandatory ``## Items`` flat bullet list (any mix of the
+    shared 11-tag reference vocabulary, ``<TAG> <uuid>: <title>``, at least one item,
    duplicate ``(tag, id)`` rejected; the items remain the source of truth and
    nothing in an item ever points back to the set -- ``SET`` is not a reference
     tag), and it is built dispatch-only from day one (DEC

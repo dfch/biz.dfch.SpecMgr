@@ -8,7 +8,7 @@ Thin over the feat-144-ref-artifact reference machinery (``general.tools._refere
 tool's own per-domain source-scan legs (the ``(<d>_base_dir, load_<d>_by_id)``
 pairs the tool's ``_SOURCE_LOADERS`` table holds, here re-dispatched over
 ``general.tools._domains.ALL_DOMAINS``): the reference extraction and target
-resolution semantics are inherited verbatim -- the 12-tag ``<TYPE> <id>``
+resolution semantics are inherited verbatim -- the 11-tag ``<TYPE> <id>``
 vocabulary (the UUID tags with a canonical uuid id, plus ``FEAT`` carrying the
 full ``feat-NNN-slug`` id or the bare ``feat-NNN`` number), the code-fence
 extraction caveat, and the feat dual-spelling behaviour (rulebook §3.7).

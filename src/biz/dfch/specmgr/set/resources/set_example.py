@@ -45,7 +45,7 @@ from ...server import mcp
         "A complete, valid sample set document as raw markdown -- "
         "frontmatter and body -- exercising the opaque `## Description` (prose, a list, a "
         "fenced code block, a nested H3 heading) and the mandatory `## Items` list with "
-        "mixed reference tags (any of the shared 12-tag vocabulary), for use as a learning "
+        "mixed reference tags (any of the shared 11-tag vocabulary), for use as a learning "
         "example."
     ),
     mime_type="text/markdown",
