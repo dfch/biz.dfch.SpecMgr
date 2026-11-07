@@ -4,7 +4,7 @@ created: '2026-11-01T14:10:53.141+01:00'
 id: feat-250-c4-structurizr-skills
 status: review
 type: feat
-updated: '2026-11-07T06:17:13.403+01:00'
+updated: '2026-11-07T09:12:05.114+01:00'
 version: 1.0.0
 ---
 
@@ -156,6 +156,14 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 - [ ] Task 120.140: Run the held-out case once and record the result under the hybrid rule of the stop rule.
 - [ ] Task 120.150: Check the attribution and the source map, write `tests/opencode/test_skill_structurizr_dsl_authoring.py`, and run `specmgr harness-bundle` once the stop rule has passed.
 
+#### Phase 125: Deferred Phase 110 Review Findings (G2, I1–I4)
+
+- [ ] Task 125.100: Close the `triage_complete` gate edge of the Phase 110 review (G2, 2026-11-07, deferred): the gate can be satisfied by edit-derived `fix` labels attached to findings the agent never addressed — any completed `shell`/`execute`/`edit`/`write` call after the last inspect flips all non-`expected` findings to `fix`, and the merged finding set can contain line-fragment "findings" from bundled Code Mode outputs (committed evidence: two `none` mcp-limits trials pass `triage_complete` with every entry — including JSON fragments — labeled `fix`); the locked gate design does not cover the edge that a post-inspect edit is unrelated to a finding, and the edge is amplified by I1's spurious findings (Task 125.110). Citations: `evals/c4-skills/c4_skills/metrics.py:88, 365-413`, `evals/c4-skills/c4_skills/graders.py:408-426`, evidence `evals/c4-skills/results/p110-iter2-2026-11-05T143241Z/trials/mcp-limits/none-k0.json` (cite, never modify). Why it matters: a baseline can clear the loop discipline's acceptance gate without having triaged anything, and that matters once later phases' baselines are stronger.
+- [ ] Task 125.110: Restrict `_findings_from_output`'s line-based fallback to single-line outputs (I1, the Phase 110 review, 2026-11-07, deferred): as it stands, the fallback turns any multi-line non-JSON-array output (bundled Code Mode object answers) into dozens of spurious findings — one committed `none` trial carries 70+ entries like `"containers": [` and `}` — and restricting the fallback to single-line outputs keeps the `inspect_findings` count and the triage dict meaningful (it also removes the spurious findings that amplify G2, Task 125.100). Citations: `evals/c4-skills/c4_skills/metrics.py:324-344`, evidence `evals/c4-skills/results/p110-iter2-2026-11-05T143241Z/trials/mcp-limits/none-k1.json` (cite, never modify). Why it matters: every stream-derived finding count and the `triage_complete` label set is built on this extraction, so its noise corrupts the loop discipline's measurements.
+- [ ] Task 125.120: Normalize the severity prefix before the stream/CLI finding merge (I2, the Phase 110 review, 2026-11-07, deferred): the merge dedupes by exact string, so the same finding appears twice — under its `ERROR:`-prefixed CLI form and its bare stream form (one passing skill trial shows 4 findings that are 2 real findings × 2 forms) — and normalizing the severity prefix before merging fixes the double count. Citations: `evals/c4-skills/c4_skills/metrics.py:465-469`, evidence `evals/c4-skills/results/p110-iter2-2026-11-05T143241Z/trials/mcp-limits/skill-k1.json` (cite, never modify). Why it matters: the doubled entries inflate `inspect_findings` and the triage dict that `triage_complete` and the report gate figures count.
+- [ ] Task 125.130: Map `_run_cli`'s 300 s `subprocess.TimeoutExpired` into the CLI exit-code contract (I3, the Phase 110 review, 2026-11-07, deferred): the contract (recorded in `cli.py`'s module docstring and the harness README) covers `KeyError`/`ValueError`/`AssertionError` → 2 and `RuntimeError`/`OSError` → 1 only, so a hung docker CLI would surface as a raw traceback mid-run instead of exit 1. Citations: `evals/c4-skills/c4_skills/graders.py:675-680`, `evals/c4-skills/c4_skills/cli.py:332-349`. Why it matters: a raw traceback aborts a multi-hour run with no verdict and contradicts the documented contract.
+- [ ] Task 125.140: Remove the dead code the enforced vulture pass never sees (I4, the Phase 110 review, 2026-11-07, deferred — the vulture hook is scoped to `src/` only): `ReportInput.extras` is declared but never read, and `UPSTREAM_CACHE_DIRNAME` is declared but never referenced (callers pass `cache_root / "upstream"`). Citations: `evals/c4-skills/c4_skills/report.py:66`, `evals/c4-skills/c4_skills/upstream.py:37`, `.pre-commit-config.yaml:16-27`. Why it matters: dead declarations in the harness read as live behavior, and they sit outside every enforced check.
+
 #### Phase 130: Skill c4-modeling
 
 - [ ] Task 130.100: Write the cases and graders for modeling decisions (`modeling-decisions`: container versus library, external systems, the common mistakes) and `heldout-modeling`.
@@ -199,6 +207,10 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-07 08:12:05.000Z - Phase 110 review findings G2, I1–I4 logged in the Task List for Phases 120+ (user decision)
+
+Per the user's 2026-11-07 decision, the Phase 110 review's deferred findings **G2, I1, I2, I3, I4** are NOT fixed now — they are logged in the Task List as new `Phase 125: Deferred Phase 110 Review Findings (G2, I1–I4)`, inserted in-between `Phase 120` and `Phase 130` (the in-between insertion rule; no existing phase or task renumbered or reworded, every checkbox `- [ ]`). Placement: G2 → Task 125.100, I1 → Task 125.110, I2 → Task 125.120, I3 → Task 125.130, I4 → Task 125.140. A single in-between phase was chosen over folding because none of the existing 120–160 phases covers harness gate/metric/CLI design changes or dead-code cleanup in `evals/` (Phases 120–150 are per-skill, Phase 160 is cumulative regression + results + repo-doc housekeeping). These five findings post-date the Phase 110 remediation (E1, G1, D1–D4), which landed as commit f7cfa86d — they are scheduled work, not remediation fixes. Every citation in the new task lines was re-verified against the post-f7cfa86d tree: the `metrics.py` spans moved +3 lines versus the review's numbers (85 → 88, 321-341 → 324-344, 362-410 → 365-413, 462-466 → 465-469), and the vulture hook citation is `.pre-commit-config.yaml:16-27` (the review's 100-101 pointed elsewhere); `graders.py`/`cli.py`/`report.py`/`upstream.py` citations verified unchanged. README-only change; `specmgr lint` on this README stays green (linted=1 failed=0).
 
 #### 2026-11-07 04:48:14.000Z - Phase 110 review remediation: E1, G1 and D1–D4 applied
 
@@ -269,6 +281,12 @@ The plan is created from GitHub issue 250.
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-07 08:12:05.000Z - Phase 110 review findings G2, I1–I4 deferred to Phases 120+ (user decision)
+
+All feature-scoped, development-only (nothing in `src/`, nothing shipped) — the same placement rule as the Phase 100/110 entries.
+
+- **G2/I1–I4 deferral (user-ruled 2026-11-07)**: the five deferred findings of the Phase 110 review are logged in the Task List as `Phase 125` (Tasks 125.100–125.140, carrying G2, I1, I2, I3, I4 in that order) and are NOT fixed in the Phase 110 remediation (commit f7cfa86d). Rationale: they extend or change the locked gate/metric design (the `triage_complete` edit-derived-`fix` edge, the finding extraction and merge, the CLI exit-code contract, plus dead code outside the enforced vulture scope) — scheduled work, not review-remediation fixes; the remediation's D4 scope explicitly left the gate implementation to G2. Phase 125 sits between Phase 120 and Phase 130: the fixes post-date Phase 120's own stop-rule measurement (that data stays as recorded, under the pre-fix graders) and precede Phases 130–150's measurements; Phase 160's full re-run (Task 160.100) measures every case under the fixed graders. G2's edge is amplified by I1's spurious findings — cross-referenced in both task lines.
 
 #### 2026-11-07 04:48:14.000Z - Phase 110 review remediation decisions
 
