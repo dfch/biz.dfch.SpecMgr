@@ -582,7 +582,20 @@ replace an existing document's status across every domain (``type`` is one of
 also bumping
 ``updated`` (the whole-body domains) and leaving the body untouched;
 ``superseded_by`` is ``adr``-only (it composes the status as
-``"superseded by {superseded_by}"``);
+``"superseded by {superseded_by}"``); each whole-body domain's own
+``_STATUS_TRANSITIONS`` state machine (feat-108-fsm, GitHub issue #108, ADR
+a79608e4-88cd-498f-8ca1-445df4d04f92) is enforced post-load/pre-write,
+immediately after the unchanged-status no-op comparison and before any
+write, and a disallowed transition returns the non-raising
+``InvalidStatusTransitionResult`` (``allowed_values`` are the targets allowed
+from the current state, sorted -- never the domain's full flat vocabulary;
+``[]`` plus the terminal message form for a terminal current state; nothing
+persisted, ``updated`` not bumped) instead -- the tool's second, post-load
+error surface, case 6 of the ADR 519d1206-4d2a-4500-9046-6db635209996
+non-raising-structured-result chain, distinct from the unchanged
+pre-dispatch/pre-load out-of-vocabulary ``InvalidStatusResult`` (case 2),
+which still runs first; ``adr`` is excluded (keeps its flat-vocabulary
+behavior);
 ``set_classification`` -- replace the free-text ``classification``
 frontmatter field of an existing document across the whole-body
 domains (``type`` is one of
@@ -796,7 +809,28 @@ and every ``parse_<d>`` tool (an existing file that fails to parse);
 compound failure returns ``ValidateResult`` first) still raise; the shared
 catch tuple and 300-char cap constant are defined in
 ``general/models/validate_result.py`` and re-exported by
-``general/tools/validate.py``.
+``general/tools/validate.py``. A sixth extension
+(feat-108-fsm, GitHub issue #108, ADR a79608e4-88cd-498f-8ca1-445df4d04f92)
+gives ``set_status`` a second, post-load error surface: each whole-body
+domain's own ``_STATUS_TRANSITIONS`` state machine (domain-owned, next to the
+domain's own ``_ALLOWED_STATUSES`` in its frontmatter module; aggregated in
+``general/tools/_status_fsm.py``'s ``_STATUS_TRANSITIONS_BY_TYPE`` keyed to
+the ``general/tools/_domains`` registry, with the full-coverage import-time
+assert) is enforced post-load/pre-write, immediately after the unchanged-
+status no-op comparison, and a disallowed transition returns the non-raising
+``InvalidStatusTransitionResult`` (``allowed_values`` are the targets allowed
+from the current state, sorted -- never the domain's full flat vocabulary;
+``[]`` plus the terminal message form for a terminal current state; nothing
+persisted, ``updated`` not bumped) instead of writing -- distinct from the
+unchanged pre-dispatch/pre-load out-of-vocabulary ``InvalidStatusResult``
+(case 2, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), which still runs first;
+``adr`` is excluded (keeps its flat-vocabulary behavior, ``_set_status_adr``
+byte-identical). One chain-bookkeeping record: ADR
+f14f125e-eaad-4f4f-a6fd-3c931bed726e's "delete as the later candidate (case
+6)" prediction is overtaken -- this ADR takes the case-6 slot for the
+``set_status`` transition surface, ``delete`` remaining the later candidate
+if ever addressed (no accepted ADR is edited, per the chain's established
+precedent).
 
 Prompts
 -------

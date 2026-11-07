@@ -61,6 +61,7 @@ from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.dec.tools.list_dec import list_dec
+from biz.dfch.specmgr.feat.models.v1 import FeatFrontmatter
 from biz.dfch.specmgr.feat.models.v1.frontmatter import _ALLOWED_STATUSES as _FEAT_ALLOWED_STATUSES
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError, feat_base_dir
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -481,7 +482,10 @@ _CASES: list[_Case] = [
         frontmatter_type=ReqFrontmatter,
         document_type=ReqDocument,
         minimal_body=_REQ_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 110: req's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="open",
         allowed_statuses=_REQ_ALLOWED_STATUSES,
     ),
@@ -492,7 +496,10 @@ _CASES: list[_Case] = [
         frontmatter_type=UcFrontmatter,
         document_type=UcDocument,
         minimal_body=_UC_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: uc's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="implemented",
         allowed_statuses=_UC_ALLOWED_STATUSES,
     ),
@@ -536,7 +543,10 @@ _CASES: list[_Case] = [
         frontmatter_type=GolFrontmatter,
         document_type=GolDocument,
         minimal_body=_GOL_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: gol's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="open",
         allowed_statuses=_GOL_ALLOWED_STATUSES,
     ),
@@ -558,7 +568,10 @@ _CASES: list[_Case] = [
         frontmatter_type=DecFrontmatter,
         document_type=DecDocument,
         minimal_body=_DEC_MINIMAL_BODY,
-        valid_status="accepted",
+        # feat-108-fsm Phase 120: dec's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``proposed`` (``draft`` -> ``accepted`` is rejected by the machine).
+        valid_status="proposed",
         invalid_status="implemented",
         allowed_statuses=_DEC_ALLOWED_STATUSES,
     ),
@@ -569,7 +582,10 @@ _CASES: list[_Case] = [
         frontmatter_type=SopFrontmatter,
         document_type=SopDocument,
         minimal_body=_SOP_MINIMAL_BODY,
-        valid_status="active",
+        # feat-108-fsm Phase 120: sop's own state machine is enforced, so the positive case must
+        # be a transition the table allows from a freshly created document's ``draft`` status --
+        # ``draft`` -> ``approved`` (``draft`` -> ``active`` is rejected by the machine).
+        valid_status="approved",
         invalid_status="implemented",
         allowed_statuses=_SOP_ALLOWED_STATUSES,
     ),
@@ -1295,6 +1311,90 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
             f"Allowed values: {', '.join(expected_allowed)}",
         )
         self.assertEqual(path.read_bytes(), before)
+
+
+class TestSetStatusTransitionSeam(TempSetStatusInjectionDirTestCase):
+    """feat-108-fsm (the cross-cutting seam, REQ-002/REQ-005, GitHub issue #108): the
+    post-load/pre-write ``check_status_transition`` call is wired into the whole-body adapters
+    (Phase 100). As of Phase 120 the rollout is complete: every entry of
+    ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` carries the domain's own landed
+    table (``req`` since Phase 110, the remaining whole-body domains since Phase 120), and no
+    entry is the ``None`` passthrough any more -- the pins below therefore drive an allowed
+    transition of their own domain's landed table (``req``: ``draft`` -> ``proposed``;
+    ``feat``: ``planning`` -> ``progress``), with ``feat`` -- like every other whole-body
+    domain -- enforced like ``req``.
+
+    The no-op, out-of-vocabulary, parse-failure, and path-safety order pins are this module's
+    existing tests (unchanged by this phase); this class adds the seam-specific pins: the check
+    is actually invoked (with the domain, the document's current on-disk status, and the
+    requested target), it runs AFTER the no-op comparison (a same-status call never reaches it)
+    and AFTER the pre-dispatch out-of-vocabulary channel (an out-of-vocabulary call never
+    reaches it), and an allowed transition proceeds to the write with the exact return shape
+    (the domain's own frontmatter, status changed). The disallowed-transition outcome itself is
+    the e2e module ``test_set_status_fsm_req.py``'s subject (Phase 110).
+    """
+
+    def test_transition_check_is_wired_post_load_and_drives_an_allowed_transition_for_req(self) -> None:
+        """The req adapter must call ``check_status_transition("req", <current>, <target>)`` after its
+        own load/no-op and, for an allowed transition of the landed req table (``draft`` ->
+        ``proposed``), proceed to the write with the exact return shape (the domain's own
+        frontmatter, status changed)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        spy.assert_called_once_with("req", created.status, case.valid_status)
+        self.assertIsInstance(result, case.frontmatter_type)
+        self.assertNotIsInstance(result, case.document_type)
+        self.assertEqual(result.status, case.valid_status)
+
+    def test_transition_check_is_wired_post_load_and_drives_an_allowed_transition_for_feat(self) -> None:
+        """The same, for ``feat`` (separate case shape: folder + ``README.md``, no ``language``
+        parameter -- the same wiring point; the pin drives an allowed transition of the landed
+        feat table, ``planning`` -> ``progress``)."""
+        created = create_feat(_FEAT_MINIMAL_BODY)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type="feat", status="progress")
+
+        spy.assert_called_once_with("feat", created.status, "progress")
+        self.assertIsInstance(result, FeatFrontmatter)
+        self.assertEqual(result.status, "progress")
+
+    def test_transition_check_runs_after_the_noop_comparison(self) -> None:
+        """REQ-005/ACC-005 order pin: a same-status call returns at the no-op and never reaches
+        the transition check (mirrors this module's existing no-op test pattern)."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+        first_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            second_result = set_status(id=created.id, type=case.doc_type, status=case.valid_status)
+
+        spy.assert_not_called()
+        self.assertEqual(second_result, first_result)
+
+    def test_out_of_vocabulary_status_still_returns_invalid_status_result_before_the_transition_check(self) -> None:
+        """REQ-005/ACC-005 order pin: the pre-dispatch ``InvalidStatusResult`` channel runs before
+        any adapter (and thus before the transition check) -- the spy must not see the call."""
+        case = next(c for c in _CASES if c.doc_type == "req")
+        created = case.create(case.minimal_body)
+
+        with mock.patch.object(
+            set_status_module, "check_status_transition", wraps=set_status_module.check_status_transition
+        ) as spy:
+            result = set_status(id=created.id, type=case.doc_type, status=case.invalid_status)
+
+        self.assertIsInstance(result, InvalidStatusResult)
+        spy.assert_not_called()
 
 
 if __name__ == "__main__":

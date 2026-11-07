@@ -17,6 +17,11 @@ this system does not model an effective-date/rollout gap, so the
 transition from ``approved`` to ``active`` is a manual ``set_status``
 call, not automatic.
 
+This module also owns the SYSRS status state machine (feat-108-fsm,
+GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `SysrsFrontmatter`

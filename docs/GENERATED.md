@@ -133,6 +133,7 @@ First-line docstrings from each module, organized by domain:
 - `general/models/ears.py` — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - `general/models/heading_table.py` — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - `general/models/invalid_status_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- `general/models/invalid_status_transition_result.py` — The generic ``set_status`` tool's own non-raising, structured result for its second, post-load
 - `general/models/iso29148.py` — Pydantic schema and parser for the ISO/IEC/IEEE 29148:2018 requirement-
 - `general/models/language_list_result.py` — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - `general/models/paged_result.py` — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
@@ -182,6 +183,7 @@ First-line docstrings from each module, organized by domain:
 - `general/tools/_similarity_text.py` — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - `general/tools/_splice.py` — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - `general/tools/_startup_warmup.py` — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
+- `general/tools/_status_fsm.py` — The generic ``set_status`` tool's own per-domain status state machine (feat-108-fsm, GitHub issue #108).
 - `general/tools/_timestamps.py` — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - `general/tools/check_translation_drift.py` — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - `general/tools/delete.py` — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).
@@ -666,4 +668,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 517
+**Test files**: 521
