@@ -22,8 +22,8 @@ Pins the REQ-007 generator contract:
 * **Determinism** -- two runs over an unchanged tree are byte-identical
   (no timestamps; ``json.dumps(indent=2, ensure_ascii=False)`` + trailing
   newline), both in the pure generator and end-to-end over a tmp fixture.
-* **Enumeration completeness** -- the current repo tree's 25 files (6 in
-  ``agent/``, 10 in ``command/``, 9 in ``skill/*/``) all appear, each with
+* **Enumeration completeness** -- the current repo tree's 30 files (6 in
+  ``agent/``, 10 in ``command/``, 14 in ``skill/*/``) all appear, each with
   a correct ``sha256`` and verbatim ``content``; a tmp-fixture copy of the
   scoped dirs gains a file and the generated bundle contains it with the
   correct ``sha256``.

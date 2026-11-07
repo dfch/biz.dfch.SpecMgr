@@ -18,9 +18,13 @@
 """feat-250-c4-structurizr-skills Phase 110, Task 110.150 (ACC-011): pin the structurizr-validate-loop skill.
 
 The first of the feature's five skills, ``.opencode/skill/structurizr-validate-loop/``
-— the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
-``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
-(variant ``927d6c3f…``, the committed winner). These tests pin, read-only from
+ — the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
+ ``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
+ (the measured winner was variant ``927d6c3fc039…``; the committed variant is
+ ``48c9b87bdee8…``, differing only in the one-character ADR-citation typo the
+ 2026-11-07 review remediation fixed — a citation-only editorial change, the
+ trigger description and instructions are byte-identical, so the measured
+ behavioral identity is preserved). These tests pin, read-only from
 the committed files (no network, no Docker, no model): the file location (the
 project skill path ``.opencode/skill/`` — singular ``skill/`` dir, the plural
 ``skills/`` no longer exists — with exactly the five markdown files:
@@ -47,13 +51,7 @@ ideas-only marks (ACC-010).
 Phrase pins are matched against whitespace-normalized text (every run of
 whitespace collapsed to one space) so they survive the committed files'
 hard line-wrapping; the description pins are matched case-insensitively on
-the raw description, since opencode surfaces it verbatim to agents.
-
-Known deviation pinned as a prefix: the body's ADR precedent reference
-currently reads ``7a626b12-…-ffb2e9e133b4``, one character off the real ADR id
-``7a626b12-b189-4561-a51d-ffb2e9e193b4``; the pin covers the stable prefix
-plus the surrounding sentence, so fixing the typo (or not) keeps this test
-green while dropping the reference entirely fails it.
+ the raw description, since opencode surfaces it verbatim to agents.
 """
 
 from __future__ import annotations
@@ -106,9 +104,9 @@ _LOOP_PHRASES: tuple[str, ...] = (
     "Any edit after the final validate requires re-validating",
     "if anything is edited after the final validate, re-run `validate`",
     "a parsed-only or reported-only result is not a pass",
-    # ADR 7a626b12 precedent: prefix pin (the body's full id currently carries
-    # a one-character typo, see the module docstring).
-    "the repo's own PlantUML validation chain (ADR 7a626b12",
+    # ADR 7a626b12 precedent: the full id (the body carried a one-character
+    # typo, fixed by the 2026-11-07 review remediation).
+    "the repo's own PlantUML validation chain (ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4)",
     "a structure-only check is not a pass",
 )
 
