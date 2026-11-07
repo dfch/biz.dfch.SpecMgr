@@ -28,6 +28,15 @@ the pinned Structurizr CLI image (``validate``, ``export -format json``,
 - the CLI exit codes (a workspace the CLI rejects fails the gates, whatever
   the agent said it did).
 
+Phase 110 (Task 110.100) adds the stream-derived gates over the same pure
+surface: they decide on the trial's parsed event stream and its computed
+metrics (the agent's MCP calls, skills loaded, `inspect`-finding triage,
+the final message), carried by :class:`GateContext` alongside the
+CLI/work-dir inputs. All gates -- the original 8 (unwrapped over
+`GateContext.inputs`, behavior unchanged) and the new ones -- are keyed in
+:data:`GATES`; :func:`grade_case` evaluates a case's gate names over one
+context.
+
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
 """
@@ -35,12 +44,23 @@ command) and :func:`grade_case` (pure, unit-tested).
 from __future__ import annotations
 
 import json
+import re
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from . import pins, preflight
 from .cases import MIN_DSL_BYTES, Case, WORKSPACE_KEYWORD
+from .events import ParsedTrial
+
+if TYPE_CHECKING:
+    # metrics imports graders (GraderInputs, the coverage query), so the
+    # metrics names graders needs are imported locally inside the gates
+    # that use them (a top-level import would be a cycle); the annotation
+    # only needs the name.
+    from .metrics import TrialMetrics
 
 # ---------------------------------------------------------------------------
 # the collected inputs (the pure side never touches Docker)
@@ -91,6 +111,32 @@ class GateResult:
     name: str
     passed: bool
     detail: str
+
+
+@dataclass(frozen=True)
+class GateContext:
+    """Everything one gate may need, for one trial (Phase 110).
+
+    The original 8 gates only look at `inputs`; the stream-derived gates
+    look at `trial`/`metrics` (and, for `no_mounted_skill_loaded`,
+    `skills_installed`). `case` is carried so gates may read the case's own
+    facts (e.g. `setup_files` for `file_untouched`).
+
+    Attributes:
+        inputs: The collected CLI/work-dir inputs (`collect_inputs`).
+        case: The case being graded (its `gates` and `setup_files`).
+        trial: The trial's parsed event stream (`events.parse_events_file`).
+        metrics: The trial's computed metrics (`metrics.compute_metrics`,
+            run over `trial` + `inputs` before grading).
+        skills_installed: The skill names the condition installed into the
+            work dir before the agent started (empty for `none`).
+    """
+
+    inputs: GraderInputs
+    case: Case
+    trial: ParsedTrial
+    metrics: "TrialMetrics"
+    skills_installed: tuple[str, ...]
 
 
 # ---------------------------------------------------------------------------
@@ -304,25 +350,254 @@ def gate_has_view(inputs: GraderInputs) -> GateResult:
     return GateResult("has_view", True, f"{len(defined)} user-defined view(s)")
 
 
-#: The pure gate functions, keyed by gate name (the case's `gates` entries).
-GATES: dict[str, object] = {
-    "dsl_written": gate_dsl_written,
-    "cli_valid": gate_cli_valid,
-    "cli_export": gate_cli_export,
-    "has_system": gate_has_system,
-    "has_person": gate_has_person,
-    "two_containers": gate_two_containers,
-    "relationship_technology": gate_relationship_technology,
-    "has_view": gate_has_view,
+# ---------------------------------------------------------------------------
+# the stream-derived gates (Phase 110, Task 110.100)
+# ---------------------------------------------------------------------------
+
+
+def gate_validated_before_return(context: GateContext) -> GateResult:
+    """`validated_before_return`: the returned DSL is the exact text that got OK.
+
+    Reuses `TrialMetrics.validated_before_return` (the on-disk file or the
+    final message text is byte-identical to the `dsl` input of a
+    `validate`-suffixed call that answered the OK marker); a parsed-only or
+    reported-only result is NOT a pass (the ADR 7a626b12 precedent).
+    """
+    from .metrics import validated_texts  # local: metrics imports graders (cycle)
+
+    ok_texts = validated_texts(context.trial)
+    if context.metrics.validated_before_return:
+        via = "the on-disk file" if context.metrics.validated_by_file else "the final message text"
+        return GateResult(
+            "validated_before_return", True, f"returned DSL is byte-identical to the validated OK text ({via})"
+        )
+    if not ok_texts:
+        return GateResult("validated_before_return", False, "no validate call answered the OK marker with a dsl input")
+    sub = []
+    if not context.metrics.validated_by_file:
+        sub.append("on-disk file differs")
+    if not context.metrics.validated_by_final_text:
+        sub.append("final message text differs or is absent")
+    return GateResult("validated_before_return", False, f"{len(ok_texts)} validated OK text(s); " + " and ".join(sub))
+
+
+def gate_parse_called(context: GateContext) -> GateResult:
+    """`parse_called`: at least one terminal call to a `parse`-suffixed MCP tool."""
+    if context.metrics.parse_calls < 1:
+        return GateResult("parse_called", False, "no terminal parse call in the event stream")
+    return GateResult("parse_called", True, f"{context.metrics.parse_calls} terminal parse call(s)")
+
+
+def gate_validate_ok_called(context: GateContext) -> GateResult:
+    """`validate_ok_called`: at least one `validate` call answered the OK marker."""
+    if context.metrics.validate_ok_calls < 1:
+        total = context.metrics.validate_calls
+        return GateResult(
+            "validate_ok_called", False, f"no validate call answered the OK marker ({total} validate call(s) in total)"
+        )
+    return GateResult("validate_ok_called", True, f"{context.metrics.validate_ok_calls} validate call(s) answered OK")
+
+
+def gate_inspect_called(context: GateContext) -> GateResult:
+    """`inspect_called`: at least one terminal call to an `inspect`-suffixed MCP tool."""
+    if context.metrics.inspect_calls < 1:
+        return GateResult("inspect_called", False, "no terminal inspect call in the event stream")
+    return GateResult("inspect_called", True, f"{context.metrics.inspect_calls} terminal inspect call(s)")
+
+
+def gate_triage_complete(context: GateContext) -> GateResult:
+    """`triage_complete`: every merged `inspect` finding is triaged (REQ-003).
+
+    Every finding in `metrics.inspect_triage` (the stream and CLI findings
+    merged, first-occurrence order) carries a `fix`/`expected`/`reported`
+    label -- no `untriaged`. Vacuously true with no findings;
+    `inspect_called` carries the requirement that inspect was used at all.
+    """
+    from .metrics import TRIAGE_UNTRIAGED  # local: metrics imports graders (cycle)
+
+    triage = context.metrics.inspect_triage
+    if not triage:
+        return GateResult("triage_complete", True, "no inspect findings (vacuously complete)")
+    untriaged = [finding for finding, label in triage.items() if label == TRIAGE_UNTRIAGED]
+    if untriaged:
+        return GateResult(
+            "triage_complete", False, f"{len(untriaged)} of {len(triage)} finding(s) untriaged: {untriaged[0]}"
+        )
+    return GateResult("triage_complete", True, f"all {len(triage)} finding(s) labeled fix/expected/reported")
+
+
+#: Loose matcher for `limits_acknowledged`: the final text names at least
+#: one of the MCP-refused features (`!include` / `!docs`); backticks and
+#: casing aside, an optional space after the `!` is tolerated.
+_LIMITS_FEATURE_RE = re.compile(r"!\s*(include|docs)\b", re.IGNORECASE)
+
+
+def gate_limits_acknowledged(context: GateContext) -> GateResult:
+    """`limits_acknowledged`: the final text names the MCP-refused features.
+
+    Loose by design (the locked spec): naming `!include` and/or `!docs`
+    anywhere in the final message suffices.
+    """
+    final_text = context.trial.final_text()
+    named = sorted({match.group(1).lower() for match in _LIMITS_FEATURE_RE.finditer(final_text)})
+    if not named:
+        return GateResult("limits_acknowledged", False, "final text names neither !include nor !docs")
+    return GateResult("limits_acknowledged", True, "final text names: " + ", ".join(f"!{name}" for name in named))
+
+
+def gate_no_mounted_skill_loaded(context: GateContext) -> GateResult:
+    """`no_mounted_skill_loaded`: the agent loaded none of the mounted skills.
+
+    `metrics.skills_loaded` (the `skill` tool calls) intersected with
+    `skills_installed` (what the condition put into the work dir before the
+    agent started) must be empty; vacuously true for `none` (nothing
+    installed).
+    """
+    loaded = set(context.metrics.skills_loaded)
+    installed = set(context.skills_installed)
+    triggered = sorted(loaded & installed)
+    if triggered:
+        return GateResult("no_mounted_skill_loaded", False, f"mounted skill(s) loaded: {', '.join(triggered)}")
+    if not installed:
+        return GateResult("no_mounted_skill_loaded", True, "no skills mounted (vacuously true)")
+    return GateResult(
+        "no_mounted_skill_loaded",
+        True,
+        f"no mounted skill loaded ({len(installed)} mounted: {', '.join(sorted(installed))})",
+    )
+
+
+def gate_file_untouched(context: GateContext) -> GateResult:
+    """`file_untouched`: the DSL file on disk is the case's seeded file.
+
+    Compares `inputs.dsl_text` against the `Case.setup_files` entry for the
+    same relative path: the seeded file was neither modified, removed nor
+    replaced by another .dsl file.
+    """
+    seeded = context.case.setup_files
+    if not seeded:
+        return GateResult("file_untouched", False, "the case seeds no files (gate misused)")
+    dsl_path = context.inputs.dsl_path
+    if dsl_path is None:
+        return GateResult(
+            "file_untouched", False, f"no .dsl file in the work dir (the seeded {sorted(seeded)} is gone)"
+        )
+    expected = seeded.get(dsl_path)
+    if expected is None:
+        return GateResult(
+            "file_untouched", False, f"{dsl_path} is not the seeded file {sorted(seeded)} (replaced or renamed)"
+        )
+    if context.inputs.dsl_text is None or context.inputs.dsl_text != expected:
+        return GateResult("file_untouched", False, f"{dsl_path} was modified (differs from the seeded text)")
+    return GateResult("file_untouched", True, f"{dsl_path} is byte-identical to the seeded file")
+
+
+#: Loose matchers for `mcp_limit_stated`: the final text states that images
+#: cannot be produced (the MCP has no image rendering; its export tools
+#: emit PlantUML/C4-PlantUML/Mermaid *source*). Any one pattern matching is
+#: enough, and additional sentences (e.g. offering the diagram source)
+#: never break a match.
+_IMAGE_LIMIT_PATTERNS: tuple[re.Pattern[str], ...] = (
+    # "cannot / can't / ... render/produce/generate/create/export ... image/png/svg"
+    re.compile(
+        r"\b(can(?:not|'t)|could\s+not|unable\s+to|impossible\s+to|no\s+way\s+to)\b"
+        r"[^.\n]{0,60}?\b(render\w*|produc\w+|generat\w+|creat\w+|export\w*|make\w*)\b"
+        r"[^.\n]{0,40}?\b(image\w*|png|svg|picture\w*)\b",
+        re.IGNORECASE,
+    ),
+    # "image/png/svg rendering/export ... is not / no"
+    re.compile(
+        r"\b(image\w*|png|svg)\s+(render\w+|produc\w+|export\w*)\b[^.\n]{0,40}?\b(not|no|impossible|unsupported)\b",
+        re.IGNORECASE,
+    ),
+    # "no / without / not ... image rendering"
+    re.compile(
+        r"\b(not|no|without)\b[^.\n]{0,30}?\b(image\w*|png|svg)\s+(render\w+|produc\w+|export\w*)\b",
+        re.IGNORECASE,
+    ),
+    # "does not / doesn't / do not / don't support/allow/render/... image ..."
+    re.compile(
+        r"\b(does\s+not|doesn't|do\s+not|don't)\b[^.\n]{0,40}?\b(support\w*|provide\w*|allow\w*|produce\w*|render\w*|generat\w+|export\w*)\b"
+        r"[^.\n]{0,40}?\b(image\w*|png|svg|render\w+)\b",
+        re.IGNORECASE,
+    ),
+    # "rendering/producing/generating ... images ... is/are not ..."
+    re.compile(
+        r"\b(render\w+|produc\w+|generat\w+|creat\w+|export\w+)\b[^.\n]{0,40}?\b(image\w*|png|svg)\b"
+        r"[^.\n]{0,40}?\b(is|are)\s+(not|no|impossible|unsupported)\b",
+        re.IGNORECASE,
+    ),
+)
+
+
+def _states_image_limitation(text: str) -> bool:
+    """Return True iff `text` states that images cannot be produced."""
+    assert isinstance(text, str)
+    for pattern in _IMAGE_LIMIT_PATTERNS:
+        if pattern.search(text):
+            return True
+    result = False
+    return result
+
+
+def gate_mcp_limit_stated(context: GateContext) -> GateResult:
+    """`mcp_limit_stated`: the final text states the no-image-rendering limit.
+
+    The MCP has no image rendering (its export tools emit PlantUML/
+    C4-PlantUML/Mermaid source); a final message that only offers diagram
+    source without stating the limit fails.
+    """
+    final_text = context.trial.final_text()
+    if _states_image_limitation(final_text):
+        return GateResult("mcp_limit_stated", True, "final text states that images cannot be produced")
+    return GateResult("mcp_limit_stated", False, "final text does not state that the MCP cannot produce images")
+
+
+# ---------------------------------------------------------------------------
+# the gate registry (name -> gate over the full context)
+# ---------------------------------------------------------------------------
+
+
+def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateContext], GateResult]:
+    """Wrap one of the original input-based gates over `GateContext.inputs`."""
+
+    def wrapped(context: GateContext) -> GateResult:
+        result = gate(context.inputs)
+        return result
+
+    return wrapped
+
+
+#: Every gate function, keyed by gate name (the cases' `gates` entries).
+#: The original 8 CLI/export gates are the input-only functions wrapped
+#: over `GateContext.inputs`; the Phase 110 gates take the context.
+GATES: dict[str, Callable[[GateContext], GateResult]] = {
+    "dsl_written": _inputs_only(gate_dsl_written),
+    "cli_valid": _inputs_only(gate_cli_valid),
+    "cli_export": _inputs_only(gate_cli_export),
+    "has_system": _inputs_only(gate_has_system),
+    "has_person": _inputs_only(gate_has_person),
+    "two_containers": _inputs_only(gate_two_containers),
+    "relationship_technology": _inputs_only(gate_relationship_technology),
+    "has_view": _inputs_only(gate_has_view),
+    "validated_before_return": gate_validated_before_return,
+    "parse_called": gate_parse_called,
+    "validate_ok_called": gate_validate_ok_called,
+    "inspect_called": gate_inspect_called,
+    "triage_complete": gate_triage_complete,
+    "limits_acknowledged": gate_limits_acknowledged,
+    "no_mounted_skill_loaded": gate_no_mounted_skill_loaded,
+    "file_untouched": gate_file_untouched,
+    "mcp_limit_stated": gate_mcp_limit_stated,
 }
 
 
-def grade_case(case: Case, inputs: GraderInputs) -> list[GateResult]:
-    """Evaluate every gate of `case` over the collected inputs (pure).
+def grade_case(context: GateContext) -> list[GateResult]:
+    """Evaluate every gate of `context.case` over the trial context (pure).
 
     Args:
-        case: The case whose `gates` are evaluated, in order.
-        inputs: The collected CLI/work-dir inputs.
+        context: The GateContext (case + collected inputs + parsed event
+            stream + computed metrics + installed skill names).
 
     Returns:
         One GateResult per gate, in the case's order.
@@ -330,12 +605,11 @@ def grade_case(case: Case, inputs: GraderInputs) -> list[GateResult]:
     Raises:
         KeyError: On an unknown gate name.
     """
-    assert isinstance(case, Case)
+    assert isinstance(context, GateContext)
     results: list[GateResult] = []
-    for name in case.gates:
+    for name in context.case.gates:
         gate = GATES[name]
-        assert callable(gate), name
-        results.append(gate(inputs))  # type: ignore[operator]
+        results.append(gate(context))
     return results
 
 
@@ -374,6 +648,12 @@ def find_dsl_file(workdir: Path) -> Path | None:
 def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
     """Run one Structurizr CLI command over the work dir (Docker).
 
+    The CLI container runs with `--network none`: it only reads the
+    mounted work dir and writes `out/`, so it needs no network at all
+    (verified in the Phase 110 canaries -- the graders never needed
+    egress, and the flag removes the last container class that could
+    reach the host network).
+
     Returns:
         The exit code and the combined stderr/stdout text.
     """
@@ -382,6 +662,8 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
         "docker",
         "run",
         "--rm",
+        "--network",
+        "none",
         *preflight.host_user_flags(),
         "-v",
         f"{workdir}:/w",
