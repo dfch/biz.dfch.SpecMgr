@@ -2,9 +2,9 @@
 
 Decision (DEC) domain -- decisions in general (not architecture-only).
 
-This is a domain-first package, mirroring ``gol``'s layout (per ADR
+This is a domain-first package, mirroring ``gol``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
-and resources for managing ``dec`` documents. A DEC keeps the ADR's general
+and resources for managing ``dec`` documents. A DEC keeps the MADR-style general
 structure (MADR-style headings, ``Options`` collection) but is built on the
 generic ``models/md`` parser with the simple surface used by GOL/RSK/QA --
 no fine-grained mutation tools, no by-id resource.
@@ -32,5 +32,5 @@ tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 
 The former ``specmgr://dec/schema`` resource was converted into the
 ``get_dec_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).

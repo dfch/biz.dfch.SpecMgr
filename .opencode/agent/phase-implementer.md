@@ -54,7 +54,7 @@ plan the whole feature, and you do not proceed past your assigned phase.
    - `uv run --frozen ruff check`
    - `uv run --frozen vulture src/ whitelist.py --min-confidence 60`
    - `uv run --frozen python -m unittest discover -v -s tests -t . -p "test_*.py"`
-   - plus any `specmgr docs` / `specmgr adr-toc` / `specmgr schema --type <t>`
+   - plus any `specmgr docs` / `specmgr schema --type <t>`
      drift checks the phase touches.
    Fix your own failures and re-run until the gate is green. Debugging your own
    work is in scope; do not hand a red gate back to the orchestrator.

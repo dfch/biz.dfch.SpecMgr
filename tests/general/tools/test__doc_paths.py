@@ -247,7 +247,7 @@ class TestFindDocPathById(unittest.TestCase):
             self.assertEqual(find_doc_path_by_id(base, "good-id", _read_fake, _get_id), good_path)
 
     def test_is_generic_over_doc_type_via_parse_and_get_id_functions(self):
-        """A different read_fn/get_id_fn pair must work independently (no ADR/REQ coupling)."""
+        """A different read_fn/get_id_fn pair must work independently (no cross-domain coupling)."""
 
         class _OtherDoc:
             def __init__(self, ident: str) -> None:

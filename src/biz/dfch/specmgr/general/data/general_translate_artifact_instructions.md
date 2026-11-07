@@ -8,9 +8,9 @@ Target:
 - target language: `$language`
 
 Scope: only the thirteen i18n-eligible domains (`req`, `uc`, `tsk`, `qa`,
-`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`). `feat` and
-`adr` are always English and are out of scope: they have no language
-variants, and this flow never touches them.
+`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`). `feat` is always
+English and is out of scope: it has no language variants, and this flow
+never touches it.
 
 Make a todo list and use the `question` tool whenever something is
 ambiguous -- do not guess. Use only the existing specmgr tools for every

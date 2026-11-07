@@ -52,7 +52,6 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
@@ -79,7 +78,6 @@ from biz.dfch.specmgr.vcr.tools._paths import VcrNotFoundError
 from ._reference_graph_helpers import (
     _MISSING_UUID,
     _SeededRegistryTestCase,
-    _A001,
     _B001,
     _C001,
     _C002,
@@ -121,8 +119,8 @@ class TestGetReferenceDiagramRegistration(unittest.TestCase):
 
         cls._tools = asyncio.run(mcp.list_tools())
 
-    def test_get_reference_diagram_registered_with_15_value_type_enum(self) -> None:
-        """``type`` is the full 15-domain vocabulary (adr included), ``type``/``id`` required, the
+    def test_get_reference_diagram_registered_with_14_value_type_enum(self) -> None:
+        """``type`` is the full 14-domain vocabulary, ``type``/``id`` required, the
         remaining parameters optional with the frozen defaults."""
         matching = [t for t in self._tools if t.name == "get_reference_diagram"]
         self.assertEqual(len(matching), 1)
@@ -163,7 +161,6 @@ class TestGetReferenceDiagramPathSafety(unittest.TestCase):
                 {
                     DOCS_DIR_ENV_VAR: str(self.missing_docs_root),
                     FEAT_DIR_ENV_VAR: str(self.missing_docs_root / "feat"),
-                    ADR_DIR_ENV_VAR: str(self.missing_docs_root / "adr"),
                 },
             )
         )
@@ -178,7 +175,7 @@ class TestGetReferenceDiagramPathSafety(unittest.TestCase):
         """A feat-NNN-slug (and every pinned traversal shape, and the empty string) must raise
         ``ValueError`` for every UUID source domain -- the docs root does not exist, so a lookup
         that reached the filesystem would have raised the domain's ``LookupError`` instead."""
-        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt", "adr"):
+        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt"):
             for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID, _BARE_FEAT_ID):
                 with self.subTest(doc_type=doc_type, bad_id=bad_id):
                     with self.assertRaises(ValueError):
@@ -235,7 +232,6 @@ class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
             ("vcr", _MISSING_UUID, VcrNotFoundError),
             ("txt", _MISSING_UUID, TxtNotFoundError),
             ("feat", "feat-999-no-such-feature", FeatNotFoundError),
-            ("adr", _MISSING_UUID, AdrNotFoundError),
         ]
         for doc_type, missing_id, error_type in cases:
             with self.subTest(doc_type=doc_type):
@@ -249,8 +245,8 @@ class TestGetReferenceDiagramSourceMissing(_SeededRegistryTestCase):
 class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
     """ACC-003: an existing-but-broken source returns the non-raising ``ParseFailureResult``
     (never the not-found error, never a diagram) -- for ``dec`` the ``error`` text is
-    byte-identical to the domain's ``list_<d>`` failed-row ``error`` for the same file (ADR
-    9080b37c); for ``feat`` (folder-per-document) and ``adr`` the result carries the broken file's
+    byte-identical to the domain's ``list_<d>`` failed-row ``error`` for the same file (DEC
+    9080b37c); for ``feat`` (folder-per-document) the result carries the broken file's
     resolved path and the domain's own parse-error text."""
 
     SEEDS = (("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),)
@@ -290,26 +286,9 @@ class TestGetReferenceDiagramBrokenSource(_SeededRegistryTestCase):
         self.assertEqual(result.path, str((broken_folder / "README.md").resolve()))
         self.assertTrue(result.error)
 
-    def test_broken_adr_source_returns_parse_failure_result(self) -> None:
-        broken = self.adr_dir / f"{_D002}-broken.md"
-        broken.parent.mkdir(parents=True, exist_ok=True)
-        broken.write_text(
-            "---\nid: c00dc00d-c00d-4c0d-8c0d-c00dc00dc00d\ntype: adr\nstatus: draft\nversion: 1.0.0\n---\n\n"
-            "# Broken ADR\n\n## A Wrong Heading\n\nThe heading structure does not fit the ADR schema.\n",
-            encoding="utf-8",
-        )
-
-        result = get_reference_diagram(type="adr", id=_D002)
-
-        self.assertIsInstance(result, ParseFailureResult)
-        self.assertNotIsInstance(result, str)
-        self.assertEqual(result.id, _D002)
-        self.assertEqual(result.path, str(broken.resolve()))
-        self.assertTrue(result.error)
-
 
 class TestTxtNodeDiagram(_SeededRegistryTestCase):
-    """The TXT node end-to-end over the 16-entry palette (feat-229-txt Phase 150, REQ-010 /
+    """The TXT node end-to-end over the 15-entry palette (feat-229-txt Phase 150, REQ-010 /
     ACC-007): a registry whose REQ source carries a free-floating ``TXT <uuid>`` reference
     renders the TXT node (the ``<<TXT>>`` stereotype inside the ``component "TXT" { … }``
     group, the resolved title) with the 15th skinparam line (``LightGrey``, after ``SYSRS``,
@@ -575,14 +554,13 @@ class TestNoFeatRegistryTool(_SeededRegistryTestCase):
 
 
 class TestWideRegistryTool(_SeededRegistryTestCase):
-    """The scoped tool's byte-stable return over the multi-domain registry (the never-cached adr
-    leg included, the broken dec present as a scanned-but-skipped document)."""
+    """The scoped tool's byte-stable return over the multi-domain registry (the broken dec present
+    as a scanned-but-skipped document)."""
 
     SEEDS = (
         ("wide/req-w001.md", f"docs/req/{_W001}.md"),
         ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
         ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/adr-a001.md", f"adr/{_A001}.md"),
         ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
     )
 
@@ -675,7 +653,6 @@ class TestGetReferenceDiagramGoldenRoundTrip(_SeededRegistryTestCase):
         ("wide/req-w001.md", f"docs/req/{_W001}.md"),
         ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
         ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/adr-a001.md", f"adr/{_A001}.md"),
         ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
     )
 

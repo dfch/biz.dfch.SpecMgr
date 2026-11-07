@@ -56,9 +56,7 @@ class SimilarityHit(BaseModel):
     type:
         The hit's domain name: one of the whole-body domains
         (``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``,
-        ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``) -- ``adr``
-        is structurally excluded from the candidate set (issue #46, ADR
-        750842b2's **corpus and registry** sub-decision).
+        ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``).
     id:
         The hit document's specmgr-assigned id (the validated frontmatter
         value, the domain's own defaults applied for a blank key --

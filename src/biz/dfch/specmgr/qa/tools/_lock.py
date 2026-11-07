@@ -17,8 +17,7 @@
 
 """Per-document in-process lock guarding Question and Answer (QA) mutations.
 
-Ported from ``adr.tools._lock.adr_lock``/``req.tools._lock.req_lock``
-unchanged except for naming -- see that module's own docstring for the full
+Ported from ``req.tools._lock.req_lock`` unchanged except for naming -- see that module's own docstring for the full
 rationale (the read-modify-write race a mutating tool's ``load_by_id`` ->
 mutate -> write sequence is exposed to when an MCP host dispatches two
 overlapping calls against the same id). The generic ``update`` tool in
@@ -30,8 +29,8 @@ Not generalized into ``general.tools`` alongside ``_doc_paths.py`` -- the id
 -> path lookup plumbing was generalized because it was already shared,
 read-only, dependency-light code; a lock, by contrast, is a mutation-time
 correctness primitive that was never part of that design discussion. Kept as
-its own small, QA-specific module for now, mirroring ADR's/REQ's own
-non-generalized precedent; migrating all three onto one shared module
+its own small, QA-specific module for now, mirroring REQ's own
+non-generalized precedent; migrating them onto one shared module
 remains optional future cleanup.
 """
 

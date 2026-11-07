@@ -28,7 +28,7 @@ target -- the ``translate_artifact`` prompt's own rule); ``source_language`` (de
 with a heading table, since both sides are resolved the same way. Both are shape-guarded and table-probed before any
 filesystem access (``_language_guard.guard_language``); ``language == source_language`` is a ``ValueError``.
 
-**Error semantics.** ``feat``/``adr`` are rejected with the permanent "always English" ``ValueError`` (before the id is
+**Error semantics.** ``feat`` is rejected with the permanent "always English" ``ValueError`` (before the id is
 looked at); an unknown ``type``, a path-injection/wrong-format ``id`` or ``language``/``source_language``, a table-less
 language, ``language='en'`` and equal languages are ``ValueError``s before any filesystem access. A source or variant
 document that does not exist at all raises the domain's own not-found error (naming the missing language); one that
@@ -50,7 +50,7 @@ exactly as the parser does), independent of whether the document parses -- a doc
 be split yields ``(None, None, ...)`` for them (its parse error is already carried by the finding).
 
 
-### `check_translation_drift(type: 'WholeBodyOrAdrType', id: 'str', language: 'str', source_language: 'str' = 'en') -> 'TranslationDriftResult'`
+### `check_translation_drift(type: 'WholeBodyType', id: 'str', language: 'str', source_language: 'str' = 'en') -> 'TranslationDriftResult'`
 
 Check a translated variant for structural drift and staleness against its source.
 
@@ -58,7 +58,7 @@ Parameters
 ----------
 type:
     The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``feat``/``adr`` are permanently
+    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``feat`` is permanently
     English and rejected).
 id:
     The artifact's specmgr-assigned id (shared by both languages).
@@ -79,7 +79,7 @@ TranslationDriftResult
 Raises
 ------
 ValueError
-    ``type`` is ``feat``/``adr`` (always English) or unknown; ``id`` is a path-injection attempt or not in the
+    ``type`` is ``feat`` (always English) or unknown; ``id`` is a path-injection attempt or not in the
     domain's own format; ``language``/``source_language`` is not a two-letter lowercase code or has no packaged
     heading table; ``language`` is ``"en"``; or ``language == source_language`` (all raised before any
     filesystem access).

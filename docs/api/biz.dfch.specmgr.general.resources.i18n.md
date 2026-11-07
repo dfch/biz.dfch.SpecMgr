@@ -29,7 +29,7 @@ convention spans thirteen document domains -- it is not owned by any single
 domain's schema.
 
 The sibling resource **template** ``specmgr://i18n/headings/{language}``
-(``i18n_headings``, registered the way ``specmgr://adr/{id}`` is) serves a
+(``i18n_headings``) serves a
 language's heading-mapping table as JSON text (``application/json``), so the
 ``translate_artifact`` flow can obtain the table without any host file tool.
 It is a thin, read-only view over

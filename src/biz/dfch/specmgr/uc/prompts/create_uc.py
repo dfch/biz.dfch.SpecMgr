@@ -23,7 +23,7 @@ through drafting a brand-new Use Case (UC) document using the existing
 ``specmgr://uc/template``/``specmgr://uc/example``, ``get_uc_schema``,
 ``create_uc``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_uc`` builds the entire UC frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.

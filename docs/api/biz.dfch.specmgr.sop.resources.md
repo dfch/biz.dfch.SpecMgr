@@ -16,7 +16,7 @@ Like DEC/GOL, SOP has exactly two resources and no by-id single-document
 *resource* -- id-based reads go through the ``get_sop`` tool only
 (``sop.tools.get_sop``), and no ``specmgr://sop/list`` resource either --
 listing goes through the ``list_sop`` ``@mcp.tool()``
-(``sop.tools.list_sop``) from the start, per ADR
+(``sop.tools.list_sop``) from the start, per DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 The former schema resource (``sop_schema``, ``specmgr://sop/schema``) was

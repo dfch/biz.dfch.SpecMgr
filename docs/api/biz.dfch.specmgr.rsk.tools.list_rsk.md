@@ -6,7 +6,7 @@ Per feat-13 / DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, listing is a paged
 ``@mcp.tool()`` rather than a ``specmgr://rsk/list`` resource: MCP resources
 cannot take arbitrary parameters (only URI-template path segments), and
 ``max_results``/``offset`` paging needs exactly that -- the same resource->
-tool reasoning already applied to ``get_req`` (ADR
+tool reasoning already applied to ``get_req`` (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614) and ``list_tsk``. Mirrors
 ``tsk.tools.list_tsk`` line-for-line in mechanism, with one deliberate
 difference: each summary line is built by
@@ -112,7 +112,7 @@ glob:
     match count and ``offset``/``max_results`` paging keeps its existing
     meaning on that smaller set.
 language:
-    The language whose directory to list (feat-197-i18n Phase 125, ADR
+    The language whose directory to list (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
     scans the flat ``docs/rsk/`` directory -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.

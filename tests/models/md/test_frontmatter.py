@@ -26,7 +26,7 @@ from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERS
 
 
 class _UcFrontmatter(MarkdownFrontmatter):
-    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the ADR."""
+    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the decision."""
 
     type: Literal["uc"] = "uc"
 

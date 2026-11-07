@@ -23,7 +23,7 @@ through drafting a brand-new Requirement (REQ) document using the existing
 ``specmgr://req/template``/``specmgr://req/example``, ``get_req_schema``,
 ``create_req``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_req`` builds the entire REQ frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.

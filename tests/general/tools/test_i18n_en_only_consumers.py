@@ -39,7 +39,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, iter_doc_paths
 from biz.dfch.specmgr.general.tools.find_related import find_related
@@ -96,12 +95,10 @@ def seed_pair(spec: DomainSpec) -> tuple[str, Path, Path]:
 
 
 class _EnOnlyTestCase(SimilarityTestCase):
-    """Similarity fixture (docs + feat tmp dirs, reset provider/cache) plus an ADR tmp dir and cleared doc caches."""
+    """Similarity fixture (docs + feat tmp dirs, reset provider/cache) plus cleared doc caches."""
 
     def setUp(self) -> None:
         super().setUp()
-        self.adr_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.enterContext(mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: str(self.adr_dir)}))
         _reset_caches()
         self.addCleanup(_reset_caches)
 

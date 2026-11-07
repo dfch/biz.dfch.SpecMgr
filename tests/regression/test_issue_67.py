@@ -24,8 +24,8 @@ GitHub issue #67 (and its literal duplicate, #71) reported that every domain's p
 headings, used a suspiciously round `00:00:00.000` time-of-day -- round enough to invite an
 agent or human to copy it verbatim into a real document instead of substituting the actual
 current timestamp. Phase 1's Task 1.5 audit (see this feature's README, Design Notes) found the
-defect in all 24 affected files (ADR has none, since it has no `*/data/*_template.md`/
-`*/data/*_example.md` files), with severity ranging from full midnight (`00:00:00.000`, the
+defect in all 24 affected files (a domain with no `*/data/*_template.md`/
+`*/data/*_example.md` files has none), with severity ranging from full midnight (`00:00:00.000`, the
 literal ACC-001 pattern) down to a "round milliseconds only" borderline tier at a real,
 non-round hour/minute/second (e.g. `08:15:42.000Z`). Phase 2 fixed every tier in all 24 files
 (this feature's own Decisions Made log records that scope decision), so this test asserts on
@@ -38,7 +38,7 @@ midnight-UTC migration shape, e.g. `### 2026-08-15 00:00:00.000Z - Created`. fea
 (DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf) tightens every entry-heading alias to the full
 date+time form and migrates the 8 packaged date-only entry headings to exactly that midnight
 shape -- a date-only heading carries no time-of-day at all, so midnight UTC is the faithful,
-convention-fixed representation of it (the ADR's decision outcome prescribes
+convention-fixed representation of it (the decision's outcome prescribes
 `yyyy-MM-dd 00:00:00.000Z`). It is a documented migration shape, not a copy-paste
 placeholder, and no packaged data file keeps a date-only heading anymore (so the
 date-only-heading exclusion this note previously carried is moot).

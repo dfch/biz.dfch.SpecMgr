@@ -35,7 +35,7 @@ MarkdownStr engine. Two error channels:
   cross-field invariants -- deliberately left uncaught here, same as all other
   parsers in the project.
 
-Unlike ADR's ``models.adr.v1.parser.parse_adr``, there is no dedicated
+There is no dedicated
 structural-error exception type (no ``ReqParseError`` equivalent); both error
 channels are plain ``AssertionError`` / ``pydantic.ValidationError`` that
 propagate uncaught, exactly like ``uc.models.v2.parser.parse_uc``.
@@ -125,7 +125,7 @@ def parse_req(text: str, *, language: str | None = None) -> ReqDocument:
 def parse_req_body(content: str, *, language: str | None = None) -> Requirement:
     """Parse a frontmatter-free requirement body text into a :class:`Requirement`, in the given language.
 
-    The body-only half of :func:`parse_req` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_req` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Requirement.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

@@ -25,12 +25,12 @@ serializes the whole scan-then-write sequence instead.
 
 Both locks are plain in-process :class:`threading.Lock` instances (not
 :class:`asyncio.Lock` -- mutations run in a worker thread, not on the event
-loop, mirroring ``adr_lock``/``dec_lock``), and neither is backed by an
+loop, mirroring ``dec_lock``), and neither is backed by an
 on-disk lock file -- this codebase's established precedent for every other
 domain's mutation lock is in-process only, and ``feat`` follows that
 precedent rather than introducing a new on-disk-lock-file mechanism. This is
 process-local only: it does not protect against a second OS process (or a
-human editor, sanctioned and expected for `feat` per ADR
+human editor, sanctioned and expected for `feat` per DEC
 e369ee2e-3353-4f92-991c-6367d76d832e) writing the same file/folder
 concurrently.
 

@@ -43,27 +43,16 @@ repos:
           Regenerate docs/MCP.md (MCP tools/resources/prompts reference),
           then fail if that changed anything -- standard formatter-hook UX:
           review and `git add` the regenerated file, then commit again.
-          Triggers on any src/ change, not just adr/general/req/uc/resources/
-          server.py -- a tool's generated parameter schema also depends on
-          the shared models/ package (e.g. adding a field to AdrBody changes
-          create_adr's schema without touching adr/tools/*.py), so this
-          mirrors the equally broad specmgr-docs hook above rather than
-          risk a missed regeneration.
+          Triggers on any src/ change, not just a domain's resources/server.py
+          -- a tool's generated parameter schema also depends on the shared
+          models/ package (e.g. adding a field to a shared section model
+          changes every domain's schema without touching a domain's
+          tools), so this mirrors the equally broad specmgr-docs hook above
+          rather than risk a missed regeneration.
         entry: bash -c 'uv run --frozen specmgr mcp-docs && git diff --exit-code -- docs/MCP.md'
         language: system
         pass_filenames: false
         files: ^src/.*\.py$
-
-      - id: specmgr-adr-toc
-        name: specmgr adr-toc
-        description: >-
-          Regenerate docs/adr/README.md, then fail if that changed anything
-          -- standard formatter-hook UX: review and `git add` the regenerated
-          file, then commit again.
-        entry: bash -c 'uv run --frozen specmgr adr-toc && git diff --exit-code -- docs/adr/README.md'
-        language: system
-        pass_filenames: false
-        files: ^docs/adr/.*\.md$
 
       - id: specmgr-harness-bundle
         name: specmgr harness-bundle
@@ -76,7 +65,7 @@ repos:
           then commit again. Triggers only on a bundled .opencode/
           markdown file (the files: pattern); the Python 3.13-pinned CI
           parity check in .github/workflows/ci.yml (alongside the
-          `specmgr docs`/`adr-toc`/`mcp-docs` steps) is the backstop.
+          `specmgr docs`/`mcp-docs` steps) is the backstop.
         entry: bash -c 'uv run --frozen specmgr harness-bundle && git diff --exit-code -- src/biz/dfch/specmgr/general/data/general_harness_bundle.json'
         language: system
         pass_filenames: false
@@ -348,10 +337,10 @@ repos:
           longer than the OS argument-length limit is still split into
           sequential invocations, each with its own summary). The hook
           parses working-tree file contents, not the git index: a
-          partially staged file is checked as it exists on disk
-          (accepted and documented). Files the pattern matches but the
-          command skips or excludes (e.g. docs/appendix/*.md,
-          docs/adr/README.md) pass with a 0-linted summary.
+           partially staged file is checked as it exists on disk
+           (accepted and documented). Files the pattern matches but the
+           command skips or excludes (e.g. docs/appendix/*.md) pass with
+           a 0-linted summary.
         entry: uv run --frozen --all-extras specmgr lint --skip-unrecognized
         language: system
         pass_filenames: true

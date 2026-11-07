@@ -270,6 +270,21 @@ definitions_and_acronyms
 body
 title
 
+# feat-46 (Phase 140): Pydantic model fields (and the UC parser's
+# `own_content_end` property) read only via (de)serialization. Removing the
+# retired artifact type's code dropped the last `src/` attribute references
+# that had been marking these names "used" for vulture's name-based analysis --
+# they were previously masked by that domain's own same-named fields (e.g.
+# `consequences`/`confirmation`/`more_information` on its body model,
+# `consulted`/`informed` on its frontmatter/RASCI composite). Genuine fields,
+# not dead code.
+consequences
+confirmation
+consulted
+informed
+more_information
+own_content_end
+
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
 # (Constructor keyword arguments don't count as name references for vulture's

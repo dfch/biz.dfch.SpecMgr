@@ -26,7 +26,7 @@ the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
-Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, DEC
 19ff316b-cd11-41a7-a616-ffd84917da51, revising feature feat-69-
 update-context's "frontmatter-only" precedent for ``update`` alone): every
 successful call returns the shared
@@ -52,16 +52,12 @@ flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
 It bumps ``updated`` to the same shared date+time timestamp (via
 ``general.tools._timestamps.now_timestamp()``) as every other domain --
-an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
-reversed for cross-domain consistency; see that feature's Decisions
-Made.
+ an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+ reversed for cross-domain consistency; see that feature's Decisions
+ Made.
 
-ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
-contract (``update_frontmatter``/``update_section``/``option_*``) has no
-whole-body replace by design.
-
-**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+ **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead of
 raising, with nothing written in either case. (1) On a target ``id`` whose
@@ -97,10 +93,9 @@ exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
 ``general.tools.validate``). The mode-dependent precedence when both failures hold at once is
 intentional (whole-body mode validates before loading, so
 ``ValidateResult`` wins; range mode loads first, so
-``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
-(invalid ``id`` shape, ``limit`` given without ``offset``, misused range
-coordinates) still raises exactly as before, and a plain ``KeyError``
-still marks ``type="adr"`` (inherited from the dispatch-table lookup).
+ ``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
+ (invalid ``id`` shape, ``limit`` given without ``offset``, misused range
+ coordinates) still raises exactly as before.
 
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
 validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
@@ -156,7 +151,7 @@ Assemble the public ``UpdateResult`` from one adapter's internal :class:`_Update
 
 The shared dispatcher's single point where the before/after ``snippet``
 is computed -- once per successful call, never inside a per-domain
-adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, DEC
 19ff316b-cd11-41a7-a616-ffd84917da51). ``snippet`` is ``None`` in exactly
 two cases: whole-body mode (no ``offset``) and the whole-body-equivalent
 range (``offset=1`` + omitted ``limit`` -- the range :func:`_splice.
@@ -327,7 +322,7 @@ Replace the body of the set document identified by ``id_`` (whole-body or line-r
 
 Mirrors :func:`_update_sysrs`'s shape (same ``set_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
-``SetNotFoundError``; ``set`` is dispatch-only from day one per ADR
+``SetNotFoundError``; ``set`` is dispatch-only from day one per DEC
 36905d5b, so this adapter was written directly in this shape), plus the
 REQ-002 range branch (see :func:`_update_req`).
 
@@ -410,7 +405,7 @@ Replace the body of the free-form text document identified by ``id_`` (whole-bod
 
 Mirrors :func:`_update_sysrs`'s shape (same ``txt_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
-``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
+``TxtNotFoundError``; ``txt`` is dispatch-only from day one per DEC
 36905d5b, so this adapter was written directly in this shape), plus the
 REQ-002 range branch (see :func:`_update_req`).
 
@@ -480,7 +475,7 @@ structural (``AssertionError``) or field/cross-field
 (``pydantic.ValidationError``) failure returns the non-raising
 ``ValidateResult(valid=False, ...)`` (the single ``errors[].message``
 capped at 300 chars exactly as the generic ``validate`` tool caps it,
-feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, DEC
 b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the DEC 519d1206 chain)
 with nothing written.
 
@@ -543,7 +538,7 @@ limit:
     (``0`` = pure insert); must be given together with ``offset``
     (``limit`` without ``offset`` is a ``ValueError``).
 language:
-    The language variant to act on (feat-197-i18n Phase 120, ADR
+    The language variant to act on (feat-197-i18n Phase 120, DEC
     38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
     it) acts on the flat default-language document -- today's exact
     behavior; any other ISO 639-1-shaped lowercase two-letter code
@@ -593,7 +588,7 @@ UpdateResult | ParseFailureResult | ValidateResult
     (``error``/``path``/``id``) instead of the domain's not-found
     error -- ``error`` is byte-identical to the domain's ``list_<d>``
     failed row's ``error`` for the same file (identical field path and
-    cause, including the trailing pydantic documentation line; ADR
+    cause, including the trailing pydantic documentation line; DEC
     9080b37c-82b3-4f63-81f1-79641d0bf14c). On a content-validation
     failure of the submitted new content (or, in range mode, of the
     spliced result), a non-raising
@@ -617,16 +612,8 @@ ValueError
     ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
     ``offset + limit - 1 > N`` (raised after the on-disk body is read;
     the message names the offending value(s) and the allowed range).
-    Nothing is written in any of these cases.
-KeyError
-    A plain ``KeyError`` still marks ``type="adr"`` (inherited from
-    the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
-    UUID-shaped domain set, so ``type="adr"`` with a well-formed
-    UUID ``id`` passes ``validate_id`` and reaches the lookup, which
-    has no ``adr`` entry. Nothing is written. Unreachable through the
-    MCP server, whose ``type`` enum carries the 14 whole-body domains
-    only; a direct-Python-caller outcome.
-ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+     Nothing is written in any of these cases.
+ ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
 PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
 FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
     The target id is truly absent (no file on disk matches it at all)

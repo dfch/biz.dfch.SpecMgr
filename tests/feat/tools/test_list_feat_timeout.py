@@ -28,7 +28,7 @@ ACC-009 (REQ-007's four-flag-combination lifespan gating invariant) lives in
 pre-existing ``TestStartSimilarityWarmup``/``TestServerLifespan`` classes it
 extends. ACC-006 (the live one-shot ``uvx`` measurement) is a manual
 protocol recorded in the feature's own ``### Updates``, not a committed
-test. ACC-007 is the gate itself; ACC-008 (the ADR) is already done.
+test. ACC-007 is the gate itself; ACC-008 (the decision) is already done.
 """
 
 from __future__ import annotations

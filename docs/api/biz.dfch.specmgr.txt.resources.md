@@ -20,6 +20,6 @@ no ``specmgr://txt/list`` resource either -- listing goes through the
 DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 TXT ships the generated JSON Schema as the ``get_txt_schema`` ``@mcp.tool()``
-(``txt.tools.get_txt_schema``) from day one, per ADR
+(``txt.tools.get_txt_schema``) from day one, per DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3 (feat-189 Phase 105) -- there is no
 ``specmgr://txt/schema`` resource in its history.

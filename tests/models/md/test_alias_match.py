@@ -70,7 +70,7 @@ class TestMatchAlias(unittest.TestCase):
 
     def test_class_with_no_alias_defaults_to_space_separated_class_name_match(self) -> None:
         """No @alias declared defaults to `AliasType.SPACE_SEPARATED`'s derivation
-        of `cls.__name__`, not a literal match against the raw class name (ADR
+        of `cls.__name__`, not a literal match against the raw class name (DEC
         832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0)."""
         self.assertTrue(match_alias(NoAliasMultiWord, "No Alias Multi Word"))
 

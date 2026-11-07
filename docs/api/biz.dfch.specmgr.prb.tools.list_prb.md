@@ -2,11 +2,11 @@
 
 ``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13: "Expose ``list_<domain>`` as a paged
 MCP tool, not a resource") -- unlike REQ/TSK/QA (which launched as a
 ``specmgr://<domain>/list`` resource and were converted later in
-feat-13-list-paging), PRB is a new domain built after that ADR was accepted,
+feat-13-list-paging), PRB is a new domain built after that DEC was accepted,
 so it must not repeat that resource-then-convert history. See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
 shared by every ``list_<domain>`` tool.
@@ -98,7 +98,7 @@ glob:
     match count and ``offset``/``max_results`` paging keeps its existing
     meaning on that smaller set.
 language:
-    The language whose directory to list (feat-197-i18n Phase 125, ADR
+    The language whose directory to list (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
     scans the flat ``docs/prb/`` directory -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.

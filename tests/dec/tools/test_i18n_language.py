@@ -25,7 +25,7 @@ property at the domain level (ACC-014 unit pin), the translated-headings-
 resolve-to-canonical-keys behavior (ACC-004), the closed-vocabulary tokens
 staying canonical (ACC-012 unit pin), the raw-read byte-identity
 (ACC-005/ACC-007 read half), and the ``ParseFailureResult``/failed-row
-byte-identity for a broken DE variant (the feat-150/162 contract, ADR
+byte-identity for a broken DE variant (the feat-150/162 contract, DEC
 9080b37c, extended to language variants).
 """
 
@@ -133,7 +133,7 @@ def _seed_en_and_de(docs_root: Path) -> tuple[str, Path, Path]:
     """Create the EN document via ``create_dec`` and write its DE variant under the same basename.
 
     Returns the shared id, the EN file path, and the DE file path (the DE frontmatter is the EN
-    frontmatter verbatim -- the language is encoded by directory location only, ADR item 1).
+    frontmatter verbatim -- the language is encoded by directory location only, DEC 38efdb66 item 1).
     """
     created = create_dec(_EN_BODY)
     assert created.id is not None  # create_dec always assigns the frontmatter id
@@ -356,7 +356,7 @@ class TestListDecLanguage(unittest.TestCase):
 
     def test_row_shape_is_unchanged_no_language_column(self):
         """The PagedResult row shape is unchanged: a DE listing row carries exactly the same fields
-        as an EN row (no language column, ADR item 7)."""
+        as an EN row (no language column, DEC 38efdb66 item 7)."""
         en_row = list_dec().results[0].model_dump()
         de_row = list_dec(language="de").results[0].model_dump()
         self.assertEqual(set(en_row), set(de_row))
@@ -556,7 +556,7 @@ class TestDecCacheLanguage(unittest.TestCase):
     def test_en_and_de_of_one_id_are_independent_cache_entries(self):
         """Reading the EN document, then the DE variant, then EN again must never cross-contaminate:
         the two languages of one id live at distinct paths and get distinct, correct results
-        (DocCache is path-keyed -- ADR item 9's confirmed design fact, pinned behaviorally)."""
+        (DocCache is path-keyed -- DEC 38efdb66 item 9's confirmed design fact, pinned behaviorally)."""
         en_first = get_dec(self.doc_id)
         de = get_dec(self.doc_id, language="de")
         en_second = get_dec(self.doc_id)

@@ -19,8 +19,8 @@
 
 """``@mcp.tool()`` wrapper: get_req (feat-7-various-improvements Task 0.9).
 
-Mirrors ``adr.tools.get_adr`` -- a thin file-I/O/id-lookup adapter. The
-``.md`` file itself remains the sole source of truth (ADR
+A thin file-I/O/id-lookup adapter. The
+``.md`` file itself remains the sole source of truth (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` (see
 ``._io``) now routes through a content-hash-validated, per-domain in-memory
 cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
@@ -33,8 +33,7 @@ This tool replaces the earlier ``specmgr://req/{id}`` resource
 was removed because LLM/agent clients calling this MCP server failed to
 reliably invoke it. See DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose
 id-based REQ document reads as a tool (get_req), not a resource") for the
-full rationale, including why the equivalent ``specmgr://adr/{id}`` resource
-was deliberately left untouched.
+full rationale.
 
 ``raw=True`` (feat-22-consolidate-mutation-tools, Phase 2) returns the
 frontmatter-stripped body text verbatim instead of the parsed document --
@@ -165,7 +164,7 @@ def get_req(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         Combining it with ``raw=False`` raises ``ValueError`` (see
         ``Raises``).
     language:
-        The language variant to read (feat-197-i18n Phase 125, ADR
+        The language variant to read (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
         reads the flat ``docs/req/`` document -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.

@@ -22,7 +22,7 @@ GENERIC fence-aware ``normalize_heading_lines`` pre-pass applies: the two fixed-
 schema headings (``## Description``/``## Items``) map through the language's table,
 and free nested headings inside ``## Description`` are looked up like any other
 levels 2-6 heading (a table hit is rewritten to canonical, a miss stays verbatim --
-the ADR item 5 rule). The ``## Items`` bullets are never touched (their schema-
+the DEC 38efdb66 item 5 rule). The ``## Items`` bullets are never touched (their schema-
 constant tokens stay canonical in the file, REQ-010).
 """
 

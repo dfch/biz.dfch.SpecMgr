@@ -21,16 +21,9 @@
 
 The generic, cross-domain classification-change tool for the
 whole-body document types
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
-Unlike ``set_status`` (``general/tools/set_status.py``), which also
-dispatches on ``adr``, ``adr`` is deliberately excluded here: ADR's
-separate ``AdrFrontmatter`` model
-(``models/adr/``) is out of scope for the ``classification`` field entirely
-(``.specmgr/feat/feat-56-classification-attribute-in-frontmatter/README.md``
-Scope section) -- there is no ADR adapter, no ``superseded_by``-style
-parameter, and no entry for it in the dispatch table.
+ (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
 
-It dispatches on the explicit ``type`` parameter to a private per-domain
+ It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_classification_<d>``), each shaped exactly like
 ``set_status.py``'s corresponding ``_set_status_<d>`` adapter (same domain
 lock, same ``load_by_id``, same ``_path_safety.assert_within`` guard, same
@@ -602,7 +595,7 @@ def _set_classification_sop(
 
     Verbatim-shape port of :func:`_set_classification_dec` (same
     ``sop_lock``, ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``;
-    ``sop`` is the first domain built dispatch-only from day one per ADR
+    ``sop`` is the first domain built dispatch-only from day one per DEC
     36905d5b, so this adapter was written directly in this shape) -- see
     :func:`_set_classification_req` for the full semantics.
 
@@ -862,7 +855,7 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
     title="Set document classification",
     description=(
         "Replace the free-text `classification` frontmatter field of an existing document across "
-        f"the whole-body domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported), "
+        f"the whole-body domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}), "
         "also bumping `updated` and leaving the body and every other frontmatter field untouched. "
         "`classification` is fully free-text -- no closed "
         "vocabulary; a blank or whitespace-only value clears it back to `None`/absent. No `create_*` "
@@ -871,13 +864,11 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
         "(`error`/`path`/`id`) instead of raising the domain's not-found error (a truly-absent id "
         "still raises) -- its `error` text is byte-identical to the domain's `list_<d>` failed "
         "row's `error` for the same file (identical field path and cause, including the trailing "
-        "pydantic documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c; ADR "
-        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
+        "pydantic documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c; DEC "
+        "b8c9bfea-6dcf-4158-bfc5-4e17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain). An invalid `id` "
         "(path-injection attempt or wrong format for `type`) or an unknown `type` is a `ValueError` "
-        'raised before any file access; `type="adr"` passes the id validation (a well-formed '
-        "UUID id) and raises the plain `KeyError` inherited from the dispatch-table lookup "
-        "instead. Returns the updated frontmatter only (no body) on success; use the "
+        "raised before any file access. Returns the updated frontmatter only (no body) on success; use the "
         "corresponding `get_<d>` tool to fetch the full document afterward. "
         "The optional `language` parameter (default 'en', feat-197-i18n) selects the language variant to "
         "act on: omitted/'en' = the flat default-language document, exactly the default behavior; a "
@@ -899,12 +890,10 @@ def set_classification(
 
     Cross-domain generic for the whole-body document types
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
-    dispatches on ``type`` to the domain's own adapter (same lock, same id
-    resolution, same body handling, same domain not-found error). ``adr``
-    is deliberately excluded (its separate ``AdrFrontmatter`` model is out
-    of scope for this feature).
+     dispatches on ``type`` to the domain's own adapter (same lock, same id
+     resolution, same body handling, same domain not-found error).
 
-    The existing file's frontmatter is carried over with every field
+     The existing file's frontmatter is carried over with every field
     preserved except ``classification`` (replaced) and ``updated`` (bumped
     to the current date+time timestamp, via
     ``general.tools._timestamps.now_timestamp()``); the body is never
@@ -924,10 +913,7 @@ def set_classification(
         format -- canonical lowercase-hex UUID for every domain other than
         ``feat``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem access, so a
     path-injection attempt, a wrong-format id, or an unknown ``type``
-    is a ``ValueError`` raised before dispatch -- but ``type="adr"`` passes
-    the validation (``adr`` is in ``_path_safety``'s UUID-shaped domain
-    set) and raises the plain ``KeyError`` inherited from the
-    dispatch-table lookup instead. Each adapter additionally
+    is a ``ValueError`` raised before dispatch. Each adapter additionally
     confines the resolved path to the domain's own base directory with
     ``_path_safety.assert_within`` inside the lock -- defense-in-depth
     against any future gap in the id validation.
@@ -944,7 +930,7 @@ def set_classification(
         The new classification value. Fully free-text; a blank or
         whitespace-only value clears the field back to ``None``/absent.
     language:
-        The language variant to act on (feat-197-i18n Phase 120, ADR
+        The language variant to act on (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
         it) acts on the flat default-language document -- today's exact
         behavior; any other ISO 639-1-shaped lowercase two-letter code
@@ -970,7 +956,7 @@ def set_classification(
         (``error``/``path``/``id``) instead of the domain's not-found error
         -- ``error`` is byte-identical to the domain's ``list_<d>`` failed
         row's ``error`` for the same file (identical field path and cause,
-        including the trailing pydantic documentation line; ADR
+        including the trailing pydantic documentation line; DEC
         9080b37c-82b3-4f63-81f1-79641d0bf14c) (feat-170-update-edit-parse-
         failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f
         -- case 4 of the DEC 519d1206-4d2a-4500-9046-6db635209996
@@ -986,13 +972,7 @@ def set_classification(
         (not an ISO 639-1-shaped lowercase two-letter code), a non-default
         ``language`` with ``type`` ``feat`` (always English), or a non-default
         ``language`` without a packaged heading-mapping table.
-    KeyError
-        ``type="adr"`` with a well-formed UUID ``id`` (``adr`` is in
-        ``_path_safety``'s UUID-shaped domain set, so ``validate_id``
-        passes) -- a plain ``KeyError`` inherited from the
-        dispatch-table lookup, which has no ``adr`` entry (nothing is
-        written).
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
         The target id is truly absent (no file on disk matches it at all) --
@@ -1000,10 +980,9 @@ def set_classification(
         tools. An existing-but-broken document returns the non-raising
         ``ParseFailureResult`` instead (see Returns).
     """
-    # Mirrors set_status's/update's own REQ-009 guard: validate before any filesystem access
-    # (injection prevention); an unknown `type` also raises ValueError here, before dispatch
-    # (`type="adr"` passes -- its id is a UUID -- and raises the plain `KeyError` inherited
-    # from the dispatch-table lookup below).
+    # Mirrors set_status's/update's own REQ-009 guard: validate before any
+    # filesystem access (injection prevention); an unknown `type` also
+    # raises ValueError here, before dispatch.
     validate_id(type, id)
     # feat-197-i18n Phase 120: shape + support + table guard, still before any filesystem access.
     guard_language(type, language)

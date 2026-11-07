@@ -28,7 +28,7 @@ dialect) as raw text, reading the same packaged, build-guaranteed data
 file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://gol/schema`` resource). ``get_gol`` (Task 3.8)
 reads, parses, and returns a full goal document by id -- the sole id-based
-read path for GOL (there is no ``specmgr://gol/{id}`` resource, ADR
+read path for GOL (there is no ``specmgr://gol/{id}`` resource, DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_gol`` (Task 3.9) returns one
 page of id/title/status/ref summaries of every goal, shipped as a paged tool
 from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_gol``

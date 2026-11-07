@@ -164,7 +164,7 @@ Render the before/after snippet of the range-mode splice of ``pre_body`` at
 ``offset``/``limit`` into ``post_body``.
 
 The single snippet definition behind the generic ``update`` tool's
-``UpdateResult.snippet`` (feat-153-off-by-n Phase 2, REQ-002, ADR
+``UpdateResult.snippet`` (feat-153-off-by-n Phase 2, REQ-002, DEC
 19ff316b-cd11-41a7-a616-ffd84917da51's Decision Outcome items 2/3/4):
 given the pre-splice body, the post-splice body (the result of splicing
 ``pre_body`` at these same coordinates via :func:`splice_body`), and the
@@ -173,7 +173,7 @@ window -- the dropped lines, the inserted lines, and up to
 :data:`_CONTEXT_LINES` unchanged context lines immediately above and below
 the touched range in the *post-splice* body, clamped at the body's
 start/end (clamped, never errored, mirroring :func:`window_body`) --
-rendered as the ADR's exact snippet line format:
+rendered in the exact snippet line format:
 
 - Each snippet line is ``<marker> <n>: <line text>``: ``<marker>`` is
   exactly one character -- ``-`` for a dropped line, ``+`` for an
@@ -291,7 +291,7 @@ The single windowing definition behind every
 ``get_<d>(raw=True, offset=..., limit=...)`` read (REQ-002): a
 read-style, *clamping* (never erroring) window over a
 frontmatter-stripped body text, in the ``list_<d>`` "clamped, not
-errored" paging convention (ADR
+errored" paging convention (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13) -- reads are non-destructive, so
 out-of-range coordinates degrade to the nearest valid window instead of
 raising. Let ``N = len(text.splitlines())`` be the number of lines of

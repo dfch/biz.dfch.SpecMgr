@@ -32,7 +32,7 @@ describe QA's own schema and lifecycle instead of REQ's. Like ``get_req``,
 step 1 points at the ``get_qa`` tool, not a ``specmgr://qa/{id}`` resource
 -- there is no such resource; see DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
+There is no ``update_frontmatter``/
 ``option_*`` equivalent here: QA's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="qa"``) plus a single, dedicated status-change path (the generic

@@ -125,7 +125,7 @@ def parse_sop(text: str, *, language: str | None = None) -> SopDocument:
 def parse_sop_body(content: str, *, language: str | None = None) -> Sop:
     """Parse a frontmatter-free Standard Operating Procedure body text into a :class:`Sop`, in the given language.
 
-    The body-only half of :func:`parse_sop` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_sop` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Sop.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

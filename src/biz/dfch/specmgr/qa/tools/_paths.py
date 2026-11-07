@@ -18,17 +18,17 @@
 """Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 
 A thin, QA-specific layer over the generic ``general.tools._doc_paths``
-module, rather than a second hand-written copy of ``adr.tools._paths`` --
-the base-directory/id-lookup plumbing is identical in shape, only the parsed
+module -- the base-directory/id-lookup plumbing is identical in shape,
+only the parsed
 document type and its id accessor differ. 1:1 port of ``req.tools._paths``.
 
-Mirrors ``adr.tools._paths``'s/``req.tools._paths``'s read-only/write split:
+Mirrors ``req.tools._paths``'s read-only/write split:
 :func:`qa_base_dir` never creates the directory (a read-only tool shouldn't
 have that side effect), only :func:`ensure_qa_base_dir` does, for the
 ``create_qa`` tool.
 
 **Cache-backed scan (feat-107-doc-cache Phase 4).** :func:`find_qa_path`
-now scans through the content-hash-validated per-domain cache (ADR
+now scans through the content-hash-validated per-domain cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
 ``read_qa`` (not ``parse_qa``) as ``find_doc_path_by_id``'s ``read_fn``,
 so a file whose on-disk content hash is unchanged since its last read is
@@ -77,8 +77,7 @@ class QaNotFoundError(LookupError):
     """No Question and Answer (QA) file found matching the given id.
 
     A separate class from ``general.tools._doc_paths.DocNotFoundError``, not
-    a subclass of it -- the same relationship ``adr.tools._paths.AdrNotFoundError``/
-    ``req.tools._paths.ReqNotFoundError`` have to nothing generic, so callers
+    a subclass of it -- the same relationship ``req.tools._paths.ReqNotFoundError`` has to nothing generic, so callers
     can keep catching a QA-specific exception type without depending on the
     generic module's own exception.
     """
@@ -195,9 +194,9 @@ def find_qa_path(base_dir: Path, id_: str) -> Path:
     that fails to parse
     (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
     one broken file must not prevent lookup of a different, valid id.
-    Mirrors ``adr.tools._paths.find_adr_path``'s/``req.tools._paths.find_req_path``'s
-    own skip-on-parse-failure rule. Before scanning, the cache is reconciled
-    against the freshly materialized live path listing
+     Mirrors ``req.tools._paths.find_req_path``'s own skip-on-parse-failure
+     rule. Before scanning, the cache is reconciled against the freshly
+     materialized live path listing
     (:func:`~._cache.reconcile_qa_cache`, against the domain-wide live listing of every language
     -- a scan of one language must not evict the other languages' entries, feat-197-i18n
     Phase 125), dropping any cached entry for a

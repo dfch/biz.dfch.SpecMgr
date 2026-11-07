@@ -6,19 +6,17 @@ Fills the `from_text`/parser entry point gap `document.py`'s own docstring
 flags: `UcDocument` deliberately holds no such method itself, and the
 generic `models/md` engine only ever parses a *body* (`UseCase.from_text`),
 never the combination of frontmatter + body a full on-disk file is. This
-module is the thin free-function glue between the two, mirroring
-`models.adr.v1.parser.parse_adr`'s own split (a free function, not a
+module is the thin free-function glue between the two (a free function, not a
 classmethod on the document model) -- the "mirror whichever convention
 feels closer" choice the feature README's Task 1.8 entry left open.
 
-Unlike `parse_adr`, there is no dedicated structural-error exception type
-here (no `UcParseError` equivalent on the v2 model tree): the generic
+There is no dedicated structural-error exception type here (no
+`UcParseError` equivalent on the v2 model tree): the generic
 `models/md` engine reports a malformed heading/list structure as a plain
 `AssertionError` (see `MarkdownStr.from_text`/`process_field`), and a
 structurally-sound document whose field values or cross-field invariants
 are invalid raises `pydantic.ValidationError` the normal Pydantic way --
-both are deliberately left to propagate uncaught, exactly like `parse_adr`
-leaves its own two error channels uncaught.
+both are deliberately left to propagate uncaught.
 
 **Heading-mapping table pre-pass (feat-197-i18n Phase 125, DEC 38efdb66
 item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
@@ -120,7 +118,7 @@ ValueError
 
 Parse a frontmatter-free use case body text into a :class:`UseCase`, in the given language.
 
-The body-only half of :func:`parse_uc` (feat-197-i18n Phase 125, ADR
+The body-only half of :func:`parse_uc` (feat-197-i18n Phase 125, DEC
 38efdb66 item 5): ``UseCase.from_text(format_text(content))`` with the
 optional per-language heading-normalization pre-pass between the two.
 It is the single body-validation entry point the write side shares --

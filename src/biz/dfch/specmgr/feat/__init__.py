@@ -33,7 +33,7 @@ domain's shared ``general/tools/_doc_paths.py``.
 ``models/v1/`` (Phase 1), ``tools/`` (Phase 2), ``data/`` and ``resources``
 (Phase 3), and ``prompts`` (Phase 4) are all fully implemented; only Phase 5
 (cross-cutting registration) of the linked feature plan remains. ``feat``
-already follows the ``sop``-style generic-dispatch MCP surface (ADR
+already follows the ``sop``-style generic-dispatch MCP surface (DEC
 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``, ``parse_feat``,
 ``list_feat``, ``get_feat``, ``get_feat_example``, ``get_feat_template``,
 ``get_feat_schema``, plus ``type="feat"`` entries in

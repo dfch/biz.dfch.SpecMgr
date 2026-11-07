@@ -19,13 +19,13 @@ sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid director
 ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in no language at
 all raises the domain's own not-found error. Strictly read-only: it writes, creates, and invalidates nothing.
 
-**Error semantics.** ``feat`` and ``adr`` are permanently English (REQ-002/REQ-009): they are rejected with the
+**Error semantics.** ``feat`` is permanently English (REQ-002): it is rejected with the
 permanent "always English" ``ValueError``, before the id is looked at; an unknown ``type``, a path-injection attempt, or
 a wrong-format ``id`` is a ``ValueError`` before any filesystem access (``_path_safety.validate_id``).
 
 ## Functions
 
-### `list_languages(type: 'WholeBodyOrAdrType', id: 'str') -> 'LanguageListResult'`
+### `list_languages(type: 'WholeBodyType', id: 'str') -> 'LanguageListResult'`
 
 List the languages the artifact ``id`` of ``type`` currently exists in.
 
@@ -33,8 +33,8 @@ Parameters
 ----------
 type:
     The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set``. ``feat`` and ``adr`` are accepted
-    by the schema only so that they get an explanation: they are permanently English and are rejected.
+    ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set``. ``feat`` is accepted
+    by the schema only so that it gets an explanation: it is permanently English and is rejected.
 id:
     The artifact's specmgr-assigned id (shared by every language variant).
 
@@ -48,7 +48,7 @@ LanguageListResult
 Raises
 ------
 ValueError
-    ``type`` is ``feat``/``adr`` (always English) or unknown, or ``id`` is a path-injection attempt or not in
+    ``type`` is ``feat`` (always English) or unknown, or ``id`` is a path-injection attempt or not in
     the domain's own format (raised before any filesystem access).
 ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError / PrbNotFoundError /
 GolNotFoundError / RskNotFoundError / DecNotFoundError / SopNotFoundError / VcrNotFoundError /

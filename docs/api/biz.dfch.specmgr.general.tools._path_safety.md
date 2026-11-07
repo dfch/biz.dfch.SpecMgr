@@ -29,9 +29,8 @@ usable languages grows by adding one JSON file, never by a guard change.
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
-now also called by every ``get_<d>`` tool (including ``get_adr``,
-``get_sysrs`` since feat-32-sysrs Phase 3, and ``get_txt`` since
-feat-229-txt Phase 130)
+ now also called by every ``get_<d>`` tool (``get_sysrs`` since
+ feat-32-sysrs Phase 3, and ``get_txt`` since feat-229-txt Phase 130)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
 take only plain ``str``/``Path`` inputs, return ``None`` (raise on
@@ -48,15 +47,11 @@ The UUID domains as a ``frozenset`` (O(1) membership in :func:`validate_id`).
 
 The UUID domains whose ``id`` is a server-generated v4 UUID: derived
 from the shared :data:`_domains.UUID_DOMAINS` source (feat-125-domain-
-lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``,
-plus ``adr`` (feat-38-39-41-43-44 Phase 4, REQ-009; ``sysrs`` added
-feat-32-sysrs Phase 3; ``txt`` added feat-229-txt Phase 130) -- ADR ids
-are canonical lowercase-hex UUIDs of
-the exact same shape (see ``adr.tools._paths.find_adr_path``/any
-``docs/adr/*.md`` frontmatter ``id`` value). The ``frozenset`` keeps
-O(1) membership. ``delete``'s own ``Literal`` type still excludes
-``"adr"`` (its behavior is unchanged, D-Phase-4) -- that addition is
-purely for use by ``get_<d>``/``update``/``set_status``.
+lists Phase 2, REQ-004) -- every whole-body domain other than ``feat``
+(``sysrs`` added feat-32-sysrs Phase 3; ``txt`` added feat-229-txt
+Phase 130) -- all canonical lowercase-hex UUIDs of the exact same shape
+(see any ``docs/<type>/*.md`` frontmatter ``id`` value). The
+``frozenset`` keeps O(1) membership.
 
 The ``_domains`` import is deferred into this helper (called once per
 :func:`validate_id` call, not at module import) because ``_domains``
@@ -194,13 +189,12 @@ Convenience dispatcher: :func:`assert_no_traversal` plus the type's format check
 ``type_ == "feat"`` -> :func:`assert_feat_id`; any other ``type_`` ->
 ``ValueError`` (unknown type). This is the single entry point the
 generic ``delete``, ``update``, ``set_status``, and every ``get_<d>``
-tool (including ``get_adr``) call before any filesystem access.
+tool call before any filesystem access.
 
 Parameters
 ----------
 type_:
-    The document type name: one of the whole-body domains, or
-    ``adr``.
+    The document type name: one of the whole-body domains.
 id_:
     The id to check.
 

@@ -17,9 +17,9 @@
 
 """``@mcp.tool()`` wrapper: list_txt (feat-229-txt Phase 110).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13: "Expose ``list_<domain>`` as a paged
-MCP tool, not a resource") -- like VCR (a domain built after that ADR was
+MCP tool, not a resource") -- like VCR (a domain built after that DEC was
 accepted), TXT must not repeat the resource-then-convert history of
 REQ/UC/TSK/QA/PRB (launched as a ``specmgr://<domain>/list`` resource,
 converted later in feat-13-list-paging). See
@@ -164,7 +164,7 @@ def list_txt(
          and ``offset``/``max_results`` paging keeps its existing meaning on
          that smaller set.
     language:
-        The language whose directory to list (feat-197-i18n Phase 125, ADR
+        The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
         scans the flat ``docs/txt/`` directory -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.

@@ -74,8 +74,8 @@ content}`` entry in ``files``; the agent's sole discoverable entry point
 for installing the published harness files into a fresh harness setup (no
 install CLI, no MCP prompt -- OpenCode exposes no prompt surface to the
 agent). Domain-specific
-resources (e.g. ``adr_list``/``adr_get``)
-live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
+resources live under their own domain package instead (e.g.
+``biz.dfch.specmgr.req.resources``).
 Import this package to load all cross-cutting resources at once::
 
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)

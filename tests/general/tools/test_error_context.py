@@ -22,7 +22,7 @@ ACC-003: asserts that the ``message`` surfaced by ``create_<d>``'s non-raising
 non-raising chain), plus the ``message`` returned by the generic ``validate``
 tool's non-raising result (feat-81-83-validation
 Phase 2, retiring the former ``validate_<d>`` tools) and the generic ``update`` adapter's
-non-raising ``ValidateResult`` (feat-170 Phase 120, Bug 2, ADR
+non-raising ``ValidateResult`` (feat-170 Phase 120, Bug 2, DEC
 b8c9bfea-6dcf-4158-bfc5-4ec17abb842f), prepend domain + tool context (built by
 ``models.md._errors.wrap_tool_errors``, Task 3.1) on top of the engine's own message
 (feat-27-validation Phases 1/2). Covers ``tsk`` and

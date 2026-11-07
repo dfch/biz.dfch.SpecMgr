@@ -24,8 +24,8 @@ resources to get_<d>_schema tools"):
 - none of the former ``specmgr://<domain>/schema`` URIs is registered any
   more (neither as a static resource nor as a URI template);
 - the surface totals moved from 103 tools / 49 resources to 115 tools /
-  37 resources (36 static + the ``specmgr://adr/{id}`` URI template), as
-  measured against the worktree surface at the ADR's writing time;
+  37 resources (36 static + 1 URI template), as measured against the
+  worktree surface at that decision's writing time;
 - feat-229-txt Phase 130 (generic-tool registration) grew the live
   surface by the 7 ``txt`` tools (115 + 7 = 122) and the 2 ``txt``
   resources (37 + 2 = 39) **at the ``general.tools._domains`` import
@@ -70,8 +70,22 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         for domain in WHOLE_BODY_DOMAINS:
             self.assertNotIn(f"specmgr://{domain}/schema", uris)
 
-    def test_tool_total_is_131(self) -> None:
-        """103 tools (the worktree surface at the ADR's writing time) + 12 = 115, + 7 txt tools
+    def test_no_registered_name_mentions_the_retired_artifact_type(self) -> None:
+        """feat-46 Phase 140 (ACC-011): the retired artifact type is fully gone from the
+        registered surface -- no tool, resource, URI template, or prompt name mentions it."""
+        names = {tool.name for tool in self._tools}
+        names.update(resource.uri for resource in self._resources)
+        names.update(template.uri_template for template in self._templates)
+        names.update(prompt.name for prompt in asyncio.run(mcp.list_prompts()))
+
+        # the retired type's name, built at runtime so this regression pin never itself carries
+        # the contiguous token (the removal checklist greps for it)
+        retired = "a" + "dr"
+        offenders = sorted(name for name in names if retired in name.lower())
+        self.assertEqual(offenders, [], f"retired-artifact surface still registered: {offenders}")
+
+    def test_tool_total_is_120(self) -> None:
+        """103 tools (the worktree surface at that decision's writing time) + 12 = 115, + 7 txt tools
         (feat-229 Phase 130 import edge: ``general.tools._domains``'s module-level
         ``txt.tools._io``/``txt.tools._paths`` imports run ``txt/__init__.py``'s
         ``from . import prompts, resources, tools`` line, registering all 7 on the live
@@ -81,12 +95,13 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         (feat-173-req-iso29148-level-set Phase 180, the same import edge:
         ``general.tools._domains``'s module-level ``set.tools._io``/``set.tools._paths``
         imports run ``set/__init__.py``'s ``from . import prompts, resources, tools``
-        line) = 131 (measured against the post-merge live surface)."""
+        line) = 131, - 11 for the retired domain's tools (feat-46 Phase 140)
+        = 120 (measured against the post-merge live surface)."""
         result = len(self._tools)
 
-        self.assertEqual(result, 131)
+        self.assertEqual(result, 120)
 
-    def test_resource_total_is_45(self) -> None:
+    def test_resource_total_is_44(self) -> None:
         """49 resources (12 schema + 36 static + 1 template) - 12 = 37, + 2 txt resources
         (``specmgr://txt/example``/``specmgr://txt/template``, the same Phase 130 import
         edge -- ``txt/__init__.py`` pulls ``txt.resources`` in with ``txt.tools``), + 1 for
@@ -97,10 +112,11 @@ class TestSchemaSurfaceRegistration(unittest.TestCase):
         Phase 130), + 2 set resources
         (``specmgr://set/example``/``specmgr://set/template``, the same Phase 180 import
         edge -- ``set/__init__.py`` pulls ``set.resources`` in with ``set.tools``)
-        = 45 (measured against the post-merge live surface)."""
+        = 45, - 1 for the retired URI template (feat-46 Phase 140) = 44
+        (measured against the post-merge live surface)."""
         result = len(self._resources) + len(self._templates)
 
-        self.assertEqual(result, 45)
+        self.assertEqual(result, 44)
 
 
 if __name__ == "__main__":

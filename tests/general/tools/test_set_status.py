@@ -17,22 +17,18 @@
 
 """Tests for the generic ``set_status`` ``@mcp.tool()`` wrapper (feat-22-consolidate-mutation-tools, Phase 4).
 
-Parameterized over all document types (ACC-004); seeds a real,
-persisted document per type -- the whole-body domains via the
-domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR`` (mirroring
-the fixture strategy of ``tests/general/tools/test_update.py``), the ADR
-by rendering a minimal valid model into a temp ``SPECMGR_ADR_DIR`` -- and
-covers: status changed + ``updated`` bumped (microsecond timestamp) + body
-untouched (whole-body domains: raw body byte-identical; ADR: re-render round-
-trip equal apart from status); each domain's closed-vocabulary
+Parameterized over all document types (ACC-004); seeds a real, persisted
+document per type via the domain's own ``create_<d>`` tool in a temp
+``SPECMGR_DOCS_DIR`` (mirroring the fixture strategy of
+``tests/general/tools/test_update.py``) -- and covers: status changed +
+``updated`` bumped (microsecond timestamp) + body untouched (whole-body
+domains: raw body byte-identical); each domain's closed-vocabulary
 enforcement (positive value from the domain's own ``_ALLOWED_STATUSES``;
 negative value valid in one domain but invalid in the tested one -- each a
-non-raising, structured ``InvalidStatusResult`` (ADR
+non-raising, structured ``InvalidStatusResult`` (DEC
 b399f1ce-ed42-4929-b01c-7a57d18e8014) with the file left byte-identical on
-disk, its ``message`` wording pinned by a dedicated regression test); the
-ADR-only ``superseded_by`` composition (``"superseded by X"`` in the
-file) and the guard that rejects it for every non-``adr`` type *before*
-any file access; and the per-domain not-found errors for an unknown id.
+disk, its ``message`` wording pinned by a dedicated regression test); and
+the per-domain not-found errors for an unknown id.
 
 The per-type case data ties each ``valid_status``/``invalid_status`` pair
 to the domain's own closed set (the authoritative source of truth in
@@ -55,7 +51,6 @@ from unittest import mock
 
 import frontmatter
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError, adr_base_dir
 from biz.dfch.specmgr.dec.models.v1 import DecDocument, DecFrontmatter
 from biz.dfch.specmgr.dec.models.v1.frontmatter import _ALLOWED_STATUSES as _DEC_ALLOWED_STATUSES
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError, dec_base_dir
@@ -74,8 +69,6 @@ from biz.dfch.specmgr.gol.models.v1.frontmatter import _ALLOWED_STATUSES as _GOL
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError, gol_base_dir
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
 from biz.dfch.specmgr.gol.tools.list_gol import list_gol
-from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, parse_adr, render_adr
-from biz.dfch.specmgr.models.adr.v1.frontmatter import _FIXED_STATUSES as _ADR_ALLOWED_STATUSES
 from biz.dfch.specmgr.prb.models.v1 import PrbDocument, PrbFrontmatter
 from biz.dfch.specmgr.prb.models.v1.frontmatter import _ALLOWED_STATUSES as _PRB_ALLOWED_STATUSES
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError, prb_base_dir
@@ -608,10 +601,6 @@ _CASES: list[_Case] = [
     ),
 ]
 
-#: A well-formed canonical UUID (feat-38-39-41-43-44 Phase 4 added "adr" to ``_path_safety``'s
-#: UUID-shaped domains, so this fixture id must be UUID-shaped, not a free-form string).
-_ADR_ID = "0d8f4c2a-1b3e-4f5a-9c7d-2e6b8a0f1c3d"
-
 #: A well-formed but non-existent canonical UUID, for the unknown-id not-found cases.
 _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
@@ -626,9 +615,8 @@ _BROKEN_BODY = "not a valid document, no headings at all\n"
 #: The core parse defect ``_BROKEN_BODY`` produces in every domain's parse error text.
 _CORE_DEFECT = "Token[0]: expected 'heading_open', got 'paragraph_open'."
 
-#: A status string outside every domain's own closed vocabulary (including ADR's fixed set and
-#: its ``"superseded by ..."`` pattern) -- the universally-invalid input the
-#: ``InvalidStatusResult``-first precedence tests in ``TestSetStatusParseFailure`` call with.
+#: A status string outside every domain's own closed vocabulary -- the universally-invalid input
+#: the ``InvalidStatusResult``-first precedence tests in ``TestSetStatusParseFailure`` call with.
 _UNIVERSALLY_INVALID_STATUS = "not-a-status"
 
 
@@ -671,25 +659,17 @@ _PARSE_FAILURE_CASES: list[_ParseFailureCase] = [
     ),
     _ParseFailureCase("txt", create_txt, TxtNotFoundError, txt_base_dir, list_txt, _TXT_MINIMAL_BODY, "progress"),
 ]
-_ADR_SEED_BODY = AdrBody(
-    title="A title",
-    context_and_problem_statement="Context.",
-    considered_options="Options.",
-    decision_outcome="Outcome.",
-)
 
 
 class TempDocsDirTestCase(unittest.TestCase):
-    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the ADR base dir via SPECMGR_ADR_DIR."""
+    """Common fixture: temp dir set as the docs root via SPECMGR_DOCS_DIR."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.adr_dir = self.docs_root / "adr"
-        self.adr_dir.mkdir(parents=True, exist_ok=True)
         self.enterContext(
             mock.patch.dict(
                 "os.environ",
-                {DOCS_DIR_ENV_VAR: str(self.docs_root), ADR_DIR_ENV_VAR: str(self.adr_dir)},
+                {DOCS_DIR_ENV_VAR: str(self.docs_root)},
             )
         )
 
@@ -705,12 +685,6 @@ class TempDocsDirTestCase(unittest.TestCase):
         result = case.create(body)
         return result
 
-    def _seed_adr(self, id_: str = _ADR_ID) -> Path:
-        """Write a minimal, valid ADR (id ``id_``) to the temp ADR dir and return its path."""
-        path = self.adr_dir / f"{id_}.md"
-        path.write_text(render_adr(Adr(frontmatter=AdrFrontmatter(id=id_), body=_ADR_SEED_BODY)), encoding="utf-8")
-        return path
-
 
 class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
     """ACC-004: the whole-body domains -- status changed, ``updated`` bumped, body untouched."""
@@ -721,8 +695,6 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
             with self.subTest(doc_type=case.doc_type):
                 self.assertIn(case.valid_status, case.allowed_statuses)
                 self.assertNotIn(case.invalid_status, case.allowed_statuses)
-        self.assertIn("accepted", _ADR_ALLOWED_STATUSES)
-        self.assertNotIn("implemented", _ADR_ALLOWED_STATUSES)
 
     def test_changes_status_bumps_updated_leaves_body_untouched(self) -> None:
         """A domain-valid status must change ``status`` on disk, bump ``updated``, and leave the raw body byte-identical."""
@@ -794,25 +766,6 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
             f"Invalid status '{case.invalid_status}' for type '{case.doc_type}'. Allowed values: {expected_allowed}",
         )
 
-    def test_superseded_by_with_non_adr_type_raises_value_error_file_untouched(self) -> None:
-        """``superseded_by`` with any non-``adr`` type must raise ``ValueError``, leaving the file byte-identical."""
-        for case in _CASES:
-            with self.subTest(doc_type=case.doc_type):
-                created = self._seed(case, case.minimal_body)
-                path = self._doc_path(case)
-                before = path.read_text(encoding="utf-8")
-
-                with self.assertRaises(ValueError) as ctx:
-                    set_status(
-                        id=created.id,
-                        type=case.doc_type,
-                        status=case.valid_status,
-                        superseded_by="other-id",
-                    )
-
-                self.assertIn(case.doc_type, str(ctx.exception))
-                self.assertEqual(path.read_text(encoding="utf-8"), before)
-
     def test_unknown_id_raises_domain_not_found(self) -> None:
         """An unknown id must raise the domain's own not-found error."""
         for case in _CASES:
@@ -848,140 +801,6 @@ class TestSetStatusWholeBodyDomains(TempDocsDirTestCase):
                 self.assertEqual(second_result.updated, first_result.updated)
                 self.assertEqual(path.read_bytes(), bytes_after_first)
                 self.assertEqual(path.stat().st_mtime_ns, mtime_after_first)
-
-
-class TestSetStatusAdr(TempDocsDirTestCase):
-    """ACC-004: the ADR -- status changed (render round-trip), body untouched, ``superseded_by`` composition."""
-
-    def test_changes_plain_status_with_superseded_by_none(self) -> None:
-        """A plain ADR status value must persist with ``superseded_by=None``, the body equal on re-parse (no ``updated`` field)."""
-        path = self._seed_adr()
-        before_adr = parse_adr(path.read_text(encoding="utf-8"))
-
-        result = set_status(id=_ADR_ID, type="adr", status="accepted")
-
-        # feat-69 regression: the ADR branch is explicitly out of scope for the
-        # frontmatter-only response change -- set_status(type="adr", ...) must
-        # keep returning the full `Adr` document, body included, unaffected.
-        self.assertIsInstance(result, Adr)
-        self.assertEqual(result.body, _ADR_SEED_BODY)
-        self.assertEqual(result.frontmatter.status, "accepted")
-        on_disk = parse_adr(path.read_text(encoding="utf-8"))
-        self.assertEqual(on_disk.frontmatter.status, "accepted")
-        self.assertEqual(on_disk.body, _ADR_SEED_BODY)
-        self.assertEqual(on_disk.frontmatter.id, before_adr.frontmatter.id)
-        self.assertEqual(on_disk.frontmatter.version, before_adr.frontmatter.version)
-        self.assertEqual(on_disk.frontmatter.date, before_adr.frontmatter.date)
-        self.assertEqual(on_disk, result)
-
-    def test_superseded_by_composes_status_string_in_file(self) -> None:
-        """``superseded_by`` must compose the status as ``"superseded by X"`` in the file."""
-        path = self._seed_adr()
-
-        result = set_status(id=_ADR_ID, type="adr", status="accepted", superseded_by="other-decision")
-
-        self.assertEqual(result.frontmatter.status, "superseded by other-decision")
-        on_disk = parse_adr(path.read_text(encoding="utf-8"))
-        self.assertEqual(on_disk.frontmatter.status, "superseded by other-decision")
-
-    def test_same_plain_status_is_a_noop_leaves_file_untouched(self) -> None:
-        """ACC-002: calling ``set_status`` again with the same plain status must not write.
-
-        First call establishes ``"accepted"`` as the current status. The second call, with
-        the exact same ``status="accepted"``, is the no-op case under test (issue #109): the
-        file bytes must be unchanged between the two calls, and the returned ``Adr`` must
-        equal what a fresh ``parse_adr`` of the file produces (no drift).
-        """
-        path = self._seed_adr()
-
-        set_status(id=_ADR_ID, type="adr", status="accepted")
-        bytes_after_first = path.read_bytes()
-
-        result = set_status(id=_ADR_ID, type="adr", status="accepted")
-
-        self.assertEqual(path.read_bytes(), bytes_after_first)
-        self.assertEqual(result, parse_adr(path.read_text(encoding="utf-8")))
-
-    def test_same_superseded_by_composition_is_a_noop_leaves_file_untouched(self) -> None:
-        """ACC-002: calling ``set_status`` again with the SAME ``superseded_by`` must not write.
-
-        First call composes and persists ``"superseded by other-decision"`` as the current
-        status. The second call, with the same ``superseded_by="other-decision"``, is the
-        no-op case under test (issue #109): the file bytes must be unchanged between the two
-        calls.
-        """
-        path = self._seed_adr()
-
-        set_status(id=_ADR_ID, type="adr", status="ignored-value", superseded_by="other-decision")
-        bytes_after_first = path.read_bytes()
-
-        result = set_status(id=_ADR_ID, type="adr", status="ignored-value", superseded_by="other-decision")
-
-        self.assertEqual(result.frontmatter.status, "superseded by other-decision")
-        self.assertEqual(path.read_bytes(), bytes_after_first)
-
-    def test_out_of_vocabulary_status_raises_validation_error_file_untouched(self) -> None:
-        """A status valid in one domain but not ADR's must return a non-raising
-        ``InvalidStatusResult`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- ``allowed_values``
-        is ADR's own fixed 6-value set plus the literal ``"superseded by <target-id>"`` trailing
-        entry documenting the pattern -- file byte-identical (never raises
-        ``pydantic.ValidationError`` any more)."""
-        path = self._seed_adr()
-        before = path.read_text(encoding="utf-8")
-
-        result = set_status(id=_ADR_ID, type="adr", status="implemented")
-
-        self.assertIsInstance(result, InvalidStatusResult)
-        self.assertFalse(result.valid)
-        self.assertEqual(result.type, "adr")
-        self.assertEqual(result.status, "implemented")
-        expected_allowed = sorted(_ADR_ALLOWED_STATUSES) + ["superseded by <target-id>"]
-        self.assertEqual(result.allowed_values, expected_allowed)
-        self.assertEqual(
-            result.message,
-            f"Invalid status 'implemented' for type 'adr'. Allowed values: {', '.join(expected_allowed)}",
-        )
-        self.assertEqual(path.read_text(encoding="utf-8"), before)
-
-    def test_invalid_status_message_wording_pinned_for_adr(self) -> None:
-        """Regression (Task 3.3): the exact literal message wording must not silently drift, for ADR.
-
-        No ``assertIn``/partial matching -- exact ``assertEqual`` so a future refactor that
-        changes the wording (including the ADR-specific trailing ``"superseded by <target-id>"``
-        entry) fails loudly here.
-        """
-        self._seed_adr()
-
-        result = set_status(id=_ADR_ID, type="adr", status="implemented")
-
-        expected_allowed = ", ".join(sorted(_ADR_ALLOWED_STATUSES) + ["superseded by <target-id>"])
-        self.assertEqual(
-            result.message,
-            f"Invalid status 'implemented' for type 'adr'. Allowed values: {expected_allowed}",
-        )
-
-    def test_unknown_id_raises_adr_not_found(self) -> None:
-        """An unknown id must raise ``AdrNotFoundError``."""
-        self._seed_adr()
-
-        with self.assertRaises(AdrNotFoundError):
-            set_status(id=_MISSING_UUID, type="adr", status="accepted")
-
-
-class TestSetStatusSupersededByGuard(TempDocsDirTestCase):
-    """The ``superseded_by`` guard must fire before any file access -- even for an unknown id."""
-
-    def test_unknown_id_with_superseded_by_raises_value_error_not_not_found(self) -> None:
-        """``set_status("no-such-id", <non-adr type>, status, superseded_by=...)`` must raise ``ValueError``, not the domain not-found."""
-        for case in _CASES:
-            with self.subTest(doc_type=case.doc_type):
-                with self.assertRaises(ValueError):
-                    set_status(
-                        id="no-such-id",
-                        type=case.doc_type,
-                        status=case.valid_status,
-                        superseded_by="other-id",
-                    )
 
 
 @dataclass(frozen=True)
@@ -1071,22 +890,19 @@ _INJECTION_CASES: list[_InjectionCase] = [
 
 
 class TempSetStatusInjectionDirTestCase(unittest.TestCase):
-    """Common fixture for ACC-008: temp dirs for SPECMGR_DOCS_DIR, SPECMGR_FEAT_DIR, and
-    SPECMGR_ADR_DIR (mirrors ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection
-    coverage spans all document types, feat and adr included)."""
+    """Common fixture for ACC-008: temp dirs for SPECMGR_DOCS_DIR and SPECMGR_FEAT_DIR (mirrors
+    ``test_delete.py``'s ``TempDeleteDirTestCase``, since injection coverage spans all document
+    types, feat included)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.adr_dir = self.docs_root / "adr"
-        self.adr_dir.mkdir(parents=True, exist_ok=True)
         self.enterContext(
             mock.patch.dict(
                 "os.environ",
                 {
                     DOCS_DIR_ENV_VAR: str(self.docs_root),
                     FEAT_DIR_ENV_VAR: str(self.feat_dir),
-                    ADR_DIR_ENV_VAR: str(self.adr_dir),
                 },
             )
         )
@@ -1100,12 +916,6 @@ class TempSetStatusInjectionDirTestCase(unittest.TestCase):
             self.assertEqual(len(matches), 1)
             result = matches[0]
         return result
-
-    def _seed_adr(self, id_: str = _ADR_ID) -> Path:
-        """Write a minimal, valid ADR (id ``id_``) to the temp ADR dir and return its path."""
-        path = self.adr_dir / f"{id_}.md"
-        path.write_text(render_adr(Adr(frontmatter=AdrFrontmatter(id=id_), body=_ADR_SEED_BODY)), encoding="utf-8")
-        return path
 
 
 class TestSetStatusInjection(TempSetStatusInjectionDirTestCase):
@@ -1125,17 +935,6 @@ class TestSetStatusInjection(TempSetStatusInjectionDirTestCase):
                         with self.assertRaises(ValueError):
                             set_status(id=bad_id, type=case.doc_type, status=case.valid_status)
                         self.assertEqual(path.read_text(encoding="utf-8"), before)
-
-    def test_adr_injection_ids_raise_value_error_and_leave_the_seed_untouched(self) -> None:
-        """The same, for type="adr" (feat-38-39-41-43-44 Phase 4 added adr to the UUID-shaped domains)."""
-        path = self._seed_adr()
-        before = path.read_text(encoding="utf-8")
-
-        for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID):
-            with self.subTest(bad_id=bad_id):
-                with self.assertRaises(ValueError):
-                    set_status(id=bad_id, type="adr", status="accepted")
-                self.assertEqual(path.read_text(encoding="utf-8"), before)
 
 
 class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
@@ -1157,15 +956,6 @@ class TestSetStatusAssertWithinSpy(TempSetStatusInjectionDirTestCase):
 
                 spy.assert_any_call(base_dir, path)
 
-    def test_assert_within_is_called_for_adr(self) -> None:
-        """The same, for type="adr"."""
-        path = self._seed_adr()
-
-        with mock.patch.object(set_status_module, "assert_within", wraps=set_status_module.assert_within) as spy:
-            set_status(id=_ADR_ID, type="adr", status="accepted")
-
-        spy.assert_any_call(adr_base_dir(), path)
-
 
 class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
     """feat-170 Phase 110 (Bug 1, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f): an id whose only
@@ -1178,8 +968,7 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
     status so execution reaches ``load_by_id`` (an out-of-vocabulary status against a broken
     document still returns ``InvalidStatusResult`` first). ``feat`` carries the same coverage
     in its own separate case shape (folder + ``README.md``), mirroring this module's existing
-    split of ``feat`` out of the flat-file ``_CASES`` loop. The ``adr`` branch stays out of
-    scope (unchanged by this phase).
+    split of ``feat`` out of the flat-file ``_CASES`` loop.
 
     A truly-absent id still raises the domain's own not-found error (REQ-002): the 11
     flat-file domains' regression is this module's existing
@@ -1246,7 +1035,7 @@ class TestSetStatusParseFailure(TempSetStatusInjectionDirTestCase):
         raised error): the pre-dispatch ``_check_status_allowed`` check runs before any
         domain lock is taken or file is read, so it never reaches the protected
         ``load_by_id`` -- the precedence this class's docstring, this feature's Design
-        Notes (``set_status._set_status_<d>`` bullet), and ADR
+        Notes (``set_status._set_status_<d>`` bullet), and DEC
         b8c9bfea-6dcf-4158-bfc5-4ec17abb842f (Option 4, Pros) document. The corrupted
         file stays byte-unchanged (no status is written).
         """

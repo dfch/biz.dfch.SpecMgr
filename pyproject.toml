@@ -125,9 +125,6 @@ namespaces = true
 "biz.dfch.specmgr" = [
     "py.typed"
 ]
-"biz.dfch.specmgr.adr" = [
-    "data/*.md"
-]
 "biz.dfch.specmgr.dec" = [
     "data/*.md",
     "data/*.json"

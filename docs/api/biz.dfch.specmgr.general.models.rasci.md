@@ -18,7 +18,7 @@ H1-rooted document (:class:`Rasci`, a `MarkdownSection1` subclass) with a
 leading `MarkdownParagraph` intro, followed by further `MarkdownSection2`
 children. The 5-item role list is modeled as a `MarkdownListItem` subclass
 with two `@computed_field`s (`role`/`description`), reusing
-`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (ADR
+`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (DEC
 356d8781-e446-4c26-917a-eda85648ce9d's Decision Drivers) rather than
 inventing a new shared `models/md` primitive -- the two-computed-field
 shape (as opposed to `dtais`'s single-computed-field `MethodItem`/
@@ -3392,8 +3392,7 @@ items:
 
 Parse the packaged RASCI guidance markdown text into a :class:`Rasci`.
 
-Thin `format_text` + `Rasci.from_text` wrapper -- unlike `parse_adr`/
-`parse_req`, there is no YAML frontmatter to split off first, since
+Thin `format_text` + `Rasci.from_text` wrapper -- there is no YAML frontmatter to split off first, since
 this is a plain packaged data file, not a user-authored document
 (mirrors `biz.dfch.specmgr.general.models.dtais.parse_dtais`'s exact
 shape).

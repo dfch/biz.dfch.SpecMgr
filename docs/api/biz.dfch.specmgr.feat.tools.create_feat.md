@@ -77,7 +77,7 @@ is even acquired). A malformed caller-supplied ``id`` is validated in
 that same before-any-lock window and raises a bare ``ValueError``
 (see Raises below), also before anything is written.
 
-Compound-failure precedence (feat-204-create-error, REQ-003 -- ADR
+Compound-failure precedence (feat-204-create-error, REQ-003 -- DEC
 f14f125e's item 3): the content validation above runs *before* both
 id guards in the existing execution order, and this feature does not
 re-order that. Consequently, a compound failure (invalid ``content``
@@ -116,8 +116,8 @@ FeatFrontmatter | ValidateResult
     exactly as the generic ``validate`` tool caps it (feat-110, via
     :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
     ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
-    in that case (feat-204-create-error, ADR
-    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    in that case (feat-204-create-error, DEC
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain); because content validation runs before both id
     guards, a compound failure (invalid ``content`` plus a malformed or

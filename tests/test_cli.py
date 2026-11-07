@@ -137,7 +137,6 @@ class TestDiagramAndPlantumlCommands(unittest.TestCase):
                 "mcp",
                 "docs",
                 "mcp-docs",
-                "adr-toc",
                 "harness-bundle",
                 "coverage-badge",
                 "schema",

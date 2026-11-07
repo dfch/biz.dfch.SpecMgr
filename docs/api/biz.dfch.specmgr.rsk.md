@@ -2,7 +2,7 @@
 
 Risk (RSK) domain -- risk registers for system specifications.
 
-This is a domain-first package, mirroring ``tsk``'s layout (per ADR
+This is a domain-first package, mirroring ``tsk``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``rsk`` documents.
 
@@ -28,10 +28,10 @@ Like REQ/TSK, RSK has no
 "Expose id-based document reads as a tool, not a resource" -- RSK never had
 such a resource to remove in the first place). Likewise, there is no
 ``specmgr://rsk/list`` resource -- listing is the paged ``list_rsk`` tool,
-so that paging parameters could be accepted (feat-13-list-paging, ADR
+so that paging parameters could be accepted (feat-13-list-paging, DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 The former ``specmgr://rsk/schema`` resource was converted into the
 ``get_rsk_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).

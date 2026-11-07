@@ -20,7 +20,7 @@ step 1 if this is genuinely a new SYSRS.
 ## 1. Structure recap (body markdown only, no frontmatter block)
 
 A SYSRS aggregates already-existing specmgr artifacts (`gol`, `prb`,
-`qa`, `uc`, `req`, `rsk`, `dec`/`adr`, `vcr`) into one coherent,
+`qa`, `uc`, `req`, `rsk`, `dec`, `vcr`) into one coherent,
 navigable specification, rather than duplicating their content: every
 cross-reference list below is a bullet list of
 `<TYPE> <uuid>: <title>` lines (a literal type tag, a real 8-4-4-4-12
@@ -48,9 +48,8 @@ paraphrasing why it is referenced here.
 - `## Operational Concept and Scenarios` -- optional; a
   cross-reference list to `uc` (`UC <uuid>: <title>`), at least one
   item when present.
-- `## Decisions` -- optional; a cross-reference list to `dec` or `adr`
-  (`DEC <uuid>: <title>` or `ADR <uuid>: <title>`), at least one item
-  when present.
+- `## Decisions` -- optional; a cross-reference list to `dec`
+  (`DEC <uuid>: <title>`), at least one item when present.
 - `## Risks` -- optional; a cross-reference list to `rsk`
   (`RSK <uuid>: <title>`), at least one item when present.
 - `## Assumptions and Dependencies` -- optional prose.

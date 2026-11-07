@@ -167,7 +167,7 @@ def list_qa(
         match count and ``offset``/``max_results`` paging keeps its existing
         meaning on that smaller set.
     language:
-        The language whose directory to list (feat-197-i18n Phase 125, ADR
+        The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
         scans the flat ``docs/qa/`` directory -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.

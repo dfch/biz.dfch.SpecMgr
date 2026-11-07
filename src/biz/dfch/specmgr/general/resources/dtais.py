@@ -64,7 +64,7 @@ def dtais() -> str:
     design as every other cross-cutting ``general`` resource -- reads the
     file fresh on every call. Also parses the text via
     :func:`~biz.dfch.specmgr.general.models.parse_dtais` on every call
-    purely to fail fast on structural drift in production (ADR
+    purely to fail fast on structural drift in production (DEC
     356d8781-e446-4c26-917a-eda85648ce9d); the parsed result is discarded
     and the raw text is returned unchanged.
 

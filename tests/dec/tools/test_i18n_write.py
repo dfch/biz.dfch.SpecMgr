@@ -96,10 +96,10 @@ class _TempDocsTestCase(unittest.TestCase):
 
 
 class TestCreateDecVariant(_TempDocsTestCase):
-    """create_dec(language=..., id=...) (ACC-006 create, ACC-007 write half, REQ-003, ADR item 2)."""
+    """create_dec(language=..., id=...) (ACC-006 create, ACC-007 write half, REQ-003, DEC 38efdb66 item 2)."""
 
     def test_variant_is_written_under_the_en_basename_in_the_language_subfolder(self):
-        """The DE variant must live at docs/dec/de/ under the EN source's exact basename (ADR item 2)."""
+        """The DE variant must live at docs/dec/de/ under the EN source's exact basename (DEC 38efdb66 item 2)."""
         self.assertTrue(self.de_path.exists())
         self.assertEqual(self.de_path.parent, dec_base_dir("de"))
         self.assertEqual(self.de_path.name, self.en_path.name)
@@ -150,7 +150,7 @@ class TestCreateDecVariant(_TempDocsTestCase):
         self.assertEqual(self.de_path.read_bytes(), before)
 
     def test_variant_requires_the_en_source(self):
-        """A variant of an id with no EN source must raise DecNotFoundError and write nothing (ADR item 2)."""
+        """A variant of an id with no EN source must raise DecNotFoundError and write nothing (DEC 38efdb66 item 2)."""
         with self.assertRaises(DecNotFoundError) as ctx:
             create_dec(_DE_BODY, language="de", id=_MISSING_UUID)
         self.assertIn("requires its 'en' source", str(ctx.exception))

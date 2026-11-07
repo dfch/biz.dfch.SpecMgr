@@ -55,7 +55,7 @@ below (rulebook §7.1 Phase 150 note, Phase 160 correction).
 
 ``_EMITTED_SUBSET`` below is the rulebook §2.9 worked example verbatim (the
 corrected 2026-10-15 layout) — the frozen emission subset the real-parser
-gate verifies (component declarations, the 16-entry skinparam block,
+gate verifies (component declarations, the 15-entry skinparam block,
 label-free ``-->``/red-arrow edges, a self-loop, the curly ``component
 "TYPE" { … }`` domain groups, a top-level ``<<UNRESOLVED>>`` node).
 
@@ -99,7 +99,6 @@ _EMITTED_SUBSET = """\
 @startuml Requirement A
 
 skinparam component {
-  backgroundColor<<ADR>> LightYellow
   backgroundColor<<REQ>> LightBlue
   backgroundColor<<UC>> Pink
   backgroundColor<<TSK>> Honeydew

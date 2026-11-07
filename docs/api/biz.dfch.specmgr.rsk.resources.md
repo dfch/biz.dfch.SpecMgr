@@ -21,7 +21,7 @@ was a ``specmgr://rsk/{id}`` resource to remove in the first place (same
 rationale as DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). There is no
 ``specmgr://rsk/list`` resource either -- listing is the paged ``list_rsk``
 tool (``rsk.tools.list_rsk``), so that paging parameters
-(``max_results``/``offset``) can be accepted (feat-13-list-paging, ADR
+(``max_results``/``offset``) can be accepted (feat-13-list-paging, DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13).
 The former schema resource (``rsk_schema``, ``specmgr://rsk/schema``) was
 converted the same way into the ``get_rsk_schema`` ``@mcp.tool()``

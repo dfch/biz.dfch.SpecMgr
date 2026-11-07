@@ -66,7 +66,7 @@ from ._paths import rsk_base_dir
         "into a structured :class:`~biz.dfch.specmgr.rsk.models.v1.RskDocument`. An existing file "
         "that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single "
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
-        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR "
+        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (DEC "
         "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain); a truly-absent or unreadable path still "
         "raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) "
@@ -91,8 +91,8 @@ def parse_rsk(path: str) -> RskDocument | ValidateResult:
     ``@alias``, wrong section order) or field/cross-field validation
     failure raises ``AssertionError``/``pydantic.ValidationError`` (a
     malformed frontmatter block raises ``yaml.YAMLError``) internally, but
-    this tool catches all three (feat-204-create-error, ADR
-    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    this tool catches all three (feat-204-create-error, DEC
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain) and returns the enriched message (domain/tool context
     prepended by the shared tool-boundary wrapper,

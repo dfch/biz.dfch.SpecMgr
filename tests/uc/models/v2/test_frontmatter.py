@@ -37,7 +37,7 @@ class TestUcFrontmatter(unittest.TestCase):
     def test_type_rejects_other_values(self) -> None:
         """`type` is a fixed Literal["uc"] -- any other value fails validation."""
         with self.assertRaises(ValidationError):
-            UcFrontmatter(type="adr")
+            UcFrontmatter(type="bogus")
 
     def test_status_defaults_to_draft(self) -> None:
         """`status` defaults to "draft" (inherited from MarkdownFrontmatter)."""

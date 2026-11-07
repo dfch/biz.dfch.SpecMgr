@@ -18,18 +18,16 @@
 """Requirement base directory resolution and id -> path lookup (Task 3.11).
 
 A thin, requirement-specific layer over the generic
-``general.tools._doc_paths`` module (Task 3.10), rather than a second
-hand-written copy of ``adr.tools._paths`` -- the base-directory/id-lookup
-plumbing is identical in shape, only the parsed document type and its id
-accessor differ.
+``general.tools._doc_paths`` module (Task 3.10) -- the base-directory/id-lookup
+plumbing is identical in shape across domains, only the parsed document type and its id accessor differ.
 
-Mirrors ``adr.tools._paths``'s read-only/write split: :func:`req_base_dir`
+A read-only/write split: :func:`req_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
 effect), only :func:`ensure_req_base_dir` does, for the eventual
 ``create_req`` tool (Task 3.12).
 
 **Cache-backed scan (feat-107-doc-cache Phase 3).** :func:`find_req_path`
-now scans through the content-hash-validated per-domain cache (ADR
+now scans through the content-hash-validated per-domain cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
 ``read_req`` (not ``parse_req``) as ``find_doc_path_by_id``'s ``read_fn``,
 so a file whose on-disk content hash is unchanged since its last read is
@@ -78,8 +76,7 @@ class ReqNotFoundError(LookupError):
     """No requirement file found matching the given id.
 
     A separate class from ``general.tools._doc_paths.DocNotFoundError``, not
-    a subclass of it -- the same relationship ``adr.tools._paths.AdrNotFoundError``
-    has to nothing generic, so callers can keep catching a requirement-specific
+    a subclass of it, so callers can keep catching a requirement-specific
     exception type without depending on the generic module's own exception.
     """
 
@@ -194,8 +191,7 @@ def find_req_path(base_dir: Path, id_: str) -> Path:
     content hash is unchanged since its last read is not re-parsed. A file
     that fails to parse (``AssertionError``/``pydantic.ValidationError``) is
     silently skipped -- one broken file must not prevent lookup of a
-    different, valid id. Mirrors ``adr.tools._paths.find_adr_path``'s own
-    skip-on-parse-failure rule. Before scanning, the cache is reconciled
+    different, valid id, using the same skip-on-parse-failure rule. Before scanning, the cache is reconciled
     against the freshly materialized live path listing
     (:func:`~._cache.reconcile_req_cache`, against the domain-wide live listing of every language
     -- a scan of one language must not evict the other languages' entries, feat-197-i18n

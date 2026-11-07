@@ -70,7 +70,6 @@ _TAG_KEYWORDS: tuple[str, ...] = (
     "REQ",
     "RSK",
     "DEC",
-    "ADR",
     "VCR",
     "SYSRS",
     "TXT",
@@ -174,7 +173,7 @@ class TestSkillBodyWording(unittest.TestCase):
         for phrase in _INVARIANCE_PHRASES:
             self.assertIn(phrase, body)
 
-    def test_all_twelve_reference_tags_are_named(self):
+    def test_all_eleven_reference_tags_are_named(self):
         _, body = _split_frontmatter(_read_text(_SKILL_PATH))
 
         for tag in _TAG_KEYWORDS:

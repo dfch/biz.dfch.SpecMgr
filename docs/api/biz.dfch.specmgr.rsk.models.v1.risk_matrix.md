@@ -5079,8 +5079,7 @@ parsing entirely"); this section's entire extent is stored verbatim.
 
 Parse the packaged risk-matrix guidance markdown text into a :class:`RiskMatrix`.
 
-Thin `format_text` + `RiskMatrix.from_text` wrapper -- unlike
-`parse_adr`/`parse_rsk`, there is no YAML frontmatter to split off
+Thin `format_text` + `RiskMatrix.from_text` wrapper -- there is no YAML frontmatter to split off
 first, since this is a plain packaged data file, not a user-authored
 document (mirrors `biz.dfch.specmgr.rsk.models.v1.tara.parse_tara`'s
 exact shape).

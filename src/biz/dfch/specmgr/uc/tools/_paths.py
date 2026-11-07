@@ -25,7 +25,7 @@ never creates the directory (a read-only tool shouldn't have that side
 effect), only :func:`ensure_uc_base_dir` does, for ``create_uc``.
 
 **Cache-backed scan (feat-107-doc-cache Phase 4).** :func:`find_uc_path`
-now scans through the content-hash-validated per-domain cache (ADR
+now scans through the content-hash-validated per-domain cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
 ``read_uc`` (not ``parse_uc``) as ``find_doc_path_by_id``'s ``read_fn``,
 so a file whose on-disk content hash is unchanged since its last read is

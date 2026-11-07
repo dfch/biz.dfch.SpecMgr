@@ -20,7 +20,7 @@ leading `list[MarkdownListItem]` field directly under the H1, followed by
 further `MarkdownSection2` children. Closed-vocabulary bullets are modeled
 as `MarkdownListItem` subclasses with a `@computed_field` regex-extracting
 the leading backticked keyword, reusing `feat.RequirementItem`/
-`tsk.TaskItem`'s established precedent (ADR 356d8781-e446-4c26-917a-
+`tsk.TaskItem`'s established precedent (DEC 356d8781-e446-4c26-917a-
 eda85648ce9d's Decision Drivers) rather than inventing a new shared
 `models/md` primitive.
 
@@ -5060,8 +5060,7 @@ method:
 
 Parse the packaged DTAIS guidance markdown text into a :class:`Dtais`.
 
-Thin `format_text` + `Dtais.from_text` wrapper -- unlike `parse_adr`/
-`parse_req`, there is no YAML frontmatter to split off first, since
+Thin `format_text` + `Dtais.from_text` wrapper -- there is no YAML frontmatter to split off first, since
 this is a plain packaged data file, not a user-authored document
 (mirrors `biz.dfch.specmgr.models.iso25010.parse_iso25010`'s exact
 shape).

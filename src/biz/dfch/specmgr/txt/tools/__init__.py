@@ -32,7 +32,7 @@ file (TXT ships the schema as a tool from day one, the feat-189 Phase 105
 id -- the sole id-based read path for TXT (there is no
 ``specmgr://txt/{id}`` resource, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 ``list_txt`` returns one page of id/title/status/ref summaries of every
-free-form text document, shipped as a paged tool from day one (ADR
+free-form text document, shipped as a paged tool from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_txt`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the free-form text base directory

@@ -20,7 +20,7 @@
 """``@mcp.tool()`` wrapper: get_feat (Task 2.3).
 
 Mirrors ``dec.tools.get_dec`` -- a thin file-I/O/id-lookup adapter. The
-``README.md`` file itself remains the sole source of truth (ADR
+``README.md`` file itself remains the sole source of truth (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the underlying single-file read now
 routes through ``feat``'s own bespoke content-hash-validated in-memory
 cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips
@@ -72,7 +72,7 @@ from ._paths import FeatNotFoundError, feat_base_dir, find_feat_parse_failure
         "is the full-fidelity authority for this document -- byte-identical to list_feat's own "
         "failed-row `error` for the same file once list_feat's background warmup (or this very call) "
         "has fully parsed it; before that (or under SPECMGR_FEAT_WARMUP_DISABLED), list_feat's row may "
-        "carry a transiently-healthy or dirty-stage-specific error instead (ADR "
+        "carry a transiently-healthy or dirty-stage-specific error instead (DEC "
         "3982712a-a46b-4b2b-809f-9c6925a49b44, time-qualifying DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c "
         "for feat only; every other domain's list/get error byte-identity stays unconditional). "
         "An invalid id (path-injection attempt or wrong format) is also a ValueError, raised before "
@@ -144,7 +144,7 @@ def get_feat(
         the same file once ``list_feat``'s background warmup (or this very
         call) has fully parsed it -- before that (or under
         ``SPECMGR_FEAT_WARMUP_DISABLED``), ``list_feat``'s row may instead
-        carry a transiently-healthy or dirty-stage-specific ``error`` (ADR
+        carry a transiently-healthy or dirty-stage-specific ``error`` (DEC
         3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract,
         time-qualifying DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c for
         ``feat`` only -- every other domain's list/get error byte-identity

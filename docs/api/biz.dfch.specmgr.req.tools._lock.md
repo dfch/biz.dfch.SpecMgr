@@ -2,8 +2,7 @@
 
 Per-document in-process lock guarding requirement mutations.
 
-Ported from ``adr.tools._lock.adr_lock`` unchanged except for naming -- see
-that module's own docstring for the full rationale (the read-modify-write
+A per-document in-process lock (the read-modify-write
 race a mutating tool's ``load_by_id`` -> mutate -> write sequence is exposed
 to when an MCP host dispatches two overlapping calls against the same id).
 The generic ``update`` and ``set_status`` tools in ``general.tools``
@@ -14,8 +13,7 @@ Not generalized into ``general.tools`` alongside ``_doc_paths.py`` (Task
 already shared, read-only, dependency-light code; a lock, by contrast, is a
 mutation-time correctness primitive that was never part of Task 3.9's
 recorded design discussion. Kept as its own small, REQ-specific module for
-now, mirroring ADR's own non-generalized precedent; migrating both onto one
-shared module remains optional future cleanup.
+now; migrating it onto one shared module remains optional future cleanup.
 
 ## Functions
 

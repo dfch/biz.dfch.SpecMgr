@@ -113,12 +113,12 @@ class TestGenerateMcpDocs(unittest.TestCase):
         self.assertFalse(content.endswith("\n\n"))
 
     def test_anchors_stay_unique_across_kinds_with_same_name(self):
-        """create_adr exists as both a tool and a prompt; their headings/anchors must differ."""
+        """create_req exists as both a tool and a prompt; their headings/anchors must differ."""
         content = generate_mcp_docs()
-        self.assertIn("### Tool: create_adr", content)
-        self.assertIn("### Prompt: create_adr", content)
-        self.assertIn("(#tool-create_adr)", content)
-        self.assertIn("(#prompt-create_adr)", content)
+        self.assertIn("### Tool: create_req", content)
+        self.assertIn("### Prompt: create_req", content)
+        self.assertIn("(#tool-create_req)", content)
+        self.assertIn("(#prompt-create_req)", content)
 
 
 class TestSchemaTypeStr(unittest.TestCase):
@@ -181,8 +181,8 @@ class TestSlugify(unittest.TestCase):
 
     def test_lowercases_and_replaces_spaces_with_hyphens(self):
         """A kind-prefixed heading lowercases and turns spaces into hyphens."""
-        self.assertEqual(_slugify("Tool: create_adr"), "tool-create_adr")
+        self.assertEqual(_slugify("Tool: create_req"), "tool-create_req")
 
     def test_strips_punctuation_but_keeps_underscores_and_hyphens(self):
         """Punctuation (``:``, ``/``, ``!``) is dropped; underscores/hyphens survive."""
-        self.assertEqual(_slugify("Resource: adr/list!"), "resource-adrlist")
+        self.assertEqual(_slugify("Resource: req/list!"), "resource-reqlist")

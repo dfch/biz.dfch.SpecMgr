@@ -37,8 +37,7 @@ Parse the QA file at ``path`` into a :class:`QaDocument`.
 Reads the file from disk, then parses and validates its content. "Parse"
 here also means "validate": letting :class:`Qa` / :class:`QaFrontmatter`
 / :class:`QaDocument`'s own Pydantic validators run during parsing is the
-only validation pass there is, exactly like ``adr.tools.validate_adr``'s
-own docstring describes for ADRs -- there is no separate validation step.
+only validation pass there is -- there is no separate validation step.
 Any structural problem (unrecognized/misplaced heading, list the schema
 doesn't expect) or field/cross-field validation failure raises
 ``AssertionError``/``pydantic.ValidationError`` (a malformed frontmatter

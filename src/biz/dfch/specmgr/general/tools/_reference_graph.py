@@ -34,11 +34,11 @@ Two builders, one frozen construction semantics each (rulebook §3):
   document, its outgoing reference neighbourhood to ``depth`` (level 0 = the
   source; a level-k node is expanded only if k < depth and it resolved to an
   existing document, its body read through the domain's own read path -- the
-  cache-aware leg for the 14 whole-body domains, the never-cached leg for
-  ``adr``, DEC bfd76370), optionally plus the direct incoming references to
-  the source (``reverse``: a full scan of all 15 source domains, additive and
-  direct-only on the incoming side, with the feat dual-spelling match rule).
-- :func:`build_registry_graph` -- the registry-wide graph: the same 15-domain
+  cache-aware leg for the 14 whole-body domains), optionally plus the direct
+  incoming references to the source (``reverse``: a full scan of all 14
+  source domains, additive and direct-only on the incoming side, with the
+  feat dual-spelling match rule).
+- :func:`build_registry_graph` -- the registry-wide graph: the same 14-domain
   scan; every successfully parsed document is a node; every extracted
   reference an edge; a target not present as a scanned document gets its
   title via :func:`resolve_reference` (dangling ⇒ the unresolved node).
@@ -58,9 +58,9 @@ builders **never raise for target-side content** (a dangling
 target becomes a ``title=None`` node); a **missing** source raises the source
 domain's own ``XNotFoundError`` (propagated unchanged from the source
 domain's own ``load_by_id``), and an **existing-but-broken** source raises
-the domain's own parse error (the ``AssertionError``/
-``pydantic.ValidationError``/``yaml.YAMLError`` channels, ``AdrParseError``
-for ``adr``) -- the Phase 120 tool layer converts that to the non-raising
+ the domain's own parse error (the ``AssertionError``/
+ ``pydantic.ValidationError``/``yaml.YAMLError`` channels) -- the Phase 120
+ tool layer converts that to the non-raising
 ``ParseFailureResult`` (the feat-150 precedent), the builders themselves
 raise. Every build runs over a visited (type, id) set (reference cycles
 terminate by construction; they affect only rendering, rulebook §4).
@@ -90,9 +90,6 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from ...adr.tools._io import load_by_id as load_adr_by_id
-from ...adr.tools._io import read_adr
-from ...adr.tools._paths import adr_base_dir, iter_adr_paths
 from ...dec.tools._cache import read_dec
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
@@ -102,7 +99,6 @@ from ...feat.tools._paths import feat_base_dir, feature_title, find_feat_parse_f
 from ...gol.tools._cache import read_gol
 from ...gol.tools._io import load_by_id as load_gol_by_id
 from ...gol.tools._paths import gol_base_dir
-from ...models.adr import AdrParseError
 from ...prb.tools._cache import read_prb
 from ...prb.tools._io import load_by_id as load_prb_by_id
 from ...prb.tools._paths import prb_base_dir
@@ -138,7 +134,7 @@ from ...vcr.tools._io import load_by_id as load_vcr_by_id
 from ...vcr.tools._paths import vcr_base_dir
 from ..models.reference_graph import GraphEdge, GraphNode, ReferenceGraph
 from ._doc_paths import find_parse_failure
-from ._domains import ALL_DOMAINS, ADR, FEAT, whole_body_domain
+from ._domains import ALL_DOMAINS, FEAT, whole_body_domain
 from ._listing import DEFAULT_ERROR_TYPES
 from ._path_safety import assert_within
 from ._references import find_references, resolve_reference
@@ -147,10 +143,8 @@ from ._splice import body_text
 __all__ = ["build_registry_graph", "build_source_graph"]
 
 #: The parse-failure channels the source scans skip broken documents on
-#: (rulebook §3.4): the three whole-body channels plus ``adr``'s own
-#: ``AdrParseError`` (a ``ValueError`` subclass -- the ``read_adr`` leg's
-#: structural channel).
-_SCAN_ERROR_TYPES: tuple[type[Exception], ...] = DEFAULT_ERROR_TYPES + (AdrParseError,)
+#: (rulebook §3.4): the three whole-body parse-failure channels.
+_SCAN_ERROR_TYPES: tuple[type[Exception], ...] = DEFAULT_ERROR_TYPES
 
 #: The frozen registry-wide diagram title (rulebook §2.2: the default for
 #: ``build_registry_graph``'s output; the scoped builder's default is the
@@ -162,8 +156,8 @@ _REGISTRY_TITLE = "Reference Graph"
 #: here over ``ALL_DOMAINS``): the source document is resolved through the
 #: source domain's own id resolution (the domain's own ``XNotFoundError``
 #: propagates unchanged), and every scanned document is read through the
-#: domain's own read path below (cache-aware for the 14 whole-body domains,
-#: never-cached for ``adr``).
+#: domain's own read path below (the cache-aware ``read_<d>`` leg for every
+#: whole-body domain).
 _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple[Path, BaseModel]]]] = {
     "req": (req_base_dir, load_req_by_id),
     "uc": (uc_base_dir, load_uc_by_id),
@@ -179,7 +173,6 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
     "txt": (txt_base_dir, load_txt_by_id),
     "set": (set_base_dir, load_set_by_id),
-    "adr": (adr_base_dir, load_adr_by_id),
 }
 
 assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
@@ -189,12 +182,11 @@ assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
 )
 
 #: Per source-domain read leg (rulebook §3's "the per-domain cache-aware
-#: reads; the never-cached adr leg"): the 14 whole-body domains read through
-#: their own content-hash-validated ``read_<d>`` cache singleton
-#: (feat-107-doc-cache; ``feat``'s CLEAN, full-parse stage), and ``adr``
-#: through its own plain ``read_adr`` (permanently DocCache-excluded, ADR
-#: bfd76370) -- a broken document's parse failure raises out of the leg and
-#: is skipped by the scans, never a node and never an edge source.
+#: reads"): the 14 whole-body domains read through their own
+#: content-hash-validated ``read_<d>`` cache singleton (feat-107-doc-cache;
+#: ``feat``'s CLEAN, full-parse stage) -- a broken document's parse failure
+#: raises out of the leg and is skipped by the scans, never a node and never
+#: an edge source.
 _SCAN_READERS: dict[str, Callable[[Path], Any]] = {
     "req": read_req,
     "uc": read_uc,
@@ -210,7 +202,6 @@ _SCAN_READERS: dict[str, Callable[[Path], Any]] = {
     "sysrs": read_sysrs,
     "txt": read_txt,
     "set": read_set,
-    "adr": read_adr,
 }
 
 assert set(_SCAN_READERS) == set(ALL_DOMAINS), (
@@ -226,15 +217,12 @@ def _doc_title(type_: str, doc: Any) -> str:
     resolvers use (so a node reached via a reference and the same document
     loaded as a source or scanned in a full scan always carry the identical
     title): the ``feat`` H1 with its ``Feature: `` prefix stripped
-    (:func:`feature_title`), the ``adr`` body's own ``title`` field, every
-    other domain's body H1 (``doc.body.text``).
+    (:func:`feature_title`), every other domain's body H1 (``doc.body.text``).
     """
     assert isinstance(type_, str), type(type_)
 
     if type_ == FEAT:
         result: str = feature_title(doc.body.text)
-    elif type_ == ADR:
-        result = doc.body.title
     else:
         result = doc.body.text
     return result
@@ -259,17 +247,15 @@ def _unique_references(text: str) -> list[tuple[str, str]]:
 
 
 def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
-    """Every parseable document across all 15 source domains (rulebook §3.2/§3.3's full scan).
+    """Every parseable document across all 14 source domains (rulebook §3.2/§3.3's full scan).
 
     The full scan the reverse and registry-wide builders share (no listing,
-    no pagination), in ``ALL_DOMAINS`` order (adr first) and each domain's
-    own sorted path
-    order (the domain's own path iterator: the shared flat-file
+    no pagination), in ``ALL_DOMAINS`` order and each domain's own sorted
+    path order (the domain's own path iterator: the shared flat-file
     ``iter_doc_paths`` for every whole-body domain other than ``feat``,
-    ``iter_feat_paths`` for ``feat``, ``iter_adr_paths`` for ``adr``). Each
-    path is read through the domain's own leg (the cache-aware
-    ``read_<d>`` for the 14 whole-body domains, the never-cached
-    ``read_adr`` for ``adr``); a document that fails to parse
+    ``iter_feat_paths`` for ``feat``). Each path is read through the
+    domain's own leg (the cache-aware ``read_<d>`` for every whole-body
+    domain); a document that fails to parse
     (:data:`_SCAN_ERROR_TYPES` channels) or vanishes mid-scan
     (``FileNotFoundError``) is skipped (rulebook §3.4 -- never a node, never
     an edge source), so the scan never raises for content. That guard
@@ -289,10 +275,7 @@ def _iter_source_documents() -> Iterator[tuple[str, Path, Any]]:
         base_dir_fn, _load_fn = _SOURCE_LOADERS[type_]
         read_fn = _SCAN_READERS[type_]
         base_dir = base_dir_fn()
-        if type_ == ADR:
-            paths = iter_adr_paths(base_dir)
-        else:
-            paths = whole_body_domain(type_).iter_paths(base_dir)
+        paths = whole_body_domain(type_).iter_paths(base_dir)
         for path in paths:
             try:
                 doc = read_fn(path)
@@ -310,11 +293,9 @@ def _raise_broken_source(type_: str, base_dir: Path, id_: str, read_fn: Callable
     ``XNotFoundError`` (a broken source's own id is unreadable by the id
     lookup, which skips unparseable files -- so missing and broken surface
     as the same ``LookupError`` and must be probed apart here). The
-    flat domains and ``adr`` go through the shared
-    :func:`general.tools._doc_paths.find_parse_failure` name-match scan
-    (for ``adr``, a broken file's own ``AdrParseError``/``ValidationError``
-    propagates out of ``find_parse_failure``'s leg read directly -- already
-    the domain's parse error); ``feat`` goes through its folder-per-document
+    flat domains go through the shared
+    :func:`general.tools._doc_paths.find_parse_failure` name-match scan;
+    ``feat`` goes through its folder-per-document
     counterpart :func:`find_feat_parse_failure` (the flat-file stem match
     cannot see a ``<base>/<id>/README.md``). For a name-matching broken
     file, the leg is re-run on the matched path to re-raise the live
@@ -469,7 +450,7 @@ def build_source_graph(
     precedent); each unique (type, id) reference adds exactly one edge +
     one node (the node title via :func:`resolve_reference`; a dangling
     target = ``title=None`` = the unresolved node). ``reverse=True`` is
-    ADDITIVE and direct-only on the incoming side: the full 15-domain scan
+    ADDITIVE and direct-only on the incoming side: the full 14-domain scan
     adds a scanned document as a node + one incoming edge to the source iff
     it carries a reference matching the source on (type, id) (the feat
     dual-spelling rule: a full ``feat-NNN-slug`` source also matches a bare
@@ -491,10 +472,9 @@ def build_source_graph(
     ----------
     source_type:
         The source document's lowercase domain name: one of
-        ``ALL_DOMAINS`` (the 14 whole-body domains plus ``adr``). Assumed
-        validated by the caller (the Phase 120 tool's own ``type``
-        parameter); a name outside ``ALL_DOMAINS`` is a ``KeyError``
-        programming error.
+        ``ALL_DOMAINS`` (the 14 whole-body domains). Assumed validated by the
+        caller (the Phase 120 tool's own ``type`` parameter); a name outside
+        ``ALL_DOMAINS`` is a ``KeyError`` programming error.
     source_id:
         The source document's verbatim id (the canonical lowercase-hex
         uuid for the UUID domains, the full ``feat-NNN-slug`` for
@@ -506,7 +486,7 @@ def build_source_graph(
         ``assert``s the contract). Governs the forward part only.
     reverse:
         When ``True``, add the direct incoming references to the source
-        (the additive 15-domain scan, rulebook §3.2).
+        (the additive 14-domain scan, rulebook §3.2).
     include_feat:
         When ``False``, apply the FEAT exclusion (rulebook §3.5) last:
         drop every FEAT node except this source (when it is one), then
@@ -525,7 +505,7 @@ def build_source_graph(
     LookupError
         The source domain's own ``XNotFoundError`` (a ``LookupError``
         subclass): no document of ``source_type`` has this id.
-    AssertionError / pydantic.ValidationError / yaml.YAMLError / AdrParseError
+    AssertionError / pydantic.ValidationError / yaml.YAMLError
         The source exists but fails to parse -- the domain's own parse
         error (the tool layer converts it to the non-raising
         ``ParseFailureResult``).
@@ -579,7 +559,7 @@ def build_source_graph(
                     next_frontier.append(target_key)
         frontier = next_frontier
 
-    # The reverse pass (additive, direct-only): the full 15-domain scan adds
+    # The reverse pass (additive, direct-only): the full 14-domain scan adds
     # a scanned document as a node + one incoming edge to the source iff it
     # carries a matching reference (the feat dual-spelling rule for a full
     # feat source). The source's own document is skipped (its self-reference,
@@ -613,7 +593,7 @@ def build_source_graph(
 def build_registry_graph(*, include_feat: bool = True) -> ReferenceGraph:
     """Build the registry-wide reference graph (rulebook §3.3/§3.5).
 
-    The same full 15-domain scan the reverse pass uses: every successfully
+    The same full 14-domain scan the reverse pass uses: every successfully
     parsed document is a node (title via :func:`_doc_title`); every
     extracted reference is an edge (deduped per source document); a target
     not present as a scanned document gets its title via

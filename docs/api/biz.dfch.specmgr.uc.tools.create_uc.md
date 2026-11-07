@@ -25,7 +25,7 @@ assigns a fresh id and writes the flat ``docs/uc/uc-<id>-<slug>.md`` file
 creates a *translation* of an existing use case: ``id`` -- the shared id of the
 EN source document (REQ-003, the id is never language-qualified and is never
 freshly assigned for a variant) -- is then **required**, the EN source must
-already exist on disk (ADR item 2: the EN slug is the single filename
+already exist on disk (DEC 38efdb66 item 2: the EN slug is the single filename
 authority), and the variant is written to ``docs/uc/{language}/`` under the
 EN source's exact basename with the shared id as its frontmatter ``id``
 (fresh ``created``/``updated``, ``status="draft"`` -- this domain's create
@@ -143,8 +143,8 @@ UcFrontmatter | ValidateResult
     exactly as the generic ``validate`` tool caps it (feat-110, via
     :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
     ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
-    in that case (feat-204-create-error, ADR
-    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    in that case (feat-204-create-error, DEC
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
 

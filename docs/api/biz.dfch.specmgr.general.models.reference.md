@@ -10,7 +10,7 @@ the bare ``feat-NNN`` number), deduplicates repeated occurrences of the
 same reference (first-occurrence order preserved), resolves each unique
 reference to the referenced document in its own target domain, and returns
 one :class:`ReferenceRow` per unique reference, paged
-(``PagedResult[ReferenceRow]`` via the shared ``list_*`` mechanism, ADR
+(``PagedResult[ReferenceRow]`` via the shared ``list_*`` mechanism, DEC
 ec9f5262). A reference that cannot be resolved on disk still yields a row --
 ``title``/``path`` are ``None`` and ``error`` carries the target domain's
 own not-found message (``list_*``-style inline failure) instead of the tool
@@ -27,7 +27,7 @@ Parameters
 type:
     The referenced document's target domain name, lowercase -- one of
     ``general.tools._references.REFERENCE_TYPES`` (``gol``/``prb``/
-    ``qa``/``uc``/``req``/``rsk``/``dec``/``adr``/``vcr``/``sysrs``/
+    ``qa``/``uc``/``req``/``rsk``/``dec``/``vcr``/``sysrs``/
     ``txt``/``feat``; the reference tag itself is the uppercase form
     of this value).
 id:
@@ -39,7 +39,7 @@ title:
     The referenced document's ``# {title}`` H1, re-derived from the
     resolved document on disk (``doc.body.text`` for the flat target
     domains, the ``feat`` H1 with its ``Feature: `` prefix stripped
-    via ``feature_title``, ``doc.body.title`` for ``adr``) -- or
+    via ``feature_title``) -- or
     ``None`` if the reference could not be resolved (``error`` is
     set).
 path:

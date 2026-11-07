@@ -35,7 +35,7 @@ Covers ACC-001..ACC-006 and ACC-008..ACC-010 (ACC-007's docs are Phase 4):
 - The byte-unchanged-on-every-failure-path regression (raw bytes) -- ACC-002/
   003/004, Task 3.3.
 - The registration/input-schema test (live ``mcp.list_tools()``) and the pinned
-  ``type="adr"`` explicit-``ValueError`` test (Task 3.4, REQ-004/ACC-006).
+  unknown-``type`` explicit-``ValueError`` test (Task 3.4, REQ-004/ACC-006).
 
 Two notes on derivation (as in ``test_update.py``'s own approach note):
 
@@ -157,14 +157,6 @@ _EMPTY_OLD_STR_MESSAGE = (
     "Provide the exact text to replace, "
     "or use update for an intentional full-file replacement."
 )
-
-
-def _unknown_type_message(type_: str) -> str:
-    """The public dispatcher's explicit pre-dispatch ``type`` rejection message (REQ-004)."""
-    result = (
-        f"unknown document type {type_!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} ('adr' is not supported)"
-    )
-    return result
 
 
 #: A fixed date+time timestamp (feat-146 shape, ``T``-separated canonical form)
@@ -1134,37 +1126,25 @@ class TestEditPublicGuards(TempEditDirTestCase):
 
 
 class TestEditUnsupportedType(TempEditDirTestCase):
-    """REQ-004/ACC-006: an unknown or ``adr`` ``type`` is an explicit pre-dispatch ``ValueError``
-    (the generic ``validate`` tool's precedent; a deliberate divergence from ``update``'s
-    inherited ``KeyError``), before any filesystem access."""
+    """REQ-004/ACC-006: an unknown ``type`` is a pre-dispatch ``ValueError`` (before any
+    filesystem access), raised by ``validate_id`` which runs ahead of ``edit``'s own
+    defensive explicit check."""
 
-    def test_adr_type_raises_explicit_value_error_before_any_filesystem_access(self) -> None:
-        """REQ-004/ACC-006: ``type="adr"`` raises the edit-specific explicit pre-dispatch
-        ``ValueError``, before any filesystem access."""
+    def test_unknown_type_raises_value_error_before_any_filesystem_access(self) -> None:
+        """REQ-004: an unknown type is rejected with a pre-dispatch ``ValueError`` before any
+        filesystem access (containment, not full equality: ``validate_id`` raises first with its
+        own message)."""
         with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="adr", old_str="old text", new_str="new text")  # type: ignore[arg-type]
+            edit(id=_MISSING_UUID, type="bogus", old_str="old text", new_str="new text")  # type: ignore[arg-type]
 
-        self.assertEqual(str(ctx.exception), _unknown_type_message("adr"))
+        self.assertIn("bogus", str(ctx.exception))
         self.assertFalse(any(self.docs_root.iterdir()))
         self.assertFalse(any(self.feat_dir.iterdir()))
 
-    def test_adr_type_precedes_identical_input_guard(self) -> None:
-        """Guard order (REQ-008): the explicit ``type`` check fires before the input guards."""
+    def test_unknown_type_precedes_identical_input_guard(self) -> None:
+        """Guard order (REQ-008): the ``type`` check fires before the input guards."""
         with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="adr", old_str="identical text", new_str="identical text")  # type: ignore[arg-type]
-
-        self.assertEqual(str(ctx.exception), _unknown_type_message("adr"))
-
-    def test_unknown_type_raises_value_error(self) -> None:
-        """REQ-004: an unknown non-``adr`` type is rejected with a plain pre-dispatch ``ValueError``.
-
-        Containment (not full equality) is deliberate: for every type other than ``"adr"``,
-        ``validate_id`` -- which runs before ``edit``'s own explicit check -- raises first with
-        its own message (naming the UUID domains, ``adr`` included); the edit-specific message
-        is reachable only for ``type="adr"`` (pinned by full equality in the adjacent test).
-        """
-        with self.assertRaises(ValueError) as ctx:
-            edit(id=_MISSING_UUID, type="bogus", old_str="old text", new_str="new text")  # type: ignore[arg-type]
+            edit(id=_MISSING_UUID, type="bogus", old_str="identical text", new_str="identical text")  # type: ignore[arg-type]
 
         self.assertIn("bogus", str(ctx.exception))
 
@@ -1420,7 +1400,7 @@ class TestEditAssertWithinSpy(TempEditDirTestCase):
 
 class TestEditRegistration(unittest.TestCase):
     """Task 3.4: the live ``mcp`` registration carries ``edit`` exactly once, with the pinned
-    input schema (ACC-006): the 13-value ``type`` enum (no ``adr``),
+    input schema (ACC-006): the full whole-body-domain ``type`` enum,
     ``required == [id, type, old_str, new_str]``, optional boolean ``replace_all``
     defaulting to ``false``, and no ``minLength`` on ``new_str`` (REQ-001/D1)."""
 
@@ -1431,8 +1411,8 @@ class TestEditRegistration(unittest.TestCase):
         cls._tools = asyncio.run(mcp.list_tools())
 
     def test_edit_registered_exactly_once_with_pinned_input_schema(self) -> None:
-        """ACC-006: the live MCP registration carries ``edit`` exactly once, with the
-        14-value ``type`` enum (no ``adr``)."""
+        """ACC-006: the live MCP registration carries ``edit`` exactly once, with the full
+        whole-body-domain ``type`` enum."""
         matching = [t for t in self._tools if t.name == "edit"]
         self.assertEqual(len(matching), 1)
 
@@ -1441,7 +1421,6 @@ class TestEditRegistration(unittest.TestCase):
         self.assertEqual(type_prop["enum"], list(WHOLE_BODY_DOMAINS))
         self.assertEqual(type_prop["type"], "string")
         self.assertEqual(len(type_prop["enum"]), 14)
-        self.assertNotIn("adr", type_prop["enum"])
         self.assertEqual(schema["required"], ["id", "type", "old_str", "new_str"])
 
         replace_all_prop = schema["properties"]["replace_all"]

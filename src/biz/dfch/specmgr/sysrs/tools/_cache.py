@@ -97,7 +97,7 @@ def read_sysrs(path: Path) -> SysrsDocument:
     """Read and parse the System Requirements Specification at ``path``, through the cache.
 
     A file is only ever re-parsed when its on-disk content hash no longer
-    matches the hash recorded at the last read of ``path`` (ADR
+    matches the hash recorded at the last read of ``path`` (DEC
     bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
     re-raised cached failure) is returned without re-invoking
     :func:`~biz.dfch.specmgr.sysrs.models.v1.parse_sysrs`.
@@ -113,7 +113,7 @@ def read_sysrs(path: Path) -> SysrsDocument:
     second read, the generic tools' own sysrs adapters) parses a variant file
     with its table without any signature change, and the ``DocCache``'s
     path-keyed entries keep EN and every language of one id independent
-    (ADR item 9 -- no cache code change).
+    (DEC 38efdb66 item 9 -- no cache code change).
 
     Parameters
     ----------

@@ -35,7 +35,7 @@ no ``specmgr://set/list`` resource either -- listing goes through the
 DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 set ships the generated JSON Schema as the ``get_set_schema`` ``@mcp.tool()``
-(``set.tools.get_set_schema``) from day one, per ADR
+(``set.tools.get_set_schema``) from day one, per DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3 (feat-189 Phase 105) -- there is no
 ``specmgr://set/schema`` resource in its history.
 """

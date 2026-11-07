@@ -3,18 +3,14 @@
 Generic, doc-type-agnostic base directory resolution, filename slugification,
 and id -> path lookup (plan Task 3.10).
 
-Generalizes ``adr.tools._paths``'s shape into a single module shared across
-document domains (REQ now, UC later) instead of a copy per domain: one root
+A single module shared across document domains (REQ now, UC later) instead
+of a copy per domain: one root
 env var (:data:`DOCS_DIR_ENV_VAR`, default :data:`DEFAULT_DOCS_ROOT`) holds
 every doc type's own subdirectory (``{root}/{type_name}/``, e.g. ``docs/req/``
 for ``type_name="req"``).
 
-**ADR is deliberately left untouched** -- it keeps its own
-``SPECMGR_ADR_DIR``/``docs/adr`` env var and default (``adr.tools._paths``).
-Migrating ADR onto this shared module is optional future cleanup, not
-bundled into this change.
 
-As with ``adr.tools._paths``, this module has no ``mcp``/file-write
+This module has no ``mcp``/file-write
 dependency beyond read-only directory listing: :func:`doc_base_dir` never
 creates the directory (a read-only tool shouldn't have that side effect),
 only :func:`ensure_doc_base_dir` does.
@@ -57,7 +53,7 @@ Phase 8, REQ-014).** This scan iterates over a path list materialized at
 one point in time (the directory-listing snapshot up front), but the
 generic ``delete`` tool in ``general.tools`` only holds the *target*
 document's own per-id lock, never a whole-domain lock, while ``get_*``/
-``list_*`` intentionally take no lock at all (ADR
+``list_*`` intentionally take no lock at all (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of *any
 other* document in the same domain can remove a file between the scan's
 directory listing and that file's own turn in the loop, raising
@@ -90,10 +86,10 @@ unchanged and stays non-recursive: it never descends into ``{language}``
 subfolders, which is exactly what keeps every EN-only consumer (each
 domain's own flat scan, plus ``list_references``,
 ``find_related``/``find_similar_text``, ``get_reference_diagram(_all)``)
-EN-only by directory layout (REQ-013/ACC-014, ADR item 8).
+EN-only by directory layout (REQ-013/ACC-014, DEC 38efdb66 item 8).
 
 **A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
-encodes (feat-150-mcp-lifecycle-commands Phase 1a, ADR
+encodes (feat-150-mcp-lifecycle-commands Phase 1a, DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c).** :func:`find_doc_path_by_id`'s
 skip-on-parse-failure behavior above is deliberate and unchanged -- but it
 means ``get_<d>`` on a document whose own file is broken raised only the
@@ -222,8 +218,8 @@ before doing any per-file work, then scans that same materialized
 listing, reading each path via ``read_fn`` and comparing
 ``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
 (``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
-and every parser-specific error in this codebase -- e.g.
-``AdrParseError`` -- subclass; ``yaml.YAMLError``, raised unwrapped
+and every parser-specific error in this codebase -- subclass;
+``yaml.YAMLError``, raised unwrapped
 for malformed frontmatter YAML by every ``parse_<domain>`` function,
 Phase 6, REQ-010; or ``FileNotFoundError``, raised by ``read_fn`` when
 a file vanishes between this function's own directory-listing
@@ -310,14 +306,14 @@ outcome -- no name match, a name-matching file that vanishes mid-scan
 (a frontmatter-id mismatch, i.e. the file is not the requested document)
 -- so a caller can re-raise its original not-found error unchanged.
 
-feat-150-mcp-lifecycle-commands Phase 1a, ADR
+feat-150-mcp-lifecycle-commands Phase 1a, DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c: the ``get_<d>`` tools call this on
 the domain's ``XNotFoundError`` and return a non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
 non-``None`` result. The four generic mutation tools
 (``update``/``edit``/``set_status``/``set_classification``) now call it
 the same way from their own per-domain adapters on the same catch
-(feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+(feat-170-update-edit-parse-failure, GitHub issue #170, DEC
 b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC 519d1206
 chain), with the same ``read_fn``/``assert_within`` mirroring.
 
@@ -458,7 +454,7 @@ str | None
 
 Derive a filename-safe slug from a document title.
 
-Ported from ``adr.tools._paths.slugify`` unchanged: lowercases
+Lowercases
 ``title``, collapses every run of non-``[a-z0-9]`` characters into a
 single ``-``, strips leading/trailing ``-``, truncates to
 :data:`_SLUG_MAX_LENGTH` characters (stripping a trailing ``-`` again in

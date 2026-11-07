@@ -41,19 +41,20 @@ then be structurally ambiguous. A shape-valid language with no table file
 is UNUSABLE: the loader raises an actionable :class:`ValueError` (the
 shape guard itself, :func:`~biz.dfch.specmgr.general.tools._path_safety.
 assert_language`, is deliberately shape-only -- the open set passes, and
-this is the closed-set check, ADR item 6).
+this is the closed-set check, DEC 38efdb66 item 6).
 
 :func:`normalize_heading_lines` is the pre-parse heading-normalization
-pre-pass of ADR item 5: a fence-aware (``` / ~~~ code fences), line-based
+pre-pass of DEC 38efdb66 item 5: a fence-aware (``` / ~~~ code fences), line-based
 transform that rewrites each ``^#{2,6} `` section-heading line outside a
 fence to its canonical text when (and only when) the table maps it, leaving
 every other line byte-identical. The level-1 line -- the document title (H1)
 -- is free text in every i18n-eligible domain (alias ``.+``, or the
 ``sysrs`` English prefix pattern) and is NEVER looked up or rewritten, so a
 title that happens to equal a table key (e.g. a German title ``Quelle``)
-reaches the model unchanged (ADR item 5: the free-form H1 is unaffected). It sits at each domain's text-to-model parse
-boundary (for the pilot domain ``dec``, :func:`biz.dfch.specmgr.
-dec.models.v1.parse_dec`) *after* the mdformat normalization and *before*
+ reaches the model unchanged (DEC 38efdb66 item 5: the free-form H1 is
+ unaffected). It sits at each domain's text-to-model parse boundary (for the
+ pilot domain ``dec``, :func:`biz.dfch.specmgr.dec.models.v1.parse_dec`)
+ *after* the mdformat normalization and *before*
 the unchanged ``models/md`` engine runs -- the engine then sees canonical
 English heading text, the parsed model holds the same canonical keys the EN
 parser produces (ACC-011), and the on-disk file keeps its translation
@@ -98,7 +99,7 @@ _loaded_tables: dict[str, dict[str, str]] = {}
 _load_lock = threading.Lock()
 
 #: An ATX heading line in mdformat-normalized form: 1-6 hashes, one space,
-#: then the inline text (the ADR item 5 ``^#{1,6} `` match, trailing
+#: then the inline text (the DEC 38efdb66 item 5 ``^#{1,6} `` match, trailing
 #: whitespace tolerated for the lookup key).
 _HEADING_LINE_PATTERN = re.compile(r"^(#{1,6}) (.+)$")
 
@@ -165,7 +166,7 @@ def load_heading_table(language: str) -> dict[str, str]:
     ------
     ValueError
         The table file does not exist (the shape-valid-but-unusable
-        language, ADR item 3/6 -- the message names the missing file and
+        language, DEC 38efdb66 item 3/6 -- the message names the missing file and
         what adding it would enable), the file is not valid JSON, is not a
         flat ``str -> str`` object, or carries two distinct canonical
         headings translated to the same string (values must be pairwise

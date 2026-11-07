@@ -17,10 +17,10 @@
 
 """System Requirements Specification (SYSRS) domain -- an aggregator document type that
 ties together already-existing specmgr artifacts (``gol``, ``prb``, ``qa``, ``uc``,
-``req``, ``rsk``, ``dec``/``adr``, ``vcr``) into one coherent, navigable specification,
+``req``, ``rsk``, ``dec``, ``vcr``) into one coherent, navigable specification,
 rather than duplicating their content.
 
-This is a domain-first package, mirroring ``sop``'s layout (per ADR
+This is a domain-first package, mirroring ``sop``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts, and
 resources for managing ``sysrs`` documents. A ``sysrs`` is built on the
 generic ``models/md`` parser with the simple surface used by GOL/RSK/QA/DEC/

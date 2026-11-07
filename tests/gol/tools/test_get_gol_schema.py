@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 
-"""Tests for the ``get_gol_schema`` ``@mcp.tool()`` wrapper (feat-189 Phase 105, ADR
+"""Tests for the ``get_gol_schema`` ``@mcp.tool()`` wrapper (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3)."""
 
 from __future__ import annotations

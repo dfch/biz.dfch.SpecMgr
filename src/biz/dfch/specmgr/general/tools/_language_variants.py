@@ -35,7 +35,7 @@ LANGUAGE_AWARE_DOMAINS`) all expose the same three callables under the same name
 healthy one carries ``parseable=True``; a document that exists but fails to parse (a broken file, or a language whose
 heading table is missing) is *still located* -- ``parseable=False`` with the parse-failure message, the string form of
 the very exception the domain's cache-backed reader raises, so it is byte-identical to the domain's ``list_<d>``
-failed-row ``error`` and to ``get_<d>``'s ``ParseFailureResult.error`` for the same file in the same language (ADR
+failed-row ``error`` and to ``get_<d>``'s ``ParseFailureResult.error`` for the same file in the same language (DEC
 9080b37c). A document that does not exist at all raises the domain's own ``XNotFoundError`` (a ``LookupError``).
 """
 

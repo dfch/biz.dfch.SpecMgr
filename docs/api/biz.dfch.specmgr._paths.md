@@ -22,7 +22,7 @@ deliberately does **not** import this module -- it reads a packaged-data
 copy via ``general.tools._packaged_data`` instead, so the ``get_req_schema``
 MCP tool keeps working from a non-editable install too. Every current caller of
 ``DOCS_DIR`` is a dev/CI-only CLI command (``commands/schema.py``,
-``commands/docs.py``, ``commands/adr_toc.py``); it is not meant for
+``commands/docs.py``); it is not meant for
 resources/tools that must survive a real, non-editable install -- use
 ``importlib.resources``-backed package data for those instead (see
 `.specmgr/feat/feat-6-requirement-artifact/README.md`'s Decisions Made).

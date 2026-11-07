@@ -111,7 +111,6 @@ from importlib.util import find_spec
 from pathlib import Path
 
 from ... import _envregistry
-from ...adr.tools._paths import ADR_DIR_ENV_VAR, adr_base_dir
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._paths import FEAT_DIR_ENV_VAR, feat_base_dir
 from ...general.tools._diagram_config import DEFAULT_MAX_TITLE, ENV_VAR_DIAGRAM_MAX_TITLE, diagram_max_title
@@ -238,12 +237,10 @@ def config_info() -> ConfigInfo:
     plantuml, and diagram sections and the feat_warmup_disabled flag.
 
     Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
-    reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
-    each have their own dedicated env var; every other domain (``req``,
-    ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``vcr``, ``sysrs``, ``txt``, ``set``) shares the one root
-    ``SPECMGR_DOCS_DIR``
-    env var,
+    reads only those from the environment (REQ-002) -- ``feat`` has its own
+    dedicated env var; every other domain (``req``, ``uc``, ``tsk``, ``qa``,
+    ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``,
+    ``set``) shares the one root ``SPECMGR_DOCS_DIR`` env var,
     so their ``env_var``/``env_var_set`` fields are identical by design, not
     a bug.
 
@@ -281,7 +278,7 @@ def config_info() -> ConfigInfo:
     CLI) render with: 40 when unset or set-but-invalid, the set int
     otherwise.
 
-    ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+    ``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, DEC
     3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
     convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
     unified startup warmup thread's ``feat`` frontmatter/full-parse phases.
@@ -296,11 +293,6 @@ def config_info() -> ConfigInfo:
     docs_dir_set = _envregistry.get(DOCS_DIR_ENV_VAR) is not None
 
     domains = {
-        "adr": DomainConfig(
-            base_dir=str(adr_base_dir().resolve()),
-            env_var=ADR_DIR_ENV_VAR,
-            env_var_set=_envregistry.get(ADR_DIR_ENV_VAR) is not None,
-        ),
         "req": DomainConfig(
             base_dir=str(req_base_dir().resolve()),
             env_var=DOCS_DIR_ENV_VAR,

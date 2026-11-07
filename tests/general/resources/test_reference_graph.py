@@ -50,7 +50,6 @@ from tests.plantuml.test_reference_graph_subset import _EMITTED_SUBSET
 #: feat-229-txt Phase 150, the SET entry by feat-173-req-iso29148-level-set
 #: Phase 180).
 _PALETTE_LINES = [
-    "backgroundColor<<ADR>> LightYellow",
     "backgroundColor<<REQ>> LightBlue",
     "backgroundColor<<UC>> Pink",
     "backgroundColor<<TSK>> Honeydew",

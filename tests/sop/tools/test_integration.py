@@ -28,7 +28,7 @@ module drives the actual tool functions in a single realistic sequence --
  create->get->list->update->set_status->validate round-trip requirement
  with concrete evidence beyond the isolated per-tool tests.
 
-``sop`` is the first domain built dispatch-only from day one (ADR
+``sop`` is the first domain built dispatch-only from day one (DEC
 36905d5b): it has **no** per-domain ``update_sop``/``set_status_sop``
 tools, so the round-trip below drives the GENERIC ``update``/
 ``set_status`` tools in ``general.tools`` with ``type="sop"`` -- not
@@ -222,7 +222,7 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="sop") must reject `implemented` (GOL's value, outside SOP's
-        closed five-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        closed five-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_sop(_INITIAL_BODY)
         expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
@@ -235,17 +235,6 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertEqual(result.type, "sop")
         self.assertEqual(result.status, "implemented")
         self.assertEqual(result.allowed_values, sorted(_SOP_ALLOWED_STATUSES))
-        self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
-
-    def test_set_status_rejects_superseded_by_for_sop(self) -> None:
-        """ACC-006: set_status (type="sop") must reject `superseded_by` (ADR-only) with ValueError, before any file access."""
-        created = create_sop(_INITIAL_BODY)
-        expected_path = sop_base_dir() / f"sop-{created.id}-new-employee-it-account-provisioning.md"
-        before = expected_path.read_text(encoding="utf-8")
-
-        with self.assertRaises(ValueError):
-            set_status(created.id, "sop", "active", superseded_by="other-sop")
-
         self.assertEqual(expected_path.read_text(encoding="utf-8"), before)
 
     def test_validate_rejects_malformed_body_and_wrong_full_shape(self) -> None:

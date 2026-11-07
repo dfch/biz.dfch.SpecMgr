@@ -32,8 +32,8 @@ added first -- never invented here).
 
 ``type`` is one of the thirteen i18n-eligible domains (imported from
 ``general.tools._language_guard.LANGUAGE_AWARE_DOMAINS``, the single
-source of truth); ``feat`` and ``adr`` are permanently English and
-explicitly rejected. Like ``repair``, the prompt validates its arguments
+source of truth); ``feat`` is permanently English and explicitly
+rejected. Like ``repair``, the prompt validates its arguments
 up front and raises ``ValueError`` -- before any text is rendered.
 
 This prompt is cross-cutting (it takes ``type`` + ``id`` + languages), so
@@ -60,8 +60,8 @@ Parameters
 type:
     The document domain to translate: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``,
-    ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat`` and ``adr``
-    are permanently English and rejected with an actionable error; so is
+    ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat``
+    is permanently English and rejected with an actionable error; so is
     any other unknown value.
 id:
     The shared id of the artifact (the EN source's id, which every
@@ -86,7 +86,7 @@ str
 Raises
 ------
 ValueError
-    ``type`` is ``feat``/``adr`` (always English) or unknown; ``id`` is
+    ``type`` is ``feat`` (always English) or unknown; ``id`` is
     blank/whitespace-only; ``language`` or ``source_language`` is not an
     ISO 639-1-shaped lowercase two-letter code or has no heading-mapping
     table; ``language`` is ``"en"``; or ``language`` equals

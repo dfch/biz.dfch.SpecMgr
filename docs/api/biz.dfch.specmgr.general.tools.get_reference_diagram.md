@@ -26,18 +26,16 @@ the guard order of Design Notes §7 (``_path_safety.validate_id`` and the
 ``list_feat`` to discover the exact ``feat-NNN-slug`` id), the source load's
 error mapping (a missing source raises the source domain's own
 ``XNotFoundError``, identical to ``get_<d>``/``list_references``; an
-existing-but-broken source returns the non-raising
-:class:`~biz.dfch.specmgr.general.models.ParseFailureResult` -- case 3 of the
-DEC 519d1206 workaround chain -- with the ``error`` text byte-identical to
-the domain's ``list_<d>`` failed-row ``error`` for the same file (ADR
-9080b37c) for the 14 whole-body domains -- time-qualified by ADR
-3982712a for ``feat`` (``get_feat`` the unconditional full-fidelity
-authority) -- and, for ``adr`` (whose ``list_adr`` carries no failed row:
-broken ADRs are skipped), the leg-read ``AdrParseError``'s own text), the
-``title`` override (replaces the graph's title before
-rendering; the renderer sanitizes the title but never truncates it), and the
-``max_label`` read via the shared env-var helper (the pure renderer takes it
-as a plain parameter and never reads the env var itself).
+ existing-but-broken source returns the non-raising
+ :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` -- case 3 of the
+ DEC 519d1206 workaround chain -- with the ``error`` text byte-identical to
+ the domain's ``list_<d>`` failed-row ``error`` for the same file (DEC
+ 9080b37c) for the 14 whole-body domains, time-qualified by DEC 3982712a for
+ ``feat`` (``get_feat`` the unconditional full-fidelity authority), the
+ ``title`` override (replaces the graph's title before rendering; the
+ renderer sanitizes the title but never truncates it), and the ``max_label``
+ read via the shared env-var helper (the pure renderer takes it as a plain
+ parameter and never reads the env var itself).
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects to
@@ -56,19 +54,13 @@ this one returns instead): ``feat`` goes through
 counterpart -- its ``error`` is byte-identical to ``list_feat``'s own
 failed row for the same file once that file's clean stage has converged,
 time-qualified by DEC 3982712a), every other domain through the shared
-flat-file ``find_parse_failure`` name-match scan called with the
-domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
-whole-body domains, whose ``list_<d>`` failed row reads with the same
-``read_fn``, so the captured ``str(exc)`` is byte-identical to that
-row's ``error`` -- DEC 9080b37c). For ``adr``, ``find_parse_failure``
-'s own leg read propagates the domain's parse error (``AdrParseError`` is
-outside its catch tuple -- the Phase 110 mechanism's own adr channel), in
-which case the single name-matching file is the broken source itself and
-the captured ``str(exc)`` is that ``AdrParseError``'s own text
-(``list_adr`` carries no failed row -- broken ADRs are skipped -- so the
-DEC 9080b37c byte-identity has no referent there). The probed path
-passes the same ``assert_within`` guard every ``get_<d>``/``update``
-branch applies.
+ flat-file ``find_parse_failure`` name-match scan called with the
+ domain's own ``read_<d>`` leg (cache-backed for the 11 flat-file
+ whole-body domains, whose ``list_<d>`` failed row reads with the same
+ ``read_fn``, so the captured ``str(exc)`` is byte-identical to that
+ row's ``error`` -- DEC 9080b37c). The probed path
+ passes the same ``assert_within`` guard every ``get_<d>``/``update``
+ branch applies.
 
 Parameters
 ----------
@@ -112,13 +104,13 @@ ValueError
     message names the offending value.
 
 
-### `get_reference_diagram(type: 'WholeBodyOrAdrType', id: 'str', depth: 'int' = 1, reverse: 'bool' = False, include_feat: 'bool' = True, title: 'str | None' = None) -> 'str | ParseFailureResult'`
+### `get_reference_diagram(type: 'WholeBodyType', id: 'str', depth: 'int' = 1, reverse: 'bool' = False, include_feat: 'bool' = True, title: 'str | None' = None) -> 'str | ParseFailureResult'`
 
 Render and return the PlantUML reference diagram of one source document's neighbourhood.
 
 The source is identified by ``type`` (every whole-body domain
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
+``feat``/``vcr``/``sysrs``/``txt``/``set``) and its own
 ``id``. The graph
 is the source document, its outgoing reference neighbourhood to
 ``depth`` (level 0 = the source; a level-k node is expanded only if
@@ -142,19 +134,17 @@ missing source raises the source domain's own ``XNotFoundError``
 source returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` (case 3 of
 the DEC 519d1206 workaround chain) instead of raising -- its ``error``
-text is byte-identical to that domain's ``list_<d>`` failed-row
-``error`` for the same file (DEC 9080b37c) for the 14 whole-body domains
--- time-qualified by DEC 3982712a for ``feat`` (``get_feat`` the
-unconditional full-fidelity authority) -- and, for ``adr`` (whose
-``list_adr`` carries no failed row: broken ADRs are skipped), the
-leg-read ``AdrParseError``'s own text. The build then never raises
-for target-side content (a dangling target becomes the unresolved node),
-and the render is pure.
+ text is byte-identical to that domain's ``list_<d>`` failed-row
+ ``error`` for the same file (DEC 9080b37c) for the 14 whole-body
+ domains -- time-qualified by DEC 3982712a for ``feat`` (``get_feat``
+ the unconditional full-fidelity authority). The build then never
+ raises for target-side content (a dangling target becomes the unresolved
+ node), and the render is pure.
 
 The diagram title is the ``title`` override when given (sanitized but
 never truncated by the renderer), else the source's derived H1 (the
-``feature_title`` prefix strip for ``feat``, the ``adr`` body's own
-``title`` field, every other domain's body H1). The resolved-node label
+``feature_title`` prefix strip for ``feat``, every other domain's body
+H1). The resolved-node label
 limit is the ``SPECMGR_DIAGRAM_MAX_TITLE`` env var via the shared
 ``_diagram_config.diagram_max_title`` helper (default 40; a
 set-but-invalid value falls back to 40 -- the ``specmgr://config``
@@ -163,7 +153,7 @@ set-but-invalid value falls back to 40 -- the ``specmgr://config``
 Parameters
 ----------
 type:
-    The source document's type / domain: one of ``adr``, ``req``,
+    The source document's type / domain: one of ``req``,
     ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
     ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
 id:
@@ -177,7 +167,7 @@ depth:
     (rulebook §3.2).
 reverse:
     When ``True``, add the direct incoming references to the source
-    (the additive 15-domain scan, rulebook §3.2).
+    (the additive 14-domain scan, rulebook §3.2).
 include_feat:
     When ``False``, apply the FEAT exclusion (rulebook §3.5) last: drop
     every FEAT node except this source (when it is one), then every
@@ -197,7 +187,7 @@ str | ParseFailureResult
 Raises
 ------
 ValueError
-    ``type`` is outside the 15-domain vocabulary, ``id`` is a
+    ``type`` is outside the 14-domain vocabulary, ``id`` is a
     path-injection attempt or not in the dispatched domain's own format
     (for ``feat``: not a full ``feat-NNN-slug``), or ``depth`` is not a
     plain ``int`` in 1..5 -- all raised before any filesystem access;
@@ -206,7 +196,7 @@ ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /
 FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-TxtNotFoundError / AdrNotFoundError
+TxtNotFoundError
     No document of the dispatched source ``type`` has this ``id`` --
     the source domain's own not-found error, propagated unchanged from
     the source domain's own ``load_by_id`` (identical to ``get_<d>``).

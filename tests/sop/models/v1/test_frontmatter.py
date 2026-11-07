@@ -33,7 +33,7 @@ class TestSopFrontmatter(unittest.TestCase):
         self.assertEqual(sut.type, "sop")
 
     def test_type_rejects_other_document_types(self) -> None:
-        for other in ("req", "gol", "dec", "adr", "rsk"):
+        for other in ("req", "gol", "dec", "rsk"):
             with self.subTest(other=other):
                 with self.assertRaises(ValidationError):
                     SopFrontmatter(type=other)

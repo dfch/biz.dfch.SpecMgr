@@ -169,7 +169,7 @@ def _count_test_files() -> int:
 
 
 def _list_domain_packages() -> dict[str, list[str]]:
-    """List domain packages and their subpackages (``models/``, ``adr/``)."""
+    """List domain packages and their subpackages (``models/``)."""
     result: dict[str, list[str]] = {}
 
     models_dir = _SRC_ROOT / "models"
@@ -182,31 +182,7 @@ def _list_domain_packages() -> dict[str, list[str]]:
         if models:
             result["models"] = sorted(models)
 
-    adr_dir = _SRC_ROOT / "adr"
-    if adr_dir.exists():
-        adr_subs = [
-            d.name for d in adr_dir.iterdir() if d.is_dir() and not d.name.startswith("_") and d.name != "__pycache__"
-        ]
-        if adr_subs:
-            result["adr_subpackages"] = sorted(adr_subs)
-
     return result
-
-
-def _count_py_files(subdir: Path) -> int:
-    """Count non-private, non-``__init__`` ``.py`` files directly under ``subdir``."""
-    if not subdir.exists():
-        return 0
-    return len([f for f in subdir.glob("*.py") if not f.name.startswith("_") and f.name != "__init__.py"])
-
-
-def _count_mcp_features() -> dict[str, int]:
-    """Count MCP tools, resources, and prompt modules under ``adr/``."""
-    return {
-        "tools": _count_py_files(_SRC_ROOT / "adr" / "tools"),
-        "resources": _count_py_files(_SRC_ROOT / "adr" / "resources"),
-        "prompts": _count_py_files(_SRC_ROOT / "adr" / "prompts"),
-    }
 
 
 def generate_module_reference() -> str:
@@ -233,7 +209,6 @@ def generate_module_reference() -> str:
 def generate_generated_md() -> str:
     """Generate the full contents of ``docs/GENERATED.md``."""
     domains = _list_domain_packages()
-    features = _count_mcp_features()
     test_count = _count_test_files()
 
     lines = [
@@ -248,16 +223,6 @@ def generate_generated_md() -> str:
 
     if "models" in domains:
         lines.append(f"**Models** — schema definitions: {', '.join(domains['models'])}")
-        lines.append("")
-
-    if "adr_subpackages" in domains:
-        lines.append(f"**ADR domain** — subpackages: {', '.join(domains['adr_subpackages'])}")
-        if features["tools"] > 0:
-            lines.append(f"  - {features['tools']} MCP tools")
-        if features["resources"] > 0:
-            lines.append(f"  - {features['resources']} MCP resources")
-        if features["prompts"] > 0:
-            lines.append(f"  - {features['prompts']} prompt modules")
         lines.append("")
 
     lines.append(generate_module_reference())

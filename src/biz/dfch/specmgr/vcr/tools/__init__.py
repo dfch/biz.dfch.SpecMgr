@@ -32,7 +32,7 @@ replaces the removed ``specmgr://vcr/schema`` resource).
 record document by id -- the sole id-based read path for VCR (there is no
 ``specmgr://vcr/{id}`` resource, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 ``list_vcr`` returns one page of id/title/status/ref summaries of every
-verification case record, shipped as a paged tool from day one (ADR
+verification case record, shipped as a paged tool from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_vcr`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the verification case record base directory

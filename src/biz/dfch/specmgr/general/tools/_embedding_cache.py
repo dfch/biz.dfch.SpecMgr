@@ -45,7 +45,7 @@ candidate's ``SimilarityText`` -- see below) are returned without
 re-embedding or re-parsing. A stale entry is structurally impossible --
 it can only ever cost one extra embed, never an incorrect result. This
 refines, rather than violates, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
-"the filesystem is the sole source of truth" invariant, exactly as ADR
+"the filesystem is the sole source of truth" invariant, exactly as DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d did for parsing.
 
 **Row metadata is cached with the vector (feat-134, Phase 6).** An entry
@@ -352,7 +352,7 @@ def read_embedding(domain: str, path: Path, embed_fn: _EmbedFn) -> tuple[Vector,
     The public read entry point over the module-level :data:`_cache`
     singleton (Phase 3's similarity tools are the first callers): a file is
     only ever re-embedded when its on-disk content hash no longer matches
-    the hash recorded at the last read of ``(domain, path)`` (ADR
+    the hash recorded at the last read of ``(domain, path)`` (DEC
     750842b2/REQ-004) -- see :meth:`EmbeddingCache.read` for the full
     contract, including the Phase 6 row-metadata serving (a warm read is
     one file read and no parse; a cold one, one of each).

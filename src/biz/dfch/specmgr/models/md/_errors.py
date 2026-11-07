@@ -39,10 +39,10 @@ wrap only *one* inner call, not their entire body, e.g. ``validate_<d>`` has an 
 
 On a caught exception it re-raises the exact same runtime exception type (REQ-006) with an
 enriched message -- reusing the same two techniques already established by Phases 1/2:
-message-only reconstruction for ``AssertionError`` (and any domain-specific structural error
-type opted into via ``also_catch``, e.g. ADR's own :class:`~biz.dfch.specmgr.models.adr.v1.
-parser.AdrParseError`, a plain ``ValueError`` subclass with the same single-message
-constructor shape), and ``pydantic_core.ValidationError.from_exception_data`` (the same
+ message-only reconstruction for ``AssertionError`` (and any domain-specific
+ structural error type opted into via ``also_catch``, a plain ``ValueError``
+ subclass with the same single-message constructor shape), and
+ ``pydantic_core.ValidationError.from_exception_data`` (the same
 construction Phase 2's ``models/md/_frontmatter_parse.py`` uses) for ``pydantic.
 ValidationError``. ``yaml.YAMLError`` is reconstructed the same ``yaml.error.Mark``-preserving
 way Phase 2's ``enrich_frontmatter_yaml_error`` does, except here only the ``context`` field
@@ -106,8 +106,8 @@ def _reraise_assertion_like(error: Exception, label: str) -> Exception:
     """Return a same-type, message-only reconstruction of ``error`` prefixed with ``label``.
 
     Used for ``AssertionError`` and any domain-specific structural exception type opted into
-    via ``also_catch`` (e.g. ADR's ``AdrParseError``) -- both take a single message argument,
-    so ``type(error)(message)`` is a faithful, same-type reconstruction (REQ-006).
+    via ``also_catch`` -- both take a single message argument, so
+    ``type(error)(message)`` is a faithful, same-type reconstruction (REQ-006).
     """
     result = type(error)(f"{label}: {error}")
     return result
@@ -182,7 +182,7 @@ def wrap_tool_errors(
     Parameters
     ----------
     domain:
-        The short domain code (e.g. ``"tsk"``, ``"req"``, ``"adr"``) to name in the label.
+        The short domain code (e.g. ``"tsk"``, ``"req"``) to name in the label.
     tool:
         The tool name (e.g. ``"create_tsk"``, ``"update"``, ``"set_status"``) to name in the
         label.
@@ -194,10 +194,9 @@ def wrap_tool_errors(
         message self-identifies it regardless (Phases 1/2).
     also_catch:
         Additional exception types to treat exactly like ``AssertionError`` (message-only,
-        same-type reconstruction) -- e.g. ADR's own
-        :class:`~biz.dfch.specmgr.models.adr.v1.parser.AdrParseError` for ``create_adr``/
-        ``validate_adr``, whose structural channel is a plain ``ValueError`` subclass rather
-        than ``AssertionError``. Defaults to ``()``.
+        same-type reconstruction) -- e.g. a domain's own structural-error
+        exception, whose structural channel is a plain ``ValueError``
+        subclass rather than ``AssertionError``. Defaults to ``()``.
 
     Yields
     ------

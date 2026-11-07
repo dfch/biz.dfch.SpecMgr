@@ -59,7 +59,7 @@ why no field is declared). A fenced `## Items` line inside the description
 yields no `heading_open` token, so it stays in the opaque content.
 
 `Items`'s bullets are the shared 12-tag reference vocabulary in any mix
-(`GOL`/`PRB`/`QA`/`UC`/`REQ`/`RSK`/`DEC`/`ADR`/`VCR`/`SYSRS`/`TXT`/`FEAT`):
+(`GOL`/`PRB`/`QA`/`UC`/`REQ`/`RSK`/`DEC`/`VCR`/`SYSRS`/`TXT`/`FEAT`):
 the eleven UUID tags carry a canonical 8-4-4-4-12 hex id, `FEAT` carries
 the full `feat-NNN-slug` id or the bare `feat-NNN` number (the same shapes
 the `general.tools._references` extractor and `assert_feat_id` accept --
@@ -119,7 +119,7 @@ _FEAT_ID_PREFIX, _FEAT_ID_SLUG = _FEAT_ID_SPLIT
 #: behaviour the shared `validate_cross_reference_items` helper documents
 #: (the SYSRS cross-reference-list precedent; such regexes must NOT call
 #: `MarkdownListItem.single_line_text`, which is for non-DOTALL shapes).
-_ITEMS_UUID_PATTERN = rf"^(?P<tag>GOL|PRB|QA|UC|REQ|RSK|DEC|ADR|VCR|SYSRS|TXT) (?P<id>{UUID_PATTERN}): .+$"
+_ITEMS_UUID_PATTERN = rf"^(?P<tag>GOL|PRB|QA|UC|REQ|RSK|DEC|VCR|SYSRS|TXT) (?P<id>{UUID_PATTERN}): .+$"
 
 #: Matches a `## Items` bullet item text for the `FEAT` reference tag:
 #: `FEAT <feat-NNN-slug|feat-NNN>: <title>` -- the one tag whose id is not a

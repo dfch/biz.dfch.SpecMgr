@@ -12,7 +12,7 @@ resources against the shared ``mcp`` application instance::
     from biz.dfch.specmgr.qa import resources  # noqa: F401 (side-effects only)
 
 Like REQ, QA has no by-id single-document *resource* -- id-based reads go
-through the ``get_qa`` tool only; see ADR
+through the ``get_qa`` tool only; see DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose id-based REQ document reads as
 a tool (get_req), not a resource"). The former listing resource (``qa_list``,
 ``specmgr://qa/list``) was replaced the same way by the ``list_qa``

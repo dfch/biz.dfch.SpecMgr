@@ -46,16 +46,6 @@ Returns:
 Collect first-line module docstrings, grouped by top-level domain package.
 
 
-### `_count_mcp_features() -> dict[str, int]`
-
-Count MCP tools, resources, and prompt modules under ``adr/``.
-
-
-### `_count_py_files(subdir: pathlib.Path) -> int`
-
-Count non-private, non-``__init__`` ``.py`` files directly under ``subdir``.
-
-
 ### `_count_test_files() -> int`
 
 Count ``test_*.py`` files under ``tests/`` -- static, no subprocess.
@@ -133,7 +123,7 @@ Extract module docstring.
 
 ### `_list_domain_packages() -> dict[str, list[str]]`
 
-List domain packages and their subpackages (``models/``, ``adr/``).
+List domain packages and their subpackages (``models/``).
 
 
 ### `_pruning_was_skipped(module_count: int) -> bool`

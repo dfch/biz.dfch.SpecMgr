@@ -15,13 +15,9 @@ subclasses :class:`MarkdownFrontmatter` and adds its own fields, narrowing
         type: Literal["uc"] = "uc"
         # ... uc-specific fields ...
 
-This model is deliberately independent of ``models.adr.v1.AdrFrontmatter``:
-no shared base class, no shared validator module. ``AdrFrontmatter`` is left
-exactly as-is (see the ADR's Decision Outcome/Consequences) -- a possible
-future convergence is noted there but not decided.
+This model has no shared base class and no shared validator module -- each document type owns its own frontmatter model.
 
-This module has no import dependency on ``models.adr.v1`` or any other
-document-type package, consistent with ``models.md``'s existing
+This module has no import dependency on any other document-type package, consistent with ``models.md``'s existing
 no-dependency invariant (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 
 ## Classes
@@ -68,8 +64,7 @@ status:
     the key is absent entirely and when it is present but blank (e.g. a
     template shipping a placeholder ``status:`` with nothing after the
     colon, which YAML parses as ``None``, not an absent key).
-    Deliberately not restricted to a fixed set of values here (unlike
-    ``AdrFrontmatter.status``'s closed six-value enum): different
+    Deliberately not restricted to a fixed set of values here: different
     document types may have different valid status vocabularies, and a
     subclass is free to add its own stricter validator.
 version:

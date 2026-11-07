@@ -130,7 +130,7 @@ def parse_dec(text: str, *, language: str | None = None) -> DecDocument:
 def parse_dec_body(content: str, *, language: str | None = None) -> Decision:
     """Parse a frontmatter-free decision body text into a :class:`Decision`, in the given language.
 
-    The body-only half of :func:`parse_dec` (feat-197-i18n Phase 120, ADR
+    The body-only half of :func:`parse_dec` (feat-197-i18n Phase 120, DEC
     38efdb66 item 5): ``Decision.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

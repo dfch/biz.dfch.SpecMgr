@@ -29,7 +29,7 @@ line's 1-based body-line number, ready to feed into ``update``'s
 ``offset``). There is no ``specmgr://gol/{id}`` resource to point at
 -- id-based reads always go through the ``get_gol`` tool only.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
+There is no ``update_frontmatter``/
 ``option_*`` equivalent here: GOL's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="gol"``) plus a single, dedicated status-change path (the generic

@@ -36,7 +36,7 @@ sibling (the ``.pdf`` next to a ``sysrs`` document) and a shape-invalid director
 ignored. An id with variants but no EN source is reported as such (no ``"en"``); an id that exists in no language at
 all raises the domain's own not-found error. Strictly read-only: it writes, creates, and invalidates nothing.
 
-**Error semantics.** ``feat`` and ``adr`` are permanently English (REQ-002/REQ-009): they are rejected with the
+**Error semantics.** ``feat`` is permanently English (REQ-002): it is rejected with the
 permanent "always English" ``ValueError``, before the id is looked at; an unknown ``type``, a path-injection attempt, or
 a wrong-format ``id`` is a ``ValueError`` before any filesystem access (``_path_safety.validate_id``).
 """
@@ -45,7 +45,7 @@ from __future__ import annotations
 
 from ...server import mcp
 from ..models.language_list_result import LanguageListResult
-from ._domains import WholeBodyOrAdrType
+from ._domains import WholeBodyType
 from ._language_guard import LANGUAGE_AWARE_DOMAINS, assert_language_aware_type
 from ._language_variants import list_language_variants
 from ._path_safety import validate_id
@@ -58,7 +58,7 @@ __all__ = ["list_languages"]
     title="List the languages an artifact exists in",
     description=(
         "Read-only. Report the language codes one artifact currently exists in. `type` is one of "
-        f"{', '.join(LANGUAGE_AWARE_DOMAINS)} (feat and adr documents are always English and are rejected "
+        f"{', '.join(LANGUAGE_AWARE_DOMAINS)} (feat documents are always English and are rejected "
         "with a ValueError) and `id` the artifact's id, shared by every language variant. Returns a "
         "`LanguageListResult`: `languages` -- 'en' first when the EN source exists (it is never invented: an id "
         "with variants but no EN source lists no 'en'), then every other language holding a variant, sorted by "
@@ -73,15 +73,15 @@ __all__ = ["list_languages"]
         "source use check_translation_drift."
     ),
 )
-def list_languages(type: WholeBodyOrAdrType, id: str) -> LanguageListResult:
+def list_languages(type: WholeBodyType, id: str) -> LanguageListResult:
     """List the languages the artifact ``id`` of ``type`` currently exists in.
 
     Parameters
     ----------
     type:
         The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set``. ``feat`` and ``adr`` are accepted
-        by the schema only so that they get an explanation: they are permanently English and are rejected.
+        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set``. ``feat`` is accepted
+        by the schema only so that it gets an explanation: it is permanently English and is rejected.
     id:
         The artifact's specmgr-assigned id (shared by every language variant).
 
@@ -95,7 +95,7 @@ def list_languages(type: WholeBodyOrAdrType, id: str) -> LanguageListResult:
     Raises
     ------
     ValueError
-        ``type`` is ``feat``/``adr`` (always English) or unknown, or ``id`` is a path-injection attempt or not in
+        ``type`` is ``feat`` (always English) or unknown, or ``id`` is a path-injection attempt or not in
         the domain's own format (raised before any filesystem access).
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError / PrbNotFoundError /
     GolNotFoundError / RskNotFoundError / DecNotFoundError / SopNotFoundError / VcrNotFoundError /

@@ -35,7 +35,7 @@ generic ``set_status`` tool in ``general.tools`` (``type="set"``), and
 disk-free, id-free dry-run content validation through the generic
 ``validate`` tool in ``general.tools`` (``type="set"``). Like TXT, SET has
 no ``specmgr://set/{id}`` resource --
-id-based reads go through the ``get_set`` tool only (ADR
+id-based reads go through the ``get_set`` tool only (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://set/list`` resource -- ``list_set`` ships as a paged
 ``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).

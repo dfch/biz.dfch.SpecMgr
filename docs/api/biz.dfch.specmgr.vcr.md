@@ -2,7 +2,7 @@
 
 Verification Case Record (VCR) domain -- how a single REQ/UC is verified.
 
-This is a domain-first package, mirroring ``dec``'s layout (per ADR
+This is a domain-first package, mirroring ``dec``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts, and
 resources for managing ``vcr`` documents. A VCR captures a coverage
 assessment plus a list of acceptance criteria, each with its own closed
@@ -36,7 +36,7 @@ tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 
 The former ``specmgr://vcr/schema`` resource was converted into the
 ``get_vcr_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 
 The closed DTAIS verification-method vocabulary that this domain's

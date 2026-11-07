@@ -42,7 +42,7 @@ The five requirement patterns`` heading, so it is wrapped in a composite
 than declared as a bare list field on `Ears` itself. Closed-vocabulary
 bullets are modeled as `MarkdownListItem` subclasses with
 `@computed_field`s regex-extracting the leading keyword, reusing
-`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (ADR
+`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (DEC
 356d8781-e446-4c26-917a-eda85648ce9d's Decision Drivers) rather than
 inventing a new shared `models/md` primitive. `` ## Combining patterns ``
 is out of REQ-006's narrow scope (which only asks for the five templates
@@ -5076,8 +5076,7 @@ name:
 
 Parse the packaged EARS guidance markdown text into an :class:`Ears`.
 
-Thin `format_text` + `Ears.from_text` wrapper -- unlike `parse_adr`/
-`parse_req`, there is no YAML frontmatter to split off first, since
+Thin `format_text` + `Ears.from_text` wrapper -- there is no YAML frontmatter to split off first, since
 this is a plain packaged data file, not a user-authored document
 (mirrors `biz.dfch.specmgr.general.models.dtais.parse_dtais`'s exact
 shape).

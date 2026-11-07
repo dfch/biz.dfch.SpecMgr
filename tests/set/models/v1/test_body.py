@@ -96,17 +96,16 @@ class TestItems(unittest.TestCase):
             "- REQ 00000000-0000-4000-8000-000000000005: R\n"
             "- RSK 00000000-0000-4000-8000-000000000006: K\n"
             "- DEC 00000000-0000-4000-8000-000000000007: D\n"
-            "- ADR 00000000-0000-4000-8000-000000000008: A\n"
-            "- VCR 00000000-0000-4000-8000-000000000009: V\n"
-            "- SYSRS 00000000-0000-4000-8000-000000000010: S\n"
-            "- TXT 00000000-0000-4000-8000-000000000011: T\n"
+            "- VCR 00000000-0000-4000-8000-000000000008: V\n"
+            "- SYSRS 00000000-0000-4000-8000-000000000009: S\n"
+            "- TXT 00000000-0000-4000-8000-000000000010: T\n"
             "- FEAT feat-42-thermal-management: F\n"
         )
         sut = Set.from_text(_doc(items=items))
 
-        self.assertEqual(len(sut.items.items), 12)
+        self.assertEqual(len(sut.items.items), 11)
         tags = [item.text.split()[0] for item in sut.items.items]
-        self.assertEqual(tags, ["GOL", "PRB", "QA", "UC", "REQ", "RSK", "DEC", "ADR", "VCR", "SYSRS", "TXT", "FEAT"])
+        self.assertEqual(tags, ["GOL", "PRB", "QA", "UC", "REQ", "RSK", "DEC", "VCR", "SYSRS", "TXT", "FEAT"])
 
     def test_feat_bare_number_id(self) -> None:
         sut = Set.from_text(_doc(items="- FEAT feat-42: F"))

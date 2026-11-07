@@ -4,7 +4,7 @@ The shared document-type domain names and per-domain adapter registry (feat-125-
 + feat-134, Phase 1, REQ-012).
 
 This module is the single source of truth for the document-type domain
-**names** (feat-125-domain-lists, REQ-001, ADR c4efbde6-fd19-4aa8-8668-
+**names** (feat-125-domain-lists, REQ-001, DEC c4efbde6-fd19-4aa8-8668-
 95316ed62dcc "Single source of truth for the document-type domain-name
 set") and for the per-domain **adapters** every cross-domain consumer
 needs (feat-134, Phase 1, REQ-012, DEC 750842b2-aca4-4649-ba0c-855ec8e1f505,
@@ -26,18 +26,18 @@ seventh copies.
   hand-listed tuple in the module, the whole-body document types in the
   canonical order ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``,
   ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
-  Every other
-  name-set constant is derived from it, never hand-listed a second
-  time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
-  without ``feat``, :data:`UUID_DOMAINS` is those plus ``adr``, and
-  :data:`ALL_DOMAINS` is ``adr`` prefixed to the whole-body domains.
-  :data:`ADR` and :data:`FEAT` are the two name singletons. The five
-  existing generic tools' and the two Phase 3 similarity tools' ``type``
-  parameter annotations are derived from it (via the
-  :data:`WholeBodyType`/:data:`WholeBodyOrAdrType` aliases below), so a
-  new document type (e.g. the reserved ``ac``) registers its name in
-  :data:`WHOLE_BODY_DOMAINS` once and every derived tuple and tool
-  domain set picks it up by construction.
+   Every other
+   name-set constant is derived from it, never hand-listed a second
+   time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
+   without ``feat``, :data:`UUID_DOMAINS` is the same set (the
+   UUID-shaped domains), and :data:`ALL_DOMAINS` is the whole-body
+   domains. :data:`FEAT` is the name singleton. The five existing
+   generic tools' and the two Phase 3 similarity tools' ``type``
+   parameter annotations are derived from it (via the
+   :data:`WholeBodyType` alias below), so a
+   new document type (e.g. the reserved ``ac``) registers its name in
+   :data:`WHOLE_BODY_DOMAINS` once and every derived tuple and tool
+   domain set picks it up by construction.
 - :class:`WholeBodyDomain` + the module-scope ``_DOMAINS`` mapping --
   the per-domain adapters every cross-domain consumer needs: the
   base-dir resolver, the path iterator, ``load_by_id``, and the pure
@@ -51,21 +51,11 @@ seventh copies.
   of the three parse-failure channels (REQ-009) -- and its candidate
   enumeration / source resolution live in
   ``general/tools/_similarity_corpus.py``, built on this registry.
-- :data:`WholeBodyType` / :data:`WholeBodyOrAdrType` -- the derived
-  ``Literal`` ``type``-parameter annotations for the generic tools.
-- :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
-  the path-safety-convention ``ValueError`` for an unknown name (raised
-  before any filesystem access).
-
-**``adr`` is structurally excluded** from :data:`WHOLE_BODY_DOMAINS`
-(issue #46, "Remove adr artifact type": ADR is being removed as an
-artifact type entirely, so it is not a useful similarity target/source,
-and it never had a whole-body
-replace/status/classification/delete/validate adapter of its own to begin
-with -- ``set_status``'s own ``adr`` branch is the single generic-tool
-exception, hence the separate :data:`WholeBodyOrAdrType`; ``adr`` enters
-the name-set constants only through :data:`UUID_DOMAINS` and
-:data:`ALL_DOMAINS`).
+ - :data:`WholeBodyType` -- the derived
+   ``Literal`` ``type``-parameter annotation for the generic tools.
+ - :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
+   the path-safety-convention ``ValueError`` for an unknown name (raised
+   before any filesystem access).
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/``
 support module: the registry is plain data plus the per-domain adapter
@@ -139,8 +129,8 @@ Returns:
 
 Raises:
     ValueError:
-        ``name`` is not one of the whole-body domains (e.g. ``"adr"``,
-        or a future unregistered name) -- raised before any filesystem
+        ``name`` is not one of the whole-body domains (e.g. a future
+        unregistered name) -- raised before any filesystem
         access (the path-safety convention), naming the offending value
         and the allowed set.
 

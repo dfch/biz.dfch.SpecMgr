@@ -18,8 +18,8 @@ review, a release, or a workstream can be navigated from one place.
 - **Forward references only.** Nothing in an item ever points back to the
   set: `SET` is not a tag of the shared reference vocabulary. Never add a
   back-reference into a bundled artifact while working on a set.
-- **Mixed types allowed.** Any of the 12 reference tags (`GOL`, `PRB`,
-  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `TXT`, `FEAT`)
+- **Mixed types allowed.** Any of the 11 reference tags (`GOL`, `PRB`,
+  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `VCR`, `SYSRS`, `TXT`, `FEAT`)
   may appear in any mix in one `## Items` list; `FEAT` bullets carry a
   `feat-NNN-slug` or bare `feat-NNN` id instead of a uuid. The same
   `(tag, id)` pair appears at most once (a duplicate is rejected).

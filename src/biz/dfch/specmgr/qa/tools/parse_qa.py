@@ -66,7 +66,7 @@ from ._paths import qa_base_dir
         "into a structured :class:`~biz.dfch.specmgr.qa.models.v2.QaDocument`. An existing file "
         "that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single "
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
-        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR "
+        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (DEC "
         "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain); a truly-absent or unreadable path still "
         "raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) "
@@ -84,8 +84,7 @@ def parse_qa(path: str) -> QaDocument | ValidateResult:
     Reads the file from disk, then parses and validates its content. "Parse"
     here also means "validate": letting :class:`Qa` / :class:`QaFrontmatter`
     / :class:`QaDocument`'s own Pydantic validators run during parsing is the
-    only validation pass there is, exactly like ``adr.tools.validate_adr``'s
-    own docstring describes for ADRs -- there is no separate validation step.
+    only validation pass there is -- there is no separate validation step.
     Any structural problem (unrecognized/misplaced heading, list the schema
     doesn't expect) or field/cross-field validation failure raises
     ``AssertionError``/``pydantic.ValidationError`` (a malformed frontmatter

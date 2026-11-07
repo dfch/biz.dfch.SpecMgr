@@ -2,7 +2,7 @@
 
 ``@mcp.tool()`` wrapper: get_qa (Phase 4, Task 4.1).
 
-Mirrors ``adr.tools.get_adr``/``req.tools.get_req`` -- a thin
+Mirrors ``req.tools.get_req`` -- a thin
 file-I/O/id-lookup adapter. The ``.md`` file itself remains the sole source
 of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying
 ``load_by_id`` now routes through a content-hash-validated, per-domain
@@ -11,7 +11,7 @@ that skips re-parsing when a file's content hash is unchanged since its
 last read, so a stale entry is structurally impossible.
 
 There is no ``specmgr://qa/{id}`` resource -- id-based reads go through
-this tool only, mirroring REQ's own choice; see ADR
+this tool only, mirroring REQ's own choice; see DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose id-based REQ document reads as
 a tool (get_req), not a resource") for the full rationale.
 
@@ -88,7 +88,7 @@ numbered:
     Combining it with ``raw=False`` raises ``ValueError`` (see
     ``Raises``).
 language:
-    The language variant to read (feat-197-i18n Phase 125, ADR
+    The language variant to read (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
     reads the flat ``docs/qa/`` document -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.

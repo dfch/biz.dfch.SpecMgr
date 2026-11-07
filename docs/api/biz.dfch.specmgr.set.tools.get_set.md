@@ -3,9 +3,9 @@
 ``@mcp.tool()`` wrapper: get_set (feat-173-req-iso29148-level-set Phase 180).
 
 Mirrors ``vcr.tools.get_vcr`` -- a thin file-I/O/id-lookup adapter. The
-``.md`` file itself remains the sole source of truth (ADR
+``.md`` file itself remains the sole source of truth (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
-routes through a content-hash-validated, per-domain in-memory cache (ADR
+routes through a content-hash-validated, per-domain in-memory cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
 when a file's content hash is unchanged since its last read, so a stale
 entry is structurally impossible.
@@ -96,7 +96,7 @@ numbered:
      Combining it with ``raw=False`` raises ``ValueError`` (see
      ``Raises``).
 language:
-    The language variant to read (feat-197-i18n Phase 125, ADR
+    The language variant to read (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
     reads the flat ``docs/set/`` document -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.

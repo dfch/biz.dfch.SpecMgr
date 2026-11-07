@@ -19,7 +19,7 @@ Replaces the removed ``specmgr://feat/schema`` resource
 ("Convert the 12 per-domain schema resources to get_<d>_schema tools"):
 the raw-text return deliberately follows the sibling
 ``get_feat_template``/``get_feat_example`` tools' own convention instead of
-the removed resource's parsed-dict return (the ADR's micro-decision D1),
+the removed resource's parsed-dict return (the DEC's micro-decision D1),
 and the wire content the agent sees is the same JSON document either way.
 
 ## Functions

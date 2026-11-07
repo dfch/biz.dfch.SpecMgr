@@ -34,7 +34,7 @@ from biz.dfch.specmgr.models.md.frontmatter import DEFAULT_STATUS
 
 #: Fixed, closed set of accepted ``status`` values for task lists -- a small,
 #: purpose-fit set matching how a task list is actually used (start it, work
-#: it, finish it, or drop it), rather than reusing REQ's larger, ADR-like set
+#: it, finish it, or drop it), rather than reusing REQ's larger set
 #: (`.specmgr/feat/feat-10-add-artifact-type-tasklist/README.md` Design Notes).
 _ALLOWED_STATUSES = frozenset(
     {

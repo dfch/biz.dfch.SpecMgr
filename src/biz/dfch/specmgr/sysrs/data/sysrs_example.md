@@ -107,7 +107,7 @@ onboarding volume, most of it "where is my key" status chasing.
   Per Partner
 
   Rate-limit key issuance per partner, not globally — an operational
-  decision kept in `dec` rather than a full ADR.
+  decision kept in `dec` rather than a full decision record.
 
 ## Risks
 

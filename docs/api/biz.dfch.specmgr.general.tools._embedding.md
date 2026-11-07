@@ -264,7 +264,7 @@ Pool a document's chunk vectors as ``normalize(mean(chunk_vectors))`` (REQ-010).
 Element-wise arithmetic mean of the equally-weighted chunk vectors,
 then L2 renormalization -- renormalizing after the mean keeps cosine
 == dot-product comparability between documents of different chunk
-counts (the ADR's own rationale). Pure Python on purpose (no
+counts (the decision's own rationale). Pure Python on purpose (no
 ``numpy`` import, module-level or otherwise -- the dependency-light
 constraint): the backend's ``numpy.ndarray`` chunks are iterated as
 read-only :data:`Vector` sequences, and the pooled vector is a plain

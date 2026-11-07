@@ -20,9 +20,9 @@
 Drives the real ``find_related`` tool function against a temp corpus seeded with
 the deterministic :class:`~._similarity_helpers.FakeProvider`, so every expected
 cosine is hand-computable. Covers ACC-001 (ranked hits, self-exclusion, marker
-rows, the default non-``adr`` set), ACC-003 (the tool still registers and returns
+rows, the default whole-body set), ACC-003 (the tool still registers and returns
 the structured unavailable result with the backend missing), ACC-004 (the disabled
-flag), ACC-005/ACC-006 (cache reuse / invalidation), ACC-007 (``adr`` rejection),
+flag), ACC-005/ACC-006 (cache reuse / invalidation), ACC-007 (unknown-type rejection),
 ACC-009 (model-load failure), ACC-011 (``delete`` invalidation + ``set_feat_id``
 move), and ACC-015 (the error contract: ``ValueError`` before filesystem access,
 ``ReqNotFoundError`` for a missing source).
@@ -86,7 +86,6 @@ class TestFindRelatedRegistration(unittest.TestCase):
 
         type_prop = tool.input_schema["properties"]["type"]
 
-        self.assertNotIn("adr", type_prop["enum"])
         self.assertIn("req", type_prop["enum"])
         self.assertEqual(len(type_prop["enum"]), 14)
 
@@ -161,7 +160,6 @@ class TestFindRelatedRanking(SimilarityTestCase, _RankedCorpusMixin):
 
         types = {hit.type for hit in hits}
         self.assertEqual(types, {"gol", "dec", "feat", "txt"})  # the source req is excluded
-        self.assertNotIn("adr", types)
 
     def test_target_types_restricts_the_candidate_set(self) -> None:
         source = self.seed_req("Source Doc", "alpha alpha alpha")
@@ -250,9 +248,9 @@ class TestFindRelatedAvailability(SimilarityTestCase):
                 self.assertIsInstance(result, SimilarityUnavailableResult)
                 self.assertFalse(result.available)
                 self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
-            with self.subTest(target_types=["adr"]):
-                # structurally excluded -> ValueError when available
-                result = find_related(type="req", id=source.id, target_types=["adr"])
+            with self.subTest(target_types=["bogus"]):
+                # unknown target type -> ValueError when available
+                result = find_related(type="req", id=source.id, target_types=["bogus"])
                 self.assertIsInstance(result, SimilarityUnavailableResult)
                 self.assertFalse(result.available)
                 self.assertEqual(result.reason, REASON_BACKEND_UNAVAILABLE)
@@ -324,20 +322,6 @@ class TestFindRelatedErrorContract(SimilarityTestCase):
             with self.subTest(min_score=bad_min_score):
                 with self.assertRaises(ValueError):
                     find_related(type="req", id=source.id, min_score=bad_min_score)
-
-    def test_adr_rejected_as_source_type(self) -> None:
-        self.seed_req("Source Doc", "alpha")
-        self.install_fake()
-
-        with self.assertRaises(ValueError):
-            find_related(type="adr", id=_MISSING_UUID)  # type: ignore[arg-type]
-
-    def test_adr_rejected_as_target_type(self) -> None:
-        source = self.seed_req("Source Doc", "alpha")
-        self.install_fake()
-
-        with self.assertRaises(ValueError):
-            find_related(type="req", id=source.id, target_types=["adr"])
 
     def test_unknown_target_type_rejected_before_filesystem_access(self) -> None:
         source = self.seed_req("Source Doc", "alpha")

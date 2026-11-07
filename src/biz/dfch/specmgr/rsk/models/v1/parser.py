@@ -127,7 +127,7 @@ def parse_rsk(text: str, *, language: str | None = None) -> RskDocument:
 def parse_rsk_body(content: str, *, language: str | None = None) -> Risk:
     """Parse a frontmatter-free risk body text into a :class:`Risk`, in the given language.
 
-    The body-only half of :func:`parse_rsk` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_rsk` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Risk.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

@@ -17,8 +17,7 @@
 
 """Tests for the generic ``set_classification`` ``@mcp.tool()`` wrapper (feat-56-classification, Phase 2).
 
-Parameterized over the whole-body document types (``adr`` is out of
-scope for this feature, unlike ``set_status``, which also covers ``adr``); seeds a real,
+Parameterized over the whole-body document types; seeds a real,
 persisted document per type via the domain's own ``create_<d>`` tool in a
 temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` (mirroring the fixture
 strategy of ``tests/general/tools/test_set_status.py``), and covers:
@@ -715,17 +714,6 @@ class TestSetClassificationInvalidType(TempDocsDirTestCase):
             set_status(id=_MISSING_UUID, type="bogus", status="accepted")
 
         self.assertIs(type(classification_ctx.exception), type(status_ctx.exception))
-
-    def test_adr_type_is_not_supported(self) -> None:
-        """``type="adr"`` must be rejected -- ADR's separate frontmatter model is out of scope for this feature.
-
-        ``adr`` is one of ``_path_safety``'s known UUID-shaped types, so ``validate_id`` accepts a
-        well-formed UUID id for it (same as the generic ``update`` tool, which also excludes ``adr``
-        from its own dispatch table); the rejection surfaces as a ``KeyError`` from the dispatch-table
-        lookup itself, mirroring ``update``'s own undocumented-but-real behavior for ``type="adr"``.
-        """
-        with self.assertRaises(KeyError):
-            set_classification(id=_MISSING_UUID, type="adr", classification="Confidential")
 
 
 #: The pinned path-injection shapes (mirrors ``test_set_status.py``'s own ``_TRAVERSAL_IDS``).

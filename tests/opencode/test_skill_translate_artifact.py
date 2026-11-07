@@ -26,7 +26,7 @@ dedicated subagent: the flow is the prompt itself. These tests pin: the file loc
 trigger phrasing -- keyword matching is case-insensitive, as in ``test_skill_uc_diagram.py``); the key body wording
 (the prompt name, the ``specmgr://i18n`` resource read first, the ``translate_artifact`` flow's contract: the
 create-versus-update flow, the closed-vocabulary never-translate rule, the ``prb`` ``problem_statement`` exemption,
-the no-dry-run/``ValidateResult`` retry, the ``question``/never-commit contract, the feat/adr exclusion); and the
+the no-dry-run/``ValidateResult`` retry, the ``question``/never-commit contract, the feat exclusion); and the
 command's frontmatter (a ``description`` naming ``$1``..``$4``, **no** ``agent:`` field) plus its body's prompt-flow
 and step-9 report pointers. The prompt this host surface points at is real and registered (cross-checked).
 """
@@ -157,7 +157,7 @@ class TestSkillFrontmatter(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase.lower(), description)
 
-    def test_description_states_the_scope_and_the_feat_adr_exclusion(self):
+    def test_description_states_the_scope_and_the_feat_exclusion(self):
         frontmatter, _ = _split_frontmatter(_read_text(_SKILL_PATH))
 
         description = _parse_frontmatter(frontmatter)["description"]
@@ -165,7 +165,7 @@ class TestSkillFrontmatter(unittest.TestCase):
         for domain in _IN_SCOPE_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertIn(domain, description)
-        self.assertIn("feat and adr are always English and out of scope", description)
+        self.assertIn("feat is always English and out of scope", description)
 
     def test_description_is_valid_plain_yaml_scalar(self):
         """No `: ` inside the plain scalar (it would not be valid YAML)."""
@@ -212,11 +212,11 @@ class TestSkillBodyWording(unittest.TestCase):
         self.assertIn("specmgr://i18n/headings/{language}", flat)
         self.assertIn("no host file tool needed", flat)
 
-    def test_feat_adr_exclusion_and_no_table_rule_stated(self):
+    def test_feat_exclusion_and_no_table_rule_stated(self):
         _, body = _split_frontmatter(_read_text(_SKILL_PATH))
         flat = _flat(body)
 
-        self.assertIn("`feat` and `adr` are always English", flat)
+        self.assertIn("`feat` is always English", flat)
         self.assertIn("no language variants and no `language` parameter", flat)
         self.assertIn("general/data/headings/<language>.json", flat)
         self.assertIn("never invent one", flat)
@@ -259,7 +259,7 @@ class TestCommandFrontmatterAndBody(unittest.TestCase):
         for domain in _IN_SCOPE_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertIn(domain, flat)
-        self.assertIn("`feat` and `adr` are always English and out of scope", flat)
+        self.assertIn("`feat` is always English and out of scope", flat)
         self.assertIn("`en` is never a target", flat)
         self.assertIn("`problem_statement`", flat)
         self.assertIn("`question` tool", flat)

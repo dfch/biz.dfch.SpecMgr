@@ -17,7 +17,7 @@ disk: the single ``*.md`` file for every flat domain (i.e. every
 whole-body domain except ``feat``)
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
-session transcripts in that folder; ``feat`` is folder-per-document, ADR
+session transcripts in that folder; ``feat`` is folder-per-document, DEC
 8cf940c5). On success the adapter returns the deleted path as a ``str``
 (the file path for the flat domains, the folder path for ``feat``).
 
@@ -38,12 +38,7 @@ adapter does not catch it); an I/O failure during the actual
 re-raised as :class:`DeleteError` carrying the resolved path and the
 underlying ``OSError`` as ``__cause__``.
 
-ADR is deliberately *not* a ``type`` here: it never had a ``delete_adr``
-stub, and hard-deleting an ADR could break other ADRs' "superseded by X"
-cross-references (see ``.specmgr/feat/feat-36-delete/README.md``'s
-Decisions Made).
-
-The parameter is intentionally named ``type`` (it matches the frontmatter
+ The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
 to the builtin shadow.
 
@@ -306,11 +301,7 @@ attempt (``/``, ``\``, or ``..``) or a wrong-format id (not a canonical
 lowercase-hex UUID for every domain other than ``feat``, or not a
 ``feat-NNN-slug`` for ``feat``) is a ``ValueError`` raised before
 dispatch. The resolved path is additionally confined to the domain's
-own base directory (defense-in-depth) inside the lock.
-
-ADR is not a supported ``type``: it never had a ``delete_adr`` stub,
-and hard-deleting an ADR could break other ADRs' "superseded by X"
-cross-references.
+ own base directory (defense-in-depth) inside the lock.
 
 Parameters
 ----------
@@ -322,7 +313,7 @@ type:
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
     ``vcr``, ``sysrs``, ``txt``, ``set``.
 language:
-    The language variant to delete (feat-197-i18n Phase 120, ADR
+    The language variant to delete (feat-197-i18n Phase 120, DEC
     38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
     it) deletes the flat default-language document -- today's exact
     behavior; any other ISO 639-1-shaped lowercase two-letter code

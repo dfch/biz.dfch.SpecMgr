@@ -5,7 +5,7 @@ Decision (DEC) body models: whole-section fields under a single H1.
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection3`/`MarkdownParagraph`/`MarkdownListItem` engine: each class
 below models one markdown heading (`## `/`### `) or list, and `Decision` is
-the top-level H1 container. A `dec` document keeps the ADR's general
+the top-level H1 container. A `dec` document keeps the MADR-style general
 structure (MADR-style headings, an `Options` collection) but is built on the
 generic engine with the simple surface used by GOL/RSK/QA (see
 `.specmgr/feat/feat-21-decision/README.md` Design Notes).
@@ -5007,7 +5007,7 @@ expect "Context").
 
 The `dec` body: a single H1 section with the fields below.
 
-The H1 heading text is free-form. Keeps the ADR's general structure
+The H1 heading text is free-form. Keeps the MADR-style general structure
 (MADR headings + an options collection) on the generic `models.md`
 engine -- see the module docstring.
 
@@ -12559,8 +12559,8 @@ otherwise-private `_value` is reachable through `model_dump()`/
 
 Optional as a whole, but present only if it carries at least one
 `### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero
-options is a structural error. The ADR heading "Pros and Cons of the
-Options" is deliberately NOT accepted (LITERAL alias).
+options is a structural error. The heading "Pros and Cons of the Options"
+is deliberately NOT accepted (LITERAL alias).
 
 Parameters
 ----------

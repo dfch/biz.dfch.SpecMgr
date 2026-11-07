@@ -201,9 +201,9 @@ class TestTranslateArtifactRendering(unittest.TestCase):
         self.assertIn("never change a document's frontmatter `id` or `status`", result)
         self.assertIn("Do not commit, do not write the English document", result)
 
-    def test_scope_statement_excludes_feat_and_adr(self):
+    def test_scope_statement_excludes_feat(self):
         result = _one_line(translate_fn("req", _ID, "de"))
-        self.assertIn("`feat` and `adr` are always English and are out of scope", result)
+        self.assertIn("`feat` is always English and is out of scope", result)
 
     def test_question_tool_and_todo_list(self):
         result = translate_fn("req", _ID, "de")
@@ -231,12 +231,6 @@ class TestTranslateArtifactValidation(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             translate_fn("feat", "feat-1-x", "de")
         self.assertIn("feat", str(ctx.exception))
-        self.assertIn("always English", str(ctx.exception))
-
-    def test_adr_is_rejected_as_always_english(self):
-        with self.assertRaises(ValueError) as ctx:
-            translate_fn("adr", _ID, "de")
-        self.assertIn("adr", str(ctx.exception))
         self.assertIn("always English", str(ctx.exception))
 
     def test_unknown_type_is_rejected_with_the_allowed_domains_named(self):
@@ -327,7 +321,7 @@ class TestTranslateArtifactRegistration(unittest.TestCase):
         description = _one_line(matching[0].description or "")
         for phrase in (
             "specmgr://i18n",
-            "feat and adr are always English",
+            "feat is always English and out of scope",
             "ValidateResult",
             "problem_statement",
             "Never commits",

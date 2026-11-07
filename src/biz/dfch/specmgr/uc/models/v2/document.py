@@ -17,9 +17,7 @@
 
 """Pydantic model for a full use-case document (frontmatter + body).
 
-Mirrors `models.adr.v1.Adr`'s own frontmatter+body pairing. `UcDocument` holds
-no file/id/path information itself -- that lives on `frontmatter.id`, same
-convention as `AdrFrontmatter.id`.
+`UcDocument` holds no file/id/path information itself -- that lives on `frontmatter.id`.
 
 Frontmatter *stripping* is deliberately not this module's responsibility
 (feat-5-md-model-parser's REQ-003/`MarkdownFrontmatter`'s own convention):
@@ -27,8 +25,8 @@ a caller splits a raw `.md` file's `---...---` block from its body via
 `python-frontmatter` (`frontmatter.loads(text)`), validates `.metadata` as
 `UcFrontmatter` and `.content` as `UseCase.from_text(...)` separately, then
 constructs a `UcDocument` from the two already-parsed pieces -- there is no
-`UcDocument.from_text`/parser function here (unlike `models.adr.v1.parser`,
-which is a separate, not-yet-ported concern; see `.specmgr/feat/feat-4-use-cases/README.md`).
+ `UcDocument.from_text`/parser function here (a separate, not-yet-ported
+ concern; see `.specmgr/feat/feat-4-use-cases/README.md`).
 """
 
 from __future__ import annotations

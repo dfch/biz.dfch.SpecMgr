@@ -4,7 +4,7 @@ Standard Operating Procedure (SOP) domain -- structured, step-by-step
 operational documents with a RASCI-style responsibility assignment and a
 closed approval/effectivity lifecycle.
 
-This is a domain-first package, mirroring ``dec``'s layout (per ADR
+This is a domain-first package, mirroring ``dec``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``sop`` documents. An SOP is built on the
 generic ``models/md`` parser with the simple surface used by GOL/RSK/QA/DEC
@@ -34,14 +34,14 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate`` tool in ``general.tools`` (``type="sop"``) -- the former
 ``validate_sop`` tool was removed in favor of it (feat-81-83-validation).
 Like DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
-through the ``get_sop`` tool only (ADR
+through the ``get_sop`` tool only (DEC
 ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged
 ``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 The former ``specmgr://sop/schema`` resource was converted into the
 ``get_sop_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 
 SOP relies on the cross-cutting ``specmgr://rasci`` resource

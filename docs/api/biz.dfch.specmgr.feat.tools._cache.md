@@ -53,7 +53,7 @@ implements (Phase 4, Task 4.1a).
 
 **feat-187-list-feat-timeout, Task 110.100: a second, "dirty" (frontmatter-
 stage) ``DocCache`` instance alongside the pre-existing "clean" (full-parse)
-one.** Added to fix GitHub issue #187's ``list_feat`` cold-scan timeout (ADR
+one.** Added to fix GitHub issue #187's ``list_feat`` cold-scan timeout (DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44): a cold ``list_feat`` call must never
 run a full body parse on its request path, but must still surface a
 document's frontmatter + H1 (``id``/``title``/``status``) immediately, so
@@ -257,7 +257,7 @@ FeatDocument | Exception | None
 Read and parse the feature document at ``path``, through the cache.
 
 A file is only ever re-parsed when its on-disk content hash no longer
-matches the hash recorded at the last read of ``path`` (ADR
+matches the hash recorded at the last read of ``path`` (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
 re-raised cached failure) is returned without re-invoking
 :func:`~biz.dfch.specmgr.feat.models.v1.parse_feat`.

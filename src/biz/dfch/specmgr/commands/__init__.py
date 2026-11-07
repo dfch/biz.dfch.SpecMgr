@@ -31,7 +31,6 @@ the ``ImportError`` -> exit 1 guard for the missing ``mcp`` extra (the
 ``mcp``/``diagram`` precedent).
 """
 
-from .adr_toc import adr_toc
 from .coverage_badge import coverage_badge
 from .diagram import diagram
 from .docs import docs
@@ -48,7 +47,6 @@ from .unused_code import unused_code
 from .version import version
 
 __all__ = [
-    "adr_toc",
     "coverage_badge",
     "diagram",
     "docs",

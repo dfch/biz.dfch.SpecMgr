@@ -242,16 +242,13 @@ Every document type stores its `.md` files in a base directory on disk —
 the file is always the source of truth, re-read and re-parsed on every
 tool call, so hand-editing a file between calls is safe.
 
-- ADRs: base directory defaults to `docs/adr`, configurable via the
-  `SPECMGR_ADR_DIR` environment variable. This is ADR-specific and not
-  shared with other document types.
 - Requirements (REQ) and future document types: share one root directory,
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
-  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
-  like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
+  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific and
+  not shared via `SPECMGR_DOCS_DIR`.
 - PlantUML validation source (UC diagrams): `SPECMGR_PLANTUML_JAR` (a
   plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an executable speaking the
   PlantUML CLI contract), and `SPECMGR_PLANTUML_URL` (a PlantUML server base
@@ -465,11 +462,10 @@ To add the `specmgr` MCP server to your OpenCode configuration:
        "specmgr",
        "mcp"
      ],
-     "environment": {
-       "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
-       "SPECMGR_ADR_DIR": "<path-to-your-project>/docs/adr",
-       "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
-     }
+      "environment": {
+        "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
+        "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
+      }
    }
    ```
 

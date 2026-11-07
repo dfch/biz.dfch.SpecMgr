@@ -17,11 +17,7 @@
 
 """Shared, private validation helpers for the ``models.md`` subpackage.
 
-Deliberately independent of ``models.adr.v1._util`` -- per ADR
-bc5e18ad-6bbf-4265-bae4-3e34984a2d29, ``models.md`` owns its own small
-validator helpers rather than depending on the ADR-specific package, even
-though the two modules currently look near-identical. A future decision may
-converge them; that is not decided here.
+Per DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29, ``models.md`` owns its own small validator helpers.
 """
 
 from __future__ import annotations
@@ -30,9 +26,7 @@ import re
 
 #: The schema major version this ``models.md`` package implements. Only a
 #: breaking change to :class:`MarkdownFrontmatter`'s shape would warrant
-#: bumping this (and, unlike ``models.adr.v1``, there is currently no
-#: sibling ``v2`` package convention for ``models.md`` -- see ADR
-#: 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
+#: bumping this (see DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae).
 SCHEMA_MAJOR_VERSION = 1
 
 #: The current, default schema version for newly created frontmatter blocks.

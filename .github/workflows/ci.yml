@@ -70,18 +70,9 @@ jobs:
       run: |
         uv run --frozen --all-extras --python 3.13.13 specmgr docs
         git diff --exit-code -- docs/ || {
-          echo "::error::docs/ is out of date -- run 'uv run --frozen --all-extras specmgr docs' and commit the result (see AGENTS.md)."
-          exit 1
-        }
-
-    - name: Make sure `docs/adr/README.md` is correct
-      if: matrix.python-version == '3.13'
-      run: |
-        uv run --frozen --all-extras --python 3.13.13 specmgr adr-toc
-        git diff --exit-code -- docs/adr/README.md || {
-          echo "::error::docs/adr/README.md is out of date -- run 'uv run --frozen --all-extras specmgr adr-toc' and commit the result (see AGENTS.md)."
-          exit 1
-        }
+           echo "::error::docs/ is out of date -- run 'uv run --frozen --all-extras specmgr docs' and commit the result (see AGENTS.md)."
+           exit 1
+         }
 
     - name: Make sure `docs/MCP.md` is correct
       if: matrix.python-version == '3.13'
@@ -114,7 +105,7 @@ jobs:
       # (dec, feat, gol, prb, qa, req, rsk, sop, sysrs, tsk, txt, uc, vcr) in a single run, and the command itself
       # exits 1 when the regenerated content differs from what was already on disk
       # (or the file didn't exist yet), so no separate `git diff --exit-code` step
-      # is needed here, unlike the `docs/`/`docs/adr/README.md` checks above.
+      # is needed here, unlike the `docs/`/`docs/MCP.md` checks above.
       # One step covers every `docs/<type>_schema.json` -- including `tsk` and
       # `rsk`, which never got their own dedicated step (their docs copies are
       # checked incidentally via this run).

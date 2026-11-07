@@ -55,7 +55,7 @@ next read (a guaranteed, harmless miss that self-heals, the same
 
 **A concurrent, lock-free reader can still race the rename step itself
 (feat-107-doc-cache Phase 6, REQ-012) -- closed on the *reader* side, not
-here.** ``get_feat``/``list_feat`` intentionally take no domain lock (ADR
+here.** ``get_feat``/``list_feat`` intentionally take no domain lock (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
 window after ``old_path.parent.rename(new_path.parent)`` above succeeds but
 before :func:`~biz.dfch.specmgr.feat.tools._cache.move_feat_cache_entry`

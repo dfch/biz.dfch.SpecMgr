@@ -1,7 +1,7 @@
 # `biz.dfch.specmgr.models.md._timestamps`
 
 Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
-read path and the MCP write side (feat-146 Phase 1, ADR
+read path and the MCP write side (feat-146 Phase 1, DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf).
 
 This module is the single source of the machine-written canonical date+time
@@ -14,8 +14,7 @@ produces by default). It lives here -- under ``models.md`` -- rather than in
 ``general.tools._timestamps`` because ``models/*`` must not import anything
 under ``general`` (``general``'s own ``__init__`` transitively imports
 ``server.mcp``, an ``mcp``-extra-only dependency that would silently land on
-the dependency-free base library; see
-``models/adr/v1/summary.py``'s module docstring for the precedent).
+the dependency-free base library).
 ``general.tools._timestamps.format_timestamp`` now delegates to
 :func:`format_timestamp` below, so the write side and this read-side
 normalization share exactly one formatting implementation.

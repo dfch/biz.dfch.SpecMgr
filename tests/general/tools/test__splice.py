@@ -226,7 +226,7 @@ class TestSpliceSnippet(unittest.TestCase):
     """Tests for the no-I/O splice_snippet helper (feat-153-off-by-n Phase 2, REQ-002, DEC 19ff316b).
 
     The full ACC-002 matrix (all domains, every splice shape) is this
-    feature's Phase 5; this class pins the byte-exact line format (the ADR's
+    feature's Phase 5; this class pins the byte-exact line format (the decision's
     Decision Outcome item 3 worked example) and the boundary behavior the
     dispatcher relies on.
     """

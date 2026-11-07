@@ -30,13 +30,13 @@ printing each line's 1-based body-line number, ready to feed into
 resource to point at -- id-based reads always go through the ``get_feat``
 tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-Unlike ADR's ``update_adr``, there is no ``update_frontmatter``/
+There is no ``update_frontmatter``/
 ``option_*`` equivalent here: FEAT's lifecycle surface is deliberately
 small -- a whole-body or line-range replace (the generic ``update`` tool
 with ``type="feat"``) plus a single, dedicated status-change path (the
 generic ``set_status`` tool with ``type="feat"``) -- mirroring
 ``dec.prompts.update_dec``/``req.prompts.update_req``. There is no
-``update_feat``/``set_status_feat`` tool of FEAT's own (REQ-006, ADR
+``update_feat``/``set_status_feat`` tool of FEAT's own (REQ-006, DEC
 36905d5b-8057-4294-8665-c7eed5534db0).
 
 Like ``dec.prompts.update_dec``/``req.prompts.update_req`` (and unlike

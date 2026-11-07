@@ -87,11 +87,8 @@ dedup, traversal, and aggregation.
 Use for "do all cross-references across the registry resolve on disk?".
 
 1. **Iterate the 14 whole-body domains in canonical order:**
-   req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set. The `adr` exclusion is
-   deliberate and must not be "fixed": `list_references`'s source enum
-   accepts `adr` and ADR documents can carry outbound references, but `adr`
-   is slated for removal (GitHub issue #46) and this workflow targets the
-   whole-body registry.
+   req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set — the same set
+   `list_references`'s source `type` enum dispatches over.
 2. **Per domain,** page `list_<d>` to completion (while `truncated`, a
    higher `offset`). A row whose `id` is null (a `<failed to parse>` row)
    cannot be scanned -- `list_references` needs a source id -- so count it
@@ -117,14 +114,14 @@ Use for "which documents reference REQ `<uuid>`?" -- any target `<type>
 1. **Parse the target** `<type> <id>` pair.
 2. **State the cost before running:** this is an O(registry-size) scan --
    every candidate document's body must be read, because the
-   `list_references` extractor regex-scans every body for the 12-tag
-   reference vocabulary (GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT;
+   `list_references` extractor regex-scans every body for the 11-tag
+   reference vocabulary (GOL/PRB/QA/UC/REQ/RSK/DEC/VCR/SYSRS/TXT/FEAT;
    case-insensitive tag, space/tab/dash separator, anywhere in a line). No
    domain can be pre-filtered by the target's type and no document can be
    skipped; do not "optimize" the scan by dropping domains.
 3. **Scan:** for each of the 14 whole-body domains (req/uc/tsk/qa/prb/gol/
-   rsk/dec/sop/feat/vcr/sysrs/txt/set -- the same deliberate `adr` exclusion as the
-   batch workflow), page `list_<d>` to completion and, for every scannable
+   rsk/dec/sop/feat/vcr/sysrs/txt/set -- the same set the batch workflow
+   iterates), page `list_<d>` to completion and, for every scannable
    document (null-id `<failed to parse>` rows are counted as
    `parse_failures`, not scanned), call `list_references(<domain>, id)` and
    page to completion.
@@ -194,10 +191,10 @@ vice versa).
      edges — a self-loop, or both endpoints in the same strongly
      connected component of size ≥ 2 — render with the red `-[#red]->`
      arrow; every off-cycle edge renders plain `-->`.
-   - **The reverse mandate's cost (scoped diagrams only):** the
-     `reverse`/`--reverse` the workflow always requests makes the scoped
-      build run the FULL 15-DOMAIN SCAN for the direct incoming
-     references — O(registry size), the same cost the reverse workflow
+    - **The reverse mandate's cost (scoped diagrams only):** the
+      `reverse`/`--reverse` the workflow always requests makes the scoped
+      build run the FULL 14-DOMAIN SCAN for the direct incoming
+      references — O(registry size), the same cost the reverse workflow
      above states before running; state it in the report whenever you
      produced a scoped diagram. The registry-wide surface pays no such
      cost (its edges already run both ways).
@@ -205,14 +202,11 @@ vice versa).
      FEAT node except the explicitly requested source (scoped), then drops
      every edge touching a dropped node — a feat target never surfaces as
      a node in any mode.
-   - **Domain-count reconciliation (do not "fix" either):** the diagram
-     surface spans 15 domains — `adr` INCLUDED (a scoped `type` accepts
-     `adr`; an ADR document referencing a REQ is a real edge) — while the
-     text workflows above (graph, batch, reverse) stay 14 whole-body
-     domains with their deliberate `adr` exclusion (`adr` is slated for
-     removal, GitHub issue #46, ADR
-     bfd76370-b59b-4d65-b550-a969f6c93c9d). The two surfaces intentionally
-     differ.
+    - **Domain count:** the diagram surface and the text workflows above
+      (graph, batch, reverse) both span the same 14 whole-body domains
+      (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set); the
+      scoped diagram `type` and the `list_references` source `type` dispatch
+      over that same set.
 
 ## Reporting conventions (every workflow)
 

@@ -42,23 +42,14 @@ content-shape mismatch (``full=True`` with body-only content, or
 content-validation failure, and is **not** in that catch set: it is a bare
 ``ValueError`` raised by the adapter itself, before the wrapped parse call
 ever runs, and it still propagates through :func:`validate` unchanged, same
-as it always did through the retired per-domain tools. An unsupported
-``type`` (including ``"adr"``) is likewise a ``ValueError``, raised before
-any adapter runs at all.
+ as it always did through the retired per-domain tools. An unsupported
+ ``type`` is likewise a ``ValueError``, raised before any adapter runs at
+ all. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends DEC
+ 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+ (previously covering only mutation-adjacent tools) to this read-only/
+ dry-run tool category.
 
-ADR is deliberately *not* a ``type`` here, mirroring ``update``'s/
-``set_classification``'s/``delete``'s own exclusion: ``validate_adr`` is
-structurally the odd one out among the (previously) separate per-domain
-``validate_<d>`` tools -- ``id``-based and disk-touching, with no ``full``
-parameter, and its own structural-failure channel is ``AdrParseError``
-(a ``ValueError`` subclass) rather than ``AssertionError`` -- so it is kept
-as its own standalone tool, unchanged, and excluded from this
-consolidation. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends
-DEC 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
-(previously covering only mutation-adjacent tools) to this read-only/
-dry-run tool category.
-
-The parameter is intentionally named ``type`` (it matches the frontmatter
+ The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
 to the builtin shadow.
 
@@ -173,7 +164,7 @@ Validate ``content`` as set markdown.
 Verbatim-shape port of :func:`_validate_sysrs` (same ``set`` domain
 label, ``parse_set`` for the full document, ``parse_set_body`` -- the
 single body-validation entry point the write adapters share -- for the
-body-only shape; ``set`` is dispatch-only from day one per ADR
+body-only shape; ``set`` is dispatch-only from day one per DEC
 36905d5b) -- see :func:`_validate_req` for the shared semantics.
 
 
@@ -206,7 +197,7 @@ Validate ``content`` as free-form text markdown.
 Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
 label, ``parse_txt`` for the full document, ``parse_txt_body`` -- the
 single body-validation entry point the write adapters share -- for the
-body-only shape; ``txt`` is dispatch-only from day one per ADR
+body-only shape; ``txt`` is dispatch-only from day one per DEC
 36905d5b) -- see :func:`_validate_req` for the shared semantics.
 
 
@@ -260,9 +251,8 @@ body markdown only when ``full=False`` (the shape ``create_<d>`` and
 the generic ``update`` tool accept), or a complete document
 (frontmatter and body together) when ``full=True`` -- passing the
 wrong shape raises ``ValueError`` before the domain's own parse/
-validation logic ever runs. An unsupported ``type`` (including
-``"adr"``, which has its own standalone ``validate_adr`` tool) is
-likewise a ``ValueError``, raised before any adapter is dispatched.
+ validation logic ever runs. An unsupported ``type`` is likewise a
+ ``ValueError``, raised before any adapter is dispatched.
 
 Parameters
 ----------
@@ -287,7 +277,6 @@ ValidateResult
 Raises
 ------
 ValueError
-    ``type`` is not one of the supported domains (including
-    ``"adr"``), or ``full`` does not match whether ``content`` carries
-    a frontmatter block.
+    ``type`` is not one of the supported domains, or ``full`` does not
+    match whether ``content`` carries a frontmatter block.
 

@@ -16,7 +16,7 @@ Like SOP/DEC/VCR, SYSRS has exactly two resources and no by-id single-document
 *resource* -- id-based reads go through the ``get_sysrs`` tool only
 (``sysrs.tools.get_sysrs``), and no ``specmgr://sysrs/list`` resource either --
 listing goes through the ``list_sysrs`` ``@mcp.tool()``
-(``sysrs.tools.list_sysrs``) from the start, per ADR
+(``sysrs.tools.list_sysrs``) from the start, per DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 The former schema resource (``sysrs_schema``, ``specmgr://sysrs/schema``) was

@@ -16,10 +16,10 @@ file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://sysrs/schema`` resource).
 ``get_sysrs`` reads, parses, and returns a full System Requirements
 Specification document by id -- the sole id-based read path for SYSRS
-(there is no ``specmgr://sysrs/{id}`` resource, ADR
+(there is no ``specmgr://sysrs/{id}`` resource, DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_sysrs`` returns one page of
 id/title/status/ref summaries of every System Requirements Specification,
-shipped as a paged tool from day one (ADR
+shipped as a paged tool from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_sysrs`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the System Requirements Specification base
@@ -37,7 +37,7 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate_sysrs`` tool was removed in favor of it (feat-81-83-validation
 Phase 2). There is **no** per-domain
 ``update_sysrs``/``set_status_sysrs``/``delete_sysrs``/``validate_sysrs``
-tool -- dispatch-only from day one, ADR
+tool -- dispatch-only from day one, DEC
 36905d5b-8057-4294-8665-c7eed5534db0. Import this package to register all
 System Requirements Specification tools at once::
 

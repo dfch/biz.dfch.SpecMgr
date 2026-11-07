@@ -69,12 +69,6 @@
           "format": "number"
         },
         {
-          "name": "SPECMGR_ADR_DIR",
-          "description": "Base directory scanned for Architecture Decision Record (.md) files.",
-          "default": "docs/adr",
-          "format": "filepath"
-        },
-        {
           "name": "SPECMGR_DOCS_DIR",
           "description": "Shared base directory root for the document-type domains that do not have their own dedicated directory environment variable (req, uc, tsk, qa, prb, gol, rsk, dec, sop, vcr, sysrs, txt, set). Each domain's own subdirectory is appended automatically, e.g. docs/req.",
           "default": "docs",

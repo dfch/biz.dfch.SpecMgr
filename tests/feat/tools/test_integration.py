@@ -315,7 +315,7 @@ class TestFeatLifecycleIntegration(TempFeatDirTestCase):
 
     def test_set_status_rejects_status_outside_the_closed_four_set(self) -> None:
         """ACC-004: set_status (type="feat") must reject a status outside {planning, progress,
-        review, done}, returning a non-raising ``InvalidStatusResult`` (ADR
+        review, done}, returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_feat(_INITIAL_BODY)
         expected_path = feat_base_dir() / created.id / README_FILENAME

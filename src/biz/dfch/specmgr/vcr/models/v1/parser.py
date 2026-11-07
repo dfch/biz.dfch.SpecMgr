@@ -124,7 +124,7 @@ def parse_vcr(text: str, *, language: str | None = None) -> VcrDocument:
 def parse_vcr_body(content: str, *, language: str | None = None) -> Vcr:
     """Parse a frontmatter-free verification case record body text into a :class:`Vcr`, in the given language.
 
-    The body-only half of :func:`parse_vcr` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_vcr` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Vcr.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

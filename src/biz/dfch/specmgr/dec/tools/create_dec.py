@@ -19,8 +19,7 @@
 
 """``@mcp.tool()`` wrapper: create_dec (Task 2.2).
 
-Unlike ``adr.tools.create_adr`` (which accepts a full ``frontmatter``/``body``
-pair and renders the body back out via ``render_adr``), ``create_dec`` accepts
+``create_dec`` accepts
 **body markdown only** and never renders anything: the caller's own
 already-validated ``content`` text is persisted byte-for-byte, and only the
 small frontmatter YAML block is code-generated and prepended -- mirrors
@@ -42,7 +41,7 @@ a non-default ``language`` the tool creates a *translation* of an existing
 decision: ``id`` -- the shared id of the EN source document (REQ-003, the
 id is never language-qualified and is never freshly assigned for a
 variant) -- is then **required**, the EN source must already exist on disk
-(ADR item 2: the EN slug is the single filename authority), and the
+(DEC 38efdb66 item 2: the EN slug is the single filename authority), and the
 variant is written to ``docs/dec/{language}/`` under the EN source's exact
 basename with the shared id as its frontmatter ``id`` (fresh
 ``created``/``updated``, ``status="draft"`` as on every create). The
@@ -180,8 +179,8 @@ def create_dec(  # pylint: disable=too-many-locals
         exactly as the generic ``validate`` tool caps it (feat-110, via
         :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
         ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
-        in that case (feat-204-create-error, ADR
-        f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+        in that case (feat-204-create-error, DEC
+        f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
         519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
         workaround chain).
 

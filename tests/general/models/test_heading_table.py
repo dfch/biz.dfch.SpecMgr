@@ -54,7 +54,7 @@ from biz.dfch.specmgr.models.md.alias_type import AliasType
 from biz.dfch.specmgr.models.md.markdown_section import MarkdownSection
 
 #: The i18n-eligible domains' own current document-model packages (feat-197-i18n: every
-#: whole-body domain except ``feat``; ``adr`` excluded). The derivation below walks each
+#: whole-body domain except ``feat``). The derivation below walks each
 #: domain's ``*Document`` body field tree -- the exact sections the engine can match.
 _DOCUMENT_MODEL_PACKAGES = {
     "req": "biz.dfch.specmgr.req.models.v1",
@@ -179,7 +179,7 @@ class TestLoadHeadingTable(unittest.TestCase):
         self.enterContext(mock.patch("biz.dfch.specmgr.general.models.heading_table._loaded_tables", {}))
 
     def test_de_table_loads_with_the_expected_shape(self):
-        """The packaged de table loads as a flat str -> str object with the ADR's own example entry."""
+        """The packaged de table loads as a flat str -> str object with the decision's own example entry."""
         result = load_heading_table("de")
         self.assertIsInstance(result, dict)
         self.assertEqual(result["Kontext und Problembeschreibung"], "Context and Problem Statement")
@@ -531,7 +531,7 @@ class TestDeJsonIntegrity(unittest.TestCase):
                 self.assertFalse(value.startswith(data_carrying_prefixes))
 
     def test_the_adr_example_entries_are_present(self):
-        """The ADR's own named examples (item 3) are pinned: PRB's escaped-question regex headings
+        """The decision's own named examples (item 3) are pinned: PRB's escaped-question regex headings
         decode with the '?' restored, and the shared 'More Information' heading maps too."""
         self.assertEqual(self.table["Was ist das Problem?"], "What Is the Problem?")
         self.assertEqual(self.table["Weitere Informationen"], "More Information")

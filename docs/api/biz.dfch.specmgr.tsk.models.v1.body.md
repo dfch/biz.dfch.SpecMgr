@@ -33,8 +33,7 @@ in that same order.
 `## Recent Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries.
 
 A fixed-title (non-alias) `MarkdownSection2WithComment`, structurally
-similar to `AdrBody`'s `## Pros and Cons of the Options`/`AdrOption`
-collection, but with no dedicated per-entry tools (no
+similar to DEC's `## Pros and Cons`/option collection, but with no dedicated per-entry tools (no
 `option_create`/`option_list` equivalent) -- entries are prepended
 (newest-first) by editing the whole body. May be preceded by an
 explanatory HTML comment (e.g. an ordering hint).
@@ -1366,7 +1365,7 @@ colon, space): e.g. `### 2026-08-19 05:42:00.000+02:00 - Kickoff` or
 `### 2026-08-19T05:42:00.000Z : Kickoff`. The em-dash separator is
 rejected. The timestamp is the full ``yyyy-MM-dd`` + (``T`` or space) +
 ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``, ``-05:00``) or
-``Z`` for UTC variant -- date-only is rejected (ADR
+``Z`` for UTC variant -- date-only is rejected (DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf). Mirrors DEC/VCR's own
 `UpdateEntry` shape exactly.
 

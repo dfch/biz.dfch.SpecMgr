@@ -176,7 +176,7 @@ class TestMarkdownSectionAliasEnforcement(unittest.TestCase):
 
     def test_class_with_no_alias_defaults_to_space_separated_class_name_match(self) -> None:
         """A class with no @alias at all (e.g. MarkdownSection3 itself) defaults to
-        `AliasType.SPACE_SEPARATED`'s derivation of its own class name (ADR
+        `AliasType.SPACE_SEPARATED`'s derivation of its own class name (DEC
         832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.4.0), not "accept any heading
         text", and not a literal match against the raw class name."""
         text = mdformat.text("### Markdown Section 3\ncontent\n")
@@ -326,7 +326,7 @@ class TestMarkdownSectionNestedHeadingContent(unittest.TestCase):
 
     def test_directly_assigning_a_nested_heading_to_value_raises_nothing(self) -> None:
         """No model validator re-checks `_value`'s content shape after
-        construction (the inert heading validators were removed -- see ADR
+        construction (the inert heading validators were removed -- see DEC
         832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.6.0 / feat-129), so directly
         assigning a nested heading to `_value` raises nothing."""
         instance = MarkdownSection3()

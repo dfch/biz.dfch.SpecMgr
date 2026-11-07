@@ -125,7 +125,7 @@ def parse_gol(text: str, *, language: str | None = None) -> GolDocument:
 def parse_gol_body(content: str, *, language: str | None = None) -> Goal:
     """Parse a frontmatter-free goal body text into a :class:`Goal`, in the given language.
 
-    The body-only half of :func:`parse_gol` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_gol` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Goal.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

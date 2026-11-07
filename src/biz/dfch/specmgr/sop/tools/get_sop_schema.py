@@ -34,7 +34,7 @@ Replaces the removed ``specmgr://sop/schema`` resource
 ("Convert the 12 per-domain schema resources to get_<d>_schema tools"):
 the raw-text return deliberately follows the sibling
 ``get_sop_template``/``get_sop_example`` tools' own convention instead of
-the removed resource's parsed-dict return (the ADR's micro-decision D1),
+the removed resource's parsed-dict return (the DEC's micro-decision D1),
 and the wire content the agent sees is the same JSON document either way.
 """
 

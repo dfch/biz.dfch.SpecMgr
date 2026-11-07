@@ -80,7 +80,7 @@ __all__ = [
     "first_h1",
 ]
 
-#: The frontmatter keys excluded from the embedding input (ADR
+#: The frontmatter keys excluded from the embedding input (DEC
 #: 750842b2, **embedding input** sub-decision; REQ-005): bookkeeping
 #: metadata with no semantic similarity signal. ``status`` is part of
 #: this exclusion by an explicit decision (the feature README's

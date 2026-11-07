@@ -18,7 +18,7 @@ begin with). ``list_rsk`` (Task 3.14) returns one page of
 id/title/status/ref summaries of every risk, plus the initial/residual 5x5
 zone levels, the TARA strategy word, the first ``## Scope`` entry, and the
 residual-risk coordinates (``RskSummary``), so that ``max_results``/
-``offset`` paging parameters can be accepted (feat-13-list-paging, ADR
+``offset`` paging parameters can be accepted (feat-13-list-paging, DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_rsk`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the risk base directory (``rsk.tools._paths``/

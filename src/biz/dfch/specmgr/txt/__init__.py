@@ -47,7 +47,7 @@ generic ``set_status`` tool in ``general.tools`` (``type="txt"``), and
 disk-free, id-free dry-run content validation through the generic
 ``validate`` tool in ``general.tools`` (``type="txt"``). Like VCR, TXT has
 no ``specmgr://txt/{id}`` resource --
-id-based reads go through the ``get_txt`` tool only (ADR
+id-based reads go through the ``get_txt`` tool only (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://txt/list`` resource -- ``list_txt`` ships as a paged
 ``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).

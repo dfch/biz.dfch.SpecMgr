@@ -27,7 +27,7 @@ exists but fails to parse is returned, not raised: the result carries
 ``list_<d>``'s failed-row ``error`` for the same file -- identical field
 path and cause, including the trailing pydantic documentation line) and
 ``path`` (the absolute on-disk
-file), for every one of the whole-body domains per ADR
+file), for every one of the whole-body domains per DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for ``feat`` only
 (feat-187-list-feat-timeout, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44):
 ``get_feat`` always fully parses and remains the unconditional,
@@ -65,8 +65,7 @@ fix, touch nothing).
 
 ``type`` is one of the whole-body domains (imported from
 ``general.tools._domains.WHOLE_BODY_DOMAINS``, the single source of truth
-per feat-125-domain-lists); ADR is explicitly out of scope -- it has no
-generic dry-run ``validate``/``update`` tooling of its own.
+per feat-125-domain-lists).
 
 This prompt is cross-cutting (it takes ``type`` + an optional ``id``, not
 tied to one domain), so -- like ``compact_history`` -- it lives under
@@ -79,7 +78,7 @@ The actual instructional text lives in its own packaged data file,
 ``general/data/general_repair_instructions.md``, read fresh on every call
 via ``general.tools._packaged_data.read_packaged_text`` -- following the
 same packaging convention already used for prompt instructions in the
-``qa``/``adr``/``req``/``tsk`` domains (Task 0.19.1, Task 0.20).
+``qa``/``req``/``tsk`` domains (Task 0.19.1, Task 0.20).
 Placeholders use ``string.Template`` (``$type``/``$id``), not
 ``str.format``, so the packaged file is free to use plain, unescaped
 ``{...}`` braces of its own.
@@ -89,7 +88,7 @@ from __future__ import annotations
 
 from string import Template
 
-from ...general.tools._domains import ADR, WHOLE_BODY_DOMAINS
+from ...general.tools._domains import WHOLE_BODY_DOMAINS
 from ...general.tools._packaged_data import read_packaged_text
 from ...server import mcp
 
@@ -109,7 +108,7 @@ _ID_NOT_GIVEN_TEMPLATE = (
         "parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- "
         "the error text byte-identical to list_<d>()'s failed row for the same "
         "file; every whole-body "
-        "domain, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for feat only, ADR "
+        "domain, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for feat only, DEC "
         "3982712a-a46b-4b2b-809f-9c6925a49b44: list_feat's own row may transiently differ until its "
         "background warmup or an on-demand get_feat read has fully parsed that file) when an id is "
         "given, or "
@@ -121,7 +120,7 @@ _ID_NOT_GIVEN_TEMPLATE = (
         "which is structurally unable to repair a document that fails to parse), then confirm the "
         "repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() "
         "call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only "
-        "on a host without file read/write tools. ADR is out of scope."
+        "on a host without file read/write tools."
     ),
 )
 def repair(type: str, id: str | None = None) -> str:
@@ -132,10 +131,8 @@ def repair(type: str, id: str | None = None) -> str:
     type:
         The document domain to repair: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``"adr"``
-        is explicitly rejected with an actionable error (ADR is not a
-        whole-body domain and has no generic dry-run ``validate`` tooling);
-        so is any other unknown value.
+        ``vcr``, ``sysrs``, ``txt``, ``set`` (matched case-insensitively);
+        any other value is rejected with an actionable error.
     id:
         The failing document's id, when known. When absent, the returned
         instructions direct discovery via ``list_<type>()``'s failed row
@@ -151,9 +148,9 @@ def repair(type: str, id: str | None = None) -> str:
     Raises
     ------
     ValueError
-        If ``type`` is ``"adr"`` (ADR exclusion) or an unknown domain, or
-        if ``id`` is a blank/whitespace-only string (pass a real id, or
-        omit the parameter entirely).
+        If ``type`` is an unknown domain, or if ``id`` is a
+        blank/whitespace-only string (pass a real id, or omit the
+        parameter entirely).
     """
     assert isinstance(type, str), f"repair() expects type as a str, got {type!r}"
     assert id is None or isinstance(id, str), f"repair() expects id as a str or None, got {id!r}"
@@ -163,16 +160,9 @@ def repair(type: str, id: str | None = None) -> str:
             "omit the id parameter entirely (discovery then scans list_<type>()'s failed rows)."
         )
     normalized_type = type.strip().lower()
-    if normalized_type == ADR:
-        raise ValueError(
-            "repair() does not support type 'adr': ADR is not a whole-body domain and has no "
-            "generic dry-run validate tooling of its own (its standalone validate_adr re-reads "
-            "the ADR from disk by id), so the repair loop is not defined for it."
-        )
     if normalized_type not in WHOLE_BODY_DOMAINS:
         raise ValueError(
-            f"repair() does not support type {normalized_type!r}; expected one of "
-            f"{'/'.join(WHOLE_BODY_DOMAINS)} ('adr' is explicitly out of scope)."
+            f"repair() does not support type {normalized_type!r}; expected one of {'/'.join(WHOLE_BODY_DOMAINS)}."
         )
     template = Template(read_packaged_text("general", "repair_instructions", "md"))
     result = template.substitute(

@@ -437,8 +437,7 @@ Attributes:
   Neither JSON Schema (uc_schema.json) nor a single model's own fields can express this:
   it requires cross-checking ``Extension.step_reference``/``SubVariation.step_reference``
   against the sibling ``main_success_scenario.steps`` collection, and detecting duplicate
-  references within each of ``extensions``/``sub_variations``. Unlike ADR's analogous
-  Considered-Options/Option-section gap (deliberately left unenforced), this check is
+  references within each of ``extensions``/``sub_variations``. This check is
   explicitly in scope here (Task 1.3B).
 
 

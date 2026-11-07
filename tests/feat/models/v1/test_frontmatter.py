@@ -33,7 +33,7 @@ class TestFeatFrontmatter(unittest.TestCase):
         self.assertEqual(sut.type, "feat")
 
     def test_type_rejects_other_document_types(self) -> None:
-        for other in ("req", "gol", "dec", "adr"):
+        for other in ("req", "gol", "dec"):
             with self.subTest(other=other):
                 with self.assertRaises(ValidationError):
                     FeatFrontmatter(type=other)

@@ -18,11 +18,7 @@ reusable :class:`DocCache` class itself -- it is Phase 3/4's job to
 instantiate one module-level singleton per domain (mirroring the existing
 per-domain ``threading.Lock`` registries in each domain's own ``_lock.py``)
 and route that domain's ``read_<domain>``/``find_doc_path_by_id`` scan/
-``list_<domain>`` summary-building callback through it. **ADR
-(``models/adr/v1``) is deliberately excluded from this cache mechanism
-entirely** -- it is expected to be phased out later and does not justify
-its own independently-implemented cache module, since it has no dependency
-on ``general`` to begin with.
+``list_<domain>`` summary-building callback through it.
 
 **Content-hash validation guarantee.** Every :meth:`DocCache.read` call
 re-hashes ``path``'s full on-disk text (``hashlib.blake2b``) and compares it
@@ -30,10 +26,9 @@ against the hash recorded at the last successful/failed read of that path
 *before* deciding whether to skip re-parsing -- a stale entry is
 structurally impossible, it can only ever cost one extra parse. This
 refines, rather than violates, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3's
-"the filesystem is the sole source of truth" invariant. See ADR
+"the filesystem is the sole source of truth" invariant. See DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d for the full design this module
-implements, including its relationship to DEC 33c5ab08 and the explicit
-ADR-domain exclusion above.
+implements, including its relationship to DEC 33c5ab08.
 
 **Phase 6 (feat-107-doc-cache): a hash/parse TOCTOU race, and two latent
 design risks, closed.** An independent post-closeout review of the Phase
@@ -123,7 +118,7 @@ guard and needed no changes).
 
 A process-local, content-hash-validated in-memory read cache for one domain.
 
-Shaped as ``dict[Path, tuple[content_hash, result]]`` (ADR
+Shaped as ``dict[Path, tuple[content_hash, result]]`` (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d), where ``result`` is either the
 successfully parsed document or the exception a prior parse attempt
 raised. One :class:`DocCache` instance is intended per domain, created
@@ -202,7 +197,7 @@ this class does not attempt to de-duplicate in-flight parses.
   The read-only counterpart of :meth:`read_preloaded`: it never calls
   ``parse_fn`` (it has none) and never writes to this cache's own
   entries -- a pure lookup against a result some *other* call already
-  produced. Built for ``feat``'s two-stage dirty/clean staging (ADR
+  produced. Built for ``feat``'s two-stage dirty/clean staging (DEC
   3982712a-a46b-4b2b-809f-9c6925a49b44): a caller holding both a
   "clean" (full-parse) and a "dirty" (cheaper) ``DocCache`` instance
   for the same domain calls this on the clean one first, against text
@@ -327,7 +322,7 @@ this class does not attempt to de-duplicate in-flight parses.
   Identical hit/miss semantics to :meth:`read` -- see that method's
   own docstring for the full hit/miss contract -- except this method
   is handed the text the caller already read (e.g. for its own
-  two-stage dirty/clean cache staging, ADR
+  two-stage dirty/clean cache staging, DEC
   3982712a-a46b-4b2b-809f-9c6925a49b44) rather than reading ``path``
   itself: :meth:`read` is now implemented in terms of this method
   (``text = path.read_text(...); return self.read_preloaded(path,

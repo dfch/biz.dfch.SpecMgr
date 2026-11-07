@@ -67,7 +67,7 @@ failure case (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c):
   :class:`InvalidStatusResult` -- a different tool's own model.
 
 Also backs feat-92-resources's cross-cutting reference-resource
-model-backed drift-guard convention (ADR
+model-backed drift-guard convention (DEC
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
 
 - :func:`parse_dtais`/:class:`Dtais` -- parses the DTAIS verification-

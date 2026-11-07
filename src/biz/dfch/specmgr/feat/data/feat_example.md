@@ -45,7 +45,7 @@ Short description of what this feature is and why it exists.
 
 #### Depends On
 
-- ADR xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx: the component library this widget is built on.
+- DEC xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx: the component library this widget is built on.
 
 #### Blocks
 
@@ -57,7 +57,7 @@ Free-form design rationale, schema sketches, etc.
 
 ### Related Decisions
 
-- xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (ADR): short description
+- xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (DEC): short description
 
 - yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy (dec): short description
 

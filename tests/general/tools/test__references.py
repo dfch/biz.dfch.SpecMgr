@@ -19,7 +19,7 @@
 
 ``find_references`` is pure string extraction (no fixture required);
 ``resolve_reference`` resolves against real, referenced artifacts created
-in a temp ``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/``SPECMGR_FEAT_DIR``
+in a temp ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR``
 (fixture convention mirrors ``tests/general/tools/test_delete.py``'s
 ``TempDeleteDirTestCase``: the env vars are read per call, so patching is
 clean and isolated).
@@ -35,8 +35,6 @@ from unittest import mock
 
 from typing import Any, Callable
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
-from biz.dfch.specmgr.adr.tools.create_adr import create_adr
 from biz.dfch.specmgr.dec.tools.create_dec import create_dec
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -44,7 +42,6 @@ from biz.dfch.specmgr.general.models.reference import ReferenceRow
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._references import REFERENCE_TYPES, find_references, resolve_reference
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
-from biz.dfch.specmgr.models.adr import AdrBody, AdrFrontmatter
 from biz.dfch.specmgr.prb.tools.create_prb import create_prb
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
 from biz.dfch.specmgr.req.tools.create_req import create_req
@@ -354,8 +351,6 @@ _TXT_MINIMAL_BODY = textwrap.dedent(
 )
 
 _TXT_TITLE = "Sample Free-Form Text"
-
-_ADR_TITLE = "Use the dispatch convention"
 
 
 def _feat_body(title: str) -> str:
@@ -667,20 +662,18 @@ class TestFindReferences(unittest.TestCase):
 
 
 class TempRefDirTestCase(unittest.TestCase):
-    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR, the ADR base dir via
-    SPECMGR_ADR_DIR, and the feat base dir via SPECMGR_FEAT_DIR (the lifecycle is managed by
-    ``enterContext``, per the sibling ``test_delete.py``/``test_set_status.py`` fixture convention)."""
+    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the feat base dir via
+    SPECMGR_FEAT_DIR (the lifecycle is managed by ``enterContext``, per the sibling
+    ``test_delete.py``/``test_set_status.py`` fixture convention)."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.adr_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(
             mock.patch.dict(
                 "os.environ",
                 {
                     DOCS_DIR_ENV_VAR: str(self.docs_root),
-                    ADR_DIR_ENV_VAR: str(self.adr_dir),
                     FEAT_DIR_ENV_VAR: str(self.feat_dir),
                 },
             )
@@ -715,34 +708,13 @@ class TestResolveReference(TempRefDirTestCase):
                 self.assertTrue(path.is_absolute())
                 self.assertTrue(path.exists())
 
-    def test_adr_target_row_uses_the_adr_h1(self):
-        """The adr special case: the row's title is the referenced ADR's own H1 (doc.body.title)."""
-        created_adr = create_adr(
-            AdrFrontmatter(),
-            AdrBody(
-                title=_ADR_TITLE,
-                context_and_problem_statement="Context.",
-                considered_options="Options.",
-                decision_outcome="Outcome.",
-            ),
-        )
-
-        row = resolve_reference("adr", created_adr.frontmatter.id)
-
-        self.assertEqual((row.type, row.id), ("adr", created_adr.frontmatter.id))
-        self.assertEqual(row.title, _ADR_TITLE)
-        expected_path = self.adr_dir / f"{created_adr.frontmatter.id}-use-the-dispatch-convention.md"
-        self.assertEqual(row.path, str(expected_path.resolve()))
-        self.assertIsNone(row.error)
-
     def test_not_found_rows_never_raise(self):
         """A target absent on disk must yield a row with null title/path and the domain's own
-        not-found message in error -- for the flat, the adr, a second flat domain, and the txt
+        not-found message in error -- for the flat, a second flat domain, and the txt
         target domain (feat-229-txt REQ-009)."""
         for ref_type, error_fragment in (
             ("req", "no requirement found with id"),
             ("gol", "no goal found with id"),
-            ("adr", "no ADR found with id"),
             ("txt", "no free-form text document found with id"),
         ):
             with self.subTest(ref_type=ref_type):

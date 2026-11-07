@@ -2,7 +2,7 @@
 
 Goal (GOL) domain -- high-level business goal specifications.
 
-This is a domain-first package, mirroring ``prb``/``req``'s layout (per ADR
+This is a domain-first package, mirroring ``prb``/``req``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``gol`` documents.
 
@@ -30,5 +30,5 @@ unlike REQ/UC/TSK/QA/PRB's own resource-then-converted history.
 
 The former ``specmgr://gol/schema`` resource was converted into the
 ``get_gol_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).
