@@ -6,7 +6,8 @@
 # paths. A uuid/prefix that is not a migrated ADR is `foreign` and never touched; lines saying
 # "Converted from ADR" are `keep`; a bare `docs/adr/...` path is `manual`.
 # Tiers: G generated, A live artifacts, B src+tests, C prose, D transcripts/sibling files;
-# `docs/adr/*.md` themselves and this feature folder are excluded.
+# the ADR sources (`docs/adr/*.md` pre-move, the frozen `docs/archive/` after Phase 150) and
+# this feature folder are excluded.
 #
 # Run with: bash 300-110-find-refs.sh [--tags REGEX] [--tiers ABCDG] [--list] [--status S]
 #   --tags    citation tag to look for (default ADR; e.g. 'ADR|DEC' to see both)

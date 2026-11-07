@@ -39,9 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sibling-directory detection, no MCP prompt (OpenCode exposes MCP tools
   but not prompts to the agent). Drift guards: the `specmgr-harness-bundle`
   pre-commit hook (the regenerate + `git diff --exit-code` pair, scoped to
-  `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
-  family's shape) and a Python 3.13-pinned CI parity check in the `build`
-  job alongside the existing `specmgr docs`/`adr-toc`/`mcp-docs` steps;
+  `^\.opencode/(agent|command|skill)/.*\.md$`) and a Python 3.13-pinned
+  CI parity check in the `build` job alongside the existing `specmgr docs`/`mcp-docs` steps;
   the README gains a new "Installing the specmgr Harness Files" section
   (agent-driven install + what gets installed + the manual Claude Code
   path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2

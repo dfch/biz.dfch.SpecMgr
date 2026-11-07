@@ -342,6 +342,8 @@ def tier_of(rel: str) -> str | None:
     """Tier letter of a tracked path, or None when excluded (the ADR sources, the feat-46 folder)."""
     if rel.startswith("docs/adr/") and rel != "docs/adr/README.md":
         return None
+    if rel.startswith("docs/archive/"):
+        return None
     if rel.startswith(".specmgr/feat/feat-46-remove-adr/"):
         return None
     if _GENERATED.match(rel) or rel.endswith((".json", ".lock")) and "schema" in rel:
