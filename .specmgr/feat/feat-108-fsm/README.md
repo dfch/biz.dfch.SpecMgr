@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-04T14:21:56.524+01:00'
 id: feat-108-fsm
-status: review
+status: done
 type: feat
-updated: '2026-11-06T17:01:17.961+01:00'
+updated: '2026-11-07T06:51:29.443+01:00'
 version: 1.0.0
 ---
 
@@ -214,7 +214,7 @@ set:
 
 ### Current Status
 
-Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry. The post-implementation review (feat-reviewer) ran and is complete — all ACCs confirmed met, the single wording finding fixed (`4a360327`), PR #256 CI green. A second post-implementation review (feat-reviewer, over `git diff 83be6624..HEAD`) confirmed all nine ACCs met, the 14 `_STATUS_TRANSITIONS` tables and their golden pins byte-exact, and no behavioral defects; its three non-blocking findings (G1 CHANGELOG entry, D1 ACC-003 example segment, I1 AGENTS.md onboarding clause) are fixed (`527a0e7c`, docs-only); the feature awaits merge (not merged — by design).
+Implementation complete — all five phases (100–140) landed and committed, the full Phase-140 quality gate green (ruff format/check, vulture, full pytest 6131 passed/18 skipped/11203 subtests, `specmgr docs`/`adr-toc`/`mcp-docs` zero drift, `specmgr lint --all` 171 linted/0 failed, pylint advisory 9.03/10 with no feature-code findings), and all nine acceptance criteria (ACC-001…ACC-009) met — the feature is in review. Per-command gate evidence: the 2026-11-05T13:06:43Z Updates entry; per-ACC evidence: the 2026-11-05T15:12:48Z Updates entry. The post-implementation review (feat-reviewer) ran and is complete — all ACCs confirmed met, the single wording finding fixed (`4a360327`), PR #256 CI green. A second post-implementation review (feat-reviewer, over `git diff 83be6624..HEAD`) confirmed all nine ACCs met, the 14 `_STATUS_TRANSITIONS` tables and their golden pins byte-exact, and no behavioral defects; its three non-blocking findings (G1 CHANGELOG entry, D1 ACC-003 example segment, I1 AGENTS.md onboarding clause) are fixed (`527a0e7c`, docs-only); PR #256 was merged to `dev` on 2026-11-07 (merge commit `db8b6da0`, CI green on `586f682a`), closing GitHub issue #108; the feature is done (closeout recorded in the 2026-11-07 Updates entry below).
 
 ### Blockers
 
@@ -223,6 +223,10 @@ Implementation complete — all five phases (100–140) landed and committed, th
 ### Updates
 
 <!-- Newest first. -->
+
+#### 2026-11-07T05:44:27.000Z - Closeout: PR #256 merged to dev, status review -> done, issue #108 closed
+
+PR #256 was merged to `dev` by dfch at 2026-11-07T04:13:46Z as merge commit `db8b6da03820f0fd703224bf3ab54dcd324affda` (merge-style — the branch's commits are verbatim on `dev`; CI green, all 8 checks pass on `586f682a`), and GitHub issue #108 was auto-closed by the merge (2026-11-07T04:13:47Z). The frontmatter `status` is flipped `review` -> `done` in this closeout via the generic `set_status` tool — a legal transition under the feat table this feature shipped (`review`: [done, progress], ADR a79608e4-88cd-498f-8ca1-445df4d04f92). The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the coming release window (a non-`done` feat with a merged PR in the window would fail `stage_precheck`). No code or plan changes accompany it; nothing pending.
 
 #### 2026-11-06T14:39:56.000Z - Second post-implementation review run — three findings (G1, D1, I1) fixed
 
@@ -308,7 +312,7 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 
 ### Related PRs / Commits
 
-- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (open, base `dev`, CI green — all 8 checks pass on `586f682a`)
+- PR: https://github.com/dfch/biz.dfch.SpecMgr/pull/256 (merged to `dev` 2026-11-07T04:13:46Z as merge commit `db8b6da0`; CI green — all 8 checks pass on `586f682a`; issue #108 auto-closed by the merge)
 - 0a745cb Phase 100 — cross-cutting status state-machine mechanism (issue #108)
 - c5fa928 Phase 110 — REQ pilot: req status state machine + end-to-end enforcement tests (issue #108)
 - 2d22059 Phase 120 — remaining 13 domain state machines, full-coverage assert, golden + e2e matrix tests (issue #108)
@@ -317,6 +321,7 @@ Excluded ADR (consistent with i18n/feat-170). Chose domain-owned tables plus a c
 - a6e5082 set status to review — implementation complete, ACC-001…ACC-009 ticked (issue #108)
 - 4a360327 review D1 — stale Phase-110 rollout wording in the set_status seam tests (issue #108)
 - 527a0e7c review G1/D1/I1 — CHANGELOG entry, ACC-003 legal cycle, AGENTS.md ac-domain FSM clause (issue #108)
+- db8b6da0 merge — PR #256 merged to dev, closeout status review -> done (issue #108)
 
 ### More Information
 
