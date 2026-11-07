@@ -64,19 +64,21 @@ class Characteristics(MarkdownSection2):
     )
 
 
-_LEVEL_PATTERN = r"^(MUST|SHOULD|MUST NOT|SHOULD NOT|MAY)$"
+_LEVEL_PATTERN = r"^(BRS|StRS|SyRS|SRS)$"
 
 
 class Level(MarkdownSection2WithComment):
-    """`## Level` -- single-line value giving the requirement's obligation
-    strength (e.g. "MUST"). Mandatory. May be preceded by an explanatory
-    HTML comment (e.g. listing the allowed values).
+    """`## Level` -- single-line value giving the requirement's
+    ISO/IEC/IEEE 29148:2018 requirement specification kind (one of
+    `BRS`, `StRS`, `SyRS`, `SRS`, the standard's own §3.2 abbreviations).
+    Mandatory. May be preceded by an explanatory HTML comment
+    (e.g. naming the allowed kinds).
     """
 
     comment: MarkdownComment | None = Field(
         default=None,
         description="Optional explanatory HTML comment (`<!-- ... -->`) preceding `value`, "
-        "e.g. listing the allowed obligation-strength values.",
+        "e.g. naming the allowed ISO/IEC/IEEE 29148:2018 requirement specification kinds.",
     )
     value: MarkdownParagraph = Field(
         # feat-189 Phase 135: the Phase 120 (C13) `enum` key on this field's
@@ -87,8 +89,10 @@ class Level(MarkdownSection2WithComment):
         # description; `_validate_value` below remains the sole enforcement
         # point.
         description=(
-            'Single-line value giving the requirement\'s obligation strength (e.g. "MUST"). '
-            "One of `MUST`, `SHOULD`, `MUST NOT`, `SHOULD NOT`, `MAY` (RFC 2119)."
+            "Single-line value giving the requirement's ISO/IEC/IEEE 29148:2018 requirement "
+            "specification kind. One of `BRS`, `StRS`, `SyRS`, `SRS` (the standard's §3.2 "
+            "abbreviations; §5.4 maps the four kinds to the standard's requirement levels, "
+            "§9.3-9.6 give their normative content clauses)."
         ),
     )
 
@@ -251,7 +255,8 @@ class Requirement(MarkdownSection1):
     characteristics:
         `## Characteristics`. Mandatory.
     level:
-        `## Level`. Mandatory.
+        `## Level`. Mandatory. The requirement's ISO/IEC/IEEE 29148:2018
+        requirement specification kind (one of `BRS`, `StRS`, `SyRS`, `SRS`).
     priority:
         `## Priority`. Optional.
     tags:

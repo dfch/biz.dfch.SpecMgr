@@ -6,7 +6,7 @@ The generic, cross-domain cross-reference listing tool (ADR 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
 every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
-``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``) plus ``adr`` --
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) plus ``adr`` --
 reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
@@ -64,7 +64,7 @@ List the cross-references of one source document, resolved and paged.
 
 The source is identified by ``type`` (every whole-body domain
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``/``txt``, plus ``adr``) and its own
+``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
 ``id``, and is validated via ``_path_safety.validate_id`` before any
 filesystem access (ACC-005). The source is then read as raw, frontmatter-stripped
 body text (``_splice.body_text`` -- the doc-cache does not apply to it,
@@ -103,7 +103,7 @@ Parameters
 type:
     The source document's type / domain: one of ``adr``, ``req``,
     ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
-    ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``.
+    ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
 id:
     The source document's specmgr-assigned identifier (the
     ``feat-NNN-slug`` folder name for ``feat``).

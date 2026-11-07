@@ -9,7 +9,10 @@ only, see `vcr.models.v1.body._VERIFIES_PATTERN`), and the new
 `RequirementsBase`/`DecisionsBase`/`GoalsBase`/`RisksBase` base classes in
 `common_sections.py` (feat-135-related-artifacts-risks, REQ-007/REQ-010),
 rather than a third/fourth independent reimplementation of the same
-`"<TAG> <uuid>: <title>"` format check.
+`"<TAG> <uuid>: <title>"` format check. The module additionally hosts the
+shared, anchored `FEAT_ID_PATTERN` (the ``feat-NNN-slug`` folder-name
+shape, relocated model-side from ``general.tools._path_safety`` by
+feat-173's second-review I1/I2).
 
 Like every other private (`_`-prefixed) shared helper in `models/md`
 (`_ordering.py`, `_errors.py`, `_markdown.py`), this module is **not**

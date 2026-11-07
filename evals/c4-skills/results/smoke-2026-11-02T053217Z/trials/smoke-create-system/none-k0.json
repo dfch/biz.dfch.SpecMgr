@@ -1,0 +1,90 @@
+{
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/smoke-create-system/none-k0.events.ndjson",
+  "exit_code": null,
+  "finished_at": "2026-11-02T05:56:26Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (863 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 05:56:27.526 [main] ERROR com.structurizr.command.ValidateCommand -- Unexpected tokens (expected: systemLandscape, systemContext, container, component, filtered, dynamic, deployment, custom, styles, theme, themes, terminology, properties) at line 19 of /w/workspace.dsl: workspaceView \"SystemContext\"",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 05:56:28.446 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "only 0 container(s) in the export JSON",
+      "name": "two_containers",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 244.5402003779309,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 0,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 0,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 3,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 12802,
+      "output": 2611,
+      "reasoning": 0
+    },
+    "tool_calls": 3,
+    "validate_calls": 0,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1018.991,
+    "workdir_dsl": "workspace \"Bookshop\" \"A simple online bookshop\" {\n\n    model {\n        customer = person \"Customer\" \"A customer who browses and buys books online\"\n        bookshop = softwareSystem \"Bookshop\" \"An online bookshop for buying books\" {\n            webStore = container \"Web Store\" \"A web application that lets customers browse the catalogue and place orders\" \"Web Application\"\n            orderProcessor = container \"Order Processor\" \"Processes and fulfils customer orders\" \"Service\"\n        }\n\n        customer -> webStore \"Browses the catalogue and places orders using\" \"HTTPS\"\n        webStore -> orderProcessor \"Sends order details to\" \"gRPC\"\n    }\n\n    views {\n        systemContext bookshop \"SystemContext\" \"Shows the Customer interacting with the Bookshop\" {\n            include *\n            autoLayout\n        }\n        workspaceView \"SystemContext\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "smoke-create-system",
+    "condition": "none",
+    "k_index": 0
+  },
+  "run_id": "smoke-2026-11-02T053217Z",
+  "started_at": "2026-11-02T05:36:25Z",
+  "timeout": true,
+  "wall_time_s": 1201.0809216919588,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr/evals/c4-skills/work/smoke-create-system.none-k0.smoke-2026-11-02T053217Z"
+}

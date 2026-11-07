@@ -79,6 +79,34 @@ class TestCreateReqPrompt(unittest.TestCase):
         self.assertIn('update(id, type="req", content)', result)
         self.assertIn('set_status(id, type="req", status)', result)
 
+    def test_mentions_iso29148_read_first_step_before_level(self):
+        """The prompt must name specmgr://iso29148 as a read-first step taken
+        before filling in ## Level, positioned after the structure recap and
+        before the template/example tools."""
+        result = create_req("Some topic")
+        step = "Read the ISO 29148 requirement specifications before drafting"
+        self.assertIn(step, result)
+        self.assertIn("Before filling in `## Level`, fetch the cross-cutting", result)
+        self.assertIn("`specmgr://iso29148` resource and read the four requirement", result)
+        self.assertLess(result.index(step), result.index("get_req_template"))
+
+    def test_elicits_the_iso29148_kind(self):
+        """The prompt must elicit the ISO 29148 requirement specification kind:
+        the four kind tokens and the question-tool ask must both appear."""
+        result = create_req("Some topic")
+        self.assertIn("one of BRS / StRS / SyRS / SRS", result)
+        for kind in ("BRS", "StRS", "SyRS", "SRS"):
+            with self.subTest(kind=kind):
+                self.assertIn(kind, result)
+        self.assertIn("via the `question` tool) which of the four", result)
+
+    def test_directs_obligation_into_statement_phrasing_with_ears_pointer(self):
+        """The prompt must carry obligation in the requirement statement's
+        phrasing (not by a field) and point at specmgr://ears."""
+        result = create_req("Some topic")
+        self.assertIn("Obligation is carried by the statement's phrasing,", result)
+        self.assertIn("Read `specmgr://ears`", result)
+
     def test_instructions_loaded_from_packaged_data_file(self):
         """The instructional text must come from req/data/req_create_instructions.md,
         not an inline Python string -- reads fresh on every call, no cache."""

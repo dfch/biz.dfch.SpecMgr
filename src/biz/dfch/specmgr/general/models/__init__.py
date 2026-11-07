@@ -54,6 +54,19 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
   ``pydantic.ValidationError`` propagate. Distinct from
   :class:`ValidateResult` -- a different tool's own model.
 
+Also backs feat-108-fsm's (Phase 100) extension of that same non-raising
+workaround to the generic ``set_status`` tool's second, post-load failure
+mode (GitHub issue #108 -- case 6 of the ADR 519d1206 chain):
+
+- :class:`InvalidStatusTransitionResult` -- the non-raising, structured
+  result each whole-body ``_set_status_<d>`` adapter returns when the
+  requested transition (``from_status`` -> ``to_status``) is rejected by the
+  dispatched domain's own ``_STATUS_TRANSITIONS`` state machine, after the
+  document is loaded and before any write. A sibling of
+  :class:`InvalidStatusResult`, not a reuse or subclass: ``allowed_values``
+  are the targets allowed from the current state (sorted; empty for a
+  terminal current state), never the domain's full flat vocabulary.
+
 Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
 similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
@@ -97,6 +110,15 @@ model-backed drift-guard convention (ADR
   phrasing-templates guidance document (``general/data/general_ears.md``)
   backing ``specmgr://ears``, purely to fail fast on structural drift (the
   parsed result is discarded by the resource itself).
+
+Also backs feat-173-req-iso29148-level-set's (Phase 130) cross-cutting
+ISO 29148 requirement-specifications resource (REQ-003, ADR 356d8781):
+
+- :func:`parse_iso29148`/:class:`Iso29148` -- parses the ISO/IEC/IEEE
+  29148:2018 requirement-specifications guidance document
+  (``general/data/general_iso29148.md``) backing ``specmgr://iso29148``,
+  purely to fail fast on structural drift (the parsed result is discarded
+  by the resource itself).
 
 Also backs feat-144-ref-artifact's generic ``list_references`` tool
 (REQ-002/REQ-003/REQ-004):
@@ -211,6 +233,19 @@ from .heading_table import (
     resolve_heading_table,
 )
 from .invalid_status_result import InvalidStatusResult
+from .invalid_status_transition_result import InvalidStatusTransitionResult
+from .iso29148 import (
+    Characteristics,
+    CharacteristicItem,
+    DocumentTypeMapping,
+    Iso29148,
+    RequirementObligation,
+    RequirementSpecifications,
+    SpecificationItem,
+    WhenToUseEach,
+    WhenToUseEachItem,
+    parse_iso29148,
+)
 from .language_list_result import LanguageEntry, LanguageListResult
 from .paged_result import PagedResult
 from .parse_failure_result import ParseFailureResult
@@ -242,17 +277,22 @@ from .translation_drift import (
 from .validate_result import ValidateResult, ValidationErrorEntry
 
 __all__ = [
+    "CharacteristicItem",
+    "Characteristics",
     "CombiningPatterns",
     "CoverageItem",
     "CoverageRelationship",
     "DEFAULT_MAX_LABEL",
     "Dtais",
     "DocSummary",
+    "DocumentTypeMapping",
     "DriftFinding",
     "Ears",
     "GraphEdge",
     "GraphNode",
     "InvalidStatusResult",
+    "InvalidStatusTransitionResult",
+    "Iso29148",
     "LanguageEntry",
     "LanguageListResult",
     "MethodItem",
@@ -266,11 +306,14 @@ __all__ = [
     "RasciVsRaci",
     "ReferenceGraph",
     "ReferenceRow",
+    "RequirementObligation",
+    "RequirementSpecifications",
     "RoleItem",
     "Roles",
     "SimilarityHit",
     "SimilarityUnavailableResult",
     "SkeletonEntry",
+    "SpecificationItem",
     "Staleness",
     "TranslationDriftResult",
     # PEP 562 lazy export: pylint cannot see the __getattr__-provided names (see update_result.py's module docstring).
@@ -281,6 +324,8 @@ __all__ = [
     "WhenToApply",
     "WhenToApplyItem",
     "WhenToUse",
+    "WhenToUseEach",
+    "WhenToUseEachItem",
     "WhenToUseItem",
     "check_staleness",
     "compare_skeletons",
@@ -290,6 +335,7 @@ __all__ = [
     "normalize_heading_lines",
     "parse_dtais",
     "parse_ears",
+    "parse_iso29148",
     "parse_rasci",
     "render_reference_graph",
     "reset_heading_table_cache",

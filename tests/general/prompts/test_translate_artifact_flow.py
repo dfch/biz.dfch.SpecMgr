@@ -464,7 +464,7 @@ _NEGATIVES: tuple[tuple[str, str, Any], ...] = (
     ("rsk", "Probability token", lambda b: b.replace("### Probability 3", "### Wahrscheinlichkeit 3", 1)),
     ("rsk", "Impact token", lambda b: b.replace("### Impact 3", "### Auswirkung 3", 1)),
     ("rsk", "Strategy word", lambda b: re.sub(r"(?m)^reduce$", "reduzieren", b)),
-    ("req", "RFC 2119 Level word", lambda b: re.sub(r"(?m)^MUST$", "MUSS", b)),
+    ("req", "ISO 29148 Level word", lambda b: re.sub(r"(?m)^SyRS$", "Systemanforderungsspezifikation", b)),
     ("req", "Priority number", lambda b: re.sub(r"(?m)^50$", "fünfzig", b)),
     (
         "prb",

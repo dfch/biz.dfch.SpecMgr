@@ -22,8 +22,8 @@ This is a description of the requirement statement that gives more context. Use 
 
 ## Level
 
-<!-- RFC 2119 Requirement Keyword: one of MUST, SHOULD, MUST NOT, SHOULD NOT, MAY. Mandatory. -->
-MUST
+<!-- ISO 29148 requirement specification kind: one of BRS, StRS, SyRS, SRS. Mandatory. -->
+SyRS
 
 ## Priority
 

@@ -62,7 +62,7 @@ _DOC_TEMPLATE = textwrap.dedent(
 
     ## Level
 
-    MUST
+    SRS
 
     ## Source
 

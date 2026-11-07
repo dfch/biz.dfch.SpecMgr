@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `feat` package as the one domain whose 
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

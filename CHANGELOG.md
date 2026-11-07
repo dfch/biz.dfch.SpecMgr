@@ -7,6 +7,187 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The new flat `specmgr harness-bundle` CLI command (`[cli]`-only, no
+  `mcp` import, `commands/harness_bundle.py`): reads the repo-root layout
+  from the current working directory, enumerates every `*.md` file
+  recursively under exactly `.opencode/{agent,command,skill}/` (exact
+  top-level directory-name match, singular names, sorted by
+  `.opencode/`-relative path; a stray markdown file outside that scope
+  warns on stderr and is never bundled; a missing `.opencode/` directory
+  is a usage error, exit 2, nothing written), and regenerates the single
+  package-data file
+  `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` of shape
+  `{"instructions": <install protocol>, "files": [{"path", "sha256",
+  "content"}]}` — serialized via `json.dumps(indent=2, ensure_ascii=False)`
+  plus a trailing newline, no timestamps, so two runs over an unchanged
+  tree are byte-identical. The new `specmgr://harness-bundle` MCP resource
+  (`application/json`, the `rasci.py` pattern: packaged read + fail-fast
+  `json.loads` on every call, the raw text returned unchanged — no model,
+  the bundle has no schema of its own) serves that file verbatim from an
+  editable checkout or a real, non-editable install: its top-level
+  `instructions` field carries the complete agent-driven install protocol
+  (harness config root via the harness's own configuration skill,
+  OpenCode: `customize-opencode`; byte-exact writes; the sha256
+  skip/ask/verify loop; the per-file installed/skipped/updated/failed
+  report; never touching `opencode.json`), making the resource the
+  agent's sole discoverable entry point for installing the published
+  harness files (every `.opencode/agent/*.md` subagent,
+  `.opencode/command/*.md` slash command, and `.opencode/skill/*/SKILL.md`
+  skill) into a fresh harness setup — no install CLI, no `--force`, no
+  sibling-directory detection, no MCP prompt (OpenCode exposes MCP tools
+  but not prompts to the agent). Drift guards: the `specmgr-harness-bundle`
+  pre-commit hook (the regenerate + `git diff --exit-code` pair, scoped to
+  `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
+  family's shape) and a Python 3.13-pinned CI parity check in the `build`
+  job alongside the existing `specmgr docs`/`adr-toc`/`mcp-docs` steps;
+  the README gains a new "Installing the specmgr Harness Files" section
+  (agent-driven install + what gets installed + the manual Claude Code
+  path with its permission-model gap) (feat-167-mcp-lifecycle-commands-2
+   Phase 130, GitHub issue #167).
+
+- The cross-cutting `specmgr://iso29148` resource: the four
+  ISO/IEC/IEEE 29148:2018 requirement specifications (`BRS`, `StRS`,
+  `SyRS`, `SRS` — the standard's own §3.2 abbreviations), with the §5.4
+  mapping sentence, the §6.2-6.4 processes, the §8.2-8.5 example
+  outlines, the §9.3-9.6 content clauses, the mapping to specmgr
+  document types, and the §5.2.6 "Characteristics of a set of
+  requirements" list — the closed set `req`'s `## Level` carries.
+  Served as raw markdown with a model-backed drift guard (a structural
+  edit of the packaged markdown fails its parse model) — the
+  `specmgr://ears` shape (ADR 356d8781-e446-4c26-917a-eda85648ce9d;
+  feat-173-req-iso29148-level-set, GitHub issue #173).
+
+- The new `set` artifact domain (issue #173's second work package): a
+  convenience bundle of one or more already-existing specmgr artifacts
+  of any (mixed) type via forward references only — `SET` is not a tag
+  of the shared 12-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). The
+  body is strictly H1 → `## Description` (mandatory, opaque free
+  markdown) → `## Items` (mandatory flat bullet list, at least one
+  `<TAG> <uuid>: <title>` bullet from the shared 12-tag vocabulary in
+  any mix — `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
+  other sections. `SetFrontmatter.status` is the SET-specific
+  four-value closed set `draft`/`progress`/`done`/`review`. Full
+  dispatch-only surface per ADR 36905d5b (7 tools: `create_set`,
+  `parse_set`, `list_set`, `get_set` with `raw`/`offset`/`limit`/
+  `numbered`/`language` + the non-raising `ParseFailureResult` channel,
+  `get_set_example`, `get_set_template`, `get_set_schema`; 2 resources:
+  `specmgr://set/example`/`specmgr://set/template`; 2 prompts:
+  `create_set`/`update_set`; schema at `set/models/v1/`; flat documents
+  `docs/set/set-{uuid}-{slug}.md`), the `set` entries in every generic
+  tool's dispatch table (forced by their import-time asserts), and the
+  self-triggering OpenCode skill `specmgr-set` as the host surface (no
+  dedicated `/set` command). `set` is the 13th language-aware domain
+  (the `## Description`/`## Items` headings join the packaged heading
+  tables, e.g. `de.json`'s `Beschreibung`/`Elemente`, plus the
+  never-translate line in `specmgr://i18n` and the
+  `translate_artifact` instructions), and the reference graph carries
+  the 16th palette entry (`SET` coloured `Wheat`, after `TXT`, before
+  `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
+   (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
+
+### Changed
+
+- The `specmgr harness-bundle` generator and its install protocol, refined
+  by the feat-167-mcp-lifecycle-commands-2 Phase 170 fix phase (review
+  cycle 3, GitHub issue #167): the feat-numbering skill
+  (`.opencode/skill/feat-numbering/SKILL.md`) no longer references the
+  deleted TSK `tsk-2687d267` (the feat-150 plan-document numbering
+  migration is deferred without a live tracker; the successor
+  `tsk-1b36c754` is named as the TSK whose repair scope a future migration
+  would need its own tracker or an explicit scope extension of); the
+  bundle's `instructions` install protocol gains the both-spellings
+  collision case in step 2 (a root containing both a singular and a plural
+  directory for the same first path segment -- do not guess, ask the user
+  which one to install into, and report the other as needing manual
+  cleanup); the `specmgr harness-bundle` exit-2 usage-error contract now
+  also covers a scoped `.md` file that is not decodable as UTF-8 and an
+  unwritable/uncreatable output path (a deterministic stderr message
+  naming the problem + "nothing was written", no traceback, no partial
+  bundle); and `generate_bundle_text` returns the bundle text together
+  with the bundled-file count, so the command enumerates the scoped
+  `.opencode/` tree exactly once.
+- The `dec` `## Decision Outcome` lead is relaxed so that, after the
+  mandatory lead paragraph (the `statement` field, position and meaning
+  unchanged), zero or more further blocks — additional paragraphs,
+  bullet lists, ordered lists, and fenced code blocks — may follow
+  before the first `###` sub-section, carried by the new optional
+  `further_blocks` field (the `dec`-local `OutcomeBlocks` leaf) declared
+  between `statement` and `consequences` in `dec/models/v1` — an
+  additive, non-breaking schema evolution: a section whose first block
+  is not a paragraph (a bare list, a `###` heading, nothing) is still
+  rejected, `### Consequences`/`### Confirmation` keep their position,
+  optionality and meaning, and every previously valid document parses to
+  the same result with a byte-exact round-trip. The rejected kinds stay
+  rejected per distinct token kind (block quotes, HTML comments,
+  horizontal rules, H4+/H5/H6 headings, raw HTML); pipe-table content is
+  a plain paragraph to the shared commonmark tokenizer (which has no
+  table token) and is therefore accepted, consistent with the lead
+  paragraph's existing behavior. This unblocks the UUID-preserving ADR to
+  DEC conversion (GitHub issue #46), whose ~20 of 46 blocked ADRs (e.g.
+  `750842b2`, `92cc4ce8`, `356d8781`) carry multi-block outcomes
+   (feat-247-dec-outcome-blocks, GitHub issue #247).
+
+- **BREAKING**: `req`'s `## Level` is a mandatory single-line
+  closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind — exactly one of `BRS`, `StRS`, `SyRS`,
+  `SRS` (the standard's §3.2 abbreviations) — enforced in
+  `req/models/v1` by its own `_LEVEL_PATTERN`. This is an in-place
+  `req/models/v1` schema evolution (the feat-132-prb-update precedent:
+  no v2, no dual-schema read support), so an existing `req` document
+  with any other `## Level` value fails to parse until its value is one
+  of the four kinds; the `update_req` prompt carries a present-tense
+  recovery directive for that case (host-read the file at the
+  parse-failure `path`, replace the value, confirming read). The RFC
+  2119 obligation keywords (`MUST`/`SHOULD`/`MUST NOT`/`SHOULD NOT`/
+  `MAY`) are gone from the `req` schema — obligation is carried by the
+  requirement statement's phrasing (EARS, `specmgr://ears`), as
+  documented by the resource's `## Requirement obligation` section. All
+  14 in-repo `docs/req/` documents carry `SRS` (they specify the
+  specmgr tool itself); the packaged `req` template/example carry the
+  kind (`SyRS`); the `create_req` prompt reads `specmgr://iso29148`
+  first and elicits the kind; the i18n never-translate `## Level`
+  vocabulary is the four kinds; and the GOL model module docstring and
+  the `create_gol` prompt carry the current fact (a goal has no
+  `## Level` section; obligation lives on the requirements below it, in
+  each one's ISO 29148 kind plus its statement's own phrasing)
+   (feat-173-req-iso29148-level-set, GitHub issue #173).
+
+- The generic `set_status` tool now enforces each whole-body domain's
+  own `_STATUS_TRANSITIONS` state machine post-load/pre-write: a
+  `set_status` call is honoured only when the transition from the
+  document's current (loaded from disk) status to the requested target
+  is allowed by that domain's machine. The 14 whole-body domains
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) each own
+  their table next to their `_ALLOWED_STATUSES` in their own
+  `models/<v>/frontmatter.py`; the central `_STATUS_TRANSITIONS_BY_TYPE`
+  aggregation in `general/tools/_status_fsm.py` is keyed to the shared
+  `general/tools/_domains` registry, with a full-coverage import-time
+  assert. A disallowed transition is rejected before any write
+  (nothing is persisted, `updated` not bumped) with the new non-raising
+  `InvalidStatusTransitionResult` (`general/models/`, a sibling to
+  `InvalidStatusResult`): `valid: false`, `type`, `from_status`
+  (current), `to_status` (requested), `allowed_values` (sorted,
+  current-state-relative — NOT the domain's full vocabulary), plus the
+  exact message forms (normal: the allowed targets joined; terminal
+  current state: empty `allowed_values` plus the "Status '...' is
+  terminal (no outgoing transitions)" form). The channel order is
+  undisturbed: the pre-existing pre-load out-of-vocabulary
+  `InvalidStatusResult` (the domain's full flat vocabulary) still runs
+  first, and the unchanged-status no-op (issue #109) still runs before
+  the transition check. `adr` is excluded and keeps its flat-vocabulary
+  behavior byte-identically. This is the sixth extension of the ADR
+  519d1206 client-side-`isError`-truncation non-raising
+  structured-result workaround chain, taking the case-6 slot for the
+  `set_status` transition surface (f14f125e's "delete as the later
+  candidate (case 6)" prediction is overtaken — `delete` remains the
+  later candidate; no accepted ADR is edited)
+   (feat-108-fsm, GitHub issue #108, ADR
+   a79608e4-88cd-498f-8ca1-445df4d04f92).
+
 ## [0.38.0] - 2026-10-31
 
 ### Added

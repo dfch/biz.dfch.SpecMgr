@@ -3,7 +3,7 @@
 ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``adr``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``/``adr``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -50,7 +50,7 @@ status-change entry point for every domain.
 
 No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
 adapter compares the requested target status against the document's
-current on-disk status -- for the 13 whole-body domains, plainly
+current on-disk status -- for the 14 whole-body domains, plainly
 ``existing.frontmatter.status == status``; for ``adr``, against the same
 composed target (``status`` or ``f"superseded by {superseded_by}"``)
 ``models.adr.v1.mutations.set_status`` would compute -- immediately after
@@ -86,7 +86,7 @@ An existing-but-broken document (feat-170-update-edit-parse-failure,
 GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
 the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
-fails to parse, each of the 13 whole-body adapters now returns the
+fails to parse, each of the 14 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
 (``error``/``path``/``id``) instead of raising the domain's own
 ``XNotFoundError`` -- the adapter catches the ``load_by_id`` failure
@@ -108,6 +108,33 @@ check runs first and is unaffected -- an out-of-vocabulary ``status``
 against a broken existing document still returns ``InvalidStatusResult``
 (that check never reaches ``load_by_id``). The ``adr`` adapter stays
 raise-based (ADR is out of scope for this feature).
+
+Per-domain status state machine (feat-108-fsm, GitHub issue #108, ADR
+a79608e4-88cd-498f-8ca1-445df4d04f92): each
+whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
+:func:`general.tools._status_fsm.check_status_transition` check --
+immediately after its own unchanged-status no-op comparison and before the
+raw-body re-read (so a rejection is pre-write: nothing is persisted and
+``updated`` is not bumped) -- against the dispatched domain's own
+``_STATUS_TRANSITIONS`` state machine, aggregated centrally in
+``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` (keyed to the
+``general.tools._domains`` registry). This is the tool's
+second, post-load error surface, distinct from the pre-dispatch, pre-load
+out-of-vocabulary ``InvalidStatusResult`` check above (which still runs
+first and is unchanged): a transition the domain's machine does not allow
+returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+(``valid``/``type``/``from_status``/``to_status``/``allowed_values``/
+``message``, where ``allowed_values`` are the targets allowed from the
+document's current state, sorted -- never the domain's full flat vocabulary;
+an empty list marks a terminal current state) instead of writing -- case 6
+of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
+result workaround chain. The rollout is complete as of Phase 120: every
+whole-body domain's own table has landed and is enforced (``req`` first, in
+Phase 110; the remaining whole-body domains in Phase 120); the no-op,
+out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
+untouched, and ``_set_status_adr`` never calls the check (REQ-006: ADR keeps
+its flat-vocabulary behavior).
 
 ``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
 because the pure, in-memory operation it delegates to shares this
@@ -157,7 +184,7 @@ and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
 per-domain tool was retired in feat-22 Phase 4).
 
 
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult'`
+### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -178,7 +205,7 @@ untouched, and the unchanged-status no-op compares against the
 variant's own current status.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult'`
+### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -191,7 +218,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult'`
+### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -208,7 +235,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult'`
+### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -226,7 +253,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult'`
+### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -243,7 +270,7 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult'`
+### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -268,7 +295,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult'`
+### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -285,7 +312,28 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult'`
+### `_set_status_set(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+
+Replace the status of the set document identified by ``id_``.
+
+Mirrors :func:`_set_status_sysrs`'s shape (same ``set_lock``,
+``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
+dispatch-only from day one per ADR 36905d5b, so this adapter was
+written directly in this shape) -- see :func:`_set_status_req` for
+the full semantics. ``set`` is not ``adr``, so ``superseded_by`` must
+never be given.
+
+**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
+selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
+variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is
+written, the unchanged-status no-op compares against the variant's own current status -- the EN
+document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
+The allowed-status set is language-invariant (``status`` is a closed
+vocabulary value, never translated, REQ-010).
+
+
+### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -304,7 +352,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult'`
+### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -322,7 +370,7 @@ written, the unchanged-status no-op compares against the variant's own current s
 document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult'`
+### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -339,7 +387,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_txt(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult'`
+### `_set_status_txt(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the free-form text document identified by ``id_``.
 
@@ -360,7 +408,7 @@ The allowed-status set is language-invariant (``status`` is a closed
 vocabulary value, never translated, REQ-010).
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult'`
+### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -377,7 +425,7 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult'`
+### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -400,7 +448,7 @@ Replace the status of an existing document, across every domain.
 
     Cross-domain generic for every document type
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
-    ``vcr``/``sysrs``/``txt``/``adr``);
+    ``vcr``/``sysrs``/``txt``/``set``/``adr``);
     dispatches on ``type`` to the domain's own ported adapter (same lock,
     same id resolution, same body handling, same domain not-found error).
 
@@ -451,7 +499,7 @@ Replace the status of an existing document, across every domain.
     type:
         The document type / domain: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``, ``adr``.
+        ``vcr``, ``sysrs``, ``txt``, ``set``, ``adr``.
     status:
         The new status. Must be one of the dispatched domain's own
         accepted values (see its ``XFrontmatter.status`` field). For
@@ -478,7 +526,8 @@ Replace the status of an existing document, across every domain.
     -------
 ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
 GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult
+VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult |
+InvalidStatusTransitionResult
     On success, the updated document's frontmatter only (no body) of the
     dispatched domain type for the whole-body domains; for ``type="adr"``
     (unchanged, out of scope for this feature) the full ``Adr`` document,
@@ -503,7 +552,18 @@ VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResu
     (feat-170-update-edit-parse-failure, GitHub issue
     #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
-    workaround chain).
+    workaround chain). For the whole-body domains, a transition the
+    dispatched domain's own ``_STATUS_TRANSITIONS`` state machine does not
+    allow (checked post-load, pre-write, immediately after the no-op
+    comparison) returns a non-raising
+    :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+    (``allowed_values`` are the targets allowed from the document's current
+    state, sorted; an empty list marks a terminal current state) instead of
+    writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108,
+    ADR a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
+    The rollout is complete as of Phase 120 (every whole-body domain's
+    own table has landed and is enforced), and ``type="adr"`` never
+    produces this result (REQ-006: ADR keeps its flat-vocabulary behavior).
 
     Raises
     ------

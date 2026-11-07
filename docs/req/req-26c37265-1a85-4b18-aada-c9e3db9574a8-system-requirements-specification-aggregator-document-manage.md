@@ -22,7 +22,7 @@ AGENTS.md's Status section documents `sysrs` alongside `sop`/`vcr` as built disp
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

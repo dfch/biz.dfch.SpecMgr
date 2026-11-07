@@ -138,6 +138,7 @@ from ...sop.tools._paths import sop_base_dir
 from ...sysrs.tools._paths import sysrs_base_dir
 from ...tsk.tools._paths import tsk_base_dir
 from ...txt.tools._paths import txt_base_dir
+from ...set.tools._paths import set_base_dir
 from ...uc.tools._paths import uc_base_dir
 from ...vcr.tools._paths import vcr_base_dir
 
@@ -240,7 +241,8 @@ def config_info() -> ConfigInfo:
     reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
     each have their own dedicated env var; every other domain (``req``,
     ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-    ``vcr``, ``sysrs``, ``txt``) shares the one root ``SPECMGR_DOCS_DIR``
+    ``vcr``, ``sysrs``, ``txt``, ``set``) shares the one root
+    ``SPECMGR_DOCS_DIR``
     env var,
     so their ``env_var``/``env_var_set`` fields are identical by design, not
     a bug.
@@ -361,6 +363,11 @@ def config_info() -> ConfigInfo:
         ),
         "txt": DomainConfig(
             base_dir=str(txt_base_dir().resolve()),
+            env_var=DOCS_DIR_ENV_VAR,
+            env_var_set=docs_dir_set,
+        ),
+        "set": DomainConfig(
+            base_dir=str(set_base_dir().resolve()),
             env_var=DOCS_DIR_ENV_VAR,
             env_var_set=docs_dir_set,
         ),

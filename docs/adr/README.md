@@ -137,6 +137,11 @@ Index of all ADRs in this repository.
   - Status: superseded by 92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c
   - Date: 2026-09-01
   - Decision-makers: dfch
+- [Per-domain status state machines for set_status: domain-owned tables, central aggregation, and the non-raising, current-state-relative transition result](a79608e4-88cd-498f-8ca1-445df4d04f92-per-domain-status-state-machines-for-set-status-domain-owned.md)
+  - Id: a79608e4-88cd-498f-8ca1-445df4d04f92
+  - Status: accepted
+  - Date: 2026-11-05
+  - Decision-makers: OpenCode agent + user decision (plan locked during feat-108-fsm planning)
 - [Extend the non-raising structured-result workaround to set_status's invalid-status case](b399f1ce-ed42-4929-b01c-7a57d18e8014-extend-the-non-raising-structured-result-workaround-to-set-s.md)
   - Id: b399f1ce-ed42-4929-b01c-7a57d18e8014
   - Status: accepted

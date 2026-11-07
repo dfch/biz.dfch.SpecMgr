@@ -210,15 +210,17 @@ class TestAliasAndConstants(unittest.TestCase):
 
         self.assertEqual(_DOMAIN_ORDER, ALL_DOMAINS)
 
-    def test_palette_is_the_frozen_15_entries_in_block_order(self):
-        # the frozen 15-entry palette (rulebook §2.5): the 14 domain
+    def test_palette_is_the_frozen_16_entries_in_block_order(self):
+        # the frozen 16-entry palette (rulebook §2.5): the 15 domain
         # stereotypes in the group order, then UNRESOLVED last -- the TXT
         # entry (LightGrey) was added by feat-229-txt Phase 150 after
-        # SYSRS, before UNRESOLVED (position 13, 0-based)
-        self.assertEqual(len(_PALETTE), 15)
+        # SYSRS, and the SET entry (Wheat) by feat-173-req-iso29148-level-set
+        # Phase 180 after TXT, before UNRESOLVED (positions 13/14, 0-based)
+        self.assertEqual(len(_PALETTE), 16)
         self.assertEqual(_PALETTE[12], ("SYSRS", "Thistle"))
         self.assertEqual(_PALETTE[13], ("TXT", "LightGrey"))
-        self.assertEqual(_PALETTE[14], ("UNRESOLVED", "DarkRed"))
+        self.assertEqual(_PALETTE[14], ("SET", "Wheat"))
+        self.assertEqual(_PALETTE[15], ("UNRESOLVED", "DarkRed"))
         self.assertEqual(
             [stereotype for stereotype, _colour in _PALETTE],
             [domain.upper() for domain in _DOMAIN_ORDER] + ["UNRESOLVED"],

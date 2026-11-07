@@ -22,7 +22,7 @@ AGENTS.md's Status section documents the `vcr` package's tools (`create_vcr`, `p
 
 ## Level
 
-MUST
+SRS
 
 ## Source
 

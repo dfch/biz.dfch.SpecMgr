@@ -25,6 +25,11 @@ decision records (not business goals), so they follow the requirement-style
 lifecycle vocabulary minus `implemented` (a decision is never "implemented",
 its consequences are) -- see `.specmgr/feat/feat-21-decision/README.md`
 Design Notes.
+
+This module also owns the decision status state machine (feat-108-fsm,
+GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
 """
 
 from __future__ import annotations
@@ -51,6 +56,46 @@ _ALLOWED_STATUSES = frozenset(
         "deprecated",
     }
 )
+
+#: The authoring form of :data:`_STATUS_TRANSITIONS` (feat-108-fsm, GitHub issue #108, REQ-007):
+#: the decision status state machine as a plain mapping of current status to a list of the
+#: allowed next statuses. The machine is cycling-friendly (``proposed`` may return to ``draft``,
+#: ``rejected`` may return to ``proposed``); ``superseded`` and ``deprecated`` are terminal
+#: states (an empty target list).
+_STATUS_TRANSITIONS_RAW: dict[str, list[str]] = {
+    "draft": ["proposed", "rejected"],
+    "proposed": ["accepted", "rejected", "draft"],
+    "accepted": ["superseded", "deprecated", "rejected"],
+    "rejected": ["proposed", "draft"],
+    "superseded": [],
+    "deprecated": [],
+}
+
+#: The decision status state machine (feat-108-fsm, GitHub issue #108, REQ-001/REQ-002),
+#: normalized from :data:`_STATUS_TRANSITIONS_RAW` to set semantics: current status -> the
+#: allowed target statuses (a ``frozenset`` per entry, the shape
+#: ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE``'s own per-entry validity check
+#: requires). The generic ``set_status`` tool enforces this machine post-load/pre-write
+#: (immediately after the unchanged-status no-op comparison): a transition not in the current
+#: state's target set is rejected before any write with the non-raising
+#: ``InvalidStatusTransitionResult`` (its ``allowed_values`` are the current state's targets,
+#: sorted); ``superseded`` and ``deprecated`` are terminal (an empty target set).
+_STATUS_TRANSITIONS: dict[str, frozenset[str]] = {
+    current: frozenset(targets) for current, targets in _STATUS_TRANSITIONS_RAW.items()
+}
+
+# Program invariants (import-time, feat-108-fsm REQ-001/REQ-003): the machine covers exactly the
+# domain's own closed status vocabulary -- so a document's on-disk status is always a key and
+# the "current not a key" case is structurally unreachable -- and every target is in-vocabulary.
+assert set(_STATUS_TRANSITIONS) == _ALLOWED_STATUSES, (
+    "_STATUS_TRANSITIONS drifted from dec's own closed status vocabulary _ALLOWED_STATUSES -- every "
+    "status must be a key exactly once (feat-108-fsm, REQ-001)"
+)
+for _current, _targets in _STATUS_TRANSITIONS.items():
+    assert _targets <= _ALLOWED_STATUSES, (
+        f"_STATUS_TRANSITIONS[{_current!r}] names target status(es) {sorted(_targets - _ALLOWED_STATUSES)} "
+        f"outside dec's own closed status vocabulary (feat-108-fsm, REQ-001)"
+    )
 
 
 class DecFrontmatter(MarkdownFrontmatter):

@@ -47,7 +47,14 @@ type or cross-cutting:
   carries `error_count` and reports a failed-to-parse document inline
   (marker `title`/`status`, `error`, plus a resolved `path`) rather than silently dropping it,
   feat-81-83-validation Phase 3); `req/prompts/`
-  (`create_req`/`update_req`). Its schema lives at `req/models/v1/`, inside
+  (`create_req`/`update_req`). REQ's `## Level` is a mandatory
+  single-line closed-value field carrying the ISO/IEC/IEEE 29148:2018
+  requirement-specification kind (exactly one of `BRS`/`StRS`/`SyRS`/
+  `SRS`, the standard's §3.2 abbreviations; the cross-cutting
+  `specmgr://iso29148` resource documents the four kinds, and obligation
+  is carried by the requirement statement's phrasing — EARS,
+  `specmgr://ears`) (feat-173-req-iso29148-level-set, GitHub issue #173).
+  Its schema lives at `req/models/v1/`, inside
   the domain package itself, not under top-level `models/`.
 - **`uc/`** (Use Cases) — same tools/resources/prompts shape as `req/` but
   for use cases (`create_uc`, `parse_uc`,
@@ -734,7 +741,7 @@ type or cross-cutting:
   package, not top-level `models/`. Documents live flat under the shared
   docs root as `docs/txt/txt-{uuid}-{slug}.md` (the shared
   `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
-  `SPECMGR_TXT_DIR`). `txt` is one of the twelve language-aware domains
+  `SPECMGR_TXT_DIR`). `txt` is one of the thirteen language-aware domains
   (feat-197-i18n, see its paragraph below): `get_txt`/`list_txt`/`create_txt`
   take `language` (`create_txt` also `id`), the five generic mutation tools
   carry a `txt` `_LANGUAGE_ADAPTERS` entry, and — unlike every other domain —
@@ -746,14 +753,81 @@ type or cross-cutting:
   reference target (free-floating tokens in the body; the shared tag
   vocabulary is `GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT`), and
   the reference-graph palette carries a `TXT` entry coloured `LightGrey`
-  (the 15th entry, after `SYSRS`, before `UNRESOLVED`; see the
-  `general/` bullet below). See `.specmgr/feat/feat-229-txt/README.md`
+  (the 15th entry, after `SYSRS`; the 16th `SET` entry, coloured `Wheat`,
+  follows it before `UNRESOLVED` — see the `set/` bullet below and the
+  `general/` bullet). See `.specmgr/feat/feat-229-txt/README.md`
   for the full design.
+- **`set/`** (Set) — same tools/resources/prompts shape as
+  `req`/`prb`/`dec`/`txt` but for the convenience-bundle document type
+  (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180): one
+  set document bundles one or more already-existing specmgr artifacts of
+  any (mixed) type via forward references only — `SET` is not a tag of
+  the shared 12-tag reference vocabulary and nothing in an item ever
+  points back to the set (the items remain the source of truth). 7 tools
+  (`create_set`, `parse_set`, `list_set`, `get_set`,
+  `get_set_example`, `get_set_template`, `get_set_schema`); the `get_set`
+  tool takes `raw: bool = False` — `raw=True` returns the
+  frontmatter-stripped body text as-is (the text `update`'s
+  `offset`/`limit` index into), with optional read-style
+  `offset`/`limit` windowing of that raw read (raw-only; out-of-range
+  values clamp, never error) and a non-raising `ParseFailureResult` for a
+  document that exists but fails to parse. 2 resources in
+  `set/resources/` (`specmgr://set/example`, `specmgr://set/template`; the
+  structure reference is the `get_set_schema` tool, ADR
+  112b6498-078b-4a59-88b8-8ffb7a5041b3; no `specmgr://set/{id}` — id-based
+  reads are `get_set`-only, ADR
+  ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://set/list` —
+  `list_set` ships as a paged tool from day one, ADR
+  ec9f5262-9912-49d0-903f-fcfb54f28c13, whose `PagedResult` carries
+  `error_count` and reports a failed-to-parse document inline (with a
+  resolved `path`) rather than silently dropping it). 2 prompts in
+  `set/prompts/` (`create_set`/`update_set` — `create_set` first checks
+  `list_set` for a near-duplicate; `update_set` names the generic
+  `update`/`edit`/`set_status`/`set_classification` tools with
+  `type="set"`). Dispatch-only from day one (ADR
+  36905d5b-8057-4294-8665-c7eed5534db0) — no per-domain
+  `update_set`/`set_status_set`/`validate_set`/`delete_set` tools:
+  whole-body and line-range updates go through the generic `update` tool
+  in `general/tools/` (`type="set"`), status changes through the generic
+  `set_status` tool (`type="set"`, the SET-specific four-value closed set
+  `draft`/`progress`/`done`/`review` carried by `SetFrontmatter.status`),
+  classification changes through the generic `set_classification` tool
+  (`type="set"`), deletions through the generic `delete` tool
+  (`type="set"`), and disk-free/id-free dry-run content validation through
+  the generic `validate` tool (`type="set"`). The body is strictly H1 ->
+  `## Description` (mandatory, opaque free markdown — any blocks, nested
+  H3–H6 included) -> `## Items` (mandatory flat bullet list, at least one
+  `<TAG> <uuid>: <title>` bullet — the shared 12-tag reference vocabulary
+  in any mix, `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
+  with an optional per-bullet notes paragraph; a duplicate `(tag, id)`
+  pair is rejected by a root `model_validator`, the VCR `AC-NNN`
+  duplicate-guard precedent); no `## Owner`, no `## Source`, no `## Tags`,
+  no other section (the engine's trailing-completeness error rejects any
+  further H2). Its schema lives at `set/models/v1/`, inside the domain
+  package, not top-level `models/`. Documents live flat under the shared
+  docs root as `docs/set/set-{uuid}-{slug}.md` (the shared
+  `SPECMGR_DOCS_DIR`-rooted default like `req`/`vcr` — no
+  `SPECMGR_SET_DIR`). `set` is one of the thirteen language-aware domains
+  (feat-197-i18n, see its paragraph below): `get_set`/`list_set`/
+  `create_set` take `language` (`create_set` also `id`), the five generic
+  mutation tools carry a `set` `_LANGUAGE_ADAPTERS` entry, and the
+  heading-mapping table is applied to both fixed-text schema headings
+  (`## Description`/`## Items`) — free nested headings inside the opaque
+  `## Description` follow the generic levels 2-6 lookup (a table hit is
+  rewritten to canonical, a miss stays verbatim). The host surface is the
+  self-triggering OpenCode skill `specmgr-set`
+  (`.opencode/skill/specmgr-set/SKILL.md` + `tests/opencode/
+  test_skill_set.py`; no dedicated `/set` command — the flow is the skill
+  plus the prompts). The reference-graph palette carries a `SET` entry
+  coloured `Wheat` (the 16th entry, after `TXT`, before `UNRESOLVED`; see
+  the `general/` bullet below). See
+  `.specmgr/feat/feat-173-req-iso29148-level-set/README.md` for the full
+  design.
   - **`general/`** — cross-cutting, non-domain-specific package:
     `general/tools/` (`mdformat`, formats a markdown file in place while
     preserving YAML frontmatter blocks; `update`, the generic whole-body
     *and* line-range replace for the whole-body domains — `type` is
-    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt, read-style
+    one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set, read-style
     `offset`/`limit` body-line coordinates (`offset` = 1-based first line,
     `limit` = count; omitted `limit` = through end of body, `0` = pure
     insert, `offset` `N+1` = append; strict validation, never clamped),
@@ -801,7 +875,7 @@ type or cross-cutting:
     (first), and nothing is written in any failure case; a fifth extension
     of the same chain (feat-204-create-error, GitHub issue #204, ADR
     f14f125e-eaad-4f4f-a6fd-3c931bed726e) gives every `create_<d>` tool (the
-    13 whole-body domains) the non-raising `ValidateResult` for a
+    14 whole-body domains) the non-raising `ValidateResult` for a
     content-validation failure of the caller-submitted body (nothing
     written), and every `parse_<d>` tool the same for an existing-but-broken
     file — `parse_<d>`'s `OSError`-family file-access errors from
@@ -809,13 +883,27 @@ type or cross-cutting:
     (incl. `create_feat`'s guards, whose execution order relative to content
     validation is unchanged: a compound failure returns `ValidateResult`
     first, "first-in-execution-order wins") still raise;
+    `set_status`'s second, post-load error surface (a sixth extension of
+    the same chain, feat-108-fsm, GitHub issue #108, ADR
+    a79608e4-88cd-498f-8ca1-445df4d04f92) enforces each whole-body domain's
+    own `_STATUS_TRANSITIONS` state machine (next to its `_ALLOWED_STATUSES`
+    in its own frontmatter module; the central `general/tools/_status_fsm.py`
+    aggregation keyed to the `general/tools/_domains` registry, full-coverage
+    import-time assert) post-load/pre-write, immediately after the
+    unchanged-status no-op comparison, and a disallowed transition returns
+    the non-raising `InvalidStatusTransitionResult` (current-state-relative
+    sorted `allowed_values`; `[]` plus the terminal message form for a
+    terminal current state; nothing written, `updated` not bumped) instead of
+    writing — `adr` excluded (keeps its flat-vocabulary behavior), with the
+    case-2 out-of-vocabulary `InvalidStatusResult` above still running
+    pre-lock/pre-load first (unchanged);
     `_CAUGHT_EXCEPTIONS`/`_MAX_VALIDATE_ERROR_CHARS` are defined in
     `general/models/validate_result.py` and re-exported by
     `general/tools/validate.py` (their one source of truth); `edit`, the
     generic surgical exact-match
     string replacement of an existing document's frontmatter-stripped body
     across the whole-body domains (`type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt; `adr` excluded —
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; `adr` excluded —
     unlike `update`/`delete`/`set_classification`, an explicit pre-dispatch
     `ValueError` for an unknown or `adr` `type`, following the generic
     `validate` tool's precedent): `old_str` must match the on-disk body
@@ -831,19 +919,20 @@ type or cross-cutting:
     domain incl. adr — `superseded_by` is ADR-only, composing
     `"superseded by X"`; `set_classification`, the generic free-text
     `classification` frontmatter field change for the whole-body
-    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt
+    domains only — `type` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set
     (`adr` excluded, same as `update`/`delete`, since ADR's separate
     `AdrFrontmatter` model is out of scope), bumping `updated` and leaving
     the body and every other frontmatter field untouched, with a
     blank/whitespace-only value clearing `classification` back to
     `None`/absent; `delete`, the generic type-dispatched hard-delete
     for the whole-body domains — `type` is one of
-    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt (`adr` excluded), every one of these
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set (`adr` excluded), every one of these
     domains implements a `delete` adapter in that one tool (a future domain
     adds its own adapter there, never a per-domain `delete_<d>` tool),
     resolving by `id`, taking the domain's own lock, and returning the
     deleted path; `validate`, the generic, disk-free/id-free dry-run
-    content validator for the same whole-body domains (`adr`
+    content validator for the same whole-body domains (`type` is one of
+    req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; `adr`
     excluded, `validate_adr` remains its own standalone tool) —
     replacing the former per-domain `validate_<d>` tools
     (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6);
@@ -873,7 +962,7 @@ type or cross-cutting:
     750842b2-aca4-4649-ba0c-855ec8e1f505). `list_references`, the generic,
     cross-domain cross-reference listing tool (feat-144-ref-artifact,
     GitHub issue #144) — takes a *source* document's `type` (one of
-    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt) + `id`,
+    adr/req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) + `id`,
     regex-scans the source's frontmatter-stripped body for `<TYPE>
     <id>` references (the reference-tag vocabulary
     GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT/FEAT; case-insensitive tag,
@@ -914,7 +1003,7 @@ type or cross-cutting:
     PlantUML component diagram of the frozen `specmgr://reference-graph`
     rulebook — one node per artifact (label = the document title,
     truncated to the `SPECMGR_DIAGRAM_MAX_TITLE` label limit, default 40),
-    a stereotype + colour per artifact type (the frozen 15-entry palette),
+    a stereotype + colour per artifact type (the frozen 16-entry palette),
     nodes grouped into per-domain curly `component "TYPE" { … }` domain
     groups, one label-free edge per unique reference (`{src} --> {dst}`,
     the referenced item carries the incoming arrow), every edge on a cycle
@@ -922,9 +1011,9 @@ type or cross-cutting:
     of size ≥ 2) drawn with the red label-free `-[#red]->` arrow, and every
     reference whose target cannot be resolved on disk drawn as a top-level
     `<<UNRESOLVED>>` node.
-    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 14
+    `type` is the `_domains.py` `WholeBodyOrAdrType` alias (all 15
     domains, `adr` INCLUDED — an ADR document referencing a REQ is a real
-    edge; the 14-vs-13 split vs the skill's 13-domain text workflows is
+    edge; the 15-vs-14 split vs the skill's 14-domain text workflows is
     reconciled in the skill's own note, above) + `id`, with the rulebook
     §7 guard order: `validate_id` AND the `depth` 1..5 check (a plain
     `int`, default 1) are BOTH a `ValueError` before any filesystem
@@ -934,7 +1023,7 @@ type or cross-cutting:
     `get_<d>`/`list_references`); an existing-but-broken source returns
     the non-raising `ParseFailureResult` (`error`/`path`/`id`, the `error`
     byte-identical to the domain's `list_<d>` failed row (ADR 9080b37c) for
-    the 13 whole-body domains — time-qualified by ADR 3982712a for `feat`
+    the 14 whole-body domains — time-qualified by ADR 3982712a for `feat`
     (`get_feat` the unconditional full-fidelity authority), and the leg-read
     `AdrParseError`'s own text for `adr` (whose `list_adr` carries no failed
     row: broken ADRs are skipped), case 3 of the ADR 519d1206 chain);
@@ -1006,17 +1095,32 @@ type or cross-cutting:
     value),
     `specmgr://ears` — the EARS requirement-phrasing templates (feat-92),
     `specmgr://iso25010` — the ISO/IEC 25010:2023
-    quality model, `specmgr://dtais` — the DTAIS verification-method
-    vocabulary VCR's `## Acceptance Criteria` depends on, kept here rather
+    quality model, `specmgr://iso29148` — the ISO/IEC/IEEE 29148:2018
+    four requirement specifications (`BRS`/`StRS`/`SyRS`/`SRS` — the
+    closed set `req`'s `## Level` carries), `specmgr://dtais` — the DTAIS
+    verification-method vocabulary VCR's `## Acceptance Criteria` depends
+    on, kept here rather
     than under `vcr/resources/` since it is domain-knowledge other document
     types may also want to reference, `specmgr://rasci` — the generic
     RASCI responsibility-assignment framework, REQ-011; motivated by `sop`
-      but not scoped to it, and `specmgr://reference-graph` — the frozen
-      reference-graph → PlantUML rulebook (the emission layout + 15-entry
+      but not scoped to it, `specmgr://reference-graph` — the frozen
+      reference-graph → PlantUML rulebook (the emission layout + 16-entry
       palette, the alias/label/truncation rules, the title override +
       defaults, the FEAT-exclusion + cycle + construction semantics, the
       CLI file layout; raw markdown passthrough, the `specmgr://uc/plantuml`
-      style; feat-207-reference-graph, GitHub issue #207)), and `general/prompts/` (`compact_history` — rotates
+      style; feat-207-reference-graph, GitHub issue #207), and
+      `specmgr://harness-bundle` — the packaged harness bundle
+      (`application/json`; the flat `specmgr harness-bundle` CLI command's
+      own generated package file served verbatim, a fail-fast `json.loads`
+      on every call — no model, the bundle has no schema of its own): the
+      complete agent-driven install protocol in the top-level
+      `instructions` field plus every `.opencode/{agent,command,skill}/`
+      markdown file as a `{path, sha256, content}` entry in `files` — the
+      agent's sole discoverable entry point for installing the published
+      harness files into a fresh harness setup (no install CLI, no MCP
+      prompt — OpenCode exposes no prompt surface to the agent;
+      feat-167-mcp-lifecycle-commands-2 Phase 130, GitHub issue #167)),
+      and `general/prompts/` (`compact_history` — rotates
       older `Recent Updates` entries out of any feature folder's `README.md`
       into a sibling `history.md`; `repair` (feat-150-mcp-lifecycle-commands,
       GitHub issue #150, Phase 1) — cross-cutting, takes `type` (one of the
@@ -1072,8 +1176,8 @@ type or cross-cutting:
      byte-identical to the plain `raw=True` text; and, per feat-150's
      precedent below, a numbered read of a document that exists but fails to
      parse still returns the `ParseFailureResult`, never numbered text.
-     `get_<d>` for the 13 whole-body domains
-    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`;
+     `get_<d>` for the 14 whole-body domains
+    (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/`txt`/`set`;
     `get_adr` excluded) additionally returns a structured, non-raising
     `ParseFailureResult` (`general/models/parse_failure_result.py`;
     `error`/`path`/`id`) for a document that exists but fails to parse,
@@ -1094,7 +1198,7 @@ type or cross-cutting:
    wrong-format before any filesystem access, and confine the resolved path
    to the domain's own base directory after resolution — `_path_safety`'s
    UUID-shaped domains now include `adr`; `delete` itself is unchanged.
-   The `general/` package also owns the i18n machinery of the twelve
+   The `general/` package also owns the i18n machinery of the thirteen
    language-aware domains (feat-197-i18n, ADR 38efdb66; the full
    description is the `feat-197-i18n` paragraph below): the optional
    `language: str = "en"` parameter of `update`/`edit`/`set_status`/
@@ -1211,7 +1315,13 @@ Still genuinely missing / not yet done (don't assume otherwise):
   position), then one dispatch entry to each of the two generic tools in
    `general/tools/` (`update`'s `type`, `set_status`'s `type`), one `delete`
    adapter in the generic `delete` tool, one `edit` adapter in the generic
-   `edit` tool, plus a `raw` parameter on the new
+   `edit` tool, one `_STATUS_TRANSITIONS` table of its own in its
+   `models/<v>/frontmatter.py` (next to its `_ALLOWED_STATUSES`) and its
+   registration into `general/tools/_status_fsm.py`'s
+   `_STATUS_TRANSITIONS_BY_TYPE` aggregation — whose full-coverage
+   import-time assert fails loudly if the table or its registration is
+   missing (feat-108-fsm, GitHub issue #108, ADR
+   a79608e4-88cd-498f-8ca1-445df4d04f92), plus a `raw` parameter on the new
   `get_<d>` tool — not new `update_<d>`/`set_status_<d>`/`delete_<d>` tools.
 
 `feat-27-validation` (closed 2026-09-01, GitHub issue #27, subsuming feat-7's
@@ -1250,7 +1360,7 @@ per-domain, content-hash-validated in-memory read cache
 singleton per domain in each domain's own `tools/_cache.py`, mirroring the
 existing per-domain `threading.Lock` registries in `_lock.py`) for every
 generic whole-body domain (`req`, `uc`, `tsk`, `qa`, `prb`, `gol`, `rsk`,
-`dec`, `sop`, `feat`, `vcr`, `sysrs`, `txt`), eliminating the redundant
+`dec`, `sop`, `feat`, `vcr`, `sysrs`, `txt`, `set`), eliminating the redundant
 markdown-it/Pydantic re-parsing cost `get_*`/`list_*` previously paid on
 every single call against an unchanged file — the real fix for the
 CPU-bound, GIL-holding bottleneck behind issue #107's reported timeouts
@@ -1303,8 +1413,8 @@ unchanged; only the startup orchestration moved.
 
 `feat-197-i18n` (GitHub issue #197, ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772)
 added first-class **multi-language variants of the same artifact** for the
-**twelve** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
-`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt` (`general/tools/_language_guard.
+**thirteen** i18n-eligible whole-body domains `req`/`uc`/`tsk`/`qa`/`prb`/`gol`/
+`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set` (`general/tools/_language_guard.
 LANGUAGE_AWARE_DOMAINS`, derived from the shared domain registry). English is
 the default and keeps its exact, unchanged location; every other language is
 a `docs/{type}/{language}/` subfolder holding the variant under the EN
@@ -1394,7 +1504,7 @@ permanent "`feat` documents are always English" wording
   Never switch it to a recursive glob —
   `tests/general/tools/test_i18n_en_only_consumers.py` fails if you do.
 
-The tests: `tests/general/tools/test_i18n_all_domains.py` (all twelve domains),
+The tests: `tests/general/tools/test_i18n_all_domains.py` (all thirteen domains),
 `tests/dec/tools/test_i18n_*.py` (the `dec` pilot, deep),
 `test_i18n_feat_adr_exclusion.py` (the registered-surface regression for
 ACC-002/ACC-015), `test_i18n_en_only_consumers.py`, `test_i18n_closed_
@@ -1495,6 +1605,7 @@ uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (p
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr adr-toc                                        # regenerate docs/adr/README.md (ADR table of contents)
+uv run --frozen specmgr harness-bundle                                 # regenerate general/data/general_harness_bundle.json from .opencode/{agent,command,skill}/
 uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)
 uv run --frozen specmgr unused-code --test                             # report symbols only referenced from tests/, never src/
 uv run --frozen specmgr version                                        # run the CLI
@@ -1517,11 +1628,18 @@ Without `--all-extras` on `uv run`, only base dependencies are installed, causin
 `pre-commit install` is one-time per clone (see `.pre-commit-config.yaml`):
 runs `ruff format`/`ruff check`, `vulture`, a local `specmgr docs` hook
 (scoped to `src/**/*.py` changes), a local `specmgr adr-toc` hook (scoped to
-`docs/adr/**/*.md` changes), and the other doc/schema drift checks, then the
+`docs/adr/**/*.md` changes), a local `specmgr harness-bundle` hook (scoped
+to `.opencode/{agent,command,skill}/` markdown changes: regenerate the
+packaged harness bundle
+`src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
+repo-root `.opencode/` tree, then fail on diff), and the other doc/schema
+drift checks, then the
 full test suite (scoped to `src/**/*.py`/`tests/**/*.py` changes, run via
 `pytest`/`pytest-xdist` in parallel, `-n auto`) and `specmgr coverage-badge`
 last, before every commit, so a broken test or drift in
-`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md` gets caught locally
+`docs/api/`/`docs/GENERATED.md`/`docs/adr/README.md`/
+`src/biz/dfch/specmgr/general/data/general_harness_bundle.json` gets caught
+locally
 instead of failing later in CI. The local `specmgr lint` hook (feat-218)
 lints the staged in-tree spec artifacts (the feature README.md files under
 `.specmgr/feat/` and the documents under `docs/{type}/`, selected by the
@@ -1642,18 +1760,47 @@ extras onto every consumer of the base library.
   flag, an unreadable or missing path, an unrecognized layout without
   `--skip-unrecognized`, `--dir` without `--type` or combined with explicit
   paths, paths combined with `--all`, an unknown `--type`, `--all`
-  discovering nothing at all -- no document and no excluded one). Accepted
-  limitation: because the gate is change-scoped, a schema or parser change
-  can break untouched documents without failing any gate — the full sweep
-  (manual, or the follow-up nightly workflow whose issue owns the
-  limitation) finds them.
+   discovering nothing at all -- no document and no excluded one). Accepted
+   limitation: because the gate is change-scoped, a schema or parser change
+   can break untouched documents without failing any gate — the full sweep
+   (manual, or the follow-up nightly workflow whose issue owns the
+   limitation) finds them.
+- `specmgr harness-bundle` (feat-167-mcp-lifecycle-commands-2 Phase 130,
+  `commands/harness_bundle.py`, `[cli]`-only — no `mcp` import, no server
+  import): regenerates the single committed package-data bundle
+  `src/biz/dfch/specmgr/general/data/general_harness_bundle.json` from the
+  repo-root `.opencode/` tree read out of the current working directory —
+  it enumerates every `*.md` recursively under exactly
+  `.opencode/{agent,command,skill}/` (exact top-level directory-name
+  match, singular names; sorted by `.opencode/`-relative `path`) and
+  emits `{"instructions": <the module's own install-protocol constant>,
+  "files": [{"path", "sha256", "content"}]}` — `content` the file's
+  verbatim text, `sha256` of that text — via `json.dumps(indent=2,
+  ensure_ascii=False)` + trailing newline, no timestamps, so two runs over
+  an unchanged tree are byte-identical. A stray `*.md` at the `.opencode/`
+  top level or under a non-scoped directory (`node_modules/`, a
+  similarly-named directory such as the former `zZz-skill/`) warns on
+  stderr (one warning per stray top-level entry) and is never bundled; a
+  missing `.opencode/` directory is a usage error. Exit codes: **0**
+  written, **2** usage error (missing `.opencode/`, a non-decodable scoped
+  file, or an unwritable output path -- nothing written).
+  Drift guards: the `specmgr-harness-bundle` pre-commit hook (the same
+  regenerate + `git diff --exit-code` pair, scoped to
+  `^\.opencode/(agent|command|skill)/.*\.md$`, the `specmgr-adr-toc`
+  family's shape) and the Python 3.13-pinned CI parity step in
+  `.github/workflows/ci.yml` (alongside the `specmgr docs`/`adr-toc`/
+  `mcp-docs` steps). The generated file is served verbatim by the
+  `specmgr://harness-bundle` MCP resource (`application/json`, a
+  fail-fast `json.loads` on every call — no model, the bundle has no
+  schema of its own), whose `instructions` field is the agent-driven
+  install protocol for a fresh harness setup.
 
 ## MCP server (`server.py`)
 
 - Builds the `SpecMgrServer` instance (`mcp` object) and the `_lifespan`
   (the unified startup warmup, ADR 3982712a),
   then imports every domain package (`adr`, `dec`, `feat`, `general`,
-  `gol`, `prb`, `qa`, `req`, `rsk`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
+  `gol`, `prb`, `qa`, `req`, `rsk`, `set`, `sop`, `sysrs`, `tsk`, `txt`, `uc`,
   `vcr`) as its last line purely
   for the side effect of
   running their `@mcp.tool()`/`@mcp.resource()`/`@mcp.prompt()` decorators.

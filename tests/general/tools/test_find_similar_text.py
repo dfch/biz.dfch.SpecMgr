@@ -260,7 +260,7 @@ class TestSetextH1EndToEnd(SimilarityTestCase):
 
         ## Level
 
-        MUST
+        SRS
 
         ## Source
 

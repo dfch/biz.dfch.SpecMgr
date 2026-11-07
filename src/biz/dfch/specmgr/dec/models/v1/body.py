@@ -70,6 +70,7 @@ from ....models.md import (
     alias,
     AliasType,
 )
+from ....models.md._markdown import format_text, not_in_mdformat_message, parse
 from ....models.md._ordering import validate_newest_first
 
 
@@ -105,6 +106,138 @@ class Confirmation(MarkdownSection3):
     or will be confirmed. Optional, free-form prose."""
 
 
+#: The four top-level block-start kinds the `OutcomeBlocks` extent accepts at
+#: the head of its own text (feat-247-dec-outcome-blocks, GitHub issue #247,
+#: REQ-001). The shared `MarkdownIt("commonmark")` tokenizer has no table
+#: token, so GFM pipe-table content tokenizes as a plain paragraph and is
+#: accepted with it -- there is no distinct table kind to reject (confirmed
+#: Option A, see the feature's Decisions Made).
+_OUTCOME_ACCEPTED_BLOCK_START_KINDS = frozenset({"paragraph_open", "bullet_list_open", "ordered_list_open", "fence"})
+
+#: Every top-level block-start kind the `OutcomeBlocks` extent walk
+#: recognises as "a new top-level block begins here" (feat-247). Any of
+#: these seen at nesting depth 0 ends the accepted run unless it is also one
+#: of `_OUTCOME_ACCEPTED_BLOCK_START_KINDS` -- in particular every heading of
+#: any level (h1-h6: the `### Consequences`/`### Confirmation` hand-off and
+#: any stray H4+ alike), as do block quotes, HTML comments, horizontal
+#: rules, and (defensively, since `format_text` normalizes indented code
+#: blocks to fences before parsing) `code_block`.
+_OUTCOME_BLOCK_START_KINDS = frozenset(
+    {
+        "paragraph_open",
+        "bullet_list_open",
+        "ordered_list_open",
+        "fence",
+        "heading_open",
+        "blockquote_open",
+        "html_block",
+        "code_block",
+        "hr",
+    }
+)
+
+
+class OutcomeBlocks(MarkdownStr):
+    """Further markdown blocks after `DecisionOutcome`'s mandatory lead paragraph
+    (feat-247-dec-outcome-blocks, GitHub issue #247).
+
+    Leaf class (no declared nested fields, no `@markdown` metadata of its
+    own) mirroring this file's own `UpdateEntryContent` precedent: an
+    internal content-holding leaf that the parent's field loop resolves via
+    `get_extent` and stores verbatim via the base `MarkdownStr` leaf
+    `from_text` (`parse(text)` for the raw-HTML rejection, then `_value =
+    text`) -- which is exactly what makes the round-trip byte-exact
+    (REQ-003).
+
+    Unlike `UpdateEntryContent` -- which is last on its parent and therefore
+    consumes everything remaining -- `OutcomeBlocks` is *not* last: the
+    `### Consequences`/`### Confirmation` H3 sections follow it. Its own
+    `get_extent` therefore bounds the run it claims: it only claims an
+    extent at all when the first token is one of the four accepted
+    block-start kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise it
+    returns `0` (the field is absent) and the H3 fields match exactly where
+    they always matched before a document carries no further blocks (the
+    REQ-004 parity). When it does claim an extent, the run accumulates the
+    accepted blocks and STOPS at the first non-accepted top-level block --
+    in particular at the first heading of any level (h1-h6) -- by returning
+    that block's start line exclusive, so a block quote, an HTML comment, a
+    horizontal rule, or an H4+ heading left after the run is never consumed
+    and fails the parse with the engine's own actionable "text left over
+    after processing all fields" error (REQ-001's rejected-kinds contract,
+    enforced per distinct token kind).
+
+    Adds a `text` computed property (mirroring `UpdateEntryContent`'s own,
+    and `qa`'s `IntroductionBody.text` idiom, feat-114) so this
+    otherwise-private `_value` is reachable through `model_dump()`/
+    `model_dump_json()` (REQ-003).
+    """
+
+    @classmethod
+    def get_extent(cls, text: str) -> int:
+        """Return the extent of the accepted block run parsed from `text`, as a line count.
+
+        Overrides `MarkdownStr.get_extent` (whose base behaviour would
+        consume *everything* remaining -- too greedy for a field that is
+        not last on its parent). After the standard `text ==
+        format_text(text)` precondition and `parse()`, there is an extent at
+        all only if the FIRST token is one of the four accepted block-start
+        kinds (`_OUTCOME_ACCEPTED_BLOCK_START_KINDS`); otherwise this
+        returns `0`, same as the base class's "no extent" case.
+
+        When the run is claimed, the token stream is walked with a depth
+        counter (shifted by every token's own `nesting`, mirroring
+        `MarkdownSection.get_extent`'s own `end_marker` walk): a token
+        counts as a new top-level block when it has a 2-element `.map`, is
+        seen at depth 0 (the depth going into it, before applying its own
+        nesting delta), and has one of the known block-start types
+        (`_OUTCOME_BLOCK_START_KINDS`). The first such block whose kind is
+        not accepted ends the run -- this returns that block's start line
+        (`m[0]`, exclusive); every other token contributes its own line
+        span to the accumulated extent (the max `m[1]` over all mapped
+        tokens, i.e. the end of `text` when the run reaches it).
+
+        Args:
+            text: Markdown source, pre-formatted with `mdformat`.
+
+        Returns:
+            0: `text` does not start with an accepted block (no extent).
+            int > 0: line count (see `MarkdownStr.get_extent`) covered by
+                the accepted block run, stopping before the first
+                non-accepted top-level block or at the end of `text`.
+        """
+        assert isinstance(text, str), type(text)
+        assert text == format_text(text), not_in_mdformat_message(text)
+
+        tokens = parse(text)
+
+        if not tokens or tokens[0].type not in _OUTCOME_ACCEPTED_BLOCK_START_KINDS:
+            return 0
+
+        result: int = 0
+        depth: int = 0
+        for token in tokens:
+            depth_at_entry = depth
+            depth += token.nesting
+
+            token_map = token.map
+            if not token_map or len(token_map) != 2:
+                continue
+
+            if depth_at_entry == 0 and token.type in _OUTCOME_BLOCK_START_KINDS:
+                if token.type not in _OUTCOME_ACCEPTED_BLOCK_START_KINDS:
+                    return token_map[0]
+
+            result = max(result, token_map[1])
+
+        return result
+
+    @computed_field  # type: ignore
+    @property
+    def text(self) -> str:
+        """Return this field's raw markdown text verbatim (or `""` if unset)."""
+        return self._value
+
+
 class DecisionOutcome(MarkdownSection2):
     """`## Decision Outcome` -- the chosen option plus its consequences. Mandatory.
 
@@ -115,6 +248,13 @@ class DecisionOutcome(MarkdownSection2):
         itself (e.g. "We chose option 1 because ..."). Any other block in
         place of a lead paragraph (a bare list, an H3 first, nothing at
         all) is a structural error.
+    further_blocks:
+        Optional further markdown blocks (paragraphs, bullet lists, ordered
+        lists, fenced code blocks) after the lead paragraph and before the
+        first H3 sub-section (feat-247-dec-outcome-blocks, GitHub issue
+        #247). A block quote, an HTML comment, a horizontal rule, or a
+        heading of any level ends the run and stays unconsumed, failing the
+        parse with the engine's own actionable "text left over" error.
     consequences:
         `### Consequences` sub-section. Optional.
     confirmation:
@@ -124,6 +264,11 @@ class DecisionOutcome(MarkdownSection2):
     statement: MarkdownParagraph = Field(
         description="The lead paragraph directly under the H2, before any H3 sub-section -- the "
         "decision outcome itself. Mandatory."
+    )
+    further_blocks: OutcomeBlocks | None = Field(
+        default=None,
+        description="Optional further markdown blocks (paragraphs, bullet/ordered lists, fenced code "
+        "blocks) after the lead paragraph and before the first `###` sub-section.",
     )
     consequences: Consequences | None = Field(default=None, description="`### Consequences` sub-section. Optional.")
     confirmation: Confirmation | None = Field(default=None, description="`### Confirmation` sub-section. Optional.")
@@ -589,7 +734,8 @@ class Decision(MarkdownSection1):
     considered:
         `## Considered Options`. Optional.
     outcome:
-        `## Decision Outcome` (mandatory lead paragraph + optional
+        `## Decision Outcome` (mandatory lead paragraph, optional further
+        blocks after it -- feat-247 -- + optional
         `### Consequences`/`### Confirmation`). Mandatory.
     roles_and_responsibilities:
         `## Roles and Responsibilities` (RASCI composite). Mandatory (unlike

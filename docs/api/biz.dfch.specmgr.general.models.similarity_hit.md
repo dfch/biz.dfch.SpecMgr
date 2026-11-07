@@ -36,7 +36,7 @@ Parameters
 type:
     The hit's domain name: one of the whole-body domains
     (``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``,
-    ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``) -- ``adr``
+    ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``) -- ``adr``
     is structurally excluded from the candidate set (issue #46, ADR
     750842b2's **corpus and registry** sub-decision).
 id:
