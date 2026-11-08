@@ -4,7 +4,7 @@ created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
 status: progress
 type: feat
-updated: '2026-11-08T16:33:13.418Z'
+updated: '2026-11-08T17:26:33.110Z'
 version: 1.0.0
 ---
 
@@ -106,13 +106,13 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 #### Phase 100: Implementation (items 1-4)
 
-- [ ] Task 100.100: Item 1 -- replace `SOP` by `TXT` in `general/data/general_i18n.md` §5.1's tag list (line 122) and update the coordinated pin in `tests/general/resources/test_i18n.py` (line 274) to assert `TXT`
+- [x] Task 100.100: Item 1 -- replace `SOP` by `TXT` in `general/data/general_i18n.md` §5.1's tag list (line 122) and update the coordinated pin in `tests/general/resources/test_i18n.py` (line 274) to assert `TXT`
 
-- [ ] Task 100.110: Item 2 -- relocate the canonical `DEFAULT_LANGUAGE` into `general/models/heading_table.py` (dropping the line-72 tools import), alias it in `general/tools/_path_safety.py` (keeping it in `__all__`), and correct the docstring references
+- [x] Task 100.110: Item 2 -- relocate the canonical `DEFAULT_LANGUAGE` into `general/models/heading_table.py` (dropping the line-72 tools import), alias it in `general/tools/_path_safety.py` (keeping it in `__all__`), and correct the docstring references
 
-- [ ] Task 100.120: Item 3 -- change AGENTS.md's "twelve `@mcp.tool()` modules" to 14 (lines 1252-1253)
+- [x] Task 100.120: Item 3 -- change AGENTS.md's "twelve `@mcp.tool()` modules" to 14 (lines 1252-1253)
 
-- [ ] Task 100.130: Item 4 -- change the SYSRS document's System Scope from "fourteen document-type domains (adr … txt)" to "fifteen document-type domains (adr … set)" via the generic `update`/`edit` tool (`type="sysrs"`)
+- [x] Task 100.130: Item 4 -- change the SYSRS document's System Scope from "fourteen document-type domains (adr … txt)" to "fifteen document-type domains (adr … set)" via the generic `update`/`edit` tool (`type="sysrs"`)
 
 #### Phase 110: Verification and convergence
 
@@ -126,11 +126,15 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 ### Current Status
 
-**As of 2026-11-08**: Feature taken over from an exported session (session ID `ses_e44fb2e76ffeVv6WZ60Eij0s6m`); implementation has started. All four findings re-verified in-tree at file:line granularity on takeover (the i18n §5.1 tag-list typo, the heading_table model→tools import edge, the AGENTS.md tool-module count, the SYSRS domain count). The next work unit is Phase 100 (Tasks 100.100–100.130).
+**As of 2026-11-08**: Phase 100 complete (items 1-4): the i18n §5.1 tag-list typo is fixed with its coordinated test pin, the last model→tools import edge is removed (`DEFAULT_LANGUAGE`'s canonical home is now `general/models/heading_table.py`, aliased by `general/tools/_path_safety.py`), AGENTS.md names the 14 eagerly imported `@mcp.tool()` modules, the SYSRS document's `## System Scope` names the 15 domains (via the generic `edit` tool, `type="sysrs"`), and the new `CHANGELOG.md` `### Fixed` section has landed; `docs/api/` regenerated and the quality gate is green. The next work unit is Phase 110 (Tasks 110.100–110.120: verification + regeneration convergence).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T17:26:33.110Z - Phase 100 complete (items 1-4)
+
+All four items landed in one pass, gate green. Item 1: `general/data/general_i18n.md` §5.1's 12-tag reference list now ends `…VCR, SYSRS, TXT, FEAT` (the stale `SOP` — not a reference tag — replaced by `TXT`, matching the code authority `general/tools/_references.py`'s `_UUID_REFERENCE_TYPES` + `feat`; the §5.2 `set` row was already correct and no other `sop` mention touched), with the coordinated pin in `tests/general/resources/test_i18n.py`'s `test_common_group_names_the_cross_cutting_tokens` asserting `` `TXT` `` in place of the file's only `` `SOP` `` fragment. Item 2: `DEFAULT_LANGUAGE` now has its canonical model-side home in `general/models/heading_table.py` (first in its `__all__`, `#:` comment moved verbatim; the line-72 `..tools._path_safety` import — the repo's last model→tools edge — is gone), and `general/tools/_path_safety.py` aliases it from there with the name kept in `__all__`, so every existing tools-layer consumer is untouched; the one stale qualified docstring reference (`general/tools/_doc_paths.py`'s module docstring) was re-pointed to the new home; the isolated I1/I2 probe (the repo-wide package-init registration edge stubbed, per the feat-173 record) flips `mcp in sys.modules` True (PRE, with the recorded mid-cascade re-entry `ImportError` artifact) → False (POST), while the literal one-liner probe stays True on every tree because it measures `general/__init__`'s eager `from . import prompts, resources, tools` registration edge — the feat-173 "recorded contradiction" — not the model edge. Item 3: AGENTS.md's `_envregistry.py` paragraph now reads "14 `@mcp.tool()` modules" (verified against `general/tools/__init__.py`'s own 14 imports: the 12 alphabetical plus the deliberately last `check_translation_drift`/`list_languages`). Item 4: the SYSRS document's `## System Scope` now names fifteen document-type domains (`adr … txt, set`) — edited via the generic `edit` tool (`type="sysrs"`, byte-exact unique match), the document's diff is exactly that one body line plus the frontmatter `updated` bump, and `get_sysrs` still parses it. The new `CHANGELOG.md` `### Fixed` section (two bullets in the file's own em-dash prose style) landed between `### Changed` and `## [0.38.0]`, and `specmgr docs` regenerated exactly one `docs/api/` page (`_doc_paths.md`, mirroring the re-pointed docstring reference; module constants are not rendered as standalone entries) with `docs/GENERATED.md` byte-identical.
 
 #### 2026-11-08T16:33:13.418Z - Status planning → progress
 

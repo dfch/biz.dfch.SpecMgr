@@ -74,7 +74,7 @@ unparseable file, and the scan continues looking for the target id.
 non-default language ``L`` of a domain's documents lives in a direct
 ``{L}`` subdirectory of the domain's flat base directory
 (``docs/{type}/{L}/<type>-<id>-<slug>.md``); the default language EN
-(:data:`~biz.dfch.specmgr.general.tools._path_safety.DEFAULT_LANGUAGE`,
+(:data:`~biz.dfch.specmgr.general.models.heading_table.DEFAULT_LANGUAGE`,
 whether omitted or passed explicitly) keeps exactly today's flat path
 ``docs/{type}/<type>-<id>-<slug>.md``. :func:`doc_base_dir`/
 :func:`ensure_doc_base_dir` take the optional ``language`` parameter that

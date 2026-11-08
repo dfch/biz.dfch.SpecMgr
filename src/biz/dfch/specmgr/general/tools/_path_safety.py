@@ -63,6 +63,10 @@ from pathlib import Path
 
 from ...models.md._cross_reference import FEAT_ID_PATTERN as _FEAT_ID_PATTERN
 
+# The canonical DEFAULT_LANGUAGE home moved model-side (feat-255 item 2); the alias
+# keeps every existing tools-layer consumer importing it from here untouched.
+from ..models.heading_table import DEFAULT_LANGUAGE
+
 __all__ = [
     "DEFAULT_LANGUAGE",
     "LANGUAGE_PATTERN",
@@ -87,12 +91,6 @@ _TRAVERSAL_SEQUENCE = ".."
 #: The ISO 639-1-shaped language-code shape (feat-197-i18n, ADR 38efdb66 item 6):
 #: exactly two lowercase ASCII letters. ``fullmatch``ed, not ``match``ed.
 LANGUAGE_PATTERN = re.compile(r"^[a-z]{2}$")
-
-#: The default/primary document language (feat-197-i18n, ADR 38efdb66 items 1/6/7):
-#: English. The only language without a ``{language}`` subfolder (its documents live
-#: directly in the domain's flat base directory) and without a heading-mapping table
-#: (its headings are the canonical form itself).
-DEFAULT_LANGUAGE = "en"
 
 
 def _uuid_types() -> frozenset[str]:

@@ -271,7 +271,7 @@ class TestI18nNeverTranslateList(unittest.TestCase):
             "`ADR`",
             "`VCR`",
             "`SYSRS`",
-            "`SOP`",
+            "`TXT`",
             "Timestamps",
             "UUIDs",
             "code spans",
