@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
-status: planning
+status: progress
 type: feat
-updated: '2026-11-03T20:33:04.587+01:00'
+updated: '2026-11-08T16:33:13.418Z'
 version: 1.0.0
 ---
 
@@ -126,11 +126,15 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 ### Current Status
 
-**As of 2026-11-03**: Feature drafted from issue #255 (opened 2026-11-03, the carry-over from the feat-173 review passes; PR #254 merged the same day). All four findings verified in-tree at file:line granularity. No implementation started.
+**As of 2026-11-08**: Feature taken over from an exported session (session ID `ses_e44fb2e76ffeVv6WZ60Eij0s6m`); implementation has started. All four findings re-verified in-tree at file:line granularity on takeover (the i18n §5.1 tag-list typo, the heading_table model→tools import edge, the AGENTS.md tool-module count, the SYSRS domain count). The next work unit is Phase 100 (Tasks 100.100–100.130).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T16:33:13.418Z - Status planning → progress
+
+Implementation started on takeover from the exported session (`ses_e44fb2e76ffeVv6WZ60Eij0s6m`). The plan preconditions were re-verified in-tree: the four defects sit at the planned file:line locations, `general/tools/__init__.py` carries the 14-module count, and `CHANGELOG.md`'s `[Unreleased]` section carries no Fixed entry yet. Phase 100 is next.
 
 #### 2026-11-03T19:31:24.000Z - Created
 
