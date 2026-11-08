@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: review
 type: feat
-updated: '2026-11-03T13:14:55.581+01:00'
+updated: '2026-11-08T17:47:17.028+01:00'
 version: 1.0.0
 ---
 
@@ -26,7 +26,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - REQ-001: A new `feat/prompts/refine_feat.py` MCP prompt, signature `refine_feat(id)`, narrates a pre-implementation plan-readiness review (testable ACs, phase ordering/dependencies, scope clarity, unresolved decisions) that is fully MCP-native: read via `get_feat(id, raw=True)`, ask the user via the `question` tool, apply edits via the generic `update(type="feat", id, content, offset/limit)` tool (line-range preferred), and re-check via `validate(type="feat", content, full=True)` -- host file tools only as a fallback when those specmgr tools are unavailable.
 
-- REQ-002: A new `.opencode/agent/feat-planner.md` subagent implements REQ-001 with real file access, with its plan-README-only edit scope enforced mechanically rather than by prose: `edit`/`write` permission rules `{"*": deny, ".specmgr/feat/**/README.md": allow}` (OpenCode's `edit` permission patterns match file paths, last matching rule wins), `read`/`glob`/`grep`/`list`/`question`/`todowrite` allowed, `task` denied, `bash` denied -- plus `.opencode/command/refine-feature.md` (`/refine-feature <id>`, `agent: feat-planner`).
+- REQ-002: A new `.opencode/agent/feat-planner.md` subagent implements REQ-001 with real file access, with its plan-README-only edit scope enforced mechanically rather than by prose: `edit`/`write` permission rules `{"*": deny, ".specmgr/feat/**/README.md": allow}` (OpenCode's `edit` permission patterns match file paths, last matching rule wins), `read`/`glob`/`grep`/`list`/`question`/`todowrite` allowed, `task` denied, `bash` denied -- plus `.opencode/command/plan-feature.md` (`/plan-feature <id>`, `agent: feat-planner`).
 
 - REQ-003: A new `feat/prompts/implement_feat.py` MCP prompt narrates orchestrator discipline (read plan, phase-by-phase `TodoWrite`, delegate each phase via the host's subagent-delegation tool when available, verify before advancing, never write code directly), names the new delegation-pattern ADR (Phase 110) by UUID, mentions the REQ-006 review-fix loop, and falls back to direct single-session implementation when no delegation tool exists.
 
@@ -46,7 +46,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - [ ] ACC-001: `refine_feat(id)` MCP prompt exists, is registered, and its instructions name `get_feat(id, raw=True)`, the generic `update` tool (`type="feat"`), and `validate` (`type="feat"`, `full=True`) as the read/apply/re-check path.
 
-- [ ] ACC-002: `/refine-feature <id>` successfully edits a fixture plan's README in place after a manual smoke test.
+- [ ] ACC-002: `/plan-feature <id>` successfully edits a fixture plan's README in place after a manual smoke test.
 
 - [ ] ACC-003: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), the new delegation-pattern ADR (Phase 110) by UUID, and the review-fix loop.
 
@@ -72,7 +72,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - 3 new MCP prompts (`refine_feat`, `implement_feat`, `review_feat`) and their packaged instruction data files.
 
-- 1 new OpenCode subagent (`feat-planner`) and 1 new OpenCode command (`/refine-feature`).
+- 1 new OpenCode subagent (`feat-planner`) and 1 new OpenCode command (`/plan-feature`).
 
 - Targeted edits to 4 existing OpenCode files: `feat-reviewer.md` (the Proposed Fix Phase section) and `phase-orchestrator.md` (the review-fix loop) for the review-fix loop, `implement-feature.md` (doc update mentioning the automatic review-fix step, plus its "a a" typo fix), and `review-feature.md` (its body re-enumerates the report sections and would go stale without the new conditional section).
 
@@ -92,7 +92,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - Any change to `.opencode/agent/phase-implementer.md`, `.opencode/agent/ref-finder.md`, `.opencode/agent/doc-repairer.md`, `/refs`, `/repair`, or `/release` (unaffected; `doc-repairer`/`repair` shipped under feat-150).
 
-- The pre-existing `.opencode/agent/feat-refiner.md`, `.opencode/command/refine-feature.md` (routed to feat-refiner since 39a6e0b), and the `refine-feature`/`review-feature` skills: their disposition against Phase 100's planned feat-planner surface is the open review-cycle-3 finding D1 (Task 100.110 [NEEDS DECISION]); this fix cycle touches none of them.
+- The pre-existing `.opencode/agent/feat-refiner.md`, `.opencode/command/refine-feature.md` (routed to feat-refiner since 39a6e0b), and the `refine-feature`/`review-feature` skills: their disposition against Phase 100's planned feat-planner surface was settled by the D1 decision (option b, Decisions Made 2026-11-08) -- Phase 100 creates the distinct command `/plan-feature` and touches none of them.
 
 - Any change to `general/prompts/compact_history.py`.
 
@@ -156,9 +156,9 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 **OpenCode permission model for the new agent.** `edit` permission patterns match file paths with the last matching rule winning (opencode.ai/docs/permissions), so `feat-planner`'s plan-README-only scope is mechanically enforced (`{"*": deny, ".specmgr/feat/**/README.md": allow}` on `edit`/`write`), not just prose discipline. The new agent denies `bash` and `task` and declares every permission it relies on explicitly (`read`/`glob`/`grep`/`list`/`question`/`todowrite`), matching the existing agents' explicitness.
 
-**Naming.** `feat-planner.md` (agent) / `refine-feature.md` (command); `feat.prompts.refine_feat`/`implement_feat`/`review_feat` keep the `<verb>_<domain>` prompt-naming convention feat-150's own `general.prompts.repair` was a deliberate exception to (it is cross-cutting, this is domain-scoped). The distribution surface takes the flat artifact-noun CLI name `specmgr harness-bundle` (the `specmgr docs`/`specmgr adr-toc`/`specmgr mcp-docs` precedent) -- no nested Typer sub-application, since the 2026-10-31 re-scope left exactly one stage -- and the resource URI `specmgr://harness-bundle`.
+**Naming.** `feat-planner.md` (agent) / `plan-feature.md` (command); `feat.prompts.refine_feat`/`implement_feat`/`review_feat` keep the `<verb>_<domain>` prompt-naming convention feat-150's own `general.prompts.repair` was a deliberate exception to (it is cross-cutting, this is domain-scoped). The distribution surface takes the flat artifact-noun CLI name `specmgr harness-bundle` (the `specmgr docs`/`specmgr adr-toc`/`specmgr mcp-docs` precedent) -- no nested Typer sub-application, since the 2026-10-31 re-scope left exactly one stage -- and the resource URI `specmgr://harness-bundle`.
 
-**Pending decision (review cycle 3, finding D1).** /refine-feature is not new: 39a6e0b (2026-10-05, after the 2026-09-28 plan draft) created it routed to the read-only feat-refiner agent, plus the refine-feature/review-feature skills; all three are already in the published bundle. Task 100.110 as written would repoint a shipped command from the reporting refiner to the plan-editing planner. Options: (a) repoint /refine-feature to feat-planner and rewrite the refine-feature skill's description/body (feat-refiner's disposition: retire, rename, or keep under a distinct name), or (b) give the planner a distinct command (e.g. /plan-feature) and adjust REQ-002/Scope's "1 new OpenCode command" wording accordingly when the decision lands.
+**Command naming (review cycle 3, finding D1 -- resolved 2026-11-08, user decision, option b).** /refine-feature is not new: 39a6e0b (2026-10-05, after the 2026-09-28 plan draft) created it routed to the read-only feat-refiner agent, plus the refine-feature/review-feature skills; all three are already in the published bundle. Task 100.110 as originally written would have repointed a shipped command from the reporting refiner to the plan-editing planner. User decision (2026-11-08): the planner gets the distinct command /plan-feature (.opencode/command/plan-feature.md, agent: feat-planner) -- Phase 100 is purely additive, the pre-existing /refine-feature, feat-refiner, and the two skills stay untouched, and option (a) (repoint + the feat-refiner disposition question) is closed without further action. REQ-002, ACC-002, the Scope bullet, and Task 100.110 carry the settled name.
 
 ### Related Decisions
 
@@ -176,7 +176,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - [ ] Task 100.100: `feat/prompts/refine_feat.py` (`refine_feat(id)`) + `feat/data/feat_refine_instructions.md` (the MCP-native `get_feat`/`update`/`validate` path) + registration in `feat/prompts/__init__.py`.
 
-- [ ] Task 100.110: `.opencode/agent/feat-planner.md` (path-scoped `edit`/`write` permission rules per REQ-002) + `.opencode/command/refine-feature.md` (`agent: feat-planner`). [NEEDS DECISION (review cycle 3, finding D1): the /refine-feature command already exists (39a6e0b, 2026-10-05), routed to the read-only feat-refiner agent, and is already in the published bundle (with feat-refiner.md and the refine-feature/review-feature skills) -- decide repoint-to-feat-planner vs. a distinct command name (e.g. /plan-feature) before implementing this task]
+- [ ] Task 100.110: `.opencode/agent/feat-planner.md` (path-scoped `edit`/`write` permission rules per REQ-002) + `.opencode/command/plan-feature.md` (`/plan-feature <id>`, `agent: feat-planner`) -- the command name settled by the D1 decision (2026-11-08, option b): /refine-feature already exists (39a6e0b) routed to the read-only feat-refiner agent and is already in the published bundle, so the planner gets the distinct name /plan-feature; the pre-existing surface stays untouched.
 
 - [ ] Task 100.120: `tests/feat/prompts/test_refine_feat.py` + manual smoke test (ACC-002).
 
@@ -286,11 +286,15 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 ### Current Status
 
-**As of 2026-11-02**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). Phase 150 (the review-cycle-1 fix phase that resolved D1/D2/D3), Phase 160 (the review-cycle-2 fix phase that resolved D4), and Phase 170 (the review-cycle-3 fix phase: D2/D3/D4, I1-I4, G1-G4 -- the two LIVE dangling-reference rewrites, the section-name alignment, the bundle generator's single-tree enumeration, the install-protocol collision case, the I/O error contract, the fixture coverage boundary, and the plan bookkeeping, with the bundle regenerated exactly once) are now complete; D1 (the `/refine-feature` command collision) is deliberately deferred and encoded as the `[NEEDS DECISION]` flag on Task 100.110; Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending user direction.
+**As of 2026-11-08**: Phase 130 (Distribution) is fully implemented. Tasks 130.100-130.140 and 130.160 (the flat `specmgr harness-bundle` CLI command, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the test suites, the README section + TOC entry, and the docs sync) are committed as `10a0184`. Task 130.150 (the end-to-end walkthrough fixture) is done: an agent run in a fresh, hermetic OpenCode 2.2.5 container (no repo mount, verified-empty OC state) installed strictly from the bundle's `instructions` field -- 22 installed (new) / 1 skipped (sha256-identical pre-existing) / 1 updated (approved overwrite of a pre-differing file) / 0 failed -- independently re-verified host-side at 24/24 byte-exact against the committed bundle, and pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`. Phase 130 is now complete: every task 130.100-130.170 is done -- the implementation is committed as `10a0184`, the walkthrough is pinned by `tests/fixtures/harness-bundle/install.walkthrough.md`, and Task 130.170's phase-end gate was re-run green by the orchestrator, closing the phase out with its own single Conventional Commit. Per user direction, the feature has now moved to `review` for the completed distribution slice (Phase 125 + Phase 130). Phase 150 (the review-cycle-1 fix phase that resolved D1/D2/D3), Phase 160 (the review-cycle-2 fix phase that resolved D4), and Phase 170 (the review-cycle-3 fix phase: D2/D3/D4, I1-I4, G1-G4 -- the two LIVE dangling-reference rewrites, the section-name alignment, the bundle generator's single-tree enumeration, the install-protocol collision case, the I/O error contract, the fixture coverage boundary, and the plan bookkeeping, with the bundle regenerated exactly once) are now complete; D1 (the `/refine-feature` command collision) is resolved (2026-11-08, option b: the planner command is `/plan-feature`, the pre-existing `/refine-feature` surface untouched); Phases 100-120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat`) and Phase 140 (final verification over all ACCs) remain deferred pending user direction.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08 17:47:17.028Z - D1 resolved: the feat-planner command is /plan-feature (option b); Phase 100 unblocked
+
+The user settled the review-cycle-3 finding D1 with option (b): the new feat-planner agent (REQ-002) gets the distinct OpenCode command /plan-feature (.opencode/command/plan-feature.md, agent: feat-planner) instead of the name /refine-feature, which already exists since 39a6e0b routed to the read-only feat-refiner agent and is already in the published bundle (with feat-refiner.md and the refine-feature/review-feature skills) -- the pre-existing surface stays untouched, the MCP prompt name (refine_feat) is unchanged, and option (a)'s feat-refiner-disposition question is closed without further action. Plan-only change: REQ-002, ACC-002, the Scope/Included bullet, Task 100.110 ([NEEDS DECISION] flag removed), the Out-of-Scope bullet's rationale, the Design Notes Naming + command-naming paragraphs, Current Status, and a Decisions Made entry; no code, bundle, or .opencode/ change (the new plan-feature.md file is created by Phase 100 when it is implemented). This entry supersedes the 2026-11-03 handover note's "single open decision D1" state (that note stays as-is as a point-in-time record).
 
 #### 2026-11-03 12:07:19.014Z - Handover: session ended, Phases 100-120/140 deferred, single open decision D1 (repo state for a fresh agent)
 
@@ -375,6 +379,10 @@ Drafted this feature by splitting the not-yet-started remainder (originally Phas
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08 17:47:17.028Z - D1 resolved (user decision, option b): the feat-planner command is /plan-feature; the pre-existing /refine-feature surface stays untouched
+
+User decision (2026-11-08, GitHub issue #167): the review-cycle-3 finding D1 (the /refine-feature command already exists since 39a6e0b, routed to the read-only feat-refiner agent, and is already in the published bundle with feat-refiner.md and the refine-feature/review-feature skills) is resolved with option (b) -- the new feat-planner agent (REQ-002) gets the distinct command /plan-feature (.opencode/command/plan-feature.md, agent: feat-planner), so Phase 100 is purely additive and touches none of the pre-existing files; option (a) (repoint /refine-feature to feat-planner plus a feat-refiner disposition decision: retire/rename/keep under a distinct name) is closed without further action. The MCP prompt name (refine_feat, REQ-001) is unchanged -- only the OpenCode command was renamed. Living spec updated in the same change: REQ-002, ACC-002, the Scope/Included bullet, Task 100.110 (the [NEEDS DECISION] flag removed), the Out-of-Scope bullet's rationale, and the Design Notes Naming + command-naming paragraphs; Current Status and a matching Updates entry record the resolution. Phase 100 is unblocked.
 
 #### 2026-11-02 12:46:57.262Z - Review cycle 3 (Phase 170) scope decisions: D2 fixed at the two LIVE references only; I1 as the `tuple[str, int]` return; G4 as the documented exit-2 wrap
 
