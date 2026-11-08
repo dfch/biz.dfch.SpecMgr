@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
-status: review
+status: done
 type: feat
-updated: '2026-11-08T18:55:27.207Z'
+updated: '2026-11-08T21:02:57.163Z'
 version: 1.0.0
 ---
 
@@ -126,11 +126,15 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 ### Current Status
 
-**As of 2026-11-08**: Phase 100 (items 1-4 plus the CHANGELOG Fixed entry) and Phase 110 (verification + regeneration convergence, with ACC-001…ACC-005 walked and ticked and the full quality gate green) are complete. The feature status is `review`. The next action is the post-implementation feat-reviewer pass (any findings addressed in a fix phase), followed by the closeout commit (`status` → `done`).
+**As of 2026-11-08**: All phases are complete — Phase 100 (implementation, items 1-4 plus the CHANGELOG Fixed entry) and Phase 110 (verification + regeneration convergence) — with ACC-001…ACC-005 ticked and the full quality gate green (pytest 6297 passed / 18 skipped / 11218 subtests; `ruff format --check` / `ruff check` / `vulture` clean; `specmgr docs` converged with no diff). The post-implementation feat-reviewer pass returned verdict `ship` (no Errors/Gaps/Inconsistencies; ACC-001…ACC-005 all MET with independently re-verified evidence), and its two advisory Improvements (I1: no permanent AST regression guard pinning the model→tools import direction; I2: pre-existing — the §5.1 content pin asserts 11 of the 12 backticked tags) were deliberately not acted on, the plan fixing this feature's footprint (~15 changed lines across 7 files + regeneration) and scoping item 2's verification as a one-off sweep in the feat-173 precedent's shape. The feature is closed out to `done`; the branch is ready for push + PR to `dev` (head ref `feat-255-i18n-typo`).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T21:02:57.163Z - Closeout: post-implementation review passed, status done
+
+The post-implementation feat-reviewer pass returned verdict `ship`: no Errors, Gaps, or Inconsistencies, and ACC-001…ACC-005 all MET with independently re-verified evidence (i18n suite 25 passed / 124 subtests; AST sweep 199 model files / zero model→tools imports; isolated I1/I2 probe `mcp not in sys.modules`; full gate green). Its two advisory Improvements were named and deliberately not acted on — I1 (no permanent AST regression guard pinning the model→tools import direction; the sweep was one-off, as the feat-173 I1/I2 precedent itself was) and I2 (pre-existing: the §5.1 content pin asserts 11 of the 12 backticked tags, `` `FEAT` `` was never in the fragment tuple, before or after this change) — because the plan fixes this feature's footprint (~15 changed lines across 7 files + regeneration) and scopes item 2's verification as a one-off sweep in the feat-173 precedent's shape, and a new test file or a widened pin tuple would be scope creep the plan does not authorize (repo precedent for this treatment: feat-167's Phase 150 entry). Gate evidence summary: `ruff format --check` 2433 files already formatted, `ruff check` clean, `vulture src/ whitelist.py --min-confidence 60` clean, `pytest -n auto` 6297 passed / 18 skipped / 11218 subtests, `specmgr docs` second run converged with no diff. The status moves `review` → `done` in this closeout per the feat-108 closeout-commit pattern. Next: push the branch and open PR `feat-255-i18n-typo` → `dev` (the PR number is recorded under Related PRs / Commits once it is opened).
 
 #### 2026-11-08T18:55:27.207Z - Status progress → review
 
@@ -151,6 +155,14 @@ Implementation started on takeover from the exported session (`ses_e44fb2e76ffeV
 #### 2026-11-03T19:31:24.000Z - Created
 
 Feature drafted from [issue #255](https://github.com/dfch/biz.dfch.SpecMgr/issues/255). The four fixable findings (the i18n §5.1 tag-list typo, the last model→tools import edge, the AGENTS.md tool-module count, the SYSRS domain count) were verified in-tree at file:line before drafting; issue item 5 (the QA interview record) is deliberately left as-is per the issue's own evaluation. The plan is a single consolidated pass in the shape the issue suggests: Phase 100 (items 1-4), Phase 110 (verification + regeneration convergence).
+
+### Decisions Made
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T21:02:57.163Z - Review triage: advisory Improvements I1/I2 deliberately not acted on
+
+The post-implementation feat-reviewer pass returned verdict `ship` (no Errors/Gaps/Inconsistencies; ACC-001…ACC-005 all MET), and its two advisory Improvements — I1 (no permanent AST regression guard pinning the model→tools import direction; the sweep was one-off, as the feat-173 I1/I2 precedent itself was) and I2 (pre-existing: the §5.1 content pin asserts 11 of the 12 backticked tags, `` `FEAT` `` was never in the fragment tuple, before or after this change) — were deliberately not acted on: the plan fixes this feature's footprint (~15 changed lines across 7 files + regeneration) and scopes item 2's verification as a one-off sweep in the feat-173 precedent's shape, so a new test file or a widened pin tuple would be scope creep the plan does not authorize (repo precedent for this treatment: feat-167's Phase 150 entry).
 
 ### Related PRs / Commits
 
