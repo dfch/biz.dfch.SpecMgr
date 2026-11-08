@@ -55,7 +55,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import pins, preflight, report, runner, sidecar
+from . import forwarder, pins, preflight, report, runner, sidecar
 from .cases import Case, get_case
 from .events import parse_events_file
 from .upstream import ensure_upstream
@@ -102,16 +102,37 @@ def cmd_probe(args: argparse.Namespace) -> int:
     The probe exists to verify the injected config, the vLLM provider, the
     MCP sidecar and the event-stream shape before a real run; it is a
     single, short model call and never counts toward any measurement.
+
+    It exercises the SAME topology a real run uses (Phase 110): its own
+    per-run private `--internal` network, the sidecar on it, and the vLLM
+    forwarder on the network's gateway IP -- so a green probe is proof
+    the egress-controlled chain works end to end.
     """
     run_id = args.run_id or _run_id("probe")
     results_dir = Path(args.results_dir) if args.results_dir else pins.HARNESS_ROOT / "results" / f"probe-{run_id}"
     workroot = Path(args.workroot) if args.workroot else DEFAULT_WORKROOT
+    network = runner.network_name_for(run_id)
     stale = sidecar.sidecar_container_list()
     if stale:
         print(f"stale c4eval-mcp sidecar(s) still running: {stale}; tear them down first")
         return 1
-    handle = sidecar.start_sidecar(run_id)
+    swept = runner.sweep_trial_containers()
+    if swept:
+        print(f"swept {len(swept)} leftover trial container(s): {swept}")
+    swept_networks = runner.sweep_run_networks()
+    if swept_networks:
+        print(f"swept {len(swept_networks)} leftover run network(s): {swept_networks}")
+    handle: sidecar.SidecarHandle | None = None
+    forwarder_handle: forwarder.ForwarderHandle | None = None
     try:
+        runner.create_run_network(network)
+        handle = sidecar.start_sidecar(run_id, network)
+        gateway_ip = runner.network_gateway_ip(network)
+        # option C (conditional): forwarder preferred, strictly-verified
+        # direct bind fallback (the trial's vLLM URL is mode-invariant).
+        forwarder_handle, vllm_access = runner.establish_vllm_access(gateway_ip)
+        vllm_base_url = f"http://{gateway_ip}:{pins.vllm_host_port()}/v1"
+        mcp_url = f"http://{handle.ip}:{handle.port}/mcp"
         workdir = workroot / f"probe.{run_id}"
         if workdir.exists():
             workdir = workdir / str(int(time.time()))
@@ -119,7 +140,15 @@ def cmd_probe(args: argparse.Namespace) -> int:
         pre = preflight.run_preflight(
             conditions=[pins.CONDITION_NONE],
             mcp_port=handle.port,
-            extra={"run_id": run_id, "label": "probe"},
+            extra={
+                "run_id": run_id,
+                "label": "probe",
+                "network_mode": pins.NETWORK_MODE,
+                "network_name": network,
+                "sidecar_ip": handle.ip,
+                "vllm_access": vllm_access,
+                "vllm_base_url": vllm_base_url,
+            },
         )
         preflight.write_preflight(results_dir / "preflight.json", pre)
         if not pre.ok:
@@ -132,7 +161,9 @@ def cmd_probe(args: argparse.Namespace) -> int:
         exit_code, timed_out, wall = runner._run_opencode_container(
             workdir,
             probe,
-            handle.port,
+            network=network,
+            vllm_base_url=vllm_base_url,
+            mcp_url=mcp_url,
             timeout_s=args.timeout,
             log_path=event_path,
             container_name=f"{runner.TRIAL_CONTAINER_PREFIX}{run_id}.probe",
@@ -155,7 +186,12 @@ def cmd_probe(args: argparse.Namespace) -> int:
         print(json.dumps(summary, indent=2, sort_keys=True))
         return 0 if (exit_code == 0 and not timed_out) else 2
     finally:
-        sidecar.stop_sidecar(container_id=handle.container_id)
+        # Same teardown order as runner.run: forwarder, sidecar, network.
+        if forwarder_handle is not None:
+            forwarder.stop(forwarder_handle)
+        if handle is not None:
+            sidecar.stop_sidecar(container_id=handle.container_id)
+        runner.remove_run_network(network)
 
 
 def cmd_run(args: argparse.Namespace) -> int:

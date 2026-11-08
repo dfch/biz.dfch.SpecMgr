@@ -460,3 +460,15 @@ variant_position
 variant_path
 in_sync
 staleness_error
+
+# --- feat-108-fsm (Phase 100) ---------------------------------------------
+# `InvalidStatusTransitionResult`'s own `from_status`/`to_status` fields
+# (`general/models/invalid_status_transition_result.py`), populated by keyword
+# in `general.tools._status_fsm.decide_transition` (vulture's constructor-kwarg
+# suppression does not count that as use) and read by tests and, dynamically,
+# by the mcp SDK's pydantic serializer when the result is returned over the
+# wire -- the same precedent as the entries above. The model's remaining fields
+# (`valid`/`type`/`allowed_values`/`message`) are shared names vulture already
+# sees used in `src/` and need no entry.
+from_status
+to_status

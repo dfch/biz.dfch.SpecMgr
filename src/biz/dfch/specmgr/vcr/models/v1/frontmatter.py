@@ -26,6 +26,11 @@ started, in work, complete, and approved"), see
 `.specmgr/feat/feat-33-vcr/README.md` REQ-004. No separate pass/fail/waived
 outcome field exists anywhere in this domain -- `## Coverage` is the only
 outcome signal.
+
+This module also owns the verification-case-record status state machine
+(feat-108-fsm, GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next
+to ``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
 """
 
 from __future__ import annotations
@@ -51,6 +56,46 @@ _ALLOWED_STATUSES = frozenset(
         "approved",
     }
 )
+
+#: The authoring form of :data:`_STATUS_TRANSITIONS` (feat-108-fsm, GitHub issue #108, REQ-007):
+#: the verification-case-record status state machine as a plain mapping of current status to a
+#: list of the allowed next statuses. The machine is cycling-friendly (``progress`` may return
+#: to ``draft``, ``complete`` may return to ``progress``, ``approved`` may return to
+#: ``progress``); this domain has no terminal state (every current status carries at least one
+#: allowed target).
+_STATUS_TRANSITIONS_RAW: dict[str, list[str]] = {
+    "draft": ["progress"],
+    "progress": ["complete", "draft"],
+    "complete": ["approved", "progress"],
+    "approved": ["progress"],
+}
+
+#: The verification-case-record status state machine (feat-108-fsm, GitHub issue #108,
+#: REQ-001/REQ-002), normalized from :data:`_STATUS_TRANSITIONS_RAW` to set semantics:
+#: current status -> the allowed target statuses (a ``frozenset`` per entry, the shape
+#: ``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE``'s own per-entry validity check
+#: requires). The generic ``set_status`` tool enforces this machine post-load/pre-write
+#: (immediately after the unchanged-status no-op comparison): a transition not in the current
+#: state's target set is rejected before any write with the non-raising
+#: ``InvalidStatusTransitionResult`` (its ``allowed_values`` are the current state's targets,
+#: sorted); this domain has no terminal state (every current status carries at least one
+#: allowed target).
+_STATUS_TRANSITIONS: dict[str, frozenset[str]] = {
+    current: frozenset(targets) for current, targets in _STATUS_TRANSITIONS_RAW.items()
+}
+
+# Program invariants (import-time, feat-108-fsm REQ-001/REQ-003): the machine covers exactly the
+# domain's own closed status vocabulary -- so a document's on-disk status is always a key and
+# the "current not a key" case is structurally unreachable -- and every target is in-vocabulary.
+assert set(_STATUS_TRANSITIONS) == _ALLOWED_STATUSES, (
+    "_STATUS_TRANSITIONS drifted from vcr's own closed status vocabulary _ALLOWED_STATUSES -- every "
+    "status must be a key exactly once (feat-108-fsm, REQ-001)"
+)
+for _current, _targets in _STATUS_TRANSITIONS.items():
+    assert _targets <= _ALLOWED_STATUSES, (
+        f"_STATUS_TRANSITIONS[{_current!r}] names target status(es) {sorted(_targets - _ALLOWED_STATUSES)} "
+        f"outside vcr's own closed status vocabulary (feat-108-fsm, REQ-001)"
+    )
 
 
 class VcrFrontmatter(MarkdownFrontmatter):

@@ -15,26 +15,30 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""The harness's own pinned `structurizr/mcp` sidecar (Task 100.110/120).
+"""The harness's own pinned `structurizr/mcp` sidecar (Task 100.110/120,
+reworked for the Phase 110 egress-control change).
 
 The development MCP (bound to `127.0.0.1:3000`) is never used. The sidecar
-runs on the host network on a free ephemeral port, is healthy-checked with
-a real MCP `initialize` + `tools/list` round trip, and is torn down after
-the run. The trial containers reach it over `--network host` at
-`http://127.0.0.1:<port>/mcp` (streamable HTTP; verified against the
+runs on the run's private `--internal` bridge network (`c4eval-<run_id>`,
+the one the runner creates before starting it) on a FIXED container port,
+is healthy-checked FROM THE HOST with a real MCP `initialize` +
+`tools/list` round trip against the sidecar's container IP (the host can
+reach container IPs on its own bridge networks), and is torn down after
+the run. The trial containers reach it at
+`http://<sidecar_ip>:<port>/mcp` (streamable HTTP; verified against the
 pinned image).
 
-Port selection is racy (bind/close -> container bind): when a sidecar
-fails to become healthy and its container logs show a bind/port-in-use
-failure, `start_sidecar` retries with a fresh port (up to
-`SIDECAR_START_ATTEMPTS` attempts); the residual window (the port taken
-after the log check) is absorbed by the same retry on the next attempt.
+No host port at all: the container's port lives in its own netns, and a
+per-run network has no other container on it, so the Phase 100
+port-collision retry (`free_host_port` TOCTOU, `SIDECAR_START_ATTEMPTS`,
+the collision log analysis) is structurally obsolete and was removed.
+A startup failure aborts the run after one attempt (the container's log
+tail is included in the error).
 """
 
 from __future__ import annotations
 
 import json
-import socket
 import subprocess
 import time
 import urllib.error
@@ -45,6 +49,12 @@ from . import pins
 
 #: The sidecar container name prefix (one per run id).
 CONTAINER_NAME_PREFIX = "c4eval-mcp-"
+
+#: The sidecar's fixed container port. The "never 3000/9797" convention of
+#: the Phase 100 sidecar (the dev services' ports) is kept -- this port is
+#: a container-local value on a fresh per-run network, but it is never
+#: published, and the convention documents the intent.
+SIDECAR_PORT = 8181
 
 #: The sidecar startup budget in seconds (the Spring Boot JVM needs a few).
 STARTUP_BUDGET_S = 90.0
@@ -70,78 +80,34 @@ EXPECTED_TOOLS: frozenset[str] = frozenset(
 
 @dataclass(frozen=True)
 class SidecarHandle:
-    """A running sidecar (port + container id for teardown).
+    """A running sidecar (container IP + port + container id for teardown).
 
     Attributes:
-        port: The host port the sidecar answers on.
+        ip: The sidecar's IP on the run's private network (the host
+            health-checks it; the trial containers reach it the same way).
+        port: The fixed container port the sidecar answers on
+            (:data:`SIDECAR_PORT`; a netns-local value, never published).
         container_id: The Docker container id.
         container_name: The Docker container name.
     """
 
+    ip: str
     port: int
     container_id: str
     container_name: str
 
 
-def free_host_port() -> int:
-    """Ask the host kernel for a free TCP port on 127.0.0.1.
+def _mcp_round_trip(host: str, port: int) -> list[str]:
+    """Run an MCP `initialize` + `tools/list` round trip against the sidecar.
 
-    The bind/close -> container-bind sequence is racy (TOCTOU): another
-    process can take the port in the gap, and the sidecar then fails to
-    bind. `start_sidecar` therefore retries with a fresh port when the
-    container logs show a bind/port-in-use failure; this function is just
-    the first candidate of that loop.
-
-    Returns:
-        A currently unbound port number.
-    """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("127.0.0.1", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    result = port
-    return result
-
-
-#: How many sidecar start attempts (fresh port each) before the run aborts.
-SIDECAR_START_ATTEMPTS = 3
-
-#: The case-insensitive log markers of a bind/port-in-use failure.
-_PORT_COLLISION_MARKERS: tuple[str, ...] = (
-    "address already in use",
-    "port already in use",
-    "was already allocated",
-    "eaddrinuse",
-)
-
-
-def _port_collision_evidence(logs: str, port: int) -> str | None:
-    """Return the first log line evidencing a port collision, or None.
-
-    A collision means the port picked on the host was taken before the
-    sidecar could bind it (the `free_host_port` TOCTOU window): the JVM's
-    bind failure (`address already in use`, Spring's `Port N was already
-    in use`, docker's `port ... was already allocated`). Any other failure
-    (a crash for another reason, a tool-set drift) is NOT a collision and
-    must abort immediately instead of burning another attempt.
+    The round trip runs FROM THE HOST against the sidecar's container IP
+    on the run's private network (the host reaches container IPs on its
+    own bridge networks; the `--internal` flag blocks only the containers'
+    egress, not the host's ingress).
 
     Args:
-        logs: The failed container's combined `docker logs` output.
-        port: The port the attempt was given (matches `Port N ...` lines).
-    """
-    for line in (logs or "").splitlines():
-        lowered = line.lower()
-        if any(marker in lowered for marker in _PORT_COLLISION_MARKERS):
-            result = line.strip()
-            return result
-        if f"port {port}" in lowered and ("in use" in lowered or "already" in lowered):
-            result = line.strip()
-            return result
-    return None
-
-
-def _mcp_round_trip(port: int) -> list[str]:
-    """Run an MCP `initialize` + `tools/list` round trip against the sidecar.
+        host: The sidecar's IP (or `127.0.0.1` for a local test double).
+        port: The port the sidecar answers on.
 
     Returns:
         The tool names the sidecar registered.
@@ -150,7 +116,7 @@ def _mcp_round_trip(port: int) -> list[str]:
         RuntimeError: On any HTTP/protocol failure (the sidecar is not
             healthy yet).
     """
-    base = f"http://127.0.0.1:{port}/mcp"
+    base = f"http://{host}:{port}/mcp"
     headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
 
     def raw_post(payload: dict) -> str:
@@ -194,18 +160,22 @@ def _mcp_round_trip(port: int) -> list[str]:
     return result
 
 
-def _sidecar_docker_run(name: str, port: int) -> subprocess.CompletedProcess[str]:
-    """Start the pinned sidecar container detached (the docker run only)."""
+def _sidecar_docker_run(name: str, network: str) -> subprocess.CompletedProcess[str]:
+    """Start the pinned sidecar container detached (the docker run only).
+
+    The container joins the run's private network and binds the fixed
+    container port -- nothing is published to the host.
+    """
     cmd = [
         "docker",
         "run",
         "-d",
         "--network",
-        "host",
+        network,
         "--name",
         name,
         "-e",
-        f"PORT={port}",
+        f"PORT={SIDECAR_PORT}",
         "-e",
         f"STRUCTURIZR_THEMES={SIDECAR_THEMES}",
         pins.STRUCTURIZR_MCP_IMAGE,
@@ -215,13 +185,65 @@ def _sidecar_docker_run(name: str, port: int) -> subprocess.CompletedProcess[str
     return proc
 
 
-def _wait_healthy(name: str, container_id: str, port: int) -> SidecarHandle:
+def _container_ip(name: str, network: str) -> str:
+    """Return the container's IP on the run's network (empty while unset)."""
+    proc = subprocess.run(  # noqa: S603 -- fixed container name + network
+        [
+            "docker",
+            "inspect",
+            "--format",
+            f'{{{{(index .NetworkSettings.Networks "{network}").IPAddress}}}}',
+            name,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"docker inspect {name} failed: {proc.stderr.strip()}")
+    result = proc.stdout.strip()
+    return result
+
+
+def _resolve_container_ip(name: str, network: str) -> str:
+    """Poll the container's IP on the network until it is set (or the budget ends).
+
+    Docker assigns the IP when the container joins the network, i.e. right
+    after `docker run -d` returns -- the poll covers the rare scheduler
+    gap and a container that restarted before attaching. An EMPTY IP is
+    the transient state that is polled; a failing `docker inspect`
+    (container gone, docker broken) is NOT -- it aborts immediately via
+    the :func:`_container_ip` RuntimeError.
+
+    Args:
+        name: The container name.
+        network: The run's private network name.
+
+    Returns:
+        The container's IP on that network.
+
+    Raises:
+        RuntimeError: If the IP is still empty when the startup budget ends
+            (the container never attached to the network), or `docker
+            inspect` fails (propagated from :func:`_container_ip`).
+    """
+    deadline = time.monotonic() + STARTUP_BUDGET_S
+    while time.monotonic() < deadline:
+        ip = _container_ip(name, network)
+        if ip:
+            result = ip
+            return result
+        time.sleep(HEALTH_POLL_S)
+    raise RuntimeError(f"sidecar IP not resolved on {network} after {STARTUP_BUDGET_S:.0f}s: empty IP address")
+
+
+def _wait_healthy(name: str, container_id: str, ip: str) -> SidecarHandle:
     """Poll the MCP round trip until healthy (or the startup budget ends).
 
     Args:
         name: The container name (the handle's).
         container_id: The container id (the handle's).
-        port: The host port the sidecar was told to bind.
+        ip: The sidecar's IP on the run's network (the health-check host).
 
     Returns:
         The SidecarHandle once the MCP round trip succeeds.
@@ -230,17 +252,16 @@ def _wait_healthy(name: str, container_id: str, port: int) -> SidecarHandle:
         RuntimeError: If the sidecar is not healthy within the startup
             budget, or registers a tool set that differs from the pinned
             image's (a pin drift). The failed container is NOT removed
-            here -- the caller reads its logs first (the port-collision
-            evidence) and tears it down.
+            here -- the caller reads its logs first and tears it down.
     """
     deadline = time.monotonic() + STARTUP_BUDGET_S
     last_error: str = "no probe run"
     while time.monotonic() < deadline:
         try:
-            tools = _mcp_round_trip(port)
+            tools = _mcp_round_trip(ip, SIDECAR_PORT)
             if set(tools) != EXPECTED_TOOLS:
                 raise RuntimeError(f"sidecar tool set {sorted(tools)} != pinned {sorted(EXPECTED_TOOLS)}")
-            handle = SidecarHandle(port=port, container_id=container_id, container_name=name)
+            handle = SidecarHandle(ip=ip, port=SIDECAR_PORT, container_id=container_id, container_name=name)
             return handle
         except (urllib.error.URLError, RuntimeError, OSError, KeyError, json.JSONDecodeError) as exc:
             last_error = str(exc)
@@ -277,62 +298,51 @@ def _log_tail(logs: str, max_chars: int = 200) -> str:
     return result
 
 
-def start_sidecar(run_id: str) -> SidecarHandle:
-    """Start the pinned sidecar on a free ephemeral host port.
+def start_sidecar(run_id: str, network: str) -> SidecarHandle:
+    """Start the pinned sidecar on the run's private network.
 
-    Port-collision retry (the `free_host_port` TOCTOU window): when an
-    attempt's health check fails, the container's logs are inspected and
-    a bind/port-in-use failure (`_port_collision_evidence`) triggers a
-    retry with a FRESH port -- up to `SIDECAR_START_ATTEMPTS` attempts in
-    total. Any other failure (a crash for another reason, a tool-set
-    drift) aborts immediately. The aborting error names the port, the
-    attempt, and the log evidence (the collision line, or the container
-    log tail for a non-collision); after the last attempt it also names
-    every earlier colliding port. A residual window remains: a port can
-    still be taken between the log check and the retry's bind -- the
-    same retry logic then absorbs it on the next attempt.
+    One attempt, no port lottery: the sidecar joins `network` (the
+    run's fresh `c4eval-<run_id>` `--internal` bridge, created by the
+    runner beforehand) on the fixed container port
+    (:data:`SIDECAR_PORT`) and is healthy-checked from the host against
+    its resolved container IP. A failure (not healthy within the startup
+    budget, a tool-set pin drift, or `docker run` itself failing) aborts
+    the run immediately -- the failed container's log tail is read
+    BEFORE the teardown and included in the error.
 
     Args:
         run_id: The run identifier (the container is named
             `c4eval-mcp-<run_id>`).
+        network: The run's private network name (the sidecar joins it).
 
     Returns:
         The SidecarHandle once the MCP round trip succeeds.
 
     Raises:
-        RuntimeError: If the sidecar is not healthy within the startup
-            budget of the final attempt, registers a tool set that
-            differs from the pinned image's (a pin drift), or `docker
-            run` itself fails.
+        RuntimeError: If `docker run` itself fails, the container's IP
+            never resolves on the network, the sidecar is not healthy
+            within the startup budget, it registers a tool set that
+            differs from the pinned image's (a pin drift), or
+            `docker inspect` fails.
     """
     assert isinstance(run_id, str) and run_id
+    assert isinstance(network, str) and network
     name = f"{CONTAINER_NAME_PREFIX}{run_id}"
-    collisions: list[str] = []
-    for attempt in range(1, SIDECAR_START_ATTEMPTS + 1):
-        port = free_host_port()
-        proc = _sidecar_docker_run(name, port)
-        if proc.returncode != 0:
-            raise RuntimeError(f"sidecar docker run failed rc={proc.returncode}: {proc.stderr.strip()}")
-        container_id = proc.stdout.strip()
-        try:
-            return _wait_healthy(name, container_id, port)
-        except RuntimeError as exc:
-            logs = _container_logs(container_id)
-            stop_sidecar(container_id=container_id, container_name=name)
-            evidence = _port_collision_evidence(logs, port)
-            if evidence is None or attempt == SIDECAR_START_ATTEMPTS:
-                detail = f"sidecar failed on port {port} (attempt {attempt}/{SIDECAR_START_ATTEMPTS}): {exc}"
-                if evidence is not None:
-                    detail += f"; log evidence: {evidence}"
-                else:
-                    tail = _log_tail(logs)
-                    if tail:
-                        detail += f"; container log tail: {tail}"
-                if collisions:
-                    detail += "; earlier port collision(s): " + "; ".join(collisions)
-                raise RuntimeError(detail) from exc
-            collisions.append(f"port {port}: {evidence}")
-    raise AssertionError("unreachable: the attempt loop returns or raises")
+    proc = _sidecar_docker_run(name, network)
+    if proc.returncode != 0:
+        raise RuntimeError(f"sidecar docker run failed rc={proc.returncode}: {proc.stderr.strip()}")
+    container_id = proc.stdout.strip()
+    try:
+        ip = _resolve_container_ip(name, network)
+        return _wait_healthy(name, container_id, ip)
+    except RuntimeError as exc:
+        logs = _container_logs(container_id)
+        stop_sidecar(container_id=container_id, container_name=name)
+        detail = f"sidecar failed on network {network} (container {name}): {exc}"
+        tail = _log_tail(logs)
+        if tail:
+            detail += f"; container log tail: {tail}"
+        raise RuntimeError(detail) from exc
 
 
 def stop_sidecar(*, container_id: str | None = None, container_name: str | None = None) -> None:

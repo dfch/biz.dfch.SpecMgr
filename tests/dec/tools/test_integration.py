@@ -165,6 +165,12 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
         self.assertIsNotNone(get_dec(dec_id).body.drivers)
 
         # 5. set_status (type="dec"): only status/updated may change.
+        #    feat-108-fsm Phase 120: the domain's own state machine is enforced, so the
+        #    transition walks the legal path draft -> proposed -> accepted (draft -> accepted
+        #    is rejected pre-write with InvalidStatusTransitionResult).
+        proposed = set_status(dec_id, "dec", "proposed")
+        self.assertEqual(proposed.status, "proposed")
+        self.assertEqual(proposed.id, updated.frontmatter.id)
         accepted = set_status(dec_id, "dec", "accepted")
         self.assertEqual(accepted.status, "accepted")
         self.assertEqual(accepted.id, updated.frontmatter.id)

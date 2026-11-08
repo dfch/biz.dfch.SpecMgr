@@ -30,7 +30,7 @@
     "112b6498-078b-4a59-88b8-8ffb7a5041b3": {
       "accountable": "dfch",
       "adr_date": "2026-10-17",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-17T22:49:52.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -58,7 +58,7 @@
     "19ff316b-cd11-41a7-a616-ffd84917da51": {
       "accountable": "dfch",
       "adr_date": "2026-09-28",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-03T06:14:25.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -140,7 +140,7 @@
     "3159caf2-4beb-43f2-9f5d-8f46be0211af": {
       "accountable": "dfch",
       "adr_date": "2026-08-12",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-08-12T09:22:22.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [
@@ -191,7 +191,7 @@
     "356d8781-e446-4c26-917a-eda85648ce9d": {
       "accountable": "dfch",
       "adr_date": null,
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-04T13:50:18.000+02:00",
       "decision_makers": "dfch",
       "defaults": [
@@ -242,7 +242,7 @@
     "38efdb66-8025-45c5-bbe8-45b25fc7a772": {
       "accountable": "dfch",
       "adr_date": "2026-10-29",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-30T19:19:11.000+01:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -273,7 +273,7 @@
     "3982712a-a46b-4b2b-809f-9c6925a49b44": {
       "accountable": "dfch",
       "adr_date": null,
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-06T05:27:19.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -352,7 +352,7 @@
     "4ec08dcb-fcb7-4961-abaf-ff7803e2f21d": {
       "accountable": "dfch",
       "adr_date": "2026-09-01",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-02T10:06:31.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -459,7 +459,7 @@
     "750842b2-aca4-4649-ba0c-855ec8e1f505": {
       "accountable": "dfch",
       "adr_date": null,
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-29T10:47:06.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -511,7 +511,7 @@
     "7a626b12-b189-4561-a51d-ffb2e9e193b4": {
       "accountable": "dfch",
       "adr_date": "2026-10-03",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-03T19:52:46.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -540,7 +540,7 @@
     "80305c52-102e-4833-a233-3468bef29e11": {
       "accountable": "dfch",
       "adr_date": "2026-10-19",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-19T23:31:52.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -567,7 +567,7 @@
     "832cd6c1-ef8a-4bfc-990e-a610823f61ae": {
       "accountable": "dfch",
       "adr_date": null,
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-08-11T11:04:56.000+02:00",
       "decision_makers": "dfch",
       "defaults": [
@@ -617,7 +617,7 @@
     "8c889262-152b-4b8e-ae2c-75371f7a9edf": {
       "accountable": "dfch",
       "adr_date": "2026-09-23",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-23T23:43:55.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -667,7 +667,7 @@
     "9080b37c-82b3-4f63-81f1-79641d0bf14c": {
       "accountable": "dfch",
       "adr_date": "2026-09-25",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-28T05:58:05.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -697,7 +697,7 @@
     "92cc4ce8-2cdd-45a7-9ae4-85de5abaf94c": {
       "accountable": "dfch",
       "adr_date": "2026-09-10",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-11T06:40:21.000+02:00",
       "decision_makers": "dfch",
       "defaults": [],
@@ -797,10 +797,41 @@
       "updated": "2026-09-11T06:40:21.000+02:00",
       "wrapped_tokens": []
     },
+    "a79608e4-88cd-498f-8ca1-445df4d04f92": {
+      "accountable": "dfch",
+      "adr_date": "2026-11-05",
+      "class": "clean",
+      "created": "2026-11-07T05:13:46.000+01:00",
+      "decision_makers": "OpenCode agent + user decision (plan locked during feat-108-fsm planning)",
+      "defaults": [],
+      "has_pros_heading": true,
+      "id": "a79608e4-88cd-498f-8ca1-445df4d04f92",
+      "responsible": [
+        "OpenCode agent",
+        "user decision (plan locked during feat-108-fsm planning)"
+      ],
+      "source": "GitHub issue #108",
+      "source_issues": [
+        "108"
+      ],
+      "status": "accepted",
+      "stem": "a79608e4-88cd-498f-8ca1-445df4d04f92-per-domain-status-state-machines-for-set-status-domain-owned",
+      "superseded_by": null,
+      "supersedes": [],
+      "title": "Per-domain status state machines for set_status: domain-owned tables, central aggregation, and the non-raising, current-state-relative transition result",
+      "unknown_makers": [
+        "user decision (plan locked during feat-108-fsm planning)"
+      ],
+      "updated": "2026-11-07T05:13:46.000+01:00",
+      "wrapped_tokens": [
+        "get_<d>'s",
+        "create_<d>/parse_<d>"
+      ]
+    },
     "b399f1ce-ed42-4929-b01c-7a57d18e8014": {
       "accountable": "dfch",
       "adr_date": "2026-09-07",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-09-07T06:22:02.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -828,7 +859,7 @@
     "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f": {
       "accountable": "dfch",
       "adr_date": "2026-09-30",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-02T10:15:35.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],
@@ -1061,7 +1092,7 @@
     "ddfb1109-422d-4507-8dbc-dc5e4bec9614": {
       "accountable": "dfch",
       "adr_date": "2026-08-15",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-08-15T10:39:25.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [
@@ -1112,7 +1143,7 @@
     "e369ee2e-3353-4f92-991c-6367d76d832e": {
       "accountable": "dfch",
       "adr_date": "2026-08-05",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-08-05T11:08:28.000+02:00",
       "decision_makers": "dfch",
       "defaults": [
@@ -1137,7 +1168,7 @@
     "ec9f5262-9912-49d0-903f-fcfb54f28c13": {
       "accountable": "dfch",
       "adr_date": "2026-08-19",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-08-19T09:58:10.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [
@@ -1191,7 +1222,7 @@
     "f14f125e-eaad-4f4f-a6fd-3c931bed726e": {
       "accountable": "dfch",
       "adr_date": "2026-10-08",
-      "class": "blocked-by-247",
+      "class": "clean",
       "created": "2026-10-10T09:14:00.000+02:00",
       "decision_makers": "OpenCode agent + user decision",
       "defaults": [],

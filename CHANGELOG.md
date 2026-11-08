@@ -155,6 +155,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    each one's ISO 29148 kind plus its statement's own phrasing)
     (feat-173-req-iso29148-level-set, GitHub issue #173).
 
+- The generic `set_status` tool now enforces each whole-body domain's
+  own `_STATUS_TRANSITIONS` state machine post-load/pre-write: a
+  `set_status` call is honoured only when the transition from the
+  document's current (loaded from disk) status to the requested target
+  is allowed by that domain's machine. The 14 whole-body domains
+  (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) each own
+  their table next to their `_ALLOWED_STATUSES` in their own
+  `models/<v>/frontmatter.py`; the central `_STATUS_TRANSITIONS_BY_TYPE`
+  aggregation in `general/tools/_status_fsm.py` is keyed to the shared
+  `general/tools/_domains` registry, with a full-coverage import-time
+  assert. A disallowed transition is rejected before any write
+  (nothing is persisted, `updated` not bumped) with the new non-raising
+  `InvalidStatusTransitionResult` (`general/models/`, a sibling to
+  `InvalidStatusResult`): `valid: false`, `type`, `from_status`
+  (current), `to_status` (requested), `allowed_values` (sorted,
+  current-state-relative — NOT the domain's full vocabulary), plus the
+  exact message forms (normal: the allowed targets joined; terminal
+  current state: empty `allowed_values` plus the "Status '...' is
+  terminal (no outgoing transitions)" form). The channel order is
+  undisturbed: the pre-existing pre-load out-of-vocabulary
+  `InvalidStatusResult` (the domain's full flat vocabulary) still runs
+  first, and the unchanged-status no-op (issue #109) still runs before
+  the transition check. This is the sixth extension of the DEC
+  519d1206 client-side-`isError`-truncation non-raising
+  structured-result workaround chain, taking the case-6 slot for the
+  `set_status` transition surface (f14f125e's "delete as the later
+  candidate (case 6)" prediction is overtaken — `delete` remains the
+  later candidate; no accepted DEC is edited)
+   (feat-108-fsm, GitHub issue #108, DEC
+   a79608e4-88cd-498f-8ca1-445df4d04f92).
+
 ### Removed
 
 - **BREAKING**: the ADR (Architecture Decision Record) artifact type is
@@ -165,7 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `validate_adr`), the `specmgr://adr/{id}` resource, the ADR prompts,
   the `specmgr adr-toc` CLI command, the `SPECMGR_ADR_DIR` environment
   variable, and the `specmgr-adr-toc` pre-commit hook and CI step. The
-  46 ADR documents are converted to DECs at `docs/dec/<uuid>-<slug>.md`
+  47 ADR documents are converted to DECs at `docs/dec/<uuid>-<slug>.md`
   reusing each ADR's UUID and file name (per the "Convert an ADR to a
   DEC" SOP), every citation of a migrated id is retargeted
   `ADR <uuid>` -> `DEC <uuid>`, and the original ADR sources are

@@ -90,6 +90,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.models.ears`](biz.dfch.specmgr.general.models.ears.md) — Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 - [`biz.dfch.specmgr.general.models.heading_table`](biz.dfch.specmgr.general.models.heading_table.md) — Per-language section-heading mapping tables: the lazy loader and the fence-aware
 - [`biz.dfch.specmgr.general.models.invalid_status_result`](biz.dfch.specmgr.general.models.invalid_status_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its one narrowly-scoped
+- [`biz.dfch.specmgr.general.models.invalid_status_transition_result`](biz.dfch.specmgr.general.models.invalid_status_transition_result.md) — The generic ``set_status`` tool's own non-raising, structured result for its second, post-load
 - [`biz.dfch.specmgr.general.models.iso29148`](biz.dfch.specmgr.general.models.iso29148.md) — Pydantic schema and parser for the ISO/IEC/IEEE 29148:2018 requirement-
 - [`biz.dfch.specmgr.general.models.language_list_result`](biz.dfch.specmgr.general.models.language_list_result.md) — The ``list_languages`` tool's result model (feat-197-i18n Phase 140, REQ-012, ACC-008).
 - [`biz.dfch.specmgr.general.models.paged_result`](biz.dfch.specmgr.general.models.paged_result.md) — Generic paged-result wrapper shared by every ``list_<domain>`` MCP tool (feat-13 Task 1.1).
@@ -139,6 +140,7 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.general.tools._similarity_text`](biz.dfch.specmgr.general.tools._similarity_text.md) — Embedding-input text extraction for the similarity engine (feat-134, Phase 2, Task 2.2).
 - [`biz.dfch.specmgr.general.tools._splice`](biz.dfch.specmgr.general.tools._splice.md) — Frontmatter-stripped body extraction, body-line splicing, and body-line
 - [`biz.dfch.specmgr.general.tools._startup_warmup`](biz.dfch.specmgr.general.tools._startup_warmup.md) — The unified MCP server startup warmup spawner (feat-187-list-feat-timeout, Task 110.120).
+- [`biz.dfch.specmgr.general.tools._status_fsm`](biz.dfch.specmgr.general.tools._status_fsm.md) — The generic ``set_status`` tool's own per-domain status state machine (feat-108-fsm, GitHub issue #108).
 - [`biz.dfch.specmgr.general.tools._timestamps`](biz.dfch.specmgr.general.tools._timestamps.md) — Shared, private timestamp-formatting helpers for the MCP write side (feat-38-39-41-43-44 Phase 3,
 - [`biz.dfch.specmgr.general.tools.check_translation_drift`](biz.dfch.specmgr.general.tools.check_translation_drift.md) — ``@mcp.tool()`` wrapper: check_translation_drift (feat-197-i18n Phase 140, Tasks 140.100/140.110, REQ-014, ACC-009).
 - [`biz.dfch.specmgr.general.tools.delete`](biz.dfch.specmgr.general.tools.delete.md) — ``@mcp.tool()`` wrapper: delete (feat-36-delete, Phase 2).

@@ -179,6 +179,16 @@ class TestSopLifecycleIntegration(TempSopDirTestCase):
         self.assertIn("onboarding", get_sop(sop_id, raw=True))
 
         # 5. set_status (type="sop", GENERIC): only status/updated may change (ACC-003, ACC-006).
+        #    feat-108-fsm Phase 120: the domain's own state machine is enforced, so the
+        #    transition walks the legal lifecycle path draft -> review -> approved -> active
+        #    (draft -> active, and review -> active, are rejected pre-write with
+        #    InvalidStatusTransitionResult).
+        reviewed = set_status(sop_id, "sop", "review")
+        self.assertEqual(reviewed.status, "review")
+        self.assertEqual(reviewed.id, updated.frontmatter.id)
+        approved = set_status(sop_id, "sop", "approved")
+        self.assertEqual(approved.status, "approved")
+        self.assertEqual(approved.id, updated.frontmatter.id)
         active = set_status(sop_id, "sop", "active")
         self.assertEqual(active.status, "active")
         self.assertEqual(active.id, updated.frontmatter.id)

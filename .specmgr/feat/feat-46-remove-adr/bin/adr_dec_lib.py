@@ -77,11 +77,25 @@ def h2_blocks(body: str) -> list[tuple[str, list[str]]]:
     return blocks
 
 
+def _merge_in_progress() -> bool:
+    """True while a merge is in progress (a MERGE_HEAD file in the worktree's git dir)."""
+    git_dir = Path(git("rev-parse", "--git-dir").strip())
+    if not git_dir.is_absolute():
+        git_dir = repo_root() / git_dir
+    return (git_dir / "MERGE_HEAD").exists()
+
+
 def git_dates(path: Path) -> tuple[str, str]:
-    """(created, updated) = first / last commit author date of the file, `.000` millis, offset kept."""
+    """(created, updated) = first / last commit author date of the file, `.000` millis, offset kept.
+
+    During an in-progress merge (the feat-46 47th-ADR contingency: the 47th ADR was created on
+    dev, so its file history exists only on the MERGE_HEAD side and `git log` from HEAD alone
+    finds no commits for it), the scan is the union of both merge parents' histories.
+    """
     rel = str(path.relative_to(repo_root()))
-    first = git("log", "--follow", "--diff-filter=A", "--format=%aI", "--", rel).splitlines()[-1]
-    last = git("log", "-1", "--format=%aI", "--", rel)
+    revs = ["HEAD", "MERGE_HEAD"] if _merge_in_progress() else ["HEAD"]
+    first = git("log", "--follow", *revs, "--diff-filter=A", "--format=%aI", "--", rel).splitlines()[-1]
+    last = git("log", "-1", *revs, "--format=%aI", "--", rel)
     return _millis(first), _millis(last)
 
 

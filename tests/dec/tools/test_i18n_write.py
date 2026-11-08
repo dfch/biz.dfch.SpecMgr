@@ -295,7 +295,10 @@ class TestWriteToolsActOnTheDeVariantOnly(_TempDocsTestCase):
 
     def test_set_status(self):
         """set_status(language='de') changes the DE status only; the EN document keeps its status and updated."""
+        # feat-108-fsm Phase 120: the dec state machine is enforced -- the variant walks the
+        # legal draft -> proposed -> accepted path (draft -> accepted is rejected pre-write).
         with mock.patch("biz.dfch.specmgr.general.tools.set_status.now_timestamp", return_value=_FIXED_NOW):
+            set_status(self.doc_id, "dec", "proposed", language="de")
             result = set_status(self.doc_id, "dec", "accepted", language="de")
         self.assertIsInstance(result, DecFrontmatter)
         assert isinstance(result, DecFrontmatter)
@@ -317,8 +320,15 @@ class TestWriteToolsActOnTheDeVariantOnly(_TempDocsTestCase):
         self.assert_en_untouched()
 
     def test_set_status_noop_compares_against_the_variant_not_en(self):
-        """When EN is accepted and DE draft, set_status('accepted', language='de') is a real change, not a no-op."""
+        """When EN is accepted and DE proposed, set_status('accepted', language='de') is a real change, not a no-op.
+
+        (feat-108-fsm Phase 120: both sides now walk the legal draft -> proposed -> accepted
+        path, so the DE variant sits at ``proposed`` -- not ``draft`` -- at the comparison
+        point; the pin is unchanged: the no-op comparison uses the variant's own status.)
+        """
+        set_status(self.doc_id, "dec", "proposed")  # EN -> proposed
         set_status(self.doc_id, "dec", "accepted")  # EN -> accepted
+        set_status(self.doc_id, "dec", "proposed", language="de")  # DE -> proposed
         en_bytes = self.en_path.read_bytes()
         result = set_status(self.doc_id, "dec", "accepted", language="de")
         assert isinstance(result, DecFrontmatter)
@@ -434,6 +444,7 @@ class TestWriteToolsAbsentAndBrokenVariants(_TempDocsTestCase):
     def test_broken_variant_does_not_affect_the_en_write_channels(self):
         """A broken DE variant leaves the EN document fully writable."""
         self._break_de()
+        set_status(self.doc_id, "dec", "proposed")  # feat-108-fsm Phase 120: legal path draft -> proposed -> accepted
         result = set_status(self.doc_id, "dec", "accepted")
         self.assertIsInstance(result, DecFrontmatter)
 
@@ -463,6 +474,7 @@ class TestDocCacheKeepsLanguagesIndependent(_TempDocsTestCase):
         self.assertEqual(get_dec(self.doc_id).body.outcome.statement.text, "We chose the database.")
         self.assertEqual(get_dec(self.doc_id, language="de").body.outcome.statement.text, _DE_OUTCOME_NEW)
 
+        set_status(self.doc_id, "dec", "proposed", language="de")  # feat-108-fsm Phase 120: legal path
         set_status(self.doc_id, "dec", "accepted", language="de")
         self.assertEqual(get_dec(self.doc_id).frontmatter.status, "draft")
         self.assertEqual(get_dec(self.doc_id, language="de").frontmatter.status, "accepted")
@@ -536,6 +548,7 @@ class TestSharedIdEndToEnd(_TempDocsTestCase):
     def test_the_variant_frontmatter_id_survives_every_write_tool(self):
         """No write tool ever alters the frontmatter id of the variant."""
         update(self.doc_id, "dec", _DE_BODY, language="de")
+        set_status(self.doc_id, "dec", "proposed", language="de")  # feat-108-fsm Phase 120: legal path
         set_status(self.doc_id, "dec", "accepted", language="de")
         set_classification(self.doc_id, "dec", "intern", language="de")
         edit(self.doc_id, "dec", _DE_OUTCOME_OLD, _DE_OUTCOME_NEW, language="de")

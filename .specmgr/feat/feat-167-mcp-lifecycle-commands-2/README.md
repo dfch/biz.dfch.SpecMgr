@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: review
 type: feat
-updated: '2026-11-02T14:24:30.763+01:00'
+updated: '2026-11-03T13:14:55.581+01:00'
 version: 1.0.0
 ---
 
@@ -291,6 +291,22 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-03 12:07:19.014Z - Handover: session ended, Phases 100-120/140 deferred, single open decision D1 (repo state for a fresh agent)
+
+Handover notes for the agent starting fresh. The Task List (Phase 100: Tasks 100.100-100.140; Phase 110: 110.100-110.110; Phase 120: 120.100-120.170; Phase 140: 140.100-140.110) is the authoritative task text; everything below is the session state and the settled design decisions.
+
+**Branch / repo state.** Local `dev` is clean and fully in sync with `origin/dev` (verified at handover: 0 unpushed commits; tip `a08292f`); every feat-167 commit is on the remote, interleaved with feat-250 (the C4 evals harness) commits per the repo's shared-branch convention -- do not touch feat-250's files (`evals/`, `tests/evals/`, its feature folder). The full test suite runs in ~2 minutes under `pytest -n auto`; pre-commit runs the full suite plus every drift gate before any commit lands.
+
+**Where the feature stands.** Phases 125 + 130 (the distribution slice: the flat `specmgr harness-bundle` CLI, the generated 24-file bundle `general/data/general_harness_bundle.json`, the `specmgr://harness-bundle` resource, the pre-commit + CI drift guards, the README section) are implemented, shipped, and reviewed through three review-fix cycles (the fixes are Phases 150/160/170 = commits `f83a110`/`8e6bb64`/`999fb5d`). The feature status is `review`; ACC-007..ACC-010 are checked with committed evidence (the bundle drift-pin tests, the walkthrough fixture, the docs sync). Phases 100/110/120 (`refine_feat` / the delegation-pattern ADR / `implement_feat` + `review_feat` + the review-fix loop) and Phase 140 (final verification over all ACCs) are not started and remain deferred; ACC-001..006/011 stay unchecked by design until they are.
+
+**The single open decision -- D1 (blocks Phase 100; Task 100.110 carries the `[NEEDS DECISION]` flag).** `/refine-feature` is not new: `39a6e0b` (2026-10-05) created it routed to the read-only `feat-refiner` agent, and it is already in the published bundle (with `feat-refiner.md` and the `refine-feature`/`review-feature` skills). Ask the user to choose: (a) repoint `/refine-feature` to the new plan-editing `feat-planner` and rewrite the `refine-feature` skill's description/body (and decide `feat-refiner`'s disposition: retire, rename, or keep under a distinct name), or (b) give the planner a distinct command (e.g. `/plan-feature`) and adjust REQ-002's and Scope's "1 new OpenCode command" wording accordingly. Do NOT implement Phase 100 until the user has decided; the Design Notes "Pending decision" paragraph records the same options.
+
+**Next action once decided.** Phase 100 per its refreshed task text (no ADR dependency) -> Phase 110 (the delegation-pattern ADR; its UUID is an input to Phase 120) -> Phase 120 (`implement_feat`/`review_feat` + the loop edits to `feat-reviewer.md`/`phase-orchestrator.md`/`implement-feature.md`/`review-feature.md` -- Task 120.130 annotates the post-`39a6e0b` state of its targets) -> Phase 140 (walk all 11 ACCs with evidence; set the status to `done`). One Conventional Commit + full quality gate per phase (phase discipline); Phase 130's two-commit split was a documented one-time exception -- do not repeat it.
+
+**Settled decisions -- do not re-litigate (all recorded in Design Notes / Decisions Made).** No install CLI, no `--force`, no MCP prompt: the bundle's `instructions` field is the agent-driven install protocol (REQ-008). No ADR for the packaging decision (plan-scoped, unshipped at the time). The review-fix loop is capped at 3 cycles and exits when the reviewer reports no Errors/Gaps/Discrepancies. Cycle-3 scope decisions (the 2026-11-02 Decisions Made entry): D2 was fixed at the two LIVE references only -- the historical point-in-time mentions of the deleted TSK `tsk-2687d267` in the done feature documents (feat-163/feat-146/feat-153), CHANGELOG.md, and the successor `tsk-1b36c754`'s own "Replaces" note are preserved as-is; I1 as the `tuple[str, int]` return from `generate_bundle_text`; G4 as the documented exit-2 wrap for a non-decodable scoped file / unwritable output path. The D1 deferral is a user decision, not an oversight.
+
+**Operational gotchas.** (1) This feature README is a specmgr `feat` document: list items (Requirements/Acceptance Criteria/Out-of-Scope/Task lines) are ONE physical line -- soft-wrapping one fails the feat schema; after edits the whole document must full-parse (use the MCP `edit` tool with `type="feat"`, which re-validates per edit, or verify with `uv run --frozen specmgr lint .specmgr/feat/feat-167-mcp-lifecycle-commands-2/README.md` -> exit 0). (2) Any change to a `.opencode/{agent,command,skill}/*.md` file requires `uv run --frozen specmgr harness-bundle` in the SAME commit (the pre-commit drift hook enforces it) -- Phase 100/120 will add new bundled files, so expect that. (3) Adding test files requires a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit: the specmgr-docs pre-commit hook is scoped to `src/` changes only, so it does not run locally for test-only phases (feat-250 hit this twice). (4) The walkthrough fixture `tests/fixtures/harness-bundle/install.walkthrough.md` is a committed point-in-time ACC-008 record -- append-only, never rewrite its historical claims.
 
 #### 2026-11-02 12:32:49.240Z - Review cycle 3: D2/D3/D4, I1-I4, G1-G4 fixed in Phase 170; Phases 100-120 task text refreshed against the verified tree
 

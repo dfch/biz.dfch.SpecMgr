@@ -47,7 +47,7 @@ from biz.dfch.specmgr.general.tools.set_classification import set_classification
 from biz.dfch.specmgr.general.tools.set_status import set_status
 from biz.dfch.specmgr.general.tools.update import update
 
-from .test_i18n_all_domains import SPECS, SPECS_BY_NAME, _TempDocsMixin
+from .test_i18n_all_domains import SPECS, SPECS_BY_NAME, _TempDocsMixin, _set_status_target
 
 #: A German word for each status the domains might be tempted to translate (none is a valid status anywhere).
 _TRANSLATED_STATUS = "entwurf"
@@ -89,7 +89,8 @@ class TestFrontmatterStatusStaysCanonicalInAVariant(_TempDocsMixin):
                 doc_id, en_file, de_file = self.seed(spec)
                 rejected = set_status(type=spec.d, id=doc_id, status=_TRANSLATED_STATUS, language="de")
                 assert isinstance(rejected, InvalidStatusResult)
-                target = next(value for value in rejected.allowed_values if value != spec.status)
+                target = _set_status_target(spec)
+                assert target in rejected.allowed_values
                 en_before = en_file.read_bytes()
 
                 result = set_status(type=spec.d, id=doc_id, status=target, language="de")

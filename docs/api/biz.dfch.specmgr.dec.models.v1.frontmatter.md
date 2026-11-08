@@ -11,6 +11,11 @@ lifecycle vocabulary minus `implemented` (a decision is never "implemented",
 its consequences are) -- see `.specmgr/feat/feat-21-decision/README.md`
 Design Notes.
 
+This module also owns the decision status state machine (feat-108-fsm,
+GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `DecFrontmatter`

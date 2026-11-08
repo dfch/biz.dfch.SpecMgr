@@ -93,6 +93,32 @@ check runs first and is unaffected -- an out-of-vocabulary ``status``
  against a broken existing document still returns ``InvalidStatusResult``
  (that check never reaches ``load_by_id``).
 
+Per-domain status state machine (feat-108-fsm, GitHub issue #108, DEC
+a79608e4-88cd-498f-8ca1-445df4d04f92): each
+whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
+:func:`general.tools._status_fsm.check_status_transition` check --
+immediately after its own unchanged-status no-op comparison and before the
+raw-body re-read (so a rejection is pre-write: nothing is persisted and
+``updated`` is not bumped) -- against the dispatched domain's own
+``_STATUS_TRANSITIONS`` state machine, aggregated centrally in
+``general.tools._status_fsm._STATUS_TRANSITIONS_BY_TYPE`` (keyed to the
+``general.tools._domains`` registry). This is the tool's
+second, post-load error surface, distinct from the pre-dispatch, pre-load
+out-of-vocabulary ``InvalidStatusResult`` check above (which still runs
+first and is unchanged): a transition the domain's machine does not allow
+returns the non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+(``valid``/``type``/``from_status``/``to_status``/``allowed_values``/
+``message``, where ``allowed_values`` are the targets allowed from the
+document's current state, sorted -- never the domain's full flat vocabulary;
+an empty list marks a terminal current state) instead of writing -- case 6
+of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
+result workaround chain. The rollout is complete as of Phase 120: every
+whole-body domain's own table has landed and is enforced (``req`` first, in
+Phase 110; the remaining whole-body domains in Phase 120); the no-op,
+out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
+untouched.
+
  Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
  :func:`set_status` validates ``id`` via ``_path_safety.validate_id``
  before dispatch (a ``ValueError`` before any filesystem access --
@@ -114,7 +140,7 @@ b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome, point 3). Returns an
 :class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid.
 
 
-### `_set_status_dec(id_: 'str', status: 'str', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult'`
+### `_set_status_dec(id_: 'str', status: 'str', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -135,7 +161,7 @@ untouched, and the unchanged-status no-op compares against the
 variant's own current status.
 
 
-### `_set_status_feat(id_: 'str', status: 'str') -> 'FeatFrontmatter | ParseFailureResult'`
+### `_set_status_feat(id_: 'str', status: 'str') -> 'FeatFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -148,7 +174,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult'`
+### `_set_status_gol(id_: 'str', status: 'str', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -165,7 +191,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult'`
+### `_set_status_prb(id_: 'str', status: 'str', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -183,7 +209,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult'`
+### `_set_status_qa(id_: 'str', status: 'str', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -200,7 +226,7 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_req(id_: 'str', status: 'str', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult'`
+### `_set_status_req(id_: 'str', status: 'str', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -224,7 +250,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult'`
+### `_set_status_rsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -241,7 +267,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_set(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult'`
+### `_set_status_set(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the set document identified by ``id_``.
 
@@ -261,7 +287,7 @@ The allowed-status set is language-invariant (``status`` is a closed
 vocabulary value, never translated, REQ-010).
 
 
-### `_set_status_sop(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult'`
+### `_set_status_sop(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
@@ -280,7 +306,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult'`
+### `_set_status_sysrs(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
@@ -298,7 +324,7 @@ written, the unchanged-status no-op compares against the variant's own current s
 document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult'`
+### `_set_status_tsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -315,7 +341,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_txt(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult'`
+### `_set_status_txt(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the free-form text document identified by ``id_``.
 
@@ -335,7 +361,7 @@ The allowed-status set is language-invariant (``status`` is a closed
 vocabulary value, never translated, REQ-010).
 
 
-### `_set_status_uc(id_: 'str', status: 'str', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult'`
+### `_set_status_uc(id_: 'str', status: 'str', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -352,7 +378,7 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult'`
+### `_set_status_vcr(id_: 'str', status: 'str', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 
@@ -372,126 +398,137 @@ the unchanged-status no-op compares against the variant's own current status -- 
 
 Replace the status of an existing document, across every domain.
 
-   Cross-domain generic for every document type
-   (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
-   ``vcr``/``sysrs``/``txt``/``set``);
-   dispatches on ``type`` to the domain's own ported adapter (same lock,
-   same id resolution, same body handling, same domain not-found error).
+       Cross-domain generic for every document type
+       (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
+       ``vcr``/``sysrs``/``txt``/``set``);
+       dispatches on ``type`` to the domain's own ported adapter (same lock,
+       same id resolution, same body handling, same domain not-found error).
 
-   For the whole-body domains the existing file's frontmatter is
-   carried over with every field preserved except ``status`` (replaced)
-   and ``updated`` (bumped to the current date+time timestamp, via
-   ``general.tools._timestamps.now_timestamp()``); the
-   body is never touched -- its raw, on-disk markdown (not a render of
-   the parsed model) is re-read and re-persisted verbatim.
+       For the whole-body domains the existing file's frontmatter is
+       carried over with every field preserved except ``status`` (replaced)
+       and ``updated`` (bumped to the current date+time timestamp, via
+       ``general.tools._timestamps.now_timestamp()``); the
+       body is never touched -- its raw, on-disk markdown (not a render of
+       the parsed model) is re-read and re-persisted verbatim.
 
-   No-op on an unchanged status (issue #109): when the requested
-   ``status`` already equals the document's current on-disk status,
-   nothing is written and ``updated`` is not bumped -- the already-loaded
-   value is returned as-is. This is a success, not an error, and returns
-   the exact same value shape a changed-status call would (the domain's
-   own ``XFrontmatter``).
+       No-op on an unchanged status (issue #109): when the requested
+       ``status`` already equals the document's current on-disk status,
+       nothing is written and ``updated`` is not bumped -- the already-loaded
+       value is returned as-is. This is a success, not an error, and returns
+       the exact same value shape a changed-status call would (the domain's
+       own ``XFrontmatter``).
 
-   The new ``status`` must be in the domain's own closed vocabulary: the
-   frontmatter is reconstructed through the domain's own
-   ``XFrontmatter`` constructor, so the domain's own validator enforces
-   its set. Where that set lives is documented per domain -- see each
-   ``XFrontmatter.status`` field (each whole-body domain's own
-   ``models/<v>/frontmatter.py``) rather than any list in this docstring.
+       The new ``status`` must be in the domain's own closed vocabulary: the
+       frontmatter is reconstructed through the domain's own
+       ``XFrontmatter`` constructor, so the domain's own validator enforces
+       its set. Where that set lives is documented per domain -- see each
+       ``XFrontmatter.status`` field (each whole-body domain's own
+       ``models/<v>/frontmatter.py``) rather than any list in this docstring.
 
-   Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-   own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-   ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-   canonical lowercase-hex UUID for every domain other than ``feat``,
-   ``feat-NNN-slug`` for ``feat``) **before** any filesystem
-   access, so a path-injection attempt or a wrong-format id is a
-   ``ValueError`` raised before dispatch. Each adapter additionally
-   confines the resolved path to the domain's own base directory with
-   ``_path_safety.assert_within`` inside the lock -- defense-in-depth
-   against any future gap in the id validation.
+       Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+       own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+       ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+       canonical lowercase-hex UUID for every domain other than ``feat``,
+       ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+       access, so a path-injection attempt or a wrong-format id is a
+       ``ValueError`` raised before dispatch. Each adapter additionally
+       confines the resolved path to the domain's own base directory with
+       ``_path_safety.assert_within`` inside the lock -- defense-in-depth
+       against any future gap in the id validation.
 
-   Parameters
-   ----------
-   id:
-       The document's specmgr-assigned identifier.
-   type:
-       The document type / domain: one of ``req``, ``uc``, ``tsk``,
-       ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-       ``vcr``, ``sysrs``, ``txt``, ``set``.
-   status:
-       The new status. Must be one of the dispatched domain's own
-       accepted values (see its ``XFrontmatter.status`` field).
-   language:
-       The language variant to act on (feat-197-i18n Phase 120, DEC
-       38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-       it) acts on the flat default-language document -- today's exact
-       behavior; any other ISO 639-1-shaped lowercase two-letter code
-       (e.g. ``"de"``) acts on that language's variant, located by
-       id-scan of ``docs/<type>/{language}/`` (the variant's basename is
-       never re-derived); only that one file is touched: the EN
-       document's bytes, ``updated`` timestamp, and cache entry stay
-       untouched. Shape-guarded before any filesystem access (like
-        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
-        (``feat`` is always English: a non-default language for it
-        raises a ``ValueError``).
+       Parameters
+       ----------
+       id:
+           The document's specmgr-assigned identifier.
+       type:
+           The document type / domain: one of ``req``, ``uc``, ``tsk``,
+           ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+           ``vcr``, ``sysrs``, ``txt``, ``set``.
+       status:
+           The new status. Must be one of the dispatched domain's own
+           accepted values (see its ``XFrontmatter.status`` field).
+       language:
+           The language variant to act on (feat-197-i18n Phase 120, DEC
+           38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+           it) acts on the flat default-language document -- today's exact
+           behavior; any other ISO 639-1-shaped lowercase two-letter code
+           (e.g. ``"de"``) acts on that language's variant, located by
+           id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+           never re-derived); only that one file is touched: the EN
+           document's bytes, ``updated`` timestamp, and cache entry stay
+           untouched. Shape-guarded before any filesystem access (like
+            ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+            (``feat`` is always English: a non-default language for it
+            raises a ``ValueError``).
 
-    Returns
-    -------
-ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
-GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter | InvalidStatusResult | ParseFailureResult
-    On success, the updated document's frontmatter only (no body) of the
-     dispatched domain type. Use the corresponding ``get_<d>`` tool to
-     fetch the full document afterward. When the requested
-   target status already equals the document's current status, the same
-   value shape is returned unchanged, with no write and no ``updated``
-   bump (issue #109's no-op case). When ``status`` is not in the
-   dispatched domain's closed vocabulary, returns an
-   :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
-   (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
-   below for why this one case no longer raises. When the target
-   ``id``'s only matching on-disk file fails to parse (the whole-body
-   domains), a non-raising
-   :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
-   (``error``/``path``/``id``) is returned instead of the domain's
-   not-found error -- ``error`` is byte-identical to the domain's
-   ``list_<d>`` failed row's ``error`` for the same file (identical
-   field path and cause, including the trailing pydantic documentation
-   line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
-   id still raising the domain's own not-found error
-    (feat-170-update-edit-parse-failure, GitHub issue
-    #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
-    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
-    workaround chain).
+        Returns
+        -------
+    ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+    GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter | SysrsFrontmatter | InvalidStatusResult | ParseFailureResult |
+InvalidStatusTransitionResult
+        On success, the updated document's frontmatter only (no body) of the
+         dispatched domain type. Use the corresponding ``get_<d>`` tool to
+         fetch the full document afterward. When the requested
+       target status already equals the document's current status, the same
+       value shape is returned unchanged, with no write and no ``updated``
+       bump (issue #109's no-op case). When ``status`` is not in the
+       dispatched domain's closed vocabulary, returns an
+       :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+       (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
+       below for why this one case no longer raises. When the target
+       ``id``'s only matching on-disk file fails to parse (the whole-body
+       domains), a non-raising
+       :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+       (``error``/``path``/``id``) is returned instead of the domain's
+       not-found error -- ``error`` is byte-identical to the domain's
+       ``list_<d>`` failed row's ``error`` for the same file (identical
+       field path and cause, including the trailing pydantic documentation
+       line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+       id still raising the domain's own not-found error
+        (feat-170-update-edit-parse-failure, GitHub issue
+        #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain). For the whole-body domains, a transition the
+        dispatched domain's own ``_STATUS_TRANSITIONS`` state machine does not
+        allow (checked post-load, pre-write, immediately after the no-op
+        comparison) returns a non-raising
+        :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+        (``allowed_values`` are the targets allowed from the document's current
+        state, sorted; an empty list marks a terminal current state) instead of
+    writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108,
+    DEC a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
+    The rollout is complete as of Phase 120 (every whole-body domain's
+    own table has landed and is enforced).
 
-   Raises
-   ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written). Also raised, before any filesystem access, for a
-        malformed ``language`` (not an ISO 639-1-shaped lowercase two-letter
-        code), a non-default ``language`` with ``type`` ``feat`` (always
-        English), or a non-default ``language`` without a packaged
-        heading-mapping table.
-    pydantic.ValidationError
-        Does **not** raise for an out-of-vocabulary ``status`` -- that
-        one case is pre-checked before dispatch (see Returns above) and
-        returns an ``InvalidStatusResult`` instead (DEC
-        b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
-        exception to this tool's otherwise raise-based contract. No
-        other path in this function still raises
-        ``pydantic.ValidationError``: every other frontmatter field
-        carried into the domain's ``XFrontmatter`` reconstruction is
-        either preserved unchanged from the existing, already-valid
-        document or (``updated``) a well-formed timestamp generated
-        internally, so nothing else in the reconstructed model can fail
-        validation in practice.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
-        The target id is truly absent (no file on disk matches it at all)
-        -- the domain's own not-found error, unchanged from the per-domain
-        tools. An existing-but-broken document returns the non-raising
-        ``ParseFailureResult`` instead (see Returns).
+       Raises
+       ------
+        ValueError
+            ``id`` is a path-injection attempt or not in the dispatched
+            domain's own format (raised before any filesystem access; nothing
+            is written). Also raised, before any filesystem access, for a
+            malformed ``language`` (not an ISO 639-1-shaped lowercase two-letter
+            code), a non-default ``language`` with ``type`` ``feat`` (always
+            English), or a non-default ``language`` without a packaged
+            heading-mapping table.
+        pydantic.ValidationError
+            Does **not** raise for an out-of-vocabulary ``status`` -- that
+            one case is pre-checked before dispatch (see Returns above) and
+            returns an ``InvalidStatusResult`` instead (DEC
+            b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
+            exception to this tool's otherwise raise-based contract. No
+            other path in this function still raises
+            ``pydantic.ValidationError``: every other frontmatter field
+            carried into the domain's ``XFrontmatter`` reconstruction is
+            either preserved unchanged from the existing, already-valid
+            document or (``updated``) a well-formed timestamp generated
+            internally, so nothing else in the reconstructed model can fail
+            validation in practice.
+        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+        PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+        FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+            The target id is truly absent (no file on disk matches it at all)
+            -- the domain's own not-found error, unchanged from the per-domain
+            tools. An existing-but-broken document returns the non-raising
+            ``ParseFailureResult`` instead (see Returns).
 

@@ -12,6 +12,11 @@ only `type` and `status` are narrowed beyond the base's free-form defaults --
 `id: str | None = None`, not `UseCaseFrontmatter`'s stricter, now-superseded
 `Field(..., pattern=r"^uc-[0-9]+$")`.
 
+This module also owns the use-case status state machine (feat-108-fsm, GitHub
+issue #108): the ``_STATUS_TRANSITIONS`` table, next to ``_ALLOWED_STATUSES``,
+enforced by the generic ``set_status`` tool post-load/pre-write (REQ-001/
+REQ-002).
+
 ## Classes
 
 ### `UcFrontmatter`
