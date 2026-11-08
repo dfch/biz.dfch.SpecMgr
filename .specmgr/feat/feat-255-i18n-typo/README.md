@@ -4,7 +4,7 @@ created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
 status: progress
 type: feat
-updated: '2026-11-08T17:26:33.110Z'
+updated: '2026-11-08T18:33:25.552Z'
 version: 1.0.0
 ---
 
@@ -44,15 +44,15 @@ regeneration convergence.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: Verifies REQ-001 -- `general_i18n.md` §5.1 lists the 12 tags ending `…VCR, SYSRS, TXT, FEAT`; the test pin asserts `TXT` (no `SOP`); the i18n resource test suite passes.
+- [x] ACC-001: Verifies REQ-001 -- `general_i18n.md` §5.1 lists the 12 tags ending `…VCR, SYSRS, TXT, FEAT`; the test pin asserts `TXT` (no `SOP`); the i18n resource test suite passes.
 
-- [ ] ACC-002: Verifies REQ-002 -- the AST sweep over all model modules returns zero tools-layer imports; an isolated import probe confirms `mcp` is not in `sys.modules` after importing `general.models.heading_table` (the I1/I2 method); the full test suite is green.
+- [x] ACC-002: Verifies REQ-002 -- the AST sweep over all model modules returns zero tools-layer imports; an isolated import probe confirms `mcp` is not in `sys.modules` after importing `general.models.heading_table` (the I1/I2 method); the full test suite is green.
 
-- [ ] ACC-003: Verifies REQ-003 -- AGENTS.md names 14 modules, matching `general/tools/__init__.py`'s own imports.
+- [x] ACC-003: Verifies REQ-003 -- AGENTS.md names 14 modules, matching `general/tools/__init__.py`'s own imports.
 
-- [ ] ACC-004: Verifies REQ-004 -- the SYSRS document names 15 domains (`adr … set`); the document still parses (the `specmgr lint` gate / `get_sysrs` green); no other line of the document changed.
+- [x] ACC-004: Verifies REQ-004 -- the SYSRS document names 15 domains (`adr … set`); the document still parses (the `specmgr lint` gate / `get_sysrs` green); no other line of the document changed.
 
-- [ ] ACC-005: Verifies REQ-005 -- `specmgr docs` second run converges (no diff); `ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` are all green.
+- [x] ACC-005: Verifies REQ-005 -- `specmgr docs` second run converges (no diff); `ruff format --check`, `ruff check`, `vulture`, and `pytest -n auto` are all green.
 
 ### Scope
 
@@ -116,21 +116,25 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 #### Phase 110: Verification and convergence
 
-- [ ] Task 110.100: Run the AST sweep over all model modules (zero tools-layer imports) plus the isolated `mcp not in sys.modules` probe for `general.models.heading_table`
+- [x] Task 110.100: Run the AST sweep over all model modules (zero tools-layer imports) plus the isolated `mcp not in sys.modules` probe for `general.models.heading_table`
 
-- [ ] Task 110.110: Regenerate with `specmgr docs`; confirm the second run converges with no diff
+- [x] Task 110.110: Regenerate with `specmgr docs`; confirm the second run converges with no diff
 
-- [ ] Task 110.120: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`) and walk the acceptance criteria ACC-001…ACC-005
+- [x] Task 110.120: Run the full quality gate (`ruff format --check`, `ruff check`, `vulture`, `pytest -n auto`) and walk the acceptance criteria ACC-001…ACC-005
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-08**: Phase 100 complete (items 1-4): the i18n §5.1 tag-list typo is fixed with its coordinated test pin, the last model→tools import edge is removed (`DEFAULT_LANGUAGE`'s canonical home is now `general/models/heading_table.py`, aliased by `general/tools/_path_safety.py`), AGENTS.md names the 14 eagerly imported `@mcp.tool()` modules, the SYSRS document's `## System Scope` names the 15 domains (via the generic `edit` tool, `type="sysrs"`), and the new `CHANGELOG.md` `### Fixed` section has landed; `docs/api/` regenerated and the quality gate is green. The next work unit is Phase 110 (Tasks 110.100–110.120: verification + regeneration convergence).
+**As of 2026-11-08**: Phase 110 complete (verification + convergence): the AST sweep over all model modules finds zero tools-layer imports (199 files scanned), the isolated I1/I2 probe confirms `mcp` is not in `sys.modules` after importing `general.models.heading_table`, `specmgr docs` converges (two runs, no diff), the full quality gate is green (`ruff format --check` 2433 files / `ruff check` / `vulture` / `pytest -n auto` = 6297 passed, 18 skipped, 11218 subtests), and ACC-001…ACC-005 are walked and ticked with their concrete evidence. Both phases (100 + 110) are done; the next step is the feature-level `status` → `review` move plus the feat-reviewer pass.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T18:33:25.552Z - Phase 110 complete (verification and convergence)
+
+Task 110.100(a) AST sweep (REQ-002) over all three model locations (`src/biz/dfch/specmgr/models/`, `*/models/`, `general/models/`) parsed 199 model files with `ast` and found zero `Import`/`ImportFrom` nodes resolving into the tools layer (no `biz.dfch.specmgr.<anything>.tools` absolute name, no `..tools`/`...tools` relative import). Task 110.100(b) ran the isolated I1/I2 probe (the repo-wide package-init registration edge stubbed, per the feat-173 record) and reported `mcp in sys.modules: False` / `probe OK: mcp not in sys.modules` — confirming importing `general.models.heading_table` alone no longer pulls the `mcp` extra into the model import graph; the literal one-liner probe still reports `mcp` present on every tree because it measures `general/__init__`'s eager `from . import prompts, resources, tools` registration edge, not the model edge. Task 110.110 ran `specmgr docs` twice; both runs wrote 587 `docs/api/` module pages plus `docs/GENERATED.md` and left `git status` clean of any generated-file change, so the Phase 100 regeneration had already converged. Task 110.120 gate: `ruff format --check` = 2433 files already formatted, `ruff check` = All checks passed!, `vulture src/ whitelist.py --min-confidence 60` = clean, `pytest -n auto -q` = 6297 passed, 18 skipped, 11218 subtests passed (exit 0). ACC-001…ACC-005 walked and ticked: ACC-001 `general_i18n.md` §5.1 (line 122) ends `…SYSRS, TXT, FEAT` and the `test_i18n.py` pin asserts `TXT` with no `SOP` fragment (i18n suite 25 passed, 124 subtests); ACC-002 the 199-file AST sweep + isolated probe + green full suite; ACC-003 AGENTS.md names 14 modules matching `general/tools/__init__.py`'s 12 alphabetical + `check_translation_drift`/`list_languages`; ACC-004 the SYSRS `## System Scope` (line 19) names the fifteen domains `adr…set`, `specmgr lint` exit 0 (`linted=1 failed=0`), and the diff is exactly that one body line plus the `updated` bump; ACC-005 the docs double-run no-diff plus all four gate commands green.
 
 #### 2026-11-08T17:26:33.110Z - Phase 100 complete (items 1-4)
 
