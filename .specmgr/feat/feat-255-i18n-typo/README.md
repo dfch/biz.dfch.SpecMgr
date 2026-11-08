@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
-status: progress
+status: review
 type: feat
-updated: '2026-11-08T18:33:25.552Z'
+updated: '2026-11-08T18:55:27.207Z'
 version: 1.0.0
 ---
 
@@ -126,11 +126,15 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 ### Current Status
 
-**As of 2026-11-08**: Phase 110 complete (verification + convergence): the AST sweep over all model modules finds zero tools-layer imports (199 files scanned), the isolated I1/I2 probe confirms `mcp` is not in `sys.modules` after importing `general.models.heading_table`, `specmgr docs` converges (two runs, no diff), the full quality gate is green (`ruff format --check` 2433 files / `ruff check` / `vulture` / `pytest -n auto` = 6297 passed, 18 skipped, 11218 subtests), and ACC-001…ACC-005 are walked and ticked with their concrete evidence. Both phases (100 + 110) are done; the next step is the feature-level `status` → `review` move plus the feat-reviewer pass.
+**As of 2026-11-08**: Phase 100 (items 1-4 plus the CHANGELOG Fixed entry) and Phase 110 (verification + regeneration convergence, with ACC-001…ACC-005 walked and ticked and the full quality gate green) are complete. The feature status is `review`. The next action is the post-implementation feat-reviewer pass (any findings addressed in a fix phase), followed by the closeout commit (`status` → `done`).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-08T18:55:27.207Z - Status progress → review
+
+Implementation (Phase 100, items 1-4 plus the CHANGELOG Fixed entry) and verification (Phase 110, regeneration convergence plus the full quality gate) are complete: all five acceptance criteria (ACC-001…ACC-005) are ticked with committed evidence, and the gate is green (`ruff format --check` / `ruff check` / `vulture` / `pytest -n auto` = 6297 passed, 18 skipped, 11218 subtests). The feature is submitted for the post-implementation review pass; any findings will be addressed in a fix phase, followed by the closeout commit (`status` → `done`).
 
 #### 2026-11-08T18:33:25.552Z - Phase 110 complete (verification and convergence)
 
