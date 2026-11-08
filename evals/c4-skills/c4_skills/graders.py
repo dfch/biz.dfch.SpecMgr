@@ -569,9 +569,13 @@ def gate_triage_complete(context: GateContext) -> GateResult:
     """`triage_complete`: every merged `inspect` finding is triaged (REQ-003).
 
     Every finding in `metrics.inspect_triage` (the stream and CLI findings
-    merged, first-occurrence order) carries a `fix`/`expected`/`reported`
-    label -- no `untriaged`. Vacuously true with no findings;
-    `inspect_called` carries the requirement that inspect was used at all.
+    merged on the normalized finding text, first-occurrence order) carries
+    a `fix`/`expected`/`reported` label -- no `untriaged`. Vacuously true
+    with no findings; `inspect_called` carries the requirement that
+    inspect was used at all. The gate itself is unchanged by Task
+    125.100/G2 -- what changed is which labels the metrics layer
+    assigns: a `fix` now needs a post-inspect edit AND the finding's
+    absence from the final CLI `inspect` findings (the truth anchor).
     """
     from .metrics import TRIAGE_UNTRIAGED  # local: metrics imports graders (cycle)
 
@@ -794,6 +798,14 @@ CLI_VALIDATE_CMD = ("validate",)
 CLI_EXPORT_CMD = ("export",)
 CLI_INSPECT_CMD = ("inspect",)
 
+#: The per-command timeout of the grader's CLI runs. A
+#: `subprocess.TimeoutExpired` is mapped to `RuntimeError` (Task
+#: 125.130/I3): a hung docker CLI is a runtime-shaped failure, so the
+#: documented CLI exit-code contract (`cli.py`'s module docstring, the
+#: harness README) carries it as exit 1 instead of a raw traceback
+#: mid-run.
+CLI_TIMEOUT_S = 300
+
 
 def find_dsl_file(workdir: Path) -> Path | None:
     """Return the trial's workspace DSL file, or None.
@@ -821,6 +833,11 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
 
     Returns:
         The exit code and the combined stderr/stdout text.
+
+    Raises:
+        RuntimeError: If the CLI run exceeds the ``CLI_TIMEOUT_S``
+            timeout (Task 125.130/I3 -- the documented CLI exit-code
+            contract's runtime-shaped failure, exit 1).
     """
     assert workdir.is_dir()
     cmd = [
@@ -837,13 +854,40 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
         pins.STRUCTURIZR_CLI_IMAGE,
         *args,
     ]
-    proc = subprocess.run(  # noqa: S603 -- fixed pinned image, no user input
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
+    try:
+        proc = subprocess.run(  # noqa: S603 -- fixed pinned image, no user input
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=CLI_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired as exc:
+        command = " ".join(cmd)
+        raise RuntimeError(f"the Structurizr CLI run timed out after {CLI_TIMEOUT_S} s: {command}") from exc
     result: tuple[int, str] = (proc.returncode, (proc.stderr or "") + (proc.stdout or ""))
+    return result
+
+
+def parse_inspect_findings(inspect_out: str) -> list[str]:
+    """Return the finding lines one CLI `inspect` output text carries.
+
+    The pure half of `collect_inputs`'s inspect step (extracted for the
+    Phase 125 fixture pattern, Task 125.100/110/120): a
+    `LEVEL | key | message` line contributes its bare `message` (the
+    pipe form the pinned CLI prints for a workspace it inspected); a
+    `LEVEL ...` line without a pipe contributes the whole line. Every
+    other line (timestamps, the error lines of a workspace the CLI
+    cannot even inspect, e.g. a missing `!include` target) contributes
+    nothing.
+    """
+    findings: list[str] = []
+    for line in inspect_out.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("ERROR", "WARNING", "INFO", "IGNORE")) and "|" in stripped:
+            findings.append(stripped.split("|", 2)[-1].strip())
+        elif stripped.startswith(("ERROR", "WARNING")):
+            findings.append(stripped)
+    result = findings
     return result
 
 
@@ -889,13 +933,7 @@ def collect_inputs(workdir: Path) -> GraderInputs:
         except json.JSONDecodeError:
             export_json = None
 
-    findings: list[str] = []
-    for line in inspect_out.splitlines():
-        stripped = line.strip()
-        if stripped.startswith(("ERROR", "WARNING", "INFO", "IGNORE")) and "|" in stripped:
-            findings.append(stripped.split("|", 2)[-1].strip())
-        elif stripped.startswith(("ERROR", "WARNING")):
-            findings.append(stripped)
+    findings = parse_inspect_findings(inspect_out)
 
     result = GraderInputs(
         dsl_path=dsl.name,

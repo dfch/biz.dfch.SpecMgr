@@ -79,8 +79,10 @@ uv run --frozen python evals/c4-skills/run.py report --results-dir evals/c4-skil
 ```
 
 Exit codes: `0` ok; `1` a runtime-shaped failure (a pin/preflight
-violation, the sidecar or a trial container failing, a runner error, an
-I/O failure); `2` a usage-shaped failure (an invalid argument such as
+violation, the sidecar or a trial container failing, a runner error, a
+hung Structurizr CLI run -- the graders' `_run_cli` maps its 300 s
+`subprocess.TimeoutExpired` to `RuntimeError`, Task 125.130/I3 -- an I/O
+failure); `2` a usage-shaped failure (an invalid argument such as
 `k <= 0` or a missing/misplaced `--skills-dir`, an unknown case, or a
 missing artifact the command needs, e.g. `report` on a dir without
 `run.json`). Any other exception type is a harness bug and stays a raw

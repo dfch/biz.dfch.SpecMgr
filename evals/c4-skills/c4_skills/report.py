@@ -33,7 +33,7 @@ from __future__ import annotations
 import dataclasses
 import json
 import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import pins, stats
@@ -63,7 +63,6 @@ class ReportInput:
     preflight: dict | None = None
     phase_cases: list[str] | None = None
     comparison: str = pins.CONDITION_UPSTREAM
-    extras: dict = field(default_factory=dict)
 
 
 def _trials_by_condition(run: dict) -> dict[str, list[dict]]:

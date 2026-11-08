@@ -29,6 +29,24 @@ gate therefore counts over the NORMALIZED MCP-CALL VIEW
 (exactly the pre-fix semantics) plus one entry per MCP-family reference
 in a terminal `execute` block (the conservative extraction rules live in
 the detection layer :mod:`c4_skills.codemode`).
+
+Phase 125 (the deferred Phase 110 review findings G2/I1/I2) changed the
+finding extraction and the `fix` triage label:
+
+- I1: the stream finding extraction's line fallback applies to
+  SINGLE-LINE non-JSON-array outputs only (a multi-line bundled Code
+  Mode object answer yields no findings, not one per line);
+- I2: the stream/CLI finding merge dedupes on the severity-prefix-
+  NORMALIZED finding text (:func:`normalize_finding`), so the same
+  finding under its `ERROR:`-prefixed stream form and its bare CLI form
+  merges to one entry (first-occurrence order, first-seen form kept);
+- G2: the `fix` triage label is truth-anchored to the grader's own
+  FINAL CLI `inspect` findings (:func:`final_inspect_findings_set`): a
+  post-inspect edit earns it for a finding only when that finding is
+  absent from that set (a clean final inspect makes every finding
+  absent; a final inspect that could not run or that met a broken
+  workspace makes no `fix` label valid). The edit signal alone no
+  longer suffices.
 """
 
 from __future__ import annotations
@@ -73,18 +91,22 @@ TRIAGE_EXPECTED = "expected"
 TRIAGE_REPORTED = "reported"
 TRIAGE_UNTRIAGED = "untriaged"
 
-#: The tool names whose calls count as a file edit (for the `fix` triage
+#: The tool names whose calls count as a file edit (the `fix` triage
 #: signal). Coarse and informational about the agent's edit activity
-#: (what it edited is not checked) -- but NOT gate-free: the `fix` label
-#: it derives feeds the locked `triage_complete` gate (which accepts
-#: `fix`/`expected`/`reported`). The pinned opencode image (2.2.5) reports
-#: its command-execution tools as `shell` (a `command` input) and
-#: `execute` (a `code` input), and the committed smoke streams show
-#: agents mutating files through both (e.g. heredoc writes, `sed`-style
-#: fixes); the dedicated editors are `edit`/`write`, plus the
-#: `apply_patch`/`patch` names of other agent CLIs (kept for schema
-#: drift). A call to a name here after the last inspect counts as
-#: "edited".
+#: (what it edited is not checked) -- and, since Task 125.100/G2, NOT
+#: SUFFICIENT ON ITS OWN: a post-inspect edit earns the `fix` label for
+#: a finding only when that finding is absent from the grader's own
+#: final CLI `inspect` findings (the truth anchor,
+#: :func:`final_inspect_findings_set`), which corroborates the edit; the
+#: label it derives feeds the locked `triage_complete` gate (which
+#: accepts `fix`/`expected`/`reported`). The pinned opencode image
+#: (2.2.5) reports its command-execution tools as `shell` (a `command`
+#: input) and `execute` (a `code` input), and the committed smoke
+#: streams show agents mutating files through both (e.g. heredoc
+#: writes, `sed`-style fixes); the dedicated editors are `edit`/`write`,
+#: plus the `apply_patch`/`patch` names of other agent CLIs (kept for
+#: schema drift). A call to a name here after the last inspect counts
+#: as "edited".
 EDIT_TOOL_NAMES: frozenset[str] = frozenset({"edit", "write", "apply_patch", "patch", "shell", "execute"})
 
 #: A fenced code block in the final text.
@@ -155,9 +177,13 @@ class TrialMetrics:
         validate_ok_calls: `validate` invocations that answered the OK
             marker (native: the strict output check; Code Mode: the
             locked attribution rule).
-        inspect_findings: The `inspect` findings (stream and CLI merged,
-            first-occurrence order).
-        inspect_triage: finding text -> triage label.
+        inspect_findings: The `inspect` findings (stream and CLI merged
+            on the severity-prefix-normalized finding text,
+            first-occurrence order, first-seen form kept -- Task
+            125.120/I2).
+        inspect_triage: finding text -> triage label (`fix` requires a
+            post-inspect edit AND the finding's absence from the final
+            CLI `inspect` findings -- Task 125.100/G2).
         relationship_technology_coverage: 0.0-1.0 or None (no relationships).
         steps: The agent's step count.
         tool_calls: Every completed tool call count.
@@ -324,23 +350,55 @@ def extract_final_dsl(final_text: str) -> str | None:
 def _findings_from_output(text: str) -> list[str]:
     """Return the findings one `inspect` output text carries, in order.
 
-    A JSON array of items, or -- when the text is not a JSON array --
-    its non-blank lines (the existing extraction, unchanged).
+    A JSON array of items is the extraction (the MCP `inspect` answers
+    a JSON array of finding strings, single- or multi-line -- the JSON
+    array path is exactly the pre-I1 one). When the text is not a JSON
+    array, the line-based fallback applies to SINGLE-LINE outputs only
+    (its one line is the finding): a multi-line non-array output -- e.g.
+    a bundled Code Mode object answer -- yields NO findings (Task
+    125.110/I1; before, every non-blank line of such an answer became a
+    spurious finding, e.g. the JSON lines of the object itself).
     """
     stripped = text.strip()
     if not stripped:
         result: list[str] = []
         return result
-    items: list[str] | None = None
     try:
         loaded = json.loads(stripped)
-        if isinstance(loaded, list):
-            items = [str(item) for item in loaded]
     except json.JSONDecodeError:
-        items = None
-    if items is None:
-        items = [line.strip() for line in stripped.splitlines() if line.strip()]
-    result = items
+        loaded = None
+    if isinstance(loaded, list):
+        result = [str(item) for item in loaded]
+        return result
+    if "\n" in stripped:
+        result = []
+        return result
+    result = [stripped]
+    return result
+
+
+#: The leading severity tokens the finding extraction normalizes away
+#: before the stream/CLI merge (Task 125.120/I2) and before the `fix`
+#: label's final-CLI-absence check (Task 125.100/G2): the MCP `inspect`
+#: answers findings `ERROR:`-prefixed, while the CLI `inspect` finding
+#: lines parse to their bare message (the pipe form is split in
+#: `collect_inputs`) or keep an `ERROR`/`WARNING` prefix (the non-pipe
+#: form). The same finding in both forms must merge to one entry.
+_SEVERITY_PREFIX_RE = re.compile(r"^(?:ERROR|WARNING|INFO|IGNORE)(?::[ \t]*|[ \t]+)")
+
+
+def normalize_finding(text: str) -> str:
+    """Return the finding text without its leading severity prefix.
+
+    The merge key of the stream/CLI finding merge (Task 125.120/I2) and
+    of the `fix` label's absence check (Task 125.100/G2): `ERROR: X`,
+    `ERROR X`, `WARNING: X`, `INFO X` and `IGNORE X` all normalize to
+    the bare `X`. The prefix is a whole severity token followed by a
+    colon or whitespace, so a finding that starts with a longer word
+    (e.g. `ERRORS in the model`) or with the token without such a
+    delimiter keeps its text.
+    """
+    result = _SEVERITY_PREFIX_RE.sub("", text.strip(), count=1)
     return result
 
 
@@ -388,23 +446,63 @@ def _edited_after_inspect(parsed: ParsedTrial) -> bool:
     return result
 
 
-def triage_findings(findings: list[str], parsed: ParsedTrial) -> dict[str, str]:
+def final_inspect_findings_set(inputs: GraderInputs) -> set[str] | None:
+    """Return the final-CLI-findings set the `fix` triage label anchors to.
+
+    Task 125.100/G2: the truth anchor is the grader's own final CLI
+    `inspect` run over the final workspace, never the agent's claim. The
+    pinned CLI `inspect` answers rc=0 with no output on a finding-free
+    workspace and rc=1 on a workspace it inspected that carries findings
+    (the pipe-form finding lines), so the set is trustworthy iff:
+
+    - `inspect_rc` is 0 -- a clean workspace, the empty set (every
+      finding is absent from it);
+    - `inspect_rc` is non-zero AND a non-empty findings list parsed --
+      the inspected workspace's findings (normalized to the merge key).
+
+    and not trustworthy (None) iff:
+
+    - `inspect_rc` is None (no DSL file -- the CLI never ran);
+    - `inspect_rc` is non-zero with NO parsed finding (a broken
+      workspace whose error line carries no finding, e.g. a missing
+      `!include` target -- nothing is demonstrably fixed).
+
+    When the set is None, no `fix` label is valid at all.
+    """
+    if inputs.inspect_rc is None:
+        result: set[str] | None = None
+        return result
+    if inputs.inspect_rc == 0:
+        result = set()
+        return result
+    if not inputs.inspect_findings:
+        result = None
+        return result
+    result = {normalize_finding(finding) for finding in inputs.inspect_findings}
+    return result
+
+
+def triage_findings(findings: list[str], parsed: ParsedTrial, inputs: GraderInputs) -> dict[str, str]:
     """Assign each finding its triage label (REQ-003).
 
-    `expected` under the MCP limits wins first (documentation/decisions),
-    then `fix` (a file edit after the last inspect call), then `reported`
-    (the finding's text or its element name is mentioned in the final
-    message), otherwise `untriaged`.
+    Priority: `expected` (the MCP-limits markers) first, then `fix` --
+    a completed file edit after the last inspect AND the finding absent
+    from the final CLI `inspect` findings (the truth anchor of Task
+    125.100/G2: the edit signal alone no longer suffices, and when the
+    final CLI inspect could not run or the workspace is broken, no
+    `fix` label is granted at all), then `reported` (the finding's text
+    is mentioned in the final message), otherwise `untriaged`.
     """
     assert isinstance(findings, list)
     final_text = parsed.final_text()
     edited = _edited_after_inspect(parsed)
+    final_set = final_inspect_findings_set(inputs)
     result: dict[str, str] = {}
     for finding in findings:
         lowered = finding.lower()
         if any(marker in lowered for marker in EXPECTED_FINDING_MARKERS):
             result[finding] = TRIAGE_EXPECTED
-        elif edited:
+        elif edited and final_set is not None and normalize_finding(finding) not in final_set:
             result[finding] = TRIAGE_FIX
         elif finding in final_text:
             result[finding] = TRIAGE_REPORTED
@@ -464,8 +562,11 @@ def compute_metrics(
 
     stream_findings = _stream_findings(parsed)
     findings: list[str] = list(stream_findings)
+    seen: set[str] = {normalize_finding(finding) for finding in findings}
     for finding in inputs.inspect_findings:
-        if finding not in findings:
+        key = normalize_finding(finding)
+        if key not in seen:
+            seen.add(key)
             findings.append(finding)
 
     calls = normalized_mcp_calls(parsed)
@@ -486,7 +587,7 @@ def compute_metrics(
         export_calls=export_calls,
         validate_ok_calls=validate_ok_calls,
         inspect_findings=findings,
-        inspect_triage=triage_findings(findings, parsed),
+        inspect_triage=triage_findings(findings, parsed, inputs),
         relationship_technology_coverage=relationship_technology_coverage(inputs.export_json),
         steps=parsed.steps,
         tool_calls=len(parsed.completed_tool_calls()),

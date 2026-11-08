@@ -1,0 +1,1 @@
+15:20:30.072 [main] ERROR com.structurizr.command.InspectCommand -- /w/people.dsl could not be found at line 3 of /w/workspace.dsl: !include people.dsl

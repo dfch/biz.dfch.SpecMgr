@@ -103,7 +103,33 @@ def _load_export(name: str) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _inputs(name: str, validate_rc: int, export_rc: int) -> GraderInputs:
+#: The Phase 110 loop fixture's final-inspect facts (the Task 125.100/G2
+#: truth anchor): the agent's post-inspect edit clears the container-view
+#: findings, the MCP-limits findings remain (the MCP refuses `!docs`/
+#: `!adrs`). The bare form is the CLI's parsed form (the pipe lines are
+#: split in `collect_inputs`); rc=1 is the pinned CLI's exit code when it
+#: reports findings on a workspace it inspected.
+LOOP_FINAL_INSPECT_RC = 1
+LOOP_FINAL_INSPECT_FINDINGS = [
+    'The software system "Bookshop" has containers, but is missing documentation.',
+    'The software system "Bookshop" has containers, but is missing decisions.',
+]
+
+#: The Phase 110 codemode fixture's final-inspect facts: only the
+#: missing-documentation finding remains (the web-store view finding was
+#: fixed by the post-inspect edit).
+CODEMODE_FINAL_INSPECT_FINDINGS = [
+    'The software system "Bookshop" has containers, but is missing documentation.',
+]
+
+
+def _inputs(
+    name: str,
+    validate_rc: int,
+    export_rc: int,
+    inspect_rc: int | None = None,
+    inspect_findings: list[str] | None = None,
+) -> GraderInputs:
     dsl_path = WORKSPACES / name / "workspace.dsl"
     dsl_text = dsl_path.read_text(encoding="utf-8")
     export_json = _load_export(name)
@@ -116,8 +142,8 @@ def _inputs(name: str, validate_rc: int, export_rc: int) -> GraderInputs:
         export_json=export_json,
         export_rc=export_rc,
         export_stderr="" if export_rc == 0 else "export failed",
-        inspect_rc=None,
-        inspect_findings=[],
+        inspect_rc=inspect_rc,
+        inspect_findings=list(inspect_findings or []),
     )
 
 
@@ -125,8 +151,16 @@ def _minimal_inputs(
     dsl_text: str | None,
     export_json: dict | None = None,
     inspect_findings: list[str] | None = None,
+    inspect_rc: int | None = None,
 ) -> GraderInputs:
-    """Build a GraderInputs from plain text (no fixture file, no CLI)."""
+    """Build a GraderInputs from plain text (no fixture file, no CLI).
+
+    An omitted `inspect_rc` derives the pre-Phase 125 shape: 0 when the
+    dsl text exists (the CLI ran, finding-free), None otherwise (no file,
+    the CLI could not run).
+    """
+    if inspect_rc is None and dsl_text is not None:
+        inspect_rc = 0
     return GraderInputs(
         dsl_path="workspace.dsl" if dsl_text is not None else None,
         dsl_text=dsl_text,
@@ -135,7 +169,7 @@ def _minimal_inputs(
         export_json=export_json,
         export_rc=0 if export_json is not None else None,
         export_stderr="",
-        inspect_rc=0 if dsl_text is not None else None,
+        inspect_rc=inspect_rc,
         inspect_findings=list(inspect_findings or []),
     )
 
@@ -433,7 +467,13 @@ class TestPhase110EndToEnd(unittest.TestCase):
 
     def test_create_system_passes_all_13_gates(self) -> None:
         case = CASES["create-system"]
-        inputs = _inputs("good", validate_rc=0, export_rc=0)
+        inputs = _inputs(
+            "good",
+            validate_rc=0,
+            export_rc=0,
+            inspect_rc=LOOP_FINAL_INSPECT_RC,
+            inspect_findings=LOOP_FINAL_INSPECT_FINDINGS,
+        )
         context = _context(case, inputs, trial=_loop_parsed())
 
         results = grade_case(context)
@@ -443,7 +483,13 @@ class TestPhase110EndToEnd(unittest.TestCase):
 
     def test_mcp_limits_passes_all_14_gates(self) -> None:
         case = CASES["mcp-limits"]
-        inputs = _inputs("good", validate_rc=0, export_rc=0)
+        inputs = _inputs(
+            "good",
+            validate_rc=0,
+            export_rc=0,
+            inspect_rc=LOOP_FINAL_INSPECT_RC,
+            inspect_findings=LOOP_FINAL_INSPECT_FINDINGS,
+        )
         context = _context(case, inputs, trial=_loop_parsed())
 
         results = grade_case(context)
@@ -632,11 +678,18 @@ class TestInspectCalledGate(unittest.TestCase):
 class TestTriageCompleteGate(unittest.TestCase):
     def test_pass_when_every_finding_is_labeled(self) -> None:
         case = CASES["create-system"]
-        context = _context(case, _minimal_inputs(None), trial=_loop_parsed())
+        context = _context(
+            case,
+            _minimal_inputs(None, inspect_rc=LOOP_FINAL_INSPECT_RC, inspect_findings=LOOP_FINAL_INSPECT_FINDINGS),
+            trial=_loop_parsed(),
+        )
 
         result = _gate("triage_complete", context)
 
-        # the fixture: 2 expected (MCP limits) + 2 fix (post-inspect edit)
+        # the fixture: 2 expected (MCP limits) + 2 fix (post-inspect edit
+        # corroborated by the final CLI inspect, Task 125.100/G2); the
+        # CLI's bare forms merge onto the stream's `ERROR:`-prefixed forms
+        # (Task 125.120/I2), so 4 findings, not 6
         self.assertTrue(result.passed)
         self.assertIn("all 4 finding(s)", result.detail)
 
@@ -859,11 +912,18 @@ class TestCodeModeGates(unittest.TestCase):
         self.assertIn("1 terminal inspect call(s)", result.detail)
 
     def test_triage_complete_over_codemode_findings(self) -> None:
-        context = _context(self.case, _minimal_inputs(None), trial=parse_events_file(self.CODEMODE_STREAM))
+        context = _context(
+            self.case,
+            _minimal_inputs(None, inspect_rc=LOOP_FINAL_INSPECT_RC, inspect_findings=CODEMODE_FINAL_INSPECT_FINDINGS),
+            trial=parse_events_file(self.CODEMODE_STREAM),
+        )
 
         result = _gate("triage_complete", context)
 
-        # the fixture: 1 expected (MCP limits) + 1 fix (post-inspect edit)
+        # the fixture: 1 expected (MCP limits) + 1 fix (post-inspect edit
+        # corroborated by the final CLI inspect, Task 125.100/G2); the CLI's
+        # bare docs finding merges onto the stream's `ERROR:`-prefixed form
+        # (Task 125.120/I2), so 2 findings, not 3
         self.assertTrue(result.passed)
         self.assertIn("all 2 finding(s)", result.detail)
 
