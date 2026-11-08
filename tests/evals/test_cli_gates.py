@@ -115,6 +115,55 @@ class TestCliOverFixtures(unittest.TestCase):
         self.assertNotEqual(export_rc, 0)
         self.assertIn("ERROR", validate_out)
 
+    def test_fixdsl_seed_workspace_cli_rejects(self) -> None:
+        # the Phase 120 fix-dsl seed must fail the pinned CLI's `validate`
+        # (the known-bad half of ACC-006 for the fix-dsl case; verified at
+        # case creation, Task 120.100)
+        workdir = self._stage("fixdsl-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertNotEqual(validate_rc, 0)
+        self.assertNotEqual(export_rc, 0)
+        self.assertIn("ERROR", validate_out)
+
+    def test_heldout_dsl_seed_workspace_cli_rejects(self) -> None:
+        workdir = self._stage("heldout-dsl-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertNotEqual(validate_rc, 0)
+        self.assertNotEqual(export_rc, 0)
+        self.assertIn("ERROR", validate_out)
+
+    def test_fixdsl_fixed_workspace_cli_matches_preexported_fixture(self) -> None:
+        # the Phase 120 known-good fixed reference: valid, and its live
+        # export is JSON-equivalent to the committed pre-exported fixture
+        workdir = self._stage("fixdsl-fixed")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "fixdsl-fixed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_heldout_dsl_fixed_workspace_cli_matches_preexported_fixture(self) -> None:
+        workdir = self._stage("heldout-dsl-fixed")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-dsl-fixed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
     def test_cli_image_matches_the_pin(self) -> None:
         proc = subprocess.run(  # noqa: S603 -- pinned image
             ["docker", "run", "--rm", pins.STRUCTURIZR_CLI_IMAGE, "version"],

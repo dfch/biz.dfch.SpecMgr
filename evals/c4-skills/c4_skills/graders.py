@@ -32,10 +32,17 @@ Phase 110 (Task 110.100) adds the stream-derived gates over the same pure
 surface: they decide on the trial's parsed event stream and its computed
 metrics (the agent's MCP calls, skills loaded, `inspect`-finding triage,
 the final message), carried by :class:`GateContext` alongside the
-CLI/work-dir inputs. All gates -- the original 8 (unwrapped over
-`GateContext.inputs`, behavior unchanged) and the new ones -- are keyed in
-:data:`GATES`; :func:`grade_case` evaluates a case's gate names over one
-context.
+CLI/work-dir inputs. Phase 120 (Task 120.100) adds the `fix-dsl`
+knowledge gates over the export JSON: `elements_described` and
+`relationships_described` (completeness rules `validate` cannot surface --
+a relationship's missing technology/description and a custom element's
+missing metadata pass `validate` cleanly, and the latter is not even
+flagged by `inspect` in the pinned CLI), and `no_deletions` (every element
+and relationship the case seeded is still present, matched by name over
+the export JSON -- the anti-deletion half of the fix-style cases). All
+gates -- the original 8 (unwrapped over `GateContext.inputs`, behavior
+unchanged) and the new ones -- are keyed in :data:`GATES`;
+:func:`grade_case` evaluates a case's gate names over one context.
 
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
@@ -167,6 +174,18 @@ def iter_systems(export_json: dict | None) -> list[dict]:
 def iter_external_systems(export_json: dict | None) -> list[dict]:
     """Return every external system element of the export JSON."""
     result = _model(export_json).get("externalSystems")
+    return [e for e in (result or []) if isinstance(e, dict)]
+
+
+def iter_custom_elements(export_json: dict | None) -> list[dict]:
+    """Return every custom element of the export JSON.
+
+    The DSL `element` keyword (elements that sit outside the C4 model,
+    e.g. hardware or third-party feeds) exports to `model.customElements`;
+    unlike every other element kind, a custom element's description is the
+    `metadata` field (absent, not empty, when the DSL gave none).
+    """
+    result = _model(export_json).get("customElements")
     return [e for e in (result or []) if isinstance(e, dict)]
 
 
@@ -348,6 +367,147 @@ def gate_has_view(inputs: GraderInputs) -> GateResult:
     if not defined:
         return GateResult("has_view", False, "no user-defined views in the export JSON (only auto-generated)")
     return GateResult("has_view", True, f"{len(defined)} user-defined view(s)")
+
+
+# ---------------------------------------------------------------------------
+# the Phase 120 knowledge and anti-deletion gates (Task 120.100)
+# ---------------------------------------------------------------------------
+
+
+def _iter_all_elements(export_json: dict | None) -> list[tuple[str, dict]]:
+    """Return every model element as (kind, element) pairs.
+
+    Kinds: `person`, `system`, `external`, `container`, `custom` -- the
+    same kind vocabulary `Case.seed_elements` uses.
+    """
+    result: list[tuple[str, dict]] = []
+    for kind, elements in (
+        ("person", iter_people(export_json)),
+        ("system", iter_systems(export_json)),
+        ("external", iter_external_systems(export_json)),
+        ("custom", iter_custom_elements(export_json)),
+    ):
+        for element in elements:
+            result.append((kind, element))
+    for element in iter_containers(export_json):
+        result.append(("container", element))
+    return result
+
+
+def gate_elements_described(inputs: GraderInputs) -> GateResult:
+    """`elements_described`: every element carries a description.
+
+    People, systems, external systems and containers carry a non-blank
+    `description`; custom elements carry a non-blank `metadata` (their
+    description field in the export). A model with no elements at all
+    fails (there is nothing to be complete about).
+    """
+    missing: list[str] = []
+    total = 0
+    for kind, element in _iter_all_elements(inputs.export_json):
+        total += 1
+        value = element.get("metadata") if kind == "custom" else element.get("description")
+        if not str(value or "").strip():
+            missing.append(f"{kind} {str(element.get('name') or element.get('id'))!r}")
+    if total == 0:
+        return GateResult("elements_described", False, "no elements in the export JSON")
+    if missing:
+        return GateResult(
+            "elements_described", False, f"{len(missing)} of {total} element(s) lack a description: {missing}"
+        )
+    return GateResult("elements_described", True, f"description on all {total} element(s)")
+
+
+def gate_relationships_described(inputs: GraderInputs) -> GateResult:
+    """`relationships_described`: every relationship carries a description.
+
+    The description-coverage counterpart of `relationship_technology`:
+    the DSL distinguishes same-pair relationships by description only, so
+    a relationship without one is both incomplete and unidentifiable.
+    """
+    rels = iter_relationships(inputs.export_json)
+    if not rels:
+        return GateResult("relationships_described", False, "no relationships in the export JSON")
+    missing = [str(r.get("description") or r.get("id")) for r in rels if not str(r.get("description") or "").strip()]
+    if missing:
+        return GateResult(
+            "relationships_described",
+            False,
+            f"{len(missing)} of {len(rels)} relationship(s) lack a description: {missing}",
+        )
+    return GateResult("relationships_described", True, f"description on all {len(rels)} relationship(s)")
+
+
+def gate_no_deletions(context: GateContext) -> GateResult:
+    """`no_deletions`: every seeded element and relationship is still present.
+
+    The anti-deletion gate of the fix-style cases (Phase 120): the prompt
+    forbids removing any people, systems, containers or relationships, and
+    `validate` cannot enforce that -- a workspace with a whole element
+    deleted still parses. Elements are matched by name over the export
+    JSON (`Case.seed_elements` kinds); relationships are matched by
+    (source name, destination name, description) -- the description is the
+    relationship's identity in the DSL, so rewording a seeded relationship
+    removes it.
+    """
+    case = context.case
+    if not case.seed_elements and not case.seed_relationships:
+        return GateResult("no_deletions", False, "the case seeds no elements or relationships (gate misused)")
+    export_json = context.inputs.export_json
+    if export_json is None:
+        return GateResult("no_deletions", False, "no export JSON to check against the seeded model")
+
+    # name -> every element id with that name (containers are matched
+    # across all systems; names may collide across kinds, so each kind
+    # maps independently)
+    ids_by_kind: dict[str, dict[str, set[str]]] = {}
+    for kind, element in _iter_all_elements(export_json):
+        name = str(element.get("name") or "").strip()
+        elem_id = element.get("id")
+        if name and elem_id is not None:
+            ids_by_kind.setdefault(kind, {}).setdefault(name, set()).add(str(elem_id))
+
+    missing_elements: list[str] = []
+    for kind, name in case.seed_elements:
+        if name not in ids_by_kind.get(kind, {}):
+            missing_elements.append(f"{kind} {name!r}")
+
+    source_ids: dict[str, set[str]] = {}
+    for kind, names in ids_by_kind.items():
+        for name, ids in names.items():
+            source_ids.setdefault(name, set()).update(ids)
+
+    def _ids_for(name: str) -> set[str]:
+        return source_ids.get(name, set())
+
+    rels = iter_relationships(export_json)
+    missing_relationships: list[str] = []
+    for source_name, destination_name, description in case.seed_relationships:
+        source_ids_ = _ids_for(source_name)
+        destination_ids_ = _ids_for(destination_name)
+        present = any(
+            str(r.get("sourceId")) in source_ids_
+            and str(r.get("destinationId")) in destination_ids_
+            and str(r.get("description") or "").strip() == description
+            for r in rels
+        )
+        if not present:
+            missing_relationships.append(f"{source_name!r} -> {destination_name!r} {description!r}")
+
+    if missing_elements or missing_relationships:
+        detail = "missing: " + ", ".join(missing_elements + missing_relationships)
+        return GateResult(
+            "no_deletions",
+            False,
+            f"{len(missing_elements)} element(s) and "
+            f"{len(missing_relationships)} relationship(s) deleted or reworded; {detail}",
+        )
+    return GateResult(
+        "no_deletions",
+        True,
+        f"all {len(case.seed_elements)} seeded element(s) and {len(case.seed_relationships)} "
+        "seeded relationship(s) still present",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -570,7 +730,9 @@ def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateCo
 
 #: Every gate function, keyed by gate name (the cases' `gates` entries).
 #: The original 8 CLI/export gates are the input-only functions wrapped
-#: over `GateContext.inputs`; the Phase 110 gates take the context.
+#: over `GateContext.inputs`; the Phase 120 `elements_described`/
+#: `relationships_described` gates are input-only too; the Phase 110
+#: stream gates and the Phase 120 `no_deletions` gate take the context.
 GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "dsl_written": _inputs_only(gate_dsl_written),
     "cli_valid": _inputs_only(gate_cli_valid),
@@ -580,6 +742,9 @@ GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "two_containers": _inputs_only(gate_two_containers),
     "relationship_technology": _inputs_only(gate_relationship_technology),
     "has_view": _inputs_only(gate_has_view),
+    "elements_described": _inputs_only(gate_elements_described),
+    "relationships_described": _inputs_only(gate_relationships_described),
+    "no_deletions": gate_no_deletions,
     "validated_before_return": gate_validated_before_return,
     "parse_called": gate_parse_called,
     "validate_ok_called": gate_validate_ok_called,

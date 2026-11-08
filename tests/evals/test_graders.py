@@ -42,6 +42,7 @@ message) -- still no Docker and no model call.
 
 from __future__ import annotations
 
+import copy
 import json
 import unittest
 
@@ -49,6 +50,16 @@ from c4_skills import pins
 from c4_skills.cases import (
     CASES,
     CREATE_SYSTEM_GATES,
+    FIX_DSL_CASE_DEF,
+    FIX_DSL_GATES,
+    FIX_DSL_PROMPT,
+    FIX_DSL_SEED_ELEMENTS,
+    FIX_DSL_SEED_RELATIONSHIPS,
+    FIX_DSL_SEED_WORKSPACE,
+    HELDOUT_DSL_CASE_DEF,
+    HELDOUT_DSL_SEED_ELEMENTS,
+    HELDOUT_DSL_SEED_RELATIONSHIPS,
+    HELDOUT_DSL_SEED_WORKSPACE,
     MCP_LIMITS_GATES,
     NO_TRIGGER_GATES,
     MIN_DSL_BYTES,
@@ -63,7 +74,11 @@ from c4_skills.graders import (
     GraderInputs,
     case_passed,
     grade_case,
+    gate_elements_described,
+    gate_no_deletions,
+    gate_relationships_described,
     iter_containers,
+    iter_custom_elements,
     iter_people,
     iter_relationships,
     iter_systems,
@@ -957,11 +972,380 @@ class TestMcpLimitStatedGate(unittest.TestCase):
 
     def test_fail_when_the_final_text_does_not_mention_images(self) -> None:
         case = CASES["no-trigger"]
-        context = _context(case, _minimal_inputs(None), trial=_stream(_text_event("Done.")))
+        context = _context(case, _minimal_inputs(None))
 
         result = _gate("mcp_limit_stated", context)
 
         self.assertFalse(result.passed)
+
+
+class TestPhase120CaseRegistry(unittest.TestCase):
+    """The Phase 120 cases (Task 120.100): the locked ids, prompts, gate set
+    and seed facts, and the seeds' defect spread."""
+
+    def test_fix_dsl_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["fix-dsl"], FIX_DSL_CASE_DEF)
+        self.assertIn("fix-dsl", pins.FULL_CASES)
+        self.assertEqual(FIX_DSL_CASE_DEF.gates, FIX_DSL_GATES)
+        self.assertEqual(FIX_DSL_CASE_DEF.seed_elements, FIX_DSL_SEED_ELEMENTS)
+        self.assertEqual(FIX_DSL_CASE_DEF.seed_relationships, FIX_DSL_SEED_RELATIONSHIPS)
+
+    def test_heldout_dsl_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_DSL_CASE], HELDOUT_DSL_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_DSL_CASE, pins.FULL_CASES)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.gates, FIX_DSL_GATES)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.seed_elements, HELDOUT_DSL_SEED_ELEMENTS)
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.seed_relationships, HELDOUT_DSL_SEED_RELATIONSHIPS)
+        # same task shape: the identical prompt over a different seeded domain
+        self.assertEqual(HELDOUT_DSL_CASE_DEF.prompt, FIX_DSL_CASE_DEF.prompt)
+
+    def test_fix_dsl_gate_set_is_the_locked_11(self) -> None:
+        self.assertEqual(
+            FIX_DSL_GATES,
+            (
+                "dsl_written",
+                "cli_valid",
+                "cli_export",
+                "has_system",
+                "has_person",
+                "two_containers",
+                "has_view",
+                "relationship_technology",
+                "relationships_described",
+                "elements_described",
+                "no_deletions",
+            ),
+        )
+        # no loop-discipline gates (locked: they belong to the validate-loop
+        # skill and are measured on the reused create-system/mcp-limits cases)
+        for stream_gate in (
+            "parse_called",
+            "validate_ok_called",
+            "inspect_called",
+            "validated_before_return",
+            "triage_complete",
+        ):
+            self.assertNotIn(stream_gate, FIX_DSL_GATES)
+
+    def test_fix_dsl_prompt_is_the_locked_wording(self) -> None:
+        self.assertEqual(
+            FIX_DSL_PROMPT,
+            "Our Structurizr workspace in `workspace.dsl` in the current working directory fails to validate and "
+            "I can't see why. Fix it so it validates, without removing any people, systems, containers, or "
+            "relationships.",
+        )
+        self.assertEqual(FIX_DSL_CASE_DEF.setup_files, {"workspace.dsl": FIX_DSL_SEED_WORKSPACE})
+        self.assertEqual(CASES[pins.HELDOUT_DSL_CASE].setup_files, {"workspace.dsl": HELDOUT_DSL_SEED_WORKSPACE})
+
+    def test_fix_dsl_seed_spans_at_least_three_defect_classes(self) -> None:
+        seed = FIX_DSL_SEED_WORKSPACE
+        lines = seed.splitlines()
+        # class 2 (quoting): an unquoted multi-word person description
+        self.assertIn('driver = person "Driver" Arrives at and departs from the garage.', seed)
+        # class 3 (duplicate identifier): the identifier `entry` declared twice
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("entry = container")), 2)
+        # class 1 (forward reference): a relationship to `traffic` before its declaration
+        use = next(i for i, line in enumerate(lines) if "billing -> traffic" in line)
+        decl = next(i for i, line in enumerate(lines) if "traffic = element" in line)
+        self.assertLess(use, decl)
+        # class 4 (relationship missing its technology): the driver relationship
+        # ends at its quoted description (no trailing technology token)
+        self.assertIn('driver -> entry "Enters through"\n', seed)
+        # class 5 (element missing its description): the custom element line
+        # ends at its quoted name (no trailing metadata token)
+        self.assertIn('traffic = element "City Traffic Feed"\n', seed)
+
+    def test_heldout_dsl_seed_spans_at_least_three_defect_classes(self) -> None:
+        seed = HELDOUT_DSL_SEED_WORKSPACE
+        lines = seed.splitlines()
+        # class 2 (quoting): an unquoted multi-word person description
+        self.assertIn('visitor = person "Museum Visitor" Buys tickets and plans visits\n', seed)
+        # class 3 (duplicate identifier): the identifier `shop` declared twice
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("shop = container")), 2)
+        # class 1 (forward reference): a relationship to `payment` before its declaration
+        use = next(i for i, line in enumerate(lines) if "shop -> payment" in line)
+        decl = next(i for i, line in enumerate(lines) if "payment = element" in line)
+        self.assertLess(use, decl)
+        # class 4 (relationship missing its technology)
+        self.assertIn('visitor -> shop "Buys tickets through"\n', seed)
+        # class 5 (element missing its description): the kiosk container line
+        # ends at its quoted name (no trailing description/technology tokens)
+        self.assertIn('shop = container "Ticket Kiosk"\n', seed)
+
+    def test_seed_facts_match_the_seed_text(self) -> None:
+        for case, seed in (
+            (CASES["fix-dsl"], FIX_DSL_SEED_WORKSPACE),
+            (CASES[pins.HELDOUT_DSL_CASE], HELDOUT_DSL_SEED_WORKSPACE),
+        ):
+            for kind, name in case.seed_elements:
+                self.assertIn(f'"{name}"', seed, f"seeded {kind} {name!r} not in the seed text")
+            for source, destination, description in case.seed_relationships:
+                self.assertIn(f'"{description}"', seed, f"seeded relationship description {description!r} missing")
+            self.assertGreaterEqual(len(case.seed_elements), 4)
+            self.assertGreaterEqual(len(case.seed_relationships), 3)
+
+
+class TestPhase120FixtureFilesPresent(unittest.TestCase):
+    def test_fix_dsl_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("fixdsl-fixed", "heldout-dsl-fixed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+        for name in ("fixdsl-seed", "heldout-dsl-seed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+
+    def test_fixture_dsl_files_match_the_case_seeds(self) -> None:
+        # the committed seed fixtures are the case's `setup_files` text
+        # byte-for-byte (the trial work dir gets exactly these bytes)
+        self.assertEqual(
+            (WORKSPACES / "fixdsl-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            FIX_DSL_SEED_WORKSPACE,
+        )
+        self.assertEqual(
+            (WORKSPACES / "heldout-dsl-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            HELDOUT_DSL_SEED_WORKSPACE,
+        )
+
+    def test_fix_dsl_fixed_reference_carries_no_seed_defect(self) -> None:
+        fixed = (WORKSPACES / "fixdsl-fixed" / "workspace.dsl").read_text(encoding="utf-8")
+        lines = fixed.splitlines()
+        # every seeded defect is repaired in the known-good reference
+        self.assertNotIn('driver = person "Driver" Arrives at and departs from the garage.', fixed)
+        self.assertEqual(sum(1 for line in lines if line.strip().startswith("entry = container")), 1)
+        use = next(i for i, line in enumerate(lines) if "billing -> traffic" in line)
+        decl = next(i for i, line in enumerate(lines) if "traffic = element" in line)
+        self.assertLess(decl, use)
+        self.assertIn('driver -> entry "Enters through" "HTTPS"', fixed)
+        self.assertIn('traffic = element "City Traffic Feed" "Provides live traffic data for the region."', fixed)
+        self.assertEqual(len(iter_custom_elements(_load_export("fixdsl-fixed"))), 1)
+
+
+def _fixdsl_inputs(export_name: str = "fixdsl-fixed") -> GraderInputs:
+    return _inputs(export_name, validate_rc=0, export_rc=0)
+
+
+def _mutated_export(export_name: str = "fixdsl-fixed") -> dict:
+    export = _load_export(export_name)
+    assert export is not None
+    return copy.deepcopy(export)
+
+
+class TestElementsDescribedGate(unittest.TestCase):
+    def test_pass_when_every_element_is_described(self) -> None:
+        result = gate_elements_described(_fixdsl_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("description on all 6 element(s)", result.detail)
+
+    def test_fail_when_a_person_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        del export["model"]["people"][0]["description"]
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("person", result.detail)
+
+    def test_fail_when_a_container_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        export["model"]["softwareSystems"][0]["containers"][0].pop("description")
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("container", result.detail)
+
+    def test_fail_when_a_custom_element_lacks_metadata(self) -> None:
+        export = _mutated_export()
+        export["model"]["customElements"][0].pop("metadata")
+
+        result = gate_elements_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("custom", result.detail)
+
+    def test_edge_fail_without_elements(self) -> None:
+        inputs = _minimal_inputs(None, export_json={"model": {}})
+
+        result = gate_elements_described(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no elements", result.detail)
+
+
+class TestRelationshipsDescribedGate(unittest.TestCase):
+    def test_pass_when_every_relationship_is_described(self) -> None:
+        result = gate_relationships_described(_fixdsl_inputs())
+
+        self.assertTrue(result.passed)
+        self.assertIn("description on all 4 relationship(s)", result.detail)
+
+    def test_fail_when_a_relationship_lacks_a_description(self) -> None:
+        export = _mutated_export()
+        for system in export["model"]["softwareSystems"]:
+            for container in system["containers"]:
+                for rel in container.get("relationships", []):
+                    rel.pop("description", None)
+
+        result = gate_relationships_described(_fixdsl_inputs_from(export))
+
+        self.assertFalse(result.passed)
+        self.assertIn("lack a description", result.detail)
+
+    def test_edge_fail_without_relationships(self) -> None:
+        inputs = _minimal_inputs(None, export_json={"model": {}})
+
+        result = gate_relationships_described(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no relationships", result.detail)
+
+
+class TestNoDeletionsGate(unittest.TestCase):
+    def test_pass_when_every_seeded_fact_is_still_present(self) -> None:
+        context = _context(CASES["fix-dsl"], _fixdsl_inputs())
+
+        result = gate_no_deletions(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("all 6 seeded element(s) and 4 seeded relationship(s)", result.detail)
+
+    def test_pass_on_the_heldout_case_too(self) -> None:
+        context = _context(CASES[pins.HELDOUT_DSL_CASE], _inputs("heldout-dsl-fixed", 0, 0))
+
+        result = gate_no_deletions(context)
+
+        self.assertTrue(result.passed)
+        self.assertIn("all 6 seeded element(s) and 3 seeded relationship(s)", result.detail)
+
+    def test_fail_when_a_seeded_container_is_deleted(self) -> None:
+        export = _mutated_export()
+        export["model"]["softwareSystems"][0]["containers"] = [
+            c for c in export["model"]["softwareSystems"][0]["containers"] if c["name"] != "Exit Gate Controller"
+        ]
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("container 'Exit Gate Controller'", result.detail)
+        # the relationship that used it is reported deleted as well
+        self.assertIn("'Exit Gate Controller' -> 'Billing Service' 'Clears bay occupancy in'", result.detail)
+
+    def test_fail_when_a_seeded_person_is_renamed(self) -> None:
+        export = _mutated_export()
+        export["model"]["people"][0]["name"] = "Visitor"
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("person 'Driver'", result.detail)
+
+    def test_fail_when_a_seeded_relationship_is_reworded(self) -> None:
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "Enters through":
+                    rel["description"] = "Enters via"
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("'Driver' -> 'Entry Gate Controller' 'Enters through'", result.detail)
+
+    def test_fail_when_a_seeded_relationship_is_deleted(self) -> None:
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            person["relationships"] = [
+                r for r in person.get("relationships", []) if r.get("description") != "Enters through"
+            ]
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], _fixdsl_inputs_from(export)))
+
+        self.assertFalse(result.passed)
+        self.assertIn("relationship(s) deleted or reworded", result.detail)
+
+    def test_edge_fail_without_an_export_json(self) -> None:
+        inputs = _minimal_inputs('workspace "X" "y" { model { } }')
+
+        result = gate_no_deletions(_context(CASES["fix-dsl"], inputs))
+
+        self.assertFalse(result.passed)
+        self.assertIn("no export JSON", result.detail)
+
+    def test_edge_gate_misused_on_a_case_without_seed_facts(self) -> None:
+        inputs = _fixdsl_inputs()
+
+        result = gate_no_deletions(_context(CASES["create-system"], inputs))
+
+        self.assertFalse(result.passed)
+        self.assertIn("gate misused", result.detail)
+
+
+class TestPhase120EndToEnd(unittest.TestCase):
+    """The locked `fix-dsl`/`heldout-dsl` gate sets over the known-good
+    fixed references (ACC-006: the known-good split, no model call, no
+    Docker -- the CLI facts come from the pre-exported fixtures)."""
+
+    def test_fix_dsl_fixed_reference_passes_all_11_gates(self) -> None:
+        case = CASES["fix-dsl"]
+        inputs = _fixdsl_inputs()
+
+        results = grade_case(_context(case, inputs))
+
+        self.assertEqual(len(results), 11)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_heldout_dsl_fixed_reference_passes_all_11_gates(self) -> None:
+        case = CASES[pins.HELDOUT_DSL_CASE]
+        inputs = _inputs("heldout-dsl-fixed", 0, 0)
+
+        results = grade_case(_context(case, inputs))
+
+        self.assertEqual(len(results), 11)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_seed_defect_classes_fail_the_knowledge_gates(self) -> None:
+        # the seed's fixed-minus-knowledge state (all parse defects repaired,
+        # the technology and the custom-element metadata still missing) is
+        # what a baseline chasing only `validate` errors would produce: it
+        # must fail exactly the knowledge gates
+        export = _mutated_export()
+        for person in export["model"]["people"]:
+            for rel in person.get("relationships", []):
+                if rel.get("description") == "Enters through":
+                    rel.pop("technology", None)
+        export["model"]["customElements"][0].pop("metadata")
+        inputs = _fixdsl_inputs_from(export)
+        case = CASES["fix-dsl"]
+
+        results = grade_case(_context(case, inputs))
+        by_name = {r.name: r for r in results}
+
+        self.assertTrue(by_name["cli_valid"].passed)
+        self.assertTrue(by_name["cli_export"].passed)
+        self.assertFalse(by_name["relationship_technology"].passed)
+        self.assertFalse(by_name["elements_described"].passed)
+        self.assertTrue(by_name["no_deletions"].passed)
+        self.assertFalse(case_passed(results))
+
+
+def _fixdsl_inputs_from(export: dict) -> GraderInputs:
+    dsl = (WORKSPACES / "fixdsl-fixed" / "workspace.dsl").read_text(encoding="utf-8")
+    return GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=0,
+        inspect_findings=[],
+    )
 
 
 if __name__ == "__main__":

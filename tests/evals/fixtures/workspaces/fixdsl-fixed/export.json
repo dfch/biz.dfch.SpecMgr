@@ -1,0 +1,160 @@
+{
+  "configuration" : { },
+  "description" : "Manages a multi-level parking garage.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "customElements" : [ {
+      "id" : "2",
+      "metadata" : "Provides live traffic data for the region.",
+      "name" : "City Traffic Feed",
+      "properties" : {
+        "structurizr.dsl.identifier" : "traffic"
+      },
+      "tags" : "Element"
+    } ],
+    "people" : [ {
+      "description" : "Arrives at and departs from the garage.",
+      "id" : "1",
+      "name" : "Driver",
+      "properties" : {
+        "structurizr.dsl.identifier" : "driver"
+      },
+      "relationships" : [ {
+        "description" : "Enters through",
+        "destinationId" : "4",
+        "id" : "11",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Enters through",
+        "destinationId" : "3",
+        "id" : "12",
+        "linkedRelationshipId" : "11",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Reads licence plates and drives the entry barrier.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Entry Gate Controller",
+        "properties" : {
+          "structurizr.dsl.identifier" : "entry"
+        },
+        "relationships" : [ {
+          "description" : "Registers bay occupancy in",
+          "destinationId" : "6",
+          "id" : "7",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "C/C++"
+      }, {
+        "description" : "Drives the exit barrier.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Exit Gate Controller",
+        "properties" : {
+          "structurizr.dsl.identifier" : "exit"
+        },
+        "relationships" : [ {
+          "description" : "Clears bay occupancy in",
+          "destinationId" : "6",
+          "id" : "8",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "C/C++"
+      }, {
+        "description" : "Calculates fees and issues invoices.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Billing Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "billing"
+        },
+        "relationships" : [ {
+          "description" : "Considers live traffic from",
+          "destinationId" : "2",
+          "id" : "9",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      } ],
+      "description" : "Manages bays, entry, exit, and billing.",
+      "documentation" : { },
+      "id" : "3",
+      "name" : "Parking Garage",
+      "properties" : {
+        "structurizr.dsl.identifier" : "garage"
+      },
+      "relationships" : [ {
+        "description" : "Considers live traffic from",
+        "destinationId" : "2",
+        "id" : "10",
+        "linkedRelationshipId" : "9",
+        "sourceId" : "3",
+        "technology" : "REST/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "ParkFlow",
+  "properties" : {
+    "structurizr.inspection.error" : "6",
+    "structurizr.dsl" : "d29ya3NwYWNlICJQYXJrRmxvdyIgIk1hbmFnZXMgYSBtdWx0aS1sZXZlbCBwYXJraW5nIGdhcmFnZS4iIHsKICAgIG1vZGVsIHsKICAgICAgICBkcml2ZXIgPSBwZXJzb24gIkRyaXZlciIgIkFycml2ZXMgYXQgYW5kIGRlcGFydHMgZnJvbSB0aGUgZ2FyYWdlLiIKICAgICAgICB0cmFmZmljID0gZWxlbWVudCAiQ2l0eSBUcmFmZmljIEZlZWQiICJQcm92aWRlcyBsaXZlIHRyYWZmaWMgZGF0YSBmb3IgdGhlIHJlZ2lvbi4iCiAgICAgICAgZ2FyYWdlID0gc29mdHdhcmVTeXN0ZW0gIlBhcmtpbmcgR2FyYWdlIiAiTWFuYWdlcyBiYXlzLCBlbnRyeSwgZXhpdCwgYW5kIGJpbGxpbmcuIiB7CiAgICAgICAgICAgIGVudHJ5ID0gY29udGFpbmVyICJFbnRyeSBHYXRlIENvbnRyb2xsZXIiICJSZWFkcyBsaWNlbmNlIHBsYXRlcyBhbmQgZHJpdmVzIHRoZSBlbnRyeSBiYXJyaWVyLiIgIkMvQysrIgogICAgICAgICAgICBleGl0ID0gY29udGFpbmVyICJFeGl0IEdhdGUgQ29udHJvbGxlciIgIkRyaXZlcyB0aGUgZXhpdCBiYXJyaWVyLiIgIkMvQysrIgogICAgICAgICAgICBiaWxsaW5nID0gY29udGFpbmVyICJCaWxsaW5nIFNlcnZpY2UiICJDYWxjdWxhdGVzIGZlZXMgYW5kIGlzc3VlcyBpbnZvaWNlcy4iICJKYXZhIgogICAgICAgIH0KICAgICAgICBlbnRyeSAtPiBiaWxsaW5nICJSZWdpc3RlcnMgYmF5IG9jY3VwYW5jeSBpbiIgImdSUEMiCiAgICAgICAgZXhpdCAtPiBiaWxsaW5nICJDbGVhcnMgYmF5IG9jY3VwYW5jeSBpbiIgImdSUEMiCiAgICAgICAgYmlsbGluZyAtPiB0cmFmZmljICJDb25zaWRlcnMgbGl2ZSB0cmFmZmljIGZyb20iICJSRVNUL0pTT04iCiAgICAgICAgZHJpdmVyIC0+IGVudHJ5ICJFbnRlcnMgdGhyb3VnaCIgIkhUVFBTIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgZ2FyYWdlICJHYXJhZ2VDb250ZXh0IiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQogICAgfQp9",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "GarageContext",
+      "name" : "System Context View: Parking Garage",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "10"
+      }, {
+        "id" : "12"
+      } ],
+      "softwareSystemId" : "3"
+    } ]
+  }
+}

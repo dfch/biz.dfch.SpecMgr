@@ -1,0 +1,172 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/fix-dsl/upstream-k0.events.ndjson",
+  "event_file_bytes": 100469,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-07T22:52:34Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (960 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "1/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "3 container(s)",
+      "name": "two_containers",
+      "passed": true
+    },
+    {
+      "detail": "1 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "technology on 75% of 4 relationship(s); missing: ['Enters through']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "description on all 4 relationship(s)",
+      "name": "relationships_described",
+      "passed": true
+    },
+    {
+      "detail": "1 of 6 element(s) lack a description: [\"system 'City Traffic Feed'\"]",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "1 element(s) and 0 relationship(s) deleted or reworded; missing: custom 'City Traffic Feed'",
+      "name": "no_deletions",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.010576928034424782,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "{",
+      "\"validate\": {",
+      "\"status\": \"fulfilled\",",
+      "\"value\": \"OK\"",
+      "},",
+      "\"inspect\": {",
+      "\"value\": [",
+      "\"ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \\\"Landscape\\\" or \\\"SoftwareSystem\\\".\",",
+      "\"ERROR: The relationship between the person \\\"Driver\\\" and the container \\\"Parking Garage.Entry Gate Controller\\\" is missing a technology.\",",
+      "\"ERROR: The relationship between the person \\\"Driver\\\" and the software system \\\"Parking Garage\\\" is missing a technology.\",",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing documentation.\",",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing decisions.\",",
+      "\"ERROR: The container named \\\"Entry Gate Controller\\\" is not included on any views - add it to a view.\",",
+      "\"ERROR: The container named \\\"Exit Gate Controller\\\" is not included on any views - add it to a view.\",",
+      "\"ERROR: The container named \\\"Billing Service\\\" is not included on any views - add it to a view.\",",
+      "\"ERROR: The software system \\\"City Traffic Feed\\\" is missing a description.\"",
+      "]",
+      "}",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The relationship between the person \"Driver\" and the container \"Parking Garage.Entry Gate Controller\" is missing a technology.",
+      "The relationship between the person \"Driver\" and the software system \"Parking Garage\" is missing a technology.",
+      "The software system \"Parking Garage\" has containers, but is missing documentation.",
+      "The software system \"Parking Garage\" has containers, but is missing decisions.",
+      "The container named \"Entry Gate Controller\" is not included on any views - add it to a view.",
+      "The container named \"Exit Gate Controller\" is not included on any views - add it to a view.",
+      "The container named \"Billing Service\" is not included on any views - add it to a view.",
+      "The software system \"City Traffic Feed\" is missing a description."
+    ],
+    "inspect_triage": {
+      "\"ERROR: The container named \\\"Billing Service\\\" is not included on any views - add it to a view.\",": "untriaged",
+      "\"ERROR: The container named \\\"Entry Gate Controller\\\" is not included on any views - add it to a view.\",": "untriaged",
+      "\"ERROR: The container named \\\"Exit Gate Controller\\\" is not included on any views - add it to a view.\",": "untriaged",
+      "\"ERROR: The relationship between the person \\\"Driver\\\" and the container \\\"Parking Garage.Entry Gate Controller\\\" is missing a technology.\",": "untriaged",
+      "\"ERROR: The relationship between the person \\\"Driver\\\" and the software system \\\"Parking Garage\\\" is missing a technology.\",": "untriaged",
+      "\"ERROR: The software system \\\"City Traffic Feed\\\" is missing a description.\"": "untriaged",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing decisions.\",": "expected",
+      "\"ERROR: The software system \\\"Parking Garage\\\" has containers, but is missing documentation.\",": "expected",
+      "\"ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \\\"Landscape\\\" or \\\"SoftwareSystem\\\".\",": "untriaged",
+      "\"inspect\": {": "untriaged",
+      "\"status\": \"fulfilled\",": "untriaged",
+      "\"validate\": {": "untriaged",
+      "\"value\": \"OK\"": "untriaged",
+      "\"value\": [": "untriaged",
+      "The container named \"Billing Service\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Entry Gate Controller\" is not included on any views - add it to a view.": "untriaged",
+      "The container named \"Exit Gate Controller\" is not included on any views - add it to a view.": "untriaged",
+      "The relationship between the person \"Driver\" and the container \"Parking Garage.Entry Gate Controller\" is missing a technology.": "untriaged",
+      "The relationship between the person \"Driver\" and the software system \"Parking Garage\" is missing a technology.": "untriaged",
+      "The software system \"City Traffic Feed\" is missing a description.": "untriaged",
+      "The software system \"Parking Garage\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parking Garage\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged",
+      "]": "untriaged",
+      "{": "reported",
+      "}": "reported",
+      "},": "untriaged"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 0.75,
+    "skills_loaded": [
+      "structurizr-dsl"
+    ],
+    "steps": 7,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 102411,
+      "output": 4712,
+      "reasoning": 0
+    },
+    "tool_calls": 9,
+    "validate_calls": 3,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 44.551,
+    "workdir_dsl": "workspace \"ParkFlow\" \"Manages a multi-level parking garage.\" {\n    model {\n        driver = person \"Driver\" \"Arrives at and departs from the garage.\"\n        garage = softwareSystem \"Parking Garage\" \"Manages bays, entry, exit, and billing.\" {\n            entry = container \"Entry Gate Controller\" \"Reads licence plates and drives the entry barrier.\" \"C/C++\"\n            exit = container \"Exit Gate Controller\" \"Drives the exit barrier.\" \"C/C++\"\n            billing = container \"Billing Service\" \"Calculates fees and issues invoices.\" \"Java\"\n        }\n        traffic = softwareSystem \"City Traffic Feed\"\n        entry -> billing \"Registers bay occupancy in\" \"gRPC\"\n        exit -> billing \"Clears bay occupancy in\" \"gRPC\"\n        billing -> traffic \"Considers live traffic from\" \"REST/JSON\"\n        driver -> entry \"Enters through\"\n    }\n    views {\n        systemContext garage \"GarageContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "fix-dsl",
+    "condition": "upstream",
+    "k_index": 0
+  },
+  "run_id": "p120-prove-2026-11-07T185741Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-07T22:51:47Z",
+  "timeout": false,
+  "wall_time_s": 46.614558992907405,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/fix-dsl.upstream-k0.p120-prove-2026-11-07T185741Z"
+}
