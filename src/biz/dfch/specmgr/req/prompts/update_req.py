@@ -31,8 +31,8 @@ Task 0.9, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614); ``get_req``'s
 ``numbered=True`` additionally printing each line's 1-based body-line
 number, ready to feed into ``update``'s ``offset``).
 
-There is no ``update_frontmatter``/
-``option_*`` equivalent here: REQ's lifecycle surface (Task 3.9's design) is
+There are no fine-grained frontmatter/section mutation tools for
+this domain: REQ's lifecycle surface (Task 3.9's design) is
 deliberately small -- a whole-body or line-range replace (the generic
 ``update`` tool with ``type="req"``) plus a single, dedicated
 status-change path (the generic ``set_status`` tool with ``type="req"``)

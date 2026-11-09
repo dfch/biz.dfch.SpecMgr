@@ -515,8 +515,8 @@ class Updates(MarkdownSection2WithComment):
     ordering hint).
 
     Mirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no
-    dedicated per-entry tools (no `option_create`/`option_list` equivalent)
-    -- entries are prepended (newest-first) by editing the whole body.
+    dedicated per-entry tools -- entries are prepended (newest-first) by
+    editing the whole body.
 
     Parameters
     ----------

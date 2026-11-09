@@ -60,12 +60,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The new `set` artifact domain (issue #173's second work package): a
   convenience bundle of one or more already-existing specmgr artifacts
-  of any (mixed) type via forward references only — `SET` is not a tag
-  of the shared 12-tag reference vocabulary and nothing in an item ever
+   of any (mixed) type via forward references only — `SET` is not a tag
+   of the shared 11-tag reference vocabulary and nothing in an item ever
   points back to the set (the items remain the source of truth). The
   body is strictly H1 → `## Description` (mandatory, opaque free
   markdown) → `## Items` (mandatory flat bullet list, at least one
-  `<TAG> <uuid>: <title>` bullet from the shared 12-tag vocabulary in
+   `<TAG> <uuid>: <title>` bullet from the shared 11-tag vocabulary in
   any mix — `FEAT` carrying a `feat-NNN-slug` or bare `feat-NNN` id —
   optional per-bullet notes, a duplicate `(tag, id)` pair rejected); no
   other sections. `SetFrontmatter.status` is the SET-specific
@@ -83,8 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (the `## Description`/`## Items` headings join the packaged heading
   tables, e.g. `de.json`'s `Beschreibung`/`Elemente`, plus the
   never-translate line in `specmgr://i18n` and the
-  `translate_artifact` instructions), and the reference graph carries
-  the 16th palette entry (`SET` coloured `Wheat`, after `TXT`, before
+   `translate_artifact` instructions), and the reference graph carries
+   the 15th palette entry (`SET` coloured `Wheat`, after `TXT`, before
   `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
    (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
 

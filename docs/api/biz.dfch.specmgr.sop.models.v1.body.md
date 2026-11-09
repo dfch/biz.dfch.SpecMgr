@@ -18382,8 +18382,8 @@ present. May be preceded by an explanatory HTML comment (e.g. an
 ordering hint).
 
 Mirrors `tsk`/`dec`'s `Updates`/`RecentUpdates` container shape: no
-dedicated per-entry tools (no `option_create`/`option_list` equivalent)
--- entries are prepended (newest-first) by editing the whole body.
+dedicated per-entry tools -- entries are prepended (newest-first) by
+editing the whole body.
 
 Parameters
 ----------

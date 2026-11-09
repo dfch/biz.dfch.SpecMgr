@@ -69,7 +69,7 @@ class TestUcFrontmatter(unittest.TestCase):
             UcFrontmatter(status="rejected")
 
     def test_status_rejects_adr_style_superseded_by_phrase(self) -> None:
-        """Unlike AdrFrontmatter, "superseded by ..." is not a use-case status shape."""
+        """Unlike a domain frontmatter that carried a "superseded by ..." status shape, it is not a use-case status shape."""
         with self.assertRaises(ValidationError):
             UcFrontmatter(status="superseded by uc-002")
 
@@ -85,7 +85,7 @@ class TestUcFrontmatter(unittest.TestCase):
 
     def test_id_accepts_any_non_pattern_string(self) -> None:
         """`id` no longer enforces v1's `^uc-[0-9]+$` pattern -- any string is accepted,
-        matching AdrFrontmatter.id's own specmgr-assigned-identifier convention."""
+        matching the specmgr-assigned-identifier convention of every other domain frontmatter."""
         frontmatter = UcFrontmatter(id="not-uc-shaped-at-all")
         self.assertEqual(frontmatter.id, "not-uc-shaped-at-all")
 

@@ -81,7 +81,7 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         self.assertEqual(MarkdownFrontmatter.model_validate({"type": "uc", "status": "   "}).status, "draft")
 
     def test_status_accepts_arbitrary_free_form_value(self):
-        """Unlike AdrFrontmatter, status is not restricted to a fixed enum here."""
+        """Unlike a domain frontmatter with a closed status vocabulary, status is not restricted to a fixed enum here."""
         frontmatter = MarkdownFrontmatter(type="uc", status="in-review")
         self.assertEqual(frontmatter.status, "in-review")
 

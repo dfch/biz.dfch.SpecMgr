@@ -130,7 +130,7 @@ class TestSchemaTypeStr(unittest.TestCase):
 
     def test_ref_resolves_to_bare_name(self):
         """A ``$ref`` schema resolves to the referenced definition's bare name."""
-        self.assertEqual(_schema_type_str({"$ref": "#/$defs/AdrBody"}), "AdrBody")
+        self.assertEqual(_schema_type_str({"$ref": "#/$defs/SomeBody"}), "SomeBody")
 
     def test_any_of_with_null_becomes_none_union(self):
         """An ``anyOf: [T, null]`` union (optional field) renders as ``T | None``."""

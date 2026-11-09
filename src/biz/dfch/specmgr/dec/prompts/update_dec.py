@@ -32,8 +32,8 @@ There is no ``specmgr://dec/{id}`` resource to point
 at -- id-based reads always go through the ``get_dec`` tool only (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-There is no ``update_frontmatter``/
-``option_*`` equivalent here: DEC's lifecycle surface is deliberately
+There are no fine-grained frontmatter/section mutation tools for
+this domain: DEC's lifecycle surface is deliberately
 small -- a whole-body or line-range replace (the generic ``update`` tool
 with ``type="dec"``) plus a single, dedicated status-change path (the
 generic ``set_status`` tool with ``type="dec"``) -- mirroring

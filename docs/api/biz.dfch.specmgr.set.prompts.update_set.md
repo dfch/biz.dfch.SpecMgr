@@ -13,8 +13,8 @@ each line's 1-based body-line number, ready to feed into ``update``'s
 id-based reads always go through the ``get_set`` tool only (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-There is no ``update_frontmatter``/
-``option_*`` equivalent here: SET is dispatch-only from day one (DEC
+There are no fine-grained frontmatter/section mutation tools for
+this domain: SET is dispatch-only from day one (DEC
 36905d5b-8057-4294-8665-c7eed5534db0) -- a whole-body or line-range replace
 (the generic ``update`` tool with ``type="set"``), a surgical exact-match
 replacement (the generic ``edit`` tool with ``type="set"``), plus a single,

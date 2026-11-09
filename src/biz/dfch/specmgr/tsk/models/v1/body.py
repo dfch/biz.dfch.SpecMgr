@@ -190,9 +190,8 @@ class RecentUpdates(MarkdownSection2WithComment):
     """`## Recent Updates` -- a dynamic, newest-first list of timestamp-led `### ` update entries.
 
     A fixed-title (non-alias) `MarkdownSection2WithComment`, structurally
-    similar to DEC's `## Pros and Cons`/option collection, but with no dedicated per-entry tools (no
-    `option_create`/`option_list` equivalent) -- entries are prepended
-    (newest-first) by editing the whole body. May be preceded by an
+    similar to DEC's `## Pros and Cons`/option collection, but with no dedicated per-entry tools --
+    entries are prepended (newest-first) by editing the whole body. May be preceded by an
     explanatory HTML comment (e.g. an ordering hint).
 
     Parameters

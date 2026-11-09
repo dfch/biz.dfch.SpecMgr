@@ -14,8 +14,8 @@ line's 1-based body-line number, ready to feed into ``update``'s
 earlier resource to remove, unlike REQ's own history -- DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
-There is no ``update_frontmatter``/
-``option_*`` equivalent here: RSK's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: RSK's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="rsk"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="rsk"``) -- so the tool-mapping section

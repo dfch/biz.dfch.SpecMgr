@@ -13,8 +13,8 @@ serves the line-range flow's line numbers (with ``numbered=True``
 additionally printing each line's 1-based body-line number, ready to
 feed into ``update``'s ``offset``).
 
-There is no ``update_frontmatter``/
-``option_*`` equivalent here: UC's lifecycle surface is deliberately
+There are no fine-grained frontmatter/section mutation tools for
+this domain: UC's lifecycle surface is deliberately
 small, the same shape as REQ's -- a whole-body or line-range replace (the
 generic ``update`` tool with ``type="uc"``), a dedicated status-change
 path (the generic ``set_status`` tool with ``type="uc"``), and a dedicated
