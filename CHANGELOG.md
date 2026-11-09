@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The new `refine_feat` MCP prompt (`feat/prompts/refine_feat.py` + the
+  packaged `feat/data/feat_refine_instructions.md`): narrates a
+  pre-implementation plan-readiness review of a `feat-NNN-slug` feature
+  plan (testable acceptance criteria, phase ordering and dependencies,
+  scope clarity, unresolved decisions) fully over the MCP-native path —
+  read via `get_feat(id, raw=True)` (the edit coordinates only from
+  `get_feat(id, raw=True, numbered=True)`, never from a raw file read),
+  the findings triaged with the user via the `question` tool, the
+  approved fixes applied with the generic `update` tool with
+  `type="feat"` (line-range replace preferred, so unchanged regions stay
+  byte-identical), and the re-check via the generic `validate` tool with
+  `type="feat"`, `full=True` — host file tools only as a fallback for
+  hosts without those specmgr tools. The OpenCode host surface for it:
+  the new `feat-planner` subagent (`.opencode/agent/feat-planner.md` —
+  the same review with real file access, its plan-README-only edit scope
+  mechanically enforced by its `edit`/`write` permission rules
+  `{"*": deny, ".specmgr/feat/**/README.md": allow}`, distinct from the
+  pre-existing read-only `feat-refiner` agent) and the new
+  `/plan-feature <id>` command (`.opencode/command/plan-feature.md`,
+  `agent: feat-planner` — the name settled by the D1 decision, 2026-11-08:
+  the pre-existing `/refine-feature`/`feat-refiner`/`refine-feature`-skill
+  surface stays untouched; Phase 100 is purely additive). The harness
+  bundle grows from 30 to 32 files (the two new `.opencode/` files) and
+  is regenerated accordingly, with the count-pin test updated (feat-167-
+  mcp-lifecycle-commands-2 Phase 100, GitHub issue #167).
+
 - The new flat `specmgr harness-bundle` CLI command (`[cli]`-only, no
   `mcp` import, `commands/harness_bundle.py`): reads the repo-root layout
   from the current working directory, enumerates every `*.md` file

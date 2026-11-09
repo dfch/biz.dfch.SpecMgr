@@ -532,10 +532,26 @@ type or cross-cutting:
   (feat-81-83-validation Phase 4 retrofitted `FeatSummary`'s own `path` to
   match) rather than silently dropping it, feat-81-83-validation Phase 3);
   `feat/prompts/`
-  (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
-  first checks `list_feat` for a near-duplicate feature). Its schema
-  lives at `feat/models/v1/`, inside the domain package, not top-level
-  `models/`. `FeatSummary`'s own separate `path` field was removed in
+  (`create_feat`/`update_feat`/`refine_feat`, narrated instruction flows;
+  `create_feat` first checks `list_feat` for a near-duplicate feature;
+  `refine_feat` is the pre-implementation plan-readiness review --
+  testable acceptance criteria, phase ordering and dependencies, scope
+  clarity, unresolved decisions -- fully over the MCP-native
+  `get_feat(id, raw=True)`/generic `update(type="feat")` line-range/
+  `validate(type="feat", full=True)` path, host file tools only as the
+  fallback (feat-167-mcp-lifecycle-commands-2 Phase 100, GitHub issue
+  #167)). The OpenCode host surface for it (same phase): the
+  `feat-planner` subagent (`.opencode/agent/feat-planner.md` -- the same
+  review with real file access, its plan-README-only edit scope
+  mechanically enforced by its `edit`/`write` permission rules
+  `{"*": deny, ".specmgr/feat/**/README.md": allow}`; distinct from the
+  pre-existing read-only `feat-refiner` agent, which only reports and
+  never edits) and the `/plan-feature <id>` command
+  (`.opencode/command/plan-feature.md`, `agent: feat-planner` -- the
+  D1-settled name, 2026-11-08: the pre-existing `/refine-feature`/
+  `feat-refiner`/`refine-feature`-skill surface stays untouched). Its
+  schema lives at `feat/models/v1/`, inside the domain package, not
+  top-level `models/`. `FeatSummary`'s own separate `path` field was removed in
   feat-81-83-validation Phase 4 -- it now inherits the same, resolved
   `path: str` field every other whole-body domain's summary also carries
   via the shared `DocSummary` base (feat-81-83-validation Phase 3/4), no

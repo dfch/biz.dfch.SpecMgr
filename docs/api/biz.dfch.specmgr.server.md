@@ -878,10 +878,15 @@ and the ``create_sop``/generic ``validate`` (``type="sop"``) tool calls); ``crea
 ``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
 via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
 ``set_status_sop`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
-Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat`` --
-narrated instruction flows guiding an LLM through the FEAT tool sequence
-above; ``create_feat`` first checks ``list_feat`` for a near-duplicate
-feature.
+Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat``,
+``refine_feat`` -- narrated instruction flows guiding an LLM through the
+FEAT tool sequence above; ``create_feat`` first checks ``list_feat`` for a
+near-duplicate feature; ``refine_feat`` is the pre-implementation
+plan-readiness review (testable acceptance criteria, phase ordering and
+dependencies, scope clarity, unresolved decisions) over the MCP-native
+``get_feat(id, raw=True)`` / generic ``update(type="feat")`` line-range /
+``validate(type="feat", full=True)`` path, host file tools only as the
+fallback (feat-167-mcp-lifecycle-commands-2 Phase 100).
 Verification case record prompts (``vcr/prompts/``): ``create_vcr``,
 ``update_vcr`` -- narrated instruction flows guiding an LLM through the VCR
 tool sequence above; ``create_vcr`` first checks ``list_vcr`` for a

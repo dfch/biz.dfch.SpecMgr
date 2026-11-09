@@ -106,7 +106,7 @@ _ADR_TOOLS: frozenset[str] = frozenset(
     }
 )
 
-_FEAT_PROMPTS: frozenset[str] = frozenset({"create_feat", "update_feat"})
+_FEAT_PROMPTS: frozenset[str] = frozenset({"create_feat", "refine_feat", "update_feat"})
 _ADR_PROMPTS: frozenset[str] = frozenset({"create_adr", "update_adr", "create_adr_test", "update_adr_test"})
 
 #: The module-path prefixes that identify a ``feat``/``adr`` implementing function.
