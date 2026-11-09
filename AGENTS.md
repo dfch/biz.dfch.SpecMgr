@@ -1223,7 +1223,7 @@ import graph is AST-pinned (mirroring `plantuml/`'s import-free pin)
 because `cli.py`/`commands/mcp.py` import it at module level in a
 `[cli]`-only install — the originally drafted `general/tools/` home is
 rejected precisely because `general/tools/__init__.py` eagerly imports all
-twelve `@mcp.tool()` modules (→ `server` → third-party `mcp`), which would
+14 `@mcp.tool()` modules (→ `server` → third-party `mcp`), which would
 crash every CLI command in a `[cli]`-only install; do not move it there.
 Registration happens at import time of each owning module (the ten
 modules; the plantuml trio via its uc-domain consumer

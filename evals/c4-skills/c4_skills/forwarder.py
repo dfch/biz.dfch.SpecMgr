@@ -162,6 +162,13 @@ def _accept_loop(handle: ForwarderHandle) -> None:
     REAL connection (not the marker) and gets its worker thread too --
     "let the connections drain" includes the accept queue, so the loop
     exits on the marker byte, not on the stop event alone.
+
+    That discrimination is non-destructive: the first byte is PEEKed
+    (`socket.MSG_PEEK`), not consumed, so a real connection with in-flight
+    data loses no byte -- the peeked byte stays in the buffer for the
+    worker's relay. Only when the peeked byte IS the marker does the loop
+    consume it (and then close the wake-up connection). `MSG_PEEK` is
+    POSIX; this harness runs on Linux only (trial containers, CI runners).
     """
     assert handle._listener is not None
     while True:
@@ -172,10 +179,14 @@ def _accept_loop(handle: ForwarderHandle) -> None:
         if handle._stop_event.is_set():
             client.settimeout(1.0)
             try:
-                marker = client.recv(1)
+                marker = client.recv(1, socket.MSG_PEEK)
             except OSError:
                 marker = b""
             if marker == _STOP_MARKER:
+                try:
+                    client.recv(1)  # consume the single marker byte (peeked, not yet removed)
+                except OSError:
+                    pass
                 try:
                     client.close()
                 except OSError:
@@ -246,7 +257,9 @@ def stop(handle: ForwarderHandle) -> None:
     The accept loop is unblocked by a SELF-CONNECTION carrying the stop
     marker before the listener closes (closing the fd from another thread
     does not reliably wake a blocked `accept()` on Linux): the loop drains
-    any real connection still queued, then exits on the marker.
+    any real connection still queued, then exits on the marker -- which it
+    discriminates by peeking the first byte (`socket.MSG_PEEK`), so a real
+    connection's in-flight data is never consumed by the probe.
     """
     handle._stop_event.set()
     listener = handle._listener

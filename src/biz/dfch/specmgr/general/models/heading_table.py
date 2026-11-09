@@ -70,9 +70,8 @@ from collections.abc import Iterator
 from importlib import resources
 from importlib.resources.abc import Traversable
 
-from ..tools._path_safety import DEFAULT_LANGUAGE
-
 __all__ = [
+    "DEFAULT_LANGUAGE",
     "heading_table_path",
     "iter_heading_lines",
     "load_heading_table",
@@ -80,6 +79,12 @@ __all__ = [
     "reset_heading_table_cache",
     "resolve_heading_table",
 ]
+
+#: The default/primary document language (feat-197-i18n, DEC 38efdb66 items 1/6/7):
+#: English. The only language without a ``{language}`` subfolder (its documents live
+#: directly in the domain's flat base directory) and without a heading-mapping table
+#: (its headings are the canonical form itself).
+DEFAULT_LANGUAGE = "en"
 
 #: The anchor package whose packaged data holds the per-language tables
 #: (the existing ``general/data`` precedent, ``general/data/general_*.md``):

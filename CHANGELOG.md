@@ -210,6 +210,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   documents (the removal freeze, announced in AGENTS.md before the
   rollout, held for the whole migration).
 
+### Fixed
+
+- The `specmgr://i18n` resource's §5.1 11-tag reference-vocabulary
+  correction in the packaged data file `general/data/general_i18n.md`:
+  the stale `SOP` tag (not a reference tag) is replaced by `TXT`
+  (which is), matching the code authority in
+  `general/tools/_references.py` — the resource serves the packaged
+  file verbatim, so the fix ships to every consumer, and the
+  coordinated content pin in `tests/general/resources/test_i18n.py`
+  now asserts `TXT` (feat-255-i18n-typo, GitHub issue #255).
+- The last model→tools import edge (owed by feat-197-i18n) is
+  removed: `DEFAULT_LANGUAGE` now has its canonical model-side home in
+  `general/models/heading_table.py`, and `general/tools/_path_safety.py`
+  aliases it from there (the name stays in its `__all__`, so every
+  existing tools-layer consumer is untouched) — importing the model
+  module no longer pulls the `mcp` extra into the model import graph
+  (feat-255-i18n-typo, GitHub issue #255).
+
 ## [0.38.0] - 2026-10-31
 
 ### Added
