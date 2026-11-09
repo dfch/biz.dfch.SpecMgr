@@ -193,6 +193,12 @@ class TestForwarderStop(_ForwarderCase):
         handle = sut()
 
         client = _connect(*handle.address)
+        # wait for the accept loop to hand the connection to a worker, so this test
+        # exercises ESTABLISHED-connection drain deterministically (bounded by WAIT_S)
+        deadline = time.monotonic() + WAIT_S
+        while handle.active_connections() < 1 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertGreaterEqual(handle.active_connections(), 1, "worker for the test connection was not spawned")
         client.sendall(payload)
         # the echo is in flight; stop now (listener closes, relays drain)
         forwarder.stop(handle)
