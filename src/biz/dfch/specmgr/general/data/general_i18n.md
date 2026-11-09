@@ -119,7 +119,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 - The structure: heading levels (`#` counts), heading order, blank lines,
   list markers, numbered-list numbers.
 - Cross-reference lines `<TAG> <uuid>: <title>` with the tags `GOL`, `PRB`,
-  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `SOP`, `FEAT`:
+  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `TXT`, `FEAT`:
   the tag word, the uuid, and the `: <title>` text stay exactly as in the
   source (the title is the title of the referenced document). Only the
   paraphrase prose of a reference (the notes paragraph under it) is

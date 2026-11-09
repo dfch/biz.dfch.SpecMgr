@@ -4,7 +4,7 @@ created: '2026-09-03 10:44:22.396+02:00'
 id: 8d752304-b076-4bad-89af-f8032158dd21
 status: draft
 type: sysrs
-updated: '2026-10-30T14:08:12.419+01:00'
+updated: '2026-11-08T18:24:44.232+01:00'
 version: 1.0.0
 ---
 
@@ -16,7 +16,7 @@ biz.dfch.SpecMgr exists to be an artifact manager for system specifications: an 
 
 ## System Scope
 
-The system provides fourteen document-type domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
+The system provides fifteen document-type domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
 
 ## Business Context and Goals
 
