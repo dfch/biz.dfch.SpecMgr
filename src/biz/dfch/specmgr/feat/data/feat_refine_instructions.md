@@ -18,7 +18,10 @@ at design decisions the plan leaves open.
 - Call `get_feat($id)` (the parsed document) to see the frontmatter
   fields -- `id`/`type`/`status`/`created`/`updated`/`version` (plus
   `classification` when set) -- which step 5's re-check reuses, and to
-  see which of the sections are present.
+  see which of the sections are present. If `get_feat($id)` returns a
+  parse-failure result (`error`/`path`) instead of a document, report
+  the error and stop: the plan must be repaired first (the `/repair`
+  surface), not refined.
 - Call `get_feat($id, raw=True)` for the frontmatter-stripped body --
   the exact text the `update` tool's `offset`/`limit` address. Never
   assume prior state: the on-disk `.specmgr/feat/$id/README.md` file is

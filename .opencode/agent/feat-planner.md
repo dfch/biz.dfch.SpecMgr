@@ -61,7 +61,10 @@ those specmgr tools (the final section below).
    overview) and `get_feat(<id>, raw=True)` (the frontmatter-stripped
    body, the text the `update` tool's `offset`/`limit` address). Never
    assume prior state -- the on-disk README may have been hand-edited
-   since it was last read.
+   since it was last read. If `get_feat(<id>)` returns a parse-failure
+   result (`error`/`path`) instead of a document, report the error and
+   stop: the plan must be repaired first (the `/repair` surface), not
+   refined.
 2. **Assess plan readiness** against the checklist below, collecting a
    finding (area, section, 1-based body line, and the fix you would
    apply) for every defect you see.

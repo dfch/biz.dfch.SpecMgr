@@ -97,6 +97,16 @@ class TestRefineFeatPrompt(unittest.TestCase):
         self.assertIn(f"`get_feat({_ID}, raw=True)`", result)
         self.assertIn(f"`get_feat({_ID}, raw=True, numbered=True)`", _one_line(result))
 
+    def test_parse_failure_report_and_stop(self):
+        """The unparseable-plan branch (cycle-4 G1): a parse-failure result is reported and stopped, not refined."""
+        result = _one_line(refine_feat(_ID))
+        self.assertIn(
+            f"If `get_feat({_ID})` returns a parse-failure result (`error`/`path`) instead of a "
+            "document, report the error and stop: the plan must be repaired first (the `/repair` "
+            "surface), not refined.",
+            result,
+        )
+
     def test_update_line_range_preferred(self):
         """The apply path must name the generic update tool with type="feat", line-range preferred."""
         result = _one_line(refine_feat(_ID))
