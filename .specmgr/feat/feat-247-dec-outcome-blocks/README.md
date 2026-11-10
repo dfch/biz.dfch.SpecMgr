@@ -4,7 +4,7 @@ created: '2026-11-01T07:22:27.849+01:00'
 id: feat-247-dec-outcome-blocks
 status: done
 type: feat
-updated: '2026-11-04T06:14:00.000+01:00'
+updated: '2026-11-09T21:49:57.000+01:00'
 version: 1.0.0
 ---
 
@@ -106,9 +106,7 @@ Every list item in this document is written as a single physical line (the soft-
 
 ### Current Status
 
-**As of 2026-11-04**: The feature is closed out. The change was merged to `dev` via PR #252 (`68ed2d1`), and the post-merge state was verified end-to-end by the feat-46-remove-adr refinement pass: a trial conversion of all 46 ADRs through the merged parser (with feat-46's own `convert()`) yields 46/46 clean and 0 needs-judgment, including the raw-HTML/multi-block interactions of `7a626b12` and `bfd76370` and the `92cc4ce8` superseder bullet. The maintainer marked all nine ACCs met and closed GitHub issue #247 as part of the feat-46 preparation. Frontmatter `status` moved `review` -> `done`.
-
-**As of 2026-11-01**: All four phases (100, 110, 120 and 130) are complete, the Phase 130 verification gate is green, and the feature is ready for review. Phase 130 ran the definitive quality gate -- `ruff format --check` (2264 files already formatted), `ruff check` (all checks passed), `vulture src/ whitelist.py --min-confidence 60` (clean), and the full `pytest -n auto --cov=src --cov-report=` suite (5647 passed, 18 skipped in 124.18s) -- verified the feature's 19-file footprint against ACC-005 (every file in the allowed set, plus exactly the two plan-sanctioned infrastructure files: `whitelist.py` and this plan README; no `models/md` change, no other-domain change, no DEC frontmatter change, no violation), and ran the one-off in-memory 46-ADR `## Decision Outcome` trial (the full snapshot is the newest Updates entry below): before = 19 blocked by this rule / 2 raw-HTML / 25 fully clean, after = 44 fully clean (19 of them with `further_blocks` populated) / 2 raw-HTML / 0 blocked by this rule -- i.e. "46 clean for this rule", with the measured 19-vs-20 baseline reconciliation recorded there. Frontmatter `status` moved `progress` -> `review` (the post-implementation "ready for review" transition).
+**As of 2026-11-09**: All four phases (100, 110, 120 and 130) complete and gate-green (the Phase 130 quality gate and the 46-ADR one-off trial are recorded in the Updates entries below), the single post-implementation feat-reviewer pass addressed (commit `d375cd9e`), and the feature closed out to `done`. PR #252 was merged to `dev` on 2026-11-03 (merge commit `68ed2d14`), and GitHub issue #247 was closed on 2026-11-04. The post-merge state was verified end-to-end by the feat-46-remove-adr refinement pass: a trial conversion of all 46 ADRs through the merged parser (with feat-46's own `convert()`) yields 46/46 clean and 0 needs-judgment, including the raw-HTML/multi-block interactions of `7a626b12` and `bfd76370` and the `92cc4ce8` superseder bullet. The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the v0.39.0 release window; nothing remains in this feature.
 
 **Handover**: the Phase 130 trial result is handed to feat-46 (feat-46-remove-adr, GitHub issue #46, which exists only on its own branch, not in this worktree) via this snapshot as the proof that THIS rule (the single-paragraph-lead constraint of `## Decision Outcome`) no longer blocks any of the 46 ADRs' outcomes; the two remaining ADR-level rejections are the deliberately-preserved raw-HTML rule (`7a626b12`'s `<jar>`, `bfd76370`'s `<domain>`), which the plan's Scope assigns to feat-46's mechanical raw-HTML handling. No further implementation remains in this feature -- the next step is review and merge, after which feat-46 can roll out the ADR to DEC conversion.
 
@@ -119,6 +117,10 @@ Every list item in this document is written as a single physical line (the soft-
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-09 20:49:57.000Z - Closeout: PR #252 merged to dev, status review -> done, issue #247 closed
+
+PR #252 was merged to `dev` on 2026-11-03 (committer time 13:30:40 +0100) as merge commit `68ed2d14074208c2005bf2fbe711a55b804d8479`, and GitHub issue #247 was closed on 2026-11-04 (2026-11-04T06:24:23Z). The frontmatter `status` is flipped `review` -> `done` in this closeout (a legal transition under the feat table). The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the coming v0.39.0 release window (a non-`done` feat with a merged PR in the window would fail `stage_precheck`). No code or plan changes accompany it; nothing pending.
 
 #### 2026-11-04 05:14:00.000Z - Closeout: merged (PR #252), verified end-to-end, status to done
 

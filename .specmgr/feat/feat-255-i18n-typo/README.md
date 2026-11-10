@@ -4,7 +4,7 @@ created: '2026-11-03T20:33:04.587+01:00'
 id: feat-255-i18n-typo
 status: done
 type: feat
-updated: '2026-11-08T21:02:57.163Z'
+updated: '2026-11-09T20:49:57.894Z'
 version: 1.0.0
 ---
 
@@ -169,3 +169,5 @@ The post-implementation feat-reviewer pass returned verdict `ship` (no Errors/Ga
 - [Issue #255](https://github.com/dfch/biz.dfch.SpecMgr/issues/255): the tracking issue for this feature.
 
 - [PR #254](https://github.com/dfch/biz.dfch.SpecMgr/pull/254): the merged feat-173 PR whose two feat-reviewer passes surfaced all four findings (fix commits `3edeee2`, `847c447`; merge commit `83be662`).
+
+- [PR #259](https://github.com/dfch/biz.dfch.SpecMgr/pull/259): this feature's delivery PR (merged 2026-11-09T18:35:09Z as merge commit `3d74305`; auto-closed issue #255 by the merge).
