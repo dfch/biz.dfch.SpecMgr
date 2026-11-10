@@ -1,0 +1,395 @@
+---
+classification: null
+created: '2026-11-05T08:11:57.662+01:00'
+id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
+status: draft
+type: qa
+updated: '2026-11-10T09:49:01.765+01:00'
+version: 1.0.0
+---
+
+# Architecture Review Checklist: Decisions and Open Items
+
+## General
+
+### Introduction
+
+Decision record and open-item list for the architecture review checklist TXT 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9: Architecture Review Checklist: Viewpoints x Perspectives (renamed in TXT Draft 0.8, formerly "Viewpoints x Quality Characteristics"). Answered questions record decisions taken in the refinement sessions of 2026-11-05. Questions marked `TODO` are open items. The TXT holds only the result of the work. Open items are tracked here.
+
+### Raw Requirements
+
+The raw requirement was a draft checklist from several interviews, using ISO 42010 viewpoints, ISO 25010 quality characteristics, the assessment dimensions AD01 to AD12 and the ISO 29148 characteristics, with the structure viewpoint, quality characteristic, review criteria, assessment, findings and evidence.
+
+## Elicitation Context
+
+<!-- Decisions from the refinement sessions of 2026-11-05. -->
+
+> **0.0010**: What is the source of the assessment dimensions AD01 to AD12?
+
+A draft list collected from several interviews. There is no single reference. The list must not be cited as an ISO standard.
+
+> **0.0020**: Are Security, Safety and Performance viewpoints or quality characteristics?
+
+Security and Safety are viewpoints. Performance is a quality characteristic only. The removed Performance viewpoint is replaced by a Runtime/Process viewpoint at VP12.
+
+Reversed on 2026-11-10 (TXT Draft 0.8, see 0.0520): Security and Safety are perspectives, not viewpoints. Performance Efficiency stays a perspective. The viewpoint VP12 Runtime/Process is now VP04 Concurrency.
+
+> **0.0030**: What is ISO 29148 used for?
+
+It is used to author the checklist criteria. Each criterion is checked against the characteristics of a well-formed requirement.
+
+> **0.0040**: Which format holds the checklist, and which holds open items?
+
+The checklist catalogue is a TXT document and holds only results. Open items and decisions are tracked in this QA.
+
+> **0.0050**: What default applicability does Safety have?
+
+Opt-in. Each review states "safety relevant" or "not safety relevant", with a one-line justification for either decision.
+
+> **0.0060**: Which language and style does the checklist use?
+
+English, plain style.
+
+> **0.0070**: What is the criterion ID scheme?
+
+`VP08-RE-090`: viewpoint, quality characteristic code, three-digit number. Numbers start at 090 and run in steps of 10. Numbers are permanent. They are not renumbered or reused.
+
+Update 2026-11-10 (TXT Draft 0.8): the viewpoint part is now VP01 to VP07 or XV (CrossView), and the second part is a perspective code, for example `VP06-RE-090` (the former `VP08-RE-090`). The viewpoint IDs were renumbered once, with the move to the R+W viewpoint set (0.0520). The old to new table is in 0.0520. From Draft 0.8 on, viewpoint IDs and criterion numbers are permanent.
+
+> **0.0080**: Which dimensions are added to the AD list?
+
+AD13 Necessity, AD14 Economic viability and AD15 Organisational fit.
+
+> **0.0090**: Which rating scale is used?
+
+Single-word ratings: Satisfactory, Partially, Unsatisfactory, Inapplicable, Unassessable. The words follow the first draft, shortened to one word each.
+
+Refined in TXT Draft 0.5: the rating is no longer recorded directly. Each criterion records three fields, each with single-word values: Applicability (Applicable, Inapplicable), Evidence (Sufficient, Insufficient, Missing) and Outcome (Satisfactory, Partially, Unsatisfactory). The five rating words are derived: Inapplicable if not applicable, Unassessable if the evidence is not sufficient, otherwise the Outcome word. The severity of a finding no longer defines the rating.
+
+> **0.0100**: How is maturity handled?
+
+Maturity is rated only on practice criteria, plus one required capability profile per review. Design criteria carry no maturity level. The scale starts with ISO/IEC 33020: incomplete, performed, managed, established, predictable, innovating.
+
+> **0.0110**: Does the review result justify a new artifact type now?
+
+Not yet. Run two or three real reviews as TXT first, linking findings to RSK and DEC artifacts. Then decide.
+
+> **0.0200**: Do the statements about ISO/IEC/IEEE 42010, 29148 and 42030 hold against the standards?
+
+fyi: information about ISO 29148 is in ~/src/docs/md/iso-iec-ieee-29148-2018.md, verify
+
+TODO: answer pending
+
+> **0.0210**: Does ISO/IEC/IEEE 42030 or ATAM require changes to the structure?
+
+TODO: answer pending
+
+> **0.0220**: Which capability level names does the current ISACA COBIT version use, and does it differ from ISO/IEC 33020?
+
+TODO: answer pending
+
+> **0.0230**: Which practice areas make up the capability profile?
+
+TODO: answer pending
+
+> **0.0240**: How are the overlaps between Functional, Logical and Application/Software, and between Technology/Infrastructure and Deployment, resolved?
+
+Answered on 2026-11-10 (TXT Draft 0.8). The overlaps disappear because the thirteen viewpoints are reduced to the seven core viewpoints of R+W (0.0520). Logical is merged into Functional (runtime structure) and Development (source-level dependency rule). Application/Software is merged into Development. Technology/Infrastructure is merged into Deployment. The remaining boundaries are written in TXT section 4: Functional is runtime, Development is source modules; Deployment is the environment, Operational is how it is run; an interface to an entity outside the system is Context, an interface inside is Functional.
+
+> **0.0250**: How are the overlaps between the AD list and ISO 25010 resolved, namely AD08 and AD10 against Maintainability and Flexibility, and the names shared by AD01, AD03 and AD05 with Functional Suitability?
+
+TODO: answer pending
+
+> **0.0260**: Is Organisational promoted to an actual viewpoint, and are Business/Capability, Scenarios, Evolution and Migration, and Privacy and Regulatory added?
+
+**TODO** What does TOGAF or ISO 42010 say about this?
+
+Partly answered on 2026-11-10 (TXT Draft 0.8), based on R+W (0.0520). Not added as viewpoints: Evolution (it is covered by the perspectives MA and FL), Privacy and Regulatory (perspective RG Regulation), Organisational (perspective DR DevelopmentResource, which covers skills, budget, time and external dependencies), Scenarios (a technique of R+W, ch. 10, used for quality targets), Migration (part of VP07 Operational). Business/Capability is not in the R+W set. VP01 Context holds scope and responsibilities. It can be added per review.
+
+ISO/IEC/IEEE 42010 defines no viewpoint catalogue. Its text names the R+W viewpoints Functional, Information, Concurrency, Development, Deployment and Operational and the perspectives Security, Performance and Scalability, Availability and Resilience, and Evolution as an example (bibliography entry for R+W). It refers to TOGAF only in a list of architecture frameworks.
+
+TODO: check what TOGAF says about a Business/Capability viewpoint, if a review needs one.
+
+> **0.0270**: Is the applicability matrix and its cell count correct?
+
+Partly answered. An external review of 2026-11-05 claimed 28 primary cells. A recount of the table gives 30 primary, 68 secondary (after the change below) and 19 dash cells. The count of 30 stays. Structural fixes were applied: the dash means "no default criteria assigned", P and S were redefined, removal and activation rules were added, and VP11 x SA changed from a dash to S. The matrix stays provisional until the validation in 0.0340 is done. The remaining dash cells were kept. VP11 x RE, VP08 x MA and VP09 x FL can be activated per review if the validation shows a gap.
+
+Superseded on 2026-11-10 (TXT Draft 0.8): the matrix was rebuilt for seven viewpoints plus CrossView and twelve perspectives. The new counts are 32 primary, 47 secondary and 17 X cells, 96 in total. The reasons for each cell are in 0.0530.
+
+> **0.0340**: Does the matrix hold up against three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform, and a safety-relevant cyber-physical system?
+
+TODO: answer pending
+
+> **0.0350**: For each of the three architectures: does every important quality concern have a primary location, do the secondary cells give useful cross-checks without duplicating primary criteria, and which concerns fit no viewpoint?
+
+TODO: answer pending
+
+> **0.0360**: Should VP11 x RE, VP08 x MA or VP09 x FL become secondary cells, if the validation shows a coverage gap?
+
+Update 2026-11-10: the question uses the old IDs. In the new matrix (TXT Draft 0.8) the equivalent cells are VP05 x RE and VP06 x MA, and both are already S (0.0530). The old VP09 x FL has no equivalent cell. The nearest one is XV x FL, which is X and can be activated per review.
+
+TODO: answer pending
+
+<!-- Split from 3.0090 (C4/Structurizr). Checked on 2026-11-05 against the Structurizr documentation and the local Structurizr MCP server (DSL tools and PlantUML and Mermaid export, no file access). Items not yet checked are marked "to be confirmed". -->
+
+> **0.0370**: Can a C4 model serve as input evidence for a review, and which C4 views support which viewpoints?
+
+Yes, as evidence. The mapping is many to many, because C4 is not viewpoint based. Draft mapping:
+
+- System context and system landscape view: VP01 Context. A landscape view is a candidate for the Business/Capability viewpoint (0.0260).
+- Container view: VP03, VP05 and VP07 together. A C4 container is both a logical unit and a technology unit. This feeds the overlaps in 0.0240.
+- Component view: VP03 and VP05.
+- Dynamic view: VP12 Runtime/Process, and sequence evidence for VP06.
+- Deployment view with infrastructure nodes and health checks: VP08, partly VP07 and VP10.
+- Relationship description and technology: evidence for the VP06 interface catalogue.
+- Groups, tags and properties: trust boundaries, failure domains and the safety relevance declaration.
+
+Checked with the MCP server: a deployment node with an instance count and a health check is machine readable. A single instance node with no replica is therefore visible in the model. This supports VP08-RE-100 and VP08-RE-120.
+
+Update 2026-11-10 (TXT Draft 0.8): the mapping above uses the old viewpoint IDs. The current mapping is in TXT section 11.6: Container is VP02 Functional and VP06 Deployment, partly VP05 Development. Component is VP02 Functional, partly VP05. Dynamic is VP04 Concurrency, and sequence evidence for the interfaces of VP01 and VP02. Deployment is VP06, partly VP07 Operational. Relationship description and technology is the interface catalogue of VP01 (external) and VP02 (internal). Groups, tags and properties carry trust boundaries (XV x SE), failure domains (VP06) and the safety relevance declaration (XV x SA). The overlaps of 0.0240 no longer exist. The criteria are `VP06-RE-100` and `VP06-RE-120`.
+
+Evidence level: a view drawn from a validated model is Documented. A Structurizr inspection that is run and recorded so that it can be run again is Demonstrated, and Measured when it runs repeatedly in a pipeline, but only for structure claims. Inspections check the model, not the quality targets.
+
+Inspections that fit the architecture-level pass (TXT section 6.4): disconnected element (AD01, AD02), element in no view (AD13), software system with containers but no decisions (AD06), no documentation (AD09), container without technology and relationship without description (AD07). A probe workspace returned six violations with the default severity error, so a review must set the severity per inspection first.
+
+To be confirmed: the same mapping on the three architectures of 0.0340. Pattern catalog entries of Structurizr (microservice, Kubernetes, hardware system) can serve as starting models.
+
+> **0.0380**: Can a review result be shown on a Structurizr model?
+
+Yes, with a limit. A perspective (name, description, value) can be attached to any element and relationship. Proposed use: the perspective name is the checklist perspective (since TXT Draft 0.8 the word is the same on both sides, for example Reliability), the value is the rating word, the description is the finding summary. Properties carry the criterion ID and the evidence strength, for example `review.criterion` `VP06-RE-100` and `review.evidence` `Documented`. Verified with the parse tool: both are kept in the model. A model-level property can hold the safety relevance declaration and its justification.
+
+Limit: a style on a perspective value, for example `Perspective:Reliability[value==Unsatisfactory]`, works in the Structurizr renderer only. In the PlantUML export of the probe workspace the style was not applied. A coloured rating view in an exported diagram needs another way, for example tag based styles. To be confirmed: whether tag based styles survive the export.
+
+To be confirmed: a review as an overlay on the architecture baseline with `workspace extends` and `!element`. This needs file access and cannot be tested with the MCP server. The local Structurizr container mounts a workspace directory and can test it.
+
+> **0.0390**: Which viewpoints and checklist concepts have no C4 equivalent?
+
+No native C4 construct exists for VP02 Functional, VP04 Information/Data, VP09 Security, VP11 Development/Construction and VP13 Safety. VP10 Operational is covered in part only (health checks, infrastructure nodes).
+
+Update 2026-11-10 (TXT Draft 0.8): with the R+W viewpoints the list is shorter and more precise. No native construct: VP03 Information, and the functional capabilities of VP02 (the structure of VP02 is modelled by container and component views). Covered in part only: VP05 Development (technology and component structure, not build, test or codeline) and VP07 Operational. The row XV CrossView (security target, threat model, hazard analysis, regulation register, resource constraints) is not modelled. Quality targets, the rating scale, the maturity levels and the capability profile are not modelled in C4 either. These need other evidence, for example quality attribute scenarios, threat models and hazard analyses. Model properties and perspectives can only reference this evidence.
+
+> **0.0400**: Is tooling or automation for the C4/Structurizr mapping wanted now?
+
+Not yet. This follows the decision of 0.0110 and 0.0320: run two or three real reviews first. Candidates for later, each as a phase in a feature: an inspection step that produces E3 evidence for the architecture-level pass, and a generator that turns a review document into a `workspace extends` overlay.
+
+To be confirmed before any such work:
+
+- `workspace extends` and `!docs` with a local container (see 0.0380).
+- Whether the Structurizr PlantUML and C4-PlantUML exports pass the `validate_plantuml` tool of specmgr. A plain PlantUML export of a deployment view passed with two warnings about unclosed rectangle fragments. C4-PlantUML was not tested. It relies on `!include`.
+- Whether `!adrs` accepts the MADR format of specmgr ADR documents. DEC documents are not compatible without conversion.
+
+The checklist TXT stays tool neutral. It names no product in its criteria (TXT section 6.2). Update 2026-11-06: the design of a model generation agent is now part of the TXT, in section 11. Product names are confined to that section. The criteria stay tool neutral. See 0.0450.
+
+> **0.0410**: Which source describes the viewpoint and perspective model that the matrix resembles, and how reliable are the two links found?
+
+Partly answered. The Structurizr documentation says that its perspectives come from the book *Viewpoints and Perspectives* (Rozanski and Woods). In that model a viewpoint is a way to look at the architecture, and a perspective is a quality property applied across viewpoints. This has the same structure as the matrix of the checklist. The TXT section 2 does not yet name this source and says only "compiled from several practice sources" for VP01 to VP13.
+
+Links found (secondary sources, from one demo project, not the book):
+
+- https://github.com/humank/genai-demo/blob/a48be6fb9534feb6b35dfc16ae9edab30543f38b/.kiro/steering/rozanski-woods-architecture-methodology.md
+- https://github.com/humank/genai-demo/blob/a48be6fb9534feb6b35dfc16ae9edab30543f38b/.kiro/steering/README.md
+
+What the first link shows: seven viewpoints (Context, Functional, Information, Concurrency, Development, Deployment, Operational) as per feature checklists, and four perspectives (Security, Performance and Scalability, Availability and Resilience, Evolution). Of these, Concurrency matches our VP12 Runtime/Process, and Evolution matches in part our Flexibility. It also gives a quality attribute scenario template (source, stimulus, environment, artifact, response, response measure). This template supports the first criterion of every home cell, which asks for the measurable target. The second link is an index of that project and adds nothing for the matrix.
+
+Cautions: the files are written for a Java and DDD project and mix project rules with the methodology. The scenario template comes from the quality attribute work of the SEI, not from Rozanski and Woods. The cited commit is pinned, which is good, but the content is a secondary source and must not be cited as the book.
+
+Resolved on 2026-11-10 (TXT Draft 0.8). The viewpoint list, the perspective list, the definitions and the per-view applicability tables were checked against the text of the book (2nd edition, 2012). The book has seven viewpoints (Table 3-1) and ten perspectives: four in detail (Security, Performance and Scalability, Availability and Resilience, Evolution) and six in brief (Accessibility, Development Resource, Internationalization, Location, Regulation, Usability; Tables 4-2, 24-1 and 24-2). The demo project of the first link lists only four of the ten. The source is now in TXT section 2, and the decision on the other perspectives is in 0.0520.
+
+> **0.0420**: Are the evidence levels E0 to E3 kept as codes?
+
+No. Decided on 2026-11-06 for TXT Draft 0.5. The codes are replaced by three named levels, ordered from weakest to strongest: Documented, Demonstrated, Measured. The order is needed to compare evidence against a minimum. The codes are not needed. E0 is dropped, because evidence that is only asserted is Evidence Missing in the rating. Demonstrated and Measured require a result that someone else can reproduce. A review, an opinion, or the reading of an artefact is not a level.
+
+> **0.0430**: Where is the minimum evidence level defined?
+
+In one policy table in TXT section 8.2, by review type and by criterion type (design or practice). The per-criterion field "Minimum evidence strength" was removed. The reason is that a fixed minimum per criterion made a concept review fail by construction. Provisional values: concept and pre-implementation need Documented for both criterion types. Pre-release needs Documented for design and Demonstrated for practice. A periodic health check needs Demonstrated for design and Measured for practice. To be confirmed against real reviews (see 0.0110).
+
+> **0.0440**: What evidence level can an LLM agent reach, and how is that made visible?
+
+The reading or judgement of an LLM is never evidence by itself. The evidence level is the level of the artefact or result that was read. An agent reaches Demonstrated or Measured only by running a recorded, repeatable check (producer Tool), for example a model parse, a dependency cycle check, or a query for nodes with one instance. Such a check supports structure claims only. Load tests, failover tests and penetration tests come from a person or a pipeline. The agent reads the report and checks its provenance. If the artefact does not exist, the Evidence is Missing and the rating is Unassessable. The evidence record in TXT section 8.2 gets a Producer attribute for this: Author, Human, Pipeline or Tool.
+
+> **0.0450**: Where is the design of the C4 model generation agent described?
+
+In TXT section 11, as a design proposal (TXT Draft 0.6). It is not implemented. It covers scope, inputs and outputs, design principles, origin and provenance, four agents, five skills, two commands, the viewpoint to C4 view mapping, a six-phase flow and the checks. This changes the position of 0.0400, which kept the checklist free of product names. The criteria in TXT sections 6 to 10 stay tool neutral. Section 11 names Structurizr. Building the agent is still not started. The decision of 0.0110 applies: run real reviews first.
+
+> **0.0460**: Where are the outputs of the model generation agent stored, and are they linked from a specmgr artifact?
+
+Proposed in TXT section 11.2: `diagrams/c4/<system>/`.
+
+TODO: answer pending
+
+> **0.0470**: In which format is the facts file written?
+
+TODO: answer pending
+
+> **0.0480**: Does the viewpoint to C4 view mapping live only in the skill c4-viewpoint-mapping, or does the skill read it from the TXT?
+
+A copy in the skill can drift from the TXT.
+
+TODO: answer pending
+
+> **0.0490**: How many failed check attempts end phase 5 of the flow, and how large is the sample of facts compared with the source?
+
+TODO: answer pending
+
+> **0.0500**: Do the property conventions `trust.boundary`, `failure.domain`, `review.safety.relevant` and `review.safety.justification` survive the Structurizr parse and the exports?
+
+The first two are proposals. The safety properties follow the verified model-level property of 0.0380. To be confirmed with the Structurizr tools.
+
+Verified on 2026-11-06 with a probe workspace and Structurizr 2026.10.26 (image `structurizr/structurizr:2026.10.26-noble`, no network needed). The probe is in `/tmp/opencode/c4-probe/` (`README.md` has the reproduce commands). It is to be moved into a feature folder. Results:
+
+- Properties parse on elements, deployment nodes, infrastructure nodes, container instances, software system instances and relationships. They are kept verbatim in the JSON export.
+- Properties are dropped in the PlantUML (Structurizr and C4-PlantUML) and Mermaid exports. A diagram does not show them. The JSON export is the only carrier, so a query script is the authoritative reader.
+- `trust.boundary` cannot be set on a group. Inside a software system or deployment environment it is a parse error. In a model-level group it parses, but writes to the model properties. In JSON a group is only a string `group` on each member element.
+- There is no inheritance in the JSON. A child does not carry the properties of its parent. A reader must walk the hierarchy.
+- Dots, hyphens and spaces in keys, and spaces, commas, semicolons and unicode in values, are kept. An empty value is a parse error. A duplicate key in one block takes the last value silently. Keys are case sensitive.
+- Relationship properties exist only on explicit relationships. Implied and instance-to-instance relationships carry none.
+- The Structurizr `inspect` command knows nothing about properties. There is no vocabulary enforcement.
+- A stdlib-only Python query script grouped instances by failure domain, found shared domains, derived boundary-crossing relationships, reported unset values without failing, and flagged a singleton typo and a group/property conflict.
+- Three Structurizr PlantUML exports and one C4-PlantUML export passed the specmgr `validate_plantuml` tool. This also answers part of 0.0400. The Structurizr exports give "unclosed rectangle fragment" warnings on every plain `rectangle ... as X` line. This looks like a false positive of the structure check.
+
+Decisions taken in TXT Draft 0.7: `trust.boundary` on elements and deployment nodes only, never on groups. One key per failure domain level (`failure.domain.host`, `.zone`, `.region`), set once on the node of that level. Keys use `[a-z0-9.]+`. No empty values. Relationship placement is renamed `trust.boundary.crossing` and is only a cross-check against the boundary derived from the endpoints.
+
+Not verified: the full deployment export in the PlantUML validator (only a trimmed subset), image rendering, properties on views, components and deployment groups, the Structurizr MCP server, other Structurizr versions.
+
+TODO: decide where the probe and the query script live (feature folder) and whether the query script becomes the c4-model-checker check.
+
+> **0.0510**: Which pilot runs are used for the model generation agent?
+
+Candidates: this repository for the code path and one SYSRS for the specmgr path. This follows 0.0110.
+
+TODO: answer pending
+
+> **0.0520**: Which viewpoint set and which perspective set does the TXT use, and what happened to the old viewpoints VP01 to VP13?
+
+Decided on 2026-11-10 for TXT Draft 0.8, after the check of the book (0.0410). The TXT can reduce its viewpoints if each one maps clearly to an R+W viewpoint, and it keeps the ISO wording where that makes sense.
+
+- Viewpoints: the seven core R+W viewpoints, VP01 Context, VP02 Functional, VP03 Information, VP04 Concurrency, VP05 Development, VP06 Deployment and VP07 Operational. The names are the R+W names.
+- Perspectives: the nine ISO/IEC 25010:2023 characteristics keep their ISO names, order and sub-characteristics. Three R+W perspectives are added because ISO/IEC 25010 cannot express them: RG Regulation, LO Location and DR DevelopmentResource. That gives twelve.
+- Not added as perspectives: Usability and Accessibility are part of IC. Internationalization is covered by IC (Inclusivity) and FL (Adaptability). Evolution is split into MA and FL, as in ISO. Scalability stays under FL, as in ISO, although R+W group it with Performance.
+- Security and Safety are perspectives and no longer viewpoints (as R+W). Safety is an extension of R+W, which has no safety perspective.
+- A new matrix row, XV CrossView, holds the deep criteria that no single view can hold. Its primary cells are the home cells XV x SE, XV x SA, XV x RG and XV x DR. The row is not an R+W viewpoint.
+- The assessment dimensions follow: AD11 Compliance is carried by RG, AD14 Economic viability and AD15 Organisational fit by DR. The statement that AD14 and AD15 have no ISO characteristic is obsolete.
+- Interfaces: the old Integration/Interface viewpoint is split into VP01 Context (external interfaces) and VP02 Functional (internal interfaces and connectors). Both keep "Interfaces" as a named concern group. Behaviour when an external system fails is assessed in VP06 x RE (VP06-RE-140).
+
+Old to new viewpoint IDs (the IDs were renumbered once, before the catalogue was released):
+
+- Old VP01 Context is VP01 Context.
+- Old VP02 Functional is VP02 Functional.
+- Old VP03 Logical is VP02 Functional (runtime structure, layering) and VP05 Development (source-level dependency rule).
+- Old VP04 Information/Data is VP03 Information.
+- Old VP05 Application/Software is VP05 Development.
+- Old VP06 Integration/Interface is VP01 Context, VP02 Functional and VP06 Deployment, as described above.
+- Old VP07 Technology/Infrastructure is VP06 Deployment.
+- Old VP08 Deployment is VP06 Deployment.
+- Old VP09 Security is the perspective SE, with its deep criteria in XV x SE.
+- Old VP10 Operational is VP07 Operational.
+- Old VP11 Development/Construction is VP05 Development. Team ownership and skills are in the perspective DR.
+- Old VP12 Runtime/Process is VP04 Concurrency. Load behaviour is in the perspective PE.
+- Old VP13 Safety is the perspective SA, with its deep criteria in XV x SA.
+
+The only released criteria were the worked example VP08-RE-090 to VP08-RE-150. They are now VP06-RE-090 to VP06-RE-150. The untracked review file `agent-review-of-txt-23de-sec-5-matrix.md` in the repository root reviews the old matrix and uses the old IDs. It was not changed. It is history.
+
+> **0.0530**: How were the cells of the new matrix decided, and which cells are judgement calls?
+
+Decided on 2026-11-10 for TXT Draft 0.8. A mechanical merge of the old matrix (the highest value wins) would have made VP02 Functional primary in seven of the nine ISO columns, so each cell was decided again under the rule "one primary location for each concern". Guide: the per-view applicability tables of R+W (Tables 25-1, 26-1, 27-1, 28-1, 29-1 to 29-6): P where the viewpoint is where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. R+W have no table for FS, CO and SA, so those columns follow the old matrix. Result: 8 rows, 12 columns, 96 cells, 32 P, 47 S, 17 X. Every viewpoint and every perspective has at least one P. The share of P cells is 33 percent. It was 26 percent in the old matrix (30 of 117).
+
+Reasons by perspective (cells that changed from a straight merge are marked "changed"):
+
+- FS: P in VP01 (scope and completeness) and VP02 (correctness and appropriateness of elements), as before. S in VP03 (information quality) and VP04 (race conditions affect correctness). X in VP05 (no R+W concern; changed from S of the old VP05), VP06, VP07 and XV.
+- PE: P in VP04 (contention, throughput), VP06 (hardware capacity, headroom) and VP07 (performance monitoring). S in VP01 (performance of external interfaces), VP02 (R+W: functional structure may change for performance; changed from X), VP03 (shared resources, transactions) and VP05 (R+W: performance guidelines for developers; changed from X of the old VP11). X in XV.
+- CO: P in VP01 (external entities and interfaces), VP02 (interfaces and connectors, absorbing the old Integration/Interface; changed from X), VP03 (data exchange semantics and formats) and VP06 (technology compatibility is a named R+W concern of Deployment; changed from S). S in VP04, VP05 and VP07. X in XV.
+- IC: P in VP02 only (where the user-facing interfaces are). S in VP01 (specialist devices), VP03 (R+W: information quality affects usability; changed from X), VP05 (R+W: UI guidelines and standards; changed from X of the old VP11) and VP07 (R+W: usability for administrators). X in VP04, VP06 (R+W: little or no impact) and XV.
+- RE: P in VP03 (backup, recovery, consistency), VP04 (deadlock, task failure), VP06 (redundancy, failover, disaster recovery site, external dependencies) and VP07 (recovery processes). S in VP01 (availability of external systems), VP02 (offline operation; the old Integration/Interface P was moved into VP06-RE-140, which the worked example already holds in Deployment), VP05 (R+W: modules must support start, stop and restart for failover; changed from X of the old VP11) and XV (Reliability x Safety cross-check; changed from the P of the old Safety viewpoint).
+- SE: P in XV (home cell, replaces the old Security viewpoint), VP01 (external connections and trust boundaries; changed from S, takes the old Integration/Interface P), VP03 (sensitive data) and VP06 (R+W: major impact on the deployment environment, trust boundaries on deployment nodes; changed from S). S in VP02, VP04 (isolation into runtime elements), VP05 (guidelines) and VP07 (security assumptions in operation).
+- MA: P in VP02 (modularity and responsibilities), VP05 (module organisation, testing standards, instrumentation) and VP07 (analysability through monitoring and logging). S in VP03, VP04 and VP06 (changed from X of the old VP08). X in VP01 and XV.
+- FL: P in VP02, VP05, VP06 (scalability, installability) and VP07 (R+W: installation, upgrade and migration are Operational concerns; changed from S). S in VP01 (future external entities), VP03 (flexible information model) and VP04. X in XV.
+- SA: P in XV only (home cell). S in all seven viewpoints, as before.
+- RG: P in VP03 (R+W: privacy, retention, audit) and XV (identify the applicable regulations, then assess). S in VP01 (interfaces to auditing and regulatory reporting), VP02 and VP07 (regulatory reporting tools and processes). X in VP04, VP05 and VP06 (R+W: little or no impact).
+- LO: P in VP06 (R+W: rollout, latency and links are modelled in Deployment). S in VP01, VP03 (distributed data), VP04, VP05 (development at several sites) and VP07 (monitoring distributed systems). X in VP02 (R+W: presented independently of location) and XV.
+- DR: P in VP05 (environments, developer skills), VP07 (operating and support capacity, cost) and XV (budget, time, skills, dependencies; AD14 and AD15). S in VP01, VP02, VP03, VP04 and VP06 (R+W Table 29-2).
+
+Judgement calls to check in the validation of 0.0340 and 0.0350: VP06 x CO as P, VP07 x FL as P, VP01 x SE as P, VP06 x SE as P, VP02 x RE as S, VP05 x RE as S, XV x RE as S, and the high share of P cells. If a cell produces duplicate criteria, demote it to S.
+
+> **0.0540**: Which naming rules apply to viewpoints, perspectives and codes?
+
+Decided on 2026-11-10. Names of viewpoints, of the row CrossView and of the perspectives added from R+W are single words without special characters, so that they work in IDs, tags and tool properties: Concurrency (not Runtime/Process), CrossView, Regulation, Location, DevelopmentResource. The viewpoint names follow R+W. The nine ISO perspective names are kept as ISO writes them. Codes: VP01 to VP07 and XV for the row; FS, PE, CO, IC, RE, SE, MA, FL, SA for the ISO perspectives; RG, LO, DR for the added ones.
+
+> **0.0550**: Which of the judgement-call cells of the 8 x 12 matrix stay P or S?
+
+Follow-up of 0.0530 (TXT Draft 0.8). Cells to check: VP06 x CO, VP07 x FL, VP01 x SE and VP06 x SE (all P), and VP02 x RE, VP05 x RE and XV x RE (all S). The share of P cells rose from 26 percent to 33 percent. Rule: demote a cell to S if it produces duplicate criteria. The check is done together with the validation of 0.0340 and 0.0350, which is still open for the new matrix. The TOGAF question stays in 0.0260.
+
+TODO: answer pending
+
+> **0.0560**: Should the question text of 0.0360 be rewritten with the new viewpoint IDs?
+
+Follow-up of TXT Draft 0.8. 0.0360 asks about VP11 x RE, VP08 x MA and VP09 x FL. These IDs no longer exist. An update note was added to 0.0360, but the question text is unchanged. Options: keep it as history, or replace it by a question about VP05 x RE, VP06 x MA and XV x FL.
+
+TODO: answer pending
+
+> **0.0570**: How is the TXT file renamed, now that the title no longer says "Quality Characteristics"?
+
+Follow-up of TXT Draft 0.8. The file name still ends in `viewpoints-x-quality-character`. The specmgr tools cannot rename a TXT file, so the rename is done by hand. It changes the path that other documents or tools may store. The id stays the same.
+
+TODO: answer pending
+
+> **0.0580**: What happens to the file `agent-review-of-txt-23de-sec-5-matrix.md`?
+
+Follow-up of 0.0520. The untracked file in the repository root reviews the old 13 x 9 matrix and uses the old IDs VP01 to VP13. It was not changed. Options: keep it as history, move it into a feature folder, mark it as superseded at the top, or delete it.
+
+TODO: answer pending
+
+> **0.0590**: How are the Draft 0.8 changes formatted and committed?
+
+Follow-up of TXT Draft 0.8. `mdformat` was not run on the TXT or on this QA. The TXT was already staged and modified before the session, and the QA is untracked. Open: run `mdformat` first, review `git diff`, then decide on one commit or separate commits for the TXT and the QA.
+
+TODO: answer pending
+
+> **0.0280**: Which criteria are knock-out criteria, per review type?
+
+**CHECK** We must not define "knock-out criteria". This can change across organisations and architectures. A final evaluation will be done by a different agent with guidance what "knock-out" in that specifc environment is.
+
+Answered in TXT Draft 0.5. The checklist defines no knock-out criteria. The knock-out rules were removed from TXT section 7.1. A criticality weight stays an optional, separate attribute and is never part of the rating. Which criteria are critical is decided by the final evaluation for the specific organisation and architecture.
+
+> **0.0290**: Is a criticality weight attached to each criterion, and how is it defined?
+
+TODO: answer pending
+
+> **0.0300**: Is the optional numeric report mapping 0/3/7/10 needed for the four scored ratings?
+
+Since TXT Draft 0.5 the rating is derived from Applicability, Evidence and Outcome. A numeric mapping would apply to the derived rating word, not to the three fields. Which of the five words are scored is still to be decided.
+
+TODO: answer pending
+
+> **0.0310**: How is a completed review stored and linked?
+
+TODO: answer pending
+
+> **0.0320**: Is a `specmgr://iso29148` resource worth a separate feature?
+
+It is not worth a feature, but a separate Phase in a feature.
+
+> **0.0330**: How are the remaining primary cells expanded, and in which order?
+
+TODO: answer pending
+
+## Functional Suitability
+
+## Performance Efficiency
+
+## Compatibility
+
+> **3.0090**: How can we map this architecture assessment with C4/structurizr?
+
+Split into singular questions in `## Elicitation Context`: 0.0370 (C4 model as input evidence), 0.0380 (review result shown on a Structurizr model), 0.0390 (concepts without a C4 equivalent), 0.0400 (tooling and automation) and 0.0410 (source of the viewpoint and perspective model). Short answer: C4/Structurizr is an evidence source and a presentation layer. It is not part of the checklist structure. This question stays here as the entry point and is answered once 0.0370 to 0.0410 are answered.
+
+## Interaction Capability
+
+## Reliability
+
+## Security
+
+## Maintainability
+
+## Flexibility
+
+## Safety
