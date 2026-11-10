@@ -21,9 +21,10 @@ A case is a prompt plus the gates that decide pass/fail. Phase 100 carries
 the smoke case (Task 100.170); Phase 110 (Task 110.100) adds its own
 cases: ``create-system``, ``mcp-limits``, ``no-trigger`` and the held-out
 ``heldout-validate``; Phase 120 (Task 120.100) adds ``fix-dsl`` and the
-held-out ``heldout-dsl``. The remaining shared cases (``design-views``,
-``review-model``) and the other per-phase held-outs land with their
-phases.
+held-out ``heldout-dsl``; Phase 130 (Task 130.100) adds ``modeling-
+decisions`` and the held-out ``heldout-modeling``. The remaining shared
+cases (``design-views``, ``review-model``) and the other per-phase
+held-outs land with their phases.
 """
 
 from __future__ import annotations
@@ -61,6 +62,16 @@ class Case:
             identity (the DSL distinguishes same-pair relationships by
             description only), so rewording a seeded relationship counts as
             removing it.
+        forbidden_element_names: Names the case forbids from appearing as a
+            container or a component of the produced model (for the Phase
+            130 `no_library_container` gate -- the scenario's shared
+            library, which C4 models as no element at all). Phase 130
+            (Task 130.100) adds this; earlier cases carry nothing.
+        expected_container_count: The exact number of containers the
+            scenario implies (for the Phase 130 `container_count` gate --
+            the scenario's two application parts plus its own database; a
+            library or a third-party service modeled as a container raises
+            the count). None when the case pins no count.
     """
 
     id: str
@@ -69,6 +80,8 @@ class Case:
     setup_files: dict[str, str] = field(default_factory=dict)
     seed_elements: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     seed_relationships: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
+    forbidden_element_names: tuple[str, ...] = field(default_factory=tuple)
+    expected_container_count: int | None = None
 
 
 SMOKE_CREATE_SYSTEM_PROMPT = """\
@@ -412,14 +425,147 @@ HELDOUT_DSL_CASE_DEF = Case(
     seed_relationships=HELDOUT_DSL_SEED_RELATIONSHIPS,
 )
 
+# ---------------------------------------------------------------------------
+# Phase 130 gate set (Task 130.100)
+# ---------------------------------------------------------------------------
+
+#: The `modeling-decisions` gate set: the standard create-family shape
+#: gates (the workspace validates and exports, carries a person, a system,
+#: exactly the scenario's container count -- two application parts plus the
+#: scenario's own database -- technologies on every relationship, a
+#: description on every element, a user-defined view) plus
+#: `validate_ok_called` (the prompt carries the create-family
+#: "check with the structurizr MCP tools before you finish" tail,
+#: deliberately naming no tool -- the Phase 110 precedent) and the three
+#: new modeling-decision gates: `no_library_container` (the scenario's
+#: shared library is NOT a container or component -- the C4 answer),
+#: `external_system_tagged` (the third-party service is a TOP-LEVEL element
+#: carrying the `External` tag -- the pinned DSL has no `externalSystem`
+#: keyword, so the export's `model.externalSystems` is never the place to
+#: look), and `no_vague_labels` (no relationship carries a forbidden vague
+#: description). Deliberately NO loop-discipline gates (`parse_called`/
+#: `inspect_called`/`triage_complete`/`validated_before_return`): that
+#: discipline belongs to the `structurizr-validate-loop` skill (the locked
+#: Phase 120 separation) -- this skill's delta is the modeling knowledge,
+#: and its primary case carries that delta.
+MODELING_DECISIONS_GATES: tuple[str, ...] = (
+    "dsl_written",
+    "cli_valid",
+    "cli_export",
+    "has_system",
+    "has_person",
+    "container_count",
+    "relationship_technology",
+    "elements_described",
+    "has_view",
+    "validate_ok_called",
+    "no_library_container",
+    "external_system_tagged",
+    "no_vague_labels",
+)
+
+# ---------------------------------------------------------------------------
+# Phase 130 cases (Task 130.100)
+# ---------------------------------------------------------------------------
+
+#: The `modeling-decisions` prompt: a CREATE task (a fresh
+#: `workspace.dsl` from a scenario prompt -- the create-family shape, NOT a
+#: fix/seeded case). The scenario is plain business language that never
+#: states the C4 answers: it names one user role, one owned system with two
+#: application parts, a shared library embedded in both, a third-party
+#: service operated by a different organization, and one in-house database.
+#: The answers (the library is no element, the third-party service is a
+#: top-level `External`-tagged element, the database IS a container) are
+#: exactly what the `c4-modeling` skill teaches. The tail carries the
+#: create-family "check with the structurizr MCP tools" wording without
+#: naming any tool (the Phase 110 precedent: the prompt never names
+#: parse/inspect).
+MODELING_DECISIONS_PROMPT = """\
+Create a C4 model of our parcel delivery tracking platform in the current working directory.
+
+Write exactly one file named `workspace.dsl` containing a Structurizr DSL workspace for the following situation:
+
+- Customers use the platform to look up the status of their parcels.
+- The platform is the Parcel Tracker system, owned and operated by our company. It has two application parts:
+  a web portal where customers look up shipments, and a dispatch service that assigns parcels to couriers.
+- Both application parts embed our shared pricing rules library, which computes delivery prices from weight and zone.
+- The dispatch service sends customer notification emails through an email delivery provider that is operated by
+  a different organization.
+- The platform stores shipments and dispatch records in its own database, which we operate.
+
+Keep the model minimal: nothing beyond what the situation above contains.
+
+Before you finish, check with the structurizr MCP tools and fix every error they report. Make sure the final
+`workspace.dsl` on disk is the exact text you last checked.
+"""
+
+#: The `modeling-decisions` scenario facts (locked, Task 130.100): the
+#: shared library's name -- forbidden as a container or component
+#: (`no_library_container`) -- and the exact container count the scenario
+#: implies (`container_count`): the two application parts plus the in-house
+#: database.
+MODELING_DECISIONS_FORBIDDEN_NAMES: tuple[str, ...] = ("Pricing Rules Library",)
+MODELING_DECISIONS_EXPECTED_CONTAINERS = 3
+
+MODELING_DECISIONS_CASE_DEF = Case(
+    id="modeling-decisions",
+    prompt=MODELING_DECISIONS_PROMPT,
+    gates=MODELING_DECISIONS_GATES,
+    forbidden_element_names=MODELING_DECISIONS_FORBIDDEN_NAMES,
+    expected_container_count=MODELING_DECISIONS_EXPECTED_CONTAINERS,
+)
+
+#: `heldout-modeling`: the same task shape as `modeling-decisions` (a fresh
+#: workspace from a business scenario whose modeling decisions are the
+#: test), a different domain (home energy management -- not
+#: bookshop/hospital/library/parking/museum, per the locked guardrail) and
+#: the same gate family with its own scenario facts (the shared rates
+#: library, the same three-container count). Held out: registered by its
+#: own id constant, never part of `FULL_CASES`, never tuned with, run once
+#: at the end of the phase (the `HELDOUT_DSL_CASE` precedent).
+HELDOUT_MODELING_PROMPT = """\
+Create a C4 model of our home energy management platform in the current working directory.
+
+Write exactly one file named `workspace.dsl` containing a Structurizr DSL workspace for the following situation:
+
+- Homeowners use the platform to manage their household's energy use and costs.
+- The platform is the Energy Manager system, owned and operated by our company. It has two application parts:
+  a dashboard web app where homeowners see consumption and costs, and a scheduling service that plans charging
+  and heating.
+- Both application parts embed our shared rates library, which computes energy prices from tariff and time of day.
+- The scheduling service fetches live meter readings from a smart meter provider that is operated by a different
+  organization.
+- The platform stores meter readings and schedules in its own database, which we operate.
+
+Keep the model minimal: nothing beyond what the situation above contains.
+
+Before you finish, check with the structurizr MCP tools and fix every error they report. Make sure the final
+`workspace.dsl` on disk is the exact text you last checked.
+"""
+
+#: The `heldout-modeling` scenario facts (the same locked family, the
+#: held-out domain's own names).
+HELDOUT_MODELING_FORBIDDEN_NAMES: tuple[str, ...] = ("Rates Library",)
+HELDOUT_MODELING_EXPECTED_CONTAINERS = 3
+
+HELDOUT_MODELING_CASE_DEF = Case(
+    id=pins.HELDOUT_MODELING_CASE,
+    prompt=HELDOUT_MODELING_PROMPT,
+    gates=MODELING_DECISIONS_GATES,
+    forbidden_element_names=HELDOUT_MODELING_FORBIDDEN_NAMES,
+    expected_container_count=HELDOUT_MODELING_EXPECTED_CONTAINERS,
+)
+
 #: Every case the harness knows, in canonical order.
 CASES: dict[str, Case] = {
     CREATE_SYSTEM_CASE_DEF.id: CREATE_SYSTEM_CASE_DEF,
     FIX_DSL_CASE_DEF.id: FIX_DSL_CASE_DEF,
+    MODELING_DECISIONS_CASE_DEF.id: MODELING_DECISIONS_CASE_DEF,
     MCP_LIMITS_CASE_DEF.id: MCP_LIMITS_CASE_DEF,
     NO_TRIGGER_CASE_DEF.id: NO_TRIGGER_CASE_DEF,
     HELDOUT_VALIDATE_CASE_DEF.id: HELDOUT_VALIDATE_CASE_DEF,
     HELDOUT_DSL_CASE_DEF.id: HELDOUT_DSL_CASE_DEF,
+    HELDOUT_MODELING_CASE_DEF.id: HELDOUT_MODELING_CASE_DEF,
     SMOKE_CASE_DEF.id: SMOKE_CASE_DEF,
 }
 

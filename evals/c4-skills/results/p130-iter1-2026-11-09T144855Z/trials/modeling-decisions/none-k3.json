@@ -1,0 +1,119 @@
+{
+  "cache_reason": "hit",
+  "cached": true,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/none-k3.events.ndjson",
+  "event_file_bytes": 102164,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-09T14:28:08Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1443 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=1: 14:28:09.715 [main] ERROR com.structurizr.command.ValidateCommand -- Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 15 of /w/workspace.dsl: webPortal embeds pricingRulesLibrary",
+      "name": "cli_valid",
+      "passed": false
+    },
+    {
+      "detail": "CLI export rc=1: 14:28:10.510 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+      "name": "cli_export",
+      "passed": false
+    },
+    {
+      "detail": "no softwareSystem in the export JSON",
+      "name": "has_system",
+      "passed": false
+    },
+    {
+      "detail": "no person in the export JSON",
+      "name": "has_person",
+      "passed": false
+    },
+    {
+      "detail": "0 container(s), expected 3: []",
+      "name": "container_count",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "no elements in the export JSON",
+      "name": "elements_described",
+      "passed": false
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "no validate call answered the OK marker (13 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+      "name": "no_library_container",
+      "passed": true
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no relationships in the export JSON",
+      "name": "no_vague_labels",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.009829537943005562,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 4,
+    "inspect_findings": [],
+    "inspect_triage": {},
+    "parse_calls": 1,
+    "relationship_technology_coverage": null,
+    "skills_loaded": [],
+    "steps": 17,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 526577,
+      "output": 55034,
+      "reasoning": 0
+    },
+    "tool_calls": 17,
+    "validate_calls": 13,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 736.104,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"C4 model of the parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"Looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"Owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\"\n            database = container \"Database\" \"Stores shipments and dispatch records\"\n        }\n\n        pricingRulesLibrary = softwareSystem \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\"\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"\n\n        customer -> webPortal \"Looks up the status of their parcels\"\n        webPortal embeds pricingRulesLibrary\n        dispatchService embeds pricingRulesLibrary\n        dispatchService -> emailProvider \"Sends customer notification emails\"\n        webPortal -> database \"Stores and retrieves shipments\"\n        dispatchService -> database \"Stores dispatch records\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" \"System context diagram for Parcel Tracker\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" \"Container diagram for Parcel Tracker\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "none",
+    "k_index": 3
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [],
+  "started_at": "2026-11-09T14:08:07Z",
+  "timeout": true,
+  "wall_time_s": 1201.010272727115,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k3.p130-prove-2026-11-09T063128Z"
+}

@@ -39,10 +39,21 @@ a relationship's missing technology/description and a custom element's
 missing metadata pass `validate` cleanly, and the latter is not even
 flagged by `inspect` in the pinned CLI), and `no_deletions` (every element
 and relationship the case seeded is still present, matched by name over
-the export JSON -- the anti-deletion half of the fix-style cases). All
-gates -- the original 8 (unwrapped over `GateContext.inputs`, behavior
-unchanged) and the new ones -- are keyed in :data:`GATES`;
-:func:`grade_case` evaluates a case's gate names over one context.
+the export JSON -- the anti-deletion half of the fix-style cases).
+Phase 130 (Task 130.100) adds the modeling-decision gates over the export
+JSON: `container_count` (the model carries exactly the scenario's
+container count -- the scenario's two application parts plus its own
+database, so a library or a third-party service modeled as a container
+raises the count), `no_library_container` (the scenario's shared library
+appears as no container or component -- a negative-presence gate by name),
+`external_system_tagged` (a TOP-LEVEL `softwareSystem` or custom `element`
+carries the `External` tag -- the pinned DSL has no `externalSystem`
+keyword, so the export's `model.externalSystems` section is never the
+place to look), and `no_vague_labels` (no relationship carries a
+forbidden vague description). All gates -- the original 8 (unwrapped over
+`GateContext.inputs`, behavior unchanged) and the new ones -- are keyed in
+:data:`GATES`; :func:`grade_case` evaluates a case's gate names over one
+context.
 
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
@@ -194,6 +205,16 @@ def iter_containers(export_json: dict | None) -> list[dict]:
     result: list[dict] = []
     for system in iter_systems(export_json):
         for e in system.get("containers") or []:
+            if isinstance(e, dict):
+                result.append(e)
+    return result
+
+
+def iter_components(export_json: dict | None) -> list[dict]:
+    """Return every component element (inside containers)."""
+    result: list[dict] = []
+    for container in iter_containers(export_json):
+        for e in container.get("components") or []:
             if isinstance(e, dict):
                 result.append(e)
     return result
@@ -511,6 +532,137 @@ def gate_no_deletions(context: GateContext) -> GateResult:
 
 
 # ---------------------------------------------------------------------------
+# the Phase 130 modeling-decision gates (Task 130.100)
+# ---------------------------------------------------------------------------
+
+#: The forbidden vague relationship labels (locked, Task 130.100): a
+#: relationship whose description equals one of these (case-insensitive,
+#: trimmed) fails `no_vague_labels`. The set is a membership test, not a
+#: substring test -- "user uses the portal to track parcels" is specific
+#: and passes.
+VAGUE_RELATIONSHIP_LABELS: frozenset[str] = frozenset(
+    {"uses", "connects to", "interacts with", "talks to", "communicates with"}
+)
+
+
+def _element_tags(element: dict) -> list[str]:
+    """Return one element's tags as a clean list.
+
+    The pinned CLI's JSON exporter writes the `tags` property as a
+    comma-separated string (e.g. `Element,Software System,External`); a
+    list form is tolerated for fixture robustness.
+    """
+    raw = element.get("tags")
+    if isinstance(raw, str):
+        result = [t.strip() for t in raw.split(",") if t.strip()]
+        return result
+    if isinstance(raw, list):
+        result = [str(t).strip() for t in raw if str(t).strip()]
+        return result
+    result = []
+    return result
+
+
+def gate_container_count(context: GateContext) -> GateResult:
+    """`container_count`: the model carries exactly the scenario's containers.
+
+    The scenario's container count is its two application parts plus its
+    own database (a data store is a C4 container): `3`. The shared
+    library is NO element, and the third-party service is top-level --
+    either of them modeled as a container raises the count and fails this
+    gate alongside the dedicated decision gates.
+    """
+    expected = context.case.expected_container_count
+    if expected is None:
+        return GateResult("container_count", False, "the case pins no expected container count (gate misused)")
+    containers = iter_containers(context.inputs.export_json)
+    if len(containers) != expected:
+        names = [str(c.get("name") or c.get("id")) for c in containers]
+        return GateResult("container_count", False, f"{len(containers)} container(s), expected {expected}: {names}")
+    return GateResult("container_count", True, f"exactly {expected} container(s)")
+
+
+def gate_no_library_container(context: GateContext) -> GateResult:
+    """`no_library_container`: the scenario's shared library is no container or component.
+
+    A negative-presence gate over the export JSON by name (locked, Task
+    130.100): none of `Case.forbidden_element_names` (the scenario's
+    shared library) may appear as a container of any system or a component
+    of any container. C4 treats libraries, JARs, modules and packages as
+    code-level constructs -- they run inside another element's process and
+    are not modeled as their own element.
+    """
+    forbidden = context.case.forbidden_element_names
+    if not forbidden:
+        return GateResult("no_library_container", False, "the case forbids no element names (gate misused)")
+    found: list[str] = []
+    for kind, elements in (
+        ("container", iter_containers(context.inputs.export_json)),
+        ("component", iter_components(context.inputs.export_json)),
+    ):
+        for element in elements:
+            name = str(element.get("name") or "").strip()
+            if name in forbidden:
+                found.append(f"{kind} {name!r}")
+    if found:
+        return GateResult(
+            "no_library_container",
+            False,
+            "forbidden element(s) modeled as a container or component: " + ", ".join(sorted(found)),
+        )
+    return GateResult(
+        "no_library_container",
+        True,
+        f"none of the {len(forbidden)} forbidden element name(s) appears as a container or component",
+    )
+
+
+def gate_external_system_tagged(inputs: GraderInputs) -> GateResult:
+    """`external_system_tagged`: a top-level element carries the `External` tag.
+
+    The third-party service of the scenario must be modeled as a TOP-LEVEL
+    element -- a `softwareSystem` or a custom `element` outside the owned
+    system -- carrying the `External` tag. The pinned DSL has no
+    `externalSystem` keyword (verified in Phase 120), so the export JSON's
+    `model.externalSystems` section is never populated by it and is never
+    consulted here: a container of the owned system, or a top-level
+    element without the tag, fails the gate.
+    """
+    top_level = iter_systems(inputs.export_json) + iter_custom_elements(inputs.export_json)
+    tagged = [
+        str(e.get("name") or e.get("id")) for e in top_level if any(t.lower() == "external" for t in _element_tags(e))
+    ]
+    if not tagged:
+        return GateResult(
+            "external_system_tagged",
+            False,
+            "no top-level softwareSystem or custom element carries the External tag",
+        )
+    return GateResult("external_system_tagged", True, f"top-level element(s) with the External tag: {tagged}")
+
+
+def gate_no_vague_labels(inputs: GraderInputs) -> GateResult:
+    """`no_vague_labels`: no relationship carries a forbidden vague label.
+
+    Every relationship's description (trimmed, case-insensitive) must not
+    be a member of :data:`VAGUE_RELATIONSHIP_LABELS` -- a label that states
+    no intent ("uses" says nothing about what happens in that direction).
+    A model with no relationships fails (the scenario has some).
+    """
+    rels = iter_relationships(inputs.export_json)
+    if not rels:
+        return GateResult("no_vague_labels", False, "no relationships in the export JSON")
+    vague = [
+        str(r.get("description") or r.get("id"))
+        for r in rels
+        if str(r.get("description") or "").strip().lower() in VAGUE_RELATIONSHIP_LABELS
+    ]
+    if vague:
+        return GateResult("no_vague_labels", False, f"{len(vague)} vague relationship label(s): {vague}")
+    return GateResult("no_vague_labels", True, f"no vague label on any of the {len(rels)} relationship(s)")
+
+
+# ---------------------------------------------------------------------------
 # the stream-derived gates (Phase 110, Task 110.100)
 # ---------------------------------------------------------------------------
 
@@ -735,8 +887,11 @@ def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateCo
 #: Every gate function, keyed by gate name (the cases' `gates` entries).
 #: The original 8 CLI/export gates are the input-only functions wrapped
 #: over `GateContext.inputs`; the Phase 120 `elements_described`/
-#: `relationships_described` gates are input-only too; the Phase 110
-#: stream gates and the Phase 120 `no_deletions` gate take the context.
+#: `relationships_described` gates are input-only too; the Phase 130
+#: `external_system_tagged`/`no_vague_labels` gates are input-only too;
+#: the Phase 110 stream gates and the Phase 120 `no_deletions` gate and
+#: the Phase 130 `container_count`/`no_library_container` gates (which
+#: read the case's own scenario facts) take the context.
 GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "dsl_written": _inputs_only(gate_dsl_written),
     "cli_valid": _inputs_only(gate_cli_valid),
@@ -749,6 +904,10 @@ GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "elements_described": _inputs_only(gate_elements_described),
     "relationships_described": _inputs_only(gate_relationships_described),
     "no_deletions": gate_no_deletions,
+    "container_count": gate_container_count,
+    "no_library_container": gate_no_library_container,
+    "external_system_tagged": _inputs_only(gate_external_system_tagged),
+    "no_vague_labels": _inputs_only(gate_no_vague_labels),
     "validated_before_return": gate_validated_before_return,
     "parse_called": gate_parse_called,
     "validate_ok_called": gate_validate_ok_called,

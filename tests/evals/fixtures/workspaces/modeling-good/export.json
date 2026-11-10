@@ -1,0 +1,166 @@
+{
+  "configuration" : { },
+  "description" : "Tracks parcels from dispatch to delivery.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Looks up the status of their parcels.",
+      "id" : "1",
+      "name" : "Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "tracks parcels through",
+        "destinationId" : "3",
+        "id" : "7",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "tracks parcels through",
+        "destinationId" : "2",
+        "id" : "8",
+        "linkedRelationshipId" : "7",
+        "sourceId" : "1",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Lets customers look up shipments; embeds the shared pricing rules library.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Web Portal",
+        "properties" : {
+          "structurizr.dsl.identifier" : "portal"
+        },
+        "relationships" : [ {
+          "description" : "requests dispatch status from",
+          "destinationId" : "4",
+          "id" : "9",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "reads shipment records from",
+          "destinationId" : "5",
+          "id" : "10",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python/FastAPI"
+      }, {
+        "description" : "Assigns parcels to couriers; embeds the shared pricing rules library.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Dispatch Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "dispatch"
+        },
+        "relationships" : [ {
+          "description" : "writes dispatch records to",
+          "destinationId" : "5",
+          "id" : "11",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "JDBC"
+        }, {
+          "description" : "sends notification emails to",
+          "destinationId" : "6",
+          "id" : "12",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Stores shipments and dispatch records.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Shipments Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "db"
+        },
+        "tags" : "Element,Container",
+        "technology" : "PostgreSQL"
+      } ],
+      "description" : "Tracks parcels from dispatch to delivery.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Parcel Tracker",
+      "properties" : {
+        "structurizr.dsl.identifier" : "tracker"
+      },
+      "relationships" : [ {
+        "description" : "sends notification emails to",
+        "destinationId" : "6",
+        "id" : "13",
+        "linkedRelationshipId" : "12",
+        "sourceId" : "2",
+        "technology" : "REST/JSON"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Delivers notification emails on behalf of the platform.",
+      "documentation" : { },
+      "id" : "6",
+      "name" : "Email Delivery Service",
+      "properties" : {
+        "structurizr.dsl.identifier" : "emailProvider"
+      },
+      "tags" : "Element,Software System,External"
+    } ]
+  },
+  "name" : "Parcel Tracker",
+  "properties" : {
+    "structurizr.inspection.error" : "6",
+    "structurizr.dsl" : "d29ya3NwYWNlICJQYXJjZWwgVHJhY2tlciIgIlRyYWNrcyBwYXJjZWxzIGZyb20gZGlzcGF0Y2ggdG8gZGVsaXZlcnkuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgY3VzdG9tZXIgPSBwZXJzb24gIkN1c3RvbWVyIiAiTG9va3MgdXAgdGhlIHN0YXR1cyBvZiB0aGVpciBwYXJjZWxzLiIKICAgICAgICB0cmFja2VyID0gc29mdHdhcmVTeXN0ZW0gIlBhcmNlbCBUcmFja2VyIiAiVHJhY2tzIHBhcmNlbHMgZnJvbSBkaXNwYXRjaCB0byBkZWxpdmVyeS4iIHsKICAgICAgICAgICAgcG9ydGFsID0gY29udGFpbmVyICJXZWIgUG9ydGFsIiAiTGV0cyBjdXN0b21lcnMgbG9vayB1cCBzaGlwbWVudHM7IGVtYmVkcyB0aGUgc2hhcmVkIHByaWNpbmcgcnVsZXMgbGlicmFyeS4iICJQeXRob24vRmFzdEFQSSIKICAgICAgICAgICAgZGlzcGF0Y2ggPSBjb250YWluZXIgIkRpc3BhdGNoIFNlcnZpY2UiICJBc3NpZ25zIHBhcmNlbHMgdG8gY291cmllcnM7IGVtYmVkcyB0aGUgc2hhcmVkIHByaWNpbmcgcnVsZXMgbGlicmFyeS4iICJKYXZhIgogICAgICAgICAgICBkYiA9IGNvbnRhaW5lciAiU2hpcG1lbnRzIERhdGFiYXNlIiAiU3RvcmVzIHNoaXBtZW50cyBhbmQgZGlzcGF0Y2ggcmVjb3Jkcy4iICJQb3N0Z3JlU1FMIgogICAgICAgIH0KICAgICAgICBlbWFpbFByb3ZpZGVyID0gc29mdHdhcmVTeXN0ZW0gIkVtYWlsIERlbGl2ZXJ5IFNlcnZpY2UiICJEZWxpdmVycyBub3RpZmljYXRpb24gZW1haWxzIG9uIGJlaGFsZiBvZiB0aGUgcGxhdGZvcm0uIiAiRXh0ZXJuYWwiCiAgICAgICAgY3VzdG9tZXIgLT4gcG9ydGFsICJ0cmFja3MgcGFyY2VscyB0aHJvdWdoIiAiSFRUUFMvSlNPTiIKICAgICAgICBwb3J0YWwgLT4gZGlzcGF0Y2ggInJlcXVlc3RzIGRpc3BhdGNoIHN0YXR1cyBmcm9tIiAiZ1JQQyIKICAgICAgICBwb3J0YWwgLT4gZGIgInJlYWRzIHNoaXBtZW50IHJlY29yZHMgZnJvbSIgIkpEQkMiCiAgICAgICAgZGlzcGF0Y2ggLT4gZGIgIndyaXRlcyBkaXNwYXRjaCByZWNvcmRzIHRvIiAiSkRCQyIKICAgICAgICBkaXNwYXRjaCAtPiBlbWFpbFByb3ZpZGVyICJzZW5kcyBub3RpZmljYXRpb24gZW1haWxzIHRvIiAiUkVTVC9KU09OIgogICAgfQogICAgdmlld3MgewogICAgICAgIHN5c3RlbUNvbnRleHQgdHJhY2tlciAiVHJhY2tlckNvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "TrackerContext",
+      "name" : "System Context View: Parcel Tracker",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "13"
+      }, {
+        "id" : "8"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

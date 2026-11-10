@@ -1,0 +1,148 @@
+{
+  "cases": [
+    "modeling-decisions",
+    "no-trigger"
+  ],
+  "comparison": "upstream",
+  "conditions": [
+    "none",
+    "upstream",
+    "skill"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 7.1,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.1,
+    "mean_wall_time_s": 423.3,
+    "measured_trials": 10,
+    "median_wall_time_s": 284.1,
+    "within_budget_at_median": true
+  },
+  "k": 5,
+  "label": "p130-iter2",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 10,
+        "contended": 1,
+        "timeout": 4
+      },
+      "gate_failures": {
+        "cli_export": 2,
+        "cli_valid": 2,
+        "container_count": 2,
+        "elements_described": 2,
+        "external_system_tagged": 5,
+        "has_person": 2,
+        "has_system": 2,
+        "has_view": 3,
+        "mcp_limit_stated": 3,
+        "no_library_container": 2,
+        "no_vague_labels": 2,
+        "relationship_technology": 4,
+        "validate_ok_called": 5
+      },
+      "pass_power_k": 1.0240000000000006e-07,
+      "pass_rate": 0.2,
+      "passes": 2,
+      "per_case": {
+        "modeling-decisions": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 2,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.05668215093776688,
+        0.5098375308778678
+      ]
+    },
+    "skill": {
+      "flags": {
+        "cached": 0,
+        "contended": 0,
+        "timeout": 1
+      },
+      "gate_failures": {
+        "has_view": 1,
+        "mcp_limit_stated": 4,
+        "validate_ok_called": 3
+      },
+      "pass_power_k": 5.9048999999999975e-06,
+      "pass_rate": 0.3,
+      "passes": 3,
+      "per_case": {
+        "modeling-decisions": {
+          "passes": 2,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 1,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.10779126655639398,
+        0.6032218546540291
+      ]
+    },
+    "upstream": {
+      "flags": {
+        "cached": 10,
+        "contended": 1,
+        "timeout": 2
+      },
+      "gate_failures": {
+        "container_count": 2,
+        "mcp_limit_stated": 4,
+        "no_library_container": 4,
+        "no_mounted_skill_loaded": 3,
+        "validate_ok_called": 5
+      },
+      "pass_power_k": 0.0,
+      "pass_rate": 0.0,
+      "passes": 0,
+      "per_case": {
+        "modeling-decisions": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 0,
+          "trials": 5
+        }
+      },
+      "trials": 10,
+      "wilson": [
+        0.0,
+        0.2775328030260577
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p130-iter2-2026-11-09T172621Z",
+  "seed": 31001,
+  "skill_margins": {
+    "margin": {
+      "better_than_none": true,
+      "clearly_worse_cases": [],
+      "none_rate": 0.2,
+      "ok": true,
+      "rate_margin_pp": -30.0,
+      "within_rate_margin": true
+    },
+    "wilson": [
+      0.10779126655639398,
+      0.6032218546540291
+    ]
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

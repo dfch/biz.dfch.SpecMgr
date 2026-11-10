@@ -164,6 +164,47 @@ class TestCliOverFixtures(unittest.TestCase):
         expected = json.loads((WORKSPACES / "heldout-dsl-fixed" / "export.json").read_text(encoding="utf-8"))
         self.assertEqual(live, expected)
 
+    def test_modeling_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        # the Phase 130 known-good reference: CLI-valid, and its live
+        # export is JSON-equivalent to the committed pre-exported fixture
+        workdir = self._stage("modeling-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "modeling-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_modeling_bad_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 130 known-bad reference: its defects are SEMANTIC (the
+        # wrong modeling decisions), so the pinned CLI validates it
+        # cleanly (rc=0) and its live export matches the committed fixture
+        workdir = self._stage("modeling-bad")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "modeling-bad" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
+    def test_heldout_modeling_good_workspace_cli_matches_preexported_fixture(self) -> None:
+        workdir = self._stage("heldout-modeling-good")
+
+        validate_rc, _ = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+
+        self.assertEqual(validate_rc, 0)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-modeling-good" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+
     def test_cli_image_matches_the_pin(self) -> None:
         proc = subprocess.run(  # noqa: S603 -- pinned image
             ["docker", "run", "--rm", pins.STRUCTURIZR_CLI_IMAGE, "version"],

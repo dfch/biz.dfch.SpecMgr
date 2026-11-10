@@ -1,0 +1,161 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": true,
+  "event_file": "trials/heldout-modeling/skill-k1.events.ndjson",
+  "event_file_bytes": 203338,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-09T22:39:10Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (1299 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 3 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "no user-defined views in the export JSON (only auto-generated)",
+      "name": "has_view",
+      "passed": false
+    },
+    {
+      "detail": "1 validate call(s) answered OK",
+      "name": "validate_ok_called",
+      "passed": true
+    },
+    {
+      "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+      "name": "no_library_container",
+      "passed": true
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "no vague label on any of the 3 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.011044196086004376,
+  "metrics": {
+    "contended": true,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 4,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The person named \"Homeowner\" is not included on any views - add it to a view.",
+      "ERROR: The software system named \"Smart Meter Provider\" is not included on any views - add it to a view.",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing decisions.",
+      "ERROR: The software system named \"Energy Manager\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Dashboard\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Database\" is not included on any views - add it to a view.",
+      "ERROR: This workspace has no views.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time."
+    ],
+    "inspect_triage": {
+      "ERROR: The container named \"Dashboard\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The container named \"Database\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The container named \"Scheduling Service\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The person named \"Homeowner\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+      "ERROR: The software system named \"Energy Manager\" is not included on any views - add it to a view.": "fix",
+      "ERROR: The software system named \"Smart Meter Provider\" is not included on any views - add it to a view.": "fix",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged",
+      "ERROR: This workspace has no views.": "fix",
+      "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.": "untriaged",
+      "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+      "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged"
+    },
+    "parse_calls": 9,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-modeling"
+    ],
+    "steps": 18,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 442491,
+      "output": 31074,
+      "reasoning": 0
+    },
+    "tool_calls": 20,
+    "validate_calls": 1,
+    "validate_ok_calls": 1,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1068.762,
+    "workdir_dsl": "workspace \"Energy Manager\" \"A home energy management platform for managing household energy use and costs.\" {\n    model {\n        homeowner = person \"Homeowner\" \"Uses the platform to manage the household's energy use and costs.\"\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Provides live meter readings. Operated by a different organization.\" \"External\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"A home energy management platform that helps homeowners manage their household's energy use and costs.\" {\n            dashboard = container \"Dashboard\" \"A web app where homeowners see consumption and costs. Embeds the shared rates library, which computes energy prices from tariff and time of day.\" \"Web App\"\n            schedulingService = container \"Scheduling Service\" \"Plans charging and heating. Embeds the shared rates library, which computes energy prices from tariff and time of day.\" \"Service\"\n            database = container \"Database\" \"Stores meter readings and schedules.\" \"Database\"\n        }\n\n        homeowner -> dashboard \"views consumption and costs\" \"Web browser\"\n        schedulingService -> smartMeterProvider \"fetches live meter readings\" \"REST/JSON\"\n        schedulingService -> database \"stores meter readings and schedules\" \"SQL\"\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-modeling",
+    "condition": "skill",
+    "k_index": 1
+  },
+  "run_id": "p130-heldout-2026-11-09T214830Z",
+  "skills_installed": [
+    "c4-modeling"
+  ],
+  "started_at": "2026-11-09T22:19:08Z",
+  "timeout": true,
+  "wall_time_s": 1201.434811034007,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.skill-k1.p130-heldout-2026-11-09T214830Z"
+}
