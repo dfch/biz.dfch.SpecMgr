@@ -45,7 +45,6 @@ teardown runs in a `finally` and must not mask the run's real outcome.
 
 from __future__ import annotations
 
-import selectors
 import socket
 import threading
 
@@ -58,11 +57,12 @@ RECV_BUF = 65_536
 #: connection is dropped to the client).
 CONNECT_TIMEOUT_S = 30.0
 
-#: The accept loop's poll timeout: short enough that a `stop` drains the
-#: accept queue and the loop exits within a couple of these, long enough
-#: that the idle loop costs nothing measurable (no wake-up protocol is
-#: needed -- the poll itself observes the queue).
-_ACCEPT_POLL_S = 0.1
+#: The byte `stop` sends over its wake-up connection (the accept loop exits
+#: on it, distinguishing the wake-up from real connections that completed
+#: their handshake before `stop`). NUL can never be the first byte of the
+#: HTTP traffic this forwarder carries (a vLLM/OpenAI-compatible request
+#: line).
+_STOP_MARKER = b"\x00"
 
 
 class ForwarderHandle:
@@ -154,43 +154,53 @@ def _serve_connection(handle: ForwarderHandle, client: socket.socket) -> None:
 
 
 def _accept_loop(handle: ForwarderHandle) -> None:
-    """Accept connections until the stop event is set AND the queue drained (one thread each).
+    """Accept connections until :func:`stop`'s marker arrives (one thread each).
 
-    Polls the listener with a short timeout instead of blocking in
-    `accept()` (closing the fd from another thread does not reliably wake
-    a blocked `accept()` on Linux): before the stop event, a poll timeout
-    is just a loop (negligible overhead); after it, the loop keeps
-    accepting while the queue is non-empty and exits once a poll finds it
-    drained. The drain is structural -- every connection that completed
-    its kernel-level handshake before the stop was `accept`ed and handed
-    to a worker BEFORE :func:`stop` joins this thread and closes the
-    listener, so a queued connection can never be reset by the close, and
-    no byte of any real connection is ever consumed by the loop itself.
+    `stop` sets the stop event and then connects to the listener itself,
+    sending :data:`_STOP_MARKER`. A connection that completed its kernel-
+    level handshake before `stop` but had not been `accept`ed yet is a
+    REAL connection (not the marker) and gets its worker thread too --
+    "let the connections drain" includes the accept queue, so the loop
+    exits on the marker byte, not on the stop event alone.
+
+    That discrimination is non-destructive: the first byte is PEEKed
+    (`socket.MSG_PEEK`), not consumed, so a real connection with in-flight
+    data loses no byte -- the peeked byte stays in the buffer for the
+    worker's relay. Only when the peeked byte IS the marker does the loop
+    consume it (and then close the wake-up connection). `MSG_PEEK` is
+    POSIX; this harness runs on Linux only (trial containers, CI runners).
     """
     assert handle._listener is not None
-    listener = handle._listener
-    with selectors.DefaultSelector() as poll:
-        poll.register(listener, selectors.EVENT_READ)
-        while True:
+    while True:
+        try:
+            client, _addr = handle._listener.accept()
+        except OSError:
+            return  # the listener closed (stop) -- exit quietly
+        if handle._stop_event.is_set():
+            client.settimeout(1.0)
             try:
-                events = poll.select(timeout=_ACCEPT_POLL_S)
+                marker = client.recv(1, socket.MSG_PEEK)
             except OSError:
-                return  # the listener closed (a racing double stop) -- exit quietly
-            if events:
+                marker = b""
+            if marker == _STOP_MARKER:
                 try:
-                    client, _addr = listener.accept()
-                except OSError:
-                    return  # the listener closed between select and accept -- exit quietly
-                try:
-                    client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    client.recv(1)  # consume the single marker byte (peeked, not yet removed)
                 except OSError:
                     pass
-                thread = threading.Thread(target=_connection_worker, args=(handle, client), daemon=True)
-                with handle._live_lock:
-                    handle._live.add(thread)
-                thread.start()
-            elif handle._stop_event.is_set():
-                return  # the stop event is set and the accept queue is drained
+                try:
+                    client.close()
+                except OSError:
+                    pass
+                return
+            client.settimeout(None)  # a real connection queued before stop: drain it
+        try:
+            client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except OSError:
+            pass
+        thread = threading.Thread(target=_connection_worker, args=(handle, client), daemon=True)
+        with handle._live_lock:
+            handle._live.add(thread)
+        thread.start()
 
 
 def _connection_worker(handle: ForwarderHandle, client: socket.socket) -> None:
@@ -237,30 +247,35 @@ def start_forwarder(*, bind_ip: str, bind_port: int, target_ip: str, target_port
 
 
 def stop(handle: ForwarderHandle) -> None:
-    """Stop the accept loop (draining the queue) and only then close the listener.
+    """Close the listener and let the active connections drain.
 
     Never raises: `stop` runs in the harness teardown `finally` and may be
-    called twice (or on a handle whose listener already went away -- the
-    join on a dead thread returns immediately, the close is guarded).
+    called twice (or on a handle whose listener already went away). Active
+    connections are not killed -- their relays finish and the daemon
+    threads end with the process if the harness exits first.
 
-    The ordering IS the contract: the stop event is set, the accept thread
-    is JOINED first -- it exits only once the accept queue has drained, so
-    every connection that completed its kernel-level handshake before the
-    join was `accept`ed and handed to a worker -- and only then the
-    listener closes. Joining before the close is what makes the close
-    RST-free by construction (a queued connection can never be destroyed
-    un-accepted). A join timeout still proceeds to the close (teardown
-    must not hang; the loop then sees the closed fd and exits, and the
-    daemon threads end with the process if the harness exits first).
-    Active connections are not killed -- their relays finish on their own.
+    The accept loop is unblocked by a SELF-CONNECTION carrying the stop
+    marker before the listener closes (closing the fd from another thread
+    does not reliably wake a blocked `accept()` on Linux): the loop drains
+    any real connection still queued, then exits on the marker -- which it
+    discriminates by peeking the first byte (`socket.MSG_PEEK`), so a real
+    connection's in-flight data is never consumed by the probe.
     """
     handle._stop_event.set()
-    accept_thread = handle._accept_thread
-    if accept_thread is not None:
-        accept_thread.join(timeout=5.0)
     listener = handle._listener
     if listener is not None:
+        try:
+            wake = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            wake.settimeout(2.0)
+            wake.connect((handle.bind_ip, handle.bind_port))
+            wake.sendall(_STOP_MARKER)
+            wake.close()
+        except OSError:
+            pass  # the listener is already gone (a double stop)
         try:
             listener.close()
         except OSError:
             pass
+    accept_thread = handle._accept_thread
+    if accept_thread is not None:
+        accept_thread.join(timeout=5.0)

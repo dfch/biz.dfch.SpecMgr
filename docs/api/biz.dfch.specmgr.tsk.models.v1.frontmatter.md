@@ -7,6 +7,11 @@ a subtype of `MarkdownFrontmatter` that restricts `type` to a fixed
 ``Literal["tsk"]`` and narrows the free-form ``status`` to an appropriate
 closed vocabulary for task lists.
 
+This module also owns the task-list status state machine (feat-108-fsm,
+GitHub issue #108): the ``_STATUS_TRANSITIONS`` table, next to
+``_ALLOWED_STATUSES``, enforced by the generic ``set_status`` tool
+post-load/pre-write (REQ-001/REQ-002).
+
 ## Classes
 
 ### `TskFrontmatter`
