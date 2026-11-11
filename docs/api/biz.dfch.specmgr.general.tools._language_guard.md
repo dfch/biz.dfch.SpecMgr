@@ -18,7 +18,7 @@ runs, before any filesystem access and before dispatch:
 3. A non-default language for a language-aware domain resolves its
    heading-mapping table (so a shape-valid code without a packaged table is
    an actionable ``ValueError`` before any filesystem access).
- 4. A non-default language for ``feat`` is rejected with permanently-worded
+4. A non-default language for ``feat`` is rejected with permanently-worded
     text (REQ-002: this domain is always English). Since Phase 125 enabled
     every other whole-body domain, the remaining rejection ("not yet
     supported") is a defensive fallback only: it is reachable solely for a

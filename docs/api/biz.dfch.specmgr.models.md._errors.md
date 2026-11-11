@@ -24,10 +24,10 @@ wrap only *one* inner call, not their entire body, e.g. ``validate_<d>`` has an 
 
 On a caught exception it re-raises the exact same runtime exception type (REQ-006) with an
 enriched message -- reusing the same two techniques already established by Phases 1/2:
- message-only reconstruction for ``AssertionError`` (and any domain-specific
- structural error type opted into via ``also_catch``, a plain ``ValueError``
- subclass with the same single-message constructor shape), and
- ``pydantic_core.ValidationError.from_exception_data`` (the same
+message-only reconstruction for ``AssertionError`` (and any domain-specific
+structural error type opted into via ``also_catch``, a plain ``ValueError``
+subclass with the same single-message constructor shape), and
+``pydantic_core.ValidationError.from_exception_data`` (the same
 construction Phase 2's ``models/md/_frontmatter_parse.py`` uses) for ``pydantic.
 ValidationError``. ``yaml.YAMLError`` is reconstructed the same ``yaml.error.Mark``-preserving
 way Phase 2's ``enrich_frontmatter_yaml_error`` does, except here only the ``context`` field

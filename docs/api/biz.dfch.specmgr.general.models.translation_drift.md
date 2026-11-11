@@ -34,11 +34,11 @@ language-invariant **structural key**:
    section therefore carries its whole subtree: every sub-section of it is reported as well (the first finding of
    each subtree is its root).
 
- The ``h1`` title is free prose (every domain's own H1 alias is ``.+``, or a fixed prefix plus free text) and is
- not part of the skeleton, and prose that is not a heading at all -- paragraphs, list items, fenced code,
- ``prb``'s regex-locked ``problem_statement`` lead paragraph (DEC 38efdb66 item 11, exempt in every language) --
- is invisible to it by construction: drift detection is about structure and staleness, never about wording or
- translation quality.
+The ``h1`` title is free prose (every domain's own H1 alias is ``.+``, or a fixed prefix plus free text) and is
+not part of the skeleton, and prose that is not a heading at all -- paragraphs, list items, fenced code,
+``prb``'s regex-locked ``problem_statement`` lead paragraph (DEC 38efdb66 item 11, exempt in every language) --
+is invisible to it by construction: drift detection is about structure and staleness, never about wording or
+translation quality.
 
 **(b) Staleness** -- the source's frontmatter ``updated`` timestamp is newer than the variant's
 (:func:`check_staleness`). Both are compared as *parsed, offset-aware datetimes* (never as strings), so the ``T`` and

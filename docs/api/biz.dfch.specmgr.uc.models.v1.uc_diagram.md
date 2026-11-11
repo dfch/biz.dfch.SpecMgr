@@ -2,8 +2,8 @@
 
 Render a :class:`UseCase` into a PlantUML Use Case diagram (feature plan Task 2.1).
 
- A pure function, no file I/O and no multi-document resolution -- it operates
- purely on the schema. Only ever parses/renders
+A pure function, no file I/O and no multi-document resolution -- it operates
+purely on the schema. Only ever parses/renders
 one :class:`UseCase` at a time: sub-use-case mentions inside actor text or extension/sub-
 variation content (e.g. ``"Take Payment by Credit Card (UC-044)"``) are rendered as plain text,
 never resolved into their own separate diagram nodes -- there is no id->document listing/

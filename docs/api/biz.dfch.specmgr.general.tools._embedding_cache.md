@@ -86,9 +86,10 @@ for the entry's row-metadata type, itself stdlib + the base
 simply return the structured unavailable result (REQ-003) without ever
 touching this cache.
 
-**Explicitly out of scope** (mirroring both ADRs): no TTL/size-based
-eviction, no on-disk persistence, and no ``stat()``-based (mtime/size)
-pre-check fast path -- content-hash-only for v1.
+**Explicitly out of scope** (mirroring both DECs, 750842b2 and
+bfd76370): no TTL/size-based eviction, no on-disk persistence, and no
+``stat()``-based (mtime/size) pre-check fast path -- content-hash-only
+for v1.
 
 ## Classes
 

@@ -51,9 +51,9 @@ seventh copies.
   of the three parse-failure channels (REQ-009) -- and its candidate
   enumeration / source resolution live in
   ``general/tools/_similarity_corpus.py``, built on this registry.
- - :data:`WholeBodyType` -- the derived
+- :data:`WholeBodyType` -- the derived
    ``Literal`` ``type``-parameter annotation for the generic tools.
- - :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
+- :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
    the path-safety-convention ``ValueError`` for an unknown name (raised
    before any filesystem access).
 

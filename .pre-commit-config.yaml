@@ -337,10 +337,10 @@ repos:
           longer than the OS argument-length limit is still split into
           sequential invocations, each with its own summary). The hook
           parses working-tree file contents, not the git index: a
-           partially staged file is checked as it exists on disk
-           (accepted and documented).            Files the pattern matches but the
-           command skips (e.g. docs/appendix/*.md) pass with
-           a 0-linted summary.
+          partially staged file is checked as it exists on disk
+          (accepted and documented). Files the pattern matches but the
+          command skips (e.g. docs/appendix/*.md) pass with
+          a 0-linted summary.
         entry: uv run --frozen --all-extras specmgr lint --skip-unrecognized
         language: system
         pass_filenames: true

@@ -11,9 +11,9 @@ tool's own (``general.tools.validate``) ``{valid, errors}`` shape for a differen
 (disk-free/id-free content validation, potentially multiple errors). ``InvalidStatusResult``
 instead carries exactly one rejected value plus its domain's full allowed-values list, matching
 the single guarded vocabulary check ``set_status`` performs before dispatching to any per-domain
- adapter. Every other ``set_status`` failure mode (unknown id,
- path-injection/wrong-shape id) continues to raise unchanged -- see DEC
- b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome for the full rationale and scope.
+adapter. Every other ``set_status`` failure mode (unknown id,
+path-injection/wrong-shape id) continues to raise unchanged -- see DEC
+b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome for the full rationale and scope.
 
 ## Classes
 

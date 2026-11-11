@@ -17,9 +17,9 @@ language variant of a document from its source-language content: read the
 ``specmgr://i18n`` resource first, read the source, decide create versus
 update, translate only free-form prose and fixed heading text (never the
 closed-vocabulary tokens), retry the write on a non-raising ``ValidateResult``,
- verify against the file on disk. Domain-specific prompts (e.g.
- ``create_req``/``refine``) live under their own domain package instead.
- Import this package to register all general prompts against the shared
- ``mcp`` application instance::
+verify against the file on disk. Domain-specific prompts (e.g.
+``create_req``/``refine``) live under their own domain package instead.
+Import this package to register all general prompts against the shared
+``mcp`` application instance::
 
     from biz.dfch.specmgr.general import prompts  # noqa: F401 (side-effects only)

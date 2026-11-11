@@ -50,39 +50,39 @@ to the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
- Neither any ``create_<d>`` tool nor the generic :func:`update` tool
- accepts a ``status`` argument at all -- this tool is the sole
- status-change entry point for every domain.
+Neither any ``create_<d>`` tool nor the generic :func:`update` tool
+accepts a ``status`` argument at all -- this tool is the sole
+status-change entry point for every domain.
 
- No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
- adapter compares the requested ``status`` against the document's current
- on-disk status -- plainly ``existing.frontmatter.status == status`` --
- immediately after ``assert_within`` and before any write. When they are
- equal, the adapter returns the already-loaded value unchanged: no write to
- disk, no ``updated`` bump, and no cache re-warm (there is nothing new to
- warm the cache with). This is a success, not an error, and returns the
- exact same value shape (the domain's own ``XFrontmatter``) a changed-status
- call would return. The pre-dispatch out-of-vocabulary
- ``InvalidStatusResult`` check below still runs first, unaffected -- the
- no-op check only ever applies to an already-valid ``status``.
+No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
+adapter compares the requested ``status`` against the document's current
+on-disk status -- plainly ``existing.frontmatter.status == status`` --
+immediately after ``assert_within`` and before any write. When they are
+equal, the adapter returns the already-loaded value unchanged: no write to
+disk, no ``updated`` bump, and no cache re-warm (there is nothing new to
+warm the cache with). This is a success, not an error, and returns the
+exact same value shape (the domain's own ``XFrontmatter``) a changed-status
+call would return. The pre-dispatch out-of-vocabulary
+``InvalidStatusResult`` check below still runs first, unaffected -- the
+no-op check only ever applies to an already-valid ``status``.
 
- An out-of-vocabulary ``status`` for the dispatched ``type`` (DEC
- b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
- structured-result workaround to set_status's invalid-status case") is
- pre-checked by the public :func:`set_status` against a private,
- module-scope ``_ALLOWED_STATUSES_BY_TYPE`` mapping (built from each
- domain's own ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant, imported
- directly from its ``models/v{N}/frontmatter.py`` submodule) **before**
- dispatching to any ``_set_status_<d>`` adapter -- so before any domain
- lock is taken or any file is read -- and returns a structured, non-raising
- :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead of
- letting ``pydantic.ValidationError`` propagate from the adapter's
- ``XFrontmatter`` reconstruction. This is a narrow, additive exception to
- this tool's otherwise raise-based contract (mirroring the generic
- ``validate`` tool's own non-raising workaround, DEC
- 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode (a
- truly-absent id, path-injection/wrong-shape id) still raises exactly as
- before.
+An out-of-vocabulary ``status`` for the dispatched ``type`` (DEC
+b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
+structured-result workaround to set_status's invalid-status case") is
+pre-checked by the public :func:`set_status` against a private,
+module-scope ``_ALLOWED_STATUSES_BY_TYPE`` mapping (built from each
+domain's own ``_ALLOWED_STATUSES``/``_FIXED_STATUSES`` constant, imported
+directly from its ``models/v{N}/frontmatter.py`` submodule) **before**
+dispatching to any ``_set_status_<d>`` adapter -- so before any domain
+lock is taken or any file is read -- and returns a structured, non-raising
+:class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead of
+letting ``pydantic.ValidationError`` propagate from the adapter's
+``XFrontmatter`` reconstruction. This is a narrow, additive exception to
+this tool's otherwise raise-based contract (mirroring the generic
+``validate`` tool's own non-raising workaround, DEC
+519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode (a
+truly-absent id, path-injection/wrong-shape id) still raises exactly as
+before.
 
 An existing-but-broken document (feat-170-update-edit-parse-failure,
 GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
@@ -107,8 +107,8 @@ that footer on a warm re-raise). A truly-absent ``id`` (no file on
 disk matches at all) still raises the domain's own not-found error
 unchanged. The pre-dispatch out-of-vocabulary ``InvalidStatusResult``
 check runs first and is unaffected -- an out-of-vocabulary ``status``
- against a broken existing document still returns ``InvalidStatusResult``
- (that check never reaches ``load_by_id``).
+against a broken existing document still returns ``InvalidStatusResult``
+(that check never reaches ``load_by_id``).
 
 Per-domain status state machine (feat-108-fsm, GitHub issue #108, DEC
 a79608e4-88cd-498f-8ca1-445df4d04f92): each
@@ -136,13 +136,13 @@ Phase 110; the remaining whole-body domains in Phase 120); the no-op,
 out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
 untouched.
 
- Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
- :func:`set_status` validates ``id`` via ``_path_safety.validate_id``
- before dispatch (a ``ValueError`` before any filesystem access --
- mirroring the generic ``delete`` tool's own REQ-003), and every adapter
- confines the resolved path to the domain's own base directory with
- ``_path_safety.assert_within`` after ``load_by_id``, inside the domain
- lock.
+Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
+:func:`set_status` validates ``id`` via ``_path_safety.validate_id``
+before dispatch (a ``ValueError`` before any filesystem access --
+mirroring the generic ``delete`` tool's own REQ-003), and every adapter
+confines the resolved path to the domain's own base directory with
+``_path_safety.assert_within`` after ``load_by_id``, inside the domain
+lock.
 """
 
 from __future__ import annotations

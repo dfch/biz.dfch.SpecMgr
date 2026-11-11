@@ -121,9 +121,9 @@ generic ``validate`` tool caps it (300 chars via
 exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
 :mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
 ``general.tools.validate``). Stage-1's OC-parity ``ValueError``s (identical input, empty
- ``old_str``, not found, multiple matches) and every pre-dispatch
- caller-usage ``ValueError`` (invalid ``id`` shape, unknown ``type``)
- are never caught and still raise exactly as before.
+``old_str``, not found, multiple matches) and every pre-dispatch
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown ``type``)
+are never caught and still raise exactly as before.
 
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a

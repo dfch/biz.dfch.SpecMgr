@@ -69,11 +69,11 @@ flat-file directory scan (see
 ``.specmgr/feat/feat-31-feature/README.md`` Design Notes, "Addressing").
 It bumps ``updated`` to the same shared date+time timestamp (via
 ``general.tools._timestamps.now_timestamp()``) as every other domain --
- an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
- reversed for cross-domain consistency; see that feature's Decisions
- Made.
+an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
+reversed for cross-domain consistency; see that feature's Decisions
+Made.
 
- **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
+**Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
 issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead of
@@ -110,9 +110,9 @@ exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
 ``general.tools.validate``). The mode-dependent precedence when both failures hold at once is
 intentional (whole-body mode validates before loading, so
 ``ValidateResult`` wins; range mode loads first, so
- ``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
- (invalid ``id`` shape, ``limit`` given without ``offset``, misused range
- coordinates) still raises exactly as before.
+``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
+(invalid ``id`` shape, ``limit`` given without ``offset``, misused range
+coordinates) still raises exactly as before.
 
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
 validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
@@ -1700,7 +1700,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         ``offset + limit - 1 > N`` (raised after the on-disk body is read;
         the message names the offending value(s) and the allowed range).
          Nothing is written in any of these cases.
-     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
         The target id is truly absent (no file on disk matches it at all)

@@ -44,8 +44,8 @@ usable languages grows by adding one JSON file, never by a guard change.
 
 The generic ``delete`` tool (``.specmgr/feat/feat-36-delete/README.md``,
 Design Notes sections 2-6) was the first caller. The five functions are
- now also called by every ``get_<d>`` tool (``get_sysrs`` since
- feat-32-sysrs Phase 3, and ``get_txt`` since feat-229-txt Phase 130)
+now also called by every ``get_<d>`` tool (``get_sysrs`` since
+feat-32-sysrs Phase 3, and ``get_txt`` since feat-229-txt Phase 130)
 and by the generic ``update`` and ``set_status`` tools
 (``.specmgr/feat/feat-38-39-41-43-44/README.md``, Phase 4, REQ-009): they
 take only plain ``str``/``Path`` inputs, return ``None`` (raise on

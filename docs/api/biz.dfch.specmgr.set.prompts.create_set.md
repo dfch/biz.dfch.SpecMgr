@@ -14,8 +14,8 @@ itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown. The body narrates set's own
 shape: a single ``# {title}`` H1, the mandatory opaque free-markdown
 ``## Description`` (any blocks allowed), and the mandatory ``## Items``
- flat bullet list (any mix of the 11 reference tags, at least one item) --
- there are no other sections.
+flat bullet list (any mix of the 11 reference tags, at least one item) --
+there are no other sections.
 
 Naming note: this prompt is named ``create_set``, the same name as the
 ``@mcp.tool()`` in ``set/tools/create_set.py``. This is not a collision --

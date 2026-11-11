@@ -26,27 +26,27 @@ req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; optional read-style bo
 ``offset``/``limit`` coordinates -- ``offset`` = 1-based first line,
 ``limit`` = number of lines, omitted = through end of body, ``0`` = pure
 insert, ``offset = N+1`` = the virtual end-of-body append position -- strict
- validation, splice-then-validate-whole). ``set_status`` -- the generic,
- cross-domain status change for the whole-body document types (``type`` is
- one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set).
- ``set_classification`` -- the generic, cross-domain change of the free-text
- ``classification`` frontmatter field for the whole-body document
- types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set),
- bumping ``updated`` and leaving the body and
+validation, splice-then-validate-whole). ``set_status`` -- the generic,
+cross-domain status change for the whole-body document types (``type`` is
+one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set).
+``set_classification`` -- the generic, cross-domain change of the free-text
+``classification`` frontmatter field for the whole-body document
+types (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set),
+bumping ``updated`` and leaving the body and
 every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent.
- ``delete`` -- the
- generic, cross-domain hard-delete for the whole-body document types
- (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set),
- resolving the document by ``id``, taking the domain's own
- per-id lock, and removing it from disk (the single ``*.md`` file for the
- flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
- returning the deleted path as a string. ``edit`` -- the generic,
- cross-domain surgical, exact-match string replacement of an existing
- document's frontmatter-stripped body for the whole-body document types
- (``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set):
- ``old_str`` must
- match the on-disk body byte-exactly (no line-ending normalization, no
+``delete`` -- the
+generic, cross-domain hard-delete for the whole-body document types
+(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set),
+resolving the document by ``id``, taking the domain's own
+per-id lock, and removing it from disk (the single ``*.md`` file for the
+flat domains, the entire ``<base>/<id>/`` folder for ``feat``),
+returning the deleted path as a string. ``edit`` -- the generic,
+cross-domain surgical, exact-match string replacement of an existing
+document's frontmatter-stripped body for the whole-body document types
+(``type`` is one of req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set):
+``old_str`` must
+match the on-disk body byte-exactly (no line-ending normalization, no
 fuzzy/regex fallback) and be unique unless ``replace_all`` rewrites every
 exact occurrence, then the *edited* body must still validate as a whole
 document -- the 2-fold contract writes the document only if both stages
@@ -54,17 +54,17 @@ pass, nothing is written on any failure (an empty ``new_str`` is a pure
 deletion, legal iff stage 2 validates) (feat-159-edit, GitHub issue #159).
 ``validate`` -- the generic,
 cross-domain, disk-free/id-free dry-run content validator for the
- whole-body document types (``type`` is one of
- req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set); unlike every
- other generic tool here, it never raises for a content-validation failure --
+whole-body document types (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set); unlike every
+other generic tool here, it never raises for a content-validation failure --
 it always returns ``{valid: bool, errors: list[{message: str}]}``, only
 raising ``ValueError`` for a ``full``/content-shape mismatch or an
 unsupported ``type`` (feat-81-83-validation, DEC
 078bf395-0a5f-4afd-84f6-b7a2191a00e6).
- ``find_related`` -- find the documents most semantically related to an
- existing document, given its ``type``/``id``, across every whole-body
- domain, ranked by cosine similarity of
- local sentence embeddings (the ``similarity`` extra), excluding the
+``find_related`` -- find the documents most semantically related to an
+existing document, given its ``type``/``id``, across every whole-body
+domain, ranked by cosine similarity of
+local sentence embeddings (the ``similarity`` extra), excluding the
 source document itself (feat-134-related-artifact-similarity, DEC
 750842b2-aca4-4649-ba0c-855ec8e1f505). ``find_similar_text`` -- find the
 documents most semantically similar to a free-form ``query`` text (the
@@ -75,9 +75,9 @@ parse>`` marker title/status), and both return the structured,
 non-raising ``{available: false, reason, message}`` result whenever the
 embedding feature is unavailable (``SPECMGR_SIMILARITY_DISABLED`` present
 or the backend/model failed to load) -- the tools always register,
- availability is decided at call time (REQ-003). ``list_references`` -- the
- generic, cross-domain cross-reference listing tool (``type`` is one of
- req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set): scans the source
+availability is decided at call time (REQ-003). ``list_references`` -- the
+generic, cross-domain cross-reference listing tool (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set): scans the source
 document's frontmatter-stripped body for ``<TYPE> <id>`` references (the
 shared reference-tag vocabulary in ``general.tools._references`` --
 the UUID tags with a canonical uuid id, plus ``feat`` carrying the
@@ -88,9 +88,9 @@ returns a paged ``PagedResult`` of one ``ReferenceRow`` per unique
 reference (``type``/``id``/``title``/``path``, plus ``error`` for
 references that could not be resolved -- the shared ``list_*`` paging
 mechanism, DEC ec9f5262; feat-144-ref-artifact, the ``feat`` tag added
- by feat-177-list-ref-feat). ``get_reference_diagram`` -- the
- read-only, id-based reference-diagram tool (``type`` is one of
- req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set): renders one source
+by feat-177-list-ref-feat). ``get_reference_diagram`` -- the
+read-only, id-based reference-diagram tool (``type`` is one of
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set): renders one source
 document's reference neighbourhood as the deterministic PlantUML component
 diagram of the frozen ``specmgr://reference-graph`` rulebook (one node per
 artifact, a stereotype + colour per type, per-domain curly-brace component
@@ -101,16 +101,16 @@ dangling targets top-level ``<<UNRESOLVED>>`` nodes) -- the guard order is
 access), a missing source raises the source domain's own ``XNotFoundError``,
 and an existing-but-broken source returns the non-raising
 ``ParseFailureResult`` (feat-207-reference-graph, Phase 120).
- ``get_reference_diagram_all`` -- the read-only, registry-wide
- reference-diagram tool: the same deterministic PlantUML component diagram
- over every parseable document of all 14 domains (broken documents are
+``get_reference_diagram_all`` -- the read-only, registry-wide
+reference-diagram tool: the same deterministic PlantUML component diagram
+over every parseable document of all 14 domains (broken documents are
 skipped -- the render never fails for content), with the
 ``include_feat`` switch and an optional ``title`` override
 (feat-207-reference-graph, Phase 120).
 ``list_languages`` -- the read-only language-listing tool for one artifact (feat-197-i18n Phase 140, REQ-012,
 ACC-008): given a ``type`` (one of the thirteen i18n-eligible domains
- req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set;
- ``feat`` is permanently English and rejected) and an ``id``, it returns the language codes the artifact
+req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set;
+``feat`` is permanently English and rejected) and an ``id``, it returns the language codes the artifact
 exists in -- ``"en"`` first when the EN source exists, then the other languages holding a variant, sorted by code --
 with one entry per language (resolved path, ``parseable``, parse ``error``).
 ``check_translation_drift`` -- the read-only drift check between a translated variant (``language``) and its source

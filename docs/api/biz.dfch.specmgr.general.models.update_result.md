@@ -40,9 +40,9 @@ The generic ``update`` tool's success return: the updated frontmatter plus an op
 feat-69-update-context's "frontmatter-only" precedent returned -- the
 document's carried-over frontmatter with only ``updated`` bumped -- so a
 caller that previously read frontmatter fields directly off the result now
- reads them off ``result.frontmatter`` (the DEC's documented breaking
- change). ``snippet`` is the before/after window of the touched range, in
- range mode only: up to 2 unchanged context lines immediately above the
+reads them off ``result.frontmatter`` (the DEC's documented breaking
+change). ``snippet`` is the before/after window of the touched range, in
+range mode only: up to 2 unchanged context lines immediately above the
 touched range, the dropped lines (labeled with their **pre-splice** 1-based
 body-line numbers), the inserted lines (labeled with their **post-splice**
 numbers), and up to 2 unchanged context lines immediately below, each line

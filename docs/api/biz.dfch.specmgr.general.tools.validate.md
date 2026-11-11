@@ -42,14 +42,14 @@ content-shape mismatch (``full=True`` with body-only content, or
 content-validation failure, and is **not** in that catch set: it is a bare
 ``ValueError`` raised by the adapter itself, before the wrapped parse call
 ever runs, and it still propagates through :func:`validate` unchanged, same
- as it always did through the retired per-domain tools. An unsupported
- ``type`` is likewise a ``ValueError``, raised before any adapter runs at
- all. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends DEC
- 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
- (previously covering only mutation-adjacent tools) to this read-only/
- dry-run tool category.
+as it always did through the retired per-domain tools. An unsupported
+``type`` is likewise a ``ValueError``, raised before any adapter runs at
+all. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends DEC
+36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+(previously covering only mutation-adjacent tools) to this read-only/
+dry-run tool category.
 
- The parameter is intentionally named ``type`` (it matches the frontmatter
+The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
 to the builtin shadow.
 
@@ -251,8 +251,8 @@ body markdown only when ``full=False`` (the shape ``create_<d>`` and
 the generic ``update`` tool accept), or a complete document
 (frontmatter and body together) when ``full=True`` -- passing the
 wrong shape raises ``ValueError`` before the domain's own parse/
- validation logic ever runs. An unsupported ``type`` is likewise a
- ``ValueError``, raised before any adapter is dispatched.
+validation logic ever runs. An unsupported ``type`` is likewise a
+``ValueError``, raised before any adapter is dispatched.
 
 Parameters
 ----------

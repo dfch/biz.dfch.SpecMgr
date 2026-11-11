@@ -25,8 +25,8 @@ a caller splits a raw `.md` file's `---...---` block from its body via
 `python-frontmatter` (`frontmatter.loads(text)`), validates `.metadata` as
 `UcFrontmatter` and `.content` as `UseCase.from_text(...)` separately, then
 constructs a `UcDocument` from the two already-parsed pieces -- there is no
- `UcDocument.from_text`/parser function here (a separate, not-yet-ported
- concern; see `.specmgr/feat/feat-4-use-cases/README.md`).
+`UcDocument.from_text`/parser function here (a separate, not-yet-ported
+concern; see `.specmgr/feat/feat-4-use-cases/README.md`).
 """
 
 from __future__ import annotations

@@ -36,10 +36,10 @@ every other line byte-identical. The level-1 line -- the document title (H1)
 -- is free text in every i18n-eligible domain (alias ``.+``, or the
 ``sysrs`` English prefix pattern) and is NEVER looked up or rewritten, so a
 title that happens to equal a table key (e.g. a German title ``Quelle``)
- reaches the model unchanged (DEC 38efdb66 item 5: the free-form H1 is
- unaffected). It sits at each domain's text-to-model parse boundary (for the
- pilot domain ``dec``, :func:`biz.dfch.specmgr.dec.models.v1.parse_dec`)
- *after* the mdformat normalization and *before*
+reaches the model unchanged (DEC 38efdb66 item 5: the free-form H1 is
+unaffected). It sits at each domain's text-to-model parse boundary (for the
+pilot domain ``dec``, :func:`biz.dfch.specmgr.dec.models.v1.parse_dec`)
+*after* the mdformat normalization and *before*
 the unchanged ``models/md`` engine runs -- the engine then sees canonical
 English heading text, the parsed model holds the same canonical keys the EN
 parser produces (ACC-011), and the on-disk file keeps its translation

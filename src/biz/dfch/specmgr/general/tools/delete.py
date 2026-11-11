@@ -55,7 +55,7 @@ adapter does not catch it); an I/O failure during the actual
 re-raised as :class:`DeleteError` carrying the resolved path and the
 underlying ``OSError`` as ``__cause__``.
 
- The parameter is intentionally named ``type`` (it matches the frontmatter
+The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
 to the builtin shadow.
 """
@@ -607,7 +607,7 @@ def delete(
     lowercase-hex UUID for every domain other than ``feat``, or not a
     ``feat-NNN-slug`` for ``feat``) is a ``ValueError`` raised before
     dispatch. The resolved path is additionally confined to the domain's
-     own base directory (defense-in-depth) inside the lock.
+    own base directory (defense-in-depth) inside the lock.
 
     Parameters
     ----------

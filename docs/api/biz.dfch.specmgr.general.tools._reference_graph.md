@@ -43,9 +43,9 @@ builders **never raise for target-side content** (a dangling
 target becomes a ``title=None`` node); a **missing** source raises the source
 domain's own ``XNotFoundError`` (propagated unchanged from the source
 domain's own ``load_by_id``), and an **existing-but-broken** source raises
- the domain's own parse error (the ``AssertionError``/
- ``pydantic.ValidationError``/``yaml.YAMLError`` channels) -- the Phase 120
- tool layer converts that to the non-raising
+the domain's own parse error (the ``AssertionError``/
+``pydantic.ValidationError``/``yaml.YAMLError`` channels) -- the Phase 120
+tool layer converts that to the non-raising
 ``ParseFailureResult`` (the feat-150 precedent), the builders themselves
 raise. Every build runs over a visited (type, id) set (reference cycles
 terminate by construction; they affect only rendering, rulebook §4).

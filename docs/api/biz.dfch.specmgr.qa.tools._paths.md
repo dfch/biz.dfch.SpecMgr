@@ -108,9 +108,9 @@ content hash is unchanged since its last read is not re-parsed. A file
 that fails to parse
 (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
 one broken file must not prevent lookup of a different, valid id.
- Mirrors ``req.tools._paths.find_req_path``'s own skip-on-parse-failure
- rule. Before scanning, the cache is reconciled against the freshly
- materialized live path listing
+Mirrors ``req.tools._paths.find_req_path``'s own skip-on-parse-failure
+rule. Before scanning, the cache is reconciled against the freshly
+materialized live path listing
 (:func:`~._cache.reconcile_qa_cache`, against the domain-wide live listing of every language
 -- a scan of one language must not evict the other languages' entries, feat-197-i18n
 Phase 125), dropping any cached entry for a

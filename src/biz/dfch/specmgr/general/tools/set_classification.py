@@ -21,9 +21,9 @@
 
 The generic, cross-domain classification-change tool for the
 whole-body document types
- (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
 
- It dispatches on the explicit ``type`` parameter to a private per-domain
+It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_classification_<d>``), each shaped exactly like
 ``set_status.py``'s corresponding ``_set_status_<d>`` adapter (same domain
 lock, same ``load_by_id``, same ``_path_safety.assert_within`` guard, same
@@ -890,10 +890,10 @@ def set_classification(
 
     Cross-domain generic for the whole-body document types
     (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
-     dispatches on ``type`` to the domain's own adapter (same lock, same id
-     resolution, same body handling, same domain not-found error).
+    dispatches on ``type`` to the domain's own adapter (same lock, same id
+    resolution, same body handling, same domain not-found error).
 
-     The existing file's frontmatter is carried over with every field
+    The existing file's frontmatter is carried over with every field
     preserved except ``classification`` (replaced) and ``updated`` (bumped
     to the current date+time timestamp, via
     ``general.tools._timestamps.now_timestamp()``); the body is never
@@ -972,7 +972,7 @@ def set_classification(
         (not an ISO 639-1-shaped lowercase two-letter code), a non-default
         ``language`` with ``type`` ``feat`` (always English), or a non-default
         ``language`` without a packaged heading-mapping table.
-     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
         The target id is truly absent (no file on disk matches it at all) --

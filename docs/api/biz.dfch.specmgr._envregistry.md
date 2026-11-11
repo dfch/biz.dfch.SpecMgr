@@ -108,10 +108,10 @@ Read one registered variable with its default inserted (feat-208, Phase 100).
 The environment is read at call time: a set value (including a
 set-but-empty one) is returned as-is, except that a set-but-empty
 value falls back to the registered default when the entry's
- ``empty_falls_back_to_default`` flag is set -- the three empty-fallback
- variables (``SPECMGR_DOCS_DIR``, ``SPECMGR_FEAT_DIR``,
- ``FASTEMBED_CACHE_PATH``; the user-approved Option A decision,
- feat-208 Phase 110). An unset variable yields the registered default.
+``empty_falls_back_to_default`` flag is set -- the three empty-fallback
+variables (``SPECMGR_DOCS_DIR``, ``SPECMGR_FEAT_DIR``,
+``FASTEMBED_CACHE_PATH``; the user-approved Option A decision,
+feat-208 Phase 110). An unset variable yields the registered default.
 
 Args:
     name: A registered environment variable name carrying a default.

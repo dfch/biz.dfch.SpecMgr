@@ -22,9 +22,9 @@
 The generic, cross-domain cross-reference listing tool (DEC 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
- every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
- ``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) --
- reads
+every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) --
+reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
 the source, since extraction needs the literal markdown), extracts every
@@ -35,8 +35,8 @@ canonical 8-4-4-4-12 hex id, plus the ``FEAT`` tag carrying the full
 repeated occurrences of the same reference (first-occurrence order
 preserved), and
 resolves each unique reference to the referenced document in its own target
- domain (``general.tools._references.resolve_reference``: the target
- domains' own cache-backed ``load_by_id``).
+domain (``general.tools._references.resolve_reference``: the target
+domains' own cache-backed ``load_by_id``).
 The result is one
 :class:`~biz.dfch.specmgr.general.models.reference.ReferenceRow` per unique
 reference, wrapped in ``PagedResult[ReferenceRow]`` via the exact ``list_*``

@@ -53,9 +53,9 @@ missing-extra condition into the clear exit-1 message whenever the CLI
 is importable but the registry-backed chain is not -- in today's
 ``[cli]``-only install the sibling commands' pre-existing
 package-init tangles block the CLI import first (issue #238 territory),
- but this module no longer contributes to that. There is no module-level
- specmgr import at all (the registry's ``--type`` acceptance set is
- deliberately NOT derived at import time, so no Typer ``choices``).
+but this module no longer contributes to that. There is no module-level
+specmgr import at all (the registry's ``--type`` acceptance set is
+deliberately NOT derived at import time, so no Typer ``choices``).
 
 Exit codes (pinned, REQ-008 -- the plantuml-check family):
 
