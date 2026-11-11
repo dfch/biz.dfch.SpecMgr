@@ -22,9 +22,10 @@ the smoke case (Task 100.170); Phase 110 (Task 110.100) adds its own
 cases: ``create-system``, ``mcp-limits``, ``no-trigger`` and the held-out
 ``heldout-validate``; Phase 120 (Task 120.100) adds ``fix-dsl`` and the
 held-out ``heldout-dsl``; Phase 130 (Task 130.100) adds ``modeling-
-decisions`` and the held-out ``heldout-modeling``. The remaining shared
-cases (``design-views``, ``review-model``) and the other per-phase
-held-outs land with their phases.
+decisions`` and the held-out ``heldout-modeling``; Phase 140 (Task
+140.100) adds ``design-views`` and the held-out ``heldout-views``. The
+remaining shared case (``review-model``) and the last held-out land with
+their phase.
 """
 
 from __future__ import annotations
@@ -556,9 +557,178 @@ HELDOUT_MODELING_CASE_DEF = Case(
     expected_container_count=HELDOUT_MODELING_EXPECTED_CONTAINERS,
 )
 
+# ---------------------------------------------------------------------------
+# Phase 140 gate set (Task 140.100)
+# ---------------------------------------------------------------------------
+
+#: The `design-views` gate set: the standard create-family shape gates
+#: (the workspace validates and exports, carries a person, a system, a
+#: description on every element, a technology on every relationship, a
+#: user-defined view) plus `validate_ok_called` (the prompt carries the
+#: create-family "check with the structurizr MCP tools before you finish"
+#: tail, deliberately naming no tool -- the Phase 110/130 precedent),
+#: `external_system_tagged` (the scenario's two third-party services are
+#: operated by a different organization -- a TOP-LEVEL element carrying
+#: the `External` tag, the Phase 130 gate) and the two new view-design
+#: gates: `views_within_element_bound` (every user-defined view carries at
+#: most the locked 20-element bound -- the scenario's 23 elements make a
+#: single `include *` container view 22 elements, necessarily over) and
+#: `explicit_view_keys` (every view has an explicit key -- a view the DSL
+#: wrote without a key exports under an auto-generated `<Kind>-NNN` key
+#: with `generatedKey: true`). Deliberately NO loop-discipline gates
+#: (`parse_called`/`inspect_called`/`triage_complete`/
+#: `validated_before_return`): the locked Phase 120/130 separation -- this
+#: skill's delta is the view design.
+DESIGN_VIEWS_GATES: tuple[str, ...] = (
+    "dsl_written",
+    "cli_valid",
+    "cli_export",
+    "has_system",
+    "has_person",
+    "elements_described",
+    "relationship_technology",
+    "has_view",
+    "validate_ok_called",
+    "external_system_tagged",
+    "views_within_element_bound",
+    "explicit_view_keys",
+)
+
+# ---------------------------------------------------------------------------
+# Phase 140 cases (Task 140.100)
+# ---------------------------------------------------------------------------
+
+#: The `design-views` prompt: a CREATE task (a fresh `workspace.dsl` from
+#: a scenario prompt -- the create-family shape, NOT a fix/seeded case),
+#: larger than any earlier case: 23 elements in total (one person role,
+#: one owned system, 19 application parts, two third-party services
+#: operated by a different organization), so a single `include *`
+#: container view necessarily carries 22 elements -- over the locked
+#: 20-element bound -- while a well-designed split (several views with
+#: explicit include lists, each within the bound, explicit keys) satisfies
+#: every gate. The scenario is plain business language that never states
+#: the view-design answers (no "view", no "split", no element-per-view
+#: numbers -- the view design is the skill's delta), with the create-
+#: family tail "check with the structurizr MCP tools before you finish"
+#: (no tool named -- the Phase 110/130 precedent).
+DESIGN_VIEWS_PROMPT = """\
+Create a C4 model of our online banking platform in the current working directory.
+
+Write exactly one file named `workspace.dsl` containing a Structurizr DSL workspace for the following situation:
+
+- Bank customers use the platform to manage their accounts, move money, and track their activity.
+- The platform is the Bank Portal system, owned and operated by our company. Its application parts are:
+  - a web portal where customers log in and manage their accounts,
+  - a mobile app backend that serves the bank's mobile app,
+  - an account service that holds the customer account records,
+  - a transaction service that processes deposits, withdrawals, and transfers,
+  - a payment service that executes card payments and bank transfers,
+  - a card service that manages debit and credit cards,
+  - a fraud detection service that scores transactions for fraud,
+  - a notification service that sends email and SMS alerts,
+  - an onboarding service that verifies new customers,
+  - a statements service that generates monthly statements,
+  - a direct debit service that processes standing orders and direct debits,
+  - an exchange rates service that provides currency conversion rates,
+  - a batch scheduler that runs the nightly interest calculation and reconciliation,
+  - an event queue that carries internal events between the application parts,
+  - a ledger database that stores every account movement,
+  - a customer database that stores account and profile records,
+  - an audit database that stores the compliance audit trail,
+  - a cache that stores sessions and frequently read account data, and
+  - a document store that holds the generated statement PDFs.
+- The payment service routes card authorisations through a card payment network that is
+  operated by a different organization.
+- The onboarding service performs credit checks through a credit reference agency that is
+  operated by a different organization.
+- The web portal and the mobile app backend reach the account, transaction, payment, card,
+  statements, and direct debit services.
+- The transaction service updates the ledger, scores transactions with the fraud detection
+  service, and publishes events to the event queue.
+- The notification service consumes events from the event queue, the statements service
+  reads the ledger and writes to the document store, and the batch scheduler reads and
+  writes the ledger and the customer database.
+- The card service and the exchange rates service serve the payment service, and the
+  onboarding service reads the customer database.
+
+Keep the model minimal: nothing beyond what the situation above contains.
+
+Before you finish, check with the structurizr MCP tools and fix every error they report. Make sure the final
+`workspace.dsl` on disk is the exact text you last checked.
+"""
+
+DESIGN_VIEWS_CASE_DEF = Case(
+    id="design-views",
+    prompt=DESIGN_VIEWS_PROMPT,
+    gates=DESIGN_VIEWS_GATES,
+)
+
+#: `heldout-views`: the same task shape as `design-views` (a fresh
+#: workspace from a >20-element business scenario whose view design is
+#: the test), a different domain (insurance claims -- not
+#: bookshop/hospital/library/parking/museum/parcel/home-energy/banking,
+#: per the locked guardrail) with its own scenario facts (19 application
+#: parts, the two third-party services a national claims data bureau and
+#: a clearing house) and the same locked gate family. Held out:
+#: registered by its own id constant, never part of `FULL_CASES`, never
+#: tuned with, run once at the end of the phase (the
+#: `HELDOUT_MODELING_CASE` precedent).
+HELDOUT_VIEWS_PROMPT = """\
+Create a C4 model of our insurance claims platform in the current working directory.
+
+Write exactly one file named `workspace.dsl` containing a Structurizr DSL workspace for the following situation:
+
+- Policyholders use the platform to report claims and track their progress.
+- The platform is the Claims Center system, owned and operated by our insurance company. Its application parts are:
+  - a web portal where policyholders report claims and track their progress,
+  - a mobile app backend that serves the insurer's mobile app,
+  - a claims intake service that registers new claims,
+  - a triage service that classifies and prioritizes claims,
+  - an assessment service that calculates settlement amounts,
+  - a payout service that executes claim settlements,
+  - a fraud screening service that flags suspicious claims,
+  - a document service that accepts claim photos and reports,
+  - a notification service that emails and messages policyholders,
+  - an assignment service that routes claims to adjusters,
+  - an adjuster workbench where staff process their assigned claims,
+  - a policy verification service that checks that a claim is covered by the policy,
+  - a reinsurance allocation service that apportions large losses across reinsurance partners,
+  - a batch scheduler that runs the nightly reserves calculation,
+  - an event queue that carries claim events between the application parts,
+  - a claims database that stores claim records,
+  - a policy database that stores policy and cover records,
+  - an audit database that stores the compliance audit trail, and
+  - a document store that holds claim photos, reports, and correspondence.
+- The fraud screening service consults a national claims data bureau that is
+  operated by a different organization.
+- The payout service executes settlements through a clearing house that is
+  operated by a different organization.
+- The web portal and the mobile app backend reach the intake, assessment, payout, document,
+  and notification services.
+- The claims intake service hands accepted claims to the triage service, the triage service
+  routes them to the assessment service, and the assessment service requests settlements
+  from the payout service.
+- The fraud screening service screens each incoming claim, the policy verification service
+  checks the cover, and the assignment service routes the claim to the adjuster workbench.
+- The document service reads from the document store, the batch scheduler reads and writes
+  the claims and policy databases, and the notification service reports claim status changes.
+
+Keep the model minimal: nothing beyond what the situation above contains.
+
+Before you finish, check with the structurizr MCP tools and fix every error they report. Make sure the final
+`workspace.dsl` on disk is the exact text you last checked.
+"""
+
+HELDOUT_VIEWS_CASE_DEF = Case(
+    id=pins.HELDOUT_VIEWS_CASE,
+    prompt=HELDOUT_VIEWS_PROMPT,
+    gates=DESIGN_VIEWS_GATES,
+)
+
 #: Every case the harness knows, in canonical order.
 CASES: dict[str, Case] = {
     CREATE_SYSTEM_CASE_DEF.id: CREATE_SYSTEM_CASE_DEF,
+    DESIGN_VIEWS_CASE_DEF.id: DESIGN_VIEWS_CASE_DEF,
     FIX_DSL_CASE_DEF.id: FIX_DSL_CASE_DEF,
     MODELING_DECISIONS_CASE_DEF.id: MODELING_DECISIONS_CASE_DEF,
     MCP_LIMITS_CASE_DEF.id: MCP_LIMITS_CASE_DEF,
@@ -566,6 +736,7 @@ CASES: dict[str, Case] = {
     HELDOUT_VALIDATE_CASE_DEF.id: HELDOUT_VALIDATE_CASE_DEF,
     HELDOUT_DSL_CASE_DEF.id: HELDOUT_DSL_CASE_DEF,
     HELDOUT_MODELING_CASE_DEF.id: HELDOUT_MODELING_CASE_DEF,
+    HELDOUT_VIEWS_CASE_DEF.id: HELDOUT_VIEWS_CASE_DEF,
     SMOKE_CASE_DEF.id: SMOKE_CASE_DEF,
 }
 

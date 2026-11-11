@@ -50,10 +50,21 @@ appears as no container or component -- a negative-presence gate by name),
 carries the `External` tag -- the pinned DSL has no `externalSystem`
 keyword, so the export's `model.externalSystems` section is never the
 place to look), and `no_vague_labels` (no relationship carries a
-forbidden vague description). All gates -- the original 8 (unwrapped over
-`GateContext.inputs`, behavior unchanged) and the new ones -- are keyed in
-:data:`GATES`; :func:`grade_case` evaluates a case's gate names over one
-context.
+forbidden vague description). Phase 140 (Task 140.100) adds the
+view-design gates over the export JSON: `views_within_element_bound`
+(every user-defined view -- `generatedKey` filtered out, the `has_view`
+precedent -- carries at most the locked `VIEW_ELEMENT_BOUND` of 20
+elements, the spike's practical bound; a view's element list is the
+exported `elements` array -- the scoped containers/components plus every
+linked element, the scoped system itself not counted -- and a filtered
+view, which the pinned exporter writes without an `elements` list, is
+bounded by its base view's count) and `explicit_view_keys` (every view in
+the export JSON carries an explicit key -- a view whose DSL omitted the
+key is exported under an auto-generated `<Kind>-NNN` key, e.g.
+`Container-001`, with `generatedKey: true`, verified against the pinned
+CLI). All gates -- the original 8 (unwrapped over `GateContext.inputs`,
+behavior unchanged) and the new ones -- are keyed in :data:`GATES`;
+:func:`grade_case` evaluates a case's gate names over one context.
 
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
@@ -663,6 +674,132 @@ def gate_no_vague_labels(inputs: GraderInputs) -> GateResult:
 
 
 # ---------------------------------------------------------------------------
+# the Phase 140 view-design gates (Task 140.100)
+# ---------------------------------------------------------------------------
+
+#: The practical upper bound on the elements one view may carry (locked,
+#: Task 140.100): the spike's Finding 8 -- the 150-element view exported a
+#: 29,664-pixel-wide SVG that was unusable as a diagram; "about 20 elements
+#: per view".
+VIEW_ELEMENT_BOUND = 20
+
+
+def iter_user_defined_views(export_json: dict | None) -> list[dict]:
+    """Return the views the DSL itself defined (`generatedKey` filtered out).
+
+    The `has_view` precedent: the JSON exporter auto-generates default
+    views (one container view per system, a system context view, a system
+    landscape view) marked `generatedKey: true` when the DSL defines no
+    views at all, and it marks a view the DSL defined with an omitted key
+    `generatedKey: true` too (giving it an auto-generated `<Kind>-NNN`
+    key, e.g. `Container-001` -- verified against the pinned CLI, Task
+    140.100). Either way, only a view the DSL defined WITH its key
+    explicit counts as user-defined here.
+    """
+    result = [v for v in iter_views(export_json) if not v.get("generatedKey")]
+    return result
+
+
+def _view_element_count(view: dict, all_views: list[dict], seen: set[str] | None = None) -> int:
+    """Return the number of elements one view renders (over the export JSON).
+
+    The pinned exporter's element-scoping fact (verified against the
+    pinned CLI, Task 140.100): a regular view's `elements` array is the
+    view's `include` result -- for a container view with `include *`, the
+    scoped system's containers plus every element linked to them (people,
+    other software systems, custom elements); the scoped software system
+    itself is NOT in the list (the view references it by its own
+    `softwareSystemId`), and linked relationship copies are relationships,
+    not elements. An explicit include list carries exactly the listed
+    elements. A filtered view has no `elements` array of its own (the
+    exporter writes its `baseViewKey`, `mode` and `tags` instead); it
+    renders a subset of its base view, so it is bounded by the base's
+    count, resolved by key (recursively, cycle-guarded).
+    """
+    elements = view.get("elements")
+    if isinstance(elements, list):
+        result = len(elements)
+        return result
+    if seen is None:
+        seen = set()
+    key = str(view.get("key") or "")
+    if key in seen:
+        result = 0
+        return result
+    seen.add(key)
+    base_key = view.get("baseViewKey")
+    for other in all_views:
+        if other.get("key") == base_key:
+            result = _view_element_count(other, all_views, seen)
+            return result
+    result = 0
+    return result
+
+
+def gate_views_within_element_bound(inputs: GraderInputs) -> GateResult:
+    """`views_within_element_bound`: every user-defined view carries at most 20 elements.
+
+    The locked view-size rule of the `c4-view-design` skill (the spike's
+    practical bound, `VIEW_ELEMENT_BOUND`): a single `include *` view of a
+    larger model is not a readable diagram. Counts every user-defined
+    view's rendered element count over the export JSON (the `elements`
+    array; a filtered view bounded by its base's count -- see
+    `_view_element_count`); a view with more than the bound fails the
+    gate. Vacuously true without user-defined views (`has_view` carries
+    the presence requirement).
+    """
+    views = iter_user_defined_views(inputs.export_json)
+    if not views:
+        return GateResult(
+            "views_within_element_bound", True, "no user-defined views to check (vacuously within the bound)"
+        )
+    all_views = iter_views(inputs.export_json)
+    over: list[str] = []
+    for view in views:
+        count = _view_element_count(view, all_views)
+        if count > VIEW_ELEMENT_BOUND:
+            over.append(f"{view.get('key')!r} with {count} element(s)")
+    if over:
+        return GateResult(
+            "views_within_element_bound",
+            False,
+            f"{len(over)} of {len(views)} user-defined view(s) over {VIEW_ELEMENT_BOUND} element(s): "
+            + "; ".join(over),
+        )
+    return GateResult(
+        "views_within_element_bound",
+        True,
+        f"every one of {len(views)} user-defined view(s) carries at most {VIEW_ELEMENT_BOUND} element(s)",
+    )
+
+
+def gate_explicit_view_keys(inputs: GraderInputs) -> GateResult:
+    """`explicit_view_keys`: every view the workspace carries has an explicit key.
+
+    The locked explicit-key rule of the `c4-view-design` skill: a view
+    whose DSL omitted the key is exported under an auto-generated
+    `<Kind>-NNN` key (e.g. `Container-001`) with `generatedKey: true` --
+    not guaranteed to be stable over time, and the pinned CLI's `inspect`
+    reports it as a `views.view.key` finding (verified against the pinned
+    CLI, Task 140.100). The gate is over the export JSON: every view must
+    exist, and none may carry the `generatedKey` mark. A workspace whose
+    DSL defines no views at all exports only auto-generated default
+    views and fails here as well (`has_view` fails it too).
+    """
+    views = iter_views(inputs.export_json)
+    if not views:
+        return GateResult("explicit_view_keys", False, "no views at all in the export JSON")
+    generated = [str(v.get("key") or "?") for v in views if v.get("generatedKey")]
+    if generated:
+        return GateResult(
+            "explicit_view_keys",
+            False,
+            f"{len(generated)} of {len(views)} view(s) carry an auto-generated key (the DSL omitted it): {generated}",
+        )
+    return GateResult("explicit_view_keys", True, f"every one of {len(views)} view(s) has an explicit key")
+
+
+# ---------------------------------------------------------------------------
 # the stream-derived gates (Phase 110, Task 110.100)
 # ---------------------------------------------------------------------------
 
@@ -889,9 +1026,11 @@ def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateCo
 #: over `GateContext.inputs`; the Phase 120 `elements_described`/
 #: `relationships_described` gates are input-only too; the Phase 130
 #: `external_system_tagged`/`no_vague_labels` gates are input-only too;
-#: the Phase 110 stream gates and the Phase 120 `no_deletions` gate and
-#: the Phase 130 `container_count`/`no_library_container` gates (which
-#: read the case's own scenario facts) take the context.
+#: the Phase 140 `views_within_element_bound`/`explicit_view_keys` gates
+#: are input-only too; the Phase 110 stream gates and the Phase 120
+#: `no_deletions` gate and the Phase 130 `container_count`/
+#: `no_library_container` gates (which read the case's own scenario
+#: facts) take the context.
 GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "dsl_written": _inputs_only(gate_dsl_written),
     "cli_valid": _inputs_only(gate_cli_valid),
@@ -908,6 +1047,8 @@ GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "no_library_container": gate_no_library_container,
     "external_system_tagged": _inputs_only(gate_external_system_tagged),
     "no_vague_labels": _inputs_only(gate_no_vague_labels),
+    "views_within_element_bound": _inputs_only(gate_views_within_element_bound),
+    "explicit_view_keys": _inputs_only(gate_explicit_view_keys),
     "validated_before_return": gate_validated_before_return,
     "parse_called": gate_parse_called,
     "validate_ok_called": gate_validate_ok_called,

@@ -279,6 +279,14 @@ HELDOUT_DSL_CASE = "heldout-dsl"
 #: `HELDOUT_DSL_CASE`.
 HELDOUT_MODELING_CASE = "heldout-modeling"
 
+#: The Phase 140 held-out case (Task 140.100/140.140): the same task shape
+#: as `design-views` (a fresh workspace from a business scenario whose
+#: view design is the test -- more than 20 elements, so a single
+#: `include *` container view necessarily exceeds the element bound) in a
+#: different domain. Deliberately NOT part of `FULL_CASES` -- held out
+#: exactly like `HELDOUT_MODELING_CASE`.
+HELDOUT_VIEWS_CASE = "heldout-views"
+
 
 def version_tuple() -> dict[str, object]:
     """Return the version tuple as a plain dict (REQ-008 reproducibility).

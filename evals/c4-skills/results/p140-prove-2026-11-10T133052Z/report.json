@@ -1,0 +1,76 @@
+{
+  "cases": [
+    "design-views",
+    "no-trigger",
+    "heldout-views"
+  ],
+  "comparison": "none",
+  "conditions": [
+    "none"
+  ],
+  "cost_estimate": {
+    "budget_hours": 30.0,
+    "full_run_hours_at_median": 30.0,
+    "full_run_hours_at_timeout": 30.0,
+    "full_run_trials": 90,
+    "max_wall_time_s": 1201.4,
+    "mean_wall_time_s": 1008.0,
+    "measured_trials": 15,
+    "median_wall_time_s": 1201.1,
+    "within_budget_at_median": false
+  },
+  "k": 5,
+  "label": "p140-prove",
+  "per_condition": {
+    "none": {
+      "flags": {
+        "cached": 0,
+        "contended": 5,
+        "timeout": 11
+      },
+      "gate_failures": {
+        "cli_export": 7,
+        "cli_valid": 7,
+        "dsl_written": 6,
+        "elements_described": 7,
+        "explicit_view_keys": 7,
+        "external_system_tagged": 10,
+        "has_person": 7,
+        "has_system": 7,
+        "has_view": 7,
+        "mcp_limit_stated": 4,
+        "relationship_technology": 9,
+        "validate_ok_called": 8,
+        "views_within_element_bound": 3
+      },
+      "pass_power_k": 2.283658260521167e-18,
+      "pass_rate": 0.06666666666666667,
+      "passes": 1,
+      "per_case": {
+        "design-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "heldout-views": {
+          "passes": 0,
+          "trials": 5
+        },
+        "no-trigger": {
+          "passes": 1,
+          "trials": 5
+        }
+      },
+      "trials": 15,
+      "wilson": [
+        0.01186689536153232,
+        0.2981653010887565
+      ]
+    }
+  },
+  "preflight_ok": true,
+  "preflight_problems": [],
+  "run_id": "p140-prove-2026-11-10T133052Z",
+  "seed": 41733,
+  "skill_margins": null,
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

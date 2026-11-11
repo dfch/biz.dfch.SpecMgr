@@ -44,12 +44,16 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import unittest
 
 from c4_skills import pins
 from c4_skills.cases import (
     CASES,
     CREATE_SYSTEM_GATES,
+    DESIGN_VIEWS_CASE_DEF,
+    DESIGN_VIEWS_GATES,
+    DESIGN_VIEWS_PROMPT,
     FIX_DSL_CASE_DEF,
     FIX_DSL_GATES,
     FIX_DSL_PROMPT,
@@ -63,6 +67,8 @@ from c4_skills.cases import (
     HELDOUT_MODELING_CASE_DEF,
     HELDOUT_MODELING_FORBIDDEN_NAMES,
     HELDOUT_MODELING_PROMPT,
+    HELDOUT_VIEWS_CASE_DEF,
+    HELDOUT_VIEWS_PROMPT,
     MCP_LIMITS_GATES,
     MODELING_DECISIONS_CASE_DEF,
     MODELING_DECISIONS_EXPECTED_CONTAINERS,
@@ -81,15 +87,18 @@ from c4_skills.graders import (
     GateResult,
     GraderInputs,
     VAGUE_RELATIONSHIP_LABELS,
+    VIEW_ELEMENT_BOUND,
     case_passed,
     grade_case,
     gate_container_count,
     gate_elements_described,
+    gate_explicit_view_keys,
     gate_external_system_tagged,
     gate_no_deletions,
     gate_no_library_container,
     gate_no_vague_labels,
     gate_relationships_described,
+    gate_views_within_element_bound,
     iter_components,
     iter_containers,
     iter_custom_elements,
@@ -1834,6 +1843,426 @@ class TestPhase130EndToEnd(unittest.TestCase):
             "elements_described",
             "has_view",
             "validate_ok_called",
+        ):
+            self.assertTrue(by_name[shape_gate].passed, shape_gate)
+        self.assertFalse(case_passed(results))
+
+
+# ---------------------------------------------------------------------------
+# Phase 140 (Task 140.100): the design-views case and its gates
+# ---------------------------------------------------------------------------
+
+DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS: tuple[str, ...] = (
+    # the view-design answers (the skill's delta -- never in the prompt)
+    "view",
+    "diagram",
+    "split",
+    "crowded",
+    "readable",
+    "include",
+    "layout",
+    "key",
+    # the C4 modeling answers (the Phase 130 precedent)
+    "container",
+    "softwaresystem",
+    "component",
+    "external",
+    "person",
+)
+
+
+def _views_inputs(export_name: str) -> GraderInputs:
+    return _inputs(export_name, validate_rc=0, export_rc=0)
+
+
+def _views_inputs_from(export: dict, export_name: str = "views-good") -> GraderInputs:
+    dsl = (WORKSPACES / export_name / "workspace.dsl").read_text(encoding="utf-8")
+    return GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=0,
+        inspect_findings=[],
+    )
+
+
+def _synthetic_export(views: dict) -> dict:
+    """A minimal export JSON carrying only the given `views` section."""
+    result = {
+        "model": {"people": [], "softwareSystems": [], "customElements": []},
+        "views": views,
+    }
+    return result
+
+
+class TestPhase140CaseRegistry(unittest.TestCase):
+    """The Phase 140 cases (Task 140.100): the locked ids, prompts, gate
+    set and scenario facts."""
+
+    def test_design_views_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["design-views"], DESIGN_VIEWS_CASE_DEF)
+        self.assertIn("design-views", pins.FULL_CASES)
+        self.assertEqual(DESIGN_VIEWS_CASE_DEF.gates, DESIGN_VIEWS_GATES)
+
+    def test_heldout_views_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_VIEWS_CASE], HELDOUT_VIEWS_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_VIEWS_CASE, pins.FULL_CASES)
+        # the same gate family (locked: same task shape, same gates, different domain)
+        self.assertEqual(HELDOUT_VIEWS_CASE_DEF.gates, DESIGN_VIEWS_GATES)
+
+    def test_design_views_gate_set_is_the_locked_12(self) -> None:
+        self.assertEqual(
+            DESIGN_VIEWS_GATES,
+            (
+                "dsl_written",
+                "cli_valid",
+                "cli_export",
+                "has_system",
+                "has_person",
+                "elements_described",
+                "relationship_technology",
+                "has_view",
+                "validate_ok_called",
+                "external_system_tagged",
+                "views_within_element_bound",
+                "explicit_view_keys",
+            ),
+        )
+        # no loop-discipline gates (locked: they belong to the validate-loop
+        # skill; this skill's delta is the view design); the create-family
+        # `validate_ok_called` gate IS in the set (the prompt carries the
+        # tool-nameless "check with the structurizr MCP tools" tail)
+        for stream_gate in ("parse_called", "inspect_called", "validated_before_return", "triage_complete"):
+            self.assertNotIn(stream_gate, DESIGN_VIEWS_GATES)
+        self.assertIn("validate_ok_called", DESIGN_VIEWS_GATES)
+
+    def test_design_views_prompt_is_the_locked_wording(self) -> None:
+        self.assertEqual(DESIGN_VIEWS_CASE_DEF.setup_files, {})
+        # the create-family tail, naming no tool (the Phase 110/130 precedent)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            DESIGN_VIEWS_PROMPT,
+        )
+        lowered = DESIGN_VIEWS_PROMPT.lower()
+        for tool_name in ("validate", "parse", "inspect"):
+            self.assertNotIn(tool_name, lowered, f"the prompt names a tool: {tool_name}")
+        # the scenario facts in plain business language
+        self.assertIn("Bank Portal system", DESIGN_VIEWS_PROMPT)
+        self.assertIn("card payment network", DESIGN_VIEWS_PROMPT)
+        self.assertIn("credit reference agency", DESIGN_VIEWS_PROMPT)
+        # ...and never the view-design answers or the C4 answers
+        for answer_word in DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS:
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+    def test_design_views_scenario_has_more_than_20_elements(self) -> None:
+        # one person role + one owned system + 19 application parts + two
+        # third-party services = 23 elements, so a single `include *`
+        # container view necessarily carries 22 (19 + person + 2 externals)
+        # -- over the locked 20-element bound
+        self.assertEqual(
+            len(re.findall(r"^  - ", DESIGN_VIEWS_PROMPT, re.MULTILINE)), 19, "the scenario names 19 application parts"
+        )
+        self.assertEqual(DESIGN_VIEWS_PROMPT.count("operated by a different organization"), 2)
+
+    def test_heldout_views_prompt_keeps_the_same_task_shape(self) -> None:
+        # same shape, different domain (insurance claims -- not any earlier
+        # phase's domain, per the locked guardrail)
+        lowered = HELDOUT_VIEWS_PROMPT.lower()
+        for domain in (
+            "bookshop",
+            "hospital",
+            "library",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+        ):
+            self.assertNotIn(domain, lowered, f"the held-out prompt reuses an earlier domain: {domain}")
+        # the held-out scenario's own facts
+        self.assertIn("Claims Center system", HELDOUT_VIEWS_PROMPT)
+        self.assertIn("national claims data bureau", HELDOUT_VIEWS_PROMPT)
+        self.assertIn("clearing house", HELDOUT_VIEWS_PROMPT)
+        self.assertEqual(
+            len(re.findall(r"^  - ", HELDOUT_VIEWS_PROMPT, re.MULTILINE)), 19, "the scenario names 19 application parts"
+        )
+        self.assertEqual(HELDOUT_VIEWS_PROMPT.count("operated by a different organization"), 2)
+        self.assertIn(
+            "Before you finish, check with the structurizr MCP tools and fix every error they report.",
+            HELDOUT_VIEWS_PROMPT,
+        )
+        for answer_word in DESIGN_VIEWS_FORBIDDEN_PROMPT_WORDS:
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+
+class TestPhase140FixtureFilesPresent(unittest.TestCase):
+    def test_views_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("views-good", "views-bad", "heldout-views-good"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+            validate_txt = WORKSPACES / name / "validate.txt"
+            self.assertTrue(validate_txt.is_file(), f"missing fixture {name}/validate.txt")
+
+    def test_views_bad_fixture_is_cli_valid(self) -> None:
+        # the known-bad reference's defects are SEMANTIC (the wrong view
+        # design), not syntactic: the pinned CLI validates it cleanly
+        self.assertEqual((WORKSPACES / "views-bad" / "validate.txt").read_text(encoding="utf-8"), "")
+
+    def test_views_good_fixture_carries_the_split_view_design(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        views = iter_views(export)
+        self.assertEqual(len(views), 4)
+        self.assertTrue(all(not v.get("generatedKey") for v in views))
+        for view in views:
+            self.assertLessEqual(len(view.get("elements") or []), VIEW_ELEMENT_BOUND)
+
+    def test_views_bad_fixture_carries_both_view_defect_classes(self) -> None:
+        export = _load_export("views-bad")
+        assert export is not None
+        views = iter_views(export)
+        self.assertEqual(len(views), 3)
+        # an explicit-key view over the bound ...
+        over = [v for v in views if not v.get("generatedKey") and len(v.get("elements") or []) > VIEW_ELEMENT_BOUND]
+        self.assertEqual([v["key"] for v in over], ["AllContainers"])
+        # ... and a keyless view (auto-generated key, the `generatedKey` mark)
+        generated = [v for v in views if v.get("generatedKey")]
+        self.assertEqual([v["key"] for v in generated], ["Container-001"])
+
+
+class TestViewElementScopingFacts(unittest.TestCase):
+    """The pinned exporter's element-scoping facts (verified against the
+    pinned CLI, Task 140.100) as the gates rely on them."""
+
+    def test_include_star_counts_containers_plus_linked_elements_not_the_system(self) -> None:
+        # the views-bad `AllContainers` view (`include *` over 19
+        # containers): the element list is the 19 containers + the linked
+        # person + the two linked external software systems = 22; the
+        # scoped system itself is NOT in the list (the view references it
+        # by its own `softwareSystemId`)
+        export = _load_export("views-bad")
+        assert export is not None
+        all_containers = next(v for v in iter_views(export) if v.get("key") == "AllContainers")
+        self.assertEqual(len(all_containers["elements"]), 22)
+        self.assertIn("softwareSystemId", all_containers)
+        system_id = str(all_containers["softwareSystemId"])
+        self.assertNotIn(system_id, [str(e["id"]) for e in all_containers["elements"]])
+
+    def test_an_explicit_include_list_counts_exactly_the_listed_elements(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        front_office = next(v for v in iter_views(export) if v.get("key") == "FrontOffice")
+        # customer + web + mobile + accounts + transactions + payments +
+        # notifications + cache = 8, nothing else
+        self.assertEqual(len(front_office["elements"]), 8)
+
+    def test_a_filtered_view_carries_no_elements_list_of_its_own(self) -> None:
+        # the pinned exporter writes a filtered view as `baseViewKey` +
+        # `mode` + `tags` (no `elements` array): the gate bounds it by its
+        # base's count (`_view_element_count`)
+        export = _synthetic_export(
+            {
+                "containerViews": [
+                    {"key": "Big", "elements": [{"id": i} for i in range(21)]},
+                    {"key": "Small", "elements": [{"id": i} for i in range(3)]},
+                ],
+                "filteredViews": [
+                    {"key": "MyFiltered", "baseViewKey": "Big", "mode": "Include", "tags": ["X"]},
+                ],
+            }
+        )
+        inputs = _views_inputs_from(export)
+
+        result = gate_views_within_element_bound(inputs)
+
+        self.assertFalse(result.passed)
+        # `Big` itself is over; `MyFiltered` resolves through its base
+        self.assertIn("'Big' with 21 element(s)", result.detail)
+        self.assertIn("'MyFiltered' with 21 element(s)", result.detail)
+
+    def test_the_filtered_base_resolution_is_recursive_and_cycle_guarded(self) -> None:
+        export = _synthetic_export(
+            {
+                "containerViews": [
+                    {"key": "Root", "elements": [{"id": i} for i in range(21)]},
+                ],
+                "filteredViews": [
+                    {"key": "F1", "baseViewKey": "Root"},
+                    {"key": "F2", "baseViewKey": "F1"},
+                    {"key": "LoopA", "baseViewKey": "LoopB"},
+                    {"key": "LoopB", "baseViewKey": "LoopA"},
+                ],
+            }
+        )
+        inputs = _views_inputs_from(export)
+
+        result = gate_views_within_element_bound(inputs)
+
+        # Root + F1 + F2 resolve to 21; the pathological LoopA/LoopB pair
+        # terminates (cycle guard) instead of recursing forever and
+        # resolves to 0 -- not flagged over the bound
+        self.assertFalse(result.passed)
+        self.assertEqual(result.detail.count("with 21 element(s)"), 3)
+        self.assertNotIn("LoopA", result.detail)
+        self.assertNotIn("LoopB", result.detail)
+
+
+class TestViewsWithinElementBoundGate(unittest.TestCase):
+    def test_pass_when_every_user_defined_view_is_within_the_bound(self) -> None:
+        result = gate_views_within_element_bound(_views_inputs("views-good"))
+
+        self.assertTrue(result.passed)
+        self.assertIn("every one of 4 user-defined view(s) carries at most 20 element(s)", result.detail)
+
+    def test_fail_when_a_view_exceeds_the_bound(self) -> None:
+        result = gate_views_within_element_bound(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("'AllContainers' with 22 element(s)", result.detail)
+
+    def test_fail_at_one_over_the_bound_and_pass_at_exactly_the_bound(self) -> None:
+        export = _load_export("views-good")
+        assert export is not None
+        # grow the CustomerContext view (4 elements) to exactly 20 -> pass
+        context_view = next(v for v in iter_views(export) if v.get("key") == "CustomerContext")
+        for i in range(16):
+            context_view["elements"].append({"id": 100 + i})
+
+        at_bound = gate_views_within_element_bound(_views_inputs_from(copy.deepcopy(export)))
+
+        self.assertTrue(at_bound.passed)
+        self.assertIn("at most 20 element(s)", at_bound.detail)
+        # one more -> 21 -> fail
+        context_view["elements"].append({"id": 200})
+
+        over = gate_views_within_element_bound(_views_inputs_from(copy.deepcopy(export)))
+
+        self.assertFalse(over.passed)
+        self.assertIn("'CustomerContext' with 21 element(s)", over.detail)
+
+    def test_pass_vacuously_without_user_defined_views(self) -> None:
+        # the `weak` fixture defines no views: the exporter's auto-generated
+        # `generatedKey` defaults are filtered out (the `has_view` precedent
+        # carries the presence requirement)
+        result = gate_views_within_element_bound(_inputs("weak", validate_rc=0, export_rc=0))
+
+        self.assertTrue(result.passed)
+        self.assertIn("vacuously within the bound", result.detail)
+
+    def test_a_keyless_crowded_view_is_not_bound_checked(self) -> None:
+        # the locked complementarity: a view the DSL wrote without a key
+        # exports under `generatedKey: true` and is filtered out of the
+        # bound check (it fails `explicit_view_keys` instead) -- the
+        # views-bad `Container-001` view carries 22 elements but is not
+        # named in the bound gate's failure
+        result = gate_views_within_element_bound(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertNotIn("Container-001", result.detail)
+        self.assertIn("1 of 2 user-defined view(s)", result.detail)
+
+    def test_edge_fail_without_an_export_json(self) -> None:
+        result = gate_views_within_element_bound(_minimal_inputs('workspace "X" "y" { model { } }'))
+
+        self.assertTrue(result.passed)
+        self.assertIn("vacuously within the bound", result.detail)
+
+
+class TestExplicitViewKeysGate(unittest.TestCase):
+    def test_pass_when_every_view_has_an_explicit_key(self) -> None:
+        result = gate_explicit_view_keys(_views_inputs("views-good"))
+
+        self.assertTrue(result.passed)
+        self.assertIn("every one of 4 view(s) has an explicit key", result.detail)
+
+    def test_fail_when_a_view_key_was_auto_generated(self) -> None:
+        result = gate_explicit_view_keys(_views_inputs("views-bad"))
+
+        self.assertFalse(result.passed)
+        self.assertIn("1 of 3 view(s) carry an auto-generated key", result.detail)
+        self.assertIn("['Container-001']", result.detail)
+
+    def test_fail_when_the_dsl_defines_no_views_at_all(self) -> None:
+        # the `weak` fixture: only the exporter's auto-generated default
+        # views exist, every one carrying the `generatedKey` mark
+        result = gate_explicit_view_keys(_inputs("weak", validate_rc=0, export_rc=0))
+
+        self.assertFalse(result.passed)
+        self.assertIn("3 of 3 view(s) carry an auto-generated key", result.detail)
+        for key in ("Container-001", "SystemContext-001", "SystemLandscape-001"):
+            self.assertIn(key, result.detail)
+
+    def test_edge_fail_without_any_views_in_the_export(self) -> None:
+        inputs = _minimal_inputs('workspace "X" "y" { model { } }', export_json={"views": {}})
+
+        result = gate_explicit_view_keys(inputs)
+
+        self.assertFalse(result.passed)
+        self.assertIn("no views at all", result.detail)
+
+
+class TestPhase140EndToEnd(unittest.TestCase):
+    """The locked `design-views`/`heldout-views` gate sets over the
+    committed references (ACC-006: the known-good reference passes every
+    gate, the known-bad reference fails exactly the two new view-design
+    gates -- no model call, no Docker; the stream half is the minimal
+    validate-OK shape a CREATE case produces)."""
+
+    def test_views_good_reference_passes_all_12_gates(self) -> None:
+        case = CASES["design-views"]
+        inputs = _views_inputs("views-good")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 12)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_heldout_views_good_reference_passes_all_12_gates(self) -> None:
+        case = CASES[pins.HELDOUT_VIEWS_CASE]
+        inputs = _views_inputs("heldout-views-good")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+
+        self.assertEqual(len(results), 12)
+        self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_views_bad_reference_fails_exactly_the_view_design_gates(self) -> None:
+        case = CASES["design-views"]
+        inputs = _views_inputs("views-bad")
+        trial = _validate_ok_stream(inputs.dsl_text)
+        context = _context(case, inputs, trial=trial)
+
+        results = grade_case(context)
+        by_name = {r.name: r for r in results}
+
+        self.assertEqual(
+            sorted(r.name for r in results if not r.passed),
+            ["explicit_view_keys", "views_within_element_bound"],
+        )
+        for shape_gate in (
+            "dsl_written",
+            "cli_valid",
+            "cli_export",
+            "has_system",
+            "has_person",
+            "elements_described",
+            "relationship_technology",
+            "has_view",
+            "validate_ok_called",
+            "external_system_tagged",
         ):
             self.assertTrue(by_name[shape_gate].passed, shape_gate)
         self.assertFalse(case_passed(results))
