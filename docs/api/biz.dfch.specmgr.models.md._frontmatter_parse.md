@@ -2,7 +2,7 @@
 
 Shared frontmatter-parsing error enrichment (feat-27-validation Phase 2, Tasks 2.1/2.2).
 
-Every one of the domains' ``parser.py`` modules (every whole-body domain plus ADR)
+Every one of the domains' ``parser.py`` modules (every whole-body domain)
 shares the exact same three-line shape::
 
     post = frontmatter.loads(text)                                    # yaml.YAMLError
@@ -71,7 +71,7 @@ text:
 error:
     The ``pydantic.ValidationError`` raised by ``SomeFrontmatter.model_validate(...)``.
 domain:
-    The short domain code (e.g. ``"tsk"``, ``"req"``, ``"adr"``) to name in each enriched
+    The short domain code (e.g. ``"tsk"``, ``"req"``) to name in each enriched
     message.
 
 Returns
@@ -152,11 +152,11 @@ text:
     as read from disk (or submitted verbatim by an MCP tool call).
 frontmatter_cls:
     The concrete frontmatter model to validate the parsed metadata against (a
-    ``MarkdownFrontmatter`` subclass for every whole-body domain, or ADR's own
-    ``AdrFrontmatter``/UC v1's own ``UseCaseFrontmatter``, both plain
+    ``MarkdownFrontmatter`` subclass for every whole-body domain, or UC v1's own
+    ``UseCaseFrontmatter`` -- both plain
     ``pydantic.BaseModel`` subclasses with no shared base).
 domain:
-    The short domain code (e.g. ``"tsk"``, ``"req"``, ``"adr"``) named in the enriched
+    The short domain code (e.g. ``"tsk"``, ``"req"``) named in the enriched
     ``pydantic.ValidationError`` message.
 stringify_metadata:
     Optional metadata-normalizing callable, mirroring every domain parser's own

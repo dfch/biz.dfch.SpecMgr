@@ -283,7 +283,7 @@ class TestGetTxt(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_broken_document_error_matches_list_failed_row_get_first(self) -> None:
         """ParseFailureResult.error must be byte-identical to list_txt's failed-row error for the same broken
-        file, in cold-get-then-warm-list read order (ADR 9080b37c property)."""
+        file, in cold-get-then-warm-list read order (DEC 9080b37c property)."""
         created = create_txt(_MINIMAL_BODY)
         self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
 
@@ -299,7 +299,7 @@ class TestGetTxt(unittest.TestCase):  # pylint: disable=too-many-public-methods
 
     def test_broken_document_error_matches_list_failed_row_list_first(self) -> None:
         """ParseFailureResult.error must be byte-identical to list_txt's failed-row error for the same broken
-        file, in cold-list-then-warm-get read order (ADR 9080b37c property)."""
+        file, in cold-list-then-warm-get read order (DEC 9080b37c property)."""
         created = create_txt(_MINIMAL_BODY)
         self._doc_path().write_text("not a valid document, no headings at all\n", encoding="utf-8")
 

@@ -25,7 +25,7 @@ the first-set-wins ``selected`` source): :class:`PlantumlConfig`.
 
 feat-187-list-feat-timeout, Task 110.120: :class:`ConfigInfo` additionally
 carries ``feat_warmup_disabled``, the presence of the new
-``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag (ADR
+``SPECMGR_FEAT_WARMUP_DISABLED`` opt-out flag (DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44) -- a single top-level boolean field,
 not a new nested model, since it is the one additional fact this feature
 needs to report and does not warrant its own section the way the
@@ -54,7 +54,7 @@ class DomainConfig(BaseModel):
         The domain's resolved, absolute base directory path.
     env_var:
         The name of the environment variable that can override ``base_dir``
-        (e.g. ``"SPECMGR_ADR_DIR"``, or the shared ``"SPECMGR_DOCS_DIR"``
+        (e.g. ``"SPECMGR_FEAT_DIR"``, or the shared ``"SPECMGR_DOCS_DIR"``
         for the other domains rooted under it).
     env_var_set:
         Whether ``env_var`` is explicitly set in the current process
@@ -203,7 +203,7 @@ class ConfigInfo(BaseModel):
     Parameters
     ----------
     domains:
-        A mapping of domain name (``"adr"``, ``"req"``, ``"uc"``, ``"tsk"``,
+        A mapping of domain name (``"req"``, ``"uc"``, ``"tsk"``,
         ``"qa"``, ``"prb"``, ``"gol"``, ``"rsk"``, ``"dec"``, ``"sop"``,
         ``"feat"``, ``"vcr"``, ``"sysrs"``, ``"txt"``, ``"set"``) to that domain's
         :class:`DomainConfig`.
@@ -225,7 +225,7 @@ class ConfigInfo(BaseModel):
         presence-based, never the value -- the same convention
         ``SimilarityConfig.disabled`` already follows). When set, the
         unified startup warmup thread's ``feat`` frontmatter/full-parse
-        phases never run (feat-187-list-feat-timeout, Task 110.120, ADR
+        phases never run (feat-187-list-feat-timeout, Task 110.120, DEC
         3982712a-a46b-4b2b-809f-9c6925a49b44).
     """
 

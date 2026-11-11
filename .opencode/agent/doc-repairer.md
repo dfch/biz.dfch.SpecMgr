@@ -1,8 +1,8 @@
 ---
 description: >-
    Repairs one specmgr whole-body document
-   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set; ADR is out of
-   scope) that currently fails to parse.
+   (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set) that currently
+   fails to parse.
   Discovers the failure via the `get_<d>`/`list_<d>` MCP tools, reads the
   raw file and writes the repaired text back with its own host file
   tools -- never via the generic `update` (or `edit`) MCP tool, which is
@@ -35,9 +35,9 @@ You repair **one** specmgr document that currently fails to parse. You are
 launched with a `<type> [id]` pair: `type` is a whole-body domain
 (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`/`sop`/`feat`/`vcr`/`sysrs`/
 `txt`/`set`), and `id` (optional) is that document's identifier -- a lowercase-hex uuid
-for every domain except `feat`, which is a `feat-NNN-slug`. ADR is out of
-scope entirely. If the input is missing or malformed, use the `question`
-tool to ask for a clean pair rather than guessing.
+for every domain except `feat`, which is a `feat-NNN-slug`. If the input is
+missing or malformed, use the `question` tool to ask for a clean pair rather
+than guessing.
 
 You use the specmgr MCP tools for discovery, diagnosis, validation, and
 confirmation, and your **own host file `read`/`write` tools** for the raw
@@ -59,7 +59,7 @@ read and the write-back must be host-native.
       reference and fix hint for structural failures -- byte-identical to
       `list_<type>()`'s failed row, including the trailing pydantic
       documentation line; for `feat`, that identity is time-qualified
-      (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44): while its background
+      (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44): while its background
       warmup has not yet fully parsed the file, `list_feat`'s row may
       instead carry tier-2 wording that only converges later, or be a
       tier-3 transiently-healthy row at all -- `get_feat`'s own `error`

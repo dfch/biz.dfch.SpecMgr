@@ -26,26 +26,21 @@ directories only (the in-tree corpus is never mutated) plus the
 static and drift pins that keep the command import-safe and derived:
 
 * Task 110.100 -- path-layout inference, the ``--type`` override,
-  ``--skip-unrecognized`` (skipped and counted), the unconditional ADR
-  ``README.md`` exclusion (path and sweep mode, with and without the
-  flag, a ``README.md`` in another directory via ``--type adr``, and
-  ``feat/<id>/README.md`` never excluded), and the exit-2 usage
-  errors.
+  ``--skip-unrecognized`` (skipped and counted, ``feat/<id>/README.md``
+  always linted), and the exit-2 usage errors.
 * Task 110.110 -- the negative pins (the feat-214-shape dated-bullet
-  fixture built from the packaged feat template, a structurally
-  broken ADR, and a broken ``req`` document) and the healthy
-  fixtures (every whole-body domain's packaged ``get_<d>_example``
-  data, each first verified to parse with its own model-level parser,
-  plus a minimal rendered ADR), with the per-type repair pointer
-  (the derived id -- lowercased for the UUID-shaped types, the folder
-  name for feat -- and the id-less fallback, the ADR fix-manually
-  line).
+  fixture built from the packaged feat template and a broken ``req``
+  document) and the healthy fixtures (every whole-body domain's
+  packaged ``get_<d>_example`` data, each first verified to parse with
+  its own model-level parser), with the per-type repair pointer (the
+  derived id -- lowercased for the UUID-shaped types, the folder name
+  for feat -- and the id-less fallback).
 * Task 110.120 -- environment behaviour: path mode independent of
   ``SPECMGR_*_DIR``, sweep mode honoring them, ``--dir`` overriding,
   the all-sweep finding zero documents exiting 2, a
   registered-but-empty ``--type`` domain exiting 0 with a 0-document
-  summary, and a path run in which every path is skipped or excluded
-  exiting 0 with a 0-linted summary.
+  summary, and a path run in which every path is skipped exiting 0
+  with a 0-linted summary.
 * Task 110.130 -- the drift pins: the runtime ``--type`` acceptance
   set equals the registry's ``ALL_DOMAINS`` (never a hand-listed
   set), ``commands/lint.py``'s module level carries no import of the
@@ -85,7 +80,6 @@ from unittest import mock
 from click.testing import Result
 from typer.testing import CliRunner
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.cli import app
 from biz.dfch.specmgr.feat.tools._cache import read_feat_dirty
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
@@ -93,7 +87,6 @@ from biz.dfch.specmgr.general.tools._doc_cache import DocCache
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR
 from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, FEAT, WHOLE_BODY_DOMAINS, whole_body_domain
 from biz.dfch.specmgr.general.tools._packaged_data import read_packaged_text
-from biz.dfch.specmgr.models.adr import Adr, AdrBody, AdrFrontmatter, AdrOption, parse_adr, render_adr
 
 runner = CliRunner()
 
@@ -168,24 +161,6 @@ def _healthy_whole_body_text(doc_type: str) -> str:
     """
     text = read_packaged_text(doc_type, "example")
     whole_body_domain(doc_type).parse_text(text)
-    return text
-
-
-def _healthy_adr_text() -> str:
-    """A minimal rendered ADR (verified to parse), the healthy fixture for the
-    one type whose packaged example is not a ``get_<d>_example`` data file."""
-    adr = Adr(
-        frontmatter=AdrFrontmatter(id="11111111-1111-4111-8111-111111111111", status="accepted", date="2026-01-01"),
-        body=AdrBody(
-            title="Minimal ADR",
-            context_and_problem_statement="A context.",
-            considered_options="Option 1 only.",
-            decision_outcome="We chose Option 1.",
-            options=[AdrOption(number=1, partial_title="The only option", content="Good: fine.")],
-        ),
-    )
-    text = render_adr(adr)
-    parse_adr(text)
     return text
 
 
@@ -273,7 +248,7 @@ class TestLintPathInference(_LintTestBase):
         result = self._invoke(str(path))
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
     def test_feat_folder_shape_is_inferred(self):
         text = _healthy_whole_body_text(FEAT)
@@ -283,7 +258,7 @@ class TestLintPathInference(_LintTestBase):
         result = self._invoke(str(path))
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
     def test_type_option_overrides_inference(self):
         path = self._write("elsewhere/foo.md", _healthy_whole_body_text("req"))
@@ -291,7 +266,7 @@ class TestLintPathInference(_LintTestBase):
         result = self._invoke(str(path), "--type", "req")
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
     def test_unrecognized_layout_is_a_usage_error(self):
         path = self._write("elsewhere/foo.md", "anything")
@@ -307,7 +282,7 @@ class TestLintPathInference(_LintTestBase):
         result = self._invoke(str(path), "--skip-unrecognized")
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=1 excluded=0", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=1", result.stdout)
 
     def test_skip_flag_does_not_change_exit_code_for_a_healthy_run(self):
         healthy = self._write("req/healthy.md", _healthy_whole_body_text("req"))
@@ -316,79 +291,7 @@ class TestLintPathInference(_LintTestBase):
         result = self._invoke(str(healthy), str(unknown), "--skip-unrecognized")
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=1 excluded=0", result.stdout)
-
-
-class TestLintAdrReadmeExclusion(_LintTestBase):
-    """Task 110.100 / REQ-007: the unconditional ADR ``README.md`` exclusion -- resolved type
-    ``adr`` (inferred or via ``--type adr``) and base name ``README.md``, in any directory. The
-    excluded file is never parsed (the fixtures carry garbage content that would fail any parse)
-    and ``feat/<id>/README.md`` (type ``feat``) is never excluded."""
-
-    def test_path_mode_inferred_adr_readme_excluded_without_flag(self):
-        path = self._write("adr/README.md", "not an ADR at all")
-
-        result = self._invoke(str(path))
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=1", result.stdout)
-
-    def test_path_mode_inferred_adr_readme_excluded_with_skip_flag(self):
-        path = self._write("adr/README.md", "not an ADR at all")
-
-        result = self._invoke(str(path), "--skip-unrecognized")
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=1", result.stdout)
-
-    def test_path_mode_type_adr_on_readme_in_another_directory_excluded(self):
-        path = self._write("elsewhere/README.md", "not an ADR at all")
-
-        result = self._invoke(str(path), "--type", "adr")
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=1", result.stdout)
-
-    def test_sweep_type_adr_excludes_readme_and_lints_the_adrs(self):
-        adr_root = self.tmp / "adr-root"
-        adr_root.mkdir()
-        (adr_root / "README.md").write_text("generated table of contents", encoding="utf-8")
-        (adr_root / "11111111-1111-4111-8111-111111111111.md").write_text(_healthy_adr_text(), encoding="utf-8")
-
-        with mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: str(adr_root)}):
-            result = self._invoke("--type", "adr")
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=1", result.stdout)
-
-    def test_sweep_all_excludes_the_adr_readme(self):
-        adr_root = self.tmp / "adr-root"
-        adr_root.mkdir()
-        (adr_root / "README.md").write_text("generated table of contents", encoding="utf-8")
-        (adr_root / "11111111-1111-4111-8111-111111111111.md").write_text(_healthy_adr_text(), encoding="utf-8")
-
-        with mock.patch.dict(
-            os.environ,
-            {
-                DOCS_DIR_ENV_VAR: str(self.tmp / "empty-docs"),
-                FEAT_DIR_ENV_VAR: str(self.tmp / "empty-feat"),
-                ADR_DIR_ENV_VAR: str(adr_root),
-            },
-        ):
-            result = self._invoke("--all")
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=1", result.stdout)
-
-    def test_feat_readme_is_never_excluded(self):
-        text = _healthy_whole_body_text(FEAT)
-        doc_id = whole_body_domain(FEAT).parse_text(text).frontmatter.id
-        path = self._write(f"feat/{doc_id}/README.md", text)
-
-        result = self._invoke(str(path), "--type", FEAT)
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=1", result.stdout)
 
 
 class TestLintUsageErrors(_LintTestBase):
@@ -481,30 +384,7 @@ class TestLintFeat214Shape(_LintTestBase):
         self.assertIn("DecisionsMade", result.stdout)
         self.assertIn("expected list[DecisionEntry]", result.stdout)
         self.assertIn(f"repair via: /repair {FEAT} {self.FEAT_ID}", result.stdout)
-        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
-
-
-class TestLintAdrFailure(_LintTestBase):
-    """Task 110.110 / ACC-002: a structurally broken ADR (an ``AdrParseError`` case) fails with
-    the file named and the ADR fix-manually line instead of a ``/repair`` pointer (the repair
-    flow is whole-body-only)."""
-
-    _BROKEN_ADR = "---\nstatus: accepted\n---\n\n# Broken ADR\n\n## Bogus Heading\n\ntext\n"
-
-    def test_broken_adr_fails_with_file_error_and_adr_line(self):
-        path = self._write("adr/11111111-1111-4111-8111-111111111111.md", self._BROKEN_ADR)
-
-        result = self._invoke(str(path))
-
-        self.assertEqual(result.exit_code, 1, result.output)
-        self.assertIn(str(path), result.stdout)
-        self.assertIn("unrecognized H2 heading", result.stdout)
-        self.assertIn(
-            "ADR is not covered by the repair flow; fix the file manually from the error above.",
-            result.stdout,
-        )
-        self.assertNotIn("repair via:", result.stdout)
-        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0", result.stdout)
 
 
 class TestLintWholeBodyFailure(_LintTestBase):
@@ -559,7 +439,7 @@ class TestLintMultiFailureReporting(_LintTestBase):
         self.assertIn("Requirement > Characteristics", result.stdout)
         self.assertIn("repair via: /repair feat feat-multi-failure", result.stdout)
         self.assertIn("\n  repair via: /repair req\n", result.stdout)
-        self.assertIn("summary: linted=2 failed=2 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=2 failed=2 skipped=0", result.stdout)
 
     def test_report_order_is_decode_failures_first_then_parse_failures(self):
         """Phase 170 (I2, accepted): decode failures (path mode) print before parse failures in
@@ -574,14 +454,13 @@ class TestLintMultiFailureReporting(_LintTestBase):
         self.assertIn(str(parse_path), result.stdout)
         self.assertIn(str(decode_path), result.stdout)
         self.assertLess(result.stdout.index(str(decode_path)), result.stdout.index(str(parse_path)))
-        self.assertIn("summary: linted=2 failed=2 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=2 failed=2 skipped=0", result.stdout)
 
 
 class TestLintHealthyFixtures(_LintTestBase):
     """Task 110.110 / ACC-002: the healthy fixtures -- every whole-body domain's packaged
     ``get_<d>_example`` data (each first verified to parse with its own model-level parser, and
-    written under a layout the command infers from the path alone) plus a minimal rendered ADR --
-    each exits 0."""
+    written under a layout the command infers from the path alone) -- each exits 0."""
 
     def test_every_whole_body_example_lints_clean(self):
         for doc_type in WHOLE_BODY_DOMAINS:
@@ -596,16 +475,7 @@ class TestLintHealthyFixtures(_LintTestBase):
                 result = self._invoke(str(path))
 
                 self.assertEqual(result.exit_code, 0, result.output)
-                self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
-
-    def test_minimal_rendered_adr_lints_clean(self):
-        text = _healthy_adr_text()
-        path = self._write(f"adr/{parse_adr(text).frontmatter.id}.md", text)
-
-        result = self._invoke(str(path))
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+                self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
 
 class TestLintReadFailures(_LintTestBase):
@@ -629,7 +499,7 @@ class TestLintReadFailures(_LintTestBase):
         self.assertIn(str(path), result.stdout)
         self.assertIn("not valid utf-8", result.stdout)
         self.assertIn("\n  repair via: /repair req\n", result.stdout)
-        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0", result.stdout)
 
     def test_sweep_enumerated_unreadable_file_is_a_lint_failure(self):
         docs_root = self.tmp / "docsroot"
@@ -645,7 +515,7 @@ class TestLintReadFailures(_LintTestBase):
         self.assertEqual(result.exit_code, 1, result.output)
         self.assertIn(str(file_path), result.stdout)
         self.assertIn("unreadable:", result.stdout)
-        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0", result.stdout)
 
     def test_sweep_enumerated_invalid_utf8_file_is_a_lint_failure(self):
         """Phase 160 (I3): the same decode failure in SWEEP mode prints the same
@@ -663,7 +533,7 @@ class TestLintReadFailures(_LintTestBase):
         self.assertIn(str(file_path), result.stdout)
         self.assertIn("not valid utf-8", result.stdout)
         self.assertNotIn("unreadable:", result.stdout)
-        self.assertIn("summary: linted=1 failed=1 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=1 skipped=0", result.stdout)
 
     def test_feat_typed_non_folder_shape_path_gets_fallback_pointer(self):
         path = self._write("elsewhere/not-a-folder-shape.md", _feat214_shaped_text())
@@ -679,14 +549,13 @@ class TestLintEnvVars(_LintTestBase):
     """Task 110.120 / ACC-004, ACC-010, ACC-016: path mode is independent of every
     ``SPECMGR_*_DIR`` variable, sweep mode honors them, ``--dir`` overrides, the all-sweep
     finding zero documents in total exits 2 (a registered-but-empty ``--type`` domain exits 0
-    with a 0-document summary), and a path run in which every path is skipped or excluded exits
-    0 with a 0-linted summary."""
+    with a 0-document summary), and a path run in which every path is skipped exits 0 with a
+    0-linted summary."""
 
     def _empty_env(self) -> dict[str, str]:
         return {
             DOCS_DIR_ENV_VAR: str(self.tmp / "empty-docs"),
             FEAT_DIR_ENV_VAR: str(self.tmp / "empty-feat"),
-            ADR_DIR_ENV_VAR: str(self.tmp / "empty-adr"),
         }
 
     def test_path_mode_is_unaffected_by_env_vars(self):
@@ -696,7 +565,7 @@ class TestLintEnvVars(_LintTestBase):
             result = self._invoke(str(path))
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
     def test_sweep_mode_honors_env_vars(self):
         for doc_type, env_var in ((FEAT, FEAT_DIR_ENV_VAR), ("req", DOCS_DIR_ENV_VAR)):
@@ -705,7 +574,7 @@ class TestLintEnvVars(_LintTestBase):
                     result = self._invoke("--type", doc_type)
 
                 self.assertEqual(result.exit_code, 0, result.output)
-                self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=0", result.stdout)
+                self.assertIn("summary: linted=0 failed=0 skipped=0", result.stdout)
 
     def test_dir_overrides_env_var(self):
         example_text = read_packaged_text("req", "example")
@@ -718,7 +587,7 @@ class TestLintEnvVars(_LintTestBase):
             result = self._invoke("--type", "req", "--dir", str(sweep_dir))
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=1 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=1 failed=0 skipped=0", result.stdout)
 
     def test_all_with_zero_documents_exits_2(self):
         with mock.patch.dict(os.environ, self._empty_env()):
@@ -727,37 +596,20 @@ class TestLintEnvVars(_LintTestBase):
         self.assertEqual(result.exit_code, 2, result.output)
         self.assertIn("zero documents", result.output)
 
-    def test_all_with_only_the_excluded_adr_readme_exits_0(self):
-        """Phase 170 (G2): the zero-documents guard fires only when NOTHING was discovered; an
-        ADR dir holding only the always-excluded README.md was discovered, so the run exits 0
-        with ``excluded=1``."""
-        adr_dir = self.tmp / "only-adr"
-        adr_dir.mkdir()
-        (adr_dir / "README.md").write_text("generated table of contents", encoding="utf-8")
-        env = self._empty_env()
-        env[ADR_DIR_ENV_VAR] = str(adr_dir)
-
-        with mock.patch.dict(os.environ, env):
-            result = self._invoke("--all")
-
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=1", result.stdout)
-
     def test_type_uc_with_no_documents_exits_0(self):
         with mock.patch.dict(os.environ, {DOCS_DIR_ENV_VAR: str(self.tmp / "empty-docs")}):
             result = self._invoke("--type", "uc")
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=0", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=0", result.stdout)
 
-    def test_every_path_skipped_or_excluded_exits_0_with_zero_linted(self):
-        excluded = self._write("adr/README.md", "not an ADR at all")
+    def test_every_path_skipped_exits_0_with_zero_linted(self):
         skipped = self._write("elsewhere/foo.md", "anything")
 
-        result = self._invoke(str(excluded), str(skipped), "--skip-unrecognized")
+        result = self._invoke(str(skipped), "--skip-unrecognized")
 
         self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("summary: linted=0 failed=0 skipped=1 excluded=1", result.stdout)
+        self.assertIn("summary: linted=0 failed=0 skipped=1", result.stdout)
 
 
 class TestLintTypeAcceptanceRuntime(_LintTestBase):
@@ -773,7 +625,7 @@ class TestLintTypeAcceptanceRuntime(_LintTestBase):
                 result = self._invoke("--type", doc_type, "--dir", str(empty_dir))
 
                 self.assertEqual(result.exit_code, 0, result.output)
-                self.assertIn("summary: linted=0 failed=0 skipped=0 excluded=0", result.stdout)
+                self.assertIn("summary: linted=0 failed=0 skipped=0", result.stdout)
 
     def test_non_member_type_exits_2(self):
         result = self._invoke("--type", "no-such-domain", "--dir", str(self.tmp / "empty"))
@@ -809,14 +661,13 @@ class TestLintModuleImportSafety(unittest.TestCase):
                 result.append(base or "")
         return result
 
-    def test_no_module_level_import_of_registry_or_tools_packages(self):
+    def test_no_module_level_specmgr_import(self):
         for name in self._module_level_imports():
             if name.startswith("biz.dfch.specmgr"):
-                self.assertTrue(
-                    name.startswith("biz.dfch.specmgr.models.adr"),
-                    f"module-level specmgr import {name!r} in lint.py: only the mcp-free ADR models "
-                    "package is allowed -- the registry and every tools package require the mcp "
-                    "extra and must stay inside the lazily imported command body",
+                self.fail(
+                    f"module-level specmgr import {name!r} in lint.py: the registry and every "
+                    "tools package require the mcp extra and must stay inside the lazily "
+                    "imported command body",
                 )
             else:
                 root = name.split(".")[0]
@@ -849,8 +700,6 @@ class TestLintModuleImportSafety(unittest.TestCase):
             )
 
     def test_lint_module_imports_with_mcp_blocked(self):
-        importlib.import_module("biz.dfch.specmgr.models.adr")  # already in sys.modules during the block
-
         with mock.patch.dict(sys.modules, {"mcp": None}):
             spec = importlib.util.spec_from_file_location("biz.dfch.specmgr.commands.lint_isolated", _LINT_PY)
             assert spec is not None, "spec_from_file_location failed for the lint command's own file"

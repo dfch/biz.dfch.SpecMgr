@@ -228,16 +228,9 @@ class TestSysrsLifecycleIntegration(TempSysrsDirTestCase):
         with self.assertRaises(SysrsNotFoundError):
             get_sysrs(sysrs_id)
 
-    def test_set_status_rejects_superseded_by(self) -> None:
-        """set_status (type="sysrs") must reject `superseded_by` -- ADR-only, standard non-adr ValueError."""
-        created = create_sysrs(_INITIAL_BODY)
-
-        with self.assertRaises(ValueError):
-            set_status(created.id, "sysrs", "review", superseded_by="some-other-id")
-
     def test_set_status_rejects_status_outside_closed_set(self) -> None:
         """set_status (type="sysrs") must reject a status outside the closed 5-value set,
-        returning a non-raising ``InvalidStatusResult`` (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014)
+        returning a non-raising ``InvalidStatusResult`` (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014)
         instead of raising ``pydantic.ValidationError``."""
         created = create_sysrs(_INITIAL_BODY)
         expected_path = sysrs_base_dir() / f"sysrs-{created.id}-system-requirements-specification-sample-document.md"

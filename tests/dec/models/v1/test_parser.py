@@ -683,7 +683,7 @@ class TestParseDecStructuralViolations(unittest.TestCase):
             parse_dec(text)
 
     def test_old_adr_pros_and_cons_heading_raises_assertion_error(self) -> None:
-        """The old ADR heading `## Pros and Cons of the Options` is rejected (LITERAL alias)."""
+        """The old decision-record heading `## Pros and Cons of the Options` is rejected (LITERAL alias)."""
         text = _FULL_DOC.replace("## Pros and Cons", "## Pros and Cons of the Options")
 
         with self.assertRaises(AssertionError):

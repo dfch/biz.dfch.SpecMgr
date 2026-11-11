@@ -22,7 +22,7 @@ Real tool calls against temporary base directories (``SPECMGR_DOCS_DIR``), no LL
 i18n-eligible domains, a variant without an EN source (``"en"`` is never invented), a broken variant (listed, flagged,
 byte-identical error text), a table-less language directory (listed, flagged), the layout rules (non-``.md`` siblings,
 ``sysrs``' ``.pdf``, shape-invalid directory names, other ids' documents are ignored), the guards before any filesystem
-access (path-injection ``type``/``id``, ``feat``/``adr`` with the permanent wording), the not-found contract, the
+access (path-injection ``type``/``id``, ``feat`` with the permanent wording), the not-found contract, the
 registered MCP surface, and the read-only guarantee (no file is written, created, touched, or cache-invalidated).
 """
 
@@ -310,11 +310,10 @@ class TestListLanguagesGuards(_TempDocsMixin):
                         list_languages(bad_type, _MISSING_UUID)
                     probe.assert_not_called()
 
-    def test_feat_and_adr_are_rejected_with_the_permanent_wording(self):
+    def test_feat_is_rejected_with_the_permanent_wording(self):
         for type_, id_ in (
             ("feat", "feat-197-i18n"),
             ("feat", _MISSING_UUID),
-            ("adr", _MISSING_UUID),
             ("feat", "../../x"),
         ):
             with self.subTest(type=type_, id=id_):
@@ -416,7 +415,7 @@ class TestListLanguagesRegistration(unittest.TestCase):
         schema = tools["list_languages"].input_schema
         self.assertEqual(set(schema["properties"]), {"type", "id"})
         self.assertEqual(set(schema["required"]), {"type", "id"})
-        # feat/adr are in the schema's enum only so that they get the explanatory rejection
+        # feat is in the schema's enum only so that it gets the explanatory rejection
         self.assertEqual(set(schema["properties"]["type"]["enum"]), set(ALL_DOMAINS))
 
     def test_no_language_parameter_and_not_in_the_en_only_tool_family(self):

@@ -1,6 +1,6 @@
 ---
 name: translate-artifact
-description: Use when translating a specmgr document into another language or bringing an existing translation up to date -- e.g. "translate this requirement into German", "create a German version of REQ ...", "update the French translation of ..." (the translate_artifact prompt flow -- read the specmgr://i18n guidance, read the source, create or update the language variant, never translate closed-vocabulary tokens) -- whether surfaced by an explicit /translate request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set only; feat and adr are always English and out of scope.
+description: Use when translating a specmgr document into another language or bringing an existing translation up to date -- e.g. "translate this requirement into German", "create a German version of REQ ...", "update the French translation of ..." (the translate_artifact prompt flow -- read the specmgr://i18n guidance, read the source, create or update the language variant, never translate closed-vocabulary tokens) -- whether surfaced by an explicit /translate request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set only; feat is always English and out of scope.
 ---
 
 # Translate Artifact
@@ -33,10 +33,10 @@ translates for you.
    tool cannot dry-run a translation), verification with
    `get_<d>(id, language=...)`, and the report. This is the only sanctioned
    path for a translation.
-3. **Out of scope**: `feat` and `adr` are always English — they have no
-   language variants and no `language` parameter. A language without a
-   heading table (`general/data/headings/<language>.json`) is unusable: stop
-   and report that the table must be added first; never invent one.
+3. **Out of scope**: `feat` is always English — it has no language variants
+   and no `language` parameter. A language without a heading table
+   (`general/data/headings/<language>.json`) is unusable: stop and report that
+   the table must be added first; never invent one.
 
 Ask the user (via your host's question mechanism) rather than guessing
 whenever the source is ambiguous or a token's translatability is unclear.

@@ -84,7 +84,7 @@ The skills are not written from scratch where good MIT-licensed sources exist. T
 
 ### Design Notes
 
-Keep each `SKILL.md` thin. A trigger description names exactly one task and lists the phrases that should load the skill, and a skill must not trigger on a request that only names another skill's task (the `no-trigger` case measures this). Keep the skills separate: `c4-modeling` and `structurizr-validate-loop` are loaded almost every time, the others only when needed. See TXT 4a09922d-bc32-4c03-86ba-d30ebc34e0b8 for the MCP and PlantUML findings. ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4 sets the precedent that a structure-only PlantUML check is not a pass, and the skills apply the same rule: a DSL result that was only parsed, and not validated, is not a pass.
+Keep each `SKILL.md` thin. A trigger description names exactly one task and lists the phrases that should load the skill, and a skill must not trigger on a request that only names another skill's task (the `no-trigger` case measures this). Keep the skills separate: `c4-modeling` and `structurizr-validate-loop` are loaded almost every time, the others only when needed. See TXT 4a09922d-bc32-4c03-86ba-d30ebc34e0b8 for the MCP and PlantUML findings. DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4 sets the precedent that a structure-only PlantUML check is not a pass, and the skills apply the same rule: a DSL result that was only parsed, and not validated, is not a pass.
 
 #### Sources and Licensing
 
@@ -120,7 +120,7 @@ One held-out case is never used while tuning and runs once at the end. Its resul
 ### Related Decisions
 
 - TXT 4a09922d-bc32-4c03-86ba-d30ebc34e0b8: Structurizr and C4 for specmgr: Spike Findings and Design Suggestions
-- ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
+- DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
 
 ### Task List
 

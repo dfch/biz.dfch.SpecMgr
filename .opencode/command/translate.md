@@ -1,11 +1,11 @@
 ---
-description: Translate a specmgr document into another language (or update its translation) -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat and adr are always English), $2 the document id, $3 the target language, optional $4 the source language (default en).
+description: Translate a specmgr document into another language (or update its translation) -- $1 is the domain (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat is always English), $2 the document id, $3 the target language, optional $4 the source language (default en).
 ---
 
 Translate a specmgr document. My input:
 
 - `$1` (required): the document's domain -- one of `req`/`uc`/`tsk`/`qa`/
-  `prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set`. `feat` and `adr` are always
+  `prb`/`gol`/`rsk`/`dec`/`sop`/`vcr`/`sysrs`/`txt`/`set`. `feat` is always
   English and out of scope.
 - `$2` (required): the artifact's shared id (a lowercase-hex uuid; the EN
   source's id, which every language variant reuses).
@@ -13,8 +13,8 @@ Translate a specmgr document. My input:
   example `de`) that has a heading table. `en` is never a target.
 - `$4` (optional): the source language; defaults to `en`.
 
-1. If `$1`, `$2`, or `$3` is missing or malformed, or `$1` is `feat`/`adr`,
-   ask me for a clean input with the `question` tool rather than guessing.
+1. If `$1`, `$2`, or `$3` is missing or malformed, or `$1` is `feat`, ask me
+   for a clean input with the `question` tool rather than guessing.
 2. Run the `translate_artifact` MCP prompt flow for `$1 $2 $3 [$4]` exactly
    as narrated: read `specmgr://i18n` first, build the `TodoWrite` plan, read
    the source via `get_<d>` with `raw=True` (a `ParseFailureResult` stops the

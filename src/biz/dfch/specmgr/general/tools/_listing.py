@@ -44,7 +44,7 @@ these types contributes to neither ``results`` nor ``total`` nor
 begin with. A file that vanishes between ``list_<domain>``'s
 directory-listing snapshot and this function's own per-path ``read(path)``
 call (e.g. a concurrent ``delete`` tool call racing this lock-free scan,
-ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3) is the same "deleted outside
+DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3) is the same "deleted outside
 specmgr's own tooling" event REQ-005's reconcile-on-scan already handles
 *silently* when the deletion completes *before* the scan starts -- treating
 a deletion that lands *during* the scan identically, rather than as a
@@ -217,7 +217,7 @@ def build_summaries(
         file vanishing between the directory-listing snapshot that
         produced ``paths`` and this function's own per-path ``read(path)``
         call (e.g. a concurrent ``delete`` tool call racing this
-        intentionally lock-free scan, ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3)
+        intentionally lock-free scan, DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3)
         is the same "deleted outside specmgr's own tooling" event
         REQ-005's reconcile-on-scan already handles silently for a
         deletion that completes *before* the scan starts -- a deletion

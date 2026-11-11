@@ -15,11 +15,11 @@ pre-commit ``specmgr-schema-req-package`` hook/CI step -- the same
 ``commands/schema.py``.
 
 Replaces the removed ``specmgr://req/schema`` resource
-(``req.resources.req_schema``) with this tool, per ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+(``req.resources.req_schema``) with this tool, per DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 ("Convert the 12 per-domain schema resources to get_<d>_schema tools"):
 the raw-text return deliberately follows the sibling
 ``get_req_template``/``get_req_example`` tools' own convention instead of
-the removed resource's parsed-dict return (the ADR's micro-decision D1),
+the removed resource's parsed-dict return (the DEC's micro-decision D1),
 and the wire content the agent sees is the same JSON document either way.
 
 ## Functions
@@ -37,7 +37,7 @@ here -- it propagates as a hard :class:`FileNotFoundError`, the same
 let-it-raise convention every other tool/resource in this codebase
 follows.
 
-Unlike the removed ``specmgr://req/schema`` resource (ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3), the
+Unlike the removed ``specmgr://req/schema`` resource (DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3), the
 returned text is **not** parsed into a dict: it is the raw JSON document
 (the machine-readable / parsed-JSON view of the structure, not the
 markdown view), which the agent reads as text.

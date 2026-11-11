@@ -17,11 +17,11 @@
 
 """``@mcp.tool()`` wrapper: list_prb (Task 3.9).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13: "Expose ``list_<domain>`` as a paged
 MCP tool, not a resource") -- unlike REQ/TSK/QA (which launched as a
 ``specmgr://<domain>/list`` resource and were converted later in
-feat-13-list-paging), PRB is a new domain built after that ADR was accepted,
+feat-13-list-paging), PRB is a new domain built after that DEC was accepted,
 so it must not repeat that resource-then-convert history. See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
 shared by every ``list_<domain>`` tool.
@@ -48,7 +48,7 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
 scans: omitted/``"en"`` = the flat ``docs/prb/`` directory -- today's exact
@@ -165,7 +165,7 @@ def list_prb(
         match count and ``offset``/``max_results`` paging keeps its existing
         meaning on that smaller set.
     language:
-        The language whose directory to list (feat-197-i18n Phase 125, ADR
+        The language whose directory to list (feat-197-i18n Phase 125, DEC
         38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
         scans the flat ``docs/prb/`` directory -- today's exact behavior;
         any other ISO 639-1-shaped lowercase two-letter code (e.g.
@@ -198,7 +198,7 @@ def list_prb(
         resolve_heading_table(language)
 
     paths = list(iter_prb_paths(language))
-    # feat-107-doc-cache REQ-005 -- and feat-197-i18n (ADR 38efdb66 item 9): with {language}
+    # feat-107-doc-cache REQ-005 -- and feat-197-i18n (DEC 38efdb66 item 9): with {language}
     # subfolders, a scan of one language's directory no longer covers the whole domain, so
     # reconcile against the domain-wide live listing (flat EN files plus every {language}
     # subdirectory's files), never just the scanned directory -- or listing one language would

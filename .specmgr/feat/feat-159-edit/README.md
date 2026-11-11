@@ -118,15 +118,15 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 ### Related Decisions
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0 (dispatch-only): `edit` is one generic tool with per-domain adapters, not per-domain `edit_<d>` tools.
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0 (dispatch-only): `edit` is one generic tool with per-domain adapters, not per-domain `edit_<d>` tools.
 
-- ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d (path safety): `validate_id` before any filesystem access and `assert_within` base-directory confinement apply to the new tool.
+- DEC 1af6787b-eaab-4e8f-888f-531c1e76c19d (path safety): `validate_id` before any filesystem access and `assert_within` base-directory confinement apply to the new tool.
 
-- ADR bfd76370-b59b-4d65-b550-a969f6c93c9d (doc cache): the write path warms the domain cache after a successful edit.
+- DEC bfd76370-b59b-4d65-b550-a969f6c93c9d (doc cache): the write path warms the domain cache after a successful edit.
 
 - feat-22-consolidate-mutation-tools: precedent for the generic whole-body mutation tool (`update`) that this tool mirrors.
 
-- ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (feat-81-83-validation): the generic `validate` tool's explicit `type not in _ADAPTERS` `ValueError` is the precedent for `edit`'s own unknown/`adr`-type rejection (REQ-004).
+- DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6 (feat-81-83-validation): the generic `validate` tool's explicit `type not in _ADAPTERS` `ValueError` is the precedent for `edit`'s own unknown/`adr`-type rejection (REQ-004).
 
 ### Task List
 
@@ -134,7 +134,7 @@ edit.py carries its own module-level `assert set(_ADAPTERS) == set(WHOLE_BODY_DO
 
 - [x] Task 100.100: Draft the tool contract (signature, OC error parity, 2-fold behaviour) into this feature — status: done (2026-09-25)
 
-- [x] Task 100.110: Decide whether a full ADR is required or the dispatch-only convention (ADR 36905d5b) suffices; record in Decisions Made — status: done (2026-09-26, no new ADR; see Decisions Made)
+- [x] Task 100.110: Decide whether a full ADR is required or the dispatch-only convention (DEC 36905d5b) suffices; record in Decisions Made — status: done (2026-09-26, no new ADR; see Decisions Made)
 
 #### Phase 110: Implementation
 
@@ -208,7 +208,7 @@ D8: the `@mcp.tool` description and the `general/tools/__init__.py` package-docs
 
 #### 2026-09-26T21:18:14.835+02:00 - Refined design decisions (D1–D7)
 
-D1: an empty `new_str` is a pure deletion, legal iff stage 2 validates (OC parity; no `minLength` on `new_str` in the MCP schema). D2: matching is pure byte-exact over `body_text` — no OC line-ending normalization, no BOM handling. D3: the four stage-1 failures (identical input, empty `old_str`, not found, multiple matches) raise plain `ValueError`s with the verbatim OC messages and no `domain tool (channel)` prefix; guard order `validate_id` → explicit `type` check → identical → empty `old_str`, all before any filesystem access; stage 2 stays wrapped exactly like `update`. D4: an unknown or `adr` `type` is an explicit pre-dispatch `ValueError` (the generic `validate` tool's precedent) — a deliberate divergence from `update`/`delete`/`set_classification`'s inherited `KeyError`. D5: updating the 12 per-domain `update_<d>` prompt flows to mention `edit` is a follow-up feature, out of scope here. D6: no new ADR — ADR 36905d5b (dispatch-only) plus 1af6787b (path safety) and bfd76370 (doc cache) cover the design (closes Task 1.2). D7: the OC error strings are pinned to opencode dev commit `236cfcbbc31530fde6a9e65318703f40adad8455` (`packages/opencode/src/tool/edit.ts`, last touched 2026-06-05, verified verbatim on 2026-09-26); parity targets OC's *runtime* strings (OC's own tool description text promises different messages than its runtime throws).
+D1: an empty `new_str` is a pure deletion, legal iff stage 2 validates (OC parity; no `minLength` on `new_str` in the MCP schema). D2: matching is pure byte-exact over `body_text` — no OC line-ending normalization, no BOM handling. D3: the four stage-1 failures (identical input, empty `old_str`, not found, multiple matches) raise plain `ValueError`s with the verbatim OC messages and no `domain tool (channel)` prefix; guard order `validate_id` → explicit `type` check → identical → empty `old_str`, all before any filesystem access; stage 2 stays wrapped exactly like `update`. D4: an unknown or `adr` `type` is an explicit pre-dispatch `ValueError` (the generic `validate` tool's precedent) — a deliberate divergence from `update`/`delete`/`set_classification`'s inherited `KeyError`. D5: updating the 12 per-domain `update_<d>` prompt flows to mention `edit` is a follow-up feature, out of scope here. D6: no new ADR — DEC 36905d5b (dispatch-only) plus 1af6787b (path safety) and bfd76370 (doc cache) cover the design (closes Task 1.2). D7: the OC error strings are pinned to opencode dev commit `236cfcbbc31530fde6a9e65318703f40adad8455` (`packages/opencode/src/tool/edit.ts`, last touched 2026-06-05, verified verbatim on 2026-09-26); parity targets OC's *runtime* strings (OC's own tool description text promises different messages than its runtime throws).
 
 #### 2026-09-25T16:06:51.408Z - Confirmed tool design decisions
 

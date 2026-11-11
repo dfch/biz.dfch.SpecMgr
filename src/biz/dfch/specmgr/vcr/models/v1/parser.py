@@ -39,7 +39,7 @@ Like ``dec.models.v1.parser.parse_dec``, there is no dedicated structural-error
 exception type (no ``VcrParseError`` equivalent); both error channels are plain
 ``AssertionError`` / ``pydantic.ValidationError`` that propagate uncaught.
 
-**Heading-mapping table pre-pass (feat-197-i18n Phase 125, ADR 38efdb66
+**Heading-mapping table pre-pass (feat-197-i18n Phase 125, DEC 38efdb66
 item 5).** A 1:1 port of ``dec.models.v1.parser``'s own pre-pass for this
 domain: ``parse_vcr`` is this domain's single text-to-model parse boundary --
 the choke point behind ``get_vcr``'s non-raw reads, ``list_vcr``'s rows (both
@@ -84,7 +84,7 @@ def parse_vcr(text: str, *, language: str | None = None) -> VcrDocument:
         together, exactly as read from disk (or submitted verbatim by an MCP
         tool call that never wrote it to disk at all).
     language:
-        The document's language (feat-197-i18n, ADR 38efdb66 item 5):
+        The document's language (feat-197-i18n, DEC 38efdb66 item 5):
         ``None`` (the default) or ``"en"`` parses the canonical, English
         headings as-is (no table -- byte-identical to the pre-i18n path);
         any other value resolves that language's heading-mapping table and
@@ -124,7 +124,7 @@ def parse_vcr(text: str, *, language: str | None = None) -> VcrDocument:
 def parse_vcr_body(content: str, *, language: str | None = None) -> Vcr:
     """Parse a frontmatter-free verification case record body text into a :class:`Vcr`, in the given language.
 
-    The body-only half of :func:`parse_vcr` (feat-197-i18n Phase 125, ADR
+    The body-only half of :func:`parse_vcr` (feat-197-i18n Phase 125, DEC
     38efdb66 item 5): ``Vcr.from_text(format_text(content))`` with the
     optional per-language heading-normalization pre-pass between the two.
     It is the single body-validation entry point the write side shares --

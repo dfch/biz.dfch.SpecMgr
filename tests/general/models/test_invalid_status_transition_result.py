@@ -16,7 +16,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Tests for `general.models.invalid_status_transition_result.InvalidStatusTransitionResult` (feat-108-fsm
-Phase 100, REQ-004, GitHub issue #108 -- case 6 of the ADR 519d1206-4d2a-4500-9046-6db635209996
+Phase 100, REQ-004, GitHub issue #108 -- case 6 of the DEC 519d1206-4d2a-4500-9046-6db635209996
 non-raising, structured-result workaround chain)."""
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from biz.dfch.specmgr.general.models import InvalidStatusTransitionResult
 _EXPECTED_FIELD_NAMES = ["valid", "type", "from_status", "to_status", "allowed_values", "message"]
 
 #: The locked normal-form message wording (sorted `allowed_values`, comma-and-space-joined in the
-#: same order as the field -- the ADR 519d1206 self-consistency rationale).
+#: same order as the field -- the DEC 519d1206 self-consistency rationale).
 _NORMAL_MESSAGE = (
     "Invalid status transition 'accepted' -> 'draft' for type 'req'. "
     "Allowed from 'accepted': deprecated, implemented, rejected, superseded"

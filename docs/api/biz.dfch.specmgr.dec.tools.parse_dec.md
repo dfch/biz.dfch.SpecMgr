@@ -8,13 +8,13 @@ read path → parse via free-function returning typed document model. A
 content-validation failure of an existing file (the parser's
 ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``) is
 caught and returned as the non-raising ``ValidateResult``
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
-5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
+5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain); only the file-access errors raised
 by ``Path.read_text()`` for a truly-absent or unreadable path still
 surface as MCP tool errors to the caller.
 
-**Path-derived language (feat-197-i18n Phase 110, ADR 38efdb66 item 5).**
+**Path-derived language (feat-197-i18n Phase 110, DEC 38efdb66 item 5).**
 This tool takes no ``language`` parameter: it derives the effective
 language from the file's own position relative to the decision base
 directory (``general.tools._doc_paths.language_for_doc_path``) -- a file
@@ -42,8 +42,8 @@ no separate validation step. Any structural problem (unrecognized/misplaced
 heading, list the schema doesn't expect) or field/cross-field validation
 failure raises ``AssertionError``/``pydantic.ValidationError`` (a malformed
 frontmatter block raises ``yaml.YAMLError``) internally, but this tool
-catches all three (feat-204-create-error, ADR
-f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+catches all three (feat-204-create-error, DEC
+f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain) and returns the enriched message (domain/tool context
 prepended by the shared tool-boundary wrapper,
@@ -62,7 +62,7 @@ path:
     The filesystem path to the ``.md`` file to parse (absolute or
     relative to the current working directory). The file's language is
     derived from this path's position relative to the decision base
-    directory (feat-197-i18n Phase 110, ADR 38efdb66 item 5): flat
+    directory (feat-197-i18n Phase 110, DEC 38efdb66 item 5): flat
     ``docs/dec/`` = canonical (no table), a direct shape-validated
     ``docs/dec/{language}/`` subdirectory = that language's table,
     any other location = canonical.
@@ -80,8 +80,8 @@ DecDocument | ValidateResult
     exactly as the generic ``validate`` tool caps it (feat-110, via
     :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
     ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``
-    (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-    case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+    (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+    case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
     structured-result workaround chain).
 
 Raises

@@ -100,7 +100,7 @@ Item 4 -- The SYSRS document is live spec content, not code: it is edited via th
 
 - feat-173-req-iso29148-level-set, Decisions Made 2026-11-03 16:33:41Z -- the I1/I2 relocation of the shared FEAT id-shape constant model-side (`models/md/_cross_reference.FEAT_ID_PATTERN`); the exact precedent item 2 follows.
 
-- ADR 38efdb66-8025-45c5-bbe8-45b25fc7a772 (feat-197-i18n) -- the i18n design that introduced `DEFAULT_LANGUAGE` (items 1/6/7) and whose residual import direction this feature settles.
+- DEC 38efdb66-8025-45c5-bbe8-45b25fc7a772 (feat-197-i18n) -- the i18n design that introduced `DEFAULT_LANGUAGE` (items 1/6/7) and whose residual import direction this feature settles.
 
 ### Task List
 

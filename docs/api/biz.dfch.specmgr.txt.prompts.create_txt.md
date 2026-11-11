@@ -8,7 +8,7 @@ existing ``txt/tools/``/``txt/resources/`` surface (``list_txt``,
 ``specmgr://txt/template``/``specmgr://txt/example``,
 ``get_txt_schema``, ``create_txt``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_txt`` builds the entire TXT frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown. The body narrates TXT's own

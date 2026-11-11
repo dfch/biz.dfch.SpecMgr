@@ -13,7 +13,7 @@ Backs feat-13's ``<domain>_list`` -> ``list_<domain>`` pagination rollout
 
 Also backs feat-81-83-validation Phase 2's generic ``validate`` tool
 (REQ-004) -- originally greenfield for that tool alone; since feat-170
-(case 4 of the ADR 519d1206 non-raising chain) it also backs the generic
+(case 4 of the DEC 519d1206 non-raising chain) it also backs the generic
 ``update``/``edit`` tools' own content-validation-failure branches, and
 since feat-204-create-error (case 5 of the same chain) the 24
 ``create_<d>``/``parse_<d>`` tools' branches:
@@ -31,7 +31,7 @@ since feat-204-create-error (case 5 of the same chain) the 24
 
 Also backs feat-103-set-status-error's narrow extension of that same
 non-raising workaround to the generic ``set_status`` tool's own single
-failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
+failure mode (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014):
 
 - :class:`InvalidStatusResult` -- the non-raising, structured result the
   generic ``set_status`` tool (``general.tools.set_status``) returns for an
@@ -41,7 +41,7 @@ failure mode (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014):
 
 Also backs feat-108-fsm's (Phase 100) extension of that same non-raising
 workaround to the generic ``set_status`` tool's second, post-load failure
-mode (GitHub issue #108 -- case 6 of the ADR 519d1206 chain):
+mode (GitHub issue #108 -- case 6 of the DEC 519d1206 chain):
 
 - :class:`InvalidStatusTransitionResult` -- the non-raising, structured
   result each whole-body ``_set_status_<d>`` adapter returns when the
@@ -53,7 +53,7 @@ mode (GitHub issue #108 -- case 6 of the ADR 519d1206 chain):
   terminal current state), never the domain's full flat vocabulary.
 
 Also backs feat-134-related-artifact-similarity's (Phase 3) two generic
-similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
+similarity tools (DEC 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
 - :class:`SimilarityUnavailableResult` -- the non-raising, structured
   ``{available, reason, message}`` result the ``find_related``/
@@ -71,7 +71,7 @@ similarity tools (ADR 750842b2-aca4-4649-ba0c-855ec8e1f505):
 
 Also backs feat-150-mcp-lifecycle-commands Phase 1a's narrow extension of
 that same non-raising workaround to the ``get_<d>`` tools' own parse-
-failure case (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c):
+failure case (DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c):
 
 - :class:`ParseFailureResult` -- the non-raising, structured result every
   ``get_<d>`` tool returns when the requested id resolves to an on-disk
@@ -80,7 +80,7 @@ failure case (ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c):
   :class:`InvalidStatusResult` -- a different tool's own model.
 
 Also backs feat-92-resources's cross-cutting reference-resource
-model-backed drift-guard convention (ADR
+model-backed drift-guard convention (DEC
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-002/REQ-005/REQ-006):
 
 - :func:`parse_dtais`/:class:`Dtais` -- parses the DTAIS verification-
@@ -97,7 +97,7 @@ model-backed drift-guard convention (ADR
   parsed result is discarded by the resource itself).
 
 Also backs feat-173-req-iso29148-level-set's (Phase 130) cross-cutting
-ISO 29148 requirement-specifications resource (REQ-003, ADR 356d8781):
+ISO 29148 requirement-specifications resource (REQ-003, DEC 356d8781):
 
 - :func:`parse_iso29148`/:class:`Iso29148` -- parses the ISO/IEC/IEEE
   29148:2018 requirement-specifications guidance document
@@ -118,7 +118,7 @@ Also backs feat-144-ref-artifact's generic ``list_references`` tool
   style inline failure).
 
 Also backs feat-153-off-by-n Phase 2's revision of the generic ``update``
-tool's success return (ADR 19ff316b-cd11-41a7-a616-ffd84917da51, revising
+tool's success return (DEC 19ff316b-cd11-41a7-a616-ffd84917da51, revising
 feature feat-69-update-context's "frontmatter-only" precedent for ``update``
 alone):
 
@@ -159,7 +159,7 @@ Also backs feat-207-reference-graph (Phase 110, REQ-001/REQ-003):
   the ``update_result`` names.
 
 Also backs feat-197-i18n's (Phase 110) per-language section-heading mapping
-tables (ADR 38efdb66 items 3/4/5):
+tables (DEC 38efdb66 items 3/4/5):
 
 - :func:`load_heading_table`/
   :func:`resolve_heading_table` -- the lazy, once-per-process loader of a

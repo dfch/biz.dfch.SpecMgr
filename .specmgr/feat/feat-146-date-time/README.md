@@ -74,7 +74,7 @@ form in entry-heading section titles for readability.
 
 The accepted timestamp regex fragment is shared verbatim across the six entry-heading sites and the D5 frontmatter pattern: `\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\.\d{3}(?:Z|[+-]\d{2}:\d{2})`.
 
-Write/read split: frontmatter is system-owned (the MCP is its only writer) and therefore always written `T`-separated; entry headings are hand/agent-authored body content where both separators are accepted and examples/templates use space for readability. This matches ADR 23a14195's ISO 8601 combined form (`T`) while keeping the human-facing convention unchanged.
+Write/read split: frontmatter is system-owned (the MCP is its only writer) and therefore always written `T`-separated; entry headings are hand/agent-authored body content where both separators are accepted and examples/templates use space for readability. This matches DEC 23a14195's ISO 8601 combined form (`T`) while keeping the human-facing convention unchanged.
 
 PyYAML hazard (verified): unquoted values in either separator coerce to `datetime` and bare `str()` drops milliseconds (and renders `+00:00`), which is why D5 rejects the coerced shape today; REQ-006's normalization makes unquoted values parse and converge to the `T` canonical form. The write path is already safe: `frontmatter.dumps` auto single-quotes timestamp-like strings (verified byte-exact round-trip).
 
@@ -84,8 +84,8 @@ No external dependencies; this feature is self-contained.
 
 ### Related Decisions
 
-- ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf ("Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)"): created by this feature, Phase 0.
-- ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO 8601 for all dates and times"): aligned, not superseded -- the `T` combined form becomes canonical for machine-written values.
+- DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf ("Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)"): created by this feature, Phase 0.
+- DEC 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO 8601 for all dates and times"): aligned, not superseded -- the `T` combined form becomes canonical for machine-written values.
 - feat-38-39-41-43-44 (D4/D5/D7/D11, REQ-004/REQ-006): superseded in part -- see the ADR.
 - feat-32-sysrs (locked lenient `## Updates` shape): superseded in part -- see the ADR.
 
@@ -150,7 +150,7 @@ the same defect class as (a).
 **As of 2026-09-24**: Phase 4 complete: all four implementation phases are done and the
 feature is ready for review (the frontmatter `status` change to `review` is the
 orchestrator's closeout step, not this phase's). Task 4.1 added 8 brief supersession
-notes (one blockquote each, citing ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) to previous
+notes (one blockquote each, citing DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf) to previous
 feature READMEs -- the 5 unconditional ones (feat-38-39-41-43-44, feat-32-sysrs,
 feat-67-70-71, feat-104-109-set-status-noop-dec-docs, feat-94-frontmatter-schema) plus 3 of
 the 6 verify-by-grep candidates that carry timestamp-format decisions (feat-31-feature,
@@ -253,7 +253,7 @@ is a feat-31/feat-38 decision, not feat-93's).
 The Task 3.2 parse gate surfaced a pre-existing, timestamp-unrelated parse failure in
 `docs/sysrs/sysrs-8d752304-b076-4bad-89af-f8032158dd21-system-requirements-specification-biz-dfch-specmgr-appendix.md`
 (the manual feat-84 concatenation of all referenced artifacts, commit bca1a87): the embedded
-ADR ec9f5262's own H1 heading -- which carries bare `<domain>` tokens (e.g.
+DEC ec9f5262's own H1 heading -- which carries bare `<domain>` tokens (e.g.
 `# Expose <domain>_list as paged MCP tools (list_<domain>), not resources`) -- violates the
 sysrs body parser's raw-HTML ban (feat-27), a ban `parse_adr` itself does not apply to ADR H1s.
 Per the plan's hazard clause it was stopped-and-reported without being fixed. The user then
@@ -346,7 +346,7 @@ legacy, referenced by no tool). `feat` was already strict and `sop` stays strict
 ### More Information
 
 - GitHub issue: https://github.com/dfch/biz.dfch.SpecMgr/issues/146
-- Decision: ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf (created with this feature, Phase 0).
+- Decision: DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf (created with this feature, Phase 0).
 - Superseded prior decisions: feat-38-39-41-43-44 (REQ-004/REQ-006, D4/D5/D7/D11), feat-32-sysrs
   (locked lenient `## Updates` shape), feat-67-70-71 ("deliberately supported alternate
   granularity" declaration), feat-104-109-set-status-noop-dec-docs ("already accepts both forms"

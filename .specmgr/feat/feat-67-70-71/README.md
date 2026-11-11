@@ -48,7 +48,7 @@ This feature closes three interconnected GitHub issues discovered during dogfood
 
 - Changing the `yyyy-MM-dd HH:mm:ss.fff[+HH:mm|Z]` timestamp format itself -- that format was already decided in `feat-38-39-41-43-44`.
 - Adding new document-type domains or new MCP tools.
-- Wiring `validate_<d>` into CI/pre-commit over the repo's own `.specmgr`/`docs` documents -- tracked separately (ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73 and the AGENTS.md "Still genuinely missing" list).
+- Wiring `validate_<d>` into CI/pre-commit over the repo's own `.specmgr`/`docs` documents -- tracked separately (DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73 and the AGENTS.md "Still genuinely missing" list).
 
 ### Design Notes
 

@@ -18,18 +18,14 @@
 """Generic, doc-type-agnostic base directory resolution, filename slugification,
 and id -> path lookup (plan Task 3.10).
 
-Generalizes ``adr.tools._paths``'s shape into a single module shared across
-document domains (REQ now, UC later) instead of a copy per domain: one root
+A single module shared across document domains (REQ now, UC later) instead
+of a copy per domain: one root
 env var (:data:`DOCS_DIR_ENV_VAR`, default :data:`DEFAULT_DOCS_ROOT`) holds
 every doc type's own subdirectory (``{root}/{type_name}/``, e.g. ``docs/req/``
 for ``type_name="req"``).
 
-**ADR is deliberately left untouched** -- it keeps its own
-``SPECMGR_ADR_DIR``/``docs/adr`` env var and default (``adr.tools._paths``).
-Migrating ADR onto this shared module is optional future cleanup, not
-bundled into this change.
 
-As with ``adr.tools._paths``, this module has no ``mcp``/file-write
+This module has no ``mcp``/file-write
 dependency beyond read-only directory listing: :func:`doc_base_dir` never
 creates the directory (a read-only tool shouldn't have that side effect),
 only :func:`ensure_doc_base_dir` does.
@@ -41,14 +37,14 @@ be a domain's own content-hash-validated, cache-backed reader (e.g.
 ``req.tools._cache.read_req``) -- when a candidate file's on-disk content
 hash is unchanged since the last time that path was read, ``read_fn``
 returns the cached result without re-invoking the underlying parser
-(ADR bfd76370-b59b-4d65-b550-a969f6c93c9d). Callers may also pass
+(DEC bfd76370-b59b-4d65-b550-a969f6c93c9d). Callers may also pass
 ``reconcile_fn`` (a domain's own cache-reconcile callable, e.g.
 ``req.tools._cache.reconcile_req_cache``), invoked once against the freshly
 materialized live path listing *before* any per-file work, dropping any
 cached entry for a file deleted outside specmgr's own tooling (REQ-005) --
 this keeps orphan cleanup to a cheap set comparison rather than additional
 file reads. The filesystem nonetheless remains the sole source of truth
-(ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only ever a
+(DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only ever a
 memoization keyed by a validated content hash, so a stale entry is
 structurally impossible -- it can only ever cost one extra parse, never an
 incorrect result.
@@ -72,7 +68,7 @@ Phase 8, REQ-014).** This scan iterates over a path list materialized at
 one point in time (the directory-listing snapshot up front), but the
 generic ``delete`` tool in ``general.tools`` only holds the *target*
 document's own per-id lock, never a whole-domain lock, while ``get_*``/
-``list_*`` intentionally take no lock at all (ADR
+``list_*`` intentionally take no lock at all (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of *any
 other* document in the same domain can remove a file between the scan's
 directory listing and that file's own turn in the loop, raising
@@ -85,7 +81,7 @@ triggers the exact same race for every one of the other domains. A file
 vanishing mid-scan this way is now skipped exactly like any other
 unparseable file, and the scan continues looking for the target id.
 
-**Language-variant directories (feat-197-i18n, ADR 38efdb66 items 1/6).** A
+**Language-variant directories (feat-197-i18n, DEC 38efdb66 items 1/6).** A
 non-default language ``L`` of a domain's documents lives in a direct
 ``{L}`` subdirectory of the domain's flat base directory
 (``docs/{type}/{L}/<type>-<id>-<slug>.md``); the default language EN
@@ -105,15 +101,15 @@ unchanged and stays non-recursive: it never descends into ``{language}``
 subfolders, which is exactly what keeps every EN-only consumer (each
 domain's own flat scan, plus ``list_references``,
 ``find_related``/``find_similar_text``, ``get_reference_diagram(_all)``)
-EN-only by directory layout (REQ-013/ACC-014, ADR item 8).
+EN-only by directory layout (REQ-013/ACC-014, DEC 38efdb66 item 8).
 
 **A companion :func:`find_parse_failure` surfaces the parse-failure a skipped id
-encodes (feat-150-mcp-lifecycle-commands Phase 1a, ADR
+encodes (feat-150-mcp-lifecycle-commands Phase 1a, DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c).** :func:`find_doc_path_by_id`'s
 skip-on-parse-failure behavior above is deliberate and unchanged -- but it
 means ``get_<d>`` on a document whose own file is broken raised only the
 generic not-found error, with no parse cause/path/line, and that generic
-error was being discarded client-side anyway (the ADR 519d1206
+error was being discarded client-side anyway (the DEC 519d1206
 ``isError: true`` truncation chain). :func:`find_parse_failure` recovers
 exactly that case: it scans for the single file whose stem encodes the id
 (``f"{id_}-"`` prefix), attempts the domain's own cache-backed reader on it,
@@ -134,8 +130,8 @@ broken target -- ``update``/``edit``/``set_status``/
 ``set_classification`` now return the non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` via this probe
 on their own ``XNotFoundError`` catch (feat-170-update-edit-parse-failure,
-GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the
-ADR 519d1206-4d2a-4500-9046-6db635209996 workaround chain).
+GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the
+DEC 519d1206-4d2a-4500-9046-6db635209996 workaround chain).
 """
 
 from __future__ import annotations
@@ -203,7 +199,7 @@ DEFAULT_DOCS_ROOT = Path(_docs_dir_var.default)
 #: Anything that isn't a lowercase ASCII letter or digit, run-collapsed.
 _NON_ALNUM_RUN_PATTERN = re.compile(r"[^a-z0-9]+")
 
-#: Maximum length of a slugified title (mirrors ``adr.tools._paths``'s filename scheme).
+#: Maximum length of a slugified title.
 _SLUG_MAX_LENGTH = 60
 
 #: Fallback slug used when a title has no alphanumeric characters at all.
@@ -240,7 +236,7 @@ def doc_base_dir(type_name: str, language: str | None = None) -> Path:
     this so merely reading never has the side effect of creating the
     directory -- see :func:`ensure_doc_base_dir` for the write path.
 
-    With an optional ``language`` (feat-197-i18n, ADR 38efdb66 item 1):
+    With an optional ``language`` (feat-197-i18n, DEC 38efdb66 item 1):
     ``None`` (omitted) or the default language EN (:data:`DEFAULT_LANGUAGE`)
     resolves to the flat ``docs/{type_name}`` directory -- exactly today's
     path, unchanged; any other value is shape-guarded by
@@ -282,7 +278,7 @@ def ensure_doc_base_dir(type_name: str, language: str | None = None) -> Path:
     Only a doc type's ``create_*`` tool should call this -- every other
     tool/resource uses the read-only :func:`doc_base_dir` instead. The
     optional ``language`` parameter selects the same flat-vs-subdirectory
-    resolution as :func:`doc_base_dir` (feat-197-i18n, ADR 38efdb66
+    resolution as :func:`doc_base_dir` (feat-197-i18n, DEC 38efdb66
     item 1) before the directory is created.
 
     Parameters
@@ -309,7 +305,7 @@ def ensure_doc_base_dir(type_name: str, language: str | None = None) -> Path:
 def slugify(title: str) -> str:
     """Derive a filename-safe slug from a document title.
 
-    Ported from ``adr.tools._paths.slugify`` unchanged: lowercases
+    Lowercases
     ``title``, collapses every run of non-``[a-z0-9]`` characters into a
     single ``-``, strips leading/trailing ``-``, truncates to
     :data:`_SLUG_MAX_LENGTH` characters (stripping a trailing ``-`` again in
@@ -340,7 +336,7 @@ def iter_doc_paths(base_dir: Path) -> Iterator[Path]:
 
     Yields nothing (rather than raising) if ``base_dir`` does not exist.
 
-    Non-recursive by design (feat-197-i18n, REQ-013/ACC-014, ADR 38efdb66
+    Non-recursive by design (feat-197-i18n, REQ-013/ACC-014, DEC 38efdb66
     item 8): the single-level ``*.md`` glob never descends into
     ``{language}`` subfolders (or any other subdirectory), so every
     EN-only consumer of this function -- each domain's own flat scan, plus
@@ -371,7 +367,7 @@ def language_for_doc_path(base_dir: Path, doc_path: Path) -> str | None:
     """Return the language a document path is encoded by, from its position under ``base_dir``.
 
     The inverse of :func:`doc_base_dir`'s own language resolution
-    (feat-197-i18n, ADR 38efdb66 items 1/5): the language is encoded by
+    (feat-197-i18n, DEC 38efdb66 items 1/5): the language is encoded by
     directory location only, so a document directly under ``base_dir``
     (the flat, default-EN directory) maps to ``None`` (no heading-mapping
     table applies -- EN is the canonical form itself), and a document
@@ -423,7 +419,7 @@ def iter_doc_paths_all_languages(base_dir: Path) -> Iterator[Path]:
     """Yield the domain-wide live ``*.md`` listing: the flat directory plus every ``{language}`` subdirectory.
 
     The reconcile-on-scan counterpart of the language variant's directory
-    layout (feat-197-i18n, ADR 38efdb66 item 9): once a domain's documents
+    layout (feat-197-i18n, DEC 38efdb66 item 9): once a domain's documents
     can live in a per-language subdirectory, a scan of one directory no
     longer covers the whole domain, so a domain's cache-reconcile call must
     be handed the union -- the flat (default-EN) files plus every file
@@ -461,7 +457,7 @@ def iter_language_dirs(base_dir: Path) -> Iterator[tuple[str, Path]]:
     """Yield ``(language, directory)`` for every shape-valid ``{language}`` subdirectory of ``base_dir``, sorted.
 
     The directory-level discovery primitive of the language-variant layout (feat-197-i18n Phase 140,
-    ADR 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
+    DEC 38efdb66 items 1/7): a direct subdirectory of a domain's flat base directory whose name fullmatches the
     language-code shape (``^[a-z]{2}$``, :data:`~biz.dfch.specmgr.general.tools._path_safety.LANGUAGE_PATTERN`) is a
     language location; every other entry -- a plain file, a shape-invalid directory name (``"Notes"``, ``"de-DE"``),
     anything deeper -- is not and is skipped. It never inspects the directory's contents (a language directory may
@@ -505,8 +501,8 @@ def find_doc_path_by_id(
     listing, reading each path via ``read_fn`` and comparing
     ``get_id_fn(parsed)`` against ``id_``. A file that fails to parse
     (``AssertionError`` or ``ValueError``, which ``pydantic.ValidationError``
-    and every parser-specific error in this codebase -- e.g.
-    ``AdrParseError`` -- subclass; ``yaml.YAMLError``, raised unwrapped
+    and every parser-specific error in this codebase -- subclass;
+    ``yaml.YAMLError``, raised unwrapped
     for malformed frontmatter YAML by every ``parse_<domain>`` function,
     Phase 6, REQ-010; or ``FileNotFoundError``, raised by ``read_fn`` when
     a file vanishes between this function's own directory-listing
@@ -616,15 +612,15 @@ def find_parse_failure(
     (a frontmatter-id mismatch, i.e. the file is not the requested document)
     -- so a caller can re-raise its original not-found error unchanged.
 
-    feat-150-mcp-lifecycle-commands Phase 1a, ADR
+    feat-150-mcp-lifecycle-commands Phase 1a, DEC
     9080b37c-82b3-4f63-81f1-79641d0bf14c: the ``get_<d>`` tools call this on
     the domain's ``XNotFoundError`` and return a non-raising
     :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
     non-``None`` result. The four generic mutation tools
     (``update``/``edit``/``set_status``/``set_classification``) now call it
     the same way from their own per-domain adapters on the same catch
-    (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+    (feat-170-update-edit-parse-failure, GitHub issue #170, DEC
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC 519d1206
     chain), with the same ``read_fn``/``assert_within`` mirroring.
 
     Parameters

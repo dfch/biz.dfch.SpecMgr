@@ -18,18 +18,16 @@
 """Requirement base directory resolution and id -> path lookup (Task 3.11).
 
 A thin, requirement-specific layer over the generic
-``general.tools._doc_paths`` module (Task 3.10), rather than a second
-hand-written copy of ``adr.tools._paths`` -- the base-directory/id-lookup
-plumbing is identical in shape, only the parsed document type and its id
-accessor differ.
+``general.tools._doc_paths`` module (Task 3.10) -- the base-directory/id-lookup
+plumbing is identical in shape across domains, only the parsed document type and its id accessor differ.
 
-Mirrors ``adr.tools._paths``'s read-only/write split: :func:`req_base_dir`
+A read-only/write split: :func:`req_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
 effect), only :func:`ensure_req_base_dir` does, for the eventual
 ``create_req`` tool (Task 3.12).
 
 **Cache-backed scan (feat-107-doc-cache Phase 3).** :func:`find_req_path`
-now scans through the content-hash-validated per-domain cache (ADR
+now scans through the content-hash-validated per-domain cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
 ``read_req`` (not ``parse_req``) as ``find_doc_path_by_id``'s ``read_fn``,
 so a file whose on-disk content hash is unchanged since its last read is
@@ -39,7 +37,7 @@ specmgr's own tooling) is dropped before any per-file work on every scan.
 ``read_req``/``reconcile_req_cache`` are imported from ``._cache``, not
 ``._io``, to avoid a circular import -- see ``._cache``'s own module
 docstring for the full rationale. The filesystem remains the sole source
-of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
+of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
 ever a memoization keyed by validated content hash, never an independent
 fact about what exists on disk.
 """
@@ -78,8 +76,7 @@ class ReqNotFoundError(LookupError):
     """No requirement file found matching the given id.
 
     A separate class from ``general.tools._doc_paths.DocNotFoundError``, not
-    a subclass of it -- the same relationship ``adr.tools._paths.AdrNotFoundError``
-    has to nothing generic, so callers can keep catching a requirement-specific
+    a subclass of it, so callers can keep catching a requirement-specific
     exception type without depending on the generic module's own exception.
     """
 
@@ -171,7 +168,7 @@ def _reconcile_req_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
     The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
     per-file work, with the scanned directory's own materialized path
     listing. With the ``{language}`` subfolder layout (feat-197-i18n
-    Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+    Phase 125, DEC 38efdb66 item 9), a scan of one language directory no
     longer covers the whole domain -- reconciling against ``scan_paths``
     alone would evict every other language's cached entries -- so this
     wrapper instead hands :func:`~._cache.reconcile_req_cache` the
@@ -194,8 +191,7 @@ def find_req_path(base_dir: Path, id_: str) -> Path:
     content hash is unchanged since its last read is not re-parsed. A file
     that fails to parse (``AssertionError``/``pydantic.ValidationError``) is
     silently skipped -- one broken file must not prevent lookup of a
-    different, valid id. Mirrors ``adr.tools._paths.find_adr_path``'s own
-    skip-on-parse-failure rule. Before scanning, the cache is reconciled
+    different, valid id, using the same skip-on-parse-failure rule. Before scanning, the cache is reconciled
     against the freshly materialized live path listing
     (:func:`~._cache.reconcile_req_cache`, against the domain-wide live listing of every language
     -- a scan of one language must not evict the other languages' entries, feat-197-i18n

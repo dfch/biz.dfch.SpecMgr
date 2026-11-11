@@ -2,10 +2,10 @@
 
 ``@mcp.tool()`` wrapper: list_sop (Task 2.2).
 
-Ships as a paged ``@mcp.tool()`` from day one (ADR
+Ships as a paged ``@mcp.tool()`` from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13: "Expose ``list_<domain>`` as a paged
 MCP tool, not a resource") -- like GOL/DEC (other domains built after that
-ADR was accepted), SOP must not repeat the resource-then-convert history of
+DEC was accepted), SOP must not repeat the resource-then-convert history of
 REQ/UC/TSK/QA/PRB (launched as a ``specmgr://<domain>/list`` resource,
 converted later in feat-13-list-paging). See
 ``.specmgr/feat/feat-13-list-paging/README.md`` for the full paging contract
@@ -33,7 +33,7 @@ byte-identical to the pre-glob behaviour (REQ-005), and an empty string is
 a pattern, not an off-switch (it matches no id and yields a zero-row
 result).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/6/7).**
 A 1:1 port of ``list_dec``'s ``language`` handling. The optional
 ``language`` parameter (default ``"en"``) selects which directory this tool
 scans: omitted/``"en"`` = the flat ``docs/sop/`` directory -- today's exact
@@ -98,7 +98,7 @@ glob:
     match count and ``offset``/``max_results`` paging keeps its existing
     meaning on that smaller set.
 language:
-    The language whose directory to list (feat-197-i18n Phase 125, ADR
+    The language whose directory to list (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/6/7): ``"en"`` (the default, same as omitting it)
     scans the flat ``docs/sop/`` directory -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.

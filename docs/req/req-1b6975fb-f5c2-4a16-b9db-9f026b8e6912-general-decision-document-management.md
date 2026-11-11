@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:12.539+02:00'
 id: 1b6975fb-f5c2-4a16-b9db-9f026b8e6912
 status: draft
 type: req
-updated: '2026-09-30T14:56:31.213+02:00'
+updated: '2026-11-07T09:10:17.838+01:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,7 @@ THE system shall provide decision (DEC) document management, including create, r
 
 ## Description
 
-AGENTS.md's Status section documents the `dec` package's tools (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`, `get_dec_template`, `create_dec`, `validate_dec`). A DEC keeps the ADR's general MADR-style structure (headings, `Options` collection) but has no fine-grained mutation tools or renderer: writes persist the caller's raw validated body byte-for-byte.
+AGENTS.md's Status section documents the `dec` package's tools (`parse_dec`, `get_dec`, `list_dec`, `get_dec_example`, `get_dec_template`, `create_dec`, `validate_dec`). A DEC keeps the general MADR-style structure (headings, `Options` collection) but has no fine-grained mutation tools or renderer: writes persist the caller's raw validated body byte-for-byte.
 
 ## Characteristics
 

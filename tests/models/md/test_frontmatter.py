@@ -26,7 +26,7 @@ from biz.dfch.specmgr.models.md import CURRENT_SCHEMA_VERSION, SCHEMA_MAJOR_VERS
 
 
 class _UcFrontmatter(MarkdownFrontmatter):
-    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the ADR."""
+    """A concrete document-type subclass narrowing `type` to a fixed Literal, per the decision."""
 
     type: Literal["uc"] = "uc"
 
@@ -81,7 +81,7 @@ class TestMarkdownFrontmatter(unittest.TestCase):
         self.assertEqual(MarkdownFrontmatter.model_validate({"type": "uc", "status": "   "}).status, "draft")
 
     def test_status_accepts_arbitrary_free_form_value(self):
-        """Unlike AdrFrontmatter, status is not restricted to a fixed enum here."""
+        """Unlike a domain frontmatter with a closed status vocabulary, status is not restricted to a fixed enum here."""
         frontmatter = MarkdownFrontmatter(type="uc", status="in-review")
         self.assertEqual(frontmatter.status, "in-review")
 
@@ -204,7 +204,7 @@ class TestMarkdownFrontmatter(unittest.TestCase):
 
 
 class TestMarkdownFrontmatterSubclassing(unittest.TestCase):
-    """Tests for the document-type subclassing pattern (ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29)."""
+    """Tests for the document-type subclassing pattern (DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29)."""
 
     def test_subclass_defaults_type_to_its_own_literal_value(self):
         """A subclass narrowing `type` to a Literal with a default needs no explicit `type=`."""

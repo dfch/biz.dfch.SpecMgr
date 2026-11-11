@@ -35,13 +35,12 @@ included); the single-document delegation pointer (pin d -- the locked delegatio
 in the whitespace-normalized body, plus all three names of the existing stack); the
 read-only posture (pin e -- both locked read-only phrases in the whitespace-normalized
 body); the workflow presence (pin f -- the four codified workflow headings as literal
-body substrings, plus the load-bearing workflow constants (the canonical 13-domain
-string, the ``N = 2`` default-depth wording, and the deliberate ``adr``-exclusion
-wording) in the whitespace-normalized body); and, since feat-207-reference-graph Phase
-140 (the rendered-diagram extension, REQ-011/ACC-005), the diagram workflow (pin g --
-the fifth routing-table row, the frozen rendered-vs-text disambiguation phrases, the
-15-domain (diagram surface, ``adr`` included) vs 14-domain (text workflows, ``adr``
-excluded by design) reconciliation note, and the load-bearing diagram facts: the tool /
+ body substrings, plus the load-bearing workflow constants (the canonical 14-domain
+ string and the ``N = 2`` default-depth wording) in the whitespace-normalized body);
+ and, since feat-207-reference-graph Phase 140 (the rendered-diagram extension,
+ REQ-011/ACC-005), the diagram workflow (pin g -- the fifth routing-table row, the
+ frozen rendered-vs-text disambiguation phrases, the 14-domain (diagram surface and
+ text workflows agree) reconciliation note, and the load-bearing diagram facts: the tool /
 CLI / verdict / rulebook names, ``SPECMGR_DIAGRAM_MAX_TITLE`` default 40, the red
 ``-[#red]->`` cycle syntax, the FEAT switch, and — since feat-214-rel-invalid-diag Phase
 110 (REQ-007) — the scoped reverse mandate (ALWAYS request ``reverse=True`` / ALWAYS
@@ -98,7 +97,6 @@ _WORKFLOW_HEADINGS: tuple[str, ...] = (
 _WORKFLOW_CONSTANTS: tuple[str, ...] = (
     "req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set",
     "N = 2",
-    "deliberate",
 )
 # feat-207-reference-graph Phase 140 (pin g): the rendered-diagram workflow's
 # load-bearing wording -- the routing-table row, the frozen disambiguation, the
@@ -113,10 +111,8 @@ _DISAMBIGUATION_PHRASES: tuple[str, ...] = (
     "must not be stolen",
 )
 _RECONCILIATION_PHRASES: tuple[str, ...] = (
-    "15 domains",
     "14 whole-body",
-    "bfd76370-b59b-4d65-b550-a969f6c93c9d",
-    "intentionally differ",
+    "both span the same",
 )
 _DIAGRAM_SURFACE_NAMES: tuple[str, ...] = (
     "get_reference_diagram",
@@ -306,8 +302,8 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
     workflow row — the rendered reference-graph diagram — and its frozen wording:
     the routing-table row, the rendered-vs-text disambiguation (the bare
     "show me the reference graph[, N levels deep]" phrasing stays with the
-    multi-hop row), the 15-domain (adr included) vs 14-domain (adr excluded by
-    design) reconciliation note, the diagram surface names (the two MCP tools,
+    multi-hop row), the 14-domain reconciliation note (diagram surface and text
+    workflows agree), the diagram surface names (the two MCP tools,
     the CLI, the verdict tools, the rulebook URI), and the load-bearing diagram
     facts (the env var + default, the red-cycle syntax, the FEAT switch)."""
 
@@ -331,9 +327,8 @@ class TestSkillDiagramWorkflow(unittest.TestCase):
             self.assertIn(phrase, normalized_body)
 
     def test_domain_count_reconciliation_note_present(self):
-        """The explicit 15-domain (diagram surface, adr included) vs 14-domain
-        (text workflows, adr excluded by design, ADR bfd76370) reconciliation
-        note is pinned."""
+        """The 14-domain reconciliation note (diagram surface and text workflows
+        span the same set) is pinned."""
         _, body = _split_frontmatter(_skill_text())
 
         normalized_body = _normalize_whitespace(body)

@@ -10,7 +10,7 @@ using the existing ``sop/tools/``/``sop/resources/`` surface (``list_sop``,
 cross-cutting ``specmgr://rasci`` resource (read before drafting
 ``## Roles and Responsibilities``).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_sop`` builds the entire SOP frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown (and ``status`` is always fixed

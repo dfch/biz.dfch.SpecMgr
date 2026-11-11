@@ -19,7 +19,7 @@
 
 ``find_related``/``find_similar_text`` (semantic similarity) and ``list_references``/``get_reference_diagram``/
 ``get_reference_diagram_all`` (cross-references) must never resolve, enumerate, or index a ``docs/{type}/{language}/``
-entry, and every reference or similarity hit resolves to the EN variant's path (ADR 38efdb66 item 8: a directory-layout
+entry, and every reference or similarity hit resolves to the EN variant's path (DEC 38efdb66 item 8: a directory-layout
 property of the non-recursive ``iter_doc_paths`` scan, with zero code change in those tools). These tests build a docs
 tree that holds BOTH the EN documents and ``de/`` variants of the same ids -- with content *marked* so a leak is
 unambiguous (a ``gamma``-only German title the deterministic fake embedding backend scores as the nearest possible
@@ -39,7 +39,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.general.models import ValidateResult
 from biz.dfch.specmgr.general.tools._doc_paths import DOCS_DIR_ENV_VAR, iter_doc_paths
 from biz.dfch.specmgr.general.tools.find_related import find_related
@@ -96,12 +95,10 @@ def seed_pair(spec: DomainSpec) -> tuple[str, Path, Path]:
 
 
 class _EnOnlyTestCase(SimilarityTestCase):
-    """Similarity fixture (docs + feat tmp dirs, reset provider/cache) plus an ADR tmp dir and cleared doc caches."""
+    """Similarity fixture (docs + feat tmp dirs, reset provider/cache) plus cleared doc caches."""
 
     def setUp(self) -> None:
         super().setUp()
-        self.adr_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.enterContext(mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: str(self.adr_dir)}))
         _reset_caches()
         self.addCleanup(_reset_caches)
 
@@ -375,7 +372,7 @@ class TestRegistryDiagramAcrossAllDomainsStaysEnOnly(_EnOnlyTestCase):
 
 
 class TestFlatScansNeverSeeALanguageFolder(unittest.TestCase):
-    """The structural fact ADR 38efdb66 item 8 rests on, per domain: a ``de/`` file is invisible to the flat scan,
+    """The structural fact DEC 38efdb66 item 8 rests on, per domain: a ``de/`` file is invisible to the flat scan,
     the id lookup and the listing -- even when hand-planted. A future recursive glob fails these tests."""
 
     def setUp(self) -> None:

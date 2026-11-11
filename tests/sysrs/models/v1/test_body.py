@@ -92,7 +92,6 @@ _PRB_ID = "7166b565-ddb2-4a91-924c-d36d0e02d7aa"
 _QA_ID = "c79bc330-6795-4dd3-9b79-c0936d4ae7f9"
 _UC_ID = "88ed67cd-0b3b-4846-a827-530c12695936"
 _DEC_ID = "60b1e331-4fe4-4d41-8c50-d0bd6227c472"
-_ADR_ID = "365bcab7-b086-4205-84f9-eb1654ff8410"
 _RSK_ID = "c1b33b41-d976-4191-a2c5-6f3c09441eb3"
 _REQ_ID = "a3f8c2d1-7b4e-4d9a-b6c0-91e5f2a8d734"
 _VCR_ID = "ee8672f3-af06-4f53-bc2a-80b5a581399b"
@@ -114,14 +113,14 @@ _LITERAL_CLASSES = [
     ),
 ]
 
-# Every cross-reference list class alongside its allowed type tag(s) (a
-# tuple, since `Decisions` allows two) and whether it is H2- or H3-level.
+# Every cross-reference list class alongside its allowed type tag (a
+# one-member tuple for uniformity) and whether it is H2- or H3-level.
 _CROSS_REF_CLASSES = [
     (Goals, ("GOL",)),
     (ProblemStatement, ("PRB",)),
     (StakeholderNeedsAndElicitation, ("QA",)),
     (OperationalConceptAndScenarios, ("UC",)),
-    (Decisions, ("DEC", "ADR")),
+    (Decisions, ("DEC",)),
     (Risks, ("RSK",)),
     (FunctionalSuitability, ("REQ",)),
     (PerformanceEfficiency, ("REQ",)),
@@ -303,9 +302,10 @@ class TestCrossReferenceItemPatterns(unittest.TestCase):
                 format_text(f"## Operational Concept and Scenarios\n\n- QA {_UC_ID}: A scenario\n")
             )
 
-    def test_decisions_accepts_both_dec_and_adr(self) -> None:
+    def test_decisions_accepts_dec_and_rejects_non_dec(self) -> None:
         Decisions.from_text(format_text(f"## Decisions\n\n- DEC {_DEC_ID}: A decision\n"))
-        Decisions.from_text(format_text(f"## Decisions\n\n- ADR {_ADR_ID}: An architecture decision\n"))
+        with self.assertRaises(ValidationError):
+            Decisions.from_text(format_text(f"## Decisions\n\n- GOL {_DEC_ID}: A goal\n"))
 
     def test_decisions_rejects_req(self) -> None:
         with self.assertRaises(ValidationError):

@@ -23,13 +23,13 @@ existing ``set/tools/``/``set/resources/`` surface (``list_set``,
 ``specmgr://set/template``/``specmgr://set/example``,
 ``get_set_schema``, ``create_set``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_set`` builds the entire set frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown. The body narrates set's own
 shape: a single ``# {title}`` H1, the mandatory opaque free-markdown
 ``## Description`` (any blocks allowed), and the mandatory ``## Items``
-flat bullet list (any mix of the 12 reference tags, at least one item) --
+flat bullet list (any mix of the 11 reference tags, at least one item) --
 there are no other sections.
 
 Naming note: this prompt is named ``create_set``, the same name as the

@@ -3,7 +3,7 @@
 ``@mcp.tool()`` wrapper: set_status (feat-22-consolidate-mutation-tools, Phase 4).
 
 The generic, cross-domain status-change tool for every document type
-(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``/``adr``).
+(``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``).
 It dispatches on the explicit ``type`` parameter to a private per-domain
 adapter (``_set_status_<d>``), each a **verbatim port** of the
 corresponding per-domain status tool's function body (same domain lock,
@@ -11,15 +11,10 @@ same ``load_by_id``, same raw-body re-read and verbatim re-persistence,
 same frontmatter reconstruction through the domain's own
 ``XFrontmatter`` constructor -- so the domain's closed status vocabulary
 validates -- and the same domain ``XNotFoundError``; those per-domain
-tools were retired in feat-22 Phase 4). The ADR adapter ports the
-previous per-domain ADR status tool's function body (same ``adr_lock``,
-``load_by_id``, and ``write_adr`` render round-trip,
-``AdrNotFoundError``) including its delegation to
-``models.adr.v1.mutations.set_status``, which composes ``status`` as
-``"superseded by {superseded_by}"`` when ``superseded_by`` is given.
-``sop`` is the first domain built dispatch-only from day one (ADR
-36905d5b): its ``_set_status_sop`` adapter was written directly in this
-shape rather than ported from a retired per-domain tool.
+tools were retired in feat-22 Phase 4). ``sop`` is the first domain
+built dispatch-only from day one (DEC 36905d5b): its ``_set_status_sop``
+adapter was written directly in this shape rather than ported from a
+retired per-domain tool.
 
 The ``feat`` adapter (``_set_status_feat``) diverges from every other
 whole-body domain's identical shape in the same way ``_update_feat``
@@ -38,33 +33,23 @@ to the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK
 serializes whichever concrete document is returned.
 
-``superseded_by`` is accepted only for ``type="adr"``: the
-"superseded by X" status pattern is ADR-specific (no other domain's
-``XFrontmatter.status`` accepts it). The public :func:`set_status`
-rejects it for any other ``type`` with a ``ValueError`` before any file
-access.
-
 Neither any ``create_<d>`` tool nor the generic :func:`update` tool
 accepts a ``status`` argument at all -- this tool is the sole
 status-change entry point for every domain.
 
 No-op on an unchanged status (GitHub issue #109): each ``_set_status_<d>``
-adapter compares the requested target status against the document's
-current on-disk status -- for the 14 whole-body domains, plainly
-``existing.frontmatter.status == status``; for ``adr``, against the same
-composed target (``status`` or ``f"superseded by {superseded_by}"``)
-``models.adr.v1.mutations.set_status`` would compute -- immediately after
-``assert_within`` and before any write. When they are equal, the adapter
-returns the already-loaded value unchanged: no write to disk, no
-``updated`` bump, and no cache re-warm (there is nothing new to warm the
-cache with). This is a success, not an error, and returns the exact same
-value shape (the domain's own ``XFrontmatter`` for the whole-body domains,
-the full ``Adr`` for ``type="adr"``) a changed-status call would return.
-The pre-dispatch out-of-vocabulary ``InvalidStatusResult`` check below
-still runs first, unaffected -- the no-op check only ever applies to an
-already-valid ``status``.
+adapter compares the requested ``status`` against the document's current
+on-disk status -- plainly ``existing.frontmatter.status == status`` --
+immediately after ``assert_within`` and before any write. When they are
+equal, the adapter returns the already-loaded value unchanged: no write to
+disk, no ``updated`` bump, and no cache re-warm (there is nothing new to
+warm the cache with). This is a success, not an error, and returns the
+exact same value shape (the domain's own ``XFrontmatter``) a changed-status
+call would return. The pre-dispatch out-of-vocabulary
+``InvalidStatusResult`` check below still runs first, unaffected -- the
+no-op check only ever applies to an already-valid ``status``.
 
-An out-of-vocabulary ``status`` for the dispatched ``type`` (ADR
+An out-of-vocabulary ``status`` for the dispatched ``type`` (DEC
 b399f1ce-ed42-4929-b01c-7a57d18e8014, "Extend the non-raising
 structured-result workaround to set_status's invalid-status case") is
 pre-checked by the public :func:`set_status` against a private,
@@ -75,16 +60,16 @@ dispatching to any ``_set_status_<d>`` adapter -- so before any domain
 lock is taken or any file is read -- and returns a structured, non-raising
 :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead of
 letting ``pydantic.ValidationError`` propagate from the adapter's
-``XFrontmatter``/``AdrFrontmatter`` reconstruction. This is a narrow,
-additive exception to this tool's otherwise raise-based contract
-(mirroring the generic ``validate`` tool's own non-raising workaround,
-ADR 519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode
-(a truly-absent id, path-injection/wrong-shape id, ``superseded_by``
-misuse on a non-``adr`` type) still raises exactly as before.
+``XFrontmatter`` reconstruction. This is a narrow, additive exception to
+this tool's otherwise raise-based contract (mirroring the generic
+``validate`` tool's own non-raising workaround, DEC
+519d1206-4d2a-4500-9046-6db635209996) -- every other failure mode (a
+truly-absent id, path-injection/wrong-shape id) still raises exactly as
+before.
 
 An existing-but-broken document (feat-170-update-edit-parse-failure,
-GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
-the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain): on a target ``id`` whose only matching on-disk file
 fails to parse, each of the 14 whole-body adapters now returns the
 non-raising :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
@@ -106,10 +91,9 @@ disk matches at all) still raises the domain's own not-found error
 unchanged. The pre-dispatch out-of-vocabulary ``InvalidStatusResult``
 check runs first and is unaffected -- an out-of-vocabulary ``status``
 against a broken existing document still returns ``InvalidStatusResult``
-(that check never reaches ``load_by_id``). The ``adr`` adapter stays
-raise-based (ADR is out of scope for this feature).
+(that check never reaches ``load_by_id``).
 
-Per-domain status state machine (feat-108-fsm, GitHub issue #108, ADR
+Per-domain status state machine (feat-108-fsm, GitHub issue #108, DEC
 a79608e4-88cd-498f-8ca1-445df4d04f92): each
 whole-body ``_set_status_<d>`` adapter additionally runs the shared, pure
 :func:`general.tools._status_fsm.check_status_transition` check --
@@ -128,63 +112,35 @@ returns the non-raising
 ``message``, where ``allowed_values`` are the targets allowed from the
 document's current state, sorted -- never the domain's full flat vocabulary;
 an empty list marks a terminal current state) instead of writing -- case 6
-of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
+of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-
 result workaround chain. The rollout is complete as of Phase 120: every
 whole-body domain's own table has landed and is enforced (``req`` first, in
 Phase 110; the remaining whole-body domains in Phase 120); the no-op,
 out-of-vocabulary, ``ParseFailureResult``, and path-safety order is
-untouched, and ``_set_status_adr`` never calls the check (REQ-006: ADR keeps
-its flat-vocabulary behavior).
-
-``models.adr.v1.mutations`` is imported qualified (as ``mutations``)
-because the pure, in-memory operation it delegates to shares this
-wrapper's own name.
+untouched.
 
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public
 :func:`set_status` validates ``id`` via ``_path_safety.validate_id``
 before dispatch (a ``ValueError`` before any filesystem access --
-mirroring the generic ``delete`` tool's own REQ-003; ``_path_safety``'s
-UUID-shaped domains now include ``adr``), and every adapter confines the
-resolved path to the domain's own base directory with
+mirroring the generic ``delete`` tool's own REQ-003), and every adapter
+confines the resolved path to the domain's own base directory with
 ``_path_safety.assert_within`` after ``load_by_id``, inside the domain
 lock.
 
 ## Functions
 
-### `_check_status_allowed(type_: 'str', status: 'str', superseded_by: 'str | None') -> 'InvalidStatusResult | None'`
+### `_check_status_allowed(type_: 'str', status: 'str') -> 'InvalidStatusResult | None'`
 
 Pre-check ``status`` against ``type_``'s own closed vocabulary; ``None`` if valid.
 
-For ``type_ != "adr"``: valid iff ``status`` is a member of
-``_ALLOWED_STATUSES_BY_TYPE[type_]``. For ``type_ == "adr"`` with ``superseded_by is None``:
-valid iff ``status`` is in ``_ADR_FIXED_STATUSES`` or matches ``_ADR_SUPERSEDED_PATTERN`` --
-mirroring ``AdrFrontmatter._validate_status``'s own check exactly.
+Valid iff ``status`` is a member of ``_ALLOWED_STATUSES_BY_TYPE[type_]``.
 
-For ``type_ == "adr"`` with ``superseded_by`` given, ``status`` is never checked here at
-all -- always ``None`` (valid) -- because ``models.adr.v1.mutations.set_status`` itself
-ignores the raw ``status`` argument in that case and composes ``f"superseded by
-{superseded_by}"`` instead; validating the discarded ``status`` value would incorrectly
-reject an otherwise-valid call.
-
-Called before any domain lock is taken or file is read (ADR
+Called before any domain lock is taken or file is read (DEC
 b399f1ce-ed42-4929-b01c-7a57d18e8014's Decision Outcome, point 3). Returns an
-:class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid
-(or ignored, per the ``adr``+``superseded_by`` case above).
+:class:`InvalidStatusResult` (never raises) on a miss, or ``None`` when ``status`` is valid.
 
 
-### `_set_status_adr(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'Adr'`
-
-Replace the status of the ADR identified by ``id_``.
-
-Port of the previous per-domain ADR status tool's function body
-(same ``adr_lock``, ``load_by_id``, delegation to
-``models.adr.v1.mutations.set_status`` -- which composes ``status`` as
-``"superseded by {superseded_by}"`` when ``superseded_by`` is given --
-and the ``write_adr`` render round-trip, ``AdrNotFoundError``; that
-per-domain tool was retired in feat-22 Phase 4).
-
-
-### `_set_status_dec(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_dec(id_: 'str', status: 'str', language: 'str' = 'en') -> 'DecFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the decision identified by ``id_``.
 
@@ -195,7 +151,7 @@ Phase 8, when the DEC domain -- merged from dev while still on the
 old per-domain mechanism -- was converted to the generic tools) --
 see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 item 2).**
+**Language variants (feat-197-i18n Phase 120, DEC 38efdb66 item 2).**
 ``language`` (the caller's already-guarded value; default ``"en"``,
 byte-identical to the pre-i18n adapter) selects the variant file: the
 id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -205,7 +161,7 @@ untouched, and the unchanged-status no-op compares against the
 variant's own current status.
 
 
-### `_set_status_feat(id_: 'str', status: 'str', superseded_by: 'str | None') -> 'FeatFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_feat(id_: 'str', status: 'str') -> 'FeatFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the feature identified by ``id_``.
 
@@ -218,7 +174,7 @@ shortcut, not a flat-file directory scan. ``updated`` is bumped to the
 same shared date+time timestamp as every other domain.
 
 
-### `_set_status_gol(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_gol(id_: 'str', status: 'str', language: 'str' = 'en') -> 'GolFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the goal identified by ``id_``.
 
@@ -227,7 +183,7 @@ body (same ``gol_lock``, ``load_by_id``, ``write_gol_file``,
 ``GolNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
 variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one file is written,
@@ -235,7 +191,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_prb(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_prb(id_: 'str', status: 'str', language: 'str' = 'en') -> 'PrbFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the problem statement identified by ``id_``.
 
@@ -245,7 +201,7 @@ tool's function body (same ``prb_lock``, ``load_by_id``,
 retired in feat-22 Phase 4) -- see :func:`_set_status_req` for the
 full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
 variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one file is written,
@@ -253,7 +209,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_qa(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_qa(id_: 'str', status: 'str', language: 'str' = 'en') -> 'QaFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the QA document identified by ``id_``.
 
@@ -262,7 +218,7 @@ function body (same ``qa_lock``, ``load_by_id``, ``write_qa_file``,
 ``QaNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
 variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one file is written, the
@@ -270,7 +226,7 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_req(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_req(id_: 'str', status: 'str', language: 'str' = 'en') -> 'ReqFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the requirement identified by ``id_``.
 
@@ -280,14 +236,13 @@ the established ``frontmatter.loads(...).content`` mechanism and
 verbatim re-persistence, frontmatter reconstructed through
 :class:`ReqFrontmatter`'s own constructor so the closed status
 vocabulary validates, ``write_req_file``, ``ReqNotFoundError``; that
-per-domain tool was retired in feat-22 Phase 4). ``superseded_by`` is
-never used here -- the public :func:`set_status` guard rejects it for
-every non-``adr`` type before dispatch. Failure return (see the module
-docstring): a target ``id`` whose only matching on-disk file fails to
+per-domain tool was retired in feat-22 Phase 4). Failure return (see
+the module docstring): a target ``id`` whose only matching on-disk file
+fails to
 parse yields the non-raising ``ParseFailureResult`` instead of
 ``ReqNotFoundError`` (a truly-absent id still raises).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
 variant's own (``req_lock(req_lock_key(id_, language))``), and only that one file is written,
@@ -295,7 +250,7 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_rsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_rsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'RskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the risk identified by ``id_``.
 
@@ -304,7 +259,7 @@ body (same ``rsk_lock``, ``load_by_id``, ``write_rsk_file``,
 ``RskNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
 variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one file is written,
@@ -312,18 +267,17 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_set(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_set(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SetFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the set document identified by ``id_``.
 
 Mirrors :func:`_set_status_sysrs`'s shape (same ``set_lock``,
 ``load_by_id``, ``write_set_file``, ``SetNotFoundError``; ``set`` is
-dispatch-only from day one per ADR 36905d5b, so this adapter was
+dispatch-only from day one per DEC 36905d5b, so this adapter was
 written directly in this shape) -- see :func:`_set_status_req` for
-the full semantics. ``set`` is not ``adr``, so ``superseded_by`` must
-never be given.
+the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
 variant's own (``set_lock(set_lock_key(id_, language))``), and only that one file is
@@ -333,18 +287,18 @@ The allowed-status set is language-invariant (``status`` is a closed
 vocabulary value, never translated, REQ-010).
 
 
-### `_set_status_sop(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_sop(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SopFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the SOP identified by ``id_``.
 
 Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
 ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-first domain built dispatch-only from day one per ADR 36905d5b, so there
+first domain built dispatch-only from day one per DEC 36905d5b, so there
 was never a per-domain ``set_status_sop`` tool to port -- this adapter
 was written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
 variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one file is written,
@@ -352,17 +306,17 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_sysrs(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_sysrs(id_: 'str', status: 'str', language: 'str' = 'en') -> 'SysrsFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the System Requirements Specification identified by ``id_``.
 
 Verbatim-shape port of :func:`_set_status_sop` (same ``sysrs_lock``,
 ``load_by_id``, ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs``
-is dispatch-only from day one per ADR 36905d5b, so this adapter was
+is dispatch-only from day one per DEC 36905d5b, so this adapter was
 written directly in this shape) -- see :func:`_set_status_req` for
 the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
 variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one file is
@@ -370,7 +324,7 @@ written, the unchanged-status no-op compares against the variant's own current s
 document (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_tsk(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_tsk(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TskFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the task list identified by ``id_``.
 
@@ -379,7 +333,7 @@ function body (same ``tsk_lock``, ``load_by_id``, ``write_tsk_file``,
 ``TskNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
 variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one file is written,
@@ -387,18 +341,17 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_txt(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_txt(id_: 'str', status: 'str', language: 'str' = 'en') -> 'TxtFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the free-form text document identified by ``id_``.
 
 Mirrors :func:`_set_status_sysrs`'s shape (same ``txt_lock``,
 ``load_by_id``, ``write_txt_file``, ``TxtNotFoundError``; ``txt`` is
-dispatch-only from day one per ADR 36905d5b, so this adapter was
+dispatch-only from day one per DEC 36905d5b, so this adapter was
 written directly in this shape) -- see :func:`_set_status_req` for
-the full semantics. ``txt`` is not ``adr``, so ``superseded_by`` must
-never be given.
+the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
 variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one file is
@@ -408,7 +361,7 @@ The allowed-status set is language-invariant (``status`` is a closed
 vocabulary value, never translated, REQ-010).
 
 
-### `_set_status_uc(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_uc(id_: 'str', status: 'str', language: 'str' = 'en') -> 'UcFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the use case identified by ``id_``.
 
@@ -417,7 +370,7 @@ function body (same ``uc_lock``, ``load_by_id``, ``write_uc_file``,
 ``UcNotFoundError``; that per-domain tool was retired in feat-22
 Phase 4) -- see :func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
 variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one file is written, the
@@ -425,16 +378,15 @@ unchanged-status no-op compares against the variant's own current status -- the 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `_set_status_vcr(id_: 'str', status: 'str', superseded_by: 'str | None', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
+### `_set_status_vcr(id_: 'str', status: 'str', language: 'str' = 'en') -> 'VcrFrontmatter | ParseFailureResult | InvalidStatusTransitionResult'`
 
 Replace the status of the verification case record identified by ``id_``.
 
 Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,
 ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see
-:func:`_set_status_req` for the full semantics. ``vcr`` is not
-``adr``, so ``superseded_by`` must never be given.
+:func:`_set_status_req` for the full semantics.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
 variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one file is written,
@@ -442,161 +394,141 @@ the unchanged-status no-op compares against the variant's own current status -- 
 (bytes, ``updated``, cache entry) is never touched by a non-default ``language`` call.
 
 
-### `set_status(id: 'str', type: 'WholeBodyOrAdrType', status: 'str', superseded_by: 'str | None' = None, language: 'str' = 'en') -> '_SetStatusFrontmatter | InvalidStatusResult'`
+### `set_status(id: 'str', type: 'WholeBodyType', status: 'str', language: 'str' = 'en') -> '_SetStatusFrontmatter | InvalidStatusResult'`
 
 Replace the status of an existing document, across every domain.
 
-    Cross-domain generic for every document type
-    (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
-    ``vcr``/``sysrs``/``txt``/``set``/``adr``);
-    dispatches on ``type`` to the domain's own ported adapter (same lock,
-    same id resolution, same body handling, same domain not-found error).
+       Cross-domain generic for every document type
+       (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/
+       ``vcr``/``sysrs``/``txt``/``set``);
+       dispatches on ``type`` to the domain's own ported adapter (same lock,
+       same id resolution, same body handling, same domain not-found error).
 
-    For the whole-body domains the existing file's frontmatter is
-    carried over with every field preserved except ``status`` (replaced)
-    and ``updated`` (bumped to the current date+time timestamp, via
-    ``general.tools._timestamps.now_timestamp()``); the
-    body is never touched -- its raw, on-disk markdown (not a render of
-    the parsed model) is re-read and re-persisted verbatim. For
-    ``type="adr"`` the change delegates to
-    ``models.adr.v1.mutations.set_status`` (which composes ``status`` as
-    ``"superseded by {superseded_by}"`` when ``superseded_by`` is given)
-    and re-renders the full file via the ``write_adr`` round-trip.
+       For the whole-body domains the existing file's frontmatter is
+       carried over with every field preserved except ``status`` (replaced)
+       and ``updated`` (bumped to the current date+time timestamp, via
+       ``general.tools._timestamps.now_timestamp()``); the
+       body is never touched -- its raw, on-disk markdown (not a render of
+       the parsed model) is re-read and re-persisted verbatim.
 
-    No-op on an unchanged status (issue #109): when the requested target
-    status (``status`` itself, or for ``type="adr"`` with
-    ``superseded_by`` given, the composed ``"superseded by
-    {superseded_by}"`` value) already equals the document's current
-    on-disk status, nothing is written and ``updated`` is not bumped --
-    the already-loaded value is returned as-is. This is a success, not
-    an error, and returns the exact same value shape a changed-status
-    call would (the domain's own ``XFrontmatter`` for the whole-body
-    domains, the full ``Adr`` for ``type="adr"``).
+       No-op on an unchanged status (issue #109): when the requested
+       ``status`` already equals the document's current on-disk status,
+       nothing is written and ``updated`` is not bumped -- the already-loaded
+       value is returned as-is. This is a success, not an error, and returns
+       the exact same value shape a changed-status call would (the domain's
+       own ``XFrontmatter``).
 
-    The new ``status`` must be in the domain's own closed vocabulary: the
-    frontmatter is reconstructed through the domain's own
-    ``XFrontmatter`` constructor, so the domain's own validator enforces
-    its set. Where that set lives is documented per domain -- see each
-    ``XFrontmatter.status`` field (each whole-body domain's own
-    ``models/<v>/frontmatter.py`` and ``models/adr/v1/frontmatter.py``)
-    rather than any list in this docstring.
+       The new ``status`` must be in the domain's own closed vocabulary: the
+       frontmatter is reconstructed through the domain's own
+       ``XFrontmatter`` constructor, so the domain's own validator enforces
+       its set. Where that set lives is documented per domain -- see each
+       ``XFrontmatter.status`` field (each whole-body domain's own
+       ``models/<v>/frontmatter.py``) rather than any list in this docstring.
 
-    Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
-    own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
-    ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
-    canonical lowercase-hex UUID for every domain other than ``feat``,
-    including ``adr``, ``feat-NNN-slug`` for ``feat``) **before** any filesystem
-    access, so a path-injection attempt or a wrong-format id is a
-    ``ValueError`` raised before dispatch. Each adapter additionally
-    confines the resolved path to the domain's own base directory with
-    ``_path_safety.assert_within`` inside the lock -- defense-in-depth
-    against any future gap in the id validation.
+       Safety (REQ-009, feat-38-39-41-43-44 Phase 4, mirroring ``delete``'s
+       own REQ-003): ``id`` is validated via ``_path_safety.validate_id`` (no
+       ``/``, no ``\``, no ``..``, plus the dispatched domain's own format --
+       canonical lowercase-hex UUID for every domain other than ``feat``,
+       ``feat-NNN-slug`` for ``feat``) **before** any filesystem
+       access, so a path-injection attempt or a wrong-format id is a
+       ``ValueError`` raised before dispatch. Each adapter additionally
+       confines the resolved path to the domain's own base directory with
+       ``_path_safety.assert_within`` inside the lock -- defense-in-depth
+       against any future gap in the id validation.
 
-    Parameters
-    ----------
-    id:
-        The document's specmgr-assigned identifier.
-    type:
-        The document type / domain: one of ``req``, ``uc``, ``tsk``,
-        ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-        ``vcr``, ``sysrs``, ``txt``, ``set``, ``adr``.
-    status:
-        The new status. Must be one of the dispatched domain's own
-        accepted values (see its ``XFrontmatter.status`` field). For
-        ``adr``, ignored when ``superseded_by`` is given.
-    superseded_by:
-        ADR only. When given (with ``type="adr"``), ``status`` is
-        composed as ``f"superseded by {superseded_by}"`` instead of being
-        used verbatim. A ``ValueError`` for any other ``type``.
-    language:
-        The language variant to act on (feat-197-i18n Phase 120, ADR
-        38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
-        it) acts on the flat default-language document -- today's exact
-        behavior; any other ISO 639-1-shaped lowercase two-letter code
-        (e.g. ``"de"``) acts on that language's variant, located by
-        id-scan of ``docs/<type>/{language}/`` (the variant's basename is
-        never re-derived); only that one file is touched: the EN
-        document's bytes, ``updated`` timestamp, and cache entry stay
-        untouched. Shape-guarded before any filesystem access (like
-        ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
-        (``feat`` and ``adr`` are always English: a non-default language
-        for either raises a ``ValueError``).
+       Parameters
+       ----------
+       id:
+           The document's specmgr-assigned identifier.
+       type:
+           The document type / domain: one of ``req``, ``uc``, ``tsk``,
+           ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
+           ``vcr``, ``sysrs``, ``txt``, ``set``.
+       status:
+           The new status. Must be one of the dispatched domain's own
+           accepted values (see its ``XFrontmatter.status`` field).
+       language:
+           The language variant to act on (feat-197-i18n Phase 120, DEC
+           38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
+           it) acts on the flat default-language document -- today's exact
+           behavior; any other ISO 639-1-shaped lowercase two-letter code
+           (e.g. ``"de"``) acts on that language's variant, located by
+           id-scan of ``docs/<type>/{language}/`` (the variant's basename is
+           never re-derived); only that one file is touched: the EN
+           document's bytes, ``updated`` timestamp, and cache entry stay
+           untouched. Shape-guarded before any filesystem access (like
+            ``id``). Every whole-body ``type`` except ``feat`` supports a non-default language
+            (``feat`` is always English: a non-default language for it
+            raises a ``ValueError``).
 
-    Returns
-    -------
-ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
-GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
-VcrFrontmatter | SysrsFrontmatter | Adr | InvalidStatusResult | ParseFailureResult |
+        Returns
+        -------
+    ReqFrontmatter | UcFrontmatter | TskFrontmatter | QaFrontmatter | PrbFrontmatter |
+    GolFrontmatter | RskFrontmatter | DecFrontmatter | FeatFrontmatter | SopFrontmatter |
+VcrFrontmatter | SysrsFrontmatter | InvalidStatusResult | ParseFailureResult |
 InvalidStatusTransitionResult
-    On success, the updated document's frontmatter only (no body) of the
-    dispatched domain type for the whole-body domains; for ``type="adr"``
-    (unchanged, out of scope for this feature) the full ``Adr`` document,
-    as before. Use the corresponding ``get_<d>`` tool to fetch the full
-    document afterward for the whole-body domains. When the requested
-    target status already equals the document's current status, the same
-    value shape is returned unchanged, with no write and no ``updated``
-    bump (issue #109's no-op case). When ``status`` is not in the
-    dispatched domain's closed vocabulary, returns an
-    :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
-    (ADR b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
-    below for why this one case no longer raises. When the target
-    ``id``'s only matching on-disk file fails to parse (the whole-body
-    domains), a non-raising
-    :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
-    (``error``/``path``/``id``) is returned instead of the domain's
-    not-found error -- ``error`` is byte-identical to the domain's
-    ``list_<d>`` failed row's ``error`` for the same file (identical
-    field path and cause, including the trailing pydantic documentation
-    line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
-    id still raising the domain's own not-found error
-    (feat-170-update-edit-parse-failure, GitHub issue
-    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
-    519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
-    workaround chain). For the whole-body domains, a transition the
-    dispatched domain's own ``_STATUS_TRANSITIONS`` state machine does not
-    allow (checked post-load, pre-write, immediately after the no-op
-    comparison) returns a non-raising
-    :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
-    (``allowed_values`` are the targets allowed from the document's current
-    state, sorted; an empty list marks a terminal current state) instead of
+        On success, the updated document's frontmatter only (no body) of the
+         dispatched domain type. Use the corresponding ``get_<d>`` tool to
+         fetch the full document afterward. When the requested
+       target status already equals the document's current status, the same
+       value shape is returned unchanged, with no write and no ``updated``
+       bump (issue #109's no-op case). When ``status`` is not in the
+       dispatched domain's closed vocabulary, returns an
+       :class:`~biz.dfch.specmgr.general.models.InvalidStatusResult` instead
+       (DEC b399f1ce-ed42-4929-b01c-7a57d18e8014) -- see the Raises section
+       below for why this one case no longer raises. When the target
+       ``id``'s only matching on-disk file fails to parse (the whole-body
+       domains), a non-raising
+       :class:`~biz.dfch.specmgr.general.models.ParseFailureResult`
+       (``error``/``path``/``id``) is returned instead of the domain's
+       not-found error -- ``error`` is byte-identical to the domain's
+       ``list_<d>`` failed row's ``error`` for the same file (identical
+       field path and cause, including the trailing pydantic documentation
+       line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- with a truly-absent
+       id still raising the domain's own not-found error
+        (feat-170-update-edit-parse-failure, GitHub issue
+        #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
+        519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
+        workaround chain). For the whole-body domains, a transition the
+        dispatched domain's own ``_STATUS_TRANSITIONS`` state machine does not
+        allow (checked post-load, pre-write, immediately after the no-op
+        comparison) returns a non-raising
+        :class:`~biz.dfch.specmgr.general.models.InvalidStatusTransitionResult`
+        (``allowed_values`` are the targets allowed from the document's current
+        state, sorted; an empty list marks a terminal current state) instead of
     writing -- case 6 of the same chain (feat-108-fsm, GitHub issue #108,
-    ADR a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
+    DEC a79608e4-88cd-498f-8ca1-445df4d04f92; see the module docstring).
     The rollout is complete as of Phase 120 (every whole-body domain's
-    own table has landed and is enforced), and ``type="adr"`` never
-    produces this result (REQ-006: ADR keeps its flat-vocabulary behavior).
+    own table has landed and is enforced).
 
-    Raises
-    ------
-    ValueError
-        ``id`` is a path-injection attempt or not in the dispatched
-        domain's own format (raised before any filesystem access; nothing
-        is written), or ``superseded_by`` given with a ``type`` other
-        than ``"adr"`` (raised before any file access). Nothing is
-        written in either case. Also raised, before any filesystem
-        access, for a malformed ``language`` (not an ISO 639-1-shaped
-        lowercase two-letter code), a non-default ``language`` with ``type`` ``feat``/``adr`` (always English), or
-        a non-default ``language`` without a packaged heading-mapping
-        table.
-    pydantic.ValidationError
-        Does **not** raise for an out-of-vocabulary ``status`` -- that
-        one case is pre-checked before dispatch (see Returns above) and
-        returns an ``InvalidStatusResult`` instead (ADR
-        b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
-        exception to this tool's otherwise raise-based contract. No
-        other path in this function still raises
-        ``pydantic.ValidationError``: every other frontmatter field
-        carried into the domain's ``XFrontmatter``/``AdrFrontmatter``
-        reconstruction is either preserved unchanged from the existing,
-        already-valid document or (``updated``) a well-formed timestamp
-        generated internally, so nothing else in the reconstructed
-        model can fail validation in practice.
-    ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
-    PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
-    FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-    AdrNotFoundError
-        The target id is truly absent (no file on disk matches it at all)
-        -- the domain's own not-found error, unchanged from the per-domain
-        tools. An existing-but-broken document of the whole-body domains
-        returns the non-raising ``ParseFailureResult`` instead (see
-        Returns); the ``adr`` branch is unchanged (it raises as before).
+       Raises
+       ------
+        ValueError
+            ``id`` is a path-injection attempt or not in the dispatched
+            domain's own format (raised before any filesystem access; nothing
+            is written). Also raised, before any filesystem access, for a
+            malformed ``language`` (not an ISO 639-1-shaped lowercase two-letter
+            code), a non-default ``language`` with ``type`` ``feat`` (always
+            English), or a non-default ``language`` without a packaged
+            heading-mapping table.
+        pydantic.ValidationError
+            Does **not** raise for an out-of-vocabulary ``status`` -- that
+            one case is pre-checked before dispatch (see Returns above) and
+            returns an ``InvalidStatusResult`` instead (DEC
+            b399f1ce-ed42-4929-b01c-7a57d18e8014), a deliberate, narrow
+            exception to this tool's otherwise raise-based contract. No
+            other path in this function still raises
+            ``pydantic.ValidationError``: every other frontmatter field
+            carried into the domain's ``XFrontmatter`` reconstruction is
+            either preserved unchanged from the existing, already-valid
+            document or (``updated``) a well-formed timestamp generated
+            internally, so nothing else in the reconstructed model can fail
+            validation in practice.
+        ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
+        PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
+        FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError
+            The target id is truly absent (no file on disk matches it at all)
+            -- the domain's own not-found error, unchanged from the per-domain
+            tools. An existing-but-broken document returns the non-raising
+            ``ParseFailureResult`` instead (see Returns).
 

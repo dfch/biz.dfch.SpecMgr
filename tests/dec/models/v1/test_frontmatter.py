@@ -45,7 +45,7 @@ class TestDecFrontmatter(unittest.TestCase):
         self.assertEqual(sut.type, "dec")
 
     def test_type_rejects_other_document_types(self) -> None:
-        for other in ("req", "gol", "adr"):
+        for other in ("req", "gol"):
             with self.subTest(other=other):
                 with self.assertRaises(ValidationError):
                     DecFrontmatter(type=other)

@@ -27,15 +27,15 @@ The `dec` parser requires `## Decision Outcome` to hold exactly one lead paragra
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: A DEC whose `## Decision Outcome` has a lead paragraph followed by a second paragraph and a bullet list parses via `parse_dec` and the generic `validate` tool (`type="dec"`), and the `statement` field holds the first paragraph while the new optional `further_blocks` field (the `OutcomeBlocks` leaf) holds the remainder (REQ-001, REQ-002).
-- [ ] ACC-002: A DEC whose `## Decision Outcome` starts with a bullet list, starts with `### Consequences`, or is empty is still rejected with an actionable error (REQ-002).
-- [ ] ACC-003: The same document round-trips byte-exact through parse and model-to-text, and the extra blocks appear in `model_dump()` under `outcome.further_blocks.text` (REQ-003).
-- [ ] ACC-004: All pre-existing `tests/dec/` tests pass unchanged, including the i18n tests that read the lead paragraph; new tests are additive only (REQ-004).
-- [ ] ACC-005: `git diff` of the change touches no file outside the `dec` package, its tests, the DEC data files, the generated docs and `CHANGELOG.md` (REQ-005, REQ-006).
-- [ ] ACC-006: Both copies of `dec_schema.json` are regenerated and `specmgr docs` leaves no drift (REQ-006).
-- [ ] ACC-007: Committed regression fixtures derived from the outcomes of the ADRs `750842b2`, `92cc4ce8` and `356d8781` parse without "text left over" in `DecisionOutcome` (REQ-001).
-- [ ] ACC-008: The DEC create and update instruction texts (`dec_create_instructions.md`, `dec_update_instructions.md`) describe that further paragraphs, lists and code blocks may follow the lead paragraph (REQ-006).
-- [ ] ACC-009: A block placed after `### Consequences` or between `### Consequences` and `### Confirmation` that violates the H3 order, and a block quote, horizontal rule, comment or H4+ heading inside the outcome lead, are still rejected (REQ-001, REQ-004).
+- [x] ACC-001: A DEC whose `## Decision Outcome` has a lead paragraph followed by a second paragraph and a bullet list parses via `parse_dec` and the generic `validate` tool (`type="dec"`), and the `statement` field holds the first paragraph while the new optional `further_blocks` field (the `OutcomeBlocks` leaf) holds the remainder (REQ-001, REQ-002).
+- [x] ACC-002: A DEC whose `## Decision Outcome` starts with a bullet list, starts with `### Consequences`, or is empty is still rejected with an actionable error (REQ-002).
+- [x] ACC-003: The same document round-trips byte-exact through parse and model-to-text, and the extra blocks appear in `model_dump()` under `outcome.further_blocks.text` (REQ-003).
+- [x] ACC-004: All pre-existing `tests/dec/` tests pass unchanged, including the i18n tests that read the lead paragraph; new tests are additive only (REQ-004).
+- [x] ACC-005: `git diff` of the change touches no file outside the `dec` package, its tests, the DEC data files, the generated docs and `CHANGELOG.md` (REQ-005, REQ-006).
+- [x] ACC-006: Both copies of `dec_schema.json` are regenerated and `specmgr docs` leaves no drift (REQ-006).
+- [x] ACC-007: Committed regression fixtures derived from the outcomes of the ADRs `750842b2`, `92cc4ce8` and `356d8781` parse without "text left over" in `DecisionOutcome` (REQ-001).
+- [x] ACC-008: The DEC create and update instruction texts (`dec_create_instructions.md`, `dec_update_instructions.md`) describe that further paragraphs, lists and code blocks may follow the lead paragraph (REQ-006).
+- [x] ACC-009: A block placed after `### Consequences` or between `### Consequences` and `### Confirmation` that violates the H3 order, and a block quote, horizontal rule, comment or H4+ heading inside the outcome lead, are still rejected (REQ-001, REQ-004).
 
 ### Scope
 
@@ -106,7 +106,7 @@ Every list item in this document is written as a single physical line (the soft-
 
 ### Current Status
 
-**As of 2026-11-09**: All four phases (100, 110, 120 and 130) complete and gate-green (the Phase 130 quality gate and the 46-ADR one-off trial are recorded in the Updates entries below), the single post-implementation feat-reviewer pass addressed (commit `d375cd9e`), and the feature closed out to `done`. PR #252 was merged to `dev` on 2026-11-03 (merge commit `68ed2d14`), and GitHub issue #247 was closed on 2026-11-04. The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the v0.39.0 release window; nothing remains in this feature.
+**As of 2026-11-09**: All four phases (100, 110, 120 and 130) complete and gate-green (the Phase 130 quality gate and the 46-ADR one-off trial are recorded in the Updates entries below), the single post-implementation feat-reviewer pass addressed (commit `d375cd9e`), and the feature closed out to `done`. PR #252 was merged to `dev` on 2026-11-03 (merge commit `68ed2d14`), and GitHub issue #247 was closed on 2026-11-04. The post-merge state was verified end-to-end by the feat-46-remove-adr refinement pass: a trial conversion of all 46 ADRs through the merged parser (with feat-46's own `convert()`) yields 46/46 clean and 0 needs-judgment, including the raw-HTML/multi-block interactions of `7a626b12` and `bfd76370` and the `92cc4ce8` superseder bullet. The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the v0.39.0 release window; nothing remains in this feature.
 
 **Handover**: the Phase 130 trial result is handed to feat-46 (feat-46-remove-adr, GitHub issue #46, which exists only on its own branch, not in this worktree) via this snapshot as the proof that THIS rule (the single-paragraph-lead constraint of `## Decision Outcome`) no longer blocks any of the 46 ADRs' outcomes; the two remaining ADR-level rejections are the deliberately-preserved raw-HTML rule (`7a626b12`'s `<jar>`, `bfd76370`'s `<domain>`), which the plan's Scope assigns to feat-46's mechanical raw-HTML handling. No further implementation remains in this feature -- the next step is review and merge, after which feat-46 can roll out the ADR to DEC conversion.
 
@@ -121,6 +121,10 @@ Every list item in this document is written as a single physical line (the soft-
 #### 2026-11-09 20:49:57.000Z - Closeout: PR #252 merged to dev, status review -> done, issue #247 closed
 
 PR #252 was merged to `dev` on 2026-11-03 (committer time 13:30:40 +0100) as merge commit `68ed2d14074208c2005bf2fbe711a55b804d8479`, and GitHub issue #247 was closed on 2026-11-04 (2026-11-04T06:24:23Z). The frontmatter `status` is flipped `review` -> `done` in this closeout (a legal transition under the feat table). The closeout satisfies the feat-233-update-release precheck feat-closeout gate for the coming v0.39.0 release window (a non-`done` feat with a merged PR in the window would fail `stage_precheck`). No code or plan changes accompany it; nothing pending.
+
+#### 2026-11-04 05:14:00.000Z - Closeout: merged (PR #252), verified end-to-end, status to done
+
+Closed out as part of the feat-46-remove-adr preparation (maintainer decision, 2026-11-04): the change was merged to `dev` via PR #252 (`68ed2d1`). The feat-46 refinement pass (feat-refiner) verified the merged relaxation end-to-end — a trial conversion of all 46 ADRs through the merged `parse_dec` with feat-46's own `convert()` yields 46/46 clean, 0 needs-judgment, 0 parse errors (including `7a626b12`'s wrapped `<jar>`/`<args>` multi-block outcome, `bfd76370`'s wrapped `<domain>` tokens, and `92cc4ce8`'s superseder `### Decisions` bullet). All nine ACCs marked met, frontmatter `status` moved `review` -> `done` and `updated` bumped, and GitHub issue #247 closed.
 
 #### 2026-11-01 18:13:38.000Z - Phase 130: verification complete (all three tasks), status to review
 

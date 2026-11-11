@@ -54,7 +54,7 @@ step 1 if this is genuinely a new decision.
   (each bullet MUST match `<TAG> <uuid>: <title>` -- a space-separated
   tag, a lowercase 8-4-4-4-12 hex UUID, and a title, e.g.
   `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; `Decisions`
-  accepts only the `DEC` tag, not `ADR`).
+  accepts only the `DEC` tag).
 - `## Pros and Cons` -- optional appendix of `### Option {N}: {name}`
   sections, one per weighed option (the title after the colon is
   mandatory, numbers start at 1 and are never renumbered). The H2 is
@@ -75,9 +75,8 @@ step 1 if this is genuinely a new decision.
 Section order is binding: Context and Problem Statement -> Decision
 Drivers -> Considered Options -> Decision Outcome -> Roles and
 Responsibilities -> Tags -> Source -> Related Artifacts -> Pros and Cons
--> More Information -> Updates. The ADR heading
-`## Pros and Cons of the Options` is not part of this schema and must
-not be used.
+-> More Information -> Updates. The heading `## Pros and Cons of the
+Options` is not part of this schema and must not be used.
 
 ## 2. Build a todo list, then gather the information one at a time
 

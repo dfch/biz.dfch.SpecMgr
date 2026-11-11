@@ -29,7 +29,6 @@ specmgr://version --    Installed version number of the ``biz-dfch-specmgr`` pac
                         embedding backend) or null when that extra is not installed -- read via
                         ``importlib.metadata``, never an import of ``fastembed`` itself (feat-134
                         Phase 7, REQ-014).
-specmgr://adr/{id} --    Full ADR document for a given id (ADR 7531106b-074b-4bd8-a83a-e433d01676e2).
 specmgr://req/example -- A complete, valid sample requirement document as raw markdown.
 specmgr://req/template -- A requirement template (every field present, placeholder text)
                           as raw markdown.
@@ -112,9 +111,9 @@ specmgr://iso29148 --   The ISO/IEC/IEEE 29148:2018 four requirement specificati
                         mapping to specmgr document types, and the §5.2.6
                         "Characteristics of a set of requirements" list -- the
                         closed set ``req``'s ``## Level`` carries -- raw markdown,
-                        the ``specmgr://ears`` shape (ADR
-                        356d8781-e446-4c26-917a-eda85648ce9d; feat-173-
-                        req-iso29148-level-set, GitHub issue #173, Phase 130).
+                         the ``specmgr://ears`` shape (DEC
+                         356d8781-e446-4c26-917a-eda85648ce9d; feat-173-
+                         req-iso29148-level-set, GitHub issue #173, Phase 130).
 specmgr://rasci --      The generic RASCI (Responsible/Accountable/Support/Consulted/
                         Informed) responsibility-assignment framework, as raw markdown.
 specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
@@ -124,8 +123,8 @@ specmgr://ears --       The EARS (Easy Approach to Requirements Syntax) five
                         markdown domain-knowledge guidance.
 specmgr://reference-graph -- The frozen reference-graph rulebook: the deterministic
                               PlantUML component-diagram emission layout for the
-                              cross-reference network (the 16-entry palette, the bracketed
-                              alias/label/truncation rules, the title override + defaults,
+                               cross-reference network (the 15-entry palette, the bracketed
+                               alias/label/truncation rules, the title override + defaults,
                              the FEAT-exclusion rule, the bare-`feat-NNN` source-id
                              rejection with the `list_feat` discovery pointer, the SCC
                              cycle rule + red-arrow syntax, the construction semantics,
@@ -138,9 +137,9 @@ specmgr://i18n --       How language variants of the same artifact are stored an
                         per-language heading tables, the tool surface honoring ``language``,
                         the exact never-translate list per domain (closed-vocabulary and
                         schema-constant tokens, the ``prb`` ``problem_statement``
-                        exemption), how to translate headings, the create-versus-update
-                        decision, and the guard/error semantics (``feat``/``adr`` are always
-                        English) -- raw markdown domain-knowledge guidance.
+                         exemption), how to translate headings, the create-versus-update
+                         decision, and the guard/error semantics (``feat`` is always
+                         English) -- raw markdown domain-knowledge guidance.
 specmgr://i18n/headings/{language} -- (resource template, feat-197-i18n Phase 130) A
                         language's heading-mapping table as JSON text (``application/json``):
                         a flat object mapping each translated heading text to its canonical
@@ -167,8 +166,8 @@ specmgr://harness-bundle -- The packaged specmgr harness bundle as JSON
                            installing the published harness files into a fresh harness
                            setup (no install CLI, no MCP prompt -- OpenCode exposes no
                            prompt surface to the agent).
-specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, gol,
-                         rsk, dec, sop, feat, vcr, sysrs, txt, set), the resolved absolute base directory and
+specmgr://config --     For every document domain (req, uc, tsk, qa, prb, gol, rsk,
+                          dec, sop, feat, vcr, sysrs, txt, set), the resolved absolute base directory and
                         whether the domain's ``SPECMGR_*_DIR`` environment variable is
                         explicitly set (feat-51-mcp-cwd REQ-001) -- lets a client
                         self-diagnose a CWD/env-var misconfiguration without shell access to
@@ -204,8 +203,8 @@ specmgr://config --     For every document domain (adr, req, uc, tsk, qa, prb, g
                         structured ``{available, reason, message}`` result, not part of
                         this resource (no ``loaded`` field).
 
-REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+REQ has no ``specmgr://req/{id}`` resource -- id-based reads go
+through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -214,48 +213,45 @@ there never was such a resource to remove in the first place. QA has no
 through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 either, for the same reason -- id-based reads go through the ``get_prb`` tool
 only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 id-based reads go through the ``get_gol`` tool only, and there is also no
  ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_rsk`` tool only, and there never was such a resource to
  remove in the first place. DEC has no
  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_dec`` tool only, and there is also no
  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
+day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
  ``specmgr://sop/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_sop`` tool only, and there is also no
  ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged tool from
- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
+day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
  ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_feat`` tool only, and there is also no
  ``specmgr://feat/list`` resource either -- ``list_feat`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
+tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
  ``specmgr://vcr/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_vcr`` tool only, and there is also no
  ``specmgr://vcr/list`` resource either -- ``list_vcr`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SYSRS has no
+tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). SYSRS has no
  ``specmgr://sysrs/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_sysrs`` tool only, and there is also no
  ``specmgr://sysrs/list`` resource either -- ``list_sysrs`` ships as a
- paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). TXT
+paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). TXT
  has no ``specmgr://txt/{id}`` resource either, for the same reason --
  id-based reads go through the ``get_txt`` tool only, and there is also no
  ``specmgr://txt/list`` resource either -- ``list_txt`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SET has no
+tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). SET has no
  ``specmgr://set/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_set`` tool only, and there is also no
  ``specmgr://set/list`` resource either -- ``list_set`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
-ADR tools (``adr/tools/``): ``get_adr``, ``list_adr``, ``create_adr``, ``update_frontmatter``,
-``update_section``, ``option_list``, ``option_create``,
-``option_update``, ``option_read``, ``option_delete``, ``validate_adr``.
 Use-case tools (``uc/tools/``): ``parse_uc``, ``get_uc`` (``raw=True`` returns the
 frontmatter-stripped body text verbatim instead of the parsed document, optionally
 windowed with read-style ``offset``/``limit`` (raw-only, clamping), and, with
@@ -392,7 +388,7 @@ into the generic ``update`` tool's ``offset``)), ``list_sop``,
     ``get_sop_template``, ``get_sop_schema``, ``create_sop``. SOP is the first domain with NO
     per-domain ``update_sop``/``set_status_sop`` tools at all -- whole-body and line-range
     updates go through the generic ``update`` tool in ``general/tools/`` (``type="sop"``)
-    and status changes through the generic ``set_status`` tool (``type="sop"``), per ADR
+    and status changes through the generic ``set_status`` tool (``type="sop"``), per DEC
     36905d5b-8057-4294-8665-c7eed5534db0 (the dispatch-only convention every future domain
     follows). SOP relies on the cross-cutting ``specmgr://rasci`` resource (see the
     ``general`` resources paragraph above) for the generic RASCI role definitions used by
@@ -414,7 +410,7 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
   ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
   its own -- it dispatches through the generic ``update``/``set_status`` tools below from
-  day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
+  day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
   Verification case record tools (``vcr/tools/``): ``parse_vcr``, ``get_vcr``
   (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
   parsed document, optionally windowed with read-style ``offset``/``limit``
@@ -435,10 +431,10 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   never restarts, so a number seen can be fed straight back into the generic
   ``update`` tool's ``offset``)), ``list_sysrs``, ``get_sysrs_example``,
   ``get_sysrs_schema``, ``get_sysrs_template``, ``create_sysrs``. ``sysrs`` is an
-  aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
-  ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``, ``vcr``) via per-section
-  type-tagged cross-reference lists, and is built dispatch-only from day one (ADR
-  36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
+   aggregator domain tying together already-existing artifacts (``gol``, ``prb``,
+   ``qa``, ``uc``, ``req``, ``rsk``, ``dec``, ``vcr``) via per-section
+   type-tagged cross-reference lists, and is built dispatch-only from day one (DEC
+   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr`` -- no per-domain
   ``update_sysrs``/``set_status_sysrs`` tools of its own; deletion goes through the
   generic ``delete`` tool (``type="sysrs"``).
   Free-form text tools (``txt/tools/``): ``parse_txt``, ``get_txt``
@@ -453,9 +449,9 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
   ``get_txt_template``, ``create_txt``. ``txt`` is the generic, minimally
   structured catch-all domain (a mandatory free-form body plus a mandatory
   newest-first ``## Updates`` log; everything between the H1 and ``## Updates`` is
-  opaque to the parser) and is built dispatch-only from day one (ADR
-  36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr``/``sysrs`` -- no
-  per-domain ``update_txt``/``set_status_txt``/``validate_txt``/``delete_txt``
+   opaque to the parser) and is built dispatch-only from day one (DEC
+   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr``/``sysrs`` -- no
+   per-domain ``update_txt``/``set_status_txt``/``validate_txt``/``delete_txt``
   tools of its own: whole-body and line-range updates go through the generic
   ``update`` tool (``type="txt"``), surgical edits through the generic ``edit``
   tool (``type="txt"``), status changes through the generic ``set_status`` tool
@@ -476,14 +472,14 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
    the clamped offset and never restarts, so a number seen can be fed straight back
    into the generic ``update`` tool's ``offset``)), ``list_set``,
    ``get_set_example``, ``get_set_schema``, ``get_set_template``, ``create_set``.
-   ``set`` is the convenience-bundle domain: a mandatory opaque free-markdown
-   ``## Description`` plus a mandatory ``## Items`` flat bullet list (any mix of the
-   shared 12-tag reference vocabulary, ``<TAG> <uuid>: <title>``, at least one item,
+    ``set`` is the convenience-bundle domain: a mandatory opaque free-markdown
+    ``## Description`` plus a mandatory ``## Items`` flat bullet list (any mix of the
+    shared 11-tag reference vocabulary, ``<TAG> <uuid>: <title>``, at least one item,
    duplicate ``(tag, id)`` rejected; the items remain the source of truth and
    nothing in an item ever points back to the set -- ``SET`` is not a reference
-   tag), and it is built dispatch-only from day one (ADR
-   36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr``/``sysrs``/``txt`` --
-   no per-domain ``update_set``/``set_status_set``/``validate_set``/``delete_set``
+    tag), and it is built dispatch-only from day one (DEC
+    36905d5b-8057-4294-8665-c7eed5534db0) like ``sop``/``vcr``/``sysrs``/``txt`` --
+    no per-domain ``update_set``/``set_status_set``/``validate_set``/``delete_set``
    tools of its own: whole-body and line-range updates go through the generic
    ``update`` tool (``type="set"``), surgical edits through the generic ``edit``
    tool (``type="set"``), status changes through the generic ``set_status`` tool
@@ -506,8 +502,8 @@ into the generic ``update`` tool's ``offset``)), ``list_feat``,
  domain's own create status: ``draft``, ``open`` for ``rsk``); every ``parse_<d>`` tool
  derives the language from its path position; ``prb``'s ``problem_statement`` lead
  paragraph is exempt from translation (the one regex-locked English field, it stays the
- canonical English template sentence in every language). ``feat`` (always English) and
- ``adr`` take no ``language`` parameter.
+  canonical English template sentence in every language). ``feat`` (always
+  English) takes no ``language`` parameter.
   General tools (``general/tools/``) -- language variants (feat-197-i18n Phases 120/125):
 the generic ``update``/``edit``/``set_status``/``set_classification``/``delete``
 tools each take an optional ``language`` parameter (default ``"en"``, appended
@@ -516,8 +512,8 @@ ISO 639-1-shaped lowercase two-letter code acts on that language's variant file
 ONLY (``docs/<type>/{language}/``, located by id-scan; the EN file's bytes,
 ``updated`` timestamp, and cache entry stay untouched, and a variant's content is
 validated through the language's heading-mapping table) -- honored by every
-whole-body domain except ``feat``; ``feat``/``adr`` raise a ``ValueError`` for a
-non-default language before any file access (those documents are always English),
+whole-body domain except ``feat``; ``feat`` raises a ``ValueError`` for a
+non-default language before any file access (that document is always English),
 as does a malformed ``language`` or one without a packaged table. The generic
 ``validate`` tool takes no ``language`` parameter (EN/canonical content only).
 General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
@@ -542,16 +538,14 @@ existing document's content across the whole-body domains (``type`` is one of
    range (dropped lines numbered pre-splice, inserted lines numbered
    post-splice, up to 2 unchanged context lines per side), bounded by the
    touched range rather than the document size; ``snippet`` is ``None`` in
-   whole-body mode and for the whole-body-equivalent range (``offset=1`` with
-   ``limit`` omitted) (feat-153-off-by-n, GitHub issue #153, ADR
-   19ff316b-cd11-41a7-a616-ffd84917da51));
+    whole-body mode and for the whole-body-equivalent range (``offset=1`` with
+    ``limit`` omitted) (feat-153-off-by-n, GitHub issue #153, DEC
+    19ff316b-cd11-41a7-a616-ffd84917da51));
   ``edit`` (feat-159-edit, GitHub issue #159) -- surgical, exact-match string
   replacement of an existing document's frontmatter-stripped body across the
-  whole-body domains (``type`` is one of
-  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``;
-  ``adr`` is not supported -- an explicit pre-dispatch ``ValueError``, unlike
-  ``update``'s inherited ``KeyError``, following the generic ``validate`` tool's
-  precedent, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6); ``old_str`` must match
+   whole-body domains (``type`` is one of
+   ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``);
+   ``old_str`` must match
   the on-disk body byte-exactly (no line-ending normalization -- an
   ``old_str`` containing a ``\n`` will not match a CRLF body -- no BOM
   handling, no fuzzy/regex fallback) and must be unique unless ``replace_all``
@@ -561,48 +555,44 @@ existing document's content across the whole-body domains (``type`` is one of
   stays byte-unchanged); an empty ``new_str`` is a pure deletion, legal iff
   the edited body validates; returns the updated frontmatter only (no body;
   ``updated`` bumped), with an invalid ``id`` a ``ValueError`` before any file
-  access; ``set_status`` --
-replace an existing document's status across every domain (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``/``adr``),
-also bumping
-``updated`` (the whole-body domains) and leaving the body untouched;
-``superseded_by`` is ``adr``-only (it composes the status as
-``"superseded by {superseded_by}"``); each whole-body domain's own
-``_STATUS_TRANSITIONS`` state machine (feat-108-fsm, GitHub issue #108, ADR
-a79608e4-88cd-498f-8ca1-445df4d04f92) is enforced post-load/pre-write,
-immediately after the unchanged-status no-op comparison and before any
-write, and a disallowed transition returns the non-raising
-``InvalidStatusTransitionResult`` (``allowed_values`` are the targets allowed
-from the current state, sorted -- never the domain's full flat vocabulary;
-``[]`` plus the terminal message form for a terminal current state; nothing
-persisted, ``updated`` not bumped) instead -- the tool's second, post-load
-error surface, case 6 of the ADR 519d1206-4d2a-4500-9046-6db635209996
-non-raising-structured-result chain, distinct from the unchanged
-pre-dispatch/pre-load out-of-vocabulary ``InvalidStatusResult`` (case 2),
-which still runs first; ``adr`` is excluded (keeps its flat-vocabulary
-behavior);
-``set_classification`` -- replace the free-text ``classification``
-frontmatter field of an existing document across the whole-body
-domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``;
-``adr`` is not supported), also bumping ``updated`` and leaving the body
+    access; ``set_status`` -- replace an existing document's status across
+  every domain (``type`` is one of
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``),
+  also bumping ``updated`` (the whole-body domains) and leaving the body
+  untouched; each whole-body domain's own ``_STATUS_TRANSITIONS`` state
+  machine (feat-108-fsm, GitHub issue #108, DEC a79608e4-88cd-498f-8ca1-445df4d04f92)
+  is enforced post-load/pre-write, immediately after the unchanged-status
+  no-op comparison and before any write, and a disallowed transition returns
+  the non-raising ``InvalidStatusTransitionResult`` (``allowed_values`` are
+  the targets allowed from the current state, sorted -- never the domain's
+  full flat vocabulary; ``[]`` plus the terminal message form for a terminal
+  current state; nothing persisted, ``updated`` not bumped) instead -- the
+  tool's second, post-load error surface, case 6 of the DEC
+  519d1206-4d2a-4500-9046-6db635209996 non-raising-structured-result chain,
+  distinct from the unchanged pre-dispatch/pre-load out-of-vocabulary
+  ``InvalidStatusResult`` (case 2), which still runs first;
+  ``set_classification`` -- replace the free-text ``classification``
+  frontmatter field of an existing document across the whole-body
+  domains (``type`` is one of
+  ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``),
+  also bumping ``updated`` and leaving the body
 and every other frontmatter field untouched; a blank/whitespace-only value
 clears ``classification`` back to ``None``/absent; no ``create_<d>`` tool
 accepts a ``classification`` argument at all -- this is the sole
 classification-change entry point;
 ``delete`` -- the generic type-dispatched hard-delete for the
 whole-body domains (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/
-``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``; ``adr`` is not supported),
+``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``),
 resolves by ``id``, takes the domain lock, and returns the deleted path; a
 ``ValueError`` for injection/wrong-format ids before any file access, the
 domain's ``XNotFoundError`` for missing documents, and a ``DeleteError`` for
 I/O failures;
-``validate`` (feat-81-83-validation, ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
+``validate`` (feat-81-83-validation, DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6) --
 the generic, disk-free/id-free dry-run content validator for the
 whole-body domains (``type`` is one of
-``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``;
-``adr`` is not supported -- use ``validate_adr`` instead), replacing the
-former per-domain ``validate_<d>`` tools; it is the one generic tool
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``),
+replacing the former per-domain ``validate_<d>`` tools; it is the one
+generic tool
 above whose entire surface is non-raising structured results: it never
 raises for a content-validation failure -- it always returns
 ``{valid: bool, errors: list[{message: str}]}`` (``errors`` empty when
@@ -614,7 +604,7 @@ caller-usage errors still raise);
 ``find_related`` -- find the documents most semantically related to an
 existing document, given its ``type``/``id``, across every whole-body domain
 (``type`` is one of ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``; ``adr`` is excluded structurally),
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``),
 ranked by cosine similarity of local sentence embeddings (the ``similarity``
 extra, ``fastembed``/``bge-small``), excluding the source document itself;
 ``find_similar_text`` -- the same ranking for a free-form ``query`` text (the
@@ -626,22 +616,21 @@ return the structured, non-raising ``{available: false, reason, message}``
 result whenever the embedding feature is unavailable (the
 ``SPECMGR_SIMILARITY_DISABLED`` flag present, or the backend/model fails to
 load) -- the tools always register; availability is decided at call time
-(feat-134-related-artifact-similarity, ADR
+(feat-134-related-artifact-similarity, DEC
 750842b2-aca4-4649-ba0c-855ec8e1f505);
 ``list_references`` (feat-144-ref-artifact, GitHub issue #144) -- the
 generic, cross-domain cross-reference listing tool: takes a *source*
 document's ``type`` (one of
-``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``)
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``)
 and its ``id``, scans the source's frontmatter-stripped body for
 ``<TYPE> <id>`` references (the shared reference-tag vocabulary
-``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``ADR``/``VCR``/``SYSRS``/``TXT``/
+``GOL``/``PRB``/``QA``/``UC``/``REQ``/``RSK``/``DEC``/``VCR``/``SYSRS``/``TXT``/
 ``FEAT``: case-insensitive tag, one or more space/tab/dash separators,
 anywhere in a line; the UUID tags carry a canonical uuid id, while
 ``FEAT`` carries the full ``feat-NNN-slug`` id or the bare ``feat-NNN``
 number), dedupes repeated occurrences of the same reference
 (first-occurrence order preserved), and resolves each unique reference in
-its target domain (the target domains' own cache-backed ``load_by_id``;
-``adr`` excluded from the cache, ADR bfd76370-b59b-4d65-b550-a969f6c93c9d),
+its target domain (the target domains' own cache-backed ``load_by_id``),
 returning a paged ``PagedResult[ReferenceRow]`` -- one row per unique
 reference carrying ``type``/``id``/``title`` (the referenced document's
 H1, re-derived from the resolved document)/``path`` (the referenced
@@ -658,7 +647,7 @@ document that does not exist on disk raises the source domain's own
 ``get_reference_diagram`` (feat-207-reference-graph, Phase 120, REQ-004)
 -- the read-only, id-based reference-diagram tool: takes a *source*
 document's ``type`` (one of
-``adr``/``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``)
+``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``)
 and its ``id``, plus ``depth`` (1..5, default 1, the forward BFS depth),
 ``reverse`` (additive, direct-only on the incoming side), ``include_feat``
 (the FEAT exclusion, applied last), and an optional ``title`` override;
@@ -677,15 +666,13 @@ a missing source raises the source domain's own ``XNotFoundError``
 (identical to ``get_<d>``); an existing-but-broken source returns the
 non-raising ``ParseFailureResult`` (``error``/``path``/``id``, the
 ``error`` text byte-identical to the domain's ``list_<d>`` failed-row
-``error`` for the same file (ADR 9080b37c) for the 14 whole-body domains --
-time-qualified by ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 for ``feat``
-(``get_feat`` the unconditional full-fidelity authority), and the leg-read
-``AdrParseError``'s own text for ``adr`` (whose ``list_adr`` carries no
-failed row: broken ADRs are skipped));
+``error`` for the same file (DEC 9080b37c) for the 14 whole-body domains --
+time-qualified by DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 for ``feat``
+(``get_feat`` the unconditional full-fidelity authority));
 ``get_reference_diagram_all`` (feat-207-reference-graph, Phase 120,
 REQ-005) -- the read-only, registry-wide reference-diagram tool: the same
 deterministic PlantUML component diagram over every parseable document of
-all 15 domains (broken documents are skipped -- the render never fails for
+all 14 domains (broken documents are skipped -- the render never fails for
 content), with the ``include_feat`` switch (the FEAT exclusion, applied
 last) and an optional ``title`` override (default: ``Reference Graph``;
 the diagram title is sanitized but never truncated, the node labels are
@@ -694,7 +681,7 @@ truncated to ``SPECMGR_DIAGRAM_MAX_TITLE``, default 40);
 the read-only language-listing tool: takes a ``type`` (one of the thirteen
 i18n-eligible domains ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
 ``vcr``/``sysrs``/``txt``/``set``;
-``feat`` and ``adr`` are permanently English and rejected with the "always
+``feat`` is permanently English and rejected with the "always
 English" ``ValueError``, before the id is looked at) and an ``id``, and returns a
 ``LanguageListResult``: ``languages`` -- ``"en"`` first when the EN source exists
 (never invented: an id with variants but no EN source lists no ``"en"``), then
@@ -730,27 +717,27 @@ offsets compare correctly; equal is not stale), with both timestamps, the signed
 timestamp. ``in_sync`` is true iff there is no structural finding, the variant is
 not stale and staleness could be determined. Wording, prose, frontmatter values
 and ``prb``'s English ``problem_statement`` are never compared. Guards before any
-filesystem access: ``feat``/``adr`` (always English), unknown ``type``,
+filesystem access: ``feat`` (always English), unknown ``type``,
 path-injection/wrong-format ``id``, a malformed or table-less ``language``/
 ``source_language``, ``language="en"``, and equal languages are ``ValueError``s;
 a truly absent source or variant raises the domain's own ``XNotFoundError``
 (naming the missing side). Strictly read-only; no tool translates (translating is
 the ``translate_artifact`` prompt).
 Path safety (feat-38-39-41-43-44 Phase 4, REQ-009, extending feat-36-delete's
-``delete``-only guards, ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
-``get_<d>`` tools (including ``get_adr``), the generic ``update``, the generic
+``delete``-only guards, DEC 1af6787b-eaab-4e8f-888f-531c1e76c19d): every one of the
+``get_<d>`` tools, the generic ``update``, the generic
 ``edit``, and the generic ``set_status`` now validate ``id`` via ``general.tools._path_safety.validate_id`` (no
 ``/``, no ``\``, no ``..``, plus the dispatched/fixed domain's own format --
-canonical lowercase-hex UUID for every domain other than ``feat``, including ``adr``,
+canonical lowercase-hex UUID for every domain other than ``feat``,
 ``feat-NNN-slug`` for ``feat``) before any filesystem access, raising ``ValueError``
 before dispatch on a path-injection attempt or a wrong-format id, and additionally
 confine the resolved path to the domain's own base directory with
 ``general.tools._path_safety.assert_within`` after id resolution (defense-in-depth).
 ``delete`` itself is unchanged by this phase.
-Parse-failure error channel (feat-150-mcp-lifecycle-commands Phase 1a, ADR
-9080b37c-82b3-4f63-81f1-79641d0bf14c): every ``get_<d>`` tool for the 13
+Parse-failure error channel (feat-150-mcp-lifecycle-commands Phase 1a, DEC
+9080b37c-82b3-4f63-81f1-79641d0bf14c): every ``get_<d>`` tool for the 14
 whole-body domains (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``/``txt``/``set``; ``get_adr`` excluded) additionally returns a
+``feat``/``vcr``/``sysrs``/``txt``/``set``) additionally returns a
 structured, non-raising ``ParseFailureResult`` (``error``/``path``/``id``) for a
 document that exists but fails to parse, instead of raising the domain's
 not-found error -- the ``error`` text is byte-identical to that
@@ -758,7 +745,7 @@ domain's ``list_<d>`` tool's failed-row ``error`` for the same file (identical
 field path and cause, including the trailing pydantic documentation line --
 feat-162-doc-cache-exception-footer, GitHub issue #162) for every domain
 EXCEPT ``feat``, where this byte-identity is time-qualified
-(feat-187-list-feat-timeout, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44):
+(feat-187-list-feat-timeout, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44):
 ``get_feat`` always fully parses and remains the unconditional,
 full-fidelity authority, but ``list_feat``'s own row may carry a
 transiently-healthy or dirty-stage-specific ``error`` instead until its
@@ -768,9 +755,9 @@ that file, or permanently under ``SPECMGR_FEAT_WARMUP_DISABLED`` (see
 contract). ``raw=True`` on a broken
 document still returns the result (never a raw ``str``); a healthy document's
 shape and every other ``get_<d>`` outcome are unchanged. This is the third
-extension of the ADR 519d1206 client-side-``isError``-truncation workaround
+extension of the DEC 519d1206 client-side-``isError``-truncation workaround
 chain after ``validate`` and ``set_status``'s invalid-status case. A fourth
-extension (feat-170-update-edit-parse-failure, GitHub issue #170, ADR
+extension (feat-170-update-edit-parse-failure, GitHub issue #170, DEC
 b8c9bfea-6dcf-4158-bfc5-4ec17abb842f) adds the same non-raising
 ``ParseFailureResult`` to the generic ``update``/``edit``/``set_status``/
 ``set_classification`` tools for an existing-but-broken target document
@@ -784,7 +771,7 @@ on the submitted new content / post-edit result instead of raising
 every caller-usage ``ValueError`` still raises, and
 ``set_status``'s own ``InvalidStatusResult`` check still runs
 pre-lock/pre-load first). A fifth extension (feat-204-create-error,
-GitHub issue #204, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e) adds the
+GitHub issue #204, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e) adds the
 non-raising ``ValidateResult`` to every ``create_<d>`` tool (a
 content-validation failure of the caller-submitted body; nothing written)
 and every ``parse_<d>`` tool (an existing file that fails to parse);
@@ -795,7 +782,7 @@ compound failure returns ``ValidateResult`` first) still raise; the shared
 catch tuple and 300-char cap constant are defined in
 ``general/models/validate_result.py`` and re-exported by
 ``general/tools/validate.py``. A sixth extension
-(feat-108-fsm, GitHub issue #108, ADR a79608e4-88cd-498f-8ca1-445df4d04f92)
+(feat-108-fsm, GitHub issue #108, DEC a79608e4-88cd-498f-8ca1-445df4d04f92)
 gives ``set_status`` a second, post-load error surface: each whole-body
 domain's own ``_STATUS_TRANSITIONS`` state machine (domain-owned, next to the
 domain's own ``_ALLOWED_STATUSES`` in its frontmatter module; aggregated in
@@ -808,20 +795,16 @@ from the current state, sorted -- never the domain's full flat vocabulary;
 ``[]`` plus the terminal message form for a terminal current state; nothing
 persisted, ``updated`` not bumped) instead of writing -- distinct from the
 unchanged pre-dispatch/pre-load out-of-vocabulary ``InvalidStatusResult``
-(case 2, ADR b399f1ce-ed42-4929-b01c-7a57d18e8014), which still runs first;
-``adr`` is excluded (keeps its flat-vocabulary behavior, ``_set_status_adr``
-byte-identical). One chain-bookkeeping record: ADR
+(case 2, DEC b399f1ce-ed42-4929-b01c-7a57d18e8014), which still runs first.
+One chain-bookkeeping record: DEC
 f14f125e-eaad-4f4f-a6fd-3c931bed726e's "delete as the later candidate (case
-6)" prediction is overtaken -- this ADR takes the case-6 slot for the
+6)" prediction is overtaken -- this DEC takes the case-6 slot for the
 ``set_status`` transition surface, ``delete`` remaining the later candidate
-if ever addressed (no accepted ADR is edited, per the chain's established
+if ever addressed (no accepted DEC is edited, per the chain's established
 precedent).
 
 Prompts
 -------
-ADR prompts (``adr/prompts/``): ``create_adr``, ``update_adr`` -- instructional
-text guiding an LLM through the ADR tool sequence above (ADR
-ddd038f0-ae16-4f4b-beef-df06f7ed226f).
 Use-case prompts (``uc/prompts/``): ``create_uc``, ``update_uc`` --
 instructional text guiding an LLM through the UC tool sequence above -- plus
 ``generate_uc_sequence_diagram`` (feat-185-uc-diagrams Phase 120), the
@@ -877,7 +860,7 @@ and the ``create_sop``/generic ``validate`` (``type="sop"``) tool calls); ``crea
 ``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
 ``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
 via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
-``set_status_sop`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+``set_status_sop`` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
 Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat`` --
 narrated instruction flows guiding an LLM through the FEAT tool sequence
 above; ``create_feat`` first checks ``list_feat`` for a near-duplicate
@@ -895,14 +878,14 @@ cross-cutting ``specmgr://iso25010`` resource for the nine canonical ISO/IEC
 ``general`` resource is introduced); ``update_sysrs`` names the generic
 ``update``/``set_status`` tools with ``type="sysrs"`` (both whole-body and
 line-range via ``get_sysrs(id, raw=True)``) -- ``sysrs`` has no per-domain
-``update_sysrs``/``set_status_sysrs`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+``update_sysrs``/``set_status_sysrs`` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
 Free-form text prompts (``txt/prompts/``): ``create_txt``, ``update_txt`` --
 narrated instruction flows guiding an LLM through the TXT tool sequence
 above; ``create_txt`` first checks ``list_txt`` for a near-duplicate
 free-form text document. ``update_txt`` names the generic ``update``/
 ``edit``/``set_status`` tools with ``type="txt"`` (both whole-body and
 line-range via ``get_txt(id, raw=True)``) -- ``txt`` has no per-domain
-``update_txt``/``set_status_txt`` tools (ADR
+``update_txt``/``set_status_txt`` tools (DEC
 36905d5b-8057-4294-8665-c7eed5534db0).
 Set prompts (``set/prompts/``): ``create_set``, ``update_set`` -- narrated
 instruction flows guiding an LLM through the SET tool sequence above;
@@ -910,18 +893,18 @@ instruction flows guiding an LLM through the SET tool sequence above;
 ``update_set`` names the generic ``update``/``edit``/``set_status`` tools
 with ``type="set"`` (both whole-body and line-range via
 ``get_set(id, raw=True)``) -- ``set`` has no per-domain
-``update_set``/``set_status_set`` tools (ADR
+``update_set``/``set_status_set`` tools (DEC
 36905d5b-8057-4294-8665-c7eed5534db0).
 General prompts (``general/prompts/``): ``compact_history`` -- guides rotating
 older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
-``README.md`` into an optional sibling ``history.md``, per ADR
+``README.md`` into an optional sibling ``history.md``, per DEC
 e369ee2e-3353-4f92-991c-6367d76d832e; ``repair`` -- guides repairing a
 whole-body document (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/
-``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``; ADR out of scope) that fails to
+``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) that fails to
 parse: discover it via ``get_<d>``'s non-raising parse-failure result
 (``error``/``path``/``id``, the ``error`` text carrying the same parse
 defect as ``list_<d>``'s failed row for the same file, modulo a possibly-
-missing trailing pydantic documentation line; ADR
+missing trailing pydantic documentation line; DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c) or ``list_<d>``'s ``<failed to parse>``
 failed row, then a host-native raw read, a generic ``validate`` (``full=True``)
 loop, a host-native write-back (never the generic ``update`` (or ``edit``) tool, which is
@@ -932,7 +915,7 @@ result); degrades to diagnose-only on a host without file tools
 (feat-150-mcp-lifecycle-commands, Phase 1); ``translate_artifact`` -- guides
 producing or updating a target-language variant of a whole-body document
 (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/``vcr``/
-``sysrs``/``txt``/``set``; ``feat`` and ``adr`` are always English and rejected) from its
+``sysrs``/``txt``/``set``; ``feat`` is always English and rejected) from its
 source-language content (arguments ``type``, ``id``, ``language``, optional
 ``source_language`` default ``"en"``): read the ``specmgr://i18n`` resource
 first (and the heading table via ``specmgr://i18n/headings/{language}``), read the
@@ -952,9 +935,9 @@ OpenCode host surface is the ``translate-artifact`` skill
 (``.opencode/command/translate.md``) (feat-197-i18n, Phase 130).
 
 Modules are grouped domain-first
-(ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+(DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 document-type domain"): each document
-domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
+domain (``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
 ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``) is a
 top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
 self-registered via the domain package's own ``__init__.py``. Cross-cutting, non-domain-specific
@@ -965,7 +948,7 @@ prompts) stay under the top-level
 Add a new domain by
 creating its top-level package and importing it at the bottom of this
 module, next to the existing
-``adr``/``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``set``/``sop``/``sysrs``/``tsk``/``txt``/``uc``/``vcr``
+``dec``/``feat``/``general``/``gol``/``prb``/``qa``/``req``/``rsk``/``set``/``sop``/``sysrs``/``tsk``/``txt``/``uc``/``vcr``
 imports, so its ``@mcp.tool()`` / ``@mcp.prompt()`` / ``@mcp.resource()``
 decorators actually run. ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
 ``feat``, ``vcr``, ``sysrs``, ``txt``, and ``set``
@@ -992,8 +975,7 @@ exception chain in the server log). The SDK's own ``_handle_call_tool``
 catch then stringifies that original exception into the ``is_error=True``
 ``CallToolResult`` it returns: the v2.0.0 wire shape minus the
 ``Error executing tool <name>: `` prefix. The override is uniform for
-every tool registered on this server (the ``adr`` domain's tools
-included); it carries no per-domain logic.
+every tool registered on this server; it carries no per-domain logic.
 (feat-221-mcp-220-error-contract, Phase 100, REQ-002.)
 
 **Methods:**
@@ -1326,7 +1308,7 @@ included); it carries no per-domain logic.
 
 ### `_lifespan(_server: 'MCPServer') -> 'AsyncGenerator[None, None]'`
 
-Server lifespan: start the unified background startup warmup, then run (ADR 3982712a, REQ-007).
+Server lifespan: start the unified background startup warmup, then run (DEC 3982712a, REQ-007).
 
 At startup (before the first ``yield`` -- i.e. before any tool call can
 run), ``general.tools._startup_warmup.start_startup_warmup`` checks two
@@ -1361,7 +1343,7 @@ one-time first-use download -- runs inside its own phase, Phase 5, Task
 never blocked by either warmup, and a mid-warmup failure in any phase
 is logged and swallowed, never raised out of the thread. This lifespan
 does not wait for the thread, and the daemon thread dies with the
-process (ADR 3982712a-a46b-4b2b-809f-9c6925a49b44, refining ADR
+process (DEC 3982712a-a46b-4b2b-809f-9c6925a49b44, refining DEC
 750842b2-aca4-4649-ba0c-855ec8e1f505's **Warmup** sub-decision via its
 own v1.4.0 note).
 

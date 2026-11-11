@@ -19,7 +19,7 @@
 
 Static, cross-cutting domain-knowledge resource documenting how specmgr
 stores and translates language variants of the same artifact: the
-directory layout and the EN-slug basename rule (ADR 38efdb66), the
+directory layout and the EN-slug basename rule (DEC 38efdb66), the
 language vocabulary and the per-language heading-mapping tables, the
 tool surface that honors ``language``, the exact never-translate list per
 domain (REQ-010: the closed-vocabulary and schema-constant tokens plus the
@@ -44,7 +44,7 @@ convention spans thirteen document domains -- it is not owned by any single
 domain's schema.
 
 The sibling resource **template** ``specmgr://i18n/headings/{language}``
-(``i18n_headings``, registered the way ``specmgr://adr/{id}`` is) serves a
+(``i18n_headings``) serves a
 language's heading-mapping table as JSON text (``application/json``), so the
 ``translate_artifact`` flow can obtain the table without any host file tool.
 It is a thin, read-only view over
@@ -76,7 +76,7 @@ from ..tools._path_safety import DEFAULT_LANGUAGE, assert_language
         "per-language heading tables, the tool surface honoring `language`, the exact "
         "never-translate list per domain (closed-vocabulary/schema-constant tokens, the prb "
         "problem_statement exemption), how to translate headings, the create-versus-update "
-        "decision, and the guard/error semantics (feat and adr are always English) -- raw "
+        "decision, and the guard/error semantics (feat is always English) -- raw "
         "markdown domain-knowledge guidance."
     ),
     mime_type="text/markdown",

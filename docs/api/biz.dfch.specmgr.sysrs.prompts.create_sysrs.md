@@ -10,12 +10,12 @@ document using the existing ``sysrs/tools/``/``sysrs/resources/`` surface
 existing cross-cutting ``specmgr://iso25010`` resource (read before grouping
 ``## Requirements`` by its nine canonical characteristic names).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_sysrs`` builds the entire SYSRS frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown (and ``status`` is always fixed
 to ``"draft"``). The body aggregates already-existing specmgr artifacts
-(``gol``, ``prb``, ``qa``, ``uc``, ``req``, ``rsk``, ``dec``/``adr``,
+(``gol``, ``prb``, ``qa``, ``uc``, ``req``, ``rsk``, ``dec``,
 ``vcr``) into one coherent, navigable specification via per-section
 type-tagged cross-reference lists, rather than duplicating their content.
 

@@ -1,7 +1,6 @@
 @startuml Reverse Target
 
 skinparam component {
-  backgroundColor<<ADR>> LightYellow
   backgroundColor<<REQ>> LightBlue
   backgroundColor<<UC>> Pink
   backgroundColor<<TSK>> Honeydew

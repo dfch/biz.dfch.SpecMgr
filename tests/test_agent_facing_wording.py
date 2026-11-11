@@ -28,9 +28,8 @@ data-file history), not by any test:
   wording or that the step names the ``get_<d>_schema`` tool;
 - G2: the 38 structure-reference description clauses (the 12 ``create_<d>``
   tool descriptions + the generic ``update``/``validate`` tool descriptions +
-  the 24 create/update prompt descriptions) plus the ``create_adr``
-  deliberate-absence sentence -- nothing asserted the clauses against the
-  live tool/prompt metadata;
+  the 24 create/update prompt descriptions) -- nothing asserted the clauses
+  against the live tool/prompt metadata;
 - G3: the closed-set/comment content folded into the 6 template/example files
   in Phases 100/110 (prb lead-sentence frame, tsk task-text fidelity
   directive, req ISO 29148 kind set, rsk TARA set + ``specmgr://rsk/`` pointers, qa
@@ -123,14 +122,6 @@ _GENERIC_STRUCTURE_REFERENCE = (
     "with `get_<d>_template`/`get_<d>_example` as the authoring starting points."
 )
 
-#: The ``create_adr`` deliberate-absence sentence (REQ-005): no
-#: ``specmgr://adr/schema`` resource exists by design.
-_CREATE_ADR_EXCLUSION = (
-    "There is deliberately no `specmgr://adr/schema` resource -- this tool's own typed input "
-    "parameters (`frontmatter`: `AdrFrontmatter`, `body`: `AdrBody`) are the authoritative ADR "
-    "structure reference."
-)
-
 #: The per-domain prompt name deviations -- rsk and tsk do not follow the
 #: ``create_<d>``/``update_<d>`` convention (the prompt files are
 #: ``create_risk``/``update_risk`` and ``create_task``/``update_task``).
@@ -187,8 +178,7 @@ class TestUpdateInstructionSchemaStep(unittest.TestCase):
 
 
 class TestStructureReferenceDescriptionClauses(unittest.TestCase):
-    """G2: the 41 structure-reference clauses + the ``create_adr`` exclusion,
-    pinned against the live ``mcp`` tool/prompt metadata."""
+    """G2: the 41 structure-reference clauses, pinned against the live ``mcp`` tool/prompt metadata."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -220,11 +210,6 @@ class TestStructureReferenceDescriptionClauses(unittest.TestCase):
             for prompt_name in (create_name, update_name):
                 with self.subTest(domain=domain, prompt=prompt_name):
                     self.assertIn(_CREATE_STRUCTURE_REFERENCE.format(d=domain), self._prompts[prompt_name].description)
-
-    def test_create_adr_description_documents_schema_exclusion(self) -> None:
-        """The ``create_adr`` tool description carries the deliberate-absence
-        sentence (REQ-005: no ``specmgr://adr/schema`` resource by design)."""
-        self.assertIn(_CREATE_ADR_EXCLUSION, self._tools["create_adr"].description)
 
 
 class TestTemplateExampleCommentContent(unittest.TestCase):

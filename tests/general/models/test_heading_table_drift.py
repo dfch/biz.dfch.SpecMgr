@@ -15,9 +15,9 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Closed-set drift test of the packaged heading-mapping tables (feat-197-i18n Phase 150, ADR 38efdb66 item 4(c)).
+"""Closed-set drift test of the packaged heading-mapping tables (feat-197-i18n Phase 150, DEC 38efdb66 item 4(c)).
 
-The ADR promised a drift test that derives the closed set of fixed-text headings from the i18n-eligible domains'
+The decision promised a drift test that derives the closed set of fixed-text headings from the i18n-eligible domains'
 document models and asserts every language table covers *exactly* that set. ``test_heading_table.py`` derives the set
 (``_derive_canonical_headings``) and pins the "no invented headings" direction; this module pins the whole
 contract for **every** table file shipped under ``general/data/headings/`` (so a future ``fr.json`` is covered
@@ -134,7 +134,7 @@ def sample_data_heading(pattern: str) -> str | None:
 
 
 class TestDerivation(unittest.TestCase):
-    """The derivation itself: it agrees with the Phase 110 helper and finds the heading families the ADR names."""
+    """The derivation itself: it agrees with the Phase 110 helper and finds the heading families the decision names."""
 
     def test_the_closed_set_equals_the_phase_110_derivation(self):
         fixed, _data = derive_heading_classes()
@@ -168,7 +168,7 @@ class TestDerivation(unittest.TestCase):
 
 
 class TestEveryShippedTableCoversTheClosedSetExactly(unittest.TestCase):
-    """ADR 38efdb66 item 4(c): each ``general/data/headings/<language>.json`` covers exactly the model-derived set."""
+    """DEC 38efdb66 item 4(c): each ``general/data/headings/<language>.json`` covers exactly the model-derived set."""
 
     def setUp(self) -> None:
         reset_heading_table_cache()
@@ -240,7 +240,7 @@ class TestEveryShippedTableCoversTheClosedSetExactly(unittest.TestCase):
 
     def test_no_translated_key_shadows_a_canonical_heading(self):
         """A key equal to a *different* canonical heading would silently rewrite canonical English text in a
-        translated document (canonical English must stay valid in every language, ADR item 5)."""
+        translated document (canonical English must stay valid in every language, DEC 38efdb66 item 5)."""
         for language in shipped_languages():
             with self.subTest(language=language):
                 table = load_heading_table(language)
@@ -251,7 +251,7 @@ class TestEveryShippedTableCoversTheClosedSetExactly(unittest.TestCase):
                 self.assertEqual(identity, [], f"{language}.json identity entries (a no-op translation)")
 
     def test_keys_and_values_are_plain_heading_text(self):
-        """Heading text only: no leading ``#`` markers, no surrounding whitespace, never empty (ADR item 3)."""
+        """Heading text only: no leading ``#`` markers, no surrounding whitespace, never empty (DEC 38efdb66 item 3)."""
         for language in shipped_languages():
             with self.subTest(language=language):
                 for key, value in load_heading_table(language).items():

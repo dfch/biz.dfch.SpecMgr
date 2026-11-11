@@ -19,10 +19,10 @@
 + feat-134, Phase 1, REQ-012).
 
 This module is the single source of truth for the document-type domain
-**names** (feat-125-domain-lists, REQ-001, ADR c4efbde6-fd19-4aa8-8668-
+**names** (feat-125-domain-lists, REQ-001, DEC c4efbde6-fd19-4aa8-8668-
 95316ed62dcc "Single source of truth for the document-type domain-name
 set") and for the per-domain **adapters** every cross-domain consumer
-needs (feat-134, Phase 1, REQ-012, ADR 750842b2-aca4-4649-ba0c-855ec8e1f505,
+needs (feat-134, Phase 1, REQ-012, DEC 750842b2-aca4-4649-ba0c-855ec8e1f505,
 **corpus and registry** sub-decision).
 
 Every other module that names a set of document types imports the names
@@ -41,18 +41,18 @@ seventh copies.
   hand-listed tuple in the module, the whole-body document types in the
   canonical order ``req``, ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``,
   ``rsk``, ``dec``, ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
-  Every other
-  name-set constant is derived from it, never hand-listed a second
-  time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
-  without ``feat``, :data:`UUID_DOMAINS` is those plus ``adr``, and
-  :data:`ALL_DOMAINS` is ``adr`` prefixed to the whole-body domains.
-  :data:`ADR` and :data:`FEAT` are the two name singletons. The five
-  existing generic tools' and the two Phase 3 similarity tools' ``type``
-  parameter annotations are derived from it (via the
-  :data:`WholeBodyType`/:data:`WholeBodyOrAdrType` aliases below), so a
-  new document type (e.g. the reserved ``ac``) registers its name in
-  :data:`WHOLE_BODY_DOMAINS` once and every derived tuple and tool
-  domain set picks it up by construction.
+   Every other
+   name-set constant is derived from it, never hand-listed a second
+   time: :data:`WHOLE_BODY_NO_FEAT_DOMAINS` is the whole-body domains
+   without ``feat``, :data:`UUID_DOMAINS` is the same set (the
+   UUID-shaped domains), and :data:`ALL_DOMAINS` is the whole-body
+   domains. :data:`FEAT` is the name singleton. The five existing
+   generic tools' and the two Phase 3 similarity tools' ``type``
+   parameter annotations are derived from it (via the
+   :data:`WholeBodyType` alias below), so a
+   new document type (e.g. the reserved ``ac``) registers its name in
+   :data:`WHOLE_BODY_DOMAINS` once and every derived tuple and tool
+   domain set picks it up by construction.
 - :class:`WholeBodyDomain` + the module-scope ``_DOMAINS`` mapping --
   the per-domain adapters every cross-domain consumer needs: the
   base-dir resolver, the path iterator, ``load_by_id``, and the pure
@@ -66,21 +66,11 @@ seventh copies.
   of the three parse-failure channels (REQ-009) -- and its candidate
   enumeration / source resolution live in
   ``general/tools/_similarity_corpus.py``, built on this registry.
-- :data:`WholeBodyType` / :data:`WholeBodyOrAdrType` -- the derived
-  ``Literal`` ``type``-parameter annotations for the generic tools.
+- :data:`WholeBodyType` -- the derived
+   ``Literal`` ``type``-parameter annotation for the generic tools.
 - :func:`whole_body_domain` -- the ``name -> WholeBodyDomain`` lookup with
-  the path-safety-convention ``ValueError`` for an unknown name (raised
-  before any filesystem access).
-
-**``adr`` is structurally excluded** from :data:`WHOLE_BODY_DOMAINS`
-(issue #46, "Remove adr artifact type": ADR is being removed as an
-artifact type entirely, so it is not a useful similarity target/source,
-and it never had a whole-body
-replace/status/classification/delete/validate adapter of its own to begin
-with -- ``set_status``'s own ``adr`` branch is the single generic-tool
-exception, hence the separate :data:`WholeBodyOrAdrType`; ``adr`` enters
-the name-set constants only through :data:`UUID_DOMAINS` and
-:data:`ALL_DOMAINS`).
+   the path-safety-convention ``ValueError`` for an unknown name (raised
+   before any filesystem access).
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/``
 support module: the registry is plain data plus the per-domain adapter
@@ -141,7 +131,6 @@ from ...vcr.tools._paths import vcr_base_dir
 from ._doc_paths import iter_doc_paths
 
 __all__ = [
-    "ADR",
     "FEAT",
     "WHOLE_BODY_DOMAINS",
     "WHOLE_BODY_NO_FEAT_DOMAINS",
@@ -149,12 +138,8 @@ __all__ = [
     "ALL_DOMAINS",
     "WholeBodyDomain",
     "WholeBodyType",
-    "WholeBodyOrAdrType",
     "whole_body_domain",
 ]
-
-#: The ``adr`` document type (singleton).
-ADR = "adr"
 
 #: The ``feat`` document type (singleton): the one whole-body domain whose
 #: ``id`` is a chosen ``feat-NNN-slug`` folder name, not a server-generated
@@ -163,8 +148,7 @@ FEAT = "feat"
 
 #: The whole-body document types in the canonical order -- the only
 #: hand-listed tuple in this module, the one source of the domain set
-#: (REQ-012). ``adr`` is structurally excluded (issue #46; see the module
-#: docstring). The five existing generic tools and the two Phase 3
+#: (REQ-012). The five existing generic tools and the two Phase 3
 #: similarity tools all derive their own ``type`` domain set from this
 #: tuple.
 WHOLE_BODY_DOMAINS: tuple[str, ...] = (
@@ -188,13 +172,13 @@ WHOLE_BODY_DOMAINS: tuple[str, ...] = (
 #: :data:`WHOLE_BODY_DOMAINS`, never hand-listed).
 WHOLE_BODY_NO_FEAT_DOMAINS = tuple(d for d in WHOLE_BODY_DOMAINS if d != FEAT)
 
-#: The UUID-shaped document types: the whole-body domains without ``feat``,
-#: plus ``adr`` (derived from :data:`WHOLE_BODY_DOMAINS`, never hand-listed).
-UUID_DOMAINS = WHOLE_BODY_NO_FEAT_DOMAINS + (ADR,)
+#: The UUID-shaped document types: the whole-body domains without ``feat``
+#: (derived from :data:`WHOLE_BODY_DOMAINS`, never hand-listed).
+UUID_DOMAINS = WHOLE_BODY_NO_FEAT_DOMAINS
 
-#: Every document type: ``adr`` plus the whole-body domains (derived from
+#: Every document type: the whole-body domains (derived from
 #: :data:`WHOLE_BODY_DOMAINS`, never hand-listed).
-ALL_DOMAINS = (ADR,) + WHOLE_BODY_DOMAINS
+ALL_DOMAINS = WHOLE_BODY_DOMAINS
 
 
 @dataclass(frozen=True)
@@ -217,7 +201,7 @@ class WholeBodyDomain:
             directory, sorted) for every domain other than ``feat``,
             ``iter_feat_paths`` (``<base>/<id>/README.md``, sorted by
             folder name) for ``feat`` -- the one bespoke,
-            folder-per-document domain (ADR 8cf940c5).
+            folder-per-document domain (DEC 8cf940c5).
         load_by_id:
             The domain's ``load_by_id`` -- resolves ``id_`` under the given
             base directory and parses the matching document, raising the
@@ -355,16 +339,14 @@ _DOMAINS: dict[str, WholeBodyDomain] = {
     ),
 }
 
-# Program invariants (import-time). feat-125 (ADR c4efbde6): the derived
+# Program invariants (import-time). feat-125 (DEC c4efbde6): the derived
 # name sets keep their intended relation to the single hand-listed source
 # -- ``feat`` is one of the whole-body domains (so the ``-feat`` derivation
-# actually drops it), ``adr`` is structurally excluded from them (issue
-# #46), and no name appears twice in :data:`ALL_DOMAINS`. feat-134 (REQ-012,
-# ADR 750842b2): the adapter mapping and the domain tuple must stay exactly
-# in sync -- same names, same order -- so the tuple (the single source of
-# the set) and the adapters can never drift apart.
+# actually drops it) and no name appears twice in :data:`ALL_DOMAINS`.
+# feat-134 (REQ-012, DEC 750842b2): the adapter mapping and the domain tuple
+# must stay exactly in sync -- same names, same order -- so the tuple (the
+# single source of the set) and the adapters can never drift apart.
 assert FEAT in WHOLE_BODY_DOMAINS, "feat must be one of the whole-body domains"
-assert ADR not in WHOLE_BODY_DOMAINS, "adr is structurally excluded from the whole-body domains (issue #46)"
 assert len(ALL_DOMAINS) == len(set(ALL_DOMAINS)), "ALL_DOMAINS must not contain a name twice"
 assert tuple(_DOMAINS) == WHOLE_BODY_DOMAINS, (
     "the _DOMAINS adapter mapping must match WHOLE_BODY_DOMAINS exactly, in order"
@@ -376,13 +358,6 @@ assert tuple(_DOMAINS) == WHOLE_BODY_DOMAINS, (
 #: would produce, so the generated MCP schema is unchanged) -- REQ-012:
 #: the set is derived, not duplicated.
 WholeBodyType: TypeAlias = Literal[WHOLE_BODY_DOMAINS]
-
-#: Same derivation, plus ``adr`` -- for the one generic tool that also
-#: dispatches on ``adr`` (``set_status``; see the module docstring).
-#: Derived from :data:`ALL_DOMAINS` (so the registered enum lists ``adr``
-#: first, feat-125-domain-lists' documented, ordering-only change) rather
-#: than hand-spelling ``WHOLE_BODY_DOMAINS + (ADR,)``.
-WholeBodyOrAdrType: TypeAlias = Literal[ALL_DOMAINS]
 
 
 def whole_body_domain(name: str) -> WholeBodyDomain:
@@ -401,8 +376,8 @@ def whole_body_domain(name: str) -> WholeBodyDomain:
 
     Raises:
         ValueError:
-            ``name`` is not one of the whole-body domains (e.g. ``"adr"``,
-            or a future unregistered name) -- raised before any filesystem
+            ``name`` is not one of the whole-body domains (e.g. a future
+            unregistered name) -- raised before any filesystem
             access (the path-safety convention), naming the offending value
             and the allowed set.
     """

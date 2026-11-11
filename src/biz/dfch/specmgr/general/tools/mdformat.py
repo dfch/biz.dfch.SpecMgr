@@ -41,7 +41,7 @@ from ...server import mcp
 def mdformat(path: str) -> bool:
     """Format the markdown file at ``path`` in place.
 
-    Reads the file, detects any leading YAML frontmatter block (e.g. in ADR/UC
+    Reads the file, detects any leading YAML frontmatter block (e.g. in UC/REQ
     files), and normalizes only the body markdown using ``mdformat``. The
     frontmatter itself is re-serialized to preserve valid YAML (key order may
     change, value types and quoting may normalize), but never modified in

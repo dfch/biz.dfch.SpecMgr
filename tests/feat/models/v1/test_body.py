@@ -141,7 +141,7 @@ class TestImplicitHeadingAliases(unittest.TestCase):
             (DependsOn, "Depends on"),
             (Blocks, "Block"),
             (DesignNotes, "Design Note"),
-            (RelatedDecisions, "Related ADRs"),
+            (RelatedDecisions, "Related Decision"),
             (TaskList, "Tasklist"),
             (CurrentStatus, "Status"),
             (Updates, "Update"),

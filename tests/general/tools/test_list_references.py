@@ -17,16 +17,15 @@
 
 """Tests for the generic ``list_references`` ``@mcp.tool()`` wrapper (feat-144-ref-artifact Phase 3).
 
-Seeds real, referenced artifacts per test -- every flat target domain via
-the domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR``, ``feat``
-via its own ``create_feat`` in a temp ``SPECMGR_FEAT_DIR``, ``adr`` via
-``create_adr`` in a temp ``SPECMGR_ADR_DIR`` (mirroring the fixture strategy
-of ``tests/general/tools/test_delete.py``) -- and covers: the resolved-row
-contract (ACC-001), the empty-list case (ACC-002), the never-raising
-not-found row (ACC-003), first-occurrence deduplication (ACC-004), the
-path-safety guards (ACC-005), the source-missing raise (ACC-006), the
-``list_*`` paging contract (ACC-009), the source-domain spread (a
-``feat-NNN-slug``-id ``feat`` source and a UUID-id ``adr`` source), the
+ Seeds real, referenced artifacts per test -- every flat target domain via
+ the domain's own ``create_<d>`` tool in a temp ``SPECMGR_DOCS_DIR``, ``feat``
+ via its own ``create_feat`` in a temp ``SPECMGR_FEAT_DIR`` (mirroring the
+ fixture strategy of ``tests/general/tools/test_delete.py``) -- and covers: the
+ resolved-row contract (ACC-001), the empty-list case (ACC-002), the
+ never-raising not-found row (ACC-003), first-occurrence deduplication
+ (ACC-004), the path-safety guards (ACC-005), the source-missing raise
+ (ACC-006), the ``list_*`` paging contract (ACC-009), the source-domain
+ spread (a ``feat-NNN-slug``-id ``feat`` source), the
 FEAT target (feat-177-list-ref-feat, issue #177: a QA source referencing a
 feature by its full ``feat-NNN-slug`` id, its bare ``feat-NNN`` number, or
 both spellings in one body), the ``txt`` source (feat-229-txt REQ-009: a
@@ -45,8 +44,6 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, AdrNotFoundError
-from biz.dfch.specmgr.adr.tools.create_adr import create_adr
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR, FeatNotFoundError
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
@@ -60,7 +57,6 @@ from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS
 from biz.dfch.specmgr.general.tools.list_references import list_references
 from biz.dfch.specmgr.gol.tools._paths import GolNotFoundError
 from biz.dfch.specmgr.gol.tools.create_gol import create_gol
-from biz.dfch.specmgr.models.adr import AdrBody, AdrFrontmatter
 from biz.dfch.specmgr.prb.tools._paths import PrbNotFoundError
 from biz.dfch.specmgr.qa.tools._paths import QaNotFoundError
 from biz.dfch.specmgr.qa.tools.create_qa import create_qa
@@ -562,36 +558,21 @@ def _qa_body_with_feat_reference(feat_mention: str) -> str:
     return result
 
 
-def _adr_body_with_reference(req_id: str) -> AdrBody:
-    """A minimal valid ADR body whose optional ``## More Information`` references one requirement
-    (the source-domain-spread ``adr`` case)."""
-    result = AdrBody(
-        title="Use the dispatch convention",
-        context_and_problem_statement="Context.",
-        considered_options="Options.",
-        decision_outcome="Outcome.",
-        more_information=f"REQ {req_id}: A requirement this decision depends on.",
-    )
-    return result
-
-
 class TempListReferencesDirTestCase(unittest.TestCase):
-    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR, the feat base dir via
-    SPECMGR_FEAT_DIR, and the ADR base dir via SPECMGR_ADR_DIR (the lifecycle is managed by
-    ``enterContext``, per the sibling ``test_delete.py``/``test_set_status.py`` fixture convention).
-    The env vars are read per call, so patching is clean and isolated."""
+    """Common fixture: temp dirs set as the docs root via SPECMGR_DOCS_DIR and the feat base dir via
+    SPECMGR_FEAT_DIR (the lifecycle is managed by ``enterContext``, per the sibling
+    ``test_delete.py``/``test_set_status.py`` fixture convention). The env vars are read per call,
+    so patching is clean and isolated."""
 
     def setUp(self) -> None:
         self.docs_root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.feat_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        self.adr_dir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(
             mock.patch.dict(
                 "os.environ",
                 {
                     DOCS_DIR_ENV_VAR: str(self.docs_root),
                     FEAT_DIR_ENV_VAR: str(self.feat_dir),
-                    ADR_DIR_ENV_VAR: str(self.adr_dir),
                 },
             )
         )
@@ -713,7 +694,6 @@ class TestListReferencesPathSafety(unittest.TestCase):
                 {
                     DOCS_DIR_ENV_VAR: str(self.missing_docs_root),
                     FEAT_DIR_ENV_VAR: str(self.missing_docs_root / "feat"),
-                    ADR_DIR_ENV_VAR: str(self.missing_docs_root / "adr"),
                 },
             )
         )
@@ -727,7 +707,7 @@ class TestListReferencesPathSafety(unittest.TestCase):
     def test_wrong_format_source_ids_raise_value_error_for_uuid_domains(self) -> None:
         """A feat-NNN-slug (and every pinned traversal shape, and the empty string) must raise
         ValueError for every UUID source domain."""
-        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt", "adr"):
+        for doc_type in ("req", "uc", "tsk", "qa", "prb", "gol", "rsk", "dec", "sop", "vcr", "sysrs", "txt"):
             for bad_id in (*_TRAVERSAL_IDS, _FEAT_SLUG_ID, ""):
                 with self.subTest(doc_type=doc_type, bad_id=bad_id):
                     with self.assertRaises(ValueError):
@@ -761,7 +741,6 @@ class TestListReferencesSourceMissing(TempListReferencesDirTestCase):
             ("vcr", _MISSING_UUID, VcrNotFoundError),
             ("txt", _MISSING_UUID, TxtNotFoundError),
             ("feat", _MISSING_FEAT_ID, FeatNotFoundError),
-            ("adr", _MISSING_UUID, AdrNotFoundError),
         ]
         for doc_type, missing_id, error_type in cases:
             with self.subTest(doc_type=doc_type):
@@ -870,8 +849,8 @@ class TestListReferencesPaging(TempListReferencesDirTestCase):
 
 
 class TestListReferencesSourceDomainSpread(TempListReferencesDirTestCase):
-    """The source may be any whole-body domain plus adr: a feat-NNN-slug-id ``feat`` source and a
-    UUID-id ``adr`` source (in addition to the UUID-domain sources above)."""
+    """The source may be any whole-body domain: a feat-NNN-slug-id ``feat`` source (in addition to
+    the UUID-domain sources above)."""
 
     def test_a_feat_source_with_a_feat_slug_id(self) -> None:
         created_gol = create_gol(_GOL_MINIMAL_BODY)
@@ -890,24 +869,6 @@ class TestListReferencesSourceDomainSpread(TempListReferencesDirTestCase):
         self.assertEqual((result.results[1].type, result.results[1].id), ("gol", created_gol.id))
         self.assertEqual(result.results[1].title, _GOL_TITLE)
         self.assertIsNone(result.results[1].error)
-
-    def test_an_adr_source_with_a_uuid_id(self) -> None:
-        created_req = create_req(_REQ_MINIMAL_BODY)
-
-        created_adr = create_adr(AdrFrontmatter(), _adr_body_with_reference(created_req.id))
-
-        result = list_references(type="adr", id=created_adr.frontmatter.id)
-
-        self.assertEqual(result.total, 1)
-        self.assertFalse(result.truncated)
-        self.assertEqual(result.error_count, 0)
-        row = result.results[0]
-        self.assertEqual((row.type, row.id), ("req", created_req.id))
-        self.assertEqual(row.title, _REQ_TITLE)
-        self.assertIsNone(row.error)
-        path = Path(row.path)
-        self.assertTrue(path.is_absolute())
-        self.assertTrue(path.exists())
 
 
 class TestListReferencesTxtSource(TempListReferencesDirTestCase):
@@ -1043,9 +1004,9 @@ class TestListReferencesRegistration(unittest.TestCase):
 
         cls._tools = asyncio.run(mcp.list_tools())
 
-    def test_list_references_registered_with_13_value_type_enum(self) -> None:
+    def test_list_references_registered_with_full_type_enum(self) -> None:
         """``list_references`` must be registered exactly once, with the full ``type`` enum (every
-        whole-body domain plus ``adr``) and required ``id``/``type``."""
+        whole-body domain) and required ``id``/``type``."""
         matching = [t for t in self._tools if t.name == "list_references"]
         self.assertEqual(len(matching), 1)
 

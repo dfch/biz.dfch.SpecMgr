@@ -43,7 +43,7 @@ class TestSetFrontmatter(unittest.TestCase):
         self.assertEqual(sut.type, "set")
 
     def test_type_rejects_other_document_types(self) -> None:
-        for other in ("req", "gol", "dec", "adr", "vcr", "sop"):
+        for other in ("req", "gol", "dec", "vcr", "sop"):
             with self.subTest(other=other):
                 with self.assertRaises(ValidationError):
                     SetFrontmatter(type=other)

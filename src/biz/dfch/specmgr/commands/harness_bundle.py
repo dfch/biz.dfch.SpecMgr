@@ -17,7 +17,7 @@
 
 """``harness-bundle`` -- regenerate the packaged harness bundle from the repo-root ``.opencode/`` tree.
 
-Like ``specmgr docs``/``specmgr adr-toc`` regenerate committed documentation
+Like ``specmgr docs`` regenerates committed documentation
 from the codebase, this command regenerates the single committed package-data
 bundle from the repo layout -- read from the current working directory, so
 the repo root must be the CWD. A missing ``.opencode/`` directory, a scoped
@@ -54,7 +54,7 @@ former ``zZz-skill/``) warns on stderr and is never bundled. This module is
 Run this after adding/removing/editing any bundled ``.opencode/`` markdown
 file and commit the result -- the ``specmgr-harness-bundle`` pre-commit hook
 and the CI parity check (Python 3.13, alongside the ``specmgr
-docs``/``adr-toc``/``mcp-docs`` steps) fail on drift.
+docs``/``mcp-docs`` steps) fail on drift.
 """
 
 from __future__ import annotations

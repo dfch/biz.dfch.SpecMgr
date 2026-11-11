@@ -19,7 +19,7 @@
 
 The builder integration tests over the synthetic seeded registries under
 ``tests/fixtures/reference-graphs/`` (ACC-001's scenario matrix): the
-isolated ``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/``SPECMGR_FEAT_DIR`` tmp
+isolated ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` tmp
 dirs follow the ``tests/commands/test_diagram.py`` precedent (the env vars
 are read per call, so patching is clean and isolated), the per-domain
 process-local doc caches are reset in ``setUp``/``tearDown`` (the
@@ -62,12 +62,10 @@ from unittest import mock
 import yaml
 from pydantic import ValidationError
 
-from biz.dfch.specmgr.adr.tools._paths import AdrNotFoundError
 from biz.dfch.specmgr.dec.tools._paths import DecNotFoundError
 from biz.dfch.specmgr.feat.tools._paths import FeatNotFoundError
 from biz.dfch.specmgr.general.models.reference_graph import render_reference_graph
 from biz.dfch.specmgr.general.tools._reference_graph import build_registry_graph, build_source_graph
-from biz.dfch.specmgr.models.adr import AdrParseError
 from biz.dfch.specmgr.req.tools._paths import ReqNotFoundError
 from biz.dfch.specmgr.txt.tools._paths import TxtNotFoundError
 
@@ -75,7 +73,6 @@ from ._reference_graph_helpers import (
     _FIXTURES,
     _MISSING_UUID,
     _SeededRegistryTestCase,
-    _A001,
     _B001,
     _C001,
     _C002,
@@ -446,16 +443,14 @@ class TestNoFeatRegistry(_SeededRegistryTestCase):
 
 
 class TestWideRegistry(_SeededRegistryTestCase):
-    """Scenario 9/13: the registry-wide default over the multi-domain registry (the never-cached
-    adr leg included) + the skip-broken (a broken document is never a node, never an edge
-    source -- registry-wide and reverse alike, though its raw text carries a live-looking
-    reference)."""
+    """Scenario 9/13: the registry-wide default over the multi-domain registry + the skip-broken
+    (a broken document is never a node, never an edge source -- registry-wide and reverse alike,
+    though its raw text carries a live-looking reference)."""
 
     SEEDS = (
         ("wide/req-w001.md", f"docs/req/{_W001}.md"),
         ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
         ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-        ("wide/adr-a001.md", f"adr/{_A001}.md"),
         ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
     )
 
@@ -474,14 +469,6 @@ class TestWideRegistry(_SeededRegistryTestCase):
             # reference to w001 must not contribute the edge
             self.assertNotIn(f"[DEC-{_D002}]", rendered)
 
-    def test_adr_leg_is_carried(self):
-        # the never-cached adr leg (ADR bfd76370): the ADR document is a node
-        # and its reference an edge in both modes
-        for graph in (build_registry_graph(), build_source_graph("req", _W001, depth=1, reverse=True)):
-            rendered = render_reference_graph(graph)
-            self.assertIn('component "ADR" {', rendered)
-            self.assertIn(f"[ADR-{_A001}] --> [REQ-{_W001}]", rendered)
-
 
 class TestBuilderErrorContract(_SeededRegistryTestCase):
     """Scenario 14: the builder error contract -- a missing source raises the source domain's own
@@ -498,8 +485,6 @@ class TestBuilderErrorContract(_SeededRegistryTestCase):
             build_source_graph("dec", _MISSING_UUID)
         with self.assertRaises(FeatNotFoundError):
             build_source_graph("feat", "feat-999-no-such-feature")
-        with self.assertRaises(AdrNotFoundError):
-            build_source_graph("adr", _MISSING_UUID)
         with self.assertRaises(TxtNotFoundError):
             build_source_graph("txt", _MISSING_UUID)
 
@@ -522,17 +507,6 @@ class TestBuilderErrorContract(_SeededRegistryTestCase):
         with self.assertRaises((AssertionError, ValidationError, yaml.YAMLError)):
             build_source_graph("feat", "feat-9-broken")
 
-    def test_broken_adr_source_raises_the_domain_parse_error(self):
-        broken = self.adr_dir / f"{_D002}-broken.md"
-        broken.parent.mkdir(parents=True, exist_ok=True)
-        broken.write_text(
-            "---\nid: c00dc00d-c00d-4c0d-8c0d-c00dc00dc00d\ntype: adr\nstatus: draft\nversion: 1.0.0\n---\n\n"
-            "# Broken ADR\n\n## A Wrong Heading\n\nThe heading structure does not fit the ADR schema.\n",
-            encoding="utf-8",
-        )
-        with self.assertRaises((AdrParseError, ValidationError)):
-            build_source_graph("adr", _D002)
-
 
 class TestFixtureValidity(unittest.TestCase):
     """The committed fixture documents themselves stay valid: every healthy fixture parses
@@ -546,7 +520,6 @@ class TestFixtureValidity(unittest.TestCase):
         from biz.dfch.specmgr.dec.models.v1.parser import parse_dec
         from biz.dfch.specmgr.feat.models.v1.parser import parse_feat
         from biz.dfch.specmgr.gol.models.v1.parser import parse_gol
-        from biz.dfch.specmgr.models.adr import parse_adr
         from biz.dfch.specmgr.req.models.v1.parser import parse_req
         from biz.dfch.specmgr.rsk.models.v1.parser import parse_rsk
         from biz.dfch.specmgr.uc.models.v2.parser import parse_uc
@@ -567,7 +540,6 @@ class TestFixtureValidity(unittest.TestCase):
             ("wide/req-w001.md", parse_req),
             ("wide/uc-u001.md", parse_uc),
             ("wide/gol-g001.md", parse_gol),
-            ("wide/adr-a001.md", parse_adr),
         ]
         for relative, parse_fn in healthy:
             with self.subTest(fixture=relative):

@@ -10,7 +10,7 @@ sections in an ``rsk`` markdown file -- see ``body.py``/``assessment.py`` for
 the full hierarchy.
 
 Also backs feat-92-resources's cross-cutting reference-resource
-model-backed drift-guard convention (ADR
+model-backed drift-guard convention (DEC
 356d8781-e446-4c26-917a-eda85648ce9d, REQ-003/REQ-004):
 
 - :func:`parse_tara`/:class:`Tara` -- parses the TARA risk-response-

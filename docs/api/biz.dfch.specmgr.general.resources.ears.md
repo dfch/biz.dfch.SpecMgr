@@ -11,7 +11,7 @@ trigger/condition keyword.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
 ``specmgr://iso25010``/``specmgr://dtais``/``specmgr://rsk/tara``/
-``specmgr://rsk/risk-matrix``/``specmgr://rasci``, per ADR
+``specmgr://rsk/risk-matrix``/``specmgr://rasci``, per DEC
 356d8781-e446-4c26-917a-eda85648ce9d's uniform convention: raw markdown
 output, backed by a dedicated model that is parsed on every resource call
 purely to fail fast on structural drift, with the parsed result discarded
@@ -34,7 +34,7 @@ Same packaged-data source and no-cache, hard-failure-on-missing-file
 design as every other cross-cutting ``general`` resource -- reads the
 file fresh on every call. Also parses the text via
 :func:`~biz.dfch.specmgr.general.models.parse_ears` on every call
-purely to fail fast on structural drift in production (ADR
+purely to fail fast on structural drift in production (DEC
 356d8781-e446-4c26-917a-eda85648ce9d); the parsed result is discarded
 and the raw text is returned unchanged.
 

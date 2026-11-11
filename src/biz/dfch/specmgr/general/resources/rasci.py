@@ -30,12 +30,12 @@ content is limited to the five roles' generic definitions -- no
 ``sop``-specific heading names or cardinality rules leak in here; those
 stay exclusively in ``sop``'s own schema field docstrings (surfaced via
 the ``get_sop_schema`` tool, the former ``specmgr://sop/schema`` resource,
-feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3) and packaged
+feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3) and packaged
 instructions.
 
 Served as raw packaged markdown (``text/markdown``, mirroring
 ``iso25010``/``dtais``/``rsk/resources/tara``'s raw-markdown output, per
-ADR 356d8781-e446-4c26-917a-eda85648ce9d's uniform convention: raw
+DEC 356d8781-e446-4c26-917a-eda85648ce9d's uniform convention: raw
 markdown output, backed by a dedicated model that is parsed on every
 resource call purely to fail fast on structural drift, with the parsed
 result discarded and the original raw text returned unchanged) -- the
@@ -72,7 +72,7 @@ def rasci() -> str:
     design as every other cross-cutting ``general`` resource -- reads the
     file fresh on every call. Also parses the text via
     :func:`~biz.dfch.specmgr.general.models.parse_rasci` on every call
-    purely to fail fast on structural drift in production (ADR
+    purely to fail fast on structural drift in production (DEC
     356d8781-e446-4c26-917a-eda85648ce9d); the parsed result is discarded
     and the raw text is returned unchanged.
 

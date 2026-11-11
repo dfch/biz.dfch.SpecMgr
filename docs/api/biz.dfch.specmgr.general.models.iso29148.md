@@ -4,7 +4,7 @@ Pydantic schema and parser for the ISO/IEC/IEEE 29148:2018 requirement-
 specifications guidance document (``general/data/general_iso29148.md``),
 feat-173-req-iso29148-level-set Phase 130 (REQ-003/ACC-003).
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://iso29148`` (``general/resources/iso29148.
@@ -37,7 +37,7 @@ next declared section's heading is expected yields a no-match error, and
 a trailing section yields a leftover-text error). Closed-vocabulary
 bullets are modeled as `MarkdownListItem` subclasses with
 `@computed_field`s regex-extracting the leading keyword, reusing
-`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (ADR
+`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (DEC
 356d8781-e446-4c26-917a-eda85648ce9d's Decision Drivers) rather than
 inventing a new shared `models/md` primitive. ``general/data/
 general_iso29148.md`` was authored from scratch alongside this model, so
@@ -7611,8 +7611,7 @@ abbreviation:
 
 Parse the packaged ISO/IEC/IEEE 29148:2018 guidance markdown text into an :class:`Iso29148`.
 
-Thin `format_text` + `Iso29148.from_text` wrapper -- unlike
-`parse_adr`/`parse_req`, there is no YAML frontmatter to split off
+Thin `format_text` + `Iso29148.from_text` wrapper -- there is no YAML frontmatter to split off
 first, since this is a plain packaged data file, not a user-authored
 document (mirrors `biz.dfch.specmgr.general.models.ears.parse_ears`'s
 exact shape).

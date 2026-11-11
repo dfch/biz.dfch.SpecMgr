@@ -22,7 +22,7 @@ GENERIC fence-aware ``normalize_heading_lines`` pre-pass applies: the two fixed-
 schema headings (``## Description``/``## Items``) map through the language's table,
 and free nested headings inside ``## Description`` are looked up like any other
 levels 2-6 heading (a table hit is rewritten to canonical, a miss stays verbatim --
-the ADR item 5 rule). The ``## Items`` bullets are never touched (their schema-
+the DEC 38efdb66 item 5 rule). The ``## Items`` bullets are never touched (their schema-
 constant tokens stay canonical in the file, REQ-010).
 """
 
@@ -67,7 +67,7 @@ class TestParseSetBodyLanguage(unittest.TestCase):
         self.assertIn("### Hintergrund", str(sut))
 
     def test_free_headings_with_table_entries_are_mapped_like_any_other_level(self) -> None:
-        # the generic pre-pass (ADR 38efdb66 item 5) rewrites table hits at levels
+        # the generic pre-pass (DEC 38efdb66 item 5) rewrites table hits at levels
         # 2-6 -- a `### Quelle` nested heading maps to its canonical `Source`
         sut = parse_set_body(_variant("### Quelle\n\nfoo"), language="de")
 

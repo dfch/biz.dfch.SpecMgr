@@ -24,7 +24,7 @@ JSON Schema artifact registers a ``generate_x() -> str`` function in
 **all** registered types. Each type is written to its own
 ``{output_dir}/{type}_schema.json`` (default ``docs/``).
 
-Unlike ``adr-toc``/``docs``, drift detection is built into this command
+Unlike ``docs``, drift detection is built into this command
 itself rather than left to a separate ``git diff --exit-code`` CI step: the
 previous on-disk content (if any) is compared against the freshly generated
 content for every type this invocation touches, and the command exits with
@@ -342,7 +342,7 @@ def generate_set_schema() -> str:
 
 #: Registry mapping a doc-type name (as accepted by ``--type``) to its
 #: ``generate_x() -> str`` function. Add an entry here when a new document
-#: type's schema generator is implemented (e.g. ``"adr"``).
+#: type's schema generator is implemented.
 _GENERATORS: dict[str, Callable[[], str]] = {
     "dec": generate_dec_schema,
     "feat": generate_feat_schema,

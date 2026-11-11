@@ -2,11 +2,7 @@
 
 Shared, private validation helpers for the ``models.md`` subpackage.
 
-Deliberately independent of ``models.adr.v1._util`` -- per ADR
-bc5e18ad-6bbf-4265-bae4-3e34984a2d29, ``models.md`` owns its own small
-validator helpers rather than depending on the ADR-specific package, even
-though the two modules currently look near-identical. A future decision may
-converge them; that is not decided here.
+Per DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29, ``models.md`` owns its own small validator helpers.
 
 ## Functions
 

@@ -317,12 +317,7 @@ class DecisionsBase(MarkdownSection3):
     """`### Decisions` under `## Related Artifacts` -- cross-reference list
     to decisions. Optional as a whole; at least one item when present.
 
-    `DEC`-only (not `DEC|ADR`), since `adr` is slated for removal as an
-    artifact type (issue #46) -- unlike `sysrs`'s own, structurally
-    different `## Decisions` section, which still accepts either tag (a
-    deliberate, recorded asymmetry, see
-    `.specmgr/feat/feat-135-related-artifacts-risks/README.md` Design
-    Notes).
+    `DEC`-only.
 
     Shared base for every domain's own `Decisions` (currently `req`, `gol`,
     `dec`, `sop`). Domain subclasses are thin pass-throughs

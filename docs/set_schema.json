@@ -8,10 +8,10 @@
       "type": "object"
     },
     "Items": {
-      "description": "`## Items` -- the flat bullet list of bundled artifacts, in any mix of the 12 reference tags.\nMandatory, at least one item.\n\nParameters\n----------\nitems:\n    Bullet list of `<TAG> <uuid-or-feat-id>: <title>` cross-references\n    from the shared 12-tag reference vocabulary (the eleven UUID tags\n    plus `FEAT`), any mix, each optionally followed by an indented notes\n    paragraph (the `MarkdownListItemWithNotes` shape SYSRS uses). Must\n    contain at least one item.",
+      "description": "`## Items` -- the flat bullet list of bundled artifacts, in any mix of the 11 reference tags.\nMandatory, at least one item.\n\nParameters\n----------\nitems:\n    Bullet list of `<TAG> <uuid-or-feat-id>: <title>` cross-references\n    from the shared 11-tag reference vocabulary (the ten UUID tags\n    plus `FEAT`), any mix, each optionally followed by an indented notes\n    paragraph (the `MarkdownListItemWithNotes` shape SYSRS uses). Must\n    contain at least one item.",
       "properties": {
         "items": {
-          "description": "Bullet list of `<TAG> <uuid-or-feat-id>: <title>` cross-references from the shared 12-tag reference vocabulary (any mix); must contain at least one item.",
+          "description": "Bullet list of `<TAG> <uuid-or-feat-id>: <title>` cross-references from the shared 11-tag reference vocabulary (any mix); must contain at least one item.",
           "items": {
             "$ref": "#/$defs/MarkdownListItemWithNotes"
           },

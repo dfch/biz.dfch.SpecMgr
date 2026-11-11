@@ -627,8 +627,8 @@ class TestGuardsBeforeAnyFilesystemAccess(_TempDocsMixin):
             with self.subTest(type=bad_type):
                 self._assert_rejected(bad_type, _MISSING_UUID, "de")
 
-    def test_feat_and_adr_with_the_permanent_wording(self):
-        for type_, id_ in (("feat", "feat-197-i18n"), ("feat", _MISSING_UUID), ("adr", _MISSING_UUID)):
+    def test_feat_with_the_permanent_wording(self):
+        for type_, id_ in (("feat", "feat-197-i18n"), ("feat", _MISSING_UUID)):
             with self.subTest(type=type_, id=id_):
                 error = self._assert_rejected(type_, id_, "de")
                 self.assertIn(f"{type_} documents are always English", str(error))

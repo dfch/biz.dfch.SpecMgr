@@ -1,6 +1,6 @@
 ---
 name: translation-status
-description: Use when checking which languages a specmgr document exists in or whether a translation is still in sync with its source -- e.g. "which languages exist for REQ ...", "list the translations of ...", "is the German translation of ... up to date", "check translation drift", "is the German version of this decision stale" (the read-only list_languages and check_translation_drift MCP tools) -- whether surfaced by an explicit /translation-status request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set only; feat and adr are always English and out of scope.
+description: Use when checking which languages a specmgr document exists in or whether a translation is still in sync with its source -- e.g. "which languages exist for REQ ...", "list the translations of ...", "is the German translation of ... up to date", "check translation drift", "is the German version of this decision stale" (the read-only list_languages and check_translation_drift MCP tools) -- whether surfaced by an explicit /translation-status request or organically while working with specmgr documents and language variants. Whole-body domains req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set only; feat is always English and out of scope.
 ---
 
 # Translation Status
@@ -40,9 +40,9 @@ deterministic specmgr tools; you only call them and report what they return.
 - No tool translates: translating or updating a variant is the
   `translate-artifact` skill and the `translate_artifact` prompt, not this
   skill. This skill never edits, writes, or commits anything.
-- `feat` and `adr` are always English — they have no language variants and the
-  two tools reject them with an explanatory error. `en` is never a drift
-  `language` (it is the canonical source form).
+- `feat` is always English — it has no language variants and the two tools
+  reject it with an explanatory error. `en` is never a drift `language` (it
+  is the canonical source form).
 - A language without a heading table (`general/data/headings/<language>.json`)
   is unusable; report the tool's error as is.
 - Ask the user (via your host's question mechanism) rather than guessing when

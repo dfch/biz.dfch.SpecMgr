@@ -4,14 +4,14 @@ Standard Operating Procedure (SOP) domain -- structured, step-by-step
 operational documents with a RASCI-style responsibility assignment and a
 closed approval/effectivity lifecycle.
 
-This is a domain-first package, mirroring ``dec``'s layout (per ADR
+This is a domain-first package, mirroring ``dec``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``sop`` documents. An SOP is built on the
 generic ``models/md`` parser with the simple surface used by GOL/RSK/QA/DEC
 -- no fine-grained mutation tools, no by-id resource.
 
 SOP is the **first domain built from scratch entirely on the post-feat-22
-generic mutation tools** (ADR 36905d5b-8057-4294-8665-c7eed5534db0): it has
+generic mutation tools** (DEC 36905d5b-8057-4294-8665-c7eed5534db0): it has
 no ``update_sop``/``set_status_sop`` tools of its own -- it dispatches
 straight into the generic ``update``/``set_status`` tools in
 ``general.tools`` from day one, per the convention ``AGENTS.md`` already
@@ -34,14 +34,14 @@ Disk-free, id-free dry-run content validation goes through the generic
 ``validate`` tool in ``general.tools`` (``type="sop"``) -- the former
 ``validate_sop`` tool was removed in favor of it (feat-81-83-validation).
 Like DEC, SOP has no ``specmgr://sop/{id}`` resource -- id-based reads go
-through the ``get_sop`` tool only (ADR
+through the ``get_sop`` tool only (DEC
 ddf1109-422d-4507-8dbc-dc5e4bec9614). Likewise, there is no
 ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged
-``@mcp.tool()`` from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+``@mcp.tool()`` from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 The former ``specmgr://sop/schema`` resource was converted into the
 ``get_sop_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 
 SOP relies on the cross-cutting ``specmgr://rasci`` resource

@@ -78,8 +78,6 @@ import re
 from collections.abc import Callable
 from pathlib import Path
 
-from ...adr.tools._io import load_by_id as load_adr_by_id
-from ...adr.tools._paths import adr_base_dir
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._io import load_by_id as load_feat_by_id
@@ -119,7 +117,7 @@ __all__ = [
 #: (not from :data:`REFERENCE_TYPES`) so the UUID pattern keeps matching
 #: exactly these tags: a feat's id is never a UUID, so ``FEAT
 #: <uuid>``-shaped text matches nothing under the UUID pattern.
-_UUID_REFERENCE_TYPES: tuple[str, ...] = ("gol", "prb", "qa", "uc", "req", "rsk", "dec", "adr", "vcr", "sysrs", "txt")
+_UUID_REFERENCE_TYPES: tuple[str, ...] = ("gol", "prb", "qa", "uc", "req", "rsk", "dec", "vcr", "sysrs", "txt")
 
 #: The reference *types* a cross-reference tag can name (feat-144 REQ-002;
 #: ``feat`` added by feat-177-list-ref-feat, ``txt`` by feat-229-txt): the
@@ -138,7 +136,7 @@ REFERENCE_TYPES: tuple[str, ...] = _UUID_REFERENCE_TYPES + ("feat",)
 #: The compiled UUID cross-reference extraction pattern (feat-144 REQ-002).
 #: The tag group is derived from :data:`_UUID_REFERENCE_TYPES` (the
 #: uppercase forms, same order -- so the group is exactly
-#: ``GOL|PRB|QA|UC|REQ|RSK|DEC|ADR|VCR|SYSRS|TXT`` and the two cannot drift
+#: ``GOL|PRB|QA|UC|REQ|RSK|DEC|VCR|SYSRS|TXT`` and the two cannot drift
 #: apart; ``feat`` is deliberately not in the group, since a feat's id is
 #: never a UUID). The separator is one or more space/tab/dash characters
 #: (so both ``REQ 4f2a...`` and ``GOL-0e15...`` match); the uuid is a
@@ -374,22 +372,6 @@ def _load_txt(ref_id: str) -> tuple[str, Path]:
     return result
 
 
-def _load_adr(ref_id: str) -> tuple[str, Path]:
-    """Resolve one ``adr`` reference to ``(title, path)`` (feat-144 Task 2.1).
-
-    ``adr`` is the one target domain that never reads through the doc
-    cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d -- ADR is permanently
-    excluded from the cache mechanism), and ``title`` is the referenced
-    ADR's own ``# {title}`` H1 via ``doc.body.title`` (not
-    ``doc.body.text``). ``AdrNotFoundError`` propagates unchanged (caught
-    by :func:`resolve_reference`).
-    """
-    base_dir = adr_base_dir()
-    path, doc = load_adr_by_id(base_dir, ref_id)
-    result: tuple[str, Path] = (doc.body.title, path)
-    return result
-
-
 def _load_feat(ref_id: str) -> tuple[str, Path]:
     """Resolve one ``feat`` reference to ``(title, path)`` (feat-177-list-ref-feat Task 100.110).
 
@@ -448,10 +430,9 @@ def _load_feat(ref_id: str) -> tuple[str, Path]:
 #: by feat-177-list-ref-feat Task 100.110): each returns ``(title, path)``
 #: for one reference id and propagates the domain's own ``XNotFoundError``
 #: (a ``LookupError``) if the target is absent on disk. Every target
-#: domain except ``adr`` reads through its own cache-backed
-#: ``load_by_id`` (feat-107-doc-cache; ``feat`` is folder-per-document
-#: rather than flat-file -- see :func:`_load_feat`); ``adr`` never does
-#: (see :func:`_load_adr`).
+#: domain reads through its own cache-backed ``load_by_id`` (feat-107-
+#: doc-cache; ``feat`` is folder-per-document rather than flat-file -- see
+#: :func:`_load_feat`).
 _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "gol": _load_gol,
     "prb": _load_prb,
@@ -463,7 +444,6 @@ _TARGET_RESOLVERS: dict[str, Callable[[str], tuple[str, Path]]] = {
     "vcr": _load_vcr,
     "sysrs": _load_sysrs,
     "txt": _load_txt,
-    "adr": _load_adr,
     "feat": _load_feat,
 }
 

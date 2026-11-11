@@ -20,7 +20,7 @@
 Complements the tool-layer tests in `tests/general/tools/test_error_context.py` (ACC-003,
 Task 3.4) by exercising `wrap_tool_errors` directly, in isolation from any real domain tool:
 each of the three REQ-006 channels (`AssertionError`, `pydantic.ValidationError`,
-`yaml.YAMLError`), the `also_catch` extension point (ADR's `AdrParseError`), the `channel`
+`yaml.YAMLError`), the `also_catch` extension point (a domain's own parse-error type), the `channel`
 label, and the "any other exception passes through untouched" guarantee.
 """
 
@@ -150,17 +150,17 @@ class TestWrapToolErrorsYamlError(unittest.TestCase):
 
 class TestWrapToolErrorsAlsoCatch(unittest.TestCase):
     """The ``also_catch`` extension point treats extra exception types exactly like
-    ``AssertionError`` -- message-only, same-type reconstruction (ADR's ``AdrParseError``)."""
+    ``AssertionError`` -- message-only, same-type reconstruction (a domain's own parse-error type)."""
 
     def test_also_catch_type_gets_the_same_prefix_treatment(self) -> None:
         class _CustomStructuralError(ValueError):
             pass
 
         with self.assertRaises(_CustomStructuralError) as ctx:
-            with wrap_tool_errors(domain="adr", tool="validate_adr", also_catch=(_CustomStructuralError,)):
+            with wrap_tool_errors(domain="req", tool="validate_req", also_catch=(_CustomStructuralError,)):
                 raise _CustomStructuralError("duplicate heading Foo")
 
-        self.assertEqual(str(ctx.exception), "adr validate_adr: duplicate heading Foo")
+        self.assertEqual(str(ctx.exception), "req validate_req: duplicate heading Foo")
         self.assertIs(type(ctx.exception), _CustomStructuralError)
 
     def test_a_plain_valueerror_not_listed_in_also_catch_passes_through_untouched(self) -> None:

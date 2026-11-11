@@ -135,7 +135,7 @@ Row 5: `set_status(id=UUID, type="req", status="draft", superseded_by="x")`
 Error executing tool set_status: superseded_by is only accepted for type='adr' (the "superseded by X" pattern is ADR-specific), got type='req' with superseded_by='x'
 ```
 
-Baseline check (REQ-003): for both variants rows 1, 3, 4 and 5 carry the full server message with `isError: true`; row 2 is `isError: false` (control). The `old` variant adds the `Error executing tool <name>: ` prefix, the `dev` variant does not (feat-221 / ADR 80305c52). Both baselines are valid.
+Baseline check (REQ-003): for both variants rows 1, 3, 4 and 5 carry the full server message with `isError: true`; row 2 is `isError: false` (control). The `old` variant adds the `Error executing tool <name>: ` prefix, the `dev` variant does not (feat-221 / DEC 80305c52). Both baselines are valid.
 
 ## OpenCode runs on 2.0.32 (image a)
 

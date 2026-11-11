@@ -192,7 +192,7 @@ class TestAliasAndConstants(unittest.TestCase):
     + the module's frozen constants."""
 
     def test_uuid_domains_take_the_uppercase_type_prefix(self):
-        for type_ in ("req", "adr", "sysrs"):
+        for type_ in ("req", "vcr", "sysrs"):
             with self.subTest(type_=type_):
                 self.assertEqual(
                     _alias(type_, "0e15c5de-4ac9-4279-aa75-53249a3e43e4"),
@@ -210,17 +210,17 @@ class TestAliasAndConstants(unittest.TestCase):
 
         self.assertEqual(_DOMAIN_ORDER, ALL_DOMAINS)
 
-    def test_palette_is_the_frozen_16_entries_in_block_order(self):
-        # the frozen 16-entry palette (rulebook §2.5): the 15 domain
+    def test_palette_is_the_frozen_15_entries_in_block_order(self):
+        # the frozen 15-entry palette (rulebook §2.5): the 14 domain
         # stereotypes in the group order, then UNRESOLVED last -- the TXT
         # entry (LightGrey) was added by feat-229-txt Phase 150 after
         # SYSRS, and the SET entry (Wheat) by feat-173-req-iso29148-level-set
-        # Phase 180 after TXT, before UNRESOLVED (positions 13/14, 0-based)
-        self.assertEqual(len(_PALETTE), 16)
-        self.assertEqual(_PALETTE[12], ("SYSRS", "Thistle"))
-        self.assertEqual(_PALETTE[13], ("TXT", "LightGrey"))
-        self.assertEqual(_PALETTE[14], ("SET", "Wheat"))
-        self.assertEqual(_PALETTE[15], ("UNRESOLVED", "DarkRed"))
+        # Phase 180 after TXT, before UNRESOLVED (positions 12/13, 0-based)
+        self.assertEqual(len(_PALETTE), 15)
+        self.assertEqual(_PALETTE[11], ("SYSRS", "Thistle"))
+        self.assertEqual(_PALETTE[12], ("TXT", "LightGrey"))
+        self.assertEqual(_PALETTE[13], ("SET", "Wheat"))
+        self.assertEqual(_PALETTE[14], ("UNRESOLVED", "DarkRed"))
         self.assertEqual(
             [stereotype for stereotype, _colour in _PALETTE],
             [domain.upper() for domain in _DOMAIN_ORDER] + ["UNRESOLVED"],

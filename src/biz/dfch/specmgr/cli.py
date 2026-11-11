@@ -40,7 +40,6 @@ from dotenv import find_dotenv, load_dotenv
 
 from . import _envregistry
 from .commands import (
-    adr_toc,
     coverage_badge,
     diagram,
     docs,
@@ -134,7 +133,6 @@ app.command()(version)
 app.command()(mcp)
 app.command()(docs)
 app.command()(mcp_docs)
-app.command()(adr_toc)
 app.command()(harness_bundle)
 app.command()(coverage_badge)
 app.command()(schema)

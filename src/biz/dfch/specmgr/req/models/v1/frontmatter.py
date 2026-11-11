@@ -34,7 +34,7 @@ from pydantic import Field, field_validator
 from biz.dfch.specmgr.models.md import MarkdownFrontmatter
 from biz.dfch.specmgr.models.md.frontmatter import DEFAULT_STATUS
 
-#: Fixed, closed set of accepted ``status`` values for requirements -- ADR's six plus
+#: Fixed, closed set of accepted ``status`` values for requirements -- DEC's six plus
 #: ``"implemented"``, since requirements track implementation beyond acceptance.
 _ALLOWED_STATUSES = frozenset(
     {

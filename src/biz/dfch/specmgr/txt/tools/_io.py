@@ -42,7 +42,7 @@ vanished file (feat-107-doc-cache Phase 8, REQ-015 shape, repeated here).**
 ``find_txt_path`` already resolved and read the same ``path`` once during
 its own scan. The generic ``delete`` tool in ``general.tools`` only holds
 the *target* document's own per-id lock, never a whole-domain lock, while
-``get_txt``/``list_txt`` intentionally take no lock at all (ADR
+``get_txt``/``list_txt`` intentionally take no lock at all (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
 same document can remove ``path`` in the narrow window between
 ``find_txt_path``'s own read and this one, raising ``FileNotFoundError``.

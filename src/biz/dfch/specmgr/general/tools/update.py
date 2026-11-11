@@ -33,7 +33,7 @@ re-read via :func:`._splice.body_text`, spliced via
 :func:`._splice.splice_body` at the read-style ``offset``/``limit``
 coordinates, and the *spliced result* is validated as a whole document and
 persisted verbatim instead of the raw fragment. ``sop`` is the first domain
-built dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
+built dispatch-only from day one (DEC 36905d5b): its ``_update_sop`` adapter was
 written directly in this shape rather than ported from a retired
 per-domain tool.
 
@@ -43,7 +43,7 @@ the builtin shadow. The union return type is annotation-only -- the
 MCP input schema is built from the parameters, and the SDK serializes
 whichever concrete document is returned.
 
-Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+Return shape (feat-153-off-by-n Phase 2, REQ-002/REQ-003, DEC
 19ff316b-cd11-41a7-a616-ffd84917da51, revising feature feat-69-
 update-context's "frontmatter-only" precedent for ``update`` alone): every
 successful call returns the shared
@@ -73,12 +73,8 @@ an earlier, deliberate divergence (a plain ``YYYY-MM-DD`` date) was
 reversed for cross-domain consistency; see that feature's Decisions
 Made.
 
-ADR is deliberately *not* a ``type`` here: its section-level MADR mutation
-contract (``update_frontmatter``/``update_section``/``option_*``) has no
-whole-body replace by design.
-
 **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead of
 raising, with nothing written in either case. (1) On a target ``id`` whose
@@ -116,8 +112,7 @@ intentional (whole-body mode validates before loading, so
 ``ValidateResult`` wins; range mode loads first, so
 ``ParseFailureResult`` wins -- REQ-010). Every caller-usage ``ValueError``
 (invalid ``id`` shape, ``limit`` given without ``offset``, misused range
-coordinates) still raises exactly as before, and a plain ``KeyError``
-still marks ``type="adr"`` (inherited from the dispatch-table lookup).
+coordinates) still raises exactly as before.
 
 Safety (REQ-009, feat-38-39-41-43-44 Phase 4): the public :func:`update`
 validates ``id`` via ``_path_safety.validate_id`` before dispatch (a
@@ -319,7 +314,7 @@ def _update_req(
     the ``snippet`` once via :func:`_splice.splice_snippet`) instead of
     returning the bare frontmatter; the write behavior itself is unchanged.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
     variant's own (``req_lock(req_lock_key(id_, language))``), the submitted/spliced body is
@@ -398,7 +393,7 @@ def _update_uc(
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
     variant's own (``uc_lock(uc_lock_key(id_, language))``), the submitted/spliced body is validated
@@ -476,7 +471,7 @@ def _update_tsk(
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
     variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the submitted/spliced body is
@@ -555,7 +550,7 @@ def _update_qa(
     that per-domain tool was retired in feat-22 Phase 3), plus the REQ-002
     range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
     variant's own (``qa_lock(qa_lock_key(id_, language))``), the submitted/spliced body is validated
@@ -633,7 +628,7 @@ def _update_prb(
     ``PrbNotFoundError``; that per-domain tool was retired in feat-22
     Phase 3), plus the REQ-002 range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
     variant's own (``prb_lock(prb_lock_key(id_, language))``), the submitted/spliced body is
@@ -712,7 +707,7 @@ def _update_gol(
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
     variant's own (``gol_lock(gol_lock_key(id_, language))``), the submitted/spliced body is
@@ -791,7 +786,7 @@ def _update_rsk(
     per-domain tool was retired in feat-22 Phase 3), plus the REQ-002 range
     branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
     variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the submitted/spliced body is
@@ -872,7 +867,7 @@ def _update_dec(
     -- was converted to the generic tools), plus the REQ-002 range branch
     (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+    **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/5).**
     ``language`` (the caller's already-guarded value; default ``"en"``,
     byte-identical to the pre-i18n adapter) selects which variant file the
     adapter acts on: the id is scanned for in ``dec_base_dir(language)``
@@ -1026,12 +1021,12 @@ def _update_sop(
     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
     ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
     ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
-    built dispatch-only from day one per ADR 36905d5b, so there was never a
+    built dispatch-only from day one per DEC 36905d5b, so there was never a
     per-domain ``update_sop`` tool to port -- this adapter was written
     directly in this shape), plus the REQ-002 range branch
     (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
     variant's own (``sop_lock(sop_lock_key(id_, language))``), the submitted/spliced body is
@@ -1109,7 +1104,7 @@ def _update_vcr(
     ``VcrNotFoundError``), plus the REQ-002 range branch (see
     :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
     variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the submitted/spliced body is
@@ -1185,11 +1180,11 @@ def _update_sysrs(
     Verbatim-shape port of :func:`_update_sop` (same ``sysrs_lock``,
     ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
     ``write_sysrs_file``, ``SysrsNotFoundError``; ``sysrs`` is dispatch-only
-    from day one per ADR 36905d5b, so there was never a per-domain
+    from day one per DEC 36905d5b, so there was never a per-domain
     ``update_sysrs`` tool to port -- this adapter was written directly in
     this shape), plus the REQ-002 range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
     variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the submitted/spliced body is
@@ -1264,11 +1259,11 @@ def _update_txt(
 
     Mirrors :func:`_update_sysrs`'s shape (same ``txt_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
-    ``TxtNotFoundError``; ``txt`` is dispatch-only from day one per ADR
+    ``TxtNotFoundError``; ``txt`` is dispatch-only from day one per DEC
     36905d5b, so this adapter was written directly in this shape), plus the
     REQ-002 range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
     variant's own (``txt_lock(txt_lock_key(id_, language))``), the submitted/spliced body is
@@ -1341,11 +1336,11 @@ def _update_set(
 
     Mirrors :func:`_update_sysrs`'s shape (same ``set_lock``, ``load_by_id``,
     frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
-    ``SetNotFoundError``; ``set`` is dispatch-only from day one per ADR
+    ``SetNotFoundError``; ``set`` is dispatch-only from day one per DEC
     36905d5b, so this adapter was written directly in this shape), plus the
     REQ-002 range branch (see :func:`_update_req`).
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
     variant's own (``set_lock(set_lock_key(id_, language))``), the submitted/spliced body is
@@ -1471,7 +1466,7 @@ def _assemble_result(outcome: _UpdateOutcome) -> UpdateResult:
 
     The shared dispatcher's single point where the before/after ``snippet``
     is computed -- once per successful call, never inside a per-domain
-    adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, ADR
+    adapter (feat-153-off-by-n Phase 2, REQ-002/REQ-003, DEC
     19ff316b-cd11-41a7-a616-ffd84917da51). ``snippet`` is ``None`` in exactly
     two cases: whole-body mode (no ``offset``) and the whole-body-equivalent
     range (``offset=1`` + omitted ``limit`` -- the range :func:`_splice.
@@ -1515,12 +1510,12 @@ def _assemble_result(outcome: _UpdateOutcome) -> UpdateResult:
         "(`error`/`path`/`id`) instead of raising the domain's not-found error -- its `error` text "
         "is byte-identical to the domain's `list_<d>` failed row's `error` for the same file "
         "(identical field path and cause, including the trailing pydantic documentation line; "
-        "ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
+        "DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c) -- and a truly-absent id still raises the domain's "
         "not-found error. A content-validation failure on the submitted new content (or, in range "
         "mode, on the spliced result) returns a non-raising `ValidateResult` (`valid=False`, "
         "`errors=[{message}]`) with the message capped at 300 chars as the generic `validate` tool "
-        "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (ADR "
-        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the ADR 519d1206 "
+        "caps it, instead of raising `AssertionError`/`pydantic.ValidationError` (DEC "
+        "b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, GitHub issue #170 -- case 4 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain). An invalid `id` (path-injection attempt or "
         "wrong format for `type`) or misused range coordinates (`limit` without `offset`) is a "
         "`ValueError` raised before any file access. Each domain's structure reference is its own "
@@ -1567,8 +1562,8 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     (``pydantic.ValidationError``) failure returns the non-raising
     ``ValidateResult(valid=False, ...)`` (the single ``errors[].message``
     capped at 300 chars exactly as the generic ``validate`` tool caps it,
-    feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the ADR 519d1206 chain)
+    feat-110 -- feat-170-update-edit-parse-failure, GitHub issue #170, DEC
+    b8c9bfea-6dcf-4158-bfc5-4ec17abb842f, case 4 of the DEC 519d1206 chain)
     with nothing written.
 
     **Range mode** (``offset`` given): ``content`` is a replacement
@@ -1630,7 +1625,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         (``0`` = pure insert); must be given together with ``offset``
         (``limit`` without ``offset`` is a ``ValueError``).
     language:
-        The language variant to act on (feat-197-i18n Phase 120, ADR
+        The language variant to act on (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
         it) acts on the flat default-language document -- today's exact
         behavior; any other ISO 639-1-shaped lowercase two-letter code
@@ -1649,7 +1644,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     UpdateResult | ParseFailureResult | ValidateResult
         On success, the updated document's
         :class:`~biz.dfch.specmgr.general.models.UpdateResult` wrapper
-        (feat-153-off-by-n Phase 2, ADR 19ff316b-cd11-41a7-a616-ffd84917da51):
+        (feat-153-off-by-n Phase 2, DEC 19ff316b-cd11-41a7-a616-ffd84917da51):
         its ``frontmatter`` is the updated frontmatter only (no body) of
         the dispatched domain type -- the same object feature
         feat-69-update-context's "frontmatter-only" precedent returned --
@@ -1680,7 +1675,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         (``error``/``path``/``id``) instead of the domain's not-found
         error -- ``error`` is byte-identical to the domain's ``list_<d>``
         failed row's ``error`` for the same file (identical field path and
-        cause, including the trailing pydantic documentation line; ADR
+        cause, including the trailing pydantic documentation line; DEC
         9080b37c-82b3-4f63-81f1-79641d0bf14c). On a content-validation
         failure of the submitted new content (or, in range mode, of the
         spliced result), a non-raising
@@ -1690,8 +1685,8 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         ``validate`` tool caps it (feat-110), instead of
         ``AssertionError``/``pydantic.ValidationError``. Nothing is written
         in either failure case (feat-170-update-edit-parse-failure, GitHub
-        issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
-        the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+        issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of
+        the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
         structured-result workaround chain).
 
     Raises
@@ -1704,15 +1699,7 @@ def update(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         ``offset < 1``, ``offset > N + 1``, ``limit < 0``, or
         ``offset + limit - 1 > N`` (raised after the on-disk body is read;
         the message names the offending value(s) and the allowed range).
-        Nothing is written in any of these cases.
-    KeyError
-        A plain ``KeyError`` still marks ``type="adr"`` (inherited from
-        the dispatch-table lookup): ``adr`` is in ``_path_safety``'s
-        UUID-shaped domain set, so ``type="adr"`` with a well-formed
-        UUID ``id`` passes ``validate_id`` and reaches the lookup, which
-        has no ``adr`` entry. Nothing is written. Unreachable through the
-        MCP server, whose ``type`` enum carries the 14 whole-body domains
-        only; a direct-Python-caller outcome.
+         Nothing is written in any of these cases.
     ReqNotFoundError / UcNotFoundError / TskNotFoundError / QaNotFoundError /
     PrbNotFoundError / GolNotFoundError / RskNotFoundError / DecNotFoundError /
     FeatNotFoundError / SopNotFoundError / VcrNotFoundError / SysrsNotFoundError

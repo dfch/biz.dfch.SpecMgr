@@ -11,7 +11,7 @@ instead (Task 3.1.3) -- both read a packaged, build-guaranteed data file
 rather than anything on the caller's filesystem.
 ``get_uc_schema`` returns the domain's generated JSON Schema (2020-12
 dialect) as raw text, reading the same packaged, build-guaranteed data
-file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://uc/schema`` resource). ``get_uc`` (Task 3.1.5)
 reads, parses, and returns a full use-case document by id -- the sole
 id-based read path for UC. ``list_uc`` (feat-13-list-paging Task 2.3)

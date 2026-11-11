@@ -18,9 +18,8 @@
 """Resource: specmgr://set/example (feat-173-req-iso29148-level-set Phase 180).
 
 Read-only, addressable counterpart of the ``get_set_example`` tool, mirroring
-this repo's existing tool+resource pairs (e.g. ADR's ``get_adr`` tool /
-``specmgr://adr/{id}`` resource) for a host that wants to fetch the example as
-context without an explicit tool call. Deliberately does not import from
+this repo's existing tool+resource pairs, for a host that wants to
+fetch the example as context without an explicit tool call. Deliberately does not import from
 ``set.tools`` (nor vice versa): both this resource and the
 ``get_set_example`` tool import the shared, doc-type-agnostic
 ``general.tools._packaged_data`` helper directly, so neither sub-package
@@ -46,7 +45,7 @@ from ...server import mcp
         "A complete, valid sample set document as raw markdown -- "
         "frontmatter and body -- exercising the opaque `## Description` (prose, a list, a "
         "fenced code block, a nested H3 heading) and the mandatory `## Items` list with "
-        "mixed reference tags (any of the shared 12-tag vocabulary), for use as a learning "
+        "mixed reference tags (any of the shared 11-tag vocabulary), for use as a learning "
         "example."
     ),
     mime_type="text/markdown",

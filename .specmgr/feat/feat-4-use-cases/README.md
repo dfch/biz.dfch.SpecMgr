@@ -53,7 +53,7 @@ Create a Markdown schema for use cases based on Alistair Cockburn's template, wi
 
 #### Depends On
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), feat-5-md-model-parser (done, 2026-08-11) — Task 1.5 rebuilds the uc schema/models on its `models/md` engine
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), feat-5-md-model-parser (done, 2026-08-11) — Task 1.5 rebuilds the uc schema/models on its `models/md` engine
 - External: PlantUML (for diagram rendering, not included in this feature)
 
 #### Blocks
@@ -263,7 +263,7 @@ See `history.md` for updates — all entries have been moved to history.
 
 #### 2026-08-05T00:00:00.000Z - DEC-004
 
-**DEC-004** \[2026-08-05\]: Create a new domain "uc" (use cases) — Following the domain-first hierarchy established in ADR ece4554b-725c-4f76-bc04-5d2b760363d2, create `uc/` as a top-level package alongside `adr/`, with sub-packages for `uc/models/`, `uc/tools/`, `uc/prompts/`, `uc/resources/`. This differs from current `adr/` structure (which has models in shared `models/adr/`) — see tech debt note below.
+**DEC-004** \[2026-08-05\]: Create a new domain "uc" (use cases) — Following the domain-first hierarchy established in DEC ece4554b-725c-4f76-bc04-5d2b760363d2, create `uc/` as a top-level package alongside `adr/`, with sub-packages for `uc/models/`, `uc/tools/`, `uc/prompts/`, `uc/resources/`. This differs from current `adr/` structure (which has models in shared `models/adr/`) — see tech debt note below.
 
 #### 2026-08-05T00:00:00.000Z - DEC-003
 

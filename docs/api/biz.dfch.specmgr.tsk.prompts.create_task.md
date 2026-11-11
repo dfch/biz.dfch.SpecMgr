@@ -8,7 +8,7 @@ through drafting a brand-new Task List (TSK) document using the existing
 ``specmgr://tsk/template``/``specmgr://tsk/example``, ``get_tsk_schema``,
 ``create_tsk``, generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_tsk`` builds the entire TSK frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.

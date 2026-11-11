@@ -20,7 +20,7 @@
 Built on the generic `models.md` `MarkdownSection1`/`MarkdownSection2`/
 `MarkdownSection3`/`MarkdownParagraph`/`MarkdownListItem` engine: each class
 below models one markdown heading (`## `/`### `) or list, and `Decision` is
-the top-level H1 container. A `dec` document keeps the ADR's general
+the top-level H1 container. A `dec` document keeps the MADR-style general
 structure (MADR-style headings, an `Options` collection) but is built on the
 generic engine with the simple surface used by GOL/RSK/QA (see
 `.specmgr/feat/feat-21-decision/README.md` Design Notes).
@@ -535,8 +535,8 @@ class ProsAndCons(MarkdownSection2):
 
     Optional as a whole, but present only if it carries at least one
     `### Option {N}: {name}` entry (``min_length=1``) -- an H2 with zero
-    options is a structural error. The ADR heading "Pros and Cons of the
-    Options" is deliberately NOT accepted (LITERAL alias).
+    options is a structural error. The heading "Pros and Cons of the Options"
+    is deliberately NOT accepted (LITERAL alias).
 
     Parameters
     ----------
@@ -611,7 +611,7 @@ class UpdateEntry(MarkdownSection3):
     space) + ``HH:mm:ss.SSS`` + explicit UTC offset (``+02:00``,
     ``-05:00``) or ``Z`` for UTC variant -- the same full format as
     frontmatter ``created``/``updated`` (both separators accepted, date-only
-    rejected; ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
+    rejected; DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf); this format is
     scoped to `## Updates` entry headings only, which are hand/LLM-authored
     body content. Constrained by the regex `@alias` above and enforced by
     `match_alias` (`re.fullmatch`) at parse time -- a heading that does not
@@ -681,9 +681,8 @@ class Updates(MarkdownSection2WithComment):
     present. May be preceded by an explanatory HTML comment (e.g. an
     ordering hint).
 
-    Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools (no
-    `option_create`/`option_list` equivalent) -- entries are prepended
-    (newest-first) by editing the whole body.
+    Mirrors `tsk`'s `RecentUpdates` shape: no dedicated per-entry tools
+    -- entries are prepended (newest-first) by editing the whole body.
 
     Parameters
     ----------
@@ -721,7 +720,7 @@ class Updates(MarkdownSection2WithComment):
 class Decision(MarkdownSection1):
     """The `dec` body: a single H1 section with the fields below.
 
-    The H1 heading text is free-form. Keeps the ADR's general structure
+    The H1 heading text is free-form. Keeps the MADR-style general structure
     (MADR headings + an options collection) on the generic `models.md`
     engine -- see the module docstring.
 

@@ -55,12 +55,11 @@ structured, validated read/write/list/status tools (see
 | UC — Use Case | Actor/system interaction describing a specific usage scenario |
 | RSK — Risk | Risk-register entry: cause/trigger/consequence, 5x5 probability/impact assessment (initial + residual), TARA response strategy |
 | DEC — Decision | General-purpose decision record (MADR-style), not limited to architecture |
-| ADR — Architecture Decision Record | Architecture-specific decision record; **deprecated**, use DEC instead |
 | TSK — Task List | Checklist of implementation tasks, e.g. for a requirement or feature |
 | VCR — Verification Case Record | Verifies **exactly one** REQ or UC; holds a collection of `AC-NNN` acceptance criteria (each with a DTAIS verification method) plus one overall coverage outcome (full/partial/none) |
 | SOP — Standard Operating Procedure | Step-by-step operational procedure with RASCI responsibility assignment and approval lifecycle |
 | FEAT — Feature | Development work-unit plan/progress tracking (`.specmgr/feat/<id>/README.md`) |
-| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC-ADR/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
+| SYSRS — System Requirements Spec | Aggregates GOL/PRB/QA/UC/REQ/RSK/DEC/VCR via cross-reference lists into one navigable spec; its structure follows **ISO/IEC/IEEE 29148:2018** (Systems and software engineering — Life cycle processes — Requirements engineering), with a few specmgr-only additions (e.g. `## Decisions`, `## Risks`) |
 | TXT — Free-Form Text | Generic, minimally structured catch-all for unstructured markdown that does not warrant a dedicated domain (ad hoc notes, meeting minutes, review/audit write-ups, scratch analysis); free body (any markdown, incl. H2..H6) plus a mandatory newest-first `## Updates` log |
 
 A typical spec effort starts with a **QA** elicitation interview, which
@@ -188,7 +187,7 @@ neighbourhood (the forward walk to `depth`, 1..5; `reverse=True` adds the
 direct incoming references, additive and direct-only);
 `get_reference_diagram_all(include_feat=True, title=None)` renders the
 registry-wide graph. Both return the PlantUML source directly (no file
-writes); the scoped tool accepts all 14 domains (`adr` included) and returns
+writes); the scoped tool accepts all 14 whole-body domains and returns
 the non-raising `ParseFailureResult` for an existing-but-broken source; the
 registry-wide tool never raises for content.
 
@@ -242,16 +241,13 @@ Every document type stores its `.md` files in a base directory on disk —
 the file is always the source of truth, re-read and re-parsed on every
 tool call, so hand-editing a file between calls is safe.
 
-- ADRs: base directory defaults to `docs/adr`, configurable via the
-  `SPECMGR_ADR_DIR` environment variable. This is ADR-specific and not
-  shared with other document types.
 - Requirements (REQ) and future document types: share one root directory,
   configurable via the `SPECMGR_DOCS_DIR` environment variable (default
   `docs`), with each type's own subdirectory appended automatically (e.g.
   `docs/req` for requirements).
 - Features (FEAT): base directory defaults to `.specmgr/feat`, configurable
-  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific,
-  like ADRs above, and not shared via `SPECMGR_DOCS_DIR`.
+  via the `SPECMGR_FEAT_DIR` environment variable. This is FEAT-specific and
+  not shared via `SPECMGR_DOCS_DIR`.
 - PlantUML validation source (UC diagrams): `SPECMGR_PLANTUML_JAR` (a
   plantuml.jar path), `SPECMGR_PLANTUML_BIN` (an executable speaking the
   PlantUML CLI contract), and `SPECMGR_PLANTUML_URL` (a PlantUML server base
@@ -421,7 +417,7 @@ To add the `specmgr` MCP server to your OpenCode configuration:
 
    **A bare `uvx --from biz-dfch-specmgr[mcp] specmgr mcp` command with no
    `--directory` and no `SPECMGR_*_DIR` env vars is unsafe**: the server
-   resolves every base directory (`docs`, `docs/adr`, `.specmgr/feat`, ...)
+   resolves every base directory (`docs`, `.specmgr/feat`, ...)
    relative to its own process's current working directory, which an MCP
    host is free to launch from anywhere — not necessarily your project
    root. Pick one of the two options below instead of the plain form:
@@ -465,11 +461,10 @@ To add the `specmgr` MCP server to your OpenCode configuration:
        "specmgr",
        "mcp"
      ],
-     "environment": {
-       "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
-       "SPECMGR_ADR_DIR": "<path-to-your-project>/docs/adr",
-       "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
-     }
+      "environment": {
+        "SPECMGR_DOCS_DIR": "<path-to-your-project>/docs",
+        "SPECMGR_FEAT_DIR": "<path-to-your-project>/.specmgr/feat"
+      }
    }
    ```
 
@@ -597,9 +592,8 @@ domain: **per-domain** tools (`create_<d>`, `get_<d>`, `list_<d>`,
 `parse_<d>`, plus `get_<d>_example`/`get_<d>_template`), and **generic
 dispatch** tools that take a `type=` parameter and behave the same way
 across every domain: `update` (whole-body or line-range edits),
-`set_status`, `set_classification`, `delete`, and `validate` (ADR is the
-one exception, predating this pattern, with its own dedicated tools
-instead). See [docs/MCP.md](docs/MCP.md) for the full list.
+`set_status`, `set_classification`, `delete`, and `validate`. See
+[docs/MCP.md](docs/MCP.md) for the full list.
 
 The server also ships **prompts** (e.g. `create_req`, `update_req`,
 `implement_task`) — guided, multi-turn interview flows that are the
@@ -660,10 +654,10 @@ file's location only — there is no `language` frontmatter field. It
 applies to the twelve domains `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
 `rsk`, `dec`, `sop`, `vcr`, `sysrs` and `txt`.
 
-**`feat` and `adr` are always English**, permanently: no `feat` or `adr`
-tool, resource or prompt takes a `language`, and the generic tools reject a
-non-default `language` for those two types (`language="en"`, the default,
-is accepted and behaves as before).
+**`feat` is always English**, permanently: no `feat` tool, resource or
+prompt takes a `language`, and the generic tools reject a non-default
+`language` for that type (`language="en"`, the default, is accepted and
+behaves as before).
 
 - **Reading and writing.** `get_<d>`, `list_<d>` and `create_<d>`, and
   the generic `update`, `edit`, `set_status`, `set_classification` and

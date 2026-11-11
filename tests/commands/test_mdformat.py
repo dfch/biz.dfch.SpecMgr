@@ -111,12 +111,12 @@ class TestMdformatCommand(unittest.TestCase):
         unformatted = textwrap.dedent(
             """\
             ---
-            id: adr-001
-            type: adr
+            id: doc-001
+            type: req
             status: draft
             ---
 
-            # ADR Title
+            # Doc Title
 
             Some   text   with    spacing.
             """
@@ -129,8 +129,8 @@ class TestMdformatCommand(unittest.TestCase):
 
             self.assertEqual(ctx.exception.exit_code, 1)
             content = path.read_text(encoding="utf-8")
-            self.assertIn("id: adr-001", content)
-            self.assertIn("type: adr", content)
+            self.assertIn("id: doc-001", content)
+            self.assertIn("type: req", content)
             self.assertIn("Some text with spacing.", content)
 
     def test_missing_file_propagates_uncaught(self) -> None:

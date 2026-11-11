@@ -33,7 +33,7 @@ flat vocabulary) before any document is loaded -- no current state is known ther
 does not touch it; (B) this module's post-load transition check returns the non-raising
 :class:`~biz.dfch.specmgr.general.models.invalid_status_transition_result.InvalidStatusTransitionResult`
 (the targets allowed from the current state, sorted -- never the full vocabulary; an empty list
-marks a terminal current state) -- case 6 of the ADR
+marks a terminal current state) -- case 6 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result workaround chain, so the
 current-state-relative detail survives MCP clients that truncate ``isError`` text.
 
@@ -41,10 +41,9 @@ Rollout complete (REQ-003/ACC-007): every whole-body domain's own ``_STATUS_TRAN
 has landed (next to the domain's own ``_ALLOWED_STATUSES`` in its ``models/<v>/frontmatter.py``)
 and is enforced -- ``req`` as the Phase 110 pilot, the remaining whole-body domains as of Phase
 120. The import-time drift assert below is the full-coverage form: keys equal the shared
-``general.tools._domains`` registry, no entry is ``None``, and ADR is excluded (REQ-006: it has
-no entry and ``_set_status_adr`` never calls into this module). The pure core
-:func:`decide_transition` still treats a ``None`` table as a passthrough (the total-decision
-seam, exercised by tests with temporary tables and by unregistered types such as ``adr``).
+``general.tools._domains`` registry (the 14 whole-body domains), and no entry is ``None``. The
+pure core :func:`decide_transition` still treats a ``None`` table as a passthrough (the
+total-decision seam, exercised by tests with temporary tables and by unregistered types).
 
 **No ``mcp`` dependency here**, like every other private ``general/tools/`` support module: this
 module is plain data plus pure functions (it imports the per-domain closed vocabularies and the
@@ -84,14 +83,13 @@ from ...uc.models.v2.frontmatter import _STATUS_TRANSITIONS as _UC_STATUS_TRANSI
 from ...vcr.models.v1.frontmatter import _ALLOWED_STATUSES as _VCR_ALLOWED_STATUSES
 from ...vcr.models.v1.frontmatter import _STATUS_TRANSITIONS as _VCR_STATUS_TRANSITIONS
 from ..models import InvalidStatusTransitionResult
-from ._domains import ADR, WHOLE_BODY_DOMAINS
+from ._domains import WHOLE_BODY_DOMAINS
 
 __all__ = ["check_status_transition", "decide_transition"]
 
 #: Each whole-body domain's own closed status vocabulary, keyed by ``type`` (REQ-003's per-entry
 #: validity check): the same per-domain ``_ALLOWED_STATUSES`` constants ``set_status.py``'s own
-#: ``_ALLOWED_STATUSES_BY_TYPE`` reuses -- no new duplicated list. ADR's fixed set is deliberately
-#: absent: ADR is excluded from the state machine (REQ-006).
+#: ``_ALLOWED_STATUSES_BY_TYPE`` reuses -- no new duplicated list.
 _STATUS_VOCABULARIES_BY_TYPE: dict[str, frozenset[str]] = {
     "req": _REQ_ALLOWED_STATUSES,
     "uc": _UC_ALLOWED_STATUSES,
@@ -120,8 +118,7 @@ assert set(_STATUS_VOCABULARIES_BY_TYPE) == set(WHOLE_BODY_DOMAINS), (
 #: target statuses, set semantics; domain-owned, next to the domain's own
 #: ``_ALLOWED_STATUSES`` in its ``models/<v>/frontmatter.py``), carried by identity -- ``req``
 #: since Phase 110, every remaining whole-body domain since Phase 120 (rollout complete: no
-#: entry is ``None`` any more, and no whole-body domain is a passthrough). ADR has no entry
-#: (REQ-006).
+#: entry is ``None`` any more, and no whole-body domain is a passthrough).
 _STATUS_TRANSITIONS_BY_TYPE: dict[str, dict[str, frozenset[str]]] = {
     "req": _REQ_STATUS_TRANSITIONS,
     "uc": _UC_STATUS_TRANSITIONS,
@@ -141,16 +138,12 @@ _STATUS_TRANSITIONS_BY_TYPE: dict[str, dict[str, frozenset[str]]] = {
 
 # Program invariants (import-time), the full-coverage form of REQ-003/ACC-007's drift assert
 # (Phase 120, Task 120.120 -- the phased rollout is finished): the aggregation is keyed to the
-# shared domain registry (keys equal the whole-body domains, ADR structurally absent), every
-# entry is the domain's own landed table (no ``None`` passthrough remains), and every table
-# names only statuses from its domain's own closed vocabulary.
+# shared domain registry (keys equal the 14 whole-body domains), every entry is the domain's
+# own landed table (no ``None`` passthrough remains), and every table names only statuses from
+# its domain's own closed vocabulary.
 assert set(_STATUS_TRANSITIONS_BY_TYPE) == set(WHOLE_BODY_DOMAINS), (
     "_STATUS_TRANSITIONS_BY_TYPE keys drifted from the shared general.tools._domains.WHOLE_BODY_DOMAINS source -- "
     "add or remove the domain in both places (feat-125-domain-lists, REQ-006; feat-108-fsm, REQ-003)"
-)
-assert ADR not in _STATUS_TRANSITIONS_BY_TYPE, (
-    "ADR is excluded from the status state machine (feat-108-fsm, REQ-006): it keeps its own "
-    "flat-vocabulary behavior and gets no aggregation entry"
 )
 for _domain, _table in _STATUS_TRANSITIONS_BY_TYPE.items():
     assert _table is not None, (
@@ -181,8 +174,8 @@ def decide_transition(
     """The pure transition decision over one domain's own table (:func:`check_status_transition`'s core).
 
     Total and deterministic, with no module-state dependency (the testability seam): a ``None``
-    table (a table-less domain, or a type with no aggregation entry such as ``adr``) is a
-    passthrough; a ``target`` inside the current state's allowed set is allowed; everything else
+    table (a table-less domain, or a type with no aggregation entry) is a passthrough; a
+    ``target`` inside the current state's allowed set is allowed; everything else
     is a non-raising :class:`InvalidStatusTransitionResult` whose ``allowed_values`` are the
     current state's allowed targets, sorted (never the domain's full vocabulary). A ``current``
     status that is not a key of the table (structurally unreachable once a domain's table pins
@@ -246,7 +239,7 @@ def check_status_transition(type_: str, current: str, target: str) -> InvalidSta
     delegates to :func:`decide_transition`. A ``None`` lookup result passes through (``None``):
     as of Phase 120 no whole-body domain's entry is ``None`` any more (the rollout is complete,
     every whole-body domain is enforced), so the passthrough covers only types without an
-    aggregation entry -- e.g. ``adr``, which never calls this (feat-108-fsm, REQ-003/REQ-006).
+    aggregation entry (feat-108-fsm, REQ-003).
     The adapters call this inside their domain lock, after the unchanged-status no-op comparison
     and before the raw-body re-read -- a rejection is pre-write (nothing is persisted,
     ``updated`` is not bumped).

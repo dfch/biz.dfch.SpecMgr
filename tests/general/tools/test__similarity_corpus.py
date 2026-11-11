@@ -17,7 +17,7 @@
 
 """Unit tests for candidate enumeration and source resolution (feat-134, Phase 2, Task 2.1).
 
-Covers ACC-007 (``adr`` never appears as a candidate and is rejected as a
+Covers ACC-007 (an unknown type never appears as a candidate and is rejected as a
 ``target_types``/source ``type``), ACC-015 (bad ``target_types``/``type``/``id``
 are a ``ValueError`` before any filesystem access; a missing source is the
 domain's own ``XNotFoundError``), and the per-candidate parseability / marker-row
@@ -50,7 +50,7 @@ _MISSING_UUID = "00000000-0000-0000-0000-000000000000"
 
 
 class TestIterCandidatePaths(SimilarityTestCase):
-    """ACC-007: the enumeration walks the target domains and never yields ``adr``."""
+    """ACC-007: the enumeration walks the target whole-body domains in registry order."""
 
     def test_default_walk_yields_seeded_domains_in_registry_order(self) -> None:
         req_fm = self.seed_req("Req Doc", "alpha")
@@ -63,7 +63,6 @@ class TestIterCandidatePaths(SimilarityTestCase):
         self.assertIn("req", domains)
         self.assertIn("gol", domains)
         self.assertIn("feat", domains)
-        self.assertNotIn("adr", domains)
         # Registry order among the seeded domains: req (index 0) < gol (5) < feat (9).
         self.assertEqual([d for d in domains if d in ("req", "gol", "feat")], ["req", "gol", "feat"])
         self.assertEqual(len(pairs), 3)
@@ -102,12 +101,6 @@ class TestIterCandidatePathsRejection(SimilarityTestCase):
         missing = Path(self.enterContext(tempfile.TemporaryDirectory())) / "does-not-exist"
         return mock.patch.dict("os.environ", {DOCS_DIR_ENV_VAR: str(missing)})
 
-    def test_adr_target_rejected_before_filesystem_access(self) -> None:
-        with self._nonexistent_docs_dir():
-            with self.assertRaises(ValueError) as ctx:
-                list(iter_candidate_paths(["adr"]))
-        self.assertIn("adr", str(ctx.exception))
-
     def test_unknown_target_rejected_before_filesystem_access(self) -> None:
         with self._nonexistent_docs_dir():
             with self.assertRaises(ValueError) as ctx:
@@ -134,9 +127,9 @@ class TestResolveSource(SimilarityTestCase):
         with self.assertRaises(ReqNotFoundError):
             resolve_source("req", _MISSING_UUID)
 
-    def test_adr_source_rejected(self) -> None:
+    def test_unknown_source_rejected(self) -> None:
         with self.assertRaises(ValueError):
-            resolve_source("adr", _MISSING_UUID)
+            resolve_source("bogus", _MISSING_UUID)
 
     def test_unknown_source_type_rejected(self) -> None:
         with self.assertRaises(ValueError):

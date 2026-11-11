@@ -22,8 +22,8 @@ which re-declared `id`/`version`/`created`/`updated`/`status` from scratch. Here
 only `type` and `status` are narrowed beyond the base's free-form defaults --
 `id`'s `uc-NNN` pattern is deliberately *not* ported forward: per
 `MarkdownFrontmatter.id`'s own docstring, `id` is a specmgr-assigned identifier
-(the same convention `models.adr.v1.AdrFrontmatter.id` already uses), not a
-hand-authored `uc-NNN` sequence number -- mirroring `AdrFrontmatter`'s own
+(the same convention `MarkdownFrontmatter.id` uses), not a hand-authored
+`uc-NNN` sequence number -- mirroring
 `id: str | None = None`, not `UseCaseFrontmatter`'s stricter, now-superseded
 `Field(..., pattern=r"^uc-[0-9]+$")`.
 
@@ -44,8 +44,7 @@ from biz.dfch.specmgr.models.md.frontmatter import DEFAULT_STATUS
 
 #: Fixed, closed set of accepted `status` values, ported forward from
 #: `uc/models/v1/use_case_frontmatter.py::UseCaseFrontmatter`'s own set --
-#: unlike `AdrFrontmatter.status`, there is no `"superseded by <anything>"`
-#: freeform shape for a use case (that concept is ADR-specific).
+#: there is no `"superseded by <anything>"` freeform shape for a use case.
 _ALLOWED_STATUSES = frozenset({"draft", "proposed", "accepted", "deprecated", "superseded"})
 
 #: The authoring form of :data:`_STATUS_TRANSITIONS` (feat-108-fsm, GitHub issue #108, REQ-007):

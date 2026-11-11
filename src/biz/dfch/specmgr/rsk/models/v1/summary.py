@@ -19,7 +19,7 @@
 
 Mirrors :class:`~biz.dfch.specmgr.tsk.models.v1.summary.TskSummary` for the
 paged ``list_rsk`` tool (Phase 3, Task 3.14 -- not yet built; per feat-13 /
-ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 there is no ``specmgr://rsk/list``
+DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 there is no ``specmgr://rsk/list``
 resource, so a summary line carries more than the base's four fields: the
 initial/residual zone levels, the TARA strategy word, the first ``## Scope``
 entry, and the residual risk's matrix coordinates, so a register-wide

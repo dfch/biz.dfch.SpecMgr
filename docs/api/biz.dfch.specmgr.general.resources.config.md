@@ -34,7 +34,7 @@ the *resolved* model cache directory (a path, by design -- the client needs
 to know where the model is cached; unset or empty falls back to the default
 ``<tempdir>/fastembed_cache``). A third presence flag,
 ``SPECMGR_FEAT_WARMUP_DISABLED`` (feat-187-list-feat-timeout, Task 110.120,
-ADR 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
+DEC 3982712a-a46b-4b2b-809f-9c6925a49b44), is reported the same way --
 whether the unified startup warmup's ``feat`` frontmatter/full-parse phases
 are disabled. A fourth, ``SPECMGR_DIAGRAM_MAX_TITLE``
 (feat-207-reference-graph Phase 120, REQ-010), is likewise presence-only
@@ -123,12 +123,10 @@ Return the resolved base directory and env-var-set flag for every domain, plus t
 plantuml, and diagram sections and the feat_warmup_disabled flag.
 
 Explicitly enumerates the known ``SPECMGR_*_DIR`` env var names and
-reads only those from the environment (REQ-002) -- ``adr`` and ``feat``
-each have their own dedicated env var; every other domain (``req``,
-``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``,
-``vcr``, ``sysrs``, ``txt``, ``set``) shares the one root
-``SPECMGR_DOCS_DIR``
-env var,
+reads only those from the environment (REQ-002) -- ``feat`` has its own
+dedicated env var; every other domain (``req``, ``uc``, ``tsk``, ``qa``,
+``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``,
+``set``) shares the one root ``SPECMGR_DOCS_DIR`` env var,
 so their ``env_var``/``env_var_set`` fields are identical by design, not
 a bug.
 
@@ -166,7 +164,7 @@ effective label limit the reference-graph tools (and the Phase 130
 CLI) render with: 40 when unset or set-but-invalid, the set int
 otherwise.
 
-``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, ADR
+``feat_warmup_disabled`` (feat-187-list-feat-timeout, Task 110.120, DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44) follows the same presence-only
 convention: whether ``SPECMGR_FEAT_WARMUP_DISABLED`` is set, gating the
 unified startup warmup thread's ``feat`` frontmatter/full-parse phases.

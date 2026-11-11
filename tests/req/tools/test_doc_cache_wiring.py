@@ -18,7 +18,7 @@
 """Acceptance-criteria-level tests for the req domain's cache wiring (feat-107-doc-cache Phase 3, Task 3.6).
 
 Covers ACC-001 through ACC-006 (``.specmgr/feat/feat-107-doc-cache/README.md``)
-specifically for ``req``, the pilot domain. See ADR
+specifically for ``req``, the pilot domain. See DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d for the cache design these tests
 validate.
 

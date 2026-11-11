@@ -14,13 +14,13 @@ version: 1.0.0
 
 ### Overview
 
-GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740) documented that OpenCode 1.x (reported on 1.18.29; the original local reproduction behind ADR 519d1206 was on 1.18.27) drops the content of a failed MCP tool result -- the model only receives a bare `Error executing tool <name>`, discarding the real error text the server put in `content[].text`. This defect is the reason this repo built the non-raising structured-result workaround chain (ADR 519d1206, extended by b399f1ce, 9080b37c, b8c9bfea, f14f125e) instead of simply raising informative exceptions everywhere. Upstream closed #47740 on 2026-10-11 because OpenCode 2.0 shipped and 1.x triage stopped; the closure is a triage action, not a fix, and the maintainers asked for a reopen (or a new issue citing the 2.x version) if the defect still reproduces on 2.0+. This feature re-runs that repro against OpenCode 2.x container images only (OpenCode 1.x is no longer used by this project and is not tested), records the evidence, and acts on the result (comment on upstream and close #211 if fixed; file a new upstream issue if not) -- and separately assesses whether the ADR 519d1206 non-raising workaround chain itself can now be retired.
+GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740](https://github.com/anomalyco/opencode/issues/47740) documented that OpenCode 1.x (reported on 1.18.29; the original local reproduction behind DEC 519d1206 was on 1.18.27) drops the content of a failed MCP tool result -- the model only receives a bare `Error executing tool <name>`, discarding the real error text the server put in `content[].text`. This defect is the reason this repo built the non-raising structured-result workaround chain (DEC 519d1206, extended by b399f1ce, 9080b37c, b8c9bfea, f14f125e) instead of simply raising informative exceptions everywhere. Upstream closed #47740 on 2026-10-11 because OpenCode 2.0 shipped and 1.x triage stopped; the closure is a triage action, not a fix, and the maintainers asked for a reopen (or a new issue citing the 2.x version) if the defect still reproduces on 2.0+. This feature re-runs that repro against OpenCode 2.x container images only (OpenCode 1.x is no longer used by this project and is not tested), records the evidence, and acts on the result (comment on upstream and close #211 if fixed; file a new upstream issue if not) -- and separately assesses whether the DEC 519d1206 non-raising workaround chain itself can now be retired.
 
 ### Requirements
 
 - REQ-001: Pull and use the newest published `ghcr.io/anomalyco/opencode` 2.x image tag available at run time, and also record the pre-existing local `ghcr.io/anomalyco/opencode:2.0.32` image as a baseline comparison point; record each image's tag and repository digest, and if both resolve to the same digest, treat them as one image and record the equality.
 
-- REQ-002: Run the repro against two MCP server variants: the published `biz-dfch-specmgr[mcp]==0.23.0` package, run with `mcp` pinned to `2.0.0` so that its wire text matches the original #47740 report (0.23.0 only requires `mcp>=2.0.0`, and `mcp` 2.1.0 and later swallow the handler's message before it reaches the wire), and this repo's current dev checkout (which carries the feat-221/ADR 80305c52 `call_tool` seam shim, so its wire text differs from the original report by the missing `Error executing tool <name>: ` prefix). For every variant, record the exact server command line, the resolved `mcp` version, and the server version and commit.
+- REQ-002: Run the repro against two MCP server variants: the published `biz-dfch-specmgr[mcp]==0.23.0` package, run with `mcp` pinned to `2.0.0` so that its wire text matches the original #47740 report (0.23.0 only requires `mcp>=2.0.0`, and `mcp` 2.1.0 and later swallow the handler's message before it reaches the wire), and this repo's current dev checkout (which carries the feat-221/DEC 80305c52 `call_tool` seam shim, so its wire text differs from the original report by the missing `Error executing tool <name>: ` prefix). For every variant, record the exact server command line, the resolved `mcp` version, and the server version and commit.
 
 - REQ-003: Re-run all five rows of the #47740 repro table (not just row 1) for each image x server pair, plus a raw MCP Inspector call per server as the ground-truth baseline each OpenCode run is compared against; a baseline for rows 1, 3, 4 and 5 that is not the full server message (for example a bare `Error executing tool <name>`) invalidates that server variant's cells and must be fixed before any verdict is given.
 
@@ -30,7 +30,7 @@ GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740
 
 - REQ-006: Based on the verdict, perform the appropriate upstream/issue action. anomalyco/opencode#47740 is already closed by a maintainer: if fixed, comment on it with the evidence but do not try to close or reopen it, and close dfch/biz.dfch.SpecMgr#211; if still present, file a new upstream issue citing the tested OpenCode 2.x version and linking #47740 (reopening may not be possible for the author), and keep #211 open.
 
-- REQ-007: Write up a short assessment of whether the ADR 519d1206 non-raising-structured-result workaround chain can now be retired, as input to a separate, later follow-up feature -- this feature does not perform any such retirement itself.
+- REQ-007: Write up a short assessment of whether the DEC 519d1206 non-raising-structured-result workaround chain can now be retired, as input to a separate, later follow-up feature -- this feature does not perform any such retirement itself.
 
 ### Acceptance Criteria
 
@@ -42,7 +42,7 @@ GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740
 
 - [x] ACC-004: The appropriate upstream action (comment-only if fixed, new issue if still present) has been taken on or for anomalyco/opencode#47740, and dfch/biz.dfch.SpecMgr#211 has been updated (comment, and closed if fixed), with both links recorded in this feature's Related PRs / Commits.
 
-- [x] ACC-005: A written assessment of whether the ADR 519d1206 chain can be retired is present in this feature's More Information, covering the inputs listed in the Design Notes, including which specific tools/call sites it would affect if retirement were pursued.
+- [x] ACC-005: A written assessment of whether the DEC 519d1206 chain can be retired is present in this feature's More Information, covering the inputs listed in the Design Notes, including which specific tools/call sites it would affect if retirement were pursued.
 
 - [x] ACC-006: The evidence records, per server variant, the exact server command line, the resolved `mcp` version, the server version and commit, and the Inspector baseline check for rows 1, 3, 4 and 5 (REQ-002, REQ-003).
 
@@ -60,13 +60,13 @@ GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740
 
 - Taking the resulting upstream/#211 close-out action.
 
-- Writing the ADR 519d1206 chain retirement assessment (assessment only, no code change).
+- Writing the DEC 519d1206 chain retirement assessment (assessment only, no code change).
 
 #### Explicitly Out Of Scope
 
-- Any change to this repo's server code, tools, or the `call_tool` seam shim (feat-221/ADR 80305c52) -- this feature only observes and records behavior.
+- Any change to this repo's server code, tools, or the `call_tool` seam shim (feat-221/DEC 80305c52) -- this feature only observes and records behavior.
 
-- Actually retiring any part of the ADR 519d1206 non-raising workaround chain -- tracked as a separate, later follow-up feature if the assessment (REQ-007/ACC-005) recommends it.
+- Actually retiring any part of the DEC 519d1206 non-raising workaround chain -- tracked as a separate, later follow-up feature if the assessment (REQ-007/ACC-005) recommends it.
 
 - Verifying OpenCode 1.x behavior, including as a positive control: this project no longer uses OpenCode 1.x, and the 1.x behavior is already established and documented by the original #47740 report and FEAT feat-103-set-status-error.
 
@@ -80,11 +80,11 @@ GitHub issue #211 tracks a re-verification obligation: [anomalyco/opencode#47740
 
 #### Blocks
 
-- A future follow-up feature to retire part or all of the ADR 519d1206 non-raising workaround chain, contingent on this feature's REQ-007/ACC-005 assessment.
+- A future follow-up feature to retire part or all of the DEC 519d1206 non-raising workaround chain, contingent on this feature's REQ-007/ACC-005 assessment.
 
 ### Design Notes
 
-Why the `mcp` pin matters: two different defects produce a similar symptom. The original defect is client-side: the server sends `isError: true` with the full message and OpenCode 1.x drops it before the model sees it. The `mcp` 2.1.0 behavior (upstream #3314, ADR 80305c52) is server-side: the SDK wraps a raised handler exception as `Error executing tool <name>` and discards the handler's message, so the text never goes on the wire. A server on `mcp` 2.1.0 or later without a shim therefore gives a lossy Inspector baseline too, OpenCode would trivially "match" it, and the cell would say nothing about the client. The 0.23.0 variant must therefore pin `mcp==2.0.0` (for example `uvx --from "biz-dfch-specmgr[mcp]==0.23.0" --with mcp==2.0.0 specmgr mcp`, or `--exclude-newer` set to a date before 2.1.0), and the dev-checkout variant is valid because the feat-221 shim restores the message. The `mcp` 2.1.0 change is not a fix of the original defect; whether OpenCode 2.x still drops the text is exactly what this feature measures.
+Why the `mcp` pin matters: two different defects produce a similar symptom. The original defect is client-side: the server sends `isError: true` with the full message and OpenCode 1.x drops it before the model sees it. The `mcp` 2.1.0 behavior (upstream #3314, DEC 80305c52) is server-side: the SDK wraps a raised handler exception as `Error executing tool <name>` and discards the handler's message, so the text never goes on the wire. A server on `mcp` 2.1.0 or later without a shim therefore gives a lossy Inspector baseline too, OpenCode would trivially "match" it, and the cell would say nothing about the client. The 0.23.0 variant must therefore pin `mcp==2.0.0` (for example `uvx --from "biz-dfch-specmgr[mcp]==0.23.0" --with mcp==2.0.0 specmgr mcp`, or `--exclude-newer` set to a date before 2.1.0), and the dev-checkout variant is valid because the feat-221 shim restores the message. The `mcp` 2.1.0 change is not a fix of the original defect; whether OpenCode 2.x still drops the text is exactly what this feature measures.
 
 Repro matrix shape: 2 images (`ghcr.io/anomalyco/opencode:2.0.32` baseline, newest published 2.x tag) x 2 MCP server variants (the pinned 0.23.0 package and the dev checkout via `uv run --frozen --extra cli --extra mcp --directory`) x 5 repro rows = 20 OpenCode-run cells, plus one MCP Inspector baseline call per server (2 baselines x 5 rows = 10 reference outputs) that every OpenCode cell is compared against. If the two images share a digest the matrix is 10 cells.
 
@@ -102,7 +102,7 @@ The five repro rows (taken from #47740; `UUID` is the id of a real requirement d
 
 Baseline method: run `npx @modelcontextprotocol/inspector --cli <server command> --method tools/call --tool-name <tool> --tool-arg <k=v> --format json` (the form used in #47740) once per server and row, store the raw JSON unmodified, and judge the baseline by `content[].text` and `isError` in that raw JSON. The Inspector is a reference for what the server put on the wire; it is not the system under test.
 
-Expected-text caveat: the dev-checkout server's wire text is expected to differ from the original 0.23.0 report even on an unfixed OpenCode, because feat-221/ADR 80305c52's `SpecMgrServer.call_tool` seam already re-raises `UnexpectedToolError.__cause__`, which strips the `Error executing tool <name>: ` prefix. The REQ-005 rule therefore compares against each server's own Inspector baseline and tolerates only that prefix, not a byte-for-byte match against the original issue's quoted output.
+Expected-text caveat: the dev-checkout server's wire text is expected to differ from the original 0.23.0 report even on an unfixed OpenCode, because feat-221/DEC 80305c52's `SpecMgrServer.call_tool` seam already re-raises `UnexpectedToolError.__cause__`, which strips the `Error executing tool <name>: ` prefix. The REQ-005 rule therefore compares against each server's own Inspector baseline and tolerates only that prefix, not a byte-for-byte match against the original issue's quoted output.
 
 Headless run approach (verified by a probe on 2.0.32, see Updates): `opencode run --standalone --auto --format json -m opencode/big-pickle "<prompt>"` inside the container. The built-in `opencode` provider needs no login or credentials from inside the container (`opencode models --standalone` lists 12 free `opencode/*` models). `--standalone` is required (a private server instead of the background service) and `--auto` auto-approves the tool permission. The MCP server is attached by a project-level `opencode.json` in the working directory, in the 2.x shape `{"mcp": {"servers": {"<name>": {"type": "local", "command": [...], "environment": {...}}}}}` (not the 1.x `mcp.<name>` shape, which is silently ignored); the `OPENCODE_CONFIG` variable did not attach the server, and `opencode mcp list` reports "No MCP servers configured" even when the server attaches, so neither is a usable check. In 2.x the model does not see MCP tools as individual tools: it calls them from one `execute` code tool as `tools.<server>.<tool>({...})`, and a failed call surfaces as a thrown exception whose `message` is the server's error text. The JSON event stream (`type: "tool_use"`, `part.state`) records the `execute` wrapper's `output` and, in `metadata.toolCalls[]`, only the nested call's `status` (`error`) and `input`, not the error text, so the raw message is observable only through the code the model runs. The prompt therefore must instruct the model to run exactly one `try { await tools.<server>.<tool>({...}) } catch (e) { return "ERROR: " + e.message }` call with the literal arguments, with no retry and no corrected arguments, and the cell records the `execute` `output` and `content[].text` from the stream, not the assistant's prose. Because model behavior is not deterministic, run each cell three times and record all three; a cell passes only if all three runs pass on the REQ-005 rule. Provider and model are recorded per cell; `opencode/big-pickle` is the default, and another free `opencode/*` model is the fallback.
 
@@ -110,21 +110,21 @@ Container prerequisites (verified on 2.0.32): the stock image is Alpine (musl), 
 
 Evidence location and hygiene: the raw matrix, baselines, commands and digests go into a sibling `evidence.md` in this feature folder (thirty or more raw outputs would bloat this README); only this README may cite it, since nothing in `src/`, `tests/` or `AGENTS.md` may cite a feature-folder sibling file. The verdict and the retirement assessment live in this README's More Information. Redact provider tokens, credentials and account identifiers from every captured output. Also record the dev checkout commit SHA (at planning time `4ebdc6c`, server 0.37.0, `mcp` 2.3.0), and the `docker`, `uv`, `uvx` and `npx` versions. The pre-existing local baseline image is `ghcr.io/anomalyco/opencode:2.0.32`, digest `sha256:02998f912cc8bf84ce20ff9d9faa33225406c52f9d13f8f86b376490f1e28813` (confirmed locally at planning time).
 
-Retirement assessment inputs (REQ-007): the sites of the chain -- the generic `validate` tool (ADR 519d1206), `set_status`'s `InvalidStatusResult` (ADR b399f1ce), `get_<d>`'s `ParseFailureResult` (ADR 9080b37c), `update`/`edit`/`set_status`/`set_classification`'s `ParseFailureResult` and `ValidateResult` channels (ADR b8c9bfea), and `create_<d>`/`parse_<d>`'s `ValidateResult` (ADR f14f125e); the raise sites ADR 80305c52 deliberately kept; the Python-level contracts, tests, prompts, skills and `AGENTS.md` text that depend on the structured results; and other MCP clients, since ADR 519d1206 notes the defect is not OpenCode-only, so a verdict on OpenCode 2.x alone is necessary but not sufficient to justify retirement.
+Retirement assessment inputs (REQ-007): the sites of the chain -- the generic `validate` tool (DEC 519d1206), `set_status`'s `InvalidStatusResult` (DEC b399f1ce), `get_<d>`'s `ParseFailureResult` (DEC 9080b37c), `update`/`edit`/`set_status`/`set_classification`'s `ParseFailureResult` and `ValidateResult` channels (DEC b8c9bfea), and `create_<d>`/`parse_<d>`'s `ValidateResult` (DEC f14f125e); the raise sites DEC 80305c52 deliberately kept; the Python-level contracts, tests, prompts, skills and `AGENTS.md` text that depend on the structured results; and other MCP clients, since DEC 519d1206 notes the defect is not OpenCode-only, so a verdict on OpenCode 2.x alone is necessary but not sufficient to justify retirement.
 
 ### Related Decisions
 
-- ADR 519d1206-4d2a-4500-9046-6db635209996 (Design validate as a non-raising, structured-result tool to work around this exact OpenCode defect): the chain this feature's verdict may allow retiring.
+- DEC 519d1206-4d2a-4500-9046-6db635209996 (Design validate as a non-raising, structured-result tool to work around this exact OpenCode defect): the chain this feature's verdict may allow retiring.
 
-- ADR b399f1ce-ed42-4929-b01c-7a57d18e8014 (Extend the non-raising workaround to set_status's invalid-status case): part of the same chain.
+- DEC b399f1ce-ed42-4929-b01c-7a57d18e8014 (Extend the non-raising workaround to set_status's invalid-status case): part of the same chain.
 
-- ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c (Extend the non-raising workaround to the `get_<d>` parse-failure case): part of the same chain.
+- DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c (Extend the non-raising workaround to the `get_<d>` parse-failure case): part of the same chain.
 
-- ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f (Extend the non-raising workaround to update/edit's content-validation case): part of the same chain.
+- DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f (Extend the non-raising workaround to update/edit's content-validation case): part of the same chain.
 
-- ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e (Extend the non-raising workaround to the `create_<d>`/`parse_<d>` content-validation case): part of the same chain.
+- DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e (Extend the non-raising workaround to the `create_<d>`/`parse_<d>` content-validation case): part of the same chain.
 
-- ADR 80305c52-102e-4833-a233-3468bef29e11 (Preserve caller-visible tool error text across mcp >= 2.1.0 via a call_tool seam): the shim that changes the dev checkout's expected wire text for this repro, and explicitly scoped itself as preserving the status quo on issue #211 rather than resolving it.
+- DEC 80305c52-102e-4833-a233-3468bef29e11 (Preserve caller-visible tool error text across mcp >= 2.1.0 via a call_tool seam): the shim that changes the dev checkout's expected wire text for this repro, and explicitly scoped itself as preserving the status quo on issue #211 rather than resolving it.
 
 ### Task List
 
@@ -150,7 +150,7 @@ Retirement assessment inputs (REQ-007): the sites of the chain -- the generic `v
 
 - [x] Task 120.110: Comment on dfch/biz.dfch.SpecMgr#211 with the verdict and the upstream action taken, closing #211 if the defect is fixed (REQ-006, ACC-004).
 
-- [x] Task 120.120: Write the ADR 519d1206 chain retirement assessment (which tools/call sites would be affected, and whether retirement is recommended) into this feature's More Information, covering the inputs listed in the Design Notes (REQ-007, ACC-005).
+- [x] Task 120.120: Write the DEC 519d1206 chain retirement assessment (which tools/call sites would be affected, and whether retirement is recommended) into this feature's More Information, covering the inputs listed in the Design Notes (REQ-007, ACC-005).
 
 ## Progress
 
@@ -168,7 +168,7 @@ Retirement assessment inputs (REQ-007): the sites of the chain -- the generic `v
 
 #### 2026-10-31 14:54:21.000Z - Close-out done, assessment written, feature done
 
-Posted the verification result with the full `evidence.md` (redacted: no tokens or credentials, internal host name and endpoint removed) as a comment on the already-closed anomalyco/opencode#47740 (comment only). Commented on and closed dfch/biz.dfch.SpecMgr#211. Wrote the retirement assessment (More Information): do not retire the ADR 519d1206 chain on this result alone. Set the feature to `done`.
+Posted the verification result with the full `evidence.md` (redacted: no tokens or credentials, internal host name and endpoint removed) as a comment on the already-closed anomalyco/opencode#47740 (comment only). Commented on and closed dfch/biz.dfch.SpecMgr#211. Wrote the retirement assessment (More Information): do not retire the DEC 519d1206 chain on this result alone. Set the feature to `done`.
 
 #### 2026-10-31 14:43:00.000Z - Matrix on the newest 2.x image (2.2.5) complete; defect not reproduced
 
@@ -192,7 +192,7 @@ Plan refined after a review of the plan and its reference graph. The 0.23.0 vari
 
 #### 2026-10-31 00:00:00.000Z - Created
 
-Feature created from dfch/biz.dfch.SpecMgr#211 to re-verify anomalyco/opencode#47740 against the newest OpenCode 2.x container image. Plan covers a 2-image x 2-server x 5-row repro matrix plus Inspector baselines, the resulting upstream/#211 close-out action, and a written assessment of whether the ADR 519d1206 non-raising workaround chain can be retired. Implementation has not started.
+Feature created from dfch/biz.dfch.SpecMgr#211 to re-verify anomalyco/opencode#47740 against the newest OpenCode 2.x container image. Plan covers a 2-image x 2-server x 5-row repro matrix plus Inspector baselines, the resulting upstream/#211 close-out action, and a written assessment of whether the DEC 519d1206 non-raising workaround chain can be retired. Implementation has not started.
 
 ### Decisions Made
 
@@ -230,7 +230,7 @@ Raw outputs go into a sibling `evidence.md` in this feature folder, while the ve
 
 - FEAT feat-204-create-error: an earlier extension of the non-raising workaround chain.
 
-- FEAT feat-221-mcp-220-error-contract: added the `call_tool` seam shim (ADR 80305c52) that changes this repo's dev-checkout wire text for this repro.
+- FEAT feat-221-mcp-220-error-contract: added the `call_tool` seam shim (DEC 80305c52) that changes this repo's dev-checkout wire text for this repro.
 
 ### More Information
 
@@ -240,26 +240,26 @@ Raw outputs go into a sibling `evidence.md` in this feature folder, while the ve
 
 What this does not show: it used one local open-weight model (`qwen3.8-27b-bf16-896k`, accepted for this verdict), and in 2.x the error text is observed as the `message` of the exception thrown inside the `execute` code sandbox, the 2.x way to call MCP tools; it says nothing about any other way a client could surface a failed MCP call, or about other MCP clients. The defect reported in #47740 was on OpenCode 1.x, which is out of scope.
 
-#### Retirement assessment of the ADR 519d1206 chain (Task 120.120, REQ-007, ACC-005)
+#### Retirement assessment of the DEC 519d1206 chain (Task 120.120, REQ-007, ACC-005)
 
 **Recommendation: do not retire the chain on the strength of this result alone.** The result removes the original reason for one client (OpenCode 2.x), but not the other costs and dependencies of removing it. A retirement, if pursued, belongs in a separate follow-up feature.
 
 Sites the chain touches, if retirement were pursued:
 
-- The generic `validate` tool (ADR 519d1206): always returns `{valid, errors}` instead of raising.
-- `set_status`'s `InvalidStatusResult` for an out-of-vocabulary status (ADR b399f1ce). Row 2 of the matrix is exactly this site and is the one case that is `isError: false` by design.
-- `get_<d>`'s `ParseFailureResult` for the 12 whole-body domains (ADR 9080b37c), and the same result from `update`, `edit`, `set_status` and `set_classification` for a broken existing document (ADR b8c9bfea).
-- The non-raising `ValidateResult` from `update`/`edit` content validation (ADR b8c9bfea), and from every `create_<d>` and `parse_<d>` (ADR f14f125e).
-- Not affected: the raise sites ADR 80305c52 deliberately kept (invalid ids, not-found errors, `superseded_by` misuse). They already depend on the `call_tool` seam, not on the chain, and rows 1, 3, 4 and 5 test exactly those.
+- The generic `validate` tool (DEC 519d1206): always returns `{valid, errors}` instead of raising.
+- `set_status`'s `InvalidStatusResult` for an out-of-vocabulary status (DEC b399f1ce). Row 2 of the matrix is exactly this site and is the one case that is `isError: false` by design.
+- `get_<d>`'s `ParseFailureResult` for the 12 whole-body domains (DEC 9080b37c), and the same result from `update`, `edit`, `set_status` and `set_classification` for a broken existing document (DEC b8c9bfea).
+- The non-raising `ValidateResult` from `update`/`edit` content validation (DEC b8c9bfea), and from every `create_<d>` and `parse_<d>` (DEC f14f125e).
+- Not affected: the raise sites DEC 80305c52 deliberately kept (invalid ids, not-found errors, `superseded_by` misuse). They already depend on the `call_tool` seam, not on the chain, and rows 1, 3, 4 and 5 test exactly those.
 
 Why not retire now:
 
-- **Other MCP clients.** ADR 519d1206 records the truncation as not OpenCode-only. This feature tested one client family, OpenCode 2.x, with one local model. A pass there says nothing about other clients that may still drop `isError: true` content.
+- **Other MCP clients.** DEC 519d1206 records the truncation as not OpenCode-only. This feature tested one client family, OpenCode 2.x, with one local model. A pass there says nothing about other clients that may still drop `isError: true` content.
 - **OpenCode 1.x.** It is no longer used by this project, but the defect was reported there, and this feature did not retest it.
 - **Python-level and documented contracts.** Callers, tests, prompts, skills and `AGENTS.md` rely on the structured results (for example the `repair` flow depends on `ParseFailureResult` from `get_<d>`). Retiring means a breaking change to these return shapes, and it would not be reversible for users who already depend on them.
 - **The structured results are useful on their own.** `validate` returning a result is a dry-run, not a workaround, and `ParseFailureResult` carries the `path` and `id` that the repair flow needs. Even a retirement would likely keep some of them by design, not only as a client workaround.
 - **What was observed.** The text was seen as the exception message inside the 2.x `execute` code sandbox, so it does not cover other ways a client could surface a failed call.
 
-What would have to be true to reconsider: the supported-client list is decided and every client on it is shown to pass the same matrix; a decision is made on which structured results stay as API by design; and a migration plan exists for the changed return shapes. An ADR superseding ADR 519d1206 would record that decision.
+What would have to be true to reconsider: the supported-client list is decided and every client on it is shown to pass the same matrix; a decision is made on which structured results stay as API by design; and a migration plan exists for the changed return shapes. An ADR superseding DEC 519d1206 would record that decision.
 
 Raw evidence is in the sibling `evidence.md` of this feature folder.

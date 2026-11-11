@@ -2501,8 +2501,7 @@ One of the sub-characteristics of ISO/IEC 25010:2023.
 
 Parse the packaged ISO/IEC 25010:2023 markdown text into an :class:`Iso25010`.
 
-Thin `format_text` + `Iso25010.from_text` wrapper -- unlike `parse_adr`/
-`parse_req`, there is no YAML frontmatter to split off first, since this
+Thin `format_text` + `Iso25010.from_text` wrapper -- there is no YAML frontmatter to split off first, since this
 is a plain packaged data file, not a user-authored document.
 
 Parameters

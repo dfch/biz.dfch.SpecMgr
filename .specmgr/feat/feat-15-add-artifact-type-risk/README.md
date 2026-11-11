@@ -30,7 +30,7 @@ almost exactly (per GitHub issue #15).
 - REQ-002: Pydantic models for `rsk` documents (`rsk/models/v1/` — domain-first path, mirroring `tsk/models/v1/` and `req/models/v1/`)
 - REQ-003: Parse and validate `rsk` documents from markdown (`parse_rsk`, mirroring `parse_tsk`/`parse_req`)
 - REQ-004: MCP tools mirroring `req`'s lifecycle surface plus the feat-13 listing contract: `parse_rsk`, `get_rsk_example`, `get_rsk_template`, `create_rsk`, `update_rsk`, `set_status_rsk`, `delete_rsk` (stub), `validate_rsk`, `get_rsk`, and the paged `list_rsk` tool (`max_results`/`offset`, `PagedResult[RskSummary]`, skip-and-continue on unparseable files — mirroring `tsk/tools/list_tsk.py` and feat-13's shared paging contract)
-- REQ-005: MCP resources: `specmgr://rsk/example`, `/schema`, `/template` (no `/list` — listing is the paged `list_rsk` tool per feat-13 / ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), plus two new static domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four valid strategy words, when and how to apply each) and `specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table, product thresholds — what 'high risk' and 'low risk' mean)
+- REQ-005: MCP resources: `specmgr://rsk/example`, `/schema`, `/template` (no `/list` — listing is the paged `list_rsk` tool per feat-13 / DEC ec9f5262-9912-49d0-903f-fcfb54f28c13), plus two new static domain-knowledge resources: `specmgr://rsk/tara` (what TARA is, the four valid strategy words, when and how to apply each) and `specmgr://rsk/risk-matrix` (the 5x5 matrix: scale anchors, zone table, product thresholds — what 'high risk' and 'low risk' mean)
 - REQ-006: MCP prompts — `create_risk`, `update_risk` (narrated tool sequences, mirroring `req/prompts/create_req.py`/`update_req.py` and `tsk/prompts/create_task.py`/`update_task.py`)
 - REQ-007: Packaged example/template/schema data plus the two domain-knowledge documents (`rsk/data/`: `rsk_example.md`, `rsk_template.md`, `rsk_schema.json`, `rsk_tara.md`, `rsk_risk_matrix.md`) via the existing generic `general/tools/_packaged_data.py`, with the matching `pyproject.toml` package-data entry, pre-commit hook, and CI step
 - REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema` (new `rsk` entry in the doc-type registry), `specmgr mcp-docs`, all kept drift-free via pre-commit/CI
@@ -81,9 +81,9 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
-  `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+  `MarkdownFrontmatter` base), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614
   (id-based reads as a tool, not a resource), ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13 + the feat-13 paging machinery
   (`general/tools/_paging.py`, `general/models/summary.py::DocSummary`,
@@ -366,7 +366,7 @@ originally planned, rather than keeping a second copy of the task around.
 - [x] Task 120.140: `set_status_rsk(id, status) -> RskDocument` tool (only path that changes `status`) — depends on: Task 3.1 — status: done
 - [x] Task 120.150: `delete_rsk(id) -> NoReturn` stub tool — depends on: Task 3.1 — status: done
 - [x] Task 120.160: `validate_rsk(content, full=False) -> bool` tool — depends on: none — status: done
-- [x] Task 120.170: `get_rsk(id) -> RskDocument` tool (id-based single-document read; tool, not resource — per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614) — depends on: Task 3.1 — status: done
+- [x] Task 120.170: `get_rsk(id) -> RskDocument` tool (id-based single-document read; tool, not resource — per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614) — depends on: Task 3.1 — status: done
 - [x] Task 120.180: `get_rsk_example`/`get_rsk_template` tools + packaged data (`rsk/data/rsk_example.md` — a copy of Phase 1's `rsk_reference.md`, `rsk/data/rsk_template.md` — a valid, fully-parseable skeleton with a deadbeef-style id that round-trips through `parse_rsk` (tested)) via `general/tools/_packaged_data.py` — depends on: Task 1.3 — status: done
 - [x] Task 120.190: `specmgr://rsk/schema` resource (packaged `rsk/data/rsk_schema.json`, mirroring `specmgr://req/schema`; no `/list` resource — listing is the `list_rsk` tool, Task 3.14) — depends on: Task 3.1, Task 2.5 — status: done
 - [x] Task 120.200: `specmgr://rsk/example` and `specmgr://rsk/template` resources — depends on: Task 3.9 — status: done
@@ -500,7 +500,7 @@ rationale: `feat-10` precedent (`5985a1d`); keeps each phase's commit containing
 
 rationale: a malformed assessment heading fails at parse time via the `match_alias` assertion in `MarkdownSection.from_text` (unlike `TaskItem`'s checkbox marker, which is free text the commonmark parser accepts), and every tool path parses, so there is no silent-construction gap (user-approved, 2026-08-24).
 
-#### 2026-08-26T09:15:57.000Z : Corrected REQ-005 against feat-13 — no `specmgr://rsk/list` resource; listing is the paged `list_rsk` tool (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13: MCP resources cannot take arbitrary parameters, and `max_results`/`offset` paging needs exactly that) —
+#### 2026-08-26T09:15:57.000Z : Corrected REQ-005 against feat-13 — no `specmgr://rsk/list` resource; listing is the paged `list_rsk` tool (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13: MCP resources cannot take arbitrary parameters, and `max_results`/`offset` paging needs exactly that) —
 
 rationale: the plan originally mirrored feat-10's (pre-feat-13) resource list; verified against `tsk/tools/list_tsk.py` and `tsk/resources/` (no list resource) before correcting.
 

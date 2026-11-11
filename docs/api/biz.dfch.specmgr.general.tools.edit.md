@@ -71,14 +71,11 @@ fallback. ``replace_all`` rewrites every exact occurrence; an empty
 the result.
 
 **Explicit type check (REQ-004, D4).** Unlike ``update``/``delete``/
-``set_classification`` -- whose dispatch-table lookup inherits a
-``KeyError`` for ``type="adr"`` -- the public :func:`edit` raises an
-explicit ``ValueError`` for an unknown or ``adr`` ``type`` before
-dispatch, following the generic ``validate`` tool's own precedent (ADR
-078bf395-0a5f-4afd-84f6-b7a2191a00e6). ADR is deliberately *not* a
-``type`` here: its section-level MADR mutation contract
-(``update_frontmatter``/``update_section``/``option_*``) has no whole-body
-replace by design, and an exact-match body edit is outside it.
+``set_classification`` -- whose dispatch-table lookup raises a
+``KeyError`` for an unknown ``type`` -- the public :func:`edit` raises an
+explicit ``ValueError`` for an unknown ``type`` before dispatch, following
+the generic ``validate`` tool's own precedent (DEC
+078bf395-0a5f-4afd-84f6-b7a2191a00e6).
 
 **Persistence (REQ-006).** On success the existing frontmatter is carried
 over with only ``updated`` bumped (via ``now_timestamp()``), the edited
@@ -92,7 +89,7 @@ serialization, the inherited ``_write.py`` caveat identical to
 frontmatter only is returned (no body).
 
 **Non-raising failure channels (feat-170-update-edit-parse-failure, GitHub
-issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
 workaround chain).** Two failures now return a structured result instead
 of raising, with nothing written in either case. (1) On a target ``id``
@@ -125,8 +122,8 @@ exactly (the shared ``_CAUGHT_EXCEPTIONS`` tuple defined in
 :mod:`~biz.dfch.specmgr.general.models.validate_result` and re-exported by
 ``general.tools.validate``). Stage-1's OC-parity ``ValueError``s (identical input, empty
 ``old_str``, not found, multiple matches) and every pre-dispatch
-caller-usage ``ValueError`` (invalid ``id`` shape, unknown or ``adr``
-``type``) are never caught and still raise exactly as before.
+caller-usage ``ValueError`` (invalid ``id`` shape, unknown ``type``)
+are never caught and still raise exactly as before.
 
 **Safety (REQ-005).** The public :func:`edit` validates ``id`` via
 ``_path_safety.validate_id`` before any filesystem access (a
@@ -156,7 +153,7 @@ Mirror of :func:`_edit_req`'s shape (same ``dec_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_dec_file``,
 ``DecNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/5).**
+**Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/5).**
 ``language`` (the caller's already-guarded value; default ``"en"``,
 byte-identical to the pre-i18n adapter) selects the variant file: the
 id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -186,7 +183,7 @@ Mirror of :func:`_edit_req`'s shape (same ``gol_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_gol_file``,
 ``GolNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
 variant's own (``gol_lock(gol_lock_key(id_, language))``), the stage-1 match runs against that
@@ -204,7 +201,7 @@ Mirror of :func:`_edit_req`'s shape (same ``prb_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_prb_file``,
 ``PrbNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
 variant's own (``prb_lock(prb_lock_key(id_, language))``), the stage-1 match runs against that
@@ -222,7 +219,7 @@ Mirror of :func:`_edit_req`'s shape (same ``qa_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_qa_file``,
 ``QaNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
 variant's own (``qa_lock(qa_lock_key(id_, language))``), the stage-1 match runs against that
@@ -251,7 +248,7 @@ stage-2 content-validation failure of the edited body yields the
 non-raising ``ValidateResult(valid=False, ...)`` instead of
 ``AssertionError``/``pydantic.ValidationError``.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
 variant's own (``req_lock(req_lock_key(id_, language))``), the stage-1 match runs against that
@@ -269,7 +266,7 @@ Mirror of :func:`_edit_req`'s shape (same ``rsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_rsk_file``,
 ``RskNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
 variant's own (``rsk_lock(rsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -287,7 +284,7 @@ Mirror of :func:`_edit_req`'s shape (same ``set_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_set_file``,
 ``SetNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
 variant's own (``set_lock(set_lock_key(id_, language))``), the stage-1 match runs against
@@ -305,7 +302,7 @@ Mirror of :func:`_edit_req`'s shape (same ``sop_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_sop_file``,
 ``SopNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
 variant's own (``sop_lock(sop_lock_key(id_, language))``), the stage-1 match runs against that
@@ -323,7 +320,7 @@ Mirror of :func:`_edit_req`'s shape (same ``sysrs_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped,
 ``write_sysrs_file``, ``SysrsNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
 variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), the stage-1 match runs against
@@ -341,7 +338,7 @@ Mirror of :func:`_edit_req`'s shape (same ``tsk_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_tsk_file``,
 ``TskNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
 variant's own (``tsk_lock(tsk_lock_key(id_, language))``), the stage-1 match runs against that
@@ -359,7 +356,7 @@ Mirror of :func:`_edit_req`'s shape (same ``txt_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_txt_file``,
 ``TxtNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
 variant's own (``txt_lock(txt_lock_key(id_, language))``), the stage-1 match runs against
@@ -377,7 +374,7 @@ Mirror of :func:`_edit_req`'s shape (same ``uc_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_uc_file``,
 ``UcNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
 variant's own (``uc_lock(uc_lock_key(id_, language))``), the stage-1 match runs against that
@@ -395,7 +392,7 @@ Mirror of :func:`_edit_req`'s shape (same ``vcr_lock``, ``load_by_id``,
 frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,
 ``VcrNotFoundError``).
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
 caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
 selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
 variant's own (``vcr_lock(vcr_lock_key(id_, language))``), the stage-1 match runs against that
@@ -484,8 +481,8 @@ field/cross-field (``pydantic.ValidationError``) failure returns the
 non-raising ``ValidateResult(valid=False, ...)`` (the single
 ``errors[].message`` capped at 300 chars exactly as the generic
 ``validate`` tool caps it, feat-110 -- feat-170-update-edit-parse-
-failure, GitHub issue #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
-case 4 of the ADR 519d1206 chain), with nothing written in either case.
+failure, GitHub issue #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f,
+case 4 of the DEC 519d1206 chain), with nothing written in either case.
 
 **2-fold write (REQ-003).** The disk write happens strictly after both
 stages pass: the domain lock is held across the entire read -> match ->
@@ -505,9 +502,9 @@ nothing is written and the file is byte-unchanged.
 Safety (REQ-005): ``id`` is validated via ``_path_safety.validate_id``
 **before** any filesystem access, so a path-injection attempt or a
 wrong-format id is a ``ValueError`` raised before dispatch; an unknown
-or ``adr`` ``type`` is likewise an explicit ``ValueError`` before
-dispatch (REQ-004, D4 -- the generic ``validate`` tool's precedent, a
-deliberate divergence from ``update``'s inherited ``KeyError``); the
+``type`` is likewise an explicit ``ValueError`` before dispatch
+(REQ-004, D4 -- the generic ``validate`` tool's precedent, a deliberate
+divergence from ``update``'s inherited ``KeyError``); the
 identical-input and empty-``old_str`` guards (the OC messages verbatim,
 plain ``ValueError``s with no wrap prefix, REQ-008) fire after them and
 still before any filesystem access. Each adapter additionally confines
@@ -542,7 +539,7 @@ replace_all:
     matches are an error). ``True``: every exact occurrence is
     rewritten.
 language:
-    The language variant to edit (feat-197-i18n Phase 120, ADR
+    The language variant to edit (feat-197-i18n Phase 120, DEC
     38efdb66 items 1/2/5/6): ``"en"`` (the default, same as omitting
     it) edits the flat default-language document -- today's exact
     behavior; any other ISO 639-1-shaped lowercase two-letter code
@@ -569,7 +566,7 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
     (``error``/``path``/``id``) instead of the domain's not-found error --
     ``error`` is byte-identical to the domain's ``list_<d>`` failed row's
     ``error`` for the same file (identical field path and cause, including
-    the trailing pydantic documentation line; ADR
+    the trailing pydantic documentation line; DEC
     9080b37c-82b3-4f63-81f1-79641d0bf14c). On a stage-2 content-validation
     failure of the edited body, a non-raising
     :class:`~biz.dfch.specmgr.general.models.ValidateResult`
@@ -578,7 +575,7 @@ VcrFrontmatter | SysrsFrontmatter | ParseFailureResult | ValidateResult
     ``validate`` tool caps it (feat-110), instead of
     ``AssertionError``/``pydantic.ValidationError``. Nothing is written in
     either failure case (feat-170-update-edit-parse-failure, GitHub issue
-    #170, ADR b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR
+    #170, DEC b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
 
@@ -587,9 +584,8 @@ Raises
 ValueError
     ``id`` is a path-injection attempt or not in the dispatched
     domain's own format (raised before any filesystem access);
-    ``type`` is not one of the supported domains, including
-    ``"adr"`` (raised before dispatch, REQ-004 -- ``"adr"`` with a
-    well-formed UUID id reaches the edit-specific message; any other
+    ``type`` is not one of the supported domains
+    (raised before dispatch, REQ-004 -- any
     unknown type is rejected first by ``validate_id``'s own
     message); ``old_str`` is
     identical to ``new_str`` or empty (raised before any filesystem

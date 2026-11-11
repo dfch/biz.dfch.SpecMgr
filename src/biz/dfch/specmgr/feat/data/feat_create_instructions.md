@@ -43,7 +43,7 @@ step 1 if this is genuinely a new feature.
     independently optional leaves: `#### Depends On` and `#### Blocks`.
   - `### Design Notes` -- optional prose.
   - `### Related Decisions` -- optional free-form cross-reference list;
-    entries may reference an ADR id, a dec id, or any other decision
+    entries may reference a dec id or any other decision
     record.
   - `### Task List` -- mandatory container, no own text, holding at
     least one `#### Phase NNN: {title}` entry (3-digit zero-padded phase

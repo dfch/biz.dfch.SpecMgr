@@ -660,8 +660,8 @@ index eb8012c..a3686b6 100644
 +  criteria. Fills a gap identified during `feat-32-sysrs` planning (no
 +  existing domain modeled ISO/IEC/IEEE 29148's/MITRE SE Guide's
 +  "Verification / Test and Evaluation" concept). Follows the domain-first
-+  hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
-+  "simple surface" from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0
++  hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
++  "simple surface" from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0
 +  -- no per-domain mutation tools, including no per-AC create/read/update/
 +  delete tools):
 +  - `vcr/models/v1/`: Pydantic schema (`VcrFrontmatter` with a closed
@@ -865,7 +865,7 @@ index c714158..60239a9 100644
 --- a/src/biz/dfch/specmgr/general/resources/__init__.py
 +++ b/src/biz/dfch/specmgr/general/resources/__init__.py
 @@ -21,17 +21,22 @@ domain.
- See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+ See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
  
  ``version`` registers the server package version resource. ``iso25010``
 -registers the ISO/IEC 25010:2023 product quality model resource. Domain-
@@ -966,7 +966,7 @@ index beb0e21..21b3bbb 100644
 +
 +    Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
 +    ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-+    first domain built dispatch-only from day one per ADR 36905d5b, so there
++    first domain built dispatch-only from day one per DEC 36905d5b, so there
 +    was never a per-domain ``set_status_sop`` tool to port -- this adapter
 +    was written directly in this shape) -- see :func:`_set_status_req` for
 +    the full semantics.
@@ -1161,7 +1161,7 @@ index 868fbf4..37578ef 100644
  the *spliced result* is validated as a whole document and persisted
 -verbatim instead of the raw fragment.
 +verbatim instead of the raw fragment. ``sop`` is the first domain built
-+dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
++dispatch-only from day one (DEC 36905d5b): its ``_update_sop`` adapter was
 +written directly in this shape rather than ported from a retired
 +per-domain tool.
  
@@ -1217,7 +1217,7 @@ index 868fbf4..37578ef 100644
 +    Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
 +    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
 +    ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
-+    built dispatch-only from day one per ADR 36905d5b, so there was never a
++    built dispatch-only from day one per DEC 36905d5b, so there was never a
 +    per-domain ``update_sop`` tool to port -- this adapter was written
 +    directly in this shape), plus the REQ-002 range branch
 +    (see :func:`_update_req`).
@@ -1479,16 +1479,16 @@ index dadf610..64b5902 100644
 +                        Informed) responsibility-assignment framework, as raw markdown.
  
  REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
- through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+ through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 @@ -112,6 +121,10 @@ id-based reads go through the ``get_gol`` tool only, and there is also no
   ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
   through the ``get_dec`` tool only, and there is also no
   ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
-+ day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
++ day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
 + ``specmgr://sop/{id}`` resource either, for the same reason -- id-based reads go
 + through the ``get_sop`` tool only, and there is also no
 + ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged tool from
-  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
+  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
   ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
   reads go through the ``get_feat`` tool only, and there is also no
 @@ -156,11 +169,24 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
@@ -1521,7 +1521,7 @@ index dadf610..64b5902 100644
  frontmatter-stripped body text verbatim instead of the parsed document), ``list_feat``,
    ``get_feat_example``,
 @@ -172,15 +198,15 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
-   day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
+   day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
    General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
  preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 -existing document's content across the nine whole-body domains (``type`` is one of
@@ -1554,13 +1554,13 @@ index dadf610..64b5902 100644
 +``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
 +``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
 +via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
-+``set_status_sop`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
++``set_status_sop`` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
  Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat`` --
  narrated instruction flows guiding an LLM through the FEAT tool sequence
  above; ``create_feat`` first checks ``list_feat`` for a near-duplicate
 @@ -229,8 +265,8 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
  Modules are grouped domain-first
- (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+ (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
  document-type domain"): each document
 -domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``,
 -and later ``ac``) is a
@@ -1655,7 +1655,7 @@ index c714158..704f08e 100644
 --- a/src/biz/dfch/specmgr/general/resources/__init__.py
 +++ b/src/biz/dfch/specmgr/general/resources/__init__.py
 @@ -21,17 +21,22 @@ domain.
- See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+ See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
  
  ``version`` registers the server package version resource. ``iso25010``
 -registers the ISO/IEC 25010:2023 product quality model resource. Domain-
@@ -2044,17 +2044,17 @@ index dadf610..61c5de8 100644
   ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
   reads go through the ``get_feat`` tool only, and there is also no
   ``specmgr://feat/list`` resource either -- ``list_feat`` ships as a paged
-+ tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
++ tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
 + ``specmgr://vcr/{id}`` resource either, for the same reason -- id-based
 + reads go through the ``get_vcr`` tool only, and there is also no
 + ``specmgr://vcr/list`` resource either -- ``list_vcr`` ships as a paged
-  tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+  tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
  
  Tools
 @@ -170,17 +185,21 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
    ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
    its own -- it dispatches through the generic ``update``/``set_status`` tools below from
-   day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
+   day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
 +  Verification case record tools (``vcr/tools/``): ``parse_vcr``, ``get_vcr``
 +  (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
 +  parsed document), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
@@ -2092,7 +2092,7 @@ index dadf610..61c5de8 100644
  older ``### Recent Updates`` entries out of any `.specmgr` feature folder's
  ``README.md`` into an optional sibling ``history.md``, per ADR
 @@ -230,18 +253,19 @@ Modules are grouped domain-first
- (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+ (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
  document-type domain"): each document
  domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``,
 -and later ``ac``) is a
@@ -2133,7 +2133,7 @@ _Thinking:_
 
 I now have a very clear overall picture of the conflicts in the shared source files. Both sides make nearly identical structural edits (adding a new domain to the dispatch list, adding adapters, updating docstrings/counts) to the same files. The merged result will need to include both `sop` and `vcr`:
 
-01. **`general/tools/update.py`**: 11 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr). Both `_update_sop` and `_update_vcr` adapters, both `_ADAPTERS` entries, both imports, Literal with 11 values, union with 11 types, docstring "eleven whole-body domains", "the other ten's" (feat diverges from the other ten). Note: SOP side says "`sop` is the first domain built dispatch-only from day one (ADR 36905d5b)" — hmm, that claim: feat-31 (feat) was also dispatch-only… actually the SOP PR claims "sop is the first domain built dispatch-only from day one", but feat was built the same way too? Let me check the feat side: `_update_feat` — in the old code feat was "the only domain whose adapter diverges in how it resolves id". So the sop docstring's claim of "first domain built dispatch-only from day one" is about being built without a per-domain tool (ADR 36905d5b's convention is "no new update\_<d>/set_status\_<d> tools"). But feat-31… feat also has no per-domain update tools. Hmm, maybe feat had them at some point and then consolidated them? The docstring says the adapter is "a **verbatim port** of the corresponding per-domain `update_<d>` tool" — for feat, `_update_feat` was ported from a retired `update_feat` tool. For sop, it was written directly. So sop is indeed the first domain built dispatch-only from day one. OK, keeping the SOP side's wording as-is is fine.
+01. **`general/tools/update.py`**: 11 whole-body domains (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr). Both `_update_sop` and `_update_vcr` adapters, both `_ADAPTERS` entries, both imports, Literal with 11 values, union with 11 types, docstring "eleven whole-body domains", "the other ten's" (feat diverges from the other ten). Note: SOP side says "`sop` is the first domain built dispatch-only from day one (DEC 36905d5b)" — hmm, that claim: feat-31 (feat) was also dispatch-only… actually the SOP PR claims "sop is the first domain built dispatch-only from day one", but feat was built the same way too? Let me check the feat side: `_update_feat` — in the old code feat was "the only domain whose adapter diverges in how it resolves id". So the sop docstring's claim of "first domain built dispatch-only from day one" is about being built without a per-domain tool (DEC 36905d5b's convention is "no new update\_<d>/set_status\_<d> tools"). But feat-31… feat also has no per-domain update tools. Hmm, maybe feat had them at some point and then consolidated them? The docstring says the adapter is "a **verbatim port** of the corresponding per-domain `update_<d>` tool" — for feat, `_update_feat` was ported from a retired `update_feat` tool. For sop, it was written directly. So sop is indeed the first domain built dispatch-only from day one. OK, keeping the SOP side's wording as-is is fine.
 
 02. **`general/tools/set_status.py`**: 12 domains including adr (req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/adr). Both adapters, both entries, both imports, "twelve-way" union… wait: SOP side says "eleven document types" (10 whole-body + adr). Adding vcr → "twelve document types", "12-way union", "ten whole-body domains" → "eleven whole-body domains". Carefully: counts:
 
@@ -2204,7 +2204,7 @@ index 60bce34..7d56957 100644
 +  approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
 +  `get_sop`, `get_sop_example`, `get_sop_template`, `delete_sop` stub,
 +  `validate_sop`); `sop` is the **first domain built dispatch-only from day
-+  one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
++  one** (DEC 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
 +  `update_sop`/`set_status_sop` tools at all, so whole-body and line-range
 +  updates go through the generic `update` tool in `general/tools/`
 +  (`type="sop"`) and status changes through the generic `set_status` tool
@@ -2213,9 +2213,9 @@ index 60bce34..7d56957 100644
 +  `update`'s `begin`/`end` index into); `sop/resources/`
 +  (`specmgr://sop/schema`, `specmgr://sop/example`,
 +  `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
-+  are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
++  are `get_sop`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
 +  `specmgr://sop/list` — `list_sop` ships as a paged tool from day
-+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
++  one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
 +  (`create_sop`/`update_sop`, narrated `TodoWrite` +
 +  `question`-tool-driven interview flows; `create_sop` first checks
 +  `list_sop` for a near-duplicate SOP; both prompts include an explicit
@@ -2230,7 +2230,7 @@ index 60bce34..7d56957 100644
 +  below) for the generic RASCI role definitions used by its
 +  `## Roles and Responsibilities` section, not a domain-local one.
  - **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
-   README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
+   README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e) into a
    real, schema-backed domain, and is the one domain in this codebase whose
 @@ -228,22 +259,24 @@ type or cross-cutting:
    domain's own normal, sanctioned workflow even after its MCP tools
@@ -3115,7 +3115,7 @@ Found 100 matches (more matches available)
 
   Line 6791:      - name: Make sure `docs/coverage.svg` is correct
 
-  Line 7393:   "prompt": "You are implementing **Phase 4** of the feature plan at:\n`/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md`\n\nRead that plan README in FULL first (especially Requirements REQ-008, Acceptance Criteria ACC-008, and the Task List), plus:\n- `/home/user/src/biz.dfch.SpecMgr/AGENTS.md` — the file you will edit in Task 4.1 (read it completely; note its exact current structure: the \"## Status:\" heading line, the per-domain bullet list, the \"Still genuinely missing / not yet done\" list, the \"Existing feature folders\" paragraph, and the closing domain-enumeration paragraph near the end of that section)\n- `/home/user/src/biz.dfch.SpecMgr/.specmgr/conventions.md`\n\nRepo root: `/home/user/src/biz.dfch.SpecMgr` (branch `feat-18-goal`). Phases 1–3 are committed (`6cd5603`, `595e228`, `485665c`); working tree clean at your start — verify with `git status`. Baseline: 1609 tests OK; ruff/vulture green; `docs/` is a regeneration fixed point (verify yourself: hash `find docs -type f | sort | xargs md5sum`, run the three generation commands below, hash again, compare).\n\n## Phase 3 report context for the AGENTS.md bullet (verified by the orchestrator)\n\n- `gol/` domain = 10 tools (`parse_gol`, `get_gol`, `list_gol`, `get_gol_example`, `get_gol_template`, `create_gol`, `update_gol`, `set_status_gol`, `delete_gol` stub, `validate_gol`), 3 resources (`specmgr://gol/schema`, `/example`, `/template` — no `specmgr://gol/{id}` per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 — `list_gol` is a paged tool from day one), 2 prompts (`create_gol`/`update_gol`, narrated `TodoWrite` + `question`-tool-driven interview flows; `create_gol` uses the dedup-check-first `list_gol` pattern, both read packaged instruction files under `gol/data/`). Schema at `gol/models/v1/` inside the domain package (single v1 domain, same as REQ/PRB/TSK — not top-level `models/`). Body mirrors REQ minus `Characteri...
+  Line 7393:   "prompt": "You are implementing **Phase 4** of the feature plan at:\n`/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-18-goal/README.md`\n\nRead that plan README in FULL first (especially Requirements REQ-008, Acceptance Criteria ACC-008, and the Task List), plus:\n- `/home/user/src/biz.dfch.SpecMgr/AGENTS.md` — the file you will edit in Task 4.1 (read it completely; note its exact current structure: the \"## Status:\" heading line, the per-domain bullet list, the \"Still genuinely missing / not yet done\" list, the \"Existing feature folders\" paragraph, and the closing domain-enumeration paragraph near the end of that section)\n- `/home/user/src/biz.dfch.SpecMgr/.specmgr/conventions.md`\n\nRepo root: `/home/user/src/biz.dfch.SpecMgr` (branch `feat-18-goal`). Phases 1–3 are committed (`6cd5603`, `595e228`, `485665c`); working tree clean at your start — verify with `git status`. Baseline: 1609 tests OK; ruff/vulture green; `docs/` is a regeneration fixed point (verify yourself: hash `find docs -type f | sort | xargs md5sum`, run the three generation commands below, hash again, compare).\n\n## Phase 3 report context for the AGENTS.md bullet (verified by the orchestrator)\n\n- `gol/` domain = 10 tools (`parse_gol`, `get_gol`, `list_gol`, `get_gol_example`, `get_gol_template`, `create_gol`, `update_gol`, `set_status_gol`, `delete_gol` stub, `validate_gol`), 3 resources (`specmgr://gol/schema`, `/example`, `/template` — no `specmgr://gol/{id}` per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no `specmgr://gol/list` per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 — `list_gol` is a paged tool from day one), 2 prompts (`create_gol`/`update_gol`, narrated `TodoWrite` + `question`-tool-driven interview flows; `create_gol` uses the dedup-check-first `list_gol` pattern, both read packaged instruction files under `gol/data/`). Schema at `gol/models/v1/` inside the domain package (single v1 domain, same as REQ/PRB/TSK — not top-level `models/`). Body mirrors REQ minus `Characteri...
   Line 7539: 6. `uv run --frozen specmgr coverage-badge` → 98%; `git diff --exit-code -- docs/coverage.svg` → **0 (unchanged)**
 
   Line 8097: | **ACC-008** (zero drift; AGENTS.md eight packages) | **PASS** | Re-run end to end: `specmgr docs` exit 0; `specmgr mcp-docs` exit 0; `specmgr schema` exit 0 (all six types "unchanged"); `specmgr schema --type gol --output-dir src/biz/dfch/specmgr/gol/data` exit 0 ("unchanged"); `specmgr adr-toc` exit 0; `specmgr coverage-badge` exit 0 (98%, `docs/coverage.svg` unchanged); **`git diff --exit-code -- docs/` → exit 0** (zero on-disk drift; `docs/GENERATED.md` test-file count unchanged — Phase 5 adds no test files). `AGENTS.md` line 5: *"## Status: eight domain/cross-cutting packages implemented (ADR, REQ, UC, TSK, QA, PRB, GOL, general)"*; `gol/` bullet at line 81. |
@@ -3562,14 +3562,14 @@ All the generators have been confirmed. Next, I'll check the progress state of t
 16:New document-type domain, `vcr` ("Verification Case Record"), that captures
 21:mapping" table and "Not yet decided" list: no existing specmgr domain
 23:Evaluation" concept. Tracked by GitHub issue #33. Follows the domain-first
-26:ADR 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
+26:DEC 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
 64:- REQ-005 (not started): Everything else a from-scratch domain needs,
 82:  `specmgr://vcr/dtais`, since the vocabulary is domain-knowledge that
 83:  other domains (e.g. `sysrs`) may want to reference too, not owned by
 105:- [x] ACC-005: Verifies REQ-005 -- the full domain now exists end to end:
 129:- Full domain build: models, parser, 8 tools, 3 resources, prompts,
 143:- Any change to `sysrs`'s own schema (this feature is a sibling domain
-151:- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy).
+151:- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy).
 153:  dispatch -- new domains use it from day one).
 158:  from-scratch-domain precedent to copy tooling/registration shape from,
 164:  domain-knowledge resource (`read_packaged_text` passthrough, no
@@ -3638,9 +3638,9 @@ planning -- see that feature's README, Design Notes, "Domain-to-source
 mapping" table and "Not yet decided" list: no existing specmgr domain
 models ISO/IEC/IEEE 29148's / MITRE SE Guide's "Verification / Test and
 Evaluation" concept. Tracked by GitHub issue #33. Follows the domain-first
-hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
+hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
 "simple surface" from day one (generic `update`/`set_status` dispatch, per
-ADR 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
+DEC 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
 including no per-AC create/read/update/delete tools).
 
 Domain key: `vcr`.
@@ -4473,7 +4473,7 @@ I have the full conflict map now. Let me grab the SOP PR body to model the VCR P
 ```
 Formalizes the SOP document-type domain (issue #30): full schema-backed `sop` package (models, parser, summary, JSON schema), the 8-tool MCP surface (`create_sop`, `parse_sop`, `list_sop`, `get_sop`, `get_sop_example`, `get_sop_template`, `delete_sop` stub, `validate_sop`), resources (`specmgr://sop/schema`/`example`/`template`), and prompts (`create_sop`/`update_sop`).
 
-`sop` is the first domain built dispatch-only from day one (ADR 36905d5b): it has NO per-domain `update_sop`/`set_status_sop` tools — whole-body and line-range updates go through the generic `update` tool (`type="sop"`) and status changes through the generic `set_status` tool (`type="sop"`). It relies on the cross-cutting `specmgr://rasci` resource for its `## Roles and Responsibilities` section.
+`sop` is the first domain built dispatch-only from day one (DEC 36905d5b): it has NO per-domain `update_sop`/`set_status_sop` tools — whole-body and line-range updates go through the generic `update` tool (`type="sop"`) and status changes through the generic `set_status` tool (`type="sop"`). It relies on the cross-cutting `specmgr://rasci` resource for its `## Roles and Responsibilities` section.
 
 Note on history: this work was originally developed directly on `dev` before the feature-branch convention was applied, so `dev` diverged (this branch: 7 SOP commits; `origin/dev`: feat-31/Feature + v0.14.0 release). This branch now merges current `dev` back in — every conflict was additive (both `feat` and `sop` register into the same generic dispatch points) and was resolved by combining both sides; generated docs/schemas were regenerated from the merged source. Full suite: 2480 tests green, ruff + vulture clean.
 
@@ -4492,7 +4492,7 @@ The SOP PR's body even documents a merge-conflict resolution narrative: "This br
 Interesting — wait, this says the sop branch merged dev back in. And that PR was just merged. So our vcr branch now needs to merge dev (which includes sop) back in. Same pattern.
 
 This is also a useful template for our PR body:
-"Formalizes the VCR document-type domain (issue #33): … 8-tool MCP surface … resources … prompts … dispatch-only (ADR 36905d5b) … cross-cutting specmgr://dtais resource … Note on history: this branch merges the current dev back in (PR #34 / sop); all conflicts are additive (both sop and vcr are registered at the same generic dispatch point) and were resolved by combining both sides. Generated docs/schemas were regenerated from the merged source. Full suite: N tests green, ruff + vulture clean. Closes #33."
+"Formalizes the VCR document-type domain (issue #33): … 8-tool MCP surface … resources … prompts … dispatch-only (DEC 36905d5b) … cross-cutting specmgr://dtais resource … Note on history: this branch merges the current dev back in (PR #34 / sop); all conflicts are additive (both sop and vcr are registered at the same generic dispatch point) and were resolved by combining both sides. Generated docs/schemas were regenerated from the merged source. Full suite: N tests green, ruff + vulture clean. Closes #33."
 
 Alright, everything's in place now. Let me write the plan and ask two questions:
 
@@ -5110,7 +5110,7 @@ I'll check the conflicts in update.py one by one.
 521:     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
 522:     ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
 523:     ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
-524:     built dispatch-only from day one per ADR 36905d5b, so there was never a
+524:     built dispatch-only from day one per DEC 36905d5b, so there was never a
 525:     per-domain ``update_sop`` tool to port -- this adapter was written
 526:     directly in this shape), plus the REQ-002 range branch
 527:     (see :func:`_update_req`).
@@ -5296,7 +5296,7 @@ I'll read the file section by section: lines 15-35, 135-150, 500-610, 605-660, 6
 36: :func:`._splice.body_text`, spliced via :func:`._splice.splice_body`, and
 37: the *spliced result* is validated as a whole document and persisted
 38: verbatim instead of the raw fragment. ``sop`` is the first domain built
-39: dispatch-only from day one (ADR 36905d5b): its ``_update_sop`` adapter was
+39: dispatch-only from day one (DEC 36905d5b): its ``_update_sop`` adapter was
 40: written directly in this shape rather than ported from a retired
 41: per-domain tool.
 42: 
@@ -5815,7 +5815,7 @@ OK, let me check the remaining context regions I haven't looked at yet: lines 60
 521:     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
 522:     ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
 523:     ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
-524:     built dispatch-only from day one per ADR 36905d5b, so there was never a
+524:     built dispatch-only from day one per DEC 36905d5b, so there was never a
 525:     per-domain ``update_sop`` tool to port -- this adapter was written
 526:     directly in this shape), plus the REQ-002 range branch
 527:     (see :func:`_update_req`).
@@ -5931,7 +5931,7 @@ def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> S
     Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,
     ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,
     ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain
-    built dispatch-only from day one per ADR 36905d5b, so there was never a
+    built dispatch-only from day one per DEC 36905d5b, so there was never a
     per-domain ``update_sop`` tool to port -- this adapter was written
     directly in this shape), plus the REQ-002 range branch
     (see :func:`_update_req`).
@@ -6691,8 +6691,8 @@ Errors are expected while conflict markers remain. Continuing with the adapter f
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr.worktrees/feat-33-vcr/src/biz/dfch/specmgr/general/tools/update.py",
-  "oldString": "<<<<<<< HEAD\ndef _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:\n    \"\"\"Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).\n\n    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,\n    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,\n    ``VcrNotFoundError``), plus the REQ-002 range branch (see\n    :func:`_update_req`).\n=======\ndef _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> SopDocument:\n    \"\"\"Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).\n\n    Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,\n    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,\n    ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain\n    built dispatch-only from day one per ADR 36905d5b, so there was never a\n    per-domain ``update_sop`` tool to port -- this adapter was written\n    directly in this shape), plus the REQ-002 range branch\n    (see :func:`_update_req`).\n>>>>>>> origin/dev\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n<<<<<<< HEAD\n        base_dir = vcr_base_dir()\n        with vcr_lock(id_):\n            path, existing = load_vcr_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Vcr.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = VcrFrontmatter(**fm_data)\n            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n            write_vcr_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Vcr.from_text(format_text(content))\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n        write_vcr_file(path, new_frontmatter, content)\n=======\n        base_dir = sop_base_dir()\n        with sop_lock(id_):\n            path, existing = load_sop_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Sop.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = SopFrontmatter(**fm_data)\n            new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n            write_sop_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Sop.from_text(format_text(content))\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n        write_sop_file(path, new_frontmatter, content)\n>>>>>>> origin/dev\n    return new_doc",
-  "newString": "def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> SopDocument:\n    \"\"\"Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).\n\n    Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,\n    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,\n    ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain\n    built dispatch-only from day one per ADR 36905d5b, so there was never a\n    per-domain ``update_sop`` tool to port -- this adapter was written\n    directly in this shape), plus the REQ-002 range branch\n    (see :func:`_update_req`).\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n        base_dir = sop_base_dir()\n        with sop_lock(id_):\n            path, existing = load_sop_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Sop.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = SopFrontmatter(**fm_data)\n            new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n            write_sop_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Sop.from_text(format_text(content))\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n        write_sop_file(path, new_frontmatter, content)\n    return new_doc\n\n\ndef _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:\n    \"\"\"Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).\n\n    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,\n    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,\n    ``VcrNotFoundError``), plus the REQ-002 range branch (see\n    :func:`_update_req`).\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n        base_dir = vcr_base_dir()\n        with vcr_lock(id_):\n            path, existing = load_vcr_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Vcr.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = VcrFrontmatter(**fm_data)\n            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n            write_vcr_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Vcr.from_text(format_text(content))\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n        write_vcr_file(path, new_frontmatter, content)\n    return new_doc"
+  "oldString": "<<<<<<< HEAD\ndef _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:\n    \"\"\"Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).\n\n    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,\n    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,\n    ``VcrNotFoundError``), plus the REQ-002 range branch (see\n    :func:`_update_req`).\n=======\ndef _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> SopDocument:\n    \"\"\"Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).\n\n    Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,\n    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,\n    ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain\n    built dispatch-only from day one per DEC 36905d5b, so there was never a\n    per-domain ``update_sop`` tool to port -- this adapter was written\n    directly in this shape), plus the REQ-002 range branch\n    (see :func:`_update_req`).\n>>>>>>> origin/dev\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n<<<<<<< HEAD\n        base_dir = vcr_base_dir()\n        with vcr_lock(id_):\n            path, existing = load_vcr_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Vcr.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = VcrFrontmatter(**fm_data)\n            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n            write_vcr_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Vcr.from_text(format_text(content))\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n        write_vcr_file(path, new_frontmatter, content)\n=======\n        base_dir = sop_base_dir()\n        with sop_lock(id_):\n            path, existing = load_sop_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Sop.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = SopFrontmatter(**fm_data)\n            new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n            write_sop_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Sop.from_text(format_text(content))\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n        write_sop_file(path, new_frontmatter, content)\n>>>>>>> origin/dev\n    return new_doc",
+  "newString": "def _update_sop(id_: str, content: str, begin: int | None, end: int | None) -> SopDocument:\n    \"\"\"Replace the body of the SOP identified by ``id_`` (whole-body or line-range mode).\n\n    Verbatim-shape port of :func:`_update_dec` (same ``sop_lock``,\n    ``load_by_id``, frontmatter carry-over with only ``updated`` bumped,\n    ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the first domain\n    built dispatch-only from day one per DEC 36905d5b, so there was never a\n    per-domain ``update_sop`` tool to port -- this adapter was written\n    directly in this shape), plus the REQ-002 range branch\n    (see :func:`_update_req`).\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n        base_dir = sop_base_dir()\n        with sop_lock(id_):\n            path, existing = load_sop_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Sop.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = SopFrontmatter(**fm_data)\n            new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n            write_sop_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Sop.from_text(format_text(content))\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=body)\n        write_sop_file(path, new_frontmatter, content)\n    return new_doc\n\n\ndef _update_vcr(id_: str, content: str, begin: int | None, end: int | None) -> VcrDocument:\n    \"\"\"Replace the body of the verification case record identified by ``id_`` (whole-body or line-range mode).\n\n    Mirrors :func:`_update_dec`'s shape (same ``vcr_lock``, ``load_by_id``,\n    frontmatter carry-over with only ``updated`` bumped, ``write_vcr_file``,\n    ``VcrNotFoundError``), plus the REQ-002 range branch (see\n    :func:`_update_req`).\n    \"\"\"\n    if begin is not None or end is not None:\n        assert begin is not None and end is not None, \"the public `update` guard enforces both-or-neither\"\n\n        base_dir = vcr_base_dir()\n        with vcr_lock(id_):\n            path, existing = load_vcr_by_id(base_dir, id_)\n            spliced = splice_body(body_text(path), begin, end, content)\n            body = Vcr.from_text(format_text(spliced))\n            now = datetime.now().isoformat(timespec=\"microseconds\")\n            fm_data = existing.frontmatter.model_dump()\n            fm_data[\"updated\"] = now\n            new_frontmatter = VcrFrontmatter(**fm_data)\n            new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n            write_vcr_file(path, new_frontmatter, spliced)\n        return new_doc\n\n    body = Vcr.from_text(format_text(content))\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=body)\n        write_vcr_file(path, new_frontmatter, content)\n    return new_doc"
 }
 ```
 
@@ -7237,7 +7237,7 @@ update.py is resolved. Next is set_status.py. Let's look at its conflict.
 424: 
 425:     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
 426:     ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-427:     first domain built dispatch-only from day one per ADR 36905d5b, so there
+427:     first domain built dispatch-only from day one per DEC 36905d5b, so there
 428:     was never a per-domain ``set_status_sop`` tool to port -- this adapter
 429:     was written directly in this shape) -- see :func:`_set_status_req` for
 430:     the full semantics.
@@ -7590,7 +7590,7 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
     ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-    first domain built dispatch-only from day one per ADR 36905d5b, so there
+    first domain built dispatch-only from day one per DEC 36905d5b, so there
     was never a per-domain ``set_status_sop`` tool to port -- this adapter
     was written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics.
@@ -8053,7 +8053,7 @@ def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocu
 
     Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,
     ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the
-    first domain built dispatch-only from day one per ADR 36905d5b, so there
+    first domain built dispatch-only from day one per DEC 36905d5b, so there
     was never a per-domain ``set_status_sop`` tool to port -- this adapter
     was written directly in this shape) -- see :func:`_set_status_req` for
     the full semantics.
@@ -8318,8 +8318,8 @@ Continuing on, I'll work on the adapter function, dispatch table, description, L
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr.worktrees/feat-33-vcr/src/biz/dfch/specmgr/general/tools/set_status.py",
-  "oldString": "<<<<<<< HEAD\ndef _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:\n    \"\"\"Replace the status of the verification case record identified by ``id_``.\n\n    Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,\n    ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see\n    :func:`_set_status_req` for the full semantics. ``vcr`` is not\n    ``adr``, so ``superseded_by`` must never be given.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n=======\ndef _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocument:\n    \"\"\"Replace the status of the SOP identified by ``id_``.\n\n    Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,\n    ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the\n    first domain built dispatch-only from day one per ADR 36905d5b, so there\n    was never a per-domain ``set_status_sop`` tool to port -- this adapter\n    was written directly in this shape) -- see :func:`_set_status_req` for\n    the full semantics.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n>>>>>>> origin/dev\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n<<<<<<< HEAD\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_vcr_file(path, new_frontmatter, raw_body)\n=======\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_sop_file(path, new_frontmatter, raw_body)\n>>>>>>> origin/dev\n    return new_doc",
-  "newString": "def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocument:\n    \"\"\"Replace the status of the SOP identified by ``id_``.\n\n    Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,\n    ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the\n    first domain built dispatch-only from day one per ADR 36905d5b, so there\n    was never a per-domain ``set_status_sop`` tool to port -- this adapter\n    was written directly in this shape) -- see :func:`_set_status_req` for\n    the full semantics.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_sop_file(path, new_frontmatter, raw_body)\n    return new_doc\n\n\ndef _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:\n    \"\"\"Replace the status of the verification case record identified by ``id_``.\n\n    Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,\n    ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see\n    :func:`_set_status_req` for the full semantics. ``vcr`` is not\n    ``adr``, so ``superseded_by`` must never be given.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_vcr_file(path, new_frontmatter, raw_body)\n    return new_doc"
+  "oldString": "<<<<<<< HEAD\ndef _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:\n    \"\"\"Replace the status of the verification case record identified by ``id_``.\n\n    Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,\n    ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see\n    :func:`_set_status_req` for the full semantics. ``vcr`` is not\n    ``adr``, so ``superseded_by`` must never be given.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n=======\ndef _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocument:\n    \"\"\"Replace the status of the SOP identified by ``id_``.\n\n    Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,\n    ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the\n    first domain built dispatch-only from day one per DEC 36905d5b, so there\n    was never a per-domain ``set_status_sop`` tool to port -- this adapter\n    was written directly in this shape) -- see :func:`_set_status_req` for\n    the full semantics.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n>>>>>>> origin/dev\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n<<<<<<< HEAD\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_vcr_file(path, new_frontmatter, raw_body)\n=======\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_sop_file(path, new_frontmatter, raw_body)\n>>>>>>> origin/dev\n    return new_doc",
+  "newString": "def _set_status_sop(id_: str, status: str, superseded_by: str | None) -> SopDocument:\n    \"\"\"Replace the status of the SOP identified by ``id_``.\n\n    Verbatim-shape port of :func:`_set_status_dec` (same ``sop_lock``,\n    ``load_by_id``, ``write_sop_file``, ``SopNotFoundError``; ``sop`` is the\n    first domain built dispatch-only from day one per DEC 36905d5b, so there\n    was never a per-domain ``set_status_sop`` tool to port -- this adapter\n    was written directly in this shape) -- see :func:`_set_status_req` for\n    the full semantics.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = sop_base_dir()\n    with sop_lock(id_):\n        path, existing = load_sop_by_id(base_dir, id_)\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n        new_frontmatter = SopFrontmatter(**fm_data)\n        new_doc = SopDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_sop_file(path, new_frontmatter, raw_body)\n    return new_doc\n\n\ndef _set_status_vcr(id_: str, status: str, superseded_by: str | None) -> VcrDocument:\n    \"\"\"Replace the status of the verification case record identified by ``id_``.\n\n    Mirrors :func:`_set_status_dec`'s shape (same ``vcr_lock``,\n    ``load_by_id``, ``write_vcr_file``, ``VcrNotFoundError``) -- see\n    :func:`_set_status_req` for the full semantics. ``vcr`` is not\n    ``adr``, so ``superseded_by`` must never be given.\n    \"\"\"\n    assert superseded_by is None, \"the public `set_status` guard rejects superseded_by for non-adr types\"\n\n    base_dir = vcr_base_dir()\n    with vcr_lock(id_):\n        path, existing = load_vcr_by_id(base_dir, id_)\n        raw_body = frontmatter.loads(path.read_text(encoding=\"utf-8\")).content  # type: ignore[union-attr]\n\n        now = datetime.now().isoformat(timespec=\"microseconds\")\n        fm_data = existing.frontmatter.model_dump()\n        fm_data[\"status\"] = status\n        fm_data[\"updated\"] = now\n        new_frontmatter = VcrFrontmatter(**fm_data)\n        new_doc = VcrDocument(frontmatter=new_frontmatter, body=existing.body)\n        write_vcr_file(path, new_frontmatter, raw_body)\n    return new_doc"
 }
 ```
 
@@ -8655,7 +8655,7 @@ Display the entire region of the server.py docstring: roughly lines 80–135 (re
 112:                         Informed) responsibility-assignment framework, as raw markdown.
 113: 
 114: REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-115: through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+115: through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 116: UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 117: reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 118: resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -8664,30 +8664,30 @@ Display the entire region of the server.py docstring: roughly lines 80–135 (re
 121: through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 122: either, for the same reason -- id-based reads go through the ``get_prb`` tool
 123: only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-124: ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+124: ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 125: GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 126: id-based reads go through the ``get_gol`` tool only, and there is also no
 127:  ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
-128:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+128:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
 129:  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
 130:  through the ``get_rsk`` tool only, and there never was such a resource to
 131:  remove in the first place. DEC has no
 132:  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
 133:  through the ``get_dec`` tool only, and there is also no
 134:  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
-135:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
+135:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). SOP has no
 136:  ``specmgr://sop/{id}`` resource either, for the same reason -- id-based reads go
 137:  through the ``get_sop`` tool only, and there is also no
 138:  ``specmgr://sop/list`` resource -- ``list_sop`` ships as a paged tool from
-139:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
+139:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
 140:  ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
 141:  reads go through the ``get_feat`` tool only, and there is also no
 142:  ``specmgr://feat/list`` resource either -- ``list_feat`` ships as a paged
-143:  tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
+143:  tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). VCR has no
 144:  ``specmgr://vcr/{id}`` resource either, for the same reason -- id-based
 145:  reads go through the ``get_vcr`` tool only, and there is also no
 146:  ``specmgr://vcr/list`` resource either -- ``list_vcr`` ships as a paged
-147:  tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+147:  tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 148: 
 149: Tools
 150: -----
@@ -8753,7 +8753,7 @@ Display the entire region of the server.py docstring: roughly lines 80–135 (re
 210:   uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
 211:   ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
 212:   its own -- it dispatches through the generic ``update``/``set_status`` tools below from
-213:   day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
+213:   day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
 214:   Verification case record tools (``vcr/tools/``): ``parse_vcr``, ``get_vcr``
 215:   (``raw=True`` returns the frontmatter-stripped body text verbatim instead of the
 216:   parsed document), ``list_vcr``, ``get_vcr_example``, ``get_vcr_template``,
@@ -8831,7 +8831,7 @@ specmgr://iso25010 --   The ISO/IEC 25010:2023 product quality model's nine main
                         characteristics (and sub-characteristics), each with a description.
 
 REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -8840,22 +8840,22 @@ there never was such a resource to remove in the first place. QA has no
 through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 either, for the same reason -- id-based reads go through the ``get_prb`` tool
 only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 id-based reads go through the ``get_gol`` tool only, and there is also no
  ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+ day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_rsk`` tool only, and there never was such a resource to
  remove in the first place. DEC has no
  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
  through the ``get_dec`` tool only, and there is also no
  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
+ day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
  ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
  reads go through the ``get_feat`` tool only, and there is also no
  ``specmgr://feat/list`` resource either -- ``list_feat`` ships as a paged
- tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+ tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 
 Tools
 -----
@@ -9018,7 +9018,7 @@ Wait — I need to check the lines after the conflict (lines 237 onward) to get 
 281: ``list_sop`` for a near-duplicate SOP. ``update_sop`` names the GENERIC
 282: ``update``/``set_status`` tools with ``type="sop"`` (both whole-body and line-range
 283: via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
-284: ``set_status_sop`` tools (ADR 36905d5b-8057-4294-8665-c7eed5534db0).
+284: ``set_status_sop`` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
 285: Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat`` --
 286: narrated instruction flows guiding an LLM through the FEAT tool sequence
 287: above; ``create_feat`` first checks ``list_feat`` for a near-duplicate
@@ -9033,7 +9033,7 @@ Wait — I need to check the lines after the conflict (lines 237 onward) to get 
 296: e369ee2e-3353-4f92-991c-6367d76d832e.
 297: 
 298: Modules are grouped domain-first
-299: (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+299: (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 300: document-type domain"): each document
 301: <<<<<<< HEAD
 302: domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``,
@@ -9451,7 +9451,7 @@ To construct the edit, let's read the exact region of schema.py.
 18: """MCP resource registrations that are not specific to any single document
 19: domain.
 20: 
-21: See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+21: See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
 22: 
 23: ``version`` registers the server package version resource. ``iso25010``
 24: <<<<<<< HEAD
@@ -10381,7 +10381,7 @@ Let me also check the lines immediately before the A1 conflict (the end of the f
 197:   approval/effectivity lifecycle (`create_sop`, `parse_sop`, `list_sop`,
 198:   `get_sop`, `get_sop_example`, `get_sop_template`, `delete_sop` stub,
 199:   `validate_sop`); `sop` is the **first domain built dispatch-only from day
-200:   one** (ADR 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
+200:   one** (DEC 36905d5b-8057-4294-8665-c7eed5534db0) — it has NO per-domain
 201:   `update_sop`/`set_status_sop` tools at all, so whole-body and line-range
 202:   updates go through the generic `update` tool in `general/tools/`
 203:   (`type="sop"`) and status changes through the generic `set_status` tool
@@ -10390,9 +10390,9 @@ Let me also check the lines immediately before the A1 conflict (the end of the f
 206:   `update`'s `begin`/`end` index into); `sop/resources/`
 207:   (`specmgr://sop/schema`, `specmgr://sop/example`,
 208:   `specmgr://sop/template`; no `specmgr://sop/{id}` — id-based reads
-209:   are `get_sop`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+209:   are `get_sop`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
 210:   `specmgr://sop/list` — `list_sop` ships as a paged tool from day
-211:   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
+211:   one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13); `sop/prompts/`
 212:   (`create_sop`/`update_sop`, narrated `TodoWrite` +
 213:   `question`-tool-driven interview flows; `create_sop` first checks
 214:   `list_sop` for a near-duplicate SOP; both prompts include an explicit
@@ -10407,10 +10407,10 @@ Let me also check the lines immediately before the A1 conflict (the end of the f
 223:   below) for the generic RASCI role definitions used by its
 224:   `## Roles and Responsibilities` section, not a domain-local one.
 225: - **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
-226:   README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
+226:   README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e) into a
 227:   real, schema-backed domain, and is the one domain in this codebase whose
 228:   own addressing genuinely deviates from every other domain's precedent
-229:   (ADR 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
+229:   (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
 230:   `feat-NNN-slug` — the containing folder's own name, not a
 231:   server-generated UUID — and documents live one-per-folder as
 232:   `<base>/<id>/README.md` (a fixed filename), not flat files directly
@@ -10430,9 +10430,9 @@ Let me also check the lines immediately before the A1 conflict (the end of the f
 246:   body text as-is (the text `update`'s `begin`/`end` index into);
 247:   `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
 248:   `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
-249:   are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
+249:   are `get_feat`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
 250:   `specmgr://feat/list` — `list_feat` ships as a paged tool from day
-251:   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
+251:   one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
 252:   (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
 253:   first checks `list_feat` for a near-duplicate feature). Its schema
 254:   lives at `feat/models/v1/`, inside the domain package, not top-level
@@ -13260,7 +13260,7 @@ ______________________________________________________________________
 
 Formalize the VCR document type domain (issue #33): a fully schema-backed `vcr` package (models, parser, summary, JSON schema), an 8-tool MCP surface (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`, `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub, `validate_vcr`), resources (`specmgr://vcr/schema`/`example`/`template`), prompts (`create_vcr`/`update_vcr`), and a cross-cutting `specmgr://dtais` resource documenting the DTAIS verification-method vocabulary (Demonstration/Test/Analysis/Inspection/Special) that `## Acceptance Criteria` headings use.
 
-`vcr` follows the dispatch-only convention (ADR 36905d5b): there are no per-domain `update_vcr`/`set_status_vcr` tools — whole-body and line-range updates go through the generic `update` tool (`type="vcr"`), and status changes go through the generic `set_status` tool (`type="vcr"`).
+`vcr` follows the dispatch-only convention (DEC 36905d5b): there are no per-domain `update_vcr`/`set_status_vcr` tools — whole-body and line-range updates go through the generic `update` tool (`type="vcr"`), and status changes go through the generic `set_status` tool (`type="vcr"`).
 
 Note on history: after this branch was cut from `4c7d976`, `dev` advanced with PR #34 (the SOP domain) + chore `03260fe`, so this merge brings current `dev` back in. All conflicts were additive (both `sop` and `vcr` register into the same generic dispatch points) and were resolved by combining both sides. Generated docs/schemas/badges were regenerated from the post-merge source (fixed point verified). The audit also surfaced one gap in CI: a packaged-schema drift check for `vcr` (the pre-commit hook existed, but the CI step was missing — added here, bringing all 11 packaged schema copies into parity with pre-commit).
 
@@ -13314,7 +13314,7 @@ Next, I'll create a PR against dev.
 
 ```json
 {
-  "command": "gh pr create --base dev --head feat-33-vcr --title 'feat(33): Add artifact type \"Verification Case Record\" (VCR) — complete' --body 'Formalizes the VCR document-type domain (issue #33): full schema-backed `vcr` package (models, parser, summary, JSON schema), the 8-tool MCP surface (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`, `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub, `validate_vcr`), resources (`specmgr://vcr/schema`/`example`/`template`), prompts (`create_vcr`/`update_vcr`), and a cross-cutting `specmgr://dtais` resource documenting the DTAIS verification-method vocabulary (Demonstration/Test/Analysis/Inspection/Special) used by the `### AC-NNN (Method): ...` headings in `## Acceptance Criteria`.\n\n`vcr` follows the dispatch-only convention (ADR 36905d5b): it has NO per-domain `update_vcr`/`set_status_vcr` tools — whole-body and line-range updates go through the generic `update` tool (`type=\"vcr\"`) and status changes through the generic `set_status` tool (`type=\"vcr\"`).\n\nNote on history: after this branch cut from `4c7d976`, `dev` advanced via PR #34 (the SOP domain) plus chore `03260fe`, so this branch now merges current `dev` back in. Every conflict was additive (both `sop` and `vcr` register into the same generic dispatch points) and was resolved by combining both sides; generated docs/schemas/coverage badge were regenerated from the merged source (fixed point verified). A CI audit against the pre-commit hooks found one gap: the `vcr` packaged-schema drift step was missing (the pre-commit hook existed, the CI step did not) — added here, so all 11 packaged schema copies are now checked in both.\n\nFull suite: 2704 tests green, ruff + vulture clean, 99% coverage.\n\nCloses #33.' 2>&1 | tail -2"
+  "command": "gh pr create --base dev --head feat-33-vcr --title 'feat(33): Add artifact type \"Verification Case Record\" (VCR) — complete' --body 'Formalizes the VCR document-type domain (issue #33): full schema-backed `vcr` package (models, parser, summary, JSON schema), the 8-tool MCP surface (`create_vcr`, `parse_vcr`, `list_vcr`, `get_vcr`, `get_vcr_example`, `get_vcr_template`, `delete_vcr` stub, `validate_vcr`), resources (`specmgr://vcr/schema`/`example`/`template`), prompts (`create_vcr`/`update_vcr`), and a cross-cutting `specmgr://dtais` resource documenting the DTAIS verification-method vocabulary (Demonstration/Test/Analysis/Inspection/Special) used by the `### AC-NNN (Method): ...` headings in `## Acceptance Criteria`.\n\n`vcr` follows the dispatch-only convention (DEC 36905d5b): it has NO per-domain `update_vcr`/`set_status_vcr` tools — whole-body and line-range updates go through the generic `update` tool (`type=\"vcr\"`) and status changes through the generic `set_status` tool (`type=\"vcr\"`).\n\nNote on history: after this branch cut from `4c7d976`, `dev` advanced via PR #34 (the SOP domain) plus chore `03260fe`, so this branch now merges current `dev` back in. Every conflict was additive (both `sop` and `vcr` register into the same generic dispatch points) and was resolved by combining both sides; generated docs/schemas/coverage badge were regenerated from the merged source (fixed point verified). A CI audit against the pre-commit hooks found one gap: the `vcr` packaged-schema drift step was missing (the pre-commit hook existed, the CI step did not) — added here, so all 11 packaged schema copies are now checked in both.\n\nFull suite: 2704 tests green, ruff + vulture clean, 99% coverage.\n\nCloses #33.' 2>&1 | tail -2"
 }
 ```
 

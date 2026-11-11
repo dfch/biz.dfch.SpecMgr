@@ -13,7 +13,7 @@ near-identical copies of the same `model_validator`.
 Every caller only ever passes full date+time timestamps (the shared
 `yyyy-MM-dd` + (`T` or space) + `HH:mm:ss.SSS` + `Z`/`±HH:MM` fragment all
 six entry-heading domains' own `@alias` regexes enforce; date-only values
-are rejected at parse time -- ADR
+are rejected at parse time -- DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf), so the comparison below is a plain
 aware `datetime.fromisoformat` pair comparison, with no mixed-granularity
 (day-granularity for date-only pairs) rule.

@@ -10,7 +10,7 @@ addressable end-to-end (REQ-005). This is the one path that ever changes a
 the initial id, but has no way to fix it later (e.g. once a GitHub issue
 number is known); ``set_feat_id`` is that fix-up path, motivated by the
 ``feat-NNN-slug`` convention where ``NNN`` is meant to be the GitHub issue
-number (ADR e369ee2e-3353-4f92-991c-6367d76d832e).
+number (DEC e369ee2e-3353-4f92-991c-6367d76d832e).
 
 ``new_id`` is validated against the same ``feat-NNN-slug`` shape
 ``create_feat``'s optional ``id`` parameter uses
@@ -55,7 +55,7 @@ next read (a guaranteed, harmless miss that self-heals, the same
 
 **A concurrent, lock-free reader can still race the rename step itself
 (feat-107-doc-cache Phase 6, REQ-012) -- closed on the *reader* side, not
-here.** ``get_feat``/``list_feat`` intentionally take no domain lock (ADR
+here.** ``get_feat``/``list_feat`` intentionally take no domain lock (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
 window after ``old_path.parent.rename(new_path.parent)`` above succeeds but
 before :func:`~biz.dfch.specmgr.feat.tools._cache.move_feat_cache_entry`

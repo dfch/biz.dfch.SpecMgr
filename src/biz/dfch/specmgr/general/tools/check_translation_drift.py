@@ -37,7 +37,7 @@ non-raising :class:`~biz.dfch.specmgr.general.models.translation_drift.Translati
   compare correctly; equal or older is not stale; a missing/unparseable timestamp is reported in ``staleness_error``.
 
 Drift is about structure and staleness, never about wording or translation quality: prose, list items, frontmatter
-values and ``prb``'s regex-locked English ``problem_statement`` lead paragraph (ADR 38efdb66 item 11) are invisible
+values and ``prb``'s regex-locked English ``problem_statement`` lead paragraph (DEC 38efdb66 item 11) are invisible
 to it. The tool is strictly read-only: it writes, creates, and invalidates nothing.
 
 **Languages.** ``language`` is the variant (always non-EN: ``"en"`` is the canonical source form, never a translation
@@ -45,7 +45,7 @@ target -- the ``translate_artifact`` prompt's own rule); ``source_language`` (de
 with a heading table, since both sides are resolved the same way. Both are shape-guarded and table-probed before any
 filesystem access (``_language_guard.guard_language``); ``language == source_language`` is a ``ValueError``.
 
-**Error semantics.** ``feat``/``adr`` are rejected with the permanent "always English" ``ValueError`` (before the id is
+**Error semantics.** ``feat`` is rejected with the permanent "always English" ``ValueError`` (before the id is
 looked at); an unknown ``type``, a path-injection/wrong-format ``id`` or ``language``/``source_language``, a table-less
 language, ``language='en'`` and equal languages are ``ValueError``s before any filesystem access. A source or variant
 document that does not exist at all raises the domain's own not-found error (naming the missing language); one that
@@ -68,7 +68,7 @@ from ..models.translation_drift import (
     compare_skeletons,
     heading_skeleton,
 )
-from ._domains import WholeBodyOrAdrType
+from ._domains import WholeBodyType
 from ._language_guard import LANGUAGE_AWARE_DOMAINS, assert_language_aware_type, guard_language
 from ._language_variants import Location, locate
 from ._path_safety import DEFAULT_LANGUAGE, validate_id
@@ -121,7 +121,7 @@ def _read_side(
     description=(
         "Read-only. Compare a translated language variant with its source document (the 'en' source by default) "
         "and report both drift kinds in one structured, non-raising `TranslationDriftResult`. `type` is one of "
-        f"{', '.join(LANGUAGE_AWARE_DOMAINS)} (feat and adr documents are always English and are rejected with a "
+        f"{', '.join(LANGUAGE_AWARE_DOMAINS)} (feat documents are always English and are rejected with a "
         "ValueError); `id` the artifact's id (shared by both languages); `language` the translated variant "
         "(never 'en'); `source_language` (default 'en') the language compared against. STRUCTURAL drift: every "
         "section heading of both documents is mapped back to canonical English through the language's heading "
@@ -142,7 +142,7 @@ def _read_side(
     ),
 )
 def check_translation_drift(
-    type: WholeBodyOrAdrType,
+    type: WholeBodyType,
     id: str,
     language: str,
     source_language: str = DEFAULT_LANGUAGE,
@@ -153,7 +153,7 @@ def check_translation_drift(
     ----------
     type:
         The document type: one of the thirteen i18n-eligible domains ``req``, ``uc``, ``tsk``, ``qa``, ``prb``,
-        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``feat``/``adr`` are permanently
+        ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``, ``sysrs``, ``txt``, ``set`` (``feat`` is permanently
         English and rejected).
     id:
         The artifact's specmgr-assigned id (shared by both languages).
@@ -174,7 +174,7 @@ def check_translation_drift(
     Raises
     ------
     ValueError
-        ``type`` is ``feat``/``adr`` (always English) or unknown; ``id`` is a path-injection attempt or not in the
+        ``type`` is ``feat`` (always English) or unknown; ``id`` is a path-injection attempt or not in the
         domain's own format; ``language``/``source_language`` is not a two-letter lowercase code or has no packaged
         heading table; ``language`` is ``"en"``; or ``language == source_language`` (all raised before any
         filesystem access).

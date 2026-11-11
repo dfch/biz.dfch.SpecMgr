@@ -48,7 +48,7 @@ from .markdown_list_item import MarkdownListItemWithNotes
 #: inline `_VERIFIES_PATTERN` UUID fragment).
 UUID_PATTERN = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
-#: The ``feat`` folder-name shape (ADR 8cf940c5): ``feat-NNN-slug``,
+#: The ``feat`` folder-name shape (DEC 8cf940c5): ``feat-NNN-slug``,
 #: lowercase alnum + hyphen. The single source for the tools-layer feat-id
 #: validation (``general.tools._path_safety``), the FEAT reference pattern
 #: (``general.tools._references``), and the `## Items` FEAT bullet shape
@@ -64,8 +64,7 @@ def build_cross_reference_pattern(*tags: str) -> str:
 
     A single tag renders as a bare literal (`"^REQ ...: .+$"`); two or more
     render as a parenthesized alternation (`"^(REQ|UC) ...: .+$"`, mirroring
-    `sysrs.models.v1.body._DECISIONS_PATTERN`'s `(DEC|ADR)` shape and
-    `vcr.models.v1.body._VERIFIES_PATTERN`'s `(REQ|UC)` shape).
+    `vcr.models.v1.body._VERIFIES_PATTERN`'s own `(REQ|UC)` shape).
 
     Args:
         tags: one or more allowed type tags (e.g. `"REQ"`, or `"REQ", "UC"`

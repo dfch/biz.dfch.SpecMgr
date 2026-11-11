@@ -27,9 +27,9 @@ instance::
 
     from biz.dfch.specmgr.req import resources  # noqa: F401 (side-effects only)
 
-Unlike ADR, REQ has no by-id single-document *resource* --
+REQ has no by-id single-document *resource* --
 ``specmgr://req/{id}`` (``req_get``, Task 3.17) was removed in favor of the
-``get_req`` tool (``req.tools.get_req``); see ADR
+``get_req`` tool (``req.tools.get_req``); see DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose id-based REQ document reads as
 a tool (get_req), not a resource"). The former listing resource
 (``req_list``, ``specmgr://req/list``, Task 3.18) was replaced the same way
@@ -40,7 +40,7 @@ The former schema resource (``req_schema``, ``specmgr://req/schema``) was
 converted the same way into the ``get_req_schema`` ``@mcp.tool()``
 (``req.tools.get_req_schema``), so that the generated JSON Schema is
 discoverable from the always-in-context tool surface instead of the
-resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+resource layer -- see DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 (feat-189 Phase 105).
 """
 

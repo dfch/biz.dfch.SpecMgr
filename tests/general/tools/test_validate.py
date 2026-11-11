@@ -17,8 +17,8 @@
 
 """Tests for the generic ``validate`` ``@mcp.tool()`` wrapper (feat-81-83-validation, Phase 2).
 
-Parameterized over the whole-body document types the generic tool covers (``adr`` is
-excluded, mirroring ``update``/``set_classification``/``delete``'s own precedent); the
+Parameterized over the whole-body document types the generic tool covers (mirroring
+``update``/``set_classification``/``delete``'s own precedent); the
 per-domain fixture bodies below are 1:1 ports of the retired per-domain ``test_validate_<d>.py``
 files' own ``_MINIMAL_BODY``/``_MALFORMED_BODY``/``_FULL_DOCUMENT`` constants (Task 2.5's
 coverage-superseded rationale).
@@ -32,7 +32,7 @@ Covers, per REQ-004/ACC-004:
 - A field/cross-field-invalid body-only content likewise never raises -- same shape (the
   ``pydantic.ValidationError`` channel), for every domain with a straightforward field/
   cross-field failure mode ported from its own retired test.
-- ``validate(type="adr", ...)`` and any other unsupported ``type`` still raise ``ValueError``.
+- ``validate(type=...)`` with any unsupported ``type`` still raises ``ValueError``.
 - For a representative sample of domains (``req``, ``dec``, ``vcr``), a ``full``/content-shape
   mismatch (``full=True`` with body-only content, and ``full=False`` with a complete document)
   still raises ``ValueError`` through the generic tool, rather than being swallowed into
@@ -886,11 +886,7 @@ class TestValidateAllDomains(unittest.TestCase):
 
 
 class TestValidateUnsupportedType(unittest.TestCase):
-    """ACC-004: an unsupported `type` (including `"adr"`) must still raise `ValueError`."""
-
-    def test_adr_type_raises_value_error(self) -> None:
-        with self.assertRaises(ValueError):
-            validate(type="adr", content=_REQ_MINIMAL_BODY)  # type: ignore[arg-type]
+    """ACC-004: an unsupported `type` must raise `ValueError`."""
 
     def test_unknown_type_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):

@@ -63,7 +63,6 @@ from __future__ import annotations
 
 import unittest
 
-import biz.dfch.specmgr.adr.tools._paths  # noqa: F401 (side-effects only: SPECMGR_ADR_DIR registration)
 import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_DOTENV registration)
 import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
 import biz.dfch.specmgr.feat.tools._paths  # noqa: F401 (side-effects only: SPECMGR_FEAT_DIR registration)
@@ -102,7 +101,6 @@ _HOSTING_PROBE_EXCLUSIONS = frozenset({"KUBERNETES_SERVICE_HOST", "RAILWAY_PROJE
 #: drifted registry).
 _ENTRY_POINT_NAME_SET = frozenset(
     {
-        "SPECMGR_ADR_DIR",
         "SPECMGR_DIAGRAM_MAX_TITLE",
         "SPECMGR_DOCS_DIR",
         "SPECMGR_FEAT_DIR",

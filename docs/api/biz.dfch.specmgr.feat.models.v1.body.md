@@ -16504,7 +16504,7 @@ more_information:
 
 ### `RelatedDecisions`
 
-`### Related Decisions` -- free-form cross-reference list; entries may reference either an ADR id or a
+`### Related Decisions` -- free-form cross-reference list; entries may reference a dec id or a
 `dec` id (or any other decision record). Optional.
 
 **Methods:**
@@ -21498,7 +21498,7 @@ The timestamp is the full ISO 8601 date+time form `yyyy-MM-dd` + (`T`
 or space) + `HH:mm:ss.SSS` + explicit UTC offset (`+02:00`, `-05:00`)
 or `Z` for UTC -- the same format as frontmatter `created`/`updated`
 (both separators accepted, the `T`-separated form the machine-written
-canonical variant, date-only rejected; ADR
+canonical variant, date-only rejected; DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf). E.g. `2026-08-30 14:23:01.123Z`.
 
 Parameters

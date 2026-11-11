@@ -3,7 +3,7 @@
 The non-raising, structured ``{valid, errors}`` result shape (feat-81-83-validation Phase 2, REQ-004).
 
 Originally greenfield for the generic ``validate`` tool alone; since
-feat-204-create-error (case 5 of the ADR 519d1206 non-raising chain) it
+feat-204-create-error (case 5 of the DEC 519d1206 non-raising chain) it
 also backs the ``create_<d>``/``parse_<d>`` tools' own
 content-validation-failure branches, and since feat-170 the generic
 ``update``/``edit`` tools'. This module therefore owns the two

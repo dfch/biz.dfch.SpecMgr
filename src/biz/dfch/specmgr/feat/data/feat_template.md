@@ -49,7 +49,7 @@ Free-form design rationale, schema sketches, etc. Optional.
 
 ### Related Decisions
 
-- A free-form cross-reference list; entries may reference an ADR id, a dec id, or any other decision record. Optional.
+- A free-form cross-reference list; entries may reference a dec id or any other decision record. Optional.
 
 ### Task List
 
