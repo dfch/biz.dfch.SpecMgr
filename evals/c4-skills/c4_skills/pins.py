@@ -243,10 +243,13 @@ K_FULL = 5
 K_SMOKE = 2
 
 #: The case set of the full run (Measurement); Phase 100 only exercises the
-#: smoke case of it.
+#: smoke case of it. Phase 120 added `fix-dsl` (its home phase's case),
+#: Phase 130 adds `modeling-decisions` (its home phase's case) in canonical
+#: phase order between the Phase 120 and Phase 140 cases.
 FULL_CASES: tuple[str, ...] = (
     "create-system",
     "fix-dsl",
+    "modeling-decisions",
     "mcp-limits",
     "design-views",
     "review-model",
@@ -262,6 +265,27 @@ SMOKE_CASE = "smoke-create-system"
 #: `FULL_CASES` -- a held-out case is never used while tuning and runs
 #: once, at the end of its phase (Stop Rule).
 HELDOUT_VALIDATE_CASE = "heldout-validate"
+
+#: The Phase 120 held-out case (Task 120.100/120.140): the same task shape
+#: as `fix-dsl` (a seeded broken workspace to repair) in a different
+#: domain. Deliberately NOT part of `FULL_CASES` -- held out exactly like
+#: `HELDOUT_VALIDATE_CASE`.
+HELDOUT_DSL_CASE = "heldout-dsl"
+
+#: The Phase 130 held-out case (Task 130.100/130.140): the same task shape
+#: as `modeling-decisions` (a fresh workspace from a business scenario
+#: whose modeling decisions are the test) in a different domain.
+#: Deliberately NOT part of `FULL_CASES` -- held out exactly like
+#: `HELDOUT_DSL_CASE`.
+HELDOUT_MODELING_CASE = "heldout-modeling"
+
+#: The Phase 140 held-out case (Task 140.100/140.140): the same task shape
+#: as `design-views` (a fresh workspace from a business scenario whose
+#: view design is the test -- more than 20 elements, so a single
+#: `include *` container view necessarily exceeds the element bound) in a
+#: different domain. Deliberately NOT part of `FULL_CASES` -- held out
+#: exactly like `HELDOUT_MODELING_CASE`.
+HELDOUT_VIEWS_CASE = "heldout-views"
 
 
 def version_tuple() -> dict[str, object]:

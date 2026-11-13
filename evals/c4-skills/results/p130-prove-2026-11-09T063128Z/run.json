@@ -1,0 +1,3817 @@
+{
+  "cases": [
+    "modeling-decisions",
+    "no-trigger",
+    "heldout-modeling"
+  ],
+  "conditions": [
+    "none",
+    "upstream"
+  ],
+  "finished_at": "2026-11-09T14:28:11Z",
+  "k": 5,
+  "label": "p130-prove",
+  "order": [
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "upstream",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "upstream",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "upstream",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "upstream",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "upstream",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "upstream",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "upstream",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "upstream",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "upstream",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "upstream",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "upstream",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "upstream",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "upstream",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 1
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "upstream",
+      "k": 2
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "none",
+      "k": 0
+    },
+    {
+      "cached": false,
+      "case": "no-trigger",
+      "condition": "upstream",
+      "k": 4
+    },
+    {
+      "cached": false,
+      "case": "heldout-modeling",
+      "condition": "none",
+      "k": 3
+    },
+    {
+      "cached": false,
+      "case": "modeling-decisions",
+      "condition": "none",
+      "k": 3
+    }
+  ],
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "seed": 64292,
+  "skill_variant_hash": null,
+  "trial_timeout_s": 1200,
+  "trials": [
+    {
+      "cache_reason": "miss:key-mismatch",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/upstream-k0.events.ndjson",
+      "event_file_bytes": 296408,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T06:35:56Z",
+      "gates": [
+        {
+          "detail": "mounted skill(s) loaded: structurizr-dsl",
+          "name": "no_mounted_skill_loaded",
+          "passed": false
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text states that images cannot be produced",
+          "name": "mcp_limit_stated",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.006344214081764221,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 6,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl"
+        ],
+        "steps": 32,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 678847,
+          "output": 16305,
+          "reasoning": 0
+        },
+        "tool_calls": 34,
+        "validate_calls": 3,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 262.752,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "upstream",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T06:31:31Z",
+      "timeout": false,
+      "wall_time_s": 265.02164188888855,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.upstream-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/upstream-k4.events.ndjson",
+      "event_file_bytes": 188439,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T06:47:07Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2729 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "4 container(s), expected 3: ['Web Portal', 'Dispatch Service', 'Pricing Rules Library', 'Database']",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "technology on all 6 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: container 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 6 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.013762135989964008,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl"
+        ],
+        "steps": 9,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 264164,
+          "output": 38647,
+          "reasoning": 0
+        },
+        "tool_calls": 10,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 663.836,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"C4 model of the parcel delivery tracking platform\" {\n\n    !identifiers hierarchical\n\n    model {\n\n        customer = person \"Customer\" \"A customer who uses the platform to look up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"A parcel delivery tracking platform that lets customers look up shipments and dispatches parcels to couriers\" {\n\n            webPortal = container \"Web Portal\" \"The web portal where customers look up shipments\" \"Web application\"\n            dispatchService = container \"Dispatch Service\" \"The service that assigns parcels to couriers\" \"Service\"\n            pricingLibrary = container \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone\" \"Software library\" \"Software Library\"\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An external email delivery provider operated by a different organization\" \"External\"\n\n        customer -> parcelTracker.webPortal \"looks up the status of their parcels\" \"Web browser\"\n        parcelTracker.webPortal -> parcelTracker.pricingLibrary \"embeds\" \"In-process\"\n        parcelTracker.dispatchService -> parcelTracker.pricingLibrary \"embeds\" \"In-process\"\n        parcelTracker.dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        parcelTracker.webPortal -> parcelTracker.database \"reads shipment records from\" \"SQL\"\n        parcelTracker.dispatchService -> parcelTracker.database \"writes dispatch records to\" \"SQL\"\n    }\n\n    views {\n\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Parcel Tracker\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Software Library\" {\n                shape Hexagon\n            }\n        }\n    }\n\n    configuration {\n        scope softwareSystem\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "upstream",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T06:35:59Z",
+      "timeout": false,
+      "wall_time_s": 667.3455301867798,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-modeling/upstream-k1.events.ndjson",
+      "event_file_bytes": 187143,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T07:07:11Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2275 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009427714860066772,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl",
+          "c4-review"
+        ],
+        "steps": 8,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 211790,
+          "output": 25975,
+          "reasoning": 0
+        },
+        "tool_calls": 10,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1198.383,
+        "workdir_dsl": "workspace \"Energy Manager\" \"Home energy management platform\" {\n\n    !identifiers hierarchical\n\n    model {\n\n        homeowner = person \"Homeowner\" \"Manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Home energy management platform owned and operated by our company\" {\n\n            dashboard = container \"Dashboard Web App\" \"Where homeowners see consumption and costs; embeds the shared rates library that computes energy prices from tariff and time of day\" \"Web app\"\n\n            scheduler = container \"Scheduling Service\" \"Plans charging and heating; embeds the shared rates library that computes energy prices from tariff and time of day\" \"Service\"\n\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Database\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Provides live meter readings; operated by a different organization\" \"External\"\n\n        homeowner -> energyManager.dashboard \"views consumption and costs\" \"HTTPS\"\n        energyManager.scheduler -> smartMeterProvider \"fetches live meter readings\" \"HTTPS\"\n        energyManager.dashboard -> energyManager.database \"reads meter readings from\" \"SQL\"\n        energyManager.scheduler -> energyManager.database \"stores meter readings and schedules in\" \"SQL\"\n    }\n\n    views {\n\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Energy Manager\"\n        }\n\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Energy Manager\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "upstream",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T06:47:10Z",
+      "timeout": true,
+      "wall_time_s": 1201.1313950829208,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/none-k1.events.ndjson",
+      "event_file_bytes": 91845,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T07:27:16Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1717 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "4 container(s), expected 3: ['Dashboard Web App', 'Scheduling Service', 'Rates Library', 'Database']",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "technology on 0% of 5 relationship(s); missing: ['Manages household energy use and costs', 'Uses', 'Uses', 'Fetches live meter readings', 'Stores meter readings and schedules']",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (4 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: container 'Rates Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "2 vague relationship label(s): ['Uses', 'Uses']",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009927487000823021,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 4,
+        "inspect_findings": [
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The relationship between the person \"Homeowner\" and the container \"Energy Manager.Dashboard Web App\" is missing a technology.",
+          "The relationship between the person \"Homeowner\" and the software system \"Energy Manager\" is missing a technology.",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.",
+          "The relationship between the software system \"Energy Manager\" and the software system \"Smart Meter Provider\" is missing a technology.",
+          "The relationship between the container \"Energy Manager.Dashboard Web App\" and the container \"Energy Manager.Rates Library\" is missing a technology.",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Rates Library\" is missing a technology.",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the software system \"Smart Meter Provider\" is missing a technology.",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Database\" is missing a technology."
+        ],
+        "inspect_triage": {
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)": "untriaged",
+          "The relationship between the container \"Energy Manager.Dashboard Web App\" and the container \"Energy Manager.Rates Library\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the container \"Energy Manager.Rates Library\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Energy Manager.Scheduling Service\" and the software system \"Smart Meter Provider\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Homeowner\" and the container \"Energy Manager.Dashboard Web App\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Homeowner\" and the software system \"Energy Manager\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Energy Manager\" and the software system \"Smart Meter Provider\" is missing a technology.": "untriaged",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 4,
+        "relationship_technology_coverage": 0.0,
+        "skills_loaded": [],
+        "steps": 10,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 157588,
+          "output": 18348,
+          "reasoning": 0
+        },
+        "tool_calls": 11,
+        "validate_calls": 4,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 738.471,
+        "workdir_dsl": "workspace \"Energy Manager\" \"C4 model of the home energy management platform\" {\n\n    model {\n\n        homeowner = person \"Homeowner\" \"A homeowner who uses the platform to manage the household's energy use and costs.\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"A home energy management platform, owned and operated by our company, for managing household energy use and costs.\" {\n            dashboard = container \"Dashboard Web App\" \"A web app where homeowners see consumption and costs.\" \"Web Application\"\n            scheduler = container \"Scheduling Service\" \"A service that plans charging and heating.\" \"Service\"\n            ratesLibrary = container \"Rates Library\" \"A shared library that computes energy prices from tariff and time of day.\" \"Software Library\"\n            database = container \"Database\" \"A database that stores meter readings and schedules.\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"An external system, operated by a different organization, that provides live meter readings.\" \"External\"\n\n        homeowner -> dashboard \"Manages household energy use and costs\"\n        dashboard -> ratesLibrary \"Uses\"\n        scheduler -> ratesLibrary \"Uses\"\n        scheduler -> smartMeterProvider \"Fetches live meter readings\"\n        scheduler -> database \"Stores meter readings and schedules\"\n    }\n\n    views {\n        systemContext energyManager \"SystemContext\" \"A system context diagram of the Energy Manager platform.\" {\n            include *\n            autoLayout\n        }\n\n        container energyManager \"Containers\" \"A container diagram of the Energy Manager platform.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T07:07:15Z",
+      "timeout": true,
+      "wall_time_s": 1200.9571267161518,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/upstream-k1.events.ndjson",
+      "event_file_bytes": 228896,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T07:38:27Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (3399 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "4 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.01075421110726893,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl",
+          "c4-review"
+        ],
+        "steps": 8,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 279684,
+          "output": 53151,
+          "reasoning": 0
+        },
+        "tool_calls": 8,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 664.644,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n\n    !identifiers hierarchical\n\n    model {\n        properties {\n            \"structurizr.inspection.softwareSystem.missingDocumentation\" \"ignore\"\n            \"structurizr.inspection.softwareSystem.missingDecisions\" \"ignore\"\n        }\n\n        customer = person \"Customer\" \"A customer who uses the platform to look up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"A parcel delivery tracking platform owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up the status of their shipments\" \"Web application\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Relational database\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\" \"External\"\n\n        customer -> parcelTracker.webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        parcelTracker.webPortal -> parcelTracker.database \"reads shipment status from\" \"SQL\"\n        parcelTracker.webPortal.pricingRules -> parcelTracker.database \"reads weight and zone from\" \"SQL\"\n        parcelTracker.dispatchService -> parcelTracker.database \"reads and writes dispatch records to\" \"SQL\"\n        parcelTracker.dispatchService.pricingRules -> parcelTracker.database \"reads weight and zone from\" \"SQL\"\n        parcelTracker.dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Parcel Tracker\"\n        }\n\n        component parcelTracker.webPortal \"WebPortalComponents\" {\n            include *\n            autoLayout\n            title \"Components of Web Portal\"\n        }\n\n        component parcelTracker.dispatchService \"DispatchServiceComponents\" {\n            include *\n            autoLayout\n            title \"Components of Dispatch Service\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Component\" {\n                background #85BBF0\n                color #000000\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n\n    configuration {\n        scope softwareSystem\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "upstream",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T07:27:19Z",
+      "timeout": false,
+      "wall_time_s": 667.2071811850183,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:file-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/none-k4.events.ndjson",
+      "event_file_bytes": 218310,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T07:58:31Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1327 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on 0% of 4 relationship(s); missing: ['looks up the status of their parcels', 'stores shipments in', 'stores dispatch records in', 'sends customer notification emails through']",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (14 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009282741928473115,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 14,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.",
+          "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Database\" is missing a technology.",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Database\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.",
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+          "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.",
+          "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+          "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+          "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"Component-001\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"Component-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.",
+          "The view with key \"Component-002\" has an automatically generated view key and this is not guaranteed to be stable over time.",
+          "The view with key \"Component-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future."
+        ],
+        "inspect_triage": {
+          "System context views exist for 2 software systems. It is recommended that a workspace includes system context views for a single software system only.": "untriaged",
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Database\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+          "The view with key \"Component-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"Component-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+          "The view with key \"Component-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"Component-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+          "The view with key \"Container-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"SystemContext-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"SystemContext-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+          "The view with key \"SystemContext-002\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"SystemContext-002\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+          "The view with key \"SystemLandscape-001\" has an automatically generated view key and this is not guaranteed to be stable over time.": "untriaged",
+          "The view with key \"SystemLandscape-001\" has an automatically generated view key and this may cause manual layout information to be lost in the future.": "untriaged",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 6,
+        "relationship_technology_coverage": 0.0,
+        "skills_loaded": [],
+        "steps": 24,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 724328,
+          "output": 72687,
+          "reasoning": 0
+        },
+        "tool_calls": 24,
+        "validate_calls": 14,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1170.103,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web Application\" {\n                webPricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\"\n        webPortal -> database \"stores shipments in\"\n        dispatchService -> database \"stores dispatch records in\"\n        dispatchService -> emailProvider \"sends customer notification emails through\"\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T07:38:30Z",
+      "timeout": true,
+      "wall_time_s": 1201.051762011135,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/upstream-k2.events.ndjson",
+      "event_file_bytes": 102989,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T08:03:10Z",
+      "gates": [
+        {
+          "detail": "no mounted skill loaded (4 mounted: c4-deployment, c4-model, c4-review, structurizr-dsl)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.011456638108938932,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 25,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 409818,
+          "output": 21396,
+          "reasoning": 0
+        },
+        "tool_calls": 28,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 271.933,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "upstream",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T07:58:34Z",
+      "timeout": false,
+      "wall_time_s": 275.09356875391677,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.upstream-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/upstream-k3.events.ndjson",
+      "event_file_bytes": 122464,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T08:05:13Z",
+      "gates": [
+        {
+          "detail": "mounted skill(s) loaded: structurizr-dsl",
+          "name": "no_mounted_skill_loaded",
+          "passed": false
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.008039710111916065,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl"
+        ],
+        "steps": 16,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 279953,
+          "output": 7882,
+          "reasoning": 0
+        },
+        "tool_calls": 19,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 117.657,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "upstream",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T08:03:13Z",
+      "timeout": false,
+      "wall_time_s": 119.39569505909458,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.upstream-k3.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/upstream-k2.events.ndjson",
+      "event_file_bytes": 258119,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T08:25:17Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1602 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (7 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Rates Library', component 'Rates Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009480241918936372,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 9,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.",
+          "The component \"Energy Manager.Dashboard Web App.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The component named \"Rates Library\" is not included on any views - add it to a view.",
+          "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+        ],
+        "inspect_triage": {
+          "The component \"Energy Manager.Dashboard Web App.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component named \"Rates Library\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl",
+          "c4-model"
+        ],
+        "steps": 13,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 568079,
+          "output": 55981,
+          "reasoning": 0
+        },
+        "tool_calls": 13,
+        "validate_calls": 7,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 922.818,
+        "workdir_dsl": "workspace \"Home Energy Management Platform\" \"C4 model of the home energy management platform\" {\n\n    model {\n\n        homeowner = person \"Homeowner\" \"A homeowner who manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Platform for managing a household's energy use and costs\" {\n            dashboard = container \"Dashboard Web App\" \"Web app where homeowners see consumption and costs\" \"Web App\" {\n                dashboardRates = component \"Rates Library\" \"Computes energy prices from tariffs and time of day\" \"Library\"\n            }\n            scheduling = container \"Scheduling Service\" \"Service that plans charging and heating\" \"Service\" {\n                schedulingRates = component \"Rates Library\" \"Computes energy prices from tariffs and time of day\" \"Library\"\n            }\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"External provider of live meter readings\" \"External\"\n\n        homeowner -> dashboard \"views consumption and costs\" \"HTTPS\"\n        scheduling -> smartMeterProvider \"fetches live meter readings from\" \"HTTPS\"\n        scheduling -> database \"stores meter readings and schedules in\" \"SQL\"\n        dashboard -> database \"reads consumption and costs from\" \"SQL\"\n    }\n\n    views {\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n        }\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "upstream",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T08:05:16Z",
+      "timeout": true,
+      "wall_time_s": 1201.0733100690413,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/none-k0.events.ndjson",
+      "event_file_bytes": 459478,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T08:45:22Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2037 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "4 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (15 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.007221878971904516,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 15,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+        ],
+        "inspect_triage": {
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 15,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 45,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 2460027,
+          "output": 72503,
+          "reasoning": 0
+        },
+        "tool_calls": 45,
+        "validate_calls": 15,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1140.329,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\" {\n                webPricingRules = component \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricingRules = component \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        webPortal -> database \"stores and retrieves shipments in\" \"SQL\"\n        dispatchService -> database \"stores and retrieves dispatch records in\" \"SQL\"\n    }\n    views {\n        systemContext parcelTracker \"SystemContext\" \"The Parcel Tracker system and its external actors.\" {\n            include *\n            autoLayout\n        }\n        container parcelTracker \"Containers\" \"The containers within the Parcel Tracker system.\" {\n            include *\n            autoLayout\n        }\n        component webPortal \"WebPortalComponents\" \"The components within the Web Portal.\" {\n            include *\n            autoLayout\n        }\n        component dispatchService \"DispatchServiceComponents\" \"The components within the Dispatch Service.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T08:25:20Z",
+      "timeout": true,
+      "wall_time_s": 1201.0820974069647,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/none-k2.events.ndjson",
+      "event_file_bytes": 125228,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T09:05:26Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (14 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009883987018838525,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 11,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 2,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 19,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 854460,
+          "output": 74015,
+          "reasoning": 0
+        },
+        "tool_calls": 19,
+        "validate_calls": 14,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 960.127,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T08:45:25Z",
+      "timeout": true,
+      "wall_time_s": 1201.2551972530782,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/upstream-k3.events.ndjson",
+      "event_file_bytes": 231594,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T09:17:39Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (3262 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 5 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "4 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (3 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 5 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.011755323968827724,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 3,
+        "inspect_findings": [
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+        ],
+        "inspect_triage": {
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)": "untriaged",
+          "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl",
+          "c4-model",
+          "c4-review"
+        ],
+        "steps": 10,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 352814,
+          "output": 56001,
+          "reasoning": 0
+        },
+        "tool_calls": 10,
+        "validate_calls": 3,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 730.473,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"C4 model of the parcel delivery tracking platform\" {\n\n    !identifiers hierarchical\n    !impliedRelationships false\n\n    model {\n        properties {\n            \"structurizr.inspection.missingDocumentation\" \"ignore\"\n            \"structurizr.inspection.missingDecisions\" \"ignore\"\n            \"structurizr.inspection.disconnectedElement\" \"ignore\"\n        }\n\n        customer = person \"Customer\" \"Looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"Platform for tracking parcel deliveries, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Library\"\n            }\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Library\"\n            }\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Sends customer notification emails, operated by a different organization\" \"External\"\n\n        customer -> parcelTracker \"looks up the status of their parcels\" \"HTTPS\"\n        parcelTracker.webPortal -> parcelTracker.database \"reads shipments from\" \"SQL\"\n        parcelTracker.dispatchService -> parcelTracker.database \"writes dispatch records to\" \"SQL\"\n        parcelTracker.dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        parcelTracker -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Parcel Tracker\"\n        }\n\n        component parcelTracker.webPortal \"WebPortalComponents\" {\n            include *\n            autoLayout\n            title \"Components of Web Portal\"\n        }\n\n        component parcelTracker.dispatchService \"DispatchServiceComponents\" {\n            include *\n            autoLayout\n            title \"Components of Dispatch Service\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Component\" {\n                background #85BBF0\n                color #000000\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n\n    configuration {\n        scope softwareSystem\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "upstream",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T09:05:26Z",
+      "timeout": false,
+      "wall_time_s": 732.0244190550875,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k3.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/upstream-k0.events.ndjson",
+      "event_file_bytes": 225610,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T09:37:43Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2603 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "3/ 3 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 6 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 6 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.009405577089637518,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl",
+          "c4-review"
+        ],
+        "steps": 13,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 609083,
+          "output": 55907,
+          "reasoning": 0
+        },
+        "tool_calls": 12,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 914.814,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A platform for tracking parcel deliveries\" {\n    !identifiers hierarchical\n\n    model {\n        properties {\n            \"structurizr.inspection.softwareSystem.documentation\" \"ignore\"\n            \"structurizr.inspection.softwareSystem.decisions\" \"ignore\"\n        }\n\n        customer = person \"Customer\" \"Looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"A platform for tracking parcel deliveries, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\"\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Relational database\" \"Database\"\n        }\n\n        pricingLibrary = softwareSystem \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Library\"\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Sends customer notification emails\" \"External\"\n\n        customer -> parcelTracker.webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        parcelTracker.webPortal -> parcelTracker.database \"reads shipments from\" \"SQL\"\n        parcelTracker.dispatchService -> parcelTracker.database \"writes dispatch records to\" \"SQL\"\n        parcelTracker.dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        parcelTracker.webPortal -> pricingLibrary \"embeds\" \"compiled in\"\n        parcelTracker.dispatchService -> pricingLibrary \"embeds\" \"compiled in\"\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Library\" {\n                background #6A737D\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "upstream",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T09:17:42Z",
+      "timeout": true,
+      "wall_time_s": 1201.1038142899051,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-modeling/none-k4.events.ndjson",
+      "event_file_bytes": 250,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T09:58:18Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 30.04473501793109,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 1,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 0,
+          "output": 0,
+          "reasoning": 0
+        },
+        "tool_calls": 0,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": null,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T09:38:17Z",
+      "timeout": true,
+      "wall_time_s": 1201.26208657003,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-modeling/upstream-k4.events.ndjson",
+      "event_file_bytes": 101184,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T10:32:01Z",
+      "gates": [
+        {
+          "detail": "no .dsl file in the work dir",
+          "name": "dsl_written",
+          "passed": false
+        },
+        {
+          "detail": "CLI validate could not run (no DSL file)",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export could not run (no DSL file)",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (0 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 820.9454502358567,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 0,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [
+          "structurizr-dsl",
+          "c4-model"
+        ],
+        "steps": 2,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 5448,
+          "output": 92,
+          "reasoning": 0
+        },
+        "tool_calls": 2,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 23.985,
+        "workdir_dsl": null
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "upstream",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T10:11:59Z",
+      "timeout": true,
+      "wall_time_s": 1201.2996236381587,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/no-trigger/upstream-k1.events.ndjson",
+      "event_file_bytes": 120519,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T11:23:46Z",
+      "gates": [
+        {
+          "detail": "mounted skill(s) loaded: structurizr-dsl",
+          "name": "no_mounted_skill_loaded",
+          "passed": false
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 1980.9759941441007,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 0,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl"
+        ],
+        "steps": 16,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 299214,
+          "output": 12985,
+          "reasoning": 0
+        },
+        "tool_calls": 18,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1121.959,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "upstream",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T11:05:02Z",
+      "timeout": false,
+      "wall_time_s": 1124.3650965210982,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.upstream-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/modeling-decisions/none-k1.events.ndjson",
+      "event_file_bytes": 78322,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T11:45:51Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1671 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "3/ 3 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on 0% of 6 relationship(s); missing: ['Looks up the status of their parcels', 'Embeds', 'Stores and retrieves shipments', 'Embeds', 'Sends customer notification emails', 'Stores dispatch records']",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no vague label on any of the 6 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 120.15650742384605,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.",
+          "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Pricing Rules Library\" is missing a technology.",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the software system \"Pricing Rules Library\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Shipments Database\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Pricing Rules Library\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Shipments Database\" is missing a technology."
+        ],
+        "inspect_triage": {
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the container \"Parcel Tracker.Shipments Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Dispatch Service\" and the software system \"Pricing Rules Library\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the container \"Parcel Tracker.Shipments Database\" is missing a technology.": "untriaged",
+          "The relationship between the container \"Parcel Tracker.Web Portal\" and the software system \"Pricing Rules Library\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Customer\" and the container \"Parcel Tracker.Web Portal\" is missing a technology.": "untriaged",
+          "The relationship between the person \"Customer\" and the software system \"Parcel Tracker\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Email Delivery Provider\" is missing a technology.": "untriaged",
+          "The relationship between the software system \"Parcel Tracker\" and the software system \"Pricing Rules Library\" is missing a technology.": "untriaged",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 2,
+        "relationship_technology_coverage": 0.0,
+        "skills_loaded": [],
+        "steps": 8,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 109444,
+          "output": 13899,
+          "reasoning": 0
+        },
+        "tool_calls": 9,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 715.03,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A C4 model of the parcel delivery tracking platform.\" {\n\n    model {\n\n        customer = person \"Customer\" \"A customer who uses the platform to look up the status of their parcels.\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company.\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments.\" \"Web\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers.\" \"Service\"\n            shipmentsDb = container \"Shipments Database\" \"Stores shipments and dispatch records.\" \"Database\"\n        }\n\n        pricingRulesLibrary = softwareSystem \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone.\" \"Library\"\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization.\" \"Email\"\n\n        customer -> webPortal \"Looks up the status of their parcels\"\n        webPortal -> pricingRulesLibrary \"Embeds\"\n        dispatchService -> pricingRulesLibrary \"Embeds\"\n        dispatchService -> emailProvider \"Sends customer notification emails\"\n        webPortal -> shipmentsDb \"Stores and retrieves shipments\"\n        dispatchService -> shipmentsDb \"Stores dispatch records\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" \"The system context diagram for the Parcel Tracker.\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" \"The container diagram for the Parcel Tracker.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T11:25:50Z",
+      "timeout": true,
+      "wall_time_s": 1200.6974093688186,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": true,
+      "event_file": "trials/heldout-modeling/upstream-k3.events.ndjson",
+      "event_file_bytes": 258084,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T12:19:26Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2626 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (3 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 810.9422101560049,
+      "metrics": {
+        "contended": true,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 3,
+        "inspect_findings": [
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 3,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "structurizr-dsl",
+          "c4-model"
+        ],
+        "steps": 14,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 641573,
+          "output": 50138,
+          "reasoning": 0
+        },
+        "tool_calls": 15,
+        "validate_calls": 3,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1161.35,
+        "workdir_dsl": "workspace \"Home Energy Management Platform\" \"A C4 model of the Energy Manager platform for managing household energy use and costs\" {\n\n    !identifiers hierarchical\n\n    model {\n\n        homeowner = person \"Homeowner\" \"A homeowner who manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"A platform for managing household energy use and costs, owned and operated by our company\" {\n\n            dashboard = container \"Dashboard Web App\" \"A web app where homeowners see their consumption and costs. Embeds the shared Rates Library, which computes energy prices from tariff and time of day\" \"Web Application\"\n\n            scheduler = container \"Scheduling Service\" \"A service that plans charging and heating. Embeds the shared Rates Library, which computes energy prices from tariff and time of day\" \"Background Service\"\n\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Relational Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"An external provider of live meter readings, operated by a different organization\" \"External\"\n\n        homeowner -> energyManager.dashboard \"views consumption and costs\" \"HTTPS\"\n        energyManager.scheduler -> smartMeterProvider \"fetches live meter readings\" \"HTTPS\"\n        energyManager.dashboard -> energyManager.database \"reads meter readings and schedules from\" \"SQL\"\n        energyManager.scheduler -> energyManager.database \"stores meter readings and schedules in\" \"SQL\"\n    }\n\n    views {\n\n        systemContext energyManager \"SystemContext\" \"System context for the Energy Manager platform\" {\n            include *\n            autoLayout\n            title \"System Context for Energy Manager\"\n        }\n\n        container energyManager \"Containers\" \"Container diagram for the Energy Manager platform\" {\n            include *\n            autoLayout\n            title \"Containers for Energy Manager\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n\n    configuration {\n        scope softwaresystem\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "upstream",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T11:59:25Z",
+      "timeout": true,
+      "wall_time_s": 1201.2610721930396,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k3.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/none-k2.events.ndjson",
+      "event_file_bytes": 239187,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T12:37:21Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2091 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=1: 12:37:22.609 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Parcel Tracker has containers.",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export rc=1: 12:37:23.402 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (11 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.005987339187413454,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 9,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 8,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 20,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 552723,
+          "output": 49769,
+          "reasoning": 0
+        },
+        "tool_calls": 23,
+        "validate_calls": 11,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 1069.142,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    configuration {\n        scope \"Landscape\"\n    }\n\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\" {\n                portalPricing = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricing = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\" \"Web\"\n        dispatchService -> emailProvider \"sends customer notification emails through\" \"Email\"\n        webPortal -> database \"stores shipments in\" \"SQL\"\n        dispatchService -> database \"stores dispatch records in\" \"SQL\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" \"Shows the Parcel Tracker system and the people and systems that interact with it\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" \"Shows the containers that make up the Parcel Tracker system\" {\n            include *\n            autoLayout\n        }\n\n        component webPortal \"WebPortalComponents\" \"Shows the components of the web portal\" {\n            include *\n            autoLayout\n        }\n\n        component dispatchService \"DispatchServiceComponents\" \"Shows the components of the dispatch service\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T12:19:30Z",
+      "timeout": false,
+      "wall_time_s": 1071.4893369700294,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/none-k0.events.ndjson",
+      "event_file_bytes": 208245,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T12:48:52Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1677 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "4 container(s), expected 3: ['Dashboard Web App', 'Scheduling Service', 'Rates Library', 'Energy Manager Database']",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "technology on all 5 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (16 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: container 'Rates Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no vague label on any of the 5 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.0114137118216604,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 5,
+        "inspect_findings": [
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "ERROR: The element \"Element\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "ERROR: The element named \"Element\" is not included on any views - add it to a view.",
+          "ERROR: The software system \"System\" is missing a description.",
+          "ERROR: The software system \"System\" has containers, but is missing documentation.",
+          "ERROR: The software system \"System\" has containers, but is missing decisions.",
+          "ERROR: The software system \"System\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "ERROR: The software system named \"System\" is not included on any views - add it to a view.",
+          "ERROR: The container \"System.Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "ERROR: The container named \"Database\" is not included on any views - add it to a view.",
+          "ERROR: The container \"System.App\" is missing a technology.",
+          "ERROR: The container \"System.App\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "ERROR: The container named \"App\" is not included on any views - add it to a view.",
+          "ERROR: This workspace has no views.",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "ERROR: The container \"System.App\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "fix",
+          "ERROR: The container \"System.App\" is missing a technology.": "fix",
+          "ERROR: The container \"System.Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "fix",
+          "ERROR: The container named \"App\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The container named \"Database\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The element \"Element\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "fix",
+          "ERROR: The element named \"Element\" is not included on any views - add it to a view.": "fix",
+          "ERROR: The software system \"System\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"System\" has containers, but is missing documentation.": "expected",
+          "ERROR: The software system \"System\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "fix",
+          "ERROR: The software system \"System\" is missing a description.": "fix",
+          "ERROR: The software system named \"System\" is not included on any views - add it to a view.": "fix",
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "fix",
+          "ERROR: This workspace has no views.": "fix",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 24,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 743591,
+          "output": 48843,
+          "reasoning": 0
+        },
+        "tool_calls": 26,
+        "validate_calls": 16,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 684.429,
+        "workdir_dsl": "workspace \"Energy Manager\" \"C4 model of the home energy management platform\" {\n\n    configuration {\n        scope \"SoftwareSystem\"\n    }\n\n    model {\n\n        homeowner = person \"Homeowner\" \"Uses the platform to manage the household's energy use and costs.\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Home energy management platform owned and operated by our company.\" {\n\n            dashboard = container \"Dashboard Web App\" \"Web app where homeowners see consumption and costs.\" \"Web Application\"\n\n            scheduler = container \"Scheduling Service\" \"Service that plans charging and heating.\" \"Service\"\n\n            ratesLibrary = container \"Rates Library\" \"Shared library that computes energy prices from tariff and time of day.\" \"Library\"\n\n            database = container \"Energy Manager Database\" \"Database that stores meter readings and schedules. Operated by our company.\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"External smart meter provider that supplies live meter readings. Operated by a different organization.\"\n\n        homeowner -> dashboard \"Manages household energy use and costs\" \"HTTPS\"\n        dashboard -> ratesLibrary \"Embeds\" \"In-process\"\n        scheduler -> ratesLibrary \"Embeds\" \"In-process\"\n        scheduler -> smartMeterProvider \"Fetches live meter readings\" \"HTTPS\"\n        scheduler -> database \"Stores meter readings and schedules\" \"SQL\"\n    }\n\n    views {\n\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n        }\n\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T12:37:24Z",
+      "timeout": false,
+      "wall_time_s": 687.4664883720689,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:key-mismatch",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k2.events.ndjson",
+      "event_file_bytes": 84992,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T12:52:15Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text states that images cannot be produced",
+          "name": "mcp_limit_stated",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010349259013310075,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 14,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 173008,
+          "output": 11605,
+          "reasoning": 0
+        },
+        "tool_calls": 19,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 197.718,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T12:48:55Z",
+      "timeout": false,
+      "wall_time_s": 200.2529113299679,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/upstream-k0.events.ndjson",
+      "event_file_bytes": 304533,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T13:12:20Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2925 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "exactly 3 container(s)",
+          "name": "container_count",
+          "passed": true
+        },
+        {
+          "detail": "technology on all 4 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 6 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "4 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (1 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: component 'Rates Library', component 'Rates Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Smart Meter Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 4 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010347258998081088,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 8,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.",
+          "The component \"Energy Manager.Dashboard.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+          "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+        ],
+        "inspect_triage": {
+          "The component \"Energy Manager.Dashboard.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The component \"Energy Manager.Scheduling Service.Rates Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+          "The software system \"Energy Manager\" has containers, but is missing decisions.": "expected",
+          "The software system \"Energy Manager\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 2,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl"
+        ],
+        "steps": 13,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 478720,
+          "output": 53453,
+          "reasoning": 0
+        },
+        "tool_calls": 13,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 817.712,
+        "workdir_dsl": "workspace \"Home Energy Management Platform\" \"C4 model of the Energy Manager platform\" {\n\n    !identifiers hierarchical\n\n    model {\n\n        homeowner = person \"Homeowner\" \"Manages their household's energy use and costs\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Platform for managing household energy use and costs\" {\n\n            dashboard = container \"Dashboard\" \"Web app where homeowners see consumption and costs\" \"Web app\" \"Web\" {\n                rates = component \"Rates Library\" \"Computes energy prices from tariff and time of day\" \"Shared library\"\n            }\n\n            scheduler = container \"Scheduling Service\" \"Plans charging and heating\" \"Service\" {\n                rates = component \"Rates Library\" \"Computes energy prices from tariff and time of day\" \"Shared library\"\n            }\n\n            database = container \"Database\" \"Stores meter readings and schedules\" \"Database\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Operated by a different organization; provides live meter readings\" \"External\"\n\n        homeowner -> energyManager.dashboard \"views consumption and costs\" \"HTTPS\"\n        energyManager.dashboard -> energyManager.database \"reads meter readings from\" \"SQL\"\n        energyManager.scheduler -> smartMeterProvider \"fetches live meter readings from\" \"HTTP/JSON\"\n        energyManager.scheduler -> energyManager.database \"stores meter readings and schedules in\" \"SQL\"\n    }\n\n    views {\n\n        systemContext energyManager \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Energy Manager\"\n        }\n\n        container energyManager \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Energy Manager\"\n        }\n\n        component energyManager.dashboard \"DashboardComponents\" {\n            include *\n            autoLayout\n            title \"Components of Dashboard\"\n        }\n\n        component energyManager.scheduler \"SchedulerComponents\" {\n            include *\n            autoLayout\n            title \"Components of Scheduling Service\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Component\" {\n                background #85BBF0\n                color #000000\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Web\" {\n                shape WebBrowser\n            }\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "upstream",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T12:52:18Z",
+      "timeout": true,
+      "wall_time_s": 1201.1387081539724,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.upstream-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k3.events.ndjson",
+      "event_file_bytes": 64456,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T13:14:03Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text states that images cannot be produced",
+          "name": "mcp_limit_stated",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.010900768917053938,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 8,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 83856,
+          "output": 8927,
+          "reasoning": 0
+        },
+        "tool_calls": 10,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 96.153,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": true,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T13:12:23Z",
+      "timeout": false,
+      "wall_time_s": 99.21495341486298,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k3.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k4.events.ndjson",
+      "event_file_bytes": 149017,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T13:20:36Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.011466608149930835,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 2,
+        "inspect_findings": [
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)": "fix",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 34,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 697896,
+          "output": 24887,
+          "reasoning": 0
+        },
+        "tool_calls": 38,
+        "validate_calls": 2,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 386.352,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T13:14:06Z",
+      "timeout": false,
+      "wall_time_s": 390.32216338510625,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k1.events.ndjson",
+      "event_file_bytes": 100605,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T13:25:25Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009887873195111752,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 16,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 265317,
+          "output": 24409,
+          "reasoning": 0
+        },
+        "tool_calls": 21,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 283.691,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 1
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T13:20:39Z",
+      "timeout": false,
+      "wall_time_s": 285.2833613581024,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k1.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/upstream-k2.events.ndjson",
+      "event_file_bytes": 290223,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T13:45:30Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (2645 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "CLI export rc=0",
+          "name": "cli_export",
+          "passed": true
+        },
+        {
+          "detail": "2/ 2 softwareSystem(s) named and described",
+          "name": "has_system",
+          "passed": true
+        },
+        {
+          "detail": "1/1 person(s) described",
+          "name": "has_person",
+          "passed": true
+        },
+        {
+          "detail": "4 container(s), expected 3: ['Web Portal', 'Dispatch Service', 'Database', 'Pricing Rules Library']",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "technology on all 8 relationship(s)",
+          "name": "relationship_technology",
+          "passed": true
+        },
+        {
+          "detail": "description on all 7 element(s)",
+          "name": "elements_described",
+          "passed": true
+        },
+        {
+          "detail": "2 user-defined view(s)",
+          "name": "has_view",
+          "passed": true
+        },
+        {
+          "detail": "no validate call answered the OK marker (6 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "forbidden element(s) modeled as a container or component: container 'Pricing Rules Library'",
+          "name": "no_library_container",
+          "passed": false
+        },
+        {
+          "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+          "name": "external_system_tagged",
+          "passed": true
+        },
+        {
+          "detail": "no vague label on any of the 8 relationship(s)",
+          "name": "no_vague_labels",
+          "passed": true
+        }
+      ],
+      "idle_wait_s": 0.01028324500657618,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 11,
+        "inspect_findings": [
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions."
+        ],
+        "inspect_triage": {
+          "SyntaxError: Syntax 'ImportExpression' is not supported. This is a restricted JavaScript-like language. Supported: plain and async functions, data literals, destructuring, standard control flow, await and Promise, and built-ins such as Array, Object, Math, JSON, Date, RegExp, Map, Set, and URL. Unsupported: classes, getters/setters, BigInt, and custom Symbols. Use plain functions and data objects instead. (line 1, col 18)": "untriaged",
+          "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+          "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+        },
+        "parse_calls": 2,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [
+          "c4-model",
+          "structurizr-dsl"
+        ],
+        "steps": 17,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 727544,
+          "output": 64556,
+          "reasoning": 0
+        },
+        "tool_calls": 17,
+        "validate_calls": 6,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 959.392,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n\n    !impliedRelationships false\n\n    configuration {\n        scope softwareSystem\n    }\n\n    model {\n\n        customer = person \"Customer\" \"A customer who uses the platform to look up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"A parcel delivery tracking platform owned and operated by our company\" {\n\n            webPortal = container \"Web Portal\" \"A web portal where customers look up shipments\" \"Web Application\"\n            dispatchService = container \"Dispatch Service\" \"A service that assigns parcels to couriers\" \"Service\"\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\" \"Database\"\n            pricingLibrary = container \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Library\" \"Library\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\" \"External\"\n\n        customer -> webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        customer -> parcelTracker \"looks up the status of their parcels\" \"HTTPS\"\n        webPortal -> pricingLibrary \"embeds\" \"Embedded\"\n        dispatchService -> pricingLibrary \"embeds\" \"Embedded\"\n        dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        parcelTracker -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        webPortal -> database \"reads shipments from\" \"SQL\"\n        dispatchService -> database \"writes dispatch records to\" \"SQL\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context diagram for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Container diagram for Parcel Tracker\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n            element \"Library\" {\n                shape Hexagon\n            }\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "upstream",
+        "k_index": 2
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T13:25:28Z",
+      "timeout": true,
+      "wall_time_s": 1201.1055790509563,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k2.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/none-k0.events.ndjson",
+      "event_file_bytes": 87995,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T13:50:02Z",
+      "gates": [
+        {
+          "detail": "no skills mounted (vacuously true)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.007042613113299012,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "The software system \"Library\" has containers, but is missing documentation.",
+          "The software system \"Library\" has containers, but is missing decisions.",
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 0,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 14,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 218403,
+          "output": 18866,
+          "reasoning": 0
+        },
+        "tool_calls": 18,
+        "validate_calls": 1,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 266.189,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "none",
+        "k_index": 0
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T13:45:33Z",
+      "timeout": false,
+      "wall_time_s": 269.01300960499793,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.none-k0.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/no-trigger/upstream-k4.events.ndjson",
+      "event_file_bytes": 74767,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T13:52:55Z",
+      "gates": [
+        {
+          "detail": "no mounted skill loaded (4 mounted: c4-deployment, c4-model, c4-review, structurizr-dsl)",
+          "name": "no_mounted_skill_loaded",
+          "passed": true
+        },
+        {
+          "detail": "workspace.dsl is byte-identical to the seeded file",
+          "name": "file_untouched",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=0",
+          "name": "cli_valid",
+          "passed": true
+        },
+        {
+          "detail": "final text does not state that the MCP cannot produce images",
+          "name": "mcp_limit_stated",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.011110279941931367,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 1,
+        "inspect_findings": [
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+          "ERROR: The software system \"Library\" has containers, but is missing documentation.",
+          "ERROR: The software system \"Library\" has containers, but is missing decisions.",
+          "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+          "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view."
+        ],
+        "inspect_triage": {
+          "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+          "ERROR: The software system \"Library\" has containers, but is missing decisions.": "expected",
+          "ERROR: The software system \"Library\" has containers, but is missing documentation.": "expected",
+          "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+        },
+        "parse_calls": 1,
+        "relationship_technology_coverage": 1.0,
+        "skills_loaded": [],
+        "steps": 14,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 192908,
+          "output": 12936,
+          "reasoning": 0
+        },
+        "tool_calls": 20,
+        "validate_calls": 0,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 167.294,
+        "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "no-trigger",
+        "condition": "upstream",
+        "k_index": 4
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [
+        "c4-deployment",
+        "c4-model",
+        "c4-review",
+        "structurizr-dsl"
+      ],
+      "started_at": "2026-11-09T13:50:05Z",
+      "timeout": false,
+      "wall_time_s": 169.9968977230601,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.upstream-k4.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/heldout-modeling/none-k3.events.ndjson",
+      "event_file_bytes": 267374,
+      "event_file_committed": true,
+      "exit_code": 0,
+      "finished_at": "2026-11-09T14:08:05Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1866 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=1: 14:08:05.872 [main] ERROR com.structurizr.command.ValidateCommand -- Workspace is landscape scoped, but the software system named Energy Manager has containers.",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export rc=1: 14:08:06.653 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "1 validate call(s) answered OK",
+          "name": "validate_ok_called",
+          "passed": true
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.008871358819305897,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 12,
+        "inspect_findings": [
+          "TypeError: Cannot read properties of undefined (reading 'map'). (line 58, col 19)"
+        ],
+        "inspect_triage": {
+          "TypeError: Cannot read properties of undefined (reading 'map'). (line 58, col 19)": "untriaged"
+        },
+        "parse_calls": 3,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 39,
+        "timeout": false,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 1556595,
+          "output": 68065,
+          "reasoning": 0
+        },
+        "tool_calls": 41,
+        "validate_calls": 19,
+        "validate_ok_calls": 1,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 902.843,
+        "workdir_dsl": "workspace \"Energy Manager\" \"C4 model of the home energy management platform\" {\n\n    model {\n        homeowner = person \"Homeowner\" \"Manages the household's energy use and costs.\"\n\n        energyManager = softwareSystem \"Energy Manager\" \"Home energy management platform owned and operated by our company.\" {\n            dashboard = container \"Dashboard Web App\" \"Where homeowners see consumption and costs.\" \"Web Application\"\n            scheduling = container \"Scheduling Service\" \"Plans charging and heating.\" \"Service\"\n            ratesLibrary = container \"Rates Library\" \"Shared library that computes energy prices from tariff and time of day.\" \"Software Library\"\n            database = container \"Database\" \"Stores meter readings and schedules.\" \"Database\"\n        }\n\n        smartMeterProvider = softwareSystem \"Smart Meter Provider\" \"Operated by a different organization; provides live meter readings.\"\n\n        homeowner -> dashboard \"Manages household energy use and costs\" \"Web\"\n        dashboard -> ratesLibrary \"Embeds\" \"Embedded\"\n        scheduling -> ratesLibrary \"Embeds\" \"Embedded\"\n        scheduling -> smartMeterProvider \"Fetches live meter readings\" \"API\"\n        scheduling -> database \"Stores meter readings and schedules\" \"Database\"\n    }\n\n    views {\n        systemContext energyManager \"SystemContext\" \"System context view of the Energy Manager platform.\" {\n            include homeowner\n            include smartMeterProvider\n            autolayout\n        }\n\n        container energyManager \"Containers\" \"Container view of the Energy Manager platform.\" {\n            include homeowner\n            include smartMeterProvider\n            include dashboard\n            include scheduling\n            include ratesLibrary\n            include database\n            autolayout\n        }\n    }\n\n    configuration {\n        scope \"Landscape\"\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "heldout-modeling",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T13:52:59Z",
+      "timeout": false,
+      "wall_time_s": 905.8229999900796,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-modeling.none-k3.p130-prove-2026-11-09T063128Z"
+    },
+    {
+      "cache_reason": "miss:trial-absent",
+      "cached": false,
+      "contended": false,
+      "event_file": "trials/modeling-decisions/none-k3.events.ndjson",
+      "event_file_bytes": 102164,
+      "event_file_committed": true,
+      "exit_code": null,
+      "finished_at": "2026-11-09T14:28:08Z",
+      "gates": [
+        {
+          "detail": "workspace.dsl (1443 bytes)",
+          "name": "dsl_written",
+          "passed": true
+        },
+        {
+          "detail": "CLI validate rc=1: 14:28:09.715 [main] ERROR com.structurizr.command.ValidateCommand -- Unexpected tokens (expected: archetypes, !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 15 of /w/workspace.dsl: webPortal embeds pricingRulesLibrary",
+          "name": "cli_valid",
+          "passed": false
+        },
+        {
+          "detail": "CLI export rc=1: 14:28:10.510 [main] INFO com.structurizr.command.ExportCommand -- Exporting workspace from workspace.dsl",
+          "name": "cli_export",
+          "passed": false
+        },
+        {
+          "detail": "no softwareSystem in the export JSON",
+          "name": "has_system",
+          "passed": false
+        },
+        {
+          "detail": "no person in the export JSON",
+          "name": "has_person",
+          "passed": false
+        },
+        {
+          "detail": "0 container(s), expected 3: []",
+          "name": "container_count",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "relationship_technology",
+          "passed": false
+        },
+        {
+          "detail": "no elements in the export JSON",
+          "name": "elements_described",
+          "passed": false
+        },
+        {
+          "detail": "no user-defined views in the export JSON (only auto-generated)",
+          "name": "has_view",
+          "passed": false
+        },
+        {
+          "detail": "no validate call answered the OK marker (13 validate call(s) in total)",
+          "name": "validate_ok_called",
+          "passed": false
+        },
+        {
+          "detail": "none of the 1 forbidden element name(s) appears as a container or component",
+          "name": "no_library_container",
+          "passed": true
+        },
+        {
+          "detail": "no top-level softwareSystem or custom element carries the External tag",
+          "name": "external_system_tagged",
+          "passed": false
+        },
+        {
+          "detail": "no relationships in the export JSON",
+          "name": "no_vague_labels",
+          "passed": false
+        }
+      ],
+      "idle_wait_s": 0.009829537943005562,
+      "metrics": {
+        "contended": false,
+        "cost": 0.0,
+        "export_calls": 0,
+        "final_dsl": null,
+        "inspect_calls": 4,
+        "inspect_findings": [],
+        "inspect_triage": {},
+        "parse_calls": 1,
+        "relationship_technology_coverage": null,
+        "skills_loaded": [],
+        "steps": 17,
+        "timeout": true,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 526577,
+          "output": 55034,
+          "reasoning": 0
+        },
+        "tool_calls": 17,
+        "validate_calls": 13,
+        "validate_ok_calls": 0,
+        "validated_before_return": false,
+        "validated_by_file": false,
+        "validated_by_final_text": false,
+        "wall_time_s": 736.104,
+        "workdir_dsl": "workspace \"Parcel Tracker\" \"C4 model of the parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"Looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"Owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\"\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\"\n            database = container \"Database\" \"Stores shipments and dispatch records\"\n        }\n\n        pricingRulesLibrary = softwareSystem \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\"\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"Operated by a different organization\"\n\n        customer -> webPortal \"Looks up the status of their parcels\"\n        webPortal embeds pricingRulesLibrary\n        dispatchService embeds pricingRulesLibrary\n        dispatchService -> emailProvider \"Sends customer notification emails\"\n        webPortal -> database \"Stores and retrieves shipments\"\n        dispatchService -> database \"Stores dispatch records\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" \"System context diagram for Parcel Tracker\" {\n            include *\n            autoLayout\n        }\n\n        container parcelTracker \"Containers\" \"Container diagram for Parcel Tracker\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+      },
+      "passed": false,
+      "plan": {
+        "case_id": "modeling-decisions",
+        "condition": "none",
+        "k_index": 3
+      },
+      "run_id": "p130-prove-2026-11-09T063128Z",
+      "skills_installed": [],
+      "started_at": "2026-11-09T14:08:07Z",
+      "timeout": true,
+      "wall_time_s": 1201.010272727115,
+      "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k3.p130-prove-2026-11-09T063128Z"
+    }
+  ],
+  "version_tuple": {
+    "conditions_cacheable": [
+      "none",
+      "upstream"
+    ],
+    "jq": "1.6",
+    "model_id": "qwen3.8-27b-bf16-896k",
+    "network_mode": "internal-bridge",
+    "opencode_image": "ghcr.io/anomalyco/opencode:2.2.5",
+    "opencode_image_digest": "sha256:1690aad69864d2f6714772d1e040918feebc6df5286d2bd7e181fbb35d12d4a9",
+    "provider_id": "vllm-sys0",
+    "python": "3.13.13",
+    "sampling_parameters": {
+      "seed": 1337,
+      "temperature": 0.0,
+      "topP": 1.0
+    },
+    "speculative_config": {
+      "externally_verifiable": false,
+      "method": "mtp",
+      "num_speculative_tokens": 5
+    },
+    "structurizr_cli_image": "structurizr/structurizr:2026.10.26-noble",
+    "structurizr_cli_image_digest": "sha256:1081d615e7a539aee8b8360e36a58f42ff6412dd8f0e1b053134cb2c76ab2303",
+    "structurizr_mcp_image": "structurizr/mcp:2026.04.20",
+    "structurizr_mcp_image_digest": "sha256:fc4ef98b7da925d62b08c71a90eb995a527fae30e2c04b39e3041f253c135539",
+    "trial_timeout_s": 1200,
+    "upstream_sha": "e86d8a91d3ed793cdf6c035f01d19f1b18cc8b6b",
+    "vllm_endpoint": "http://127.0.0.1:8081/v1",
+    "vllm_version": "0.26.0"
+  },
+  "version_tuple_hash": "f22635f6ba9bee3354bb487b5f26753260293fbd8a3394a778f398b507103662"
+}

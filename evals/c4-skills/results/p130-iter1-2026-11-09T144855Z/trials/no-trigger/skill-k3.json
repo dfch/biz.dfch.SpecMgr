@@ -1,0 +1,90 @@
+{
+  "cache_reason": "n/a",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/no-trigger/skill-k3.events.ndjson",
+  "event_file_bytes": 113980,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-09T14:56:03Z",
+  "gates": [
+    {
+      "detail": "no mounted skill loaded (1 mounted: c4-modeling)",
+      "name": "no_mounted_skill_loaded",
+      "passed": true
+    },
+    {
+      "detail": "workspace.dsl is byte-identical to the seeded file",
+      "name": "file_untouched",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "final text does not state that the MCP cannot produce images",
+      "name": "mcp_limit_stated",
+      "passed": false
+    }
+  ],
+  "idle_wait_s": 0.010091447969898582,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "ReferenceError: Unknown identifier 'require'. (line 1, col 12)",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The software system \"Library\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Library\" has containers, but is missing decisions.",
+      "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.",
+      "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view."
+    ],
+    "inspect_triage": {
+      "ERROR: The container named \"Catalog Web App\" is not included on any views - add it to a view.": "untriaged",
+      "ERROR: The container named \"Circulation Service\" is not included on any views - add it to a view.": "untriaged",
+      "ERROR: The software system \"Library\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Library\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged",
+      "ReferenceError: Unknown identifier 'require'. (line 1, col 12)": "fix"
+    },
+    "parse_calls": 0,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [],
+    "steps": 17,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 344076,
+      "output": 32238,
+      "reasoning": 0
+    },
+    "tool_calls": 22,
+    "validate_calls": 0,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 421.4,
+    "workdir_dsl": "workspace \"Library\" \"A small public library system.\" {\n    model {\n        patron = person \"Patron\" \"Borrows books at the library.\"\n        library = softwareSystem \"Library\" \"Manages books and loans.\" {\n            catalog = container \"Catalog Web App\" \"Lets patrons browse the catalogue.\" \"Python\"\n            circulation = container \"Circulation Service\" \"Records loans and returns.\" \"Java\"\n        }\n        patron -> catalog \"Browses the catalogue through\" \"HTTPS\"\n        catalog -> circulation \"Records loans via\" \"gRPC\"\n    }\n    views {\n        systemContext library \"SystemContext\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "no-trigger",
+    "condition": "skill",
+    "k_index": 3
+  },
+  "run_id": "p130-iter1-2026-11-09T144855Z",
+  "skills_installed": [
+    "c4-modeling"
+  ],
+  "started_at": "2026-11-09T14:48:58Z",
+  "timeout": false,
+  "wall_time_s": 424.64552124380134,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/no-trigger.skill-k3.p130-iter1-2026-11-09T144855Z"
+}

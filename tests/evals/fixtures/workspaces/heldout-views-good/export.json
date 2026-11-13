@@ -1,0 +1,679 @@
+{
+  "configuration" : { },
+  "description" : "Insurance claims for policyholders.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Reports claims and tracks their progress.",
+      "id" : "1",
+      "name" : "Policyholder",
+      "properties" : {
+        "structurizr.dsl.identifier" : "policyholder"
+      },
+      "relationships" : [ {
+        "description" : "Reports claims through",
+        "destinationId" : "3",
+        "id" : "24",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "Reports claims through",
+        "destinationId" : "2",
+        "id" : "25",
+        "linkedRelationshipId" : "24",
+        "sourceId" : "1",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "Reports claims through",
+        "destinationId" : "4",
+        "id" : "26",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS/JSON"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Where policyholders report claims and track their progress.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Web Portal",
+        "properties" : {
+          "structurizr.dsl.identifier" : "web"
+        },
+        "relationships" : [ {
+          "description" : "Submits new claims to",
+          "destinationId" : "5",
+          "id" : "27",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Requests settlement quotes from",
+          "destinationId" : "7",
+          "id" : "28",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Requests settlements from",
+          "destinationId" : "8",
+          "id" : "29",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Uploads claim documents to",
+          "destinationId" : "10",
+          "id" : "30",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Subscribes to status updates from",
+          "destinationId" : "11",
+          "id" : "31",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container,Web",
+        "technology" : "Python/FastAPI"
+      }, {
+        "description" : "Serves the insurer's mobile app.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Mobile App Backend",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mobile"
+        },
+        "relationships" : [ {
+          "description" : "Submits new claims to",
+          "destinationId" : "5",
+          "id" : "32",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Requests settlement quotes from",
+          "destinationId" : "7",
+          "id" : "33",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Requests settlements from",
+          "destinationId" : "8",
+          "id" : "34",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container,Web",
+        "technology" : "Go"
+      }, {
+        "description" : "Registers new claims.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Claims Intake Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "intake"
+        },
+        "relationships" : [ {
+          "description" : "Hands accepted claims to",
+          "destinationId" : "6",
+          "id" : "35",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Screens each incoming claim with",
+          "destinationId" : "9",
+          "id" : "36",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Checks the cover with",
+          "destinationId" : "14",
+          "id" : "37",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Publishes claim events to",
+          "destinationId" : "17",
+          "id" : "38",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Classifies and prioritizes claims.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Triage Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "triage"
+        },
+        "relationships" : [ {
+          "description" : "Routes claims to",
+          "destinationId" : "7",
+          "id" : "39",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Routes the claim to",
+          "destinationId" : "12",
+          "id" : "40",
+          "sourceId" : "6",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Calculates settlement amounts.",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Assessment Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "assessment"
+        },
+        "relationships" : [ {
+          "description" : "Requests settlements from",
+          "destinationId" : "8",
+          "id" : "41",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "Apportions large losses to",
+          "destinationId" : "15",
+          "id" : "42",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kotlin"
+      }, {
+        "description" : "Executes claim settlements.",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Payout Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "payout"
+        },
+        "relationships" : [ {
+          "description" : "Executes settlements through",
+          "destinationId" : "23",
+          "id" : "48",
+          "sourceId" : "8",
+          "tags" : "Relationship",
+          "technology" : "ISO 20022"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Flags suspicious claims.",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Fraud Screening Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "fraudScreening"
+        },
+        "relationships" : [ {
+          "description" : "Consults historical claims at",
+          "destinationId" : "22",
+          "id" : "46",
+          "sourceId" : "9",
+          "tags" : "Relationship",
+          "technology" : "HTTPS/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Accepts claim photos and reports.",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Document Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "docService"
+        },
+        "relationships" : [ {
+          "description" : "Stores photos and reports in",
+          "destinationId" : "21",
+          "id" : "50",
+          "sourceId" : "10",
+          "tags" : "Relationship",
+          "technology" : "HTTPS/JSON"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Node.js"
+      }, {
+        "description" : "Emails and messages policyholders.",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Notification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "notifications"
+        },
+        "relationships" : [ {
+          "description" : "Consumes claim events from",
+          "destinationId" : "17",
+          "id" : "51",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "AMQP"
+        }, {
+          "description" : "Reports claim status changes from",
+          "destinationId" : "18",
+          "id" : "52",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Node.js"
+      }, {
+        "description" : "Routes claims to adjusters.",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "Assignment Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "assignment"
+        },
+        "relationships" : [ {
+          "description" : "Allocates claims to",
+          "destinationId" : "13",
+          "id" : "43",
+          "sourceId" : "12",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Where staff process their assigned claims.",
+        "documentation" : { },
+        "id" : "13",
+        "name" : "Adjuster Workbench",
+        "properties" : {
+          "structurizr.dsl.identifier" : "workbench"
+        },
+        "relationships" : [ {
+          "description" : "Reads and writes claim records in",
+          "destinationId" : "18",
+          "id" : "44",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Writes audit entries to",
+          "destinationId" : "20",
+          "id" : "45",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container,Web",
+        "technology" : "Vue"
+      }, {
+        "description" : "Checks that a claim is covered by the policy.",
+        "documentation" : { },
+        "id" : "14",
+        "name" : "Policy Verification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "policyVerification"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Apportions large losses across reinsurance partners.",
+        "documentation" : { },
+        "id" : "15",
+        "name" : "Reinsurance Allocation Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "reinsurance"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java/Spring"
+      }, {
+        "description" : "Runs the nightly reserves calculation.",
+        "documentation" : { },
+        "id" : "16",
+        "name" : "Batch Scheduler",
+        "properties" : {
+          "structurizr.dsl.identifier" : "batch"
+        },
+        "relationships" : [ {
+          "description" : "Recalculates reserves in",
+          "destinationId" : "18",
+          "id" : "53",
+          "sourceId" : "16",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        }, {
+          "description" : "Reconciles cover in",
+          "destinationId" : "19",
+          "id" : "54",
+          "sourceId" : "16",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Carries claim events between the application parts.",
+        "documentation" : { },
+        "id" : "17",
+        "name" : "Event Queue",
+        "properties" : {
+          "structurizr.dsl.identifier" : "queue"
+        },
+        "tags" : "Element,Container,Queue",
+        "technology" : "RabbitMQ"
+      }, {
+        "description" : "Stores claim records.",
+        "documentation" : { },
+        "id" : "18",
+        "name" : "Claims Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "claimsDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores policy and cover records.",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Policy Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "policyDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores the compliance audit trail.",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "Audit Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "auditDb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Holds claim photos, reports, and correspondence.",
+        "documentation" : { },
+        "id" : "21",
+        "name" : "Document Store",
+        "properties" : {
+          "structurizr.dsl.identifier" : "docStore"
+        },
+        "tags" : "Element,Container",
+        "technology" : "S3"
+      } ],
+      "description" : "The insurer's claims platform.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Claims Center",
+      "properties" : {
+        "structurizr.dsl.identifier" : "claims"
+      },
+      "relationships" : [ {
+        "description" : "Consults historical claims at",
+        "destinationId" : "22",
+        "id" : "47",
+        "linkedRelationshipId" : "46",
+        "sourceId" : "2",
+        "technology" : "HTTPS/JSON"
+      }, {
+        "description" : "Executes settlements through",
+        "destinationId" : "23",
+        "id" : "49",
+        "linkedRelationshipId" : "48",
+        "sourceId" : "2",
+        "technology" : "ISO 20022"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "Holds historical claims records.",
+      "documentation" : { },
+      "id" : "22",
+      "name" : "National Claims Data Bureau",
+      "properties" : {
+        "structurizr.dsl.identifier" : "dataBureau"
+      },
+      "tags" : "Element,Software System,External"
+    }, {
+      "description" : "Executes settlement transfers between institutions.",
+      "documentation" : { },
+      "id" : "23",
+      "name" : "Clearing House",
+      "properties" : {
+        "structurizr.dsl.identifier" : "clearingHouse"
+      },
+      "tags" : "Element,Software System,External"
+    } ]
+  },
+  "name" : "Claims Center",
+  "properties" : {
+    "structurizr.inspection.error" : "3",
+    "structurizr.dsl" : "d29ya3NwYWNlICJDbGFpbXMgQ2VudGVyIiAiSW5zdXJhbmNlIGNsYWltcyBmb3IgcG9saWN5aG9sZGVycy4iIHsKICAgIG1vZGVsIHsKICAgICAgICBwb2xpY3lob2xkZXIgPSBwZXJzb24gIlBvbGljeWhvbGRlciIgIlJlcG9ydHMgY2xhaW1zIGFuZCB0cmFja3MgdGhlaXIgcHJvZ3Jlc3MuIgogICAgICAgIGNsYWltcyA9IHNvZnR3YXJlU3lzdGVtICJDbGFpbXMgQ2VudGVyIiAiVGhlIGluc3VyZXIncyBjbGFpbXMgcGxhdGZvcm0uIiB7CiAgICAgICAgICAgIHdlYiA9IGNvbnRhaW5lciAiV2ViIFBvcnRhbCIgIldoZXJlIHBvbGljeWhvbGRlcnMgcmVwb3J0IGNsYWltcyBhbmQgdHJhY2sgdGhlaXIgcHJvZ3Jlc3MuIiAiUHl0aG9uL0Zhc3RBUEkiICJXZWIiCiAgICAgICAgICAgIG1vYmlsZSA9IGNvbnRhaW5lciAiTW9iaWxlIEFwcCBCYWNrZW5kIiAiU2VydmVzIHRoZSBpbnN1cmVyJ3MgbW9iaWxlIGFwcC4iICJHbyIgIldlYiIKICAgICAgICAgICAgaW50YWtlID0gY29udGFpbmVyICJDbGFpbXMgSW50YWtlIFNlcnZpY2UiICJSZWdpc3RlcnMgbmV3IGNsYWltcy4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgdHJpYWdlID0gY29udGFpbmVyICJUcmlhZ2UgU2VydmljZSIgIkNsYXNzaWZpZXMgYW5kIHByaW9yaXRpemVzIGNsYWltcy4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgYXNzZXNzbWVudCA9IGNvbnRhaW5lciAiQXNzZXNzbWVudCBTZXJ2aWNlIiAiQ2FsY3VsYXRlcyBzZXR0bGVtZW50IGFtb3VudHMuIiAiS290bGluIgogICAgICAgICAgICBwYXlvdXQgPSBjb250YWluZXIgIlBheW91dCBTZXJ2aWNlIiAiRXhlY3V0ZXMgY2xhaW0gc2V0dGxlbWVudHMuIiAiSmF2YS9TcHJpbmciCiAgICAgICAgICAgIGZyYXVkU2NyZWVuaW5nID0gY29udGFpbmVyICJGcmF1ZCBTY3JlZW5pbmcgU2VydmljZSIgIkZsYWdzIHN1c3BpY2lvdXMgY2xhaW1zLiIgIlB5dGhvbiIKICAgICAgICAgICAgZG9jU2VydmljZSA9IGNvbnRhaW5lciAiRG9jdW1lbnQgU2VydmljZSIgIkFjY2VwdHMgY2xhaW0gcGhvdG9zIGFuZCByZXBvcnRzLiIgIk5vZGUuanMiCiAgICAgICAgICAgIG5vdGlmaWNhdGlvbnMgPSBjb250YWluZXIgIk5vdGlmaWNhdGlvbiBTZXJ2aWNlIiAiRW1haWxzIGFuZCBtZXNzYWdlcyBwb2xpY3lob2xkZXJzLiIgIk5vZGUuanMiCiAgICAgICAgICAgIGFzc2lnbm1lbnQgPSBjb250YWluZXIgIkFzc2lnbm1lbnQgU2VydmljZSIgIlJvdXRlcyBjbGFpbXMgdG8gYWRqdXN0ZXJzLiIgIkphdmEvU3ByaW5nIgogICAgICAgICAgICB3b3JrYmVuY2ggPSBjb250YWluZXIgIkFkanVzdGVyIFdvcmtiZW5jaCIgIldoZXJlIHN0YWZmIHByb2Nlc3MgdGhlaXIgYXNzaWduZWQgY2xhaW1zLiIgIlZ1ZSIgIldlYiIKICAgICAgICAgICAgcG9saWN5VmVyaWZpY2F0aW9uID0gY29udGFpbmVyICJQb2xpY3kgVmVyaWZpY2F0aW9uIFNlcnZpY2UiICJDaGVja3MgdGhhdCBhIGNsYWltIGlzIGNvdmVyZWQgYnkgdGhlIHBvbGljeS4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgcmVpbnN1cmFuY2UgPSBjb250YWluZXIgIlJlaW5zdXJhbmNlIEFsbG9jYXRpb24gU2VydmljZSIgIkFwcG9ydGlvbnMgbGFyZ2UgbG9zc2VzIGFjcm9zcyByZWluc3VyYW5jZSBwYXJ0bmVycy4iICJKYXZhL1NwcmluZyIKICAgICAgICAgICAgYmF0Y2ggPSBjb250YWluZXIgIkJhdGNoIFNjaGVkdWxlciIgIlJ1bnMgdGhlIG5pZ2h0bHkgcmVzZXJ2ZXMgY2FsY3VsYXRpb24uIiAiSmF2YSIKICAgICAgICAgICAgcXVldWUgPSBjb250YWluZXIgIkV2ZW50IFF1ZXVlIiAiQ2FycmllcyBjbGFpbSBldmVudHMgYmV0d2VlbiB0aGUgYXBwbGljYXRpb24gcGFydHMuIiAiUmFiYml0TVEiICJRdWV1ZSIKICAgICAgICAgICAgY2xhaW1zRGIgPSBjb250YWluZXIgIkNsYWltcyBEYXRhYmFzZSIgIlN0b3JlcyBjbGFpbSByZWNvcmRzLiIgIlBvc3RncmVTUUwiICJEYXRhYmFzZSIKICAgICAgICAgICAgcG9saWN5RGIgPSBjb250YWluZXIgIlBvbGljeSBEYXRhYmFzZSIgIlN0b3JlcyBwb2xpY3kgYW5kIGNvdmVyIHJlY29yZHMuIiAiUG9zdGdyZVNRTCIgIkRhdGFiYXNlIgogICAgICAgICAgICBhdWRpdERiID0gY29udGFpbmVyICJBdWRpdCBEYXRhYmFzZSIgIlN0b3JlcyB0aGUgY29tcGxpYW5jZSBhdWRpdCB0cmFpbC4iICJQb3N0Z3JlU1FMIiAiRGF0YWJhc2UiCiAgICAgICAgICAgIGRvY1N0b3JlID0gY29udGFpbmVyICJEb2N1bWVudCBTdG9yZSIgIkhvbGRzIGNsYWltIHBob3RvcywgcmVwb3J0cywgYW5kIGNvcnJlc3BvbmRlbmNlLiIgIlMzIgogICAgICAgIH0KICAgICAgICBkYXRhQnVyZWF1ID0gc29mdHdhcmVTeXN0ZW0gIk5hdGlvbmFsIENsYWltcyBEYXRhIEJ1cmVhdSIgIkhvbGRzIGhpc3RvcmljYWwgY2xhaW1zIHJlY29yZHMuIiAiRXh0ZXJuYWwiCiAgICAgICAgY2xlYXJpbmdIb3VzZSA9IHNvZnR3YXJlU3lzdGVtICJDbGVhcmluZyBIb3VzZSIgIkV4ZWN1dGVzIHNldHRsZW1lbnQgdHJhbnNmZXJzIGJldHdlZW4gaW5zdGl0dXRpb25zLiIgIkV4dGVybmFsIgoKICAgICAgICBwb2xpY3lob2xkZXIgLT4gd2ViICJSZXBvcnRzIGNsYWltcyB0aHJvdWdoIiAiSFRUUFMvSlNPTiIKICAgICAgICBwb2xpY3lob2xkZXIgLT4gbW9iaWxlICJSZXBvcnRzIGNsYWltcyB0aHJvdWdoIiAiSFRUUFMvSlNPTiIKICAgICAgICB3ZWIgLT4gaW50YWtlICJTdWJtaXRzIG5ldyBjbGFpbXMgdG8iICJnUlBDIgogICAgICAgIHdlYiAtPiBhc3Nlc3NtZW50ICJSZXF1ZXN0cyBzZXR0bGVtZW50IHF1b3RlcyBmcm9tIiAiZ1JQQyIKICAgICAgICB3ZWIgLT4gcGF5b3V0ICJSZXF1ZXN0cyBzZXR0bGVtZW50cyBmcm9tIiAiZ1JQQyIKICAgICAgICB3ZWIgLT4gZG9jU2VydmljZSAiVXBsb2FkcyBjbGFpbSBkb2N1bWVudHMgdG8iICJnUlBDIgogICAgICAgIHdlYiAtPiBub3RpZmljYXRpb25zICJTdWJzY3JpYmVzIHRvIHN0YXR1cyB1cGRhdGVzIGZyb20iICJnUlBDIgogICAgICAgIG1vYmlsZSAtPiBpbnRha2UgIlN1Ym1pdHMgbmV3IGNsYWltcyB0byIgImdSUEMiCiAgICAgICAgbW9iaWxlIC0+IGFzc2Vzc21lbnQgIlJlcXVlc3RzIHNldHRsZW1lbnQgcXVvdGVzIGZyb20iICJnUlBDIgogICAgICAgIG1vYmlsZSAtPiBwYXlvdXQgIlJlcXVlc3RzIHNldHRsZW1lbnRzIGZyb20iICJnUlBDIgogICAgICAgIGludGFrZSAtPiB0cmlhZ2UgIkhhbmRzIGFjY2VwdGVkIGNsYWltcyB0byIgImdSUEMiCiAgICAgICAgaW50YWtlIC0+IGZyYXVkU2NyZWVuaW5nICJTY3JlZW5zIGVhY2ggaW5jb21pbmcgY2xhaW0gd2l0aCIgImdSUEMiCiAgICAgICAgaW50YWtlIC0+IHBvbGljeVZlcmlmaWNhdGlvbiAiQ2hlY2tzIHRoZSBjb3ZlciB3aXRoIiAiZ1JQQyIKICAgICAgICBpbnRha2UgLT4gcXVldWUgIlB1Ymxpc2hlcyBjbGFpbSBldmVudHMgdG8iICJBTVFQIgogICAgICAgIHRyaWFnZSAtPiBhc3Nlc3NtZW50ICJSb3V0ZXMgY2xhaW1zIHRvIiAiZ1JQQyIKICAgICAgICB0cmlhZ2UgLT4gYXNzaWdubWVudCAiUm91dGVzIHRoZSBjbGFpbSB0byIgImdSUEMiCiAgICAgICAgYXNzZXNzbWVudCAtPiBwYXlvdXQgIlJlcXVlc3RzIHNldHRsZW1lbnRzIGZyb20iICJnUlBDIgogICAgICAgIGFzc2Vzc21lbnQgLT4gcmVpbnN1cmFuY2UgIkFwcG9ydGlvbnMgbGFyZ2UgbG9zc2VzIHRvIiAiZ1JQQyIKICAgICAgICBhc3NpZ25tZW50IC0+IHdvcmtiZW5jaCAiQWxsb2NhdGVzIGNsYWltcyB0byIgImdSUEMiCiAgICAgICAgd29ya2JlbmNoIC0+IGNsYWltc0RiICJSZWFkcyBhbmQgd3JpdGVzIGNsYWltIHJlY29yZHMgaW4iICJTUUwiCiAgICAgICAgd29ya2JlbmNoIC0+IGF1ZGl0RGIgIldyaXRlcyBhdWRpdCBlbnRyaWVzIHRvIiAiU1FMIgogICAgICAgIGZyYXVkU2NyZWVuaW5nIC0+IGRhdGFCdXJlYXUgIkNvbnN1bHRzIGhpc3RvcmljYWwgY2xhaW1zIGF0IiAiSFRUUFMvSlNPTiIKICAgICAgICBwYXlvdXQgLT4gY2xlYXJpbmdIb3VzZSAiRXhlY3V0ZXMgc2V0dGxlbWVudHMgdGhyb3VnaCIgIklTTyAyMDAyMiIKICAgICAgICBkb2NTZXJ2aWNlIC0+IGRvY1N0b3JlICJTdG9yZXMgcGhvdG9zIGFuZCByZXBvcnRzIGluIiAiSFRUUFMvSlNPTiIKICAgICAgICBub3RpZmljYXRpb25zIC0+IHF1ZXVlICJDb25zdW1lcyBjbGFpbSBldmVudHMgZnJvbSIgIkFNUVAiCiAgICAgICAgbm90aWZpY2F0aW9ucyAtPiBjbGFpbXNEYiAiUmVwb3J0cyBjbGFpbSBzdGF0dXMgY2hhbmdlcyBmcm9tIiAiU1FMIgogICAgICAgIGJhdGNoIC0+IGNsYWltc0RiICJSZWNhbGN1bGF0ZXMgcmVzZXJ2ZXMgaW4iICJTUUwiCiAgICAgICAgYmF0Y2ggLT4gcG9saWN5RGIgIlJlY29uY2lsZXMgY292ZXIgaW4iICJTUUwiCiAgICB9CiAgICB2aWV3cyB7CiAgICAgICAgc3lzdGVtQ29udGV4dCBjbGFpbXMgIlBvbGljeWhvbGRlckNvbnRleHQiIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIGNsYWltcyAiQ2xhaW1JbnRha2UiIHsKICAgICAgICAgICAgaW5jbHVkZSBwb2xpY3lob2xkZXIKICAgICAgICAgICAgaW5jbHVkZSB3ZWIKICAgICAgICAgICAgaW5jbHVkZSBtb2JpbGUKICAgICAgICAgICAgaW5jbHVkZSBpbnRha2UKICAgICAgICAgICAgaW5jbHVkZSB0cmlhZ2UKICAgICAgICAgICAgaW5jbHVkZSBmcmF1ZFNjcmVlbmluZwogICAgICAgICAgICBpbmNsdWRlIHBvbGljeVZlcmlmaWNhdGlvbgogICAgICAgICAgICBpbmNsdWRlIHF1ZXVlCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIGNsYWltcyAiQ2xhaW1Qcm9jZXNzaW5nIiB7CiAgICAgICAgICAgIGluY2x1ZGUgYXNzaWdubWVudAogICAgICAgICAgICBpbmNsdWRlIHdvcmtiZW5jaAogICAgICAgICAgICBpbmNsdWRlIGFzc2Vzc21lbnQKICAgICAgICAgICAgaW5jbHVkZSByZWluc3VyYW5jZQogICAgICAgICAgICBpbmNsdWRlIHBheW91dAogICAgICAgICAgICBpbmNsdWRlIHF1ZXVlCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICAgICAgY29udGFpbmVyIGNsYWltcyAiQ2xhaW1TdXBwb3J0IiB7CiAgICAgICAgICAgIGluY2x1ZGUgZG9jU2VydmljZQogICAgICAgICAgICBpbmNsdWRlIGRvY1N0b3JlCiAgICAgICAgICAgIGluY2x1ZGUgbm90aWZpY2F0aW9ucwogICAgICAgICAgICBpbmNsdWRlIGJhdGNoCiAgICAgICAgICAgIGluY2x1ZGUgY2xhaW1zRGIKICAgICAgICAgICAgaW5jbHVkZSBwb2xpY3lEYgogICAgICAgICAgICBpbmNsdWRlIGF1ZGl0RGIKICAgICAgICAgICAgYXV0b0xheW91dAogICAgICAgIH0KICAgIH0KfQ==",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "ClaimIntake",
+      "name" : "Container View: Claims Center",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "24"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      } ],
+      "softwareSystemId" : "2"
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "ClaimProcessing",
+      "name" : "Container View: Claims Center",
+      "order" : 3,
+      "relationships" : [ {
+        "id" : "41"
+      }, {
+        "id" : "42"
+      }, {
+        "id" : "43"
+      } ],
+      "softwareSystemId" : "2"
+    }, {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "16",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "ClaimSupport",
+      "name" : "Container View: Claims Center",
+      "order" : 4,
+      "relationships" : [ {
+        "id" : "50"
+      }, {
+        "id" : "52"
+      }, {
+        "id" : "53"
+      }, {
+        "id" : "54"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "23",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "PolicyholderContext",
+      "name" : "System Context View: Claims Center",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "25"
+      }, {
+        "id" : "47"
+      }, {
+        "id" : "49"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

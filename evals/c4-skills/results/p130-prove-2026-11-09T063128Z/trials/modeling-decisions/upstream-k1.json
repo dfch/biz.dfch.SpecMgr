@@ -1,0 +1,134 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/upstream-k1.events.ndjson",
+  "event_file_bytes": 228896,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-09T07:38:27Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (3399 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "4 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker (2 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['Email Delivery Provider']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "no vague label on any of the 4 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.01075421110726893,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 2,
+    "inspect_findings": [
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions."
+    ],
+    "inspect_triage": {
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected"
+    },
+    "parse_calls": 1,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [
+      "c4-model",
+      "structurizr-dsl",
+      "c4-review"
+    ],
+    "steps": 8,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 279684,
+      "output": 53151,
+      "reasoning": 0
+    },
+    "tool_calls": 8,
+    "validate_calls": 2,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 664.644,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n\n    !identifiers hierarchical\n\n    model {\n        properties {\n            \"structurizr.inspection.softwareSystem.missingDocumentation\" \"ignore\"\n            \"structurizr.inspection.softwareSystem.missingDecisions\" \"ignore\"\n        }\n\n        customer = person \"Customer\" \"A customer who uses the platform to look up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"A parcel delivery tracking platform owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up the status of their shipments\" \"Web application\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                pricingRules = component \"Pricing Rules Library\" \"Computes delivery prices from weight and zone\" \"Shared library\"\n            }\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Relational database\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\" \"External\"\n\n        customer -> parcelTracker.webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        parcelTracker.webPortal -> parcelTracker.database \"reads shipment status from\" \"SQL\"\n        parcelTracker.webPortal.pricingRules -> parcelTracker.database \"reads weight and zone from\" \"SQL\"\n        parcelTracker.dispatchService -> parcelTracker.database \"reads and writes dispatch records to\" \"SQL\"\n        parcelTracker.dispatchService.pricingRules -> parcelTracker.database \"reads weight and zone from\" \"SQL\"\n        parcelTracker.dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n    }\n\n    views {\n        systemContext parcelTracker \"SystemContext\" {\n            include *\n            autoLayout\n            title \"System Context for Parcel Tracker\"\n        }\n\n        container parcelTracker \"Containers\" {\n            include *\n            autoLayout\n            title \"Containers for Parcel Tracker\"\n        }\n\n        component parcelTracker.webPortal \"WebPortalComponents\" {\n            include *\n            autoLayout\n            title \"Components of Web Portal\"\n        }\n\n        component parcelTracker.dispatchService \"DispatchServiceComponents\" {\n            include *\n            autoLayout\n            title \"Components of Dispatch Service\"\n        }\n\n        styles {\n            element \"Person\" {\n                shape Person\n                background #08427B\n                color #ffffff\n            }\n            element \"Software System\" {\n                background #1168BD\n                color #ffffff\n            }\n            element \"External\" {\n                background #999999\n                color #ffffff\n            }\n            element \"Container\" {\n                background #438DD5\n                color #ffffff\n            }\n            element \"Component\" {\n                background #85BBF0\n                color #000000\n            }\n            element \"Database\" {\n                shape Cylinder\n            }\n        }\n    }\n\n    configuration {\n        scope softwareSystem\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "upstream",
+    "k_index": 1
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [
+    "c4-deployment",
+    "c4-model",
+    "c4-review",
+    "structurizr-dsl"
+  ],
+  "started_at": "2026-11-09T07:27:19Z",
+  "timeout": false,
+  "wall_time_s": 667.2071811850183,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.upstream-k1.p130-prove-2026-11-09T063128Z"
+}

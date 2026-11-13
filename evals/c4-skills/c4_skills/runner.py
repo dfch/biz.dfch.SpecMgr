@@ -992,6 +992,11 @@ def grader_source_paths() -> list[Path]:
 
     Their combined hash is the `grader_hash` of the result cache key: a
     change to any of them invalidates the cached `none`/`upstream` results.
+    The set includes `codemode.py` -- the Code Mode detection layer whose
+    conservative attribution rules feed the normalized MCP-call view every
+    stream-derived metric and gate counts over (added 2026-11-07, the
+    Phase 110 review remediation: it was missing, so a change to the
+    attribution rules alone would not have invalidated the cache).
     """
     import c4_skills  # the harness package root (tests/evals put it on sys.path)
 
@@ -999,6 +1004,7 @@ def grader_source_paths() -> list[Path]:
     result = [
         root / "graders.py",
         root / "metrics.py",
+        root / "codemode.py",
         root / "events.py",
         root / "cases" / "__init__.py",
         root / "pins.py",

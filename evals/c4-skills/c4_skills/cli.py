@@ -31,7 +31,10 @@ Exit codes (the documented contract, enforced by ``main``):
 - ``0`` -- ok.
 - ``1`` -- a runtime-shaped failure: a pin/preflight violation, the
   sidecar or a trial container failing, a missing/failed docker or git
-  call (``RuntimeError``), or an I/O failure (``OSError``).
+  call (``RuntimeError`` -- including a hung Structurizr CLI run of the
+  graders, whose ``subprocess.TimeoutExpired`` is mapped to
+  ``RuntimeError`` by ``graders._run_cli``, Task 125.130/I3), or an I/O
+  failure (``OSError``).
 - ``2`` -- a usage-shaped failure: an unknown case or gate
   (``KeyError``), an invalid caller argument such as ``k <= 0`` or a
   missing/misplaced ``--skills-dir`` (``ValueError``), or a caller

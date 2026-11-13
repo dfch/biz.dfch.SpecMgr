@@ -1,0 +1,131 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/modeling-decisions/none-k0.events.ndjson",
+  "event_file_bytes": 459478,
+  "event_file_committed": true,
+  "exit_code": null,
+  "finished_at": "2026-11-09T08:45:22Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (2037 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "2/ 2 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "exactly 3 container(s)",
+      "name": "container_count",
+      "passed": true
+    },
+    {
+      "detail": "technology on all 4 relationship(s)",
+      "name": "relationship_technology",
+      "passed": true
+    },
+    {
+      "detail": "description on all 6 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "4 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker (15 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "forbidden element(s) modeled as a container or component: component 'Pricing Rules Library', component 'Pricing Rules Library'",
+      "name": "no_library_container",
+      "passed": false
+    },
+    {
+      "detail": "no top-level softwareSystem or custom element carries the External tag",
+      "name": "external_system_tagged",
+      "passed": false
+    },
+    {
+      "detail": "no vague label on any of the 4 relationship(s)",
+      "name": "no_vague_labels",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.007221878971904516,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 15,
+    "inspect_findings": [
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.",
+      "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+    ],
+    "inspect_triage": {
+      "The component \"Parcel Tracker.Dispatch Service.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The component \"Parcel Tracker.Web Portal.Pricing Rules Library\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "The software system \"Parcel Tracker\" has containers, but is missing decisions.": "expected",
+      "The software system \"Parcel Tracker\" has containers, but is missing documentation.": "expected",
+      "This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 15,
+    "relationship_technology_coverage": 1.0,
+    "skills_loaded": [],
+    "steps": 45,
+    "timeout": true,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 2460027,
+      "output": 72503,
+      "reasoning": 0
+    },
+    "tool_calls": 45,
+    "validate_calls": 15,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 1140.329,
+    "workdir_dsl": "workspace \"Parcel Tracker\" \"A parcel delivery tracking platform\" {\n    model {\n        customer = person \"Customer\" \"A customer who looks up the status of their parcels\"\n\n        parcelTracker = softwareSystem \"Parcel Tracker\" \"The parcel delivery tracking platform, owned and operated by our company\" {\n            webPortal = container \"Web Portal\" \"Where customers look up shipments\" \"Web application\" {\n                webPricingRules = component \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone\"\n            }\n\n            dispatchService = container \"Dispatch Service\" \"Assigns parcels to couriers\" \"Service\" {\n                dispatchPricingRules = component \"Pricing Rules Library\" \"A shared library that computes delivery prices from weight and zone\"\n            }\n\n            database = container \"Database\" \"Stores shipments and dispatch records\" \"Database\"\n        }\n\n        emailProvider = softwareSystem \"Email Delivery Provider\" \"An email delivery provider operated by a different organization\"\n\n        customer -> webPortal \"looks up the status of their parcels\" \"HTTPS\"\n        dispatchService -> emailProvider \"sends customer notification emails through\" \"SMTP\"\n        webPortal -> database \"stores and retrieves shipments in\" \"SQL\"\n        dispatchService -> database \"stores and retrieves dispatch records in\" \"SQL\"\n    }\n    views {\n        systemContext parcelTracker \"SystemContext\" \"The Parcel Tracker system and its external actors.\" {\n            include *\n            autoLayout\n        }\n        container parcelTracker \"Containers\" \"The containers within the Parcel Tracker system.\" {\n            include *\n            autoLayout\n        }\n        component webPortal \"WebPortalComponents\" \"The components within the Web Portal.\" {\n            include *\n            autoLayout\n        }\n        component dispatchService \"DispatchServiceComponents\" \"The components within the Dispatch Service.\" {\n            include *\n            autoLayout\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "modeling-decisions",
+    "condition": "none",
+    "k_index": 0
+  },
+  "run_id": "p130-prove-2026-11-09T063128Z",
+  "skills_installed": [],
+  "started_at": "2026-11-09T08:25:20Z",
+  "timeout": true,
+  "wall_time_s": 1201.0820974069647,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/modeling-decisions.none-k0.p130-prove-2026-11-09T063128Z"
+}

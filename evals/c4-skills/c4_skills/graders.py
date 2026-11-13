@@ -32,10 +32,39 @@ Phase 110 (Task 110.100) adds the stream-derived gates over the same pure
 surface: they decide on the trial's parsed event stream and its computed
 metrics (the agent's MCP calls, skills loaded, `inspect`-finding triage,
 the final message), carried by :class:`GateContext` alongside the
-CLI/work-dir inputs. All gates -- the original 8 (unwrapped over
-`GateContext.inputs`, behavior unchanged) and the new ones -- are keyed in
-:data:`GATES`; :func:`grade_case` evaluates a case's gate names over one
-context.
+CLI/work-dir inputs. Phase 120 (Task 120.100) adds the `fix-dsl`
+knowledge gates over the export JSON: `elements_described` and
+`relationships_described` (completeness rules `validate` cannot surface --
+a relationship's missing technology/description and a custom element's
+missing metadata pass `validate` cleanly, and the latter is not even
+flagged by `inspect` in the pinned CLI), and `no_deletions` (every element
+and relationship the case seeded is still present, matched by name over
+the export JSON -- the anti-deletion half of the fix-style cases).
+Phase 130 (Task 130.100) adds the modeling-decision gates over the export
+JSON: `container_count` (the model carries exactly the scenario's
+container count -- the scenario's two application parts plus its own
+database, so a library or a third-party service modeled as a container
+raises the count), `no_library_container` (the scenario's shared library
+appears as no container or component -- a negative-presence gate by name),
+`external_system_tagged` (a TOP-LEVEL `softwareSystem` or custom `element`
+carries the `External` tag -- the pinned DSL has no `externalSystem`
+keyword, so the export's `model.externalSystems` section is never the
+place to look), and `no_vague_labels` (no relationship carries a
+forbidden vague description). Phase 140 (Task 140.100) adds the
+view-design gates over the export JSON: `views_within_element_bound`
+(every user-defined view -- `generatedKey` filtered out, the `has_view`
+precedent -- carries at most the locked `VIEW_ELEMENT_BOUND` of 20
+elements, the spike's practical bound; a view's element list is the
+exported `elements` array -- the scoped containers/components plus every
+linked element, the scoped system itself not counted -- and a filtered
+view, which the pinned exporter writes without an `elements` list, is
+bounded by its base view's count) and `explicit_view_keys` (every view in
+the export JSON carries an explicit key -- a view whose DSL omitted the
+key is exported under an auto-generated `<Kind>-NNN` key, e.g.
+`Container-001`, with `generatedKey: true`, verified against the pinned
+CLI). All gates -- the original 8 (unwrapped over `GateContext.inputs`,
+behavior unchanged) and the new ones -- are keyed in :data:`GATES`;
+:func:`grade_case` evaluates a case's gate names over one context.
 
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
@@ -170,11 +199,33 @@ def iter_external_systems(export_json: dict | None) -> list[dict]:
     return [e for e in (result or []) if isinstance(e, dict)]
 
 
+def iter_custom_elements(export_json: dict | None) -> list[dict]:
+    """Return every custom element of the export JSON.
+
+    The DSL `element` keyword (elements that sit outside the C4 model,
+    e.g. hardware or third-party feeds) exports to `model.customElements`;
+    unlike every other element kind, a custom element's description is the
+    `metadata` field (absent, not empty, when the DSL gave none).
+    """
+    result = _model(export_json).get("customElements")
+    return [e for e in (result or []) if isinstance(e, dict)]
+
+
 def iter_containers(export_json: dict | None) -> list[dict]:
     """Return every container element (inside software systems)."""
     result: list[dict] = []
     for system in iter_systems(export_json):
         for e in system.get("containers") or []:
+            if isinstance(e, dict):
+                result.append(e)
+    return result
+
+
+def iter_components(export_json: dict | None) -> list[dict]:
+    """Return every component element (inside containers)."""
+    result: list[dict] = []
+    for container in iter_containers(export_json):
+        for e in container.get("components") or []:
             if isinstance(e, dict):
                 result.append(e)
     return result
@@ -351,6 +402,404 @@ def gate_has_view(inputs: GraderInputs) -> GateResult:
 
 
 # ---------------------------------------------------------------------------
+# the Phase 120 knowledge and anti-deletion gates (Task 120.100)
+# ---------------------------------------------------------------------------
+
+
+def _iter_all_elements(export_json: dict | None) -> list[tuple[str, dict]]:
+    """Return every model element as (kind, element) pairs.
+
+    Kinds: `person`, `system`, `external`, `container`, `custom` -- the
+    same kind vocabulary `Case.seed_elements` uses.
+    """
+    result: list[tuple[str, dict]] = []
+    for kind, elements in (
+        ("person", iter_people(export_json)),
+        ("system", iter_systems(export_json)),
+        ("external", iter_external_systems(export_json)),
+        ("custom", iter_custom_elements(export_json)),
+    ):
+        for element in elements:
+            result.append((kind, element))
+    for element in iter_containers(export_json):
+        result.append(("container", element))
+    return result
+
+
+def gate_elements_described(inputs: GraderInputs) -> GateResult:
+    """`elements_described`: every element carries a description.
+
+    People, systems, external systems and containers carry a non-blank
+    `description`; custom elements carry a non-blank `metadata` (their
+    description field in the export). A model with no elements at all
+    fails (there is nothing to be complete about).
+    """
+    missing: list[str] = []
+    total = 0
+    for kind, element in _iter_all_elements(inputs.export_json):
+        total += 1
+        value = element.get("metadata") if kind == "custom" else element.get("description")
+        if not str(value or "").strip():
+            missing.append(f"{kind} {str(element.get('name') or element.get('id'))!r}")
+    if total == 0:
+        return GateResult("elements_described", False, "no elements in the export JSON")
+    if missing:
+        return GateResult(
+            "elements_described", False, f"{len(missing)} of {total} element(s) lack a description: {missing}"
+        )
+    return GateResult("elements_described", True, f"description on all {total} element(s)")
+
+
+def gate_relationships_described(inputs: GraderInputs) -> GateResult:
+    """`relationships_described`: every relationship carries a description.
+
+    The description-coverage counterpart of `relationship_technology`:
+    the DSL distinguishes same-pair relationships by description only, so
+    a relationship without one is both incomplete and unidentifiable.
+    """
+    rels = iter_relationships(inputs.export_json)
+    if not rels:
+        return GateResult("relationships_described", False, "no relationships in the export JSON")
+    missing = [str(r.get("description") or r.get("id")) for r in rels if not str(r.get("description") or "").strip()]
+    if missing:
+        return GateResult(
+            "relationships_described",
+            False,
+            f"{len(missing)} of {len(rels)} relationship(s) lack a description: {missing}",
+        )
+    return GateResult("relationships_described", True, f"description on all {len(rels)} relationship(s)")
+
+
+def gate_no_deletions(context: GateContext) -> GateResult:
+    """`no_deletions`: every seeded element and relationship is still present.
+
+    The anti-deletion gate of the fix-style cases (Phase 120): the prompt
+    forbids removing any people, systems, containers or relationships, and
+    `validate` cannot enforce that -- a workspace with a whole element
+    deleted still parses. Elements are matched by name over the export
+    JSON (`Case.seed_elements` kinds); relationships are matched by
+    (source name, destination name, description) -- the description is the
+    relationship's identity in the DSL, so rewording a seeded relationship
+    removes it.
+    """
+    case = context.case
+    if not case.seed_elements and not case.seed_relationships:
+        return GateResult("no_deletions", False, "the case seeds no elements or relationships (gate misused)")
+    export_json = context.inputs.export_json
+    if export_json is None:
+        return GateResult("no_deletions", False, "no export JSON to check against the seeded model")
+
+    # name -> every element id with that name (containers are matched
+    # across all systems; names may collide across kinds, so each kind
+    # maps independently)
+    ids_by_kind: dict[str, dict[str, set[str]]] = {}
+    for kind, element in _iter_all_elements(export_json):
+        name = str(element.get("name") or "").strip()
+        elem_id = element.get("id")
+        if name and elem_id is not None:
+            ids_by_kind.setdefault(kind, {}).setdefault(name, set()).add(str(elem_id))
+
+    missing_elements: list[str] = []
+    for kind, name in case.seed_elements:
+        if name not in ids_by_kind.get(kind, {}):
+            missing_elements.append(f"{kind} {name!r}")
+
+    source_ids: dict[str, set[str]] = {}
+    for kind, names in ids_by_kind.items():
+        for name, ids in names.items():
+            source_ids.setdefault(name, set()).update(ids)
+
+    def _ids_for(name: str) -> set[str]:
+        return source_ids.get(name, set())
+
+    rels = iter_relationships(export_json)
+    missing_relationships: list[str] = []
+    for source_name, destination_name, description in case.seed_relationships:
+        source_ids_ = _ids_for(source_name)
+        destination_ids_ = _ids_for(destination_name)
+        present = any(
+            str(r.get("sourceId")) in source_ids_
+            and str(r.get("destinationId")) in destination_ids_
+            and str(r.get("description") or "").strip() == description
+            for r in rels
+        )
+        if not present:
+            missing_relationships.append(f"{source_name!r} -> {destination_name!r} {description!r}")
+
+    if missing_elements or missing_relationships:
+        detail = "missing: " + ", ".join(missing_elements + missing_relationships)
+        return GateResult(
+            "no_deletions",
+            False,
+            f"{len(missing_elements)} element(s) and "
+            f"{len(missing_relationships)} relationship(s) deleted or reworded; {detail}",
+        )
+    return GateResult(
+        "no_deletions",
+        True,
+        f"all {len(case.seed_elements)} seeded element(s) and {len(case.seed_relationships)} "
+        "seeded relationship(s) still present",
+    )
+
+
+# ---------------------------------------------------------------------------
+# the Phase 130 modeling-decision gates (Task 130.100)
+# ---------------------------------------------------------------------------
+
+#: The forbidden vague relationship labels (locked, Task 130.100): a
+#: relationship whose description equals one of these (case-insensitive,
+#: trimmed) fails `no_vague_labels`. The set is a membership test, not a
+#: substring test -- "user uses the portal to track parcels" is specific
+#: and passes.
+VAGUE_RELATIONSHIP_LABELS: frozenset[str] = frozenset(
+    {"uses", "connects to", "interacts with", "talks to", "communicates with"}
+)
+
+
+def _element_tags(element: dict) -> list[str]:
+    """Return one element's tags as a clean list.
+
+    The pinned CLI's JSON exporter writes the `tags` property as a
+    comma-separated string (e.g. `Element,Software System,External`); a
+    list form is tolerated for fixture robustness.
+    """
+    raw = element.get("tags")
+    if isinstance(raw, str):
+        result = [t.strip() for t in raw.split(",") if t.strip()]
+        return result
+    if isinstance(raw, list):
+        result = [str(t).strip() for t in raw if str(t).strip()]
+        return result
+    result = []
+    return result
+
+
+def gate_container_count(context: GateContext) -> GateResult:
+    """`container_count`: the model carries exactly the scenario's containers.
+
+    The scenario's container count is its two application parts plus its
+    own database (a data store is a C4 container): `3`. The shared
+    library is NO element, and the third-party service is top-level --
+    either of them modeled as a container raises the count and fails this
+    gate alongside the dedicated decision gates.
+    """
+    expected = context.case.expected_container_count
+    if expected is None:
+        return GateResult("container_count", False, "the case pins no expected container count (gate misused)")
+    containers = iter_containers(context.inputs.export_json)
+    if len(containers) != expected:
+        names = [str(c.get("name") or c.get("id")) for c in containers]
+        return GateResult("container_count", False, f"{len(containers)} container(s), expected {expected}: {names}")
+    return GateResult("container_count", True, f"exactly {expected} container(s)")
+
+
+def gate_no_library_container(context: GateContext) -> GateResult:
+    """`no_library_container`: the scenario's shared library is no container or component.
+
+    A negative-presence gate over the export JSON by name (locked, Task
+    130.100): none of `Case.forbidden_element_names` (the scenario's
+    shared library) may appear as a container of any system or a component
+    of any container. C4 treats libraries, JARs, modules and packages as
+    code-level constructs -- they run inside another element's process and
+    are not modeled as their own element.
+    """
+    forbidden = context.case.forbidden_element_names
+    if not forbidden:
+        return GateResult("no_library_container", False, "the case forbids no element names (gate misused)")
+    found: list[str] = []
+    for kind, elements in (
+        ("container", iter_containers(context.inputs.export_json)),
+        ("component", iter_components(context.inputs.export_json)),
+    ):
+        for element in elements:
+            name = str(element.get("name") or "").strip()
+            if name in forbidden:
+                found.append(f"{kind} {name!r}")
+    if found:
+        return GateResult(
+            "no_library_container",
+            False,
+            "forbidden element(s) modeled as a container or component: " + ", ".join(sorted(found)),
+        )
+    return GateResult(
+        "no_library_container",
+        True,
+        f"none of the {len(forbidden)} forbidden element name(s) appears as a container or component",
+    )
+
+
+def gate_external_system_tagged(inputs: GraderInputs) -> GateResult:
+    """`external_system_tagged`: a top-level element carries the `External` tag.
+
+    The third-party service of the scenario must be modeled as a TOP-LEVEL
+    element -- a `softwareSystem` or a custom `element` outside the owned
+    system -- carrying the `External` tag. The pinned DSL has no
+    `externalSystem` keyword (verified in Phase 120), so the export JSON's
+    `model.externalSystems` section is never populated by it and is never
+    consulted here: a container of the owned system, or a top-level
+    element without the tag, fails the gate.
+    """
+    top_level = iter_systems(inputs.export_json) + iter_custom_elements(inputs.export_json)
+    tagged = [
+        str(e.get("name") or e.get("id")) for e in top_level if any(t.lower() == "external" for t in _element_tags(e))
+    ]
+    if not tagged:
+        return GateResult(
+            "external_system_tagged",
+            False,
+            "no top-level softwareSystem or custom element carries the External tag",
+        )
+    return GateResult("external_system_tagged", True, f"top-level element(s) with the External tag: {tagged}")
+
+
+def gate_no_vague_labels(inputs: GraderInputs) -> GateResult:
+    """`no_vague_labels`: no relationship carries a forbidden vague label.
+
+    Every relationship's description (trimmed, case-insensitive) must not
+    be a member of :data:`VAGUE_RELATIONSHIP_LABELS` -- a label that states
+    no intent ("uses" says nothing about what happens in that direction).
+    A model with no relationships fails (the scenario has some).
+    """
+    rels = iter_relationships(inputs.export_json)
+    if not rels:
+        return GateResult("no_vague_labels", False, "no relationships in the export JSON")
+    vague = [
+        str(r.get("description") or r.get("id"))
+        for r in rels
+        if str(r.get("description") or "").strip().lower() in VAGUE_RELATIONSHIP_LABELS
+    ]
+    if vague:
+        return GateResult("no_vague_labels", False, f"{len(vague)} vague relationship label(s): {vague}")
+    return GateResult("no_vague_labels", True, f"no vague label on any of the {len(rels)} relationship(s)")
+
+
+# ---------------------------------------------------------------------------
+# the Phase 140 view-design gates (Task 140.100)
+# ---------------------------------------------------------------------------
+
+#: The practical upper bound on the elements one view may carry (locked,
+#: Task 140.100): the spike's Finding 8 -- the 150-element view exported a
+#: 29,664-pixel-wide SVG that was unusable as a diagram; "about 20 elements
+#: per view".
+VIEW_ELEMENT_BOUND = 20
+
+
+def iter_user_defined_views(export_json: dict | None) -> list[dict]:
+    """Return the views the DSL itself defined (`generatedKey` filtered out).
+
+    The `has_view` precedent: the JSON exporter auto-generates default
+    views (one container view per system, a system context view, a system
+    landscape view) marked `generatedKey: true` when the DSL defines no
+    views at all, and it marks a view the DSL defined with an omitted key
+    `generatedKey: true` too (giving it an auto-generated `<Kind>-NNN`
+    key, e.g. `Container-001` -- verified against the pinned CLI, Task
+    140.100). Either way, only a view the DSL defined WITH its key
+    explicit counts as user-defined here.
+    """
+    result = [v for v in iter_views(export_json) if not v.get("generatedKey")]
+    return result
+
+
+def _view_element_count(view: dict, all_views: list[dict], seen: set[str] | None = None) -> int:
+    """Return the number of elements one view renders (over the export JSON).
+
+    The pinned exporter's element-scoping fact (verified against the
+    pinned CLI, Task 140.100): a regular view's `elements` array is the
+    view's `include` result -- for a container view with `include *`, the
+    scoped system's containers plus every element linked to them (people,
+    other software systems, custom elements); the scoped software system
+    itself is NOT in the list (the view references it by its own
+    `softwareSystemId`), and linked relationship copies are relationships,
+    not elements. An explicit include list carries exactly the listed
+    elements. A filtered view has no `elements` array of its own (the
+    exporter writes its `baseViewKey`, `mode` and `tags` instead); it
+    renders a subset of its base view, so it is bounded by the base's
+    count, resolved by key (recursively, cycle-guarded).
+    """
+    elements = view.get("elements")
+    if isinstance(elements, list):
+        result = len(elements)
+        return result
+    if seen is None:
+        seen = set()
+    key = str(view.get("key") or "")
+    if key in seen:
+        result = 0
+        return result
+    seen.add(key)
+    base_key = view.get("baseViewKey")
+    for other in all_views:
+        if other.get("key") == base_key:
+            result = _view_element_count(other, all_views, seen)
+            return result
+    result = 0
+    return result
+
+
+def gate_views_within_element_bound(inputs: GraderInputs) -> GateResult:
+    """`views_within_element_bound`: every user-defined view carries at most 20 elements.
+
+    The locked view-size rule of the `c4-view-design` skill (the spike's
+    practical bound, `VIEW_ELEMENT_BOUND`): a single `include *` view of a
+    larger model is not a readable diagram. Counts every user-defined
+    view's rendered element count over the export JSON (the `elements`
+    array; a filtered view bounded by its base's count -- see
+    `_view_element_count`); a view with more than the bound fails the
+    gate. Vacuously true without user-defined views (`has_view` carries
+    the presence requirement).
+    """
+    views = iter_user_defined_views(inputs.export_json)
+    if not views:
+        return GateResult(
+            "views_within_element_bound", True, "no user-defined views to check (vacuously within the bound)"
+        )
+    all_views = iter_views(inputs.export_json)
+    over: list[str] = []
+    for view in views:
+        count = _view_element_count(view, all_views)
+        if count > VIEW_ELEMENT_BOUND:
+            over.append(f"{view.get('key')!r} with {count} element(s)")
+    if over:
+        return GateResult(
+            "views_within_element_bound",
+            False,
+            f"{len(over)} of {len(views)} user-defined view(s) over {VIEW_ELEMENT_BOUND} element(s): "
+            + "; ".join(over),
+        )
+    return GateResult(
+        "views_within_element_bound",
+        True,
+        f"every one of {len(views)} user-defined view(s) carries at most {VIEW_ELEMENT_BOUND} element(s)",
+    )
+
+
+def gate_explicit_view_keys(inputs: GraderInputs) -> GateResult:
+    """`explicit_view_keys`: every view the workspace carries has an explicit key.
+
+    The locked explicit-key rule of the `c4-view-design` skill: a view
+    whose DSL omitted the key is exported under an auto-generated
+    `<Kind>-NNN` key (e.g. `Container-001`) with `generatedKey: true` --
+    not guaranteed to be stable over time, and the pinned CLI's `inspect`
+    reports it as a `views.view.key` finding (verified against the pinned
+    CLI, Task 140.100). The gate is over the export JSON: every view must
+    exist, and none may carry the `generatedKey` mark. A workspace whose
+    DSL defines no views at all exports only auto-generated default
+    views and fails here as well (`has_view` fails it too).
+    """
+    views = iter_views(inputs.export_json)
+    if not views:
+        return GateResult("explicit_view_keys", False, "no views at all in the export JSON")
+    generated = [str(v.get("key") or "?") for v in views if v.get("generatedKey")]
+    if generated:
+        return GateResult(
+            "explicit_view_keys",
+            False,
+            f"{len(generated)} of {len(views)} view(s) carry an auto-generated key (the DSL omitted it): {generated}",
+        )
+    return GateResult("explicit_view_keys", True, f"every one of {len(views)} view(s) has an explicit key")
+
+
+# ---------------------------------------------------------------------------
 # the stream-derived gates (Phase 110, Task 110.100)
 # ---------------------------------------------------------------------------
 
@@ -409,9 +858,13 @@ def gate_triage_complete(context: GateContext) -> GateResult:
     """`triage_complete`: every merged `inspect` finding is triaged (REQ-003).
 
     Every finding in `metrics.inspect_triage` (the stream and CLI findings
-    merged, first-occurrence order) carries a `fix`/`expected`/`reported`
-    label -- no `untriaged`. Vacuously true with no findings;
-    `inspect_called` carries the requirement that inspect was used at all.
+    merged on the normalized finding text, first-occurrence order) carries
+    a `fix`/`expected`/`reported` label -- no `untriaged`. Vacuously true
+    with no findings; `inspect_called` carries the requirement that
+    inspect was used at all. The gate itself is unchanged by Task
+    125.100/G2 -- what changed is which labels the metrics layer
+    assigns: a `fix` now needs a post-inspect edit AND the finding's
+    absence from the final CLI `inspect` findings (the truth anchor).
     """
     from .metrics import TRIAGE_UNTRIAGED  # local: metrics imports graders (cycle)
 
@@ -570,7 +1023,14 @@ def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateCo
 
 #: Every gate function, keyed by gate name (the cases' `gates` entries).
 #: The original 8 CLI/export gates are the input-only functions wrapped
-#: over `GateContext.inputs`; the Phase 110 gates take the context.
+#: over `GateContext.inputs`; the Phase 120 `elements_described`/
+#: `relationships_described` gates are input-only too; the Phase 130
+#: `external_system_tagged`/`no_vague_labels` gates are input-only too;
+#: the Phase 140 `views_within_element_bound`/`explicit_view_keys` gates
+#: are input-only too; the Phase 110 stream gates and the Phase 120
+#: `no_deletions` gate and the Phase 130 `container_count`/
+#: `no_library_container` gates (which read the case's own scenario
+#: facts) take the context.
 GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "dsl_written": _inputs_only(gate_dsl_written),
     "cli_valid": _inputs_only(gate_cli_valid),
@@ -580,6 +1040,15 @@ GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "two_containers": _inputs_only(gate_two_containers),
     "relationship_technology": _inputs_only(gate_relationship_technology),
     "has_view": _inputs_only(gate_has_view),
+    "elements_described": _inputs_only(gate_elements_described),
+    "relationships_described": _inputs_only(gate_relationships_described),
+    "no_deletions": gate_no_deletions,
+    "container_count": gate_container_count,
+    "no_library_container": gate_no_library_container,
+    "external_system_tagged": _inputs_only(gate_external_system_tagged),
+    "no_vague_labels": _inputs_only(gate_no_vague_labels),
+    "views_within_element_bound": _inputs_only(gate_views_within_element_bound),
+    "explicit_view_keys": _inputs_only(gate_explicit_view_keys),
     "validated_before_return": gate_validated_before_return,
     "parse_called": gate_parse_called,
     "validate_ok_called": gate_validate_ok_called,
@@ -629,6 +1098,14 @@ CLI_VALIDATE_CMD = ("validate",)
 CLI_EXPORT_CMD = ("export",)
 CLI_INSPECT_CMD = ("inspect",)
 
+#: The per-command timeout of the grader's CLI runs. A
+#: `subprocess.TimeoutExpired` is mapped to `RuntimeError` (Task
+#: 125.130/I3): a hung docker CLI is a runtime-shaped failure, so the
+#: documented CLI exit-code contract (`cli.py`'s module docstring, the
+#: harness README) carries it as exit 1 instead of a raw traceback
+#: mid-run.
+CLI_TIMEOUT_S = 300
+
 
 def find_dsl_file(workdir: Path) -> Path | None:
     """Return the trial's workspace DSL file, or None.
@@ -656,6 +1133,11 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
 
     Returns:
         The exit code and the combined stderr/stdout text.
+
+    Raises:
+        RuntimeError: If the CLI run exceeds the ``CLI_TIMEOUT_S``
+            timeout (Task 125.130/I3 -- the documented CLI exit-code
+            contract's runtime-shaped failure, exit 1).
     """
     assert workdir.is_dir()
     cmd = [
@@ -672,13 +1154,40 @@ def _run_cli(workdir: Path, args: list[str]) -> tuple[int, str]:
         pins.STRUCTURIZR_CLI_IMAGE,
         *args,
     ]
-    proc = subprocess.run(  # noqa: S603 -- fixed pinned image, no user input
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
+    try:
+        proc = subprocess.run(  # noqa: S603 -- fixed pinned image, no user input
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=CLI_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired as exc:
+        command = " ".join(cmd)
+        raise RuntimeError(f"the Structurizr CLI run timed out after {CLI_TIMEOUT_S} s: {command}") from exc
     result: tuple[int, str] = (proc.returncode, (proc.stderr or "") + (proc.stdout or ""))
+    return result
+
+
+def parse_inspect_findings(inspect_out: str) -> list[str]:
+    """Return the finding lines one CLI `inspect` output text carries.
+
+    The pure half of `collect_inputs`'s inspect step (extracted for the
+    Phase 125 fixture pattern, Task 125.100/110/120): a
+    `LEVEL | key | message` line contributes its bare `message` (the
+    pipe form the pinned CLI prints for a workspace it inspected); a
+    `LEVEL ...` line without a pipe contributes the whole line. Every
+    other line (timestamps, the error lines of a workspace the CLI
+    cannot even inspect, e.g. a missing `!include` target) contributes
+    nothing.
+    """
+    findings: list[str] = []
+    for line in inspect_out.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("ERROR", "WARNING", "INFO", "IGNORE")) and "|" in stripped:
+            findings.append(stripped.split("|", 2)[-1].strip())
+        elif stripped.startswith(("ERROR", "WARNING")):
+            findings.append(stripped)
+    result = findings
     return result
 
 
@@ -724,13 +1233,7 @@ def collect_inputs(workdir: Path) -> GraderInputs:
         except json.JSONDecodeError:
             export_json = None
 
-    findings: list[str] = []
-    for line in inspect_out.splitlines():
-        stripped = line.strip()
-        if stripped.startswith(("ERROR", "WARNING", "INFO", "IGNORE")) and "|" in stripped:
-            findings.append(stripped.split("|", 2)[-1].strip())
-        elif stripped.startswith(("ERROR", "WARNING")):
-            findings.append(stripped)
+    findings = parse_inspect_findings(inspect_out)
 
     result = GraderInputs(
         dsl_path=dsl.name,

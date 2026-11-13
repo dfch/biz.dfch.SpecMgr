@@ -32,10 +32,6 @@ from pathlib import Path
 
 from . import pins
 
-#: The cache subdirectory (gitignored) that holds the fetched upstream
-#: checkout.
-UPSTREAM_CACHE_DIRNAME = ".upstream"
-
 #: The file that records the checked-out SHA (a stale cache with a
 #: different SHA is refetched).
 SHA_MARKER_NAME = ".pinned-sha"
