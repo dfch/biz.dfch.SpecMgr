@@ -56,7 +56,7 @@ def _schema_type_str(prop_schema: dict[str, Any]) -> str:
     """Render a single JSON Schema property as a short type string.
 
     Resolves ``$ref`` to the referenced definition's bare name (e.g.
-    ``#/$defs/AdrBody`` -> ``AdrBody``), collapses ``anyOf`` (typically an
+    ``#/$defs/Characteristics`` -> ``Characteristics``), collapses ``anyOf`` (typically an
     optional field's ``[T, null]`` union) into ``T | None``, renders
     ``array`` as ``list[T]``, and surfaces a closed ``enum`` (e.g. the
     generic ``update`` tool's multi-value ``type``) as
@@ -138,8 +138,8 @@ def _slugify(heading: str) -> str:
 
     Headings below are always prefixed with their kind (``"Resource: ..."``,
     ``"Tool: ..."``, ...) specifically so their slugs stay unique even when
-    the same bare name is reused across kinds (e.g. the ``create_adr`` tool
-    and the ``create_adr`` prompt) -- this function does not attempt to
+    the same bare name is reused across kinds (e.g. the ``create_dec`` tool
+    and the ``create_dec`` prompt) -- this function does not attempt to
     reproduce GitHub's ``-1``/``-2``/... duplicate-heading suffixing, which
     would otherwise have to be guessed and kept in lock-step by hand.
     """

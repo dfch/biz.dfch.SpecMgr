@@ -90,7 +90,7 @@ instead.
    inspect `git diff`/`git status`, re-run the quality gate commands yourself
    (`uv run --frozen ruff format --check`, `uv run --frozen ruff check`,
    `uv run --frozen vulture ...`, the `unittest` suite, and any
-   `specmgr docs`/`specmgr adr-toc`/`specmgr schema` drift checks the phase
+   `specmgr docs`/`specmgr schema` drift checks the phase
    touches). Never take "tests pass" on trust — run them.
 5. **Correct or accept.** If verification fails, resume the same subagent
    (`task_id`) with the specific failures and required fixes; do not fix it

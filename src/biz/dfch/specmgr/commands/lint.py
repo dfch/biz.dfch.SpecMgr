@@ -19,20 +19,18 @@
 
 Runs the model-level FULL parse of each document's own domain over the
 document's complete on-disk text and reports every unparseable document
-(file path + parse error), not just the first (REQ-001). The whole-body
-domains are parsed through the domain registry's own ``parse_text``
-adapters (the ``<d>.models`` package's pure text parsers -- ``parse_req``,
-``parse_uc``, ... -- no file I/O, no ``DocCache``, no ``list_<d>``, no MCP
-tool), ADR through the top-level ``models.adr`` package's own ``parse_adr``.
-The parse-failure channels are the repo's existing ones, imported rather
-than re-listed: ``general.models.validate_result._CAUGHT_EXCEPTIONS``
-(``AssertionError``, ``pydantic.ValidationError``, ``yaml.YAMLError``) plus
-``AdrParseError`` (a ``ValueError`` subclass, the same also-catch the
-``validate_adr`` tool uses) plus UTF-8 decode errors -- caught per file so
-one bad file cannot abort the aggregate report. Full parses only, never
-the listing path (REQ-003): the ``list_feat`` dirty stage (frontmatter+H1
-only, ADR 3982712a) is precisely the masking that hid the feat-214 defect
-for three consecutive commits.
+(file path + parse error), not just the first (REQ-001). Every domain is
+parsed through the domain registry's own ``parse_text`` adapters (the
+``<d>.models`` package's pure text parsers -- ``parse_req``, ``parse_uc``,
+... -- no file I/O, no ``DocCache``, no ``list_<d>``, no MCP tool). The
+parse-failure channels are the repo's existing ones, imported rather than
+re-listed: ``general.models.validate_result._CAUGHT_EXCEPTIONS``
+(``AssertionError``, ``pydantic.ValidationError``, ``yaml.YAMLError``)
+plus UTF-8 decode errors -- caught per file so one bad file cannot abort
+the aggregate report. Full parses only, never the listing path (REQ-003):
+the ``list_feat`` dirty stage (frontmatter+H1 only, DEC 3982712a) is
+precisely the masking that hid the feat-214 defect for three consecutive
+commits.
 
 Three scopes, so the cost scales with the size of a change and never with
 the size of the corpus (REQ-004):
@@ -53,15 +51,7 @@ the size of the corpus (REQ-004):
   registered-but-empty domain is not a misconfiguration.
 * **All sweep** -- ``--all`` sweeps every registered type. Explicit
   paths combined with ``--all`` is a usage error; ``--all`` that
-  discovers nothing at all (no document and no excluded document, e.g.
-  the ADR README) is a probable misconfiguration (exit 2).
-
-The ADR README exclusion (REQ-007) is unconditional, in path mode and
-sweep mode, with or without ``--skip-unrecognized``: a file is excluded
--- never parsed and never counted as a failure -- when its resolved type
-is ``adr`` (inferred from the layout or given by ``--type adr``) and its
-base name is ``README.md``, in whichever directory. It is type-specific:
-``feat/<id>/README.md`` is a real feat artifact and is never excluded.
+  discovers no document at all is a probable misconfiguration (exit 2).
 
 Import safety (REQ-002): this module has NO module-level import of the
 domain registry (``general.tools._domains``) or of any ``tools`` package.
@@ -78,37 +68,31 @@ missing-extra condition into the clear exit-1 message whenever the CLI
 is importable but the registry-backed chain is not -- in today's
 ``[cli]``-only install the sibling commands' pre-existing
 package-init tangles block the CLI import first (issue #238 territory),
-but this module no longer contributes to that. The one module-level
-specmgr import is the ADR text parser
-(``models.adr`` -- mcp-free by construction and verified import-safe;
-the registry's ``--type`` acceptance set is deliberately NOT derived at
-import time, so no Typer ``choices``).
+but this module no longer contributes to that. There is no module-level
+specmgr import at all (the registry's ``--type`` acceptance set is
+deliberately NOT derived at import time, so no Typer ``choices``).
 
 Exit codes (pinned, REQ-008 -- the plantuml-check family):
 
 * ``0`` -- every document parsed. Includes a run in which every given
-  path was skipped or excluded (0-linted summary), and ``--type T``
-  against an empty or missing base directory (0-document summary).
+  path was skipped (0-linted summary), and ``--type T`` against an empty
+  or missing base directory (0-document summary).
 * ``1`` -- at least one document failed to parse, or the ``mcp`` extra
   is missing.
 * ``2`` -- usage or resolution error: no paths and no sweep flag; an
   unreadable or missing path; an unrecognized layout without
   ``--skip-unrecognized``; ``--dir`` without ``--type``; ``--dir``
   combined with explicit paths; explicit paths combined with ``--all``;
-  an unknown ``--type``; ``--all`` that discovers nothing at all (no
-  document and no excluded document).
+  an unknown ``--type``; ``--all`` that discovers no document at all.
 
 Report: every failing ``(path, error)`` pair is printed (the error is
-the caught exception's own text, verbatim), each followed by its
-per-type repair pointer: whole-body domains ``/repair {type} {id}`` with
-the id derived from the path (the ``feat/<id>/README.md`` folder name
-for ``feat``; the canonical UUID embedded in the file name for the
-others, printed lowercased -- ids are case-insensitive on read and
-lowercase is the canonical form), falling back to ``/repair {type}``
-when no id can be derived; ADR -- which the repair flow does not cover
--- a line saying so, with the file to be fixed manually from the
-reported error. One summary per invocation:
-``summary: linted=N failed=N skipped=N excluded=N``, where ``linted`` is
+the caught exception's own text, verbatim), each followed by its repair
+pointer: ``/repair {type} {id}`` with the id derived from the path (the
+``feat/<id>/README.md`` folder name for ``feat``; the canonical UUID
+embedded in the file name for the others, printed lowercased -- ids are
+case-insensitive on read and lowercase is the canonical form), falling
+back to ``/repair {type}`` when no id can be derived. One summary per
+invocation: ``summary: linted=N failed=N skipped=N``, where ``linted`` is
 the number of documents the gate took on (parse attempted) and ``failed``
 the subset that failed to parse.
 """
@@ -122,8 +106,6 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import typer
-
-from ..models.adr import AdrParseError, parse_adr
 
 __all__ = [
     "EXIT_LINT_FAILURE",
@@ -141,9 +123,8 @@ EXIT_USAGE = 2
 #: per-file parse failure, not a usage error).
 _ENCODING = "utf-8"
 
-#: The base name the feat folder shape and the ADR exclusion rule compare
-#: against (the feat fixed filename, and the generated ADR table of
-#: contents' name).
+#: The base name the feat folder shape compares against (the feat fixed
+#: filename).
 _README_BASENAME = "README.md"
 
 #: A canonical (8-4-4-4-12 hex) UUID, searched for in a file name to
@@ -157,16 +138,14 @@ class _RegistryBacked:
     """The registry-backed names this module loads lazily (see :func:`_registry_backed`).
 
     Attributes:
-        adr:
-            The ``adr`` domain name (``general.tools._domains.ADR``).
         feat:
             The ``feat`` domain name (``general.tools._domains.FEAT``) --
             the one whole-body domain whose path shape is
             ``<base>/<id>/README.md``.
         all_domains:
             Every registered document type (``general.tools._domains.
-            ALL_DOMAINS``: ``adr`` plus the whole-body domains) -- the
-            ``--type`` acceptance set, derived, never hand-listed.
+            ALL_DOMAINS``: the whole-body domains) -- the ``--type``
+            acceptance set, derived, never hand-listed.
         whole_body_domain:
             The name -> ``WholeBodyDomain`` registry lookup (``general.
             tools._domains.whole_body_domain``) -- the source of each
@@ -176,22 +155,12 @@ class _RegistryBacked:
             The whole-body parse-failure channels (``general.models.
             validate_result._CAUGHT_EXCEPTIONS``: ``AssertionError``,
             ``pydantic.ValidationError``, ``yaml.YAMLError``).
-        adr_base_dir:
-            The ADR base-dir resolver (``adr.tools._paths.adr_base_dir``).
-        iter_adr_paths:
-            The ADR path iterator (``adr.tools._paths.iter_adr_paths`` --
-            every ``*.md`` under the base directory, incl. the generated
-            ``README.md`` table of contents, which the exclusion rule
-            filters).
     """
 
-    adr: str
     feat: str
     all_domains: tuple[str, ...]
     whole_body_domain: Callable[[str], Any]
     caught_exceptions: tuple[type[Exception], ...]
-    adr_base_dir: Callable[[], Path]
-    iter_adr_paths: Callable[[Path], Iterator[Path]]
 
 
 @dataclass(frozen=True)
@@ -241,28 +210,23 @@ def _registry_backed() -> _RegistryBacked:
     """The registry-backed names, imported lazily (they require the ``mcp`` extra).
 
     Every name below lives in a package whose import chain reaches
-    ``server.py`` (the ``general``/``adr``/domain-package ``__init__``s
-    eagerly import their ``tools``/``prompts`` sub-packages; the
-    ``tools`` packages import the shared ``mcp`` application instance) --
-    see the module docstring's Task 100.100 import-test finding. The
-    caller catches the resulting ``ImportError`` as the missing-extra
-    condition (exit 1).
+    ``server.py`` (the ``general``/domain-package ``__init__``s eagerly
+    import their ``tools``/``prompts`` sub-packages; the ``tools`` packages
+    import the shared ``mcp`` application instance) -- see the module
+    docstring's Task 100.100 import-test finding. The caller catches the
+    resulting ``ImportError`` as the missing-extra condition (exit 1).
 
     Returns:
         The :class:`_RegistryBacked` bundle of registry-backed names.
     """
-    from ..adr.tools._paths import adr_base_dir, iter_adr_paths  # noqa: PLC0415
     from ..general.models.validate_result import _CAUGHT_EXCEPTIONS  # noqa: PLC0415
-    from ..general.tools._domains import ADR, ALL_DOMAINS, FEAT, whole_body_domain  # noqa: PLC0415
+    from ..general.tools._domains import ALL_DOMAINS, FEAT, whole_body_domain  # noqa: PLC0415
 
     result = _RegistryBacked(
-        adr=ADR,
         feat=FEAT,
         all_domains=ALL_DOMAINS,
         whole_body_domain=whole_body_domain,
         caught_exceptions=_CAUGHT_EXCEPTIONS,
-        adr_base_dir=adr_base_dir,
-        iter_adr_paths=iter_adr_paths,
     )
     return result
 
@@ -299,7 +263,7 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
 
     Two rules, in order: (1) the containing directory's name is a member
     of the registry's ``ALL_DOMAINS`` (e.g. ``docs/req/x.md``,
-    ``docs/adr/x.md``); (2) the path has the ``feat/<id>/README.md``
+    ``docs/dec/x.md``); (2) the path has the ``feat/<id>/README.md``
     shape (see :func:`_is_feat_folder_shape`). Independent of every
     ``SPECMGR_*_DIR`` variable.
 
@@ -324,37 +288,12 @@ def _infer_type(path: Path, reg: _RegistryBacked) -> str | None:
     return result
 
 
-def _is_excluded(doc_type: str, path: Path, reg: _RegistryBacked) -> bool:
-    """The ADR README exclusion (REQ-007).
-
-    A file is excluded when its resolved type is ``adr`` (inferred from
-    the layout or given by ``--type adr``) and its base name is
-    ``README.md``, in whichever directory. Unconditional (path mode and
-    sweep mode, with or without ``--skip-unrecognized``); type-specific --
-    ``feat/<id>/README.md`` (type ``feat``) is never excluded.
-
-    Args:
-        doc_type: The document's resolved type.
-        path: The document's path.
-        reg: The registry-backed names (the ``adr`` domain name).
-
-    Returns:
-        ``True`` when the file is excluded (never parsed, never failed).
-    """
-    assert isinstance(doc_type, str), type(doc_type)
-    assert isinstance(path, Path), type(path)
-    assert isinstance(reg, _RegistryBacked), type(reg)
-    result = doc_type == reg.adr and path.name == _README_BASENAME
-    return result
-
-
 def _base_dir_for(doc_type: str, reg: _RegistryBacked) -> Path:
     """The sweep base directory for one type (REQ-006: the registered resolver).
 
     Args:
         doc_type: The document type to sweep.
-        reg: The registry-backed names (the ADR base-dir resolver, the
-            whole-body registry lookup).
+        reg: The registry-backed names (the whole-body registry lookup).
 
     Returns:
         The type's registered base directory (reading its own
@@ -362,9 +301,6 @@ def _base_dir_for(doc_type: str, reg: _RegistryBacked) -> Path:
     """
     assert isinstance(doc_type, str), type(doc_type)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    if doc_type == reg.adr:
-        result: Path = reg.adr_base_dir()
-        return result
     result = reg.whole_body_domain(doc_type).base_dir()
     return result
 
@@ -374,9 +310,7 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
 
     The whole-body domains' registered ``iter_paths`` adapter (the shared
     flat-file ``*.md`` enumeration, the ``feat/<id>/README.md`` folder
-    enumeration for ``feat``), the ADR ``*.md`` enumeration for ``adr``
-    (which yields the generated ``README.md`` table of contents too --
-    the exclusion rule filters it).
+    enumeration for ``feat``).
 
     Args:
         doc_type: The document type to enumerate.
@@ -391,9 +325,6 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
     assert isinstance(doc_type, str), type(doc_type)
     assert isinstance(base_dir, Path), type(base_dir)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    if doc_type == reg.adr:
-        result: Iterator[Path] = reg.iter_adr_paths(base_dir)
-        return result
     result = reg.whole_body_domain(doc_type).iter_paths(base_dir)
     return result
 
@@ -401,11 +332,10 @@ def _iter_paths_for(doc_type: str, base_dir: Path, reg: _RegistryBacked) -> Iter
 def _parse_document(doc_type: str, text: str, reg: _RegistryBacked) -> None:
     """The model-level FULL parse of one document's exact text (REQ-003).
 
-    Whole-body domains: the registry's own ``parse_text`` adapter (the
-    domain's pure text parser -- no file I/O, no ``DocCache``, no
-    ``list_<d>``, no MCP tool). ADR: the top-level ``models.adr``
-    package's ``parse_adr``. The parsed document is discarded -- the gate
-    only cares whether the parse raised.
+    Every domain: the registry's own ``parse_text`` adapter (the domain's
+    pure text parser -- no file I/O, no ``DocCache``, no ``list_<d>``,
+    no MCP tool). The parsed document is discarded -- the gate only cares
+    whether the parse raised.
 
     Args:
         doc_type: The document's resolved type.
@@ -415,14 +345,11 @@ def _parse_document(doc_type: str, text: str, reg: _RegistryBacked) -> None:
     Raises:
         Exception:
             The domain's parse-failure channels (the caller catches
-            ``_CAUGHT_EXCEPTIONS`` plus ``AdrParseError``).
+            ``_CAUGHT_EXCEPTIONS``).
     """
     assert isinstance(doc_type, str), type(doc_type)
     assert isinstance(text, str), type(text)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    if doc_type == reg.adr:
-        parse_adr(text)
-        return
     reg.whole_body_domain(doc_type).parse_text(text)
 
 
@@ -461,26 +388,20 @@ def _derive_id(doc_type: str, path: Path, reg: _RegistryBacked) -> str | None:
 
 
 def _repair_pointer(failure: _Failure, reg: _RegistryBacked) -> str:
-    """The per-type repair pointer for one failing document (REQ-008).
+    """The repair pointer for one failing document (REQ-008).
 
-    Whole-body domains: ``/repair {type} {id}`` with the path-derived id,
-    falling back to ``/repair {type}`` when none can be derived. ADR: the
-    repair flow is whole-body-only, so the pointer says ADR is not
-    covered and the file is to be fixed manually from the reported error.
+    ``/repair {type} {id}`` with the path-derived id, falling back to
+    ``/repair {type}`` when none can be derived.
 
     Args:
         failure: The failing document.
-        reg: The registry-backed names (the ``adr``/``feat`` domain
-            names).
+        reg: The registry-backed names (the ``feat`` domain name).
 
     Returns:
         The pointer line (indented to follow its failure line).
     """
     assert isinstance(failure, _Failure), type(failure)
     assert isinstance(reg, _RegistryBacked), type(reg)
-    if failure.doc_type == reg.adr:
-        result = "  ADR is not covered by the repair flow; fix the file manually from the error above."
-        return result
     doc_id = _derive_id(failure.doc_type, failure.path, reg)
     if doc_id is None:
         result = f"  repair via: /repair {failure.doc_type}"
@@ -550,12 +471,12 @@ def lint(
     parses only, never the listing/cache path) over the given paths
     (path mode), every document of ``--type T`` (type sweep), or every
     registered type (``--all``). Reports every failing ``(path, error)``
-    pair with its per-type repair pointer and one summary:
-    ``summary: linted=N failed=N skipped=N excluded=N``.
+    pair with its repair pointer and one summary:
+    ``summary: linted=N failed=N skipped=N``.
 
     Exit codes (REQ-008): ``0`` every document parsed (incl. a run where
-    every path was skipped or excluded, and ``--type T`` against an empty
-    or missing base directory); ``1`` at least one document failed to
+    every path was skipped, and ``--type T`` against an empty or missing
+    base directory); ``1`` at least one document failed to
     parse (or the ``mcp`` extra is missing); ``2`` usage or resolution
     error (see the module docstring for the full list).
     """
@@ -592,12 +513,11 @@ def lint(
         _fail_usage([f"unknown --type {type!r}; expected one of {', '.join(reg.all_domains)}"])
 
     # Path mode: resolve each explicit path (existence/readability is a
-    # usage error; the layout inference and the exclusion run on the path
-    # alone; a UTF-8 decode failure is a per-file parse failure).
+    # usage error; the layout inference runs on the path alone; a UTF-8
+    # decode failure is a per-file parse failure).
     items: list[_WorkItem] = []
     pre_failures: list[_Failure] = []
     skipped = 0
-    excluded = 0
     path_errors: list[str] = []
     for path_str in paths if paths is not None else []:
         path = Path(path_str)
@@ -615,9 +535,6 @@ def lint(
                     "--skip-unrecognized to skip"
                 )
             continue
-        if _is_excluded(doc_type, path, reg):
-            excluded += 1
-            continue
         try:
             text = path.read_text(encoding=_ENCODING)
         except OSError as ex:
@@ -632,8 +549,7 @@ def lint(
 
     # Sweep mode: --type T (no paths) or --all (the shape guards above
     # keep the two apart), over the --dir override or each domain's
-    # registered base directory; the ADR README exclusion applies here
-    # too (iter_adr_paths yields the generated README.md).
+    # registered base directory.
     sweep_types: tuple[str, ...] = ()
     if all:
         sweep_types = reg.all_domains
@@ -642,22 +558,17 @@ def lint(
     for doc_type in sweep_types:
         base_dir = dir if dir is not None else _base_dir_for(doc_type, reg)
         for path in _iter_paths_for(doc_type, base_dir, reg):
-            if _is_excluded(doc_type, path, reg):
-                excluded += 1
-                continue
             items.append(_WorkItem(path, doc_type, None))
 
     # The --all zero-documents guard (a probable misconfiguration; a
     # single empty/missing --type base directory is NOT one). It fires
-    # only when NOTHING was discovered: an excluded document (the ADR
-    # README) was discovered, so a corpus holding only that is not a
-    # misconfiguration -- the run reports excluded=1 and exits 0.
-    if all and not items and not excluded:
+    # only when NOTHING was discovered.
+    if all and not items:
         _fail_usage(["--all found zero documents in total (check the SPECMGR_*_DIR configuration)"])
 
     # Parse every work item (full model-level parse, REQ-003); per-file
-    # catch of the repo's existing parse-failure channels plus AdrParseError
-    # plus read/decode errors, so one bad file cannot abort the report.
+    # catch of the repo's existing parse-failure channels plus
+    # read/decode errors, so one bad file cannot abort the report.
     parse_failures: list[_Failure] = []
     for item in items:
         text = item.text
@@ -676,7 +587,7 @@ def lint(
                 continue
         try:
             _parse_document(item.doc_type, text, reg)
-        except (*reg.caught_exceptions, AdrParseError) as ex:
+        except reg.caught_exceptions as ex:
             parse_failures.append(_Failure(item.path, item.doc_type, str(ex)))
 
     # Report: every failing (path, error) pair with its per-type repair
@@ -687,7 +598,7 @@ def lint(
         typer.echo(f"✗ {failure.path} ({failure.doc_type}): {failure.error}")
         typer.echo(_repair_pointer(failure, reg))
     linted = len(items) + len(pre_failures)
-    typer.echo(f"summary: linted={linted} failed={len(failures)} skipped={skipped} excluded={excluded}")
+    typer.echo(f"summary: linted={linted} failed={len(failures)} skipped={skipped}")
     if failures:
         raise typer.Exit(EXIT_LINT_FAILURE)
     raise typer.Exit(EXIT_OK)

@@ -4,7 +4,7 @@ created: '2026-09-03 10:27:53.793+02:00'
 id: bad7e9c7-f794-477b-b64f-ce04645c6ef3
 status: draft
 type: req
-updated: '2026-10-30T14:06:23.339+01:00'
+updated: '2026-11-07T09:06:06.618+01:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,7 @@ THE system shall provide generic, type-dispatched `update`, `set_status`, `set_c
 
 ## Description
 
-AGENTS.md's Status section documents the cross-cutting `general` package: the generic `update` tool (whole-body and line-range replace for the thirteen whole-body domains), `set_status` (all fourteen domains including `adr`), `set_classification`, and `delete`, plus `mdformat` and shared resources (`specmgr://version`, `specmgr://iso25010`, `specmgr://dtais`, `specmgr://rasci`). ADR 36905d5b-8057-4294-8665-c7eed5534db0 fixes this as the required convention for every future domain (e.g. the reserved but not-yet-built `ac` domain), reducing per-domain tool duplication and the maintenance burden of the codebase as a whole.
+AGENTS.md's Status section documents the cross-cutting `general` package: the generic `update` tool (whole-body and line-range replace for the fourteen whole-body domains), `set_status` (the same fourteen whole-body domains), `set_classification`, and `delete`, plus `mdformat` and shared resources (`specmgr://version`, `specmgr://iso25010`, `specmgr://dtais`, `specmgr://rasci`). DEC 36905d5b-8057-4294-8665-c7eed5534db0 fixes this as the required convention for every future domain (e.g. the reserved but not-yet-built `ac` domain), reducing per-domain tool duplication and the maintenance burden of the codebase as a whole.
 
 ## Characteristics
 
@@ -26,7 +26,7 @@ SRS
 
 ## Source
 
-AGENTS.md's Status section (the `general` bullet) and ADR 36905d5b-8057-4294-8665-c7eed5534db0.
+AGENTS.md's Status section (the `general` bullet) and DEC 36905d5b-8057-4294-8665-c7eed5534db0.
 
 ## Related Artifacts
 

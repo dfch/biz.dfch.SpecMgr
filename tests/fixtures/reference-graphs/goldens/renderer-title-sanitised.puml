@@ -1,7 +1,6 @@
 @startuml He said #quot;hello#quot;\nsecond line
 
 skinparam component {
-  backgroundColor<<ADR>> LightYellow
   backgroundColor<<REQ>> LightBlue
   backgroundColor<<UC>> Pink
   backgroundColor<<TSK>> Honeydew

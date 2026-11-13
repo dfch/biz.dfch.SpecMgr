@@ -10,9 +10,8 @@ first).
 - **In scope (thirteen domains):** `req`, `uc`, `tsk`, `qa`, `prb`, `gol`,
   `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`.
 - **Out of scope, permanently:** `feat` (always English, no language
-  variants, no `language` parameter on any `feat` surface) and `adr` (always
-  English, no `language` parameter on any `adr` surface). A non-default
-  `language` passed to a generic tool for either type is a `ValueError`.
+  variants, no `language` parameter on any `feat` surface). A non-default
+  `language` passed to a generic tool for that type is a `ValueError`.
 - English (`en`) is the default and canonical language. It is the source of
   truth for the document's identity (id, file name) and its closed
   vocabulary.
@@ -119,7 +118,7 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 - The structure: heading levels (`#` counts), heading order, blank lines,
   list markers, numbered-list numbers.
 - Cross-reference lines `<TAG> <uuid>: <title>` with the tags `GOL`, `PRB`,
-  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `TXT`, `FEAT`:
+  `QA`, `UC`, `REQ`, `RSK`, `DEC`, `VCR`, `SYSRS`, `TXT`, `FEAT`:
   the tag word, the uuid, and the `: <title>` text stay exactly as in the
   source (the title is the title of the referenced document). Only the
   paraphrase prose of a reference (the notes paragraph under it) is
@@ -142,14 +141,14 @@ tokens are identifiers other artifacts, tools, or readers depend on.
 | `uc` | `### Extension <N><letter>. <text>` heading token (`Extension`, the number, the optional lowercase letter, the dot); `### Step <N>: <text>` sub-variation heading token (`Step`, the number, the colon); numbered-list numbers | `### Level` words (`Summary`, `User Goal`, `Subfunction`); the `Subordinate:`, `Superordinate:`, `Extension:` labels in `### Related Use Cases` bullets and the `return to step N` / `continue to step N` phrases (read by the EN-only diagram renderer); `UC <uuid>` references |
 | `tsk` | the `[ ]` / `[x]` checkbox markers (and each item's checked state); the update-entry heading timestamp | |
 | `qa` | the question prefix `**<d>.<NNNN>**: ` (single category digit, 4-digit number) of every question block quote; the `> ` block-quote structure | the `TODO: answer pending` placeholder line of an unanswered question (keep it verbatim) |
-| `prb` | the `problem_statement` lead paragraph (the one sentence under the H1, template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`): it is **exempt from translation** (ADR 38efdb66 item 11), stays canonical English in every language, copy it from the source byte for byte | |
+| `prb` | the `problem_statement` lead paragraph (the one sentence under the H1, template `[Current state] is causing [specific issue], for [stakeholder] because [underlying cause].`): it is **exempt from translation** (DEC 38efdb66 item 11), stays canonical English in every language, copy it from the source byte for byte | |
 | `rsk` | `## Strategy` word: `transfer`, `accept`, `reduce`, `avoid` (TARA); the `### Probability <1-5>` and `### Impact <1-5>` heading tokens (the word and the digit) under both `## Initial Assessment` and `## Residual Assessment` | `## Tags` bullets; names of people, roles, and systems in `## Owner` and `## Scope` |
 | `dec` | the `### Option <N>: <name>` heading token (`Option`, the number, the colon; the name is prose); the update-entry heading timestamp; the cross-reference tags | `## Tags` bullets |
 | `sop` | the `### Step <N>: <name>` heading token (`Step`, the number, the colon; the name is prose); the update-entry heading timestamp; the cross-reference tags | the lifecycle words (approval/effectivity) live in the frontmatter `status` and are never translated |
 | `vcr` | `## Coverage` word: `full`, `partial`, `none`; the `### AC-<NNN> (<Method>): <text>` heading token (`AC-`, the 3-digit number, and the DTAIS method word `Demonstration`, `Test`, `Analysis`, `Inspection`, `Special`, see `specmgr://dtais`; the text after the colon is prose); the `## Verifies` line `REQ|UC <uuid>: <title>`; the update-entry heading timestamp | |
-| `sysrs` | the H1 prefix `System Requirements Specification: ` (only the title after it is prose and is translated); the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC` or `ADR`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
+| `sysrs` | the H1 prefix `System Requirements Specification: ` (only the title after it is prose and is translated); the type-tagged cross-reference bullets (`GOL`, `PRB`, `QA`, `UC`, `DEC`, `RSK`, `REQ`, `VCR` per section); the update-entry heading timestamp | the acronym term in `## Definitions and Acronyms` bullets (`**AC** -- ...`) |
 | `txt` | the update-entry heading timestamp (the shared `## Updates` entry shape, section 5.1); the `## Updates` heading itself is a table-mapped fixed-text heading (the only one of this domain) | the headings of the opaque body (free text, not schema headings: the parser never rewrites them and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift); the free-floating cross-reference lines in the body (`<TAG> <uuid>: <title>`: the tag word, the uuid, and the `: <title>` text stay exactly as in the source) |
-| `set` | the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the 12 reference tags `GOL`, `PRB`, `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`, `SYSRS`, `TXT`, `FEAT`: the tag, the id, and the `: <title>` text stay exactly as in the source -- the title is the referenced document's own H1, section 5.1; only the notes paragraph under a bullet is translated); the `status` values (`draft`, `progress`, `done`, `review`) | the headings inside `## Description` (free text, not schema headings: the parser accepts them verbatim and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift, the `txt` opaque-body rule) |
+| `set` | the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the 11 reference tags `GOL`, `PRB`, `QA`, `UC`, `REQ`, `RSK`, `DEC`, `VCR`, `SYSRS`, `TXT`, `FEAT`: the tag, the id, and the `: <title>` text stay exactly as in the source -- the title is the referenced document's own H1, section 5.1; only the notes paragraph under a bullet is translated); the `status` values (`draft`, `progress`, `done`, `review`) | the headings inside `## Description` (free text, not schema headings: the parser accepts them verbatim and the drift check compares them as-is, so keep them exactly as in the source -- a renamed free heading is reported as `missing` + `extra` drift, the `txt` opaque-body rule) |
 
 The fixed-text headings of every domain (for example `## More Information`,
 `## Tags`, `## Source`, the RASCI headings `### Accountable`/`### Responsible`/
@@ -199,7 +198,7 @@ freely.
 - `language` of valid shape without a heading table: `ValueError`
   ("no heading-mapping table for language ..."); add
   `general/data/headings/<language>.json` first.
-- Non-default `language` for `feat` or `adr`: `ValueError` ("always English").
+- Non-default `language` for `feat`: `ValueError` ("always English").
 - `create_<d>`: EN requires `id` to be omitted; a non-default language
   requires `id` (the shared EN id; a missing or misused `id` is a
   `ValueError`); a missing EN source is the domain's not-found error; an

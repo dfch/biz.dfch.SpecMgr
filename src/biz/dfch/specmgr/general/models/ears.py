@@ -18,7 +18,7 @@
 """Pydantic schema and parser for the EARS requirement-phrasing-templates guidance
 document (``general/data/general_ears.md``), feat-92-resources REQ-006.
 
-Per ADR 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
+Per DEC 356d8781-e446-4c26-917a-eda85648ce9d ("Expose cross-cutting
 reference resources as raw markdown with model-backed drift-guard tests,
 not structured JSON"), this model is parsed purely to fail fast on
 structural drift -- ``specmgr://ears`` (``general/resources/ears.py``)
@@ -57,7 +57,7 @@ The five requirement patterns`` heading, so it is wrapped in a composite
 than declared as a bare list field on `Ears` itself. Closed-vocabulary
 bullets are modeled as `MarkdownListItem` subclasses with
 `@computed_field`s regex-extracting the leading keyword, reusing
-`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (ADR
+`feat.RequirementItem`/`tsk.TaskItem`'s established precedent (DEC
 356d8781-e446-4c26-917a-eda85648ce9d's Decision Drivers) rather than
 inventing a new shared `models/md` primitive. `` ## Combining patterns ``
 is out of REQ-006's narrow scope (which only asks for the five templates
@@ -376,8 +376,7 @@ class Ears(MarkdownSection1):
 def parse_ears(text: str) -> Ears:
     """Parse the packaged EARS guidance markdown text into an :class:`Ears`.
 
-    Thin `format_text` + `Ears.from_text` wrapper -- unlike `parse_adr`/
-    `parse_req`, there is no YAML frontmatter to split off first, since
+    Thin `format_text` + `Ears.from_text` wrapper -- there is no YAML frontmatter to split off first, since
     this is a plain packaged data file, not a user-authored document
     (mirrors `biz.dfch.specmgr.general.models.dtais.parse_dtais`'s exact
     shape).

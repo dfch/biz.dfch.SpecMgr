@@ -1,7 +1,6 @@
 @startuml No Feat Source
 
 skinparam component {
-  backgroundColor<<ADR>> LightYellow
   backgroundColor<<REQ>> LightBlue
   backgroundColor<<UC>> Pink
   backgroundColor<<TSK>> Honeydew

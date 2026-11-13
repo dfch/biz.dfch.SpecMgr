@@ -81,7 +81,7 @@ the existing per-domain base-directory resolution (`SPECMGR_<DOMAIN>_DIR`):
 adding a language segment is just "descend one more directory below the
 existing resolved base when language != default," with no change to the
 resolution contract itself. It is also consistent with this codebase's
-domain-first convention (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) — type
+domain-first convention (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) — type
 stays the top organizing unit everywhere else (tools/prompts/resources,
 `docs/api`, etc.).
 
@@ -92,14 +92,11 @@ unchanged-structure requirement, and would require inserting a path segment
 deeper, more invasive change than Option 1's "append a subdir."
 
 > **1.0020**: Which document-type domains should be in scope for i18n
-> support, and should ADR be included?
+> support, and should the architecture-decision-record type be included?
 
 All thirteen whole-body domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop,
-feat, vcr, sysrs, txt) are in scope. ADR is explicitly excluded: it already has
-its own separate, simpler lifecycle (schema under the shared top-level
-`models/adr/`, no generic `update`/`set_status`/`delete`/`validate`
-dispatch tooling), consistent with how ADR has been excluded from other
-cross-cutting features in this codebase.
+feat, vcr, sysrs, txt) are in scope. The architecture-decision-record
+ type is explicitly excluded: it has its own separate, simpler lifecycle (no generic `update`/`set_status`/`delete`/`validate` dispatch tooling), consistent with how it has been excluded from other cross-cutting features in this codebase.
 
 > **1.0030**: How should the language of a given file be recorded — a new
 > frontmatter field, or inferred purely from the directory path?
@@ -184,7 +181,7 @@ fallback indicator/flag is returned to the caller.
 
 > **1.0110**: What is explicitly out of scope for this feature?
 
-- The ADR domain (see 1.0020).
+- The architecture-decision-record domain (see 1.0020).
 - Machine/automatic translation — specmgr never calls an LLM/translation
   API itself (see 1.0090); a future OpenCode skill/subagent to assist with
   producing translated text is a separate, optional follow-on.
@@ -310,6 +307,6 @@ created first) to draft `feat-197-i18n`'s `## Plan` section directly from
 these answers — in particular, the `### Requirements`/`### Design Notes`
 sections should restate the Functional Suitability answers above, and the
 `### Task List`'s first phase should be a dedicated design/investigation
-phase (producing a new ADR, since this is cross-cutting across every
+phase (producing a new decision record, since this is cross-cutting across every
 whole-body domain) resolving the Performance Efficiency, Reliability, and
 Security `TODO`s before any domain code changes begin.

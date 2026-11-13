@@ -23,7 +23,7 @@ This module adds a third one (``fr``, whose table is a copy of ``de.json`` redir
 ``heading_table_path`` seam -- the established technique of ``test_check_translation_drift.py``; the *content* of a
 table is irrelevant to the properties pinned here) and asserts, for every i18n-eligible domain, that two NON-EN
 variants of one artifact share the id of the EN source (ACC-003, REQ-003), live in their own language subfolder under
-the identical basename (ACC-001, ADR item 2), never disturb each other or EN, are each listed by exactly one
+the identical basename (ACC-001, DEC 38efdb66 item 2), never disturb each other or EN, are each listed by exactly one
 ``list_<d>(language=...)`` call, and are all reported by ``list_languages`` (REQ-012).
 """
 

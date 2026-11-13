@@ -20,8 +20,8 @@
 issue #108).
 
 Covers the import-time invariants (the aggregation is keyed to the shared ``general.tools.
-_domains`` registry, ADR excluded, and -- as of Phase 120 -- every whole-body entry carries
-its domain's own landed table by identity: the rollout is complete, no ``None`` passthrough
+_domains`` registry, and -- as of Phase 120 -- every whole-body entry carries its domain's
+own landed table by identity: the rollout is complete, no ``None`` passthrough
 remains), the pure :func:`decide_transition` core (passthrough, allowed, disallowed with the
 sorted current-state-relative ``allowed_values`` + the locked normal message form, the
 terminal message form, and the total/terminal treatment of a ``current`` that is not a table
@@ -40,7 +40,7 @@ from unittest import mock
 from biz.dfch.specmgr.dec.models.v1.frontmatter import _STATUS_TRANSITIONS as _DEC_LANDED_TABLE
 from biz.dfch.specmgr.feat.models.v1.frontmatter import _STATUS_TRANSITIONS as _FEAT_LANDED_TABLE
 from biz.dfch.specmgr.general.models import InvalidStatusTransitionResult
-from biz.dfch.specmgr.general.tools._domains import ADR, WHOLE_BODY_DOMAINS
+from biz.dfch.specmgr.general.tools._domains import WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.gol.models.v1.frontmatter import _STATUS_TRANSITIONS as _GOL_LANDED_TABLE
 from biz.dfch.specmgr.prb.models.v1.frontmatter import _STATUS_TRANSITIONS as _PRB_LANDED_TABLE
 from biz.dfch.specmgr.qa.models.v2.frontmatter import _STATUS_TRANSITIONS as _QA_LANDED_TABLE
@@ -114,8 +114,8 @@ _TERMINAL_MESSAGE = (
 
 class TestStatusTransitionsAggregation(unittest.TestCase):
     """REQ-003/ACC-007 (the full-coverage form, Phase 120): the aggregation is keyed to the
-    registry, ADR excluded, and the import-time drift assert passed (the module import at the
-    top of this file is the proof -- a failed assert would have made this file unimportable).
+    registry, and the import-time drift assert passed (the module import at the top of this
+    file is the proof -- a failed assert would have made this file unimportable).
     As of Phase 120 the rollout is complete: every whole-body entry is the domain's own
     landed table (``req`` since Phase 110, the rest since Phase 120), carried by identity,
     and no ``None`` passthrough entry remains."""
@@ -129,11 +129,6 @@ class TestStatusTransitionsAggregation(unittest.TestCase):
         sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
 
         self.assertEqual(set(sut), set(WHOLE_BODY_DOMAINS))
-
-    def test_adr_has_no_entry(self) -> None:
-        sut = status_fsm_module._STATUS_TRANSITIONS_BY_TYPE
-
-        self.assertNotIn(ADR, sut)
 
     def test_every_entry_is_its_own_landed_domain_table(self) -> None:
         """REQ-001/REQ-003/ACC-007: the aggregation carries every domain's own constant by
@@ -158,7 +153,6 @@ class TestStatusTransitionsAggregation(unittest.TestCase):
         sut = status_fsm_module._STATUS_VOCABULARIES_BY_TYPE
 
         self.assertEqual(set(sut), set(WHOLE_BODY_DOMAINS))
-        self.assertNotIn(ADR, sut)
 
 
 class TestDecideTransition(unittest.TestCase):
@@ -240,7 +234,6 @@ class TestCheckStatusTransition(unittest.TestCase):
                 self.assertEqual(result.to_status, start)
 
     def test_unregistered_type_passes_through(self) -> None:
-        self.assertIsNone(check_status_transition(ADR, "draft", "accepted"))
         self.assertIsNone(check_status_transition("bogus", "draft", "accepted"))
 
     def test_landed_req_table_is_enforced_straight_from_module_state(self) -> None:

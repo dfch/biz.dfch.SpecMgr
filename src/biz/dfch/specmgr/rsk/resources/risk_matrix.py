@@ -26,7 +26,7 @@ initial/residual reading rule (a ``reduce`` strategy implies residual <
 initial).
 
 Served as raw packaged markdown (``text/markdown``, mirroring
-``specmgr://iso25010``/``specmgr://rsk/tara``, per ADR
+``specmgr://iso25010``/``specmgr://rsk/tara``, per DEC
 356d8781-e446-4c26-917a-eda85648ce9d's uniform convention: raw markdown
 output, backed by a dedicated model that is parsed on every resource call
 purely to fail fast on structural drift, with the parsed result discarded
@@ -64,7 +64,7 @@ def risk_matrix() -> str:
     design as every other ``rsk`` resource/tool -- reads the file fresh on
     every call. Also parses the text via
     :func:`~biz.dfch.specmgr.rsk.models.v1.parse_risk_matrix` on every call
-    purely to fail fast on structural drift in production (ADR
+    purely to fail fast on structural drift in production (DEC
     356d8781-e446-4c26-917a-eda85648ce9d); the parsed result is discarded
     and the raw text is returned unchanged.
 

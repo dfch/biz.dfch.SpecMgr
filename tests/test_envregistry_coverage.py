@@ -65,7 +65,6 @@ import sys
 import tempfile
 import unittest
 
-import biz.dfch.specmgr.adr.tools._paths  # noqa: F401 (side-effects only: SPECMGR_ADR_DIR registration)
 import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_DOTENV registration)
 
 # The bare import (no `as` alias): `commands/__init__.py`'s own

@@ -12,7 +12,7 @@ version: 1.0.0
 
 ### Overview
 
-Provide a markdown-based REQ artifact type for storing requirements with assignable characteristics. The REQ artifact follows the domain-first hierarchy (ADR ece4554b) and provides a structured template for capturing, organizing, and tracking requirements alongside existing document types (ADR, UC). A defining capability is the ability to assign arbitrary characteristics (metadata tags) to each requirement.
+Provide a markdown-based REQ artifact type for storing requirements with assignable characteristics. The REQ artifact follows the domain-first hierarchy (DEC ece4554b) and provides a structured template for capturing, organizing, and tracking requirements alongside existing document types (ADR, UC). A defining capability is the ability to assign arbitrary characteristics (metadata tags) to each requirement.
 
 ### Requirements
 
@@ -51,7 +51,7 @@ in this feature:
 
 #### Depends On
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic `MarkdownFrontmatter` base)
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr` structure), DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic `MarkdownFrontmatter` base)
 
 #### Blocks
 
@@ -62,8 +62,8 @@ in this feature:
 The REQ domain will follow the same patterns established by existing domains:
 
 - Models live under `req/models/v1/` (decided and implemented — domain-first path, not shared `models/req/v1/`; see Task 2.1)
-- Schema versioning follows the ADR vN strategy (ADR d54abe50's variant of this decision)
-- `type: Literal["req"]` discriminator in frontmatter via `MarkdownFrontmatter` subclass (ADR bc5e18ad)
+- Schema versioning follows the ADR vN strategy (DEC d54abe50's variant of this decision)
+- `type: Literal["req"]` discriminator in frontmatter via `MarkdownFrontmatter` subclass (DEC bc5e18ad)
 
 Single, canonical breakdown of work phases and tasks. Status lives on the
 task itself — there is no separate "planned" vs. "executed" list to keep in
@@ -274,7 +274,7 @@ Task 1.2 originally specified "JSON Schema draft-07", matching the existing hand
 
 #### 2026-08-15 00:00:00.000Z : `specmgr://req/schema` resource URI is unversioned (Task 3.5)
 
-considered addressing it as `specmgr://req/schema/v1` (mirroring `req/models/v1`'s package path) but rejected it — no existing resource or tool URI in this codebase ever exposes the internal `vN` model-package version: `specmgr://version`/`specmgr://adr/list`/`specmgr://adr/{id}` are all unversioned, and `parse_req`/`parse_uc` silently import from `models.v1`/`models.v2` respectively without either fact reaching the tool name, description, or signature. `vN` is purely an internal package-layout detail (ADR d54abe50's schema-versioning strategy), never part of the public MCP surface. Keeping `specmgr://req/schema` unversioned means it always means "the current REQ schema" — exactly like the tools already do — so a future `req/models/v2` (if REQ ever follows UC's v1→v2 migration) only changes what the resource reads internally, not its address, and callers never have to choose between two live, drifting endpoints. Scoped to this feature's own resource design, not a repo-wide architectural decision, so logged here rather than as a full ADR.
+considered addressing it as `specmgr://req/schema/v1` (mirroring `req/models/v1`'s package path) but rejected it — no existing resource or tool URI in this codebase ever exposes the internal `vN` model-package version: `specmgr://version`/`specmgr://adr/list`/`specmgr://adr/{id}` are all unversioned, and `parse_req`/`parse_uc` silently import from `models.v1`/`models.v2` respectively without either fact reaching the tool name, description, or signature. `vN` is purely an internal package-layout detail (DEC d54abe50's schema-versioning strategy), never part of the public MCP surface. Keeping `specmgr://req/schema` unversioned means it always means "the current REQ schema" — exactly like the tools already do — so a future `req/models/v2` (if REQ ever follows UC's v1→v2 migration) only changes what the resource reads internally, not its address, and callers never have to choose between two live, drifting endpoints. Scoped to this feature's own resource design, not a repo-wide architectural decision, so logged here rather than as a full ADR.
 
 #### 2026-08-15 00:00:00.000Z : Schema `"$comment"` version marker omits the doc-type name (Task 3.4)
 

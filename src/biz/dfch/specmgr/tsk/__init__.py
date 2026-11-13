@@ -17,7 +17,7 @@
 
 """TaskList (TSK) domain -- lightweight task/todo-list specifications.
 
-This is a domain-first package, mirroring ``req``'s layout (per ADR
+This is a domain-first package, mirroring ``req``'s layout (per DEC
 ece4554b-725c-4f76-bc04-5d2b760363d2), containing models, tools, prompts,
 and resources for managing ``tsk`` documents.
 
@@ -38,7 +38,7 @@ through the generic ``validate`` tool in ``general.tools``
 (``type="tsk"``) -- the former ``validate_tsk`` tool was removed in favor
 of it (feat-81-83-validation). Like REQ,
 TSK has no ``specmgr://tsk/{id}`` resource -- id-based reads go through the
-``get_tsk`` tool only (same rationale as ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614,
+``get_tsk`` tool only (same rationale as DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614,
 "Expose id-based REQ document reads as a tool (get_req), not a resource" --
 TSK never had such a resource to remove in the first place). Likewise, the
 former ``specmgr://tsk/list`` resource was replaced by the ``list_tsk``
@@ -46,7 +46,7 @@ tool, so that paging parameters could be accepted (feat-13-list-paging).
 
 The former ``specmgr://tsk/schema`` resource was converted into the
 ``get_tsk_schema`` tool, so that the generated JSON Schema is discoverable
-from the always-in-context tool surface (feat-189 Phase 105, ADR
+from the always-in-context tool surface (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 """
 

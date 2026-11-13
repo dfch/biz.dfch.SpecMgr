@@ -43,7 +43,7 @@ calls ``read_vcr(path)`` again immediately after ``find_vcr_path`` already
 resolved and read the same ``path`` once during its own scan. The generic
 ``delete`` tool in ``general.tools`` only holds the *target* document's own
 per-id lock, never a whole-domain lock, while ``get_vcr``/``list_vcr``
-intentionally take no lock at all (ADR
+intentionally take no lock at all (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3) -- so a concurrent ``delete`` of this
 same document can remove ``path`` in the narrow window between
 ``find_vcr_path``'s own read and this one, raising ``FileNotFoundError``.

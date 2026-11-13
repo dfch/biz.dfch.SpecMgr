@@ -92,11 +92,11 @@ Each phase ends gate-green: `ruff format --check` + `ruff check`, `vulture src/ 
 
 ### Related Decisions
 
-- ADR 1af6787b-eaab-4e8f-888f-531c1e76c19d (feat-36): path-safety guards for the generic delete, Phase 4's direct precedent
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0: dispatch-only generic-tool convention (the adapter shape Phase 4 extends)
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712: feat folder-per-document addressing (`assert_feat_id` in Phase 4; this folder's own id)
-- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614: id-based reads are `get_<d>`-only (Phase 4 covers every `get_<d>`)
-- ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73: pre-commit enforcement of docs/schema drift (the per-phase gate)
+- DEC 1af6787b-eaab-4e8f-888f-531c1e76c19d (feat-36): path-safety guards for the generic delete, Phase 4's direct precedent
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0: dispatch-only generic-tool convention (the adapter shape Phase 4 extends)
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712: feat folder-per-document addressing (`assert_feat_id` in Phase 4; this folder's own id)
+- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614: id-based reads are `get_<d>`-only (Phase 4 covers every `get_<d>`)
+- DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73: pre-commit enforcement of docs/schema drift (the per-phase gate)
 
 ### Task List
 

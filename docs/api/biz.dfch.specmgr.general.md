@@ -4,10 +4,9 @@ General-purpose (cross-cutting, not domain-specific) tools, resources, and
 prompts.
 
 This package provides tools, resources, and prompts that apply to any markdown
-file in the system, regardless of document type (ADR, use case, etc.), or that
+file in the system, regardless of document type (use case, requirement, etc.), or that
 are not specific to any single document domain at all (e.g. the server
-version). It complements the domain-specific packages (``adr``, ``req``,
-``uc``).
+version). It complements the domain-specific packages (``req``, ``uc``).
 
 ``tools`` (e.g. ``mdformat``, ``update``, ``set_status``) operate on raw
 markdown files and are registered as ``@mcp.tool()`` functions. ``resources``

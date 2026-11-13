@@ -48,8 +48,8 @@ The unit tests do the identical `sys.path` insertion in
 `tests/evals/conftest.py`, so nothing is installed and `pyproject.toml` is
 untouched (no `evals/` in `[tool.setuptools]`, no import from `src/`). This
 is feature-scoped development infrastructure, so the decision is recorded
-in the feat README's Updates/Decisions Made log, not in an ADR (per the
-AGENTS.md "ADR vs. feature-level Decisions Made" criteria).
+in the feat README's Updates/Decisions Made log, not in a separate DEC (per
+the AGENTS.md decision-record-vs-feature-log criteria).
 
 ## How to run
 

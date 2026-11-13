@@ -59,7 +59,7 @@ file I/O, no network, no clock:
   and sub-variation notes.
 
 Import direction: ``uc`` → ``plantuml`` (the shared marker constant only) —
-never the reverse (ADR 7a626b12).
+never the reverse (DEC 7a626b12).
 """
 
 from __future__ import annotations

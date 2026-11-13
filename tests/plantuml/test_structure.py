@@ -520,7 +520,7 @@ class TestPackageDataFiles(unittest.TestCase):
 
 
 class TestImportFree(unittest.TestCase):
-    """ADR 7a626b12: no specmgr import anywhere in the plantuml package."""
+    """DEC 7a626b12: no specmgr import anywhere in the plantuml package."""
 
     def test_no_specmgr_imports(self):
         package_dir = __import__("pathlib").Path(structure.__file__).parent

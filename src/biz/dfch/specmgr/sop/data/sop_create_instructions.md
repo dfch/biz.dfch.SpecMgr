@@ -51,7 +51,7 @@ step 1 if this is genuinely a new SOP.
   space-separated tag, a lowercase 8-4-4-4-12 hex UUID, and a title,
   e.g. `REQ 550e8400-e29b-41d4-a716-446655440000: <title>`; each
   sub-list needs at least one item if present; `Decisions` accepts
-  only the `DEC` tag, not `ADR`). `### Sops` is a self-cross-reference
+  only the `DEC` tag). `### Sops` is a self-cross-reference
   (related/superseding SOPs), using the same format with the `SOP` tag.
 - `## More Information` -- optional freeform supplementary text.
 - `## Updates` -- optional, and the last section if present: an

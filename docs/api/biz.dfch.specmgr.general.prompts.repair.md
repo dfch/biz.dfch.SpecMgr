@@ -10,9 +10,9 @@ exists but fails to parse is returned, not raised: the result carries
 ``list_<d>``'s failed-row ``error`` for the same file -- identical field
 path and cause, including the trailing pydantic documentation line) and
 ``path`` (the absolute on-disk
-file), for every one of the whole-body domains per ADR
+file), for every one of the whole-body domains per DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for ``feat`` only
-(feat-187-list-feat-timeout, ADR 3982712a-a46b-4b2b-809f-9c6925a49b44):
+(feat-187-list-feat-timeout, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44):
 ``get_feat`` always fully parses and remains the unconditional,
 full-fidelity authority, but ``list_feat``'s own row may transiently carry
 a different (healthy-looking or dirty-stage-specific) ``error``/title/
@@ -48,8 +48,7 @@ fix, touch nothing).
 
 ``type`` is one of the whole-body domains (imported from
 ``general.tools._domains.WHOLE_BODY_DOMAINS``, the single source of truth
-per feat-125-domain-lists); ADR is explicitly out of scope -- it has no
-generic dry-run ``validate``/``update`` tooling of its own.
+per feat-125-domain-lists).
 
 This prompt is cross-cutting (it takes ``type`` + an optional ``id``, not
 tied to one domain), so -- like ``compact_history`` -- it lives under
@@ -62,7 +61,7 @@ The actual instructional text lives in its own packaged data file,
 ``general/data/general_repair_instructions.md``, read fresh on every call
 via ``general.tools._packaged_data.read_packaged_text`` -- following the
 same packaging convention already used for prompt instructions in the
-``qa``/``adr``/``req``/``tsk`` domains (Task 0.19.1, Task 0.20).
+``qa``/``req``/``tsk`` domains (Task 0.19.1, Task 0.20).
 Placeholders use ``string.Template`` (``$type``/``$id``), not
 ``str.format``, so the packaged file is free to use plain, unescaped
 ``{...}`` braces of its own.
@@ -78,10 +77,8 @@ Parameters
 type:
     The document domain to repair: one of ``req``, ``uc``, ``tsk``,
     ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
-    ``vcr``, ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``"adr"``
-    is explicitly rejected with an actionable error (ADR is not a
-    whole-body domain and has no generic dry-run ``validate`` tooling);
-    so is any other unknown value.
+    ``vcr``, ``sysrs``, ``txt``, ``set`` (matched case-insensitively);
+    any other value is rejected with an actionable error.
 id:
     The failing document's id, when known. When absent, the returned
     instructions direct discovery via ``list_<type>()``'s failed row
@@ -97,7 +94,7 @@ str
 Raises
 ------
 ValueError
-    If ``type`` is ``"adr"`` (ADR exclusion) or an unknown domain, or
-    if ``id`` is a blank/whitespace-only string (pass a real id, or
-    omit the parameter entirely).
+    If ``type`` is an unknown domain, or if ``id`` is a
+    blank/whitespace-only string (pass a real id, or omit the
+    parameter entirely).
 

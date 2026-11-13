@@ -22,7 +22,7 @@ The fixture ids and the seeded-registry test case shared by
 ``test__reference_graph.py`` (the builder integration tests) and the
 Phase 120 tool tests (``test_get_reference_diagram.py`` /
 ``test_get_reference_diagram_all.py``): the isolated
-``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/``SPECMGR_FEAT_DIR`` tmp dirs
+``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` tmp dirs
 follow the ``tests/commands/test_diagram.py`` precedent (the env vars are
 read per call, so patching is clean and isolated), the per-domain
 process-local doc caches are reset in ``setUp``/``tearDown`` (the
@@ -42,7 +42,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR
 from biz.dfch.specmgr.feat.tools._paths import FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.models.reference_graph import render_reference_graph
 from biz.dfch.specmgr.general.tools._diagram_config import ENV_VAR_DIAGRAM_MAX_TITLE
@@ -66,7 +65,6 @@ _N001 = "c008c008-c008-4c08-8c08-c008c008c008"  # req "No Feat Source"
 _W001 = "c009c009-c009-4c09-8c09-c009c009c009"  # req "Wide Requirement One"
 _U001 = "c00ac00a-c00a-4c0a-8c0a-c00ac00ac00a"  # uc "Wide Use Case"
 _WG001 = "c00bc00b-c00b-4c0b-8c0b-c00bc00bc00b"  # gol "Wide Goal"
-_A001 = "c00cc00c-c00c-4c0c-8c0c-c00cc00cc00c"  # adr "Wide ADR"
 _D002 = "c00dc00d-c00d-4c0d-8c0d-c00dc00dc00d"  # dec "Broken Decision" (deliberately unparseable)
 _B001 = "c00ec00e-c00e-4c0e-8c0e-c00ec00ec00e"  # dec "Bare Referrer" (bare-`feat-42` reference + the bare-`feat-43` negative control)
 
@@ -109,21 +107,20 @@ def _reset_caches() -> None:
 
 
 class _SeededRegistryTestCase(unittest.TestCase):
-    """Common fixture: isolated ``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/``SPECMGR_FEAT_DIR`` tmp dirs
+    """Common fixture: isolated ``SPECMGR_DOCS_DIR``/``SPECMGR_FEAT_DIR`` tmp dirs
     seeded from the committed fixture documents (the ``tests/commands/test_diagram.py`` precedent),
     with every per-domain doc cache reset around each test and the
     ``SPECMGR_DIAGRAM_MAX_TITLE`` env var guarded (Phase 120: the byte-stable tool tests run at
     the frozen default label limit 40)."""
 
     #: ``(fixture relative path, destination relative to the tmp root)`` pairs: the
-    #: destination is ``docs/<domain>/<name>`` for a flat document, ``adr/<name>`` for an
-    #: ADR, or ``feat/<id>`` for a feature folder (the whole folder is copied).
+    #: destination is ``docs/<domain>/<name>`` for a flat document, or ``feat/<id>``
+    #: for a feature folder (the whole folder is copied).
     SEEDS: tuple[tuple[str, str], ...] = ()
 
     def setUp(self) -> None:
         self.root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.docs_root = self.root / "docs"
-        self.adr_dir = self.root / "adr"
         self.feat_dir = self.root / "feat"
         self._previous_max_title = os.environ.get(ENV_VAR_DIAGRAM_MAX_TITLE)
         os.environ.pop(ENV_VAR_DIAGRAM_MAX_TITLE, None)
@@ -132,7 +129,6 @@ class _SeededRegistryTestCase(unittest.TestCase):
                 "os.environ",
                 {
                     DOCS_DIR_ENV_VAR: str(self.docs_root),
-                    ADR_DIR_ENV_VAR: str(self.adr_dir),
                     FEAT_DIR_ENV_VAR: str(self.feat_dir),
                 },
             )

@@ -418,8 +418,8 @@ ______________________________________________________________________
 97: 
 98: ### Dependencies
 99: 
-100: - Depends on: ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr`
-101:   feature-folder structure), ADR ece4554b-725c-4f76-bc04-5d2b760363d2
+100: - Depends on: DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr`
+101:   feature-folder structure), DEC ece4554b-725c-4f76-bc04-5d2b760363d2
 102:   (domain-first hierarchy)
 103: - Blocks: None identified yet
 104: 
@@ -501,7 +501,7 @@ ______________________________________________________________________
 180:   favor of the plan file itself being the single source of truth) and
 181:   apply it — depends on: Task 0.4 — status: not-started
 182: 
-183: - [ ] Task 0.7: Update ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO
+183: - [ ] Task 0.7: Update DEC 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO
 184:   8601 for all dates and times") to require timezone information on every
 185:   timestamp — either an explicit offset (`±HHMM`) or `Z` for UTC — rather
 186:   than treating it as optional, if this is not already stated; the current
@@ -819,7 +819,7 @@ ______________________________________________________________________
 498:   registration in `general/__init__.py`/`server.py`) that guides an LLM
 499:   through compacting the "Recent Updates" section of *any* feature folder
 500:   under `.specmgr/feat/<feature_id>/README.md`, not just this one — per
-501:   ADR e369ee2e-3353-4f92-991c-6367d76d832e's chosen option, which
+501:   DEC e369ee2e-3353-4f92-991c-6367d76d832e's chosen option, which
 502:   documents an optional sibling `history.md` file for rotating out older
 503:   `Recent Updates` entries once a feature's `README.md` section grows too
 504:   long, leaving a pointer in its place (e.g. "See history.md for updates
@@ -919,7 +919,7 @@ ______________________________________________________________________
 598: 
 599: - [x] Task 0.24: Clean up `AGENTS.md`'s stale `specmgr://<d>/list` resource
 600:   mentions left over from `feat-13-list-paging`'s resource→tool conversion
-601:   (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) — found and flagged during
+601:   (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13) — found and flagged during
 602:   `.specmgr/feat/feat-16-problem-statement/README.md`'s planning session
 603:   (2026-08-25) while designing that new domain's own `list_prb` tool
 604:   against the *current* code/ADR state rather than `AGENTS.md`'s
@@ -1327,7 +1327,7 @@ _Thinking:_
 977:     anywhere.
 978:   - Normalized the five older-domain bullets (`adr`/`req`/`uc`/`tsk`/
 979:     `qa`) to carry the explicit "no `specmgr://<d>/list` — listing is the
-980:     `list_<d>` tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13" note that
+980:     `list_<d>` tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13" note that
 981:     the `prb`/`gol`/`rsk` bullets already had, so the ambiguity that
 982:     caused the false flag can't silently recur.
 983:   - Fixed the same stale names in three model docstrings (scope
@@ -1837,7 +1837,7 @@ Next number in Phase 0 is **Task 0.30** (last existing is 0.29). Drafted text:
 
 > - [ ] Task 0.30: Consolidate "Recent Updates" and "Updates" across artifact types — depends on: none — status: not-started
 >
->   Background: Found while planning `feat-30-sop` (2026-08-30). `tsk` uses `RecentUpdates`/`## Recent Updates` (free-form heading, mandatory lead paragraph, no enforced timestamp format); `dec` uses `Updates`/`## Updates` (implicit-alias heading); `sop` (feat-30, not yet implemented) is about to add a **third** variant — `Updates`/`## Updates` with a structurally-enforced ISO8601 `yyyy-MM-dd HH:mm:ss.fff±HH:mm — {title}` heading, stricter than either existing shape. `req`/`uc`/`qa`/`prb`/`gol`/`rsk` have no such section at all. Decide: (a) one canonical heading name/shape across all domains vs. accepted per-domain divergence; (b) whether to introduce a shared `models/md` mixin/base for `Updates`/`UpdateEntry` rather than each domain hand-rolling its own; (c) whether `sop`'s ISO8601 timestamp format becomes the cross-domain standard, gets retrofitted onto `tsk`/`dec`, or stays `sop`-only. Record the decision (or a full ADR if it touches the parser engine) per ADR e369ee2e-3353-4f92-991c-6367d76d832e's tie-breaker. Explicitly out of scope for `feat-30-sop` itself, which proceeds with its own designed shape; this task only covers a possible later consolidation pass.
+>   Background: Found while planning `feat-30-sop` (2026-08-30). `tsk` uses `RecentUpdates`/`## Recent Updates` (free-form heading, mandatory lead paragraph, no enforced timestamp format); `dec` uses `Updates`/`## Updates` (implicit-alias heading); `sop` (feat-30, not yet implemented) is about to add a **third** variant — `Updates`/`## Updates` with a structurally-enforced ISO8601 `yyyy-MM-dd HH:mm:ss.fff±HH:mm — {title}` heading, stricter than either existing shape. `req`/`uc`/`qa`/`prb`/`gol`/`rsk` have no such section at all. Decide: (a) one canonical heading name/shape across all domains vs. accepted per-domain divergence; (b) whether to introduce a shared `models/md` mixin/base for `Updates`/`UpdateEntry` rather than each domain hand-rolling its own; (c) whether `sop`'s ISO8601 timestamp format becomes the cross-domain standard, gets retrofitted onto `tsk`/`dec`, or stays `sop`-only. Record the decision (or a full ADR if it touches the parser engine) per DEC e369ee2e-3353-4f92-991c-6367d76d832e's tie-breaker. Explicitly out of scope for `feat-30-sop` itself, which proceeds with its own designed shape; this task only covers a possible later consolidation pass.
 
 I have all three edits ready. Since I'm in plan mode, I can't write them yet — let me know when you want to exit plan mode (or explicitly authorize these specific doc edits) and I'll apply all three immediately.
 
@@ -2604,12 +2604,12 @@ _Thinking:_
 15: New `sop` domain: Standard Operating Procedures — structured, step-by-step
 16: operational documents with a RASCI-style responsibility assignment and a
 17: closed approval/effectivity lifecycle. `sop` follows the domain-first
-18: hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and is built on the
+18: hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and is built on the
 19: generic `models/md` parsing engine with the simple surface used by
 20: GOL/RSK/QA/DEC — no fine-grained ADR-style mutation tools, no renderer
 21: (writes persist the caller's raw validated body byte-for-byte). `sop` is
 22: the **first domain built from scratch entirely on the post-feat-22 generic
-23: mutation tools** (ADR 36905d5b-8057-4294-8665-c7eed5534db0): it has no
+23: mutation tools** (DEC 36905d5b-8057-4294-8665-c7eed5534db0): it has no
 24: `update_sop`/`set_status_sop` tools of its own — it dispatches straight
 25: into the generic `update`/`set_status` tools in `general/tools/` from day
 26: one, per the convention `AGENTS.md` already reserves for future domains.
@@ -2636,11 +2636,11 @@ _Thinking:_
 47:   problems).
 48: - REQ-004: 8 MCP tools — **no** `update_sop`/`set_status_sop` (see
 49:   Overview): `create_sop`, `parse_sop`, `list_sop` (paged tool from day
-50:   one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13), `get_sop(id, raw=False)`, `get_sop_example`, `get_sop_template`, `delete_sop` (stub),
+50:   one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13), `get_sop(id, raw=False)`, `get_sop_example`, `get_sop_template`, `delete_sop` (stub),
 51:   `validate_sop` — plus private `_paths`/`_io`/`_lock`/`_write` helpers.
 52: - REQ-005: MCP resources: `specmgr://sop/schema`, `/example`, `/template`
 53:   (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based
-54:   reads are `get_sop`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+54:   reads are `get_sop`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 55: - REQ-006: MCP prompts `create_sop(topic)`/`update_sop(id, instructions=None)` — narrated instruction flows reusing the
 56:   dedup-check-first pattern (`list_sop`) and the `TodoWrite`/`question`-tool
 57:   narration pattern from `gol`/`dec`/`prb`'s prompts. Both use their own
@@ -2766,9 +2766,9 @@ _Thinking:_
 177: - Depends on: `models/md` engine (feat-5, done), ADR
 178:   ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy), ADR
 179:   bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic `MarkdownFrontmatter`
-180:   base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based
-181:   reads), ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool,
-182:   not a resource), ADR 36905d5b-8057-4294-8665-c7eed5534db0 (generic
+180:   base), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based
+181:   reads), DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool,
+182:   not a resource), DEC 36905d5b-8057-4294-8665-c7eed5534db0 (generic
 183:   `update`/`set_status` dispatch tools — `sop` must use these from day
 184:   one, not per-domain tools), the existing
 185:   `general/tools/_doc_paths.py`/`_packaged_data.py`/`_paging.py`/
@@ -3302,7 +3302,7 @@ _Thinking:_
 713: - **2026-08-29**: `sop` is the first domain built with **no**
 714:   per-domain `update_sop`/`set_status_sop` tools at all — it dispatches
 715:   directly into the generic `update`/`set_status` tools from its
-716:   initial build, per ADR 36905d5b (user decision, following the
+716:   initial build, per DEC 36905d5b (user decision, following the
 717:   convention `AGENTS.md` already reserves for future domains).
 718: 
 719: ### Related PRs / Commits
@@ -3989,7 +3989,7 @@ ______________________________________________________________________
 - **2026-08-29**: `sop` is the first domain built with **no**
   per-domain `update_sop`/`set_status_sop` tools at all — it dispatches
   directly into the generic `update`/`set_status` tools from its
-  initial build, per ADR 36905d5b (user decision, following the
+  initial build, per DEC 36905d5b (user decision, following the
   convention `AGENTS.md` already reserves for future domains).
 
 ### Related PRs / Commits
@@ -4011,8 +4011,8 @@ ______________________________________________________________________
 ```json
 {
   "filePath": "/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-30-sop/README.md",
-  "oldString": "- **2026-08-29**: `sop` is the first domain built with **no**\n  per-domain `update_sop`/`set_status_sop` tools at all — it dispatches\n  directly into the generic `update`/`set_status` tools from its\n  initial build, per ADR 36905d5b (user decision, following the\n  convention `AGENTS.md` already reserves for future domains).\n\n### Related PRs / Commits",
-  "newString": "- **2026-08-29**: `sop` is the first domain built with **no**\n  per-domain `update_sop`/`set_status_sop` tools at all — it dispatches\n  directly into the generic `update`/`set_status` tools from its\n  initial build, per ADR 36905d5b (user decision, following the\n  convention `AGENTS.md` already reserves for future domains).\n- **2026-08-30**: The RASCI role-definitions guidance is a cross-cutting\n  `specmgr://rasci` resource under `general/resources/` (REQ-011), not a\n  `sop`-scoped `specmgr://sop/rasci` resource — RASCI is treated as a\n  well-known external framework analogous to ISO/IEC 25010 (cross-cutting\n  precedent: `specmgr://iso25010`), not as domain-coupled guidance like\n  `rsk/tara`/`risk-matrix` (whose content is inseparable from RSK's own\n  `## Strategy`/`## Mitigation` vocabulary). Content is split\n  non-duplicatively — generic role definitions only in\n  `general_rasci.md`; every `sop`-specific structural rule stays in\n  `sop`'s own schema/instructions — with `sop`-domain discoverability\n  handled by four explicit cross-references rather than by moving or\n  copying content (user decision, after an explicit pros/cons comparison\n  of sop-scoped vs. general placement).\n\n### Related PRs / Commits"
+  "oldString": "- **2026-08-29**: `sop` is the first domain built with **no**\n  per-domain `update_sop`/`set_status_sop` tools at all — it dispatches\n  directly into the generic `update`/`set_status` tools from its\n  initial build, per DEC 36905d5b (user decision, following the\n  convention `AGENTS.md` already reserves for future domains).\n\n### Related PRs / Commits",
+  "newString": "- **2026-08-29**: `sop` is the first domain built with **no**\n  per-domain `update_sop`/`set_status_sop` tools at all — it dispatches\n  directly into the generic `update`/`set_status` tools from its\n  initial build, per DEC 36905d5b (user decision, following the\n  convention `AGENTS.md` already reserves for future domains).\n- **2026-08-30**: The RASCI role-definitions guidance is a cross-cutting\n  `specmgr://rasci` resource under `general/resources/` (REQ-011), not a\n  `sop`-scoped `specmgr://sop/rasci` resource — RASCI is treated as a\n  well-known external framework analogous to ISO/IEC 25010 (cross-cutting\n  precedent: `specmgr://iso25010`), not as domain-coupled guidance like\n  `rsk/tara`/`risk-matrix` (whose content is inseparable from RSK's own\n  `## Strategy`/`## Mitigation` vocabulary). Content is split\n  non-duplicatively — generic role definitions only in\n  `general_rasci.md`; every `sop`-specific structural rule stays in\n  `sop`'s own schema/instructions — with `sop`-domain discoverability\n  handled by four explicit cross-references rather than by moving or\n  copying content (user decision, after an explicit pros/cons comparison\n  of sop-scoped vs. general placement).\n\n### Related PRs / Commits"
 }
 ```
 

@@ -73,7 +73,7 @@ class TestUpdateSysrsPrompt(unittest.TestCase):
     def test_mentions_generic_mutation_tools_with_type_sysrs(self):
         """The generic `update`/`set_status`/`set_classification` tools,
         each called with type="sysrs", must be named -- sysrs has no
-        per-domain mutation tools of its own (ADR 36905d5b)."""
+        per-domain mutation tools of its own (DEC 36905d5b)."""
         result = " ".join(update_sysrs("id-abc-123").split())
         for tool in (
             'update(id, type="sysrs", content)',

@@ -17,7 +17,7 @@ for capturing a Six-Sigma-style problem statement: a factual, evidence-led
 description of the gap between the current and desired state of a system —
 deliberately free of assumed causes, blame, or solutions. `prb` follows the
 domain-first hierarchy and MCP surface already established by `req`/`tsk`/
-`qa` (ADR ece4554b-725c-4f76-bc04-5d2b760363d2), reusing their tools/
+`qa` (DEC ece4554b-725c-4f76-bc04-5d2b760363d2), reusing their tools/
 resources shape almost exactly, and reuses their whole-body update
 convention rather than ADR's granular `update_section` mechanism.
 
@@ -39,8 +39,8 @@ Two new prompts (`create_prb`/`update_prb`) narrate an interactive,
 - REQ-001: Define the `prb` markdown schema — frontmatter (`type="prb"`, 4-value status set `draft`/`active`/`resolved`/`cancelled`) and body (H1 title, optional leading comment, mandatory `## Current State` holding a mandatory `### Summary` plus 7 optional, fixed-heading 5W2H `### ` question leaves, mandatory `## Gap`, optional `## Impact`, mandatory `## Future State`, optional `## References`, optional `## More Information`).
 - REQ-002: Pydantic models under `prb/models/v1/` (frontmatter, body, document, parser, summary), domain-first, mirroring `tsk`/`qa`'s exact file shapes. No `models/md` engine changes are needed (unlike QA's `end_marker` addition) — every field is buildable with the existing declarative heading-mapped parser.
 - REQ-003: Parse/validate `prb` documents from markdown, mirroring `parse_req`/`parse_tsk`/`parse_qa`'s two-error-channel convention (`AssertionError` for structural problems, `pydantic.ValidationError` for field-level problems).
-- REQ-004: MCP tools mirroring REQ/TSK/QA's lifecycle surface, **plus** `list_prb` as a paged tool from day one (per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 — new domains must not add a `specmgr://prb/list` resource and convert it later): `parse_prb`, `create_prb`, `update_prb`, `set_status_prb`, `delete_prb` (stub), `validate_prb`, `get_prb`, `get_prb_example`, `get_prb_template`, `list_prb`.
-- REQ-005: MCP resources: `specmgr://prb/schema`, `/example`, `/template` (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based reads are `get_prb`-only, per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+- REQ-004: MCP tools mirroring REQ/TSK/QA's lifecycle surface, **plus** `list_prb` as a paged tool from day one (per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 — new domains must not add a `specmgr://prb/list` resource and convert it later): `parse_prb`, `create_prb`, `update_prb`, `set_status_prb`, `delete_prb` (stub), `validate_prb`, `get_prb`, `get_prb_example`, `get_prb_template`, `list_prb`.
+- REQ-005: MCP resources: `specmgr://prb/schema`, `/example`, `/template` (no `/list` — REQ-004 covers listing as a tool; no `/{id}` — id-based reads are `get_prb`-only, per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 - REQ-006: MCP prompts `create_prb`/`update_prb` — narrated, `TodoWrite` + `question`-tool-driven interview flows (no other prompt in this codebase calls `create_*`/`update_*` in a loop over 7 sub-questions with agent-synthesized `Summary`/`Gap` text, so this is a new prompt shape, though it reuses the `TodoWrite`/`question`-tool narration pattern from `tsk/prompts/implement_task.py` and the dedup-check-first pattern from `req/prompts/create_req.py`). Both use their own packaged instructions data file (`prb/data/prb_create_instructions.md`/`prb_update_instructions.md`), not an inline string.
 - REQ-007: Packaged example/template/schema data (`prb/data/`) via the existing generic `general/tools/_packaged_data.py`, with the matching `pyproject.toml` package-data entry, pre-commit hook, and CI step.
 - REQ-008: Doc generation wiring — `specmgr docs`, `specmgr schema` (new `prb` entry in the doc-type registry, `commands/schema.py`), `specmgr mcp-docs`, all kept drift-free via pre-commit/CI; `AGENTS.md` updated to seven domain/cross-cutting packages.
@@ -101,9 +101,9 @@ in this feature:
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
-  hierarchy), ADR bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
-  `MarkdownFrontmatter` base), ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+  hierarchy), DEC bc5e18ad-6bbf-4265-bae4-3e34984a2d29 (generic
+  `MarkdownFrontmatter` base), DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614
   (tool-only id-based reads, no `specmgr://prb/{id}` resource), ADR
   ec9f5262-9912-49d0-903f-fcfb54f28c13 (`list_<domain>` as a paged tool,
   not a resource — `list_prb` must follow this from day one), the existing
@@ -180,7 +180,7 @@ deliberate, methodology-driven omission, not an oversight.
 
 **Update mechanism: whole-body `update_prb(id, content)`**, not an
 ADR-style `update_section`. The generic `adr/tools/update_section.py`
-mechanism (ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
+mechanism (DEC 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) is currently
 ADR-specific code, not a shared cross-domain component — reusing it for
 PRB would mean building a second, parallel implementation. Individual
 questions/sections stay addressable by grepping/editing their fixed
@@ -192,7 +192,7 @@ per field).
 returning `PagedResult[PrbSummary]`, via `general/tools/_paging.py`'s
 `paginate`/`normalize_paging`), not a `specmgr://prb/list` resource —
 unlike REQ/TSK/QA (which launched as resources and were converted later in
-feat-13), PRB is a new domain built *after* ADR ec9f5262 was accepted, so
+feat-13), PRB is a new domain built *after* DEC ec9f5262 was accepted, so
 it must not repeat the resource-then-convert history. `PrbSummary`
 subclasses `general/models/summary.py::DocSummary` (`id`/`title`/`status`/
 `ref`), like `ReqSummary`/`TskSummary`/`QaSummary`.
@@ -345,7 +345,7 @@ package (ADR, REQ, UC, TSK, QA, PRB, general), with a domain-first
 `prb/models/v1/` schema (frontmatter, body — mandatory `Summary`/`Gap`/
 `Future State`, 7 optional 5W2H questions, optional `Impact`/`References`/
 `More Information`), a full MCP surface (10 tools including `list_prb` as
-a paged tool from day one per ADR ec9f5262, 3 resources, 2 narrated
+a paged tool from day one per DEC ec9f5262, 3 resources, 2 narrated
 prompts, packaged data), and `AGENTS.md`/`specmgr docs`/`specmgr mcp-docs`/
 `specmgr schema` all up to date and drift-free. Phase 5's final
 verification pass walked every ACC-001..008 with concrete evidence
@@ -379,7 +379,7 @@ None.
 
 #### 2026-08-25T07:33:23.000Z - Update (Phase 5: Final cross-cutting verification — feature complete)
 
-Completed Task 5.1, the final task of the feature. Walked every ACC-001..008 with concrete evidence (recorded inline in the Acceptance Criteria section above, each now checked `[x]`): ACC-001/002/003 (schema/models/parser): confirmed via `docs/prb_schema.json`/`specmgr://prb/schema`, `prb_reference.md`'s round-trip, and the existing `tests/prb/models/v1/` suite (structural `AssertionError`s for each missing mandatory section, `Validation Error` for invalid `status`). ACC-004/005 (tools/resources): live `mcp.list_tools()`/`list_resources()` calls against the actual `server.mcp` instance confirmed all 10 tools and all 3 resources are registered and callable; confirmed `list_prb` uses `general/tools/_paging.py`'s `DEFAULT_MAX_RESULTS = 25`/`MAX_MAX_RESULTS = 100`. ACC-006 (prompts): read both packaged instruction files in full and manually walked their narrated flows end to end against a real document (see below), rather than only asserting narration text contains the right tool names. ACC-007 (packaged data from a real install): built a real wheel (`uv build --wheel`), confirmed all 5 `prb/data/*` files are packaged inside it, installed it non-editably into a scratch venv under `/tmp/opencode/` (`pip install "biz_dfch_specmgr-...-py3-none-any.whl[mcp]"`), and confirmed `get_prb_example()`/`get_prb_template()`/`prb_schema()` resolve real content from that venv's `site-packages`, not the source checkout (`inspect.getfile` confirmed the module path). Wheel and scratch venv cleaned up afterward (`dist/`/`build/` removed; both are gitignored anyway). ACC-008 (doc generation drift): re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`/`specmgr schema` (generic + the `--type prb --output-dir src/biz/dfch/specmgr/prb/data` packaged-copy invocation) — every generated file reported unchanged except `docs/GENERATED.md`'s test-file count (204 → 205, expected from this phase's own new test file); `AGENTS.md` already reflects seven domains from Phase 4. Added `tests/prb/tools/test_integration.py` (2 tests): a live, non-mocked lifecycle exercise — `create_prb`→`update_prb`→`set_status_prb`→`get_prb`→`list_prb`→ `delete_prb` (confirms the stub still raises `NotImplementedError` without touching the filesystem) — plus a packaged example/template round-trip-via-`parse_prb` test. Isolated via the same `SPECMGR_DOCS_DIR`-pointed-at-a-`tempfile.TemporaryDirectory()` pattern already used by `test_create_prb.py`'s `TempPrbDirTestCase`, so nothing was ever written to the real, developer-configured `prb` base directory. This test doubles as the concrete evidence for ACC-004's "`list_prb` reflects the changes" and ACC-006's "verified live" requirements. Ran the full quality gate one final time: `ruff format --check`/`ruff check` (both clean), `pylint` (advisory, 8.96/10 — the pre-existing `redefined-builtin 'id'` (5 `prb` tools/prompts taking an `id` parameter, matching every other domain's own convention), missing-test-docstring, and `duplicate-code`-across-mirrored-test-files findings only; nothing new introduced by this phase's test file), `vulture src/ whitelist.py --min-confidence 60` (no findings), full `unittest` suite (**1454 tests**, up from 1452, all green). Set this README's own frontmatter `status: planning` → `status: done` (top of file) as Task 5.1's own required action; every phase and every acceptance criterion is now checked off. Next: None — feature complete. A follow-up feature would be needed to (a) file a real GitHub issue and rename this folder from its `feat-16` placeholder if desired, (b) implement `delete_prb` for real, or (c) wire `validate_prb` (and its five siblings) into pre-commit/CI per ADR 9c687bb1-8ee7-41c8-84ec-07606356bc73 — none of that is in this feature's scope. Notes: No new design decisions required this phase — purely verification, exactly as scoped. One clarification for future readers: ACC-006's "live" verification, per this phase's own task instructions, necessarily means manually executing the narrated flow using the real tool functions and self-simulated `question`-tool answers (there is no live human user or live MCP client in this environment) — both prompts themselves only ever return narration strings, by hard MCP-SDK contract, and never call `TodoWrite`/`question`/`list_prb`/`create_prb`/`update_prb` themselves; this was already true by design (see Phase 3's Decisions Made) and is not a limitation introduced by this verification pass.
+Completed Task 5.1, the final task of the feature. Walked every ACC-001..008 with concrete evidence (recorded inline in the Acceptance Criteria section above, each now checked `[x]`): ACC-001/002/003 (schema/models/parser): confirmed via `docs/prb_schema.json`/`specmgr://prb/schema`, `prb_reference.md`'s round-trip, and the existing `tests/prb/models/v1/` suite (structural `AssertionError`s for each missing mandatory section, `Validation Error` for invalid `status`). ACC-004/005 (tools/resources): live `mcp.list_tools()`/`list_resources()` calls against the actual `server.mcp` instance confirmed all 10 tools and all 3 resources are registered and callable; confirmed `list_prb` uses `general/tools/_paging.py`'s `DEFAULT_MAX_RESULTS = 25`/`MAX_MAX_RESULTS = 100`. ACC-006 (prompts): read both packaged instruction files in full and manually walked their narrated flows end to end against a real document (see below), rather than only asserting narration text contains the right tool names. ACC-007 (packaged data from a real install): built a real wheel (`uv build --wheel`), confirmed all 5 `prb/data/*` files are packaged inside it, installed it non-editably into a scratch venv under `/tmp/opencode/` (`pip install "biz_dfch_specmgr-...-py3-none-any.whl[mcp]"`), and confirmed `get_prb_example()`/`get_prb_template()`/`prb_schema()` resolve real content from that venv's `site-packages`, not the source checkout (`inspect.getfile` confirmed the module path). Wheel and scratch venv cleaned up afterward (`dist/`/`build/` removed; both are gitignored anyway). ACC-008 (doc generation drift): re-ran `specmgr docs`/`specmgr mcp-docs`/`specmgr adr-toc`/`specmgr schema` (generic + the `--type prb --output-dir src/biz/dfch/specmgr/prb/data` packaged-copy invocation) — every generated file reported unchanged except `docs/GENERATED.md`'s test-file count (204 → 205, expected from this phase's own new test file); `AGENTS.md` already reflects seven domains from Phase 4. Added `tests/prb/tools/test_integration.py` (2 tests): a live, non-mocked lifecycle exercise — `create_prb`→`update_prb`→`set_status_prb`→`get_prb`→`list_prb`→ `delete_prb` (confirms the stub still raises `NotImplementedError` without touching the filesystem) — plus a packaged example/template round-trip-via-`parse_prb` test. Isolated via the same `SPECMGR_DOCS_DIR`-pointed-at-a-`tempfile.TemporaryDirectory()` pattern already used by `test_create_prb.py`'s `TempPrbDirTestCase`, so nothing was ever written to the real, developer-configured `prb` base directory. This test doubles as the concrete evidence for ACC-004's "`list_prb` reflects the changes" and ACC-006's "verified live" requirements. Ran the full quality gate one final time: `ruff format --check`/`ruff check` (both clean), `pylint` (advisory, 8.96/10 — the pre-existing `redefined-builtin 'id'` (5 `prb` tools/prompts taking an `id` parameter, matching every other domain's own convention), missing-test-docstring, and `duplicate-code`-across-mirrored-test-files findings only; nothing new introduced by this phase's test file), `vulture src/ whitelist.py --min-confidence 60` (no findings), full `unittest` suite (**1454 tests**, up from 1452, all green). Set this README's own frontmatter `status: planning` → `status: done` (top of file) as Task 5.1's own required action; every phase and every acceptance criterion is now checked off. Next: None — feature complete. A follow-up feature would be needed to (a) file a real GitHub issue and rename this folder from its `feat-16` placeholder if desired, (b) implement `delete_prb` for real, or (c) wire `validate_prb` (and its five siblings) into pre-commit/CI per DEC 9c687bb1-8ee7-41c8-84ec-07606356bc73 — none of that is in this feature's scope. Notes: No new design decisions required this phase — purely verification, exactly as scoped. One clarification for future readers: ACC-006's "live" verification, per this phase's own task instructions, necessarily means manually executing the narrated flow using the real tool functions and self-simulated `question`-tool answers (there is no live human user or live MCP client in this environment) — both prompts themselves only ever return narration strings, by hard MCP-SDK contract, and never call `TodoWrite`/`question`/`list_prb`/`create_prb`/`update_prb` themselves; this was already true by design (see Phase 3's Decisions Made) and is not a limitation introduced by this verification pass.
 
 ### Decisions Made
 
@@ -403,7 +403,7 @@ feature folder uses the `feat-16-problem-statement` placeholder per `AGENTS.md`'
 
 not literal wording like TSK's `create_task`/`update_task`/`implement_task`.
 
-#### 2026-08-25T06:31:44.000Z : `list_prb` ships as a paged `@mcp.tool()` from day one (per ADR ec9f5262, already accepted/`done` via feat-13) —
+#### 2026-08-25T06:31:44.000Z : `list_prb` ships as a paged `@mcp.tool()` from day one (per DEC ec9f5262, already accepted/`done` via feat-13) —
 
 this domain must not repeat REQ/TSK/QA's original resource-then-later-converted history.
 
@@ -421,7 +421,7 @@ deferred, matching every other domain's own "defer structured cross-linking" dec
 
 #### 2026-08-25T06:31:44.000Z : `update_prb` is a single whole-body replace tool (REQ/TSK/QA convention), not an ADR-style `update_section`/option-style granular tool —
 
-the latter is currently ADR-specific code (ADR 71fd95d7), and porting it was judged not worth the added scope for this feature. Individual questions/sections remain addressable by their fixed heading text within the whole-body markdown.
+the latter is currently ADR-specific code (DEC 71fd95d7), and porting it was judged not worth the added scope for this feature. Individual questions/sections remain addressable by their fixed heading text within the whole-body markdown.
 
 #### 2026-08-25T06:31:44.000Z : Status set `draft`/`active`/`resolved`/`cancelled` —
 

@@ -21,7 +21,7 @@ The first of the feature's five skills, ``.opencode/skill/structurizr-validate-l
  — the mandatory loop over the Structurizr MCP's ``parse``, ``validate`` and
  ``inspect`` tools (REQ-003) — as measured to its stop rule in iteration 2
  (the measured winner was variant ``927d6c3fc039…``; the committed variant is
- ``48c9b87bdee8…``, differing only in the one-character ADR-citation typo the
+ ``48c9b87bdee8…``, differing only in the one-character DEC-citation typo the
  2026-11-07 review remediation fixed — a citation-only editorial change, the
  trigger description and instructions are byte-identical, so the measured
  behavioral identity is preserved). These tests pin, read-only from
@@ -40,7 +40,7 @@ case-insensitive substring); the mandatory loop wording (parse → validate
 until ``OK`` → inspect → triage EVERY finding with the three labels
 fix / expected under the MCP limits / reported in the final answer,
 re-validate-after-edit, return the exact text that last got ``OK``,
-parsed-only is NOT a pass, the ADR 7a626b12 precedent); the iteration-2
+parsed-only is NOT a pass, the DEC 7a626b12 precedent); the iteration-2
 additions (the "How to call the tools" Code Mode rules, the final-answer
 template markers, the single-file fallback protocol); the three REQ-006 limit
 statements; the REQ-011 no-MCP wording; the adapted reference files' content
@@ -104,9 +104,9 @@ _LOOP_PHRASES: tuple[str, ...] = (
     "Any edit after the final validate requires re-validating",
     "if anything is edited after the final validate, re-run `validate`",
     "a parsed-only or reported-only result is not a pass",
-    # ADR 7a626b12 precedent: the full id (the body carried a one-character
+    # DEC 7a626b12 precedent: the full id (the body carried a one-character
     # typo, fixed by the 2026-11-07 review remediation).
-    "the repo's own PlantUML validation chain (ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4)",
+    "the repo's own PlantUML validation chain (DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4)",
     "a structure-only check is not a pass",
 )
 
@@ -342,7 +342,7 @@ class TestDescriptionTriggerSurface(unittest.TestCase):
 
 class TestMandatoryLoopWording(unittest.TestCase):
     """REQ-003/ACC-002: parse → validate until OK → inspect → triage every
-    finding, re-validate after edits, return the exact OK text, ADR precedent."""
+    finding, re-validate after edits, return the exact OK text, DEC precedent."""
 
     def test_loop_phrases_present(self):
         body = _skill_body()
@@ -350,7 +350,7 @@ class TestMandatoryLoopWording(unittest.TestCase):
         for phrase in _LOOP_PHRASES:
             self.assertIn(phrase, body, phrase)
 
-    def test_adr_precedent_sentence_present(self):
+    def test_dec_precedent_sentence_present(self):
         body = _skill_body()
 
         self.assertIn("A DSL result that was only parsed, and not validated to `OK`, is NOT a pass", body)

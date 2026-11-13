@@ -19,11 +19,11 @@
 
 """``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 
-The generic, cross-domain cross-reference listing tool (ADR 36905d5b's
+The generic, cross-domain cross-reference listing tool (DEC 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
 every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
-``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) plus ``adr`` --
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) --
 reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
@@ -36,11 +36,11 @@ repeated occurrences of the same reference (first-occurrence order
 preserved), and
 resolves each unique reference to the referenced document in its own target
 domain (``general.tools._references.resolve_reference``: the target
-domains' own cache-backed ``load_by_id``; ``adr`` never, ADR bfd76370).
+domains' own cache-backed ``load_by_id``).
 The result is one
 :class:`~biz.dfch.specmgr.general.models.reference.ReferenceRow` per unique
 reference, wrapped in ``PagedResult[ReferenceRow]`` via the exact ``list_*``
-paging mechanism (``normalize_paging`` + ``paginate``, ADR ec9f5262):
+paging mechanism (``normalize_paging`` + ``paginate``, DEC ec9f5262):
 ``total`` = the number of unique references, ``error_count`` = the number
 of references that could not be resolved, ``truncated`` when more
 references exist beyond the page.
@@ -70,8 +70,6 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from ...adr.tools._io import load_by_id as load_adr_by_id
-from ...adr.tools._paths import adr_base_dir
 from ...dec.tools._io import load_by_id as load_dec_by_id
 from ...dec.tools._paths import dec_base_dir
 from ...feat.tools._io import load_by_id as load_feat_by_id
@@ -132,7 +130,6 @@ _SOURCE_LOADERS: dict[str, tuple[Callable[[], Path], Callable[[Path, str], tuple
     "sysrs": (sysrs_base_dir, load_sysrs_by_id),
     "txt": (txt_base_dir, load_txt_by_id),
     "set": (set_base_dir, load_set_by_id),
-    "adr": (adr_base_dir, load_adr_by_id),
 }
 
 assert set(_SOURCE_LOADERS) == set(ALL_DOMAINS), (
@@ -170,7 +167,7 @@ def _load_source_path(type_: str, id_: str) -> tuple[Path, Path]:
         f"document's domain (one of {', '.join(ALL_DOMAINS)}) and `id` the source's own "
         "identifier. The tool scans the source's frontmatter-stripped body for reference tags "
         "(the shared reference-tag vocabulary in general.tools._references: the UUID tags "
-        "GOL/PRB/QA/UC/REQ/RSK/DEC/ADR/VCR/SYSRS/TXT, each carrying a canonical uuid id, plus FEAT, "
+        "GOL/PRB/QA/UC/REQ/RSK/DEC/VCR/SYSRS/TXT, each carrying a canonical uuid id, plus FEAT, "
         "carrying the full feat-NNN-slug id or the bare feat-NNN number; case-insensitive tag, "
         "space/tab/dash separator, anywhere in a line), dedupes repeated occurrences "
         "(first-occurrence order preserved), and resolves each "
@@ -195,7 +192,7 @@ def list_references(
 
     The source is identified by ``type`` (every whole-body domain
     ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-    ``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
+    ``feat``/``vcr``/``sysrs``/``txt``/``set``) and its own
     ``id``, and is validated via ``_path_safety.validate_id`` before any
     filesystem access (ACC-005). The source is then read as raw, frontmatter-stripped
     body text (``_splice.body_text`` -- the doc-cache does not apply to it,
@@ -212,9 +209,8 @@ def list_references(
 
     Each unique reference is resolved to the referenced document in its own
     target domain (``_references.resolve_reference``: every target domain
-    except ``adr`` reads through its own cache-backed ``load_by_id``
-    (``feat`` is folder-per-document rather than flat-file); ``adr`` never
-    does, ADR bfd76370). The
+    reads through its own cache-backed ``load_by_id`` (``feat`` is
+    folder-per-document rather than flat-file)). The
     row's ``title`` is the referenced document's own ``# {title}`` H1 (the
     feature's H1 with the ``Feature: `` prefix stripped, for ``feat``) and
     its ``path`` the referenced document's resolved absolute file path; a
@@ -224,7 +220,7 @@ def list_references(
 
     The full, deduplicated row list is wrapped in
     ``PagedResult[ReferenceRow]`` via the exact ``list_*`` paging
-    mechanism (``_paging.normalize_paging`` + ``paginate``, ADR ec9f5262):
+    mechanism (``_paging.normalize_paging`` + ``paginate``, DEC ec9f5262):
     ``total`` = the number of unique references, ``error_count`` = the
     number of references that could not be resolved, ``truncated`` when
     more references exist beyond the page (ACC-009).
@@ -232,7 +228,7 @@ def list_references(
     Parameters
     ----------
     type:
-        The source document's type / domain: one of ``adr``, ``req``,
+        The source document's type / domain: one of ``req``,
         ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
         ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
     id:
@@ -266,7 +262,7 @@ def list_references(
     QaNotFoundError / PrbNotFoundError / GolNotFoundError /
     RskNotFoundError / DecNotFoundError / SopNotFoundError /
     FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-    TxtNotFoundError / AdrNotFoundError
+    TxtNotFoundError
         No document of the dispatched source ``type`` has this ``id`` --
         the source domain's own not-found error, propagated unchanged from
         the source domain's own ``load_by_id`` (identical to ``get_<d>``)

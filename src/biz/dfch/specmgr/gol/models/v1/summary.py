@@ -20,7 +20,7 @@
 Mirrors :class:`~biz.dfch.specmgr.req.models.v1.summary.ReqSummary`/
 :class:`~biz.dfch.specmgr.prb.models.v1.summary.PrbSummary` field-for-field,
 for the (Phase-3, not-yet-built) ``list_gol`` tool -- a paged MCP tool from
-day one per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so GOL has no
+day one per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so GOL has no
 ``specmgr://gol/list`` resource. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields (feat-13 Task 1.3, REQ-003).

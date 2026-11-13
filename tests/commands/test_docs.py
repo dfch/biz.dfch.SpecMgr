@@ -56,11 +56,9 @@ from unittest import mock
 
 from biz.dfch.specmgr.commands.docs import (
     _collect_module_docs_by_domain,
-    _count_mcp_features,
     _count_test_files,
     _format_signature,
     _generate_api_docs,
-    _list_domain_packages,
     _ruff_format_written_markdown,
     _stable_signature_str,
     docs,
@@ -306,34 +304,9 @@ class TestGeneratedMdContent(unittest.TestCase):
         self.assertGreater(count, 0)
         self.assertIn(f"**Test files**: {count}", output)
 
-    def test_list_domain_packages_finds_models_and_adr_subpackages(self):
-        """Must detect 'adr' under models/ and tools/resources/prompts under adr/."""
-        domains = _list_domain_packages()
-        self.assertIn("models", domains)
-        self.assertIn("adr", domains["models"])
-        self.assertIn("adr_subpackages", domains)
-        self.assertIn("tools", domains["adr_subpackages"])
-        self.assertIn("resources", domains["adr_subpackages"])
-        self.assertIn("prompts", domains["adr_subpackages"])
-
-    def test_count_mcp_features_matches_known_counts(self):
-        """Must count MCP tools/resources under adr/ (11 tools, 1 resource).
-
-        The former ``specmgr://adr/list`` resource was converted into the
-        ``list_adr`` tool (feat-13-list-paging Task 2.1), shifting one
-        module from ``adr/resources/`` to ``adr/tools/``. The ADR
-        ``set_status`` tool module was retired into the generic
-        ``set_status`` tool in ``general/tools/`` (feat-22 Phase 4),
-        shifting one module the other way.
-        """
-        features = _count_mcp_features()
-        self.assertEqual(features["tools"], 11)
-        self.assertEqual(features["resources"], 1)
-
     def test_collect_module_docs_finds_domains(self):
         """Must collect module docstrings organized by domain."""
         docstrings = _collect_module_docs_by_domain()
-        self.assertIn("adr", docstrings)
         self.assertIn("commands", docstrings)
         self.assertIn("models", docstrings)
         self.assertIn("general", docstrings)
@@ -342,10 +315,7 @@ class TestGeneratedMdContent(unittest.TestCase):
         """Module reference must list first-line docstrings for known modules."""
         output = generate_module_reference()
         self.assertIn("## Module Reference", output)
-        self.assertIn("**adr/**", output)
         self.assertIn("**commands/**", output)
-        self.assertIn("adr/tools/", output)
-        self.assertIn("get_adr", output)
 
 
 class TestStableSignatureStr(unittest.TestCase):

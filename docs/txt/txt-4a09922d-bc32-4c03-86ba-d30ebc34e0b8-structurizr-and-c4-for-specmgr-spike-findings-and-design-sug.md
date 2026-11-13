@@ -14,7 +14,7 @@ Write-up of a planning and tooling spike (2026-11-01) on using Structurizr DSL a
 
 Related existing artifact (the PlantUML support package whose validation chain this spike exercised):
 
-ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
+DEC 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantuml package with a strict first-set-wins validation-source chain
 
 ## Scope and decisions taken in the discussion
 
@@ -34,7 +34,7 @@ ADR 7a626b12-b189-4561-a51d-ffb2e9e193b4: Add an in-package, import-free plantum
 
 ## Finding 1: The reference graph itself is not a C4 model
 
-C4 describes software structure: person, software system, container, component, code. The existing reference graph relates documents (REQ, ADR, UC, VCR and others) with untyped edges. Drawing documents as C4 `System` or `Component` boxes would produce a misleading diagram.
+C4 describes software structure: person, software system, container, component, code. The existing reference graph relates documents (REQ, DEC, UC, VCR and others) with untyped edges. Drawing documents as C4 `System` or `Component` boxes would produce a misleading diagram.
 
 Structurizr as a tool is not limited to C4 notation: custom elements and the `custom` view exist for non-C4 content. A reference graph of documents can be modelled that way (tested: valid and readable), but it adds a layer without adding a diagram, and it loses features the existing renderer has: byte-stable output by explicit spec, cycle detection with red arrows, unresolved-reference nodes. Suggestion: keep the existing deterministic reference graph as it is.
 
@@ -69,12 +69,12 @@ Suggested pipeline: `structurizr validate`, then a policy lint, then export, the
 | Aspect | `plantuml/c4plantuml` | `plantuml/structurizr` |
 |---|---|---|
 | Architecture elements | complete | complete |
-| Custom elements (REQ, ADR, GOL) | silently dropped, no warning | drawn |
+| Custom elements (REQ, DEC, GOL) | silently dropped, no warning | drawn |
 | Source size (C2 view) | 54 lines, 3.6 KB | 142 lines, 8.0 KB |
 | Source readability | short, C4 macros | a style block of about 20 classes with base64 names |
 | Legend | inline | separate `-key.puml` file |
 
-The C4 export also drops elements pulled in by `include *`: in the C3 view two ADR elements were included by the wildcard and silently omitted. A parser check cannot catch this. A completeness check can: map the rendered SVG links back to element names and compare with the model relationships. This check passed for all three C4 views (6 of 6, 10 of 10, 15 of 15 edges).
+The C4 export also drops elements pulled in by `include *`: in the C3 view two DEC elements were included by the wildcard and silently omitted. A parser check cannot catch this. A completeness check can: map the rendered SVG links back to element names and compare with the model relationships. This check passed for all three C4 views (6 of 6, 10 of 10, 15 of 15 edges).
 
 By default the C4 export drops tags and styles (`$tags=""`). The view properties `c4plantuml.tags "true"` and `c4plantuml.elementProperties "true"` restore tags, colours and element properties. Trap: with tags on, the default `Element` tag needs an explicit background colour, otherwise the output is valid but unreadable (white text on white).
 
@@ -109,7 +109,7 @@ Constraints found:
 - 20, 60 and 150 generated components: all valid on local targets. plantuml.com answered HTTP 509 (Cloudflare, empty body, reproducible) for the 150-component view. Cause not investigated.
 - The 150-component SVG was 29,664 pixels wide, unusable as a diagram. Practical bound: about 20 elements per view.
 
-## Finding 9: Structurizr ADR import is unsuitable for the repository's ADRs
+## Finding 9: Structurizr decision-record import is unsuitable for the repository's decision records
 
 - A uuid-prefixed file name imports zero decisions without any error. A numeric prefix such as `0001-` is needed.
 - A quoted `date: '2026-09-04'` key makes the importer throw, and one bad file aborts the whole export. 25 of 46 ADRs have a `date:` key and failed individually; 21 passed.

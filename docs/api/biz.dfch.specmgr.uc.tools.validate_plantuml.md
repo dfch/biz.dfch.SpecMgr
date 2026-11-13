@@ -8,7 +8,7 @@ Direct, thin wrapper over ``plantuml.chain.validate_plantuml`` (Phase 110)
 configured source -- ``SPECMGR_PLANTUML_JAR`` → ``SPECMGR_PLANTUML_BIN`` →
 ``SPECMGR_PLANTUML_URL``, no fall-through; the all-unset state is the
 structure-only floor). The returned ``PlantumlValidationResult`` is the
-frozen §3.6 non-raising result model (the ADR 519d1206 chain precedent) --
+frozen §3.6 non-raising result model (the DEC 519d1206 chain precedent) --
 a dataclass the MCP SDK serializes directly; this wrapper adds no state of
 its own. Content-based: the caller passes the diagram text (the Phase 130
 CLI reads the file and passes its text).

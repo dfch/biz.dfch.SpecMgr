@@ -23,13 +23,13 @@ read path → parse via free-function returning typed document model. A
 content-validation failure of an existing file (the parser's
 ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``) is
 caught and returned as the non-raising ``ValidateResult``
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
-5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case
+5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain); only the file-access errors raised
 by ``Path.read_text()`` for a truly-absent or unreadable path still
 surface as MCP tool errors to the caller.
 
-**Path-derived language (feat-197-i18n Phase 125, ADR 38efdb66 item 5).**
+**Path-derived language (feat-197-i18n Phase 125, DEC 38efdb66 item 5).**
 A 1:1 port of ``parse_dec``'s handling. This tool takes no ``language``
 parameter: it derives the effective language from the file's own position
 relative to the goal base directory
@@ -66,8 +66,8 @@ from ._paths import gol_base_dir
         "into a structured :class:`~biz.dfch.specmgr.gol.models.v1.GolDocument`. An existing file "
         "that fails to parse returns a non-raising `ValidateResult` (`valid=False`, a single "
         "`errors[].message` capped at 300 chars as the generic `validate` tool caps it, feat-110) "
-        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (ADR "
-        "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the ADR 519d1206 "
+        "instead of raising `AssertionError`/`pydantic.ValidationError`/`yaml.YAMLError` (DEC "
+        "f14f125e-eaad-4f4f-a6fd-3c931bed726e, GitHub issue #204 -- case 5 of the DEC 519d1206 "
         "non-raising-structured-result workaround chain); a truly-absent or unreadable path still "
         "raises the `OSError`-family file-access error (`FileNotFoundError`/`PermissionError`/`OSError`) "
         "from `Path.read_text()`."
@@ -84,14 +84,13 @@ def parse_gol(path: str) -> GolDocument | ValidateResult:
     Reads the file from disk, then parses and validates its content. "Parse"
     here also means "validate": letting :class:`Goal` /
     :class:`GolFrontmatter` / :class:`GolDocument`'s own Pydantic validators
-    run during parsing is the only validation pass there is, exactly like
-    ``adr.tools.validate_adr``'s own docstring describes for ADRs -- there is
-    no separate validation step. Any structural problem (unrecognized/misplaced
+    run during parsing is the only validation pass there is -- there is no
+    separate validation step. Any structural problem (unrecognized/misplaced
     heading, list the schema doesn't expect) or field/cross-field validation
     failure raises ``AssertionError``/``pydantic.ValidationError`` (a malformed
     frontmatter block raises ``yaml.YAMLError``) internally, but this tool
-    catches all three (feat-204-create-error, ADR
-    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    catches all three (feat-204-create-error, DEC
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain) and returns the enriched message (domain/tool context
     prepended by the shared tool-boundary wrapper,
@@ -111,7 +110,7 @@ def parse_gol(path: str) -> GolDocument | ValidateResult:
         relative to the current working directory).
 
         The file's language is derived from this path's position relative to the
-        goal base directory (feat-197-i18n Phase 125, ADR 38efdb66 item 5):
+        goal base directory (feat-197-i18n Phase 125, DEC 38efdb66 item 5):
         flat ``docs/gol/`` = canonical (no table), a direct shape-validated
         ``docs/gol/{language}/`` subdirectory = that language's table, any
         other location = canonical.
@@ -127,8 +126,8 @@ def parse_gol(path: str) -> GolDocument | ValidateResult:
         exactly as the generic ``validate`` tool caps it (feat-110, via
         :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
         ``AssertionError``/``pydantic.ValidationError``/``yaml.YAMLError``
-        (feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-        case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+        (feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+        case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
         structured-result workaround chain).
 
     Raises

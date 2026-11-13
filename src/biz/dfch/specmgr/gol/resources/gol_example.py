@@ -18,9 +18,8 @@
 """Resource: specmgr://gol/example (Task 3.11).
 
 Read-only, addressable counterpart of the ``get_gol_example`` tool, mirroring
-this repo's existing tool+resource pairs (e.g. ADR's ``get_adr`` tool /
-``specmgr://adr/{id}`` resource) for a host that wants to fetch the example as
-context without an explicit tool call. Deliberately does not import from
+this repo's existing tool+resource pairs, for a host that wants to
+fetch the example as context without an explicit tool call. Deliberately does not import from
 ``gol.tools`` (nor vice versa): both this resource and the ``get_gol_example``
 tool import the shared, doc-type-agnostic ``general.tools._packaged_data``
 helper directly, so neither sub-package depends on the other just for this

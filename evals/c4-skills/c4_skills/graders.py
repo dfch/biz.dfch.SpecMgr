@@ -810,7 +810,7 @@ def gate_validated_before_return(context: GateContext) -> GateResult:
     Reuses `TrialMetrics.validated_before_return` (the on-disk file or the
     final message text is byte-identical to the `dsl` input of a
     `validate`-suffixed call that answered the OK marker); a parsed-only or
-    reported-only result is NOT a pass (the ADR 7a626b12 precedent).
+    reported-only result is NOT a pass (the DEC 7a626b12 precedent).
     """
     from .metrics import validated_texts  # local: metrics imports graders (cycle)
 

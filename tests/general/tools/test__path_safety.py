@@ -30,8 +30,7 @@ import unittest
 from pathlib import Path
 
 #: The shared domain-name source (feat-125-domain-lists Phase 4, REQ-008):
-#: ``UUID_DOMAINS`` -- every domain other than ``feat``, plus ``adr``
-#: (feat-38-39-41-43-44 Phase 4) -- and ``FEAT``.
+#: ``UUID_DOMAINS`` -- every domain other than ``feat`` -- and ``FEAT``.
 from biz.dfch.specmgr.general.tools._domains import FEAT, UUID_DOMAINS
 
 from biz.dfch.specmgr.general.tools._path_safety import (
@@ -225,15 +224,6 @@ class TestValidateId(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             validate_id(value, _VALID_UUID)
         self.assertIn(repr(value), str(ctx.exception))
-
-    def test_accepts_a_uuid_for_adr(self):
-        """For the adr domain (feat-38-39-41-43-44 Phase 4), a canonical UUID must pass."""
-        validate_id("adr", _VALID_UUID)
-
-    def test_rejects_a_feat_id_for_adr(self):
-        """For the adr domain, a feat-NNN-slug id must raise a ValueError."""
-        with self.assertRaises(ValueError):
-            validate_id("adr", _VALID_FEAT_ID)
 
 
 class TestAssertWithin(unittest.TestCase):

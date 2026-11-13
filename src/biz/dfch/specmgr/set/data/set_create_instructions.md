@@ -32,9 +32,9 @@ no one).
   is accepted verbatim. Describe what the set bundles and why the items
   belong together here.
 - `## Items` -- mandatory, and the last section of the document: a flat
-  bullet list with at least one item, in any mix of the 12 reference
-  tags (`GOL`, `PRB`, `QA`, `UC`, `REQ`, `RSK`, `DEC`, `ADR`, `VCR`,
-  `SYSRS`, `TXT`, `FEAT`). Each bullet is one line:
+   bullet list with at least one item, in any mix of the 11 reference
+   tags (`GOL`, `PRB`, `QA`, `UC`, `REQ`, `RSK`, `DEC`, `VCR`, `SYSRS`,
+   `TXT`, `FEAT`). Each bullet is one line:
   `<TAG> <uuid>: <title>` (the `FEAT` tag carries a `feat-NNN-slug` or
   bare `feat-NNN` id instead of a uuid), where `<title>` is the
   referenced document's own H1. A bullet may be followed by an indented

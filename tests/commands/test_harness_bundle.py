@@ -22,8 +22,8 @@ Pins the REQ-007 generator contract:
 * **Determinism** -- two runs over an unchanged tree are byte-identical
   (no timestamps; ``json.dumps(indent=2, ensure_ascii=False)`` + trailing
   newline), both in the pure generator and end-to-end over a tmp fixture.
-* **Enumeration completeness** -- the current repo tree's 41 files (6 in
-  ``agent/``, 10 in ``command/``, 25 in ``skill/*/``) all appear, each with
+* **Enumeration completeness** -- the current repo tree's 43 files (7 in
+  ``agent/``, 11 in ``command/``, 25 in ``skill/*/``) all appear, each with
   a correct ``sha256`` and verbatim ``content``; a tmp-fixture copy of the
   scoped dirs gains a file and the generated bundle contains it with the
   correct ``sha256``.
@@ -43,7 +43,7 @@ Pins the REQ-007 generator contract:
   ``specmgr-harness-bundle`` hook's own regenerate step, minus the write).
 * **Hook/CI pins** -- the ``specmgr-harness-bundle`` pre-commit hook
   (entry, ``files`` regex, the regenerate + fail-on-diff pair, placement
-  after ``specmgr-adr-toc`` and before ``specmgr-lint``) and the Python
+  after ``specmgr-mcp-docs`` and before ``specmgr-lint``) and the Python
   3.13-pinned CI parity step (the same regenerate + ``git diff
   --exit-code`` pair over the bundle path, the ``::error::`` hint), the
   ``tests/commands/test_lint.py`` shape-pin precedent.
@@ -80,7 +80,7 @@ _SCOPED_DIRS = ("agent", "command", "skill")
 _BUNDLE_RELPATH = Path("src") / "biz" / "dfch" / "specmgr" / "general" / "data" / "general_harness_bundle.json"
 
 #: The hook's own entry line (regenerate + fail on diff, the
-#: ``specmgr-adr-toc`` family's shape).
+#: ``specmgr-mcp-docs`` family's shape).
 _HOOK_ENTRY = "bash -c 'uv run --frozen specmgr harness-bundle && git diff --exit-code -- " + str(_BUNDLE_RELPATH) + "'"
 
 #: The hook's anchored ``files:`` pattern (a bundled markdown file only).
@@ -108,15 +108,15 @@ class TestGenerateBundleTextCurrentTree(unittest.TestCase):
         payload: dict[str, Any] = json.loads(text)
         return payload
 
-    def test_current_tree_enumerates_exactly_41_files(self):
+    def test_current_tree_enumerates_exactly_43_files(self):
         payload = self._bundle()
 
         paths = [entry["path"] for entry in payload["files"]]
 
         self.assertEqual(paths, _expected_scoped_paths(_REPO_ROOT))
-        self.assertEqual(len(paths), 41)
+        self.assertEqual(len(paths), 43)
         per_dir = {name: sum(1 for path in paths if path.startswith(name + "/")) for name in _SCOPED_DIRS}
-        self.assertEqual(per_dir, {"agent": 6, "command": 10, "skill": 25})
+        self.assertEqual(per_dir, {"agent": 7, "command": 11, "skill": 25})
 
     def test_top_level_and_file_entry_shape(self):
         payload = self._bundle()
@@ -377,14 +377,14 @@ class TestHookAndCiPins(unittest.TestCase):
         self.assertEqual(self._block_field(block, "pass_filenames"), "false")
         self.assertEqual(self._block_field(block, "files"), _HOOK_FILES_PATTERN)
 
-    def test_hook_is_placed_after_adr_toc_and_before_lint(self):
+    def test_hook_is_placed_after_mcp_docs_and_before_lint(self):
         text = (_REPO_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8")
 
-        adr_toc = text.index("- id: specmgr-adr-toc")
+        mcp_docs = text.index("- id: specmgr-mcp-docs")
         harness_bundle = text.index("- id: specmgr-harness-bundle")
         lint = text.index("- id: specmgr-lint")
 
-        self.assertLess(adr_toc, harness_bundle)
+        self.assertLess(mcp_docs, harness_bundle)
         self.assertLess(harness_bundle, lint)
 
     def test_files_pattern_matches_only_bundled_locations(self):

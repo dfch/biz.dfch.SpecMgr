@@ -95,7 +95,7 @@ class TestCreateDecPrompt(unittest.TestCase):
         self.assertIn("skip", result)
 
     def test_does_not_narrate_the_old_adr_options_heading(self):
-        """The prompt must not narrate the ADR heading `## Pros and Cons of the Options` as a
+        """The prompt must not narrate the old decision-record heading `## Pros and Cons of the Options` as a
         DEC heading line -- that heading is rejected by the DEC schema (the prompt may mention
         it in prose only to forbid it, which it does as a code span, never as its own heading)."""
         result = create_dec("Some topic")

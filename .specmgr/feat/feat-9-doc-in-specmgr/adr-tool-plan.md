@@ -6,13 +6,13 @@ that conform to a custom schema derived from MADR 4.0.0, through a Python MCP
 server exposing structured tools — never by having the LLM write raw markdown
 text directly.
 
-(ADR 898bfcd0-85f9-462f-93a8-747bda4166c8: "Author and edit ADRs only through MCP structured tools, never raw markdown")
+(DEC 898bfcd0-85f9-462f-93a8-747bda4166c8: "Author and edit ADRs only through MCP structured tools, never raw markdown")
 
 ## 2. Source document
 MADR 4.0.0 template:
 `https://raw.githubusercontent.com/adr/madr/refs/tags/4.0.0/template/adr-template.md`
 
-(ADR c73e4f9d-81f3-495d-bd3a-f660ab992ed3: "Base the ADR template on MADR 4.0.0")
+(DEC c73e4f9d-81f3-495d-bd3a-f660ab992ed3: "Base the ADR template on MADR 4.0.0")
 
 Heading structure:
 ```
@@ -31,7 +31,7 @@ Heading structure:
 
 ## 3. Frontmatter schema (Pydantic)
 
-(ADR bbf412a7-965e-4435-8669-c338407d73b7: "Frontmatter extension fields (id, version) with whole-object full-replace update contract")
+(DEC bbf412a7-965e-4435-8669-c338407d73b7: "Frontmatter extension fields (id, version) with whole-object full-replace update contract")
 - `status`: `Literal["proposed","rejected","accepted","deprecated","superseded"]` **or** a
   string matching `^superseded by .+$` (not a plain enum)
 - `date`, `decision-makers`, `consulted`, `informed`: all optional
@@ -56,7 +56,7 @@ Heading structure:
 Each is independently full-replace via a generic `update_section(key, value)`
 tool.
 
-(ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c: "Generic update_section(key, value) with deletion sentinel and mandatory-section rejection")
+(DEC 71fd95d7-07f2-466f-81aa-d29b7e3ef34c: "Generic update_section(key, value) with deletion sentinel and mandatory-section rejection")
 
 | Key | Heading | Mandatory |
 |---|---|---|
@@ -81,7 +81,7 @@ the literal `"REMOVE"` (case-insensitive) as `value` removes that section
 
 ## 5. `## Pros and Cons of the Options` — derived container
 
-(ADR d54abe50-a2c5-44f8-8bfe-11ea634b6f87: "\"Pros and Cons of the Options\" as a derived container with a dedicated Option sub-API")
+(DEC d54abe50-a2c5-44f8-8bfe-11ea634b6f87: "\"Pros and Cons of the Options\" as a derived container with a dedicated Option sub-API")
 - Not directly editable. Rendered automatically **iff** ≥1 `Option`
   sub-section exists; otherwise the entire H2 (and any comment placeholder) is
   omitted.
@@ -107,7 +107,7 @@ the literal `"REMOVE"` (case-insensitive) as `value` removes that section
 
 ## 6. Module layout (`src/biz/dfch/specmgr/`)
 
-(ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models")
+(DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models")
 
 Supersedes the generic `core/`/`adr/`/`req/`/`uc/`/`cli/`/`mcp_server/` sketch
 from earlier drafts of this plan — this repo already has an established
@@ -189,7 +189,7 @@ convention), so the ADR feature is placed within that, not alongside it:
 
 ## 7. Cross-cutting design decisions
 
-(ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3: "Filesystem is the sole source of truth — no in-memory id-to-document cache"; ADR 4c6119c9-532f-4629-8977-108e78304f48: "Parse-validate-render pipeline: library choices, no AST-preserving round-trip")
+(DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3: "Filesystem is the sole source of truth — no in-memory id-to-document cache"; DEC 4c6119c9-532f-4629-8977-108e78304f48: "Parse-validate-render pipeline: library choices, no AST-preserving round-trip")
 - **Source of truth:** the `.md` file itself. Humans can hand-edit it at any
   time; every tool call re-reads and re-parses current on-disk state before
   acting — no assumption that the tool is the sole writer.
@@ -219,7 +219,7 @@ convention), so the ADR feature is placed within that, not alongside it:
 
 ## 8. MCP tool surface (Python MCP SDK)
 
-(ADR 7531106b-074b-4bd8-a83a-e433d01676e2: "Expose listing and by-id reads as MCP resources in addition to tools")
+(DEC 7531106b-074b-4bd8-a83a-e433d01676e2: "Expose listing and by-id reads as MCP resources in addition to tools")
 - `list_adrs()` — ids/titles/status for context. **Implemented as an MCP
   resource (`specmgr://adr/list`), not a `@mcp.tool()` — see §9a.**
 - `get_adr(id)` → structured object (frontmatter + body, not raw markdown)
@@ -247,7 +247,7 @@ tool sequence — see §11.
 
 ## 9a. id/filename scheme and in-memory state (resolved)
 
-(ADR 8cf940c5-3100-485c-a12d-14b59b631712: "id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution"; ADR 7531106b-074b-4bd8-a83a-e433d01676e2: "Expose listing and by-id reads as MCP resources in addition to tools")
+(DEC 8cf940c5-3100-485c-a12d-14b59b631712: "id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution"; DEC 7531106b-074b-4bd8-a83a-e433d01676e2: "Expose listing and by-id reads as MCP resources in addition to tools")
 
 Prompted by a design question: since `models/adr/v1/mutations.py` functions
 take/return a whole in-memory `Adr`, but MCP tools (§8) only ever receive an
@@ -417,7 +417,7 @@ and avoiding any server-side cache/staleness problem:
 
 ## 11. Prompt surface (MCP prompts)
 
-(ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f: "Prompt surface: narrated guidance plus step-gated test variants")
+(DEC ddd038f0-ae16-4f4b-beef-df06f7ed226f: "Prompt surface: narrated guidance plus step-gated test variants")
 
 Two `@mcp.prompt()`s in `adr/prompts/` (mirroring the `adr/tools/`/
 `adr/resources/` domain-first sub-package convention from §6 --

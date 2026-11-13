@@ -36,7 +36,7 @@ language pair; read the source via ``get_<d>(id, raw=True, language=...)``
 ``update``/``edit`` with ``language``); read the target language's heading
 table and translate only free-form prose plus the fixed-text heading text
 through that table, never the closed-vocabulary / schema-constant tokens
-(REQ-010) nor -- per ADR 38efdb66 item 11 -- ``prb``'s ``problem_statement``
+(REQ-010) nor -- per DEC 38efdb66 item 11 -- ``prb``'s ``problem_statement``
 lead paragraph; write with bounded retries on the non-raising
 ``ValidateResult`` (a translated body cannot be dry-run: the generic
 ``validate`` tool is canonical-only and has no ``language`` parameter, so
@@ -49,8 +49,8 @@ added first -- never invented here).
 
 ``type`` is one of the thirteen i18n-eligible domains (imported from
 ``general.tools._language_guard.LANGUAGE_AWARE_DOMAINS``, the single
-source of truth); ``feat`` and ``adr`` are permanently English and
-explicitly rejected. Like ``repair``, the prompt validates its arguments
+source of truth); ``feat`` is permanently English and explicitly
+rejected. Like ``repair``, the prompt validates its arguments
 up front and raises ``ValueError`` -- before any text is rendered.
 
 This prompt is cross-cutting (it takes ``type`` + ``id`` + languages), so
@@ -72,7 +72,7 @@ from __future__ import annotations
 from string import Template
 
 from ...general.models.heading_table import resolve_heading_table
-from ...general.tools._domains import ADR, FEAT
+from ...general.tools._domains import FEAT
 from ...general.tools._language_guard import LANGUAGE_AWARE_DOMAINS
 from ...general.tools._packaged_data import read_packaged_text
 from ...general.tools._path_safety import DEFAULT_LANGUAGE, assert_language
@@ -84,7 +84,7 @@ from ...server import mcp
     title="Translate a specmgr document into another language",
     description=(
         "Guides the LLM through producing (or updating) a target-language variant of a whole-body "
-        "specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat and adr are always "
+        "specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat is always "
         "English and out of scope): read the specmgr://i18n resource first, read the source via "
         "get_<d>(id, raw=True, language=...) (a ParseFailureResult stops the flow), decide create "
         "(create_<d>(content, language, id)) versus update (the generic update/edit with language), "
@@ -105,8 +105,8 @@ def translate_artifact(type: str, id: str, language: str, source_language: str =
     type:
         The document domain to translate: one of ``req``, ``uc``, ``tsk``,
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``vcr``,
-        ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat`` and ``adr``
-        are permanently English and rejected with an actionable error; so is
+        ``sysrs``, ``txt``, ``set`` (matched case-insensitively). ``feat``
+        is permanently English and rejected with an actionable error; so is
         any other unknown value.
     id:
         The shared id of the artifact (the EN source's id, which every
@@ -131,7 +131,7 @@ def translate_artifact(type: str, id: str, language: str, source_language: str =
     Raises
     ------
     ValueError
-        ``type`` is ``feat``/``adr`` (always English) or unknown; ``id`` is
+        ``type`` is ``feat`` (always English) or unknown; ``id`` is
         blank/whitespace-only; ``language`` or ``source_language`` is not an
         ISO 639-1-shaped lowercase two-letter code or has no heading-mapping
         table; ``language`` is ``"en"``; or ``language`` equals
@@ -149,7 +149,7 @@ def translate_artifact(type: str, id: str, language: str, source_language: str =
             "(the EN source's id)."
         )
     normalized_type = type.strip().lower()
-    if normalized_type in (FEAT, ADR):
+    if normalized_type == FEAT:
         raise ValueError(
             f"translate_artifact() does not support type {normalized_type!r}: {normalized_type} documents are "
             "always English (they have no language variants); expected one of "
@@ -158,7 +158,7 @@ def translate_artifact(type: str, id: str, language: str, source_language: str =
     if normalized_type not in LANGUAGE_AWARE_DOMAINS:
         raise ValueError(
             f"translate_artifact() does not support type {normalized_type!r}; expected one of "
-            f"{'/'.join(LANGUAGE_AWARE_DOMAINS)} ('feat' and 'adr' are always English and out of scope)."
+            f"{'/'.join(LANGUAGE_AWARE_DOMAINS)} ('feat' is always English and out of scope)."
         )
     normalized_language = language.strip().lower()
     normalized_source = source_language.strip().lower()

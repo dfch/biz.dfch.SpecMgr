@@ -24,7 +24,7 @@ dedicated subagent: the flow is the two tool calls themselves. These tests pin: 
 ``.opencode/skill/`` path); the skill's frontmatter (exactly the ``name``/``description`` keys, ``name`` matching the
 folder, a non-empty third-person ``description`` carrying the trigger phrasing -- keyword matching is
 case-insensitive -- and no ``: `` inside the plain YAML scalar); the key body wording (both tools named, the
-``feat``/``adr`` exclusion, "no tool translates", the translate hand-off, the never-edit/never-commit contract); the
+``feat`` exclusion, "no tool translates", the translate hand-off, the never-edit/never-commit contract); the
 command's frontmatter (a ``description`` naming ``$1``..``$3``, **no** ``agent:`` field) and body (the two-step
 flow: ``list_languages`` always, ``check_translation_drift`` when a language is given, the ``/translate`` suggestion,
 read-only); and that the two tools it points at are real, registered tools.
@@ -165,7 +165,7 @@ class TestSkillFrontmatter(unittest.TestCase):
             with self.subTest(tool=tool):
                 self.assertIn(tool, description)
 
-    def test_description_states_the_scope_and_the_feat_adr_exclusion(self):
+    def test_description_states_the_scope_and_the_feat_exclusion(self):
         frontmatter, _ = _split_frontmatter(_read_text(_SKILL_PATH))
 
         description = _parse_frontmatter(frontmatter)["description"]
@@ -173,7 +173,7 @@ class TestSkillFrontmatter(unittest.TestCase):
         for domain in _IN_SCOPE_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertIn(domain, description)
-        self.assertIn("feat and adr are always English and out of scope", description)
+        self.assertIn("feat is always English and out of scope", description)
 
     def test_description_is_valid_plain_yaml_scalar(self):
         """No `: ` inside the plain scalar (it would not be valid YAML)."""
@@ -228,7 +228,7 @@ class TestSkillBodyWording(unittest.TestCase):
         self.assertIn("`translate-artifact` skill", flat)
         self.assertIn("`/translate`", flat)
         self.assertIn("never edits, writes, or commits anything", flat)
-        self.assertIn("`feat` and `adr` are always English", flat)
+        self.assertIn("`feat` is always English", flat)
         self.assertIn("`en` is never a drift `language`", flat)
         self.assertIn("general/data/headings/<language>.json", flat)
         self.assertIn("question mechanism", flat)
@@ -283,7 +283,7 @@ class TestCommandFrontmatterAndBody(unittest.TestCase):
         for domain in _IN_SCOPE_DOMAINS:
             with self.subTest(domain=domain):
                 self.assertIn(domain, flat)
-        self.assertIn("`feat` and `adr` are always English and out of scope", flat)
+        self.assertIn("`feat` is always English and out of scope", flat)
         self.assertIn("`en` is never checked", flat)
         self.assertIn("`question` tool", flat)
 

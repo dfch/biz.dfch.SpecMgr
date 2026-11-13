@@ -3,9 +3,8 @@
 Resource: specmgr://txt/example (feat-229-txt Phase 120).
 
 Read-only, addressable counterpart of the ``get_txt_example`` tool, mirroring
-this repo's existing tool+resource pairs (e.g. ADR's ``get_adr`` tool /
-``specmgr://adr/{id}`` resource) for a host that wants to fetch the example as
-context without an explicit tool call. Deliberately does not import from
+this repo's existing tool+resource pairs, for a host that wants to
+fetch the example as context without an explicit tool call. Deliberately does not import from
 ``txt.tools`` (nor vice versa): both this resource and the
 ``get_txt_example`` tool import the shared, doc-type-agnostic
 ``general.tools._packaged_data`` helper directly, so neither sub-package

@@ -1330,9 +1330,9 @@ class TestSubListCrossReferenceFormatMatrix(unittest.TestCase):
                 with self.assertRaises(ValidationError):
                     cls.from_text(text)
 
-    def test_decisions_rejects_adr_tag(self) -> None:
-        """`Decisions` is DEC-only (REQ-005/ACC-004): an `ADR` bullet is rejected."""
-        text = format_text(f"### Decisions\n\n- ADR {_VALID_UUID}: A title\n")
+    def test_decisions_rejects_non_dec_tag(self) -> None:
+        """`Decisions` is DEC-only (REQ-005/ACC-004): a non-DEC bullet is rejected."""
+        text = format_text(f"### Decisions\n\n- REQ {_VALID_UUID}: A title\n")
 
         with self.assertRaises(ValidationError):
             Decisions.from_text(text)

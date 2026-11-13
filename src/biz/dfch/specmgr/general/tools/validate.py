@@ -60,18 +60,9 @@ content-validation failure, and is **not** in that catch set: it is a bare
 ``ValueError`` raised by the adapter itself, before the wrapped parse call
 ever runs, and it still propagates through :func:`validate` unchanged, same
 as it always did through the retired per-domain tools. An unsupported
-``type`` (including ``"adr"``) is likewise a ``ValueError``, raised before
-any adapter runs at all.
-
-ADR is deliberately *not* a ``type`` here, mirroring ``update``'s/
-``set_classification``'s/``delete``'s own exclusion: ``validate_adr`` is
-structurally the odd one out among the (previously) separate per-domain
-``validate_<d>`` tools -- ``id``-based and disk-touching, with no ``full``
-parameter, and its own structural-failure channel is ``AdrParseError``
-(a ``ValueError`` subclass) rather than ``AssertionError`` -- so it is kept
-as its own standalone tool, unchanged, and excluded from this
-consolidation. See ADR 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends
-ADR 36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
+``type`` is likewise a ``ValueError``, raised before any adapter runs at
+all. See DEC 078bf395-0a5f-4afd-84f6-b7a2191a00e6, which extends DEC
+36905d5b-8057-4294-8665-c7eed5534db0's dispatch-only convention
 (previously covering only mutation-adjacent tools) to this read-only/
 dry-run tool category.
 
@@ -504,7 +495,7 @@ def _validate_txt(content: str, full: bool) -> None:
     Verbatim-shape port of :func:`_validate_sysrs` (same ``txt`` domain
     label, ``parse_txt`` for the full document, ``parse_txt_body`` -- the
     single body-validation entry point the write adapters share -- for the
-    body-only shape; ``txt`` is dispatch-only from day one per ADR
+    body-only shape; ``txt`` is dispatch-only from day one per DEC
     36905d5b) -- see :func:`_validate_req` for the shared semantics.
     """
     has_frontmatter = _detect_frontmatter(content, domain="txt")
@@ -534,7 +525,7 @@ def _validate_set(content: str, full: bool) -> None:
     Verbatim-shape port of :func:`_validate_sysrs` (same ``set`` domain
     label, ``parse_set`` for the full document, ``parse_set_body`` -- the
     single body-validation entry point the write adapters share -- for the
-    body-only shape; ``set`` is dispatch-only from day one per ADR
+    body-only shape; ``set`` is dispatch-only from day one per DEC
     36905d5b) -- see :func:`_validate_req` for the shared semantics.
     """
     has_frontmatter = _detect_frontmatter(content, domain="set")
@@ -587,8 +578,8 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
     title="Validate document content",
     description=(
         "Disk-free, id-free dry run validating document content across the whole-body "
-        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported -- use "
-        "`validate_adr` instead). `full=False` (default) validates body-only content "
+        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}). `full=False` "
+        "(default) validates body-only content "
         "(no frontmatter); `full=True` validates a complete document "
         "(frontmatter + body). Never raises for a content-validation failure: always returns "
         "`{valid: bool, errors: list[{message: str}]}` -- `errors` is empty when `valid` is "
@@ -598,7 +589,7 @@ assert set(_ADAPTERS) == set(WHOLE_BODY_DOMAINS), (
         "`type`, is a caller-usage error and still raises `ValueError` before any validation "
         "runs. This is the sole "
         "validate entry point for these domains -- the former per-domain `validate_<d>` "
-        "tools are removed; `validate_adr` remains a separate, unchanged, id-based tool. Each domain's "
+        "tools are removed. Each domain's "
         "structure reference is its own `get_<d>_schema` tool (the generated JSON Schema), with "
         "`get_<d>_template`/`get_<d>_example` as the authoring starting points."
     ),
@@ -642,9 +633,8 @@ def validate(
     the generic ``update`` tool accept), or a complete document
     (frontmatter and body together) when ``full=True`` -- passing the
     wrong shape raises ``ValueError`` before the domain's own parse/
-    validation logic ever runs. An unsupported ``type`` (including
-    ``"adr"``, which has its own standalone ``validate_adr`` tool) is
-    likewise a ``ValueError``, raised before any adapter is dispatched.
+    validation logic ever runs. An unsupported ``type`` is likewise a
+    ``ValueError``, raised before any adapter is dispatched.
 
     Parameters
     ----------
@@ -669,15 +659,11 @@ def validate(
     Raises
     ------
     ValueError
-        ``type`` is not one of the supported domains (including
-        ``"adr"``), or ``full`` does not match whether ``content`` carries
-        a frontmatter block.
+        ``type`` is not one of the supported domains, or ``full`` does not
+        match whether ``content`` carries a frontmatter block.
     """
     if type not in _ADAPTERS:
-        raise ValueError(
-            f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)} "
-            "('adr' is not supported -- use validate_adr instead)"
-        )
+        raise ValueError(f"unknown document type {type!r}; expected one of {', '.join(WHOLE_BODY_DOMAINS)}")
 
     adapter = _ADAPTERS[type]
     try:

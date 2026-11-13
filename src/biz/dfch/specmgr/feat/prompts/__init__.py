@@ -28,9 +28,11 @@ once::
 """
 
 from .create_feat import create_feat
+from .refine_feat import refine_feat
 from .update_feat import update_feat
 
 __all__ = [
     "create_feat",
+    "refine_feat",
     "update_feat",
 ]

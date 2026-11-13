@@ -34,7 +34,7 @@ disk: the single ``*.md`` file for every flat domain (i.e. every
 whole-body domain except ``feat``)
 (``Path.unlink``), or the entire ``<base>/<id>/`` folder for ``feat``
 (``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and any
-session transcripts in that folder; ``feat`` is folder-per-document, ADR
+session transcripts in that folder; ``feat`` is folder-per-document, DEC
 8cf940c5). On success the adapter returns the deleted path as a ``str``
 (the file path for the flat domains, the folder path for ``feat``).
 
@@ -54,11 +54,6 @@ adapter does not catch it); an I/O failure during the actual
 ``unlink``/``rmtree`` (``OSError``/``PermissionError``/race) is caught and
 re-raised as :class:`DeleteError` carrying the resolved path and the
 underlying ``OSError`` as ``__cause__``.
-
-ADR is deliberately *not* a ``type`` here: it never had a ``delete_adr``
-stub, and hard-deleting an ADR could break other ADRs' "superseded by X"
-cross-references (see ``.specmgr/feat/feat-36-delete/README.md``'s
-Decisions Made).
 
 The parameter is intentionally named ``type`` (it matches the frontmatter
 field vocabulary the client already knows); no enabled ruff rule objects
@@ -162,7 +157,7 @@ def _delete_req(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     spot (feat-134 Phase 3, Task 3.6, REQ-008), so a deleted document's
     stale vector is never served.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``req_base_dir(language)``, the lock is the
     variant's own (``req_lock(req_lock_key(id_, language))``), and only that one variant file is
@@ -187,7 +182,7 @@ def _delete_uc(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``uc_base_dir(language)``, the lock is the
     variant's own (``uc_lock(uc_lock_key(id_, language))``), and only that one variant file is
@@ -212,7 +207,7 @@ def _delete_tsk(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``tsk_base_dir(language)``, the lock is the
     variant's own (``tsk_lock(tsk_lock_key(id_, language))``), and only that one variant file is
@@ -237,7 +232,7 @@ def _delete_qa(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``qa_base_dir(language)``, the lock is the
     variant's own (``qa_lock(qa_lock_key(id_, language))``), and only that one variant file is
@@ -262,7 +257,7 @@ def _delete_prb(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``prb_base_dir(language)``, the lock is the
     variant's own (``prb_lock(prb_lock_key(id_, language))``), and only that one variant file is
@@ -287,7 +282,7 @@ def _delete_gol(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``gol_base_dir(language)``, the lock is the
     variant's own (``gol_lock(gol_lock_key(id_, language))``), and only that one variant file is
@@ -312,7 +307,7 @@ def _delete_rsk(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``rsk_base_dir(language)``, the lock is the
     variant's own (``rsk_lock(rsk_lock_key(id_, language))``), and only that one variant file is
@@ -337,7 +332,7 @@ def _delete_dec(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 120, ADR 38efdb66 items 2/9).**
+    **Language variants (feat-197-i18n Phase 120, DEC 38efdb66 items 2/9).**
     ``language`` (the caller's already-guarded value; default ``"en"``,
     byte-identical to the pre-i18n adapter) selects the variant file: the
     id is scanned for in ``dec_base_dir(language)``, the lock is the
@@ -362,7 +357,7 @@ def _delete_dec(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 def _delete_sop(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
     """Hard-delete the SOP ``id_`` from disk (REQ-001/004/005/006) -- see :func:`_delete_req` for the full semantics.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sop_base_dir(language)``, the lock is the
     variant's own (``sop_lock(sop_lock_key(id_, language))``), and only that one variant file is
@@ -385,7 +380,7 @@ def _delete_sop(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 def _delete_feat(id_: str) -> str:
     """Hard-delete the feature ``id_`` from disk (REQ-001/004/005/006).
 
-    ``feat`` is folder-per-document (ADR 8cf940c5), so the deletion target
+    ``feat`` is folder-per-document (DEC 8cf940c5), so the deletion target
     is the entire containing ``<base>/<id_>/`` folder (removed via
     ``shutil.rmtree`` -- deleting ``README.md``, any ``history.md``, and
     any session transcripts in that folder), not the ``README.md`` file,
@@ -421,7 +416,7 @@ def _delete_vcr(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``vcr_base_dir(language)``, the lock is the
     variant's own (``vcr_lock(vcr_lock_key(id_, language))``), and only that one variant file is
@@ -446,7 +441,7 @@ def _delete_sysrs(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``sysrs_base_dir(language)``, the lock is the
     variant's own (``sysrs_lock(sysrs_lock_key(id_, language))``), and only that one variant file is
@@ -471,7 +466,7 @@ def _delete_txt(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``txt_base_dir(language)``, the lock is the
     variant's own (``txt_lock(txt_lock_key(id_, language))``), and only that one variant file is
@@ -496,7 +491,7 @@ def _delete_set(id_: str, language: str = DEFAULT_LANGUAGE) -> str:
 
     Same resolve/lock/safety semantics as :func:`_delete_req`.
 
-    **Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 2/5).** ``language`` (the
+    **Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 2/5).** ``language`` (the
     caller's already-guarded value; default ``"en"``, byte-identical to the pre-i18n adapter)
     selects the variant file: the id is scanned for in ``set_base_dir(language)``, the lock is the
     variant's own (``set_lock(set_lock_key(id_, language))``), and only that one variant file is
@@ -570,7 +565,7 @@ assert set(_LANGUAGE_ADAPTERS) == set(LANGUAGE_AWARE_DOMAINS), (
     title="Delete document",
     description=(
         "Permanently delete an existing document from disk across the whole-body "
-        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}; `adr` is not supported). Resolves "
+        f"domains (`type` is one of {', '.join(WHOLE_BODY_DOMAINS)}). Resolves "
         "the document by `id`, takes the domain lock, "
         "and removes it: the single `*.md` file for every flat domain (every whole-body domain "
         "except `feat`), or the entire "
@@ -605,7 +600,7 @@ def delete(
     except ``feat``) removes its single
     ``*.md`` file; ``feat`` removes its entire ``<base>/<id>/`` folder
     (``README.md``, any ``history.md``, any session transcripts --
-    folder-per-document, ADR 8cf940c5).
+    folder-per-document, DEC 8cf940c5).
 
     The ``id`` is validated before any filesystem access: a path-injection
     attempt (``/``, ``\\``, or ``..``) or a wrong-format id (not a canonical
@@ -613,10 +608,6 @@ def delete(
     ``feat-NNN-slug`` for ``feat``) is a ``ValueError`` raised before
     dispatch. The resolved path is additionally confined to the domain's
     own base directory (defense-in-depth) inside the lock.
-
-    ADR is not a supported ``type``: it never had a ``delete_adr`` stub,
-    and hard-deleting an ADR could break other ADRs' "superseded by X"
-    cross-references.
 
     Parameters
     ----------
@@ -628,7 +619,7 @@ def delete(
         ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``sop``, ``feat``,
         ``vcr``, ``sysrs``, ``txt``, ``set``.
     language:
-        The language variant to delete (feat-197-i18n Phase 120, ADR
+        The language variant to delete (feat-197-i18n Phase 120, DEC
         38efdb66 items 1/2/6): ``"en"`` (the default, same as omitting
         it) deletes the flat default-language document -- today's exact
         behavior; any other ISO 639-1-shaped lowercase two-letter code

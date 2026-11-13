@@ -18,17 +18,17 @@
 """Question and Answer (QA) base directory resolution and id -> path lookup (Phase 4, Task 4.1).
 
 A thin, QA-specific layer over the generic ``general.tools._doc_paths``
-module, rather than a second hand-written copy of ``adr.tools._paths`` --
-the base-directory/id-lookup plumbing is identical in shape, only the parsed
+module -- the base-directory/id-lookup plumbing is identical in shape,
+only the parsed
 document type and its id accessor differ. 1:1 port of ``req.tools._paths``.
 
-Mirrors ``adr.tools._paths``'s/``req.tools._paths``'s read-only/write split:
+Mirrors ``req.tools._paths``'s read-only/write split:
 :func:`qa_base_dir` never creates the directory (a read-only tool shouldn't
 have that side effect), only :func:`ensure_qa_base_dir` does, for the
 ``create_qa`` tool.
 
 **Cache-backed scan (feat-107-doc-cache Phase 4).** :func:`find_qa_path`
-now scans through the content-hash-validated per-domain cache (ADR
+now scans through the content-hash-validated per-domain cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s own
 ``read_qa`` (not ``parse_qa``) as ``find_doc_path_by_id``'s ``read_fn``,
 so a file whose on-disk content hash is unchanged since its last read is
@@ -38,7 +38,7 @@ specmgr's own tooling) is dropped before any per-file work on every scan.
 ``read_qa``/``reconcile_qa_cache`` are imported from ``._cache``, not
 ``._io``, to avoid a circular import -- see ``._cache``'s own module
 docstring for the full rationale. The filesystem remains the sole source
-of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
+of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache entry is only
 ever a memoization keyed by validated content hash, never an independent
 fact about what exists on disk.
 """
@@ -77,8 +77,7 @@ class QaNotFoundError(LookupError):
     """No Question and Answer (QA) file found matching the given id.
 
     A separate class from ``general.tools._doc_paths.DocNotFoundError``, not
-    a subclass of it -- the same relationship ``adr.tools._paths.AdrNotFoundError``/
-    ``req.tools._paths.ReqNotFoundError`` have to nothing generic, so callers
+    a subclass of it -- the same relationship ``req.tools._paths.ReqNotFoundError`` has to nothing generic, so callers
     can keep catching a QA-specific exception type without depending on the
     generic module's own exception.
     """
@@ -171,7 +170,7 @@ def _reconcile_qa_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=u
     The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
     per-file work, with the scanned directory's own materialized path
     listing. With the ``{language}`` subfolder layout (feat-197-i18n
-    Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+    Phase 125, DEC 38efdb66 item 9), a scan of one language directory no
     longer covers the whole domain -- reconciling against ``scan_paths``
     alone would evict every other language's cached entries -- so this
     wrapper instead hands :func:`~._cache.reconcile_qa_cache` the
@@ -195,9 +194,9 @@ def find_qa_path(base_dir: Path, id_: str) -> Path:
     that fails to parse
     (``AssertionError``/``pydantic.ValidationError``) is silently skipped --
     one broken file must not prevent lookup of a different, valid id.
-    Mirrors ``adr.tools._paths.find_adr_path``'s/``req.tools._paths.find_req_path``'s
-    own skip-on-parse-failure rule. Before scanning, the cache is reconciled
-    against the freshly materialized live path listing
+    Mirrors ``req.tools._paths.find_req_path``'s own skip-on-parse-failure
+    rule. Before scanning, the cache is reconciled against the freshly
+    materialized live path listing
     (:func:`~._cache.reconcile_qa_cache`, against the domain-wide live listing of every language
     -- a scan of one language must not evict the other languages' entries, feat-197-i18n
     Phase 125), dropping any cached entry for a

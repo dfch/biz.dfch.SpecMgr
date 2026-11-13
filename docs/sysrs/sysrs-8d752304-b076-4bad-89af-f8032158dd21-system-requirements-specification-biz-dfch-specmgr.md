@@ -12,11 +12,11 @@ version: 1.0.0
 
 ## System Purpose
 
-biz.dfch.SpecMgr exists to be an artifact manager for system specifications: an MCP server (with an optional companion CLI) that AI agents and human maintainers use to create, read, list, update, and validate structured specification artifacts -- Architecture Decision Records, Decisions, Features, Goals, Problem Statements, Question-and-Answer interviews, Requirements, Risks, Standard Operating Procedures, System Requirements Specifications, Task Lists, Use Cases, and Verification Case Records -- instead of hand-editing free-form markdown or maintaining specification content in a separate, disconnected tool. Its domain-first architecture keeps every document type's schema, parser, and MCP tools/resources/prompts co-located in its own package, so that specification work stays machine-readable, consistently structured, and directly actionable by the agents performing it, while still being safe for a human to hand-edit the underlying `.md` files between tool calls.
+biz.dfch.SpecMgr exists to be an artifact manager for system specifications: an MCP server (with an optional companion CLI) that AI agents and human maintainers use to create, read, list, update, and validate structured specification artifacts -- Decisions, Features, Goals, Problem Statements, Question-and-Answer interviews, Requirements, Risks, Standard Operating Procedures, System Requirements Specifications, Task Lists, Use Cases, and Verification Case Records -- instead of hand-editing free-form markdown or maintaining specification content in a separate, disconnected tool. Its domain-first architecture keeps every document type's schema, parser, and MCP tools/resources/prompts co-located in its own package, so that specification work stays machine-readable, consistently structured, and directly actionable by the agents performing it, while still being safe for a human to hand-edit the underlying `.md` files between tool calls.
 
 ## System Scope
 
-The system provides fifteen document-type domains (adr, req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
+The system provides fourteen document-type domains (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) plus one cross-cutting general package of generic, type-dispatched tools (update, set_status, set_classification, delete, mdformat) and shared resources (specmgr version, iso25010, dtais, rasci), all exposed over the Model Context Protocol (MCP) as tools, resources, and prompts, plus an optional Typer-based CLI (specmgr) for documentation generation and cross-cutting utilities. Every document type's `.md` files on disk are the sole source of truth -- the server holds no in-memory cache and re-reads/re-parses/re-writes on every call, so hand-editing between tool calls is always safe. The system does not manage tickets, sprints, or project schedules (it is not a project-management/ticketing system); it does not generate application source code from specifications (it is not a code-generation tool); and it has no graphical user interface -- its only surfaces are MCP tools/resources/prompts and the specmgr CLI's documentation-generation commands. It also does not yet enforce specification freshness or validity in CI/pre-commit, a known, documented gap.
 
 ## Business Context and Goals
 
@@ -36,35 +36,35 @@ Specification artifacts (decisions, requirements, goals, risks, use cases, verif
 
 ## Decisions
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2: Organize the codebase by document-type domain: domain-first hierarchy for tools/prompts/resources, shared versioned models
 
   The core organizing principle behind every domain package this specification's Requirements and Decisions sections cross-reference: each document type owns its own tools, prompts, resources, and schema, co-located rather than scattered across interface-layer-first packages.
 
-- ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3: Filesystem is the sole source of truth: no in-memory id-to-document cache
+- DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3: Filesystem is the sole source of truth: no in-memory id-to-document cache
 
   Establishes that every domain's .md files, not any in-memory index, are authoritative -- the invariant the System Scope section above relies on when describing hand-editing safety.
 
-- ADR 8cf940c5-3100-485c-a12d-14b59b631712: id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution
+- DEC 8cf940c5-3100-485c-a12d-14b59b631712: id/filename/addressing scheme: server-generated UUID, {id}-{slug}.md, directory-scan resolution
 
   Fixes how every cross-reference bullet in this document resolves to a real file: a server-generated UUID id plus a fresh directory scan, not a cached index.
 
-- ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
+- DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae: Generic heading-mapped markdown-to-Pydantic parsing with declarative Heading metadata and opt-in constraints
 
-  The shared parser and renderer infrastructure that every domain's schema besides ADR itself is built on, including the req, gol, and sysrs schemas this document depends on.
+  The shared parser and renderer infrastructure that every domain's schema is built on, including the req, gol, and sysrs schemas this document depends on.
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0: Consolidate whole-body update and status-change tools into generic type-dispatched tools
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0: Consolidate whole-body update and status-change tools into generic type-dispatched tools
 
   Fixes the convention this document's own regeneration workflow relies on: whole-body and line-range updates and status changes go through the generic update and set_status tools with an explicit type parameter, not per-domain tools.
 
-- ADR ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose list resources as paged MCP tools, not resources
+- DEC ec9f5262-9912-49d0-903f-fcfb54f28c13: Expose list resources as paged MCP tools, not resources
 
   Fixes how an agent discovers existing cross-reference candidates before drafting or refreshing a sysrs document like this one, rather than reading an unbounded resource.
 
-- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based REQ document reads as a tool (get_req), not a resource
+- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614: Expose id-based REQ document reads as a tool (get_req), not a resource
 
   Fixes the precedent every later domain, including sysrs itself, follows for id-based reads: a get_&lt;d&gt; tool, not a resource -- the same precedent this document's own get_sysrs follows.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in `.specmgr` with feature-driven work units
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e: Organize development artifacts in `.specmgr` with feature-driven work units
 
   Fixes the .specmgr/feat/feat-NNN-slug/README.md convention this very specification was produced under, feat-84-specmgr-sysrs, distinct from the published, generated documentation under docs/.
 
@@ -79,8 +79,8 @@ Assumptions to take into account when allocating and deriving lower-level requir
 
 Dependencies:
 
-- The twelve flat-file whole-body domains and the feat domain depend on the cross-cutting general package's generic update, set_status, set_classification, and delete tools for their non-create mutation operations -- they do not each define their own equivalents.
-- Every domain except adr depends on the shared generic markdown parser and renderer infrastructure for its schema.
+- The thirteen flat-file whole-body domains and the feat domain depend on the cross-cutting general package's generic update, set_status, set_classification, and delete tools for their non-create mutation operations -- they do not each define their own equivalents.
+- Every domain depends on the shared generic markdown parser and renderer infrastructure for its schema.
 
 ## System Overview
 
@@ -92,7 +92,7 @@ biz.dfch.SpecMgr's internal elements are: the MCP server process, the optional C
 flowchart LR
   AGENT[AI agent / MCP client] -->|MCP: tools, resources, prompts| SERVER[specmgr MCP server]
   HUMAN[Human maintainer] -->|direct file edit| FS[(Domain .md files on disk)]
-  HUMAN -->|CLI: docs, adr-toc, ...| CLI[specmgr CLI]
+  HUMAN -->|CLI: docs, mcp-docs, ...| CLI[specmgr CLI]
   SERVER --> DOMAINS[14 domain packages + general]
   DOMAINS <--> FS
   CLI --> FS
@@ -100,10 +100,10 @@ flowchart LR
 
 ### System Functions
 
-- Per-domain CRUD and validation: each of the fourteen document-type domains provides create, read (by id, and a paged list), and validate operations for its own schema-defined document type, plus domain-specific mutation tools where the domain warrants them, e.g. ADR's update_section and option tools, or FEAT's set_feat_id.
-- Generic cross-domain dispatch: the general package's update, set_status, set_classification, and delete tools provide whole-body/line-range update, status change, classification change, and deletion uniformly across the thirteen whole-body domains, and adr as a fourteenth for set_status, each taking an explicit type parameter rather than requiring a dedicated per-domain tool.
+- Per-domain CRUD and validation: each of the fourteen document-type domains provides create, read (by id, and a paged list), and validate operations for its own schema-defined document type, plus domain-specific mutation tools where the domain warrants them, e.g. FEAT's set_feat_id.
+- Generic cross-domain dispatch: the general package's update, set_status, set_classification, and delete tools provide whole-body/line-range update, status change, classification change, and deletion uniformly across the fourteen whole-body domains, each taking an explicit type parameter rather than requiring a dedicated per-domain tool.
 - Cross-cutting utilities: mdformat, which formats markdown while preserving frontmatter, and shared resources (version, iso25010, dtais, rasci) support every domain without being specific to any one of them.
-- Documentation generation: the CLI's docs, adr-toc, mcp-docs, and unused-code commands regenerate the project's own published documentation and dead-code reports from source.
+- Documentation generation: the CLI's docs, mcp-docs, and unused-code commands regenerate the project's own published documentation and dead-code reports from source.
 
 ### User Characteristics
 
@@ -120,7 +120,7 @@ A new document-type domain is added by creating a new top-level package followin
 
 - REQ 678319da-f8e6-4f65-8f98-1096024012af: Architecture Decision Record Document Management
 
-  Covers the adr domain's create, read, update-frontmatter, update-section, option-management, status-change, and validate operations for MADR-style decision records.
+  Covers the former decision-record domain's create, read, update-frontmatter, update-section, option-management, status-change, and validate operations for MADR-style decision records; the requirement is rejected -- the artifact type was removed per GitHub issue #46 and its decision records were converted to DEC documents.
 
 - REQ 64065cad-bb84-45c4-9e18-b2a8c5ce6865: Requirement Document Management
 
@@ -191,8 +191,7 @@ Because this specification is retrospective, it also omits several optional sect
 
 ## Definitions and Acronyms
 
-- ADR -- Architecture Decision Record: a MADR-style decision record, deprecated in favor of DEC for new decisions but still actively managed for the existing accepted ADRs.
-- DEC -- Decision: a general, non-architecture-specific MADR-style decision record.
+- DEC -- Decision: a MADR-style decision record, for decisions in general (architecture-specific or not).
 - FEAT -- Feature: a .specmgr/feat/&lt;id&gt;/README.md feature-folder plan-and-progress document, such as the one that produced this specification.
 - GOL -- Goal: a high-level business goal document that sits above individual requirements.
 - MCP -- Model Context Protocol: the protocol this project's server exposes tools, resources, and prompts over.
@@ -210,10 +209,14 @@ Because this specification is retrospective, it also omits several optional sect
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+### 2026-11-07 07:45:00.000Z - Artifact-type-removal prose pass (GitHub issue #46)
+
+The retired decision-record artifact type is scrubbed from this document's prose: the System Purpose artifact list drops it, the System Scope domain enumeration now names `set` where it previously listed the retired domain, the Decisions note and the Assumptions and Dependencies drop the domain-exception wording, the System Context CLI label and the System Functions CLI list lose the removed TOC command, the System Functions mutation-tool example and dispatch wording use the post-removal domain set, the former decision-record requirement's note records its rejection per issue #46, the Definitions entries drop the retired type and reword DEC's, and the Created entry's decision-count wording now says "decisions". The eight `## Decisions` bullets are unchanged (DEC tags).
+
 ### 2026-10-30 13:07:50.664Z - Corpus domain-count refresh for the txt addition
 
 feat-229-txt added `txt` as the 13th whole-body / 14th document-type domain, so the stale domain counts in System Scope, Goals, System Context (prose and diagram), System Functions, and Assumptions and Dependencies were refreshed per the feat-84 regeneration checklist, and the obsolete point-in-time snapshot appendix was removed in the same pass.
 
 ### 2026-09-03 00:00:00.000Z - Created
 
-Initial retrospective System Requirements Specification drafted from feat-84-specmgr-sysrs, GitHub issue #84, aggregating the two GOL and fourteen REQ documents created for this purpose plus eight already-accepted architecturally significant ADRs in the Decisions section; only Functional Suitability and Maintainability have explicit REQ coverage as of this writing, per the documented gap in More Information above.
+Initial retrospective System Requirements Specification drafted from feat-84-specmgr-sysrs, GitHub issue #84, aggregating the two GOL and fourteen REQ documents created for this purpose plus eight already-accepted architecturally significant decisions in the Decisions section; only Functional Suitability and Maintainability have explicit REQ coverage as of this writing, per the documented gap in More Information above.

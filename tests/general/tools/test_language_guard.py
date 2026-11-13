@@ -15,13 +15,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Tests for the generic tools' write-side ``language`` guard (feat-197-i18n Phase 120, ADR 38efdb66 items 2/6/10).
+"""Tests for the generic tools' write-side ``language`` guard (feat-197-i18n Phase 120, DEC 38efdb66 items 2/6/10).
 
 Pins the rejection/dispatch matrix: the generic ``update``/``edit``/
 ``set_status``/``set_classification``/``delete`` tools gained an optional
 ``language`` parameter that Phase 120 enabled for the pilot domain ``dec``
 and Phase 125 for the remaining ten i18n-eligible domains (every whole-body
-domain except ``feat``); ``feat``/``adr`` permanently reject a non-default
+domain except ``feat``); ``feat`` permanently rejects a non-default
 ``language`` with an actionable ``ValueError`` before any filesystem access,
 while an omitted/``"en"`` language dispatches exactly as before (ACC-013 for
 the write tools, ACC-002/ACC-015 surface checks, REQ-013 surface check).
@@ -29,7 +29,7 @@ the write tools, ACC-002/ACC-015 surface checks, REQ-013 surface check).
 Phase 125 edit history of this module (the "not yet supported" set shrank to
 nothing): the pilot-only pin on ``LANGUAGE_AWARE_DOMAINS`` became the
 thirteen-domain pin; the per-type "temporarily rejected" matrix became the
-permanent ``feat``/``adr`` matrix plus a defensive unknown-type fallback test;
+permanent ``feat`` matrix plus a defensive unknown-type fallback test;
 the dec-only table-less/dispatch tests were generalized over every
 language-aware type.
 """
@@ -43,13 +43,11 @@ from collections.abc import Callable
 from typing import Any
 from unittest import mock
 
-from biz.dfch.specmgr.adr.tools.get_adr import get_adr
-from biz.dfch.specmgr.adr.tools.list_adr import list_adr
 from biz.dfch.specmgr.feat.tools.create_feat import create_feat
 from biz.dfch.specmgr.feat.tools.get_feat import get_feat
 from biz.dfch.specmgr.feat.tools.list_feat import list_feat
 from biz.dfch.specmgr.feat.tools.set_feat_id import set_feat_id
-from biz.dfch.specmgr.general.tools._domains import ADR, ALL_DOMAINS, FEAT, WHOLE_BODY_DOMAINS
+from biz.dfch.specmgr.general.tools._domains import ALL_DOMAINS, FEAT, WHOLE_BODY_DOMAINS
 from biz.dfch.specmgr.general.tools._language_guard import LANGUAGE_AWARE_DOMAINS, guard_language
 from biz.dfch.specmgr.general.tools.delete import delete
 from biz.dfch.specmgr.general.tools.edit import edit
@@ -120,7 +118,7 @@ _TOOLS: list[tuple[str, Callable[..., Any], Any, tuple[str, ...], Callable[..., 
 _DEFAULT_ADAPTER_ARGS: dict[str, Callable[[str], tuple[Any, ...]]] = {
     "update": lambda i: (i, "# T\n", None, None),
     "edit": lambda i: (i, "a", "b", False),
-    "set_status": lambda i: (i, None, None),
+    "set_status": lambda i: (i, None),
     "set_classification": lambda i: (i, "x"),
     "delete": lambda i: (i,),
 }
@@ -148,16 +146,15 @@ class TestGuardLanguage(unittest.TestCase):
     """Unit tests of ``guard_language`` itself."""
 
     def test_language_aware_domains_are_the_thirteen_i18n_eligible_domains(self):
-        """Phase 125: every whole-body domain except ``feat``, in canonical order (``feat``/``adr`` excluded)."""
+        """Phase 125: every whole-body domain except ``feat``, in canonical order (``feat`` excluded)."""
         self.assertEqual(LANGUAGE_AWARE_DOMAINS, tuple(d for d in WHOLE_BODY_DOMAINS if d != FEAT))
         self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 13)
         self.assertEqual(LANGUAGE_AWARE_DOMAINS[0], "req")
         self.assertEqual(LANGUAGE_AWARE_DOMAINS[-1], "set")
         self.assertNotIn(FEAT, LANGUAGE_AWARE_DOMAINS)
-        self.assertNotIn(ADR, LANGUAGE_AWARE_DOMAINS)
 
     def test_default_language_always_passes_for_every_type(self):
-        """'en' is the byte-identical flat path for every type, feat and adr included."""
+        """'en' is the byte-identical flat path for every type, feat included."""
         for type_ in ALL_DOMAINS:
             with self.subTest(type=type_):
                 guard_language(type_, "en")
@@ -186,9 +183,9 @@ class TestGuardLanguage(unittest.TestCase):
                     self.assertIn(repr(value), str(ctx.exception))
                     self.assertIn("ISO 639-1-shaped", str(ctx.exception))
 
-    def test_feat_and_adr_rejections_are_permanent_in_wording(self):
-        """feat/adr: 'always English' wording, never 'not yet'."""
-        for type_ in (FEAT, ADR):
+    def test_feat_rejection_is_permanent_in_wording(self):
+        """feat: 'always English' wording, never 'not yet'."""
+        for type_ in (FEAT,):
             with self.subTest(type=type_):
                 with self.assertRaises(ValueError) as ctx:
                     guard_language(type_, "de")
@@ -205,7 +202,7 @@ class TestGuardLanguage(unittest.TestCase):
                 guard_language(type_, "de")
 
     def test_unknown_type_hits_the_defensive_fallback(self):
-        """The remaining non-permanent branch is a defensive fallback for a type that is neither aware nor feat/adr."""
+        """The remaining non-permanent branch is a defensive fallback for a type that is neither aware nor feat."""
         with self.assertRaises(ValueError) as ctx:
             guard_language("zz", "de")
         message = str(ctx.exception)
@@ -217,8 +214,8 @@ class TestGuardLanguage(unittest.TestCase):
 class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest.TestCase):
     """The permanent/temporary rejection matrix over every generic write tool (ACC-013, ACC-002, ACC-015)."""
 
-    def test_feat_and_adr_reject_a_non_default_language_with_the_permanent_wording(self):
-        """For every tool x {feat, adr} (where the tool accepts it): a non-default language is a ValueError with the
+    def test_feat_rejects_a_non_default_language_with_the_permanent_wording(self):
+        """For every tool x feat (where the tool accepts it): a non-default language is a ValueError with the
         permanent 'always English' wording, raised before any adapter (== any filesystem access) runs."""
         for name, _tool, module, types, make_call in _TOOLS:
             with mock.patch.object(module, "_ADAPTERS", _booby_trapped_adapters(types)):
@@ -226,7 +223,7 @@ class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest
                     if type_ in LANGUAGE_AWARE_DOMAINS:
                         continue
                     with self.subTest(tool=name, type=type_):
-                        self.assertIn(type_, (FEAT, ADR))
+                        self.assertEqual(type_, FEAT)
                         with self.assertRaises(ValueError) as ctx:
                             make_call(type_, _id_for(type_), language="de")()
                         message = str(ctx.exception)
@@ -275,7 +272,7 @@ class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest
                                 pass
                             expected = _DEFAULT_ADAPTER_ARGS[name](_id_for(type_))
                             if name == "set_status":
-                                expected = (expected[0], _status_for(type_), None)
+                                expected = (expected[0], _status_for(type_))
                             adapters[type_].assert_called_once_with(*expected)
 
     def test_non_default_language_dispatches_to_the_language_adapter_with_the_language(self):
@@ -314,15 +311,15 @@ class TestGenericToolsRejectNonDefaultLanguageBeforeAnyFilesystemAccess(unittest
 
 
 class TestSurfacesThatMustStayLanguageFree(unittest.TestCase):
-    """Surface checks: tools that must NOT gain a ``language`` parameter (ADR items 5/10, REQ-002/009/013)."""
+    """Surface checks: tools that must NOT gain a ``language`` parameter (REQ-002/009/013)."""
 
     def test_validate_stays_en_only(self):
-        """The generic disk-free validate tool takes no language parameter (ADR item 5)."""
+        """The generic disk-free validate tool takes no language parameter."""
         self.assertNotIn("language", inspect.signature(validate).parameters)
 
-    def test_feat_and_adr_tool_surfaces_are_unchanged(self):
-        """No feat/adr-specific tool gained a language parameter (ACC-002/ACC-015, Phase 150 extends this)."""
-        for fn in (create_feat, get_feat, list_feat, set_feat_id, get_adr, list_adr):
+    def test_feat_tool_surfaces_are_unchanged(self):
+        """No feat-specific tool gained a language parameter (ACC-002/ACC-015, Phase 150 extends this)."""
+        for fn in (create_feat, get_feat, list_feat, set_feat_id):
             with self.subTest(tool=fn.__name__):
                 self.assertNotIn("language", inspect.signature(fn).parameters)
 

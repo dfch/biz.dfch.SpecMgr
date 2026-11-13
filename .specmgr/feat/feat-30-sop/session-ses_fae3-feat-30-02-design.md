@@ -36,7 +36,7 @@ _Thinking:_
 845: - **2026-08-29**: `sop` is the first domain built with **no**
 846:   per-domain `update_sop`/`set_status_sop` tools at all — it dispatches
 847:   directly into the generic `update`/`set_status` tools from its
-848:   initial build, per ADR 36905d5b (user decision, following the
+848:   initial build, per DEC 36905d5b (user decision, following the
 849:   convention `AGENTS.md` already reserves for future domains).
 850: - **2026-08-30**: The RASCI role-definitions guidance is a cross-cutting
 851:   `specmgr://rasci` resource under `general/resources/` (REQ-011), not a
@@ -605,7 +605,7 @@ Good, that confirms the plan's claim precisely (line 207 of server.py). Let me c
 202: e369ee2e-3353-4f92-991c-6367d76d832e.
 203: 
 204: Modules are grouped domain-first
-205: (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+205: (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 206: document-type domain"): each document
 207: domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and later ``ac``) is a
 208: top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
@@ -879,7 +879,7 @@ _Thinking:_
 86:                         characteristics (and sub-characteristics), each with a description.
 87: 
 88: REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-89: through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+89: through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 90: UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 91: reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 92: resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -888,18 +888,18 @@ _Thinking:_
 95: through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 96: either, for the same reason -- id-based reads go through the ``get_prb`` tool
 97: only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-98: ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+98: ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 99: GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 100: id-based reads go through the ``get_gol`` tool only, and there is also no
 101:  ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
-102:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+102:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
 103:  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
 104:  through the ``get_rsk`` tool only, and there never was such a resource to
 105:  remove in the first place. DEC has no
 106:  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
 107:  through the ``get_dec`` tool only, and there is also no
 108:  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
-109:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+109:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 110: 
 111: Tools
 112: -----

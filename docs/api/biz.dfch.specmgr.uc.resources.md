@@ -22,9 +22,9 @@ instance::
 
     from biz.dfch.specmgr.uc import resources  # noqa: F401 (side-effects only)
 
-Unlike ADR, UC has no by-id single-document *resource* --
+UC has no by-id single-document *resource* --
 ``specmgr://uc/{id}`` was never added; ``get_uc`` (``uc.tools.get_uc``) is
-the id-based read path instead, mirroring REQ's own precedent (ADR
+the id-based read path instead, mirroring REQ's own precedent (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614). The former listing resource
 (``uc_list``, ``specmgr://uc/list``, Task 3.1.6) was replaced the same way
 by the ``list_uc`` ``@mcp.tool()`` (``uc.tools.list_uc``), so that paging
@@ -34,5 +34,5 @@ The former schema resource (``uc_schema``, ``specmgr://uc/schema``) was
 converted the same way into the ``get_uc_schema`` ``@mcp.tool()``
 (``uc.tools.get_uc_schema``), so that the generated JSON Schema is
 discoverable from the always-in-context tool surface instead of the
-resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+resource layer -- see DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 (feat-189 Phase 105).
