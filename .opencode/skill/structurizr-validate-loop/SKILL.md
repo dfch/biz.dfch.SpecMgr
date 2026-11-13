@@ -42,7 +42,7 @@ Every DSL result runs through this loop before it is returned:
 
 A DSL result that was only parsed, and not validated to `OK`, is NOT a
 pass — a parsed-only or reported-only result is not a pass. This is the
-same rule as the repo's own PlantUML validation chain (ADR
+same rule as the repo's own PlantUML validation chain (DEC
 7a626b12-b189-4561-a51d-ffb2e9e133b4): a structure-only check is not a
 pass.
 

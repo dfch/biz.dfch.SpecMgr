@@ -131,7 +131,7 @@ Separately, and outside this feature's own scope: `.specmgr/conventions.md`'s `#
 
 ### Related Decisions
 
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0: establishes that a new document domain adds one dispatch entry to each generic tool (`update`/`set_status`/etc.) rather than a new per-domain tool; this feature applies the same anti-duplication spirit to prose, replacing hand-maintained domain counts with the domain list or dispatch table that already exists in code.
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0: establishes that a new document domain adds one dispatch entry to each generic tool (`update`/`set_status`/etc.) rather than a new per-domain tool; this feature applies the same anti-duplication spirit to prose, replacing hand-maintained domain counts with the domain list or dispatch table that already exists in code.
 
 ### Task List
 

@@ -53,7 +53,7 @@ shortcut around it. Since feat-81-83-validation Phase 2, ``validate_feat`` is re
 the generic ``validate`` tool (``type="feat"``), which never raises for a content-validation
 failure -- it returns ``{valid: False, errors: [{message: str}]}`` instead, so the two
 ``validate``-tool tests below assert against ``result.errors[0].message`` rather than a raised
-exception. Since feat-204-create-error Phase 110 (case 5 of the ADR 519d1206 non-raising chain),
+exception. Since feat-204-create-error Phase 110 (case 5 of the DEC 519d1206 non-raising chain),
 ``create_feat`` never raises for a content-validation failure either -- the same non-raising
 ``ValidateResult`` shape, capped exactly as ``validate``'s is -- so the two ``create_feat``-tool
 tests below assert against ``result.errors[0].message`` as well.

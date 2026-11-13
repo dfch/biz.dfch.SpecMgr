@@ -17,7 +17,7 @@
 
 """The generic ``set_status`` tool's own non-raising, structured result for its second, post-load
 failure mode: a status transition the dispatched domain's own state machine does not allow
-(feat-108-fsm, GitHub issue #108 -- case 6 of the ADR
+(feat-108-fsm, GitHub issue #108 -- case 6 of the DEC
 519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result workaround chain).
 
 This is a distinct, purpose-built model for ``set_status``'s post-load/pre-write transition
@@ -31,9 +31,8 @@ domain's full flat vocabulary). ``InvalidStatusTransitionResult`` is the second 
 document has been loaded, so the result is current-state-relative -- ``allowed_values`` holds
 exactly the target statuses the domain's machine allows from ``from_status`` (sorted; an empty
 list marks a terminal current state), never the domain's full closed vocabulary. Every other
-``set_status`` failure mode (unknown id, path-injection/wrong-shape id, ``superseded_by``
-misuse on a non-``adr`` type) continues to raise unchanged, and the ``adr`` adapter never
-produces this result (ADR is excluded from the state machine, REQ-006).
+``set_status`` failure mode (unknown id, path-injection/wrong-shape id) continues to raise
+unchanged.
 """
 
 from __future__ import annotations

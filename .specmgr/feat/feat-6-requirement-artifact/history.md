@@ -564,7 +564,7 @@ neither tool ever renders a body back out from a parsed model).
 calls in quick succession — e.g. a `create_req` immediately followed by
 an `update_req` in the same test — get distinguishably different
 `created`/`updated` values without an artificial `time.sleep()`. Still
-ISO 8601 per ADR 23a14195, which explicitly permits fractional seconds.
+ISO 8601 per DEC 23a14195, which explicitly permits fractional seconds.
 Registered in `req/tools/__init__.py`, `req/__init__.py`'s docstring, and
 `server.py`'s tool-list docstring line.
 Tests: `tests/req/tools/test_update_req.py` (5 tests: preserves
@@ -593,7 +593,7 @@ since `ensure_req_base_dir()` is only called after validation succeeds).
 The entire frontmatter is code-generated: `id=str(uuid.uuid4())`,
 `type="req"`, `status="draft"` (always), `created=updated=` a single shared
 `datetime.now().isoformat(timespec="microseconds")` timestamp (ISO 8601,
-per ADR 23a14195, with fractional seconds so two calls in quick succession
+per DEC 23a14195, with fractional seconds so two calls in quick succession
 -- e.g. `create_req` immediately followed by `update_req`, Task 3.13 -- get
 distinguishable timestamps without an artificial test sleep),
 `version=models.md.CURRENT_SCHEMA_VERSION` (already

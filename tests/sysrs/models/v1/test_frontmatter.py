@@ -49,7 +49,7 @@ class TestSysrsFrontmatter(unittest.TestCase):
         self.assertEqual(sut.type, "sysrs")
 
     def test_type_rejects_other_document_types(self) -> None:
-        for other in ("req", "gol", "dec", "adr", "rsk", "sop", "vcr"):
+        for other in ("req", "gol", "dec", "rsk", "sop", "vcr"):
             with self.subTest(other=other):
                 with self.assertRaises(ValidationError):
                     SysrsFrontmatter(type=other)

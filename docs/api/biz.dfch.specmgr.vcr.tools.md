@@ -11,13 +11,13 @@ build-guaranteed data file rather than anything on the caller's filesystem
 (Task 2.1).
 ``get_vcr_schema`` returns the domain's generated JSON Schema (2020-12
 dialect) as raw text, reading the same packaged, build-guaranteed data
-file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://vcr/schema`` resource).
 ``get_vcr`` reads, parses, and returns a full verification case
 record document by id -- the sole id-based read path for VCR (there is no
-``specmgr://vcr/{id}`` resource, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+``specmgr://vcr/{id}`` resource, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 ``list_vcr`` returns one page of id/title/status/ref summaries of every
-verification case record, shipped as a paged tool from day one (ADR
+verification case record, shipped as a paged tool from day one (DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_vcr`` assigns a fresh id,
 builds the frontmatter itself, and writes a new document (body markdown
 only, no frontmatter) under the verification case record base directory

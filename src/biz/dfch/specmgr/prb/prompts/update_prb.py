@@ -30,8 +30,8 @@ printing each line's 1-based body-line number, ready to feed into
 below). There is no ``specmgr://prb/{id}`` resource to point at -- id-based
 reads always go through the ``get_prb`` tool only.
 
-Unlike ``adr.prompts.update_adr``, there is no ``update_frontmatter``/
-``option_*`` equivalent here: PRB's lifecycle surface is deliberately small
+There are no fine-grained frontmatter/section mutation tools for
+this domain: PRB's lifecycle surface is deliberately small
 -- a whole-body or line-range replace (the generic ``update`` tool with
 ``type="prb"``) plus a single, dedicated status-change path (the generic
 ``set_status`` tool with ``type="prb"``) -- mirroring

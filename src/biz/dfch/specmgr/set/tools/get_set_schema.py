@@ -29,9 +29,9 @@ pre-commit ``specmgr-schema-set-package`` hook/CI step -- the same
 ``--output-dir``, so no bespoke copy logic exists in
 ``commands/schema.py``.
 
-Follows the ``get_vcr_schema``-style precedent (feat-189 Phase 105, ADR
+Follows the ``get_vcr_schema``-style precedent (feat-189 Phase 105, DEC
 112b6498-078b-4a59-88b8-8ffb7a5041b3): SET ships the schema as a tool from
-day one, since the domain was built after that ADR was accepted -- there
+day one, since the domain was built after that DEC was accepted -- there
 is no removed ``specmgr://set/schema`` resource in its history. The
 raw-text return deliberately follows the sibling
 ``get_set_template``/``get_set_example`` tools' own convention.

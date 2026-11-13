@@ -18,7 +18,7 @@
 """Body-model tests for ``set`` (feat-173-req-iso29148-level-set Phase 180).
 
 Covers the opaque ``## Description`` (any markdown, verbatim round-trip), the
-mandatory mixed-tag ``## Items`` list (the 12 reference tags in any mix,
+mandatory mixed-tag ``## Items`` list (the 11 reference tags in any mix,
 per-bullet notes, the duplicate ``(tag, id)`` guard), the binding section
 order (H1 -> Description -> Items, engine trailing-completeness for any
 further H2), and the ``min_length=1`` items rule.
@@ -96,17 +96,16 @@ class TestItems(unittest.TestCase):
             "- REQ 00000000-0000-4000-8000-000000000005: R\n"
             "- RSK 00000000-0000-4000-8000-000000000006: K\n"
             "- DEC 00000000-0000-4000-8000-000000000007: D\n"
-            "- ADR 00000000-0000-4000-8000-000000000008: A\n"
-            "- VCR 00000000-0000-4000-8000-000000000009: V\n"
-            "- SYSRS 00000000-0000-4000-8000-000000000010: S\n"
-            "- TXT 00000000-0000-4000-8000-000000000011: T\n"
+            "- VCR 00000000-0000-4000-8000-000000000008: V\n"
+            "- SYSRS 00000000-0000-4000-8000-000000000009: S\n"
+            "- TXT 00000000-0000-4000-8000-000000000010: T\n"
             "- FEAT feat-42-thermal-management: F\n"
         )
         sut = Set.from_text(_doc(items=items))
 
-        self.assertEqual(len(sut.items.items), 12)
+        self.assertEqual(len(sut.items.items), 11)
         tags = [item.text.split()[0] for item in sut.items.items]
-        self.assertEqual(tags, ["GOL", "PRB", "QA", "UC", "REQ", "RSK", "DEC", "ADR", "VCR", "SYSRS", "TXT", "FEAT"])
+        self.assertEqual(tags, ["GOL", "PRB", "QA", "UC", "REQ", "RSK", "DEC", "VCR", "SYSRS", "TXT", "FEAT"])
 
     def test_feat_bare_number_id(self) -> None:
         sut = Set.from_text(_doc(items="- FEAT feat-42: F"))
@@ -130,7 +129,7 @@ class TestItems(unittest.TestCase):
         self.assertIsNone(sut.items.items[1].notes)
 
     def test_unknown_tag_is_rejected(self) -> None:
-        # SOP is a whole-body domain but not one of the 12 reference tags
+        # SOP is a whole-body domain but not one of the 11 reference tags
         with self.assertRaises(ValidationError):
             Set.from_text(_doc(items="- SOP 00000000-0000-4000-8000-000000000001: S"))
 

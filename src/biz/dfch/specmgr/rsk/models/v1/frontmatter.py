@@ -50,7 +50,7 @@ from biz.dfch.specmgr.models.md._util import default_if_blank
 #: Fixed, closed set of accepted ``status`` values for risks -- a purpose-fit
 #: risk lifecycle (identified/monitored, treatment in progress, residual risk
 #: accepted, event materialized, resolved/expired, or dropped from the
-#: register), rather than reusing REQ's larger, ADR-like set (
+#: register), rather than reusing REQ's larger set (
 #: `.specmgr/feat/feat-15-add-artifact-type-risk/README.md` Design Notes).
 _ALLOWED_STATUSES = frozenset(
     {

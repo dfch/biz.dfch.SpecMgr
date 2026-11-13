@@ -369,7 +369,7 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 211:   ADR has no whole-body replace by design and is therefore not a `update`
 212:   type; its `set_status` behavior moves to the generic tool unchanged.
 213: - Re-introducing `specmgr://<d>/{id}` resources for the seven domains —
-214:   rejected in the planning session on ADR ddfb1109's empirical reliability
+214:   rejected in the planning session on DEC ddfb1109's empirical reliability
 215:   finding (agents invoke tools more reliably than parameterized resources);
 216:   `get_<d>(raw=True)` serves the same need (recorded in the Phase-1 ADR).
 217: - Consolidation of `create_*`, `get_*` (beyond the `raw` parameter),
@@ -387,9 +387,9 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 229: 
 230: ### Dependencies
 231: 
-232: - Depends on: ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-based reads are
+232: - Depends on: DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (id-based reads are
 233:   tool-first — the basis for `raw` on `get_<d>` instead of `/{id}`
-234:   resources); ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
+234:   resources); DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first
 235:   hierarchy — the generic tools live in the cross-cutting `general/`
 236:   package, reusing each domain's private helpers); ADR
 237:   3bf0326f-065a-424c-a2b9-87e5d5bcfa99 (the `mcp` singleton lives in
@@ -398,7 +398,7 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 240:   what `update` deliberately does *not* extend to ADR); ADR
 241:   898bfcd0-85f9-462f-93a8-747bda4166c8 (ADRs are authored/edited only
 242:   through the MCP structured tools — Phase 1 must use `specmgr_create_adr`);
-243:   ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem is the sole source of
+243:   DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3 (filesystem is the sole source of
 244:   truth — the splice re-reads the on-disk body and the validate-before-write
 245:   invariant is preserved); the existing `general/tools/_doc_paths.py`/
 246:   `_packaged_data.py` infrastructure and each domain's `_paths`/`_io`/
@@ -579,7 +579,7 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 421: #### Phase 1: ADR
 422: 
 423: - [ ] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
-424:   tool (never hand-write the file — ADR 898bfcd0), status `accepted`, title
+424:   tool (never hand-write the file — DEC 898bfcd0), status `accepted`, title
 425:   "Consolidate whole-body update and status-change tools into generic type-
 426:   dispatched tools": Context (15 near-duplicate mutation tools; LLM clients
 427:   see 15 entries for 2 conceptual operations; each new domain would add
@@ -596,7 +596,7 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 438:   `superseded_by` special case; the `update` line-range contract: 1-based
 439:   inclusive `begin`/`end`, `N+1` EOF sentinel, splice-then-validate-whole,
 440:   frontmatter never addressable; `get_<d>(raw=True)` as the line-number
-441:   source — tool-first per ADR ddfb1109, re-introducing `specmgr://<d>/{id}`
+441:   source — tool-first per DEC ddfb1109, re-introducing `specmgr://<d>/{id}`
 442:   resources was considered and rejected; future domains add one dispatch
 443:   entry per generic tool, not new tools) — depends on: none — status: not-
 444:   started
@@ -963,7 +963,7 @@ Found it — the folder is `feat-22-consolidate-mutation-tools`. Reading the ful
 805:   faster, safer targeted updates).
 806: - **2026-08-26**: Line numbers are served by `get_<d>(raw=True)` (shared
 807:   body-extraction helper with the splice) rather than re-introducing
-808:   `specmgr://<d>/{id}` resources — ADR ddfb1109's empirical finding that
+808:   `specmgr://<d>/{id}` resources — DEC ddfb1109's empirical finding that
 809:   agents invoke tools more reliably than parameterized resources, plus the
 810:   maintenance cost of seven new resource templates, decided it.
 811: 
@@ -1391,7 +1391,7 @@ Phase 1 prompt to phase-implementer — must be precise and self-contained:
 - Record the new ADR's id (in the Recent Updates entry / Decisions Made — the task says "record the new ADR's id")
 - Do NOT commit, do NOT proceed to phase 2, stop and return a summary
 - ADR content requirements: use specmgr_create_adr with status accepted; the body content is specified in Task 1.1 (context, decision drivers, options 1–3, decision outcome is option 1, consequences). The ADR should also include a "Pros and Cons of the Options" section — the create_adr tool has an `options` collection that backs the derived "## Pros and Cons of the Options". The plan's Task 1.1 enumerates three considered options; the implementer should fill in the options collection with pros/cons. Let's include this instruction.
-- Note: per ADR 898bfcd0, never write the file by hand.
+- Note: per DEC 898bfcd0, never write the file by hand.
 - Also, Task 1.2: validate with specmgr_validate_adr, run `uv run --frozen specmgr adr-toc`, confirm the ADR appears in docs/adr/README.md.
 - Frontmatter: decision_makers? The plan doesn't specify. Keep it minimal: status accepted, date 2026-08-27 (today). In fact, per MADR, date is the last-updated date. Today is 2026-08-27.
 - The phase gate says "no src/ changes expected" — the only file changes should be docs/adr/\*.md (new ADR), docs/adr/README.md (regenerated toc), and the feature README.md.
@@ -1562,7 +1562,7 @@ Here, delegate Phase 1 to a new phase-implementer subagent. A precise, self-cont
 ```json
 {
   "description": "Implement feat-22 Phase 1 (ADR)",
-  "prompt": "Implement exactly ONE phase of a feature plan, then stop. You are the phase-implementer for **Phase 1: ADR** of feature **feat-22-consolidate-mutation-tools** in the repo at `/home/user/src/biz.dfch.SpecMgr-feat-22` (a git repo, currently clean, on the branch that has planning commit `f9586e6` at its tip).\n\n## Your plan\nRead the full plan first: `/home/user/src/biz.dfch.SpecMgr-feat-22/.specmgr/feat/feat-22-consolidate-mutation-tools/README.md`\nYour phase heading: `#### Phase 1: ADR` (Tasks 1.1, 1.2, 1.3). Read the whole README (Plan, Requirements, Design Notes, phase-end quality gate) for context, but implement ONLY Phase 1.\n\n## Environment facts (verified by the orchestrator — trust these)\n- The `specmgr` MCP server is connected in this environment and its ADR base directory resolves to THIS repo's `docs/adr` (it currently lists 24 ADRs, matching the 24 ADR files in `docs/adr/`). So `specmgr_create_adr` will write the new ADR file into the repo's `docs/adr/` directory.\n- Python tooling: always use `uv run --frozen` (add `--all-extras` if a CLI command fails on missing extras). Working directory for all commands: the repo root.\n- Per ADR 898bfcd0-85f9-462f-93a8-747bda4166c8: ADRs are authored ONLY through the MCP structured tools. **Never hand-write the ADR .md file.**\n\n## Tasks (verbatim from the plan)\n\n- **Task 1.1**: Create the feature's ADR with the `specmgr_create_adr` MCP tool, status `accepted`, title **\"Consolidate whole-body update and status-change tools into generic type-dispatched tools\"**. Required content:\n  - **Context**: 15 near-duplicate mutation tools exist (seven `update_<d>` + seven `set_status_<d>` + ADR `set_status`); LLM clients see 15 entries for 2 conceptual operations; each new domain (e.g. the planned `ac`) would add more duplicates.\n  - **Decision Drivers**: simpler tool surface; no all-directories write-path scan and no per-domain v4-UUID-collision ambiguity (uuid-only id resolution was rejected); the calling client already knows the domain; preserve the filesystem-is-source-of-truth and validate-before-write invariants.\n  - **Considered Options** (three): (1) generic tools with explicit `type` parameter — chosen; (2) uuid-only id resolution scanning all domain directories; (3) keep per-domain tools. Populate the ADR's `options` collection (which renders the derived `## Pros and Cons of the Options` section) with one `### Option` entry per considered option, each with concrete pros/cons content consistent with the drivers above (Option 2's cons: full-directory scan on every write parsing every file, cost growing per domain, UUIDs not guaranteed unique across domains since they are per-domain v4 UUIDs; Option 3's cons: 15 near-duplicate entries in the MCP tool list for 2 conceptual operations, every future domain adds N more tools, LLM clients must pick among duplicates; Option 1's pros: minimal surface, client already knows the domain, one dispatch entry per future domain, preserves all per-domain semantics via verbatim adapter ports; cons: breaking change for 0.x clients calling the removed tools, ADR needs special-casing in `set_status` (`superseded_by`) and is excluded from `update` by design).\n  - **Decision Outcome**: Option 1, with **Consequences**: breaking — 14 per-domain tools removed and ADR `set_status`'s signature gains a required `type` (callers must pass `type=\"adr\"`); ADR is excluded from `update` — its section-level MADR contract (`update_frontmatter`/`update_section`/`option_*`) has no whole-body replace — but included in `set_status` with the `superseded_by` special case; the `update` line-range contract: 1-based inclusive `begin`/`end`, `N+1` EOF sentinel, splice-then-validate-whole, frontmatter never addressable; `get_<d>(raw=True)` as the line-number source — tool-first per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614, re-introducing `specmgr://<d>/{id}` resources was considered and rejected; future domains add one dispatch entry per generic tool, not new tools.\n  - Frontmatter: `status: accepted`, `date: 2026-08-27`.\n- **Task 1.2**: Validate the new ADR with `specmgr_validate_adr`; run `uv run --frozen specmgr adr-toc` (from the repo root) and confirm the ADR appears in `docs/adr/README.md`.\n- **Task 1.3**: Phase-end quality gate — full gate per the plan's Design Notes \"Phase-end quality gate\" section: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen python -m unittest discover -v -s tests -t . -p \"test_*.py\"` (use `--all-extras` on the `uv run` calls if a ModuleNotFoundError for CLI/MCP extras appears). No `src/` changes are expected in this phase, so the docs-drift check covers `specmgr adr-toc` output only: after regenerating, re-run `specmgr adr-toc` a second time and confirm it is a no-op (no further file changes — that is the zero-drift proof; the committed-state comparison happens at commit time, which is NOT your job). Fix any failure and re-run until green — a phase is not done with a red gate.\n  Then update the plan README at `.specmgr/feat/feat-22-consolidate-mutation-tools/README.md`:\n  - frontmatter: `status: planning` → `status: in-progress`, and `updated: 2026-08-27`;\n  - **Current Status**: rewrite to reflect Phase 1 complete / Phases 2–7 not started (as of 2026-08-27);\n  - **Recent Updates**: add a new dated entry `#### Update 2026-08-27 (Phase 1: ADR)` recording: the new ADR's id and title (get the id from the `specmgr_create_adr` result — a UUID), that it is `accepted` and listed in `docs/adr/README.md`, and the gate result; keep the existing planning-session entry below it (do not delete history);\n  - **Decisions Made**: append one bullet recording the new ADR's id (the plan's Related ADRs section anticipates \"its id is recorded in Decisions Made once created\");\n  - flip Task 1.1, 1.2, 1.3 lines to done in place (`- [x]` and `status: done` at the end of each task line, matching how the plan writes status on the task line).\n\n## Hard constraints\n- Do NOT commit anything (no `git add`/`git commit`). The orchestrator commits after verifying.\n- Do NOT start Phase 2 or touch any phase-2+ files (no `general/tools/update.py`, no `src/` changes at all in this phase — the only file changes should be: the new ADR `.md` in `docs/adr/`, the regenerated `docs/adr/README.md`, and the feature README's Progress updates).\n- Do NOT renumber or reword tasks; edit status in place only.\n- If you hit a genuine blocker (e.g. `specmgr_create_adr` writes somewhere unexpected, a gate failure you cannot fix within Phase 1 scope), STOP and report it — do not invent a workaround.\n\n## Report back (your final message)\n1. The new ADR's id (UUID) and on-disk file path.\n2. Evidence for each task: the `specmgr_validate_adr` result, the `specmgr adr-toc` run + confirmation the ADR row is in `docs/adr/README.md` (quote the row), and the no-op second run.\n3. The full quality-gate commands with their pass/fail output summaries (ruff format --check, ruff check, vulture, unittest counts).\n4. `git status --short` and `git diff --stat` of your changes.\n5. Any deviations from the plan and why.",
+  "prompt": "Implement exactly ONE phase of a feature plan, then stop. You are the phase-implementer for **Phase 1: ADR** of feature **feat-22-consolidate-mutation-tools** in the repo at `/home/user/src/biz.dfch.SpecMgr-feat-22` (a git repo, currently clean, on the branch that has planning commit `f9586e6` at its tip).\n\n## Your plan\nRead the full plan first: `/home/user/src/biz.dfch.SpecMgr-feat-22/.specmgr/feat/feat-22-consolidate-mutation-tools/README.md`\nYour phase heading: `#### Phase 1: ADR` (Tasks 1.1, 1.2, 1.3). Read the whole README (Plan, Requirements, Design Notes, phase-end quality gate) for context, but implement ONLY Phase 1.\n\n## Environment facts (verified by the orchestrator — trust these)\n- The `specmgr` MCP server is connected in this environment and its ADR base directory resolves to THIS repo's `docs/adr` (it currently lists 24 ADRs, matching the 24 ADR files in `docs/adr/`). So `specmgr_create_adr` will write the new ADR file into the repo's `docs/adr/` directory.\n- Python tooling: always use `uv run --frozen` (add `--all-extras` if a CLI command fails on missing extras). Working directory for all commands: the repo root.\n- Per DEC 898bfcd0-85f9-462f-93a8-747bda4166c8: ADRs are authored ONLY through the MCP structured tools. **Never hand-write the ADR .md file.**\n\n## Tasks (verbatim from the plan)\n\n- **Task 1.1**: Create the feature's ADR with the `specmgr_create_adr` MCP tool, status `accepted`, title **\"Consolidate whole-body update and status-change tools into generic type-dispatched tools\"**. Required content:\n  - **Context**: 15 near-duplicate mutation tools exist (seven `update_<d>` + seven `set_status_<d>` + ADR `set_status`); LLM clients see 15 entries for 2 conceptual operations; each new domain (e.g. the planned `ac`) would add more duplicates.\n  - **Decision Drivers**: simpler tool surface; no all-directories write-path scan and no per-domain v4-UUID-collision ambiguity (uuid-only id resolution was rejected); the calling client already knows the domain; preserve the filesystem-is-source-of-truth and validate-before-write invariants.\n  - **Considered Options** (three): (1) generic tools with explicit `type` parameter — chosen; (2) uuid-only id resolution scanning all domain directories; (3) keep per-domain tools. Populate the ADR's `options` collection (which renders the derived `## Pros and Cons of the Options` section) with one `### Option` entry per considered option, each with concrete pros/cons content consistent with the drivers above (Option 2's cons: full-directory scan on every write parsing every file, cost growing per domain, UUIDs not guaranteed unique across domains since they are per-domain v4 UUIDs; Option 3's cons: 15 near-duplicate entries in the MCP tool list for 2 conceptual operations, every future domain adds N more tools, LLM clients must pick among duplicates; Option 1's pros: minimal surface, client already knows the domain, one dispatch entry per future domain, preserves all per-domain semantics via verbatim adapter ports; cons: breaking change for 0.x clients calling the removed tools, ADR needs special-casing in `set_status` (`superseded_by`) and is excluded from `update` by design).\n  - **Decision Outcome**: Option 1, with **Consequences**: breaking — 14 per-domain tools removed and ADR `set_status`'s signature gains a required `type` (callers must pass `type=\"adr\"`); ADR is excluded from `update` — its section-level MADR contract (`update_frontmatter`/`update_section`/`option_*`) has no whole-body replace — but included in `set_status` with the `superseded_by` special case; the `update` line-range contract: 1-based inclusive `begin`/`end`, `N+1` EOF sentinel, splice-then-validate-whole, frontmatter never addressable; `get_<d>(raw=True)` as the line-number source — tool-first per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614, re-introducing `specmgr://<d>/{id}` resources was considered and rejected; future domains add one dispatch entry per generic tool, not new tools.\n  - Frontmatter: `status: accepted`, `date: 2026-08-27`.\n- **Task 1.2**: Validate the new ADR with `specmgr_validate_adr`; run `uv run --frozen specmgr adr-toc` (from the repo root) and confirm the ADR appears in `docs/adr/README.md`.\n- **Task 1.3**: Phase-end quality gate — full gate per the plan's Design Notes \"Phase-end quality gate\" section: `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen vulture src/ whitelist.py --min-confidence 60`, `uv run --frozen python -m unittest discover -v -s tests -t . -p \"test_*.py\"` (use `--all-extras` on the `uv run` calls if a ModuleNotFoundError for CLI/MCP extras appears). No `src/` changes are expected in this phase, so the docs-drift check covers `specmgr adr-toc` output only: after regenerating, re-run `specmgr adr-toc` a second time and confirm it is a no-op (no further file changes — that is the zero-drift proof; the committed-state comparison happens at commit time, which is NOT your job). Fix any failure and re-run until green — a phase is not done with a red gate.\n  Then update the plan README at `.specmgr/feat/feat-22-consolidate-mutation-tools/README.md`:\n  - frontmatter: `status: planning` → `status: in-progress`, and `updated: 2026-08-27`;\n  - **Current Status**: rewrite to reflect Phase 1 complete / Phases 2–7 not started (as of 2026-08-27);\n  - **Recent Updates**: add a new dated entry `#### Update 2026-08-27 (Phase 1: ADR)` recording: the new ADR's id and title (get the id from the `specmgr_create_adr` result — a UUID), that it is `accepted` and listed in `docs/adr/README.md`, and the gate result; keep the existing planning-session entry below it (do not delete history);\n  - **Decisions Made**: append one bullet recording the new ADR's id (the plan's Related ADRs section anticipates \"its id is recorded in Decisions Made once created\");\n  - flip Task 1.1, 1.2, 1.3 lines to done in place (`- [x]` and `status: done` at the end of each task line, matching how the plan writes status on the task line).\n\n## Hard constraints\n- Do NOT commit anything (no `git add`/`git commit`). The orchestrator commits after verifying.\n- Do NOT start Phase 2 or touch any phase-2+ files (no `general/tools/update.py`, no `src/` changes at all in this phase — the only file changes should be: the new ADR `.md` in `docs/adr/`, the regenerated `docs/adr/README.md`, and the feature README's Progress updates).\n- Do NOT renumber or reword tasks; edit status in place only.\n- If you hit a genuine blocker (e.g. `specmgr_create_adr` writes somewhere unexpected, a gate failure you cannot fix within Phase 1 scope), STOP and report it — do not invent a workaround.\n\n## Report back (your final message)\n1. The new ADR's id (UUID) and on-disk file path.\n2. Evidence for each task: the `specmgr_validate_adr` result, the `specmgr adr-toc` run + confirmation the ADR row is in `docs/adr/README.md` (quote the row), and the no-op second run.\n3. The full quality-gate commands with their pass/fail output summaries (ruff format --check, ruff check, vulture, unittest counts).\n4. `git status --short` and `git diff --stat` of your changes.\n5. Any deviations from the plan and why.",
   "subagent_type": "phase-implementer"
 }
 ```
@@ -1581,8 +1581,8 @@ Phase 1 is complete and verified. Final report:
 ### 1. New ADR
 - **Id**: `36905d5b-8057-4294-8665-c7eed5534db0`
 - **Title**: "Consolidate whole-body update and status-change tools into generic type-dispatched tools"
-- **File**: `docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md`
-- Created via `specmgr_create_adr` (not hand-written, per ADR 898bfcd0); frontmatter `status: accepted`, `date: 2026-08-27`; all required content present (Context: 15 near-duplicate tools / 2 operations; 4 Decision Drivers; 3 Considered Options with the 3-entry `options` collection rendering `## Pros and Cons of the Options` with concrete pros/cons; Decision Outcome = Option 1 with all five required Consequences).
+- **File**: `docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md`
+- Created via `specmgr_create_adr` (not hand-written, per DEC 898bfcd0); frontmatter `status: accepted`, `date: 2026-08-27`; all required content present (Context: 15 near-duplicate tools / 2 operations; 4 Decision Drivers; 3 Considered Options with the 3-entry `options` collection rendering `## Pros and Cons of the Options` with concrete pros/cons; Decision Outcome = Option 1 with all five required Consequences).
 
 ### 2. Task evidence
 - **Task 1.2** `specmgr_validate_adr(36905d5b-…)` → `true`. `uv run --frozen specmgr adr-toc` → `✓ Wrote docs/adr/README.md`. ADR row in `docs/adr/README.md` (lines 20–24):
@@ -1613,7 +1613,7 @@ No `src/` changes, so no `specmgr docs`/`mcp-docs`/`schema` regeneration was req
 
 M .specmgr/feat/feat-22-consolidate-mutation-tools/README.md
 M docs/adr/README.md
-?? docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
+?? docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
 
 ```
 `git diff --stat`: feature README `52 +++…` (43 insertions / 14 deletions total across both files), `docs/adr/README.md` `+5`. Verified via `git diff -U0` that the README change set is exactly: frontmatter `status: in-progress` / `updated: 2026-08-27`; Tasks 1.1–1.3 flipped to `- [x]` + `status: done` in place (original 2-space wrapping preserved byte-for-byte on every untouched line); Current Status rewritten (Phase 1 complete, Phases 2–7 not started, as of 2026-08-27); new `#### Update 2026-08-27 (Phase 1: ADR)` entry above the preserved planning-session entry; one new Decisions-Made bullet recording the ADR id.
@@ -1671,7 +1671,7 @@ Phase 1 reported complete. Now verifying independently — re-running the full g
 ```
  M .specmgr/feat/feat-22-consolidate-mutation-tools/README.md
  M docs/adr/README.md
-?? docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
+?? docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
 ---
  .../feat-22-consolidate-mutation-tools/README.md   | 52 ++++++++++++++++------
  docs/adr/README.md                                 |  5 +++
@@ -1689,14 +1689,14 @@ VULTURE_OK
 
 ```json
 {
-  "filePath": "/home/user/src/biz.dfch.SpecMgr-feat-22/docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md"
+  "filePath": "/home/user/src/biz.dfch.SpecMgr-feat-22/docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md"
 }
 ```
 
 **Output:**
 
 ```
-<path>/home/user/src/biz.dfch.SpecMgr-feat-22/docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md</path>
+<path>/home/user/src/biz.dfch.SpecMgr-feat-22/docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md</path>
 <type>file</type>
 <content>
 1: ---
@@ -1718,7 +1718,7 @@ VULTURE_OK
 17: - A simpler tool surface: the two conceptual operations should be exposed as two tools, not fifteen near-duplicates.
 18: - Id resolution must not require an all-domains directory scan on the write path, and must not introduce per-domain v4-UUID-collision ambiguity — uuid-only id resolution was considered and rejected (per-domain v4 UUIDs are not guaranteed unique across domains).
 19: - The calling client already knows the domain it is operating on (the same vocabulary as the frontmatter `type` field), so passing it explicitly costs the client nothing.
-20: - Preserve the existing invariants: the filesystem is the sole source of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3) and validation happens before any write (nothing is written on validation failure).
+20: - Preserve the existing invariants: the filesystem is the sole source of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3) and validation happens before any write (nothing is written on validation failure).
 21: 
 22: ## Considered Options
 23: 
@@ -1733,9 +1733,9 @@ VULTURE_OK
 32: ### Consequences
 33: 
 34: - Bad (breaking): the 14 per-domain tools are removed outright, and ADR `set_status`'s signature gains a required `type` parameter — existing ADR callers must now pass `type="adr"`. The package is 0.x and the MCP tool list is the only client contract; the breaking change is recorded in `CHANGELOG.md`.
-35: - ADR is excluded from `update` — its section-level MADR contract (`update_frontmatter`/`update_section`/`option_*`, ADR 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) has no whole-body replace by design — but is included in `set_status` with the `superseded_by` special case: `superseded_by` composes the status as `"superseded by {superseded_by}"`, and `superseded_by` given with any `type` other than `"adr"` raises `ValueError` before any file access.
+35: - ADR is excluded from `update` — its section-level MADR contract (`update_frontmatter`/`update_section`/`option_*`, DEC 71fd95d7-07f2-466f-81aa-d29b7e3ef34c) has no whole-body replace by design — but is included in `set_status` with the `superseded_by` special case: `superseded_by` composes the status as `"superseded by {superseded_by}"`, and `superseded_by` given with any `type` other than `"adr"` raises `ValueError` before any file access.
 36: - The `update` line-range contract: optional 1-based, inclusive body-line coordinates `begin`/`end`, with `N+1` as the EOF sentinel (`begin = end = N+1` appends at end of body; `end = N+1` extends the range through the last line). The spliced result is validated as a whole document before anything is written (splice-then-validate-whole), and the YAML frontmatter is never addressable (coordinates are body-relative by construction).
-37: - Line numbers for range updates are served by a new `get_<d>(raw=True)` parameter returning the frontmatter-stripped body text verbatim — tool-first per ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (agents invoke tools more reliably than parameterized resources); re-introducing `specmgr://<d>/{id}` resources was considered and rejected.
+37: - Line numbers for range updates are served by a new `get_<d>(raw=True)` parameter returning the frontmatter-stripped body text verbatim — tool-first per DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (agents invoke tools more reliably than parameterized resources); re-introducing `specmgr://<d>/{id}` resources was considered and rejected.
 38: - Good: future domains (e.g. `ac`) add one dispatch entry per generic tool (plus a `raw` getter parameter), not new tools.
 39: 
 40: ## Pros and Cons of the Options
@@ -1874,12 +1874,12 @@ index f3683ac..155696d 100644
  
 -- [ ] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
 +- [x] Task 1.1: Create the feature's ADR with the `specmgr_create_adr` MCP
-   tool (never hand-write the file — ADR 898bfcd0), status `accepted`, title
+   tool (never hand-write the file — DEC 898bfcd0), status `accepted`, title
    "Consolidate whole-body update and status-change tools into generic type-
    dispatched tools": Context (15 near-duplicate mutation tools; LLM clients
 @@ -440,18 +440,17 @@ phase-orchestrator commits each accepted phase as one Conventional Commit.
    frontmatter never addressable; `get_<d>(raw=True)` as the line-number
-   source — tool-first per ADR ddfb1109, re-introducing `specmgr://<d>/{id}`
+   source — tool-first per DEC ddfb1109, re-introducing `specmgr://<d>/{id}`
    resources was considered and rejected; future domains add one dispatch
 -  entry per generic tool, not new tools) — depends on: none — status: not-
 -  started
@@ -1926,7 +1926,7 @@ index f3683ac..155696d 100644
 +#### Update 2026-08-27 (Phase 1: ADR)
 +
 +- Completed: Phase 1 (Tasks 1.1–1.3). Created the feature's ADR via
-+  `specmgr_create_adr` (never hand-written — ADR 898bfcd0): id
++  `specmgr_create_adr` (never hand-written — DEC 898bfcd0): id
 +  36905d5b-8057-4294-8665-c7eed5534db0, title "Consolidate whole-body update
 +  and status-change tools into generic type-dispatched tools", status
 +  `accepted`, date 2026-08-27, on disk at
@@ -1944,7 +1944,7 @@ index f3683ac..155696d 100644
  
  - Completed: Feature planned end to end with the user. Design locked:
 @@ -808,6 +825,13 @@ None.
-   `specmgr://<d>/{id}` resources — ADR ddfb1109's empirical finding that
+   `specmgr://<d>/{id}` resources — DEC ddfb1109's empirical finding that
    agents invoke tools more reliably than parameterized resources, plus the
    maintenance cost of seven new resource templates, decided it.
 +- **2026-08-27**: The Phase-1 ADR was created with id
@@ -2092,7 +2092,7 @@ Minor notes from the implementer:
 
 Phase 1 is approved. Next, commit as a single Conventional Commit (user instruction: commit after each phase without confirmation, no push).
 
-Commit message: per ADR cb5a2d5f "Use Conventional Commits". Repo style is confirmed from git log: `feat(feat-22): add design and plan for consolidation of mutation tools`. So the scope is `feat-22`. Phase 1 is the ADR:
+Commit message: per DEC cb5a2d5f "Use Conventional Commits". Repo style is confirmed from git log: `feat(feat-22): add design and plan for consolidation of mutation tools`. So the scope is `feat-22`. Phase 1 is the ADR:
 
 `docs(feat-22): add Phase-1 ADR for generic type-dispatched mutation tools`
 
@@ -2121,7 +2121,7 @@ Stage exactly 3 files: the new ADR, docs/adr/README.md, the feature README. Then
 
 ```json
 {
-  "command": "git add docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md docs/adr/README.md .specmgr/feat/feat-22-consolidate-mutation-tools/README.md && git commit -m \"docs(feat-22): add Phase-1 ADR for generic type-dispatched mutation tools\n\nCreate the feature ADR 36905d5b-8057-4294-8665-c7eed5534db0 (status\naccepted) via specmgr_create_adr: explicit type dispatch over uuid-only\nresolution, ADR excluded from update but included in set_status with\nthe superseded_by special case, the 1-based inclusive begin/end range\ncontract with N+1 EOF sentinel, and get_<d>(raw=True) as the\nline-number source. Regenerate docs/adr/README.md (adr-toc) and update\nthe feature README progress (Phase 1 done, status in-progress).\" && git log --oneline -2 && git status --short",
+  "command": "git add docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md docs/adr/README.md .specmgr/feat/feat-22-consolidate-mutation-tools/README.md && git commit -m \"docs(feat-22): add Phase-1 ADR for generic type-dispatched mutation tools\n\nCreate the feature DEC 36905d5b-8057-4294-8665-c7eed5534db0 (status\naccepted) via specmgr_create_adr: explicit type dispatch over uuid-only\nresolution, ADR excluded from update but included in set_status with\nthe superseded_by special case, the 1-based inclusive begin/end range\ncontract with N+1 EOF sentinel, and get_<d>(raw=True) as the\nline-number source. Regenerate docs/adr/README.md (adr-toc) and update\nthe feature README progress (Phase 1 done, status in-progress).\" && git log --oneline -2 && git status --short",
   "timeout": 600000,
   "workdir": "/home/user/src/biz.dfch.SpecMgr-feat-22"
 }
@@ -2148,7 +2148,7 @@ specmgr schema (prb package copy)....................(no files to check)Skipped
 specmgr schema (gol package copy)....................(no files to check)Skipped
 [feat-22 2647649] docs(feat-22): add Phase-1 ADR for generic type-dispatched mutation tools
  3 files changed, 127 insertions(+), 14 deletions(-)
- create mode 100644 docs/adr/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
+ create mode 100644 docs/dec/36905d5b-8057-4294-8665-c7eed5534db0-consolidate-whole-body-update-and-status-change-tools-into-g.md
 2647649 docs(feat-22): add Phase-1 ADR for generic type-dispatched mutation tools
 f9586e6 feat(feat-22): add design and plan for consolidation of mutation tools
 
@@ -2578,7 +2578,7 @@ Now, let me write the Phase 2 prompt. It has to be comprehensive. Key content:
 
 01. Plan path + phase heading + "implement only Phase 2."
 02. Repo state: branch feat-22, HEAD 2647649 (Phase 1 commit), clean tree.
-03. Context from Phase 1: ADR 36905d5b-8057-4294-8665-c7eed5534db0 accepted.
+03. Context from Phase 1: DEC 36905d5b-8057-4294-8665-c7eed5534db0 accepted.
 04. Environment: uv run --frozen; exact commands for the gate.
 05. Tasks 2.1–2.9 verbatim.
 06. Key design notes (dispatch architecture, update signature, exact semantics of the range contract, shared body extraction + raw invariant, import order considerations).
@@ -4497,7 +4497,7 @@ index 0259ca7..fa38f11 100644
 --- a/src/biz/dfch/specmgr/req/tools/get_req.py
 +++ b/src/biz/dfch/specmgr/req/tools/get_req.py
 @@ -28,12 +28,20 @@ was removed because LLM/agent clients calling this MCP server failed to
- reliably invoke it. See ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose
+ reliably invoke it. See DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 ("Expose
  id-based REQ document reads as a tool (get_req), not a resource") for the
  full rationale, including why the equivalent ``specmgr://adr/{id}`` resource
  was deliberately left untouched.
@@ -5849,7 +5849,7 @@ So the only remaining item to verify is: that the 4 domain __init__.py matches a
 updates of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="req"``). Unlike ADR, REQ has no
 ``specmgr://req/{id}`` resource -- id-based reads go through the ``get_req``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
 ``specmgr://req/list`` resource was replaced by the ``list_req`` tool, so
 ===
 shared ``mcp`` application instance at once::
@@ -5864,7 +5864,7 @@ shared ``mcp`` application instance at once::
 of an existing document go through the generic ``update`` tool in
 ``general.tools`` (``type="qa"``). Like REQ, QA has no
 ``specmgr://qa/{id}`` resource -- id-based reads go through the ``get_qa``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). Likewise, the former
 ``specmgr://qa/list`` resource was replaced by the ``list_qa`` tool, so
 that paging parameters could be accepted (feat-13-list-paging).
 
@@ -6391,7 +6391,7 @@ frontmatter-stripped body text verbatim instead of the parsed document), ``list_
 +phase-end quality gate is green (1796 tests OK, zero `docs/` drift,
 +fresh-subprocess import OK); live registration is 78 tools / 25 resources
 +/ 19 prompts (baseline 85/25/19: −7). Phases 4–7 are not started.
-+(Phase 1 — the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — and
++(Phase 1 — the feature's DEC 36905d5b-8057-4294-8665-c7eed5534db0 — and
 +Phase 2 — the generic `update` tool + `raw` reads — completed on
 +2026-08-27.)
 +#### Update 2026-08-27 (Phase 3: Retire the per-domain `update_*` tools)
@@ -8837,7 +8837,7 @@ Confirmed: the `git grep` pathspec containing `*/data/` was silently matching no
 +subprocess import OK); live registration unchanged at **71 tools / 25
 +resources / 19 prompts** (narration-only phase — the feature's target
 +end state, reached in Phase 4). Phases 6–7 are not started. (Phase 1 —
-+the feature's ADR 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
++the feature's DEC 36905d5b-8057-4294-8665-c7eed5534db0 — Phase 2 — the
 +generic `update` tool + `raw` reads — Phase 3 — retiring the seven
 +`update_<d>` tools — and Phase 4 — the generic `set_status` tool +
 +retiring the eight old status tools — completed on 2026-08-27.)
@@ -9328,7 +9328,7 @@ Commit Phase 6, then on to Phase 7.
 
 ```json
 {
-  "command": "git add -A && git commit -m \"docs(feat-22): update AGENTS.md and CHANGELOG.md for the consolidated mutation tools\n\nPhase 6: AGENTS.md per-domain bullets no longer enumerate the removed\nupdate_<d>/set_status_<d> tools and point at the generic update/\nset_status tools in general/tools/ (with the raw parameter noted on the\nseven get_<d> tools); the ADR bullet's wrapper count is 11; the\ngeneral/ bullet carries both generic tools; the future-domain\nconvention (one dispatch entry per generic tool, not new tools) is\nfixed in the still-missing list citing ADR 36905d5b. CHANGELOG.md\n[Unreleased] gains the breaking removal of the 14 per-domain mutation\ntools plus ADR set_status' new required type parameter, and the added\ngeneric update/set_status tools and raw getter parameter. No code,\nschema, or generated-doc changes (all four generators verified\nno-ops).\" && git log --oneline -3",
+  "command": "git add -A && git commit -m \"docs(feat-22): update AGENTS.md and CHANGELOG.md for the consolidated mutation tools\n\nPhase 6: AGENTS.md per-domain bullets no longer enumerate the removed\nupdate_<d>/set_status_<d> tools and point at the generic update/\nset_status tools in general/tools/ (with the raw parameter noted on the\nseven get_<d> tools); the ADR bullet's wrapper count is 11; the\ngeneral/ bullet carries both generic tools; the future-domain\nconvention (one dispatch entry per generic tool, not new tools) is\nfixed in the still-missing list citing DEC 36905d5b. CHANGELOG.md\n[Unreleased] gains the breaking removal of the 14 per-domain mutation\ntools plus ADR set_status' new required type parameter, and the added\ngeneric update/set_status tools and raw getter parameter. No code,\nschema, or generated-doc changes (all four generators verified\nno-ops).\" && git log --oneline -3",
   "timeout": 900000,
   "workdir": "/home/user/src/biz.dfch.SpecMgr-feat-22"
 }

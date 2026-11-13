@@ -19,7 +19,7 @@
 
 Mirrors :class:`~biz.dfch.specmgr.vcr.models.v1.summary.VcrSummary`
 field-for-field, for the (Phase-110, not-yet-built) ``list_txt`` tool -- a
-paged MCP tool from day one per ADR ec9f5262-9912-49d0-903f-fcfb54f28c13,
+paged MCP tool from day one per DEC ec9f5262-9912-49d0-903f-fcfb54f28c13,
 so TXT has no ``specmgr://txt/list`` resource. Subclasses
 :class:`~biz.dfch.specmgr.general.models.summary.DocSummary` for its
 ``id``/``title``/``status``/``ref`` fields, with no extra fields (the plan

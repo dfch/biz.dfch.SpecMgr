@@ -31,7 +31,7 @@ mapping needed):
   charset-validated, :data:`SUBPROCESS_TIMEOUT_SECONDS` on every call.
 
 Verified against ``plantuml/plantuml:latest`` (1.2026.8), including the
-``--version`` probe. Import-free and stdlib-only (ADR 7a626b12).
+``--version`` probe. Import-free and stdlib-only (DEC 7a626b12).
 
 ## Classes
 

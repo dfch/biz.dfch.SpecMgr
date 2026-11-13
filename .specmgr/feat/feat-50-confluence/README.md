@@ -99,7 +99,7 @@ Adds a `confluence_update` tool that converts a local Markdown file to an HTML f
 
 #### Depends On
 
-- ADR a156fdf9-052c-4f43-93a2-eeec04a91eac: rename/design decisions this feature implements.
+- DEC a156fdf9-052c-4f43-93a2-eeec04a91eac: rename/design decisions this feature implements.
 
 #### Blocks
 

@@ -17,7 +17,7 @@
 
 """Tests for the ``list_set`` ``@mcp.tool()`` wrapper (feat-229-set Phase 110).
 
-Paged from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) -- there is no
+Paged from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13) -- there is no
 former ``specmgr://set/list`` resource these tests could have migrated from,
 so the paging assertions below are written directly against the tool's own
 contract (default page size 25, cap 100, out-of-range values clamped not

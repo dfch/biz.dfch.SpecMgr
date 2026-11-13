@@ -36,7 +36,7 @@ agent-path ``' validated: structure-only`` header (checker-clean by
 construction — ``plantuml-check`` works on the files unchanged).
 
 The isolated docs root follows the Phase 110/120 pattern: the shared
-``_SeededRegistryTestCase`` base (``SPECMGR_DOCS_DIR``/``SPECMGR_ADR_DIR``/
+``_SeededRegistryTestCase`` base (``SPECMGR_DOCS_DIR``/
 ``SPECMGR_FEAT_DIR`` tmp dirs seeded from the committed fixtures under
 ``tests/fixtures/reference-graphs/``, every per-domain doc cache reset, the
 ``SPECMGR_DIAGRAM_MAX_TITLE`` env var guarded to UNSET so the golden
@@ -61,7 +61,6 @@ from biz.dfch.specmgr.plantuml import chain
 
 from tests.general.tools._reference_graph_helpers import (
     _SeededRegistryTestCase,
-    _A001,
     _C001,
     _C002,
     _D001,
@@ -104,7 +103,6 @@ _SEED_WIDE = (
     ("wide/req-w001.md", f"docs/req/{_W001}.md"),
     ("wide/uc-u001.md", f"docs/uc/{_U001}.md"),
     ("wide/gol-g001.md", f"docs/gol/{_WG001}.md"),
-    ("wide/adr-a001.md", f"adr/{_A001}.md"),
     ("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),
 )
 _SEED_BROKEN_DEC = (("wide/dec-d002.md", f"docs/dec/dec-{_D002}-broken.md"),)

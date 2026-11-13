@@ -21,9 +21,9 @@ planning -- see that feature's README, Design Notes, "Domain-to-source
 mapping" table and "Not yet decided" list: no existing specmgr domain
 models ISO/IEC/IEEE 29148's / MITRE SE Guide's "Verification / Test and
 Evaluation" concept. Tracked by GitHub issue #33. Follows the domain-first
-hierarchy (ADR ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
+hierarchy (DEC ece4554b-725c-4f76-bc04-5d2b760363d2) and lands on the
 "simple surface" from day one (generic `update`/`set_status` dispatch, per
-ADR 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
+DEC 36905d5b-8057-4294-8665-c7eed5534db0 -- no per-domain mutation tools,
 including no per-AC create/read/update/delete tools).
 
 Domain key: `vcr`.
@@ -74,11 +74,11 @@ Domain key: `vcr`.
 
 #### Depends On
 
-- ADR ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy).
-- ADR 36905d5b-8057-4294-8665-c7eed5534db0 (generic `update`/`set_status`
+- DEC ece4554b-725c-4f76-bc04-5d2b760363d2 (domain-first hierarchy).
+- DEC 36905d5b-8057-4294-8665-c7eed5534db0 (generic `update`/`set_status`
   dispatch -- new domains use it from day one).
-- ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads).
-- ADR ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool, not a
+- DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614 (tool-only id-based reads).
+- DEC ec9f5262-9912-49d0-903f-fcfb54f28c13 (paged `list_<d>` tool, not a
   resource).
 - `.specmgr/feat/feat-30-sop/README.md` as the most recent
   from-scratch-domain precedent to copy tooling/registration shape from,

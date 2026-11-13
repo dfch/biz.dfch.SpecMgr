@@ -69,7 +69,6 @@ import unittest
 from collections import Counter
 from pathlib import Path
 
-import biz.dfch.specmgr.adr.tools._paths  # noqa: F401 (side-effects only: SPECMGR_ADR_DIR registration)
 import biz.dfch.specmgr.cli  # noqa: F401 (side-effects only: SPECMGR_TESTS_NO_DOTENV registration)
 import biz.dfch.specmgr.commands.mcp  # noqa: F401 (side-effects only: the three Typer MCP vars' registration)
 import biz.dfch.specmgr.feat.tools._paths  # noqa: F401 (side-effects only: SPECMGR_FEAT_DIR registration)

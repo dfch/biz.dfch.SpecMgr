@@ -11,7 +11,7 @@ version: 1.0.0
 
 ## Description
 
-<!-- The `## Description` section is opaque: any markdown (paragraphs, lists, code blocks, H3 to H6 headings) is accepted verbatim. The `## Items` section is a flat bullet list: one line per referenced artifact, `<TAG> <uuid>: <title>` (any of the 12 reference tags in any mix), optionally followed by a notes paragraph. There are no other sections. -->
+<!-- The `## Description` section is opaque: any markdown (paragraphs, lists, code blocks, H3 to H6 headings) is accepted verbatim. The `## Items` section is a flat bullet list: one line per referenced artifact, `<TAG> <uuid>: <title>` (any of the 11 reference tags in any mix), optionally followed by a notes paragraph. There are no other sections. -->
 
 Blind text describing what this set bundles and why the items belong together. Mandatory.
 

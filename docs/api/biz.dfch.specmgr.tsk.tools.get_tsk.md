@@ -3,16 +3,16 @@
 ``@mcp.tool()`` wrapper: get_tsk (Task 3.8).
 
 Mirrors ``req.tools.get_req`` -- a thin file-I/O/id-lookup adapter. The
-``.md`` file itself remains the sole source of truth (ADR
+``.md`` file itself remains the sole source of truth (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3); its underlying ``load_by_id`` now
-routes through a content-hash-validated, per-domain in-memory cache (ADR
+routes through a content-hash-validated, per-domain in-memory cache (DEC
 bfd76370-b59b-4d65-b550-a969f6c93c9d, ``._cache``) that skips re-parsing
 when a file's content hash is unchanged since its last read, so a stale
 entry is structurally impossible.
 
 Implemented as a tool, not a resource, from the start -- id-based single-
 document reads for TSK never had a ``specmgr://tsk/{id}`` resource in the
-first place, matching REQ's own revisited conclusion (ADR
+first place, matching REQ's own revisited conclusion (DEC
 ddfb1109-422d-4507-8dbc-dc5e4bec9614: "Expose id-based REQ document reads as
 a tool (get_req), not a resource").
 
@@ -31,7 +31,7 @@ out-of-range values, never erroring). With an optional ``numbered=True``
 prefixed with its 1-based absolute body-line number in the ``"<n>: "``
 form.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/5/6/7).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/5/6/7).**
 A 1:1 port of ``get_dec``'s ``language`` handling. The optional ``language``
 parameter (default ``"en"``) selects which on-disk variant of the id to
 read: omitted/``"en"`` = the flat ``docs/tsk/<id>.md`` document, exactly
@@ -49,7 +49,7 @@ heading text (ACC-004/ACC-011). The non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` channel works
 for a broken variant file exactly as for EN: the ``error`` text is
 byte-identical to ``list_tsk(language=...)``'s failed row for the same
-file (ADR 9080b37c).
+file (DEC 9080b37c).
 
 ## Functions
 
@@ -89,7 +89,7 @@ numbered:
     Combining it with ``raw=False`` raises ``ValueError`` (see
     ``Raises``).
 language:
-    The language variant to read (feat-197-i18n Phase 125, ADR
+    The language variant to read (feat-197-i18n Phase 125, DEC
     38efdb66 items 1/5/6): ``"en"`` (the default, same as omitting it)
     reads the flat ``docs/tsk/`` document -- today's exact behavior;
     any other ISO 639-1-shaped lowercase two-letter code (e.g.
@@ -116,7 +116,7 @@ TskDocument | str | ParseFailureResult
     (``error``/``path``/``id``) is returned instead of raising --
     ``error`` is byte-identical to the domain's own ``list`` tool's failed-row ``error`` for
     the same file (identical field path and cause, including the trailing pydantic
-    documentation line; ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c);
+    documentation line; DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c);
     ``raw=True`` never returns a broken document's raw text.
     Raises :class:`._paths.TskNotFoundError` if no task list has this id.
 

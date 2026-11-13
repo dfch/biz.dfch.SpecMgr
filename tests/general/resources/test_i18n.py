@@ -20,7 +20,7 @@
 The resource serves the packaged i18n guidance (``general/data/general_i18n.md``) as raw markdown (no dedicated
 parse model, like ``specmgr://reference-graph``). Because the document is what the ``translate_artifact`` flow reads
 first, these tests pin (a) the registration and the verbatim passthrough, (b) that the never-translate list covers
-every closed-vocabulary token family REQ-010 names (and the ``prb`` ``problem_statement`` exemption of ADR 38efdb66
+every closed-vocabulary token family REQ-010 names (and the ``prb`` ``problem_statement`` exemption of DEC 38efdb66
 item 11), (c) that it describes the implemented layout/vocabulary/guard behavior, and (d) -- against the real models --
 that the tokens its "schema-enforced" column lists really are rejected when translated (the full domain matrix lives in
 ``tests/general/prompts/test_translate_artifact_flow.py``), so the guidance cannot silently drift from the schemas.
@@ -105,7 +105,7 @@ class TestI18nResource(unittest.TestCase):
 class TestI18nDescribesTheImplementedLayout(unittest.TestCase):
     """The layout, vocabulary, tool surface, and guard text match the implemented behavior."""
 
-    def test_names_all_thirteen_domains_in_scope_and_excludes_feat_and_adr(self):
+    def test_names_all_thirteen_domains_in_scope_and_excludes_feat(self):
         text = i18n()
         scope = _section(text, "## 1. Scope")
 
@@ -114,7 +114,6 @@ class TestI18nDescribesTheImplementedLayout(unittest.TestCase):
                 self.assertIn(f"`{domain}`", scope)
         self.assertEqual(len(LANGUAGE_AWARE_DOMAINS), 13)
         self.assertIn("`feat`", scope)
-        self.assertIn("`adr`", scope)
         self.assertIn("always English", scope)
 
     def test_layout_and_basename_rule(self):
@@ -229,7 +228,7 @@ class TestI18nNeverTranslateList(unittest.TestCase):
                 "`progress`",
                 "`done`",
                 "`review`",
-                "12 reference tags",
+                "11 reference tags",
             ),
         ),
     )
@@ -268,10 +267,9 @@ class TestI18nNeverTranslateList(unittest.TestCase):
             "`REQ`",
             "`RSK`",
             "`DEC`",
-            "`ADR`",
             "`VCR`",
             "`SYSRS`",
-            "`SOP`",
+            "`TXT`",
             "Timestamps",
             "UUIDs",
             "code spans",
@@ -340,15 +338,15 @@ _DE_TABLE_PATH = Path(__file__).resolve().parents[3] / "src/biz/dfch/specmgr/gen
 class TestI18nHeadingsResourceTemplate(unittest.TestCase):
     """`specmgr://i18n/headings/{language}`: a read-only, guarded view of the loader's heading-mapping table."""
 
-    def test_is_registered_as_a_json_template_next_to_the_adr_one(self):
+    def test_is_registered_as_a_json_template(self):
         template = _registered_template("specmgr://i18n/headings/{language}")
 
         self.assertEqual(template.name, "i18n_headings")
         self.assertEqual(template.mime_type, "application/json")
         self.assertIn("language", template.parameters["properties"])
-        self.assertTrue(
-            {"specmgr://adr/{id}", "specmgr://i18n/headings/{language}"}
-            <= {t.uri_template for t in mcp._resource_manager.list_templates()}
+        self.assertIn(
+            "specmgr://i18n/headings/{language}",
+            {t.uri_template for t in mcp._resource_manager.list_templates()},
         )
 
     def test_is_exposed_through_the_resource_module(self):

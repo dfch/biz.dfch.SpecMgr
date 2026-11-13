@@ -215,9 +215,9 @@ class TestCrossReferenceBases(unittest.TestCase):
         assert instance.items is not None
         self.assertEqual(len(instance.items), 1)
 
-    def test_decisions_base_rejects_adr_tag(self) -> None:
-        """DEC-only (REQ-005) -- not `DEC|ADR`, unlike `sysrs`'s own `## Decisions`."""
-        text = mdformat.text(f"### Decisions\n\n- ADR {_VALID_UUID}: A title\n")
+    def test_decisions_base_rejects_non_dec_tag(self) -> None:
+        """DEC-only (REQ-005)."""
+        text = mdformat.text(f"### Decisions\n\n- REQ {_VALID_UUID}: A title\n")
         with self.assertRaises(ValidationError):
             Decisions.from_text(text)
 

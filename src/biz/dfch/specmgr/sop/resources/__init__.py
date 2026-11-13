@@ -31,14 +31,14 @@ Like DEC/GOL, SOP has exactly two resources and no by-id single-document
 *resource* -- id-based reads go through the ``get_sop`` tool only
 (``sop.tools.get_sop``), and no ``specmgr://sop/list`` resource either --
 listing goes through the ``list_sop`` ``@mcp.tool()``
-(``sop.tools.list_sop``) from the start, per ADR
+(``sop.tools.list_sop``) from the start, per DEC
 ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 The former schema resource (``sop_schema``, ``specmgr://sop/schema``) was
 converted the same way into the ``get_sop_schema`` ``@mcp.tool()``
 (``sop.tools.get_sop_schema``), so that the generated JSON Schema is
 discoverable from the always-in-context tool surface instead of the
-resource layer -- see ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3
+resource layer -- see DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3
 (feat-189 Phase 105).
 
 The generic RASCI role-definitions guidance is **not** a third ``sop``

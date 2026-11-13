@@ -84,8 +84,8 @@ Verified state at planning time (2026-10-07):
 ### Related Decisions
 
 - FEAT feat-51-mcp-cwd (GitHub issue #51): the `specmgr://config` resource that resolves the same environment variables — the manifest descriptions stay faithful to what `specmgr://config` reports.
-- ADR 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): semantics of `SPECMGR_SIMILARITY_DISABLED`.
-- ADR 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): semantics of `SPECMGR_FEAT_WARMUP_DISABLED`.
+- DEC 750842b2-aca4-4649-ba0c-855ec8e1f505 (feat-134): semantics of `SPECMGR_SIMILARITY_DISABLED`.
+- DEC 3982712a-a46b-4b2b-809f-9c6925a49b44 (feat-187): semantics of `SPECMGR_FEAT_WARMUP_DISABLED`.
 
 ### Task List
 

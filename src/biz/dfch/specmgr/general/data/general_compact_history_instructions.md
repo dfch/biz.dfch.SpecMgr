@@ -7,7 +7,7 @@ Rotation cutoff hint: $cutoff_hint
 Follow this sequence exactly. This document type has no dedicated specmgr
 MCP tool of its own -- use your own file read/edit/write tools directly on
 `.specmgr/feat/$feature_id/README.md` and its optional sibling
-`history.md`, per ADR e369ee2e-3353-4f92-991c-6367d76d832e.
+`history.md`, per DEC e369ee2e-3353-4f92-991c-6367d76d832e.
 
 Make a todo list and use the `question` tool whenever this prompt tells
 you to -- do not guess when something is ambiguous.

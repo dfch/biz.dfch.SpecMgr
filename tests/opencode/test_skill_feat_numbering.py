@@ -55,7 +55,7 @@ _RESOURCE_URIS: tuple[str, ...] = (
     "specmgr://feat/example",
 )
 #: The generated schema is served by the ``get_feat_schema`` tool, not a resource
-#: (the former ``specmgr://feat/schema`` resource, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3).
+#: (the former ``specmgr://feat/schema`` resource, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3).
 _SCHEMA_TOOL = "get_feat_schema"
 _CANONICAL_START = "Task List numbering scheme:"
 _CANONICAL_END = "removals leave gaps."

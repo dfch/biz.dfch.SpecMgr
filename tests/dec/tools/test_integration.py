@@ -214,7 +214,7 @@ class TestDecLifecycleIntegration(TempDecDirTestCase):
 
     def test_set_status_rejects_gol_only_implemented_status(self) -> None:
         """ACC-003: set_status (type="dec") must reject `implemented` (GOL's seventh value, outside
-        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (ADR
+        DEC's closed six-set), returning a non-raising ``InvalidStatusResult`` (DEC
         b399f1ce-ed42-4929-b01c-7a57d18e8014) instead of raising ``pydantic.ValidationError``."""
         created = create_dec(_INITIAL_BODY)
         expected_path = dec_base_dir() / f"dec-{created.id}-choose-a-document-store.md"

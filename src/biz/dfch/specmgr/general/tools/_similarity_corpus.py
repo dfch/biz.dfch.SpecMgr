@@ -18,7 +18,7 @@
 """Candidate enumeration and source resolution for the similarity engine (feat-134, Phase 2, Task 2.1).
 
 Built on top of the Phase 1 shared ``WHOLE_BODY_DOMAINS`` registry
-(``general/tools/_domains.py``, REQ-012) and backing ADR
+(``general/tools/_domains.py``, REQ-012) and backing DEC
 750842b2-aca4-4649-ba0c-855ec8e1f505's **corpus and registry**
 sub-decision: the two Phase 3 similarity tools (``find_related``/
 ``find_similar_text``) and the background warmup (Phase 3, Task 3.7)
@@ -33,9 +33,9 @@ prb, gol, rsk, dec, sop, feat, vcr, sysrs, txt, set) by default, a
 caller-supplied, order-preserving, de-duplicated subset otherwise --
 flat domains via the shared ``iter_doc_paths`` and ``feat``'s
 ``<base>/<id>/README.md`` folder shape via its own bespoke
-``iter_feat_paths`` (ADR 8cf940c5). Every target name is validated up
+``iter_feat_paths`` (DEC 8cf940c5). Every target name is validated up
 front via :func:`whole_body_domain` (a ``ValueError`` **before any
-filesystem access** -- ``adr`` and every unknown name rejected,
+filesystem access** -- every unknown name rejected,
 REQ-009/ACC-007), so the returned iterator itself is a plain lazy path
 walk: a bad name never lets one domain's paths slip through before it
 fires.
@@ -43,7 +43,7 @@ fires.
 **Source resolution (REQ-009/ACC-015).** :func:`resolve_source` resolves
 a ``find_related`` source ``type``/``id`` the way the generic
 ``delete``/``update``/``set_status`` tools do: the registry rejects an
-unknown/``adr`` ``type`` and :func:`_path_safety.validate_id` rejects a
+unknown ``type`` and :func:`_path_safety.validate_id` rejects a
 path-injection or wrong-format ``id`` -- both as ``ValueError`` before
 any filesystem access -- then the domain's own ``load_by_id`` resolves
 and parses the document (the domain's own ``XNotFoundError`` propagates
@@ -69,7 +69,7 @@ raw text as the embedding input for an unparseable one (REQ-009). It is
 the Phase 3 per-candidate entry point -- including inside the embedding
 cache's ``embed_fn`` closures, where it is called on the exact
 already-read file text and never re-reads the file itself (the cache's
-own TOCTOU contract, ADR bfd76370).
+own TOCTOU contract, DEC bfd76370).
 
 **Dependency-light.** Standard library + ``python-frontmatter`` (base
 dependency) + the Phase 1/2 ``general.tools`` siblings only -- no
@@ -110,13 +110,13 @@ def iter_candidate_paths(target_types: Sequence[str] | None = None) -> Iterator[
 
     The default target set is the full :data:`WHOLE_BODY_DOMAINS`
     registry set (req, uc, tsk, qa, prb, gol, rsk, dec, sop, feat, vcr,
-    sysrs, txt, set -- ``adr`` structurally excluded, issue #46); a
+    sysrs, txt, set); a
     caller-supplied ``target_types`` restricts the walk to that
     (order-preserving, de-duplicated) subset. Within each domain the
     paths come from the domain's own registry adapter -- the shared
     flat-file ``iter_doc_paths`` (every domain other than ``feat``) or
     ``feat``'s own ``iter_feat_paths`` (``<base>/<id>/README.md``,
-    folder-per-document, ADR 8cf940c5) -- in the adapter's own sorted
+    folder-per-document, DEC 8cf940c5) -- in the adapter's own sorted
     order, so the enumeration is deterministic for a given on-disk
     state. The base directories resolve through the domains' own
     ``SPECMGR_*_DIR`` env vars / defaults at iteration time, and a
@@ -135,7 +135,7 @@ def iter_candidate_paths(target_types: Sequence[str] | None = None) -> Iterator[
     Raises:
         ValueError:
             A ``target_types`` entry is not one of the whole-body
-            domains (e.g. ``"adr"``) -- raised up front, **before any
+            domains -- raised up front, **before any
             filesystem access** (the path-safety convention,
             REQ-009/ACC-007/ACC-015), never mid-iteration.
     """
@@ -153,7 +153,7 @@ def _validated_target_types(target_types: Sequence[str] | None) -> tuple[str, ..
 
     ``None`` means the full registry set (REQ-006's default). Every
     supplied name is checked via :func:`whole_body_domain` -- a
-    ``ValueError`` for an unknown name (including ``"adr"``) raised
+    ``ValueError`` for an unknown name raised
     before any filesystem access (REQ-009/ACC-007/ACC-015).
     """
     assert target_types is None or (
@@ -166,7 +166,7 @@ def _validated_target_types(target_types: Sequence[str] | None) -> tuple[str, ..
 
     validated: list[str] = []
     for name in target_types:
-        whole_body_domain(name)  # ValueError (unknown/adr) before any filesystem access
+        whole_body_domain(name)  # ValueError (unknown) before any filesystem access
         if name not in validated:
             validated.append(name)
     result = tuple(validated)
@@ -188,7 +188,7 @@ def resolve_source(type_: str, id_: str) -> tuple[str, Path, Any]:
     """Resolve a ``find_related`` source ``type``/``id`` to its on-disk path and parsed document (REQ-009).
 
     The source-side counterpart of :func:`iter_candidate_paths`: the
-    registry rejects an unknown/``adr`` ``type`` and
+    registry rejects an unknown ``type`` and
     :func:`_path_safety.validate_id` rejects a path-injection or
     wrong-format ``id`` -- both as ``ValueError`` **before any
     filesystem access** (the same convention the generic
@@ -205,7 +205,7 @@ def resolve_source(type_: str, id_: str) -> tuple[str, Path, Any]:
     Args:
         type_:
             The source's domain name: one of
-            :data:`WHOLE_BODY_DOMAINS` (``"adr"`` rejected).
+            :data:`WHOLE_BODY_DOMAINS`).
         id_:
             The source's id: a canonical lowercase-hex UUID for every
             domain other than ``feat``, a ``feat-NNN-slug`` folder name
@@ -221,8 +221,7 @@ def resolve_source(type_: str, id_: str) -> tuple[str, Path, Any]:
 
     Raises:
         ValueError:
-            ``type_`` is not one of the whole-body domains (e.g.
-            ``"adr"``), or ``id_`` is a path-injection attempt (``/``,
+            ``type_`` is not one of the whole-body domains, or ``id_`` is a path-injection attempt (``/``,
             ``\\``, ``..``) or not in the domain's own format -- raised
             before any filesystem access.
         LookupError:
@@ -234,7 +233,7 @@ def resolve_source(type_: str, id_: str) -> tuple[str, Path, Any]:
     assert isinstance(type_, str), type(type_)
     assert isinstance(id_, str), type(id_)
 
-    domain = whole_body_domain(type_)  # ValueError (unknown/adr) before any filesystem access
+    domain = whole_body_domain(type_)  # ValueError (unknown) before any filesystem access
     validate_id(type_, id_)  # ValueError (injection/wrong format) before any filesystem access
     base_dir = domain.base_dir()
     path, doc = domain.load_by_id(base_dir, id_)  # the domain's own XNotFoundError propagates unchanged
@@ -306,7 +305,7 @@ def candidate_similarity_text(domain: str, text: str) -> SimilarityText:
     Phase 6 -- the cache stores the resulting ``SimilarityText`` with its
     vector, so a warm read serves the stored metadata instead of re-running
     this), where re-reading the file would break the cache's own
-    hash-then-embed TOCTOU contract (ADR bfd76370); the tests call it
+    hash-then-embed TOCTOU contract (DEC bfd76370); the tests call it
     directly.
 
     Args:
@@ -321,8 +320,7 @@ def candidate_similarity_text(domain: str, text: str) -> SimilarityText:
 
     Raises:
         ValueError:
-            ``domain`` is not one of the whole-body domains (e.g.
-            ``"adr"``) -- before any parsing work.
+            ``domain`` is not one of the whole-body domains -- before any parsing work.
     """
     assert isinstance(domain, str), type(domain)
     assert isinstance(text, str), type(text)

@@ -24,7 +24,7 @@ through drafting a brand-new Risk (RSK) document using the existing
 ``specmgr://rsk/tara``, ``specmgr://rsk/risk-matrix``, ``create_rsk``,
 generic ``validate`` tool).
 
-Unlike ``adr.prompts.create_adr``, this prompt has no frontmatter-related
+This prompt has no frontmatter-related
 parameters to pre-fill: ``create_rsk`` builds the entire RSK frontmatter
 itself (``id``/``type``/``status``/``created``/``updated``/``version``) --
 the caller only ever supplies body markdown.

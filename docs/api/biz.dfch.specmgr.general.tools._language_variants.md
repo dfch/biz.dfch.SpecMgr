@@ -5,7 +5,7 @@ Per-language document location for the read-only translation tools (feat-197-i18
 The shared, private, ``mcp``-free helper behind the ``list_languages`` and ``check_translation_drift`` tools: given a
 document ``type``/``id`` it finds the on-disk document of one *language* (or of every language) without ever
 touching the EN-only scans of the other generic tools (REQ-013) -- it resolves each language's own directory through
-the domain's own ``<d>_base_dir(language)`` (ADR 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
+the domain's own ``<d>_base_dir(language)`` (DEC 38efdb66 item 1: EN = the flat ``docs/{type}/``, any other validated
 code = ``docs/{type}/{language}/``), reads through the domain's own cache-backed ``load_by_id``/``read_<d>``
 (a variant is parsed through its language's heading table, derived from its path position), and discovers the
 language directories of a domain through the shared :func:`~biz.dfch.specmgr.general.tools._doc_paths.
@@ -20,7 +20,7 @@ LANGUAGE_AWARE_DOMAINS`) all expose the same three callables under the same name
 healthy one carries ``parseable=True``; a document that exists but fails to parse (a broken file, or a language whose
 heading table is missing) is *still located* -- ``parseable=False`` with the parse-failure message, the string form of
 the very exception the domain's cache-backed reader raises, so it is byte-identical to the domain's ``list_<d>``
-failed-row ``error`` and to ``get_<d>``'s ``ParseFailureResult.error`` for the same file in the same language (ADR
+failed-row ``error`` and to ``get_<d>``'s ``ParseFailureResult.error`` for the same file in the same language (DEC
 9080b37c). A document that does not exist at all raises the domain's own ``XNotFoundError`` (a ``LookupError``).
 
 ## Classes

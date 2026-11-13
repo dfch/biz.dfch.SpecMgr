@@ -11,12 +11,12 @@ composition is factored into ``uc.tools._write.write_uc_file`` instead,
 shared with the generic ``update`` tool in ``general.tools``.
 
 Thin file-I/O adapter. The ``.md`` file itself is always the source of
-truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
+truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3); the in-memory cache
 warmed after the write below (feat-107-doc-cache Phase 4, REQ-003) is only
 ever a content-hash-validated memoization of that file's own current
 state, never an independent fact.
 
-**Language variants (feat-197-i18n Phase 125, ADR 38efdb66 items 1/2/5/6).**
+**Language variants (feat-197-i18n Phase 125, DEC 38efdb66 items 1/2/5/6).**
 A 1:1 port of ``create_dec``'s ``language``/``id`` handling. ``create_uc``
 gains two optional parameters, ``language`` (default ``"en"``) and ``id``.
 With ``language`` omitted/``"en"`` the tool is byte-identical to before: it
@@ -25,7 +25,7 @@ assigns a fresh id and writes the flat ``docs/uc/uc-<id>-<slug>.md`` file
 creates a *translation* of an existing use case: ``id`` -- the shared id of the
 EN source document (REQ-003, the id is never language-qualified and is never
 freshly assigned for a variant) -- is then **required**, the EN source must
-already exist on disk (ADR item 2: the EN slug is the single filename
+already exist on disk (DEC 38efdb66 item 2: the EN slug is the single filename
 authority), and the variant is written to ``docs/uc/{language}/`` under the
 EN source's exact basename with the shared id as its frontmatter ``id``
 (fresh ``created``/``updated``, ``status="draft"`` -- this domain's create
@@ -38,7 +38,7 @@ same id and language is never overwritten (``FileExistsError``).
 
 ### `_create_variant(id_: 'str', language: 'str', content: 'str') -> 'UcFrontmatter'`
 
-Create the ``language`` variant of the existing EN ``uc`` document ``id_`` (ADR 38efdb66 item 2).
+Create the ``language`` variant of the existing EN ``uc`` document ``id_`` (DEC 38efdb66 item 2).
 
 Resolves the EN source's path (the flat directory's id-scan), reuses its
 exact basename inside ``docs/uc/{language}/``, and writes the
@@ -85,8 +85,8 @@ built by this tool: a fresh id (``uuid.uuid4()``), ``type="uc"``,
 (``UseCase.from_text(format_text(content))``). A structural failure
 raises ``AssertionError`` and a field/cross-field failure raises
 ``pydantic.ValidationError`` -- but this tool catches both
-(feat-204-create-error, ADR f14f125e-eaad-4f4f-a6fd-3c931bed726e --
-case 5 of the ADR 519d1206-4d2a-4500-9046-6db635209996 non-raising,
+(feat-204-create-error, DEC f14f125e-eaad-4f4f-a6fd-3c931bed726e --
+case 5 of the DEC 519d1206-4d2a-4500-9046-6db635209996 non-raising,
 structured-result workaround chain) and returns the enriched message
 (domain/tool/channel context prepended by the shared tool-boundary
 wrapper, :func:`~biz.dfch.specmgr.models.md._errors.wrap_tool_errors`,
@@ -106,7 +106,7 @@ shared ``id`` of the EN source is a required argument (the variant's
 frontmatter ``id`` is that same id, never a fresh one, REQ-003), the EN
 source must exist, and the variant is written to
 ``docs/uc/{language}/`` under the EN source's exact basename
-(ADR 38efdb66 item 2). ``content`` is validated through the variant's
+(DEC 38efdb66 item 2). ``content`` is validated through the variant's
 heading-mapping table, and the existing-variant guard
 (``FileExistsError``) runs under the variant's own per-language lock.
 
@@ -143,8 +143,8 @@ UcFrontmatter | ValidateResult
     exactly as the generic ``validate`` tool caps it (feat-110, via
     :func:`~biz.dfch.specmgr.models.md._markdown.snippet`), instead of
     ``AssertionError``/``pydantic.ValidationError`` -- nothing is written
-    in that case (feat-204-create-error, ADR
-    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the ADR
+    in that case (feat-204-create-error, DEC
+    f14f125e-eaad-4f4f-a6fd-3c931bed726e -- case 5 of the DEC
     519d1206-4d2a-4500-9046-6db635209996 non-raising, structured-result
     workaround chain).
 
@@ -158,7 +158,7 @@ ValueError
     all raised before any filesystem access; nothing is written.
 UcNotFoundError
     A non-default ``language`` was given but no EN source document
-    with ``id`` exists (a variant requires its EN source, ADR 38efdb66
+    with ``id`` exists (a variant requires its EN source, DEC 38efdb66
     item 2); nothing is written.
 FileExistsError
     A variant of ``id`` in this non-default ``language`` already

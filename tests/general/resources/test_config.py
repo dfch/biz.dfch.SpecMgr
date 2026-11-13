@@ -31,7 +31,6 @@ from unittest import mock
 import pydantic_core
 
 from biz.dfch.specmgr import _envregistry
-from biz.dfch.specmgr.adr.tools._paths import ADR_DIR_ENV_VAR, DEFAULT_ADR_DIR
 from biz.dfch.specmgr.feat.tools._paths import DEFAULT_FEAT_DIR, FEAT_DIR_ENV_VAR
 from biz.dfch.specmgr.general.resources.config import config_info
 from biz.dfch.specmgr.general.tools._diagram_config import ENV_VAR_DIAGRAM_MAX_TITLE
@@ -47,7 +46,7 @@ from biz.dfch.specmgr.general.tools._startup_warmup import FEAT_WARMUP_DISABLED_
 from biz.dfch.specmgr.models import ConfigInfo, SimilarityConfig
 
 #: The env vars this resource is allowed to read/report on at all.
-_KNOWN_ENV_VARS = {ADR_DIR_ENV_VAR, FEAT_DIR_ENV_VAR, DOCS_DIR_ENV_VAR}
+_KNOWN_ENV_VARS = {FEAT_DIR_ENV_VAR, DOCS_DIR_ENV_VAR}
 
 
 class TestConfigResource(unittest.TestCase):
@@ -78,14 +77,13 @@ class TestConfigResource(unittest.TestCase):
             with self.subTest(domain=domain):
                 self.assertTrue(Path(cfg.base_dir).is_absolute(), f"{domain}'s base_dir is not absolute")
 
-    def test_adr_and_feat_have_their_own_env_var(self):
-        """`adr`/`feat` each report their own dedicated env var, not the shared one."""
+    def test_feat_has_its_own_env_var(self):
+        """`feat` reports its own dedicated env var, not the shared one."""
         result = config_info()
-        self.assertEqual(result.domains["adr"].env_var, ADR_DIR_ENV_VAR)
         self.assertEqual(result.domains["feat"].env_var, FEAT_DIR_ENV_VAR)
 
     def test_docs_dir_domains_share_env_var(self):
-        """The non-adr/feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
+        """The non-feat domains all report the shared `SPECMGR_DOCS_DIR` env var."""
         result = config_info()
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
             with self.subTest(domain=domain):
@@ -94,18 +92,13 @@ class TestConfigResource(unittest.TestCase):
     def test_env_var_set_reflects_controlled_environment(self):
         """`env_var_set` must reflect the actual presence of each domain's own env var."""
         with mock.patch.dict(os.environ, {}, clear=False):
-            os.environ.pop(ADR_DIR_ENV_VAR, None)
             os.environ.pop(FEAT_DIR_ENV_VAR, None)
             os.environ.pop(DOCS_DIR_ENV_VAR, None)
 
             result = config_info()
-            self.assertFalse(result.domains["adr"].env_var_set)
             self.assertFalse(result.domains["feat"].env_var_set)
             for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
                 self.assertFalse(result.domains[domain].env_var_set, domain)
-
-        with mock.patch.dict(os.environ, {ADR_DIR_ENV_VAR: "/tmp/custom-adr"}, clear=False):
-            self.assertTrue(config_info().domains["adr"].env_var_set)
 
         with mock.patch.dict(os.environ, {FEAT_DIR_ENV_VAR: "/tmp/custom-feat"}, clear=False):
             self.assertTrue(config_info().domains["feat"].env_var_set)
@@ -117,20 +110,18 @@ class TestConfigResource(unittest.TestCase):
                     self.assertTrue(result.domains[domain].env_var_set)
 
     def test_env_var_set_counts_a_set_but_empty_value_as_set(self):
-        """The three base-dir env vars' presence checks read through the registry's raw ``get``
+        """The two base-dir env vars' presence checks read through the registry's raw ``get``
         accessor (feat-208 Phase 120): a set-but-empty value still reports ``env_var_set`` as
         True (the ``None``-vs-``""`` distinction preserved), while the resolved ``base_dir``
         falls back to the default (the ``empty_falls_back_to_default`` flag) -- the two
         distinctions must not bleed into each other."""
         with mock.patch.dict(
             os.environ,
-            {ADR_DIR_ENV_VAR: "", FEAT_DIR_ENV_VAR: "", DOCS_DIR_ENV_VAR: ""},
+            {FEAT_DIR_ENV_VAR: "", DOCS_DIR_ENV_VAR: ""},
             clear=False,
         ):
             result = config_info()
 
-        self.assertTrue(result.domains["adr"].env_var_set)
-        self.assertEqual(result.domains["adr"].base_dir, str(DEFAULT_ADR_DIR.resolve()))
         self.assertTrue(result.domains["feat"].env_var_set)
         self.assertEqual(result.domains["feat"].base_dir, str(DEFAULT_FEAT_DIR.resolve()))
         for domain in WHOLE_BODY_NO_FEAT_DOMAINS:
@@ -513,9 +504,9 @@ class TestConfigGoldenIdentity(unittest.TestCase):
         fixture."""
         golden_text = _CONFIG_GOLDEN_FIXTURE.read_text(encoding="utf-8")
         golden = json.loads(golden_text)
-        # The capture's CWD prefix T0, derived from the fixture itself (the default ADR dir is
-        # <CWD>/docs/adr, so the prefix sits two levels above it).
-        t0 = str(Path(golden["domains"]["adr"]["base_dir"]).parent.parent)
+        # The capture's CWD prefix T0, derived from the fixture itself (the default req dir is
+        # <CWD>/docs/req, so the prefix sits two levels above it).
+        t0 = str(Path(golden["domains"]["req"]["base_dir"]).parent.parent)
         # The golden's own cache-dir value (the capture process's temp dir, not T0).
         golden_cache_dir = golden["similarity"]["cache_dir"]
 
@@ -539,18 +530,6 @@ class TestConfigGoldenIdentity(unittest.TestCase):
                 # The mcp SDK's own resource serialization path (FunctionResource.read for a
                 # non-str return; the fixture's README documents the exact call).
                 current_text = pydantic_core.to_json(result, fallback=str, indent=2).decode()
-                # The feat-207 `diagram` section is additive -- its own values are pinned by
-                # TestConfigResourceDiagram, not this migration-transparency test. The golden
-                # predates it, so strip the key from the re-captured payload (same serialization
-                # call on the stripped dict, so every other byte stays compared as-is).
-                # The feat-173 Phase 180 `set` domain row is additive the same way -- its own
-                # values are pinned by TestConfigResource's own ALL_DOMAINS-iterating tests
-                # (test_all_domains_present et al.), not this migration-transparency test.
-                # The golden predates it, so strip the key from the re-captured payload too.
-                current_payload = json.loads(current_text)
-                current_payload.pop("diagram")
-                current_payload["domains"].pop("set", None)
-                current_text = pydantic_core.to_json(current_payload, fallback=str, indent=2).decode()
         finally:
             os.chdir(original_cwd)
             for name, old_value in saved_env.items():
@@ -561,10 +540,10 @@ class TestConfigGoldenIdentity(unittest.TestCase):
 
         current_cache_dir = result.similarity.cache_dir
         # The current text's CWD prefix, derived from the payload itself the same way t0 is (the
-        # default ADR dir is <CWD>/docs/adr, so the prefix sits two levels above it): the
+        # default req dir is <CWD>/docs/req, so the prefix sits two levels above it): the
         # payload's base_dir values are resolved paths, so the raw tempdir path t1 is not a
         # substring of them on symlinked tempdirs (macOS /var -> /private/var, some containers).
-        t1_resolved = str(Path(result.domains["adr"].base_dir).parent.parent)
+        t1_resolved = str(Path(result.domains["req"].base_dir).parent.parent)
 
         # Normalize both sides: each side's own cache-dir value becomes one common token, then
         # each side's own CWD prefix (t0 in the golden, t1_resolved in the current text) becomes

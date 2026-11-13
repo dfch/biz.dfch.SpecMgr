@@ -8,9 +8,9 @@ Target:
 - target language: `$language`
 
 Scope: only the thirteen i18n-eligible domains (`req`, `uc`, `tsk`, `qa`,
-`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`). `feat` and
-`adr` are always English and are out of scope: they have no language
-variants, and this flow never touches them.
+`prb`, `gol`, `rsk`, `dec`, `sop`, `vcr`, `sysrs`, `txt`, `set`). `feat` is always
+English and is out of scope: it has no language variants, and this flow
+never touches it.
 
 Make a todo list and use the `question` tool whenever something is
 ambiguous -- do not guess. Use only the existing specmgr tools for every
@@ -128,7 +128,7 @@ these from the source exactly:
 - `prb`: the `problem_statement` lead paragraph under the H1 (the one
   sentence `[Current state] is causing [specific issue], for [stakeholder]
   because [underlying cause].`) stays canonical English in every language
-  (ADR 38efdb66 item 11): copy it byte for byte; its translation would be
+  (DEC 38efdb66 item 11): copy it byte for byte; its translation would be
   rejected by the schema;
 - `sysrs`: the H1 prefix `System Requirements Specification: ` (translate
   only the title after it) and the type-tagged cross-reference bullets;
@@ -144,7 +144,7 @@ these from the source exactly:
   in the source (only `## Updates` itself is translated, through the table).
   A translated free body heading no longer matches the source's structure.
 - `set`: the `## Items` bullet format `<TAG> <uuid>: <title>` (any of the
-  12 reference tags; the tag, the id, and the title text stay exactly as in
+  11 reference tags; the tag, the id, and the title text stay exactly as in
   the source -- only the notes paragraph under a bullet is translated) and
   the `status` values (`draft`, `progress`, `done`, `review`); the headings
   inside `## Description` are free text, not schema headings -- keep them

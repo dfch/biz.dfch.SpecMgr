@@ -17,7 +17,7 @@
 
 """Tests for the ``list_sop`` ``@mcp.tool()`` wrapper (Task 2.2, ACC-003).
 
-Paged from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13) -- there is no
+Paged from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13) -- there is no
 former ``specmgr://sop/list`` resource these tests could have migrated from,
 so the paging assertions below are written directly against the tool's own
 contract (default page size 25, cap 100, out-of-range values clamped not

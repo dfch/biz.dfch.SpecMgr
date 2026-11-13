@@ -32,14 +32,14 @@ data file rather than anything on the caller's filesystem (the packaged
 files themselves are Phase 3's job -- see each tool's own module docstring).
 ``get_feat_schema`` returns the domain's generated JSON Schema (2020-12
 dialect) as raw text, reading the same packaged, build-guaranteed data
-file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://feat/schema`` resource).
 
 ``get_feat`` reads, parses, and returns a full feature document by id -- the
 sole id-based read path for FEAT (there is no ``specmgr://feat/{id}``
-resource, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_feat`` returns
+resource, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_feat`` returns
 one page of id/title/status/ref/path summaries of every feature, shipped as
-a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 ``create_feat`` takes an optional caller-chosen ``id`` (a
 ``feat-NNN-slug``, validated against that shape before any lock/filesystem
 access) or, when ``id`` is omitted, defaults it to

@@ -220,7 +220,7 @@ for review/merge, issue to be closed when the PR merges.
 
 #### 2026-08-27T00:00:00.000Z - Update (post-merge note — tool-surface conversion by feat-22)
 
-This feature shipped on `dev` (v0.12.0) with per-domain `update_dec` / `set_status_dec` tools and a `get_dec` without `raw`. feat-22 (consolidate mutation tools, ADR 36905d5b-8057-4294-8665-c7eed5534db0) merged `dev` into its branch and converted the DEC domain to the generic `update` / `set_status` tools (`type="dec"`) plus `get_dec(raw=True)`, retiring the two per-domain tools — see `.specmgr/feat/feat-22-consolidate-mutation-tools/README.md` Phase 8. The task lines above remain the historical record of this feature's own scope, which completed as planned at the time.
+This feature shipped on `dev` (v0.12.0) with per-domain `update_dec` / `set_status_dec` tools and a `get_dec` without `raw`. feat-22 (consolidate mutation tools, DEC 36905d5b-8057-4294-8665-c7eed5534db0) merged `dev` into its branch and converted the DEC domain to the generic `update` / `set_status` tools (`type="dec"`) plus `get_dec(raw=True)`, retiring the two per-domain tools — see `.specmgr/feat/feat-22-consolidate-mutation-tools/README.md` Phase 8. The task lines above remain the historical record of this feature's own scope, which completed as planned at the time.
 
 ### Decisions Made
 

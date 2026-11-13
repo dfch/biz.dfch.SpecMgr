@@ -75,8 +75,7 @@ class TestGeneratedSchemaCreatedUpdatedPattern(unittest.TestCase):
     """feat-94 REQ-004: every affected domain's generated schema must carry `pattern` for
     `created`/`updated`, derived from `frontmatter._DATE_TIME_PATTERN`, not just a plain
     `string | null` union. Parametrized (via `subTest`) across all registered
-    `_GENERATORS` entries -- `adr` is intentionally excluded, since it is not registered here
-    (its `AdrFrontmatter` has no `created`/`updated` fields, feat-94 Overview)."""
+    `_GENERATORS` entries."""
 
     def test_all_registered_domains_expose_pattern_on_created_and_updated(self):
         """Every domain's `{Domain}Frontmatter` $defs entry must carry the shared pattern."""

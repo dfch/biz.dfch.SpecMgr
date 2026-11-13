@@ -11,13 +11,13 @@ data file rather than anything on the caller's filesystem (Task 2.2; the
 real packaged data files arrive in Phase 3 Task 3.1/3.2).
 ``get_sop_schema`` returns the domain's generated JSON Schema (2020-12
 dialect) as raw text, reading the same packaged, build-guaranteed data
-file (feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3;
+file (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3;
 replaces the removed ``specmgr://sop/schema`` resource).
 ``get_sop`` reads, parses, and returns a full SOP document by id -- the
 sole id-based read path for SOP (there is no ``specmgr://sop/{id}`` resource,
-ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_sop`` returns one page of
+DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614). ``list_sop`` returns one page of
 id/title/status/ref summaries of every SOP, shipped as a paged tool
-from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_sop``
+from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). ``create_sop``
 assigns a fresh id, builds the frontmatter itself, and writes a new document
 (body markdown only, no frontmatter) under the SOP base directory
 (``sop.tools._paths``/``_io``). Disk-free, id-free dry-run content
@@ -29,7 +29,7 @@ SOP tools at once::
     from biz.dfch.specmgr.sop import tools  # noqa: F401 (side-effects only)
 
 ``sop`` is the first domain built with **no** per-domain
-``update_sop``/``set_status_sop`` tools at all (ADR 36905d5b): whole-body
+``update_sop``/``set_status_sop`` tools at all (DEC 36905d5b): whole-body
 and line-range updates of an existing document go through the generic
 ``update`` tool in ``general.tools`` (``type="sop"``), preserving every
 frontmatter field except ``updated``; status changes go through the generic

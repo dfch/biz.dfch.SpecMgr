@@ -7,45 +7,13 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 
 **Models** — schema definitions: adr, md
 
-**ADR domain** — subpackages: data, prompts, resources, tools
-  - 11 MCP tools
-  - 1 MCP resources
-  - 4 prompt modules
-
 ## Module Reference
 
 First-line docstrings from each module, organized by domain:
 
-**adr/**
-
-- `adr/__init__.py` — The Architecture Decision Record (ADR) domain package.
-- `adr/prompts/__init__.py` — MCP prompt wrappers for Architecture Decision Records (ADR ddd038f0-ae16-4f4b-beef-df06f7ed226f).
-- `adr/prompts/create_adr.py` — ``@mcp.prompt()``: create_adr.
-- `adr/prompts/create_adr_test.py` — ``@mcp.prompt()``: create_adr_test.
-- `adr/prompts/update_adr.py` — ``@mcp.prompt()``: update_adr.
-- `adr/prompts/update_adr_test.py` — ``@mcp.prompt()``: update_adr_test.
-- `adr/resources/__init__.py` — MCP resource registrations for Architecture Decision Records.
-- `adr/resources/adr_get.py` — Resource: specmgr://adr/{id}.
-- `adr/tools/__init__.py` — MCP tool wrappers for Architecture Decision Records.
-- `adr/tools/_io.py` — Thin file read/write helpers over ``parse_adr``/``render_adr``.
-- `adr/tools/_lock.py` — Per-document in-process lock guarding ADR mutations.
-- `adr/tools/_paths.py` — ADR base directory resolution, filename slugification, and id -> path
-- `adr/tools/create_adr.py` — ``@mcp.tool()`` wrapper: create_adr (Task 3.2).
-- `adr/tools/get_adr.py` — ``@mcp.tool()`` wrapper: get_adr.
-- `adr/tools/list_adr.py` — ``@mcp.tool()`` wrapper: list_adr (feat-13-list-paging Task 2.1).
-- `adr/tools/option_create.py` — ``@mcp.tool()`` wrapper: option_create.
-- `adr/tools/option_delete.py` — ``@mcp.tool()`` wrapper: option_delete.
-- `adr/tools/option_list.py` — ``@mcp.tool()`` wrapper: option_list.
-- `adr/tools/option_read.py` — ``@mcp.tool()`` wrapper: option_read.
-- `adr/tools/option_update.py` — ``@mcp.tool()`` wrapper: option_update.
-- `adr/tools/update_frontmatter.py` — ``@mcp.tool()`` wrapper: update_frontmatter.
-- `adr/tools/update_section.py` — ``@mcp.tool()`` wrapper: update_section.
-- `adr/tools/validate_adr.py` — ``@mcp.tool()`` wrapper: validate_adr (Task 3.2).
-
 **commands/**
 
 - `commands/__init__.py` — commands module.
-- `commands/adr_toc.py` — ``adr-toc`` -- generate table of contents for all ADRs in docs/adr.
 - `commands/coverage_badge.py` — ``coverage-badge`` -- generate a static SVG coverage badge from .coverage data.
 - `commands/diagram.py` — ``diagram`` -- the deterministic PlantUML diagram commands (feat-185-uc-diagrams; feat-207-reference-graph).
 - `commands/docs.py` — ``docs`` -- regenerate ``docs/api/`` and ``docs/GENERATED.md`` from the codebase.
@@ -163,7 +131,7 @@ First-line docstrings from each module, organized by domain:
 - `general/resources/rasci.py` — Resource: specmgr://rasci (feat-30 Task 3.5, REQ-011).
 - `general/resources/reference_graph.py` — Resource: specmgr://reference-graph (feat-207-reference-graph, Phase 100).
 - `general/resources/version.py` — Resource: specmgr://version — MCP server package version number.
-- `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities (mirrors ``adr/tools/``'s shape).
+- `general/tools/__init__.py` — MCP tool wrappers for general-purpose utilities.
 - `general/tools/_diagram_config.py` — The ``SPECMGR_DIAGRAM_MAX_TITLE`` env-var helper (feat-207-reference-graph, Phase 110, REQ-008).
 - `general/tools/_doc_cache.py` — Generic, doc-type-agnostic content-hash-validated in-memory read cache (feat-107-doc-cache, Phase 2/Phase 6).
 - `general/tools/_doc_paths.py` — Generic, doc-type-agnostic base directory resolution, filename slugification,
@@ -234,17 +202,6 @@ First-line docstrings from each module, organized by domain:
 **models/**
 
 - `models/__init__.py` — Pydantic models used by the ``biz-dfch-specmgr`` MCP server.
-- `models/adr/__init__.py` — Pydantic models for MADR 4.0.0-based Architecture Decision Records.
-- `models/adr/v1/__init__.py` — ADR schema version 1 (``SCHEMA_MAJOR_VERSION == 1``).
-- `models/adr/v1/_util.py` — Shared, private validation helpers for the ``models.adr`` subpackage.
-- `models/adr/v1/adr.py` — Pydantic model for a full ADR document (frontmatter + body).
-- `models/adr/v1/body.py` — Pydantic model for the ADR body -- whole-section fields plus options.
-- `models/adr/v1/frontmatter.py` — Pydantic model for the ADR YAML frontmatter block.
-- `models/adr/v1/mutations.py` — Structured edit operations on an :class:`Adr`.
-- `models/adr/v1/option.py` — Pydantic model for one ``### Option N: {title}`` sub-section.
-- `models/adr/v1/parser.py` — Parse an on-disk ADR ``.md`` file into an :class:`Adr`.
-- `models/adr/v1/renderer.py` — Render an :class:`Adr` back into the canonical on-disk ``.md`` text.
-- `models/adr/v1/summary.py` — Pydantic model for one line of ADR listing output.
 - `models/config_info.py` — Pydantic models for the ``specmgr://config`` resource (feat-51-mcp-cwd REQ-001).
 - `models/iso25010.py` — Pydantic schema and parser for the ISO/IEC 25010:2023 product quality
 - `models/md/__init__.py` — Markdown base models.
@@ -669,4 +626,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 526
+**Test files**: 499

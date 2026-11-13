@@ -30,7 +30,7 @@ JSON schemas -- both the `docs/` and packaged `data/` copies -- the generated `d
 without changing the underlying accepted timestamp formats, separators, or validation
 regexes feat-146-date-time established, and without adding bloated explanatory prose to
 address the confusion. The two ADRs that document the old notation as historical decision
-records (ADR 23a14195, ADR 8c889262) are deliberately left untouched -- see Scope.
+records (DEC 23a14195, DEC 8c889262) are deliberately left untouched -- see Scope.
 
 ### Requirements
 
@@ -62,7 +62,7 @@ records (ADR 23a14195, ADR 8c889262) are deliberately left untouched -- see Scop
 #### Explicitly Out Of Scope
 
 - Changing the accepted timestamp formats, separators, or validation regexes established by feat-146-date-time -- only the human-facing notation changes.
-- Editing the historical ADR documents that illustrate the old notation (ADR 23a14195-339c-48af-99d2-97c9964041ae "Use ISO 8601 for all dates and times" and ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf) -- ADRs are immutable historical decision records; this feature cites them, it does not rewrite them.
+- Editing the historical ADR documents that illustrate the old notation (DEC 23a14195-339c-48af-99d2-97c9964041ae "Use ISO 8601 for all dates and times" and DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf) -- ADRs are immutable historical decision records; this feature cites them, it does not rewrite them.
 - Rewriting historical narrative content that happens to contain the old notation (`CHANGELOG.md`'s existing entries, `.specmgr/feat/*/session-*.md` transcripts, `docs/tsk/*.md` historical task records) -- only currently-authoritative, forward-facing content is in scope; the one deliberate forward-facing citation, this feature's own new `CHANGELOG.md` `[Unreleased]` entry quoting the old notation to name the token the substitution replaces, is likewise excluded from ACC-003's residual check.
 - The old-notation references in this feature README itself (its Overview, Requirements, Acceptance Criteria, Scope, Design Notes, and Task List name the notation being replaced as the subject of the work) -- deliberate historical references, excluded from ACC-003's residual check.
 - Adding verbose explanatory prose about timestamp formatting beyond the narrow notation substitution.
@@ -248,8 +248,8 @@ the raised error) collected for the record first.
 
 ### Related Decisions
 
-- ADR 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO 8601 for all dates and times"): the earlier, foundational ADR that first documented the `HH:mm:ss.fff` example this feature revises for clarity; cited for context, not edited.
-- ADR 8c889262-152b-4b8e-ae2c-75371f7a9edf ("Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)"): established the notation this feature is revising for clarity, not reversing its format/validation rules.
+- DEC 23a14195-339c-48af-99d2-97c9964041ae ("Use ISO 8601 for all dates and times"): the earlier, foundational ADR that first documented the `HH:mm:ss.fff` example this feature revises for clarity; cited for context, not edited.
+- DEC 8c889262-152b-4b8e-ae2c-75371f7a9edf ("Use full ISO 8601 date+time timestamps in all entry headings and frontmatter (accept T or space, write T)"): established the notation this feature is revising for clarity, not reversing its format/validation rules.
 
 ### Task List
 

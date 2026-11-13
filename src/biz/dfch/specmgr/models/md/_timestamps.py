@@ -16,12 +16,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Shared, private ``T``-canonical datetime-formatting helpers for the ``models.md`` frontmatter
-read path and the MCP write side (feat-146 Phase 1, ADR
+read path and the MCP write side (feat-146 Phase 1, DEC
 8c889262-152b-4b8e-ae2c-75371f7a9edf).
 
 This module is the single source of the machine-written canonical date+time
 form: ``yyyy-MM-ddTHH:mm:ss.SSS`` (``T``-separated, ISO 8601's standard
-extended combined form per ADR 23a14195-339c-48af-99d2-97c9964041ae)
+extended combined form per DEC 23a14195-339c-48af-99d2-97c9964041ae)
 followed by either ``Z`` (UTC, i.e. a zero UTC offset) or a signed
 ``±HH:mm`` offset, with milliseconds truncated to *exactly* three digits
 (not the six-digit microsecond precision :meth:`datetime.datetime.isoformat`
@@ -29,8 +29,7 @@ produces by default). It lives here -- under ``models.md`` -- rather than in
 ``general.tools._timestamps`` because ``models/*`` must not import anything
 under ``general`` (``general``'s own ``__init__`` transitively imports
 ``server.mcp``, an ``mcp``-extra-only dependency that would silently land on
-the dependency-free base library; see
-``models/adr/v1/summary.py``'s module docstring for the precedent).
+the dependency-free base library).
 ``general.tools._timestamps.format_timestamp`` now delegates to
 :func:`format_timestamp` below, so the write side and this read-side
 normalization share exactly one formatting implementation.

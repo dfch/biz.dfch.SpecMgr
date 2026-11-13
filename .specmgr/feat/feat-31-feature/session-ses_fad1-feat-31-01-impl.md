@@ -1976,7 +1976,7 @@ Like GOL, DEC has no by-id single-document *resource* -- id-based reads go
 through the ``get_dec`` tool only (``dec.tools.get_dec``), and no
 ``specmgr://dec/list`` resource either -- listing goes through the
 ``list_dec`` ``@mcp.tool()`` (``dec.tools.list_dec``) from the start, per
-ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
+DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 (``max_results``/``offset``) could be accepted.
 """
 
@@ -2923,7 +2923,7 @@ index b71f139..fb30318 100644
 -``tools/`` (Phase 2) are fully implemented; ``resources`` and ``prompts``
 -remain empty sub-packages, built out in Phases 3-4 of the linked feature
 -plan. ``feat`` already follows the ``sop``-style generic-dispatch MCP
--surface (ADR 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``,
+-surface (DEC 36905d5b-8057-4294-8665-c7eed5534db0): ``create_feat``,
 -``parse_feat``, ``list_feat``, ``get_feat``, ``get_feat_example``,
 -``get_feat_template``, ``delete_feat`` (stub), ``validate_feat``, plus
 -``type="feat"`` entries in the generic ``update``/``set_status`` tools --
@@ -2957,7 +2957,7 @@ index 6261709..68b4890 100644
 -``specmgr://feat/example``, ``specmgr://feat/template`` -- no ``/{id}``
 -(id-based reads are ``get_feat``-only, ADR
 -ddfb1109-422d-4507-8dbc-dc5e4bec9614) and no ``/list`` (``list_feat`` ships
--as a paged tool, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+-as a paged tool, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 +MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 +
 +``feat_schema`` registers the persisted-JSON-Schema resource
@@ -2975,7 +2975,7 @@ index 6261709..68b4890 100644
 +go through the ``get_feat`` tool only (``feat.tools.get_feat``), and no
 +``specmgr://feat/list`` resource either -- listing goes through the
 +``list_feat`` ``@mcp.tool()`` (``feat.tools.list_feat``) from the start, per
-+ADR ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
++DEC ec9f5262-9912-49d0-903f-fcfb54f28c13, so that paging parameters
 +(``max_results``/``offset``) could be accepted.
 
 specmgr mcp-docs.........................................................Failed
@@ -3829,7 +3829,7 @@ generic ``update``/``set_status`` tools in ``general/tools/`` (called with
 ``type="feat"``; ``get_feat``'s ``raw=True`` parameter serves the
 line-range flow's line numbers). There is no ``specmgr://feat/{id}``
 resource to point at -- id-based reads always go through the ``get_feat``
-tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 
 Unlike ADR's ``update_adr``, there is no ``update_frontmatter``/
 ``option_*`` equivalent here: FEAT's lifecycle surface is deliberately
@@ -4686,7 +4686,7 @@ Let's view the whole relevant docstring section (lines 60-225) for full context.
 86:                         characteristics (and sub-characteristics), each with a description.
 87: 
 88: REQ has no ``specmgr://req/{id}`` resource, unlike ADR -- id-based reads go
-89: through the ``get_req`` tool only (ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614).
+89: through the ``get_req`` tool only (DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614).
 90: UC has no ``specmgr://uc/{id}`` resource either, for the same reason -- id-based
 91: reads go through the ``get_uc`` tool only. TSK has no ``specmgr://tsk/{id}``
 92: resource either -- id-based reads go through the ``get_tsk`` tool only, and
@@ -4695,18 +4695,18 @@ Let's view the whole relevant docstring section (lines 60-225) for full context.
 95: through the ``get_qa`` tool only. PRB has no ``specmgr://prb/{id}`` resource
 96: either, for the same reason -- id-based reads go through the ``get_prb`` tool
 97: only, and there is also no ``specmgr://prb/list`` resource -- ``list_prb``
-98: ships as a paged tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+98: ships as a paged tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 99: GOL has no ``specmgr://gol/{id}`` resource either, for the same reason --
 100: id-based reads go through the ``get_gol`` tool only, and there is also no
 101:  ``specmgr://gol/list`` resource -- ``list_gol`` ships as a paged tool from
-102:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
+102:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). RSK has no
 103:  ``specmgr://rsk/{id}`` resource either, for the same reason -- id-based reads go
 104:  through the ``get_rsk`` tool only, and there never was such a resource to
 105:  remove in the first place. DEC has no
 106:  ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
 107:  through the ``get_dec`` tool only, and there is also no
 108:  ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
-109:  day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
+109:  day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
 110: 
 111: Tools
 112: -----
@@ -4802,7 +4802,7 @@ Let's view the whole relevant docstring section (lines 60-225) for full context.
 202: e369ee2e-3353-4f92-991c-6367d76d832e.
 203: 
 204: Modules are grouped domain-first
-205: (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+205: (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
 206: document-type domain"): each document
 207: domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and later ``ac``) is a
 208: top-level package with its own ``tools``/``prompts``/``resources`` sub-packages,
@@ -5756,12 +5756,12 @@ index fded6eb..dadf610 100644
   ``specmgr://dec/{id}`` resource either, for the same reason -- id-based reads go
   through the ``get_dec`` tool only, and there is also no
   ``specmgr://dec/list`` resource -- ``list_dec`` ships as a paged tool from
-- day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
-+ day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
+- day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
++ day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13). FEAT has no
 + ``specmgr://feat/{id}`` resource either, for the same reason -- id-based
 + reads go through the ``get_feat`` tool only, and there is also no
 + ``specmgr://feat/list`` resource either -- ``list_feat`` ships as a paged
-+ tool from day one (ADR ec9f5262-9912-49d0-903f-fcfb54f28c13).
++ tool from day one (DEC ec9f5262-9912-49d0-903f-fcfb54f28c13).
  
  Tools
  -----
@@ -5777,7 +5777,7 @@ index fded6eb..dadf610 100644
 +  uses bespoke, folder-per-document addressing (``feat/tools/_paths.py``, not the shared
 +  ``general/tools/_doc_paths.py``) and has no ``update_feat``/``set_status_feat`` tools of
 +  its own -- it dispatches through the generic ``update``/``set_status`` tools below from
-+  day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
++  day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0), same as every other domain.
    General tools (``general/tools/``): ``mdformat`` -- format markdown files in place,
  preserving YAML frontmatter blocks; ``update`` -- whole-body or line-range replace of an
 -existing document's content across the eight whole-body domains (``type`` is one of
@@ -5810,7 +5810,7 @@ index fded6eb..dadf610 100644
  ``README.md`` into an optional sibling ``history.md``, per ADR
 @@ -204,7 +229,8 @@ e369ee2e-3353-4f92-991c-6367d76d832e.
  Modules are grouped domain-first
- (ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
+ (DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by
  document-type domain"): each document
 -domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, and later ``ac``) is a
 +domain (``adr``, ``uc``, ``req``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``, ``feat``,
@@ -5868,10 +5868,10 @@ index 07d3154..60bce34 100644
    fine-grained mutation tools, no renderer: writes persist the
    caller's raw validated body byte-for-byte.
 +- **`feat/`** (Feature) — formalizes the ad hoc `.specmgr/feat/<id>/
-+  README.md` convention (ADR e369ee2e-3353-4f92-991c-6367d76d832e) into a
++  README.md` convention (DEC e369ee2e-3353-4f92-991c-6367d76d832e) into a
 +  real, schema-backed domain, and is the one domain in this codebase whose
 +  own addressing genuinely deviates from every other domain's precedent
-+  (ADR 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
++  (DEC 8cf940c5-3100-485c-a12d-14b59b631712): `id` is a chosen
 +  `feat-NNN-slug` — the containing folder's own name, not a
 +  server-generated UUID — and documents live one-per-folder as
 +  `<base>/<id>/README.md` (a fixed filename), not flat files directly
@@ -5891,9 +5891,9 @@ index 07d3154..60bce34 100644
 +  body text as-is (the text `update`'s `begin`/`end` index into);
 +  `feat/resources/` (`specmgr://feat/schema`, `specmgr://feat/example`,
 +  `specmgr://feat/template`; no `specmgr://feat/{id}` — id-based reads
-+  are `get_feat`-only, ADR ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
++  are `get_feat`-only, DEC ddfb1109-422d-4507-8dbc-dc5e4bec9614; no
 +  `specmgr://feat/list` — `list_feat` ships as a paged tool from day
-+  one, ADR ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
++  one, DEC ec9f5262-9912-49d0-903f-fcfb54f28c13); `feat/prompts/`
 +  (`create_feat`/`update_feat`, narrated instruction flows; `create_feat`
 +  first checks `list_feat` for a near-duplicate feature). Its schema
 +  lives at `feat/models/v1/`, inside the domain package, not top-level
@@ -6672,7 +6672,7 @@ _Thinking:_
 {
   "description": "Add Phase 6 task to feat-31 plan",
   "subagent_type": "general",
-  "prompt": "This is a documentation-only task. Do NOT write, edit, or touch any file under `src/` or `tests/` — this task is purely about editing one planning markdown file.\n\nEdit `/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-31-feature/README.md` (the feat-31-feature plan/progress document) to record a new, not-yet-implemented phase and task. Do NOT implement the actual change described by the task — only record it in the plan.\n\nThe new task to record: **`feat` frontmatter's `created`/`updated` fields must be changed to use microsecond timestamps, matching the format every other whole-body domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`) already uses** (`datetime.now().isoformat(timespec=\"microseconds\")`), reversing this feature's own earlier deliberate divergence (plain `YYYY-MM-DD` dates), which is documented in this same file's Design Notes (\"Frontmatter\" section) and Decisions Made log, and implemented in `create_feat.py` and the `_update_feat`/`_set_status_feat` adapters in `general/tools/update.py`/`set_status.py`.\n\n### What to do\n\n1. **Read the whole file first** (`.specmgr/feat/feat-31-feature/README.md`) to understand its current structure: frontmatter (currently `status: done`, `version: 1.11.0`), the `### Task List` section's existing `#### Phase 0` through `#### Phase 5` (all marked complete), the `## Progress` section's `### Current Status`/`### Blockers`/`### Updates`/`### Recent Updates`/`### Decisions Made`.\n\n2. **Add a new `#### Phase 6: ...` section** to the `### Task List`, immediately after the existing `#### Phase 5: Cross-cutting registration` section and before the \"**Note:** If a task's scope changes mid-flight...\" closing note. Give it a descriptive title, e.g. `#### Phase 6: Frontmatter timestamp format fix`. Add exactly one task under it (number it `Task 6.1`, matching this plan's existing `Task N.M` numbering convention), phrased along these lines (adjust wording/detail as you see fit, but keep it accurate and specific about the affected files):\n\n   - Task 6.1: Change `feat` frontmatter's `created`/`updated` fields from plain `YYYY-MM-DD` dates to microsecond timestamps (`datetime.now().isoformat(timespec=\"microseconds\")`), matching every other whole-body domain's own convention. Affects `feat/tools/create_feat.py` (frontmatter construction), `general/tools/update.py`'s `_update_feat` adapter, `general/tools/set_status.py`'s `_set_status_feat` adapter, the Design Notes' \"Frontmatter\" section (which currently documents the plain-date divergence as deliberate), and any tests asserting the plain-date format (`tests/feat/tools/test_create_feat.py`, `tests/feat/tools/test_integration.py`, `tests/general/tools/` equivalents if any). This reverses this feature's own earlier deliberate design decision (see Decisions Made) — reversing it needs the same care as the original decision: update the Decisions Made log with a new entry explaining why, not just silently change the code. — depends on: Phase 5 complete — status: not-started\n\n   Mark the task `not-started` — do not implement it, do not touch any `src`/`tests` file.\n\n3. **Update the plan's own frontmatter**: since there is now new, unstarted work, change `status` from `done` back to `in-progress` (this file's own frontmatter status vocabulary is `planning`/`in-progress`/`review`/`done`, per ADR e369ee2e-3353-4f92-991c-6367d76d832e's convention — NOT `feat`'s own schema's 4-value set, this is a different, pre-existing document type). Bump `version` by one minor version (e.g. `1.11.0` -> `1.12.0`) and update `updated` to today's date if you can determine it, otherwise leave it as the file's existing `updated` date (do not guess a wrong date).\n\n4. **Add a short new dated entry to `### Recent Updates`** (at the top, above the existing entries, matching this section's own existing newest-first convention) noting that Phase 6 was added, describing the task, and stating explicitly that this is planning/recording only -- no `src`/`tests` code was touched.\n\n5. **Update `### Current Status`** with one short sentence noting that a new Phase 6 (frontmatter timestamp format fix) has been added to the Task List as a not-yet-started follow-up item, and that the feature's `done` status has reverted to `in-progress` to reflect this.\n\n6. Do NOT add a new Acceptance Criteria entry, do NOT change the Requirements section, do NOT touch Scope/Dependencies/Design Notes' body text beyond what's described above — keep this a minimal, focused planning edit. Do NOT run any quality gate commands, do NOT commit, do NOT touch GitHub issue #31 — the orchestrator will handle verification and committing.\n\nReport back: the exact diff/summary of what you changed (file, line ranges, new content), confirming no `src/`/`tests/` files were touched.\n"
+  "prompt": "This is a documentation-only task. Do NOT write, edit, or touch any file under `src/` or `tests/` — this task is purely about editing one planning markdown file.\n\nEdit `/home/user/src/biz.dfch.SpecMgr/.specmgr/feat/feat-31-feature/README.md` (the feat-31-feature plan/progress document) to record a new, not-yet-implemented phase and task. Do NOT implement the actual change described by the task — only record it in the plan.\n\nThe new task to record: **`feat` frontmatter's `created`/`updated` fields must be changed to use microsecond timestamps, matching the format every other whole-body domain (`req`/`uc`/`tsk`/`qa`/`prb`/`gol`/`rsk`/`dec`) already uses** (`datetime.now().isoformat(timespec=\"microseconds\")`), reversing this feature's own earlier deliberate divergence (plain `YYYY-MM-DD` dates), which is documented in this same file's Design Notes (\"Frontmatter\" section) and Decisions Made log, and implemented in `create_feat.py` and the `_update_feat`/`_set_status_feat` adapters in `general/tools/update.py`/`set_status.py`.\n\n### What to do\n\n1. **Read the whole file first** (`.specmgr/feat/feat-31-feature/README.md`) to understand its current structure: frontmatter (currently `status: done`, `version: 1.11.0`), the `### Task List` section's existing `#### Phase 0` through `#### Phase 5` (all marked complete), the `## Progress` section's `### Current Status`/`### Blockers`/`### Updates`/`### Recent Updates`/`### Decisions Made`.\n\n2. **Add a new `#### Phase 6: ...` section** to the `### Task List`, immediately after the existing `#### Phase 5: Cross-cutting registration` section and before the \"**Note:** If a task's scope changes mid-flight...\" closing note. Give it a descriptive title, e.g. `#### Phase 6: Frontmatter timestamp format fix`. Add exactly one task under it (number it `Task 6.1`, matching this plan's existing `Task N.M` numbering convention), phrased along these lines (adjust wording/detail as you see fit, but keep it accurate and specific about the affected files):\n\n   - Task 6.1: Change `feat` frontmatter's `created`/`updated` fields from plain `YYYY-MM-DD` dates to microsecond timestamps (`datetime.now().isoformat(timespec=\"microseconds\")`), matching every other whole-body domain's own convention. Affects `feat/tools/create_feat.py` (frontmatter construction), `general/tools/update.py`'s `_update_feat` adapter, `general/tools/set_status.py`'s `_set_status_feat` adapter, the Design Notes' \"Frontmatter\" section (which currently documents the plain-date divergence as deliberate), and any tests asserting the plain-date format (`tests/feat/tools/test_create_feat.py`, `tests/feat/tools/test_integration.py`, `tests/general/tools/` equivalents if any). This reverses this feature's own earlier deliberate design decision (see Decisions Made) — reversing it needs the same care as the original decision: update the Decisions Made log with a new entry explaining why, not just silently change the code. — depends on: Phase 5 complete — status: not-started\n\n   Mark the task `not-started` — do not implement it, do not touch any `src`/`tests` file.\n\n3. **Update the plan's own frontmatter**: since there is now new, unstarted work, change `status` from `done` back to `in-progress` (this file's own frontmatter status vocabulary is `planning`/`in-progress`/`review`/`done`, per DEC e369ee2e-3353-4f92-991c-6367d76d832e's convention — NOT `feat`'s own schema's 4-value set, this is a different, pre-existing document type). Bump `version` by one minor version (e.g. `1.11.0` -> `1.12.0`) and update `updated` to today's date if you can determine it, otherwise leave it as the file's existing `updated` date (do not guess a wrong date).\n\n4. **Add a short new dated entry to `### Recent Updates`** (at the top, above the existing entries, matching this section's own existing newest-first convention) noting that Phase 6 was added, describing the task, and stating explicitly that this is planning/recording only -- no `src`/`tests` code was touched.\n\n5. **Update `### Current Status`** with one short sentence noting that a new Phase 6 (frontmatter timestamp format fix) has been added to the Task List as a not-yet-started follow-up item, and that the feature's `done` status has reverted to `in-progress` to reflect this.\n\n6. Do NOT add a new Acceptance Criteria entry, do NOT change the Requirements section, do NOT touch Scope/Dependencies/Design Notes' body text beyond what's described above — keep this a minimal, focused planning edit. Do NOT run any quality gate commands, do NOT commit, do NOT touch GitHub issue #31 — the orchestrator will handle verification and committing.\n\nReport back: the exact diff/summary of what you changed (file, line ranges, new content), confirming no `src/`/`tests/` files were touched.\n"
 }
 ```
 

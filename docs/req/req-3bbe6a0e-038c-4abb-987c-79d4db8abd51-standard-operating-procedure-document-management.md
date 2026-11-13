@@ -14,7 +14,7 @@ THE system shall provide Standard Operating Procedure (SOP) document management,
 
 ## Description
 
-AGENTS.md's Status section documents `sop` as the first domain built dispatch-only from day one (ADR 36905d5b-8057-4294-8665-c7eed5534db0): it has no per-domain `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, relying entirely on the generic dispatch tools with `type="sop"`. This reduces the number of tools that must be built, tested, and maintained as new domains are added, improving the system's overall modifiability and reducing duplicated logic across domains.
+AGENTS.md's Status section documents `sop` as the first domain built dispatch-only from day one (DEC 36905d5b-8057-4294-8665-c7eed5534db0): it has no per-domain `update_sop`/`set_status_sop`/`set_classification_sop` tools at all, relying entirely on the generic dispatch tools with `type="sop"`. This reduces the number of tools that must be built, tested, and maintained as new domains are added, improving the system's overall modifiability and reducing duplicated logic across domains.
 
 ## Characteristics
 
@@ -26,7 +26,7 @@ SRS
 
 ## Source
 
-AGENTS.md's Status section (the `sop` bullet) and ADR 36905d5b-8057-4294-8665-c7eed5534db0.
+AGENTS.md's Status section (the `sop` bullet) and DEC 36905d5b-8057-4294-8665-c7eed5534db0.
 
 ## Related Artifacts
 

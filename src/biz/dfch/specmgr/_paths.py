@@ -32,12 +32,12 @@ does not ship ``docs/`` as package data, so climbing from ``__file__``
 would land somewhere inside ``site-packages`` with no ``docs/`` directory
 at all. This is why ``req/tools/get_req_schema.py`` (the former
 ``req/resources/req_schema.py``, Task 3.8; converted to a tool in
-feat-189 Phase 105, ADR 112b6498-078b-4a59-88b8-8ffb7a5041b3)
+feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3)
 deliberately does **not** import this module -- it reads a packaged-data
 copy via ``general.tools._packaged_data`` instead, so the ``get_req_schema``
 MCP tool keeps working from a non-editable install too. Every current caller of
 ``DOCS_DIR`` is a dev/CI-only CLI command (``commands/schema.py``,
-``commands/docs.py``, ``commands/adr_toc.py``); it is not meant for
+``commands/docs.py``); it is not meant for
 resources/tools that must survive a real, non-editable install -- use
 ``importlib.resources``-backed package data for those instead (see
 `.specmgr/feat/feat-6-requirement-artifact/README.md`'s Decisions Made).
@@ -55,7 +55,7 @@ _SPECMGR_ROOT = Path(__file__).resolve().parent  # src/biz/dfch/specmgr
 REPO_ROOT = _SPECMGR_ROOT.parent.parent.parent.parent
 
 #: The repo's ``docs/`` directory, holding generated artifacts
-#: (``docs/api/``, ``docs/adr/README.md``, ``docs/req_schema.json``, ...).
+#: (``docs/api/``, ``docs/req_schema.json``, ...).
 DOCS_DIR = REPO_ROOT / "docs"
 
 __all__ = ["DOCS_DIR", "REPO_ROOT"]

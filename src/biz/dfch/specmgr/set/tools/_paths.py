@@ -35,7 +35,7 @@ effect), only :func:`ensure_set_base_dir` does, for ``create_set``.
 
 **Cache-backed scan (feat-107-doc-cache Phase 4 shape, repeated here).**
 :func:`find_set_path` scans through the content-hash-validated per-domain
-cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s
+cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d): it passes ``._cache``'s
 own ``read_set`` (not ``parse_set``) as ``find_doc_path_by_id``'s
 ``read_fn``, so a file whose on-disk content hash is unchanged since its
 last read is not re-parsed, and it passes ``._cache``'s
@@ -44,7 +44,7 @@ file deleted outside specmgr's own tooling) is dropped before any per-file
 work on every scan. ``read_set``/``reconcile_set_cache`` are imported from
 ``._cache``, not ``._io``, to avoid a circular import -- see ``._cache``'s
 own module docstring for the full rationale. The filesystem remains the
-sole source of truth (ADR 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache
+sole source of truth (DEC 33c5ab08-ff58-4c73-8c32-23abaf3838e3): a cache
 entry is only ever a memoization keyed by validated content hash, never an
 independent fact about what exists on disk.
 """
@@ -179,7 +179,7 @@ def _reconcile_set_scan(scan_paths: Iterable[Path]) -> None:  # pylint: disable=
     The ``reconcile_fn`` :func:`find_doc_path_by_id` calls once, before any
     per-file work, with the scanned directory's own materialized path
     listing. With the ``{language}`` subfolder layout (feat-197-i18n
-    Phase 125, ADR 38efdb66 item 9), a scan of one language directory no
+    Phase 125, DEC 38efdb66 item 9), a scan of one language directory no
     longer covers the whole domain -- reconciling against ``scan_paths``
     alone would evict every other language's cached entries -- so this
     wrapper instead hands :func:`~._cache.reconcile_set_cache` the

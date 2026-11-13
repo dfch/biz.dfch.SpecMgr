@@ -17,9 +17,8 @@
 
 """Unit tests for the shared ``WHOLE_BODY_DOMAINS`` registry (feat-134, Phase 1, REQ-012).
 
-Covers ACC-013 (the registry is the one source of the 13-domain set, ``adr``
-excluded, and the lookup rejects ``adr``/unknown names with ``ValueError``)
-and the ``adr``-rejection half of ACC-007.
+Covers ACC-013 (the registry is the one source of the whole-body domain set
+and the lookup rejects unknown names with ``ValueError``).
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ from biz.dfch.specmgr.general.tools._domains import (
 
 
 class TestWholeBodyDomainsTuple(unittest.TestCase):
-    """ACC-013: the registry tuple is exactly the 13 whole-body domains, ``adr`` excluded."""
+    """ACC-013: the registry tuple is exactly the 14 whole-body domains."""
 
     def test_equals_the_14_domain_tuple(self) -> None:
         expected = (
@@ -56,15 +55,12 @@ class TestWholeBodyDomainsTuple(unittest.TestCase):
 
         self.assertEqual(WHOLE_BODY_DOMAINS, expected)
 
-    def test_adr_is_excluded(self) -> None:
-        self.assertNotIn("adr", WHOLE_BODY_DOMAINS)
-
     def test_no_duplicates(self) -> None:
         self.assertEqual(len(WHOLE_BODY_DOMAINS), len(set(WHOLE_BODY_DOMAINS)))
 
 
 class TestWholeBodyDomainLookup(unittest.TestCase):
-    """ACC-013/ACC-007: the name lookup returns each entry and rejects ``adr``/unknown names."""
+    """ACC-013/ACC-007: the name lookup returns each entry and rejects unknown names."""
 
     def test_returns_an_entry_for_every_registered_domain(self) -> None:
         for name in WHOLE_BODY_DOMAINS:
@@ -74,11 +70,6 @@ class TestWholeBodyDomainLookup(unittest.TestCase):
                 self.assertEqual(entry.name, name)
                 for attr in ("base_dir", "iter_paths", "load_by_id", "parse_text"):
                     self.assertTrue(callable(getattr(entry, attr)), f"{entry.name}.{attr} must be callable")
-
-    def test_adr_rejected_with_value_error(self) -> None:
-        with self.assertRaises(ValueError) as ctx:
-            whole_body_domain("adr")
-        self.assertIn("adr", str(ctx.exception))
 
     def test_unknown_name_rejected_with_value_error(self) -> None:
         with self.assertRaises(ValueError) as ctx:

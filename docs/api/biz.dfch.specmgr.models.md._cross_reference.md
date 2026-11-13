@@ -28,8 +28,7 @@ Build a `"^<TAG(S)> {UUID_PATTERN}: .+$"` full-line match pattern for one or mor
 
 A single tag renders as a bare literal (`"^REQ ...: .+$"`); two or more
 render as a parenthesized alternation (`"^(REQ|UC) ...: .+$"`, mirroring
-`sysrs.models.v1.body._DECISIONS_PATTERN`'s `(DEC|ADR)` shape and
-`vcr.models.v1.body._VERIFIES_PATTERN`'s `(REQ|UC)` shape).
+`vcr.models.v1.body._VERIFIES_PATTERN`'s own `(REQ|UC)` shape).
 
 Args:
     tags: one or more allowed type tags (e.g. `"REQ"`, or `"REQ", "UC"`

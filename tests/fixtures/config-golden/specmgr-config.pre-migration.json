@@ -1,72 +1,72 @@
 {
   "domains": {
-    "adr": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/adr",
-      "env_var": "SPECMGR_ADR_DIR",
-      "env_var_set": false
-    },
     "req": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/req",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/req",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "uc": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/uc",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/uc",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "tsk": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/tsk",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/tsk",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "qa": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/qa",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/qa",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "prb": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/prb",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/prb",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "gol": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/gol",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/gol",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "rsk": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/rsk",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/rsk",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "dec": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/dec",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/dec",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "sop": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/sop",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/sop",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "feat": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/.specmgr/feat",
+      "base_dir": "/tmp/tmpj4h3r9x0/.specmgr/feat",
       "env_var": "SPECMGR_FEAT_DIR",
       "env_var_set": false
     },
     "vcr": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/vcr",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/vcr",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "sysrs": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/sysrs",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/sysrs",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     },
     "txt": {
-      "base_dir": "/tmp/specmgr-config-golden-ab5i4trw/docs/txt",
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/txt",
+      "env_var": "SPECMGR_DOCS_DIR",
+      "env_var_set": false
+    },
+    "set": {
+      "base_dir": "/tmp/tmpj4h3r9x0/docs/set",
       "env_var": "SPECMGR_DOCS_DIR",
       "env_var_set": false
     }
@@ -88,6 +88,12 @@
       "set": false
     },
     "selected": "none"
+  },
+  "diagram": {
+    "set": false,
+    "valid": true,
+    "default": 40,
+    "resolved": 40
   },
   "feat_warmup_disabled": false
 }

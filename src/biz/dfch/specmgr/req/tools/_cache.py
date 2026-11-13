@@ -52,7 +52,7 @@ concern, but cross-*test*-within-the-same-worker leakage very much is).
 in ``setUp``/``tearDown`` and never observe another test's cached state.
 It is not for production use.
 
-See ADR bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
+See DEC bfd76370-b59b-4d65-b550-a969f6c93c9d for the full cache design this
 module wires up for the ``req`` domain, and
 ``.specmgr/feat/feat-107-doc-cache/README.md`` for the feature plan this
 implements (Phase 3, the pilot domain -- this module's shape is the
@@ -99,7 +99,7 @@ def read_req(path: Path) -> ReqDocument:
     """Read and parse the requirement at ``path``, through the cache.
 
     A file is only ever re-parsed when its on-disk content hash no longer
-    matches the hash recorded at the last read of ``path`` (ADR
+    matches the hash recorded at the last read of ``path`` (DEC
     bfd76370-b59b-4d65-b550-a969f6c93c9d); otherwise the cached result (or
     re-raised cached failure) is returned without re-invoking
     :func:`~biz.dfch.specmgr.req.models.v1.parse_req`.
@@ -110,12 +110,12 @@ def read_req(path: Path) -> ReqDocument:
     directly in the flat ``docs/req/`` directory parses canonical/EN, a file
     directly in ``docs/req/{language}/`` parses in that language, anything
     else canonical), never from a caller argument: the location *is* the
-    language encoding (ADR 38efdb66 item 1), so every consumer of this
+    language encoding (DEC 38efdb66 item 1), so every consumer of this
     reader (``find_req_path``'s scan, ``list_req``'s rows, ``load_by_id``'s
     second read, the generic tools' own req adapters) parses a variant file
     with its table without any signature change, and the ``DocCache``'s
     path-keyed entries keep EN and every language of one id independent
-    (ADR item 9 -- no cache code change).
+    (DEC 38efdb66 item 9 -- no cache code change).
 
     Parameters
     ----------

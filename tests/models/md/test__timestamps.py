@@ -76,7 +76,7 @@ class TestFormatTimestampT(unittest.TestCase):
         self.assertEqual(format_timestamp(dt), "2026-09-01T12:30:45.123")
 
     def test_separator_is_t(self) -> None:
-        """The date/time separator must be a literal `T` (feat-146, ADR 8c889262)."""
+        """The date/time separator must be a literal `T` (feat-146, DEC 8c889262)."""
         dt = datetime(2026, 9, 1, 12, 30, 45, 123000, tzinfo=timezone.utc)
         value = format_timestamp(dt)
         self.assertEqual(value[10], "T")

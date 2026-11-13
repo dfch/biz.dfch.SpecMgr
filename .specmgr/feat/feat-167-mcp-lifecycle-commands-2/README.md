@@ -4,7 +4,7 @@ created: '2026-09-28T05:48:11.107+02:00'
 id: feat-167-mcp-lifecycle-commands-2
 status: review
 type: feat
-updated: '2026-11-09T11:24:13.721+01:00'
+updated: '2026-11-13T12:25:08.945+01:00'
 version: 1.0.0
 ---
 
@@ -16,7 +16,7 @@ version: 1.0.0
 
 This feature carries the remaining scope of GitHub issue #150 ("MCP-Native Feature-Lifecycle Commands") that was not yet started when that feature's own Phase 0 (`get_<d>` parse-failure error channel) and Phase 1 (`repair`) were implemented, reviewed, and merged as feat-150-mcp-lifecycle-commands. That feature is closed out at its Phase 0 + Phase 1 scope; the remaining four items -- (1) a portable, MCP-native version of the OpenCode-only `implement_feature` workflow, (2) an automatic post-implementation review-and-fix-phase follow-up, (3) a pre-implementation plan-refinement command, and (4) an easy way to get these OpenCode-native commands onto a fresh OpenCode install -- are tracked here, under GitHub issue #167.
 
-The split (rather than continuing inside feat-150's own plan document) is because GitHub issue #163 (feat-163-feat-numbering) introduces a stricter FEAT Task List numbering scheme -- 3-digit `#### Phase NNN: {title}` headings and `- [ ] Task NNN.MMM: {text}` checklist items, both shape-enforced by the schema, gap-friendly and permanent once assigned -- with an explicit no-migration policy for existing plan documents. This feature is authored directly in that new scheme from the start, so it never needs migration, rather than mixing schemes inside feat-150's already-merged plan or renumbering already-shipped content referenced elsewhere in the repo (AGENTS.md, ADR 9080b37c-82b3-4f63-81f1-79641d0bf14c, `CHANGELOG.md`, `server.py`'s module docstring).
+The split (rather than continuing inside feat-150's own plan document) is because GitHub issue #163 (feat-163-feat-numbering) introduces a stricter FEAT Task List numbering scheme -- 3-digit `#### Phase NNN: {title}` headings and `- [ ] Task NNN.MMM: {text}` checklist items, both shape-enforced by the schema, gap-friendly and permanent once assigned -- with an explicit no-migration policy for existing plan documents. This feature is authored directly in that new scheme from the start, so it never needs migration, rather than mixing schemes inside feat-150's already-merged plan or renumbering already-shipped content referenced elsewhere in the repo (AGENTS.md, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c, `CHANGELOG.md`, `server.py`'s module docstring).
 
 The unifying design principle carried over from feat-150 (see Design Notes) is unchanged: every new capability gets a **portable MCP prompt** (narration-only text, works in any MCP host, following the existing `create_*`/`update_*`/`implement_task`/`refine`/`compact_history`/`repair` precedent) *and*, where real file-editing/iteration/multi-agent delegation is required, a **richer OpenCode-native subagent + command** with real permission enforcement (mirroring the existing `phase-orchestrator`/`phase-implementer`/`feat-reviewer`/`ref-finder`/`doc-repairer` precedent). The distribution item (REQ-007/008/009) is the deliberate exception to the prompt half of that principle: its agent-facing carrier is the `specmgr://harness-bundle` resource's own `instructions` field, not a prompt (OpenCode exposes no MCP prompt surface to the agent -- see Design Notes).
 
@@ -122,7 +122,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - feat-163-feat-numbering (GitHub issue #163): this document's own `Phase NNN`/`Task NNN.MMM` Task List numbering scheme.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
 - feat-27-validation / feat-81-83-validation (the enriched validate errors `refine_feat`'s `validate` re-check relies on).
 
@@ -166,9 +166,9 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 - feat-163-feat-numbering (GitHub issue #163): the FEAT Phase/Task numbering scheme this document is authored in from the start.
 
-- New ADR (Phase 110, before Phase 120): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full ADR per this repo's own ADR-vs-feature-log convention. Its UUID is an input to Phase 120's instruction files and is recorded here once created.
+- New ADR (Phase 110, before Phase 120): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full DEC (the ADR domain was retired by feat-46-remove-adr, PR #258) per this repo's own ADR-vs-feature-log convention, now read as DEC-vs-feature-log. Its UUID is an input to Phase 120's instruction files and is recorded here once created.
 
-- ADR e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
+- DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
 ### Task List
 
@@ -186,7 +186,7 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 
 #### Phase 110: ADR for portable-delegation pattern
 
-- [ ] Task 110.100: Write the new ADR (see Related Decisions) in `docs/adr/` per the repo's ADR conventions, regenerate `specmgr adr-toc` (pre-commit hook), set its status to `accepted`, and record its UUID in this README's Related Decisions -- needed before Phase 120 (its UUID is an input to Phase 120's instruction files).
+- [ ] Task 110.100: Write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`/generic `set_status(type="dec")`) per the repo's DEC conventions -- the ADR carrier is retired (feat-46-remove-adr, PR #258: carrier is now a DEC; `dec` domain, no `adr-toc` regeneration), set its status to `accepted`, and record its UUID in this README's Related Decisions -- needed before Phase 120 (its UUID is an input to Phase 120's instruction files).
 
 - [ ] Task 110.110: Phase-end gate: full quality gate green (including the `specmgr adr-toc` drift check), then exactly one Conventional Commit for the phase.
 
@@ -299,6 +299,10 @@ The unifying design principle carried over from feat-150 (see Design Notes) is u
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-13 11:25:08.945Z - Merged origin/dev into feat-167: ADR removal (PR #258) + forwarder fix (PR #261); Task 110.100 carrier re-pointed ADR -> DEC
+
+origin/dev (merge commit 80d883f2, 2026-11-11) merged into feat-167: the dev move carried the ADR domain deletion (feat-46-remove-adr, PR #258, 1,307 files), the structural forwarder fix (8cb27c73, PR #261), and the feat-255 i18n cleanup. The merge conflicted in exactly 7 files; resolution was a union of our refine_feat surface (Phases 100/180) and their ADR->DEC retargets: `feat/__init__.py`'s + `server.py`'s module docstrings keep our refine_feat passages with the ADR 112b6498 / 36905d5b citations now read as DEC, the i18n-exclusion test was restructured feat-only (the ADR half deleted with the domain) with `refine_feat` re-pinned into `_FEAT_PROMPTS`, and the four generated docs were re-derived to no-diff over the merged tree (32-file harness bundle: their 13 reworded entries + our 2, the auto-merged JSON verified equal to a fresh regeneration). Their 3 plan-citation retargets (ADR -> DEC) landed in this README's Overview/Dependencies; Task 110.100 + the Related Decisions bullet are re-pointed to the DEC carrier (approved with the merge); the remaining Phase-110 ADR-carrier references (the ACC-011 text, the Scope/Included bullet, the Design Notes "Portable-prompt-narrates-delegation" sentence, the Phase 110 heading) are deliberately left for the Phase 110 planning work. The merge commit is the orchestrator's.
 
 #### 2026-11-09 10:24:13.721Z - Phase 180 (review cycle 4): G1 parse-failure branch, D1 ACC-001/002 check-offs, D2 Current Status bookkeeping
 

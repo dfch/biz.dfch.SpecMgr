@@ -270,6 +270,21 @@ definitions_and_acronyms
 body
 title
 
+# feat-46 (Phase 140): Pydantic model fields (and the UC parser's
+# `own_content_end` property) read only via (de)serialization. Removing the
+# retired artifact type's code dropped the last `src/` attribute references
+# that had been marking these names "used" for vulture's name-based analysis --
+# they were previously masked by that domain's own same-named fields (e.g.
+# `consequences`/`confirmation`/`more_information` on its body model,
+# `consulted`/`informed` on its frontmatter/RASCI composite). Genuine fields,
+# not dead code.
+consequences
+confirmation
+consulted
+informed
+more_information
+own_content_end
+
 # config (feat-51-mcp-cwd Phase 1): `DomainConfig` fields read only via
 # (de)serialization; nothing in `src/` accesses them as plain attributes yet.
 # (Constructor keyword arguments don't count as name references for vulture's
@@ -422,7 +437,7 @@ UNATTRIBUTED_MARKER_FORMS
 # `scan_paths` is `dec.tools._paths._reconcile_dec_scan`'s own parameter, the
 # `reconcile_fn` argument `general.tools._doc_paths.find_doc_path_by_id`
 # always supplies with the scanned directory's materialized path listing.
-# With the `{language}` subfolder layout (ADR 38efdb66 item 9), that single
+# With the `{language}` subfolder layout (DEC 38efdb66 item 9), that single
 # directory no longer covers the whole domain, so the wrapper deliberately
 # ignores the argument and reconciles against the recomputed domain-wide
 # live listing (a superset of it) instead -- the parameter is part of the

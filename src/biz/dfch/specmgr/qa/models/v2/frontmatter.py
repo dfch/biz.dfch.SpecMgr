@@ -21,7 +21,7 @@ Mirrors the pattern established by `tsk/models/v1/frontmatter.py::TskFrontmatter
 a subtype of `MarkdownFrontmatter` that restricts `type` to a fixed
 ``Literal["qa"]`` and narrows the free-form ``status`` to TSK's own closed
 vocabulary (reused verbatim -- a Q&A document's lifecycle doesn't map
-naturally to REQ's larger, ADR-like proposed/accepted/rejected/implemented
+naturally to REQ's larger proposed/accepted/rejected/implemented
 set, see the feature README's Design Notes/Decisions Made).
 
 Lives directly in `qa/models/v2/` -- QA's frontmatter shape has never been

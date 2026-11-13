@@ -140,7 +140,3 @@ in step 1, (2) the exact fix you would apply per step 3, and (3) the file
 
 - `type` is one of the whole-body specmgr domains:
   req/uc/tsk/qa/prb/gol/rsk/dec/sop/feat/vcr/sysrs/txt/set.
-  ADR is explicitly out of scope: it is not a whole-body domain and
-  has no generic dry-run `validate` tooling of its own (its standalone
-  `validate_adr` re-reads the ADR from disk by id), so this repair
-  loop is not defined for it.

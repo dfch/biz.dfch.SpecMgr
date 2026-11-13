@@ -18,7 +18,7 @@
 """MCP resource registrations that are not specific to any single document
 domain.
 
-See ADR ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
+See DEC ece4554b-725c-4f76-bc04-5d2b760363d2: "Organize the codebase by document-type domain".
 
 ``version`` registers the server package version resource. ``iso25010``
 registers the ISO/IEC 25010:2023 product quality model resource. ``dtais``
@@ -74,8 +74,8 @@ content}`` entry in ``files``; the agent's sole discoverable entry point
 for installing the published harness files into a fresh harness setup (no
 install CLI, no MCP prompt -- OpenCode exposes no prompt surface to the
 agent). Domain-specific
-resources (e.g. ``adr_list``/``adr_get``)
-live under their own domain package instead (``biz.dfch.specmgr.adr.resources``).
+resources live under their own domain package instead (e.g.
+``biz.dfch.specmgr.req.resources``).
 Import this package to load all cross-cutting resources at once::
 
     from biz.dfch.specmgr.general import resources  # noqa: F401 (side-effects only)

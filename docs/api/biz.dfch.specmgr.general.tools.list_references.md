@@ -2,11 +2,11 @@
 
 ``@mcp.tool()`` wrapper: list_references (feat-144-ref-artifact, Phase 2).
 
-The generic, cross-domain cross-reference listing tool (ADR 36905d5b's
+The generic, cross-domain cross-reference listing tool (DEC 36905d5b's
 dispatch-only convention: one ``general/tools/`` module, not a per-domain
 ``list_references_<d>``). It takes a *source* document's ``type``/``id`` --
 every whole-body domain (``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/
-``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) plus ``adr`` --
+``rsk``/``dec``/``sop``/``feat``/``vcr``/``sysrs``/``txt``/``set``) --
 reads
 the source as raw, frontmatter-stripped body text
 (``general.tools._splice.body_text``: the doc-cache does **not** apply to
@@ -19,11 +19,11 @@ repeated occurrences of the same reference (first-occurrence order
 preserved), and
 resolves each unique reference to the referenced document in its own target
 domain (``general.tools._references.resolve_reference``: the target
-domains' own cache-backed ``load_by_id``; ``adr`` never, ADR bfd76370).
+domains' own cache-backed ``load_by_id``).
 The result is one
 :class:`~biz.dfch.specmgr.general.models.reference.ReferenceRow` per unique
 reference, wrapped in ``PagedResult[ReferenceRow]`` via the exact ``list_*``
-paging mechanism (``normalize_paging`` + ``paginate``, ADR ec9f5262):
+paging mechanism (``normalize_paging`` + ``paginate``, DEC ec9f5262):
 ``total`` = the number of unique references, ``error_count`` = the number
 of references that could not be resolved, ``truncated`` when more
 references exist beyond the page.
@@ -64,7 +64,7 @@ List the cross-references of one source document, resolved and paged.
 
 The source is identified by ``type`` (every whole-body domain
 ``req``/``uc``/``tsk``/``qa``/``prb``/``gol``/``rsk``/``dec``/``sop``/
-``feat``/``vcr``/``sysrs``/``txt``/``set``, plus ``adr``) and its own
+``feat``/``vcr``/``sysrs``/``txt``/``set``) and its own
 ``id``, and is validated via ``_path_safety.validate_id`` before any
 filesystem access (ACC-005). The source is then read as raw, frontmatter-stripped
 body text (``_splice.body_text`` -- the doc-cache does not apply to it,
@@ -81,9 +81,8 @@ first-occurrence order preserved (REQ-005).
 
 Each unique reference is resolved to the referenced document in its own
 target domain (``_references.resolve_reference``: every target domain
-except ``adr`` reads through its own cache-backed ``load_by_id``
-(``feat`` is folder-per-document rather than flat-file); ``adr`` never
-does, ADR bfd76370). The
+reads through its own cache-backed ``load_by_id`` (``feat`` is
+folder-per-document rather than flat-file)). The
 row's ``title`` is the referenced document's own ``# {title}`` H1 (the
 feature's H1 with the ``Feature: `` prefix stripped, for ``feat``) and
 its ``path`` the referenced document's resolved absolute file path; a
@@ -93,7 +92,7 @@ message in ``error`` -- target resolution never raises (ACC-003).
 
 The full, deduplicated row list is wrapped in
 ``PagedResult[ReferenceRow]`` via the exact ``list_*`` paging
-mechanism (``_paging.normalize_paging`` + ``paginate``, ADR ec9f5262):
+mechanism (``_paging.normalize_paging`` + ``paginate``, DEC ec9f5262):
 ``total`` = the number of unique references, ``error_count`` = the
 number of references that could not be resolved, ``truncated`` when
 more references exist beyond the page (ACC-009).
@@ -101,7 +100,7 @@ more references exist beyond the page (ACC-009).
 Parameters
 ----------
 type:
-    The source document's type / domain: one of ``adr``, ``req``,
+    The source document's type / domain: one of ``req``,
     ``uc``, ``tsk``, ``qa``, ``prb``, ``gol``, ``rsk``, ``dec``,
     ``sop``, ``feat``, ``vcr``, ``sysrs``, ``txt``, ``set``.
 id:
@@ -135,7 +134,7 @@ ReqNotFoundError / UcNotFoundError / TskNotFoundError /
 QaNotFoundError / PrbNotFoundError / GolNotFoundError /
 RskNotFoundError / DecNotFoundError / SopNotFoundError /
 FeatNotFoundError / VcrNotFoundError / SysrsNotFoundError /
-TxtNotFoundError / AdrNotFoundError
+TxtNotFoundError
     No document of the dispatched source ``type`` has this ``id`` --
     the source domain's own not-found error, propagated unchanged from
     the source domain's own ``load_by_id`` (identical to ``get_<d>``)

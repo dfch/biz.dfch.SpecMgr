@@ -101,7 +101,7 @@ documents all parse. The one failure is pre-existing and unrelated to timestamps
 not permitted in a parsed document at line 362 (relative to this text's own
 numbering): html_inline '<domain>'; fix: wrap it in a code span (e.g. `<domain>`) or
 write it as an HTML comment (e.g. `<!-- <domain> -->`) instead``` -- the appendix
-(manual feat-84 concatenation, commit bca1a87) embeds ADR ec9f5262's own H1 heading
+(manual feat-84 concatenation, commit bca1a87) embeds DEC ec9f5262's own H1 heading
 verbatim (`# Expose <domain>_list as paged MCP tools (list_<domain>), not
 resources`) into sysrs body text, which the sysrs body parser rejects while
 `parse_adr` accepts it fine as an ADR H1. This file is not tracked by the

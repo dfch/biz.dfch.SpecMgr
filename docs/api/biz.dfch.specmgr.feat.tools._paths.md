@@ -2,7 +2,7 @@
 
 Feature (FEAT) base directory resolution and id -> path lookup (Task 2.1).
 
-**Hand-rolled, ADR-style** (mirrors ``adr.tools._paths``), deliberately
+**Hand-rolled**, deliberately
 **not** built on the shared, flat-file ``general.tools._doc_paths`` --
 that module assumes one file per document directly under the base
 directory (``<base>/<type>-<uuid>-<slug>.md``); ``feat`` is folder-per-
@@ -11,13 +11,13 @@ document instead (``<base>/<id>/README.md``, a fixed filename), and
 See ``.specmgr/feat/feat-31-feature/README.md`` Design Notes
 ("Addressing") for the full rationale.
 
-Mirrors ``adr.tools._paths``'s read-only/write split: :func:`feat_base_dir`
+A read-only/write split: :func:`feat_base_dir`
 never creates the directory (a read-only tool shouldn't have that side
 effect), only :func:`ensure_feat_base_dir` does, for ``create_feat``.
 
 **Cache-backed single-file read (feat-107-doc-cache Phase 4, Task 4.1a).**
 :func:`find_feat_path_by_id` reads its single target file through the
-content-hash-validated ``feat`` cache (ADR bfd76370-b59b-4d65-b550-a969f6c93c9d)
+content-hash-validated ``feat`` cache (DEC bfd76370-b59b-4d65-b550-a969f6c93c9d)
 via ``._cache``'s own ``read_feat`` (not ``parse_feat`` directly) -- a file
 whose on-disk content hash is unchanged since its last read is not
 re-parsed. This also fixes the same double-parse bug every other domain's
@@ -54,7 +54,7 @@ not-found-shaped error to handle, without needing to separately catch
 
 **A concurrent, lock-free read racing ``set_feat_id``'s rename is also
 treated as not-found (feat-107-doc-cache Phase 6, REQ-012).** ``get_feat``/
-``list_feat`` intentionally take no domain lock (ADR
+``list_feat`` intentionally take no domain lock (DEC
 33c5ab08-ff58-4c73-8c32-23abaf3838e3), so a call landing in the narrow
 window after ``set_feat_id``'s ``old_path.parent.rename(new_path.parent)``
 succeeds but before its cache-entry move runs would otherwise see
@@ -168,7 +168,7 @@ Resolve the parse-failure for a ``feat`` id whose folder exists but is unparseab
 The ``feat``-specific companion to
 :func:`general.tools._doc_paths.find_parse_failure`, for the flat-file
 domains' shared name-prefix scan. Since a ``feat`` id *is* the containing
-folder's own name (ADR 8cf940c5), there is no directory scan to fall back
+folder's own name (DEC 8cf940c5), there is no directory scan to fall back
 on: the target file is always ``<base_dir>/<id_>/README.md``. This helper
 checks that single path -- if it exists and the domain's own cache-backed
 :func:`._cache.read_feat` (the **clean**, full-parse cache -- this
@@ -182,21 +182,21 @@ row's ``error`` field for the same file **once that file's clean stage
 has converged** (identical field path and cause, including the trailing
 pydantic documentation line -- fixed by feat-162-doc-cache-exception-footer,
 GitHub issue #162, which preserves that footer on a warm re-raise); before
-convergence (feat-187-list-feat-timeout, ADR
+convergence (feat-187-list-feat-timeout, DEC
 3982712a-a46b-4b2b-809f-9c6925a49b44's three-tier contract), ``list_feat``'s
 row may instead carry a transiently-healthy or dirty-stage-specific
 ``error`` text for the same file -- this function itself is unaffected,
 since it always runs the clean, full-parse read directly -- and
 ``None`` otherwise (the folder/file is missing, it vanishes mid-scan, or it
-parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, ADR
+parses cleanly, i.e. a frontmatter-id mismatch). feat-150-mcp-lifecycle-commands Phase 1a, DEC
 9080b37c-82b3-4f63-81f1-79641d0bf14c: ``get_feat`` calls this on
 :class:`FeatNotFoundError` and returns a non-raising
 :class:`~biz.dfch.specmgr.general.models.ParseFailureResult` for a
 non-``None`` result. The four generic mutation tools' own ``_feat``
 adapters (``update``/``edit``/``set_status``/``set_classification`` in
 ``general/tools/``) call it the same way on the same catch
-(feat-170-update-edit-parse-failure, GitHub issue #170, ADR
-b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the ADR 519d1206
+(feat-170-update-edit-parse-failure, GitHub issue #170, DEC
+b8c9bfea-6dcf-4158-bfc5-4ec17abb842f -- case 4 of the DEC 519d1206
 chain).
 
 Parameters

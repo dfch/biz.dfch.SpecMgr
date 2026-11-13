@@ -506,7 +506,7 @@ code, fixed in place rather than worked around downstream.
 
 #### 2026-08-11T15:00:00.000Z - (continued, part 4)
 
-- Completed: Corrected an error in ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae
+- Completed: Corrected an error in DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae
   (now v1.4.0) and in `alias_match.py`'s actual code, per explicit
   repo-owner direction: a class declaring no `@alias` at all must default
   to `AliasType.SPACE_SEPARATED`'s derivation of `cls.__name__` (the same
@@ -551,7 +551,7 @@ code, fixed in place rather than worked around downstream.
 #### 2026-08-11T14:00:00.000Z - (continued, part 3)
 
 - Completed: Brought `alias_match.py`/`markdown_section.py` in line with
-  ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.2.0/v1.3.1 (previously
+  DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.2.0/v1.3.1 (previously
   documentation-only revisions -- this entry is the code catching up):
   - `match_alias`: a class with no `@alias` metadata at all now defaults to
     a literal match against `cls.__name__`, instead of unconditionally
@@ -646,7 +646,7 @@ code, fixed in place rather than worked around downstream.
   `Annotated[Heading(...)]`/`heading.py`/`parser.py`/`constraints.py`/
   `frontmatter.py`-shaped text with descriptions of the real
   `@markdown`/`@alias`/`alias_match`/`MarkdownStr`/`MarkdownSection1..6`
-  design (ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.1.0).
+  design (DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae v1.1.0).
   - Investigation ahead of the rewrite surfaced that considerably more had
     already landed than the 2026-08-10 entries below describe, all staged
     (`git add`ed) but never logged here: `metadata_utils.py` (`_metadata`
@@ -681,7 +681,7 @@ code, fixed in place rather than worked around downstream.
     any other feature's README. **Update, same day:** subsequent
     investigation (prompted by a repo-owner question) traced it to a
     committed session transcript (`session-ses_01e6-md-pydantic-parser.md`,
-    git-ignored) showing it pre-dated ADR 832cd6c1/this feature entirely — a
+    git-ignored) showing it pre-dated DEC 832cd6c1/this feature entirely — a
     prior, independent prototype an earlier session found already
     uncommitted in the working tree and was explicitly told to leave alone
     ("Leave it, ADR/plan stand as target design"). Confirmed it had zero
@@ -996,7 +996,7 @@ code, fixed in place rather than worked around downstream.
 
 #### 2026-08-08T13:00:00.000Z - (later)
 
-- Completed: Revised the design (and ADR 832cd6c1-ef8a-4bfc-990e-a610823f61ae,
+- Completed: Revised the design (and DEC 832cd6c1-ef8a-4bfc-990e-a610823f61ae,
   now v1.1.0) after further review of `req_parser.py`: replaced the
   `Annotated[Heading(tag=, alias=)]` field-metadata mechanism with a
   `MarkdownHeading1`..`MarkdownHeading6` base-class hierarchy (level encoded
