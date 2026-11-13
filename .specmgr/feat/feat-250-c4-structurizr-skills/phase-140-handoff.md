@@ -200,3 +200,12 @@ not proven healthy.
    as in the proven pattern; one phase commit.
 3. Continue the roadmap: Phase 150 → Phase 160 → finalization
    (status review commit, push, PR, CI green) → `review-feature` agent.
+
+## 2026-11-13 addendum (origin/dev merged, ed4b4ad9)
+
+- The merge landed: `origin/dev`'s ADR-artifact-removal rename (#46/#258) plus the feat-167 files (#260); parents `61da2be8` + `b5455bf7`, merged 2026-11-13.
+- The grader hash in this worktree is now `21140c84f17946b18a81a79e60374b8736b77234c5bb8ec6920b58d23f59c0c8` (verified); the `033fe9d9…` "checkpoint" figure above was computed from a different worktree path (`pins.source_hash` folds in absolute paths) — the p140 campaigns actually ran under `c7340b25…` per the committed cache keys in `evals/c4-skills/cache/*.none.json`.
+- The ruling (a) "remove the affected cache entries" step is superseded by the hash move: under the new hash those entries are cache-key mismatches, so the prove run re-measures all three `none` baselines fresh anyway; ruling (a) is otherwise unchanged.
+- Unchanged/verified: version tuple (`f22635f6…103662`), the reused `no-trigger` case definition (byte-unchanged), the held-out v3 skill hash (`24c89794…6d7d`).
+- The harness bundle is regenerated at 43 entries WITHOUT the held-out c4-view-design skill (ACC-005); `test_harness_bundle.py` count updated to 43.
+- See the README Updates entry of the same date for the post-merge tree state (ruff/vulture/`specmgr lint` green; pytest 6275/18 + the two known-red bundle tests; `docs/GENERATED.md` at 502 vs 501 on the bare merge).
