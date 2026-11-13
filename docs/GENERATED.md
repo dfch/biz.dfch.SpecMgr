@@ -5,7 +5,7 @@ regenerate with `uv run --frozen specmgr docs` and commit the result.
 
 ## Implemented Domains
 
-**Models** — schema definitions: adr, md
+**Models** — schema definitions: md
 
 ## Module Reference
 
