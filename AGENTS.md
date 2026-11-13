@@ -1580,6 +1580,7 @@ uv run --frozen pylint $(git ls-files '*.py')                          # lint (a
 uv run --frozen vulture src/ whitelist.py --min-confidence 60          # dead-code check (enforced)
 uv run --frozen pytest -n auto --cov=src --cov-report=                # tests (parallel, pytest-xdist)
 scripts/release.sh help                                            # staged release automation (SOP 98537416; README "Make a Release")
+# Post-merge feature bookkeeping on dev: SOP 1e6d965c (docs/sop/, draft) -- verify the squash, record it in the plan, close out or defer
 uv run --frozen specmgr docs                                           # regenerate docs/api/ + docs/GENERATED.md
 uv run --frozen specmgr harness-bundle                                 # regenerate general/data/general_harness_bundle.json from .opencode/{agent,command,skill}/
 uv run --frozen specmgr unused-code                                    # report unused code in src/ (same check as the vulture hook)
