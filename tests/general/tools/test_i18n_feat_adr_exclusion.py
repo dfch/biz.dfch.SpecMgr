@@ -82,7 +82,7 @@ _FEAT_TOOLS: frozenset[str] = frozenset(
     }
 )
 
-_FEAT_PROMPTS: frozenset[str] = frozenset({"create_feat", "update_feat"})
+_FEAT_PROMPTS: frozenset[str] = frozenset({"create_feat", "refine_feat", "update_feat"})
 
 #: The module-path prefix that identifies a ``feat`` implementing function.
 _FEAT_PACKAGE = "biz.dfch.specmgr.feat."

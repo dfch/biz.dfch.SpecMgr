@@ -73,6 +73,7 @@ First-line docstrings from each module, organized by domain:
 - `feat/models/v1/summary.py` — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - `feat/prompts/__init__.py` — MCP prompt wrappers for Features (Task 4.1).
 - `feat/prompts/create_feat.py` — ``@mcp.prompt()``: create_feat (Task 4.1).
+- `feat/prompts/refine_feat.py` — ``@mcp.prompt()``: refine_feat (feat-167-mcp-lifecycle-commands-2, Phase 100).
 - `feat/prompts/update_feat.py` — ``@mcp.prompt()``: update_feat (Task 4.1).
 - `feat/resources/__init__.py` — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - `feat/resources/feat_example.py` — Resource: specmgr://feat/example (feat-31 Task 3.5).
@@ -625,4 +626,4 @@ First-line docstrings from each module, organized by domain:
 
 ## Test Coverage
 
-**Test files**: 498
+**Test files**: 499

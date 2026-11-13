@@ -44,8 +44,15 @@ former ``validate_feat`` tool was removed in favor of the generic
 ``specmgr://feat/example``, ``specmgr://feat/template`` (no ``/{id}``, no
 ``/list``); the former ``specmgr://feat/schema`` resource was converted into
 the ``get_feat_schema`` tool (feat-189 Phase 105, DEC 112b6498-078b-4a59-88b8-8ffb7a5041b3).
-Prompts: ``create_feat(topic)``/``update_feat(id, instructions=None)`` -- narrated instruction flows only,
-reading packaged instructions data from ``feat/data/``.
+Prompts: ``create_feat(topic)``/``update_feat(id, instructions=None)``/
+``refine_feat(id)`` -- narrated instruction flows only, reading packaged
+instructions data from ``feat/data/``; ``refine_feat`` is the
+pre-implementation plan-readiness review (testable acceptance criteria,
+phase ordering and dependencies, scope clarity, unresolved decisions)
+over the MCP-native ``get_feat(id, raw=True)``/generic
+``update(type="feat")`` line-range/``validate(type="feat", full=True)``
+path, host file tools only as the fallback (feat-167-mcp-lifecycle-
+commands-2 Phase 100, GitHub issue #167).
 
 Import this package to register every feature tool/prompt/resource against
 the shared ``mcp`` application instance at once::

@@ -3,7 +3,7 @@
 Auto-generated from the live `biz.dfch.specmgr.server:mcp` registration --
 do not edit by hand, run `specmgr mcp-docs` instead (see `AGENTS.md`).
 
-43 resource(s), 1 resource template(s), 120 tool(s), 34 prompt(s).
+43 resource(s), 1 resource template(s), 120 tool(s), 35 prompt(s).
 
 ## Table of Contents
 
@@ -1723,6 +1723,7 @@ Validate PlantUML diagram text through the strict validation chain (the frozen r
 | [`generate_uc_sequence_diagram`](#prompt-generate_uc_sequence_diagram) | Guides the LLM through the rulebook §3.8 agent flow for one use case: read the frozen rulebook (specmgr://uc/plantuml) first, build a TodoWrite plan, read the UC via get_uc (a ParseFailureResult stops the flow), apply the §2.11 Subfunction judgment, fetch the deterministic skeleton via get_uc_sequence_skeleton, attribute every UNATTRIBUTED marker by understanding the free text (pre-filled arrows are positional, not semantic, and may be corrected; the question tool MUST be used whenever not confident), enforce the zero-marker rule, loop validate_plantuml until green at the highest available layer (source_state != ok with a source set => report reason/fix_hint and do not write; all unset => write with the ' validated: structure-only header), write the .puml file host-native at diagrams/uc/<id>.sequence.puml (no specmgr tool writes .puml), and never commit. |
 | [`implement_task`](#prompt-implement_task) | Reads an existing task list by id, builds a TodoWrite list from its items, and uses the question tool to resolve ambiguity before proceeding. |
 | [`refine`](#prompt-refine) | Guides the LLM through appending a batch of new, unanswered interview questions (each numbered with its target category's next `**<d>.<NNNN>**: ` prefix and carrying the `TODO: answer pending` placeholder in place of an answer) to an existing QA document, for `Elicitation Context` or one or more of the nine ISO/IEC 25010:2023 quality characteristics. |
+| [`refine_feat`](#prompt-refine_feat) | Guides the LLM through a pre-implementation plan-readiness review of an existing feature (testable acceptance criteria, phase ordering and dependencies, scope clarity, unresolved decisions): reading the plan via get_feat with raw=True, asking the user which findings to apply via the question tool, applying the approved fixes with the generic update tool (type="feat", line-range replace preferred so unchanged regions stay byte-identical), and re-checking with the generic validate tool (type="feat", full=True) -- host file tools only as a fallback for hosts without those specmgr tools. |
 | [`repair`](#prompt-repair) | Guides the LLM through repairing a whole-body specmgr document that currently fails to parse: discover it via get_<d>(id)'s non-raising parse-failure result (error/path/id -- the error text byte-identical to list_<d>()'s failed row for the same file; every whole-body domain, DEC 9080b37c-82b3-4f63-81f1-79641d0bf14c -- time-qualified for feat only, DEC 3982712a-a46b-4b2b-809f-9c6925a49b44: list_feat's own row may transiently differ until its background warmup or an on-demand get_feat read has fully parsed that file) when an id is given, or list_<d>()'s '<failed to parse>' failed row without one; read the raw file with the host's own file-read tool, fix only what the error addresses while preserving the frontmatter id/created/status/version byte-for-byte (a repair is not an edit), loop validate(type, content, full=True) until green, write the repaired text back to the same path with the host's own file-write tool (never via the generic update (or edit) tool, which is structurally unable to repair a document that fails to parse), then confirm the repair against the file as it now exists on disk with one more real get_<d>(id)/list_<d>() call (success: the parsed document, not an error-carrying result). Degrades to diagnose-only on a host without file read/write tools. |
 | [`translate_artifact`](#prompt-translate_artifact) | Guides the LLM through producing (or updating) a target-language variant of a whole-body specmgr document (req/uc/tsk/qa/prb/gol/rsk/dec/sop/vcr/sysrs/txt/set; feat is always English and out of scope): read the specmgr://i18n resource first, read the source via get_<d>(id, raw=True, language=...) (a ParseFailureResult stops the flow), decide create (create_<d>(content, language, id)) versus update (the generic update/edit with language), translate only free-form prose and fixed-text heading text via the language's heading table -- never the closed-vocabulary/schema-constant tokens (RSK Strategy/Probability/Impact, VCR Coverage/AC method words, REQ Level/Priority, Option/Step/Extension tokens, cross-reference tags, timestamps, ...) nor PRB's problem_statement -- retry the write a bounded number of times on a non-raising ValidateResult (the validate tool cannot dry-run a translation), verify with get_<d>(id, language=...), and report. A language without a heading table stops the flow. Never commits, never writes English, never changes the frontmatter id/status. |
 | [`update_dec`](#prompt-update_dec) | Guides the LLM through revising an existing decision by id: reading current state, applying the requested change with the right tool, and validating. The structure reference is the `get_dec_schema` tool (the generated JSON Schema); the `get_dec_template`/`get_dec_example` tools return the authoring template and a complete sample. |
@@ -1886,6 +1887,14 @@ Guides the LLM through appending a batch of new, unanswered interview questions 
 | --- | --- | --- |
 | `id_or_name` | Yes |  |
 | `scope` | No |  |
+
+### Prompt: refine_feat
+
+Guides the LLM through a pre-implementation plan-readiness review of an existing feature (testable acceptance criteria, phase ordering and dependencies, scope clarity, unresolved decisions): reading the plan via get_feat with raw=True, asking the user which findings to apply via the question tool, applying the approved fixes with the generic update tool (type="feat", line-range replace preferred so unchanged regions stay byte-identical), and re-checking with the generic validate tool (type="feat", full=True) -- host file tools only as a fallback for hosts without those specmgr tools.
+
+| Argument | Required | Description |
+| --- | --- | --- |
+| `id` | Yes |  |
 
 ### Prompt: repair
 
