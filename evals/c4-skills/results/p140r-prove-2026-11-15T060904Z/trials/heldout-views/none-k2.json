@@ -1,0 +1,184 @@
+{
+  "cache_reason": "miss:trial-absent",
+  "cached": false,
+  "contended": false,
+  "event_file": "trials/heldout-views/none-k2.events.ndjson",
+  "event_file_bytes": 241340,
+  "event_file_committed": true,
+  "exit_code": 0,
+  "finished_at": "2026-11-15T06:32:17Z",
+  "gates": [
+    {
+      "detail": "workspace.dsl (4435 bytes)",
+      "name": "dsl_written",
+      "passed": true
+    },
+    {
+      "detail": "CLI validate rc=0",
+      "name": "cli_valid",
+      "passed": true
+    },
+    {
+      "detail": "CLI export rc=0",
+      "name": "cli_export",
+      "passed": true
+    },
+    {
+      "detail": "3/ 3 softwareSystem(s) named and described",
+      "name": "has_system",
+      "passed": true
+    },
+    {
+      "detail": "1/1 person(s) described",
+      "name": "has_person",
+      "passed": true
+    },
+    {
+      "detail": "description on all 23 element(s)",
+      "name": "elements_described",
+      "passed": true
+    },
+    {
+      "detail": "technology on 0% of 24 relationship(s); missing: ['reports claims and tracks their progress', \"reports claims and tracks their progress via the insurer's mobile app\", 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'reaches', 'hands accepted claims', 'sends each incoming claim for screening', 'requests cover checks', 'routes claims', 'requests settlements', 'executes settlements through', 'consults', 'reads', 'reports claim status changes', 'routes claims', 'reads and writes', 'reads and writes']",
+      "name": "relationship_technology",
+      "passed": false
+    },
+    {
+      "detail": "2 user-defined view(s)",
+      "name": "has_view",
+      "passed": true
+    },
+    {
+      "detail": "no validate call answered the OK marker (8 validate call(s) in total)",
+      "name": "validate_ok_called",
+      "passed": false
+    },
+    {
+      "detail": "top-level element(s) with the External tag: ['National Claims Data Bureau', 'Clearing House']",
+      "name": "external_system_tagged",
+      "passed": true
+    },
+    {
+      "detail": "1 of 2 user-defined view(s) over 20 element(s): 'Containers' with 22 element(s)",
+      "name": "views_within_element_bound",
+      "passed": false
+    },
+    {
+      "detail": "every one of 2 view(s) has an explicit key",
+      "name": "explicit_view_keys",
+      "passed": true
+    }
+  ],
+  "idle_wait_s": 0.007059241004753858,
+  "metrics": {
+    "contended": false,
+    "cost": 0.0,
+    "export_calls": 0,
+    "final_dsl": null,
+    "inspect_calls": 1,
+    "inspect_findings": [
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".",
+      "ERROR: The relationship between the person \"Policyholder\" and the container \"Claims Center.Web Portal\" is missing a technology.",
+      "ERROR: The relationship between the person \"Policyholder\" and the software system \"Claims Center\" is missing a technology.",
+      "ERROR: The relationship between the person \"Policyholder\" and the container \"Claims Center.Mobile App Backend\" is missing a technology.",
+      "ERROR: The software system \"Claims Center\" has containers, but is missing documentation.",
+      "ERROR: The software system \"Claims Center\" has containers, but is missing decisions.",
+      "ERROR: The relationship between the software system \"Claims Center\" and the software system \"National Claims Data Bureau\" is missing a technology.",
+      "ERROR: The relationship between the software system \"Claims Center\" and the software system \"Clearing House\" is missing a technology.",
+      "ERROR: The relationship between the software system \"Claims Center\" and the person \"Policyholder\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Document Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Notification Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Document Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Notification Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Triage Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Fraud Screening Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Policy Verification Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Triage Service\" and the container \"Claims Center.Assessment Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Assessment Service\" and the container \"Claims Center.Payout Service\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Payout Service\" and the software system \"Clearing House\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Fraud Screening Service\" and the software system \"National Claims Data Bureau\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Document Service\" and the container \"Claims Center.Document Store\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Notification Service\" and the person \"Policyholder\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Assignment Service\" and the container \"Claims Center.Adjuster Workbench\" is missing a technology.",
+      "ERROR: The container \"Claims Center.Reinsurance Allocation Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "ERROR: The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Claims Database\" is missing a technology.",
+      "ERROR: The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Policy Database\" is missing a technology.",
+      "ERROR: The container \"Claims Center.Event Queue\" is disconnected - add a relationship to/from it, or consider removing it from the model.",
+      "ERROR: The container \"Claims Center.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model."
+    ],
+    "inspect_triage": {
+      "ERROR: The container \"Claims Center.Audit Database\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "ERROR: The container \"Claims Center.Event Queue\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "ERROR: The container \"Claims Center.Reinsurance Allocation Service\" is disconnected - add a relationship to/from it, or consider removing it from the model.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Assessment Service\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Assignment Service\" and the container \"Claims Center.Adjuster Workbench\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Claims Database\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Batch Scheduler\" and the container \"Claims Center.Policy Database\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Fraud Screening Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Policy Verification Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Claims Intake Service\" and the container \"Claims Center.Triage Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Document Service\" and the container \"Claims Center.Document Store\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Fraud Screening Service\" and the software system \"National Claims Data Bureau\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Document Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Notification Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Mobile App Backend\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Notification Service\" and the person \"Policyholder\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Payout Service\" and the software system \"Clearing House\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Triage Service\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Assessment Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Claims Intake Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Document Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Notification Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the container \"Claims Center.Web Portal\" and the container \"Claims Center.Payout Service\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the person \"Policyholder\" and the container \"Claims Center.Mobile App Backend\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the person \"Policyholder\" and the container \"Claims Center.Web Portal\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the person \"Policyholder\" and the software system \"Claims Center\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the software system \"Claims Center\" and the person \"Policyholder\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the software system \"Claims Center\" and the software system \"Clearing House\" is missing a technology.": "untriaged",
+      "ERROR: The relationship between the software system \"Claims Center\" and the software system \"National Claims Data Bureau\" is missing a technology.": "untriaged",
+      "ERROR: The software system \"Claims Center\" has containers, but is missing decisions.": "expected",
+      "ERROR: The software system \"Claims Center\" has containers, but is missing documentation.": "expected",
+      "ERROR: This workspace has no defined scope. It is recommended that the workspace scope is set to \"Landscape\" or \"SoftwareSystem\".": "untriaged"
+    },
+    "parse_calls": 1,
+    "relationship_technology_coverage": 0.0,
+    "skills_loaded": [],
+    "steps": 18,
+    "timeout": false,
+    "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "input": 831353,
+      "output": 61900,
+      "reasoning": 0
+    },
+    "tool_calls": 18,
+    "validate_calls": 8,
+    "validate_ok_calls": 0,
+    "validated_before_return": false,
+    "validated_by_file": false,
+    "validated_by_final_text": false,
+    "wall_time_s": 809.953,
+    "workdir_dsl": "workspace \"Claims Center\" \"C4 model of the insurance company's claims platform\" {\n\n    model {\n\n        policyholder = person \"Policyholder\" \"Uses the platform to report claims and track their progress.\"\n\n        claimsCenter = softwareSystem \"Claims Center\" \"The claims platform owned and operated by the insurance company.\" {\n\n            webPortal = container \"Web Portal\" \"Where policyholders report claims and track their progress.\" \"Web Application\"\n            mobileAppBackend = container \"Mobile App Backend\" \"Serves the insurer's mobile app.\" \"Service\"\n            claimsIntake = container \"Claims Intake Service\" \"Registers new claims.\" \"Service\"\n            triage = container \"Triage Service\" \"Classifies and prioritizes claims.\" \"Service\"\n            assessment = container \"Assessment Service\" \"Calculates settlement amounts.\" \"Service\"\n            payout = container \"Payout Service\" \"Executes claim settlements.\" \"Service\"\n            fraudScreening = container \"Fraud Screening Service\" \"Flags suspicious claims.\" \"Service\"\n            documentService = container \"Document Service\" \"Accepts claim photos and reports.\" \"Service\"\n            notificationService = container \"Notification Service\" \"Emails and messages policyholders.\" \"Service\"\n            assignment = container \"Assignment Service\" \"Routes claims to adjusters.\" \"Service\"\n            adjusterWorkbench = container \"Adjuster Workbench\" \"Where staff process their assigned claims.\" \"Web Application\"\n            policyVerification = container \"Policy Verification Service\" \"Checks that a claim is covered by the policy.\" \"Service\"\n            reinsuranceAllocation = container \"Reinsurance Allocation Service\" \"Apportions large losses across reinsurance partners.\" \"Service\"\n            batchScheduler = container \"Batch Scheduler\" \"Runs the nightly reserves calculation.\" \"Service\"\n            eventQueue = container \"Event Queue\" \"Carries claim events between the application parts.\" \"Queue\"\n            claimsDatabase = container \"Claims Database\" \"Stores claim records.\" \"Database\"\n            policyDatabase = container \"Policy Database\" \"Stores policy and cover records.\" \"Database\"\n            auditDatabase = container \"Audit Database\" \"Stores the compliance audit trail.\" \"Database\"\n            documentStore = container \"Document Store\" \"Holds claim photos, reports, and correspondence.\" \"File Store\"\n        }\n\n        nationalClaimsDataBureau = softwareSystem \"National Claims Data Bureau\" \"A national claims data bureau operated by a different organization.\" {\n            tags \"External\"\n        }\n        clearingHouse = softwareSystem \"Clearing House\" \"A clearing house operated by a different organization.\" {\n            tags \"External\"\n        }\n\n        policyholder -> webPortal \"reports claims and tracks their progress\"\n        policyholder -> mobileAppBackend \"reports claims and tracks their progress via the insurer's mobile app\"\n\n        webPortal -> claimsIntake \"reaches\"\n        webPortal -> assessment \"reaches\"\n        webPortal -> payout \"reaches\"\n        webPortal -> documentService \"reaches\"\n        webPortal -> notificationService \"reaches\"\n\n        mobileAppBackend -> claimsIntake \"reaches\"\n        mobileAppBackend -> assessment \"reaches\"\n        mobileAppBackend -> payout \"reaches\"\n        mobileAppBackend -> documentService \"reaches\"\n        mobileAppBackend -> notificationService \"reaches\"\n\n        claimsIntake -> triage \"hands accepted claims\"\n        triage -> assessment \"routes claims\"\n        assessment -> payout \"requests settlements\"\n\n        claimsIntake -> fraudScreening \"sends each incoming claim for screening\"\n        claimsIntake -> policyVerification \"requests cover checks\"\n        assignment -> adjusterWorkbench \"routes claims\"\n\n        fraudScreening -> nationalClaimsDataBureau \"consults\"\n        payout -> clearingHouse \"executes settlements through\"\n\n        documentService -> documentStore \"reads\"\n        batchScheduler -> claimsDatabase \"reads and writes\"\n        batchScheduler -> policyDatabase \"reads and writes\"\n        notificationService -> policyholder \"reports claim status changes\"\n    }\n\n    views {\n        systemContext claimsCenter \"SystemContext\" \"The context of the Claims Center system.\" {\n            include *\n        }\n        container claimsCenter \"Containers\" \"The application parts of the Claims Center system.\" {\n            include *\n        }\n    }\n}\n"
+  },
+  "passed": false,
+  "plan": {
+    "case_id": "heldout-views",
+    "condition": "none",
+    "k_index": 2
+  },
+  "run_id": "p140r-prove-2026-11-15T060904Z",
+  "skills_installed": [],
+  "started_at": "2026-11-15T06:18:43Z",
+  "timeout": false,
+  "wall_time_s": 813.2326511510037,
+  "workdir": "/home/user/src/biz.dfch.SpecMgr.worktree/feat-250-c4-structurizr-skills/evals/c4-skills/work/heldout-views.none-k2.p140r-prove-2026-11-15T060904Z"
+}
