@@ -4,7 +4,7 @@ created: '2026-08-31 15:24:14.582Z'
 id: 98537416-0e6e-4a02-925f-974a17bfa10a
 status: active
 type: sop
-updated: '2026-10-24T21:07:18.241+02:00'
+updated: '2026-11-15T06:46:24.762+01:00'
 version: 1.0.0
 ---
 
@@ -43,8 +43,7 @@ This procedure assumes a working checkout of this repository on the `dev`
 branch with `git`, `uv`, `jq`, and an authenticated `gh` CLI on the
 `PATH`. The staged script is written against the old `gh` 2.4.0 that this
 environment ships, so it avoids `gh` conveniences that newer releases
-added (`gh run list --commit`, `gh run view --json jobs`, `gh release
-edit`, `--ff`-style merge flags) — see Safety and Precautions. The gates
+added (`gh run list --commit`, `gh run view --json jobs`, `gh release edit`, `--ff`-style merge flags) — see Safety and Precautions. The gates
 themselves do not depend on the `gh` version.
 
 The nine procedure steps map one-to-one onto the stages of
@@ -193,6 +192,14 @@ gate (Step 6), and adjudicate any exception.
   `gh run view` output, and reads and updates the GitHub Release through
   `gh api`. Upgrading `gh` is optional; if you do, keep the stages' gates
   identical when modernizing these call sites.
+- **Edit pull request descriptions through `gh api`, not `gh pr edit`.**
+  `gh pr edit` fails on this repository with exit 1: GitHub's
+  classic-Projects deprecation breaks the `projectCards` query that `gh`
+  issues (observed 2026-11-13; the same deprecation as the `gh pr view`
+  default-field-set breakage recorded in the 2026-10-06 Updates entry).
+  Use `gh api -X PATCH repos/dfch/biz.dfch.SpecMgr/pulls/<N> --input <json-file>` with a JSON body such as `{"body": "..."}`. The release
+  stages do not edit descriptions after creation (`pr-create` sets the
+  body once), so this applies to feature PRs and manual release work.
 - **The branch cleanup is the only mutating precheck sub-item.** Step 2's
   sub-item (h) deletes refs — local and `origin` — unlike every other
   precheck, which is read-only. That is safe because every deletion is
@@ -244,7 +251,10 @@ the issue-number prefix `feat-<NNN>-` for work merged from a renamed
 branch — the fallback is a single `per_page=100` page of the most recently
 closed PRs, fetched once per precheck run (constant cost), so a
 renamed-branch delivery merged beyond that page is outside the fallback's
-reach) whose delivery commit is an ancestor of `HEAD` but not of `vPrev`;
+reach; the prefix includes its trailing dash, so a bare `feat-<NNN>` head
+ref matches neither the exact nor the prefix lookup and its delivery is
+never gated — name the branch exactly like its folder id, or start it
+with `feat-<NNN>-`) whose delivery commit is an ancestor of `HEAD` but not of `vPrev`;
 a violation fails the precheck with one actionable line per
 offending feat plus the remediation pointer, and a missing or unparseable
 `status:` line is a violation in its own right — the gate blocks, never
@@ -321,9 +331,7 @@ push-triggered CI run (the lint/tests/docs-drift matrix), polling every
 30 s.
 
 **Manual fallback:** move the section by hand (this repo uses no compare-
-link references in the changelog); `git add pyproject.toml uv.lock
-CHANGELOG.md`; commit with the conventional message; `git push origin
-dev`; watch the Actions run until green.
+link references in the changelog); `git add pyproject.toml uv.lock CHANGELOG.md`; commit with the conventional message; `git push origin dev`; watch the Actions run until green.
 
 A red build stops the release: fix on `dev` and resume from the failed
 stage.
@@ -348,8 +356,7 @@ fast-forward), and re-asserts that `origin/main` equals `origin/dev`.
 
 **Manual fallback:** `gh pr create --base main --head dev` (body: the new
 changelog section); wait for green checks; present to the maintainer; on
-approval, `git checkout main && git merge --ff-only dev && git push origin
-main`. Never use `--no-ff`, squash, or rebase merges.
+approval, `git checkout main && git merge --ff-only dev && git push origin main`. Never use `--no-ff`, squash, or rebase merges.
 
 ### Step 7: Tag the release and push the tag
 
@@ -358,8 +365,7 @@ runs `git pull --ff-only` (main now equals dev), creates the lightweight
 tag `vX.Y.Z` at `main`'s HEAD, pushes the tag, and switches back to
 `dev`.
 
-**Manual fallback:** `git checkout main && git pull --ff-only && git tag
-vX.Y.Z && git push origin vX.Y.Z && git checkout dev`.
+**Manual fallback:** `git checkout main && git pull --ff-only && git tag vX.Y.Z && git push origin vX.Y.Z && git checkout dev`.
 
 Warning: pushing the tag immediately starts publication (Step 8); the
 release is irreversible from here.
@@ -414,9 +420,7 @@ implementations stays visible.
 The first release executed under this SOP (v0.15.0, 2026-08-31) surfaced
 two script defects against `gh` 2.4.0: `pr-merge` passed a `--ff-only`
 flag that no `gh` release provides, and `publish-wait`/`status`/
-`release-notes` used call sites old `gh` does not support (`gh run list
---commit`, the workflow *file* name in `--workflow`, `gh release view
---json`, `gh release edit`). The script was rewritten to
+`release-notes` used call sites old `gh` does not support (`gh run list --commit`, the workflow *file* name in `--workflow`, `gh release view --json`, `gh release edit`). The script was rewritten to
 version-independent equivalents (see Safety and Precautions) and this SOP
 was corrected to describe the merge mechanism the script actually uses.
 
@@ -444,6 +448,22 @@ directly against the local checkout.
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+### 2026-11-15 06:50:00.000+01:00 - Two operational findings recorded (branch-name attribution blind spot; `gh pr edit` workaround)
+
+Both came out of the v0.39.0 release-prep sessions (2026-11-13) and were
+previously held only in an untracked handoff note. (1) Step 2's feat
+closeout gate (sub-item (g)) attributes a merged PR to a feat folder by
+head-ref name: exact folder id, else the `feat-<NNN>-` prefix. feat-167's
+work ran on a bare `feat-167` branch against the folder
+`feat-167-mcp-lifecycle-commands-2`, which matches neither lookup (the
+prefix carries a trailing dash), so PR #260 was never gated. Step 2 now
+states the rule and its remedy — name the branch like its folder id — and
+the feat-167 rescope carved the remaining work into a feature whose branch
+is named that way. The script is unchanged. (2) Safety and Precautions
+gains the `gh api -X PATCH` workaround for pull request description edits,
+since `gh pr edit` fails on the classic-Projects deprecation. Documentation
+only: no stage, script, or `/release` command behaviour changed.
+
 ### 2026-10-24 17:56:57.000+02:00 - Precheck gains a feat closeout gate and previous-release branch cleanup (feat-233, issue #233)
 
 The 2026-10-23 manual cleanup — stale `feat-*`/`fix/*` branches deleted
@@ -468,8 +488,7 @@ new sub-items, in run order:
   `origin` `feat-*`/`fix/*` branches whose delivery commit is an ancestor
   of `vPrev` (stale) are deleted on every side that exists, each side
   independently (the local ref via `git branch -d` with the `-D` fallback
-  justified by the merged-PR proof, the `origin` ref via `git push origin
-  --delete`; a one-side branch is deleted and reported on its side
+  justified by the merged-PR proof, the `origin` ref via `git push origin --delete`; a one-side branch is deleted and reported on its side
   alone), guarded by the four hazards — (a) worktree-checked-out, (b) no
   merged PR, (c) in-window delivery, (d) local≠`origin` tips — evaluated
   in order — the first guard that fires wins, emitting exactly one
@@ -577,24 +596,19 @@ never returns.)
 local `git merge --ff-only` + push of `main` made GitHub mark the PR
 `MERGED` itself, so the stage's final `gh pr close` hit a GraphQL
 "Could not close the pull request" error. The close is now
-`close_pr_if_open`: it reads the PR state via the REST API (`gh pr
-view`'s default GraphQL field set breaks on today's GitHub in this
+`close_pr_if_open`: it reads the PR state via the REST API (`gh pr view`'s default GraphQL field set breaks on today's GitHub in this
 `gh` build — the Projects-classic deprecation error) and skips the
 close when the PR is already `merged`/`closed`. Along the way,
-`status`'s `pr` line now reports `[x] merged (tag vX.Y.Z on
-origin/main)` once the tag is on `main`, instead of the misleading
+`status`'s `pr` line now reports `[x] merged (tag vX.Y.Z on origin/main)` once the tag is on `main`, instead of the misleading
 "no open PR; main behind dev" for the normal post-release state, and
 `help` no longer truncates its final usage line.
 
 The publication itself was held up by an external outage, not a defect
-in what we ship: TestPyPI's upload/OIDC endpoint (`test.pypi.org/
-legacy/`) returned 503 while the front page and simple index stayed up
+in what we ship: TestPyPI's upload/OIDC endpoint (`test.pypi.org/ legacy/`) returned 503 while the front page and simple index stayed up
 (no incident declared on status.python.org, which does not track
 test.pypi.org components). Both the original publish run and one
 re-run failed at the "Publish to TestPyPI" job's audience retrieval
-with no file uploaded anywhere. The recovery was a manual `gh api
--X POST repos/dfch/biz.dfch.SpecMgr/actions/runs/<id>/rerun-failed-
-jobs` on the SAME tag once the endpoint responded, followed by
+with no file uploaded anywhere. The recovery was a manual `gh api -X POST repos/dfch/biz.dfch.SpecMgr/actions/runs/<id>/rerun-failed- jobs` on the SAME tag once the endpoint responded, followed by
 `publish-wait` — no new version was needed since nothing had been
 published. Re-running the failed publish jobs on the same tag after a
 transient external failure (as opposed to "a fix plus a new, higher
