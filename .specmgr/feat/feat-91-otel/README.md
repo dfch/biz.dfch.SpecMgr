@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-15T21:55:15.123+01:00'
 id: feat-91-otel
-status: review
+status: done
 type: feat
-updated: '2026-11-16T10:02:35.383+01:00'
+updated: '2026-11-16T11:08:30.186+01:00'
 version: 1.0.0
 ---
 
@@ -26,7 +26,7 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 - [x] ACC-001: `uv.lock` resolves `opentelemetry-api >= 1.45.2` (landed version recorded), and `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and the opt-in `uv run --frozen pytest -m embedding_model` similarity test all pass.
 - [x] ACC-002: The `uv.lock` diff is confined to the `opentelemetry-api` `[[package]]` entry (plus any documented, resolver-forced collateral move), with no other package moved, no new `[[package]]` entry, and no manifest-section change.
-- [ ] ACC-003: After the wrap-up PR merges to `dev` and Dependabot re-scans, `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` no longer lists alert #91 as `open`, and the final open-alert state is recorded in Progress.
+- [x] ACC-003: After the wrap-up PR merges to `dev` and Dependabot re-scans, `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` no longer lists alert #91 as `open`, and the final open-alert state is recorded in Progress.
 
 ### Scope
 
@@ -73,18 +73,22 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 #### Phase 110: final verification and close-out
 
-- [ ] Task 110.100: After the wrap-up PR merges to `dev`, re-run `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` once Dependabot has re-scanned, confirm alert #91 reports as resolved, and record the final open-alert state in Progress.
-- [ ] Task 110.110: The orchestrator commits the close-out and sets the feature `status: done` once ACC-001/ACC-002/ACC-003 are all met.
+- [x] Task 110.100: After the wrap-up PR merges to `dev`, re-run `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` once Dependabot has re-scanned, confirm alert #91 reports as resolved, and record the final open-alert state in Progress.
+- [x] Task 110.110: The orchestrator commits the close-out and sets the feature `status: done` once ACC-001/ACC-002/ACC-003 are all met.
 
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-16 (review)**: Phase 100 implemented, verified, and committed as **c595f621** (`chore(deps): bump opentelemetry-api`); Phase 110's pre-merge portion is recorded in Progress (the expected-`open` pre-merge Dependabot state, the 2026-11-16 user directive, and the ACC-001/002-met / ACC-003-deferred state). `uv.lock` resolves `opentelemetry-api 1.45.2` (transitive via the MCP SDK; `pyproject.toml` untouched, REQ-002), the package-level diff is confined to that entry plus the documented `revision 5 → 3` uv-version artifact, and the full gate is green (`uv sync --frozen --all-extras`, `ruff format --check`, `ruff check`, `pytest -n auto` 6070 passed / 18 skipped, `pytest -m embedding_model` 3 passed, `vulture` clean). The branch `feat-91-otel` (c595f621 plus the bookkeeping commit 4cd370d6) is pushed, and the wrap-up **PR #264** (`feat-91-otel` → `dev`, opened 2026-11-16T08:23:48Z) is open but **not merged** per the user directive, with CI 8/8 green. **ACC-001 and ACC-002 are met, ACC-003 is deferred** pending merge + Dependabot re-scan (Task 110.100), with Task 110.110 (close-out + `status: done`) to follow the merge.
+**As of 2026-11-16 (done)**: Feature complete and closed. The lock-only bump (Phase 100, commit c595f621) shipped to `dev` via **PR #264** (merged 2026-11-16T09:36:08Z as 4b0105c7): `uv.lock` resolves `opentelemetry-api 1.45.2` (transitive via the MCP SDK; `pyproject.toml` untouched, REQ-002), the diff was confined to that entry plus the documented `revision 5 → 3` uv-version artifact (see Decisions Made), and the full gate is green (`pytest -n auto` 6070 passed / 18 skipped, `pytest -m embedding_model` 3 passed, ruff/vulture clean). The Dependabot re-scan ~1 minute post-merge confirmed **alert #91 `fixed`** (updated_at 2026-11-16T09:37:17Z) with **zero open alerts**, and `dev`'s lock did not regress (opentelemetry-api 1.45.2) — **ACC-001, ACC-002, and ACC-003 all met**; status `done`, Tasks 110.100/110.110 complete.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16T10:00:46.070Z - Post-merge close-out: alert #91 verified fixed, ACC-003 met, feature done
+
+PR #264 merged to `dev` by dfch at 2026-11-16T09:36:08Z (merge commit **4b0105c7**, `chore(deps): bump opentelemetry-api (feat-91, Dependabot alert #91) (#264)`). Dependabot re-scanned ~1 minute post-merge: alert #91 is now **`fixed`** (updated_at 2026-11-16T09:37:17Z; was `open` / 2026-11-14T06:22:38Z pre-merge) and the open-alerts list is **empty (zero open alerts)** — ACC-003 met (Task 110.100). Regression guard verified: `dev`'s `uv.lock` `opentelemetry-api` entry is `version = "1.45.2"` (the merge did not regress it). The feature status moves `review → done` (generic `set_status`) in the orchestrator's close-out commit, which also executes Task 110.110 (close-out + `status: done`) — Tasks 110.100/110.110 complete, feature closed.
 
 #### 2026-11-16T09:02:35.383Z - Post-implementation review (feat-reviewer): ready to merge; bookkeeping fixes E1/E2/I1 applied
 
@@ -124,5 +128,5 @@ User decisions at drafting (2026-11-15): (a) this is a stand-alone feature (`fea
 
 ### Related PRs / Commits
 
-- **PR #264** (wrap-up: `feat-91-otel` → `dev`): opened 2026-11-16T08:23:48Z, unmerged at review time (per the recorded user directive); CI 8/8 green (build 3.11/3.12/3.13, CodeQL, Analyze ×3, plantuml-parser). Post-merge verification remains: Task 110.100 (Dependabot re-scan → alert #91 `fixed`) and Task 110.110 (close-out commit + `status: done`).
+- **PR #264** (wrap-up: `feat-91-otel` → `dev`): opened 2026-11-16T08:23:48Z, **merged 2026-11-16T09:36:08Z by dfch** (commit 4b0105c7 on `dev`); CI 8/8 green (build 3.11/3.12/3.13, CodeQL, Analyze ×3, plantuml-parser). Post-merge verification complete: Task 110.100 (Dependabot re-scan → alert #91 `fixed`, zero open alerts, 2026-11-16T09:37:17Z) and Task 110.110 (close-out commit + `status: done`).
 - Commits on the pushed branch `feat-91-otel` (`origin/feat-91-otel` = `4cd370d6`): **c595f621** `chore(deps): bump opentelemetry-api` (Phase 100 — the `uv.lock` bump plus the Phase 100 Progress recording), **4cd370d6** `docs(feat-91): record pre-merge alert state, move feature to review (Phase 110 pre-merge portion)` (the pre-merge bookkeeping plus the `review` status move).
