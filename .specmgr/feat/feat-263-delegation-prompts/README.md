@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
-status: planning
+status: progress
 type: feat
-updated: '2026-11-16T12:26:17.446+01:00'
+updated: '2026-11-16T13:31:50.952+01:00'
 version: 1.0.0
 ---
 
@@ -102,7 +102,7 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - FEAT feat-167-mcp-lifecycle-commands-2 (GitHub issue #167): the parent feature; its Decisions Made log carries the origin of the delegation pattern and the review-fix loop decisions.
 
-- New DEC (Phase 100, before Phase 110): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full DEC. Its UUID is an input to Phase 110's instruction files and is recorded here once created.
+- DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2: "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full DEC; its UUID is an input to Phase 110's instruction files (named by implement_feat per ACC-005).
 
 - DEC e369ee2e-3353-4f92-991c-6367d76d832e (`.specmgr/feat/` conventions).
 
@@ -110,9 +110,9 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 #### Phase 100: Portable-delegation DEC
 
-- [ ] Task 100.100: As its first action, set this feature's status `planning` -> `progress` (generic `set_status(type="feat")`; the feat FSM is planning -> progress -> review -> done, so no later task may skip a hop). Then write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`, which writes `status: draft`, then the generic `set_status(type="dec")` twice: `draft` -> `proposed`, then `proposed` -> `accepted` -- dev's DEC status FSM (feat-108) forbids the one-hop `draft` -> `accepted`; the two-hop sequence is valid under both published and dev tooling), and record the DEC's UUID in this README's Related Decisions -- needed before Phase 110 (its UUID is an input to Phase 110's instruction files).
+- [x] Task 100.100: As its first action, set this feature's status `planning` -> `progress` (generic `set_status(type="feat")`; the feat FSM is planning -> progress -> review -> done, so no later task may skip a hop). Then write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`, which writes `status: draft`, then the generic `set_status(type="dec")` twice: `draft` -> `proposed`, then `proposed` -> `accepted` -- dev's DEC status FSM (feat-108) forbids the one-hop `draft` -> `accepted`; the two-hop sequence is valid under both published and dev tooling), and record the DEC's UUID in this README's Related Decisions -- needed before Phase 110 (its UUID is an input to Phase 110's instruction files).
 
-- [ ] Task 100.110: Phase-end gate: ruff format/check, vulture, the full test suite, and `specmgr lint` on this README and the new DEC (no `docs`/`mcp-docs`/`harness-bundle` regeneration -- neither `src/` nor `.opencode/` changes), then exactly one Conventional Commit for the phase.
+- [x] Task 100.110: Phase-end gate: ruff format/check, vulture, the full test suite, and `specmgr lint` on this README and the new DEC (no `docs`/`mcp-docs`/`harness-bundle` regeneration -- neither `src/` nor `.opencode/` changes), then exactly one Conventional Commit for the phase.
 
 #### Phase 110: implement_feat + review_feat + review-fix loop
 
@@ -140,11 +140,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Current Status
 
-**As of 2026-11-16**: Planned, not started; the plan was refined per the 2026-11-16 feat-refiner report (see Updates and Decisions Made) and is implementation-ready. The next action is Phase 100 (the portable-delegation DEC) on the branch `feat-263-delegation-prompts` (already fast-forwarded to dev). No code has been written for this feature.
+**As of 2026-11-16**: Phase 100 complete -- DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 (the portable-prompt-narrates-optional-delegation pattern) created and accepted; its UUID is recorded in Related Decisions and is the input to Phase 110's instruction files. The next action is Phase 110 (implement_feat + review_feat + review-fix loop).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16 12:15:57.000Z - Phase 100 complete (DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 accepted)
+
+DEC created via the `dec` domain with the two-hop `draft` -> `proposed` -> `accepted` status sequence (the plan's E1 fix), UUID recorded in Related Decisions, feature status moved `planning` -> `progress`, phase gate green (ruff/vulture/pytest/specmgr lint).
 
 #### 2026-11-16 11:20:00.000Z - Plan refined per feat-refiner report (E1/E2, G1-G4, D1, I1/I2/I4 applied)
 
