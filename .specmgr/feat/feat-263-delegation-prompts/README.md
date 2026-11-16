@@ -1,10 +1,10 @@
 ---
 classification: null
 created: '2026-11-15T06:29:34.876+01:00'
-id: feat-0-delegation-prompts
+id: feat-263-delegation-prompts
 status: planning
 type: feat
-updated: '2026-11-15T06:33:01.011+01:00'
+updated: '2026-11-16T08:20:06.032+01:00'
 version: 1.0.0
 ---
 
@@ -18,7 +18,7 @@ This feature carries the unstarted remainder of feat-167-mcp-lifecycle-commands-
 
 Requirement and acceptance IDs are renumbered from 001 in this plan; the mapping to feat-167's IDs is: REQ-001 = feat-167 REQ-003, REQ-002 = REQ-004, REQ-003 = REQ-005, REQ-004 = REQ-006, REQ-005 = Phase 110 / ACC-011 (which had no REQ of its own); ACC-001 = ACC-003, ACC-002 = ACC-004, ACC-003 = ACC-005, ACC-004 = ACC-006, ACC-005 = ACC-011. The unifying design principle is unchanged from feat-150/feat-167: every capability gets a portable MCP prompt (narration-only text that works in any MCP host) and, where real file editing or multi-agent delegation is needed, an OpenCode-native subagent or command with real permission enforcement.
 
-The reason for the carve-out (rather than continuing inside feat-167) is release-gate attribution: the release precheck's closeout gate attributes a merged PR to a feature folder by head-ref name (exact folder id, else the `feat-<NNN>-` prefix). feat-167's work ran on a bare `feat-167` branch against the folder `feat-167-mcp-lifecycle-commands-2`, so PR #260 was never attributed. This feature's branch MUST be named exactly like its folder (`feat-0-delegation-prompts`, or the renamed folder id if `set_feat_id` assigns an issue number first) so the gate attributes its delivery.
+The reason for the carve-out (rather than continuing inside feat-167) is release-gate attribution: the release precheck's closeout gate attributes a merged PR to a feature folder by head-ref name (exact folder id, else the `feat-<NNN>-` prefix). feat-167's work ran on a bare `feat-167` branch against the folder `feat-167-mcp-lifecycle-commands-2`, so PR #260 was never attributed. This feature's branch MUST be named exactly like its folder (`feat-263-delegation-prompts`) so the gate attributes its delivery.
 
 ### Requirements
 
@@ -96,7 +96,7 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 **Phase discipline.** Every phase ends with the quality gate and exactly one Conventional Commit; the phase's docs sync travels inside that same commit. Phase 100 (a DEC plus this plan) needs only the light gate (ruff format/check, vulture, full pytest, `specmgr lint` on this README and the new DEC) -- creating a DEC under `docs/dec/` changes neither `src/` nor `.opencode/`, so no `docs`/`mcp-docs`/`harness-bundle` regeneration. Phase 110 changes `src/` and `.opencode/`, so it needs the full gate including `specmgr docs`, `specmgr mcp-docs` and `specmgr harness-bundle` regenerate-then-no-diff.
 
-**Operational gotchas.** (1) This README is a specmgr `feat` document: list items (Requirements, Acceptance Criteria, Out-of-Scope and Task lines) are ONE physical line -- soft-wrapping one fails the feat schema; after edits the whole document must full-parse (`uv run --frozen specmgr lint .specmgr/feat/feat-0-delegation-prompts/README.md` -> exit 0). (2) Any change to a `.opencode/{agent,command,skill}/*.md` file requires `uv run --frozen specmgr harness-bundle` in the SAME commit (the pre-commit drift hook enforces it). (3) Adding test files requires a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit: the specmgr-docs pre-commit hook is scoped to `src/` changes only. (4) Branch name = folder name, for release-gate attribution (see Overview). (5) Stale `__pycache__`-only directory shells pollute `specmgr docs`; check before regenerating.
+**Operational gotchas.** (1) This README is a specmgr `feat` document: list items (Requirements, Acceptance Criteria, Out-of-Scope and Task lines) are ONE physical line -- soft-wrapping one fails the feat schema; after edits the whole document must full-parse (`uv run --frozen specmgr lint .specmgr/feat/feat-263-delegation-prompts/README.md` -> exit 0). (2) Any change to a `.opencode/{agent,command,skill}/*.md` file requires `uv run --frozen specmgr harness-bundle` in the SAME commit (the pre-commit drift hook enforces it). (3) Adding test files requires a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit: the specmgr-docs pre-commit hook is scoped to `src/` changes only. (4) Branch name = folder name, for release-gate attribution (see Overview). (5) Stale `__pycache__`-only directory shells pollute `specmgr docs`; check before regenerating.
 
 ### Related Decisions
 
@@ -140,11 +140,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Current Status
 
-**As of 2026-11-15**: Planned, not started. Carved out of feat-167-mcp-lifecycle-commands-2 by the 2026-11-15 D1 rescope (user decision). The next action is Phase 100 (the portable-delegation DEC) on a branch named exactly `feat-0-delegation-prompts`, cut from `dev`. No code has been written for this feature.
+**As of 2026-11-15**: Planned, not started. Carved out of feat-167-mcp-lifecycle-commands-2 by the 2026-11-15 D1 rescope (user decision). The next action is Phase 100 (the portable-delegation DEC) on a branch named exactly `feat-263-delegation-prompts`, cut from `dev`. No code has been written for this feature.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16 07:22:23.000Z - Renamed to feat-263-delegation-prompts (GitHub issue #263)
+
+GitHub issue #263 was opened for this feature; the folder was renamed `feat-0-delegation-prompts` -> `feat-263-delegation-prompts` via `set_feat_id` (frontmatter `id` rewritten by the tool). The body's self-references (the Overview's branch name, the gotcha-1 `specmgr lint` path, Current Status's branch name) were updated to the new id. The implementation branch must be named exactly `feat-263-delegation-prompts`, cut from `dev`.
 
 #### 2026-11-15 05:30:00.000Z - Created: carved out of feat-167 (D1 rescope)
 
