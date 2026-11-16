@@ -4,7 +4,7 @@ created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
 status: planning
 type: feat
-updated: '2026-11-16T08:20:06.032+01:00'
+updated: '2026-11-16T12:26:17.446+01:00'
 version: 1.0.0
 ---
 
@@ -28,19 +28,19 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - REQ-003: `.opencode/agent/feat-reviewer.md`'s report format gains a new, conditional "Proposed Fix Phase" section: a ready-to-paste block for the plan's `### Task List` -- a `#### Phase NNN: Fix phase (review cycle k)` heading using the next unused phase number (never renumbering existing phases) plus `- [ ] Task NNN.MMM` items derived strictly from the report's own Errors/Gaps/Discrepancies (Improvements/Positives stay advisory), with any item that needs a user decision explicitly flagged `[NEEDS DECISION]` rather than guessed at.
 
-- REQ-004: `.opencode/agent/phase-orchestrator.md` (and `implement_feat`'s narration, REQ-001) gain a final review-fix loop: after the plan's final verification phase, run the reviewer; if it proposes a fix phase, resolve any `[NEEDS DECISION]` items with the user via `question`, then delegate the fix phase to one more `phase-implementer` cycle exactly like a normal phase -- with the delegation prompt instructing the implementer to first append the reviewer's ready-to-paste block to the plan's Task List, since the orchestrator itself cannot edit files (`edit`/`write` are denied to it); repeat until the reviewer reports no Errors, Gaps, or Discrepancies left, capped at 3 review-fix cycles (after which remaining findings are handed to the user instead of auto-fixed again).
+- REQ-004: `.opencode/agent/phase-orchestrator.md` (and `implement_feat`'s narration, REQ-001) gain a final review-fix loop: once the plan's final verification phase has walked the acceptance criteria (the feature is at `review`, not yet `done`), run the reviewer; if it proposes a fix phase, resolve any `[NEEDS DECISION]` items with the user via `question`, then delegate the fix phase to one more `phase-implementer` cycle exactly like a normal phase -- with the delegation prompt instructing the implementer to first append the reviewer's ready-to-paste block to the plan's Task List, since the orchestrator itself cannot edit files (`edit`/`write` are denied to it); repeat until the reviewer reports no Errors, Gaps, or Discrepancies left, capped at 3 review-fix cycles (after which remaining findings are handed to the user instead of auto-fixed again); the feature is set to `done` only after the loop exits clean.
 
 - REQ-005: A new DEC documents the pattern "portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent", with status `accepted`, authored before the `implement_feat`/`review_feat` instruction files because its UUID is an input to them.
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), the new delegation-pattern DEC by UUID, and the review-fix loop.
+- [ ] ACC-001: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), narrate the orchestrator discipline (verify before advancing, never write code directly), state the fallback to direct single-session implementation when no delegation tool exists, name the new delegation-pattern DEC by UUID, and mention the review-fix loop.
 
 - [ ] ACC-002: `review_feat(id)` MCP prompt exists, is registered, and mirrors `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section.
 
 - [ ] ACC-003: `feat-reviewer.md`'s report format documents the "Proposed Fix Phase" section -- the ready-to-paste Task-List block shape (next unused phase number, `- [ ] Task NNN.MMM` items derived from Errors/Gaps/Discrepancies only) and the `[NEEDS DECISION]` flagging rule.
 
-- [ ] ACC-004: `phase-orchestrator.md`'s workflow documents the capped (3-cycle) review-fix loop, its exit criterion (reviewer reports no Errors, Gaps, or Discrepancies), and the append-the-fix-phase delegation step (the implementer appends, not the orchestrator).
+- [ ] ACC-004: `phase-orchestrator.md`'s workflow documents the capped (3-cycle) review-fix loop, its exit criterion (reviewer reports no Errors, Gaps, or Discrepancies), the resolution of `[NEEDS DECISION]` items with the user via `question`, the append-the-fix-phase delegation step (the implementer appends, not the orchestrator), and that the `done` closeout happens only after a clean loop exit (verify at `review`, loop, then `done`).
 
 - [ ] ACC-005: A new DEC under `docs/dec/` documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern, has status `accepted`, and its UUID is recorded in this plan's Related Decisions and named by `implement_feat`'s instructions.
 
@@ -70,13 +70,13 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 #### Depends On
 
-- feat-167-mcp-lifecycle-commands-2 (GitHub issue #167): its shipped Phase 100 + Phase 130 surface -- the `refine_feat` prompt shape this feature's prompts mirror, and the harness bundle that must be regenerated when `.opencode/` files change.
+- FEAT feat-167-mcp-lifecycle-commands-2 (GitHub issue #167): its shipped Phase 100 + Phase 130 surface -- the `refine_feat` prompt shape this feature's prompts mirror, and the harness bundle that must be regenerated when `.opencode/` files change.
 
-- feat-46-remove-adr (GitHub issue #46): the ADR domain is retired; the decision carrier is a DEC under `docs/dec/`.
+- FEAT feat-46-remove-adr (GitHub issue #46): the ADR domain is retired; the decision carrier is a DEC under `docs/dec/`.
 
-- feat-150-mcp-lifecycle-commands (GitHub issue #150): the `repair` prompt/`doc-repairer` precedent.
+- FEAT feat-150-mcp-lifecycle-commands (GitHub issue #150): the `repair` prompt/`doc-repairer` precedent.
 
-- feat-163-feat-numbering (GitHub issue #163): this document's Phase/Task numbering scheme.
+- FEAT feat-163-feat-numbering (GitHub issue #163): this document's Phase/Task numbering scheme.
 
 - Phase 110 (`implement_feat`/`review_feat`) depends on Phase 100's DEC (its UUID is an input to Phase 110's instruction files).
 
@@ -96,11 +96,11 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 **Phase discipline.** Every phase ends with the quality gate and exactly one Conventional Commit; the phase's docs sync travels inside that same commit. Phase 100 (a DEC plus this plan) needs only the light gate (ruff format/check, vulture, full pytest, `specmgr lint` on this README and the new DEC) -- creating a DEC under `docs/dec/` changes neither `src/` nor `.opencode/`, so no `docs`/`mcp-docs`/`harness-bundle` regeneration. Phase 110 changes `src/` and `.opencode/`, so it needs the full gate including `specmgr docs`, `specmgr mcp-docs` and `specmgr harness-bundle` regenerate-then-no-diff.
 
-**Operational gotchas.** (1) This README is a specmgr `feat` document: list items (Requirements, Acceptance Criteria, Out-of-Scope and Task lines) are ONE physical line -- soft-wrapping one fails the feat schema; after edits the whole document must full-parse (`uv run --frozen specmgr lint .specmgr/feat/feat-263-delegation-prompts/README.md` -> exit 0). (2) Any change to a `.opencode/{agent,command,skill}/*.md` file requires `uv run --frozen specmgr harness-bundle` in the SAME commit (the pre-commit drift hook enforces it). (3) Adding test files requires a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit: the specmgr-docs pre-commit hook is scoped to `src/` changes only. (4) Branch name = folder name, for release-gate attribution (see Overview). (5) Stale `__pycache__`-only directory shells pollute `specmgr docs`; check before regenerating.
+**Operational gotchas.** (1) This README is a specmgr `feat` document: list items (Requirements, Acceptance Criteria, Out-of-Scope and Task lines) are ONE physical line -- soft-wrapping one fails the feat schema; after edits the whole document must full-parse (`uv run --frozen specmgr lint .specmgr/feat/feat-263-delegation-prompts/README.md` -> exit 0). (2) Any change to a `.opencode/{agent,command,skill}/*.md` file requires `uv run --frozen specmgr harness-bundle` in the SAME commit (the pre-commit drift hook enforces it). (3) Adding test files requires a manual `uv run --frozen specmgr docs` regeneration of `docs/GENERATED.md` in the same commit: the specmgr-docs pre-commit hook is scoped to `src/` changes only. (4) Branch name = folder name, for release-gate attribution (see Overview). (5) Stale `__pycache__`-only directory shells pollute `specmgr docs`; check before regenerating. (6) The MCP server attached to this worktree currently runs the last published release (v0.38.0 -- checkable in `specmgr://config`: it still has the `adr` domain, no `set` domain, no feat-108 status FSM, and the pre-feat-247 DEC model), so MCP-side parse/resolution/status results can disagree with the dev-code CLI; the plan's CLI gates (`specmgr lint`, pre-commit) are the authority (observed: the server reports this plan's referenced DEC e369ee2e and ~20 other corpus documents as not-found while dev-code `specmgr lint` passes them).
 
 ### Related Decisions
 
-- feat-167-mcp-lifecycle-commands-2 (GitHub issue #167): the parent feature; its Decisions Made log carries the origin of the delegation pattern and the review-fix loop decisions.
+- FEAT feat-167-mcp-lifecycle-commands-2 (GitHub issue #167): the parent feature; its Decisions Made log carries the origin of the delegation pattern and the review-fix loop decisions.
 
 - New DEC (Phase 100, before Phase 110): "Portable MCP prompts may narrate optional host-native subagent delegation, degrading gracefully when absent" -- architecture-level, affects any future `<verb>_feat`-style prompt, so it gets a full DEC. Its UUID is an input to Phase 110's instruction files and is recorded here once created.
 
@@ -110,7 +110,7 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 #### Phase 100: Portable-delegation DEC
 
-- [ ] Task 100.100: Write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`, then the generic `set_status(type="dec")` to `accepted`), and record its UUID in this README's Related Decisions -- needed before Phase 110 (its UUID is an input to Phase 110's instruction files).
+- [ ] Task 100.100: As its first action, set this feature's status `planning` -> `progress` (generic `set_status(type="feat")`; the feat FSM is planning -> progress -> review -> done, so no later task may skip a hop). Then write the new DEC (see Related Decisions) in `docs/dec/` via the `dec` domain (`create_dec`, which writes `status: draft`, then the generic `set_status(type="dec")` twice: `draft` -> `proposed`, then `proposed` -> `accepted` -- dev's DEC status FSM (feat-108) forbids the one-hop `draft` -> `accepted`; the two-hop sequence is valid under both published and dev tooling), and record the DEC's UUID in this README's Related Decisions -- needed before Phase 110 (its UUID is an input to Phase 110's instruction files).
 
 - [ ] Task 100.110: Phase-end gate: ruff format/check, vulture, the full test suite, and `specmgr lint` on this README and the new DEC (no `docs`/`mcp-docs`/`harness-bundle` regeneration -- neither `src/` nor `.opencode/` changes), then exactly one Conventional Commit for the phase.
 
@@ -122,17 +122,17 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - [ ] Task 110.120: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block and the `[NEEDS DECISION]` flagging rule (REQ-003).
 
-- [ ] Task 110.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-004: exit on no Errors/Gaps/Discrepancies, the implementer-appends-the-fix-phase delegation step); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step and fix its "a a" typo at line 23; update `.opencode/command/review-feature.md`'s report-section enumeration to include the new conditional section.
+- [ ] Task 110.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-004: exit on no Errors/Gaps/Discrepancies, `[NEEDS DECISION]` resolution via the `question` tool, the implementer-appends-the-fix-phase delegation step, and the verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step, fix its "a a" typo at line 23, and align its line-21 status prose with the feat FSM (narrate the valid `progress` -> `review` hop, with the `planning` -> `progress` start hop from Task 100.100 as its precondition); update `.opencode/command/review-feature.md`'s report-section enumeration to include the new conditional section.
 
-- [ ] Task 110.140: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` (content assertions for ACC-001/ACC-002, the registration pins, and the `tests/general/tools/test_i18n_feat_adr_exclusion.py` `_FEAT_PROMPTS` pin gaining both prompts) + a manual smoke test.
+- [ ] Task 110.140: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` (content assertions for ACC-001/ACC-002, the registration pins, and the `tests/general/tools/test_i18n_feat_adr_exclusion.py` `_FEAT_PROMPTS` pin gaining both prompts) + a manual smoke test: in a fresh session, invoke `implement_feat(<id>)` and `review_feat(<id>)` and confirm the `$id` substitution renders (no unsubstituted placeholder, no KeyError) and both prompts appear in the registered prompt surface; record the evidence so the Phase 120 ACC walk is reproducible.
 
 - [ ] Task 110.150: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `CHANGELOG.md` `[Unreleased]` entry, `specmgr docs` + `specmgr mcp-docs` regeneration, and `specmgr harness-bundle` regeneration (the four edited `.opencode/` files change their bundle entries; the count stays 32).
 
-- [ ] Task 110.160: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs` + `specmgr mcp-docs` + `specmgr harness-bundle` regenerate-then-no-diff, `specmgr lint` on this README), then exactly one Conventional Commit for the phase.
+- [ ] Task 110.160: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs` + `specmgr mcp-docs` + `specmgr harness-bundle` regenerate-then-no-diff, `specmgr lint` on this README), then set this feature's status `progress` -> `review` (generic `set_status(type="feat")`) and make exactly one Conventional Commit for the phase (the status change rides in the same commit).
 
 #### Phase 120: Final Verification
 
-- [ ] Task 120.100: Walk every Acceptance Criterion above (ACC-001..ACC-005) with concrete evidence, check them off, and set the feature status to `done`.
+- [ ] Task 120.100: At status `review` (set in Task 110.160), walk every Acceptance Criterion above (ACC-001..ACC-005) with concrete evidence and check them off, then run the REQ-004 review-fix loop; set the feature status `review` -> `done` only after the loop exits clean (no Errors, Gaps, or Discrepancies).
 
 - [ ] Task 120.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
@@ -140,11 +140,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Current Status
 
-**As of 2026-11-15**: Planned, not started. Carved out of feat-167-mcp-lifecycle-commands-2 by the 2026-11-15 D1 rescope (user decision). The next action is Phase 100 (the portable-delegation DEC) on a branch named exactly `feat-263-delegation-prompts`, cut from `dev`. No code has been written for this feature.
+**As of 2026-11-16**: Planned, not started; the plan was refined per the 2026-11-16 feat-refiner report (see Updates and Decisions Made) and is implementation-ready. The next action is Phase 100 (the portable-delegation DEC) on the branch `feat-263-delegation-prompts` (already fast-forwarded to dev). No code has been written for this feature.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16 11:20:00.000Z - Plan refined per feat-refiner report (E1/E2, G1-G4, D1, I1/I2/I4 applied)
+
+Applied the user-approved feat-refiner findings of 2026-11-16: Task 100.100 now uses the two-hop `draft` -> `proposed` -> `accepted` DEC status sequence (E1); explicit feature status hops `planning` -> `progress` (Task 100.100) and `progress` -> `review` (Task 110.160) were added (E2); final verification now runs at `review` with the `done` closeout only after a clean REQ-004 loop exit (G1, see Decisions Made); ACC-001/ACC-004 pin the previously unpinned REQ-001/REQ-004 clauses (G2/G3); the five declaration-site feature references gained `FEAT` tags (G4); Operational gotcha (6) records the stale v0.38.0 session MCP server (I1); Tasks 110.130/110.140 were extended (I2/I4). Frontmatter `updated` re-stamped (D1).
 
 #### 2026-11-16 07:22:23.000Z - Renamed to feat-263-delegation-prompts (GitHub issue #263)
 
@@ -157,6 +161,10 @@ Created from the unstarted remainder of feat-167-mcp-lifecycle-commands-2 (its P
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16 11:20:00.000Z - Final verification runs at `review`; `done` only after a clean review-fix loop exit
+
+Adopted resolution of the feat-refiner's G1: Task 120.100 walks the acceptance criteria while the feature is at `review` (set in Task 110.160), the REQ-004 review-fix loop runs from there, and the `done` closeout happens only after a clean loop exit. Rationale: as originally written, a reviewer finding after `done` would require an unstated `done` -> `progress` hop, and dev's feat FSM makes `planning`/`progress` -> `done` illegal; this matches feat-167's actual cycles 1-4 (loop at `review`, `done` closeout only after clean exit).
 
 #### 2026-11-15 05:30:00.000Z - Carve the unstarted feat-167 phases into this feature (D1, option b)
 
