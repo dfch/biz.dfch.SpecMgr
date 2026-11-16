@@ -111,8 +111,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   never-translate line in `specmgr://i18n` and the
    `translate_artifact` instructions), and the reference graph carries
    the 15th palette entry (`SET` coloured `Wheat`, after `TXT`, before
-  `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
+   `UNRESOLVED`) with its dated rulebook §2.5/§3.2/§3.3 amendment note
    (feat-173-req-iso29148-level-set, GitHub issue #173, Phase 180).
+
+- The new `implement_feat` and `review_feat` MCP prompts
+  (`feat/prompts/implement_feat.py`/`feat/prompts/review_feat.py` + the
+  packaged `feat/data/feat_implement_instructions.md`/
+  `feat/data/feat_review_instructions.md`): `implement_feat` narrates
+  the orchestrator discipline for driving a `feat-NNN-slug` plan to
+  completion phase by phase (read the plan in full, a phase-by-phase
+  `TodoWrite` list, each phase delegated to a fresh subagent via "your
+  host's task-delegation tool, if one exists" — the optional-delegation
+  pattern of DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2, never assumed
+  present — with the explicit fallback to direct single-session
+  implementation when no delegation tool exists, and independent
+  verification of every subagent's result before advancing), then the
+  capped review-fix loop after the final verification phase (the feature
+  at `review`, not yet `done`; `[NEEDS DECISION]` items resolved with
+  the user via the `question` tool; the implementer appends the
+  reviewer's ready-to-paste fix phase to the plan's Task List; up to 3
+  review-fix cycles, `done` only after a clean loop exit); `review_feat`
+  is the portable mirror of the `feat-reviewer` checklist and report
+  format (the nine ISO/IEC 25010:2023 product-quality characteristics
+  plus the feature-plan convention layer and the optional local layer,
+  the five report sections as TSK-compatible checklist items each with
+  a file:line citation, report-only — never edits, writes, or commits),
+  including the conditional "Proposed Fix Phase" section (the
+  ready-to-paste `### Task List` block with the NEXT UNUSED phase
+  number, tasks derived from the report's own
+  Errors/Gaps/Discrepancies only, and the `[NEEDS DECISION]` flagging
+  rule). The OpenCode host surface stays in sync:
+  `.opencode/agent/feat-reviewer.md` gains the conditional "Proposed
+  Fix Phase" section, `.opencode/agent/phase-orchestrator.md`'s
+  Workflow gains the capped (3-cycle) review-fix loop with the
+  verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering,
+  `.opencode/command/implement-feature.md` names the FSM-aligned
+  `progress` -> `review` status hop (precondition: the `planning` ->
+  `progress` start hop at the first implementation action), the
+  automatic review-fix step, and fixes its "a a" typo, and
+  `.opencode/command/review-feature.md`'s report-section enumeration
+  gains the new conditional section. The harness bundle is regenerated
+  over the four edited `.opencode/` files (their sha256/content entries
+  change; the file count stays 32, the count pin unchanged)
+  (feat-263-delegation-prompts Phase 110, GitHub issue #263).
 
 ### Changed
 

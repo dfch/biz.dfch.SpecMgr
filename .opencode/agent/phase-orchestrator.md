@@ -98,9 +98,29 @@ instead.
 6. **Commit.** Ask the user to confirm, then stage and commit that phase as
    one Conventional Commit (see the `conventional_commit_message` tooling).
 7. **Advance.** Move to the next phase per plan dependency order. Repeat.
-8. **Finish.** After the plan's final verification phase, walk every
-   acceptance criterion, confirm each with concrete evidence, and report a
-   final summary to the user.
+8. **Finish (at `review`).** After the plan's final verification phase,
+   walk every acceptance criterion and confirm each with concrete
+   evidence. The feature is then at `review`, not yet `done` -- the
+   `done` closeout happens in step 10, only after the step-9 loop exits
+   clean.
+9. **Review-fix loop (capped at 3 cycles).** Run the `feat-reviewer`
+   subagent for the feature. If its report contains no Errors, Gaps, or
+   Discrepancies, the loop exits clean. If it contains any and carries
+   the conditional "Proposed Fix Phase" block: resolve any `[NEEDS
+   DECISION]` items with the user via `question` first (never guess),
+   then delegate the fix phase to one more `phase-implementer` cycle
+   exactly like a normal phase (steps 3-6) -- with the delegation
+   prompt adding an explicit first step: append the reviewer's
+   ready-to-paste block to the plan's Task List, since you cannot edit
+   files (`edit`/`write` are denied to you). Verify the fix phase as in
+   step 4 and commit it as in step 6. Repeat until the reviewer reports
+   no Errors, Gaps, or Discrepancies left. The loop is capped at 3
+   review-fix cycles: after the third, hand any remaining findings to
+   the user instead of auto-fixing them again.
+10. **Done closeout (only after a clean loop exit).** Set the feature
+    status to `done` (the generic `set_status` tool, `type="feat"`),
+    commit, and report the final summary to the user. Never set `done`
+    while Errors, Gaps, or Discrepancies remain open.
 
 ## Hard rules
 

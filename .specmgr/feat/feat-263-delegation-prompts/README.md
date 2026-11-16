@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
-status: progress
+status: review
 type: feat
-updated: '2026-11-16T13:31:50.952+01:00'
+updated: '2026-11-16T15:19:56.815+01:00'
 version: 1.0.0
 ---
 
@@ -116,19 +116,19 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 #### Phase 110: implement_feat + review_feat + review-fix loop
 
-- [ ] Task 110.100: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` + registration in `feat/prompts/__init__.py`, narrating the optional-delegation pattern from Design Notes, naming the Phase 100 DEC by UUID, and describing the review-fix loop (REQ-001, REQ-004).
+- [x] Task 110.100: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` + registration in `feat/prompts/__init__.py`, narrating the optional-delegation pattern from Design Notes, naming the Phase 100 DEC by UUID, and describing the review-fix loop (REQ-001, REQ-004).
 
-- [ ] Task 110.110: `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` + registration, mirroring `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section (REQ-002).
+- [x] Task 110.110: `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` + registration, mirroring `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section (REQ-002).
 
-- [ ] Task 110.120: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block and the `[NEEDS DECISION]` flagging rule (REQ-003).
+- [x] Task 110.120: Extend `.opencode/agent/feat-reviewer.md`'s report format with the conditional, ready-to-paste "Proposed Fix Phase" block and the `[NEEDS DECISION]` flagging rule (REQ-003).
 
-- [ ] Task 110.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-004: exit on no Errors/Gaps/Discrepancies, `[NEEDS DECISION]` resolution via the `question` tool, the implementer-appends-the-fix-phase delegation step, and the verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step, fix its "a a" typo at line 23, and align its line-21 status prose with the feat FSM (narrate the valid `progress` -> `review` hop, with the `planning` -> `progress` start hop from Task 100.100 as its precondition); update `.opencode/command/review-feature.md`'s report-section enumeration to include the new conditional section.
+- [x] Task 110.130: Extend `.opencode/agent/phase-orchestrator.md`'s Workflow section with the capped review-fix loop (REQ-004: exit on no Errors/Gaps/Discrepancies, `[NEEDS DECISION]` resolution via the `question` tool, the implementer-appends-the-fix-phase delegation step, and the verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering); update `.opencode/command/implement-feature.md`'s prose to mention the automatic review-fix step, fix its "a a" typo at line 23, and align its line-21 status prose with the feat FSM (narrate the valid `progress` -> `review` hop, with the `planning` -> `progress` start hop from Task 100.100 as its precondition); update `.opencode/command/review-feature.md`'s report-section enumeration to include the new conditional section.
 
-- [ ] Task 110.140: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` (content assertions for ACC-001/ACC-002, the registration pins, and the `tests/general/tools/test_i18n_feat_adr_exclusion.py` `_FEAT_PROMPTS` pin gaining both prompts) + a manual smoke test: in a fresh session, invoke `implement_feat(<id>)` and `review_feat(<id>)` and confirm the `$id` substitution renders (no unsubstituted placeholder, no KeyError) and both prompts appear in the registered prompt surface; record the evidence so the Phase 120 ACC walk is reproducible.
+- [x] Task 110.140: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` (content assertions for ACC-001/ACC-002, the registration pins, and the `tests/general/tools/test_i18n_feat_adr_exclusion.py` `_FEAT_PROMPTS` pin gaining both prompts) + a manual smoke test: in a fresh session, invoke `implement_feat(<id>)` and `review_feat(<id>)` and confirm the `$id` substitution renders (no unsubstituted placeholder, no KeyError) and both prompts appear in the registered prompt surface; record the evidence so the Phase 120 ACC walk is reproducible.
 
-- [ ] Task 110.150: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `CHANGELOG.md` `[Unreleased]` entry, `specmgr docs` + `specmgr mcp-docs` regeneration, and `specmgr harness-bundle` regeneration (the four edited `.opencode/` files change their bundle entries; the count stays 32).
+- [x] Task 110.150: Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `CHANGELOG.md` `[Unreleased]` entry, `specmgr docs` + `specmgr mcp-docs` regeneration, and `specmgr harness-bundle` regeneration (the four edited `.opencode/` files change their bundle entries; the count stays 32).
 
-- [ ] Task 110.160: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs` + `specmgr mcp-docs` + `specmgr harness-bundle` regenerate-then-no-diff, `specmgr lint` on this README), then set this feature's status `progress` -> `review` (generic `set_status(type="feat")`) and make exactly one Conventional Commit for the phase (the status change rides in the same commit).
+- [x] Task 110.160: Phase-end gate: full quality gate green (ruff format/check, vulture, full pytest, `specmgr docs` + `specmgr mcp-docs` + `specmgr harness-bundle` regenerate-then-no-diff, `specmgr lint` on this README), then set this feature's status `progress` -> `review` (generic `set_status(type="feat")`) and make exactly one Conventional Commit for the phase (the status change rides in the same commit).
 
 #### Phase 120: Final Verification
 
@@ -140,11 +140,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Current Status
 
-**As of 2026-11-16**: Phase 100 complete -- DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 (the portable-prompt-narrates-optional-delegation pattern) created and accepted; its UUID is recorded in Related Decisions and is the input to Phase 110's instruction files. The next action is Phase 110 (implement_feat + review_feat + review-fix loop).
+**As of 2026-11-16**: Phase 110 complete -- the implement_feat and review_feat prompts (with their packaged instruction files, tests and docs sync) are registered; the four OpenCode files carry the review-fix loop, the conditional Proposed Fix Phase, and the FSM-aligned status prose; DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 is named by implement_feat. Feature status is now `review`; the next action is Phase 120 (final verification, ACC walk at `review`, then the REQ-004 review-fix loop and the `done` closeout).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16 13:53:09.000Z - Phase 110 complete (implement_feat + review_feat + review-fix loop)
+
+Phase 110 (Tasks 110.100-110.160) implemented and gated. Shipped: `feat/prompts/implement_feat.py` + `feat/data/feat_implement_instructions.md` (the orchestrator-discipline narration: read the plan in full, a phase-by-phase `TodoWrite` list, each phase delegated to a fresh subagent via "your host's task-delegation tool, if one exists" (DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2, never assumed present), independently verify each subagent's result before advancing (re-run the phase gate, inspect the diff, confirm the acceptance criteria), never write or edit code files yourself, the explicit fallback to direct single-session implementation, and the capped review-fix loop -- 3 cycles, `[NEEDS DECISION]` resolved via the `question` tool, the implementer appends the reviewer's ready-to-paste fix phase, `done` only after a clean loop exit) and `feat/prompts/review_feat.py` + `feat/data/feat_review_instructions.md` (the portable feat-reviewer mirror: the nine ISO/IEC 25010:2023 characteristics + the feature-plan convention layer + the optional local layer, the five report sections as TSK-compatible checklist items each with a file:line citation, report-only, and the conditional "Proposed Fix Phase" section -- NEXT UNUSED phase number, tasks derived STRICTLY from Errors/Gaps/Discrepancies, the `[NEEDS DECISION]` flagging rule), both registered in `feat/prompts/__init__.py`. Four OpenCode files edited: `feat-reviewer.md` gains the conditional Proposed Fix Phase block + the `[NEEDS DECISION]` rule; `phase-orchestrator.md`'s Workflow gains the capped 3-cycle review-fix loop with the verify-at-`review` -> loop -> `done`-only-after-clean-exit ordering; `implement-feature.md` gains the automatic review-fix step prose, the FSM-aligned `progress` -> `review` status hop (precondition: the `planning` -> `progress` start hop at the first implementation action) and its "a a" typo fix; `review-feature.md`'s report-section enumeration gains the conditional section. Tests: `tests/feat/prompts/test_implement_feat.py` + `tests/feat/prompts/test_review_feat.py` (the ACC-001/ACC-002 content assertions + the registration pins) and the `_FEAT_PROMPTS` pin in `tests/general/tools/test_i18n_feat_adr_exclusion.py` (gains both prompts). Smoke-test evidence: both prompts render with the `$id` substitution (no unsubstituted placeholder, no KeyError) and both appear in the registered prompt surface of the dev-CLI `specmgr mcp-docs` regeneration (`docs/MCP.md`, 35 -> 37 prompts) -- a literal fresh-host MCP session is not reproducible from this environment (the session server predates the prompts, Operational gotcha 6). Docs sync: `AGENTS.md`'s `feat/` bullet, `server.py`'s module docstring, `CHANGELOG.md` `[Unreleased]`, and the three regenerations (`specmgr docs`, `specmgr mcp-docs`, `specmgr harness-bundle` -- only the four edited `.opencode/` files' sha256/content entries changed, the 32-file count pin unchanged). Gate green: ruff format/check (2381 files), vulture, full pytest (6111 passed / 18 skipped), regenerate-then-no-diff (byte-identical), and `specmgr lint` on this README; feature status moved `progress` -> `review` (the phase commit is the orchestrator's).
 
 #### 2026-11-16 12:15:57.000Z - Phase 100 complete (DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 accepted)
 

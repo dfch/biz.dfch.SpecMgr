@@ -15,5 +15,7 @@ Review the feature `$ARGUMENTS` (a `feat-NNN-slug` id under `.specmgr/feat/`).
 3. Apply the full review checklist from your own agent instructions.
 4. Report Errors (E1, E2, ...) / Gaps (G1, ...) / Discrepancies (D1, ...) /
    Improvements (I1, ...) / Positives (P1, ...) as TSK-compatible checklist
-   items (`- [ ] <ID>: <description>`), each with a file:line citation. Do
+   items (`- [ ] <ID>: <description>`), each with a file:line citation, and,
+   when any Errors/Gaps/Discrepancies are reported, the conditional
+   "Proposed Fix Phase" section (the ready-to-paste Task List block). Do
    not edit, write, or commit anything.
