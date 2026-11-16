@@ -4,7 +4,7 @@ created: '2026-11-15T21:55:15.123+01:00'
 id: feat-91-otel
 status: planning
 type: feat
-updated: '2026-11-15T22:13:09.554+01:00'
+updated: '2026-11-16T07:58:07.638+01:00'
 version: 1.0.0
 ---
 
@@ -14,7 +14,7 @@ version: 1.0.0
 
 ### Overview
 
-Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security/dependabot/91, published 2026-11-13) reports a regular-expression denial-of-service (ReDoS, CWE-1333, CVSS 5.3 / medium) in the transitive `opentelemetry-api` dependency locked at `1.45.1` in `uv.lock`. The affected code is `TraceContextTextMapPropagator.extract()`: a crafted `traceparent` value (a trace-context prefix followed by a long whitespace run and an embedded newline) triggers quadratic-time regex backtracking. The advisory explicitly names MCP request metadata (`params._meta`) as a relevant carrier, since OpenTelemetry carriers are not confined to HTTP headers and JSON strings can carry escaped newlines — the MCP SDK's built-in `OpenTelemetryMiddleware` (activated by the telemetry bootstrap landed in feat-139) is one path by which an attacker-controlled `traceparent` could reach the propagator. This feature bumps the transitive lock entry to the first-patched release, `1.45.2` (which rejects `traceparent` values longer than 512 characters before regex matching and removes the overlapping-suffix / trailing-whitespace expressions), via a lock-only `uv lock --upgrade-package` change — the same vehicle feat-232 used for the prior `opentelemetry-api` alert (#75, 1.44.0 → 1.45.1). Dependabot's reachability analysis is disabled for this repository (alert `reachability.verdict = "disabled"`), so the alert stands on the presence of the vulnerable version; the bump is the correct remediation regardless of the current exposure surface.
+Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security/dependabot/91, published 2026-11-13) reports a regular-expression denial-of-service (ReDoS, CWE-1333, CVSS 5.3 / medium) in the transitive `opentelemetry-api` dependency locked at `1.45.1` in `uv.lock`. The affected code is `TraceContextTextMapPropagator.extract()`: a crafted `traceparent` value (a trace-context prefix followed by a long whitespace run and an embedded newline) triggers quadratic-time regex backtracking. The advisory explicitly names MCP request metadata (`params._meta`) as a relevant carrier, since OpenTelemetry carriers are not confined to HTTP headers and JSON strings can carry escaped newlines — the MCP SDK's built-in `OpenTelemetryMiddleware` (activated by the telemetry bootstrap landed on the feat-139 branch, not yet merged to `dev`) is one path by which an attacker-controlled `traceparent` could reach the propagator. This feature bumps the transitive lock entry to the first-patched release, `1.45.2` (which rejects `traceparent` values longer than 512 characters before regex matching and removes the overlapping-suffix / trailing-whitespace expressions), via a lock-only `uv lock --upgrade-package` change — the same vehicle feat-232 used for the prior `opentelemetry-api` alert (#75, 1.44.0 → 1.45.1). Dependabot's reachability analysis is disabled for this repository (alert `reachability.verdict = "disabled"`), so the alert stands on the presence of the vulnerable version; the bump is the correct remediation regardless of the current exposure surface.
 
 ### Requirements
 
@@ -47,7 +47,7 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 #### Depends On
 
-- None in-repo. The bump is lock-only and independent of feat-139: `dev`'s lock already carries `opentelemetry-api 1.45.1` transitively via the MCP SDK, so the fix is available on `dev` now. When feat-139's telemetry lands on `dev`, the bumped version carries over and the advisory's `params._meta` path is covered by the same lock entry.
+- None in-repo. The bump is lock-only and independent of feat-139: `dev`'s lock already carries `opentelemetry-api 1.45.1` transitively via the MCP SDK, so the fix is available on `dev` now. When feat-139's telemetry lands on `dev` (after its planned rework), the bumped version carries over — the `uv.lock` merge must keep `>= 1.45.2` (the Design Notes' regression guard) — and the advisory's `params._meta` path is covered by the same lock entry.
 
 ### Design Notes
 
@@ -55,11 +55,12 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 - **Collateral-move expectation.** A patch-level `1.45.1 → 1.45.2` move is expected to be collateral-free (unlike feat-232 Phase 105, where a `virtualenv` bump forced `packaging 26.2 → 26.3`). If the resolver does force another package to move, it is stopped and recorded as a documented exception rather than silently absorbed.
 - **Gate scope.** Per the user decision 2026-11-15 ("test all"), the gate runs the full default suite plus the opt-in `pytest -m embedding_model` similarity test — mirroring feat-232 Phase 105's gate — even though `opentelemetry-api` is not on the fastembed → huggingface-hub model-cache path (that path is filelock's). The embedding test adds a complete verification pass over the resolved lock at no meaningful cost.
 - **Reachability / exposure nuance.** Dependabot reachability analysis is disabled for this repo, so the alert is version-presence-based. On `dev` today the MCP SDK's OTel middleware is present, but its trace-context extraction is only active once a `TracerProvider` is configured (feat-139's bootstrap, not yet merged to `dev`); the advisory nonetheless names MCP `params._meta` as a live carrier, so the bump is applied now as defense-in-depth and to keep the feat-139 telemetry path covered the moment it lands.
+- **feat-139 merge regression guard.** feat-139 is to be reworked before it can merge, and its own `uv.lock` still carries `opentelemetry-api 1.45.1` — so its eventual `dev` merge is a plausible lock-conflict site for this bump: the conflict must be resolved keeping `opentelemetry-api >= 1.45.2`, or the entry regresses to `1.45.1` and Dependabot re-opens alert #91 on the next re-scan.
 - **Workflow (per the feat-232 house pattern for dependabot bumps).** Each phase ends in one local Conventional Commit (`chore(deps): bump opentelemetry-api`) with no push/PR/merge within the phase; a single wrap-up PR to `dev` is opened at the feature level; "confirm alert closes" is recorded as expected-on-merge + re-scan, then verified in the final phase.
 
 ### Related Decisions
 
-- feat-232 (issue #232, "Resolve Dependabot Security Alerts in uv.lock", `done`) — the prior umbrella feature whose Phase 105 establishes the lock-only bump + gate + re-scan-verify pattern this feature reuses for the `opentelemetry-api` line.
+- FEAT feat-232-dependabot-security-alerts (GitHub issue #232, "Resolve Dependabot Security Alerts in uv.lock", `done`) — the prior umbrella feature whose Phase 105 establishes the lock-only bump + gate + re-scan-verify pattern this feature reuses for the `opentelemetry-api` line.
 - feat-139 ("Logging and Telemetry for the SpecMgr MCP Server", `done` on its branch) — the in-repo consumer whose MCP-SDK `OpenTelemetryMiddleware` makes the advisory's `params._meta` carrier relevant; listed for context, not a hard dependency.
 
 ### Task List
@@ -84,6 +85,10 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16T06:32:03.000Z - Plan refinement (feat-refiner findings)
+
+Applied the read-only feat-refiner pass (no errors or discrepancies; findings G1, I1, I2, I3 — per the user, the I3 ask to record feat-139's status-verification basis is ignored, since feat-139 is to be reworked before it can merge): G1 — the Depends On bullet plus a new Design Notes "feat-139 merge regression guard" now pin the eventual feat-139 `uv.lock` merge conflict to keep `opentelemetry-api >= 1.45.2` (a regression to 1.45.1 would re-open alert #91 on Dependabot's next re-scan); I1 — the feat-232 Related Decisions bullet is retagged as the machine-resolvable feat-232-dependabot-security-alerts reference; I2 — the Overview's "landed in feat-139" reworded to "landed on the feat-139 branch, not yet merged to `dev`", consistent with the Reachability note. Requirements, ACCs, phases, and task numbers unchanged; status stays `planning`.
 
 #### 2026-11-15T20:55:15.123Z - Created
 
