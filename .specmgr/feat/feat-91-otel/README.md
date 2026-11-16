@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-15T21:55:15.123+01:00'
 id: feat-91-otel
-status: planning
+status: review
 type: feat
-updated: '2026-11-16T07:58:07.638+01:00'
+updated: '2026-11-16T10:02:35.383+01:00'
 version: 1.0.0
 ---
 
@@ -24,8 +24,8 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `uv.lock` resolves `opentelemetry-api >= 1.45.2` (landed version recorded), and `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and the opt-in `uv run --frozen pytest -m embedding_model` similarity test all pass.
-- [ ] ACC-002: The `uv.lock` diff is confined to the `opentelemetry-api` `[[package]]` entry (plus any documented, resolver-forced collateral move), with no other package moved, no new `[[package]]` entry, and no manifest-section change.
+- [x] ACC-001: `uv.lock` resolves `opentelemetry-api >= 1.45.2` (landed version recorded), and `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and the opt-in `uv run --frozen pytest -m embedding_model` similarity test all pass.
+- [x] ACC-002: The `uv.lock` diff is confined to the `opentelemetry-api` `[[package]]` entry (plus any documented, resolver-forced collateral move), with no other package moved, no new `[[package]]` entry, and no manifest-section change.
 - [ ] ACC-003: After the wrap-up PR merges to `dev` and Dependabot re-scans, `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100` no longer lists alert #91 as `open`, and the final open-alert state is recorded in Progress.
 
 ### Scope
@@ -67,9 +67,9 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 #### Phase 100: opentelemetry-api bump (lock-only)
 
-- [ ] Task 100.100: Run `uv lock --upgrade-package opentelemetry-api` and confirm the lock lands on `opentelemetry-api >= 1.45.2` with nothing else moved; if the resolver forces a collateral package move, apply the STOP condition (revert the lock, record it, and raise it for a user-approved documented exception before proceeding) — the feat-232 Phase 105 precedent.
-- [ ] Task 100.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model`; capture the pass/fail output and the landed version as ACC-001/ACC-002 evidence.
-- [ ] Task 100.120: The orchestrator commits `chore(deps): bump opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow note in Design Notes) and records in Progress that alert #91's closure is expected on merge + Dependabot re-scan.
+- [x] Task 100.100: Run `uv lock --upgrade-package opentelemetry-api` and confirm the lock lands on `opentelemetry-api >= 1.45.2` with nothing else moved; if the resolver forces a collateral package move, apply the STOP condition (revert the lock, record it, and raise it for a user-approved documented exception before proceeding) — the feat-232 Phase 105 precedent.
+- [x] Task 100.110: Verify with `uv sync --frozen --all-extras`, `uv run --frozen ruff format --check`, `uv run --frozen ruff check`, `uv run --frozen pytest -n auto --cov=src --cov-report=`, and `uv run --frozen pytest -m embedding_model`; capture the pass/fail output and the landed version as ACC-001/ACC-002 evidence.
+- [x] Task 100.120: The orchestrator commits `chore(deps): bump opentelemetry-api` (one local Conventional Commit; no push/PR/merge within the phase — see the workflow note in Design Notes) and records in Progress that alert #91's closure is expected on merge + Dependabot re-scan.
 
 #### Phase 110: final verification and close-out
 
@@ -80,11 +80,23 @@ Dependabot security alert #91 (https://github.com/dfch/biz.dfch.SpecMgr/security
 
 ### Current Status
 
-**As of 2026-11-15 (planning)**: Feature planned, not started. Dependabot security alert #91 is open (created 2026-11-14T06:22:38Z; advisory published 2026-11-13). `dev`'s `uv.lock` currently resolves `opentelemetry-api 1.45.1` (transitive via the MCP SDK); the advisory names `1.45.2` as the first-patched release. No repo change has been made — this document is the plan only; the single lock-only bump (Phase 100) is the entire in-repo closure path, and Phase 110 verifies the post-merge re-scan. Implementation has not started.
+**As of 2026-11-16 (review)**: Phase 100 implemented, verified, and committed as **c595f621** (`chore(deps): bump opentelemetry-api`); Phase 110's pre-merge portion is recorded in Progress (the expected-`open` pre-merge Dependabot state, the 2026-11-16 user directive, and the ACC-001/002-met / ACC-003-deferred state). `uv.lock` resolves `opentelemetry-api 1.45.2` (transitive via the MCP SDK; `pyproject.toml` untouched, REQ-002), the package-level diff is confined to that entry plus the documented `revision 5 → 3` uv-version artifact, and the full gate is green (`uv sync --frozen --all-extras`, `ruff format --check`, `ruff check`, `pytest -n auto` 6070 passed / 18 skipped, `pytest -m embedding_model` 3 passed, `vulture` clean). The branch `feat-91-otel` (c595f621 plus the bookkeeping commit 4cd370d6) is pushed, and the wrap-up **PR #264** (`feat-91-otel` → `dev`, opened 2026-11-16T08:23:48Z) is open but **not merged** per the user directive, with CI 8/8 green. **ACC-001 and ACC-002 are met, ACC-003 is deferred** pending merge + Dependabot re-scan (Task 110.100), with Task 110.110 (close-out + `status: done`) to follow the merge.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-16T09:02:35.383Z - Post-implementation review (feat-reviewer): ready to merge; bookkeeping fixes E1/E2/I1 applied
+
+feat-reviewer verdict on PR #264: **ready to merge** — the implementation is approved as-is (the lock bump is surgically correct; the gate re-run reproduces: `pytest -n auto` 6070 passed / 18 skipped, `pytest -m embedding_model` 3 passed, ruff format/check + vulture clean; CI 8/8 green); every README factual claim was cross-checked against the live Dependabot API and the diff, incl. the prior alert #75 record. Bookkeeping fixes applied in this entry's commit: **E1** — the `### Current Status` paragraph rewritten to the current facts (feature at `review`; Phase 100 committed as c595f621; branch `feat-91-otel` pushed; PR #264 open against `dev`, opened 2026-11-16T08:23:48Z, not merged; CI 8/8 green; ACC-001/002 met, ACC-003 deferred); **E2** — ACC-001 and ACC-002 checked in place (the feat-232 sibling pattern; ACC-003 stays unchecked, still pending merge + re-scan); **I1** — a `### Related PRs / Commits` Progress subsection added, recording PR #264 and the two branch commits. Reviewer improvements dispositioned: **I2** (commit-subject feat-tag suffix) — no action, the subject is the plan's own prescribed wording (`chore(deps): bump opentelemetry-api`, Design Notes workflow note); **I3** (revision provenance) — recorded here: the committed lock's `revision = 5` was written by `9608e125` (the dependabot pillow bump, 2026-10-24), i.e. a uv newer than this machine's 0.12.5 — that is why the re-lock rewrote `5 → 3`; the revision may ping-pong as different uv versions touch the lock, and restoring `revision = 5` as a cosmetic follow-up is safe (uv 0.12.5 demonstrably reads revision 5; `uv sync --frozen` never rewrites the lock); **I4** (feat-139 regression guard owner) — to be noted in the post-merge close-out record: feat-139's eventual `dev` merge must keep `opentelemetry-api >= 1.45.2` in `uv.lock`.
+
+#### 2026-11-16T08:12:04.287Z - Phase 100 committed (c595f621); pre-merge Dependabot state recorded; user directive: `review`, PR not merged, ACC-003 deferred
+
+Task 100.120 done: the orchestrator's Phase 100 commit landed locally as **c595f621** (`chore(deps): bump opentelemetry-api`) — `uv.lock` (opentelemetry-api 1.45.1 → 1.45.2 plus the documented `revision 5 → 3` uv-version artifact) and this README's Phase 100 Progress recording; local `dev` is 1 commit ahead of `origin/dev` (not pushed, no PR, no merge — per the workflow note in Design Notes). Pre-merge Dependabot state, captured 2026-11-16 via `gh api "repos/dfch/biz.dfch.SpecMgr/dependabot/alerts?state=open&per_page=100"`: exactly one open alert, `[{"number":91,"state":"open","updated_at":"2026-11-14T06:22:38Z"}]`, and `gh api repos/dfch/biz.dfch.SpecMgr/dependabot/alerts/91 --jq '{number, state, updated_at}'` returns `{"number":91,"state":"open","updated_at":"2026-11-14T06:22:38Z"}` (vulnerable range `<= 1.45.1`, first patched `1.45.2`). This is the **expected pre-merge state**: the fix is not on the monitored branch yet (the commit is local-only), so alert #91 remains `open` until the wrap-up PR merges to `dev` and Dependabot re-scans — Task 110.100 is deferred, not failed, and stays unchecked (its post-merge re-scan verification is the remaining Phase 110 work, alongside the orchestrator's Task 110.110 close-out). User directive (2026-11-16): the feature moves to `review` (not `done`), a wrap-up PR will be created but **not merged now**, and ACC-003's post-merge verification is deferred until after merge + re-scan; the orchestrator performs the `set_status`, the commit, the push, and the PR. ACC state: **ACC-001 met** (lock at `opentelemetry-api 1.45.2`, full gate green — see the Phase 100 entry `2026-11-16T07:43:07.700Z`: `uv sync --frozen --all-extras`, `ruff format --check` / `ruff check`, `pytest -n auto` 6070 passed / 18 skipped, `pytest -m embedding_model` 3 passed, `vulture` clean) and **ACC-002 met** (the lock diff is confined to the `opentelemetry-api` `[[package]]` entry plus the documented `revision 5 → 3` uv-version artifact, see Decisions Made); **ACC-003 pending** merge + Dependabot re-scan.
+
+#### 2026-11-16T07:43:07.700Z - Phase 100 implemented and verified (lock-only bump; orchestrator commit pending)
+
+Tasks 100.100/100.110 done. `uv lock --upgrade-package opentelemetry-api` (local `uv 0.12.5`) reported `Updated opentelemetry-api v1.45.1 -> v1.45.2` and landed on **opentelemetry-api 1.45.2** (≥ 1.45.2 required — the advisory's first-patched release; nothing above it). ACC-002 package-level confinement holds: the only `[[package]]` entry changed in `uv.lock` is `opentelemetry-api` itself (its `version` line `1.45.1 → 1.45.2` plus its sdist and wheel URL/hash/size/upload-time lines) — `git diff --stat` shows `uv.lock | 8 ++++----` (1 file changed, 4 insertions, 4 deletions); no other package moved, none added or removed. One non-package diff line: the lockfile's top-level `revision` field was rewritten `5 → 3` by the local uv (format-version artifact of the rewrite, not a resolver-forced package move — see Decisions Made). `pyproject.toml` is untouched (REQ-002: no manifest change, no pin, no override). Gate (Task 100.110), all pass: `uv sync --frozen --all-extras` (reinstalled `opentelemetry-api 1.45.1 → 1.45.2` only); `ruff format --check` (2372 files already formatted); `ruff check` (all checks passed); `pytest -n auto --cov=src --cov-report=` (6070 passed, 18 skipped, 120.22 s); `pytest -m embedding_model` (3 passed, 6088 deselected, 3.34 s); `vulture src/ whitelist.py --min-confidence 60` (exit 0, no findings). Task 100.120 (the orchestrator's local `chore(deps): bump opentelemetry-api` commit) is still pending. Dependabot alert #91's closure is **expected once the wrap-up PR merges to `dev` and Dependabot re-scans** — not yet verified (post-merge, Phase 110). Feature status moved `planning → progress` (generic `set_status`).
 
 #### 2026-11-16T06:32:03.000Z - Plan refinement (feat-refiner findings)
 
@@ -98,6 +110,19 @@ Feat created for Dependabot security alert #91 (`opentelemetry-api` 1.45.1 → 1
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
 
+#### 2026-11-16T08:18:31.630Z - User directive: review-not-done, wrap-up PR not merged, ACC-003 deferred post-merge
+
+User directive (2026-11-16, at the Phase 110 pre-merge checkpoint): the feature moves to `review` (not `done`), the wrap-up PR will be created but **not merged now**, and ACC-003's post-merge verification is deferred until after the merge + Dependabot re-scan; the orchestrator owns the status change, the close-out commit, the push, and the PR. For now this supersedes the plan's original Phase 110 end-state (`status: done` after merge + re-scan verification) — the plan's Task 110.100 (post-merge re-scan confirmation) and Task 110.110 (close-out commit + `status: done`) remain the post-merge follow-up once the PR is actually merged.
+
+#### 2026-11-16T07:43:07.700Z - Lockfile `revision` rewrite (5 → 3) is a uv-version artifact, not a STOP-triggering package move
+
+`uv lock --upgrade-package opentelemetry-api` under local `uv 0.12.5` also rewrote the lockfile's top-level `revision` field from `5` to `3` (the committed lock carried a newer format revision than the local uv writes). The plan's STOP condition (REQ-001, Design Notes "Collateral-move expectation") covers resolver-forced collateral *package* moves only — any version change, added, or removed `[[package]]` entry; no other package moved, `pyproject.toml` is untouched, and ACC-002's package-level confinement holds, so the bump proceeded without a revert. The `revision` line was explicitly recorded in the Phase 100 Updates entry and in the phase report to the orchestrator rather than silently absorbed, so the user can ratify it — or request a re-bump under a newer uv — when the orchestrator commits Task 100.120.
+
 #### 2026-11-15T20:55:15.123Z - User decisions: stand-alone feature + full "test all" gate
 
 User decisions at drafting (2026-11-15): (a) this is a stand-alone feature (`feat-91-otel`), not a revision of the already-`done` feat-232 umbrella — alert #91 post-dates feat-232's close-out (created 2026-11-14) and is a single, self-contained lock-only bump; the `91` id tracks the Dependabot alert number (the original GitHub issue #91 is deleted/410). (b) The verification gate runs "test all" — the full default suite plus the opt-in `pytest -m embedding_model` similarity test (mirroring feat-232 Phase 105) — rather than the minimal default-only suite the initial proposal offered; `opentelemetry-api` is not on the fastembed/huggingface-hub model-cache path, but the embedding test is included for a complete verification pass.
+
+### Related PRs / Commits
+
+- **PR #264** (wrap-up: `feat-91-otel` → `dev`): opened 2026-11-16T08:23:48Z, unmerged at review time (per the recorded user directive); CI 8/8 green (build 3.11/3.12/3.13, CodeQL, Analyze ×3, plantuml-parser). Post-merge verification remains: Task 110.100 (Dependabot re-scan → alert #91 `fixed`) and Task 110.110 (close-out commit + `status: done`).
+- Commits on the pushed branch `feat-91-otel` (`origin/feat-91-otel` = `4cd370d6`): **c595f621** `chore(deps): bump opentelemetry-api` (Phase 100 — the `uv.lock` bump plus the Phase 100 Progress recording), **4cd370d6** `docs(feat-91): record pre-merge alert state, move feature to review (Phase 110 pre-merge portion)` (the pre-merge bookkeeping plus the `review` status move).
