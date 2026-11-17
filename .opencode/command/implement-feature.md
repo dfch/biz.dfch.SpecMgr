@@ -18,6 +18,6 @@ me first.
 
 - Commit without asking me first, but do not push.
 - Only stop when you need a decision from me, or when you hit a wall.
-- After implementation completed, set the status to "review", commit, push and create a pr, but do not merge.
+- After implementation completed (the feature has been at `progress` since the first implementation action), set the status `progress` -> `review`, commit, push and create a pr, but do not merge.
 - If there are merge conflicts, solve them, until CI is green, but do not push.
-- Then, run the review-feature agent for a a post-implementation review.
+- Then, run the review-feature agent for a post-implementation review, and follow its report with the capped review-fix loop: if it proposes a fix phase, delegate it to one more phase-implementer cycle (up to 3 cycles), resolving any [NEEDS DECISION] items with me first; set the status to `done` only after the loop exits clean (no Errors, Gaps, or Discrepancies left).

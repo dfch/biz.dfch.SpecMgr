@@ -65,7 +65,9 @@ Auto-generated API documentation for `biz.dfch.specmgr`.
 - [`biz.dfch.specmgr.feat.models.v1.summary`](biz.dfch.specmgr.feat.models.v1.summary.md) — Pydantic model for one line of FEAT listing output (Phase 2, ``list_feat``).
 - [`biz.dfch.specmgr.feat.prompts`](biz.dfch.specmgr.feat.prompts.md) — MCP prompt wrappers for Features (Task 4.1).
 - [`biz.dfch.specmgr.feat.prompts.create_feat`](biz.dfch.specmgr.feat.prompts.create_feat.md) — ``@mcp.prompt()``: create_feat (Task 4.1).
+- [`biz.dfch.specmgr.feat.prompts.implement_feat`](biz.dfch.specmgr.feat.prompts.implement_feat.md) — ``@mcp.prompt()``: implement_feat (feat-263-delegation-prompts, Phase 110).
 - [`biz.dfch.specmgr.feat.prompts.refine_feat`](biz.dfch.specmgr.feat.prompts.refine_feat.md) — ``@mcp.prompt()``: refine_feat (feat-167-mcp-lifecycle-commands-2, Phase 100).
+- [`biz.dfch.specmgr.feat.prompts.review_feat`](biz.dfch.specmgr.feat.prompts.review_feat.md) — ``@mcp.prompt()``: review_feat (feat-263-delegation-prompts, Phase 110).
 - [`biz.dfch.specmgr.feat.prompts.update_feat`](biz.dfch.specmgr.feat.prompts.update_feat.md) — ``@mcp.prompt()``: update_feat (Task 4.1).
 - [`biz.dfch.specmgr.feat.resources`](biz.dfch.specmgr.feat.resources.md) — MCP resource registrations for Feature (FEAT) documents (feat-31 Task 3.5).
 - [`biz.dfch.specmgr.feat.resources.feat_example`](biz.dfch.specmgr.feat.resources.feat_example.md) — Resource: specmgr://feat/example (feat-31 Task 3.5).

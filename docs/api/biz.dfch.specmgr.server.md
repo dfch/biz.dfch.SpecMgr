@@ -862,14 +862,23 @@ and the ``create_sop``/generic ``validate`` (``type="sop"``) tool calls); ``crea
 via ``get_sop(id, raw=True)``) -- ``sop`` has no per-domain ``update_sop``/
 ``set_status_sop`` tools (DEC 36905d5b-8057-4294-8665-c7eed5534db0).
 Feature prompts (``feat/prompts/``): ``create_feat``, ``update_feat``,
-``refine_feat`` -- narrated instruction flows guiding an LLM through the
-FEAT tool sequence above; ``create_feat`` first checks ``list_feat`` for a
-near-duplicate feature; ``refine_feat`` is the pre-implementation
-plan-readiness review (testable acceptance criteria, phase ordering and
-dependencies, scope clarity, unresolved decisions) over the MCP-native
+``refine_feat``, ``implement_feat``, ``review_feat`` -- narrated
+instruction flows guiding an LLM through the FEAT tool sequence above;
+``create_feat`` first checks ``list_feat`` for a near-duplicate feature;
+``refine_feat`` is the pre-implementation plan-readiness review
+(testable acceptance criteria, phase ordering and dependencies, scope
+clarity, unresolved decisions) over the MCP-native
 ``get_feat(id, raw=True)`` / generic ``update(type="feat")`` line-range /
 ``validate(type="feat", full=True)`` path, host file tools only as the
-fallback (feat-167-mcp-lifecycle-commands-2 Phase 100).
+fallback (feat-167-mcp-lifecycle-commands-2 Phase 100);
+``implement_feat`` is the orchestrator-discipline narration with the
+optional-delegation pattern per DEC
+4481b1fd-26e5-46bc-8f1b-236b638385b2 ("your host's task-delegation tool,
+if one exists", never assumed present, the explicit single-session
+fallback, and the capped review-fix loop), and ``review_feat`` is the
+portable mirror of the ``feat-reviewer`` checklist and report format
+including the conditional "Proposed Fix Phase" section (feat-263-
+delegation-prompts Phase 110).
 Verification case record prompts (``vcr/prompts/``): ``create_vcr``,
 ``update_vcr`` -- narrated instruction flows guiding an LLM through the VCR
 tool sequence above; ``create_vcr`` first checks ``list_vcr`` for a
