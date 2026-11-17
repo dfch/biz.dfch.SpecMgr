@@ -4,7 +4,7 @@ created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
 status: done
 type: feat
-updated: '2026-11-17T07:34:27.564+01:00'
+updated: '2026-11-17T10:04:39.919+01:00'
 version: 1.0.0
 ---
 
@@ -148,15 +148,23 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - [x] Task 140.100: Fix D1 -- the narration's `done`-closeout bullet omits the commit that the agent file's step 10 carries; add the closeout commit to src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md:81-84 mirroring .opencode/agent/phase-orchestrator.md:128-131 (e.g. "...set the feature status `done` with the generic `set_status` tool (`type="feat"`), commit the closeout, and report the final summary to the user"), and pin the new phrase in tests/feat/prompts/test_implement_feat.py (extend test_done_only_after_clean_exit or add a sibling test, following the D2/G1 pin precedent at :136-141/:165-177). No harness-bundle or docs regeneration needed -- the changed files are under `src/` only and the `@mcp.prompt` description/docstring stay accurate.
 
+#### Phase 150: Fix phase (post-done review)
+
+- [x] Task 150.100: Fix D1 (post-done review, user-run feat-reviewer report of 2026-11-17: no Errors/Gaps, one Discrepancy, two advisory Improvements) -- the `feat` domain package docstring's prompt enumeration is stale (pre-existing since feat-167 Phase 100; Task 110.150's docs sync named AGENTS.md/server.py/CHANGELOG but not this per-domain docstring, so the stale text survived into the committed generated mirror): extend the "Prompts:" sentence in src/biz/dfch/specmgr/feat/__init__.py to all five prompts (``create_feat(topic)``/``update_feat(id, instructions=None)``/``refine_feat(id)``/``implement_feat(id)``/``review_feat(id)``) with a one-sentence role note per new prompt mirroring AGENTS.md's `feat/` bullet (feat-263-delegation-prompts Phase 110, GitHub issue #263), pin the enumeration with a new test (every name in `feat/prompts/__init__.py`'s `__all__` must appear in the domain package docstring), and regenerate `specmgr docs` (docs/api/biz.dfch.specmgr.feat.md mirror; docs/GENERATED.md test-file count) -- `specmgr mcp-docs` and `specmgr harness-bundle` are expected byte-identical (no prompt-surface or `.opencode/` change); update this plan's Progress (Current Status, a dated Updates entry, a Decisions Made entry recording the scope decision: D1 fixed, I1/I2 carried advisory, status stays `done` with no FSM hop -- a post-done correction on the unmerged branch) and re-stamp the frontmatter `updated`; Improvements I1 (the `review-feature` skill's one-line summary omits the conditional "Proposed Fix Phase" section) and I2 (the `implement-feature` command's "commit, push and create a pr" wording, retained by the plan's D2 decision) are deliberately not fixed (the loop's strict derivation rule: Improvements never derive tasks).
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-17**: Done. All five acceptance criteria (ACC-001..ACC-005) walked and checked off at `review` with evidence; the REQ-004 review-fix loop ran 3 cycles (cycle 1: G1/D1/D2 fixed in Phase 130 incl. the user's D2 option-(a) decision; cycle 2: D1 fixed in Phase 140; cycle 3: clean exit) and the feature is at `done`. Remaining open items are advisory only (I1: AGENTS.md host-surface sentence, deliberately deferred; I2: cosmetic DEC slug truncation, out of scope). Delivery: 6 commits on branch `feat-263-delegation-prompts` atop dev (plan refinement, Phase 100, Phase 110, Phase 130, Phase 140, this closeout); PR per the release SOP, branch name = folder name for closeout-gate attribution.
+**As of 2026-11-17**: Done. The REQ-004 review-fix loop ran 3 cycles and exited clean (unchanged history); a user-run post-done review of 2026-11-17 reported one Discrepancy (D1, the stale `feat` package docstring prompt enumeration) fixed as Phase 150 on the unmerged branch (delivery is now 7 commits atop dev), status stays `done` (no FSM hop); carried advisory (not fixed): this review's I1 (the `review-feature` skill summary omits the conditional "Proposed Fix Phase" section; operationally harmless, would require a harness-bundle regeneration) and I2 (the `implement-feature` command push wording, retained by the D2 decision).
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 09:04:39.000Z - Phase 150: Fix phase (post-done review) complete (D1)
+
+The user-run post-done feat-reviewer review of 2026-11-17 reported no Errors and no Gaps, one Discrepancy (D1), and two advisory Improvements (I1/I2). D1: the "Prompts:" sentence of the `feat` domain package docstring in src/biz/dfch/specmgr/feat/__init__.py enumerated only create_feat/update_feat/refine_feat -- stale since feat-167 Phase 100 (Task 110.150's docs sync named AGENTS.md/server.py/CHANGELOG but not this per-domain docstring) -- so the stale text had propagated into the committed generated mirror docs/api/biz.dfch.specmgr.feat.md. D1 fix: the "Prompts:" sentence now covers all five prompts, `implement_feat` and `review_feat` each gaining a one-sentence role note mirroring AGENTS.md's `feat/` bullet (the orchestrator-discipline narration with the optional-delegation pattern per DEC 4481b1fd and the capped review-fix loop; the portable `feat-reviewer` checklist/report-format mirror including the conditional "Proposed Fix Phase" section); the new pin test tests/feat/test_package_docstring.py asserts the five prompt names and, as the drift pin, every name in feat/prompts/__init__.py's `__all__` against the domain package docstring; `specmgr docs` regenerated docs/api/biz.dfch.specmgr.feat.md (the docstring mirror) and docs/GENERATED.md (test-file count 501 -> 502) -- the only two changed generated files; `specmgr mcp-docs` and `specmgr harness-bundle` both ended byte-identical (no prompt-surface or `.opencode/` change). Scope decision: only D1 fixed -- I1 (the `review-feature` skill's one-line summary omits the conditional "Proposed Fix Phase" section; operationally harmless, would require touching `.opencode/` and a harness-bundle regeneration) and I2 (the `implement-feature` command's "commit, push and create a pr" wording, retained by this plan's D2 decision) are carried advisory, per the loop's strict derivation rule (Improvements never derive tasks); the feature status stays `done` with no FSM hop (a post-done correction on the unmerged branch, no PR open yet). Gate evidence: ruff format/check clean, vulture clean, full pytest green (the two new pin tests pass, no regressions), specmgr lint exit 0 on this README. Task 150.100 checked off.
 
 #### 2026-11-17 06:32:09.000Z - Done: REQ-004 review-fix loop exited clean at cycle 3; status review -> done
 
@@ -197,6 +205,10 @@ Created from the unstarted remainder of feat-167-mcp-lifecycle-commands-2 (its P
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 09:04:39.000Z - Post-done D1 fixed as Phase 150 without a status hop; I1/I2 carried advisory
+
+The user-run post-done feat-reviewer review of 2026-11-17 reported no Errors, no Gaps, one Discrepancy (D1: the stale `feat` domain package docstring prompt enumeration -- the "Prompts:" sentence in src/biz/dfch/specmgr/feat/__init__.py named only create_feat/update_feat/refine_feat, pre-existing since feat-167 Phase 100, propagated into the committed generated mirror docs/api/biz.dfch.specmgr.feat.md), and two advisory Improvements (I1: the `review-feature` skill's one-line summary omits the conditional "Proposed Fix Phase" section; I2: the `implement-feature` command's "commit, push and create a pr" wording). Decision: fix D1 only, on the unmerged branch (no PR open yet, so the correction lands pre-merge). The feature status stays `done` -- no status hop is needed or legal (the feat FSM has no `done` -> `progress` transition; the plan's 2026-11-16 decision anticipated post-done awkwardness) and content edits do not change status. I1 stays advisory per the strict derivation rule (Improvements never derive tasks) and is operationally harmless (the skill defers to the agent file verbatim); fixing it would mean touching `.opencode/` and regenerating the harness bundle, outside this phase's scope. I2 is retained by this plan's own D2 decision (the command file is the user's per-flow override). The phase heading reads "post-done review" rather than the loop's "review cycle k" because the REQ-004 loop (capped at 3 cycles) already exited clean and this is a standalone user-initiated review, not a loop cycle.
 
 #### 2026-11-17 01:18:32.000Z - D2 resolution: option (a) -- the narration mirrors the agent file's confirm-then-commit
 
