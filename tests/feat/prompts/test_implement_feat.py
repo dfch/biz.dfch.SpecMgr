@@ -182,6 +182,15 @@ class TestImplementFeatPrompt(unittest.TestCase):
         self.assertIn("Stop at `review` until the loop exits clean", result)
         self.assertIn("do not set `done` early", result)
 
+    def test_done_closeout_carries_the_commit(self):
+        """Cycle 2 D1 fix (Phase 140): the done-closeout bullet carries the commit the agent file's step 10 has."""
+        result = _one_line(implement_feat(_ID))
+        self.assertIn(
+            "exit -- set the feature status `done` with the generic `set_status` tool "
+            '(`type="feat"`), commit the closeout, and report the final summary to the user.',
+            result,
+        )
+
     def test_raises_value_error_for_blank_id(self):
         """A blank/whitespace-only id must fail fast with ValueError."""
         with self.assertRaises(ValueError) as ctx:

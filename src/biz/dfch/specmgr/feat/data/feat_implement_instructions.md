@@ -81,7 +81,8 @@ acceptance criteria with concrete evidence (the feature is then at
 - If the review reports no Errors, Gaps, or Discrepancies, the loop
   exits clean: the `done` closeout happens only after a clean loop
   exit -- set the feature status `done` with the generic `set_status`
-  tool (`type="feat"`) and report the final summary to the user.
+  tool (`type="feat"`), commit the closeout, and report the final
+  summary to the user.
 - If the report contains any Errors, Gaps, or Discrepancies and the
   reviewer's conditional "Proposed Fix Phase" block is present:
   resolve any `[NEEDS DECISION]` items with the user via the `question`

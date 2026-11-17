@@ -4,7 +4,7 @@ created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
 status: review
 type: feat
-updated: '2026-11-17T03:24:39.580+01:00'
+updated: '2026-11-17T06:33:08.677+01:00'
 version: 1.0.0
 ---
 
@@ -144,15 +144,23 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - [x] Task 130.120: Resolve D2 -- (user decision 2026-11-16: option (a), the narration mirrors the agent file's "ask the user to confirm, then commit"): align src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md's commit step with .opencode/agent/phase-orchestrator.md step 6; no agent/command file change.
 
+#### Phase 140: Fix phase (review cycle 2)
+
+- [x] Task 140.100: Fix D1 -- the narration's `done`-closeout bullet omits the commit that the agent file's step 10 carries; add the closeout commit to src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md:81-84 mirroring .opencode/agent/phase-orchestrator.md:128-131 (e.g. "...set the feature status `done` with the generic `set_status` tool (`type="feat"`), commit the closeout, and report the final summary to the user"), and pin the new phrase in tests/feat/prompts/test_implement_feat.py (extend test_done_only_after_clean_exit or add a sibling test, following the D2/G1 pin precedent at :136-141/:165-177). No harness-bundle or docs regeneration needed -- the changed files are under `src/` only and the `@mcp.prompt` description/docstring stay accurate.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-17**: Fix phase 130 (review cycle 1) complete -- G1 (non-conforming-reviewer-report fallback, both mirrors word-for-word), D1 (portable mirror gains the worked example), and D2 (user decision (a): the narration's commit step mirrors the agent file's confirm-then-commit) are fixed and pinned by tests. The REQ-004 loop re-runs the reviewer (cycle 2) before the `done` closeout and the Phase 120 commit.
+**As of 2026-11-17**: Fix phase 140 (review cycle 2) complete -- D1 (the narration's done-closeout now carries the commit the agent file's step 10 has) fixed and pinned by test. The REQ-004 loop re-runs the reviewer (cycle 3, the cap) before the `done` closeout and the Phase 120 commit.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 05:32:35.000Z - Phase 140: Fix phase (review cycle 2) complete (D1)
+
+Review cycle 2 (REQ-004 loop) verified the cycle-1 fixes (G1/D1/D2) as genuinely closed and reported exactly one new Discrepancy (orchestrator-verified): the narration's done-closeout bullet in src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md step 4 (lines 81-84) said 'set the feature status `done` with the generic `set_status` tool (`type="feat"`) and report the final summary to the user' -- no commit -- while .opencode/agent/phase-orchestrator.md step 10 (lines 128-131) carries 'Set the feature status to `done` (the generic `set_status` tool, `type="feat"`), commit, and report the final summary to the user' (mirror drift under the standing prompt/agent/command sync obligation, DEC 4481b1fd's Consequences). Task 140.100: the done bullet now reads 'exit -- set the feature status `done` with the generic `set_status` tool (`type="feat"`), commit the closeout, and report the final summary to the user.' (data file lines 81-85; the settled wording's 'commit the closeout' sits where the agent file's bare 'commit' sits in its step-10 sentence); no `.opencode/` file, no docs/prompt-description change (implement_feat.py's @mcp.prompt description 'done only after a clean exit' and module docstring 'the done closeout only after a clean loop exit' stay accurate and are byte-unchanged). Pin: tests/feat/prompts/test_implement_feat.py gains test_done_closeout_carries_the_commit (the full corrected closeout sentence, including 'commit the closeout', against the normalized rendered text; sibling of test_done_only_after_clean_exit, per the D2/G1 pin precedent). Gate green: ruff format/check, vulture, full pytest, specmgr docs + specmgr mcp-docs + specmgr harness-bundle regenerate-then-no-diff (all seven tracked files byte-identical this time -- no .opencode/ or prompt-description input changed), and specmgr lint on this README (full feat parse); Task 140.100 checked off. The REQ-004 loop re-runs the reviewer (cycle 3, the cap) before the done closeout and the Phase 120 commit.
 
 #### 2026-11-17 01:18:32.000Z - Phase 130: Fix phase (review cycle 1) complete (G1/D1/D2)
 
