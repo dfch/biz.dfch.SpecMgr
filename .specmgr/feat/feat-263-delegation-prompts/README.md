@@ -2,9 +2,9 @@
 classification: null
 created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
-status: review
+status: done
 type: feat
-updated: '2026-11-17T06:33:08.677+01:00'
+updated: '2026-11-17T07:34:27.564+01:00'
 version: 1.0.0
 ---
 
@@ -132,9 +132,9 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 #### Phase 120: Final Verification
 
-- [ ] Task 120.100: At status `review` (set in Task 110.160), walk every Acceptance Criterion above (ACC-001..ACC-005) with concrete evidence and check them off, then run the REQ-004 review-fix loop; set the feature status `review` -> `done` only after the loop exits clean (no Errors, Gaps, or Discrepancies).
+- [x] Task 120.100: At status `review` (set in Task 110.160), walk every Acceptance Criterion above (ACC-001..ACC-005) with concrete evidence and check them off, then run the REQ-004 review-fix loop; set the feature status `review` -> `done` only after the loop exits clean (no Errors, Gaps, or Discrepancies).
 
-- [ ] Task 120.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
+- [x] Task 120.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
 #### Phase 130: Fix phase (review cycle 1)
 
@@ -152,11 +152,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Current Status
 
-**As of 2026-11-17**: Fix phase 140 (review cycle 2) complete -- D1 (the narration's done-closeout now carries the commit the agent file's step 10 has) fixed and pinned by test. The REQ-004 loop re-runs the reviewer (cycle 3, the cap) before the `done` closeout and the Phase 120 commit.
+**As of 2026-11-17**: Done. All five acceptance criteria (ACC-001..ACC-005) walked and checked off at `review` with evidence; the REQ-004 review-fix loop ran 3 cycles (cycle 1: G1/D1/D2 fixed in Phase 130 incl. the user's D2 option-(a) decision; cycle 2: D1 fixed in Phase 140; cycle 3: clean exit) and the feature is at `done`. Remaining open items are advisory only (I1: AGENTS.md host-surface sentence, deliberately deferred; I2: cosmetic DEC slug truncation, out of scope). Delivery: 6 commits on branch `feat-263-delegation-prompts` atop dev (plan refinement, Phase 100, Phase 110, Phase 130, Phase 140, this closeout); PR per the release SOP, branch name = folder name for closeout-gate attribution.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 06:32:09.000Z - Done: REQ-004 review-fix loop exited clean at cycle 3; status review -> done
+
+Cycle 3 of the REQ-004 review-fix loop came back clean: the feat-reviewer's report carried no Errors, Gaps, or Discrepancies, and the reviewer re-ran the full gate -- pytest 6115 passed / 18 skipped, ruff format/check + vulture clean, specmgr lint 2/2 on this plan + DEC 4481b1fd, the harness bundle 32/32 sha256-verified, and docs in sync. The loop's step-10 closeout then set the feature status `review` -> `done` (the generic `set_status(type="feat")`, legal under the dev feat FSM) -- the hop Task 120.100 waits for. Tasks 120.100/120.110 are now checked off: 120.100's full scope (the ACC-001..ACC-005 walk at `review`, the loop run, the `done` hop only after a clean exit) is complete, and 120.110's gate is green, its single Conventional Commit being the orchestrator's next action. Carried advisory Improvements (not findings -- the loop's advisory rule leaves them out of the fix scope): I1 -- the AGENTS.md host-surface sentence for the feat lifecycle prompts, deliberately deferred; I2 -- the DEC filename's cosmetic mid-word slug truncation by the pre-existing 60-char slugify, out of scope for this feature.
 
 #### 2026-11-17 05:32:35.000Z - Phase 140: Fix phase (review cycle 2) complete (D1)
 
