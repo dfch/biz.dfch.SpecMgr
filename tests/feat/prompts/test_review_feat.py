@@ -211,6 +211,21 @@ class TestReviewFeatPrompt(unittest.TestCase):
             result,
         )
 
+    def test_conditional_proposed_fix_phase_worked_example(self):
+        """D1 fix (Phase 130): the worked example mirrors feat-reviewer.md's example verbatim."""
+        result = _one_line(review_feat(_ID))
+        self.assertIn(
+            "Example (a plan whose highest existing phase is `Phase 110`, review cycle 1):",
+            result,
+        )
+        self.assertIn("#### Phase 120: Fix phase (review cycle 1)", result)
+        self.assertIn("- [ ] Task 120.100: Fix E1 -- <what is wrong and why> (<file>:<line>).", result)
+        self.assertIn(
+            "- [ ] Task 120.120: [NEEDS DECISION] Resolve D1 -- <what disagrees with what>; ask the user "
+            "which side wins before fixing.",
+            result,
+        )
+
     def test_raises_value_error_for_blank_id(self):
         """A blank/whitespace-only id must fail fast with ValueError."""
         with self.assertRaises(ValueError) as ctx:

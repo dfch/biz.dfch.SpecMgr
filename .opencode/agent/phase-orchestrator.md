@@ -113,8 +113,16 @@ instead.
    prompt adding an explicit first step: append the reviewer's
    ready-to-paste block to the plan's Task List, since you cannot edit
    files (`edit`/`write` are denied to you). Verify the fix phase as in
-   step 4 and commit it as in step 6. Repeat until the reviewer reports
-   no Errors, Gaps, or Discrepancies left. The loop is capped at 3
+   step 4 and commit it as in step 6. If the report contains any
+   Errors, Gaps, or Discrepancies but omits the conditional "Proposed
+   Fix Phase" block (a non-conforming report -- the block is mandated
+   by the reviewer's own report format), re-run the reviewer once; if
+   the re-run still reports findings without the block, hand the
+   findings to the user (as after the 3-cycle cap) and exit the loop
+   without further cycles -- the re-run neither resets nor extends the
+   3-cycle cap, and the loop never stalls on a non-conforming report.
+   Repeat until the reviewer reports no Errors, Gaps, or Discrepancies
+   left. The loop is capped at 3
    review-fix cycles: after the third, hand any remaining findings to
    the user instead of auto-fixing them again.
 10. **Done closeout (only after a clean loop exit).** Set the feature

@@ -51,8 +51,9 @@ For each phase, in the order the plan lists it:
   criteria are met. Never take "tests pass" on trust -- run them.
 - If verification fails, send the same subagent back with the specific
   failures and required fixes; if it passes, mark the phase complete in
-  the `TodoWrite` list and commit the phase as one Conventional Commit
-  (the plan's own per-phase commit discipline).
+  the `TodoWrite` list, ask the user to confirm, then commit the phase
+  as one Conventional Commit (the plan's own per-phase commit
+  discipline).
 - Never write or edit code files yourself -- delegate all
   implementation. You read, verify, decide, and commit; the subagent
   writes the code.
@@ -64,8 +65,8 @@ deliberate, "your host's task-delegation tool, if one exists" -- fall
 back to direct single-session implementation, phase by phase: run each
 phase yourself, in the same order, with the same
 verify-before-advancing discipline (re-run the phase's quality gate,
-inspect the diff, confirm the phase's acceptance criteria, one
-Conventional Commit per phase). This is never a hard failure: the plan
+inspect the diff, confirm the phase's acceptance criteria, and commit
+as in step 2's own commit rule). This is never a hard failure: the plan
 is implemented either way, and the phase's substance is unchanged by
 which mode you ran it in.
 
@@ -91,6 +92,14 @@ acceptance criteria with concrete evidence (the feature is then at
   (the orchestrator) cannot edit files (`edit`/`write` are denied to
   you). Verify the fix phase as in step 2 and commit it as in step 2's
   own commit rule.
+- If the report contains any Errors, Gaps, or Discrepancies but omits
+  the conditional "Proposed Fix Phase" block (a non-conforming report
+  -- the block is mandated by the reviewer's own report format),
+  re-run the reviewer once; if the re-run still reports findings
+  without the block, hand the findings to the user (as after the
+  3-cycle cap) and exit the loop without further cycles -- the re-run
+  neither resets nor extends the 3-cycle cap, and the loop never stalls
+  on a non-conforming report.
 - Repeat until the reviewer reports no Errors, Gaps, or Discrepancies
   left, capped at 3 review-fix cycles: after the third cycle, any
   remaining findings are handed to the user instead of auto-fixed

@@ -4,7 +4,7 @@ created: '2026-11-15T06:29:34.876+01:00'
 id: feat-263-delegation-prompts
 status: review
 type: feat
-updated: '2026-11-16T15:19:56.815+01:00'
+updated: '2026-11-17T03:24:39.580+01:00'
 version: 1.0.0
 ---
 
@@ -34,15 +34,15 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 ### Acceptance Criteria
 
-- [ ] ACC-001: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), narrate the orchestrator discipline (verify before advancing, never write code directly), state the fallback to direct single-session implementation when no delegation tool exists, name the new delegation-pattern DEC by UUID, and mention the review-fix loop.
+- [x] ACC-001: `implement_feat(id)` MCP prompt exists, is registered, and its instructions explicitly name the host's task-delegation tool as optional (never assumed present), narrate the orchestrator discipline (verify before advancing, never write code directly), state the fallback to direct single-session implementation when no delegation tool exists, name the new delegation-pattern DEC by UUID, and mention the review-fix loop.
 
-- [ ] ACC-002: `review_feat(id)` MCP prompt exists, is registered, and mirrors `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section.
+- [x] ACC-002: `review_feat(id)` MCP prompt exists, is registered, and mirrors `feat-reviewer.md`'s checklist and report format including the conditional "Proposed Fix Phase" section.
 
-- [ ] ACC-003: `feat-reviewer.md`'s report format documents the "Proposed Fix Phase" section -- the ready-to-paste Task-List block shape (next unused phase number, `- [ ] Task NNN.MMM` items derived from Errors/Gaps/Discrepancies only) and the `[NEEDS DECISION]` flagging rule.
+- [x] ACC-003: `feat-reviewer.md`'s report format documents the "Proposed Fix Phase" section -- the ready-to-paste Task-List block shape (next unused phase number, `- [ ] Task NNN.MMM` items derived from Errors/Gaps/Discrepancies only) and the `[NEEDS DECISION]` flagging rule.
 
-- [ ] ACC-004: `phase-orchestrator.md`'s workflow documents the capped (3-cycle) review-fix loop, its exit criterion (reviewer reports no Errors, Gaps, or Discrepancies), the resolution of `[NEEDS DECISION]` items with the user via `question`, the append-the-fix-phase delegation step (the implementer appends, not the orchestrator), and that the `done` closeout happens only after a clean loop exit (verify at `review`, loop, then `done`).
+- [x] ACC-004: `phase-orchestrator.md`'s workflow documents the capped (3-cycle) review-fix loop, its exit criterion (reviewer reports no Errors, Gaps, or Discrepancies), the resolution of `[NEEDS DECISION]` items with the user via `question`, the append-the-fix-phase delegation step (the implementer appends, not the orchestrator), and that the `done` closeout happens only after a clean loop exit (verify at `review`, loop, then `done`).
 
-- [ ] ACC-005: A new DEC under `docs/dec/` documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern, has status `accepted`, and its UUID is recorded in this plan's Related Decisions and named by `implement_feat`'s instructions.
+- [x] ACC-005: A new DEC under `docs/dec/` documents the "portable MCP prompt narrates optional host-native subagent delegation" pattern, has status `accepted`, and its UUID is recorded in this plan's Related Decisions and named by `implement_feat`'s instructions.
 
 ### Scope
 
@@ -136,15 +136,31 @@ The reason for the carve-out (rather than continuing inside feat-167) is release
 
 - [ ] Task 120.110: Phase-end gate: full quality gate green, then exactly one Conventional Commit for the phase.
 
+#### Phase 130: Fix phase (review cycle 1)
+
+- [x] Task 130.100: Close G1 -- narrate the fallback for a reviewer report that carries Errors/Gaps/Discrepancies but no "Proposed Fix Phase" block (e.g. re-run the reviewer once, then hand the findings to the user as after the 3-cycle cap), keeping both mirror copies word-for-word aligned with each other: .opencode/agent/phase-orchestrator.md:107-119 and src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md:83-95. The phase-orchestrator edit is an `.opencode/` file, so `uv run --frozen specmgr harness-bundle` regeneration rides in the same commit, and any phrase newly asserted by the content tests in tests/feat/prompts/test_implement_feat.py:147-156 / tests/feat/prompts/test_review_feat.py gains its pin there.
+
+- [x] Task 130.110: Fix D1 -- bring the two mirror copies of the conditional "Proposed Fix Phase" section into agreement by adding the agent file's worked example block (the `Phase 120` heading example with its three task items) to the end of section 5 of src/biz/dfch/specmgr/feat/data/feat_review_instructions.md:152-169, matching .opencode/agent/feat-reviewer.md:203-212 (no harness-bundle regeneration needed -- the changed file is under `src/`; extend tests/feat/prompts/test_review_feat.py:179-212 with a pin for the example's heading/task shape if desired).
+
+- [x] Task 130.120: Resolve D2 -- (user decision 2026-11-16: option (a), the narration mirrors the agent file's "ask the user to confirm, then commit"): align src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md's commit step with .opencode/agent/phase-orchestrator.md step 6; no agent/command file change.
+
 ## Progress
 
 ### Current Status
 
-**As of 2026-11-16**: Phase 110 complete -- the implement_feat and review_feat prompts (with their packaged instruction files, tests and docs sync) are registered; the four OpenCode files carry the review-fix loop, the conditional Proposed Fix Phase, and the FSM-aligned status prose; DEC 4481b1fd-26e5-46bc-8f1b-236b638385b2 is named by implement_feat. Feature status is now `review`; the next action is Phase 120 (final verification, ACC walk at `review`, then the REQ-004 review-fix loop and the `done` closeout).
+**As of 2026-11-17**: Fix phase 130 (review cycle 1) complete -- G1 (non-conforming-reviewer-report fallback, both mirrors word-for-word), D1 (portable mirror gains the worked example), and D2 (user decision (a): the narration's commit step mirrors the agent file's confirm-then-commit) are fixed and pinned by tests. The REQ-004 loop re-runs the reviewer (cycle 2) before the `done` closeout and the Phase 120 commit.
 
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 01:18:32.000Z - Phase 130: Fix phase (review cycle 1) complete (G1/D1/D2)
+
+Review cycle 1 (REQ-004 loop) produced no Errors, one Gap (G1), two Discrepancies (D1/D2), one advisory Improvement (I1, not implemented), and four Positives; the reviewer's ready-to-paste block was appended verbatim to the Task List as Phase 130 before the fixes. Task 130.100 (G1): the non-conforming-reviewer-report fallback is now narrated in both mirror copies, word-for-word aligned -- .opencode/agent/phase-orchestrator.md's Workflow step 9 (after the 'commit it as in step 6' sentence) and src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md step 4 (a new bullet between the block-present bullet and the Repeat-until bullet): 'If the report contains any Errors, Gaps, or Discrepancies but omits the conditional "Proposed Fix Phase" block (a non-conforming report -- the block is mandated by the reviewer's own report format), re-run the reviewer once; if the re-run still reports findings without the block, hand the findings to the user (as after the 3-cycle cap) and exit the loop without further cycles -- the re-run neither resets nor extends the 3-cycle cap, and the loop never stalls on a non-conforming report.' Task 130.110 (D1): the portable mirror src/biz/dfch/specmgr/feat/data/feat_review_instructions.md section 5 gains the worked example verbatim from .opencode/agent/feat-reviewer.md -- the 'Example (a plan whose highest existing phase is Phase 110, review cycle 1):' lead-in plus the fenced '#### Phase 120: Fix phase (review cycle 1)' block with its three Task 120.100/120.110/120.120 items -- closing the mirror drift (no harness-bundle regeneration: the changed file is under src/). Task 130.120 (D2, resolved with the user: option (a)): the narration mirrors the agent file's 'ask the user to confirm, then commit' -- feat_implement_instructions.md step 2's verify/commit bullet now reads 'mark the phase complete in the TodoWrite list, ask the user to confirm, then commit the phase as one Conventional Commit', step 3's single-session fallback commits 'as in step 2's own commit rule' (one source of the commit behavior), and neither .opencode/agent/phase-orchestrator.md (step 6, the winning side) nor .opencode/command/implement-feature.md (the user's per-flow 'commit without asking' override) was touched; the Task 130.120 line was updated in place with the resolution and its [NEEDS DECISION] flag removed. Test pins: tests/feat/prompts/test_implement_feat.py gains test_review_fix_loop_non_conforming_report_fallback (the G1 sentence verbatim) and test_commit_asks_user_to_confirm_first (the D2 confirm-first phrasing, both steps); tests/feat/prompts/test_review_feat.py gains test_conditional_proposed_fix_phase_worked_example (the D1 example's lead-in, heading, and first/last task lines). Gate green: ruff format/check, vulture, full pytest, specmgr docs + specmgr mcp-docs + specmgr harness-bundle regenerate-then-no-diff (the harness bundle was regenerated for the phase-orchestrator.md edit and left in the tree), specmgr lint on this README, and the plan's full feat parse; Tasks 130.100/130.110/130.120 are checked off. The REQ-004 loop re-runs the reviewer (cycle 2) before the done closeout and the Phase 120 commit.
+
+#### 2026-11-16 17:06:20.000Z - Phase 120: ACC-001..ACC-005 walked and checked off (evidence)
+
+Task 120.100's walk portion executed at status `review` (precondition confirmed in the plan's frontmatter, both by raw read and by the live `get_feat`): ACC-001 -- `src/biz/dfch/specmgr/feat/prompts/implement_feat.py` + `src/biz/dfch/specmgr/feat/data/feat_implement_instructions.md` (the DEC UUID :7; the verbatim optional-delegation phrase + `never assumed present` :9-11; the phase-by-phase `TodoWrite` list :14-15; verify-before-advancing incl. re-run gate / inspect diff / confirm ACs :48-51; `Never write or edit code files yourself -- delegate all implementation.` :56-57; the single-session fallback :63-64 + `This is never a hard failure` :68; the loop pins: the feature is then at `review`, not yet `done` :75-76, the `done` closeout happens only after a clean loop exit :80-82, `[NEEDS DECISION]` resolved via `question` :86-87, `capped at 3 review-fix cycles` :94-95, `Stop at review until the loop exits clean` :106-107); registered at `docs/MCP.md:1876` with the exactly-once pin in `tests/feat/prompts/test_implement_feat.py::TestImplementFeatRegistration` (run: 19 passed, 4 subtests, exit 0). ACC-002 -- `src/biz/dfch/specmgr/feat/prompts/review_feat.py` + `src/biz/dfch/specmgr/feat/data/feat_review_instructions.md` (the nine ISO/IEC 25010:2023 characteristics :51-96; the three checklist layers :45/:98/:112; the five report sections `## Errors`/`## Gaps`/`## Discrepancies`/`## Improvements`/`## Positives` in order :128/:131/:134/:137/:140; report-only :147; the conditional-section pins :152-153/:157-158/:163-164/:167-169); the portability cross-check against `.opencode/agent/feat-reviewer.md` (the same five sections :162-176, the same conditional section :182-212); registered at `docs/MCP.md:1918` with `tests/feat/prompts/test_review_feat.py::TestReviewFeatRegistration` (run: 22 passed, 16 subtests, exit 0). ACC-003 -- `.opencode/agent/feat-reviewer.md`'s `### Proposed Fix Phase (conditional)` section :182 (the heading rule :189-194, the task rule :195-198, the `[NEEDS DECISION]` rule :199-201, the example block :203-212). ACC-004 -- `.opencode/agent/phase-orchestrator.md`'s Workflow step 8 `Finish (at review)` :101-105, step 9 `Review-fix loop (capped at 3 cycles)` incl. the `question` resolution :106-119, and step 10 `Done closeout (only after a clean loop exit)` :120-123. ACC-005 -- DEC `docs/dec/dec-4481b1fd-26e5-46bc-8f1b-236b638385b2-portable-mcp-prompts-may-narrate-optional-host-native-subage.md` (frontmatter id :4, status :5; H1 :11; Decision Outcome :30-32), this plan's Related Decisions bullet (body line 95), and `feat_implement_instructions.md:7` naming the UUID. Task 120.100/120.110 remain unchecked: the REQ-004 review-fix loop, the `review` -> `done` hop, and the phase commit are orchestrator work.
 
 #### 2026-11-16 13:53:09.000Z - Phase 110 complete (implement_feat + review_feat + review-fix loop)
 
@@ -169,6 +185,10 @@ Created from the unstarted remainder of feat-167-mcp-lifecycle-commands-2 (its P
 ### Decisions Made
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-17 01:18:32.000Z - D2 resolution: option (a) -- the narration mirrors the agent file's confirm-then-commit
+
+The user chose option (a) for Task 130.120 (review cycle 1): the portable narration's commit step mirrors .opencode/agent/phase-orchestrator.md step 6 ('Ask the user to confirm, then stage and commit that phase as one Conventional Commit'), not .opencode/command/implement-feature.md's per-flow 'Commit without asking me first, but do not push' override, which stays as the user wrote it. Rationale: the agent file is the standing orchestrator behavior the narration mirrors (the plan's own prompt/agent/command sync obligation), while the command file is the user's per-flow override for that one host surface; the narration therefore carries the confirm-first rule in step 2 as the single source, and step 3's single-session fallback references it ('commit as in step 2's own commit rule').
 
 #### 2026-11-16 11:20:00.000Z - Final verification runs at `review`; `done` only after a clean review-fix loop exit
 

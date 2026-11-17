@@ -133,6 +133,13 @@ class TestImplementFeatPrompt(unittest.TestCase):
         self.assertIn("confirm the phase's acceptance criteria", result)
         self.assertIn('Never take "tests pass" on trust -- run them.', result)
 
+    def test_commit_asks_user_to_confirm_first(self):
+        """D2 fix (Phase 130): the commit step mirrors the agent file's ask-the-user-to-confirm-then-commit."""
+        result = _one_line(implement_feat(_ID))
+        self.assertIn("ask the user to confirm, then commit the phase", result)
+        self.assertIn("as one Conventional Commit (the plan's own per-phase commit discipline)", result)
+        self.assertIn("and commit as in step 2's own commit rule", result)
+
     def test_never_writes_code_itself(self):
         """The orchestrator discipline: never write or edit code files yourself -- delegate all implementation."""
         result = _one_line(implement_feat(_ID))
@@ -154,6 +161,20 @@ class TestImplementFeatPrompt(unittest.TestCase):
         self.assertIn("capped at 3 review-fix cycles", result)
         self.assertIn("handed to the user instead of auto-fixed again", result)
         self.assertIn("the `done` closeout happens only after a clean loop exit", result)
+
+    def test_review_fix_loop_non_conforming_report_fallback(self):
+        """G1 fix (Phase 130): findings without the 'Proposed Fix Phase' block re-run the reviewer once,
+        then hand the findings to the user -- the re-run neither resets nor extends the 3-cycle cap."""
+        result = _one_line(implement_feat(_ID))
+        self.assertIn(
+            "If the report contains any Errors, Gaps, or Discrepancies but omits the conditional "
+            '"Proposed Fix Phase" block (a non-conforming report -- the block is mandated by the '
+            "reviewer's own report format), re-run the reviewer once; if the re-run still reports "
+            "findings without the block, hand the findings to the user (as after the 3-cycle cap) "
+            "and exit the loop without further cycles -- the re-run neither resets nor extends the "
+            "3-cycle cap, and the loop never stalls on a non-conforming report.",
+            result,
+        )
 
     def test_done_only_after_clean_exit(self):
         """The report step must keep the feature at review until the loop exits clean."""

@@ -167,3 +167,14 @@ never derive tasks. It is a ready-to-paste block for the plan's
 - Any item that needs a user decision (a design choice the plan left
   open) is explicitly flagged `[NEEDS DECISION]` in its text rather
   than guessed at.
+
+Example (a plan whose highest existing phase is `Phase 110`, review
+cycle 1):
+
+```
+#### Phase 120: Fix phase (review cycle 1)
+
+- [ ] Task 120.100: Fix E1 -- <what is wrong and why> (<file>:<line>).
+- [ ] Task 120.110: Close G1 -- <requirement/edge case not covered> (<file>:<line> or area).
+- [ ] Task 120.120: [NEEDS DECISION] Resolve D1 -- <what disagrees with what>; ask the user which side wins before fixing.
+```
