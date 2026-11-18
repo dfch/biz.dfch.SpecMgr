@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-18T13:28:51.881+01:00'
+updated: '2026-11-18T15:13:12.203+01:00'
 version: 1.0.0
 ---
 
@@ -375,6 +375,30 @@ Decided on 2026-11-18 (issue 267). Two PlantUML class diagrams in `.specmgr/feat
 Open, found on 2026-11-18 (issue 267). The checklist section 5.3 compares the matrix with the only rating grid of the book (four perspectives). Cells that differ and need a decision: Information x MA and FL (the book rates Evolution High for Information, the matrix has S and S), Context x MA (the book rates Medium, the matrix has X), and the judgement calls with P where the book says Low or Medium (Operational x PE, Information x RE, Context x SE, Information x SE). The rule of 0.0550 applies: demote a P cell if it produces duplicate criteria.
 
 TODO: decide the cells together with the validation of 0.0340 and 0.0350
+
+> **0.0650**: Does Clean Architecture (Martin) support the principle tags PR09 to PR12, and what does it add to the architecture model?
+
+Answered on 2026-11-18 (issue 267), after the book was added to the docs repository as markdown. Checked against `md/clean-architecture-robert-c-martin.md`:
+
+- PR09 is the Dependency Rule of ch. 22. It is stated on source-code dependencies only.
+- PR10 is the Acyclic Dependencies Principle and PR11 is the Stable Dependencies Principle with the Stable Abstractions Principle, both ch. 14. The metrics I, A and D are defined there. Martin calls them imperfect, so they are indicators and not thresholds.
+- PR12 is supported by ch. 19 and 20 (policy, level, business rules), ch. 22 and ch. 30 to 32 (database, web and frameworks are details).
+- Chapter 34 is by Simon Brown, the author of C4. It defines a component in the C4 sense, and Martin's ch. 12 defines it as a deployable unit.
+
+Decisions:
+
+- The book is a source for the principle tags only. It is not a source for viewpoints, perspectives or tactics. Those stay with R+W, 42010 and ISO.
+- "Component" in this catalogue means the C4 sense. The Martin sense is "deployable unit". The rules for component, boundary, service and layer are in the Architecture Model TXT, section 3.3.
+- A C4 model alone is no evidence for PR09 and PR10, because C4 relationships show the direction of use and not the direction of source dependencies (Architecture Model TXT, section 3.4).
+- PR12 joins PR09 to PR11 in the Development viewpoint, as our interpretation (checklist, section 4).
+- The mapping of Martin's decoupling modes to C4 containers and components is our interpretation, in the Architecture Model TXT, section 8.5. It is to be confirmed in the validation of feat-267 phase 120.
+- The error "ports and adapters as an R+W example" is corrected. R+W do not contain that term. Martin names it in ch. 22.
+
+> **0.0660**: Which sources named in the checklist, section 2, have no markdown copy yet?
+
+Answered on 2026-11-18 (issue 267). Not available as markdown, or not available at all: ISO/IEC/IEEE 42030, the ATAM report of the SEI, COBIT 2019, ISO/IEC 33020, TOGAF and the ISO/IEC 25010:2023 text (see 0.0210, 0.0220, 0.0260 and 0.0620). Also without a copy: Saltzer and Schroeder, Release It!, Enterprise Integration Patterns and the GoF Design Patterns book. PDF files exist, not yet converted to markdown, for the three POSA books (in `sources/praedeep/` of the docs repository). The checklist cites POSA only as a pattern source and as "to be confirmed". Converting them is not part of this feature.
+
+TODO: decide which of these sources to add and convert, in the order of the pattern and principle tags that cite them (PR07, PR08, PR13, PR14)
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 

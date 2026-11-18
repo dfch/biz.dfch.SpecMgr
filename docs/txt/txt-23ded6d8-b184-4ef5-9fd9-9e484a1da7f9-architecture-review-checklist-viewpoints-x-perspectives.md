@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-18T13:27:30.008+01:00'
+updated: '2026-11-18T15:12:56.352+01:00'
 version: 1.0.0
 ---
 
@@ -38,7 +38,7 @@ This document is the template and catalogue. The criteria are general and indexe
 | Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the DevelopmentResource perspective (section 5) |
 | Viewpoint list VP01 to VP07 | The seven core viewpoints of R+W, in the order of the book | Names and order checked against R+W. The concern lists are the book's and are in the Architecture Model TXT, section 4.1. 42010 defines no viewpoint catalogue. The earlier list VP01 to VP13 (Draft 0.7 and before) was compiled from several practice sources and is mapped in section 4.1 |
 | Perspective list FS to DR | The nine ISO/IEC 25010:2023 characteristics plus Regulation, Location and DevelopmentResource from R+W | The three added perspectives are the ones that ISO/IEC 25010 cannot express. Other R+W perspectives are mapped in section 5 |
-| Martin, Clean Architecture | Dependency rule, component principles, boundaries | Principle source, to be confirmed |
+| Martin, Clean Architecture, Pearson, 2018 (Martin) | The principle tags PR09 to PR12: the Dependency Rule (ch. 22), the component principles and their metrics (ch. 14), policy and level (ch. 19 and 20), boundaries and details (ch. 17, 18 and 30 to 32). Also treated there: PR01 (ch. 7), PR02 (ch. 14 and 16), PR03 (ch. 8), PR05 (ch. 15 and 16) | Checked against the markdown copy in the sibling docs repository (2026-11-18). The chapter numbers are those of the book. The line references are in the Architecture Model TXT, sections 3.3, 3.4 and 6.1. Martin states the principles as his own approach. They are not part of an ISO standard. His metrics are indicators and not thresholds. The tags PR09 to PR12 are a library and not adopted principles (section 9) |
 | POSA, Enterprise Integration Patterns, Release It! | Architecture-level patterns and stability patterns | Pattern source, to be confirmed |
 | Gamma et al., Design Patterns (GoF) | Class-level patterns, used only where they shape a seam | Pattern source, limited use |
 | Saltzer and Schroeder | Protection design principles | Principle source, to be confirmed |
@@ -83,7 +83,7 @@ Interfaces: both VP01 Context and VP02 Functional list interfaces among the book
 
 Boundaries between the remaining viewpoints:
 
-- Functional and Development: Functional describes runtime elements. Development describes source modules. The dependency rule and the other source-level dependency principles (PR09 to PR11) are assessed in Development.
+- Functional and Development: Functional describes runtime elements. Development describes source modules. The dependency rule and the other source-level dependency principles (PR09 to PR12) are assessed in Development. This is our interpretation. Martin states the principles for source code and for deployable units, and gives no viewpoint. The assignment of PR12 follows the same reasoning, because Martin treats the separation of policy from detail as a direction of source dependencies (ch. 19 and 22). A C4 model alone is no evidence for PR09 and PR10 (Architecture Model TXT, section 3.4).
 - Deployment and Operational: Deployment describes the environment. Operational describes how the system is run in it.
 - Concurrency and performance: Concurrency holds the process and thread structure. Load behaviour is assessed under the Performance Efficiency perspective.
 
@@ -449,10 +449,10 @@ Status of this table: it is a generic tag vocabulary for criteria. It is a libra
 | PR06 | Defence in depth | Original list |
 | PR07 | Fail-safe defaults | Original list, Saltzer and Schroeder |
 | PR08 | Least privilege | Original list, Saltzer and Schroeder |
-| PR09 | Dependency rule: source dependencies point inward, towards policy | Clean Architecture |
-| PR10 | Acyclic dependencies between components | Clean Architecture, component principles |
-| PR11 | Stable dependencies and stable abstractions | Clean Architecture. Instability and abstractness metrics give measurable evidence |
-| PR12 | Policy separated from detail, independence of frameworks, UI and database | Clean Architecture |
+| PR09 | Dependency rule: source dependencies point inward, towards policy | Martin ch. 22, "The Dependency Rule". Checked. It is stated on source-code dependencies only |
+| PR10 | Acyclic dependencies between components | Martin ch. 14, Acyclic Dependencies Principle. Checked. "Component" is Martin's deployable unit (Architecture Model TXT, section 3.3) |
+| PR11 | Stable dependencies and stable abstractions | Martin ch. 14, Stable Dependencies Principle and Stable Abstractions Principle. Checked. The metrics I, A and D give measurable evidence. Martin calls them imperfect, so they are indicators and not thresholds |
+| PR12 | Policy separated from detail, independence of frameworks, UI and database | Martin ch. 19 and 20 (policy, level, business rules), ch. 22 and ch. 30 to 32 (database, web and frameworks are details). Checked |
 | PR13 | Economy of mechanism, complete mediation | Saltzer and Schroeder |
 | PR14 | Stability patterns: timeouts, circuit breaker, bulkhead, idempotency, graceful degradation | Release It! |
 | PR15 | Simplicity, no speculative generality | Counterweight to PR05. Tie the tension to AD05 Appropriateness and AD13 Necessity |
@@ -645,6 +645,7 @@ What the agent must keep in mind from it:
 - Properties appear only in the JSON export. A query script over the JSON export is the authoritative reader.
 - Structurizr does not check property values. The check script of section 11.8 reports values that occur once and conflicts between a parent and a child.
 - The properties `origin` and `provenance` have the closed values of section 11.4.
+- A C4 model alone is no evidence for the Dependency Rule (PR09) or for acyclic dependencies (PR10). C4 relationships show the direction of use, and Martin states these principles on source-code dependencies (Architecture Model TXT, section 3.4 and 8.5). The agent reports such a criterion as Evidence Missing unless a code dependency analysis exists.
 
 ### 11.7 Flow
 
@@ -692,6 +693,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-18 15:00:00.000Z - Draft 0.10
+
+Clean Architecture (Martin) is checked against the markdown copy. Section 2: the status "to be confirmed" is replaced by the checked status and the chapters used. Section 4: PR12 joins PR09 to PR11 in Development, labelled as our interpretation. Section 9: the Origin column of PR09 to PR12 names the chapters. Section 11.6: a C4 model alone is no evidence for PR09 and PR10. No viewpoint, perspective, matrix cell or criterion ID changed. Issue 267.
 
 ### 2026-11-18 14:30:00.000Z - Draft 0.9
 

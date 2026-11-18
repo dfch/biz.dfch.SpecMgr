@@ -4,7 +4,7 @@ created: '2026-11-18T13:25:56.718+01:00'
 id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
 status: draft
 type: txt
-updated: '2026-11-18T13:26:56.622+01:00'
+updated: '2026-11-18T15:12:28.056+01:00'
 version: 1.0.0
 ---
 
@@ -27,6 +27,7 @@ This document holds definitions. The review criteria, the applicability matrix, 
 | Source | Used for | Status |
 |--------|----------|--------|
 | Rozanski and Woods, Software Systems Architecture, 2nd edition, Addison-Wesley, 2012 (R+W) | Viewpoints (ch. 3 and 15 to 22), perspectives (ch. 4 and 24 to 29), principles and decisions (ch. 8), patterns and styles (ch. 11), the architecture description (ch. 13) | Concern lists, names and order checked against the text of the book. Line references in this document point to the markdown copy of the book in the sibling docs repository |
+| Martin, Clean Architecture, Pearson, 2018 (Martin), with chapter 34 by Simon Brown | Source-level dependency principles (ch. 14, 19, 22), decoupling modes (ch. 16 and 18), the meaning of component, boundary and service (ch. 12, 18, 27 and 34) | Checked against the markdown copy in the sibling docs repository. Line references written "Martin L..." point to that file and not to the R+W copy. Used for the principle tags PR09 to PR12 of the checklist and for the term rules in section 3.3. It is not a source for viewpoints, perspectives or tactics |
 | ISO/IEC/IEEE 42010:2011 | Architecture description, viewpoint, view, model kind, correspondence, rationale | Concepts and clause 5.6 NOTE 1 checked against the text. Annex B.3 cites the 1st edition of R+W, which has six viewpoints and no Context viewpoint |
 | ISO/IEC 25010:2023 | Nine quality characteristics, used as perspectives | Names and sub-characteristics checked against specmgr://iso25010. The original standard is not in the docs repository |
 | Structurizr documentation and tool, version 2026.10.26 | Mapping in section 6 | Property and perspective behaviour verified in QA 25bd5b93 (0.0380, 0.0500). Everything else is to be confirmed |
@@ -67,6 +68,21 @@ Both files parse and render with PlantUML (checked with a local jar during autho
 - A principle guides concerns and is followed by decisions. The chain concern, principle, decision is the traceability line of R+W ch. 8.
 - A pattern implements one or more principles. A tactic belongs to a perspective.
 - Scenarios exercise perspectives. They state quality targets.
+
+### 3.3 Terms used in two senses
+
+Four words carry different meanings in the sources and in C4. The rule of this catalogue is stated for each one. A criterion or a Structurizr element uses the word in the catalogue sense only.
+
+| Term | Sense in the sources | Sense in C4 and Structurizr | Catalogue rule |
+|------|----------------------|-----------------------------|----------------|
+| Component | Martin: the unit of deployment, the smallest entity that can be deployed, for example a jar or a DLL (ch. 12, Martin L1623) | Brown, the author of C4: a grouping of related functionality behind a clean interface, inside an execution environment. Whether it sits in its own jar is an orthogonal concern (ch. 34, Martin L4306) | "Component" means the C4 sense. The Martin sense is written "deployable unit". Martin's component principles (PR10 and PR11 of the checklist) are written for deployable units. A criterion that uses them says which sense it means |
+| Boundary | Martin: a line between components. It is kept by the direction of source-code dependencies (ch. 17 and 18, Martin L2474, L2658) | A trust boundary is a catalogue property on elements (section 8.3). It is a security concept | "Boundary" alone is not used. Write "architectural boundary" (Martin) or "trust boundary" (SE) |
+| Service | Martin: a process that talks over a network. A service is not an architecture by itself. The architecture is the boundaries that follow the Dependency Rule (ch. 27, Martin L3446) | A container, or a software system | Map a service by its decoupling mode (section 8.5). A criterion does not take a service to be an architectural boundary |
+| Layer | Martin: a horizontal partition of source modules, for example the circles of ch. 22. R+W: the Layered style (ch. 11) | No construct | A layer is content of the Module Structure Model in VP05 (section 4.3) |
+
+### 3.4 Dependency direction
+
+Martin separates two directions: the flow of control and the direction of the source-code dependency. With dynamic polymorphism they can point in opposite ways (ch. 18, Figure 18.2, Martin L2658 to L2700). The Dependency Rule is stated on the source-code dependency only (ch. 22, Martin L2969). A C4 relationship usually shows the direction of use. It does not show the direction of the source dependency. A C4 model alone is therefore no evidence for PR09. See section 8.5.
 
 ## 4. Viewpoints
 
@@ -177,7 +193,8 @@ The table maps the concerns of each R+W perspective, with the tactics and pitfal
 ### 6.1 Definitions
 
 - Principle: "a fundamental statement of belief, approach, or intent that guides the definition of an architecture" (R+W ch. 8, L2058). A good principle is constructive, reasoned, well articulated, testable and significant (L2070).
-- Pattern and style: a reusable solution form (R+W ch. 11). Examples are layers, pipes and filters, ports and adapters.
+- Pattern and style: a reusable solution form (R+W ch. 11). R+W give Pipes and Filters and the Layered style as examples. Ports and adapters (Cockburn) is not in R+W. Martin names it with Hexagonal Architecture, DCI and BCE as related approaches (ch. 22, Martin L2943), and Brown discusses it in ch. 34 (Martin L4254).
+- Measurable principles: R+W ask that a principle is testable (L2070). Martin gives measures for three principles. Instability I, Abstractness A and Distance D support PR11 (ch. 14, Martin L1972 to L2124). They count classes and imports. Martin calls them imperfect and "not a god" (Martin L2132), and the control limit in his Figure 14.15 is a mock-up. They are indicators for a criterion and not thresholds.
 - Tactic: an approach to reach one quality property. It belongs to a perspective (R+W ch. 4). It is more general than a design pattern.
 - Decision: a choice with significance for the architecture, with its rationale (R+W ch. 8, 13).
 
@@ -218,6 +235,8 @@ Follow-up outside this document: a tag filter in list_dec would remove the need 
 | External interfaces in VP01 as primary | One primary viewpoint for each criterion. Both viewpoints keep the book concern | Catalogue rule |
 | Applicability matrix P, S, X | The per-view tables of R+W (Tables 25-1 to 29-6) are prose. The only rating grid is Table 4-1, for four perspectives. See the checklist, section 5.3 | Our interpretation |
 | Viewpoint IDs VP01 to VP07 | The book has no IDs | Catalogue extension |
+| Component means the C4 sense, a Martin component is a deployable unit | Martin and Brown use the word in two senses (section 3.3) | Catalogue rule |
+| Martin's decoupling modes mapped to C4 containers and components | Martin has no C4 mapping. Brown (ch. 34) links his components to C4 but does not map the decoupling modes (section 8.5) | Our interpretation |
 
 ## 8. Mapping to C4 and Structurizr
 
@@ -233,7 +252,7 @@ Coverage values: full (the viewpoint concerns can be read from the model), parti
 | VP02 Functional | Container and component views. Element description and relationship technology as responsibilities and interfaces | partial | Functional capabilities (what the system does for users), functional design philosophy |
 | VP03 Information | No native construct. Relationship descriptions can name the data. Ownership and flow need another model (a data model, linked from documentation) | none | All concerns |
 | VP04 Concurrency | Dynamic view for message flows. Container instances for process structure | partial | Threads, synchronization, reentrancy, state management |
-| VP05 Development | Component view and technology as module structure. Documentation sections | partial | Common processing, standardization of design and testing, instrumentation, codeline organization |
+| VP05 Development | Component view and technology as module structure. Documentation sections | partial | Common processing, standardization of design and testing, instrumentation, codeline organization. The dependency metrics I, A and D of Martin (section 6.1) and the direction of source dependencies (section 3.4) |
 | VP06 Deployment | Deployment view: nested deployment nodes, infrastructure nodes, container instances with instance count and health checks. Properties for failure domains and trust boundaries | full for structure | Hardware specification, network capacity, third-party software requirements beyond technology |
 | VP07 Operational | Deployment view: health checks, infrastructure nodes. Documentation sections | partial | Installation, migration, configuration management, support, backup and restore |
 | XV CrossView | Not modelled. Properties can reference the evidence | none | Security target, threat model, hazard analysis, regulation register, resource constraints |
@@ -278,7 +297,24 @@ Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty.
 - How a view records the viewpoint it conforms to. Options: the view key, a tag, a property on the view. Properties on views are not verified.
 - The keys `principle.dec`, a site key for LO, and the reference keys for RG and DR.
 - Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
+- The mapping of the decoupling modes in section 8.5, and whether a model can carry the direction of the source dependency, for example in a relationship property. No key is proposed yet.
 - The same mapping on three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform and a safety-relevant cyber-physical system.
+
+### 8.5 Decoupling modes (our interpretation)
+
+Martin names three modes in which components are decoupled: source level, deployment level and service level (ch. 16, Martin L2434). Ch. 18 adds the local process as a fourth physical boundary form (Martin L2658 to L2730). The choice of mode is an option that a good architecture keeps open (Martin L2434 to L2466). The mapping below is our interpretation and is to be confirmed in Phase 120. Martin gives no C4 mapping.
+
+| Mode | What it is | C4 and Structurizr | Coverage |
+|------|-----------|--------------------|----------|
+| Source level | Components in one address space that call each other by function calls. One executable, the monolith | C4 components inside one container | partial. Structure only |
+| Deployment level | Independently deployable units such as jar files, DLLs or gems. They may share one process | No native construct. The component technology field or a property can name the unit. A key is to be confirmed | none |
+| Local process | Separate address space on the same processor. Communication by sockets or queues | C4 containers on the same deployment node | partial |
+| Service | A process that assumes a network between it and its partners | C4 containers on different deployment nodes | partial |
+
+Consequences for criteria:
+
+- A criterion that asks which mode a system uses can read the mode from the model for the process and service levels. It cannot read it for the source and deployment levels.
+- The Dependency Rule (PR09) and the acyclic dependency principle (PR10) cannot be evidenced from the containers and the components of a C4 model alone (section 3.4). A code dependency analysis is the evidence. An agent reaches Demonstrated for it only by running a recorded, repeatable check (checklist, section 8.2).
 
 ## 9. Related Documents
 
@@ -289,6 +325,10 @@ QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decision
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-18 15:00:00.000Z - Draft 0.2
+
+Clean Architecture (Martin) is now a checked source. New source row in section 2. New sections 3.3 (terms used in two senses: component, boundary, service, layer) and 3.4 (dependency direction). Section 6.1: corrected the example of ports and adapters, which is not in R+W, and added the measurable principles of Martin with their limits. Section 7: two new deviation rows. Section 8.1: the VP05 row names what C4 cannot hold. New section 8.5 with the decoupling modes mapped to C4, labelled as our interpretation. Issue 267.
 
 ### 2026-11-18 14:00:00.000Z - Draft 0.1
 
