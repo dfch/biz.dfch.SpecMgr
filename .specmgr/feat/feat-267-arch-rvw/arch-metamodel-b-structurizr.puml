@@ -1,0 +1,73 @@
+@startuml arch-metamodel-b-structurizr
+title Architecture Model - Metamodel B (realisation in Structurizr)
+
+' to be confirmed = not yet verified with the probe
+class "Workspace" as WS
+class "Model" as MOD
+class "Person" as PER
+class "SoftwareSystem" as SYS
+class "Container" as CON
+class "Component" as CMP
+class "Relationship" as REL
+class "DeploymentNode" as DN
+class "InfrastructureNode" as IN
+class "ContainerInstance" as CI
+class "View" as VIEW
+class "Perspective" as PSP
+class "Property" as PROP
+class "Tag" as TAG
+class "Group" as GRP
+class "Docs" as DOC
+
+WS "1" *-- "1" MOD
+WS "1" *-- "0..*" VIEW
+WS "1" o-- "0..*" DOC : docs, adrs (to be confirmed)
+MOD "1" *-- "0..*" PER
+MOD "1" *-- "0..*" SYS
+SYS "1" *-- "0..*" CON
+CON "1" *-- "0..*" CMP
+MOD "1" *-- "0..*" REL
+MOD "1" *-- "0..*" DN
+DN "1" *-- "0..*" DN : nested
+DN "1" *-- "0..*" IN
+DN "1" *-- "0..*" CI
+CI "0..*" --> "1" CON : instance of
+
+VIEW "1" --> "1..*" SYS : shows
+VIEW "1" --> "0..*" CMP : shows
+
+PER "0..*" -- "0..1" GRP
+SYS "0..*" -- "0..1" GRP
+CON "0..*" -- "0..1" GRP
+
+PSP "0..*" --> "1" SYS : on element
+PSP "0..*" --> "1" REL : on relationship
+PROP "0..*" --> "1" MOD : on model
+PROP "0..*" --> "1" SYS : on element
+PROP "0..*" --> "1" REL : explicit only
+PROP "0..*" --> "1" DN
+TAG "0..*" --> "1" SYS : on element
+TAG "0..*" --> "1" REL
+
+note right of PSP
+  name = catalogue perspective (e.g. Reliability)
+  value = rating word
+  description = finding summary
+  style on value works in renderer only
+end note
+
+note right of PROP
+  keys [a-z0-9.], values never empty
+  origin, provenance
+  trust.boundary (not on group)
+  failure.domain.host|zone|region
+  review.criterion, review.evidence
+  properties only in JSON export
+end note
+
+note bottom of GRP
+  a group holds no properties
+  group name is display only
+end note
+
+@enduml

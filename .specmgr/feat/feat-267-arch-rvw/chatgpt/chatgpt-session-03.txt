@@ -1,0 +1,2706 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    I want to define an autonomous coding process. For this I have requirement artifacts (REQ, UC, DEC, RSK etc). I want to create architecture models from that build on architecture principles. The architecture must support a set of viewpoint that I defined. From the models I want to enforce architectural coding requirements (example: abstractions, direction of use, pattern). How could I do this?
+
+ 2.
+
+
+    What you are describing is essentially an *Architecture-Driven
+    Autonomous Software Engineering Process*.
+
+    The key idea is to establish a traceable chain from requirements to
+    architecture models to executable architectural constraints to
+    source code.
+
+    Rather than allowing an AI coding agent to interpret requirements
+    and freely invent an architecture, you give it an explicit
+    architectural model that acts as the blueprint and the rules of the
+    game.
+
+    I would approach this as a combination of:
+
+     1. Requirements engineering.
+     2. Model-based architecture engineering.
+     3. Architecture principles and viewpoint management.
+     4. Architecture conformance and fitness functions.
+     5. Autonomous, constraint-driven code generation and implementation.
+     6. Continuous architectural verification.
+
+    The important design decision is that *architecture models must
+    become executable engineering specifications, not just documentation.*
+
+
+      1. Define the overall process
+
+    I would structure your process into eight stages:
+
+    text
+
+    |┌──────────────────────────────────────────────┐
+    │ 1. Requirements Engineering                  │
+    │                                              │
+    │ REQ, UC, DEC, RSK, NFR, CON                   │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 2. Architecture Principles & Constraints     │
+    │                                              │
+    │ Principles, Standards, Design Rules          │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 3. Architecture Modelling                    │
+    │                                              │
+    │ Components, Interfaces, Dependencies,        │
+    │ Data, Deployment, Runtime                    │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 4. Architecture Viewpoint Validation         │
+    │                                              │
+    │ Functional, Structural, Runtime, Security,   │
+    │ Deployment, Data, etc.                       │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 5. Architectural Coding Specifications       │
+    │                                              │
+    │ Abstractions, Patterns, Dependency Direction,│
+    │ Naming, Boundaries, Interface Contracts      │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 6. Autonomous Implementation                 │
+    │                                              │
+    │ AI Coding Agents                             │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 7. Architectural Conformance Verification    │
+    │                                              │
+    │ Static Analysis, Fitness Functions, Tests    │
+    └──────────────────────┬───────────────────────┘
+                           │
+                           ▼
+    ┌──────────────────────────────────────────────┐
+    │ 8. Architecture Evolution & Feedback         │
+    │                                              │
+    │ Model Updates, Decisions, Traceability       │
+    └──────────────────────────────────────────────┘
+    |
+
+    There should be feedback loops between implementation, verification
+    and architecture modelling.
+
+    For example, if the coding agent discovers that an architectural
+    abstraction is insufficient, it should not silently bypass it. It
+    should propose an architecture change.
+
+    ------------------------------------------------------------------------
+
+
+      2. Establish a formal information model
+
+    Before building the process, I would define the artifacts and their
+    relationships.
+
+    You already have:
+
+    Artifact	Purpose
+    REQ	Requirements
+    UC	Use cases
+    DEC	Decisions
+    RSK	Risks
+
+    I would extend these with:
+
+    Artifact	Purpose
+    NFR	Non-functional requirements
+    CON	Constraints
+    PRN	Architecture principles
+    STD	Technical and architectural standards
+    VP	Architecture viewpoints
+    AV	Architecture views
+    CMP	Architecture components
+    INT	Interfaces and contracts
+    PAT	Architecture and design patterns
+    ACR	Architectural coding requirements
+    ACRV	Architectural coding requirement verification
+
+    The most important aspect is that these artifacts are connected
+    through explicit traceability.
+
+    For example:
+
+    text
+
+    |REQ-001: The system must support multiple payment providers.
+        |
+        +--- UC-001: Process Payment
+        |
+        +--- RSK-003: Provider dependency risk
+        |
+        +--- PRN-002: Depend on abstractions
+                 |
+                 +--- DEC-004: Hexagonal Architecture
+                           |
+                           +--- VP-001: Logical View
+                           |
+                           +--- CMP-001: Payment Application
+                           |
+                           +--- INT-001: Payment Provider Interface
+                                      |
+                                      +--- ACR-001:
+                                           Application must depend
+                                           on PaymentProvider abstraction.
+    |
+
+    This relationship is extremely valuable for autonomous development.
+
+    The agent can understand not only what it needs to implement, but
+    also why a particular architectural constraint exists.
+
+    I would make traceability a mandatory property of the process.
+
+    For example:
+
+      * Every architecture component should have a reason for existing.
+      * Every architectural decision should reference the requirements
+        or constraints it addresses.
+      * Every architectural coding requirement should reference an
+        architecture decision, principle or model element.
+      * Every implementation element should be traceable to an
+        architectural element or an explicitly approved implementation
+        detail.
+
+
+      3. Define architecture principles independently of architecture models
+
+    This is an important distinction.
+
+    Architecture principles define /how architecture should be
+    designed/. Architecture models describe /the architecture that has
+    been designed/.
+
+    For example:
+
+
+          Example architecture principles
+
+    ID	Principle	Description
+    PRN-001	Separation of Concerns	Components should have clearly
+    separated responsibilities.
+    PRN-002	Dependency Inversion	High-level policies must not depend on
+    implementation details.
+    PRN-003	Explicit Interfaces	Component interactions must happen
+    through defined interfaces.
+    PRN-004	Encapsulation	Internal implementation details must not leak
+    across component boundaries.
+    PRN-005	Replaceability	External technology providers should be
+    replaceable without changing business logic.
+    PRN-006	Testability	Components must be independently testable.
+    PRN-007	Least Privilege	Components should receive only the
+    permissions they require.
+
+    Principles should be more than descriptive statements.
+
+    I recommend defining each principle with the following structure:
+
+    yaml
+
+    |id: PRN-002
+    name: Dependency Inversion
+
+    intent:
+      High-level business policies must not depend
+      on low-level implementation details.
+
+    rationale:
+      Preserve independence of business logic from
+      technical infrastructure.
+
+    rules:
+      - Application components depend on abstractions.
+      - Infrastructure components implement abstractions.
+      - Dependencies must point towards domain policies.
+
+    applies_to:
+      - logical_architecture
+      - component_architecture
+      - source_code
+
+    verification:
+      - dependency_analysis
+      - static_architecture_tests
+    |
+
+    This allows you to use the same principle at different levels:
+
+      * Architecture modelling: the model must show the correct
+        dependency direction.
+      * Coding: the source code must implement that dependency direction.
+      * Verification: automated checks must prove that the direction is
+        respected.
+
+    This is what connects architecture engineering with autonomous coding.
+
+
+      4. Define architecture viewpoints as explicit contracts
+
+    You mentioned that you have a defined set of viewpoints.
+
+    I would make viewpoints first-class artifacts rather than treating
+    them as documentation templates.
+
+    A viewpoint should define:
+
+     1. What architectural concerns it addresses.
+     2. Which stakeholders it serves.
+     3. Which architecture elements it describes.
+     4. Which relationships are relevant.
+     5. Which modeling conventions must be followed.
+     6. Which consistency rules must be satisfied.
+     7. Which requirements and principles it addresses.
+
+    For example:
+
+
+          VP-001: Logical Architecture Viewpoint
+
+    Property	Definition
+    Concerns	Responsibilities and logical decomposition
+    Elements	Systems, components, interfaces
+    Relationships	Uses, implements, contains
+    Required information	Component responsibility, interfaces, dependencies
+    Related principles	Separation of Concerns, Dependency Inversion
+    Validation	No circular dependencies; clear component ownership
+
+
+          VP-002: Runtime Viewpoint
+
+    Property	Definition
+    Concerns	Runtime interactions and behavior
+    Elements	Components, services, processes
+    Relationships	Calls, publishes, subscribes
+    Required information	Interaction sequence, protocols, error handling
+    Related principles	Loose Coupling, Resilience
+    Validation	All interactions have defined contracts
+
+
+          VP-003: Security Viewpoint
+
+    Property	Definition
+    Concerns	Security architecture
+    Elements	Components, identities, resources
+    Relationships	Authenticates, authorizes, accesses
+    Required information	Trust boundaries, permissions, data classification
+    Related principles	Least Privilege, Defense in Depth
+    Validation	No unauthorized access paths
+
+    You can define as many viewpoints as your engineering approach requires.
+
+    *One important recommendation:* A viewpoint should also define its
+    completeness criteria.
+
+    For example, a Logical Architecture View is incomplete if:
+
+      * A component has no defined responsibility.
+      * An interface has no defined contract.
+      * A dependency has no justification.
+      * A component has no traceability to requirements or decisions.
+
+    This gives an AI agent an objective way to determine whether an
+    architecture model is complete.
+
+
+      5. Create architecture models using a formal modelling language
+
+    This is probably the most important technical decision.
+
+    You need a representation of architecture that is:
+
+      * Understandable by humans.
+      * Understandable by AI agents.
+      * Machine-readable.
+      * Version-controllable.
+      * Validatable.
+      * Suitable for generating implementation constraints.
+
+    I would avoid relying exclusively on natural-language architecture
+    descriptions.
+
+    Instead, use structured architecture models.
+
+    For example:
+
+    yaml
+
+    |component:
+      id: CMP-001
+      name: PaymentApplication
+
+      responsibility:
+        - Orchestrate payment processing.
+        - Apply payment business rules.
+
+      requirements:
+        - REQ-001
+        - REQ-002
+
+      decisions:
+        - DEC-004
+
+      principles:
+        - PRN-001
+        - PRN-002
+
+      interfaces:
+        provides:
+          - INT-001
+
+        requires:
+          - INT-002
+
+      dependencies:
+        allowed:
+          - Domain
+          - Application.Abstractions
+
+        forbidden:
+          - Infrastructure
+          - Database
+          - ExternalPaymentProvider
+    |
+
+    And an interface:
+
+    yaml
+
+    |interface:
+      id: INT-001
+      name: PaymentProvider
+
+      owner: CMP-001
+
+      responsibility:
+        Process a payment through an external provider.
+
+      operations:
+        - name: ProcessPayment
+          input: PaymentRequest
+          output: PaymentResult
+
+      implementations:
+        - CMP-010
+        - CMP-011
+    |
+
+    The architecture model should be the authoritative representation of
+    the intended architecture.
+
+    You can still generate diagrams, documentation and other views from it.
+
+
+        Which modelling approach?
+
+    I would consider three approaches:
+
+    Approach	Best use
+    C4 Model	System context, containers, components and deployment
+    UML/SysML	Detailed structural and behavioral modelling
+    Custom DSL / YAML	Machine-readable architecture constraints and
+    agent interaction
+
+    My recommendation would be a combination:
+
+      * C4 for architectural structure.
+      * UML where detailed behavioral or structural modelling is needed.
+      * YAML or a dedicated DSL for architecture rules, traceability and
+        machine validation.
+
+    You don't necessarily need to invent a complete modelling language.
+    You can start with a structured metamodel and evolve it as
+    requirements emerge.
+
+
+      6. Transform architecture models into architectural coding
+      requirements
+
+    This is where your approach becomes particularly powerful.
+
+    You want to derive coding requirements from architecture models.
+
+    I would introduce a dedicated artifact type: *Architectural Coding
+    Requirement (ACR)*.
+
+    An ACR describes a constraint that the source code must satisfy to
+    implement the intended architecture correctly.
+
+    For example:
+
+
+          ACR-001: Dependency direction
+
+    yaml
+
+    |id: ACR-001
+
+    name: Application dependency direction
+
+    source:
+      principles:
+        - PRN-002
+
+      architecture_elements:
+        - CMP-001
+        - INT-001
+
+    requirement:
+      Application components must depend on
+      abstractions rather than infrastructure implementations.
+
+    rules:
+      - Application must not reference Infrastructure.
+      - Application must not reference Database implementations.
+      - Infrastructure may implement Application interfaces.
+
+    verification:
+      type: static_architecture_test
+      severity: error
+    |
+
+
+          ACR-002: Abstraction requirement
+
+    yaml
+
+    |id: ACR-002
+
+    name: External provider abstraction
+
+    source:
+      decisions:
+        - DEC-004
+
+    requirement:
+      External payment providers must be accessed
+      through the PaymentProvider abstraction.
+
+    rules:
+      - PaymentApplication must use PaymentProvider.
+      - PaymentApplication must not instantiate provider SDK clients.
+      - Provider-specific code must reside in Infrastructure.
+
+    verification:
+      type: static_analysis
+      severity: error
+    |
+
+
+          ACR-003: Pattern requirement
+
+    yaml
+
+    |id: ACR-003
+
+    name: Strategy pattern for payment providers
+
+    source:
+      decisions:
+        - DEC-004
+
+    requirement:
+      Payment provider implementations must follow
+      the Strategy pattern.
+
+    rules:
+      - A common provider abstraction must exist.
+      - Each provider must implement the abstraction.
+      - Provider selection must not be implemented
+        inside the business logic.
+
+    verification:
+      type: structural_architecture_test
+      severity: error
+    |
+
+    Notice something important:
+
+    The architecture model does not necessarily dictate every class or
+    method.
+
+    Instead, it specifies architectural responsibilities, interfaces,
+    relationships and constraints.
+
+    The coding agent has implementation freedom /within those boundaries/.
+
+    That is the right balance between architecture-driven development
+    and autonomous coding.
+
+
+      7. Make architectural coding requirements executable
+
+    I would classify ACRs into four categories.
+
+    Category	What it controls	Possible enforcement
+    Structural	Components, modules, packages, boundaries	Architecture tests
+    Dependency	Allowed and forbidden dependencies	Static analysis
+    Design	Abstractions, patterns, interfaces	Structural tests, code
+    analysis
+    Quality	Cohesion, coupling, complexity, testability	Metrics, quality
+    gates
+
+    Some examples of tools that can help:
+
+
+          Dependency and architecture enforcement
+
+      * ArchUnit <https://www.archunit.org/?utm_source=chatgpt.com> —
+        Enforce architectural rules in Java.
+      * NetArchTest <https://github.com/BenMorris/NetArchTest?
+        utm_source=chatgpt.com> — Architecture testing for .NET.
+      * NDepend <https://www.ndepend.com/?utm_source=chatgpt.com> —
+        Dependency analysis and architecture rules for .NET.
+      * dependency-cruiser <https://github.com/sverweij/dependency-
+        cruiser?utm_source=chatgpt.com> — Validate JavaScript/TypeScript
+        module dependencies.
+
+
+          Architecture modelling
+
+      * Structurizr <https://structurizr.com/?utm_source=chatgpt.com> —
+        C4 architecture modelling using a textual DSL.
+      * PlantUML <https://plantuml.com/?utm_source=chatgpt.com> — Text-
+        based UML diagrams.
+      * Eclipse Modeling Framework <https://eclipse.dev/emf/?
+        utm_source=chatgpt.com> — Metamodel-based modelling.
+
+
+          Example of an executable architectural rule
+
+    Imagine the following architectural requirement:
+
+        The Application layer must never depend on Infrastructure.
+
+    A corresponding automated test could look conceptually like this:
+
+    java
+
+    |@ArchTest
+    static final ArchRule application_must_not_depend_on_infrastructure =
+        noClasses()
+            .that().resideInAPackage("..application..")
+            .should().dependOnClassesThat()
+            .resideInAPackage("..infrastructure..");
+    |
+
+    The important point is that this requirement is no longer merely
+    documented.
+
+    It becomes an automated acceptance criterion for the coding agent.
+
+    I would aim to make every mandatory ACR executable wherever
+    technically possible.
+
+    For rules that cannot be fully automated, define an explicit review
+    procedure.
+
+    ------------------------------------------------------------------------
+
+
+      8. Design the autonomous coding process around architectural contracts
+
+    Now we get to the autonomous part.
+
+    I would not give one coding agent all artifacts and ask it to
+    implement the system.
+
+    Instead, use specialized agents or specialized agent responsibilities.
+
+    For example:
+
+    Agent	Responsibility	Output
+    Requirements Agent	Analyse REQ, UC, RSK, NFR	Requirements model
+    Architecture Agent	Apply principles and decisions	Architecture models
+    Architecture Validator	Validate viewpoints and consistency	
+    Architecture validation report
+    ACR Generator	Derive coding requirements	ACR specifications
+    Coding Agent	Implement architecture-compliant code	Source code
+    Verification Agent	Execute architectural and technical checks	
+    Verification report
+    Architecture Change Agent	Analyse proposed deviations	Architecture
+    change proposal
+
+    These do not necessarily need to be separate AI models. They can be
+    different roles, prompts and tool permissions within one agent
+    orchestration system.
+
+
+        Recommended execution workflow
+
+    I would implement the following workflow for each development increment.
+
+
+          Step 1: Select implementation scope
+
+    The orchestrator selects a set of requirements and use cases.
+
+    For example:
+
+    text
+
+    |Scope:
+    - REQ-001
+    - UC-001
+    - UC-002
+    |
+
+
+          Step 2: Identify relevant architecture
+
+    The agent retrieves:
+
+      * Relevant architecture components.
+      * Relevant interfaces.
+      * Relevant architecture decisions.
+      * Relevant principles.
+      * Applicable viewpoints.
+      * Applicable ACRs.
+
+
+          Step 3: Validate architectural readiness
+
+    Before coding, the agent checks:
+
+      * Are all required architecture elements defined?
+      * Are the relevant interfaces defined?
+      * Are dependencies specified?
+      * Are architectural decisions available?
+      * Are there unresolved risks?
+
+    If not, the agent must request architecture clarification or propose
+    a model change.
+
+
+          Step 4: Generate implementation plan
+
+    The coding agent generates an implementation plan referencing the
+    architecture.
+
+    Example:
+
+    text
+
+    |Implementation Plan
+
+    1. Implement PaymentProvider interface.
+       Reference: INT-001
+
+    2. Implement StripePaymentProvider.
+       Reference: CMP-010
+
+    3. Implement PaymentApplication.
+       Reference: CMP-001
+
+    4. Add unit tests.
+
+    5. Validate ACR-001, ACR-002 and ACR-003.
+    |
+
+
+          Step 5: Implement code
+
+    The coding agent implements the code.
+
+    It must work within the architectural boundaries.
+
+
+          Step 6: Run architectural verification
+
+    The verification agent checks:
+
+      * Dependency direction.
+      * Interface conformance.
+      * Component boundaries.
+      * Pattern compliance.
+      * Naming and structural conventions.
+      * Architecture-specific quality requirements.
+
+
+          Step 7: Handle violations
+
+    There are three possible outcomes:
+
+    Result	Action
+    All rules satisfied	Accept implementation
+    Coding violation	Return to coding agent for correction
+    Architecture model insufficient	Create architecture change proposal
+
+    This last distinction is crucial.
+
+    *An autonomous coding agent must not be allowed to resolve
+    architectural conflicts simply by ignoring architecture requirements.*
+
+    If a model needs changing, that change must be explicit, justified
+    and validated.
+
+
+      9. Introduce architecture fitness functions
+
+    There is another concept I would strongly recommend: *Architecture
+    Fitness Functions*.
+
+    An ACR usually describes a specific coding constraint.
+
+    A fitness function evaluates whether the architecture continues to
+    satisfy a broader architectural objective.
+
+    For example:
+
+    Architectural objective	Fitness function
+    Loose coupling	Measure coupling between components
+    High cohesion	Detect components with unrelated responsibilities
+    Modularity	Measure dependency violations
+    Replaceability	Verify that implementations can be exchanged
+    Testability	Measure test coverage and isolation
+    Security	Verify trust boundaries and access restrictions
+    Maintainability	Monitor complexity and dependency metrics
+
+    This is especially useful when an autonomous agent continuously
+    modifies the codebase.
+
+    You don't just want to check whether individual rules are satisfied.
+    You want to prevent architectural degradation over time.
+
+    I would distinguish:
+
+      * *Architecture constraints:* Things that must never be violated.
+      * *Architecture quality objectives:* Things that should be
+        optimized and monitored.
+      * *Architecture decisions:* Explicitly accepted trade-offs.
+
+    This distinction avoids turning every architectural preference into
+    a hard coding restriction.
+
+
+      10. Establish architecture governance
+
+    There is one more problem to solve: What happens when the agent
+    discovers that the architecture is insufficient?
+
+    I recommend a formal architecture change process.
+
+    For example:
+
+    text
+
+    |Coding Agent identifies architectural limitation
+                        |
+                        ▼
+             Architecture Change Proposal
+                        |
+                        ▼
+              Architecture Agent analyses
+                        |
+                        ▼
+           Impact analysis against requirements
+                        |
+                        ▼
+           Impact analysis against viewpoints
+                        |
+                        ▼
+            Impact analysis against principles
+                        |
+                        ▼
+                 Human approval
+                        |
+                        ▼
+             Update architecture models
+                        |
+                        ▼
+             Regenerate affected ACRs
+                        |
+                        ▼
+                 Resume coding
+    |
+
+    Not every change needs human approval.
+
+    You could define different governance levels:
+
+    Change type	Approval
+    Implementation detail within defined architecture	Autonomous
+    New internal class or method	Autonomous
+    New component within existing boundaries	Conditional
+    New external dependency	Conditional
+    Change to component boundaries	Human approval
+    Change to architectural principles	Human approval
+    Change to security architecture	Human approval
+
+    This gives you controlled autonomy rather than unrestricted autonomy.
+
+    ------------------------------------------------------------------------
+
+
+      11. Suggested repository structure
+
+    I would organize the artifacts in a dedicated architecture and
+    engineering repository structure.
+
+    For example:
+
+    text
+
+    |/software-system
+    │
+    ├── requirements/
+    │   ├── requirements/
+    │   │   ├── REQ-001.yaml
+    │   │   └── REQ-002.yaml
+    │   │
+    │   ├── use-cases/
+    │   │   └── UC-001.yaml
+    │   │
+    │   ├── risks/
+    │   │   └── RSK-001.yaml
+    │   │
+    │   └── decisions/
+    │       └── DEC-001.yaml
+    │
+    ├── architecture/
+    │   │
+    │   ├── principles/
+    │   │   └── PRN-001.yaml
+    │   │
+    │   ├── viewpoints/
+    │   │   ├── VP-001.yaml
+    │   │   ├── VP-002.yaml
+    │   │   └── VP-003.yaml
+    │   │
+    │   ├── models/
+    │   │   ├── logical.yaml
+    │   │   ├── runtime.yaml
+    │   │   ├── data.yaml
+    │   │   └── deployment.yaml
+    │   │
+    │   ├── interfaces/
+    │   │   └── INT-001.yaml
+    │   │
+    │   └── decisions/
+    │
+    ├── coding-requirements/
+    │   ├── ACR-001.yaml
+    │   ├── ACR-002.yaml
+    │   └── ACR-003.yaml
+    │
+    ├── verification/
+    │   ├── architecture-tests/
+    │   ├── fitness-functions/
+    │   ├── static-analysis/
+    │   └── validation-rules/
+    │
+    ├── agents/
+    │   ├── requirements-agent/
+    │   ├── architecture-agent/
+    │   ├── coding-agent/
+    │   └── verification-agent/
+    │
+    ├── src/
+    │
+    └── tests/
+    |
+
+    The repository becomes the shared knowledge base for all agents.
+
+    It also allows you to version requirements, architecture, coding
+    constraints and implementation together.
+
+
+      12. How I would implement this incrementally
+
+    I would resist the temptation to build a sophisticated multi-agent
+    architecture platform immediately.
+
+    Instead, I would implement it in four maturity levels.
+
+    Level	Capability	Result
+    1	Structured requirements, principles, viewpoints and architecture
+    models	Explicit architecture specifications
+    2	Derivation of ACRs and automated architecture validation	
+    Enforceable architecture
+    3	AI coding agents consuming architecture and ACRs	Architecture-
+    driven autonomous implementation
+    4	Architecture fitness functions and automated change management	
+    Continuously governed autonomous engineering
+
+    For an initial implementation, I would choose:
+
+      * YAML as the structured artifact format.
+      * JSON Schema for artifact validation.
+      * C4/Structurizr for architectural structure and visualization.
+      * Architecture tests for executable dependency constraints.
+      * Git for versioning and traceability.
+      * An AI agent orchestrator for coordinating the workflow.
+    ------------------------------------------------------------------------
+
+
+      13. One additional concept: Build an Architecture Engineering
+      Metamodel
+
+    If I were designing this as a long-term engineering capability, I
+    would go one step further.
+
+    I would define a formal *Architecture Engineering Metamodel*.
+
+    This is the foundation connecting all your artifacts.
+
+    Conceptually:
+
+    text
+
+    |                 REQUIREMENTS
+                     /    |     \
+                    /     |      \
+                  REQ     UC      RSK
+                    \     |      /
+                     \    |     /
+                      DECISIONS
+                          |
+                          ▼
+                  ARCHITECTURE PRINCIPLES
+                          |
+                          ▼
+                  ARCHITECTURE MODELS
+                          |
+                ┌─────────┼─────────┐
+                ▼         ▼         ▼
+             Logical    Runtime   Security
+             View       View      View
+                |         |         |
+                └─────────┼─────────┘
+                          |
+                          ▼
+              ARCHITECTURAL CODING REQUIREMENTS
+                          |
+                ┌─────────┼─────────┐
+                ▼         ▼         ▼
+            Structural Dependency  Design
+            Rules       Rules       Rules
+                |         |         |
+                └─────────┼─────────┘
+                          |
+                          ▼
+                   SOURCE CODE
+                          |
+                          ▼
+                  VERIFICATION
+                          |
+                          ▼
+                 ARCHITECTURE CONFORMANCE
+    |
+
+    The metamodel should define the entities and relationships, not just
+    the file formats.
+
+    For example:
+
+    text
+
+    |Requirement
+        |
+        | addressedBy
+        ▼
+    ArchitectureElement
+        |
+        | conformsTo
+        ▼
+    ArchitecturePrinciple
+        |
+        | realizedBy
+        ▼
+    ArchitecturalCodingRequirement
+        |
+        | verifiedBy
+        ▼
+    VerificationRule
+        |
+        | validates
+        ▼
+    SourceCodeElement
+    |
+
+    This gives you something much more powerful than a collection of AI
+    agents and prompts.
+
+    You get a *traceable, machine-interpretable architecture knowledge
+    model*.
+
+    It also opens the possibility of automatically answering questions
+    such as:
+
+      * Which coding requirements originate from a particular
+        architecture decision?
+      * Which components implement a particular use case?
+      * Which architecture principles are violated by a code change?
+      * Which requirements are affected by changing an interface?
+      * Which viewpoints become invalid after a component change?
+      * Which architectural constraints cannot currently be verified
+        automatically?
+    ------------------------------------------------------------------------
+
+
+      My main recommendation
+
+    I would organize the entire solution around three distinct
+    engineering layers:
+
+    Layer	Main question	Main artifact
+    Architecture Definition	What architecture should exist, and why?	
+    Architecture Models
+    Architecture Specification	What must the implementation do to
+    conform to that architecture?	Architectural Coding Requirements
+    Architecture Enforcement	How do we prove that the implementation
+    conforms?	Executable Verification Rules
+
+    These three layers should be connected through your metamodel and
+    traceability relationships.
+
+    *The most important architectural principle for the process itself
+    should be:*
+
+        The AI coding agent is autonomous in implementing the
+        architecture, but not autonomous in redefining the architecture.
+
+    It can make implementation decisions within the architectural
+    constraints. Changes to those constraints require an explicit
+    architecture change process.
+
+    I would use this as the foundation for your autonomous engineering
+    approach.
+
+    *One final thought:* What you are describing has considerable
+    overlap with Model-Based Systems Engineering (MBSE), Architecture
+    Description (ISO/IEC/IEEE 42010), Architecture as Code, and
+    Architecture Fitness Functions. I would borrow concepts from these
+    disciplines rather than inventing everything from scratch. However,
+    your specific combination of requirements-driven architecture
+    modelling, viewpoint completeness, derivation of coding requirements
+    and autonomous enforcement is worth developing as a coherent
+    engineering method of its own.
+
+ 3.
+
+
+    NOTE: We use ISO 25010 and do not differentiate between functional and non-functional requirements. We also use ISO 29148 with 4 layers of requirements (Business, Stakeholder, System, Software). For ViewPoints we use Rozanski and Woods. We also use biz.dfch.SpecMgr that already has some artifact types. Would it make sense to define artifact types such as CON, PRN, STD, ... as new specmgr artifact types?
+
+ 4.
+
+
+    Yes. In your situation, I would strongly recommend extending
+    *biz.dfch.SpecMgr with additional artifact types*, provided those
+    artifacts represent distinct engineering concepts with their own
+    semantics, lifecycle, relationships and validation rules.
+
+    I would actually make SpecMgr the central foundation of your
+    Architecture-Driven Autonomous Engineering Process.
+
+    There is an important distinction, though:
+
+    *Don't introduce artifact types simply to categorize documents.
+    Introduce them to establish a formal, traceable engineering
+    information model.*
+
+    Given that you use:
+
+      * ISO/IEC/IEEE 29148 for the four requirements levels (Business,
+        Stakeholder, System, Software).
+      * ISO/IEC 25010 for product quality characteristics.
+      * Rozanski and Woods for architecture viewpoints.
+      * biz.dfch.SpecMgr for requirements and specification management.
+
+    I would build on these existing foundations rather than introduce
+    another parallel artifact management system.
+
+
+        1. First, establish the conceptual model
+
+    I would distinguish five major artifact families:
+
+    Family	Purpose	Examples
+    Requirements	Define what the system must achieve	Business,
+    Stakeholder, System, Software requirements
+    Governance	Define constraints and engineering policies	CON, PRN, STD
+    Architecture	Describe the intended architecture	DEC, CMP, INT, VP, AV
+    Implementation	Specify architectural realization requirements	ACR, PAT
+    Verification	Establish how compliance is demonstrated	VFY, TST
+
+    One important detail concerning ISO 25010: I would not create
+    separate FR/NFR artifact categories.
+
+    Instead, requirements should remain classified according to their
+    ISO 29148 level, with ISO 25010 quality characteristics available as
+    attributes or relationships.
+
+    For example:
+
+    text
+
+    |REQ-SYS-001
+      Requirement Level: System
+      Quality Characteristic: Performance Efficiency
+      Quality Subcharacteristic: Time Behaviour
+    |
+
+    This preserves your existing requirements philosophy.
+
+
+        2. Which new SpecMgr artifact types would I introduce?
+
+    Based on the current SpecMgr artifact model, you already have GOL,
+    PRB, QA, REQ, UC, RSK, DEC, TSK, VCR, SOP, SYSRS and FEAT, among
+    others. DEC is already a general-purpose decision record. PyPI
+
+    I would extend this model selectively.
+
+    My proposal:
+
+    Type	Name	Recommendation	Purpose
+    CON	Constraint	*Yes*	Technical, organizational, regulatory and
+    architectural constraints
+    PRN	Principle	*Yes*	Architecture and engineering principles
+    STD	Standard	*Yes*	Adopted engineering standards and conventions
+    VP	Viewpoint	*Yes*	Architecture viewpoint definitions
+    AV	Architecture View	*Yes*	Actual architecture descriptions
+    conforming to viewpoints
+    ACR	Architectural Coding Requirement	*Yes*	Constraints on software
+    implementation derived from architecture
+    PAT	Pattern	Maybe	Reusable architectural and design patterns
+    CMP	Component	Not initially	Architecture model element
+    INT	Interface	Not initially	Architecture model element
+    VFY	Verification Specification	Maybe	Verification rules and methods
+
+    I would distinguish between artifacts that represent independently
+    managed engineering concepts and elements that belong inside an
+    architecture model.
+
+    For example, a component can have its own identifier and be
+    referenced by many artifacts without necessarily requiring a
+    separate Markdown document and SpecMgr artifact type.
+
+    This distinction will help keep SpecMgr manageable.
+
+
+        3. Detailed recommendations for the new types
+
+
+          CON — Constraint
+
+    A constraint limits the solution space.
+
+    Examples:
+
+      * The system must run on a specified platform.
+      * The system must use an approved database technology.
+      * The system must comply with a particular regulation.
+      * The software architecture must follow an approved technology
+        strategy.
+
+    Suggested structure:
+
+    yaml
+
+    |id: CON-001
+    title: Approved Technology Platform
+
+    category: technical
+    scope: system
+
+    statement: >
+      The system shall use the approved
+      organizational technology platform.
+
+    rationale: >
+      Ensure consistency with the enterprise
+      technology strategy.
+
+    source:
+      - GOL <id>
+      - REQ <id>
+
+    applies_to:
+      - architecture
+      - implementation
+
+    status: approved
+    |
+
+    I would distinguish constraints from requirements:
+
+      * A requirement specifies something the system must achieve.
+      * A constraint restricts how the solution may be designed or
+        implemented.
+
+    There can be overlap, but their engineering semantics are different.
+
+
+          PRN — Principle
+
+    Principles establish fundamental rules for making engineering decisions.
+
+    I would support different principle domains:
+
+    yaml
+
+    |id: PRN-001
+    title: Dependency Inversion
+
+    domain: architecture
+
+    statement: >
+      High-level business policies must not depend
+      on low-level implementation details.
+
+    rationale: >
+      Preserve independence of business policies
+      from technical infrastructure.
+
+    implications:
+      - Business logic depends on abstractions.
+      - Infrastructure implements abstractions.
+      - Dependencies point towards business policies.
+
+    applies_to:
+      - logical_view
+      - development
+      - verification
+
+    verification:
+      - ACR <id>
+    |
+
+    Potential domains:
+
+      * Business principles
+      * Architecture principles
+      * Design principles
+      * Security principles
+      * Development principles
+      * Testing principles
+
+    I would not create separate artifact types for these domains. Use
+    one PRN type with a domain classification.
+
+
+          STD — Standard
+
+    Standards are different from principles.
+
+    A principle expresses an engineering philosophy. A standard
+    establishes a prescribed convention or specification.
+
+    Examples:
+
+      * ISO/IEC/IEEE 29148
+      * ISO/IEC 25010
+      * Coding standards
+      * API design standards
+      * Naming conventions
+      * Technology standards
+      * Organizational architecture standards
+
+    Suggested structure:
+
+    yaml
+
+    |id: STD-001
+    title: API Design Standard
+
+    category: engineering
+    scope: software
+
+    source:
+      name: Internal API Design Standard
+      version: "2.0"
+
+    rules:
+      - All APIs must have explicit contracts.
+      - APIs must use consistent error semantics.
+      - API versions must be explicit.
+
+    applies_to:
+      - architecture
+      - implementation
+      - verification
+    |
+
+    One important distinction: I would use STD for standards that you
+    adopt or define, not simply as a bibliographic reference to an
+    external standard.
+
+    Also, SpecMgr already has SOP, meaning Standard Operating Procedure.
+    Keeping STD and SOP semantically distinct is important.
+
+
+          VP — Viewpoint
+
+    Given your use of Rozanski and Woods, I would definitely introduce VP.
+
+    A viewpoint describes how to construct and interpret an
+    architectural view.
+
+    For example:
+
+    yaml
+
+    |id: VP-001
+    title: Functional Viewpoint
+
+    framework:
+      name: Rozanski and Woods
+
+    concerns:
+      - Functional decomposition
+      - Responsibilities
+      - Functional dependencies
+
+    stakeholders:
+      - Software Architect
+      - Developer
+
+    model_elements:
+      - Component
+      - Interface
+      - Dependency
+
+    relationships:
+      - contains
+      - provides
+      - requires
+      - depends_on
+
+    required_information:
+      - Component responsibility
+      - Provided interfaces
+      - Required interfaces
+      - Dependencies
+
+    validation:
+      - All components have responsibilities.
+      - All dependencies are explicit.
+      - Interfaces have defined contracts.
+    |
+
+    The distinction between VP and AV is important:
+
+      * VP defines the rules for constructing a view.
+      * AV describes the actual architecture from that viewpoint.
+
+    This is directly aligned with the viewpoint/view distinction in
+    architecture description standards.
+
+
+          AV — Architecture View
+
+    I would introduce AV as a first-class artifact.
+
+    An AV represents an actual architecture description for a particular
+    system and viewpoint.
+
+    For example:
+
+    yaml
+
+    |id: AV-001
+    title: Functional Architecture View
+
+    viewpoint:
+      - VP-001
+
+    architecture_decisions:
+      - DEC <id>
+
+    requirements:
+      - REQ <id>
+
+    principles:
+      - PRN <id>
+
+    components:
+      - CMP-001
+      - CMP-002
+      - CMP-003
+
+    status: approved
+    |
+
+    The actual component and relationship models could be maintained as
+    structured model files and referenced by AV.
+
+    This allows you to have several architecture views without
+    duplicating the underlying architecture model.
+
+
+          ACR — Architectural Coding Requirement
+
+    This is probably the most important new artifact type for your
+    autonomous coding objective.
+
+    I would make ACR a dedicated artifact rather than simply another REQ
+    classification.
+
+    Why?
+
+    Because an ACR has a different purpose and lifecycle:
+
+      * It is derived from architecture.
+      * It constrains implementation.
+      * It can be automatically verified.
+      * It can be associated with one or more architecture elements.
+      * It can be used directly by coding agents.
+
+    Example:
+
+    yaml
+
+    |id: ACR-001
+    title: Dependency Direction
+
+    derived_from:
+      principles:
+        - PRN-001
+      decisions:
+        - DEC-001
+      architecture_views:
+        - AV-001
+
+    applies_to:
+      components:
+        - CMP-001
+
+    requirement: >
+      Application components shall not depend
+      on Infrastructure implementations.
+
+    constraints:
+      - Application may depend on Domain.
+      - Application may depend on Application.Abstractions.
+      - Application must not depend on Infrastructure.
+
+    verification:
+      method: static_analysis
+      automated: true
+
+    severity: error
+    |
+
+    One consideration: ACRs should not become a second, disconnected
+    requirements system. They should be traceable to the Software
+    Requirements level and contribute to implementation verification.
+
+
+          PAT — Pattern
+
+    I would initially keep patterns as a classification or reference
+    within PRN, DEC and ACR.
+
+    Introduce PAT only when you need to manage reusable pattern
+    definitions with their own lifecycle.
+
+    For example:
+
+      * Hexagonal Architecture
+      * Ports and Adapters
+      * Strategy
+      * Repository
+      * CQRS
+      * Dependency Injection
+
+    A PAT should define:
+
+      * Intent
+      * Context
+      * Structure
+      * Participants
+      * Collaborations
+      * Consequences
+      * Implementation constraints
+      * Verification criteria
+
+    A pattern is not automatically mandatory. ACRs should specify which
+    aspects of a pattern are mandatory in a particular architectural
+    context.
+
+    ------------------------------------------------------------------------
+
+
+      4. How these artifact types fit together
+
+    I would establish the following relationships:
+
+    text
+
+    |       ISO 29148 REQUIREMENTS
+           ┌──────────────────────┐
+           │ Business             │
+           │ Stakeholder          │
+           │ System               │
+           │ Software             │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ CON                  │
+           │ Constraints          │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ PRN                  │
+           │ Principles           │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ DEC                  │
+           │ Architecture         │
+           │ Decisions            │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ AV                   │◄──── VP
+           │ Architecture Views   │      Viewpoints
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ ACR                  │
+           │ Architectural       │
+           │ Coding Requirements  │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ TSK                  │
+           │ Implementation Tasks │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │ VCR / Verification   │
+           │ Cases                │
+           └──────────────────────┘
+    |
+
+    STD provides applicable rules throughout the chain, while RSK
+    influences decisions and architecture design.
+
+    ISO 25010 quality characteristics should be available as
+    classifications and traceability dimensions across the requirements
+    and architecture artifacts.
+
+
+      5. One important design decision: Don't overuse artifact types
+
+    I would establish three criteria before introducing a new SpecMgr
+    artifact type.
+
+    An engineering concept deserves its own artifact type if it has at
+    least one of these characteristics:
+
+     1. *Independent lifecycle:* It has its own status, approval,
+        versioning or ownership.
+     2. *Specific semantics:* It has a distinct meaning and structure.
+     3. *Specific validation:* It requires dedicated validation rules.
+     4. *Independent traceability:* Other artifacts need to reference it
+        directly.
+
+    For example:
+
+    Concept	Separate artifact?	Reason
+    Constraint	Yes	Independent lifecycle and semantics
+    Principle	Yes	Independent governance
+    Standard	Yes	Versioning and applicability
+    Viewpoint	Yes	Defines architecture description rules
+    Architecture View	Yes	Independently maintained architecture description
+    Component	Not initially	Element of architecture model
+    Interface	Not initially	Element of architecture model
+    Pattern	Maybe	Depends on reuse and governance needs
+    ACR	Yes	Specific implementation and verification semantics
+
+    This is particularly relevant because SpecMgr already uses
+    structured Markdown with YAML frontmatter, type-specific validation
+    and cross-references. Extending that model is a natural direction. PyPI
+
+
+      6. My proposed initial SpecMgr extension
+
+    I would start with exactly these six new artifact types:
+
+    Type	Artifact	Priority
+    CON	Constraint	High
+    PRN	Principle	High
+    STD	Standard	High
+    VP	Viewpoint	High
+    AV	Architecture View	High
+    ACR	Architectural Coding Requirement	Very high
+
+    I would postpone PAT and VFY until the initial workflow is established.
+
+    I would also extend the existing VCR capabilities eventually,
+    because architectural coding requirements need systematic
+    verification. Currently, SpecMgr's VCR is defined around
+    verification of individual REQ or UC artifacts. PyPI
+
+    ------------------------------------------------------------------------
+
+
+      7. What I would do next: Define the SpecMgr metamodel
+
+    Before implementing these six types, I would define a formal
+    metamodel containing:
+
+    *A. Artifact definitions*
+
+      * Type identifier
+      * Name
+      * Description
+      * Mandatory attributes
+      * Optional attributes
+      * Lifecycle states
+
+    *B. Relationship definitions*
+
+    For example:
+
+    Source	Relationship	Target
+    REQ	constrained_by	CON
+    REQ	addressed_by	DEC
+    DEC	conforms_to	PRN
+    AV	conforms_to	VP
+    AV	realizes	REQ
+    ACR	derived_from	PRN
+    ACR	derived_from	DEC
+    ACR	constrains	AV
+    VCR	verifies	ACR
+
+    *C. Validation rules*
+
+      * Required references must exist.
+      * Approved architecture views must conform to their viewpoints.
+      * ACRs must have architectural justification.
+      * Mandatory ACRs must have verification methods.
+      * Approved decisions must not contradict applicable constraints.
+
+    *D. Agent capabilities*
+
+      * Create artifacts.
+      * Update artifacts.
+      * Resolve references.
+      * Validate artifacts.
+      * Analyze traceability.
+      * Identify inconsistencies.
+      * Generate derived artifacts.
+
+
+        My final architectural recommendation
+
+    I would position SpecMgr as the *Engineering Specification
+    Management System*, not merely a Requirements Management System.
+
+    Its responsibility would be to maintain the authoritative
+    engineering knowledge from business intent through architecture to
+    implementation constraints and verification.
+
+    The architecture models themselves could be managed as structured
+    model artifacts, with SpecMgr providing their governance and
+    traceability.
+
+    This would give you a very strong foundation:
+
+    *Requirements → Constraints & Principles → Architecture →
+    Architectural Coding Requirements → Autonomous Implementation →
+    Verification.*
+
+    And, importantly, it would make the entire chain accessible to AI
+    agents through a consistent artifact model rather than relying on
+    large collections of loosely structured documents.
+
+    ------------------------------------------------------------------------
+
+    Worked for 12s
+
+    Sources
+
+ 5.
+
+
+    -- give me an example for a "Constraint" (CON)
+    -- give me an example for a "Principle" (PRN)
+    -- is this the correct hierarchy: Standard, Policy, Guideline, Procedure? How does ISACA COBIT define this?
+
+ 6.
+
+
+      1. Example of a Constraint (CON)
+
+    I would define a constraint as:
+
+        A restriction on the acceptable solution space that limits
+        architectural, technological, organizational or implementation
+        choices.
+
+    A constraint is not necessarily a requirement imposed on the
+    software. It can originate from organizational decisions, external
+    regulations, existing infrastructure, contractual obligations or
+    technology strategy.
+
+
+        Example: CON-001 — Approved Technology Stack
+
+    yaml
+
+    |---
+    id: CON-001
+    type: CON
+    title: Approved Technology Stack
+    status: approved
+    ---
+
+    ## Statement
+
+    The software solution shall use technologies that are
+    approved for use within the organization.
+
+    ## Rationale
+
+    Ensure operational compatibility, maintainability,
+    security and compliance with organizational technology
+    governance.
+
+    ## Classification
+
+    - Category: Technology
+    - Scope: Software System
+    - Applicability: Architecture, Implementation, Deployment
+
+    ## Restrictions
+
+    - The backend must use an approved .NET version.
+    - Persistent storage must use an approved database technology.
+    - Third-party dependencies must come from approved sources.
+    - New technology platforms require explicit approval.
+
+    ## Traceability
+
+    - Source: Organizational Technology Strategy
+    - Related requirements: REQ-XXX
+    - Related decisions: DEC-XXX
+
+    ## Verification
+
+    - Automated dependency inventory.
+    - Technology compatibility validation.
+    - Approval verification for new dependencies.
+    |
+
+
+          Another example: CON-002 — Regulatory Data Residency
+
+    yaml
+
+    |---
+    id: CON-002
+    type: CON
+    title: Customer Data Residency
+    status: approved
+    ---
+
+    ## Statement
+
+    Customer personal data must be stored and processed
+    within the approved geographical jurisdictions.
+
+    ## Rationale
+
+    Ensure compliance with applicable regulatory
+    and contractual obligations.
+
+    ## Classification
+
+    - Category: Regulatory
+    - Scope: System
+    - Applicability: Architecture, Data, Deployment
+
+    ## Restrictions
+
+    - Data storage locations must be explicitly defined.
+    - External services must comply with approved
+      data residency requirements.
+    - Data transfers across jurisdiction boundaries
+      require explicit approval.
+
+    ## Verification
+
+    - Architecture review.
+    - Deployment configuration validation.
+    - Data flow analysis.
+    |
+
+
+          What distinguishes CON from REQ?
+
+    Consider:
+
+    *REQ-SYS-001*
+
+    The system shall allow customers to retrieve their personal data.
+
+    This describes required system behavior.
+
+    *CON-002*
+
+    Customer personal data must remain within approved geographical
+    jurisdictions.
+
+    This restricts the acceptable solution space.
+
+    Both can influence architecture, but they have different semantics.
+
+    ------------------------------------------------------------------------
+
+
+      2. Example of a Principle (PRN)
+
+    I would define a principle as:
+
+        A fundamental, enduring statement that establishes a preferred
+        direction for making decisions and designing solutions.
+
+    Principles should guide decisions rather than prescribe every
+    implementation detail.
+
+
+        Example: PRN-001 — Separation of Concerns
+
+    yaml
+
+    |---
+    id: PRN-001
+    type: PRN
+    title: Separation of Concerns
+    status: approved
+    ---
+
+    ## Statement
+
+    Architectural elements shall have clearly defined
+    and separated responsibilities.
+
+    ## Rationale
+
+    Separation of concerns reduces complexity,
+    improves maintainability, enables independent
+    evolution and supports independent testing.
+
+    ## Implications
+
+    - Components must have explicit responsibilities.
+    - Responsibilities should not overlap unnecessarily.
+    - Changes in one concern should minimize impact
+      on unrelated concerns.
+    - Technical infrastructure concerns should be
+      separated from business logic.
+    - Interfaces should expose only the functionality
+      required by consumers.
+
+    ## Applicability
+
+    - Architecture design
+    - Architecture modelling
+    - Software design
+    - Implementation
+    - Verification
+
+    ## Related Architecture Viewpoints
+
+    - Functional Viewpoint
+    - Information Viewpoint
+    - Development Viewpoint
+
+    ## Related Standards
+
+    - STD-XXX: Software Design Standard
+
+    ## Derived Architectural Coding Requirements
+
+    - ACR-XXX: Component Responsibility
+    - ACR-XXX: Dependency Direction
+    - ACR-XXX: Interface Segregation
+
+    ## Verification
+
+    - Architecture dependency analysis.
+    - Static code analysis.
+    - Component responsibility review.
+    |
+
+
+        Another example: PRN-002 — Depend on Abstractions
+
+    yaml
+
+    |---
+    id: PRN-002
+    type: PRN
+    title: Depend on Abstractions
+    status: approved
+    ---
+
+    ## Statement
+
+    Software components should depend on abstractions
+    rather than concrete implementation details.
+
+    ## Rationale
+
+    Reduce coupling and allow implementation details
+    to evolve independently of business logic.
+
+    ## Implications
+
+    - Define explicit interfaces for component boundaries.
+    - Business logic must not depend on infrastructure.
+    - Infrastructure implementations must implement
+      defined abstractions.
+    - Dependency direction must preserve architectural
+      boundaries.
+
+    ## Applicability
+
+    - Logical Architecture
+    - Development Architecture
+    - Software Implementation
+
+    ## Related Patterns
+
+    - Dependency Inversion
+    - Ports and Adapters
+    - Dependency Injection
+
+    ## Derived Architectural Coding Requirements
+
+    - ACR-001: Application Dependency Direction
+    - ACR-002: Infrastructure Abstraction
+    - ACR-003: External Provider Encapsulation
+    |
+
+
+          The distinction between PRN and ACR
+
+    This is particularly important for your autonomous coding process.
+
+    PRN	ACR
+    Establishes an engineering principle	Specifies an implementation
+    constraint
+    Generally applicable	Applies to specific architecture elements
+    Guides architectural decisions	Constrains coding decisions
+    May require interpretation	Should be objectively verifiable where
+    possible
+    Relatively stable	Can change with architecture evolution
+
+    For example:
+
+      * PRN: Depend on abstractions.
+      * DEC: We use Hexagonal Architecture.
+      * AV: PaymentApplication depends on PaymentProvider.
+      * ACR: PaymentApplication must not reference Stripe SDK.
+      * Verification: Static analysis checks this dependency.
+
+    That is exactly the traceability chain I would establish.
+
+
+      3. Is the hierarchy Standard → Policy → Guideline → Procedure correct?
+
+    Not quite.
+
+    There are two things to distinguish:
+
+     1. The conceptual hierarchy of governance and direction.
+     2. The hierarchy of documents used to implement governance.
+
+    Your proposed hierarchy mixes these concepts.
+
+    I would recommend the following:
+
+    text
+
+    |                 PRINCIPLE
+                         |
+                         ▼
+                       POLICY
+                         |
+                         ▼
+                      STANDARD
+                         |
+                  ┌──────┴──────┐
+                  ▼             ▼
+              PROCEDURE      GUIDELINE
+    |
+
+    However, there is an important distinction:
+
+      * A *Procedure* describes mandatory steps for performing an activity.
+      * A *Guideline* provides recommended approaches and is generally
+        not mandatory.
+
+    Therefore, Procedure and Guideline are not necessarily sequential
+    levels. They are different forms of guidance.
+
+
+        Definitions
+
+    Concept	Meaning	Mandatory?
+    Principle	Fundamental value or idea guiding decisions	Influences
+    decisions
+    Policy	Formal statement of management intent and direction	Yes
+    Standard	Specific, prescribed requirements implementing policies	Yes
+    Procedure	Defined steps for carrying out an activity	Yes, when
+    applicable
+    Guideline	Recommended approach or good practice	No
+
+    This distinction is also explained in an ISACA article by Amy
+    Diestler, /Differentiating Key Terms in the Information Security
+    Hierarchy/ (2020). ISACA
+
+    For example:
+
+    *Principle*
+
+    Security must be considered throughout the software development
+    lifecycle.
+
+    *Policy*
+
+    All software systems must implement security controls appropriate to
+    their risks.
+
+    *Standard*
+
+    All external API endpoints must enforce authentication and
+    authorization according to the approved security requirements.
+
+    *Procedure*
+
+    Steps for configuring authentication and authorization when
+    implementing a new API endpoint.
+
+    *Guideline*
+
+    Recommended approaches for selecting authentication mechanisms,
+    structuring authorization policies and handling security errors.
+
+    Notice how the level of prescription increases as you move from
+    Principle towards Procedure.
+
+    ------------------------------------------------------------------------
+
+
+      4. How does ISACA COBIT define this?
+
+    This is where I would be careful not to attribute a document
+    hierarchy to COBIT that it does not actually prescribe.
+
+
+        COBIT 2019
+
+    COBIT 2019 identifies seven components of a governance system:
+
+     1. Processes
+     2. Organizational structures
+     3. Principles, policies and frameworks
+     4. Information
+     5. Culture, ethics and behavior
+     6. People, skills and competencies
+     7. Services, infrastructure and applications
+
+    The third component is particularly relevant here: *Principles,
+    Policies and Frameworks*.
+
+    COBIT treats these as governance system components that help
+    translate desired behavior into practical guidance. ISACA+1
+
+    Importantly, COBIT does not establish a universal mandatory document
+    hierarchy of:
+
+    Standard → Policy → Guideline → Procedure.
+
+    Instead, it provides a governance and management framework that
+    organizations tailor to their circumstances.
+
+
+          ISACA's terminology
+
+    ISACA also published a useful explanation of the distinctions
+    between these concepts.
+
+    Term	ISACA interpretation
+    Principle	Highest-level idea or value guiding decisions
+    Policy	Formal, mandatory statement of management intent
+    Standard	Mandatory specification supporting a policy
+    Guideline	Recommended, non-mandatory course of action
+    Baseline	Fundamental set of implementation or configuration rules
+
+    Source: ISACA — Differentiating Key Terms in the Information
+    Security Hierarchy <https://www.isaca.org/resources/news-and-trends/
+    isaca-now-blog/2020/differentiating-key-terms-in-the-information-
+    security-hierarchy?utm_source=chatgpt.com>
+
+    Procedures are also used in ISACA's guidance, particularly to
+    describe how activities are performed. They are not, however, a
+    separate mandatory level in the COBIT 2019 governance-component model.
+
+    You can find the official framework material at ISACA COBIT
+    Framework <https://www.isaca.org/resources/cobit?
+    utm_source=chatgpt.com>.
+
+    ------------------------------------------------------------------------
+
+
+      5. What I recommend for SpecMgr
+
+    I would actually introduce *POL — Policy* as an additional artifact
+    type.
+
+    Your original proposal included CON, PRN and STD, but if you want to
+    adopt a governance model inspired by ISACA, POL is missing.
+
+    My proposed artifact model would be:
+
+    Type	Artifact	Purpose
+    PRN	Principle	Establishes fundamental values and direction
+    POL	Policy	Establishes mandatory management intent
+    STD	Standard	Defines mandatory, specific rules
+    GDL	Guideline	Provides recommended approaches
+    SOP	Standard Operating Procedure	Describes how an activity is performed
+    CON	Constraint	Restricts acceptable solutions
+    ACR	Architectural Coding Requirement	Constrains architectural
+    implementation
+
+    I would retain CON separately because a constraint is not
+    necessarily a governance document. It can originate from a policy,
+    standard, contract, regulation or technical limitation.
+
+    Similarly, an ACR is not simply a standard. It is a derived
+    engineering specification with a direct relationship to architecture
+    and code verification.
+
+
+        Example of the complete relationship
+
+    Consider an organization that wants to ensure modular software
+    architectures.
+
+    text
+
+    |PRN-001: Separation of Concerns
+        |
+        ▼
+    POL-001: Software Architecture Policy
+        |
+        ▼
+    STD-001: Software Modularity Standard
+        |
+        ▼
+    AV-001: Logical Architecture View
+        |
+        ▼
+    ACR-001: Component Dependency Direction
+        |
+        ▼
+    VCR-001: Automated Dependency Verification
+    |
+
+    A guideline could accompany STD-001:
+
+    text
+
+    |GDL-001: Recommended Modular Architecture Approaches
+
+    - Consider Hexagonal Architecture.
+    - Prefer explicit interfaces.
+    - Minimize cyclic dependencies.
+    - Separate infrastructure from business logic.
+    |
+
+    And a procedure could describe how developers create and validate a
+    new component.
+
+
+        6. My final recommendation: Keep two hierarchies
+
+    I would actually maintain two related but distinct structures in
+    SpecMgr.
+
+
+          A. Governance hierarchy
+
+    text
+
+    |PRN — Principles
+      |
+      ▼
+    POL — Policies
+      |
+      ▼
+    STD — Standards
+      |
+      ├── SOP — Procedures
+      |
+      └── GDL — Guidelines
+    |
+
+    The procedure and guideline branches are not equivalent in
+    enforceability.
+
+
+          B. Architecture engineering hierarchy
+
+    text
+
+    |Requirements (ISO 29148)
+            |
+            ▼
+    Constraints (CON)
+            |
+            ▼
+    Architecture Decisions (DEC)
+            |
+            ▼
+    Architecture Viewpoints (VP)
+            |
+            ▼
+    Architecture Views (AV)
+            |
+            ▼
+    Architectural Coding Requirements (ACR)
+            |
+            ▼
+    Verification Cases (VCR)
+    |
+
+    Principles, policies and standards can influence multiple stages of
+    this second hierarchy.
+
+    These should be connected through explicit references rather than
+    forced into a single parent-child hierarchy.
+
+    *One final design consideration:* I would make |mandatory|, |
+    approval_required|, |scope| and |applicability| common metadata
+    across these artifact types. This will be particularly useful when
+    your autonomous agents need to distinguish binding architectural
+    rules from recommendations.
+
+    For example, a coding agent must obey an ACR derived from an
+    approved standard, but it can exercise judgment when applying a
+    guideline.
+
+    That distinction is fundamental to building a reliable autonomous
+    engineering process.
+
+    Sources
+
+ 7.
+
+
+    why would not I write the "Standard" "All external API endpoints must enforce auth ..." as a security REQuirement?
+
+ 8.
+
+
+    You absolutely can, and in many cases *you should*.
+
+    In fact, I would be careful not to duplicate requirements as
+    standards. The distinction is not primarily about the wording of a
+    statement, but about its purpose, scope and governance.
+
+    Consider your example:
+
+        All external API endpoints must enforce authentication and
+        authorization according to the approved security requirements.
+
+    This can perfectly well be a Software Requirement under ISO/IEC/IEEE
+    29148.
+
+
+        1. Requirement vs. Standard: What is the difference?
+
+    Consider these two perspectives:
+
+    Aspect	Requirement (REQ)	Standard (STD)
+    Purpose	Defines what must be achieved	Defines an agreed rule or
+    convention
+    Scope	A particular system or solution	Potentially multiple systems
+    Origin	Business, stakeholder, system or software need	Organizational
+    governance or external authority
+    Lifecycle	Requirements engineering	Standards governance
+    Verification	Is the requirement satisfied?	Is the standard followed?
+    Applicability	Defined system or scope	Defined organizational or
+    technical scope
+
+    The wording can be identical.
+
+    For example:
+
+    *STD-001 — API Security Standard*
+
+        All external API endpoints must enforce authentication and
+        authorization.
+
+    This establishes an organizational rule applicable to all relevant
+    systems.
+
+    *REQ-SW-001 — API Authentication*
+
+        The system shall enforce authentication and authorization for
+        all externally accessible API endpoints.
+
+    This specifies what a particular software system must implement.
+
+    The second can be derived from the first.
+
+
+        2. How I would model this in SpecMgr
+
+    I would avoid maintaining two independently written statements.
+
+    Instead, use traceability:
+
+    text
+
+    |STD-001
+    API Security Standard
+        |
+        | imposes
+        ▼
+    REQ-SW-001
+    API Authentication
+        |
+        | realized_by
+        ▼
+    AV-SEC-001
+    Security Architecture View
+        |
+        | constrains
+        ▼
+    ACR-001
+    API Authentication Implementation
+        |
+        | verified_by
+        ▼
+    VCR-001
+    API Authentication Verification
+    |
+
+    The requirement belongs to the system's requirements specification.
+
+    The standard belongs to the organization's engineering governance.
+
+    The ACR describes the architectural implementation constraints.
+
+    Each artifact has a distinct purpose.
+
+
+        3. How does this fit with ISO 29148 and ISO 25010?
+
+    This is where I would make an important distinction in your metamodel.
+
+    You have four requirement levels:
+
+     1. Business
+     2. Stakeholder
+     3. System
+     4. Software
+
+    These levels describe the abstraction and allocation of requirements.
+
+    ISO 25010 provides quality characteristics that can be used to
+    classify and analyse requirements.
+
+    For example:
+
+    yaml
+
+    |id: REQ-SW-001
+    type: REQ
+    title: API Authentication
+
+    requirement_level: software
+
+    statement: >
+      The software shall enforce authentication
+      and authorization for all externally
+      accessible API endpoints.
+
+    quality_characteristics:
+      - Security
+
+    quality_subcharacteristics:
+      - Authenticity
+      - Confidentiality
+
+    source:
+      - STD-001
+    |
+
+    Notice that the requirement is classified as a Software Requirement,
+    not as a Non-Functional Requirement.
+
+    That is consistent with your approach.
+
+
+        4. My recommendation: Don't confuse governance with requirements
+        engineering
+
+    I would establish this rule for SpecMgr:
+
+      * *REQ:* What must a particular system achieve?
+      * *CON:* What restricts the acceptable solution space?
+      * *PRN:* What fundamental engineering principles guide decisions?
+      * *POL:* What does management mandate?
+      * *STD:* What organizational rules and conventions must be followed?
+      * *GDL:* What approaches are recommended?
+      * *SOP:* How must an activity be performed?
+      * *DEC:* What solution has been selected, and why?
+      * *ACR:* What must the implementation do to conform to the
+        architecture?
+
+    There is no requirement that every STD must generate a REQ. Some
+    standards are directly applicable to development activities,
+    organizational processes or operational practices.
+
+    *My strongest recommendation:* Keep requirements as the
+    authoritative specification of system behavior and qualities. Use
+    standards as sources of organizational rules, and derive system-
+    specific requirements from them where applicable.
+
+    This avoids creating two competing sources of truth and fits very
+    naturally with your ISO 29148-based requirements structure.
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

@@ -1,0 +1,1077 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    We have a Java/React app. We already useC4/Structurizr for architecture-as-code, archunit*, Spectral, oasdiff, openai-generator. Now I must select a lib for Zod generator:                             
+
+    Kubb 5.15.3
+    Hey API 0.99.0
+    Orval 8.46.0
+
+ 2.
+
+
+      Recommendation: Orval vs. Hey API vs. Kubb
+
+    For your Java/React architecture, I would put *Orval and Hey API
+    ahead of Kubb for a Zod-only decision*, but my preferred choice
+    depends on whether you want a standalone schema generator or a
+    broader code-generation platform.
+
+    One important architectural consideration: you already have a
+    reasonably mature toolchain:
+
+      * C4 / Structurizr for architecture-as-code.
+      * ArchUnit for Java architecture constraints.
+      * Spectral for OpenAPI governance and linting.
+      * oasdiff for API compatibility checks.
+      * openapi-generator for Java-side code generation.
+
+    I would avoid introducing another tool that duplicates
+    responsibilities unnecessarily.
+
+    Your ideal arrangement is:
+
+    *OpenAPI remains the contract → Java generates/implements against it
+    → React generates Zod schemas from it.*
+
+    The Zod generator should not become another owner of the API contract.
+
+
+        1. Comparison
+
+    Criterion	Kubb 5.15.3	Hey API 0.99.0	Orval 8.46.0
+    OpenAPI 3.0 / 3.1	Yes	Yes	Yes
+    Zod generation	Yes	Yes	Yes
+    Zod 3	No (Zod 4+)	Yes	Yes
+    Zod 4	Yes	Yes	Yes
+    Zod Mini	Beta	Yes	Yes
+    Request body schemas	Yes	Yes	Yes
+    Response schemas	Yes	Yes	Yes
+    Query/path parameters	Yes	Yes	Yes
+    Reusable component schemas	Yes	Yes	Yes
+    TypeScript type generation	Yes	Yes	Yes
+    React Query integration	Yes	Yes	Yes
+    Generated HTTP clients	Yes	Yes	Yes
+    Customization	Plugin architecture	Extensive plugin/config system	
+    Extensive configuration
+    MIT	Yes	Yes	Yes
+
+    Sources: official Kubb comparison <https://kubb.dev/docs/5.x/guide/
+    comparison>, Hey API <https://heyapi.dev/docs/openapi/typescript/
+    get-started>, Orval Zod documentation <https://orval.dev/docs/
+    guides/zod/>. Kubb+3
+
+    There are some important differences behind those checkmarks.
+
+
+          Kubb — strongest plugin-oriented architecture
+
+    Kubb
+
+    Strengths:
+
+      * Modular architecture: install only the plugins you need.
+      * Dedicated Zod plugin.
+      * Can generate TypeScript types, Zod schemas, clients and React
+        Query helpers from one configuration.
+      * Can validate HTTP responses automatically using its Axios or
+        Fetch client plugins.
+      * Supports customization of output structure, grouping and
+        generated code.
+      * MIT licensed.
+
+    Particularly interesting: |inferred: true| generates TypeScript
+    types directly from Zod schemas. You can avoid maintaining separate
+    generated types.
+
+    Another interesting feature is response validation integrated into
+    the generated client.
+
+    Weaknesses:
+
+      * Zod generation currently targets Zod 4, not Zod 3.
+      * Node.js 22+ requirement.
+      * Multiple packages/plugins to keep compatible.
+      * More framework than necessary if all you want is schema generation.
+
+    References: Kubb+2
+
+    Official documentation: Kubb Zod plugin <https://kubb.dev/
+    extensions/kubb-labs/plugin-zod?utm_source=chatgpt.com>
+
+
+          Hey API — strongest general-purpose code generator
+
+    Hey API
+
+    Strengths:
+
+      * Very extensive plugin ecosystem.
+      * Supports Zod 3, Zod 4 and Zod Mini.
+      * Configurable generation of request and response schemas.
+      * Supports reusable definitions.
+      * Configurable naming conventions.
+      * Can generate inferred TypeScript types.
+      * Extensive control over generated output.
+      * Supports SDKs, clients and TanStack Query.
+
+    One feature I particularly like is its separation of request and
+    response schema generation.
+
+    You can configure different schemas for:
+
+      * Request bodies.
+      * Response bodies.
+      * Path parameters.
+      * Query parameters.
+      * Headers.
+
+    It also provides separate inferred input and output types, which is
+    useful when transformations are involved.
+
+    Weaknesses:
+
+      * More configuration surface than needed for a Zod-only task.
+      * Node.js 22+ requirement.
+      * Its generated SDK/client ecosystem is unnecessary if you already
+        have another client-generation strategy.
+
+    References: GitHub+1
+
+    Official documentation: Hey API documentation <https://heyapi.dev/
+    docs/openapi/typescript/get-started?utm_source=chatgpt.com>
+
+
+          Orval — strongest candidate for a focused React integration
+
+    Orval
+
+    Strengths:
+
+      * Mature OpenAPI code-generation ecosystem.
+      * Dedicated Zod generation mode.
+      * Supports Zod 3 and Zod 4.
+      * Supports Zod Mini.
+      * Can generate Zod schemas independently of HTTP client generation.
+      * Integrates with React Query, SWR and other frontend ecosystems.
+      * Can generate schemas and client code in separate configurations.
+      * MIT licensed.
+
+    An important advantage is that Orval can generate Zod schemas
+    separately from your API client.
+
+    For example:
+
+    typescript
+
+    |export default defineConfig({
+      backend: {
+        input: {
+          target: './openapi.yaml',
+        },
+        output: {
+          client: 'react-query',
+          target: './src/api',
+        },
+      },
+
+      backendZod: {
+        input: {
+          target: './openapi.yaml',
+        },
+        output: {
+          client: 'zod',
+          target: './src/generated/zod',
+          fileExtension: '.zod.ts',
+        },
+      },
+    });
+    |
+
+    You can therefore use Orval purely for schema generation without
+    adopting its HTTP client.
+
+    Other interesting features:
+
+      * Explicit Zod version selection.
+      * Strict or loose object generation.
+      * Configurable handling of |oneOf|, |anyOf| and |allOf|.
+      * Zod Mini output for smaller frontend bundles.
+
+    Weaknesses:
+
+      * Its architecture is more client-generation-oriented than Kubb's
+        plugin-oriented architecture.
+      * You need to pay attention to generated schema naming and file
+        organization.
+      * Separate configurations require some discipline to prevent
+        generated outputs from overlapping.
+
+    References: orval.dev+2
+
+    Official documentation: Orval Zod guide <https://orval.dev/docs/
+    guides/zod/?utm_source=chatgpt.com>
+
+    ------------------------------------------------------------------------
+
+
+        2. My assessment for your architecture
+
+    I would rank them as follows:
+
+    Position	Tool	Reason
+    1	Orval	Best fit for focused Zod generation alongside existing tooling
+    2	Hey API	Best flexibility and Zod-specific configuration
+    3	Kubb	Best if you eventually want a unified frontend code-
+    generation platform
+
+    Why Orval first?
+
+    Your existing architecture already has distinct responsibilities:
+
+    Responsibility	Existing tool
+    Architecture documentation	Structurizr / C4
+    Java architecture enforcement	ArchUnit
+    API specification governance	Spectral
+    API compatibility	oasdiff
+    Java code generation	openapi-generator
+    React runtime validation	*Orval + Zod*
+
+    This is a clean separation.
+
+    I wouldn't introduce Kubb's additional client-generation and plugin
+    ecosystem unless you intend to use those capabilities.
+
+    Similarly, Hey API is attractive, but its additional flexibility
+    isn't necessarily an advantage when the requirement is specifically
+    OpenAPI → Zod.
+
+
+        3. Important: What I would test before selecting
+
+    I wouldn't decide based on the number of supported OpenAPI features.
+    All three claim broad support.
+
+    I would create a small representative OpenAPI fixture containing:
+
+    OpenAPI feature	What to verify
+    |nullable|	Correct nullable Zod representation
+    |required|	Correct distinction between optional and required
+    |allOf|	Correct schema composition
+    |oneOf|	Correct union/discriminated union
+    |anyOf|	Correct union semantics
+    |$ref|	Reusable schemas without duplication
+    |additionalProperties|	Correct record/object handling
+    |readOnly| / |writeOnly|	Correct request/response differences
+    |format: date-time|	Correct datetime validation
+    |format: uuid|	Correct UUID validation
+    Enums	Correct enum generation
+    Recursive schemas	No broken circular references
+    Error responses	Correct response schema generation
+
+    I would pay particular attention to |oneOf|, |allOf|, nullable
+    fields and request/response differences.
+
+    These are common sources of subtle incompatibilities between OpenAPI
+    and Zod.
+
+
+          4. One architectural recommendation
+
+    I would establish the following CI pipeline:
+
+    text
+
+    |Java Backend
+         |
+         v
+    OpenAPI Specification
+         |
+         +---- Spectral
+         |       |
+         |       v
+         |    Lint / Governance
+         |
+         +---- oasdiff
+         |       |
+         |       v
+         |    Compatibility
+         |
+         +---- openapi-generator
+         |       |
+         |       v
+         |    Java generated code
+         |
+         +---- Orval
+                 |
+                 v
+             Zod schemas
+                 |
+                 v
+             TypeScript
+                 |
+                 v
+             React build
+                 |
+                 v
+             Frontend tests
+    |
+
+    One additional recommendation: *never manually modify generated Zod
+    files.*
+
+    If you need frontend-specific validation rules, extend the generated
+    schemas in separate files.
+
+    For example:
+
+    typescript
+
+    |import { z } from 'zod';
+    import { UserSchema } from './generated/zod/user.zod';
+
+    export const UserFormSchema = UserSchema.extend({
+      email: z.email(),
+      password: z.string().min(12),
+    });
+    |
+
+    Keep API contract validation separate from UI/business validation.
+
+
+        5. Final verdict
+
+    My recommendation:
+
+    *Choose Orval 8.46.0.*
+
+    The reasons:
+
+     1. You only need Zod generation, not another complete API
+        infrastructure.
+     2. It supports independent Zod generation.
+     3. It supports both Zod 3 and Zod 4.
+     4. It has good React ecosystem integration.
+     5. It keeps the existing Java/OpenAPI architecture intact.
+
+    *When would I choose something else?*
+
+      * *Hey API:* If you need particularly sophisticated control over
+        generated schemas, naming, request/response distinctions or Zod
+        compatibility.
+      * *Kubb:* If you anticipate consolidating TypeScript types, API
+        clients, Zod, React Query, MSW and other frontend generation
+        into one extensible platform.
+
+
+          Useful references
+
+      * Orval GitHub repository <https://github.com/orval-labs/orval?
+        utm_source=chatgpt.com>
+      * Hey API GitHub repository <https://github.com/hey-api/hey-api?
+        utm_source=chatgpt.com>
+      * Kubb GitHub repository <https://github.com/kubb-labs/kubb?
+        utm_source=chatgpt.com>
+
+    *One final thought:* I would make the decision conditional on a
+    small proof of concept with your actual OpenAPI specification. Run
+    all three generators against the same spec, compare generated
+    schemas, and test representative request/response payloads. That
+    will be much more informative than comparing feature lists.
+
+    ------------------------------------------------------------------------
+
+    Worked for 14s
+
+    Searching the web
+
+    Searching the web
+    Searched 9 websites
+
+    Sources
+
+ 3.
+
+
+    I want to use RFC 9457 error codes. How can these libs help me here?
+
+ 4.
+
+
+      RFC 9457 Problem Details: How Orval, Hey API and Kubb can help
+
+    This is actually an important architectural consideration, and it
+    strengthens the case for generating Zod schemas from OpenAPI.
+
+    My recommendation is to make *RFC 9457 a first-class, standardized
+    error contract in your OpenAPI specification*, then generate the
+    corresponding TypeScript/Zod schemas.
+
+    The key distinction:
+
+      * RFC 9457 defines the structure of an HTTP error response.
+      * Your application defines the business error codes.
+      * OpenAPI documents the contract.
+      * Orval, Hey API or Kubb generate the TypeScript validation schemas.
+      * React uses those schemas to parse and handle errors consistently.
+
+    None of the three generators implements your business error-handling
+    strategy automatically. They help enforce the contract.
+
+
+        1. Define a standard RFC 9457 error response
+
+    RFC 9457 defines the |application/problem+json| media type.
+
+    A typical response:
+
+    json
+
+    |{
+      "type": "https://api.example.com/problems/validation-error",
+      "title": "Validation failed",
+      "status": 422,
+      "detail": "One or more fields contain invalid values.",
+      "instance": "/api/users",
+      "code": "USER_VALIDATION_FAILED",
+      "errors": [
+        {
+          "field": "email",
+          "code": "INVALID_EMAIL",
+          "message": "The email address is invalid."
+        }
+      ]
+    }
+    |
+
+    The standard properties are:
+
+    Property	Meaning
+    |type|	URI identifying the problem type
+    |title|	Human-readable summary
+    |status|	HTTP status code
+    |detail|	Human-readable explanation
+    |instance|	URI identifying this particular occurrence
+
+    You can add application-specific extension properties:
+
+      * |code|: stable machine-readable business error code.
+      * |errors|: field-level validation errors.
+      * |traceId|: correlation identifier.
+      * |timestamp|: occurrence timestamp.
+
+    I strongly recommend using a stable |code| rather than making
+    frontend logic depend on |title| or |detail|.
+
+    For example:
+
+    typescript
+
+    |switch (problem.code) {
+      case 'USER_NOT_FOUND':
+        // Display appropriate UI
+        break;
+
+      case 'USER_VALIDATION_FAILED':
+        // Display field-level errors
+        break;
+
+      case 'AUTHENTICATION_REQUIRED':
+        // Redirect to login
+        break;
+    }
+    |
+
+    The HTTP status communicates the HTTP-level outcome; the business
+    code identifies the application-specific problem.
+
+    Official specification: RFC 9457 <https://www.rfc-editor.org/rfc/
+    rfc9457?utm_source=chatgpt.com>
+
+
+        2. Put the error contract into OpenAPI
+
+    I would define a reusable |Problem| schema and a specialized |
+    ValidationProblem| schema.
+
+    Example:
+
+    yaml
+
+    |components:
+      schemas:
+        Problem:
+          type: object
+          required:
+            - type
+            - title
+            - status
+            - code
+          properties:
+            type:
+              type: string
+              format: uri-reference
+            title:
+              type: string
+            status:
+              type: integer
+            detail:
+              type: string
+            instance:
+              type: string
+              format: uri-reference
+            code:
+              type: string
+              description: Stable application-specific error code.
+            traceId:
+              type: string
+
+        ValidationError:
+          type: object
+          required:
+            - field
+            - code
+          properties:
+            field:
+              type: string
+            code:
+              type: string
+            message:
+              type: string
+
+        ValidationProblem:
+          allOf:
+            - $ref: '#/components/schemas/Problem'
+            - type: object
+              required:
+                - errors
+              properties:
+                errors:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ValidationError'
+    |
+
+    Then define reusable responses:
+
+    yaml
+
+    |components:
+      responses:
+        BadRequest:
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
+        ValidationFailed:
+          description: Validation failed
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ValidationProblem'
+    |
+
+    And reference them from operations:
+
+    yaml
+
+    |paths:
+      /users:
+        post:
+          responses:
+            '201':
+              description: User created
+
+            '400':
+              $ref: '#/components/responses/BadRequest'
+
+            '422':
+              $ref: '#/components/responses/ValidationFailed'
+
+            '500':
+              $ref: '#/components/responses/BadRequest'
+    |
+
+    One refinement: in production, I'd give the generic internal-server-
+    error response its own description and avoid exposing internal
+    exception details.
+
+    This approach has an important advantage: every API operation uses
+    the same error vocabulary and structure.
+
+
+        3. How the three generators help
+
+    This is where there are some meaningful differences.
+
+    Capability	Orval	Hey API	Kubb
+    Generate |Problem| Zod schema	Yes	Yes	Yes
+    Generate specialized error schemas	Yes	Yes	Yes
+    Generate schemas for operation responses	Verify output	Explicit
+    response-specific support	Schema-oriented generation
+    Handle reusable |$ref| schemas	Yes	Yes	Yes
+    Validate responses at runtime	With your integration	With your
+    integration	Client plugins support integrated Zod validation
+    Customize generated code	Yes	Yes	Yes
+
+
+          Orval
+
+    Orval can generate the shared |Problem| and |ValidationProblem| schemas.
+
+    For example, the generated result should conceptually look like:
+
+    typescript
+
+    |export const ProblemSchema = z.object({
+      type: z.string(),
+      title: z.string(),
+      status: z.number(),
+      detail: z.string().optional(),
+      instance: z.string().optional(),
+      code: z.string(),
+      traceId: z.string().optional(),
+    });
+    |
+
+    You can then use it in a centralized error handler.
+
+    One important distinction: Orval's Zod mode generates schemas from
+    OpenAPI models. Don't assume that it automatically provides a
+    complete HTTP error-handling layer.
+
+    Documentation: Orval Zod generation <https://orval.dev/docs/guides/
+    zod/?utm_source=chatgpt.com>
+
+
+          Hey API
+
+    Hey API is particularly interesting for this use case.
+
+    Its Zod plugin has explicit response-specific schema configuration,
+    including error responses and status codes.
+
+    That makes it attractive if you want generated schemas associated
+    with individual API operations rather than just reusable component
+    schemas.
+
+    For example, you can distinguish:
+
+      * |createUser| → 201 response.
+      * |createUser| → 400 error response.
+      * |createUser| → 422 validation response.
+      * |getUser| → 404 error response.
+
+    This is a useful capability when implementing strongly typed API
+    error handling.
+
+    Documentation: Hey API Zod plugin configuration <https://github.com/
+    hey-api/hey-api/blob/main/packages/openapi-ts/src/plugins/zod/
+    types.ts?utm_source=chatgpt.com>
+
+
+          Kubb
+
+    Kubb can generate Zod schemas and integrate them into its generated
+    HTTP clients.
+
+    An interesting feature is its response validator:
+
+    typescript
+
+    |pluginFetch({
+      // Configure Zod validation
+      validator: 'zod',
+    })
+    |
+
+    This allows runtime validation of HTTP responses using generated
+    schemas.
+
+    However, I would distinguish between validating successful responses
+    and handling non-2xx responses. You still need an explicit error-
+    handling strategy in your HTTP client.
+
+    Documentation: Kubb Zod plugin <https://www.kubb.dev/plugins/plugin-
+    zod?utm_source=chatgpt.com>
+
+
+        4. Centralized React error handling
+
+    This is where the generated schemas become particularly useful.
+
+    I would create one central error parser instead of implementing
+    error handling in every React component.
+
+    For example:
+
+    typescript
+
+    |import { ProblemSchema } from './generated/zod';
+
+    export type ApiProblem = z.infer<typeof ProblemSchema>;
+
+    export function parseApiProblem(
+      response: Response,
+    ): ApiProblem | undefined {
+      if (!response.headers
+        .get('content-type')
+        ?.includes('application/problem+json')) {
+        return undefined;
+      }
+
+      // In a real implementation, parse the response body
+      // and validate it with ProblemSchema.
+      return undefined;
+    }
+    |
+
+    The central handler then translates business error codes into
+    application behavior:
+
+    typescript
+
+    |export function handleApiProblem(problem: ApiProblem) {
+      switch (problem.code) {
+        case 'USER_NOT_FOUND':
+          return { action: 'show-not-found' };
+
+        case 'USER_VALIDATION_FAILED':
+          return { action: 'show-validation-errors' };
+
+        case 'AUTHENTICATION_REQUIRED':
+          return { action: 'login' };
+
+        case 'ACCESS_DENIED':
+          return { action: 'show-forbidden' };
+
+        default:
+          return { action: 'show-generic-error' };
+      }
+    }
+    |
+
+    The important thing is that React components don't need to know
+    about HTTP error serialization.
+
+    They consume a standardized application error model.
+
+
+        5. Integrate RFC 9457 into your existing quality toolchain
+
+    This is where your existing tools become valuable.
+
+    I'd add the following responsibilities:
+
+    Tool	Responsibility
+    Structurizr	Document error-handling architecture
+    ArchUnit	Enforce backend exception-handling architecture
+    Spectral	Enforce RFC 9457 conventions in OpenAPI
+    oasdiff	Detect incompatible error-contract changes
+    openapi-generator	Generate Java-side models where appropriate
+    Orval / Hey API / Kubb	Generate frontend Zod schemas
+
+    A particularly useful addition would be custom Spectral rules.
+
+    For example:
+
+      * Every 4xx and 5xx response must use |application/problem+json|.
+      * Every problem schema must contain the required application-
+        specific |code|.
+      * Every operation must document its expected error responses.
+      * Business error codes must follow a naming convention.
+      * Error responses must reference reusable schemas.
+
+    This makes RFC 9457 compliance enforceable rather than merely
+    documented.
+
+
+        6. My final recommendation
+
+    For your particular architecture, I'd make this distinction:
+
+    Requirement	My choice
+    Generate reusable RFC 9457 Zod schemas	Orval
+    Generate operation/status-specific error schemas	Hey API
+    Generate schemas and validate through generated HTTP clients	Kubb
+
+    *My preferred solution remains Orval*, provided reusable error
+    schemas are sufficient.
+
+    However, if operation-specific error schemas and status-code-aware
+    generation are important requirements, I would seriously reconsider
+    Hey API.
+
+    One final architectural detail:
+
+    RFC 9457 does not standardize your business |code| property. That is
+    your application-specific extension. Keep these concepts separate:
+
+      * HTTP status: |422|
+      * Problem type: |https://api.example.com/problems/validation-error|
+      * Application error code: |USER_VALIDATION_FAILED|
+      * Field error code: |INVALID_EMAIL|
+
+    Also, the HTTP response status is authoritative; RFC 9457's |status|
+    property is advisory.
+
+    *My suggested architecture:*
+
+    text
+
+    |          Java Backend
+                   |
+            Exception Mapping
+                   |
+            RFC 9457 Problem
+                   |
+             OpenAPI Contract
+                   |
+          +--------+--------+
+          |                 |
+       Spectral           oasdiff
+          |                 |
+          +--------+--------+
+                   |
+             OpenAPI Spec
+                   |
+           +-------+-------+
+           |               |
+     openapi-generator   Orval
+           |               |
+       Java Models     Zod Schemas
+                           |
+                     React Error
+                        Parser
+                           |
+                   Central Error
+                       Handler
+                           |
+                   Application UI
+    |
+
+    This gives you a single, version-controlled error contract across
+    Java and React, with static governance and runtime validation.
+
+    And importantly, *you don't need a separate error-code generator*.
+    Define the codes in your OpenAPI contract and generate the
+    corresponding TypeScript schemas from there.
+
+    ------------------------------------------------------------------------
+
+    Worked for 11s
+
+    Searched 10 websites
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

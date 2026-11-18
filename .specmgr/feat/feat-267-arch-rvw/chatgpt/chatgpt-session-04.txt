@@ -1,0 +1,294 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    What are the ISO 25010 quality characteristics?
+
+ 2.
+
+
+    *ISO/IEC 25010* is an international standard that defines a quality
+    model for evaluating software products and systems. It identifies
+    quality characteristics that help assess how well a software product
+    meets user and stakeholder requirements.
+
+    The standard has *two main quality models*:
+
+
+        1. Product Quality Characteristics
+
+    The product quality model defines *9 quality characteristics* in the
+    2023 edition (ISO/IEC 25010:2023).
+
+    #	Quality Characteristic	Description
+    1	*Functional Suitability*	The degree to which the software provides
+    functions that meet specified requirements and user needs.
+    2	*Performance Efficiency*	How efficiently the software performs in
+    terms of response time, resource usage and capacity.
+    3	*Compatibility*	The ability of the software to exchange
+    information and operate alongside other systems.
+    4	*Interaction Capability*	How easily users can interact with the
+    software to achieve their goals.
+    5	*Reliability*	The ability of the software to perform consistently
+    under specified conditions.
+    6	*Security*	The ability to protect information and data against
+    unauthorized access and threats.
+    7	*Maintainability*	How easily the software can be modified,
+    corrected, tested and improved.
+    8	*Flexibility*	The ability of the software to adapt to changes in
+    environments, requirements or usage.
+    9	*Safety*	The ability of the software to avoid unacceptable risks
+    of harm to people, property or the environment.
+
+
+        2. Quality-in-Use Characteristics
+
+    The quality-in-use model evaluates the quality of a software product
+    from the user's perspective.
+
+    It includes 5 characteristics:
+
+    #	Quality Characteristic	Description
+    1	*Effectiveness*	The accuracy and completeness with which users
+    achieve their goals.
+    2	*Efficiency*	The resources and effort required for users to
+    achieve their goals.
+    3	*Satisfaction*	The degree to which users are satisfied with their
+    experience using the software.
+    4	*Freedom from Risk*	The extent to which using the software avoids
+    potential risks to users, organizations and the environment.
+    5	*Context Coverage*	The ability of the software to be used
+    effectively in different contexts and environments.
+
+
+        Important: ISO 25010:2011 vs. ISO 25010:2023
+
+    If you are studying software quality or preparing an academic
+    project, it is important to know that there are two versions:
+
+      * *ISO/IEC 25010:2011:* Defines 8 product quality characteristics
+        and 5 quality-in-use characteristics.
+      * *ISO/IEC 25010:2023:* Updates the product quality model to 9
+        characteristics, with changes to the terminology and structure.
+
+
+          Quick Summary
+
+    Model	ISO 25010:2011	ISO 25010:2023
+    Product Quality	8 characteristics	9 characteristics
+    Quality-in-Use	5 characteristics	5 characteristics
+
+    *Recommendation:* If you are developing a software evaluation
+    questionnaire, thesis, or research project, make sure you specify
+    which ISO/IEC 25010 version you are following, because the
+    characteristics and their subcharacteristics differ.
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

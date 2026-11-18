@@ -1,0 +1,720 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    I want create architecture models and views based on the book "Software Systems Architecture" (2nd, Rozanski and Woods). I want to use C4 with structurizr DSL to write these models. Graphical or visual representation is a separate concern for now.
+
+ 2.
+
+
+    A good approach is to use *Rozanski and Woods' **/Software Systems
+    Architecture/**(2nd edition) as the architectural modelling
+    framework, C4 as the structural modelling notation, and Structurizr
+    DSL as the modelling language*.
+
+    I would keep these three concerns separate:
+
+     1. *Architecture method and content* — what aspects of the
+        architecture need to be described, why they matter, and which
+        stakeholders need them.
+     2. *Architecture models and views* — the actual architectural
+        concepts, relationships, constraints, decisions, and perspectives.
+     3. *Visualisation* — how those models and views are eventually
+        presented graphically.
+
+    This separation is important. C4 is particularly good at describing
+    the structural aspects of software architecture, but Rozanski and
+    Woods cover a broader range of architectural concerns.
+
+    The objective should therefore not be to translate every Rozanski
+    and Woods view directly into a C4 diagram. Instead, use C4 as the
+    structural foundation and extend the architecture model with the
+    concepts necessary to address the other concerns.
+
+
+        1. Establish the conceptual foundation
+
+    I suggest the following relationship:
+
+    Concept	Framework	Purpose
+    Architectural description	Rozanski & Woods	Overall organisation of
+    architectural information
+    Stakeholders	Rozanski & Woods	Identify who has an interest in the
+    architecture
+    Concerns	Rozanski & Woods	Identify what stakeholders care about
+    Viewpoints	Rozanski & Woods	Define how particular concerns are addressed
+    Views	Rozanski & Woods	Describe the architecture from a particular
+    perspective
+    Structural models	C4	Describe software structure and relationships
+    Modelling language	Structurizr DSL	Define architecture elements and
+    relationships
+    Visualisation	Structurizr or other tools	Render selected models and
+    views
+
+    This gives you a coherent approach without forcing one framework to
+    do everything.
+
+
+        2. Map the seven Rozanski and Woods viewpoints to C4
+
+    This is the most important part of the approach.
+
+    The book defines seven viewpoints:
+
+     1. Context
+     2. Functional
+     3. Information
+     4. Concurrency
+     5. Development
+     6. Deployment
+     7. Operational
+
+    It also defines cross-cutting architectural perspectives, including
+    security, performance and scalability, availability and resilience,
+    and evolution. O'Reilly Media+1
+
+    Here is how I would map them to C4 and Structurizr.
+
+    Rozanski & Woods viewpoint	C4 representation	Structurizr DSL	
+    Additional modelling needed
+    Context	System Context	|systemContext|	External actors, systems,
+    dependencies
+    Functional	Container, Component, Dynamic	|container|, |component|, |
+    dynamic|	Responsibilities, interfaces, interactions
+    Information	Component, Container, custom models	|container|, |
+    component|, properties	Data entities, ownership, lifecycle, flows
+    Concurrency	Dynamic, Deployment	|dynamic|, |deployment|	Processes,
+    threads, synchronization, parallelism
+    Development	Component, Code, custom models	|component|, |code|,
+    properties	Modules, packages, repositories, build structure
+    Deployment	Deployment	|deployment|	Infrastructure, environments,
+    runtime configuration
+    Operational	Deployment, Dynamic, custom models	|deployment|, |
+    dynamic|	Monitoring, administration, recovery, operational procedures
+
+    There are some important distinctions here.
+
+
+          Context viewpoint
+
+    This is almost a direct match for C4 System Context.
+
+    It should describe:
+
+      * The system's boundaries.
+      * Users and other stakeholders interacting with it.
+      * External systems.
+      * External dependencies.
+      * Important interactions and relationships.
+
+    *Recommended model:* C4 System Context.
+
+
+          Functional viewpoint
+
+    This is where C4 provides the most value.
+
+    I would use:
+
+      * Container models to describe the major executable and deployable
+        parts.
+      * Component models to describe the internal structure of important
+        containers.
+      * Dynamic models to describe significant runtime interactions.
+
+    One important consideration: the functional viewpoint is not
+    necessarily equivalent to a component diagram. It also concerns
+    responsibilities, interfaces, interactions, and behaviour.
+
+
+          Information viewpoint
+
+    This is where C4 has a significant limitation.
+
+    C4 describes software structure, not detailed information architecture.
+
+    I would use Structurizr elements to establish:
+
+      * Which containers own and manage information.
+      * Which components manipulate information.
+      * Which systems exchange information.
+      * Which relationships represent information flows.
+
+    However, detailed information models should be represented separately.
+
+    For example:
+
+      * Domain models.
+      * Entity relationships.
+      * Logical data models.
+      * Message schemas.
+      * Data lifecycle models.
+
+    You can maintain references to these models in Structurizr
+    documentation or element properties.
+
+    I would not try to force an entire domain model into a C4 component
+    diagram.
+
+
+          Concurrency viewpoint
+
+    C4 Dynamic diagrams can describe interactions between runtime
+    elements, but they do not adequately express concurrency semantics.
+
+    You will probably need additional models to describe:
+
+      * Processes and threads.
+      * Parallel execution.
+      * Synchronisation.
+      * Asynchronous communication.
+      * Message ordering.
+      * Resource contention.
+
+    Deployment diagrams can help establish where execution happens,
+    while Dynamic diagrams can describe selected interactions.
+
+
+          Development viewpoint
+
+    C4 Component diagrams provide some useful information about software
+    organisation.
+
+    However, the development viewpoint is broader. It also includes:
+
+      * Source code organisation.
+      * Modules and packages.
+      * Build processes.
+      * Development environments.
+      * Repository organisation.
+      * Architectural constraints.
+      * Technology standards.
+
+    I would model the important architectural structure in Structurizr
+    and use documentation to describe development conventions and
+    constraints.
+
+
+          Deployment viewpoint
+
+    This maps very naturally to C4 Deployment diagrams.
+
+    Use deployment models to describe:
+
+      * Deployment nodes.
+      * Infrastructure.
+      * Execution environments.
+      * Containers deployed to infrastructure.
+      * Communication paths.
+      * Technology dependencies.
+
+    I would also distinguish deployment environments, such as
+    development, testing, staging and production.
+
+
+          Operational viewpoint
+
+    This is another area where C4 alone is insufficient.
+
+    Deployment and Dynamic diagrams provide useful structural and
+    behavioural information, but operational architecture also covers:
+
+      * Installation and upgrades.
+      * Monitoring and observability.
+      * Incident management.
+      * Backup and restoration.
+      * Disaster recovery.
+      * Operational responsibilities.
+      * Maintenance procedures.
+
+    I would use Structurizr to maintain the structural relationships and
+    architectural documentation to describe operational procedures.
+
+    ------------------------------------------------------------------------
+
+
+        3. Model architectural perspectives separately
+
+    This distinction is particularly important in Rozanski and Woods.
+
+    A viewpoint describes a particular aspect of the architecture. A
+    perspective addresses a quality concern that cuts across multiple
+    viewpoints.
+
+    For example, security is not simply another diagram.
+
+    Consider the security perspective:
+
+    Architectural view	Security concerns
+    Context	Trust boundaries, external threats
+    Functional	Authentication and authorisation responsibilities
+    Information	Data classification, encryption, privacy
+    Concurrency	Isolation and secure communication
+    Development	Secure coding, dependency management
+    Deployment	Network segmentation, infrastructure security
+    Operational	Auditing, monitoring, incident response
+
+    I would model perspectives using three complementary mechanisms:
+
+     1. *Structurizr element properties:* Capture relevant architectural
+        characteristics.
+     2. *Structurizr documentation:* Describe perspective-specific
+        requirements, decisions, and solutions.
+     3. *Architectural views:* Create focused structural views when a
+        particular perspective needs a visual representation.
+
+    The four principal perspectives in the book are:
+
+      * Security.
+      * Performance and scalability.
+      * Availability and resilience.
+      * Evolution.
+
+    The book also discusses additional perspectives, such as usability,
+    accessibility, internationalisation, and regulation. O'Reilly Media+1
+
+
+        4. Organise the Structurizr workspace
+
+    I recommend having *one central architecture model and multiple
+    logical views over that model*.
+
+    This is one of the main strengths of Structurizr: you define the
+    architecture once and create different views of it. Structurizr+1
+
+    A possible workspace structure:
+
+    text
+
+    |architecture/
+    │
+    ├── workspace.dsl
+    │
+    ├── model/
+    │   ├── people.dsl
+    │   ├── systems.dsl
+    │   ├── containers.dsl
+    │   ├── components.dsl
+    │   ├── relationships.dsl
+    │   └── deployment.dsl
+    │
+    ├── views/
+    │   ├── context.dsl
+    │   ├── functional.dsl
+    │   ├── information.dsl
+    │   ├── concurrency.dsl
+    │   ├── development.dsl
+    │   ├── deployment.dsl
+    │   └── operational.dsl
+    │
+    ├── perspectives/
+    │   ├── security.dsl
+    │   ├── performance.dsl
+    │   ├── availability.dsl
+    │   └── evolution.dsl
+    │
+    └── documentation/
+        ├── architecture.md
+        ├── stakeholders.md
+        ├── concerns.md
+        ├── principles.md
+        └── decisions/
+    |
+
+    This is a logical organisation, not necessarily a requirement to
+    create one DSL file per viewpoint. Structurizr supports splitting
+    DSL definitions into multiple files using its |!include| mechanism.
+
+
+          Example workspace
+
+    Your main |workspace.dsl| could look something like this:
+
+    structurizr
+
+    |workspace "Software Architecture" {
+
+        !identifiers hierarchical
+
+        model {
+            user = person "User"
+
+            system = softwareSystem "My System" {
+
+                web = container "Web Application"
+                api = container "API"
+                database = container "Database"
+            }
+
+            user -> system.web "Uses"
+            system.web -> system.api "Calls"
+            system.api -> system.database "Reads and writes"
+        }
+
+        views {
+
+            systemContext system {
+                include *
+                autoLayout
+            }
+
+            container system {
+                include *
+                autoLayout
+            }
+
+            component system.api {
+                include *
+                autoLayout
+            }
+
+            dynamic system.api {
+                include *
+                autoLayout
+            }
+
+            deployment system "Production" {
+                include *
+                autoLayout
+            }
+        }
+    }
+    |
+
+    This is just an initial example. The important thing is that the |
+    model| section defines architectural elements and relationships,
+    while the |views| section defines particular representations.
+
+    Documentation and architecture decisions can also be maintained
+    within the Structurizr workspace.
+
+    See the official Structurizr DSL documentation <https://
+    docs.structurizr.com/dsl>.
+
+    ------------------------------------------------------------------------
+
+
+        5. Establish a modelling convention
+
+    Before creating extensive architecture models, I would establish a
+    few conventions.
+
+    Concern	Recommendation
+    Element identification	Give every element a stable identifier
+    Element descriptions	Describe architectural responsibility
+    Relationships	Describe the nature of interactions
+    Technology	Record relevant implementation technologies
+    Ownership	Identify the responsible architectural or functional owner
+    Requirements	Reference relevant architectural requirements
+    Decisions	Link architectural elements to relevant decisions
+    Documentation	Keep explanations close to the architectural model
+    Views	Give each view a clear architectural purpose
+
+    I would also distinguish between:
+
+      * *Architectural model:* The underlying collection of elements,
+        relationships, properties, and constraints.
+      * *Architectural view:* A representation of selected architectural
+        information.
+      * *Architectural viewpoint:* The conventions and rules governing
+        the creation of views.
+      * *Architectural perspective:* A set of activities and
+        considerations addressing cross-cutting quality concerns.
+
+    This distinction will help prevent the Structurizr workspace from
+    becoming just a collection of diagrams.
+
+    ------------------------------------------------------------------------
+
+
+        6. My recommended implementation strategy
+
+    I would approach this incrementally.
+
+    Phase	Focus	Expected result
+    1	Architecture foundation	Stakeholders, concerns, principles,
+    requirements
+    2	Context	System boundaries and external dependencies
+    3	Functional	Containers, components, responsibilities and interactions
+    4	Information	Information ownership, data structures and flows
+    5	Concurrency	Runtime execution and coordination
+    6	Development	Software organisation and development constraints
+    7	Deployment	Infrastructure and deployment topology
+    8	Operational	Operational architecture and procedures
+    9	Perspectives	Security, performance, resilience and evolution
+    10	Consistency	Cross-view consistency and architecture validation
+
+    I would not necessarily implement every viewpoint for every system.
+    The book's approach is stakeholder- and concern-driven, so the views
+    should address actual architectural needs.
+
+    ------------------------------------------------------------------------
+
+
+        7. One important design decision
+
+    I would avoid treating C4 as the complete architecture modelling
+    language.
+
+    Instead, I would use this combination:
+
+    Modelling concern	Preferred approach
+    Software structure	C4
+    Runtime interactions	C4 Dynamic
+    Deployment topology	C4 Deployment
+    Information structures	Domain/data modelling
+    Concurrency	Runtime and concurrency models
+    Development structure	Module and dependency modelling
+    Operational architecture	Operational models and documentation
+    Quality attributes	Architectural perspectives
+    Architectural decisions	ADRs
+    Requirements and constraints	Structured documentation
+
+    *Structurizr should be the central repository of the architectural
+    description, but not necessarily the only notation used to express
+    every architectural model.*
+
+    ------------------------------------------------------------------------
+
+
+        8. Suggested next step
+
+    Before writing lots of DSL, I would define a small *Architecture
+    Metamodel and Viewpoint Catalogue*.
+
+    This would be the foundation of the whole approach.
+
+    I would define the following concepts:
+
+     1. |Architecture| — the overall architectural description.
+     2. |Stakeholder| — a person or organisation interested in the
+        architecture.
+     3. |Concern| — an architectural issue relevant to a stakeholder.
+     4. |Requirement| — an architectural requirement or constraint.
+     5. |Principle| — an architectural guiding principle.
+     6. |Decision| — an architectural decision and its rationale.
+     7. |Viewpoint| — a specification for constructing a particular view.
+     8. |View| — an architectural representation.
+     9. |Model| — the underlying architectural information.
+    10. |Perspective| — a cross-cutting quality concern.
+
+    Then define how these concepts map to Structurizr DSL,
+    documentation, and external modelling notations.
+
+    *My suggestion:* Let's develop this metamodel first, using Rozanski
+    and Woods as the primary reference and C4/Structurizr as the
+    implementation foundation. That will give us a consistent
+    architecture modelling approach rather than simply a collection of
+    DSL diagrams.
+
+    Sources
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

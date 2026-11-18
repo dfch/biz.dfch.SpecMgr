@@ -1,0 +1,74 @@
+@startuml arch-metamodel-a-conceptual
+title Architecture Model - Metamodel A (conceptual)
+
+' Sources: 42010 = ISO/IEC/IEEE 42010:2011, RW = Rozanski and Woods 2nd ed., CAT = this catalogue (extension)
+
+class "ArchitectureDescription" as AD <<42010>>
+class "Stakeholder" as SH <<42010>>
+class "Concern" as CN <<42010>>
+class "Viewpoint" as VPT <<42010, RW>>
+class "View" as VW <<42010, RW>>
+class "ModelKind" as MK <<42010>>
+class "Model" as MD <<42010>>
+class "Correspondence" as CR <<42010>>
+class "Decision" as DC <<42010, RW>>
+class "Rationale" as RT <<42010>>
+class "Principle" as PRC <<RW>>
+class "Pattern" as PAT <<RW>>
+class "Perspective" as PSP <<RW, CAT>>
+class "Tactic" as TAC <<RW>>
+class "Scenario" as SCN <<RW>>
+class "Criterion" as CRI <<CAT>>
+class "MatrixCell" as CELL <<CAT>>
+class "Finding" as FND <<CAT>>
+
+AD "1" *-- "1..*" VW : contains
+AD "1" o-- "1..*" SH : identifies
+AD "1" o-- "1..*" CN : identifies
+AD "1" o-- "0..*" DC : records
+AD "1" o-- "0..*" PRC : states
+
+SH "1..*" -- "0..*" CN : has
+VPT "1" o-- "1..*" CN : frames
+VPT "1" o-- "1..*" MK : defines
+VW "1" --> "1" VPT : conforms to
+VW "1" *-- "1..*" MD : composed of
+MD "1" --> "1" MK : instance of
+VW "1" -- "1..*" CN : addresses
+CR "0..*" -- "2..*" VW : relates
+
+DC "1" --> "0..*" RT : has
+DC "0..*" -- "0..*" CN : resolves
+DC "0..*" -- "0..*" PRC : follows
+PRC "0..*" -- "0..*" CN : guides
+PAT "0..*" -- "0..*" PRC : implements
+PSP "0..*" -- "0..*" VW : applied to
+PSP "1" o-- "0..*" TAC : offers
+PSP "1" o-- "1..*" CN : addresses
+SCN "0..*" -- "1" PSP : exercises
+
+CELL "1" --> "1" VPT : row
+CELL "1" --> "1" PSP : column
+CRI "0..*" --> "1" CELL : home
+FND "0..*" --> "1" CRI : about
+
+note right of PRC
+  scope: general | view-specific
+  realised by one DEC each
+  tags: arch.principle
+end note
+
+note right of PAT
+  realised by one DEC each
+  tags: arch.pattern
+  style = pattern (R+W ch. 11)
+end note
+
+note bottom of PSP
+  basis: ISO 25010 | R+W
+  ISO: sub-characteristics
+  R+W: concerns
+  12 perspectives in this catalogue
+end note
+
+@enduml

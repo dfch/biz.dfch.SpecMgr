@@ -1,0 +1,1036 @@
+@supports (color:color(display-p3 1 1 1)){@media (color-gamut:p3)
+{svg[data-icon-p3="microsoft-light-16"]{--icon-p3-authored-
+f35325:color(display-p3 0.9529 0.3255 0.1451);--icon-p3-
+authored-81bc06:color(display-p3 0.5059 0.7373 0.0235);--icon-p3-
+authored-05a6f0:color(display-p3 0.0196 0.6510 0.9412);--icon-p3-
+authored-ffba08:color(display-p3 1.0000 0.7294 0.0314)}}}
+
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    I read that I can "link" a git repo as a sub-dir or "thing" to an existing repo. Is there a name for it?
+
+ 2.
+
+
+    Yes! It's called a *Git submodule*.
+
+    A *submodule* lets you include another Git repository inside an
+    existing repository as a subdirectory, while keeping it as an
+    independent repository.
+
+
+          Example
+
+    Imagine you have:
+
+    text
+
+    |my-project/
+    ├── src/
+    ├── docs/
+    └── external-library/  ← separate Git repository
+    |
+
+    You can add the external repository with:
+
+    bash
+
+    |git submodule add https://github.com/user/external-library.git external-library
+    |
+
+
+          How it works
+
+      * The parent repository tracks a reference (specific commit) of
+        the submodule.
+      * The submodule retains its own Git history and remote.
+      * You can update it independently.
+      * Other developers can clone the parent and initialize its submodules.
+
+
+          Useful commands
+
+    bash
+
+    |# Clone a repository including its submodules
+    git clone --recurse-submodules <repo-url>
+
+    # Initialize submodules after cloning
+    git submodule update --init --recursive
+
+    # Update submodules
+    git submodule update --remote
+    |
+
+
+          One alternative: Git subtree
+
+    There's another approach called *Git subtree*.
+
+    The difference:
+
+    Feature	Submodule	Subtree
+    Separate Git history	Yes	Can preserve it
+    Separate repository	Yes	Yes, but integrated
+    Cloning parent repo	Requires initialization	Everything included
+    Independent updates	Yes	Yes
+    Complexity	More configuration	Often simpler for consumers
+
+    *My recommendation:* If you want to reference another repository
+    inside your project while keeping it independently maintained, use a
+    Git submodule.
+
+ 3.
+
+
+    pros and cons?
+
+ 4.
+
+
+    The main trade-off is *independence vs. simplicity*.
+
+    Both Git submodules and Git subtrees let you reuse another
+    repository inside your project, but they behave quite differently.
+
+
+        1. Git submodules
+
+    A submodule is essentially a pointer to another repository at a
+    specific commit.
+
+
+          Pros
+
+      * *Independent repositories:* Each project has its own history,
+        branches, and remote.
+      * *Clear ownership:* The external repository can be maintained by
+        a different team.
+      * *Lightweight parent repo:* Your main repository doesn't contain
+        the external project's entire history.
+      * *Version control:* You explicitly choose which commit/version to
+        use.
+      * *Easy upstream contributions:* You can work directly in the
+        submodule and submit pull requests to its original repository.
+
+
+          Cons
+
+      * *More complicated workflow:* You need to initialize and update
+        submodules.
+      * *Easy to forget:* Committing changes inside a submodule doesn't
+        automatically update the parent repository's reference.
+      * *Detached HEAD confusion:* Submodules often check out a specific
+        commit rather than a branch.
+      * *CI/CD complexity:* Build pipelines need to know how to fetch
+        submodules.
+      * *Developer experience:* Cloning and switching branches can be
+        slightly more cumbersome.
+
+
+        2. Git subtree
+
+    A subtree effectively imports another repository into a subdirectory
+    of your existing repository.
+
+
+          Pros
+
+      * *Simple cloning:* Everything is included when cloning the parent
+        repository.
+      * *No special initialization:* Developers can immediately work
+        with the imported code.
+      * *Normal Git workflow:* No detached HEAD or special submodule
+        commands.
+      * *Can preserve history:* You can import the original repository's
+        history.
+      * *Easy deployment:* CI/CD doesn't need special handling.
+
+
+          Cons
+
+      * *Larger repository:* Imported code and potentially its history
+        increase repository size.
+      * *More complicated synchronization:* Pulling upstream changes and
+        pushing contributions back requires subtree commands.
+      * *Less explicit separation:* The imported code becomes part of
+        your main repository.
+      * *Potential merge conflicts:* Synchronizing upstream changes can
+        sometimes be tricky.
+
+
+        3. Comparison
+
+    Feature	Submodule	Subtree
+    Independent repository	Yes	Yes
+    Independent history	Yes	Yes
+    Easy cloning	Requires initialization	Yes
+    Easy CI/CD	Requires configuration	Yes
+    Independent versioning	Excellent	Good
+    Upstream synchronization	Straightforward	More involved
+    Repository size	Smaller	Potentially larger
+    Developer experience	More complex	Simpler
+
+
+        4. Which should you choose?
+
+    My rule of thumb:
+
+    *Use submodules when:*
+
+      * You want to reference an external project.
+      * You want to keep repositories genuinely independent.
+      * You want to pin dependencies to specific commits.
+      * Multiple projects share the same repository.
+
+    *Use subtrees when:*
+
+      * You want another repository's code physically integrated into yours.
+      * You want developers to clone one repository and have everything
+        available.
+      * You want simpler CI/CD.
+      * You occasionally pull changes from an upstream repository.
+
+
+          My recommendation
+
+    If you're building a project that consists of several independently
+    maintained components, I'd lean towards *Git submodules*.
+
+    If you're bringing in reusable code that should simply behave like
+    another directory in your project, I'd lean towards *Git subtree*.
+
+    One additional alternative worth knowing about is *Git worktrees*.
+    They let you check out multiple branches of the /same/ repository
+    into separate directories. They're useful, but solve a different
+    problem.
+
+ 5.
+
+
+    I use biz.dfch.SpecMgr that creates artifacts in a git repo under ./docs/... I want to combine multiple other git repos that also have biz.dfch.SpecMgr ./docs in THEIR repo into my repo.
+
+ 6.
+
+
+    In your case, I'd lean towards *Git submodules*, with one important
+    consideration: how |biz.dfch.SpecMgr| discovers and generates its
+    artifacts.
+
+    You essentially want to aggregate documentation from multiple
+    independent repositories into one central repository.
+
+
+        1. What you're trying to achieve
+
+    Imagine you have three repositories:
+
+    *Main repository:*
+
+    text
+
+    |main-repo/
+    ├── src/
+    ├── docs/
+    └── ...
+    |
+
+    *Repository A:*
+
+    text
+
+    |repo-a/
+    ├── src/
+    └── docs/
+        ├── specifications/
+        └── artifacts/
+    |
+
+    *Repository B:*
+
+    text
+
+    |repo-b/
+    ├── src/
+    └── docs/
+        ├── specifications/
+        └── artifacts/
+    |
+
+    You want something like:
+
+    text
+
+    |main-repo/
+    ├── src/
+    ├── docs/
+    │   ├── specifications/
+    │   ├── artifacts/
+    │   ├── repo-a/
+    │   │   └── ...
+    │   └── repo-b/
+    │       └── ...
+    ├── repo-a/                 <-- Git submodule
+    │   ├── src/
+    │   └── docs/
+    └── repo-b/                 <-- Git submodule
+        ├── src/
+        └── docs/
+    |
+
+    This gives you two things:
+
+      * Each repository remains independently maintained.
+      * Your main repository can aggregate their documentation.
+
+
+        2. My preferred approach: Git submodules
+
+    Add the other repositories:
+
+    bash
+
+    |git submodule add https://github.com/company/repo-a.git repositories/repo-a
+    git submodule add https://github.com/company/repo-b.git repositories/repo-b
+    |
+
+    Your main repository now tracks specific commits of those repositories.
+
+    You can update them independently:
+
+    bash
+
+    |git submodule update --remote --recursive
+    |
+
+
+        3. Aggregate the documentation
+
+    You have two possible approaches.
+
+
+          Option A: Keep documentation in its original locations
+
+    text
+
+    |main-repo/
+    ├── docs/
+    ├── repositories/
+    │   ├── repo-a/
+    │   │   └── docs/
+    │   └── repo-b/
+    │       └── docs/
+    |
+
+    This is the simplest approach.
+
+    Your documentation tooling needs to understand that documentation
+    can originate from multiple locations.
+
+
+          Option B: Aggregate everything under ./docs
+
+    text
+
+    |main-repo/
+    └── docs/
+        ├── main/
+        ├── repo-a/
+        └── repo-b/
+    |
+
+    You could use symbolic links or a build script to collect the
+    generated artifacts.
+
+    For example:
+
+    bash
+
+    |mkdir -p docs/repo-a docs/repo-b
+
+    cp -r repositories/repo-a/docs/* docs/repo-a/
+    cp -r repositories/repo-b/docs/* docs/repo-b/
+    |
+
+    This gives you one central documentation tree without changing the
+    structure of the individual repositories.
+
+    One caveat: avoid copying generated artifacts back into the source
+    repositories or creating circular dependencies.
+
+
+        4. One important architectural consideration
+
+    I'd distinguish between:
+
+      * *Source documentation:* Documentation maintained by each
+        individual repository.
+      * *Generated artifacts:* Output produced by |biz.dfch.SpecMgr|.
+      * *Aggregated documentation:* A combined view of all repositories.
+
+    Ideally, each repository remains responsible for its own source
+    documentation and generated artifacts. Your main repository simply
+    aggregates them.
+
+    That avoids coupling the individual repositories to the main repository.
+
+    ------------------------------------------------------------------------
+
+
+        My recommendation
+
+    I'd start with:
+
+     1. Git submodules for repository composition.
+     2. Keep each repository's |docs| directory untouched.
+     3. Create a central aggregation step that collects the relevant
+        documentation.
+     4. Let |biz.dfch.SpecMgr| generate the final combined
+        documentation, if its architecture supports multiple input
+        locations.
+
+    *One question that would influence the architecture considerably:*
+
+    Does |biz.dfch.SpecMgr| require a fixed |./docs| directory relative
+    to the Git repository root, or can it be configured to discover
+    documentation in multiple directories?
+
+    That determines whether submodules alone are sufficient or whether
+    you need a small aggregation/build layer.
+
+ 7.
+
+
+    if I have a git submodule, and I change contents in that submodule, how can I prevent that I can push that change upstream? I effectively want to make sure that I cannot items in the submodule
+
+ 8.
+
+
+    Yes. You want the submodule to be *read-only from the perspective of
+    your main repository*. You can achieve this at several levels.
+
+    One important distinction: Git submodules don't inherently provide
+    read-only access. They are normal Git repositories nested inside
+    another repository.
+
+
+        1. Best solution: Use read-only Git credentials
+
+    This is the strongest protection.
+
+    Configure the submodule to use credentials that only have read
+    access to its upstream repository.
+
+    For example:
+
+      * GitHub: grant the user/token read-only access.
+      * GitLab: use a Deploy Token with |read_repository|.
+      * SSH: use a deploy key without write access.
+
+    Even if someone accidentally commits changes inside the submodule,
+    they cannot push them upstream.
+
+    This is the only reliable protection against accidental pushes that
+    also provides server-side enforcement.
+
+
+        2. Configure the submodule to use a detached HEAD
+
+    By default, submodules are checked out at a specific commit, usually
+    with a detached HEAD.
+
+    You can explicitly enforce this:
+
+    bash
+
+    |cd repositories/repo-a
+    git checkout --detach
+    |
+
+    This means changes won't be committed to a regular branch unless
+    someone explicitly creates or checks out one.
+
+    However, *this is not a security measure*. Someone can still create
+    a branch and push it.
+
+
+        3. Configure the submodule remote as read-only
+
+    You can change the submodule's push URL:
+
+    bash
+
+    |cd repositories/repo-a
+
+    git remote set-url --push origin DISABLED
+    |
+
+    Now:
+
+    bash
+
+    |git push
+    |
+
+    will fail because the push URL is invalid.
+
+    The fetch URL remains unchanged.
+
+    You can verify:
+
+    bash
+
+    |git remote -v
+    |
+
+    Example:
+
+    text
+
+    |origin  https://github.com/company/repo-a.git (fetch)
+    origin  DISABLED (push)
+    |
+
+    *This is probably the simplest solution for your use case.*
+
+    Note that this configuration is local to each clone and isn't
+    automatically distributed through the parent repository.
+
+
+        4. My recommendation for your setup
+
+    Given your |biz.dfch.SpecMgr| documentation aggregation scenario,
+    I'd use:
+
+    Protection	Recommendation
+    Read-only credentials	Strongly recommended
+    Detached HEAD	Recommended
+    Invalid push URL	Recommended
+    Server-side branch protection	Optional additional safeguard
+
+    The combination makes accidental modifications and pushes
+    considerably less likely.
+
+    *One important detail:* You can still modify files inside the
+    submodule, and those modifications will show up as changes in your
+    parent repository (the submodule will appear modified). You can
+    discard those changes with:
+
+    bash
+
+    |git -C repositories/repo-a reset --hard
+    git -C repositories/repo-a clean -fd
+    |
+
+    Be careful: these commands permanently discard uncommitted changes
+    and untracked files.
+
+    For your scenario, I'd configure the submodules as read-only
+    dependencies rather than treating them as repositories you actively
+    develop.
+
+ 9.
+
+
+    if I checkout with a detached head, how do I make sure that I get upstream changes from the submodule into my main repo?
+
+10.
+
+
+    Good question. This is actually one of the advantages of Git
+    submodules: *you can keep the submodule in a detached HEAD state and
+    still update it to newer upstream commits.*
+
+    The key is that you don't need to work on a branch to fetch and
+    check out new commits.
+
+
+        1. Initial setup
+
+    Add your submodule:
+
+    bash
+
+    |git submodule add https://github.com/company/repo-a.git repositories/repo-a
+    |
+
+    Git checks it out at a specific commit, typically in detached HEAD
+    state.
+
+
+        2. Get upstream changes
+
+    To fetch and update the submodule to the latest commit of its
+    configured branch:
+
+    bash
+
+    |git submodule update --remote repositories/repo-a
+    |
+
+    This does two things:
+
+     1. Fetches changes from the upstream repository.
+     2. Checks out the latest commit of the configured branch (detached
+        HEAD).
+
+    Your submodule remains detached.
+
+
+        3. Commit the updated reference in your main repository
+
+    This is the important part.
+
+    The parent repository doesn't track the submodule's files
+    individually. It tracks a reference to a specific commit.
+
+    After updating the submodule:
+
+    bash
+
+    |git status
+    |
+
+    You'll see something like:
+
+    text
+
+    |modified: repositories/repo-a (new commits)
+    |
+
+    Now commit that reference:
+
+    bash
+
+    |git add repositories/repo-a
+    git commit -m "Update repo-a submodule"
+    |
+
+    That's it!
+
+    Your main repository now references the newer upstream commit.
+
+
+        4. Configure which upstream branch to follow
+
+    By default, |git submodule update --remote| uses the submodule's
+    remote HEAD branch.
+
+    You can explicitly configure this in your parent repository's
+    |.gitmodules|:
+
+    ini
+
+    |[submodule "repositories/repo-a"]
+        path = repositories/repo-a
+        url = https://github.com/company/repo-a.git
+        branch = main
+    |
+
+    Now:
+
+    bash
+
+    |git submodule update --remote --merge
+    |
+
+    However, I'd use the default checkout behavior rather than |--merge|
+    for your read-only scenario.
+
+
+        5. Your resulting workflow
+
+    I'd use this workflow:
+
+    bash
+
+    |# Fetch latest upstream commits and update submodules
+    git submodule update --remote --recursive
+
+    # Review changes
+    git status
+
+    # Commit updated submodule references
+    git add .
+    git commit -m "Update external repositories"
+    |
+
+    You can even automate this in a scheduled CI/CD pipeline.
+
+
+          Important distinction
+
+    There are two different things happening:
+
+    Operation	Repository affected
+    Fetch upstream changes	Submodule
+    Checkout newer commit	Submodule
+    Commit updated submodule reference	Main repository
+    Push main repository	Main repository
+
+    *The beauty of this approach:* Your main repository controls exactly
+    which version of each external repository it references. You can
+    update upstream dependencies whenever you want, but you never need
+    to modify or push changes to those upstream repositories.
+
+    This is precisely the workflow I'd recommend for your |
+    biz.dfch.SpecMgr| aggregation scenario.
+
+11.
+
+
+    I have this repo structure
+
+    root
+     +- .specmgr
+     +- docs
+        +- req
+        +- uc
+      +- external-docs
+
+    Can I add this as 2 or more submodules
+
+      +- external-docs
+        +- submodule1
+            +- req
+            +- uc
+        +- submodule2
+            +- req
+            +- uc
+
+12.
+
+
+    Absolutely! That's a perfectly valid Git submodule structure. You
+    can have multiple submodules nested under |external-docs|.
+
+    Your resulting structure would look like this:
+
+    text
+
+    |root/
+    ├── .specmgr/
+    ├── docs/
+    │   ├── req/
+    │   └── uc/
+    └── external-docs/
+        ├── submodule1/          <-- Git submodule
+        │   ├── req/
+        │   └── uc/
+        └── submodule2/          <-- Git submodule
+            ├── req/
+            └── uc/
+    |
+
+
+        1. Add the submodules
+
+    From your root repository:
+
+    bash
+
+    |git submodule add https://github.com/company/repo1.git external-docs/submodule1
+
+    git submodule add https://github.com/company/repo2.git external-docs/submodule2
+    |
+
+    Git automatically creates or updates |.gitmodules|:
+
+    ini
+
+    |[submodule "external-docs/submodule1"]
+        path = external-docs/submodule1
+        url = https://github.com/company/repo1.git
+        branch = main
+
+    [submodule "external-docs/submodule2"]
+        path = external-docs/submodule2
+        url = https://github.com/company/repo2.git
+        branch = main
+    |
+
+
+        2. Clone the main repository
+
+    Other developers can retrieve everything with:
+
+    bash
+
+    |git clone --recurse-submodules <main-repo-url>
+    |
+
+    Or, if they've already cloned it:
+
+    bash
+
+    |git submodule update --init --recursive
+    |
+
+
+        3. Update all external repositories
+
+    To retrieve the latest upstream changes:
+
+    bash
+
+    |git submodule update --remote --recursive
+    |
+
+    Then commit the updated references in your main repository:
+
+    bash
+
+    |git add external-docs
+    git commit -m "Update external documentation repositories"
+    |
+
+
+        4. One important consideration for SpecMgr
+
+    Your structure is particularly convenient because you can have a
+    central documentation structure:
+
+    text
+
+    |root/
+    ├── .specmgr/
+    ├── docs/
+    │   ├── req/
+    │   └── uc/
+    └── external-docs/
+        ├── submodule1/
+        │   └── docs/
+        │       ├── req/
+        │       └── uc/
+        └── submodule2/
+            └── docs/
+                ├── req/
+                └── uc/
+    |
+
+    You can then configure your documentation aggregation to discover:
+
+      * |./docs/req|
+      * |./docs/uc|
+      * |./external-docs/*/docs/req|
+      * |./external-docs/*/docs/uc|
+
+    This keeps the individual repositories completely independent.
+
+    *My recommendation:* This is a clean architecture for your use case.
+    Each repository owns its specifications, while your root repository
+    acts as the documentation aggregator.
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
+Switzerland ⁦(+41)⁩
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

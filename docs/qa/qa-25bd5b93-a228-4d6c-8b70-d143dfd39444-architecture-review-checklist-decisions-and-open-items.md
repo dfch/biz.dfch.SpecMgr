@@ -4,7 +4,7 @@ created: '2026-11-05T08:11:57.662+01:00'
 id: 25bd5b93-a228-4d6c-8b70-d143dfd39444
 status: draft
 type: qa
-updated: '2026-11-10T09:49:01.765+01:00'
+updated: '2026-11-18T13:28:51.881+01:00'
 version: 1.0.0
 ---
 
@@ -78,15 +78,25 @@ Not yet. Run two or three real reviews as TXT first, linking findings to RSK and
 
 fyi: information about ISO 29148 is in ~/src/docs/md/iso-iec-ieee-29148-2018.md, verify
 
-TODO: answer pending
+Partly answered on 2026-11-18 (issue 267, TXT checklist Draft 0.9). Checked against the local texts:
+
+- ISO/IEC/IEEE 29148:2018: the nine characteristics of an individual requirement (clause 5.2.5: Necessary, Appropriate, Unambiguous, Complete, Singular, Feasible, Verifiable, Correct, Conforming) and the five characteristics of a set (clause 5.2.6: Complete, Consistent, Feasible, Comprehensible, Able to be validated) match the checklist, sections 6.2. The use for criteria is by analogy, because 29148 is a requirements standard.
+- ISO/IEC/IEEE 42010:2011: the concepts viewpoint (5.4), view (5.5), model (5.6), correspondence (5.7), rationale (5.8) and the term model kind exist. Clause 5.6 NOTE 1 cites R+W for perspectives. Annex B.3 cites the 1st edition of R+W (six viewpoints, no Context).
+- ISO/IEC/IEEE 42030: missing source. It is only cited in the texts of 12207 and 15288. Please add it to the docs repository.
+
+TODO: check the 42030 statements once the standard is available
 
 > **0.0210**: Does ISO/IEC/IEEE 42030 or ATAM require changes to the structure?
 
-TODO: answer pending
+Blocked on 2026-11-18 by missing sources: ISO/IEC/IEEE 42030 (only cited in the texts of 12207 and 15288) and the ATAM report of the SEI (CMU/SEI-2000-TR-004). Neither is in the docs repository.
+
+TODO: answer pending, needs the sources
 
 > **0.0220**: Which capability level names does the current ISACA COBIT version use, and does it differ from ISO/IEC 33020?
 
-TODO: answer pending
+Blocked on 2026-11-18 by missing sources. The public ISACA COBIT page and the Wikipedia article do not list capability level names. They are in the COBIT 2019 Framework: Introduction and Methodology and the COBIT 2019 Design Guide, which are not freely available. ISO/IEC 33020:2019 is only cited in the texts of 12207 and 15288. Please add COBIT 2019 and ISO/IEC 33020 to the docs repository.
+
+TODO: answer pending, needs the sources
 
 > **0.0230**: Which practice areas make up the capability profile?
 
@@ -108,7 +118,7 @@ Partly answered on 2026-11-10 (TXT Draft 0.8), based on R+W (0.0520). Not added 
 
 ISO/IEC/IEEE 42010 defines no viewpoint catalogue. Its text names the R+W viewpoints Functional, Information, Concurrency, Development, Deployment and Operational and the perspectives Security, Performance and Scalability, Availability and Resilience, and Evolution as an example (bibliography entry for R+W). It refers to TOGAF only in a list of architecture frameworks.
 
-TODO: check what TOGAF says about a Business/Capability viewpoint, if a review needs one.
+TODO: check what TOGAF says about a Business/Capability viewpoint, if a review needs one. Missing source (2026-11-18): the TOGAF Standard of The Open Group is not in the docs repository. The BIZBOK (Business Architecture Guild) is in the sources folder of the docs repository and can be checked for capability maps.
 
 > **0.0270**: Is the applicability matrix and its cell count correct?
 
@@ -128,7 +138,7 @@ TODO: answer pending
 
 Update 2026-11-10: the question uses the old IDs. In the new matrix (TXT Draft 0.8) the equivalent cells are VP05 x RE and VP06 x MA, and both are already S (0.0530). The old VP09 x FL has no equivalent cell. The nearest one is XV x FL, which is X and can be activated per review.
 
-TODO: answer pending
+Closed on 2026-11-18. The question uses IDs that no longer exist, and its answer is in the paragraph above. The remaining coverage questions are tracked by 0.0340, 0.0350 and 0.0550, and by the Table 4-1 comparison in 0.0640.
 
 <!-- Split from 3.0090 (C4/Structurizr). Checked on 2026-11-05 against the Structurizr documentation and the local Structurizr MCP server (DSL tools and PlantUML and Mermaid export, no file access). Items not yet checked are marked "to be confirmed". -->
 
@@ -225,7 +235,7 @@ TODO: answer pending
 
 A copy in the skill can drift from the TXT.
 
-TODO: answer pending
+Answered on 2026-11-18 (issue 267). The mapping is defined once, in TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model), section 8. The checklist section 11.6 now points to it and holds no copy. The skill c4-viewpoint-mapping reads that section and keeps no copy. A viewpoint is catalogue knowledge, so it is meant to become a resource plus a skill. The resource is not built before the design is validated.
 
 > **0.0490**: How many failed check attempts end phase 5 of the flow, and how large is the sample of facts compared with the source?
 
@@ -324,25 +334,47 @@ TODO: answer pending
 
 Follow-up of TXT Draft 0.8. 0.0360 asks about VP11 x RE, VP08 x MA and VP09 x FL. These IDs no longer exist. An update note was added to 0.0360, but the question text is unchanged. Options: keep it as history, or replace it by a question about VP05 x RE, VP06 x MA and XV x FL.
 
-TODO: answer pending
+Answered on 2026-11-18. Kept as history. 0.0360 is closed with an update note, and the new matrix is compared with R+W Table 4-1 in the checklist, section 5.3 (see 0.0640).
 
 > **0.0570**: How is the TXT file renamed, now that the title no longer says "Quality Characteristics"?
 
 Follow-up of TXT Draft 0.8. The file name still ends in `viewpoints-x-quality-character`. The specmgr tools cannot rename a TXT file, so the rename is done by hand. It changes the path that other documents or tools may store. The id stays the same.
 
-TODO: answer pending
+Answered on 2026-11-18. The file is renamed with git mv. The name now ends in `viewpoints-x-perspectives`. The id is unchanged. Documents refer to the TXT by id, so no reference changes.
 
 > **0.0580**: What happens to the file `agent-review-of-txt-23de-sec-5-matrix.md`?
 
 Follow-up of 0.0520. The untracked file in the repository root reviews the old 13 x 9 matrix and uses the old IDs VP01 to VP13. It was not changed. Options: keep it as history, move it into a feature folder, mark it as superseded at the top, or delete it.
 
-TODO: answer pending
+Answered on 2026-11-18. Correction: the file was not untracked. It is in the git history (commit 904c8c74). It is moved with git mv into `.specmgr/feat/feat-267-arch-rvw/`, and a note at the top marks it as superseded by Draft 0.8. The nine ChatGPT transcripts are in `.specmgr/feat/feat-267-arch-rvw/chatgpt/`.
 
 > **0.0590**: How are the Draft 0.8 changes formatted and committed?
 
 Follow-up of TXT Draft 0.8. `mdformat` was not run on the TXT or on this QA. The TXT was already staged and modified before the session, and the QA is untracked. Open: run `mdformat` first, review `git diff`, then decide on one commit or separate commits for the TXT and the QA.
 
-TODO: answer pending
+Answered on 2026-11-18. The earlier commits are done (the TXT and the QA are in git). `mdformat` is run on the TXT, the new TXT and this QA after the Draft 0.9 changes. Nothing is committed yet. The user decides on the commits.
+
+> **0.0600**: Is a viewpoint a specmgr artifact?
+
+Decided on 2026-11-18 (issue 267): no. A viewpoint is generic catalogue knowledge, identical for every project, and changes only when the book changes. That is the shape of the resources specmgr://iso25010, specmgr://rasci and specmgr://dtais. A viewpoint fails the tests for a new artifact type (independent lifecycle, own validation, independent traceability): views refer to it by ID and nothing else needs to point at it. The viewpoint definition is meant to become a resource plus a skill. The instances (Structurizr workspaces and views) are the future ARC artifact (issue 228). A project-specific viewpoint that a review adds is recorded as a DEC. Until the resource exists, TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 is the single source.
+
+> **0.0610**: Where do architecture principles and patterns live, and how do we find the ones that apply?
+
+Decided on 2026-11-18 (issue 267). Three levels: the definitions are in the Architecture Model TXT (sections 3 and 6). The generic tags PR01 to PR18 stay in the checklist as a tag vocabulary. An adopted principle or pattern is one DEC document each (statement = Decision Outcome, rationale = Context, implications = Consequences, test = Confirmation). To find the DEC documents that apply: a hub document (the architecture description, a future ARC artifact, until then an index in a TXT) references them, and list_references returns them. The tags `arch.principle` and `arch.pattern` are a convention for people. Scope is general or view-specific, as in R+W chapter 8. One list DEC was rejected, because a principle in a list has no ID, status or reference of its own. Tactics are no DEC documents. No DEC is created before the design is validated. Follow-up: a tag filter in list_dec. The ID schemes AP-NN and PRN-NNN of the ChatGPT sessions are dropped.
+
+> **0.0620**: Which perspective set is used, and how is R+W perspective guidance kept?
+
+Confirmed on 2026-11-18 (issue 267): the 12 perspectives of 0.0520. The Architecture Model TXT, section 5, states the costs of the choice (Scalability in FL, Evolution split, Usability and Accessibility merged, Internationalization divided) and holds a table that maps the concerns, tactics and pitfalls of each R+W perspective to the 12 codes, with chapter references and no copied text.
+
+> **0.0630**: Where are the metamodel diagrams, and how do the TXT documents refer to them?
+
+Decided on 2026-11-18 (issue 267). Two PlantUML class diagrams in `.specmgr/feat/feat-267-arch-rvw/`: `arch-metamodel-a-conceptual.puml` and `arch-metamodel-b-structurizr.puml`. The files are the single source. The TXT refers to them by path and holds no copy. Both parse and render with a local PlantUML jar. The specmgr structure check alone does not render them (no PlantUML source is configured). If the files move to a diagrams folder later, the paths in the TXT must change.
+
+> **0.0640**: Which cells differ from R+W Table 4-1, and what is decided?
+
+Open, found on 2026-11-18 (issue 267). The checklist section 5.3 compares the matrix with the only rating grid of the book (four perspectives). Cells that differ and need a decision: Information x MA and FL (the book rates Evolution High for Information, the matrix has S and S), Context x MA (the book rates Medium, the matrix has X), and the judgement calls with P where the book says Low or Medium (Operational x PE, Information x RE, Context x SE, Information x SE). The rule of 0.0550 applies: demote a P cell if it produces duplicate criteria.
+
+TODO: decide the cells together with the validation of 0.0340 and 0.0350
 
 > **0.0280**: Which criteria are knock-out criteria, per review type?
 
@@ -381,6 +413,8 @@ TODO: answer pending
 > **3.0090**: How can we map this architecture assessment with C4/structurizr?
 
 Split into singular questions in `## Elicitation Context`: 0.0370 (C4 model as input evidence), 0.0380 (review result shown on a Structurizr model), 0.0390 (concepts without a C4 equivalent), 0.0400 (tooling and automation) and 0.0410 (source of the viewpoint and perspective model). Short answer: C4/Structurizr is an evidence source and a presentation layer. It is not part of the checklist structure. This question stays here as the entry point and is answered once 0.0370 to 0.0410 are answered.
+
+Answered on 2026-11-18 (issue 267): the mapping is defined in TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model), section 8, for each viewpoint and each perspective, with coverage statements. The metamodel is in two PlantUML diagrams in `.specmgr/feat/feat-267-arch-rvw/`. The mapping is a design proposal. The validation (0.0340) and the new probe are open.
 
 ## Interaction Capability
 

@@ -1,0 +1,295 @@
+---
+classification: null
+created: '2026-11-18T13:25:56.718+01:00'
+id: 30983f27-f5aa-4d42-972e-5593f0c3ba09
+status: draft
+type: txt
+updated: '2026-11-18T13:26:56.622+01:00'
+version: 1.0.0
+---
+
+# Architecture Model: Viewpoints, Perspectives and Structurizr Mapping
+
+Definition of the architecture model that the architecture review checklist and the model generation agent rely on. It fixes the concepts (metamodel), the seven viewpoints, the 12 perspectives, the home of principles, patterns, tactics and decisions, and the mapping of viewpoints and perspectives to a C4 model in Structurizr.
+
+This document holds definitions. The review criteria, the applicability matrix, the rating scale and the evidence rules stay in the checklist. Status of this draft: design proposal for validation. Nothing here is implemented. The Structurizr statements marked "to be confirmed" are not yet checked with the tool.
+
+## 1. Purpose, Scope and Status
+
+- Purpose: one place for the architecture concepts, so that the checklist, a future ARC artifact and the model generation agent use the same words.
+- Alignment rule: the viewpoints follow the book of Rozanski and Woods (R+W), 2nd edition, 2012. A deviation needs a reason, and it is labelled "catalogue extension" (section 7).
+- A viewpoint is catalogue knowledge, not a specmgr artifact. It is generic and the same for every project. It is meant to become a resource and a skill. The instances (Structurizr workspaces and their views) are the future ARC artifact.
+- Out of scope in this draft: running the Structurizr probe again, the c4-\* agents and skills, a viewpoint resource, and DEC documents for single principles. They follow after validation.
+- Tracking: GitHub issue 267, feature feat-267-arch-rvw. The downstream issues are 228 (ARC artifact) and 250 (C4 agent skills).
+
+## 2. Sources and Provenance
+
+| Source | Used for | Status |
+|--------|----------|--------|
+| Rozanski and Woods, Software Systems Architecture, 2nd edition, Addison-Wesley, 2012 (R+W) | Viewpoints (ch. 3 and 15 to 22), perspectives (ch. 4 and 24 to 29), principles and decisions (ch. 8), patterns and styles (ch. 11), the architecture description (ch. 13) | Concern lists, names and order checked against the text of the book. Line references in this document point to the markdown copy of the book in the sibling docs repository |
+| ISO/IEC/IEEE 42010:2011 | Architecture description, viewpoint, view, model kind, correspondence, rationale | Concepts and clause 5.6 NOTE 1 checked against the text. Annex B.3 cites the 1st edition of R+W, which has six viewpoints and no Context viewpoint |
+| ISO/IEC 25010:2023 | Nine quality characteristics, used as perspectives | Names and sub-characteristics checked against specmgr://iso25010. The original standard is not in the docs repository |
+| Structurizr documentation and tool, version 2026.10.26 | Mapping in section 6 | Property and perspective behaviour verified in QA 25bd5b93 (0.0380, 0.0500). Everything else is to be confirmed |
+| ISO/IEC/IEEE 42030 | Architecture evaluation framework | Missing. Only cited in the texts of 12207 and 15288 |
+| TOGAF, ATAM report of the SEI | Possible alignment, Business/Capability viewpoint | Missing |
+
+## 3. Metamodel
+
+Two class diagrams define the concepts. The PlantUML files are the single source. This document does not copy them.
+
+- Diagram A, conceptual: `.specmgr/feat/feat-267-arch-rvw/arch-metamodel-a-conceptual.puml`
+- Diagram B, realisation in Structurizr: `.specmgr/feat/feat-267-arch-rvw/arch-metamodel-b-structurizr.puml`
+
+Both files parse and render with PlantUML (checked with a local jar during authoring). The structure check of specmgr alone does not render them.
+
+### 3.1 Concepts
+
+| Concept | Meaning | Source |
+|---------|---------|--------|
+| ArchitectureDescription | The set of work products that documents an architecture. It consists of views | 42010, R+W ch. 2 |
+| Stakeholder, Concern | A party with an interest in the system. An interest that matters to a stakeholder | 42010, R+W ch. 9 |
+| Viewpoint | A template for the construction of views. It names the concerns it frames, the model kinds, the guidelines and the typical pitfalls | 42010, R+W ch. 3 |
+| View | The architecture description of one system from one viewpoint. A view conforms to one viewpoint | 42010, R+W ch. 3 |
+| ModelKind, Model | The kind of model a viewpoint prescribes, and an instance of it in a view | 42010 |
+| Correspondence | A recorded relation between elements of different views | 42010, R+W ch. 23 |
+| Perspective | A set of activities, tactics and guidelines that you apply across views, so that the system shows a quality property. It usually changes views and creates no new ones | R+W ch. 4 |
+| Tactic | An established approach to reach a quality property. It belongs to a perspective. It is not a design pattern | R+W ch. 4 |
+| Principle | A statement of belief, approach or intent that guides the architecture. It has a rationale and implications | R+W ch. 8 |
+| Pattern, style | A reusable solution form. R+W treat architectural style and architectural pattern as synonyms | R+W ch. 11 |
+| Decision, rationale | A choice with significance for the architecture, and the reason for it | 42010, R+W ch. 8 and 13 |
+| Scenario | A description of a use of the system or of a quality situation. It is a technique and not a viewpoint | R+W ch. 10 |
+| Criterion, MatrixCell, Finding | Catalogue concepts of the review checklist. They attach to Viewpoint and Perspective | Catalogue extension |
+
+### 3.2 Relations that matter
+
+- A view conforms to exactly one viewpoint. A viewpoint frames several concerns.
+- Perspectives are orthogonal to viewpoints. A perspective is applied to some or all views (R+W ch. 4). The applicability matrix of the checklist is the record of this application.
+- A principle guides concerns and is followed by decisions. The chain concern, principle, decision is the traceability line of R+W ch. 8.
+- A pattern implements one or more principles. A tactic belongs to a perspective.
+- Scenarios exercise perspectives. They state quality targets.
+
+## 4. Viewpoints
+
+The viewpoints are the seven core viewpoints of R+W, in the order of the book (R+W Table 3-1, ch. 16 to 22). The IDs VP01 to VP07 are catalogue IDs. The names and the concerns are the book's.
+
+Concern lists are quoted from the concern row at the start of each viewpoint chapter. The book has no other viewpoint. It allows more (R+W ch. 3), and a review can add one.
+
+### 4.1 Concerns of the viewpoints (R+W)
+
+| ID | Viewpoint | Concerns, as the book states them | Book |
+|----|-----------|-----------------------------------|------|
+| VP01 | Context | System scope and responsibilities, identity of external entities and services and data used, nature and characteristics of external entities, identity and responsibilities of external interfaces, nature and characteristics of external interfaces, other external interdependencies, impact of the system on its environment, and overall completeness, consistency, and coherence | ch. 16, L4001 |
+| VP02 | Functional | Functional capabilities, external interfaces, internal structure, and functional design philosophy | ch. 17, L4359 |
+| VP03 | Information | Information structure and content; information purpose and usage; information ownership; enterprise-owned information; identifiers and mappings; volatility of information semantics; information storage models; information flow; information consistency; information quality; timeliness, latency, and age; and archiving and information retention | ch. 18, L4730 |
+| VP04 | Concurrency | Task structure, mapping of functional elements to tasks, interprocess communication, state management, synchronization and integrity, supporting scalability, startup and shutdown, task failure, and reentrancy | ch. 19, L5396 |
+| VP05 | Development | Module organization, common processing, standardization of design, standardization of testing, instrumentation, and codeline organization | ch. 20, L5698 |
+| VP06 | Deployment | Runtime platform required, specification and quantity of hardware or hosting required, third-party software requirements, technology compatibility, network requirements, network capacity required, and physical constraints | ch. 21, L5993 |
+| VP07 | Operational | Installation and upgrade, functional migration, data migration, operational monitoring and control, alerting, configuration management, performance monitoring, support, backup and restore, and operation in third-party environments | ch. 22, L6323 |
+
+The earlier draft of the checklist paraphrased these lists, and its lists differed from the book in six of the seven viewpoints. The paraphrases are replaced by this table. The topics that the earlier lists added are placed in section 4.3.
+
+### 4.2 Typical stakeholders and model kinds
+
+The typical stakeholders and the typical model kinds are working lists of the checklist, section 4. They are not quotations of the book. The model kinds that the book names are: Context Model; Functional Structure Model; Information Structure, Ownership, Flow and Lifecycle Models; Concurrency Model; Module Structure, Common Design and Codeline Models; Runtime Platform, Network and Technology Dependency Models; Installation, Migration, Configuration Management, Administration and Support Models.
+
+### 4.3 Placement of other topics
+
+The earlier viewpoint definitions of the checklist listed topics that are not concern headings in the book. Each one has a place. "Book" means that the book treats the topic in that place. "Catalogue extension" means that the book has no home for it and the catalogue decides.
+
+| Topic | Placement | Basis | Label |
+|-------|-----------|-------|-------|
+| Contract and partner of an external interface | VP01 Context Model attributes: owner and responsibilities of the entity, the service level expected of the interface | L4181, L4185, L4088 | Book. The words "contract" and "partner" are not book concepts |
+| Layering | VP05 Module Structure Model, concern Module organization | L5762 | Book |
+| Dependencies between runtime elements | VP02 concern Internal structure, and the design philosophy characteristics coupling and interdependency | L4393 | Book |
+| External and internal interfaces | VP01 holds the external entity side: identity, responsibilities and nature of the external interface. VP02 holds the connectors and the internal handling. A criterion has one primary viewpoint by this rule | L4072, L4373 | Catalogue rule. The book lists external interfaces in both viewpoints |
+| Lock-in | Perspective FL, sub-characteristic Replaceability. Also the Evolution pitfall "Overreliance on Specific Hardware or Software" | L9146 | Book, in a perspective |
+| Nodes, environments, topology | VP06 concerns Runtime platform required and Network requirements. They are contents of the Runtime Platform Model and the Network Model | L6013, L6039, L6073 | Book |
+| Redundancy, failover | Perspective RE (fault tolerance, recoverability). R+W: Availability and Resilience tactics. The Deployment view shows the result | L8555 to L8627 | Book, in a perspective |
+| Scaling | Perspective FL, sub-characteristic Scalability, with PE. R+W: Performance and Scalability tactics. VP04 holds the concern Supporting scalability | L8073, L5462 | Book, with the ISO split |
+| Logging | VP05 concern Instrumentation. VP07 consumes it in the Administration Model. Audit logging belongs to SE (Accountability) | L5732, L6645, L7171 | Book |
+| Incident handling | VP07 concern Support, with the Support Model (incident classes, escalation). Incident recovery analysis belongs to RE | L6413, L6675, L8474 | Book |
+| Change and release | Release mechanics: VP05 concern Codeline organization. Installation, upgrade and configuration: VP07. Reliability of change: MA and FL | L5738, L6337, L8926 | Book |
+| Team ownership | Perspective DR | L5944 only hints at it | Catalogue extension |
+| Trust boundaries | Perspective SE, applied to VP06 and VP01 | L7123, L7420 | Catalogue term. The book has no trust boundary concept |
+| Failure domains | Perspective RE. The nearest book items are Single Point of Failure, Cascading Failure and Disaster Recovery | L8651 to L8682 | Catalogue term |
+| Observability | VP07 concerns Operational monitoring and control, Alerting and Performance monitoring, enabled by VP05 Instrumentation | L6381 to L6412 | Book. The word does not occur in the book |
+| Data migration and functional migration | Two concerns of VP07 with one Migration Model. Context lists data that will be migrated as part of the impact on the environment | L6345 to L6380, L4123 | Book |
+
+## 5. Perspectives
+
+There are 12 perspectives. The first nine are the ISO/IEC 25010:2023 product quality characteristics, with the ISO names, the ISO order and the ISO sub-characteristics. The last three are R+W perspectives that ISO cannot express, because they describe constraints and not properties of the product.
+
+| Code | Perspective | Basis | R+W counterpart |
+|------|-------------|-------|-----------------|
+| FS | Functional Suitability | ISO | None. A concern of the Functional viewpoint in R+W |
+| PE | Performance Efficiency | ISO | Performance and Scalability, without Scalability |
+| CO | Compatibility | ISO | None |
+| IC | Interaction Capability | ISO | Usability, Accessibility, and the language and culture part of Internationalization |
+| RE | Reliability | ISO | Availability and Resilience |
+| SE | Security | ISO | Security |
+| MA | Maintainability | ISO | Evolution, in part |
+| FL | Flexibility | ISO | Evolution in part, Scalability, the locale and unit part of Internationalization |
+| SA | Safety | ISO | None. Catalogue extension |
+| RG | Regulation | R+W | Regulation |
+| LO | Location | R+W | Location |
+| DR | DevelopmentResource | R+W | Development Resource |
+
+Why ISO as the base: the repository already uses the nine ISO characteristics for requirements, so a criterion matches the requirement that it checks.
+
+Costs of this choice, accepted:
+
+- Scalability sits in FL, as in ISO. The book groups it with Performance. A review that follows the book reads FL x Scalability together with PE.
+- Evolution is split into MA and FL. Usability and Accessibility are merged into IC. Internationalization has no perspective of its own. IC (Inclusivity) and FL (Adaptability) share it.
+- In the book a perspective is a package of concerns, activities, tactics and pitfalls. Our perspectives are the ISO names and the matrix. The mapping in section 5.1 keeps the book guidance reachable.
+
+### 5.1 Mapping of R+W perspective guidance to the 12 codes
+
+The table maps the concerns of each R+W perspective, with the tactics and pitfalls that the book names for them, to the codes of this catalogue. It cites chapters and uses no copied text. A tactic or pitfall is a reference point for a criterion, not a requirement.
+
+| R+W perspective | R+W concern | Our code | Note |
+|-----------------|-------------|----------|------|
+| Security (ch. 25) | Resources, principals, policies, threats | SE | Context for the security target (XV x SE) |
+| Security | Confidentiality, integrity, accountability | SE | Same-named ISO sub-characteristics. Audit logging: Accountability |
+| Security | Availability | RE | Security availability is judged under Availability |
+| Security | Detection and recovery, security mechanisms | SE | Tactics: recognized security principles, compartmentalisation |
+| Performance and Scalability (ch. 26) | Response time, throughput, hardware resource requirements, peak load behavior | PE | Time Behaviour, Resource Utilization, Capacity |
+| Performance and Scalability | Predictability | PE | Capacity, with the measured evidence |
+| Performance and Scalability | Scalability | FL | Scalability. Read with PE. Tactic: scale up or scale out |
+| Availability and Resilience (ch. 27) | Classes of service, planned downtime, unplanned downtime | RE | Availability |
+| Availability and Resilience | Time to repair | RE | Recoverability. Activity: incident recovery analysis |
+| Availability and Resilience | Disaster recovery | RE and LO | RE for the recovery, LO when the recovery site is far away |
+| Availability and Resilience | Pitfalls: single point of failure, cascading failure | RE | Used for VP06-RE-100 and VP06-RE-140 |
+| Evolution (ch. 28) | Magnitude, dimensions, likelihood and timescale of change | FL | Adaptability |
+| Evolution | Changes driven by external factors | FL and DR | Replaceability and lock-in. External dependencies in DR |
+| Evolution | Development complexity, preservation of knowledge | MA | Modularity, Analysability |
+| Evolution | Reliability of change | MA | Modifiability, Testability. The mechanics are in VP05 |
+| Evolution | When to pay for change, product management | DR | Economic viability (AD14) |
+| Accessibility (ch. 29) | Types of disability, functional availability, disability regulation | IC and RG | Inclusivity. The legal part: Regulation |
+| Development Resource | Time, cost, skills, resources, budgets, external dependencies | DR | Same concern |
+| Internationalization | Character sets, language needs, cultural norms | IC | Inclusivity |
+| Internationalization | Currency conversion, locale, cultural neutrality | FL | Adaptability |
+| Location | All concerns | LO | Same concern |
+| Regulation | All concerns | RG | Same concern |
+| Usability | Interface usability, information quality, alignment with working practices | IC | Operability, User Assistance and others. Information quality also touches VP03 |
+
+## 6. Principles, Patterns, Tactics and Decisions
+
+### 6.1 Definitions
+
+- Principle: "a fundamental statement of belief, approach, or intent that guides the definition of an architecture" (R+W ch. 8, L2058). A good principle is constructive, reasoned, well articulated, testable and significant (L2070).
+- Pattern and style: a reusable solution form (R+W ch. 11). Examples are layers, pipes and filters, ports and adapters.
+- Tactic: an approach to reach one quality property. It belongs to a perspective (R+W ch. 4). It is more general than a design pattern.
+- Decision: a choice with significance for the architecture, with its rationale (R+W ch. 8, 13).
+
+### 6.2 Three levels, three homes
+
+| Level | What | Home |
+|-------|------|------|
+| Definition | What a principle, pattern, tactic and decision are, and how they relate | This document, sections 3 and 6 |
+| Generic library | The tags PR01 to PR18 for criteria, and the pattern sources by viewpoint | The checklist, section 9. It is a tag vocabulary. Nobody decided these tags |
+| Adopted | A principle or a pattern that an organisation or a system has decided to apply | One DEC document for each principle and each pattern |
+
+### 6.3 An adopted principle as a DEC
+
+- The statement of the principle is the Decision Outcome.
+- The rationale is the Context and Problem Statement.
+- The implications are the Consequences.
+- The test that makes the principle testable is the Confirmation.
+- A pattern DEC records the decision to adopt the pattern. The definition of the pattern stays in its source and is named in the section Source. Tactics are no DEC documents. They are generic knowledge of a perspective.
+
+### 6.4 How to find the principles that apply
+
+A tag alone is not enough. list_dec filters only by identifier, and the tags are free-form. Three layers are used:
+
+1. Hub document, authoritative: the architecture description (a future ARC artifact, until then an index in a TXT) references each applicable principle as a DEC reference line. list_references then returns exactly the principles that apply, and the reverse reference diagram shows where one principle is applied.
+2. Tags, a convention for people: `arch.principle` or `arch.pattern`, and a scope tag.
+3. Scope, from the book: a principle is general (it applies to the whole architecture description) or view-specific. In the model, a view or the workspace carries the link in a property, for example `principle.dec`. The key is proposed and to be confirmed.
+
+Follow-up outside this document: a tag filter in list_dec would remove the need for the hub in simple cases.
+
+## 7. Deviations from the Book
+
+| Deviation | Reason | Label |
+|-----------|--------|-------|
+| Row XV CrossView in the matrix | Criteria that no single view can hold: security target, hazard analysis, regulation register, resource constraints | Catalogue extension |
+| Safety (SA) as a perspective | ISO/IEC 25010:2023 has Safety. R+W have no safety perspective | Catalogue extension |
+| Nine ISO characteristics as perspectives | Match with the requirement model of the repository | Catalogue extension |
+| Terms trust boundary and failure domain | Needed for Structurizr properties and for review criteria | Catalogue extension |
+| External interfaces in VP01 as primary | One primary viewpoint for each criterion. Both viewpoints keep the book concern | Catalogue rule |
+| Applicability matrix P, S, X | The per-view tables of R+W (Tables 25-1 to 29-6) are prose. The only rating grid is Table 4-1, for four perspectives. See the checklist, section 5.3 | Our interpretation |
+| Viewpoint IDs VP01 to VP07 | The book has no IDs | Catalogue extension |
+
+## 8. Mapping to C4 and Structurizr
+
+C4 is not based on viewpoints. The mapping is many to many. A C4 model is evidence for some viewpoints only. It is a presentation layer and an evidence source. It is not part of the checklist structure.
+
+Coverage values: full (the viewpoint concerns can be read from the model), partial (some concerns), none (no native construct).
+
+### 8.1 Viewpoint to C4
+
+| Viewpoint | C4 view and Structurizr construct | Coverage | Not modelled |
+|-----------|-----------------------------------|----------|--------------|
+| VP01 Context | System context and system landscape views. Persons and software systems, external ones tagged. Relationship description and technology as the external interface catalogue | partial to full | Impact of the system on its environment, other external interdependencies, overall coherence. Put them in documentation |
+| VP02 Functional | Container and component views. Element description and relationship technology as responsibilities and interfaces | partial | Functional capabilities (what the system does for users), functional design philosophy |
+| VP03 Information | No native construct. Relationship descriptions can name the data. Ownership and flow need another model (a data model, linked from documentation) | none | All concerns |
+| VP04 Concurrency | Dynamic view for message flows. Container instances for process structure | partial | Threads, synchronization, reentrancy, state management |
+| VP05 Development | Component view and technology as module structure. Documentation sections | partial | Common processing, standardization of design and testing, instrumentation, codeline organization |
+| VP06 Deployment | Deployment view: nested deployment nodes, infrastructure nodes, container instances with instance count and health checks. Properties for failure domains and trust boundaries | full for structure | Hardware specification, network capacity, third-party software requirements beyond technology |
+| VP07 Operational | Deployment view: health checks, infrastructure nodes. Documentation sections | partial | Installation, migration, configuration management, support, backup and restore |
+| XV CrossView | Not modelled. Properties can reference the evidence | none | Security target, threat model, hazard analysis, regulation register, resource constraints |
+
+The early chat sessions mapped Information to container and component views, and Development to the C4 code level. This catalogue does not do that. C4 has no Information construct, and the model generation agent does not model code level.
+
+### 8.2 Perspective to Structurizr
+
+| Code | What the model can show | Carrier |
+|------|-------------------------|---------|
+| FS | Nothing about the functions. Structure only | None |
+| PE | Technology of elements. Capacity is not modelled | Technology field |
+| CO | Protocol and technology of relationships, external systems | Relationship technology |
+| IC | Persons and user-facing containers | Persons, container technology |
+| RE | Instance count, health check, no replica, shared failure domain | Deployment view, properties `failure.domain.host`, `.zone`, `.region` |
+| SE | Trust boundaries, boundary crossings, protocol of relationships | Properties `trust.boundary`, `trust.boundary.crossing` |
+| MA | Component structure, cycles in the dependency graph | Component view, JSON export |
+| FL | Technology and replaceable elements. Scalability through instance count | Container instances |
+| SA | The declaration "safety relevant" with its justification | Model properties `review.safety.relevant`, `review.safety.justification` |
+| RG | A reference to the regulation register. Not modelled | Property reference. Key to be confirmed |
+| LO | Sites and regions of deployment nodes | `failure.domain.region`. A separate site key is to be confirmed |
+| DR | A reference to team ownership. Not modelled | Property reference. Key to be confirmed |
+
+A review result can be attached to an element with the Structurizr perspective feature. Proposed use: perspective name = the code name (for example Reliability), value = the rating word, description = the finding summary. Properties `review.criterion` and `review.evidence` carry the criterion ID and the evidence level. Verified with the parse tool. A style on a perspective value works only in the Structurizr renderer, not in the PlantUML export.
+
+### 8.3 Property conventions
+
+Verified with Structurizr 2026.10.26 (QA 25bd5b93, 0.0500):
+
+| Key | Placed on | Note |
+|-----|-----------|------|
+| `failure.domain.host`, `failure.domain.zone`, `failure.domain.region` | Deployment nodes, infrastructure nodes, container instances | One key for each level. Set each key once, on the node of that level. Children do not inherit properties |
+| `trust.boundary` | Elements and deployment nodes. Never on a group | A group holds no properties. The group name is for display |
+| `trust.boundary.crossing` | Explicit relationships | Cross-check only |
+| `review.safety.relevant`, `review.safety.justification` | Model | |
+| `origin`, `provenance` | Elements and relationships | `origin` is Extracted, Inferred or Proposed |
+
+Keys use only the characters a to z, 0 to 9 and the dot. Values are never empty. Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them, so a query script over the JSON export is the authoritative reader.
+
+### 8.4 To be confirmed
+
+- How a view records the viewpoint it conforms to. Options: the view key, a tag, a property on the view. Properties on views are not verified.
+- The keys `principle.dec`, a site key for LO, and the reference keys for RG and DR.
+- Documentation (`!docs`) and decisions (`!adrs`) with a local container, and `workspace extends` for a review overlay.
+- The same mapping on three contrasting architectures: a traditional enterprise application, a distributed cloud-native platform and a safety-relevant cyber-physical system.
+
+## 9. Related Documents
+
+TXT 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9: Architecture Review Checklist: Viewpoints x Perspectives
+
+QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decisions and Open Items
+
+## Updates
+
+<!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-18 14:00:00.000Z - Draft 0.1
+
+First draft. Metamodel concepts and two PlantUML diagrams. Viewpoints with the concern lists of the book, and the placement of the extra topics of the earlier checklist lists. The 12 perspectives with the mapping of R+W perspective guidance. Principles, patterns, tactics and decisions with their homes. Deviations from the book. Viewpoint and perspective mapping to C4 and Structurizr. Issue 267.

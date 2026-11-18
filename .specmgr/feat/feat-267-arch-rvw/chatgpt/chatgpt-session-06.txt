@@ -1,0 +1,854 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    I want to review systems and software architectures. I want to examine these architectures in regards to common viewpoints (as outlined in ISO 42010). List common viewpoints? Does it make sense to also choose viewpoints based on ISO 25010 characteristics?
+
+ 2.
+
+
+    Yes. In fact, I would recommend combining *ISO/IEC/IEEE 42010
+    viewpoints with ISO/IEC 25010 quality characteristics* when
+    reviewing software and system architectures.
+
+    They complement each other:
+
+      * *ISO 42010* helps you structure an architecture review around
+        stakeholders, their concerns, and the architectural views needed
+        to examine those concerns.
+      * *ISO 25010* provides a systematic catalogue of quality
+        characteristics against which you can evaluate the architecture.
+
+    The combination gives you a much more comprehensive and repeatable
+    architecture review approach.
+
+    Let's look at both.
+
+
+      1. Common architectural viewpoints (ISO 42010)
+
+    First, an important distinction: ISO/IEC/IEEE 42010 does *not
+    prescribe a mandatory set of viewpoints*.
+
+    The standard defines how viewpoints should be specified and used.
+    The actual viewpoints should be selected according to the
+    stakeholders and their concerns.
+
+    The current edition is ISO/IEC/IEEE 42010:2022. ISO
+
+    Nevertheless, there are commonly used viewpoints in software and
+    systems architecture.
+
+    Here is a practical collection that I would recommend considering
+    for architecture reviews.
+
+    Viewpoint	What it examines	Typical concerns
+    1. Context	System boundaries and its environment	Scope, external
+    dependencies, interfaces
+    2. Functional	System functionality and responsibilities	Functional
+    completeness, decomposition, capabilities
+    3. Logical	Logical components and their relationships	Modularity,
+    separation of concerns, coupling
+    4. Information/Data	Data structures, ownership and flows	Data
+    integrity, consistency, availability
+    5. Application/Software	Software components and their interactions	
+    Dependencies, interfaces, reuse
+    6. Technology/Infrastructure	Technology stack and infrastructure	
+    Technology choices, constraints, obsolescence
+    7. Deployment/Physical	Distribution of components across
+    infrastructure	Deployment topology, resource allocation
+    8. Integration/Interface	Communication between components and
+    external systems	API design, interoperability, protocols
+    9. Security	Security architecture and controls	Authentication,
+    authorization, confidentiality
+    10. Operational	Runtime behaviour and operational processes	
+    Monitoring, logging, availability, recovery
+    11. Development/Construction	Software organization and build
+    processes	Maintainability, testability, extensibility
+    12. Process/Behaviour	Dynamic behaviour and interactions over time	
+    Concurrency, workflows, state transitions
+    13. Lifecycle/Evolution	Architecture evolution over its lifecycle	
+    Extensibility, migration, technical debt
+
+    These are practical viewpoint categories, not an official list from
+    ISO 42010.
+
+
+          Additional viewpoints worth considering
+
+    Depending on the system, you might also want:
+
+      * *Business viewpoint:* Business capabilities, business processes,
+        organizational responsibilities and business alignment.
+      * *Performance viewpoint:* Response times, throughput, resource
+        utilization and scalability.
+      * *Safety viewpoint:* Hazards, safety requirements and risk
+        mitigation.
+      * *Compliance viewpoint:* Regulatory requirements, standards and
+        auditability.
+      * *Cost viewpoint:* Infrastructure costs, licensing, operating
+        costs and total cost of ownership.
+
+    Some of these can be incorporated into other viewpoints rather than
+    being separate viewpoints.
+
+    For example, security can be examined through the functional,
+    deployment, data and operational views.
+
+
+      2. Should you use ISO 25010 characteristics to select viewpoints?
+
+    Yes. I would actually make this a central part of your review
+    methodology.
+
+    However, there is an important conceptual distinction:
+
+    *ISO 25010 defines quality characteristics, not architectural
+    viewpoints.*
+
+    The characteristics describe WHAT you want to evaluate. The
+    viewpoints describe HOW you examine the architecture to evaluate it.
+
+    For example:
+
+      * Quality characteristic: Performance efficiency.
+      * Concern: Can the system handle 10,000 concurrent users?
+      * Viewpoint: Deployment and infrastructure.
+      * Architectural view: Deployment topology, load distribution and
+        resource allocation.
+      * Evaluation: Performance analysis, load testing and capacity
+        assessment.
+
+    This gives you a traceable relationship between quality requirements
+    and architecture decisions.
+
+
+        ISO 25010 quality characteristics
+
+    One important detail: ISO/IEC 25010:2023 revised the quality model
+    compared with the 2011 edition.
+
+    The 2023 product quality model defines nine characteristics:
+
+    Quality characteristic	What it addresses
+    1. Functional suitability	Whether the system provides the required
+    functionality
+    2. Performance efficiency	Performance, resource utilization and capacity
+    3. Compatibility	Coexistence and interoperability
+    4. Interaction capability	Usability, accessibility and user interaction
+    5. Reliability	Availability, faultlessness, recoverability and fault
+    tolerance
+    6. Security	Confidentiality, integrity, accountability and authenticity
+    7. Maintainability	Modularity, reusability, analysability,
+    modifiability and testability
+    8. Flexibility	Adaptability, scalability and installability
+    9. Safety	Operational constraints, risk identification, fail-safe
+    behaviour and safe integration
+
+    Source: ISO/IEC 25010:2023. ISO+1
+
+    Note that the 2023 edition uses /Interaction capability/ instead of
+    the previous /Usability/ characteristic and /Flexibility/ instead
+    of /Portability/.
+
+
+      3. Mapping ISO 25010 characteristics to architectural viewpoints
+
+    This is where the two standards become particularly useful together.
+
+    I would create a mapping between the nine quality characteristics
+    and the viewpoints used in your architecture reviews.
+
+    Here is a suggested starting point:
+
+    ISO 25010 characteristic	Recommended viewpoints
+    Functional suitability	Functional, Context, Process/Behaviour
+    Performance efficiency	Performance, Deployment, Technology, Process/
+    Behaviour
+    Compatibility	Integration/Interface, Context, Technology
+    Interaction capability	Functional, User Interaction, Operational
+    Reliability	Operational, Deployment, Technology, Process/Behaviour
+    Security	Security, Data, Integration, Deployment, Operational
+    Maintainability	Logical, Application/Software, Development/Construction
+    Flexibility	Logical, Application/Software, Technology, Deployment
+    Safety	Safety, Functional, Operational, Deployment
+
+    This is not a normative ISO mapping. It is a proposed mapping for a
+    practical architecture review framework.
+
+    There are two important observations:
+
+    *1. One quality characteristic can require several viewpoints.*
+
+    For example, reliability cannot be assessed simply by looking at the
+    deployment architecture.
+
+    You might need to examine:
+
+      * Component dependencies.
+      * Redundancy and failover.
+      * Error handling.
+      * Recovery mechanisms.
+      * Monitoring and operational procedures.
+
+    *2. One viewpoint can address several quality characteristics.*
+
+    For example, the deployment viewpoint can contribute to assessments of:
+
+      * Performance efficiency.
+      * Reliability.
+      * Security.
+      * Flexibility.
+      * Safety.
+
+    This many-to-many relationship is perfectly consistent with the ISO
+    42010 conceptual model.
+
+
+      4. My recommendation: A combined architecture review framework
+
+    If I were designing a repeatable architecture review process, I
+    would organize it into three levels.
+
+
+          Level 1: Architecture viewpoints
+
+    Define a standard set of viewpoints that you use when examining
+    architectures.
+
+    For example:
+
+    ID	Viewpoint
+    VP01	Context
+    VP02	Functional
+    VP03	Logical
+    VP04	Information/Data
+    VP05	Application/Software
+    VP06	Integration/Interface
+    VP07	Technology/Infrastructure
+    VP08	Deployment
+    VP09	Security
+    VP10	Operational
+    VP11	Development/Construction
+    VP12	Performance
+    VP13	Safety
+
+    This provides a consistent structure for your reviews.
+
+
+          Level 2: Quality characteristics
+
+    Use ISO 25010 to identify the quality characteristics relevant to
+    the system.
+
+    I would use all nine characteristics as an initial checklist, but
+    not necessarily evaluate all nine in equal depth.
+
+    For each characteristic, identify:
+
+      * Relevant quality requirements.
+      * Stakeholder expectations.
+      * Architectural decisions that influence the characteristic.
+      * Potential architectural risks.
+      * Evidence needed to assess the characteristic.
+
+
+          Level 3: Architecture assessment
+
+    This is where you actually evaluate the architecture.
+
+    For each relevant combination of viewpoint and quality
+    characteristic, examine:
+
+    Assessment dimension	Example questions
+    Architectural adequacy	Does the architecture support the required
+    quality?
+    Completeness	Are all necessary architectural elements present?
+    Consistency	Are architectural decisions consistent across views?
+    Risks	What architectural weaknesses or risks exist?
+    Trade-offs	What compromises have been made?
+    Evidence	What documentation, models, tests or measurements support
+    the assessment?
+
+    For example:
+
+    *Performance efficiency × Deployment viewpoint*
+
+      * Is the system horizontally scalable?
+      * Are there potential bottlenecks?
+      * Is load balancing implemented appropriately?
+      * Are resource limits understood?
+      * Are there single points of failure?
+
+    *Maintainability × Logical viewpoint*
+
+      * Are components sufficiently modular?
+      * Are responsibilities clearly separated?
+      * Are dependencies manageable?
+      * Can individual components be modified independently?
+      * Is the architecture overly complex?
+
+    *Security × Integration viewpoint*
+
+      * Are interfaces properly protected?
+      * Is authentication handled consistently?
+      * Are trust boundaries clearly defined?
+      * Is communication appropriately protected?
+      * Are external dependencies considered?
+
+
+      5. An additional recommendation: Include architectural principles
+
+    I would also consider adding a third reference model: architectural
+    principles and design principles.
+
+    For example:
+
+      * Separation of concerns.
+      * Loose coupling.
+      * High cohesion.
+      * Encapsulation.
+      * Information hiding.
+      * Single responsibility.
+      * Defense in depth.
+      * Fail-safe defaults.
+      * Least privilege.
+      * Explicit interfaces.
+      * Minimize dependencies.
+      * Design for change.
+
+    These principles help explain /why/ an architecture is good or
+    problematic.
+
+    You can then establish the following relationship:
+
+    Element	Purpose	Example
+    ISO 42010	How to examine the architecture	Deployment viewpoint
+    ISO 25010	What quality to evaluate	Reliability
+    Architectural principles	What design properties to look for	
+    Eliminate single points of failure
+    Architecture assessment	How well the architecture performs	
+    Identified availability risks
+
+
+      6. Suggested structure for your architecture review checklist
+
+    I would ultimately build a review catalogue with the following
+    structure:
+
+     1. *Architecture viewpoint*
+          * Context
+          * Functional
+          * Logical
+          * Data
+          * Integration
+          * Deployment
+          * Security
+          * Operational
+          * etc.
+     2. *Quality characteristic*
+          * Functional suitability
+          * Performance efficiency
+          * Compatibility
+          * Interaction capability
+          * Reliability
+          * Security
+          * Maintainability
+          * Flexibility
+          * Safety
+     3. *Review criteria*
+          * Specific questions to be answered.
+     4. *Assessment*
+          * Satisfactory
+          * Partially satisfactory
+          * Unsatisfactory
+          * Not applicable
+          * Not assessable (insufficient evidence)
+     5. *Findings*
+          * Identified strengths.
+          * Weaknesses.
+          * Risks.
+          * Recommendations.
+     6. *Evidence*
+          * Architecture diagrams.
+          * Design documents.
+          * Configuration information.
+          * Test results.
+          * Measurements.
+
+
+        7. Relevant standards
+
+    I would use these as the primary references:
+
+      * ISO/IEC/IEEE 42010:2022 — Architecture description and
+        viewpoints. ISO 42010 official standard <https://www.iso.org/
+        standard/74393.html?utm_source=chatgpt.com>
+      * ISO/IEC 25010:2023 — Product quality characteristics. ISO 25010
+        official standard <https://www.iso.org/standard/78176.html?
+        utm_source=chatgpt.com>
+      * ISO/IEC 25019 — Quality-in-use model, a useful complement when
+        evaluating the quality experienced by users.
+    ------------------------------------------------------------------------
+
+
+        Final recommendation
+
+    I would avoid creating two independent checklists, one based on ISO
+    42010 and another based on ISO 25010.
+
+    Instead, create a *unified architecture assessment matrix*.
+
+    The central idea is:
+
+    *Use ISO 42010 to organize the architecture examination and ISO
+    25010 to organize the quality assessment.*
+
+    This gives you:
+
+      * A consistent approach to reviewing different systems and
+        software architectures.
+      * Coverage of the most important architectural concerns.
+      * Traceability between quality requirements and architecture
+        decisions.
+      * A repeatable way to identify architectural weaknesses.
+      * A foundation for comparing architectures across different projects.
+
+    One particularly useful next step would be to develop a
+    comprehensive architecture review catalogue containing perhaps 100–
+    150 assessment questions, organized by viewpoint and mapped to ISO
+    25010 characteristics. That would give you a reusable framework for
+    conducting systematic architecture reviews.
+
+    Sources
+
+ 3.
+
+
+    regarding your assessment dimensions: can I use descriptions of ISO 29148 for this (example: completeness is also defined in ISO 29148)
+
+ 4.
+
+
+    Yes. I think this is a very good idea. In fact, I would recommend
+    using *ISO/IEC/IEEE 29148 as an additional reference for defining
+    the assessment dimensions and evaluation criteria*.
+
+    It gives your architecture review methodology a stronger foundation
+    because it provides established terminology and criteria for
+    assessing requirements quality.
+
+    There is, however, an important distinction:
+
+      * *ISO 42010:* Defines how to describe and examine architectures
+        using viewpoints, views, stakeholders and concerns.
+      * *ISO 25010:* Defines the quality characteristics against which
+        the system can be evaluated.
+      * *ISO 29148:* Defines characteristics and quality criteria for
+        requirements and requirements specifications.
+
+    These standards address different aspects of the assessment and can
+    complement each other.
+
+
+        1. Which ISO 29148 characteristics can you reuse?
+
+    ISO/IEC/IEEE 29148:2018 distinguishes between characteristics of
+    individual requirements (Clause 5.2.5) and characteristics of a set
+    of requirements (Clause 5.2.6).
+
+    This distinction is particularly interesting for architecture reviews.
+
+    The following characteristics are defined for individual requirements:
+
+    ISO 29148 characteristic	Potential application to architecture reviews
+    Necessary	Are the architectural elements and decisions actually needed?
+    Appropriate	Is the level of architectural detail appropriate?
+    Unambiguous	Are architectural descriptions and decisions clearly
+    understandable?
+    Complete	Does the architecture description provide all necessary
+    information?
+    Singular	Are architectural decisions and responsibilities
+    sufficiently distinct?
+    Feasible	Can the architecture realistically be implemented?
+    Verifiable	Can architectural properties and constraints be
+    objectively assessed?
+    Correct	Does the architecture correctly reflect stakeholder
+    requirements and constraints?
+    Conforming	Does the architecture follow applicable standards,
+    conventions and templates?
+
+    For sets of requirements, ISO 29148 additionally addresses:
+
+      * Completeness.
+      * Consistency.
+      * Feasibility.
+      * Comprehensibility.
+      * Ability to be validated.
+
+    These are particularly interesting when assessing an architecture as
+    a whole rather than individual architectural elements. Studylib+1
+
+
+        2. My proposed assessment dimensions
+
+    I would actually expand the assessment dimensions from my previous
+    answer using ISO 29148 as inspiration.
+
+    I would suggest the following catalogue:
+
+    ID	Assessment dimension	Description
+    AD01	Completeness	Does the architecture sufficiently address all
+    relevant stakeholder concerns and requirements?
+    AD02	Consistency	Are the architectural elements, decisions and views
+    mutually consistent?
+    AD03	Correctness	Does the architecture correctly address the
+    intended system requirements and constraints?
+    AD04	Feasibility	Can the architecture be implemented within
+    technical, organizational and financial constraints?
+    AD05	Appropriateness	Is the architectural solution appropriate for
+    the system's context and level of complexity?
+    AD06	Traceability	Can architectural decisions be traced to
+    requirements, stakeholder concerns and constraints?
+    AD07	Verifiability	Can architectural properties and claims be
+    objectively verified?
+    AD08	Modularity	Are architectural responsibilities and components
+    appropriately separated?
+    AD09	Understandability	Is the architecture understandable to its
+    intended stakeholders?
+    AD10	Extensibility	Can the architecture accommodate foreseeable changes?
+    AD11	Compliance	Does the architecture comply with applicable
+    standards, regulations and architectural principles?
+    AD12	Risk management	Are architectural risks identified and
+    adequately addressed?
+
+    Some of these dimensions are directly inspired by ISO 29148, while
+    others extend the approach into architecture-specific assessment.
+
+    One important point: I would not apply the 29148 definition of
+    completeness literally. For example, completeness of an individual
+    requirement is different from completeness of an architecture
+    description. You need to adapt the criteria to the object being
+    assessed.
+
+
+        3. How the three standards fit together
+
+    I would structure your assessment methodology as follows:
+
+    Standard	Role in the methodology	Main question
+    ISO 42010	Architecture viewpoints	What aspects of the architecture
+    should we examine?
+    ISO 25010	Quality characteristics	What quality properties should the
+    architecture support?
+    ISO 29148	Assessment dimensions	What criteria should we use to
+    evaluate the architecture?
+
+    This creates a three-dimensional assessment model.
+
+    For example:
+
+    *Maintainability × Logical viewpoint × Completeness*
+
+    Assessment questions:
+
+      * Are all relevant software components represented?
+      * Are their responsibilities documented?
+      * Are dependencies identified?
+      * Are important architectural constraints documented?
+
+    Another example:
+
+    *Reliability × Deployment viewpoint × Feasibility*
+
+    Assessment questions:
+
+      * Are redundancy mechanisms architecturally supported?
+      * Can the proposed failover mechanisms be implemented with the
+        available infrastructure?
+      * Are the required availability targets technically achievable?
+      * Are there infrastructure constraints that make the architecture
+        infeasible?
+
+    And another:
+
+    *Security × Integration viewpoint × Consistency*
+
+    Assessment questions:
+
+      * Are security mechanisms consistently applied across interfaces?
+      * Are authentication and authorization approaches consistent?
+      * Are trust boundaries represented consistently in the architecture?
+
+
+        4. One further suggestion: Separate assessment dimensions from
+        quality characteristics
+
+    I would resist adding every ISO 29148 characteristic directly to ISO
+    25010.
+
+    They serve different purposes.
+
+    For instance:
+
+      * Completeness is an assessment dimension.
+      * Security is a quality characteristic.
+      * Integration is a viewpoint.
+
+    Keeping these concepts separate makes the methodology more reusable.
+
+    You can apply completeness to security, maintainability,
+    performance, reliability and other quality characteristics.
+
+    Likewise, you can apply consistency to virtually every architectural
+    viewpoint.
+
+    This is a significant advantage of the three-dimensional model.
+
+    ------------------------------------------------------------------------
+
+
+        5. My recommended final model
+
+    I would use the following structure as the foundation for your
+    architecture review framework:
+
+    Dimension	Based on	Examples
+    Viewpoints	ISO 42010	Logical, data, deployment, security, operational
+    Quality characteristics	ISO 25010	Reliability, security,
+    maintainability, flexibility
+    Assessment dimensions	ISO 29148 + architecture-specific criteria	
+    Completeness, consistency, feasibility, traceability, verifiability
+
+    The resulting model is:
+
+    *Architecture assessment = Viewpoint × Quality characteristic ×
+    Assessment dimension*
+
+    This gives you a systematic way to derive individual review questions.
+
+    For reference, the relevant standards are:
+
+      * ISO/IEC/IEEE 42010 <https://www.iso.org/standard/74393.html?
+        utm_source=chatgpt.com>
+      * ISO/IEC 25010:2023 <https://www.iso.org/standard/78176.html?
+        utm_source=chatgpt.com>
+      * ISO/IEC/IEEE 29148:2018 <https://www.iso.org/
+        standard/72089.html?utm_source=chatgpt.com>
+
+    *My strongest recommendation:* Build your review catalogue around
+    these three dimensions rather than around a flat list of questions.
+    This will make it much easier to maintain, extend and apply
+    consistently to different kinds of systems and software architectures.
+
+    Sources
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

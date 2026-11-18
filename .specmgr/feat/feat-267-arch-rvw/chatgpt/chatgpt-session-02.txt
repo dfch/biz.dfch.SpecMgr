@@ -1,0 +1,1938 @@
+Log in
+
+Sign up for free
+
+ 1.
+
+
+    compare "hexagonal architecture" with "C4"
+
+ 2.
+
+
+      Hexagonal Architecture vs. C4 Model
+
+    *Hexagonal Architecture and C4 are complementary concepts, not
+    competing architectural approaches.*
+
+    The key difference is:
+
+      * *Hexagonal Architecture (Ports and Adapters):* Describes how to
+        structure the internals of a software application to isolate
+        business logic from external dependencies.
+      * *C4 Model:* Describes how to visualize, document, and
+        communicate software architecture at different levels of
+        abstraction.
+
+    In other words:
+
+        Hexagonal Architecture tells you how to design your software. C4
+        tells you how to describe and communicate that design.
+
+
+        1. Hexagonal Architecture
+
+    Hexagonal Architecture, introduced by Alistair Cockburn, is also
+    known as *Ports and Adapters*.
+
+    Its primary goal is to isolate the application's business logic from
+    external technologies and infrastructure.
+
+
+          Main concepts
+
+      * *Domain/Application Core:* Contains business rules and
+        application logic.
+      * *Ports:* Interfaces defining how the application interacts with
+        the outside world.
+      * *Adapters:* Implementations connecting the application to
+        external systems.
+
+    For example:
+
+    text
+
+    |             REST API
+                    |
+              REST Adapter
+                    |
+              Input Port
+                    |
+        +-----------------------+
+        |                       |
+        |    Application Core   |
+        |                       |
+        |    Business Logic     |
+        |                       |
+        +-----------------------+
+                    |
+              Output Port
+                    |
+              Database Adapter
+                    |
+                 Database
+    |
+
+
+          Key characteristics
+
+      * Business logic independent of infrastructure.
+      * Dependencies point inward.
+      * External technologies can be replaced with minimal impact.
+      * Easier unit testing through mock adapters.
+      * Clear separation of responsibilities.
+
+    *Best suited for:* Designing application internals, managing
+    dependencies, and protecting business logic from infrastructure changes.
+
+
+        2. C4 Model
+
+    C4, introduced by Simon Brown, is a hierarchical approach to
+    visualizing software architecture.
+
+    C4 stands for:
+
+      * Context
+      * Containers
+      * Components
+      * Code
+
+    It provides four levels of architectural diagrams.
+
+
+          Level 1: System Context
+
+    Shows the system, its users, and external systems.
+
+    Example:
+
+    text
+
+    |       Customer
+               |
+               v
+        +--------------+
+        |  E-Commerce  |
+        |    System    |
+        +--------------+
+           |        |
+           v        v
+       Payment   Shipping
+       Gateway   Provider
+    |
+
+
+          Level 2: Container
+
+    Shows the major deployable or executable parts of the system.
+
+    text
+
+    |       Customer
+               |
+               v
+          Web Application
+               |
+               v
+          Backend API
+           /       \
+          v         v
+       Database   Message Queue
+    |
+
+
+          Level 3: Component
+
+    Shows the logical components inside a container.
+
+    text
+
+    |          Backend API
+                   |
+           +-------+-------+
+           |               |
+           v               v
+       Order Module    Customer Module
+           |
+           v
+       Payment Module
+    |
+
+
+          Level 4: Code
+
+    Shows implementation-level details, such as classes, interfaces, and
+    relationships.
+
+    For example:
+
+    text
+
+    |       OrderService
+                |
+                v
+           OrderRepository
+                |
+                v
+           JpaOrderRepository
+    |
+
+    Level 4 is optional; it is often more practical to use the IDE or
+    code itself for this level of detail.
+
+    *Best suited for:* Architectural documentation, system
+    understanding, stakeholder communication, and explaining
+    dependencies between systems and components.
+
+
+        3. Direct comparison
+
+    Dimension	Hexagonal Architecture	C4 Model
+    Purpose	Software design	Architecture visualization
+    Nature	Architectural pattern	Documentation model
+    Main concern	Dependency management	Architecture communication
+    Focus	Application internals	System structure at multiple levels
+    Primary concepts	Ports, adapters, application core	Context,
+    containers, components, code
+    Scope	Usually application-level	System-wide, down to code
+    Defines implementation rules	Yes	No
+    Defines dependencies	Yes, dependency direction	No, describes
+    relationships
+    Supports testing	Through isolation and replaceable adapters	
+    Indirectly, through documentation
+    Technology independent	Yes	Yes
+    Audience	Developers and architects	Developers, architects, stakeholders
+
+
+        4. How they work together
+
+    This is where things get interesting.
+
+    Imagine building an e-commerce platform.
+
+    You could use:
+
+      * C4 to describe the overall architecture.
+      * Hexagonal Architecture to design the internals of the Order Service.
+
+    For example:
+
+
+          C4 Level 1 – System Context
+
+    text
+
+    |       Customer
+               |
+               v
+        E-Commerce Platform
+           /    |     \
+          v     v      v
+       Payment Shipping Inventory
+       Gateway Provider Service
+    |
+
+
+          C4 Level 2 – Containers
+
+    text
+
+    |       E-Commerce Platform
+                    |
+         +----------+----------+
+         |          |          |
+         v          v          v
+       Web App   Order API   Inventory API
+                     |
+                     v
+                  Database
+    |
+
+
+          C4 Level 3 – Order API Components
+
+    text
+
+    |              Order API
+                      |
+           +----------+----------+
+           |                     |
+           v                     v
+     Order Controller       Order Query
+           |
+           v
+     Order Application Service
+           |
+           v
+        Order Domain
+           |
+           v
+      Order Repository
+    |
+
+
+          Hexagonal Architecture – Order API internals
+
+    text
+
+    |          REST Controller
+                     |
+                     v
+              CreateOrder Port
+                     |
+          +----------------------+
+          |                      |
+          |   Order Application  |
+          |                      |
+          |     Order Domain     |
+          |                      |
+          +----------------------+
+                     |
+              OrderRepository
+                  Port
+                     |
+                     v
+             JPA Repository
+                  Adapter
+                     |
+                     v
+                 Database
+    |
+
+    Notice that the C4 component diagram describes the components, while
+    the hexagonal diagram describes how those components interact and
+    how dependencies are managed.
+
+
+        5. When should you use each?
+
+    Situation	Recommended approach
+    Designing a new application	Hexagonal Architecture
+    Documenting a microservices landscape	C4
+    Explaining system boundaries	C4
+    Isolating business logic from infrastructure	Hexagonal Architecture
+    Documenting interactions between services	C4
+    Designing testable application internals	Hexagonal Architecture
+    Communicating architecture to management	C4
+    Documenting application components	Both
+
+
+        6. My recommendation
+
+    I would not choose between them.
+
+    I would use them together:
+
+     1. *C4 Level 1:* Establish the system context and boundaries.
+     2. *C4 Level 2:* Identify containers and their responsibilities.
+     3. *C4 Level 3:* Identify the important components within each
+        container.
+     4. *Hexagonal Architecture:* Apply ports and adapters within
+        containers where isolation of business logic is valuable.
+     5. *C4 Dynamic Diagrams:* Document important runtime interactions
+        between components and systems.
+     6. *C4 Deployment Diagrams:* Document the infrastructure and
+        deployment topology.
+
+    One important distinction: not every container needs to implement
+    Hexagonal Architecture. A simple CRUD service, for example, might
+    not justify the additional abstraction.
+
+
+          Further reading
+
+      * Cockburn's original Hexagonal Architecture article <https://
+        alistair.cockburn.us/hexagonal-architecture?utm_source=chatgpt.com>
+      * Official C4 Model documentation <https://c4model.com/?
+        utm_source=chatgpt.com>
+
+    *Bottom line:* C4 helps you see and communicate the architecture of
+    the whole system. Hexagonal Architecture helps you design the
+    internals of individual applications. Together, they provide a
+    strong foundation for both architectural design and documentation.
+
+ 3.
+
+
+    can I combine this with DDD (Domain Driven Design)?
+
+ 4.
+
+
+    Absolutely. In fact, *DDD (Domain-Driven Design), Hexagonal
+    Architecture, and C4 work extremely well together.*
+
+    They address three different but complementary aspects of software
+    architecture:
+
+      * *DDD:* How to model the business domain.
+      * *Hexagonal Architecture:* How to structure the application and
+        manage dependencies.
+      * *C4 Model:* How to visualize and communicate the architecture.
+
+    I would consider this a very solid combination for designing complex
+    business applications and microservices.
+
+
+      1. How the three concepts complement each other
+
+    Concern	Approach	Main question
+    Business complexity	DDD	What are the business concepts, rules, and
+    boundaries?
+    Application design	Hexagonal Architecture	How do we isolate business
+    logic from infrastructure?
+    Architecture documentation	C4	How do we communicate the architecture?
+
+    Think of them as three different perspectives on the same software
+    system.
+
+
+      2. Combining them in practice
+
+    Imagine building an e-commerce platform.
+
+
+        Step 1: DDD – Identify bounded contexts
+
+    Start by understanding the business domain.
+
+    You might identify these bounded contexts:
+
+    text
+
+    |             E-Commerce Platform
+                          |
+           +--------------+--------------+
+           |              |              |
+           v              v              v
+         Sales         Inventory       Shipping
+           |              |              |
+           v              v              v
+        Ordering       Stock Mgmt     Delivery
+           |
+           v
+        Payments
+    |
+
+    Each bounded context has:
+
+      * Its own domain model.
+      * Its own ubiquitous language.
+      * Its own business rules.
+      * Clearly defined boundaries.
+      * Its own domain events and integration contracts where appropriate.
+
+    For example, |Order| in Sales does not necessarily mean the same
+    thing as |Order| in Shipping.
+
+    This is one of the fundamental benefits of DDD.
+
+
+        Step 2: C4 – Describe the architecture
+
+    Once you understand the domain boundaries, use C4 to document them.
+
+
+          C4 Level 1: System Context
+
+    Show users and external systems.
+
+
+          C4 Level 2: Containers
+
+    Show the major applications and deployable units.
+
+    For example:
+
+    text
+
+    |             E-Commerce Platform
+                          |
+           +--------------+--------------+
+           |              |              |
+           v              v              v
+       Sales Service  Inventory Service  Shipping Service
+           |              |              |
+           v              v              v
+       Sales DB       Inventory DB     Shipping DB
+    |
+
+    The important point is that bounded contexts and deployable
+    containers are not necessarily identical.
+
+    A bounded context can have multiple containers, and multiple bounded
+    contexts can sometimes live within one deployable application.
+
+
+          C4 Level 3: Components
+
+    Zoom into a particular bounded context.
+
+    For example:
+
+    text
+
+    |             Sales Service
+                       |
+           +-----------+-----------+
+           |           |           |
+           v           v           v
+       Ordering     Pricing     Payment
+       Component   Component   Component
+    |
+
+    These components can reflect DDD subdomains or application
+    responsibilities, depending on the design.
+
+
+        Step 3: Hexagonal Architecture – Structure each bounded context
+
+    Now apply Hexagonal Architecture within a bounded context.
+
+    For example, the Ordering component:
+
+    text
+
+    |       +--------------------------------+
+           |        Ordering Context        |
+           |                                |
+           |  +--------------------------+  |
+           |  |                          |  |
+           |  |     Application Layer    |  |
+           |  |                          |  |
+           |  |     CreateOrder          |  |
+           |  |     CancelOrder          |  |
+           |  |                          |  |
+           |  +------------+-------------+  |
+           |               |                |
+           |  +------------v-------------+  |
+           |  |                          |  |
+           |  |       Domain Layer        |  |
+           |  |                          |  |
+           |  |       Order              |  |
+           |  |       OrderLine          |  |
+           |  |       CustomerId         |  |
+           |  |       Business Rules     |  |
+           |  |                          |  |
+           |  +--------------------------+  |
+           |                                |
+           +--------------------------------+
+    |
+
+    Then connect it to external infrastructure through ports and adapters:
+
+    text
+
+    |       REST API Adapter
+                   |
+                   v
+           CreateOrder Port
+                   |
+                   v
+           Application Service
+                   |
+                   v
+              Domain Model
+                   |
+                   v
+           OrderRepository Port
+                   |
+                   v
+           Persistence Adapter
+                   |
+                   v
+               Database
+    |
+
+    The responsibilities are now clear:
+
+      * DDD defines the domain model.
+      * Hexagonal Architecture protects that model from infrastructure.
+      * C4 documents the structure and relationships.
+
+
+      3. How the concepts map to each other
+
+    This is probably the most useful overview:
+
+    DDD concept	Hexagonal equivalent	C4 representation
+    Domain	Application core's domain model	Component
+    Bounded Context	Application boundary (often)	Container or group of
+    containers
+    Aggregate	Domain object boundary	Usually not explicitly represented
+    Entity	Domain object	Usually not explicitly represented
+    Value Object	Domain object	Usually not explicitly represented
+    Domain Service	Domain logic	Component or class
+    Application Service	Application layer	Component
+    Repository	Output port	Component
+    Repository Implementation	Output adapter	Component
+    Domain Event	Domain mechanism	Dynamic diagram interaction
+    Anti-Corruption Layer	Adapter / translation boundary	Component or
+    container
+
+    Note that these are conceptual mappings, not strict one-to-one
+    relationships.
+
+
+      4. Recommended architectural organization
+
+    For a larger application, I would organize the code around bounded
+    contexts rather than technical layers.
+
+    For example:
+
+    text
+
+    |src/
+      sales/
+        ordering/
+          domain/
+            model/
+            events/
+            services/
+
+          application/
+            commands/
+            queries/
+            ports/
+
+          adapters/
+            inbound/
+              rest/
+            outbound/
+              persistence/
+              messaging/
+
+        pricing/
+          domain/
+          application/
+          adapters/
+
+      inventory/
+        domain/
+        application/
+        adapters/
+
+      shipping/
+        domain/
+        application/
+        adapters/
+
+      shared/
+        kernel/
+    |
+
+    This gives you:
+
+      * Business-oriented organization through DDD.
+      * Dependency isolation through Hexagonal Architecture.
+      * Clear boundaries between bounded contexts.
+      * Flexibility to evolve towards independently deployable services.
+
+    One caveat: avoid turning every bounded context into a microservice.
+    DDD boundaries are domain boundaries, not automatic deployment
+    boundaries.
+
+
+      5. My recommended architecture approach
+
+    I would approach a new enterprise application in this order:
+
+    Order	Methodology	Deliverable
+    1	DDD Strategic Design	Domain map and bounded contexts
+    2	C4 Level 1	System Context diagram
+    3	C4 Level 2	Container diagram
+    4	DDD Tactical Design	Aggregates, entities, value objects, domain events
+    5	Hexagonal Architecture	Ports, adapters, application and domain layers
+    6	C4 Level 3	Component diagrams
+    7	C4 Dynamic Diagrams	Important runtime interactions
+    8	C4 Deployment Diagrams	Infrastructure and deployment architecture
+
+    You can iterate between these steps as your understanding of the
+    domain evolves.
+
+    ------------------------------------------------------------------------
+
+
+        6. The bigger picture
+
+    I like to summarize the relationship like this:
+
+    text
+
+    |              BUSINESS DOMAIN
+                         |
+                         v
+                        DDD
+                         |
+              Defines the domain model
+                         |
+                         v
+              HEXAGONAL ARCHITECTURE
+                         |
+              Structures the application
+                         |
+                         v
+                     C4 MODEL
+                         |
+              Documents the architecture
+    |
+
+    This is a conceptual relationship, not a mandatory sequence.
+
+    *My recommendation:* Use DDD as your primary design methodology,
+    Hexagonal Architecture as your application architecture pattern, and
+    C4 as your architectural documentation standard.
+
+    Together, they provide a coherent approach to building maintainable,
+    testable, and understandable software systems.
+
+ 5.
+
+
+    I thought that the term "service" for a "thing" in DDD is only used, when that "thing" is a cross-cutting concern that is not part of a specific domain
+
+ 6.
+
+
+    You're touching on an important DDD distinction. However, there is a
+    slight misconception: *In DDD, a Service is not necessarily cross-
+    cutting or outside the domain.*
+
+    DDD distinguishes between three kinds of services, and they have
+    different responsibilities.
+
+
+        1. Domain Service
+
+    A Domain Service represents business logic that belongs to the
+    domain but doesn't naturally belong to a particular Entity or Value
+    Object.
+
+    For example:
+
+      * Calculating an insurance premium based on multiple domain objects.
+      * Determining whether a customer qualifies for a particular discount.
+      * Transferring money between two bank accounts.
+
+    Consider:
+
+    java
+
+    |public class MoneyTransferService {
+
+        public void transfer(
+            Account source,
+            Account destination,
+            Money amount
+        ) {
+            source.withdraw(amount);
+            destination.deposit(amount);
+        }
+    }
+    |
+
+    The transfer operation is domain logic, but it doesn't naturally
+    belong to either individual account.
+
+    *Important:* A Domain Service is part of the domain. It is not
+    necessarily cross-cutting.
+
+
+        2. Application Service
+
+    An Application Service coordinates a use case.
+
+    It orchestrates domain objects and delegates business decisions to
+    the domain model.
+
+    For example:
+
+    java
+
+    |public class TransferMoneyUseCase {
+
+        private final AccountRepository accountRepository;
+
+        public void execute(TransferMoneyCommand command) {
+
+            Account source =
+                accountRepository.findById(command.sourceId());
+
+            Account destination =
+                accountRepository.findById(command.destinationId());
+
+            source.transferTo(destination, command.amount());
+
+            accountRepository.save(source);
+            accountRepository.save(destination);
+        }
+    }
+    |
+
+    Its responsibility is orchestration rather than implementing
+    business rules.
+
+    Application Services typically belong to the application layer in
+    Hexagonal Architecture.
+
+
+        3. Infrastructure Service
+
+    An Infrastructure Service implements technical capabilities.
+
+    Examples:
+
+      * Email delivery.
+      * File storage.
+      * Message publishing.
+      * External API communication.
+      * Database access.
+
+    These are generally infrastructure concerns, not domain concepts.
+
+    In Hexagonal Architecture, they are often implemented as outbound
+    adapters.
+
+
+        4. What about cross-cutting concerns?
+
+    Cross-cutting concerns are a different category.
+
+    Examples:
+
+      * Logging.
+      * Authentication.
+      * Authorization.
+      * Monitoring.
+      * Tracing.
+      * Transaction management.
+
+    These concerns can affect multiple parts of an application.
+
+    They are not automatically DDD Services.
+
+    For example, authorization might involve:
+
+      * A domain-level authorization policy.
+      * An application-level permission check.
+      * An infrastructure-level identity provider.
+
+    The distinction depends on where the responsibility belongs.
+
+
+        5. Putting everything together
+
+    Here is how I would map these concepts to DDD and Hexagonal
+    Architecture:
+
+    Concept	Belongs to	Responsibility
+    Entity	Domain	Business identity and behavior
+    Value Object	Domain	Immutable domain concept
+    Aggregate	Domain	Consistency boundary
+    Domain Service	Domain	Business operation not naturally belonging to
+    an entity/value object
+    Application Service	Application	Use-case orchestration
+    Infrastructure Service	Infrastructure	Technical capabilities
+    Cross-cutting concern	Multiple layers	Shared technical or
+    organizational concern
+
+
+        6. One important distinction: Service vs. Domain Service
+
+    Your intuition might come from the fact that DDD emphasizes a rich
+    domain model rather than putting all business logic into services.
+
+    That's absolutely correct.
+
+    A useful rule of thumb:
+
+      * If the behavior naturally belongs to an Entity or Value Object,
+        put it there.
+      * If the behavior is domain logic but doesn't naturally belong to
+        one particular domain object, consider a Domain Service.
+      * If the behavior coordinates a use case, use an Application Service.
+      * If the behavior implements a technical capability, use an
+        Infrastructure Service.
+
+    *A Domain Service should not become a dumping ground for business
+    logic that hasn't been properly modeled.*
+
+    That's one of the common pitfalls in DDD.
+
+    And one final distinction worth remembering: in DDD, the word /
+    Service/ describes a particular kind of responsibility. In Hexagonal
+    Architecture, a /Service/ is often just a programming construct. The
+    terminology overlaps, but the architectural meanings aren't
+    necessarily identical.
+
+ 7.
+
+
+    is there a formal and/or generally-accepted definition of DDD?
+
+ 8.
+
+
+    Yes. There is a well-established definition of *Domain-Driven Design
+    (DDD)*, originating from Eric Evans' work. However, there is no
+    formal international standard or specification that governs DDD in
+    the way that, for example, UML is standardized.
+
+    There is something better than a collection of informal definitions:
+    an established body of concepts, principles, patterns, and practices
+    shared by the DDD community.
+
+
+        1. The original definition by Eric Evans
+
+    The canonical source is:
+
+    Domain-Driven Design: Tackling Complexity in the Heart of Software
+
+    Published in 2003, this book introduced DDD as a systematic approach
+    to dealing with complexity in software development by focusing on
+    the domain and its model.
+
+    Evans later summarized DDD as:
+
+        Domain-Driven Design is an approach to software development for
+        complex businesses and other domains.
+
+    The central idea is that software should be shaped around a deep
+    understanding of the business domain, rather than primarily around
+    technical concerns.
+
+    Martin Fowler provides a useful complementary definition:
+
+        Domain-Driven Design is an approach to software development that
+        centers the development on programming a domain model that has a
+        rich understanding of the processes and rules of a domain.
+
+    martinfowler.com+1
+
+
+        2. Three fundamental principles of DDD
+
+    Evans' work can be distilled into three fundamental principles.
+
+
+          1. Focus on the core domain
+
+    Understand the business problem and identify the parts that create
+    the most business value.
+
+    The software should reflect the business domain, not simply the
+    technical structure of the application.
+
+
+          2. Explore the domain through collaboration
+
+    Domain experts and software developers collaboratively develop a
+    model of the domain.
+
+    This is not a process where business analysts define a model and
+    developers subsequently implement it.
+
+    The model evolves through continuous collaboration.
+
+
+          3. Use a Ubiquitous Language within an explicitly Bounded Context
+
+    The team establishes a common, rigorous language that is used
+    consistently in:
+
+      * Business discussions.
+      * Requirements.
+      * Architectural documentation.
+      * Domain models.
+      * Source code.
+      * Tests.
+
+    The language belongs to a particular Bounded Context, not
+    necessarily the entire organization.
+
+    These three principles are explicitly summarized in the DDD
+    Reference. liveBook+1
+
+
+        3. What is generally considered part of DDD?
+
+    DDD is commonly divided into two areas:
+
+    Strategic Design	Tactical Design
+    Domain	Entity
+    Subdomain	Value Object
+    Core Domain	Aggregate
+    Supporting Subdomain	Aggregate Root
+    Generic Subdomain	Domain Service
+    Bounded Context	Repository
+    Context Map	Factory
+    Ubiquitous Language	Domain Event
+    Anti-Corruption Layer	Application Service
+
+    This distinction is important.
+
+    *Strategic Design* addresses the complexity of the business domain
+    and the boundaries between models.
+
+    *Tactical Design* addresses how individual domain models are
+    expressed in software.
+
+    Neither is a standalone replacement for the other. Both are
+    important parts of the DDD approach.
+
+
+        4. Is DDD an architecture?
+
+    This is a particularly important distinction in the context of our
+    previous discussion.
+
+    I would classify the concepts as follows:
+
+    Concept	Classification
+    DDD	Software design approach
+    Hexagonal Architecture	Architectural pattern
+    C4	Architectural visualization and documentation model
+    Clean Architecture	Architectural approach
+    CQRS	Architectural pattern
+    Event Sourcing	Architectural pattern
+
+    DDD does not prescribe a particular technical architecture.
+
+    You can implement DDD using:
+
+      * Hexagonal Architecture.
+      * Clean Architecture.
+      * Layered Architecture.
+      * Modular Monoliths.
+      * Microservices.
+
+    The architecture should support the domain model rather than dictate it.
+
+
+        5. Authoritative references
+
+    If you want to establish a consistent understanding of DDD, I
+    recommend these sources:
+
+     1. Domain-Driven Design: Tackling Complexity in the Heart of
+        Software — The original and canonical reference.
+     2. Domain-Driven Design Reference — A concise glossary of DDD
+        terminology and patterns. Particularly useful for establishing a
+        common vocabulary. Available free from Domain Language <https://
+        www.domainlanguage.com/ddd/reference/>.
+     3. Implementing Domain-Driven Design — A practical guide to
+        applying DDD.
+     4. Martin Fowler's Domain-Driven Design overview <https://
+        martinfowler.com/bliki/DomainDrivenDesign.html?
+        utm_source=chatgpt.com> — A good introduction to the underlying
+        philosophy.
+    ------------------------------------------------------------------------
+
+
+        6. My suggested working definition
+
+    If I had to establish a definition for an architecture handbook or
+    software development guidelines, I would use:
+
+    *Domain-Driven Design (DDD)*
+
+    DDD is a software design approach for managing complexity in
+    business domains by making the domain itself the primary focus of
+    software design.
+
+    It emphasizes:
+
+     1. Developing a deep understanding of the business domain through
+        collaboration between domain experts and software developers.
+     2. Creating and continuously evolving domain models that represent
+        business concepts, processes, and rules.
+     3. Establishing a Ubiquitous Language shared by domain experts and
+        developers within explicitly defined Bounded Contexts.
+     4. Structuring complex domains through strategic design concepts
+        such as Subdomains, Bounded Contexts, and Context Maps.
+     5. Expressing domain models through tactical design concepts such
+        as Entities, Value Objects, Aggregates, Domain Services, and
+        Domain Events.
+
+    *An important consequence:* DDD is not primarily about using
+    Aggregates, Repositories, Entities, or Domain Services. Those are tools.
+
+    The actual essence of DDD is **putting the business domain, its
+    understanding, and its model at the center of software development.**
+
+    Sources
+
+ 9.
+
+
+    Is "Clean Architecture" still considered valid today?
+
+10.
+
+
+    *Yes. Clean Architecture is still considered a valid and relevant
+    software architecture approach in 2026.* However, I would
+    distinguish between its fundamental principles, which remain highly
+    relevant, and some of the implementation conventions that are
+    frequently associated with it.
+
+    In particular, Clean Architecture works very well with DDD and
+    Hexagonal Architecture.
+
+
+        1. Which parts of Clean Architecture are still relevant?
+
+    Robert C. Martin introduced Clean Architecture in 2012, building on
+    ideas from earlier approaches such as Hexagonal Architecture and
+    Onion Architecture.
+
+    Its central principle is the *Dependency Rule*:
+
+        Source code dependencies must point inward, toward higher-level
+        policies.
+
+    This means:
+
+      * Domain logic should not depend on infrastructure.
+      * Business rules should not depend on databases.
+      * Business rules should not depend on web frameworks.
+      * External technologies should implement interfaces defined by the
+        application core.
+
+    These principles are still very much relevant.
+
+    Microsoft continues to document and recommend Clean Architecture for
+    suitable applications. Microsoft Learn
+
+    AWS also publishes architectural guidance combining DDD and
+    Hexagonal Architecture, applying essentially the same dependency
+    principles. AWS Documentation+1
+
+
+        2. Where Clean Architecture can become problematic
+
+    I see four common problems with how Clean Architecture is implemented.
+
+
+          A. Too many layers
+
+    A common implementation looks like this:
+
+    text
+
+    |Presentation
+        |
+        v
+    Application
+        |
+        v
+    Domain
+        |
+        v
+    Infrastructure
+    |
+
+    Developers sometimes introduce interfaces, DTOs, mappings, and
+    abstractions for practically everything.
+
+    The result can be excessive indirection without meaningful
+    architectural benefits.
+
+
+          B. Anemic Domain Models
+
+    This is particularly problematic when combining Clean Architecture
+    with DDD.
+
+    For example:
+
+    java
+
+    |public class Order {
+        private List<OrderLine> lines;
+        private OrderStatus status;
+
+        // Getters and setters only
+    }
+    |
+
+    And then all business logic ends up in:
+
+    java
+
+    |public class OrderService {
+        public void cancelOrder(Order order) {
+            // All business logic here
+        }
+    }
+    |
+
+    This can result in an anemic domain model.
+
+    DDD generally encourages placing behavior and business invariants in
+    the appropriate domain objects.
+
+
+          C. Treating every database operation as a repository abstraction
+
+    Not every application needs elaborate repository interfaces.
+
+    Sometimes a straightforward query service or direct persistence
+    abstraction is perfectly reasonable.
+
+    The important thing is to protect business rules from infrastructure
+    dependencies where that protection provides value.
+
+
+          D. Applying the same architecture to every application
+
+    A complex financial application and a simple CRUD application have
+    very different architectural requirements.
+
+    Applying the full Clean Architecture structure to both can be
+    counterproductive.
+
+    AWS explicitly acknowledges that the additional complexity of
+    Hexagonal Architecture and its adapters can introduce maintenance
+    overhead when the flexibility isn't needed. AWS Documentation
+
+    ------------------------------------------------------------------------
+
+
+        3. Clean Architecture vs. Hexagonal Architecture
+
+    This is an interesting comparison because they share many principles.
+
+    Aspect	Clean Architecture	Hexagonal Architecture
+    Origin	Robert C. Martin	Alistair Cockburn
+    Primary concern	Dependency management	Isolation from external systems
+    Core concept	Dependency Rule	Ports and Adapters
+    Structure	Concentric layers	Application core surrounded by adapters
+    Domain isolation	Yes	Yes
+    Infrastructure independence	Yes	Yes
+    Explicit ports	Common implementation approach	Fundamental concept
+    Explicit adapters	Common implementation approach	Fundamental concept
+
+    I would argue that Hexagonal Architecture provides a particularly
+    useful mental model for implementing the dependency principles of
+    Clean Architecture.
+
+    They are not mutually exclusive.
+
+
+        4. How I would combine DDD, Clean Architecture, Hexagonal
+        Architecture and C4
+
+    Given our previous discussion, I would actually use all four
+    concepts, but assign each a distinct responsibility.
+
+    Concept	Responsibility
+    DDD	Understand and model the business domain
+    Clean Architecture	Establish dependency rules and separation of concerns
+    Hexagonal Architecture	Define ports and adapters for external
+    interactions
+    C4	Document and communicate the architecture
+
+    For example:
+
+    text
+
+    |                 C4 MODEL
+              Documents the architecture
+                         |
+                         v
+              +----------------------+
+              |    Bounded Context   |
+              |                      |
+              |  CLEAN ARCHITECTURE  |
+              |                      |
+              |  +----------------+  |
+              |  |                |  |
+              |  |  Application   |  |
+              |  |                |  |
+              |  +----------------+  |
+              |          |           |
+              |  +-------v--------+  |
+              |  |                |  |
+              |  |   DOMAIN       |  |
+              |  |   DDD MODEL    |  |
+              |  |                |  |
+              |  +----------------+  |
+              |                      |
+              |  HEXAGONAL           |
+              |  PORTS & ADAPTERS     |
+              |                      |
+              +----------------------+
+    |
+
+    This is a conceptual illustration, not a requirement that all four
+    must be implemented as separate architectural layers.
+
+
+        5. My recommendation
+
+    I would not adopt Clean Architecture as a rigid folder structure or
+    framework.
+
+    Instead, I would adopt its fundamental principles:
+
+     1. Business rules should be independent of infrastructure.
+     2. Dependencies should point toward business policies.
+     3. Application use cases should be clearly identifiable.
+     4. Infrastructure should be replaceable without rewriting business
+        logic.
+     5. Architectural complexity should be proportional to business
+        complexity.
+
+    Then I would use DDD to build the domain model and Hexagonal
+    Architecture to implement the boundaries.
+
+    For further reading:
+
+      * Robert C. Martin – The Clean Architecture <https://
+        blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-
+        architecture.html?utm_source=chatgpt.com>
+      * Microsoft – Common Web Application Architectures <https://
+        learn.microsoft.com/dotnet/architecture/modern-web-apps-azure/
+        common-web-application-architectures?
+        wt.mc_id=studentamb_334508&utm_source=chatgpt.com>
+      * AWS – Building Hexagonal Architectures <https://
+        docs.aws.amazon.com/prescriptive-guidance/latest/hexagonal-
+        architectures/?utm_source=chatgpt.com>
+    ------------------------------------------------------------------------
+
+
+          Bottom line
+
+    I would absolutely still consider Clean Architecture a valid choice
+    today.
+
+    However, I would be careful not to confuse *Clean Architecture as a
+    set of architectural principles with Clean Architecture as a
+    particular implementation template*.
+
+    The principles are much more important than the diagram, layer
+    names, or folder structure.
+
+    Sources
+
+11.
+
+
+    can I define and express "Clean Architecture" with architecture principles? How and where do I define the requirement for software patterns?
+
+12.
+
+
+    Yes. In fact, I think this is a better approach than prescribing
+    Clean Architecture as a mandatory implementation template.
+
+    You can express Clean Architecture through *architectural
+    principles, architectural constraints, and architectural decisions*.
+    You can then define which architectural patterns are appropriate to
+    fulfil those requirements.
+
+    The important distinction is between:
+
+      * What the architecture must achieve.
+      * Which architectural principles govern the design.
+      * Which patterns or mechanisms are used to implement those principles.
+
+    I would structure this as follows.
+
+
+      1. Separate architectural principles, requirements and patterns
+
+    These concepts are related, but they serve different purposes.
+
+    Concept	Purpose	Example
+    Architectural principle	Establishes a fundamental design rule	
+    Business logic must be independent of infrastructure.
+    Architectural requirement	Defines an expected architectural
+    property	Domain modules must not depend on persistence implementations.
+    Architectural pattern	Provides a reusable solution	Hexagonal
+    Architecture
+    Design pattern	Provides a reusable implementation-level solution	
+    Repository, Factory, Strategy
+    Architectural decision	Records a concrete design choice	We use
+    Hexagonal Architecture for the Ordering context.
+    Architecture constraint	Restricts permissible solutions	Domain
+    modules must not depend on Spring Framework.
+
+    An important distinction: a principle is usually technology-
+    independent, whereas a requirement should be sufficiently precise to
+    verify.
+
+
+      2. Define Clean Architecture through architectural principles
+
+    I would derive a set of principles from Clean Architecture rather
+    than simply writing:
+
+    "We use Clean Architecture."
+
+    For example:
+
+
+        AP-01: Business Logic Independence
+
+    *Principle*
+
+    Business logic must be independent of technical infrastructure and
+    external frameworks.
+
+    *Rationale*
+
+    Business rules represent the core intellectual property of the
+    application and should remain stable when technical infrastructure
+    changes.
+
+    *Implications*
+
+      * Domain logic must not depend on database technologies.
+      * Domain logic must not depend on web frameworks.
+      * Domain logic must not depend on external APIs.
+      * Infrastructure dependencies must be isolated behind appropriate
+        abstractions.
+
+    This expresses one of the fundamental ideas of Clean Architecture.
+
+
+        AP-02: Dependency Direction
+
+    *Principle*
+
+    Dependencies between architectural layers must point towards higher-
+    level business policies.
+
+    *Rationale*
+
+    Changes in infrastructure should not force changes in business logic.
+
+    *Implications*
+
+      * The domain layer must not depend on the application layer.
+      * The application layer must not depend on infrastructure
+        implementations.
+      * Infrastructure implementations may depend on abstractions
+        defined by inner layers.
+
+    This is essentially the Dependency Rule from Clean Architecture.
+
+
+        AP-03: Separation of Concerns
+
+    *Principle*
+
+    Each architectural component must have a clearly defined responsibility.
+
+    *Rationale*
+
+    Separation of concerns reduces coupling and improves maintainability
+    and testability.
+
+    *Implications*
+
+      * Domain logic belongs in the domain model.
+      * Application logic coordinates use cases.
+      * Infrastructure implements technical capabilities.
+      * Presentation handles interaction with external users or systems.
+
+
+        AP-04: Infrastructure Independence
+
+    *Principle*
+
+    Technical infrastructure must be replaceable without requiring
+    changes to domain logic.
+
+    *Rationale*
+
+    Business capabilities should not be coupled to specific technical
+    implementations.
+
+    *Implications*
+
+      * Persistence mechanisms must be replaceable.
+      * External system integrations must be isolated.
+      * Infrastructure-specific implementations must remain outside the
+        domain model.
+
+
+        AP-05: Explicit Application Use Cases
+
+    *Principle*
+
+    Application capabilities must be expressed through clearly
+    identifiable use cases.
+
+    *Rationale*
+
+    This makes application behavior understandable and provides a clear
+    boundary between orchestration and business rules.
+
+    *Implications*
+
+      * Use cases coordinate domain operations.
+      * Use cases define application workflows.
+      * Business invariants remain in the domain model.
+
+    You now have a set of architectural principles that express the
+    essential ideas of Clean Architecture without prescribing its exact
+    implementation.
+
+
+      3. Where do you define architectural patterns?
+
+    This is the interesting part of your question.
+
+    I would distinguish between two levels:
+
+
+          Level A: Architecture principles and standards
+
+    This is where you define what is expected across your software
+    landscape.
+
+    For example:
+
+    text
+
+    |Architecture Principles
+        |
+        +-- Business Logic Independence
+        |
+        +-- Dependency Direction
+        |
+        +-- Separation of Concerns
+        |
+        +-- Infrastructure Independence
+        |
+        +-- Explicit Application Use Cases
+    |
+
+    These principles should generally be stable across projects.
+
+
+          Level B: Architecture patterns and reference architectures
+
+    This is where you define how the principles can be implemented.
+
+    For example:
+
+    Architectural principle	Suitable architectural patterns
+    Business Logic Independence	Hexagonal Architecture
+    Dependency Direction	Clean Architecture
+    Separation of Concerns	Layered Architecture
+    Infrastructure Independence	Ports and Adapters
+    Explicit Application Use Cases	Use Case / Interactor pattern
+
+    These are possible relationships, not exclusive mappings. One
+    pattern can support multiple principles, and a principle can be
+    supported by multiple patterns.
+
+    You can also define patterns as mandatory, recommended or optional.
+
+    For example:
+
+    Pattern	Status	Scope
+    Hexagonal Architecture	Recommended	Business-critical applications
+    Layered Architecture	Recommended	Simple CRUD applications
+    CQRS	Optional	Applications with distinct read/write requirements
+    Event Sourcing	Optional	Domains requiring event history and
+    reconstruction
+    Repository Pattern	Recommended	Domain models requiring persistence
+    abstraction
+
+    This gives development teams flexibility while maintaining
+    architectural consistency.
+
+
+      4. Where do DDD and C4 fit?
+
+    I would structure your architecture documentation around several
+    complementary categories.
+
+    Category	What it defines
+    Architecture Principles	Fundamental architectural rules
+    Architecture Requirements	Required architectural properties
+    Architecture Patterns	Reusable architectural solutions
+    Architecture Decisions (ADRs)	Concrete decisions and their rationale
+    Architecture Models	Visual representations using C4
+    Domain Design Standards	DDD concepts and modelling conventions
+    Technology Standards	Approved languages, frameworks and infrastructure
+
+    For example:
+
+    text
+
+    |Architecture Documentation
+    │
+    ├── 01. Architecture Principles
+    │   ├── Business Logic Independence
+    │   ├── Dependency Direction
+    │   └── Separation of Concerns
+    │
+    ├── 02. Architecture Requirements
+    │   ├── Modularity
+    │   ├── Testability
+    │   └── Maintainability
+    │
+    ├── 03. Architecture Patterns
+    │   ├── Clean Architecture
+    │   ├── Hexagonal Architecture
+    │   ├── CQRS
+    │   └── Event-Driven Architecture
+    │
+    ├── 04. Domain-Driven Design
+    │   ├── Strategic Design
+    │   ├── Tactical Design
+    │   └── Modelling Guidelines
+    │
+    ├── 05. Architecture Models
+    │   ├── C4 Context
+    │   ├── C4 Container
+    │   ├── C4 Component
+    │   └── C4 Dynamic
+    │
+    ├── 06. Architecture Decisions
+    │   ├── ADR-001
+    │   ├── ADR-002
+    │   └── ADR-003
+    │
+    └── 07. Technology Standards
+        ├── Programming Languages
+        ├── Frameworks
+        └── Infrastructure
+    |
+
+
+      5. How do you make architectural principles enforceable?
+
+    This is an important aspect that is sometimes overlooked.
+
+    An architectural principle that cannot be verified risks becoming
+    merely a statement of intent.
+
+    I recommend defining verification criteria for important principles.
+
+    For example:
+
+
+          AP-02: Dependency Direction
+
+    Attribute	Definition
+    Principle	Dependencies must point towards business policies.
+    Requirement	Domain modules must not depend on infrastructure modules.
+    Verification	Automated dependency analysis.
+    Enforcement	Build pipeline fails when prohibited dependencies are
+    detected.
+
+    For Java applications, you could use:
+
+      * ArchUnit <https://www.archunit.org/> — Automated architecture tests.
+      * jQAssistant <https://jqassistant.org/> — Structural analysis and
+        architecture constraints.
+      * Spring Modulith <https://spring.io/projects/spring-modulith> —
+        Verification and documentation of modular Spring applications.
+
+    This makes architectural principles part of your engineering process
+    rather than just documentation.
+
+
+      6. My recommendation: distinguish mandatory principles from
+      implementation choices
+
+    I would avoid making every architectural pattern mandatory.
+
+    For example:
+
+    *Mandatory:*
+
+      * Business logic must be independent of infrastructure.
+      * Dependencies must follow defined architectural boundaries.
+      * Business rules must not be implemented in presentation or
+        infrastructure components.
+
+    *Recommended:*
+
+      * Use Hexagonal Architecture to implement application boundaries.
+      * Use DDD for complex business domains.
+      * Use C4 for architecture documentation.
+
+    *Situational:*
+
+      * Use CQRS when read and write models have sufficiently different
+        requirements.
+      * Use Event Sourcing when event history is a genuine domain
+        requirement.
+      * Use microservices when independent deployment and operational
+        autonomy justify the additional complexity.
+
+    This distinction prevents architecture from becoming dogmatic.
+
+    ------------------------------------------------------------------------
+
+
+        7. One additional recommendation: look at ISO/IEC/IEEE 42010
+
+    If you want to formalize this approach at an enterprise architecture
+    level, I strongly recommend looking at:
+
+    *ISO/IEC/IEEE 42010 – Systems and Software Engineering –
+    Architecture Description.*
+
+    It provides a framework for describing software and system
+    architectures.
+
+    It distinguishes concepts such as:
+
+      * Architecture principles.
+      * Stakeholders.
+      * Concerns.
+      * Viewpoints.
+      * Views.
+      * Architecture decisions.
+
+    It is particularly useful for establishing a consistent architecture
+    documentation framework across multiple projects.
+
+    Official reference: ISO/IEC/IEEE 42010 <https://www.iso.org/
+    standard/74393.html>.
+
+    ------------------------------------------------------------------------
+
+
+        My final recommendation
+
+    I would establish the following hierarchy:
+
+    Level	Defines	Example
+    1. Architecture Principles	What must fundamentally be true	Business
+    logic independence
+    2. Architecture Requirements	What must be achieved	Domain must not
+    depend on infrastructure
+    3. Architecture Patterns	How requirements can be fulfilled	Hexagonal
+    Architecture
+    4. Architecture Decisions	What was actually chosen	Ordering uses
+    Hexagonal Architecture
+    5. Architecture Models	How the resulting architecture is
+    communicated	C4 diagrams
+    6. Architecture Verification	How compliance is demonstrated	ArchUnit
+    tests
+
+    *The key idea is that you should standardize architectural
+    properties, not necessarily architectural implementations.*
+
+    This gives you consistency across applications without forcing every
+    application into the same architecture template.
+
+ChatGPT is AI and can make mistakes.
+
+ChatGPT
+
+New chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing
+
+<https://openai.com/chatgpt/pricing/>
+
+Help
+
+<https://help.openai.com/>
+
+Deep research
+
+Settings <https://chatgpt.com/settings>
+
+<https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+Images <https://chatgpt.com/images>
+
+Plugins <https://chatgpt.com/plugins?plugins_landing=1>
+
+See plans and pricing <https://openai.com/chatgpt/pricing/>
+
+Help <https://help.openai.com/>
+
+Deep research
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+
+    Get responses tailored to you
+
+Log in to get answers based on saved chats, plus create images and
+upload files.
+
+Log in
+
+Chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+
+<https://chatgpt.com/settings>
+
+
+  What are you working on?Where should we begin?
+
+What can you do?
+
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Log in
+
+Sign up for free
+
+Chat with ChatGPT
+
+Camera
+
+Photos
+
+Files
+
+Add photos
+
+Web search
+
+Log in to use...
+
+Create imageLog in
+
+Deep researchLog in
+
+Add filesLog in
+
+Web search
+
+<https://chatgpt.com/?mode=voice>
+
+Chat stopped unexpectedlyRetry
+Add anything.avif, .bmp, .gif, .heic, .heif, .jpeg, .jpg, .png, .webp
+
+
+    Clear current chat?
+
+To start a new chat, your current conversation will be discarded. Sign
+up or log in to save chats.
+
+Clear chat <https://chatgpt.com/?noauth_recent_chat_failed=1>
+Log in
+
+Try advanced features for free
+
+Get smarter responses, upload files, create images, and more by logging in.
+
+Log in
+
+Sign up for free
+
+Turn questions into research
+
+Log in to run multi-step research, compare sources, and save cited
+reports to revisit later.
+
+Log in
+
+Sign up for free
+
+<https://chatgpt.com/auth/login>
+
+
+    Log in or sign up
+
+You’ll get smarter responses and can upload files, images, and more.
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+Continue with phone
+
+OR
+Email address
+
+Email is not valid.
+Continue
+
+Phone number
+
++41
+
+Continue with phone
+
+
+    Welcome back
+
+Choose an account to continue.
+
+OR
+Log in to another account
+
+Create account
+
+Log in or create account
+
+Continue with Google <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=google-
+oauth2&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Microsoft <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=windowslive&screen_hint=login_or_signup&ext-web-mobile-direct-social-login=true>
+
+Continue with Apple <https://chatgpt.com/auth/login_with?
+callback_path=%2F&connection=apple&screen_hint=login_or_signup&ext-web-
+mobile-direct-social-login=true>
+
+#
+
+
+No internet•This may take a while...
+
+#
+
+
+Unable to connect
+Retry
+#
+
+
+Retrying...
+#
+
+
+No internet•Reconnecting...
+
+#
+
+
+ChatGPT is temporarily experiencing issues. We’re working to restore
+service.
+Check service status <https://status.openai.com/>Retry
+#
+
+
+This may take a while...
+
+**
+

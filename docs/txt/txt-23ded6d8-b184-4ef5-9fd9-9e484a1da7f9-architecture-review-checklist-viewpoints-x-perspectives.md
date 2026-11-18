@@ -4,7 +4,7 @@ created: '2026-11-05T06:53:20.701+01:00'
 id: 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9
 status: draft
 type: txt
-updated: '2026-11-10T09:43:08.413+01:00'
+updated: '2026-11-18T13:27:30.008+01:00'
 version: 1.0.0
 ---
 
@@ -27,16 +27,16 @@ This document is the template and catalogue. The criteria are general and indexe
 
 | Source | Used for | Status |
 |--------|----------|--------|
-| ISO/IEC/IEEE 42010 | Viewpoint concept: concerns, stakeholders, model kinds, correspondences, rationale. Perspectives through shared models | The statement on perspectives is checked against clause 5.6 NOTE 1 of the standard, which cites R+W. The rest is to be confirmed against the standard |
-| Rozanski and Woods, Software Systems Architecture, 2nd edition, Addison-Wesley, 2012 (R+W) | The seven core viewpoints (ch. 3 and 15 to 22), the perspective concept (ch. 4), the perspective catalogue (ch. 24 to 29) and the per-view applicability tables of each perspective | Names, definitions, concerns and applicability tables checked against the text of the book. The mapping decisions of this catalogue are our own |
-| ISO/IEC 25010:2023 | Nine quality characteristics and their sub-characteristics. They are the first nine perspectives | Characteristic and sub-characteristic names checked against specmgr://iso25010 |
-| ISO/IEC/IEEE 29148 | Characteristics of a well-formed requirement and of a requirement set, applied to checklist criteria | To be confirmed; it is a requirements standard and is applied here by analogy |
-| ISO/IEC/IEEE 42030 | Architecture evaluation framework, possible alignment | Not yet checked |
-| ISO/IEC 33020 (successor of ISO/IEC 15504, SPICE) | Capability levels 0 to 5 for practice criteria and the capability profile | Level names provisional, to be confirmed |
-| ISACA COBIT | Possible replacement for the capability level names | Not yet checked; the current version and its level names are to be confirmed |
+| ISO/IEC/IEEE 42010:2011 | Viewpoint concept: concerns, stakeholders, model kinds, correspondences, rationale. Perspectives through shared models | Checked against the text (2026-11-18): the concepts viewpoint (clause 5.4), view (5.5), model (5.6), correspondence (5.7) and rationale (5.8), the term model kind (definitions), and clause 5.6 NOTE 1 on perspectives, which cites R+W. Annex B.3 cites the 1st edition of R+W (six viewpoints, no Context viewpoint) |
+| Rozanski and Woods, Software Systems Architecture, 2nd edition, Addison-Wesley, 2012 (R+W) | The seven core viewpoints (ch. 3 and 15 to 22), the perspective concept (ch. 4), the perspective catalogue (ch. 24 to 29) and the per-view applicability tables of each perspective | Names, order and concern lists of the viewpoints, and the names of the ten perspectives, checked against the text of the book (2026-11-18). The per-view tables of the perspectives (Tables 25-1 to 28-1, 29-1 to 29-6) are prose and hold no ratings. The only rating grid is Table 4-1. The mapping decisions and the P, S, X values of this catalogue are our own interpretation |
+| ISO/IEC 25010:2023 | Nine quality characteristics and their sub-characteristics. They are the first nine perspectives | Characteristic and sub-characteristic names checked against specmgr://iso25010. The original standard is not in the docs repository |
+| ISO/IEC/IEEE 29148:2018 | Characteristics of a well-formed requirement and of a requirement set, applied to checklist criteria | The nine characteristics of an individual requirement (clause 5.2.5) and the five characteristics of a set (clause 5.2.6) checked against the text (2026-11-18). It is a requirements standard and is applied here by analogy |
+| ISO/IEC/IEEE 42030 | Architecture evaluation framework, possible alignment | Missing. The standard is not in the docs repository. It is only cited in the texts of 12207 and 15288 |
+| ISO/IEC 33020 (successor of ISO/IEC 15504, SPICE) | Capability levels 0 to 5 for practice criteria and the capability profile | Missing. The standard is not in the docs repository. Level names provisional, to be confirmed |
+| ISACA COBIT | Possible replacement for the capability level names | Missing. The COBIT 2019 framework publication is not freely available. The public ISACA pages and Wikipedia do not list capability level names |
 | Assessment dimensions AD01 to AD12 | Tag on each criterion, plus an architecture-level pass | Draft list collected from several interviews. No single reference. Do not cite as ISO |
 | Assessment dimensions AD13 to AD15 | Necessity, economic viability, organisational fit | Added in this catalogue to close gaps in AD01 to AD12. AD14 and AD15 are carried by the DevelopmentResource perspective (section 5) |
-| Viewpoint list VP01 to VP07 | The seven core viewpoints of R+W, in the order of the book | Checked against R+W. 42010 defines no viewpoint catalogue. The earlier list VP01 to VP13 (Draft 0.7 and before) was compiled from several practice sources and is mapped in section 4.1 |
+| Viewpoint list VP01 to VP07 | The seven core viewpoints of R+W, in the order of the book | Names and order checked against R+W. The concern lists are the book's and are in the Architecture Model TXT, section 4.1. 42010 defines no viewpoint catalogue. The earlier list VP01 to VP13 (Draft 0.7 and before) was compiled from several practice sources and is mapped in section 4.1 |
 | Perspective list FS to DR | The nine ISO/IEC 25010:2023 characteristics plus Regulation, Location and DevelopmentResource from R+W | The three added perspectives are the ones that ISO/IEC 25010 cannot express. Other R+W perspectives are mapped in section 5 |
 | Martin, Clean Architecture | Dependency rule, component principles, boundaries | Principle source, to be confirmed |
 | POSA, Enterprise Integration Patterns, Release It! | Architecture-level patterns and stability patterns | Pattern source, to be confirmed |
@@ -66,18 +66,20 @@ The viewpoints VP01 to VP07 are the seven core viewpoints of Rozanski and Woods 
 
 XV CrossView is not a viewpoint. It is a row of the matrix for criteria that no single view can hold, such as the security target and the threat model, the hazard analysis, the applicable regulations and the resource constraints. It is the home of the deep criteria of Security and Safety, which R+W treat as perspectives and not as viewpoints.
 
-| ID | Viewpoint | Main concerns | Typical stakeholders | Typical model kinds |
-|----|-----------|---------------|----------------------|---------------------|
-| VP01 | Context | System scope and responsibilities, external entities, external interfaces (identity, nature, contract, partner), external interdependencies, impact of the system on its environment | All stakeholders, especially acquirers, users and developers | Context model (context diagram, actor and interface list), interaction scenarios |
-| VP02 | Functional | Functional capabilities, functional elements and their responsibilities, internal structure, layering and dependencies between runtime elements, internal interfaces and connectors, functional design philosophy | All stakeholders, architects, developers | Functional structure model (component and layer diagram, interface catalogue, sequence diagrams, contracts), capability map, use case model |
-| VP03 | Information | Information structure and content, ownership, identifiers, storage, flow, consistency, quality, latency and age, archiving and retention | Data architects, developers, compliance | Data model, data flow, ownership matrix |
-| VP04 | Concurrency | Task structure (processes and threads), mapping of functional elements to tasks, interprocess communication, state management, synchronisation and integrity, startup and shutdown, task failure, reentrancy | Developers, testers, some administrators | Process model, state model, sequence models |
-| VP05 | Development | Module organisation, source-level dependencies, common processing, standardisation of design and testing, instrumentation, codeline organisation, build and test environment | Developers, testers, release engineers, production engineers | Module structure model, common design model, codeline model, build and pipeline description |
-| VP06 | Deployment | Runtime platform, hosting and hardware, third-party software, technology stack and compatibility, lock-in, network requirements and capacity, nodes, environments, topology, placement, redundancy, scaling, physical constraints | System administrators, infrastructure engineers, operations | Runtime platform model, network model, technology dependency model, deployment diagram, environment overview |
-| VP07 | Operational | Installation and upgrade, functional and data migration, monitoring and control, alerting, logging, configuration management, backup and restore, support, incident handling, change and release, operation in third-party environments | System administrators, production engineers, support, service owners | Installation model, migration model, configuration management model, administration model, support model, runbooks, monitoring design |
-| XV | CrossView | Targets, threats, hazards, applicable regulations, cost, time and skill constraints. Anything that spans all views | Security officers, safety engineers, compliance, sponsors, architects | Security target, threat model, hazard analysis, safety concept, regulation register, resource and constraint overview |
+The concerns of each viewpoint are the concerns of the book. They are quoted in TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model), section 4.1, and are not repeated here. The earlier paraphrases in this section differed from the book in six of the seven viewpoints. The topics that they added are placed in section 4.3 of that document. The stakeholder and model kind columns below are working lists of this catalogue. They are not quotations of the book.
 
-Interfaces: the old Integration/Interface viewpoint is split. An interface to an entity outside the system boundary belongs to VP01 Context. An interface between elements inside the system belongs to VP02 Functional. Both viewpoints keep "Interfaces" as a named concern group, so that interface criteria stay easy to find. How the deployment behaves when an external system is unavailable is assessed under VP06 x RE (see VP06-RE-140).
+| ID | Viewpoint | Typical stakeholders | Typical model kinds |
+|----|-----------|----------------------|---------------------|
+| VP01 | Context | All stakeholders, especially acquirers, users and developers | Context model (context diagram, actor and interface list), interaction scenarios |
+| VP02 | Functional | All stakeholders, architects, developers | Functional structure model (component and layer diagram, interface catalogue, sequence diagrams, contracts), capability map, use case model |
+| VP03 | Information | Data architects, developers, compliance | Data model, data flow, ownership matrix |
+| VP04 | Concurrency | Developers, testers, some administrators | Process model, state model, sequence models |
+| VP05 | Development | Developers, testers, release engineers, production engineers | Module structure model, common design model, codeline model, build and pipeline description |
+| VP06 | Deployment | System administrators, infrastructure engineers, operations | Runtime platform model, network model, technology dependency model, deployment diagram, environment overview |
+| VP07 | Operational | System administrators, production engineers, support, service owners | Installation model, migration model, configuration management model, administration model, support model, runbooks, monitoring design |
+| XV | CrossView | Security officers, safety engineers, compliance, sponsors, architects | Security target, threat model, hazard analysis, safety concept, regulation register, resource and constraint overview |
+
+Interfaces: both VP01 Context and VP02 Functional list interfaces among the book concerns. A criterion has one primary viewpoint. The catalogue rule is: a criterion about the external entity side (identity, responsibilities and nature of the interface to an entity outside the system boundary) belongs to VP01. A criterion about the connectors and the handling of interfaces between elements inside the system belongs to VP02. Both viewpoints keep "Interfaces" as a named concern group, so that interface criteria stay easy to find. How the deployment behaves when an external system is unavailable is assessed under VP06 x RE (see VP06-RE-140).
 
 Boundaries between the remaining viewpoints:
 
@@ -180,7 +182,7 @@ Counts: 32 primary cells, 47 secondary cells and 17 cells without default criter
 
 Home cells are the primary cells of the row XV CrossView: XV x SE (Security), XV x SA (Safety), XV x RG (Regulation) and XV x DR (DevelopmentResource). Home cells hold the deep criteria for that topic. Other viewpoints hold short cross-checks, for example Security x Context or Reliability x CrossView.
 
-How the matrix was derived. The starting point was the matrix of Draft 0.7 (nine columns, thirteen rows), merged by the mapping of section 4.1. A mechanical merge, where the highest value wins, would have made VP02 Functional primary in seven of the nine ISO columns. It was not used. Each cell was decided again under the rule "one primary location for each concern". Where R+W give a per-view applicability table for a perspective (R+W Tables 25-1, 26-1, 27-1, 28-1 and 29-1 to 29-6), it was used as the guide: P where the viewpoint is the place where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. FS, CO and SA have no R+W table. Their cells follow the earlier matrix. The cell by cell reasons are in the linked QA.
+How the matrix was derived. The starting point was the matrix of Draft 0.7 (nine columns, thirteen rows), merged by the mapping of section 4.1. A mechanical merge, where the highest value wins, would have made VP02 Functional primary in seven of the nine ISO columns. It was not used. Each cell was decided again under the rule "one primary location for each concern". The derivation is our interpretation. The R+W per-view tables (R+W Tables 25-1, 26-1, 27-1, 28-1 and 29-1 to 29-6) hold prose and no ratings. Where R+W give such a table for a perspective, it was used as the guide: P where the viewpoint is the place where the concern is specified, S where it is a cross-check, X where R+W state little or no impact. FS, CO and SA have no R+W table. Their cells follow the earlier matrix. The cell by cell reasons are in the linked QA.
 
 Rules for tailoring:
 
@@ -198,6 +200,26 @@ Rules for tailoring:
   - A later change of the decision needs a new documented decision.
 - The word inapplicable in this section describes a cell or perspective for a review scope. The applicability value Inapplicable (section 7.1) applies to a single criterion.
 - Cell counts and markings are a first judgement. They stay provisional until the validation against three architectures is done.
+
+### 5.3 Comparison with R+W Table 4-1
+
+The P, S and X values are our interpretation. R+W give no rating for every cell. Their per-view tables of the perspectives (Tables 25-1 to 28-1 and 29-1 to 29-6) hold prose, one paragraph for each view. The only rating grid in the book is Table 4-1 (High, Medium, Low, "typical" applicability). It covers four perspectives. The book offers it as an example for your own grid and not as a norm. The table below compares it with our matrix. A difference is not an error. It needs a reason or a change.
+
+| Perspective | Viewpoint | R+W Table 4-1 | Our cell | Remark |
+|-------------|-----------|---------------|----------|--------|
+| SE | VP01 Context | Medium | P | Judgement call. P because of the one primary location rule (external connections), not because of the impact |
+| SE | VP03 Information | Medium | P | Sensitive data. Same reason |
+| SE | VP06 Deployment | High | P | Same |
+| PE | VP05 Development | Low | S | Taken from the R+W text on performance guidelines for developers |
+| PE | VP07 Operational | Low | P | The book concern Performance monitoring is in VP07 |
+| RE | VP01, VP02, VP05 | Low | S | Cross-checks from the R+W text (external availability, offline operation, start and stop for failover) |
+| RE | VP03 Information | Low | P | Backup, recovery and consistency. Judgement call |
+| MA and FL (Evolution) | VP03 Information | High | S and S | Gap candidate. The book rates Evolution High for the Information view. Decide if one of the two cells becomes P |
+| FL (Evolution, Scalability) | VP06 Deployment | Low | P | Scalability and installability sit in FL. The book groups scalability with Performance |
+| MA and FL (Evolution) | VP07 Operational | Low | P and P | Installation, upgrade and migration are Operational concerns in the book |
+| MA | VP01 Context | Medium | X | FL is S for the same view. Check if MA needs an S |
+
+All other cells of the four perspectives agree with the ordering of the book (High corresponds to P or S, Low to S or X). The check is part of the validation of QA 25bd5b93, items 0.0340, 0.0350 and 0.0550.
 
 ## 6. Criterion Record
 
@@ -407,12 +429,15 @@ The practice areas below are a proposal. The final list is to be agreed.
 | Pre-implementation | Documented | Documented |
 | Pre-release | Documented | Demonstrated |
 | Periodic health check | Demonstrated | Measured |
+
 - Typical artefacts: architecture diagrams, design documents, ADRs, configuration information, threat models, service level objectives, capacity and load test results, disaster recovery and failover test results, runbooks, dependency graphs and software bills of materials, penetration test reports, architecture conformance tests or fitness functions, measurements.
 - Record evidence before the rating. The rating Unassessable depends on it.
 
 ## 9. Principle Tags
 
 Principles are tags on criteria, not a separate axis. The original list of twelve principles is merged here, because several overlap.
+
+Status of this table: it is a generic tag vocabulary for criteria. It is a library of well-known principles from the sources named in the table. Nobody has decided that an organisation or a system applies them. A principle that is adopted for a system or an organisation is a DEC document, one for each principle. The DEC states the principle (Decision Outcome), the rationale (Context), the implications (Consequences) and how to test it (Confirmation). It carries the tag `arch.principle`. The tag PR18 is the link: a review refers to the adopted principles through PR18 and AD11. The definitions and the way to find the adopted principles are in TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09, section 6. Patterns are handled in the same way, with the tag `arch.pattern`.
 
 | Tag | Principle | Origin and note |
 |-----|-----------|-----------------|
@@ -547,7 +572,7 @@ The criteria in sections 6 to 10 stay tool neutral and name no product. Product 
 - The agent creates one or more Structurizr workspaces, a facts file for each, and a gaps report.
 - The agent does not review. It records no rating, outcome, finding, maturity or capability profile. A modeler that judges its own model grades itself.
 - A separate review agent reads the workspaces and applies sections 6 to 10. It is out of scope here.
-- A C4 model is evidence for some viewpoints only. Section 11.6 lists which. The gaps report lists the viewpoints that the model cannot show. For those viewpoints the review agent finds Evidence Missing, so the rating is Unassessable.
+- A C4 model is evidence for some viewpoints only. Section 8 of TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model) lists which. The gaps report lists the viewpoints that the model cannot show. For those viewpoints the review agent finds Evidence Missing, so the rating is Unassessable.
 
 ### 11.2 Inputs and Outputs
 
@@ -579,7 +604,7 @@ Every element and relationship in the facts file carries one origin and one prov
 
 - Elements and relationships with the origin Inferred or Proposed carry a tag in the workspace. A style makes the tag visible in every view.
 - A model built from specmgr artifacts consists mostly of Proposed elements, because requirements and decisions describe intent, not structure. The workspace documentation states that it is a target architecture proposal.
-- The properties `origin` and `provenance` are set on every element and relationship. A model-level property holds the safety relevance declaration and its justification (section 11.6).
+- The properties `origin` and `provenance` are set on every element and relationship. A model-level property holds the safety relevance declaration and its justification (Architecture Model, section 8.3).
 
 ### 11.5 Components
 
@@ -599,7 +624,7 @@ Skills, in `.opencode/skills/`. A skill holds knowledge, not behaviour, and load
 | c4-structurizr-dsl | DSL syntax and conventions: identifiers, views, styles, tags, properties, deployment, perspectives, the validation and export tools |
 | c4-from-source | How to find containers, components, relationships and external systems in code. Containers come from compose files, Kubernetes manifests, Dockerfiles and build manifests. Relationships come from HTTP, queue and database clients. External systems come from environment variables and SDKs. Where to stop |
 | c4-from-specmgr | The mapping from specmgr artifact types to C4 constructs. UC actors become persons. REQ items about interfaces and compatibility become external systems. DEC and ADR become documentation and properties. Everything is Proposed unless an artifact states a structure |
-| c4-viewpoint-mapping | The mapping of section 11.6 and the property conventions |
+| c4-viewpoint-mapping | Reads the mapping and the property conventions of the Architecture Model TXT, section 8. It holds no copy |
 | c4-model-quality | The checks of section 11.8 as modelling rules, including the severity setting per inspection |
 
 Commands, in `.opencode/command/`:
@@ -611,33 +636,15 @@ Commands, in `.opencode/command/`:
 
 ### 11.6 Viewpoints and C4 Views
 
-The mapping is many to many, because C4 is not based on viewpoints.
+The mapping of viewpoints and perspectives to C4 views and Structurizr constructs, the coverage statements and the property conventions are defined in TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model), section 8. This section holds no copy, so that the agent and the definition cannot drift apart. The skill c4-viewpoint-mapping reads that section.
 
-| C4 view | Supports |
-|---------|----------|
-| System context, system landscape | VP01 Context. A landscape view is a candidate for a Business/Capability viewpoint |
-| Container | VP02 Functional (runtime elements) and VP06 Deployment (technology), partly VP05 Development |
-| Component | VP02 Functional, partly VP05 Development |
-| Dynamic | VP04 Concurrency, and sequence evidence for the interfaces of VP01 Context and VP02 Functional |
-| Deployment, with instance counts and health checks | VP06 Deployment, partly VP07 Operational |
-| Relationship description and technology | Interface catalogue of VP01 Context (external) and VP02 Functional (internal) |
-| Groups, tags and properties | Trust boundaries (XV x SE), failure domains (VP06), safety relevance declaration (XV x SA) |
+What the agent must keep in mind from it:
 
-C4 has no native construct for VP03 Information. Functional capabilities (what the system does for its users) are not modelled either, only the structure that provides them. VP05 Development is covered in part only (technology and component structure, not build, test or codeline). VP07 Operational is covered in part only (health checks, infrastructure nodes). The row XV CrossView is not modelled: the security target, the threat model, the hazard analysis, the regulation register and the resource constraints need other evidence. Quality targets, ratings, maturity levels and the capability profile are not modelled. The agent can reference such evidence through properties. It does not create it.
-
-Property conventions, verified with Structurizr 2026.10.26 (see the linked QA):
-
-| Key | Placed on | Note |
-|-----|-----------|------|
-| `failure.domain.host`, `failure.domain.zone`, `failure.domain.region` | Deployment nodes, infrastructure nodes, container instances | One key per level. Set each key once, on the node of that level. A reader walks the hierarchy, because children do not inherit properties |
-| `trust.boundary` | Elements and deployment nodes. Never on a group | A group can hold no properties. The group name is for display only. A check compares the group name with the property |
-| `trust.boundary.crossing` | Explicit relationships | Cross-check only. The authoritative crossing is derived from the boundaries of the two endpoints |
-| `review.safety.relevant`, `review.safety.justification` | Model | |
-| `origin`, `provenance` | Elements and relationships | `origin` has the closed values of section 11.4 |
-
-- Keys use only `[a-z0-9.]` and are case sensitive. Values are never empty.
-- Properties appear only in the JSON export. The PlantUML and Mermaid exports drop them. A query script over the JSON export is the authoritative reader.
-- Structurizr does not check the values. The check script of section 11.8 reports values that occur once and conflicts between a parent and a child.
+- C4 has no native construct for VP03 Information. The row XV CrossView is not modelled. VP05 Development and VP07 Operational are covered in part only.
+- Quality targets, ratings, maturity levels and the capability profile are not modelled. The agent can reference such evidence through properties. It does not create it.
+- Properties appear only in the JSON export. A query script over the JSON export is the authoritative reader.
+- Structurizr does not check property values. The check script of section 11.8 reports values that occur once and conflicts between a parent and a child.
+- The properties `origin` and `provenance` have the closed values of section 11.4.
 
 ### 11.7 Flow
 
@@ -678,11 +685,17 @@ The checks of phase 5 support the architecture-level pass of section 6.4. They h
 
 ## 12. Related Documents
 
+TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09: Architecture Model: Viewpoints, Perspectives and Structurizr Mapping
+
 QA 25bd5b93-a228-4d6c-8b70-d143dfd39444: Architecture Review Checklist: Decisions and Open Items
 
 ## Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+### 2026-11-18 14:30:00.000Z - Draft 0.9
+
+Consolidation for issue 267. The viewpoint definitions, the perspective definitions and the Structurizr mapping moved to the new TXT 30983f27-f5aa-4d42-972e-5593f0c3ba09 (Architecture Model). Section 4 no longer paraphrases the concern lists. The concern lists of the book are in the new TXT, and the topics that the earlier lists added are placed there. Section 2 now states what was checked against the book, and that the book's per-view tables are prose. Section 5.2 states that the P, S, X derivation is our interpretation. New section 5.3 compares the matrix with R+W Table 4-1. Section 9 is relabelled as a tag vocabulary, and adopted principles are DEC documents. Section 11.6 points to the new TXT for the mapping and the property conventions. The file name now ends in viewpoints-x-perspectives. No viewpoint, perspective, matrix cell or criterion ID changed.
 
 ### 2026-11-10 08:42:00.000Z - Draft 0.8
 

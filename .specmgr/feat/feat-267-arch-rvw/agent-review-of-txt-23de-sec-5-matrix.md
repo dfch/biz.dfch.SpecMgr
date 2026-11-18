@@ -1,3 +1,5 @@
+> **Superseded (2026-11-18).** This is an agent review of the old 13 x 9 matrix (Draft 0.7 and before). It uses the old viewpoint IDs VP01 to VP13. The matrix was rebuilt in Draft 0.8 with the seven R+W viewpoints, the row XV and 12 perspectives (see TXT 23ded6d8-b184-4ef5-9fd9-9e484a1da7f9 and QA 25bd5b93-a228-4d6c-8b70-d143dfd39444, item 0.0520). Kept as history. Issue #267.
+
 Validation of the Applicability Matrix
 
 Overall assessment: the matrix is a good foundation, and I would retain its basic structure. However, I recommend several corrections and clarifications before treating it as the baseline for an architecture assessment catalogue.
