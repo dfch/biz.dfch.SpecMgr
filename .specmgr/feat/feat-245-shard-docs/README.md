@@ -4,7 +4,7 @@ created: '2026-10-31T17:51:01.215+01:00'
 id: feat-245-shard-docs
 status: planning
 type: feat
-updated: '2026-11-18T09:24:44.465+01:00'
+updated: '2026-11-18T15:42:54.619+01:00'
 version: 1.0.0
 ---
 
@@ -23,18 +23,18 @@ Per-type document directories (`docs/<type>/`) currently hold every document of 
 - REQ-003: The MCP read path is shard-only for every language: a language's scan yields files exactly one subdirectory level below the language directory (`docs/<type>/<lang>/*/*.md`); files directly under `docs/<type>/` (missing language dir) or directly under `docs/<type>/<lang>/` (missing shard dir) are invisible to `list_<d>`, `get_<d>`, id resolution, `list_languages`, and the similarity corpus.
 - REQ-004: Id resolution first scans the shard derived from the id (`id[:2]`) within the language's own directory (EN = the `en/` directory); a document whose placement disagrees with its id is still found by the full sharded-listing fallback of that language (the filesystem remains the sole source of truth).
 - REQ-005: Every `create_<d>` tool (the thirteen domains, every language including EN) writes through the single shared `sharded_doc_path(base_dir, id_, slug)` helper in `general/tools/_doc_paths.py` over `doc_base_dir(type, language)` — which now resolves every language, EN included, to `docs/<type>/<lang>/` — and creates the shard directory; no per-domain filename line and no flat-EN base resolution remain.
-- REQ-006: The `specmgr-lint` gate recognizes the sharded layout (anchored pattern + `_infer_type`, all three drift-pinned copies): the one valid file shape is `docs/<type>/<lang>/<2-hex-shard>/<file>.md`; a file that misses the language dir, misses the shard dir, carries a non-hex shard, or sits deeper than one shard level is a layout violation failing with exit 2 naming the correct path; a language dir without a packaged heading table is placement-valid but its files take the existing no-table content error; non-domain dirs (e.g. `docs/appendix/`) keep today's skip behavior.
+- REQ-006: The `specmgr-lint` gate recognizes the sharded layout (anchored pattern + `_infer_type`, all three drift-pinned copies): the one valid file shape is `docs/<type>/<lang>/<2-hex-shard>/<file>.md`; a file that misses the language dir, misses the shard dir, carries a non-hex shard, or sits deeper than one shard level is a layout violation failing with exit 2 naming the correct path; a language dir without a packaged heading table is placement-valid but its files take the existing no-table content error; non-domain dirs (e.g. `docs/archive/`, depth ≥ 3) keep today's skip behavior.
 - REQ-007: The 76 existing in-repo documents (48 dec, 14 req, 4 tsk, 3 qa, 3 sop, 2 gol, 1 sysrs, 1 txt) are moved into `docs/<type>/en/<shard>/` in the same change as the code (`git mv`; the 48 dec files are already prefix-less and move only, the remaining 28 drop the `<type>-` prefix — move + rename, 100% similarity, history preserved).
-- REQ-008: `list_<d>` result order and `ref` semantics are preserved in the thirteen domains (EN and every language): order equals lexicographic file-name order within a language's sharded listing and `ref = path.stem = <uuid>-<slug>`.
+- REQ-008: `list_<d>` result order and `ref` semantics are preserved in the thirteen domains (EN and every language): order equals lexicographic file-name order within a language's sharded listing and `ref = path.stem = <uuid>-<slug>` for documents carrying a frontmatter `id`; id-less documents keep author-chosen stems (no uuid prefix) and remain list-visible only when placed inside a shard dir (see the Id-less documents design note).
 - REQ-009: The breaking change is documented: CHANGELOG `[Unreleased]` (pre-existing flat trees invisible until moved under `<lang>/<shard>/`; file names lose the `<type>-` prefix; `ref` values change; English moves into `en/`), README, AGENTS.md (including the feat-197-i18n layout paragraph), and the `specmgr://i18n` guidance all describe the uniform layout, and a new DEC records the decision.
 
 ### Acceptance Criteria
 
 - [ ] ACC-001: `create_<d>` places the file at `docs/<type>/en/<id[:2]>/<uuid>-<slug>.md` and leaves nothing directly under `docs/<type>/` or `docs/<type>/en/`, asserted for all thirteen domains (REQ-001, REQ-002, REQ-005).
-- [ ] ACC-002: every `ref` reported by `list_<d>` (EN or a language variant) in the thirteen domains starts with the document uuid (no `<type>-` prefix) and `list` order equals lexicographic file-name order (REQ-002, REQ-008).
+- [ ] ACC-002: every `ref` reported by `list_<d>` (EN or a language variant) in the thirteen domains starts with the document uuid (no `<type>-` prefix) for documents carrying a frontmatter `id` (id-less documents keep author-chosen stems, no uuid prefix) and `list` order equals lexicographic file-name order (REQ-002, REQ-008).
 - [ ] ACC-003: a file hand-placed directly under `docs/<type>/` or directly under `docs/<type>/<lang>/` appears in no `list_<d>` result and is unresolvable by `get_<d>` or `list_languages` (REQ-003).
 - [ ] ACC-004: a document moved to a wrong shard dir (EN or variant) resolves by id with byte-identical content via the fallback scan (REQ-004).
-- [ ] ACC-005: staging `docs/req/foo.md` (missing language dir), `docs/req/en/foo.md` (missing shard dir), `docs/req/en/zz/x.md` (non-hex shard), and `docs/req/en/10/20/x.md` (deeper than one shard level) each fails the lint gate with exit 2 and the correct path in the message; a valid EN shard file, a valid variant shard file, and non-domain dirs (e.g. `docs/appendix/`) lint clean (REQ-006).
+- [ ] ACC-005: staging `docs/req/foo.md` (missing language dir), `docs/req/en/foo.md` (missing shard dir), `docs/req/en/zz/x.md` (non-hex shard), and `docs/req/en/10/20/x.md` (deeper than one shard level) each fails the lint gate with exit 2 and the correct path in the message; a valid EN shard file, a valid variant shard file, and non-domain dirs (e.g. `docs/archive/`, depth ≥ 3) lint clean (REQ-006).
 - [ ] ACC-006: after migration, `git ls-files` over the thirteen domain dirs matches only `en/<2-hex>/<uuid>-<slug>.md` paths, `git log --follow` shows preserved history, and `specmgr lint --all` exits 0 (REQ-007).
 - [ ] ACC-007: CHANGELOG `[Unreleased]`, README, AGENTS.md (including the i18n layout paragraph), the `specmgr://i18n` guidance, and the new DEC all describe the uniform layout, and the breaking note names the flat-tree visibility loss, the English `en/` move, and the `ref`/file-name change (REQ-009).
 - [ ] ACC-008: `list_languages` still probes every shape-valid two-letter base-level dir (a dir without a packaged heading table yields its existing no-table/unparseable entries), the EN-only consumers (`list_references`, `find_related`, `find_similar_text`, `get_reference_diagram(_all)`) are re-rooted at the `en/` dir and see EN files only, never variant files, and `get_<d>(language=…)`/`create_<d>(language=…)` round-trip a sharded variant (REQ-003, REQ-005; DEC 38efdb66-8025-45c5-bbe8-45b25fc7a772).
@@ -71,7 +71,7 @@ Key invariants and rationale:
 - **Why a violation instead of skip or content-lint**: a misplaced document is invisible to every MCP read tool; a passing gate would commit a dead document. The gate fails loudly with the correct path in the message (feat-218 ethos; REQ-006). Placement checking stays purely shape-based (language dir present, shard dir two-hex, exactly one shard level) because the uniform layout makes every path unambiguous; language validity (packaged heading table) stays with the existing content/parse error path.
 - **EN-only consumers (DEC 38efdb66 REQ-013/ACC-014)**: the invariant "never see a variant" is preserved by construction — the EN scan is re-rooted at the `en/` dir, so no glob-shape argument is needed; the pinning test is re-asserted in that form (Phase 130).
 - **`ref` churn**: `ref = path.stem` changes from `<type>-<uuid>-<slug>` to `<uuid>-<slug>`; `ref` is documented as opaque and is never an input to `get_<d>` (bare uuid only), so this is documentation churn, not a functional break.
-- **Id-less documents**: hand-authored docs with `id: None` in the frontmatter (list-only today) stay list-visible iff placed inside a shard dir (any shard, e.g. `en/00/`), EN or variant.
+- **Id-less documents**: hand-authored docs with `id: None` in the frontmatter (list-only today) stay list-visible iff placed inside a shard dir (any shard, e.g. `en/00/`), EN or variant — their stems keep the author-chosen name (no uuid prefix), so the uuid-prefix invariant of REQ-008/ACC-002 applies only to documents carrying a frontmatter `id` (the in-repo corpus contains no id-less documents).
 - **Cold per-id resolution** drops from O(N-domain) to O(N/256) parses via the shard-narrowed scan, per language (REQ-004).
 - **dec moves only**: the 48 in-repo dec files already carry the prefix-less name REQ-002 extends; their migration is a pure `git mv` into `en/<shard>/`, the other 28 files move + rename.
 
@@ -88,10 +88,11 @@ Key invariants and rationale:
 - [ ] Task 100.110: Make `iter_doc_paths` yield the sharded listing of its base dir (`<base>/*/*.md`, sorted by relative path; flat files and any deeper nesting excluded) — the per-language scan primitive, called with each language's own base dir (REQ-003).
 - [ ] Task 100.120: Shard-narrow `find_doc_path_by_id` within a language's base dir (EN = the `en/` dir) with the full sharded-listing fallback per language; reconcile semantics unchanged (REQ-004).
 - [ ] Task 100.130: Shard-narrow `find_parse_failure` with the full fallback (REQ-004).
-- [ ] Task 100.140: Update `_doc_paths` module and function docstrings for the sharded, prefix-less naming and the uniform per-language layout (REQ-002, REQ-003).
-- [ ] Task 100.150: Unit tests for the layout core: order identity, flat/too-deep not yielded, fast path, wrong-shard fallback (EN + variant), id-less doc in `en/00/`, the EN-only scan re-rooted at `en/` (ACC-003, ACC-004, ACC-008, ACC-009).
-- [ ] Task 100.160: Rework `doc_base_dir`/`ensure_doc_base_dir` to resolve every language — `en` included, no flat special case — to `docs/<type>/<lang>/` (REQ-003, REQ-005).
+- [ ] Task 100.140: Update `_doc_paths` module and function docstrings for the sharded, prefix-less naming and the uniform per-language layout, and the per-domain `tools/_paths.py` wrapper module/function docstrings of all thirteen sharded domains (e.g. `req/tools/_paths.py`, where `req_base_dir`/`iter_req_paths` document "the flat `docs/req/` directory exactly as before / exactly today's listing") — the wrapper files need no code change, docstrings only, otherwise `docs/api/` (regenerated in 140.110) ships wrong layout documentation (REQ-002, REQ-003).
+- [ ] Task 100.150: Unit tests for the layout core: order identity, flat/too-deep not yielded, fast path, wrong-shard fallback (EN + variant), id-less doc in `en/00/` (ACC-003, ACC-004).
+- [ ] Task 100.160: Rework `doc_base_dir`/`ensure_doc_base_dir` to resolve every language — `en` included, no flat special case — to `docs/<type>/<lang>/`; `language=None` (omitted) resolves to the `en/` directory — every EN-only call site (the per-domain `iter_<d>_paths()`, `find_<d>_path()`, `config_info()`) passes `None`, and the "EN-only consumers never see a variant" invariant holds only if `None` maps to `en/` rather than raising or returning the domain root (REQ-003, REQ-005).
 - [ ] Task 100.170: Rework `language_for_doc_path` (language = the path's first subdirectory under the domain base, shape-valid two letters; any other position ⇒ canonical) and `iter_doc_paths_all_languages` (union of the sharded listings of `en/` + every shape-valid language dir); `iter_language_dirs` keeps its shape-valid discovery semantics (REQ-003).
+- [ ] Task 100.180: Unit test for the re-rooted EN-only scan: the EN-only consumers re-rooted at the `en/` dir see EN files only, never variant files (ACC-008, ACC-009).
 
 #### Phase 110: Write path
 
@@ -102,11 +103,11 @@ Key invariants and rationale:
 
 - [ ] Task 120.100: `_infer_type` sharded recognition (the valid shape is `docs/<type>/<lang>/<2-hex>/<file>.md`) plus the placement validator (missing language dir, missing shard dir, non-hex shard, deeper than one shard level — all violations, exit 2 naming the correct path; a no-table language dir stays placement-valid, its files take the existing no-table content error) (REQ-006).
 - [ ] Task 120.110: Update the anchored artifact pattern in `.pre-commit-config.yaml`, `.github/workflows/ci.yml`, and `tests/commands/test_lint.py` (open-depth match under `docs/<dir>/` so misplaced depths are selected for the validator; non-domain dirs keep the skip behavior) and extend the drift test (REQ-006).
-- [ ] Task 120.120: Lint tests: valid EN shard, valid variant shard, the four violation shapes, `appendix` skip at every depth, `_derive_id` and repair pointer on sharded paths (ACC-005).
+- [ ] Task 120.120: Lint tests: valid EN shard, valid variant shard, the four violation shapes, the non-domain-dir skip at every depth pinned against the repo's real archive tree (real files, depth ≥ 3 — e.g. `docs/archive/adr/<uuid>-<slug>.md` and `docs/archive/sop/` — non-domain dir → skip, exit 0), `_derive_id` and repair pointer on sharded paths (ACC-005).
 
 #### Phase 130: Test sweep and in-repo migration
 
-- [ ] Task 130.100: Update the flat-glob `_doc_path()` test helpers and hand-seeded broken/variant files across the ~30 affected test files — including the feat-197-i18n suites (`tests/general/tools/test_i18n_*`, `tests/dec/tools/test_i18n_*`, `test_language_guard`, `test_list_languages`, `test_check_translation_drift`, the EN-only-consumer pinning tests) — to the uniform `en/<shard>/` + `<lang>/<shard>/` layout (REQ-002, REQ-003).
+- [ ] Task 130.100: Update the flat-glob `_doc_path()` test helpers and hand-seeded broken/variant files across the ~30 affected test files — including the feat-197-i18n suites (`tests/general/tools/test_i18n_*`, `tests/dec/tools/test_i18n_*`, `test_language_guard`, `test_list_languages`, `test_check_translation_drift`, the EN-only-consumer pinning tests) and the `specmgr://config` surface (`tests/general/resources/test_config.py`: the per-domain `base_dir` assertion `assertEqual(…, DEFAULT_DOCS_ROOT / domain)` becomes `DEFAULT_DOCS_ROOT / domain / "en"` for the thirteen sharded domains — `config_info()` calls each domain's base-dir function with no language, and after Task 100.160 the omitted-language resolution targets `docs/<type>/en/`; plus the golden fixture `tests/fixtures/config-golden/specmgr-config.pre-migration.json`, regenerated per that fixture's own capture-README procedure) — to the uniform `en/<shard>/` + `<lang>/<shard>/` layout (REQ-002, REQ-003).
 - [ ] Task 130.110: `git mv` the 76 in-repo docs into `docs/<type>/en/<shard>/` (48 dec move-only, the remaining 28 with the type prefix dropped; throwaway loop, not committed as tooling) (REQ-007).
 - [ ] Task 130.120: Verify `specmgr lint --all` and the full test suite are green on the migrated tree (ACC-002, ACC-006).
 
@@ -126,6 +127,18 @@ Key invariants and rationale:
 ### Updates
 
 <!-- Newest entry first -- prepend new entries directly below this comment. -->
+
+#### 2026-11-18 14:31:36.772Z - Plan refined after feat-refiner pass (G1, G2, D1, D3, I1, I2)
+
+Seven user-approved fixes from the feat-refiner pass applied to the plan:
+
+- G1: Task 130.100 now also covers the two config items no task owned — `tests/general/resources/test_config.py` (its per-domain `base_dir` assertion `assertEqual(…, DEFAULT_DOCS_ROOT / domain)` becomes `DEFAULT_DOCS_ROOT / domain / "en"` for the thirteen sharded domains, since `config_info()` calls each domain's base-dir function with no language and the omitted-language resolution targets `docs/<type>/en/` after Task 100.160) and the `specmgr://config` golden `tests/fixtures/config-golden/specmgr-config.pre-migration.json` (regenerated per that fixture's own capture-README procedure) — so the 130.120/140.120 green-suite gates own every affected item.
+- G2: Task 100.140 now also updates the per-domain `tools/_paths.py` wrapper module/function docstrings of all thirteen sharded domains (e.g. `req/tools/_paths.py`, "the flat `docs/req/` directory exactly as before / exactly today's listing") — docstrings only, no code change, so `docs/api/` (regenerated in 140.110) does not ship wrong layout documentation.
+- D1: REQ-008, ACC-002, and the Id-less documents design note now carry the explicit exception — the uuid-prefix invariant applies to documents carrying a frontmatter `id`; id-less documents keep author-chosen stems (no uuid prefix) and stay list-visible only when placed inside a shard dir (the in-repo corpus contains no id-less documents — a text-clarity fix, not a behavior change).
+- D2: The 2026-10-31 Decisions Made entry is amended so the 2026-11-18 "Every ADR reference is re-pointed to DEC" claim holds — "unifies with ADR's convention" now reads "(ADR removed per issue #46; the convention is now DEC's — see the 2026-11-18 Updates entry)".
+- D3: The "EN-only scan re-rooted at `en/`" test case moves out of Task 100.150 into a new Task 100.180 appended after 100.170 — the behavior is introduced by Tasks 100.160/100.170, so every task's tests are satisfiable in list order (100.150 now cites ACC-003/ACC-004 only).
+- I1: Task 120.120 pins the lint skip behavior against the repo's real non-domain tree `docs/archive/` (real files, depth ≥ 3), and REQ-006/ACC-005 use `docs/archive/` (depth ≥ 3) as the concrete example instead of the non-existent `docs/appendix/`.
+- I2: Task 100.160 now states explicitly that `language=None` (omitted) resolves to the `en/` directory — every EN-only call site (the per-domain `iter_<d>_paths()`, `find_<d>_path()`, `config_info()`) passes `None`, and the "EN-only consumers never see a variant" invariant holds only if `None` maps to `en/` rather than raising or returning the domain root.
 
 #### 2026-11-18 07:06:21.000Z - Plan revised for ADR removal, thirteen-domain scope, and the uniform per-language sharded layout
 
@@ -158,7 +171,7 @@ Settled with the requester in the plan revision:
 The layout was decided in iterative plan review with the requester:
 
 - Two hex digits (256 shards), bare-hex dir names, fixed constant (no env var) — a two-hex shard cannot collide with a domain name, unlike three digits (`dec` is three pure-hex chars).
-- File names drop the `<type>-` prefix (REQ-002) — unifies with ADR's convention and removes the "`req-<uuid>`" not-found error class at the root.
+- File names drop the `<type>-` prefix (REQ-002) — unifies with ADR's convention (ADR removed per issue #46; the convention is now DEC's — see the 2026-11-18 Updates entry) and removes the "`req-<uuid>`" not-found error class at the root.
 - No dual-layout reads and no migration CLI (REQ-003, REQ-007) — breaking for downstream flat trees, accepted and documented (REQ-009).
 - A misplaced file is a lint layout violation that blocks the commit (exit 2), not a silent skip or a content-only lint (REQ-006).
 - The GitHub issue is created before the feature folder; the feature id carries the issue number.
