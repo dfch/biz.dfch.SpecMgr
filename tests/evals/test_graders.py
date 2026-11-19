@@ -67,6 +67,9 @@ from c4_skills.cases import (
     HELDOUT_MODELING_CASE_DEF,
     HELDOUT_MODELING_FORBIDDEN_NAMES,
     HELDOUT_MODELING_PROMPT,
+    HELDOUT_REVIEW_CASE_DEF,
+    HELDOUT_REVIEW_REVIEW_FACTS,
+    HELDOUT_REVIEW_SEED_WORKSPACE,
     HELDOUT_VIEWS_CASE_DEF,
     HELDOUT_VIEWS_PROMPT,
     MCP_LIMITS_GATES,
@@ -77,6 +80,11 @@ from c4_skills.cases import (
     MODELING_DECISIONS_PROMPT,
     NO_TRIGGER_GATES,
     MIN_DSL_BYTES,
+    REVIEW_MODEL_CASE_DEF,
+    REVIEW_MODEL_GATES,
+    REVIEW_MODEL_PROMPT,
+    REVIEW_MODEL_REVIEW_FACTS,
+    REVIEW_MODEL_SEED_WORKSPACE,
     SMOKE_CREATE_SYSTEM_PROMPT,
     Case,
 )
@@ -91,14 +99,20 @@ from c4_skills.graders import (
     case_passed,
     grade_case,
     gate_container_count,
+    gate_crowded_view_found,
     gate_elements_described,
     gate_explicit_view_keys,
     gate_external_system_tagged,
+    gate_keyless_view_found,
     gate_no_deletions,
+    gate_no_false_findings,
     gate_no_library_container,
     gate_no_vague_labels,
     gate_relationships_described,
+    gate_vague_label_found,
     gate_views_within_element_bound,
+    parse_inspect_findings,
+    _finding_lines,
     iter_components,
     iter_containers,
     iter_custom_elements,
@@ -2265,6 +2279,563 @@ class TestPhase140EndToEnd(unittest.TestCase):
             "external_system_tagged",
         ):
             self.assertTrue(by_name[shape_gate].passed, shape_gate)
+        self.assertFalse(case_passed(results))
+
+
+# ---------------------------------------------------------------------------
+# Phase 150 (Task 150.100): the review cases and the report-text gates
+# ---------------------------------------------------------------------------
+
+REPORTS = FIXTURES_DIR / "reports"
+
+
+def _review_inputs(seed_name: str) -> GraderInputs:
+    """The seed's GraderInputs over the committed pre-exported fixture facts.
+
+    The review seeds are CLI-valid (validate rc=0, export rc=0); the
+    `inspect` facts (rc=1, the pinned finding lines) are read from the
+    committed `inspect.txt` -- the ambient scope/docs/decisions findings
+    plus the seeded orphan and keyless-view findings (the review's
+    `cli_valid` gate only needs validate, but the inputs stay the full
+    collected shape).
+    """
+    dsl = (WORKSPACES / seed_name / "workspace.dsl").read_text(encoding="utf-8")
+    export = _load_export(seed_name)
+    assert export is not None, f"missing pre-exported fixture {seed_name}/export.json"
+    inspect_txt = (WORKSPACES / seed_name / "inspect.txt").read_text(encoding="utf-8")
+    result = GraderInputs(
+        dsl_path="workspace.dsl",
+        dsl_text=dsl,
+        validate_rc=0,
+        validate_stderr="",
+        export_json=export,
+        export_rc=0,
+        export_stderr="",
+        inspect_rc=1,
+        inspect_findings=parse_inspect_findings(inspect_txt),
+    )
+    return result
+
+
+def _report_trial(report_name: str) -> ParsedTrial:
+    """A synthetic one-text-event stream carrying the committed report text."""
+    text = (REPORTS / f"{report_name}.txt").read_text(encoding="utf-8")
+    return _stream(_text_event(text))
+
+
+class TestPhase150CaseRegistry(unittest.TestCase):
+    """The Phase 150 cases (Task 150.100): the locked ids, prompts, gate
+    set, seeds and review facts."""
+
+    def test_review_model_is_registered_and_a_full_case(self) -> None:
+        self.assertIs(CASES["review-model"], REVIEW_MODEL_CASE_DEF)
+        self.assertIn("review-model", pins.FULL_CASES)
+        self.assertEqual(REVIEW_MODEL_CASE_DEF.gates, REVIEW_MODEL_GATES)
+
+    def test_heldout_review_is_registered_but_not_a_full_case(self) -> None:
+        self.assertIs(CASES[pins.HELDOUT_REVIEW_CASE], HELDOUT_REVIEW_CASE_DEF)
+        self.assertNotIn(pins.HELDOUT_REVIEW_CASE, pins.FULL_CASES)
+        # the same gate family (locked: same task shape, same gates, different domain)
+        self.assertEqual(HELDOUT_REVIEW_CASE_DEF.gates, REVIEW_MODEL_GATES)
+
+    def test_review_model_gate_set_is_the_locked_nine(self) -> None:
+        self.assertEqual(
+            REVIEW_MODEL_GATES,
+            (
+                "cli_valid",
+                "file_untouched",
+                "vague_label_found",
+                "library_container_found",
+                "external_tag_found",
+                "keyless_view_found",
+                "crowded_view_found",
+                "orphan_found",
+                "no_false_findings",
+            ),
+        )
+        # no loop-discipline gates and no create-family gates (the locked
+        # Phase 120 separation -- this is a review skill)
+        for stream_gate in (
+            "parse_called",
+            "inspect_called",
+            "triage_complete",
+            "validated_before_return",
+            "validate_ok_called",
+            "elements_described",
+            "relationships_described",
+            "no_deletions",
+            "container_count",
+            "no_library_container",
+            "external_system_tagged",
+            "no_vague_labels",
+            "views_within_element_bound",
+            "explicit_view_keys",
+            "has_view",
+            "has_system",
+            "has_person",
+            "two_containers",
+            "relationship_technology",
+            "dsl_written",
+        ):
+            self.assertNotIn(stream_gate, REVIEW_MODEL_GATES, stream_gate)
+
+    def test_review_model_prompt_is_the_locked_wording(self) -> None:
+        # the read-only instruction and the report shape are locked (the
+        # prompt is line-wrapped at 120 chars, so the pins run over the
+        # whitespace-normalized text)
+        lowered = re.sub(r"\s+", " ", REVIEW_MODEL_PROMPT).lower()
+        self.assertIn("read-only quality review", lowered)
+        self.assertIn("do not change, create, delete, or rename any file", lowered)
+        self.assertIn("one bullet per finding", lowered)
+        self.assertIn("workspace.dsl", lowered)
+        # ...and the prompt never states the seeded defects (no element
+        # name, no defect-class answer)
+        for seed_text in (REVIEW_MODEL_SEED_WORKSPACE, HELDOUT_REVIEW_SEED_WORKSPACE):
+            for name in re.findall(r'(?:person|softwareSystem|container|element)\s+\w+\s+"([^"]+)"', seed_text):
+                self.assertNotIn(name.lower(), lowered, f"the prompt names a seeded element: {name}")
+        for answer_word in (
+            "external",
+            "tag",
+            "library",
+            "vague",
+            "orphan",
+            "disconnected",
+            "uses",
+            "key",
+            "20",
+            "scope",
+            "documentation",
+            "decisions",
+        ):
+            self.assertNotIn(answer_word, lowered, f"the prompt states an answer: {answer_word}")
+
+    def test_review_model_seed_carries_the_locked_defects(self) -> None:
+        seed = REVIEW_MODEL_SEED_WORKSPACE
+        # the vague label is a member of the locked Phase 130 forbidden set
+        self.assertIn(REVIEW_MODEL_REVIEW_FACTS.vague_label, VAGUE_RELATIONSHIP_LABELS)
+        self.assertIn('"uses" "HTTP"', seed)
+        # the library-as-container, the untagged third party, the orphan,
+        # the keyless crowded view
+        self.assertIn('container "Pricing Rules Library"', seed)
+        self.assertIn('element "Payment Provider" "Charges customer cards for rentals and deposits."', seed)
+        self.assertIn('softwareSystem "Legacy Billing System"', seed)
+        self.assertNotIn('"External"', seed.split('element "Payment Provider"')[1].split("\n")[0])
+        # the keyless container view (no key between `container manager` and `{`)
+        self.assertIn("container manager {\n            include *", seed)
+        # the clean control: a substantial defect-free region (the locked
+        # clean names all exist in the seed; the person role is the one
+        # clean name deliberately NOT in the list)
+        for name in REVIEW_MODEL_REVIEW_FACTS.clean_names:
+            self.assertIn(f'"{name}"', seed, f"clean name absent from the seed: {name}")
+        self.assertIn('person "Customer"', seed)
+        # and the defect-adjacent names are locked OUT of the clean list
+        for polluted in (
+            *REVIEW_MODEL_REVIEW_FACTS.vague_endpoints,
+            REVIEW_MODEL_REVIEW_FACTS.library_name,
+            REVIEW_MODEL_REVIEW_FACTS.untagged_name,
+            REVIEW_MODEL_REVIEW_FACTS.orphan_name,
+            REVIEW_MODEL_REVIEW_FACTS.system_name,
+            "Customer",
+        ):
+            self.assertNotIn(polluted, REVIEW_MODEL_REVIEW_FACTS.clean_names, polluted)
+
+    def test_heldout_review_seed_carries_the_same_defect_placement(self) -> None:
+        seed = HELDOUT_REVIEW_SEED_WORKSPACE
+        self.assertIn(f'"{HELDOUT_REVIEW_REVIEW_FACTS.vague_label}" "HTTP"', seed)
+        self.assertIn(f'container "{HELDOUT_REVIEW_REVIEW_FACTS.library_name}"', seed)
+        self.assertIn(f'element "{HELDOUT_REVIEW_REVIEW_FACTS.untagged_name}"', seed)
+        self.assertIn(f'softwareSystem "{HELDOUT_REVIEW_REVIEW_FACTS.orphan_name}"', seed)
+        # the keyless container view (no key between `container planner` and `{`)
+        self.assertIn("container planner {\n            include *", seed)
+        # the held-out domain is not any earlier phase's domain (the locked
+        # guardrail): checked over the shared prompt (which names no domain
+        # at all) and the seed -- where "library" is excluded from the seed
+        # check on purpose (the locked defect placement names the seeded
+        # library container; it is not a domain reuse)
+        prompt_lowered = re.sub(r"\s+", " ", REVIEW_MODEL_PROMPT).lower()
+        for domain in (
+            "bookshop",
+            "hospital",
+            "library",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+            "insurance",
+            "claims",
+            "car rental",
+            "fleet manager",
+        ):
+            self.assertNotIn(domain, prompt_lowered, f"the prompt names an earlier domain: {domain}")
+        for domain in (
+            "bookshop",
+            "hospital",
+            "parking",
+            "museum",
+            "parcel",
+            "home energy",
+            "banking",
+            "bank portal",
+            "insurance",
+            "claims",
+            "car rental",
+            "fleet manager",
+        ):
+            self.assertNotIn(domain, seed.lower(), f"the held-out seed reuses an earlier domain: {domain}")
+        # the same clean-control shape: every locked clean name in the seed
+        for name in HELDOUT_REVIEW_REVIEW_FACTS.clean_names:
+            self.assertIn(f'"{name}"', seed, f"clean name absent from the seed: {name}")
+        # ...and the defect-adjacent names locked out of its clean list
+        for polluted in (
+            *HELDOUT_REVIEW_REVIEW_FACTS.vague_endpoints,
+            HELDOUT_REVIEW_REVIEW_FACTS.library_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.untagged_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.orphan_name,
+            HELDOUT_REVIEW_REVIEW_FACTS.system_name,
+            "Guest",
+        ):
+            self.assertNotIn(polluted, HELDOUT_REVIEW_REVIEW_FACTS.clean_names, polluted)
+
+    def test_review_seeds_are_the_case_setup_files(self) -> None:
+        # the trial's pre-seeded file is byte-identical to the committed
+        # fixture (the `file_untouched` gate's baseline)
+        self.assertEqual(REVIEW_MODEL_CASE_DEF.setup_files, {"workspace.dsl": REVIEW_MODEL_SEED_WORKSPACE})
+        self.assertEqual(HELDOUT_REVIEW_CASE_DEF.setup_files, {"workspace.dsl": HELDOUT_REVIEW_SEED_WORKSPACE})
+        self.assertEqual(
+            (WORKSPACES / "review-model-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            REVIEW_MODEL_SEED_WORKSPACE,
+        )
+        self.assertEqual(
+            (WORKSPACES / "heldout-review-seed" / "workspace.dsl").read_text(encoding="utf-8"),
+            HELDOUT_REVIEW_SEED_WORKSPACE,
+        )
+
+
+class TestPhase150FixtureFilesPresent(unittest.TestCase):
+    def test_review_fixtures_are_committed_and_consistent(self) -> None:
+        for name in ("review-model-seed", "heldout-review-seed"):
+            dsl = WORKSPACES / name / "workspace.dsl"
+            self.assertTrue(dsl.is_file(), f"missing fixture {name}/workspace.dsl")
+            self.assertGreaterEqual(len(dsl.read_text(encoding="utf-8").encode("utf-8")), MIN_DSL_BYTES)
+            export = WORKSPACES / name / "export.json"
+            self.assertTrue(export.is_file(), f"missing fixture {name}/export.json")
+            self.assertIn("model", json.loads(export.read_text(encoding="utf-8")))
+            for sidecar in ("validate.txt", "inspect.txt"):
+                self.assertTrue((WORKSPACES / name / sidecar).is_file(), f"missing fixture {name}/{sidecar}")
+        for name in ("review-model-good", "review-model-bad", "heldout-review-good", "heldout-review-bad"):
+            report = REPORTS / f"{name}.txt"
+            self.assertTrue(report.is_file(), f"missing fixture {name}.txt")
+            self.assertGreaterEqual(len(report.read_text(encoding="utf-8").strip()), 100)
+
+    def test_review_seeds_are_cli_valid_and_carry_the_pinned_inspect_findings(self) -> None:
+        # the seeds' defects are SEMANTIC: validate.txt is empty (rc=0),
+        # and the pinned inspect output carries rc=1 with the seeded
+        # orphan + keyless-view findings (plus the ambient scope/docs/
+        # decisions findings)
+        for name in ("review-model-seed", "heldout-review-seed"):
+            self.assertEqual((WORKSPACES / name / "validate.txt").read_text(encoding="utf-8"), "")
+            inspect_txt = (WORKSPACES / name / "inspect.txt").read_text(encoding="utf-8")
+            self.assertIn("model.element.disconnected", inspect_txt)
+            self.assertIn("model.element.noview", inspect_txt)
+            self.assertIn("views.view.key", inspect_txt)
+            self.assertIn("Container-001", inspect_txt)
+
+    def test_review_seed_container_views_carry_21_elements(self) -> None:
+        # the locked crowded-view fact (over the Phase 140 bound of 20):
+        # the keyless `include *` container view exports 21 elements
+        for name in ("review-model-seed", "heldout-review-seed"):
+            export = _load_export(name)
+            assert export is not None
+            container_views = [v for v in iter_views(export) if v.get("key") == "Container-001"]
+            self.assertEqual(len(container_views), 1)
+            self.assertTrue(container_views[0].get("generatedKey"))
+            self.assertEqual(len(container_views[0].get("elements") or []), 21)
+            self.assertGreater(len(container_views[0].get("elements") or []), VIEW_ELEMENT_BOUND)
+
+
+class TestFindingLines(unittest.TestCase):
+    """The finding-line extraction (the locked report shape of the review
+    prompt): markdown list items only, conservative on everything else."""
+
+    def test_bullets_unordered_and_ordered(self) -> None:
+        text = "- one\n* two\n+ three\n1) four\n2. five\nplain prose\n"
+
+        result = _finding_lines(text)
+
+        self.assertEqual(result, ["one", "two", "three", "four", "five"])
+
+    def test_a_paragraph_report_yields_no_finding_lines(self) -> None:
+        # the locked conservative direction: an unrecognisable report
+        # shape can only fail the detection gates, never pass one
+        text = "The model is fine overall. The Legacy Billing System looks disconnected to me.\n"
+
+        self.assertEqual(_finding_lines(text), [])
+
+    def test_bullet_with_leading_whitespace_and_empty_lines(self) -> None:
+        text = "   -   indented\n\n- second\n"
+
+        self.assertEqual(_finding_lines(text), ["indented", "second"])
+
+
+class TestReviewDetectionGates(unittest.TestCase):
+    """The six per-defect report-text gates over the committed report
+    fixtures (ACC-006: known-good vs known-bad, no model call, no Docker)."""
+
+    def _context(self, case: Case, report_name: str, seed_name: str) -> GateContext:
+        return _context(case, _review_inputs(seed_name), trial=_report_trial(report_name))
+
+    def test_known_good_report_locates_every_defect(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = self._context(case, report, seed)
+                for gate_name in (
+                    "vague_label_found",
+                    "library_container_found",
+                    "external_tag_found",
+                    "keyless_view_found",
+                    "crowded_view_found",
+                    "orphan_found",
+                ):
+                    result = _gate(gate_name, context)
+                    self.assertTrue(result.passed, f"{case.id}/{gate_name}: {result.detail}")
+
+    def test_known_bad_report_locates_no_defect(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = self._context(case, report, seed)
+                for gate_name in (
+                    "vague_label_found",
+                    "library_container_found",
+                    "external_tag_found",
+                    "keyless_view_found",
+                    "crowded_view_found",
+                    "orphan_found",
+                ):
+                    result = _gate(gate_name, context)
+                    self.assertFalse(result.passed, f"{case.id}/{gate_name} passed on the known-bad report")
+
+    def test_vague_label_gate_rejects_users_and_endpoint_only_mentions(self) -> None:
+        # word-boundary on the label ("users" must not match "uses") and
+        # the vagueness-claim requirement (naming the endpoints without
+        # saying what is wrong must not match)
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        for text, expected in (
+            ("- The portal's users book through the app.", False),
+            ("- The relationship from the Booking Web App to the Pricing Service has a description.", False),
+            (
+                '- The relationship from the Booking Web App to the Pricing Service is labelled "uses", which is vague.',
+                True,
+            ),
+        ):
+            context = _context(case, inputs, trial=_stream(_text_event(text)))
+
+            self.assertEqual(gate_vague_label_found(context).passed, expected, text)
+
+    def test_keyless_view_gate_accepts_the_generated_key_quote(self) -> None:
+        # a report that quotes the generated key (from `inspect`) locates
+        # the defect without naming the system
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case, inputs, trial=_stream(_text_event('- The view "Container-001" has an auto-generated key.'))
+        )
+
+        self.assertTrue(gate_keyless_view_found(context).passed)
+
+    def test_crowded_view_gate_rejects_a_benign_20_element_mention(self) -> None:
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("- The CustomerContext view carries 4 of the 20 elements on the model.")),
+        )
+
+        self.assertFalse(gate_crowded_view_found(context).passed)
+
+    def test_a_paragraph_report_fails_every_detection_gate(self) -> None:
+        # the locked conservative direction, over the full case
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(case, inputs, trial=_stream(_text_event("I reviewed it; the model looks fine overall.")))
+
+        for gate_name in (
+            "vague_label_found",
+            "library_container_found",
+            "external_tag_found",
+            "keyless_view_found",
+            "crowded_view_found",
+            "orphan_found",
+        ):
+            self.assertFalse(_gate(gate_name, context).passed, gate_name)
+
+    def test_review_gates_fail_on_a_case_without_facts(self) -> None:
+        # the `container_count` precedent: a review gate misused on a
+        # non-review case fails with the "gate misused" detail
+        context = _context(CASES["create-system"], _review_inputs("review-model-seed"))
+
+        for gate_name in (
+            "vague_label_found",
+            "library_container_found",
+            "external_tag_found",
+            "keyless_view_found",
+            "crowded_view_found",
+            "orphan_found",
+            "no_false_findings",
+        ):
+            result = GATES[gate_name](context)
+            self.assertFalse(result.passed)
+            self.assertIn("gate misused", result.detail)
+
+
+class TestNoFalseFindingsGate(unittest.TestCase):
+    """The clean control: finding lines may not name the seeded model's
+    clean parts."""
+
+    def test_known_good_report_names_no_clean_element(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+            result = gate_no_false_findings(context)
+
+            self.assertTrue(result.passed, f"{case.id}: {result.detail}")
+
+    def test_known_bad_report_names_clean_elements(self) -> None:
+        for case, report, seed, clean_name in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed", "Mobile Backend"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed", "Mobile App Backend"),
+        ):
+            context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+            result = gate_no_false_findings(context)
+
+            self.assertFalse(result.passed, f"{case.id} passed on the known-bad report")
+            self.assertIn(clean_name, result.detail)
+
+    def test_a_finding_line_naming_a_clean_element_fails(self) -> None:
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case, inputs, trial=_stream(_text_event("- The Media Database could use a bigger retention policy."))
+        )
+
+        result = gate_no_false_findings(context)
+
+        self.assertFalse(result.passed)
+        self.assertIn("Media Database", result.detail)
+
+    def test_word_boundary_matching_does_not_flag_common_noun_usage(self) -> None:
+        # a clean multi-word name must match as a whole phrase: "mobile
+        # backends" (plural, no phrase) is not the "Mobile Backend" element
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("- The mobile backends generally look well described.")),
+        )
+
+        self.assertTrue(gate_no_false_findings(context).passed)
+
+    def test_summary_prose_outside_the_finding_lines_is_exempt(self) -> None:
+        # the clean control is about findings, not about the whole message:
+        # a closing line naming the clean parts as checked-and-fine passes
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        context = _context(
+            case,
+            inputs,
+            trial=_stream(_text_event("The Mobile Backend, the Fleet Database and the rest all looked fine.\n")),
+        )
+
+        self.assertTrue(gate_no_false_findings(context).passed)
+
+
+class TestPhase150EndToEnd(unittest.TestCase):
+    """The locked `review-model`/`heldout-review` gate sets over the
+    committed seeds and reports (ACC-006: the known-good report passes
+    every gate, the known-bad report fails exactly the six detection gates
+    plus the clean control -- no model call, no Docker)."""
+
+    def test_known_good_report_passes_all_nine_gates(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-good", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-good", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+                results = grade_case(context)
+
+                self.assertEqual(len(results), 9)
+                self.assertTrue(case_passed(results), [(r.name, r.detail) for r in results if not r.passed])
+
+    def test_known_bad_report_fails_exactly_the_seven_report_gates(self) -> None:
+        for case, report, seed in (
+            (CASES["review-model"], "review-model-bad", "review-model-seed"),
+            (CASES[pins.HELDOUT_REVIEW_CASE], "heldout-review-bad", "heldout-review-seed"),
+        ):
+            with self.subTest(case=case.id):
+                context = _context(case, _review_inputs(seed), trial=_report_trial(report))
+
+                results = grade_case(context)
+                by_name = {r.name: r for r in results}
+
+                self.assertEqual(
+                    sorted(r.name for r in results if not r.passed),
+                    sorted(
+                        (
+                            "vague_label_found",
+                            "library_container_found",
+                            "external_tag_found",
+                            "keyless_view_found",
+                            "crowded_view_found",
+                            "orphan_found",
+                            "no_false_findings",
+                        )
+                    ),
+                )
+                # the read-only context gates pass on the known-bad report
+                # too (the report does not touch the file)
+                self.assertTrue(by_name["cli_valid"].passed)
+                self.assertTrue(by_name["file_untouched"].passed)
+                self.assertFalse(case_passed(results))
+
+    def test_a_modified_seed_fails_the_read_only_gates(self) -> None:
+        # the ACC-004 edge: an agent that edits the seeded file (any byte)
+        # fails `file_untouched` whatever its report says
+        case = CASES["review-model"]
+        inputs = _review_inputs("review-model-seed")
+        modified = GraderInputs(
+            dsl_path=inputs.dsl_path,
+            dsl_text=inputs.dsl_text + "\n# edited\n",
+            validate_rc=0,
+            validate_stderr="",
+            export_json=inputs.export_json,
+            export_rc=0,
+            export_stderr="",
+            inspect_rc=inputs.inspect_rc,
+            inspect_findings=inputs.inspect_findings,
+        )
+        context = _context(case, modified, trial=_report_trial("review-model-good"))
+
+        results = grade_case(context)
+        by_name = {r.name: r for r in results}
+
+        self.assertFalse(by_name["file_untouched"].passed)
+        self.assertIn("modified", by_name["file_untouched"].detail)
         self.assertFalse(case_passed(results))
 
 

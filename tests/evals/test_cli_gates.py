@@ -247,6 +247,47 @@ class TestCliOverFixtures(unittest.TestCase):
         expected = json.loads((WORKSPACES / "heldout-views-good" / "export.json").read_text(encoding="utf-8"))
         self.assertEqual(live, expected)
 
+    def test_review_model_seed_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 150 review seed: CLI-valid (the defects are SEMANTIC,
+        # not syntactic), its live export is JSON-equivalent to the
+        # committed pre-exported fixture, and the live `inspect` is
+        # rc=1 with the pinned finding lines
+        workdir = self._stage("review-model-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+        inspect_rc, inspect_out = _run_cli(workdir, ["inspect", "-w", "workspace.dsl"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "review-model-seed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+        self.assertEqual(inspect_rc, 1)
+        self.assertEqual(
+            inspect_out.strip(), (WORKSPACES / "review-model-seed" / "inspect.txt").read_text(encoding="utf-8").strip()
+        )
+
+    def test_heldout_review_seed_workspace_cli_is_valid_and_matches_fixture(self) -> None:
+        # the Phase 150 held-out review seed: same shape, the held-out
+        # domain (hotel booking)
+        workdir = self._stage("heldout-review-seed")
+
+        validate_rc, validate_out = _run_cli(workdir, ["validate", "-w", "workspace.dsl"])
+        export_rc, _ = _run_cli(workdir, ["export", "-w", "workspace.dsl", "-f", "json", "-o", "/w/out"])
+        inspect_rc, inspect_out = _run_cli(workdir, ["inspect", "-w", "workspace.dsl"])
+
+        self.assertEqual(validate_rc, 0, validate_out)
+        self.assertEqual(export_rc, 0)
+        live = json.loads((workdir / "out" / "workspace.json").read_text(encoding="utf-8"))
+        expected = json.loads((WORKSPACES / "heldout-review-seed" / "export.json").read_text(encoding="utf-8"))
+        self.assertEqual(live, expected)
+        self.assertEqual(inspect_rc, 1)
+        self.assertEqual(
+            inspect_out.strip(),
+            (WORKSPACES / "heldout-review-seed" / "inspect.txt").read_text(encoding="utf-8").strip(),
+        )
+
     def test_cli_image_matches_the_pin(self) -> None:
         proc = subprocess.run(  # noqa: S603 -- pinned image
             ["docker", "run", "--rm", pins.STRUCTURIZR_CLI_IMAGE, "version"],

@@ -62,9 +62,27 @@ bounded by its base view's count) and `explicit_view_keys` (every view in
 the export JSON carries an explicit key -- a view whose DSL omitted the
 key is exported under an auto-generated `<Kind>-NNN` key, e.g.
 `Container-001`, with `generatedKey: true`, verified against the pinned
-CLI). All gates -- the original 8 (unwrapped over `GateContext.inputs`,
-behavior unchanged) and the new ones -- are keyed in :data:`GATES`;
-:func:`grade_case` evaluates a case's gate names over one context.
+CLI). Phase 150 (Task 150.100) adds the review gates over the trial's
+FINAL MESSAGE (the review cases are pre-seeded: the model never changes,
+so the deliverable is the report, and the export-JSON gates could only
+measure the static seed): the read-only context gates `cli_valid`/
+`file_untouched` (the seeded workspace still validates and is
+byte-identical to the seed -- the ACC-004 check, the `no-trigger`
+precedent) plus seven report-text gates, each a loose finding-line
+matcher (the `mcp_limit_stated` family, a documented-limitation note in
+every docstring): `vague_label_found`, `library_container_found`,
+`external_tag_found`, `keyless_view_found`, `crowded_view_found`,
+`orphan_found` (one per seeded defect class of the case's locked
+`ReviewFacts`) and the clean control `no_false_findings` (no finding line
+names an element the seeded model does right). A finding line is a
+markdown list item of the final message (the review prompt mandates one
+bullet per finding); a report without list items yields no finding lines,
+so every detection gate fails and `no_false_findings` passes vacuously
+(the locked conservative direction: an unrecognisable report shape can
+only fail a gate, never pass one). All gates -- the original 8
+(unwrapped over `GateContext.inputs`, behavior unchanged) and the new
+ones -- are keyed in :data:`GATES`; :func:`grade_case` evaluates a case's
+gate names over one context.
 
 The split is: :func:`collect_inputs` (Docker-dependent, one real CLI run per
 command) and :func:`grade_case` (pure, unit-tested).
@@ -81,7 +99,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from . import pins, preflight
-from .cases import MIN_DSL_BYTES, Case, WORKSPACE_KEYWORD
+from .cases import MIN_DSL_BYTES, Case, ReviewFacts, WORKSPACE_KEYWORD
 from .events import ParsedTrial
 
 if TYPE_CHECKING:
@@ -800,6 +818,283 @@ def gate_explicit_view_keys(inputs: GraderInputs) -> GateResult:
 
 
 # ---------------------------------------------------------------------------
+# the Phase 150 review gates (Task 150.100)
+# ---------------------------------------------------------------------------
+
+#: The bullet prefixes a finding line may start with (the locked report
+#: shape of the review prompt: "one bullet per finding" -- markdown list
+#: items, unordered or ordered).
+_FINDING_BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)])\s+(.*)$")
+
+#: The defect vocabulary of the vague-label gate (one alternative is
+#: enough alongside the label/endpoint identification): the finding must
+#: say what is wrong with the label, not merely name the relationship.
+_VAGUENESS_RE = re.compile(
+    r"(vague|generic|uninformative|meaningless|\bintent\b|states nothing|says nothing"
+    r"|does not say|no information|not specific)",
+    re.IGNORECASE,
+)
+
+#: The defect vocabulary of the library-as-container gate.
+_LIBRARY_RE = re.compile(
+    r"(\bcontainer\b|should not|code-?level|\bmodule\b|\bpackage\b|\bjar\b|embedded"
+    r"|not (?:an? )?element|belongs (?:inside|within))",
+    re.IGNORECASE,
+)
+
+#: The defect vocabulary of the missing-External-tag gate.
+_EXTERNAL_TAG_RE = re.compile(r"(external|\btag\w*)", re.IGNORECASE)
+
+#: The defect vocabulary of the keyless-view gate.
+_VIEW_RE = re.compile(r"\b(view\w*|diagram\w*)", re.IGNORECASE)
+_VIEW_KEY_RE = re.compile(r"(\bkey\w*|identifier|\bstable\b|generated)", re.IGNORECASE)
+
+#: The defect vocabulary of the crowded-view gate (a size claim).
+_VIEW_SIZE_RE = re.compile(
+    r"(too many|crowded|readab|\belements?\b|\bover\b|\bsize\b|\bbound\b|\blarge\b|\b20\b)", re.IGNORECASE
+)
+
+#: The excess vocabulary of the crowded-view gate's system-name-free
+#: branch (a bare ``20``-element mention without an excess claim is not a
+#: size finding -- "the 20 elements on the view are all described" must
+#: not pass).
+_VIEW_OVER_RE = re.compile(r"(too many|crowded|readab|\bover\b|\bbound\b|\blarge\b)", re.IGNORECASE)
+
+#: The defect vocabulary of the orphan-element gate.
+_ORPHAN_RE = re.compile(
+    r"(orphan|disconnect|isolat|unconnected|standalone|no relationships?"
+    r"|not included|not on (?:any )?views?|missing (?:any )?(?:relationships?|views?))",
+    re.IGNORECASE,
+)
+
+
+def _finding_lines(final_text: str) -> list[str]:
+    """Return the finding lines of one final report text (Phase 150).
+
+    A finding line is a markdown list item of the final message (a
+    ``-``/``*``/``+``/ordered bullet), with the bullet marker stripped.
+    The review prompt mandates this shape ("one bullet per finding"); a
+    report without list items yields an empty set, so every detection
+    gate fails and `no_false_findings` passes vacuously -- the locked
+    conservative direction (an unrecognisable report shape can only fail
+    a gate, never pass one).
+    """
+    result: list[str] = []
+    for line in final_text.splitlines():
+        match = _FINDING_BULLET_RE.match(line.strip())
+        if match:
+            result.append(match.group(1).strip())
+    return result
+
+
+def _review_facts(context: GateContext) -> ReviewFacts | None:
+    """Return the case's locked review facts (None = gate misused)."""
+    result = context.case.review_facts
+    return result
+
+
+def _word(text: str, word: str) -> bool:
+    """Return True iff `word` occurs in `text` as a whole word (case-insensitive)."""
+    result = re.search(rf"\b{re.escape(word.lower())}\b", text.lower()) is not None
+    return result
+
+
+def gate_vague_label_found(context: GateContext) -> GateResult:
+    """`vague_label_found`: the report locates the seeded vague-labelled relationship.
+
+    A finding line passes when it carries the vague label as a whole
+    word (``uses`` -- ``users`` must not match) plus a vagueness claim,
+    or both of the locked endpoints' names plus a vagueness claim (a
+    correct finding names the relationship's endpoints). The label
+    membership itself is the case's locked `ReviewFacts.vague_label` (a
+    member of the Phase 130 `VAGUE_RELATIONSHIP_LABELS` set). Loose by
+    design (the `mcp_limit_stated` family): documented limitation -- a
+    report that locates the relationship in another phrasing the matcher
+    does not cover fails this gate.
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("vague_label_found", False, "the case carries no review facts (gate misused)")
+    source, destination = facts.vague_endpoints
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        if (
+            _word(line, facts.vague_label)
+            and _VAGUENESS_RE.search(line)
+            or (
+                line.lower().find(source.lower()) != -1
+                and line.lower().find(destination.lower()) != -1
+                and _VAGUENESS_RE.search(line)
+            )
+        ):
+            matched = line
+            break
+    if matched is None:
+        return GateResult("vague_label_found", False, "no finding line locates the vague-labelled relationship")
+    return GateResult("vague_label_found", True, f"finding line locates the vague label: {matched[:120]}")
+
+
+def gate_library_container_found(context: GateContext) -> GateResult:
+    """`library_container_found`: the report locates the seeded library modeled as a container.
+
+    A finding line passes when it carries the locked library name plus a
+    library-not-a-container claim (``container``/``should not``/
+    ``code-level``/``module``/``package``/``jar``/``embedded``/...).
+    Loose by design (the `mcp_limit_stated` family; the documented
+    limitation applies as in `vague_label_found`).
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("library_container_found", False, "the case carries no review facts (gate misused)")
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        if line.lower().find(facts.library_name.lower()) != -1 and _LIBRARY_RE.search(line):
+            matched = line
+            break
+    if matched is None:
+        return GateResult(
+            "library_container_found", False, "no finding line locates the library modeled as a container"
+        )
+    return GateResult("library_container_found", True, f"finding line locates the library container: {matched[:120]}")
+
+
+def gate_external_tag_found(context: GateContext) -> GateResult:
+    """`external_tag_found`: the report locates the seeded third-party element missing the External tag.
+
+    A finding line passes when it carries the locked element name plus an
+    ``external``/``tag`` claim. Loose by design (the `mcp_limit_stated`
+    family; the documented limitation applies as in `vague_label_found`).
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("external_tag_found", False, "the case carries no review facts (gate misused)")
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        if line.lower().find(facts.untagged_name.lower()) != -1 and _EXTERNAL_TAG_RE.search(line):
+            matched = line
+            break
+    if matched is None:
+        return GateResult(
+            "external_tag_found", False, "no finding line locates the third-party element missing the External tag"
+        )
+    return GateResult("external_tag_found", True, f"finding line locates the untagged element: {matched[:120]}")
+
+
+def gate_keyless_view_found(context: GateContext) -> GateResult:
+    """`keyless_view_found`: the report locates the seeded keyless view.
+
+    A finding line passes when it carries the locked system name plus a
+    view word plus a key/stability claim, or the locked generated key
+    (``Container-001`` -- the key the pinned exporter assigns the keyless
+    view) plus a view/key word (a report that quotes the generated key
+    from `inspect` locates the defect). Loose by design (the
+    `mcp_limit_stated` family; the documented limitation applies as in
+    `vague_label_found`).
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("keyless_view_found", False, "the case carries no review facts (gate misused)")
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        lowered = line.lower()
+        if (
+            lowered.find(facts.system_name.lower()) != -1
+            and _VIEW_RE.search(line)
+            and _VIEW_KEY_RE.search(line)
+            or lowered.find(facts.keyless_view_generated_key.lower()) != -1
+            and (_VIEW_RE.search(line) or _word(line, "key"))
+        ):
+            matched = line
+            break
+    if matched is None:
+        return GateResult("keyless_view_found", False, "no finding line locates the keyless view")
+    return GateResult("keyless_view_found", True, f"finding line locates the keyless view: {matched[:120]}")
+
+
+def gate_crowded_view_found(context: GateContext) -> GateResult:
+    """`crowded_view_found`: the report locates the seeded over-bound view.
+
+    A finding line passes when it carries the locked system name plus a
+    view word plus a size claim (``too many``/``elements``/``over``/
+    ``20``/...), or a view word plus an explicit ``20``-element bound
+    claim (a report that states the bound without the system name still
+    locates the defect). Loose by design (the `mcp_limit_stated` family;
+    the documented limitation applies as in `vague_label_found`).
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("crowded_view_found", False, "the case carries no review facts (gate misused)")
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        lowered = line.lower()
+        if (
+            lowered.find(facts.system_name.lower()) != -1
+            and _VIEW_RE.search(line)
+            and _VIEW_SIZE_RE.search(line)
+            or (_VIEW_RE.search(line) and _word(line, "20") and _VIEW_OVER_RE.search(line))
+        ):
+            matched = line
+            break
+    if matched is None:
+        return GateResult("crowded_view_found", False, "no finding line locates the over-bound view")
+    return GateResult("crowded_view_found", True, f"finding line locates the crowded view: {matched[:120]}")
+
+
+def gate_orphan_found(context: GateContext) -> GateResult:
+    """`orphan_found`: the report locates the seeded disconnected element.
+
+    A finding line passes when it carries the locked element name plus a
+    disconnection claim (``orphan``/``disconnected``/``no
+    relationships``/``not included``/...). Loose by design (the
+    `mcp_limit_stated` family; the documented limitation applies as in
+    `vague_label_found`).
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("orphan_found", False, "the case carries no review facts (gate misused)")
+    matched = None
+    for line in _finding_lines(context.trial.final_text()):
+        if line.lower().find(facts.orphan_name.lower()) != -1 and _ORPHAN_RE.search(line):
+            matched = line
+            break
+    if matched is None:
+        return GateResult("orphan_found", False, "no finding line locates the disconnected element")
+    return GateResult("orphan_found", True, f"finding line locates the orphan: {matched[:120]}")
+
+
+def gate_no_false_findings(context: GateContext) -> GateResult:
+    """`no_false_findings`: the clean control -- no finding line names a clean element.
+
+    The seeded workspace carries a substantial defect-FREE region (the
+    case's locked `ReviewFacts.clean_names`); a review that passes must
+    not flag the clean parts as defective. A finding line naming any
+    clean element (word-boundary, case-insensitive phrase match) fails
+    the gate. Summary prose outside the finding lines (e.g. "everything
+    else looked fine") is exempt -- the prompt carries the report as
+    bullets, so the clean-control claim is about findings, not about the
+    whole message. Loose by design (the `mcp_limit_stated` family):
+    documented limitation -- single generic names are excluded from the
+    clean list on purpose (they collide with English common-noun usage),
+    and a correct finding for a seeded defect that incidentally names a
+    clean element in passing would fail this gate, which is why the case
+    locks the defect endpoints out of the clean list.
+    """
+    facts = _review_facts(context)
+    if facts is None:
+        return GateResult("no_false_findings", False, "the case carries no review facts (gate misused)")
+    for line in _finding_lines(context.trial.final_text()):
+        lowered = line.lower()
+        for name in facts.clean_names:
+            if re.search(rf"\b{re.escape(name.lower())}\b", lowered):
+                return GateResult(
+                    "no_false_findings", False, f"finding line names the clean element {name!r}: {line[:120]}"
+                )
+    return GateResult(
+        "no_false_findings", True, f"no finding line names any of the {len(facts.clean_names)} clean element(s)"
+    )
+
+
+# ---------------------------------------------------------------------------
 # the stream-derived gates (Phase 110, Task 110.100)
 # ---------------------------------------------------------------------------
 
@@ -1027,10 +1322,11 @@ def _inputs_only(gate: Callable[[GraderInputs], GateResult]) -> Callable[[GateCo
 #: `relationships_described` gates are input-only too; the Phase 130
 #: `external_system_tagged`/`no_vague_labels` gates are input-only too;
 #: the Phase 140 `views_within_element_bound`/`explicit_view_keys` gates
-#: are input-only too; the Phase 110 stream gates and the Phase 120
-#: `no_deletions` gate and the Phase 130 `container_count`/
+#: are input-only too; the Phase 110 stream gates, the Phase 120
+#: `no_deletions` gate, the Phase 130 `container_count`/
 #: `no_library_container` gates (which read the case's own scenario
-#: facts) take the context.
+#: facts) and the Phase 150 review gates (which read the case's locked
+#: `review_facts` and the trial's final message) take the context.
 GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "dsl_written": _inputs_only(gate_dsl_written),
     "cli_valid": _inputs_only(gate_cli_valid),
@@ -1049,6 +1345,13 @@ GATES: dict[str, Callable[[GateContext], GateResult]] = {
     "no_vague_labels": _inputs_only(gate_no_vague_labels),
     "views_within_element_bound": _inputs_only(gate_views_within_element_bound),
     "explicit_view_keys": _inputs_only(gate_explicit_view_keys),
+    "vague_label_found": gate_vague_label_found,
+    "library_container_found": gate_library_container_found,
+    "external_tag_found": gate_external_tag_found,
+    "keyless_view_found": gate_keyless_view_found,
+    "crowded_view_found": gate_crowded_view_found,
+    "orphan_found": gate_orphan_found,
+    "no_false_findings": gate_no_false_findings,
     "validated_before_return": gate_validated_before_return,
     "parse_called": gate_parse_called,
     "validate_ok_called": gate_validate_ok_called,

@@ -287,6 +287,13 @@ HELDOUT_MODELING_CASE = "heldout-modeling"
 #: exactly like `HELDOUT_MODELING_CASE`.
 HELDOUT_VIEWS_CASE = "heldout-views"
 
+#: The Phase 150 held-out case (Task 150.100/150.140): the same task shape
+#: as `review-model` (a read-only quality review of a pre-seeded, valid
+#: workspace carrying locked defect classes -- the agent reports findings,
+#: never edits) in a different domain. Deliberately NOT part of
+#: `FULL_CASES` -- held out exactly like `HELDOUT_VIEWS_CASE`.
+HELDOUT_REVIEW_CASE = "heldout-review"
+
 
 def version_tuple() -> dict[str, object]:
     """Return the version tuple as a plain dict (REQ-008 reproducibility).

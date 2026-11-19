@@ -1,0 +1,576 @@
+{
+  "configuration" : { },
+  "description" : "Manages a regional car rental fleet.",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "customElements" : [ {
+      "description" : "MQTT",
+      "id" : "22",
+      "metadata" : "Streams position and status telemetry.",
+      "name" : "Vehicle Telemetry Feed",
+      "properties" : {
+        "structurizr.dsl.identifier" : "telemetryFeed"
+      },
+      "tags" : "Element,External"
+    }, {
+      "id" : "21",
+      "metadata" : "Charges customer cards for rentals and deposits.",
+      "name" : "Payment Provider",
+      "properties" : {
+        "structurizr.dsl.identifier" : "payments"
+      },
+      "tags" : "Element"
+    } ],
+    "people" : [ {
+      "description" : "Rents vehicles through the fleet manager.",
+      "id" : "1",
+      "name" : "Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "Rents vehicles through",
+        "destinationId" : "3",
+        "id" : "24",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Rents vehicles through",
+        "destinationId" : "2",
+        "id" : "25",
+        "linkedRelationshipId" : "24",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Books vehicles via",
+        "destinationId" : "4",
+        "id" : "26",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Lets customers book and return vehicles.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Booking Web App",
+        "properties" : {
+          "structurizr.dsl.identifier" : "booking"
+        },
+        "relationships" : [ {
+          "description" : "Reserves vehicles in",
+          "destinationId" : "5",
+          "id" : "27",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        }, {
+          "description" : "uses",
+          "destinationId" : "7",
+          "id" : "28",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "HTTP"
+        }, {
+          "description" : "Publishes booking events to",
+          "destinationId" : "19",
+          "id" : "29",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "Kafka"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Serves the rental mobile app.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "Mobile Backend",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mobile"
+        },
+        "relationships" : [ {
+          "description" : "Requests dispatch via",
+          "destinationId" : "6",
+          "id" : "30",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kotlin"
+      }, {
+        "description" : "Tracks vehicle availability and locations.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Fleet Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "fleet"
+        },
+        "relationships" : [ {
+          "description" : "Registers nightly tasks in",
+          "destinationId" : "15",
+          "id" : "31",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "gRPC"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Assigns vehicles to bookings.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Dispatch Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "dispatch"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Calculates rental prices.",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Pricing Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "pricing"
+        },
+        "relationships" : [ {
+          "description" : "Looks up rules in",
+          "destinationId" : "20",
+          "id" : "32",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "in-process"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Plans servicing and repairs.",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Maintenance Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "maintenance"
+        },
+        "relationships" : [ {
+          "description" : "Stores service records in",
+          "destinationId" : "16",
+          "id" : "37",
+          "sourceId" : "8",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "C#"
+      }, {
+        "description" : "Collects vehicle telemetry events.",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Telemetry Ingest",
+        "properties" : {
+          "structurizr.dsl.identifier" : "telemetry"
+        },
+        "relationships" : [ {
+          "description" : "Publishes telemetry events to",
+          "destinationId" : "19",
+          "id" : "40",
+          "sourceId" : "9",
+          "tags" : "Relationship",
+          "technology" : "Kafka"
+        }, {
+          "description" : "Receives fleet telemetry from",
+          "destinationId" : "22",
+          "id" : "42",
+          "sourceId" : "9",
+          "tags" : "Relationship",
+          "technology" : "MQTT"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Sends booking and reminder messages.",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Notification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "notifications"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Manages rental contracts and deposits.",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Contract Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contracts"
+        },
+        "relationships" : [ {
+          "description" : "Charges cards through",
+          "destinationId" : "21",
+          "id" : "33",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "REST/JSON"
+        }, {
+          "description" : "Stores contract records in",
+          "destinationId" : "17",
+          "id" : "39",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Records and prices vehicle damage.",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "Damage Assessment",
+        "properties" : {
+          "structurizr.dsl.identifier" : "damage"
+        },
+        "relationships" : [ {
+          "description" : "Stores damage photos in",
+          "destinationId" : "18",
+          "id" : "35",
+          "sourceId" : "12",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      }, {
+        "description" : "Produces utilisation and revenue reports.",
+        "documentation" : { },
+        "id" : "13",
+        "name" : "Reports Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "reports"
+        },
+        "relationships" : [ {
+          "description" : "Reads booking records from",
+          "destinationId" : "16",
+          "id" : "36",
+          "sourceId" : "13",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Finds vehicles by location and class.",
+        "documentation" : { },
+        "id" : "14",
+        "name" : "Search Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "search"
+        },
+        "relationships" : [ {
+          "description" : "Reads availability from",
+          "destinationId" : "16",
+          "id" : "38",
+          "sourceId" : "14",
+          "tags" : "Relationship",
+          "technology" : "SQL"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Go"
+      }, {
+        "description" : "Runs the nightly batch jobs.",
+        "documentation" : { },
+        "id" : "15",
+        "name" : "Batch Scheduler",
+        "properties" : {
+          "structurizr.dsl.identifier" : "scheduler"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Java"
+      }, {
+        "description" : "Stores vehicle, booking, and service records.",
+        "documentation" : { },
+        "id" : "16",
+        "name" : "Fleet Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "fleetdb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores customer and contract records.",
+        "documentation" : { },
+        "id" : "17",
+        "name" : "Customer Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "customerdb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Stores contracts, invoices, and photos.",
+        "documentation" : { },
+        "id" : "18",
+        "name" : "Media Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "mediadb"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "PostgreSQL"
+      }, {
+        "description" : "Carries booking and telemetry events.",
+        "documentation" : { },
+        "id" : "19",
+        "name" : "Event Queue",
+        "properties" : {
+          "structurizr.dsl.identifier" : "queue"
+        },
+        "relationships" : [ {
+          "description" : "Delivers booking and telemetry events to",
+          "destinationId" : "10",
+          "id" : "41",
+          "sourceId" : "19",
+          "tags" : "Relationship",
+          "technology" : "Kafka"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kafka"
+      }, {
+        "description" : "Computes rental prices from class, duration, and zone.",
+        "documentation" : { },
+        "id" : "20",
+        "name" : "Pricing Rules Library",
+        "properties" : {
+          "structurizr.dsl.identifier" : "rates"
+        },
+        "tags" : "Element,Container",
+        "technology" : "Python"
+      } ],
+      "description" : "Manages bookings, vehicles, contracts, and maintenance.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Fleet Manager",
+      "properties" : {
+        "structurizr.dsl.identifier" : "manager"
+      },
+      "relationships" : [ {
+        "description" : "Charges cards through",
+        "destinationId" : "21",
+        "id" : "34",
+        "linkedRelationshipId" : "33",
+        "sourceId" : "2",
+        "technology" : "REST/JSON"
+      }, {
+        "description" : "Receives fleet telemetry from",
+        "destinationId" : "22",
+        "id" : "43",
+        "linkedRelationshipId" : "42",
+        "sourceId" : "2",
+        "technology" : "MQTT"
+      } ],
+      "tags" : "Element,Software System"
+    }, {
+      "description" : "The retired billing system being phased out.",
+      "documentation" : { },
+      "id" : "23",
+      "name" : "Legacy Billing System",
+      "properties" : {
+        "structurizr.dsl.identifier" : "legacy"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Fleet Manager",
+  "properties" : {
+    "structurizr.inspection.error" : "6",
+    "structurizr.dsl" : "d29ya3NwYWNlICJGbGVldCBNYW5hZ2VyIiAiTWFuYWdlcyBhIHJlZ2lvbmFsIGNhciByZW50YWwgZmxlZXQuIiB7CiAgICBtb2RlbCB7CiAgICAgICAgY3VzdG9tZXIgPSBwZXJzb24gIkN1c3RvbWVyIiAiUmVudHMgdmVoaWNsZXMgdGhyb3VnaCB0aGUgZmxlZXQgbWFuYWdlci4iCiAgICAgICAgbWFuYWdlciA9IHNvZnR3YXJlU3lzdGVtICJGbGVldCBNYW5hZ2VyIiAiTWFuYWdlcyBib29raW5ncywgdmVoaWNsZXMsIGNvbnRyYWN0cywgYW5kIG1haW50ZW5hbmNlLiIgewogICAgICAgICAgICBib29raW5nID0gY29udGFpbmVyICJCb29raW5nIFdlYiBBcHAiICJMZXRzIGN1c3RvbWVycyBib29rIGFuZCByZXR1cm4gdmVoaWNsZXMuIiAiUHl0aG9uIgogICAgICAgICAgICBtb2JpbGUgPSBjb250YWluZXIgIk1vYmlsZSBCYWNrZW5kIiAiU2VydmVzIHRoZSByZW50YWwgbW9iaWxlIGFwcC4iICJLb3RsaW4iCiAgICAgICAgICAgIGZsZWV0ID0gY29udGFpbmVyICJGbGVldCBTZXJ2aWNlIiAiVHJhY2tzIHZlaGljbGUgYXZhaWxhYmlsaXR5IGFuZCBsb2NhdGlvbnMuIiAiSmF2YSIKICAgICAgICAgICAgZGlzcGF0Y2ggPSBjb250YWluZXIgIkRpc3BhdGNoIFNlcnZpY2UiICJBc3NpZ25zIHZlaGljbGVzIHRvIGJvb2tpbmdzLiIgIkphdmEiCiAgICAgICAgICAgIHByaWNpbmcgPSBjb250YWluZXIgIlByaWNpbmcgU2VydmljZSIgIkNhbGN1bGF0ZXMgcmVudGFsIHByaWNlcy4iICJHbyIKICAgICAgICAgICAgbWFpbnRlbmFuY2UgPSBjb250YWluZXIgIk1haW50ZW5hbmNlIFNlcnZpY2UiICJQbGFucyBzZXJ2aWNpbmcgYW5kIHJlcGFpcnMuIiAiQyMiCiAgICAgICAgICAgIHRlbGVtZXRyeSA9IGNvbnRhaW5lciAiVGVsZW1ldHJ5IEluZ2VzdCIgIkNvbGxlY3RzIHZlaGljbGUgdGVsZW1ldHJ5IGV2ZW50cy4iICJHbyIKICAgICAgICAgICAgbm90aWZpY2F0aW9ucyA9IGNvbnRhaW5lciAiTm90aWZpY2F0aW9uIFNlcnZpY2UiICJTZW5kcyBib29raW5nIGFuZCByZW1pbmRlciBtZXNzYWdlcy4iICJQeXRob24iCiAgICAgICAgICAgIGNvbnRyYWN0cyA9IGNvbnRhaW5lciAiQ29udHJhY3QgU2VydmljZSIgIk1hbmFnZXMgcmVudGFsIGNvbnRyYWN0cyBhbmQgZGVwb3NpdHMuIiAiSmF2YSIKICAgICAgICAgICAgZGFtYWdlID0gY29udGFpbmVyICJEYW1hZ2UgQXNzZXNzbWVudCIgIlJlY29yZHMgYW5kIHByaWNlcyB2ZWhpY2xlIGRhbWFnZS4iICJQeXRob24iCiAgICAgICAgICAgIHJlcG9ydHMgPSBjb250YWluZXIgIlJlcG9ydHMgU2VydmljZSIgIlByb2R1Y2VzIHV0aWxpc2F0aW9uIGFuZCByZXZlbnVlIHJlcG9ydHMuIiAiSmF2YSIKICAgICAgICAgICAgc2VhcmNoID0gY29udGFpbmVyICJTZWFyY2ggU2VydmljZSIgIkZpbmRzIHZlaGljbGVzIGJ5IGxvY2F0aW9uIGFuZCBjbGFzcy4iICJHbyIKICAgICAgICAgICAgc2NoZWR1bGVyID0gY29udGFpbmVyICJCYXRjaCBTY2hlZHVsZXIiICJSdW5zIHRoZSBuaWdodGx5IGJhdGNoIGpvYnMuIiAiSmF2YSIKICAgICAgICAgICAgZmxlZXRkYiA9IGNvbnRhaW5lciAiRmxlZXQgRGF0YWJhc2UiICJTdG9yZXMgdmVoaWNsZSwgYm9va2luZywgYW5kIHNlcnZpY2UgcmVjb3Jkcy4iICJQb3N0Z3JlU1FMIiAiRGF0YWJhc2UiCiAgICAgICAgICAgIGN1c3RvbWVyZGIgPSBjb250YWluZXIgIkN1c3RvbWVyIERhdGFiYXNlIiAiU3RvcmVzIGN1c3RvbWVyIGFuZCBjb250cmFjdCByZWNvcmRzLiIgIlBvc3RncmVTUUwiICJEYXRhYmFzZSIKICAgICAgICAgICAgbWVkaWFkYiA9IGNvbnRhaW5lciAiTWVkaWEgRGF0YWJhc2UiICJTdG9yZXMgY29udHJhY3RzLCBpbnZvaWNlcywgYW5kIHBob3Rvcy4iICJQb3N0Z3JlU1FMIiAiRGF0YWJhc2UiCiAgICAgICAgICAgIHF1ZXVlID0gY29udGFpbmVyICJFdmVudCBRdWV1ZSIgIkNhcnJpZXMgYm9va2luZyBhbmQgdGVsZW1ldHJ5IGV2ZW50cy4iICJLYWZrYSIKICAgICAgICAgICAgcmF0ZXMgPSBjb250YWluZXIgIlByaWNpbmcgUnVsZXMgTGlicmFyeSIgIkNvbXB1dGVzIHJlbnRhbCBwcmljZXMgZnJvbSBjbGFzcywgZHVyYXRpb24sIGFuZCB6b25lLiIgIlB5dGhvbiIKICAgICAgICB9CiAgICAgICAgcGF5bWVudHMgPSBlbGVtZW50ICJQYXltZW50IFByb3ZpZGVyIiAiQ2hhcmdlcyBjdXN0b21lciBjYXJkcyBmb3IgcmVudGFscyBhbmQgZGVwb3NpdHMuIgogICAgICAgIHRlbGVtZXRyeUZlZWQgPSBlbGVtZW50ICJWZWhpY2xlIFRlbGVtZXRyeSBGZWVkIiAiU3RyZWFtcyBwb3NpdGlvbiBhbmQgc3RhdHVzIHRlbGVtZXRyeS4iICJNUVRUIiAiRXh0ZXJuYWwiCiAgICAgICAgbGVnYWN5ID0gc29mdHdhcmVTeXN0ZW0gIkxlZ2FjeSBCaWxsaW5nIFN5c3RlbSIgIlRoZSByZXRpcmVkIGJpbGxpbmcgc3lzdGVtIGJlaW5nIHBoYXNlZCBvdXQuIgogICAgICAgIGN1c3RvbWVyIC0+IGJvb2tpbmcgIlJlbnRzIHZlaGljbGVzIHRocm91Z2giICJIVFRQUyIKICAgICAgICBjdXN0b21lciAtPiBtb2JpbGUgIkJvb2tzIHZlaGljbGVzIHZpYSIgIkhUVFBTIgogICAgICAgIGJvb2tpbmcgLT4gZmxlZXQgIlJlc2VydmVzIHZlaGljbGVzIGluIiAiZ1JQQyIKICAgICAgICBib29raW5nIC0+IHByaWNpbmcgInVzZXMiICJIVFRQIgogICAgICAgIGJvb2tpbmcgLT4gcXVldWUgIlB1Ymxpc2hlcyBib29raW5nIGV2ZW50cyB0byIgIkthZmthIgogICAgICAgIG1vYmlsZSAtPiBkaXNwYXRjaCAiUmVxdWVzdHMgZGlzcGF0Y2ggdmlhIiAiZ1JQQyIKICAgICAgICBmbGVldCAtPiBzY2hlZHVsZXIgIlJlZ2lzdGVycyBuaWdodGx5IHRhc2tzIGluIiAiZ1JQQyIKICAgICAgICBwcmljaW5nIC0+IHJhdGVzICJMb29rcyB1cCBydWxlcyBpbiIgImluLXByb2Nlc3MiCiAgICAgICAgY29udHJhY3RzIC0+IHBheW1lbnRzICJDaGFyZ2VzIGNhcmRzIHRocm91Z2giICJSRVNUL0pTT04iCiAgICAgICAgZGFtYWdlIC0+IG1lZGlhZGIgIlN0b3JlcyBkYW1hZ2UgcGhvdG9zIGluIiAiU1FMIgogICAgICAgIHJlcG9ydHMgLT4gZmxlZXRkYiAiUmVhZHMgYm9va2luZyByZWNvcmRzIGZyb20iICJTUUwiCiAgICAgICAgbWFpbnRlbmFuY2UgLT4gZmxlZXRkYiAiU3RvcmVzIHNlcnZpY2UgcmVjb3JkcyBpbiIgIlNRTCIKICAgICAgICBzZWFyY2ggLT4gZmxlZXRkYiAiUmVhZHMgYXZhaWxhYmlsaXR5IGZyb20iICJTUUwiCiAgICAgICAgY29udHJhY3RzIC0+IGN1c3RvbWVyZGIgIlN0b3JlcyBjb250cmFjdCByZWNvcmRzIGluIiAiU1FMIgogICAgICAgIHRlbGVtZXRyeSAtPiBxdWV1ZSAiUHVibGlzaGVzIHRlbGVtZXRyeSBldmVudHMgdG8iICJLYWZrYSIKICAgICAgICBxdWV1ZSAtPiBub3RpZmljYXRpb25zICJEZWxpdmVycyBib29raW5nIGFuZCB0ZWxlbWV0cnkgZXZlbnRzIHRvIiAiS2Fma2EiCiAgICAgICAgdGVsZW1ldHJ5IC0+IHRlbGVtZXRyeUZlZWQgIlJlY2VpdmVzIGZsZWV0IHRlbGVtZXRyeSBmcm9tIiAiTVFUVCIKICAgIH0KICAgIHZpZXdzIHsKICAgICAgICBzeXN0ZW1Db250ZXh0IG1hbmFnZXIgIkN1c3RvbWVyQ29udGV4dCIgIlNob3dzIHRoZSBjdXN0b21lcidzIGpvdXJuZXkgYXJvdW5kIHRoZSBzeXN0ZW0uIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0CiAgICAgICAgfQogICAgICAgIGNvbnRhaW5lciBtYW5hZ2VyIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQKICAgICAgICB9CiAgICB9Cn0=",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "styles" : { },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "16",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "17",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "18",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "19",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "20",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "generatedKey" : true,
+      "key" : "Container-001",
+      "name" : "Container View: Fleet Manager",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "24"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "40"
+      }, {
+        "id" : "41"
+      }, {
+        "id" : "42"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "edgeSeparation" : 50,
+        "nodeSeparation" : 50,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 100,
+        "vertices" : true
+      },
+      "description" : "Shows the customer's journey around the system.",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "21",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "22",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "CustomerContext",
+      "name" : "System Context View: Fleet Manager",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "25"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "43"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}

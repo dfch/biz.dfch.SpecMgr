@@ -1,0 +1,13 @@
+I reviewed the model in `workspace.dsl` read-only: I edited nothing, and the file is byte-identical to how I found it.
+
+Findings:
+
+- The relationship from the Reservation Portal to the Rate Service is labelled "uses" — generic and uninformative: it states no intent, so it should say what the portal asks of the rate service (for example "calculates stay rates through").
+- The container "Tariff Rules Library" is a library, not a container: code-level tariff rules embedded in the Rate Service should not be modeled as an element of its own.
+- The "Payment Gateway" is operated by a different organization but carries no External tag; third-party things must be top-level and tagged External.
+- The "Legacy Booking System" is an orphan: it has no relationships and is not included on any views.
+- The container view of Stay Planner has no explicit key — it was auto-generated as "Container-001", which is not guaranteed to be stable.
+- The container view of Stay Planner carries 21 elements via `include *` — that is too many for a readable view (over the ~20-element bound); split it with explicit include lists.
+- The workspace has no defined scope, and the Stay Planner system is missing documentation and decisions; the MCP cannot fix the last two because it refuses `!docs` and `!adrs` — expected under the MCP limits.
+
+Everything else I walked (the remaining containers, the context view, and the other relationships) is described, connected, and labelled with intent.

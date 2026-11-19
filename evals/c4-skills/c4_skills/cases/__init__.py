@@ -23,9 +23,10 @@ cases: ``create-system``, ``mcp-limits``, ``no-trigger`` and the held-out
 ``heldout-validate``; Phase 120 (Task 120.100) adds ``fix-dsl`` and the
 held-out ``heldout-dsl``; Phase 130 (Task 130.100) adds ``modeling-
 decisions`` and the held-out ``heldout-modeling``; Phase 140 (Task
-140.100) adds ``design-views`` and the held-out ``heldout-views``. The
-remaining shared case (``review-model``) and the last held-out land with
-their phase.
+140.100) adds ``design-views`` and the held-out ``heldout-views``; Phase
+150 (Task 150.100) adds the last shared case ``review-model`` (the
+read-only, pre-seeded review shape) and the last held-out,
+``heldout-review``.
 """
 
 from __future__ import annotations
@@ -40,6 +41,59 @@ MIN_DSL_BYTES = 40
 
 #: The DSL keyword every workspace must contain to count as "written".
 WORKSPACE_KEYWORD = "workspace"
+
+
+@dataclass(frozen=True)
+class ReviewFacts:
+    """The locked facts of one review case's seeded model (Phase 150, Task 150.100).
+
+    The review cases are the REVIEW shape: the trial work dir arrives
+    pre-seeded with a valid ``workspace.dsl`` (the agent reviews, it never
+    creates or fixes), and the gates measure the agent's final report
+    text. The report-text gates read these facts to locate each seeded
+    defect in the report (name + defect vocabulary) and to keep the clean
+    control honest (a finding line must not name an element the seeded
+    model does right).
+
+    Attributes:
+        system_name: The owned software system's name. The natural
+            locator of the seeded view defects (a view finding names the
+            view's system), so it is deliberately NOT a `clean_names`
+            entry.
+        clean_names: The substantial defect-free region of the seeded
+            model (element/view names). The `no_false_findings` gate
+            fails when a finding line names any of them (word-boundary,
+            case-insensitive) -- a review that dumps generic warnings on
+            the clean parts of the model is not a pass. Single generic
+            names (the person role) are excluded on purpose: as English
+            common nouns they collide with non-finding prose.
+        vague_endpoints: The (source_name, destination_name) pair of the
+            seeded vague-labelled relationship, for `vague_label_found`.
+            Both endpoint names are deliberately NOT `clean_names`
+            entries: a correct finding for this defect names them.
+        vague_label: The vague description of that relationship (a member
+            of the locked Phase 130 `VAGUE_RELATIONSHIP_LABELS` set),
+            matched word-bounded for `vague_label_found`.
+        library_name: The seeded library modeled as a container, for
+            `library_container_found`.
+        untagged_name: The seeded third-party element missing the
+            `External` tag, for `external_tag_found`.
+        orphan_name: The seeded disconnected element (no relationships,
+            on no view), for `orphan_found`.
+        keyless_view_generated_key: The key the pinned exporter assigns
+            the seeded keyless view (verified against the pinned CLI at
+            case creation), matched for `keyless_view_found` -- a report
+            that quotes the generated key locates the defect.
+    """
+
+    system_name: str
+    clean_names: tuple[str, ...]
+    vague_endpoints: tuple[str, str]
+    vague_label: str
+    library_name: str
+    untagged_name: str
+    orphan_name: str
+    keyless_view_generated_key: str
 
 
 @dataclass(frozen=True)
@@ -73,6 +127,12 @@ class Case:
             the scenario's two application parts plus its own database; a
             library or a third-party service modeled as a container raises
             the count). None when the case pins no count.
+        review_facts: The seeded model's locked defect/clean facts for the
+            Phase 150 review report-text gates (the review cases only;
+            `None` for every other case -- a review gate on a case without
+            facts fails with the "gate misused" detail, the
+            `container_count` precedent). Phase 150 (Task 150.100) adds
+            this; earlier cases carry nothing.
     """
 
     id: str
@@ -83,6 +143,7 @@ class Case:
     seed_relationships: tuple[tuple[str, str, str], ...] = field(default_factory=tuple)
     forbidden_element_names: tuple[str, ...] = field(default_factory=tuple)
     expected_container_count: int | None = None
+    review_facts: ReviewFacts | None = None
 
 
 SMOKE_CREATE_SYSTEM_PROMPT = """\
@@ -725,6 +786,308 @@ HELDOUT_VIEWS_CASE_DEF = Case(
     gates=DESIGN_VIEWS_GATES,
 )
 
+# ---------------------------------------------------------------------------
+# Phase 150 gate set (Task 150.100)
+# ---------------------------------------------------------------------------
+
+#: The `review-model` gate set: the read-only context gates (the seeded
+#: workspace is still CLI-valid and byte-identical to the seed -- the
+#: ACC-004 check, the `no-trigger` case's `file_untouched` precedent) and
+#: the seven report-text gates over the agent's final message: one
+#: detection gate per seeded defect class (`vague_label_found`,
+#: `library_container_found`, `external_tag_found`, `keyless_view_found`,
+#: `crowded_view_found`, `orphan_found` -- each a loose finding-line
+#: matcher, the `mcp_limit_stated` family) plus the clean control
+#: (`no_false_findings`: no finding line names an element the seeded model
+#: does right). Deliberately NO loop-discipline gates (`parse_called`/
+#: `inspect_called`/`triage_complete`/`validated_before_return`) and NO
+#: create-family gates (`validate_ok_called`/`elements_described`/...):
+#: the locked Phase 120 separation -- this is a review skill, not the
+#: validate-loop skill and not a create skill; it may call parse/validate/
+#: inspect as its means, but the gates measure the deliverable (findings
+#: reported + nothing changed).
+REVIEW_MODEL_GATES: tuple[str, ...] = (
+    "cli_valid",
+    "file_untouched",
+    "vague_label_found",
+    "library_container_found",
+    "external_tag_found",
+    "keyless_view_found",
+    "crowded_view_found",
+    "orphan_found",
+    "no_false_findings",
+)
+
+# ---------------------------------------------------------------------------
+# Phase 150 cases (Task 150.100)
+# ---------------------------------------------------------------------------
+
+#: The `review-model` prompt: the REVIEW shape -- a pre-seeded, valid
+#: `workspace.dsl` the agent reviews read-only and reports in its final
+#: message. The prompt carries the read-only instruction (do not change,
+#: create, delete or rename any file) and the report shape (one bullet per
+#: finding, each naming the element, relationship, or view involved), but
+#: it never states the seeded defects (no element name, no "External"/
+#: "vague"/"orphan"/"20 elements" -- the checklist knowledge that locates
+#: them is the `c4-model-review` skill's delta; two of the six defect
+#: classes are additionally visible to the MCP `inspect` tool, the rest
+#: are knowledge-only). Held-out `heldout-review` reuses this prompt
+#: verbatim (the Phase 120 precedent: same task shape, the domain lives in
+#: the seed file).
+REVIEW_MODEL_PROMPT = """\
+Our C4 model is in `workspace.dsl` in the current working directory. Give it a read-only
+quality review and report what you find.
+
+Walk the model as a C4 architecture document: every element, the relationships between the
+elements, and the views. Judge each against how C4 models are supposed to be built — what
+belongs in the model, how elements and relationships are described, and whether the model is
+complete and consistent.
+
+This is a review, not an edit: do not change, create, delete, or rename any file. The model
+on disk must be exactly as you found it, and the review is delivered in your final message,
+not in a file.
+
+Report your findings as a list: one bullet per finding, each naming the element,
+relationship, or view involved, what is wrong, and why it matters. If you find nothing,
+say so in one line.
+"""
+
+#: The `review-model` seed (car rental domain): a valid, CLI-parseable
+#: workspace carrying a locked, small set of concrete defects --
+#: 1. a vague relationship label: `booking -> pricing "uses"` (a member of
+#:    the locked Phase 130 `VAGUE_RELATIONSHIP_LABELS` set);
+#: 2. a library modeled as a container: the `Pricing Rules Library`
+#:    container (the Phase 130 `no_library_container` defect class);
+#: 3. a third-party element missing the `External` tag: the top-level
+#:    `Payment Provider` (the Phase 130 `external_system_tagged` defect
+#:    class);
+#: 4. a keyless view: the `container manager` view (no key in the DSL; the
+#:    pinned exporter writes it under `Container-001` with
+#:    `generatedKey: true` and the CLI `inspect` reports it as a
+#:    `views.view.key` finding -- the Phase 140 defect class);
+#: 5. a crowded view: the same `include *` container view carries 21
+#:    elements (18 containers + the linked person + the two linked
+#:    third-party elements) -- over the locked 20-element bound (the
+#:    Phase 140 `views_within_element_bound` defect class);
+#: 6. a disconnected element: the top-level `Legacy Billing System`
+#:    (no relationships, on no view; the CLI `inspect` reports it as a
+#:    `model.element.disconnected` + `model.element.noview` finding).
+#: Everything else is deliberately clean and connected (15 clean containers
+#: with specific descriptions and technologies, a described person, a
+#: tagged+linked third-party feed, an explicit-keyed small system context
+#: view, specific relationship labels) -- the clean control the
+#: `no_false_findings` gate protects. Verified against the pinned CLI
+#: image at creation (Task 150.100): `validate` rc=0, `inspect` rc=1
+#: (disconnected + noview + views.view.key + the ambient scope/docs/
+#: decisions findings), the container view's exported element count 21.
+REVIEW_MODEL_SEED_WORKSPACE = """\
+workspace "Fleet Manager" "Manages a regional car rental fleet." {
+    model {
+        customer = person "Customer" "Rents vehicles through the fleet manager."
+        manager = softwareSystem "Fleet Manager" "Manages bookings, vehicles, contracts, and maintenance." {
+            booking = container "Booking Web App" "Lets customers book and return vehicles." "Python"
+            mobile = container "Mobile Backend" "Serves the rental mobile app." "Kotlin"
+            fleet = container "Fleet Service" "Tracks vehicle availability and locations." "Java"
+            dispatch = container "Dispatch Service" "Assigns vehicles to bookings." "Java"
+            pricing = container "Pricing Service" "Calculates rental prices." "Go"
+            maintenance = container "Maintenance Service" "Plans servicing and repairs." "C#"
+            telemetry = container "Telemetry Ingest" "Collects vehicle telemetry events." "Go"
+            notifications = container "Notification Service" "Sends booking and reminder messages." "Python"
+            contracts = container "Contract Service" "Manages rental contracts and deposits." "Java"
+            damage = container "Damage Assessment" "Records and prices vehicle damage." "Python"
+            reports = container "Reports Service" "Produces utilisation and revenue reports." "Java"
+            search = container "Search Service" "Finds vehicles by location and class." "Go"
+            scheduler = container "Batch Scheduler" "Runs the nightly batch jobs." "Java"
+            fleetdb = container "Fleet Database" "Stores vehicle, booking, and service records." "PostgreSQL" "Database"
+            customerdb = container "Customer Database" "Stores customer and contract records." "PostgreSQL" "Database"
+            mediadb = container "Media Database" "Stores contracts, invoices, and photos." "PostgreSQL" "Database"
+            queue = container "Event Queue" "Carries booking and telemetry events." "Kafka"
+            rates = container "Pricing Rules Library" "Computes rental prices from class, duration, and zone." "Python"
+        }
+        payments = element "Payment Provider" "Charges customer cards for rentals and deposits."
+        telemetryFeed = element "Vehicle Telemetry Feed" "Streams position and status telemetry." "MQTT" "External"
+        legacy = softwareSystem "Legacy Billing System" "The retired billing system being phased out."
+        customer -> booking "Rents vehicles through" "HTTPS"
+        customer -> mobile "Books vehicles via" "HTTPS"
+        booking -> fleet "Reserves vehicles in" "gRPC"
+        booking -> pricing "uses" "HTTP"
+        booking -> queue "Publishes booking events to" "Kafka"
+        mobile -> dispatch "Requests dispatch via" "gRPC"
+        fleet -> scheduler "Registers nightly tasks in" "gRPC"
+        pricing -> rates "Looks up rules in" "in-process"
+        contracts -> payments "Charges cards through" "REST/JSON"
+        damage -> mediadb "Stores damage photos in" "SQL"
+        reports -> fleetdb "Reads booking records from" "SQL"
+        maintenance -> fleetdb "Stores service records in" "SQL"
+        search -> fleetdb "Reads availability from" "SQL"
+        contracts -> customerdb "Stores contract records in" "SQL"
+        telemetry -> queue "Publishes telemetry events to" "Kafka"
+        queue -> notifications "Delivers booking and telemetry events to" "Kafka"
+        telemetry -> telemetryFeed "Receives fleet telemetry from" "MQTT"
+    }
+    views {
+        systemContext manager "CustomerContext" "Shows the customer's journey around the system." {
+            include *
+            autoLayout
+        }
+        container manager {
+            include *
+            autoLayout
+        }
+    }
+}
+"""
+
+#: The `review-model` seeded model's locked facts (the review report-text
+#: gates' inputs). The clean control is the 15 clean containers + the
+#: tagged, linked third-party feed + the explicit-keyed context view; the
+#: person role ("Customer") is excluded on purpose (a single generic name
+#: that collides with English common-noun usage in finding prose), and so
+#: are the owned system (the natural locator of the view findings) and the
+#: vague relationship's two endpoints (a correct finding for that defect
+#: names them).
+REVIEW_MODEL_REVIEW_FACTS = ReviewFacts(
+    system_name="Fleet Manager",
+    clean_names=(
+        "Mobile Backend",
+        "Fleet Service",
+        "Dispatch Service",
+        "Maintenance Service",
+        "Telemetry Ingest",
+        "Notification Service",
+        "Contract Service",
+        "Damage Assessment",
+        "Reports Service",
+        "Search Service",
+        "Batch Scheduler",
+        "Fleet Database",
+        "Customer Database",
+        "Media Database",
+        "Event Queue",
+        "Vehicle Telemetry Feed",
+        "CustomerContext",
+    ),
+    vague_endpoints=("Booking Web App", "Pricing Service"),
+    vague_label="uses",
+    library_name="Pricing Rules Library",
+    untagged_name="Payment Provider",
+    orphan_name="Legacy Billing System",
+    keyless_view_generated_key="Container-001",
+)
+
+REVIEW_MODEL_CASE_DEF = Case(
+    id="review-model",
+    prompt=REVIEW_MODEL_PROMPT,
+    gates=REVIEW_MODEL_GATES,
+    setup_files={"workspace.dsl": REVIEW_MODEL_SEED_WORKSPACE},
+    review_facts=REVIEW_MODEL_REVIEW_FACTS,
+)
+
+#: `heldout-review`: the same task shape as `review-model` (a pre-seeded,
+#: valid workspace to review read-only and report), a different domain
+#: (hotel booking -- not any of bookshop/hospital/library/parking/museum/
+#: parcel/home-energy/online-banking/insurance-claims/car-rental, per the
+#: locked guardrail) and the same locked defect placement (the same six
+#: defect classes under different names, the same 21-element `include *`
+#: container view). Held out: registered by its own id constant, never
+#: part of `FULL_CASES`, never tuned with, run once at the end of the
+#: phase (the `HELDOUT_VIEWS_CASE` precedent).
+HELDOUT_REVIEW_SEED_WORKSPACE = """\
+workspace "Stay Planner" "Plans and manages hotel stays for a regional hotel group." {
+    model {
+        guest = person "Guest" "Books and manages hotel stays."
+        planner = softwareSystem "Stay Planner" "Manages reservations, rooms, rates, and stays." {
+            portal = container "Reservation Portal" "Lets guests book and manage stays." "Python"
+            mobile = container "Mobile App Backend" "Serves the hotel group's mobile app." "Kotlin"
+            stays = container "Stay Service" "Registers and tracks stays." "Java"
+            rooms = container "Room Assignment" "Assigns rooms to confirmed stays." "Java"
+            rate = container "Rate Service" "Calculates stay rates." "Go"
+            housekeeping = container "Housekeeping Service" "Plans cleaning tasks for the rooms." "C#"
+            concierge = container "Concierge Service" "Handles guest requests and local recommendations." "Python"
+            notifications = container "Notification Hub" "Sends booking and stay messages." "Python"
+            deposits = container "Deposit Service" "Manages booking deposits and refunds." "Java"
+            feedback = container "Feedback Service" "Collects and scores guest feedback." "Python"
+            reporting = container "Reporting Service" "Produces occupancy and revenue reports." "Java"
+            availability = container "Availability Search" "Finds rooms by date and type." "Go"
+            scheduler = container "Batch Scheduler" "Runs the nightly batch jobs." "Java"
+            staydb = container "Stay Database" "Stores stay, room, occupancy, and task records." "PostgreSQL" "Database"
+            guestdb = container "Guest Database" "Stores guest and deposit records." "PostgreSQL" "Database"
+            mediadb = container "Media Database" "Stores contracts, invoices, and guest media." "PostgreSQL" "Database"
+            queue = container "Event Queue" "Carries stay events between the application parts." "Kafka"
+            tariff = container "Tariff Rules Library" "Computes rates from room type, season, and stay length." "Python"
+        }
+        payments = element "Payment Gateway" "Charges guest cards for stays and deposits."
+        loyaltyFeed = element "Loyalty Points Feed" "Streams loyalty points balances for guests." "REST/JSON" "External"
+        legacy = softwareSystem "Legacy Booking System" "The retired booking system being phased out."
+        guest -> portal "Books rooms through" "HTTPS"
+        guest -> mobile "Books rooms via" "HTTPS"
+        portal -> stays "Registers stays in" "gRPC"
+        portal -> rate "uses" "HTTP"
+        mobile -> rooms "Requests room assignment via" "gRPC"
+        stays -> scheduler "Registers nightly tasks in" "gRPC"
+        rate -> tariff "Looks up tariffs in" "in-process"
+        deposits -> payments "Charges cards through" "REST/JSON"
+        housekeeping -> staydb "Stores task records in" "SQL"
+        availability -> staydb "Reads room data from" "SQL"
+        deposits -> guestdb "Stores deposit records in" "SQL"
+        feedback -> mediadb "Stores guest feedback media in" "SQL"
+        reporting -> staydb "Reads occupancy records from" "SQL"
+        stays -> queue "Publishes stay events to" "Kafka"
+        queue -> notifications "Delivers stay events to" "Kafka"
+        concierge -> loyaltyFeed "Reads loyalty balances from" "REST/JSON"
+    }
+    views {
+        systemContext planner "GuestContext" "Shows the guest's journey around the system." {
+            include *
+            autoLayout
+        }
+        container planner {
+            include *
+            autoLayout
+        }
+    }
+}
+"""
+
+#: The `heldout-review` seeded model's locked facts (the same locked
+#: defect placement, the held-out domain's own names).
+HELDOUT_REVIEW_REVIEW_FACTS = ReviewFacts(
+    system_name="Stay Planner",
+    clean_names=(
+        "Mobile App Backend",
+        "Stay Service",
+        "Room Assignment",
+        "Housekeeping Service",
+        "Concierge Service",
+        "Notification Hub",
+        "Deposit Service",
+        "Feedback Service",
+        "Reporting Service",
+        "Availability Search",
+        "Batch Scheduler",
+        "Stay Database",
+        "Guest Database",
+        "Media Database",
+        "Event Queue",
+        "Loyalty Points Feed",
+        "GuestContext",
+    ),
+    vague_endpoints=("Reservation Portal", "Rate Service"),
+    vague_label="uses",
+    library_name="Tariff Rules Library",
+    untagged_name="Payment Gateway",
+    orphan_name="Legacy Booking System",
+    keyless_view_generated_key="Container-001",
+)
+
+HELDOUT_REVIEW_CASE_DEF = Case(
+    id=pins.HELDOUT_REVIEW_CASE,
+    prompt=REVIEW_MODEL_PROMPT,
+    gates=REVIEW_MODEL_GATES,
+    setup_files={"workspace.dsl": HELDOUT_REVIEW_SEED_WORKSPACE},
+    review_facts=HELDOUT_REVIEW_REVIEW_FACTS,
+)
+
 #: Every case the harness knows, in canonical order.
 CASES: dict[str, Case] = {
     CREATE_SYSTEM_CASE_DEF.id: CREATE_SYSTEM_CASE_DEF,
@@ -733,10 +1096,12 @@ CASES: dict[str, Case] = {
     MODELING_DECISIONS_CASE_DEF.id: MODELING_DECISIONS_CASE_DEF,
     MCP_LIMITS_CASE_DEF.id: MCP_LIMITS_CASE_DEF,
     NO_TRIGGER_CASE_DEF.id: NO_TRIGGER_CASE_DEF,
+    REVIEW_MODEL_CASE_DEF.id: REVIEW_MODEL_CASE_DEF,
     HELDOUT_VALIDATE_CASE_DEF.id: HELDOUT_VALIDATE_CASE_DEF,
     HELDOUT_DSL_CASE_DEF.id: HELDOUT_DSL_CASE_DEF,
     HELDOUT_MODELING_CASE_DEF.id: HELDOUT_MODELING_CASE_DEF,
     HELDOUT_VIEWS_CASE_DEF.id: HELDOUT_VIEWS_CASE_DEF,
+    HELDOUT_REVIEW_CASE_DEF.id: HELDOUT_REVIEW_CASE_DEF,
     SMOKE_CASE_DEF.id: SMOKE_CASE_DEF,
 }
 
